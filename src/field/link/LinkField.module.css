@@ -34,6 +34,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  flex: 0 1 auto;
   min-width: 0;
   height: 100%;
 }
@@ -52,9 +53,16 @@
 
 .LinkFieldView-labelText {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
+  flex: 1 1 auto;
   min-width: 0;
+}
+
+.LinkFieldView-icon {
+  flex-shrink: 0;
+  color: var(--alinea-fg);
+  font-size: 16px;
 }
 
 .LinkFieldView-label.is-loading .LinkFieldView-labelText {
@@ -70,9 +78,8 @@
   object-fit: cover;
   flex-shrink: 0;
   background: var(--alinea-bg-muted);
-  margin-left: -12px;
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
+  margin-left: -16px;
+  border-radius: 4px;
 }
 
 .LinkFieldView-imagePlaceholder {
@@ -81,22 +88,16 @@
   height: 32px;
   width: 32px;
   flex-shrink: 0;
-  margin-left: -12px;
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
+  margin-left: -16px;
+  border-radius: 4px;
   background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
   animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
 }
 
-.LinkFieldView-image[data-has-fields='true'] {
-  border-bottom-left-radius: 0;
-}
-
-.LinkFieldView-imagePlaceholder[data-has-fields='true'] {
-  border-bottom-left-radius: 0;
-}
-
 .LinkFieldView-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alinea-fg-muted);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -180,7 +181,6 @@
 .MultipleLinksFieldView-row {
   justify-content: space-between;
   background: var(--alinea-bg-muted);
-  border-top: 1px solid var(--alinea-border);
 }
 
 .MultipleLinksFieldView-rowCenter {

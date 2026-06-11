@@ -67,7 +67,11 @@ function LinkRow({hasFields, node}: LinkRowProps) {
   return (
     <>
       {type && type !== 'image' && (
-        <Icon aria-hidden icon={getLinkIcon(type)} />
+        <Icon
+          aria-hidden
+          className={styles.LinkFieldView.icon()}
+          icon={getLinkIcon(type)}
+        />
       )}
       {(type === 'entry' || type === 'image' || type === 'file') && (
         <EntryRowLayer hasFields={hasFields} node={node} />
@@ -387,9 +391,11 @@ interface StandardFieldActionProps {
 }
 
 interface LinkPickerActionProps {
+  ariaLabel?: string
   buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
+  buttonIcon?: ComponentType
   buttonSize?: 'small' | 'icon' | 'icon-small'
-  children: ReactNode
+  children?: ReactNode
   className?: string
   picker: Picker<LinkFieldRow>
   selection?: Array<LinkFieldRow>
@@ -435,7 +441,9 @@ function initialFields(picker: Picker<LinkFieldRow>) {
 }
 
 function LinkPickerAction({
+  ariaLabel,
   buttonAppearance = 'outline',
+  buttonIcon,
   buttonSize = 'small',
   children,
   className,
@@ -446,12 +454,18 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
+  const dashboard = useDashboard()
+  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
+  const selectedRoot = useAtomValue(dashboard.selectedRoot)
+  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
   if (type === 'url') {
     return (
       <DialogTrigger>
         <Button
+          aria-label={ariaLabel}
           appearance={buttonAppearance}
           className={className}
+          icon={buttonIcon}
           size={buttonSize}
         >
           {children}
@@ -468,8 +482,16 @@ function LinkPickerAction({
   const options = picker.options as Partial<EntryPickerOptions>
   const condition =
     typeof options.condition === 'function' ? undefined : options.condition
+  const fallbackRoot =
+    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
+  const fallbackLocation =
+    selectedWorkspace && fallbackRoot
+      ? {workspace: selectedWorkspace, root: fallbackRoot}
+      : undefined
   const location =
-    typeof options.location === 'function' ? undefined : options.location
+    typeof options.location === 'function'
+      ? fallbackLocation
+      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
@@ -490,8 +512,10 @@ function LinkPickerAction({
     return (
       <DialogTrigger>
         <Button
+          aria-label={ariaLabel}
           appearance={buttonAppearance}
           className={className}
+          icon={buttonIcon}
           size={buttonSize}
         >
           {children}
@@ -506,8 +530,10 @@ function LinkPickerAction({
   return (
     <DialogTrigger>
       <Button
+        aria-label={ariaLabel}
         appearance={buttonAppearance}
         className={className}
+        icon={buttonIcon}
         size={buttonSize}
       >
         {children}
@@ -640,6 +666,76 @@ interface SingleLinkRowProps extends StandardFieldActionProps {
   value: LinkFieldRow
 }
 
+interface LinkRowActionsProps {
+  className: string
+  isFirst?: boolean
+  isLast?: boolean
+  picker?: Picker<LinkFieldRow>
+  type: PickerType
+  value: LinkFieldRow
+  onMoveDown?: () => void
+  onMoveUp?: () => void
+  onPick: (value: LinkFieldRow) => void
+  onRemove: () => void
+}
+
+function LinkRowActions({
+  className,
+  isFirst = true,
+  isLast = true,
+  picker,
+  type,
+  value,
+  onMoveDown,
+  onMoveUp,
+  onPick,
+  onRemove
+}: LinkRowActionsProps) {
+  return (
+    <div className={className}>
+      {picker && (
+        <LinkPickerAction
+          ariaLabel="Edit link"
+          buttonAppearance="plain"
+          buttonIcon={IcRoundEdit}
+          buttonSize="icon-small"
+          onPick={onPick}
+          picker={picker}
+          type={type}
+          value={value}
+        />
+      )}
+      {onMoveUp && (
+        <Button
+          aria-label="Move link up"
+          appearance="plain"
+          isDisabled={isFirst}
+          onPress={onMoveUp}
+          size="icon-small"
+          icon={IcRoundArrowUpward}
+        />
+      )}
+      {onMoveDown && (
+        <Button
+          aria-label="Move link down"
+          appearance="plain"
+          isDisabled={isLast}
+          onPress={onMoveDown}
+          size="icon-small"
+          icon={IcRoundArrowDownward}
+        />
+      )}
+      <Button
+        aria-label="Remove link"
+        appearance="plain"
+        size="icon-small"
+        icon={IcRoundClose}
+        onPress={onRemove}
+      />
+    </div>
+  )
+}
+
 function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const [, setValue] = useField(field)
   const options = useFieldOptions(field)
@@ -652,27 +748,14 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
           <LinkRow hasFields={Boolean(picker?.fields)} node={node} />
         </div>
         {!options.readOnly && (
-          <div className={styles.LinkFieldView.actions()}>
-            {picker && (
-              <LinkPickerAction
-                buttonAppearance="plain"
-                buttonSize="icon-small"
-                onPick={setValue}
-                picker={picker}
-                type={type}
-                value={value}
-              >
-                <Icon aria-hidden icon={IcRoundEdit} />
-              </LinkPickerAction>
-            )}
-            <Button
-              appearance="plain"
-              size="icon-small"
-              intent="secondary"
-              onPress={() => setValue(undefined!)}
-              icon={IcRoundClose}
-            />
-          </div>
+          <LinkRowActions
+            className={styles.LinkFieldView.actions()}
+            onPick={setValue}
+            onRemove={() => setValue(undefined!)}
+            picker={picker}
+            type={type}
+            value={value}
+          />
         )}
       </SurfaceHeader>
       <LinkRowEditor
@@ -822,53 +905,28 @@ function MultipleLinkRow({
             </Button>
           </div>
           {!readOnly && (
-            <div className={styles.MultipleLinksFieldView.actions()}>
-              {picker && (
-                <LinkPickerAction
-                  buttonAppearance="plain"
-                  buttonSize="icon-small"
-                  onPick={link => {
-                    setValue(links =>
-                      links.map((current, currentIndex) =>
-                        currentIndex === index ? link : current
-                      )
-                    )
-                  }}
-                  picker={picker}
-                  type={type}
-                  value={value}
-                >
-                  <Icon aria-hidden icon={IcRoundEdit} />
-                </LinkPickerAction>
-              )}
-              <Button
-                aria-label="Move link up"
-                appearance="plain"
-                isDisabled={index === 0}
-                onPress={() => moveCurrentRow(-1)}
-                size="icon-small"
-                icon={IcRoundArrowUpward}
-              />
-              <Button
-                aria-label="Move link down"
-                appearance="plain"
-                isDisabled={index === rows - 1}
-                onPress={() => moveCurrentRow(1)}
-                size="icon-small"
-                icon={IcRoundArrowDownward}
-              />
-              <Button
-                aria-label="Remove link"
-                appearance="plain"
-                size="icon-small"
-                icon={IcRoundClose}
-                onPress={() =>
-                  setValue(links =>
-                    links.filter((_, currentIndex) => currentIndex !== index)
+            <LinkRowActions
+              className={styles.MultipleLinksFieldView.actions()}
+              isFirst={index === 0}
+              isLast={index === rows - 1}
+              onMoveDown={() => moveCurrentRow(1)}
+              onMoveUp={() => moveCurrentRow(-1)}
+              onPick={link => {
+                setValue(links =>
+                  links.map((current, currentIndex) =>
+                    currentIndex === index ? link : current
                   )
-                }
-              />
-            </div>
+                )
+              }}
+              onRemove={() =>
+                setValue(links =>
+                  links.filter((_, currentIndex) => currentIndex !== index)
+                )
+              }
+              picker={picker}
+              type={type}
+              value={value}
+            />
           )}
         </SurfaceHeader>
         {expanded && (
