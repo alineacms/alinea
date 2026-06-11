@@ -86,7 +86,7 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  background: var(--alinea-backdrop);
+  background: var(--alinea-bg-muted);
 }
 
 .ListFieldTypePicker-empty {
@@ -222,7 +222,6 @@
 .ListFieldRow-header {
   justify-content: space-between;
   min-width: 0;
-  background: var(--alinea-backdrop);
 }
 
 .ListFieldRow-drag {
@@ -292,7 +291,8 @@
   display: grid;
   gap: 12px;
   align-items: normal;
-  border: none !important;
+  background: var(--alinea-bg);
+  border-top: 1px solid var(--alinea-border);
 }
 
 .ListFieldRow-footer {

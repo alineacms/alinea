@@ -306,6 +306,7 @@ function ListFieldCreateActions({
           onPress={() => onPaste(pasted)}
           size="small"
           icon={IcBaselineContentPasteGo}
+          appearance="plain"
         >
           {pasteBlockLabel(pasted, items)}
         </Button>
@@ -317,6 +318,7 @@ function ListFieldCreateActions({
           onPress={() => onSelect(item)}
           size="small"
           icon={getType(item.type).icon || IcRoundAdd}
+          appearance="plain"
         >
           {item.label}
         </Button>
