@@ -297,6 +297,7 @@ interface EntryViewToggleProps {
 function EntryViewToggle({entry}: EntryViewToggleProps) {
   const view = useAtomValue(entry.view)
   const setView = useSetAtom(entry.view)
+  const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
@@ -305,9 +306,12 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       aria-label={label}
       appearance="plain"
       icon={ViewIcon}
+      isDisabled={isPending}
       size="icon"
       onPress={() => {
-        setView(nextView)
+        startTransition(() => {
+          setView(nextView)
+        })
       }}
     />
   )
