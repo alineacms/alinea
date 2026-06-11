@@ -25,6 +25,7 @@ import {
   IcRoundVisibilityOff
 } from '../icons.js'
 import type {DashboardEntryData, DashboardEntrySidebarTab} from '../store.js'
+import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
@@ -196,7 +197,9 @@ function EntrySidebarStatusItem({
         onPress={() => setSelectedVersion({type: 'status', status})}
       >
         {isEditing && (
-          <span className={styles.EntrySidebar.historyBadge()}>Editing</span>
+          <Badge appearance="background" size="small">
+            Editing
+          </Badge>
         )}
       </EntrySidebarVersionRow>
     </li>

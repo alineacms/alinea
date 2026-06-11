@@ -31,19 +31,6 @@
   overflow: hidden;
 }
 
-.CompactField-token {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  padding: 1px 7px;
-  border: 1px solid var(--alinea-border);
-  border-radius: 999px;
-  background: var(--alinea-bg-muted);
-  color: var(--alinea-fg);
-}
-
 .CompactField-text {
   min-width: 0;
   max-width: 100%;

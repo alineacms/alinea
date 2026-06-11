@@ -4,6 +4,9 @@ import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
 import {
+  IcRoundArchive,
+  IcRoundCheck,
+  IcRoundEdit,
   IcRoundImage,
   IcRoundInsertDriveFile,
   IcRoundLink
@@ -149,6 +152,7 @@ function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
               <Badge
                 appearance="default"
                 className={styles.EntryReferences.status()}
+                icon={badgeIcon(status)}
                 key={status}
                 status={badgeStatus(status)}
               >
@@ -313,5 +317,16 @@ function badgeStatus(status: EntryStatus) {
       return 'warning'
     case 'archived':
       return 'neutral'
+  }
+}
+
+function badgeIcon(status: EntryStatus) {
+  switch (status) {
+    case 'published':
+      return IcRoundCheck
+    case 'draft':
+      return IcRoundEdit
+    case 'archived':
+      return IcRoundArchive
   }
 }

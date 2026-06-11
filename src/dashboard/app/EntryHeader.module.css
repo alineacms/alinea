@@ -35,10 +35,6 @@
   white-space: nowrap;
 }
 
-.EntryHeader-badge {
-  flex-shrink: 0;
-}
-
 .EntryHeader-actions {
   display: flex;
   align-items: center;

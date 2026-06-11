@@ -4,6 +4,7 @@ import {
   type LabelProps as LabelPrimitiveProps
 } from 'react-aria-components'
 import type {ReactNode} from 'react'
+import {Badge} from '../dashboard/app/Badge.js'
 import {IcRoundPublic} from '../dashboard/icons.js'
 import css from './Label.module.css'
 
@@ -29,13 +30,15 @@ export interface SharedLabelBadgeProps {
 
 export function SharedLabelBadge({label = 'Shared'}: SharedLabelBadgeProps) {
   return (
-    <span className={styles.Label.shared()} title="Shared field">
-      <IcRoundPublic
-        aria-hidden="true"
-        className={styles.Label.shared.icon()}
-      />
-      <span className={styles.Label.shared.text()}>{label}</span>
-    </span>
+    <Badge
+      appearance="background"
+      icon={IcRoundPublic}
+      size="small"
+      status="accent"
+      title="Shared field"
+    >
+      {label}
+    </Badge>
   )
 }
 

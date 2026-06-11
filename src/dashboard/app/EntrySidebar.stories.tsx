@@ -10,6 +10,7 @@ import {
   EntrySidebarVersionRow,
   type EntrySidebarVersionStatus
 } from './EntrySidebar.js'
+import {Badge} from './Badge.js'
 
 const storyStyle: CSSProperties = {
   width: 322,
@@ -65,7 +66,12 @@ const rows = [
   title: string
 }>
 
-function VersionRows({selected}: {selected?: boolean}) {
+interface VersionRowsProps {
+  selected?: boolean
+  showEditing?: boolean
+}
+
+function VersionRows({selected, showEditing}: VersionRowsProps) {
   return (
     <div style={groupStyle}>
       {rows.map(row => (
@@ -76,7 +82,13 @@ function VersionRows({selected}: {selected?: boolean}) {
           icon={row.icon}
           title={row.title}
           meta="Stijn Codeurs - Today at 10:40"
-        />
+        >
+          {showEditing && row.status === 'draft' && (
+            <Badge appearance="background" size="small">
+              Editing
+            </Badge>
+          )}
+        </EntrySidebarVersionRow>
       ))}
     </div>
   )
@@ -92,6 +104,10 @@ export function VersionRowStates() {
       <section style={groupStyle}>
         <h2 style={headingStyle}>Selected</h2>
         <VersionRows selected />
+      </section>
+      <section style={groupStyle}>
+        <h2 style={headingStyle}>With editing badge</h2>
+        <VersionRows selected showEditing />
       </section>
     </div>
   )

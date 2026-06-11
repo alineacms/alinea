@@ -137,13 +137,3 @@
   font-family: var(--alinea-mono-font);
   font-size: 12px;
 }
-
-.EntryStatus-badge {
-  margin-left: 12px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--alinea-fg-muted);
-  background: var(--alinea-muted);
-  border-radius: 4px;
-}

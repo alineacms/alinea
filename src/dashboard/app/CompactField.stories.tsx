@@ -20,6 +20,7 @@ import '#/theme.css'
 import {atom, type Atom} from 'jotai'
 import type {ComponentType, CSSProperties, ReactNode} from 'react'
 import {views} from '../../field/views.js'
+import {Badge} from './Badge.js'
 import {CompactField, CompactRecordFields} from './CompactField.js'
 
 interface StoryDashboard {
@@ -45,16 +46,9 @@ const compactCustomField = new ScalarField<string, FieldOptions<string>>({
   view: viewKeys.HiddenInput,
   compactView({value}) {
     return (
-      <span
-        style={{
-          borderRadius: 999,
-          background: 'var(--alinea-primary)',
-          color: 'var(--alinea-primary-fg)',
-          padding: '1px 8px'
-        }}
-      >
+      <Badge appearance="background" size="small" status="success">
         Custom: {value}
-      </span>
+      </Badge>
     )
   }
 })
@@ -211,6 +205,29 @@ export function FooterLayout() {
             author: 'Alinea'
           }}
         />
+      </div>
+    </DashboardScopeInternal>
+  )
+}
+
+export function MultiSelectBadges() {
+  const field = select.multiple('Channels', {
+    options: {
+      web: 'Web',
+      app: 'App',
+      email: 'Email',
+      social: 'Social'
+    }
+  })
+  return (
+    <DashboardScopeInternal dashboard={dashboard}>
+      <div style={{...storyStyle, maxWidth: 420}}>
+        <Row label="Compact">
+          <CompactField
+            field={field}
+            value={['web', 'app', 'email', 'social']}
+          />
+        </Row>
       </div>
     </DashboardScopeInternal>
   )
