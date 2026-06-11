@@ -1439,9 +1439,7 @@ export class DashboardExplorer {
     const allRoots = this.rootScope === 'workspace'
     if (!root && !allRoots) return []
     const locale = allRoots ? undefined : get(this.selectedLocale)
-    const searchAll = Boolean(
-      searchStarted && this.searchDepth === 'all'
-    )
+    const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
     const flatList = Boolean(this.#options.condition) || searchAll
     const policy = get(this.dashboard.policy)
     const children = await db.find({
@@ -2036,6 +2034,13 @@ export class DashboardEntryData {
   parentIds: Atom<Array<string>>
   root: Atom<DashboardRoot>
   #translationSourceLocale = atom<string | null | undefined>(undefined)
+
+  customView = atom(get => {
+    const type = get(this.type)
+    const {view} = getType(type.type)
+    if (typeof view === 'string') return get(this.dashboard.view(view))
+    return view
+  })
 
   constructor(
     public entry: DashboardEntry,

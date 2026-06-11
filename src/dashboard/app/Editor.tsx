@@ -36,10 +36,8 @@ import {
   DashboardSection,
   ReactiveNode
 } from '../store/Dashboard.js'
-import type {DetailsBarStatus} from './DetailsBar.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
-import {EditorBackButton} from './EditorBackButton.js'
 import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {EntryTranslationBanner} from './EntryTranslationBanner.js'
@@ -249,43 +247,6 @@ function RootOverviewControlsButton({entry}: RootOverviewControlsButtonProps) {
   return <EntryViewToggle entry={entry} />
 }
 
-interface RootEditorBackButtonProps {
-  root: DashboardRoot
-  parentId: string
-}
-
-function RootEditorBackButton({root, parentId}: RootEditorBackButtonProps) {
-  const parent = root.workspace.dashboard.entries(parentId)
-  const {data: parentData} = useAtomValue(parent.data)
-  if (!parentData) return null
-  return <LoadedRootEditorBackButton root={root} parent={parentData} />
-}
-
-interface LoadedRootEditorBackButtonProps {
-  root: DashboardRoot
-  parent: DashboardEntryData
-}
-
-function LoadedRootEditorBackButton({
-  root,
-  parent
-}: LoadedRootEditorBackButtonProps) {
-  const parentParentId = useAtomValue(parent.parentId)
-  const setLocation = useSetAtom(root.explorer.location)
-  const nextParentId = parentParentId ?? undefined
-  return (
-    <EditorBackButton
-      label={parentParentId ? 'Back to parent entry' : 'Back to root'}
-      onPress={() => {
-        setLocation(location => ({
-          ...location,
-          parentId: nextParentId
-        }))
-      }}
-    />
-  )
-}
-
 interface EntryEditorProps {
   entry: DashboardEntryData
 }
@@ -317,48 +278,17 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
   )
 }
 
-function detailsBarStatus(
-  activeStatus: 'draft' | 'published' | 'archived',
-  isDirty: boolean,
-  isUnpublished: boolean
-): DetailsBarStatus {
-  if (isDirty) return 'draft'
-  if (isUnpublished) return 'unpublished'
-  return activeStatus
-}
-
-function detailsBarStatusLabel(
-  activeStatus: 'draft' | 'published' | 'archived',
-  isDirty: boolean,
-  isUnpublished: boolean
-) {
-  if (isDirty) return 'Editing'
-  if (isUnpublished) return 'Unpublished'
-  switch (activeStatus) {
-    case 'published':
-      return 'Published'
-    case 'archived':
-      return 'Archived'
-    default:
-      return 'Draft'
-  }
-}
-
 function EntryEditor({entry}: EntryEditorProps) {
+  const View = useAtomValue(entry.customView)
   const isUntranslated = useAtomValue(entry.untranslated)
   const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const save = useSetAtom(entry.saveDraft)
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
-  const status = useAtomValue(entry.activeStatus)
-  const activeVersion = useAtomValue(entry.activeVersion)
-  const isUnpublished = Boolean(activeVersion?.main && status === 'draft')
-  const barStatus = detailsBarStatus(status, isDirty, isUnpublished)
-  const barStatusLabel = detailsBarStatusLabel(status, isDirty, isUnpublished)
   const [isSidebarOpen, setSidebarOpen] = useState(true)
   const defaultView = useAtomValue(entry.defaultView)
 
@@ -383,12 +313,6 @@ function EntryEditor({entry}: EntryEditorProps) {
 
   let editorBody = (
     <>
-      {/*<DetailsBar
-        entry={entry}
-        status={barStatus}
-        statusLabel={barStatusLabel}
-      />*/}
-
       <RailBody className={styles.EntryEditor.body()}>
         <RailContent>
           {isUntranslated && (
@@ -407,11 +331,6 @@ function EntryEditor({entry}: EntryEditorProps) {
   if (isMediaFile) {
     editorBody = (
       <>
-        {/*<DetailsBar
-          entry={entry}
-          status={barStatus}
-          statusLabel={barStatusLabel}
-        />*/}
         <RailBody className={styles.EntryEditor.body()}>
           <RailContent>
             <NodeEditor node={node} type={type.type}>
@@ -421,6 +340,10 @@ function EntryEditor({entry}: EntryEditorProps) {
         </RailBody>
       </>
     )
+  }
+
+  if (View) {
+    return <View type={type.type} />
   }
 
   const hasSidebar = !isUntranslated
