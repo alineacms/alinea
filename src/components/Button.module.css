@@ -261,7 +261,7 @@
     justify-content: center;
 
     [data-slot='icon'] {
-      font-size: 16px;
+      font-size: 18px;
     }
 
     &[data-hovered] {
@@ -270,6 +270,7 @@
     }
 
     &[data-active],
+    &[aria-expanded='true'],
     &[data-appearance='active'] {
       background-color: var(--alinea-button-icon-nav-background-active);
       color: var(--alinea-button-icon-nav-color-active);

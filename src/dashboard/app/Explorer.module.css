@@ -105,12 +105,16 @@
 }
 
 .Popover-Label {
-  padding-top: 4px;
-  padding-left: 4px;
+  padding: 4px 8px;
+  color: var(--alinea-fg-subtle);
   font-size: 12px;
 }
 
 .Sorting-button {
+  width: 100%;
   display: flex;
-  justify-content: space-between;
+
+  & + &{
+    margin-top: 2px;
+  }
 }

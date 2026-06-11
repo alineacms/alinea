@@ -1,4 +1,4 @@
-import type {SVGProps} from 'react'
+import type { SVGProps } from 'react'
 
 export function IcRoundEdit(props: SVGProps<SVGSVGElement>) {
   return (
@@ -397,7 +397,7 @@ export function IcRoundFilterList(props: SVGProps<SVGSVGElement>) {
     >
       <path
         fill="currentColor"
-        d="M10 18h4a1 1 0 1 1 0 2h-4a1 1 0 1 1 0-2m-7-7h18a1 1 0 1 1 0 2H3a1 1 0 1 1 0-2m3-7h12a1 1 0 1 1 0 2H6a1 1 0 1 1 0-2"
+        d="M11 18h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1M3 7c0 .55.45 1 1 1h16c.55 0 1-.45 1-1s-.45-1-1-1H4c-.55 0-1 .45-1 1m4 6h10c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1"
       />
     </svg>
   )

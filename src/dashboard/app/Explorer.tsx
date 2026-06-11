@@ -1,10 +1,10 @@
-import {Button, Popover, SearchField} from '#/components.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {slugify} from '#/core/util/Slugs.js'
-import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
+import { Button, Popover, SearchField } from '#/components.js'
+import { MediaFile, MediaLibrary } from '#/core/media/MediaTypes.js'
+import { slugify } from '#/core/util/Slugs.js'
+import { ViewToggle } from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { unwrap } from 'jotai/utils'
 import {
   useEffect,
   useMemo,
@@ -13,7 +13,7 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
+import { DialogTrigger, FileTrigger, type Key } from 'react-aria-components'
 import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
@@ -21,18 +21,18 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {DashboardEntry, DashboardEntryData} from '../store.js'
+import type { DashboardEntry, DashboardEntryData } from '../store.js'
 import {
   DashboardExplorer,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
 } from '../store.js'
-import {EditorBackButton} from './EditorBackButton.js'
+import { EditorBackButton } from './EditorBackButton.js'
 import css from './Explorer.module.css'
-import {ExplorerList} from './ExplorerList.js'
-import {MutationQueueStatus} from './MutationQueueStatus.js'
-import {RailBody, RailHeader} from './ui/Rail.js'
+import { ExplorerList } from './ExplorerList.js'
+import { MutationQueueStatus } from './MutationQueueStatus.js'
+import { RailBody, RailHeader } from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -284,7 +284,7 @@ function ExplorerControlsPopover({
     <>
       {isMedia && (
         <>
-          <span className={styles.Popover.Label()}>Filter by</span>
+          <p className={styles.Popover.Label()}>Filter by</p>
           {filters.map(filter => (
             <Button
               key={slugify(filter.label)}
@@ -298,7 +298,7 @@ function ExplorerControlsPopover({
           ))}
         </>
       )}
-      <span className={styles.Popover.Label()}>Sort by</span>
+      <p className={styles.Popover.Label()}>Sort by</p>
       {sortingOptions.map(option =>
         !isMedia && option.id === 'size' ? null : (
           <Button
