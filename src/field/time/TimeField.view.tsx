@@ -25,6 +25,7 @@ export function TimeFieldView({field}: TimeFieldViewProps) {
       isDisabled={options.readOnly}
       isRequired={options.required}
       label={options.label}
+      shared={options.shared}
       maxValue={options.maxValue ? parseTime(options.maxValue) : null}
       minValue={options.minValue ? parseTime(options.minValue) : null}
       onChange={next => setValue(next?.toString() || '')}

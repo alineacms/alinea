@@ -5,7 +5,8 @@ import {
   FoldIcon,
   Icon,
   Popover,
-  SearchField
+  SearchField,
+  SharedLabelBadge
 } from '#/components.js'
 
 import {ListField as CoreListField} from '#/core/field/ListField.js'
@@ -253,6 +254,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
         onPress={toggleAll}
       >
         {options.label}
+        {options.shared && <SharedLabelBadge />}
         <FoldIcon aria-hidden data-slot="icon" expanded={allExpanded} />
       </Button>
       {content}

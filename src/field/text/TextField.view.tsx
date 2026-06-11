@@ -21,6 +21,7 @@ export const TextFieldView = memo(function TextFieldView({
       isDisabled={options.readOnly}
       label={options.label}
       isRequired={options.required}
+      shared={options.shared}
       multiline={options.multiline}
       value={value}
       onChange={setValue}

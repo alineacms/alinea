@@ -31,6 +31,7 @@ export interface CodeEditorInputProps {
   invalid?: boolean
   isRequired?: boolean
   label?: ReactNode
+  shared?: boolean
   onValueChange: (value: string) => void
   onBlur?: () => void
   onFocus?: () => void
@@ -59,6 +60,7 @@ export function CodeEditorInput({
   invalid = false,
   isRequired,
   label,
+  shared,
   onBlur,
   onFocus,
   onValueChange,
@@ -74,6 +76,7 @@ export function CodeEditorInput({
       description={description}
       errorMessage={errorMessage}
       isRequired={isRequired}
+      shared={shared}
     >
       <div
         className={styles.CodeEditorInput()}
@@ -112,6 +115,7 @@ export function CodeFieldView({field}: CodeFieldViewProps) {
       errorMessage={error}
       isRequired={options.required}
       label={options.label}
+      shared={options.shared}
       onValueChange={setValue}
       placeholder={options.inline ? String(options.label) : undefined}
       readOnly={options.readOnly}

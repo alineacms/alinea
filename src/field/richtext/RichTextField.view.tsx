@@ -386,6 +386,7 @@ function RTView<Blocks extends Schema>({
         errorMessage={error}
         isRequired={options.required}
         label={options.label}
+        shared={options.shared}
       >
         {editor && !readOnly && (
           <InsertMenu

@@ -22,7 +22,7 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const error = useFieldError(field)
   const node = useFieldNode(field)
   return (
-    <Label label={options.label}>
+    <Label label={options.label} shared={options.shared}>
       <Surface variant="muted">
         <SurfaceContent>
           <NodeEditor

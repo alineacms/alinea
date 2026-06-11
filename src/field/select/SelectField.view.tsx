@@ -57,6 +57,7 @@ export function SelectFieldView<
       isRequired={options.required}
       items={items}
       label={options.label}
+      shared={options.shared}
       onSelectionChange={handleSelectionChange}
       placeholder={options.placeholder}
       selectedKey={value}
@@ -110,6 +111,7 @@ export function MultipleSelectFieldView<KeyType extends string>({
       isRequired={options.required}
       items={items}
       label={options.label}
+      shared={options.shared}
       onItemCleared={handleItemCleared}
       onItemInserted={handleItemInserted}
       placeholder={options.placeholder}
@@ -125,6 +127,7 @@ interface SelectFieldMultipleViewProps<KeyType extends string> {
   isRequired?: boolean
   items: Array<SelectItemData<KeyType>>
   label: ReactNode
+  shared?: boolean
   onItemCleared: (key: Key) => void
   onItemInserted: (key: Key) => void
   placeholder?: string

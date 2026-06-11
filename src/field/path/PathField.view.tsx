@@ -33,6 +33,7 @@ export const PathFieldView = memo(function PathFieldView({
       isReadOnly={options.readOnly}
       isRequired={options.required}
       label={options.label}
+      shared={options.shared}
       source={source}
       onChange={setValue}
     />
@@ -47,6 +48,7 @@ export interface PathInputProps {
   isReadOnly?: boolean
   isRequired?: boolean
   label?: ReactNode
+  shared?: boolean
   onChange: (value: string) => void
   source?: string
 }
@@ -59,6 +61,7 @@ export function PathInput({
   isReadOnly,
   isRequired,
   label,
+  shared,
   onChange,
   source = ''
 }: PathInputProps) {
@@ -83,6 +86,7 @@ export function PathInput({
       isReadOnly={isReadOnly}
       isRequired={isRequired}
       label={label}
+      shared={shared}
       onBlur={handleBlur}
       onChange={handleChange}
       value={inputValue}

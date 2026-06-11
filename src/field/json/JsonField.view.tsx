@@ -66,6 +66,7 @@ export function JsonFieldView<Value>({field}: JsonFieldViewProps<Value>) {
       invalid={Boolean(parseError)}
       isRequired={options.required}
       label={options.label}
+      shared={options.shared}
       onValueChange={handleValueChange}
       placeholder={options.inline ? String(options.label) : undefined}
       readOnly={options.readOnly}

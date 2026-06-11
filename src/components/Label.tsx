@@ -4,6 +4,7 @@ import {
   type LabelProps as LabelPrimitiveProps
 } from 'react-aria-components'
 import type {ReactNode} from 'react'
+import {IcRoundPublic} from '../dashboard/icons.js'
 import css from './Label.module.css'
 
 const styles = styler(css)
@@ -17,9 +18,26 @@ export interface LabelSharedProps {
   isDisabled?: boolean
   icon?: ReactNode
   id?: string
+  shared?: boolean
 }
 
 export interface LabelProps extends LabelSharedProps, LabelPrimitiveProps {}
+
+export interface SharedLabelBadgeProps {
+  label?: string
+}
+
+export function SharedLabelBadge({label = 'Shared'}: SharedLabelBadgeProps) {
+  return (
+    <span className={styles.Label.shared()} title="Shared field">
+      <IcRoundPublic
+        aria-hidden="true"
+        className={styles.Label.shared.icon()}
+      />
+      <span className={styles.Label.shared.text()}>{label}</span>
+    </span>
+  )
+}
 
 export function Label({
   label,
@@ -27,6 +45,7 @@ export function Label({
   errorMessage,
   isRequired,
   icon,
+  shared,
   children,
   className,
   ...props
@@ -52,6 +71,7 @@ export function Label({
                   )}
                 </LabelPrimitive>
               )}
+              {shared && <SharedLabelBadge />}
             </div>
           )}
           {description && (
@@ -70,13 +90,15 @@ export function labelProps<T extends LabelSharedProps>({
   description,
   errorMessage,
   isRequired,
-  icon
+  icon,
+  shared
 }: T): LabelProps {
   return {
     label,
     description,
     errorMessage,
     isRequired,
-    icon
+    icon,
+    shared
   }
 }

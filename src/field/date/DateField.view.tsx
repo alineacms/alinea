@@ -28,6 +28,7 @@ export function DateFieldView({field}: DateFieldViewProps) {
       isRequired={options.required}
       isDisabled={options.readOnly}
       label={options.label}
+      shared={options.shared}
       onChange={next => setValue(next?.toString() || '')}
       value={parsedValue}
     />

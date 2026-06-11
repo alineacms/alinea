@@ -16,6 +16,7 @@ export function CheckFieldView({field}: CheckFieldViewProps) {
       description={options.help}
       errorMessage={error}
       isRequired={options.required}
+      shared={options.shared}
     >
       <Checkbox
         isSelected={Boolean(value)}

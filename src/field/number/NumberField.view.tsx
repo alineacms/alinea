@@ -17,6 +17,7 @@ export function NumberFieldView({field}: NumberFieldViewProps) {
       isDisabled={options.readOnly}
       isRequired={options.required}
       label={options.label}
+      shared={options.shared}
       maxValue={options.maxValue}
       minValue={options.minValue}
       onChange={next => setValue(Number.isNaN(next) ? null : next)}

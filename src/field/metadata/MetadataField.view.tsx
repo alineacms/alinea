@@ -37,7 +37,7 @@ export function MetadataTimestampFieldView({
   const error = useFieldError(field)
   const displayValue = formatAuditTimestamp(value)
   return (
-    <Label label={options.label} errorMessage={error}>
+    <Label label={options.label} errorMessage={error} shared={options.shared}>
       <div className={styles.MetadataTimestampFieldView()}>
         {displayValue || 'Not available'}
       </div>
@@ -56,7 +56,7 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
   const name = value?.name || 'Unknown user'
   const email = value?.email
   return (
-    <Label label={options.label} errorMessage={error}>
+    <Label label={options.label} errorMessage={error} shared={options.shared}>
       <div className={styles.MetadataUserFieldView()}>
         <div className={styles.MetadataUserFieldView.person()}>{name}</div>
         {email && (

@@ -1,4 +1,11 @@
-import {Button, DialogTrigger, FoldIcon, Icon, Label} from '#/components.js'
+import {
+  Button,
+  DialogTrigger,
+  FoldIcon,
+  Icon,
+  Label,
+  SharedLabelBadge
+} from '#/components.js'
 import {createId} from '#/core/Id.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
@@ -968,7 +975,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const nodeIsEmpty = useAtomValue(node.isEmpty)
   const isEmpty = nodeIsEmpty || value === null
   return (
-    <Label label={options.label}>
+    <Label label={options.label} shared={options.shared}>
       <Surface className={styles.LinkFieldView()}>
         {!isEmpty && (
           <SingleLinkRow
@@ -1064,6 +1071,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         onPress={toggleAll}
       >
         {options.label}
+        {options.shared && <SharedLabelBadge />}
         <FoldIcon aria-hidden data-slot="icon" expanded={allExpanded} />
       </Button>
       {hasRows && !readOnly && (
