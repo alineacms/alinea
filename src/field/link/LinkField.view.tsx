@@ -102,6 +102,14 @@ function isPickerType(type: string): type is PickerType {
   )
 }
 
+function isLinkFieldRow(value: unknown): value is LinkFieldRow {
+  if (!value || typeof value !== 'object') return false
+  const type = (value as Partial<Record<typeof Reference.type, unknown>>)[
+    Reference.type
+  ]
+  return typeof type === 'string' && isPickerType(type)
+}
+
 function getPickerType(type: string): PickerType {
   return isPickerType(type) ? type : 'entry'
 }
@@ -449,7 +457,7 @@ function initialFields(picker: Picker<LinkFieldRow>) {
 
 function LinkPickerAction({
   ariaLabel,
-  buttonAppearance = 'outline',
+  buttonAppearance = 'plain',
   buttonIcon,
   buttonSize = 'small',
   children,
@@ -973,15 +981,16 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const options = useFieldOptions(field)
   const node = useFieldNode(field)
   const nodeIsEmpty = useAtomValue(node.isEmpty)
-  const isEmpty = nodeIsEmpty || value === null
+  const selectedValue = isLinkFieldRow(value) ? value : undefined
+  const isEmpty = nodeIsEmpty || !selectedValue
   return (
     <Label label={options.label} shared={options.shared}>
       <Surface className={styles.LinkFieldView()}>
-        {!isEmpty && (
+        {selectedValue && (
           <SingleLinkRow
             field={field}
             node={node as ReactiveNode<LinkFieldRow>}
-            value={value}
+            value={selectedValue}
           />
         )}
         {isEmpty && (

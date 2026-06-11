@@ -179,6 +179,7 @@
 }
 
 .MultipleLinksFieldView-row {
+  min-height: 32px;
   justify-content: space-between;
   background: var(--alinea-bg-muted);
 }
