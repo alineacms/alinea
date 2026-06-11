@@ -80,7 +80,7 @@ export function LocaleMenu({
         </Button>
       }
       aria-label="Language"
-      popoverProps={{placement: 'bottom left'}}
+      popoverProps={{placement: 'bottom right'}}
       selectionMode="single"
       selectedKeys={[activeLocale]}
       onAction={key => {
