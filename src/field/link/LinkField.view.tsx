@@ -1,8 +1,9 @@
-import {Button, DialogTrigger, Icon, Label} from '#/components.js'
+import {Button, DialogTrigger, FoldIcon, Icon, Label} from '#/components.js'
 import {createId} from '#/core/Id.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
+import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   ExternalLinkPicker,
@@ -10,11 +11,8 @@ import {
 } from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
-import {
-  Surface,
-  SurfaceContent,
-  SurfaceHeader
-} from '#/dashboard/app/ui/Surface.js'
+import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
+import {Surface, SurfaceHeader} from '#/dashboard/app/ui/Surface.js'
 import {
   useDashboard,
   useField,
@@ -44,14 +42,12 @@ import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {useMemo, useRef} from 'react'
+import {useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
   type DragPreviewRenderer,
-  type DropItem,
-  useDrag,
-  useDrop
+  useDrag
 } from 'react-aria'
 import css from './LinkField.module.css'
 
@@ -391,7 +387,8 @@ interface StandardFieldActionProps {
 }
 
 interface LinkPickerActionProps {
-  buttonSize?: 'small' | 'icon'
+  buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
+  buttonSize?: 'small' | 'icon' | 'icon-small'
   children: ReactNode
   className?: string
   picker: Picker<LinkFieldRow>
@@ -438,6 +435,7 @@ function initialFields(picker: Picker<LinkFieldRow>) {
 }
 
 function LinkPickerAction({
+  buttonAppearance = 'outline',
   buttonSize = 'small',
   children,
   className,
@@ -451,7 +449,11 @@ function LinkPickerAction({
   if (type === 'url') {
     return (
       <DialogTrigger>
-        <Button appearance="outline" className={className} size={buttonSize}>
+        <Button
+          appearance={buttonAppearance}
+          className={className}
+          size={buttonSize}
+        >
           {children}
         </Button>
         <ExternalLinkPicker
@@ -487,7 +489,11 @@ function LinkPickerAction({
   if (type === 'file' || type === 'image') {
     return (
       <DialogTrigger>
-        <Button appearance="outline" className={className} size={buttonSize}>
+        <Button
+          appearance={buttonAppearance}
+          className={className}
+          size={buttonSize}
+        >
           {children}
         </Button>
         <ImagePicker
@@ -499,7 +505,11 @@ function LinkPickerAction({
   }
   return (
     <DialogTrigger>
-      <Button appearance="outline" className={className} size={buttonSize}>
+      <Button
+        appearance={buttonAppearance}
+        className={className}
+        size={buttonSize}
+      >
         {children}
       </Button>
       <LinkPicker {...pickerProps} />
@@ -539,19 +549,6 @@ function dragRowItem(id: string): DragItem {
     'text/plain': id,
     [LINK_FIELD_ROW_DRAG_TYPE]: id
   }
-}
-
-async function getDraggedRowId(items: Array<DropItem>): Promise<string | null> {
-  for (const item of items) {
-    if (
-      item.kind === 'text' &&
-      item.types.has(LINK_FIELD_ROW_DRAG_TYPE) &&
-      item.getText
-    ) {
-      return item.getText(LINK_FIELD_ROW_DRAG_TYPE)
-    }
-  }
-  return null
 }
 
 interface SingleLinkCreateActionsProps extends StandardFieldActionProps {
@@ -632,9 +629,9 @@ interface LinkRowEditorProps {
 function LinkRowEditor({className, node, picker}: LinkRowEditorProps) {
   if (!picker?.fields) return null
   return (
-    <SurfaceContent className={className}>
+    <div className={className}>
       <NodeEditor node={node as ReactiveNode<object>} type={picker.fields} />
-    </SurfaceContent>
+    </div>
   )
 }
 
@@ -658,7 +655,8 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
           <div className={styles.LinkFieldView.actions()}>
             {picker && (
               <LinkPickerAction
-                buttonSize="icon"
+                buttonAppearance="plain"
+                buttonSize="icon-small"
                 onPick={setValue}
                 picker={picker}
                 type={type}
@@ -668,8 +666,8 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
               </LinkPickerAction>
             )}
             <Button
-              size="icon"
               appearance="plain"
+              size="icon-small"
               intent="secondary"
               onPress={() => setValue(undefined!)}
               icon={IcRoundClose}
@@ -687,11 +685,13 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
 }
 
 interface MultipleLinkRowProps {
+  expanded: boolean
   field: LinksField<LinkFieldRow, unknown>
   index: number
   list: ReactiveNode<Array<LinkFieldRow>>
   node: ReactiveNode<LinkFieldRow>
   onMoveRow: (rowId: string, targetIndex: number) => void
+  onToggleRow: (rowId: string) => void
   rows: number
   value?: LinkFieldRow
 }
@@ -713,28 +713,15 @@ function LinkFieldSeparator({
   onMoveRow,
   targetIndex
 }: LinkFieldSeparatorProps) {
-  const separatorRef = useRef<HTMLDivElement>(null)
-  const {dropProps, isDropTarget} = useDrop({
-    ref: separatorRef,
-    isDisabled: readOnly,
-    getDropOperation(types, allowedOperations) {
-      if (!types.has(LINK_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    async onDrop(event) {
-      const rowId = await getDraggedRowId(event.items)
-      if (!rowId) return
-      onMoveRow(rowId, targetIndex)
-    }
-  })
   return (
-    <div
-      {...dropProps}
-      aria-label={`Move link ${position} ${label}`}
-      className={styles.MultipleLinksFieldRow.separator()}
-      data-drop-target={isDropTarget || undefined}
-      data-top={isTop || undefined}
-      ref={separatorRef}
+    <InsertionSeparator
+      dragType={LINK_FIELD_ROW_DRAG_TYPE}
+      label={label}
+      onMoveRow={onMoveRow}
+      placement={isTop ? 'edge' : 'between'}
+      position={position}
+      readOnly={readOnly}
+      targetIndex={targetIndex}
     />
   )
 }
@@ -758,11 +745,13 @@ function LinkFieldDragPreview({icon, label}: LinkFieldDragPreviewProps) {
 }
 
 function MultipleLinkRow({
+  expanded,
   field,
   index,
   list,
   node,
   onMoveRow,
+  onToggleRow,
   rows,
   value
 }: MultipleLinkRowProps) {
@@ -791,100 +780,114 @@ function MultipleLinkRow({
   }
 
   return (
-    <section
-      aria-label={`Link item ${index + 1}`}
-      className={styles.MultipleLinksFieldRow()}
-      data-dragging={isDragging || undefined}
-      role="listitem"
-    >
-      {index === 0 && (
-        <LinkFieldSeparator
-          isTop
-          label="link"
-          onMoveRow={onMoveRow}
-          position="before"
-          readOnly={readOnly}
-          targetIndex={insertIndex(index, 'before')}
-        />
-      )}
-      <SurfaceHeader
-        className={styles.MultipleLinksFieldRow.header()}
+    <>
+      <section
+        aria-label={`Link item ${index + 1}`}
+        className={styles.MultipleLinksFieldRow()}
+        data-dragging={isDragging || undefined}
         data-first-row={index === 0 ? 'true' : undefined}
+        role="listitem"
       >
-        <DragPreview ref={dragPreview}>
-          {() => (
-            <LinkFieldDragPreview
-              icon={getLinkIcon(type)}
-              label={<LinkRowText node={node} />}
-            />
-          )}
-        </DragPreview>
-        <div
-          {...dragProps}
-          aria-label={`Drag link item ${index + 1}`}
-          className={styles.MultipleLinksFieldRow.drag()}
-          data-dragging={isDragging || undefined}
+        <SurfaceHeader
+          className={styles.MultipleLinksFieldRow.header()}
+          data-first-row={index === 0 ? 'true' : undefined}
         >
-          <LinkRow hasFields={Boolean(picker?.fields)} node={node} />
-        </div>
-        {!readOnly && (
-          <div className={styles.MultipleLinksFieldView.actions()}>
-            {picker && (
-              <LinkPickerAction
-                buttonSize="icon"
-                onPick={link => {
-                  setValue(links =>
-                    links.map((current, currentIndex) =>
-                      currentIndex === index ? link : current
-                    )
-                  )
-                }}
-                picker={picker}
-                type={type}
-                value={value}
-              >
-                <Icon aria-hidden icon={IcRoundEdit} />
-              </LinkPickerAction>
+          <DragPreview ref={dragPreview}>
+            {() => (
+              <LinkFieldDragPreview
+                icon={getLinkIcon(type)}
+                label={<LinkRowText node={node} />}
+              />
             )}
+          </DragPreview>
+          <div
+            {...dragProps}
+            aria-label={`Drag link item ${index + 1}`}
+            className={styles.MultipleLinksFieldRow.drag()}
+            data-dragging={isDragging || undefined}
+          >
             <Button
-              aria-label="Move link up"
-              appearance="outline"
-              isDisabled={index === 0}
-              intent="secondary"
-              onPress={() => moveCurrentRow(-1)}
-              size="icon"
+              appearance="plain"
+              aria-label={expanded ? 'Collapse link' : 'Expand link'}
+              className={styles.MultipleLinksFieldRow.toggle()}
+              data-expanded={expanded ? 'true' : undefined}
+              onPress={() => onToggleRow(itemId)}
             >
-              <Icon aria-hidden icon={IcRoundArrowUpward} />
+              <LinkRow hasFields={Boolean(picker?.fields)} node={node} />
+              <FoldIcon
+                aria-hidden
+                className={styles.MultipleLinksFieldRow.foldIcon()}
+                expanded={expanded}
+              />
             </Button>
-            <Button
-              aria-label="Move link down"
-              appearance="outline"
-              isDisabled={index === rows - 1}
-              intent="secondary"
-              onPress={() => moveCurrentRow(1)}
-              size="icon"
-            >
-              <Icon aria-hidden icon={IcRoundArrowDownward} />
-            </Button>
-            <Button
-              size="icon"
-              appearance="outline"
-              intent="danger"
-              icon={IcRoundClose}
-              onPress={() =>
-                setValue(links =>
-                  links.filter((_, currentIndex) => currentIndex !== index)
-                )
-              }
+          </div>
+          {!readOnly && (
+            <div className={styles.MultipleLinksFieldView.actions()}>
+              {picker && (
+                <LinkPickerAction
+                  buttonAppearance="plain"
+                  buttonSize="icon-small"
+                  onPick={link => {
+                    setValue(links =>
+                      links.map((current, currentIndex) =>
+                        currentIndex === index ? link : current
+                      )
+                    )
+                  }}
+                  picker={picker}
+                  type={type}
+                  value={value}
+                >
+                  <Icon aria-hidden icon={IcRoundEdit} />
+                </LinkPickerAction>
+              )}
+              <Button
+                aria-label="Move link up"
+                appearance="plain"
+                isDisabled={index === 0}
+                onPress={() => moveCurrentRow(-1)}
+                size="icon-small"
+                icon={IcRoundArrowUpward}
+              />
+              <Button
+                aria-label="Move link down"
+                appearance="plain"
+                isDisabled={index === rows - 1}
+                onPress={() => moveCurrentRow(1)}
+                size="icon-small"
+                icon={IcRoundArrowDownward}
+              />
+              <Button
+                aria-label="Remove link"
+                appearance="plain"
+                size="icon-small"
+                icon={IcRoundClose}
+                onPress={() =>
+                  setValue(links =>
+                    links.filter((_, currentIndex) => currentIndex !== index)
+                  )
+                }
+              />
+            </div>
+          )}
+        </SurfaceHeader>
+        {expanded && (
+          <LinkRowEditor
+            className={styles.MultipleLinksFieldRow.body()}
+            node={node}
+            picker={picker}
+          />
+        )}
+        {!expanded && picker?.fields && (
+          <div className={styles.MultipleLinksFieldRow.footer()}>
+            <CompactRecordFields
+              fields={Type.fields(picker.fields)}
+              layout="footer"
+              value={value}
             />
           </div>
         )}
-      </SurfaceHeader>
-      <LinkRowEditor
-        className={styles.MultipleLinksFieldRow.body()}
-        node={node}
-        picker={picker}
-      />
+      </section>
       <LinkFieldSeparator
         label="link"
         onMoveRow={onMoveRow}
@@ -892,7 +895,7 @@ function MultipleLinkRow({
         readOnly={readOnly}
         targetIndex={insertIndex(index, 'after')}
       />
-    </section>
+    </>
   )
 }
 
@@ -942,6 +945,18 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const list = useFieldNode<Array<LinkFieldRow>>(field)
   const links = value ?? []
   const nodes = useNodes(list) ?? []
+  const readOnly = Boolean(options.readOnly)
+  const hasRows = nodes.length > 0
+  const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
+  const rowIdsAtom = useMemo(
+    () =>
+      atom(get => {
+        const nodes = get(list.nodes) as Array<ReactiveNode<LinkFieldRow>>
+        return nodes.map(node => get(node.field('_id')) as string)
+      }),
+    [list]
+  )
+  const rowIds = useAtomValue(rowIdsAtom)
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {
@@ -959,19 +974,63 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     [list]
   )
   const moveRow = useSetAtom(moveRowAtom)
+  const allExpanded = nodes.length > 0 && foldedIds.size === 0
+
+  function toggleAll() {
+    setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
+  }
+
+  function toggleRow(rowId: string) {
+    setFoldedIds(current => {
+      const next = new Set(current)
+      if (next.has(rowId)) next.delete(rowId)
+      else next.add(rowId)
+      return next
+    })
+  }
+
   return (
-    <Label label={options.label}>
+    <>
+      <Button
+        aria-label={
+          hasRows
+            ? allExpanded
+              ? 'Collapse all links'
+              : 'Expand all links'
+            : 'No links to fold'
+        }
+        appearance="plain"
+        className={styles.MultipleLinksFieldView.label()}
+        data-has-rows={hasRows ? 'true' : undefined}
+        isDisabled={!hasRows}
+        onPress={toggleAll}
+      >
+        {options.label}
+        <FoldIcon aria-hidden data-slot="icon" expanded={allExpanded} />
+      </Button>
+      {hasRows && !readOnly && (
+        <LinkFieldSeparator
+          isTop
+          label="link"
+          onMoveRow={moveRow}
+          position="before"
+          readOnly={readOnly}
+          targetIndex={0}
+        />
+      )}
       <Surface className={styles.MultipleLinksFieldView()}>
         {nodes.length > 0 && (
           <div aria-label={options.label || 'Links'} role="list">
             {nodes.map((node, index) => (
               <MultipleLinkRow
+                expanded={!foldedIds.has(links[index]?._id || '')}
                 field={field}
                 index={index}
                 key={links[index]?._id || index}
                 list={list}
                 node={node}
                 onMoveRow={moveRow}
+                onToggleRow={toggleRow}
                 rows={nodes.length}
                 value={links[index]}
               />
@@ -988,6 +1047,6 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
           </div>
         </SurfaceHeader>
       </Surface>
-    </Label>
+    </>
   )
 }

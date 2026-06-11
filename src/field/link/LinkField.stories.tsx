@@ -214,7 +214,7 @@ function ExplorerPickerStory({
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <div style={pickerStoryStyle}>
-        <DialogTrigger defaultOpen>
+        <DialogTrigger>
           <Button>{label}</Button>
           {picker === 'entry' ? (
             <LinkPicker

@@ -20,6 +20,7 @@ import {
   Surface,
   SurfaceHeader
 } from '#/dashboard/app/ui/Surface.js'
+import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
 import {
   useFieldError,
   useFieldNode,
@@ -46,9 +47,7 @@ import {
   type DragItem,
   DragPreview,
   type DragPreviewRenderer,
-  type DropItem,
   useDrag,
-  useDrop,
   useFilter
 } from 'react-aria'
 import {
@@ -399,38 +398,22 @@ function ListFieldSeparator({
   targetIndex
 }: ListFieldSeparatorProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const separatorRef = useRef<HTMLDivElement>(null)
   const directAddItem =
     showPicker && !pasted && items.length === 1 ? items[0] : undefined
-  const {dropProps, isDropTarget} = useDrop({
-    ref: separatorRef,
-    isDisabled:
-      readOnly || onMoveRow === undefined || targetIndex === undefined,
-    getDropOperation(types, allowedOperations) {
-      if (!types.has(LIST_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    async onDrop(event) {
-      const rowId = await getDraggedRowId(event.items)
-      if (!rowId || targetIndex === undefined || !onMoveRow) return
-      onMoveRow(rowId, targetIndex)
-    }
-  })
   return (
-    <div
-      {...dropProps}
-      aria-label={`Move block ${position} ${label}`}
-      className={styles.ListFieldSeparator()}
-      data-drop-target={isDropTarget || undefined}
-      data-picker-open={isPickerOpen || undefined}
-      data-placement={placement}
-      ref={separatorRef}
-      data-picker={showPicker}
+    <InsertionSeparator
+      controlOpen={isPickerOpen}
+      dragType={LIST_FIELD_ROW_DRAG_TYPE}
+      label={label}
+      onMoveRow={onMoveRow}
+      placement={placement}
+      position={position}
+      readOnly={readOnly}
+      targetIndex={targetIndex}
     >
       {directAddItem && (
         <Button
           aria-label={`Add ${directAddItem.label} ${position}`}
-          className={styles.ListFieldSeparator.picker()}
           icon={getType(directAddItem.type).icon || IcRoundAdd}
           isDisabled={readOnly}
           onPress={() => onSelect(directAddItem, position)}
@@ -439,7 +422,6 @@ function ListFieldSeparator({
       )}
       {showPicker && !directAddItem && (
         <ListFieldTypePicker
-          className={styles.ListFieldSeparator.picker()}
           isDisabled={readOnly}
           items={items}
           label={`Add ${label} ${position}`}
@@ -450,7 +432,7 @@ function ListFieldSeparator({
           onSelect={item => onSelect(item, position)}
         />
       )}
-    </div>
+    </InsertionSeparator>
   )
 }
 
@@ -719,19 +701,6 @@ function dragRowItem(id: string): DragItem {
     'text/plain': id,
     [LIST_FIELD_ROW_DRAG_TYPE]: id
   }
-}
-
-async function getDraggedRowId(items: Array<DropItem>): Promise<string | null> {
-  for (const item of items) {
-    if (
-      item.kind === 'text' &&
-      item.types.has(LIST_FIELD_ROW_DRAG_TYPE) &&
-      item.getText
-    ) {
-      return item.getText(LIST_FIELD_ROW_DRAG_TYPE)
-    }
-  }
-  return null
 }
 
 interface ListFieldTypePickerProps {
