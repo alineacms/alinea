@@ -211,13 +211,18 @@ function ExplorerPickerStory({
 }: ExplorerPickerStoryProps) {
   const selectionMode = multiple ? 'multiple' : 'single'
   const selectionBehavior = multiple ? 'toggle' : 'replace'
+  const location =
+    picker === 'entry'
+      ? {workspace: 'simple', root: 'pages'}
+      : {workspace: 'simple', root: 'media'}
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <div style={pickerStoryStyle}>
-        <DialogTrigger defaultOpen>
+        <DialogTrigger>
           <Button>{label}</Button>
           {picker === 'entry' ? (
             <LinkPicker
+              location={location}
               selectionMode={selectionMode}
               selectionBehavior={selectionBehavior}
               onConfirm={selection => console.info(selection)}
@@ -225,6 +230,7 @@ function ExplorerPickerStory({
           ) : (
             <ImagePicker
               label={label}
+              location={location}
               selectionMode={selectionMode}
               selectionBehavior={selectionBehavior}
               onConfirm={selection => console.info(selection)}

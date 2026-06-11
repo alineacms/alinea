@@ -443,3 +443,38 @@ export const RichTextFieldView = memo(function RichTextFieldView<
   // Tiptap really does not want you to control its state
   return <RTView field={field} key={`${node.value}:${wasReset}`} />
 })
+
+export interface RichTextFieldCompactViewProps<Blocks extends Schema> {
+  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
+  value: TextDoc<Blocks>
+}
+
+export function RichTextFieldCompactView<Blocks extends Schema>({
+  value
+}: RichTextFieldCompactViewProps<Blocks>) {
+  const text = richTextPreviewText(value)
+  return (
+    <span
+      className={styles.RichTextFieldCompactView()}
+      data-empty={text ? undefined : 'true'}
+    >
+      {text || '-'}
+    </span>
+  )
+}
+
+function richTextPreviewText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value))
+    return value.map(richTextPreviewText).filter(Boolean).join(' ')
+  if (!value || typeof value !== 'object') return ''
+  const record = value as Record<string, unknown>
+  const text = record.text
+  const content = record.content
+  return [
+    typeof text === 'string' ? text : '',
+    Array.isArray(content) ? richTextPreviewText(content) : ''
+  ]
+    .filter(Boolean)
+    .join(' ')
+}

@@ -14,12 +14,13 @@ import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
+import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   Surface,
-  SurfaceContent,
   SurfaceHeader
 } from '#/dashboard/app/ui/Surface.js'
+import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
 import {
   useFieldError,
   useFieldNode,
@@ -46,9 +47,7 @@ import {
   type DragItem,
   DragPreview,
   type DragPreviewRenderer,
-  type DropItem,
   useDrag,
-  useDrop,
   useFilter
 } from 'react-aria'
 import {
@@ -175,7 +174,21 @@ export function ListFieldView({field}: ListFieldViewProps) {
 
   const content = (hasRows || !readOnly) && (
     <>
-      <div
+      {hasRows && !readOnly && (
+        <ListFieldSeparator
+          items={typeItems}
+          label="first block"
+          pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
+          onMoveRow={moveRow}
+          onPaste={row => insertRow(0, cloneRow(row))}
+          onSelect={item => insertRow(0, createRow(item.id, item.type))}
+          placement="edge"
+          position="before"
+          readOnly={readOnly}
+          targetIndex={0}
+        />
+      )}
+      <Surface
         aria-label={options.label || 'List items'}
         className={styles.ListFieldView()}
         role="list"
@@ -203,7 +216,10 @@ export function ListFieldView({field}: ListFieldViewProps) {
         ))}
 
         {!readOnly && (
-          <Surface variant="muted">
+          <div
+            className={styles.ListFieldView.create()}
+            data-empty={!hasRows || undefined}
+          >
             <SurfaceHeader className={styles.ListFieldView.createRow()}>
               <ListFieldCreateActions
                 items={typeItems}
@@ -214,9 +230,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
                 onSelect={item => addRow(item.id, item.type)}
               />
             </SurfaceHeader>
-          </Surface>
+          </div>
         )}
-      </div>
+      </Surface>
     </>
   )
 
@@ -305,6 +321,7 @@ function ListFieldCreateActions({
           onPress={() => onPaste(pasted)}
           size="small"
           icon={IcBaselineContentPasteGo}
+          appearance="plain"
         >
           {pasteBlockLabel(pasted, items)}
         </Button>
@@ -316,6 +333,7 @@ function ListFieldCreateActions({
           onPress={() => onSelect(item)}
           size="small"
           icon={getType(item.type).icon || IcRoundAdd}
+          appearance="plain"
         >
           {item.label}
         </Button>
@@ -354,6 +372,7 @@ interface ListFieldRowProps {
 
 interface ListFieldSeparatorProps {
   label: string
+  placement?: 'between' | 'edge'
   position: 'before' | 'after'
   readOnly: boolean
   items: Array<ListFieldTypeItem>
@@ -367,6 +386,7 @@ interface ListFieldSeparatorProps {
 
 function ListFieldSeparator({
   label,
+  placement = 'between',
   position,
   readOnly,
   items,
@@ -378,34 +398,30 @@ function ListFieldSeparator({
   targetIndex
 }: ListFieldSeparatorProps) {
   const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const separatorRef = useRef<HTMLDivElement>(null)
-  const {dropProps, isDropTarget} = useDrop({
-    ref: separatorRef,
-    isDisabled:
-      readOnly || onMoveRow === undefined || targetIndex === undefined,
-    getDropOperation(types, allowedOperations) {
-      if (!types.has(LIST_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    async onDrop(event) {
-      const rowId = await getDraggedRowId(event.items)
-      if (!rowId || targetIndex === undefined || !onMoveRow) return
-      onMoveRow(rowId, targetIndex)
-    }
-  })
+  const directAddItem =
+    showPicker && !pasted && items.length === 1 ? items[0] : undefined
   return (
-    <div
-      {...dropProps}
-      aria-label={`Move block ${position} ${label}`}
-      className={styles.ListFieldSeparator()}
-      data-drop-target={isDropTarget || undefined}
-      data-picker-open={isPickerOpen || undefined}
-      ref={separatorRef}
-      data-picker={showPicker}
+    <InsertionSeparator
+      controlOpen={isPickerOpen}
+      dragType={LIST_FIELD_ROW_DRAG_TYPE}
+      label={label}
+      onMoveRow={onMoveRow}
+      placement={placement}
+      position={position}
+      readOnly={readOnly}
+      targetIndex={targetIndex}
     >
-      {showPicker && (
+      {directAddItem && (
+        <Button
+          aria-label={`Add ${directAddItem.label} ${position}`}
+          icon={getType(directAddItem.type).icon || IcRoundAdd}
+          isDisabled={readOnly}
+          onPress={() => onSelect(directAddItem, position)}
+          size="icon"
+        />
+      )}
+      {showPicker && !directAddItem && (
         <ListFieldTypePicker
-          className={styles.ListFieldSeparator.picker()}
           isDisabled={readOnly}
           items={items}
           label={`Add ${label} ${position}`}
@@ -416,7 +432,7 @@ function ListFieldSeparator({
           onSelect={item => onSelect(item, position)}
         />
       )}
-    </div>
+    </InsertionSeparator>
   )
 }
 
@@ -438,6 +454,7 @@ function ListFieldRow({
 }: ListFieldRowProps) {
   const itemId = useAtomValue(row.field('_id')) as string
   const typeName = useAtomValue(row.field('_type')) as string
+  const value = useAtomValue(row.value) as Record<string, unknown>
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
@@ -469,27 +486,12 @@ function ListFieldRow({
 
   return (
     <>
-      {index === 0 && (
-        <ListFieldSeparator
-          items={typeItems}
-          label={label}
-          pasted={pasted && schema[pasted._type] ? pasted : undefined}
-          onMoveRow={onMoveRow}
-          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
-          onSelect={(item, position) =>
-            addBetweenRow(createRow(item.id, item.type), position)
-          }
-          position="before"
-          readOnly={readOnly}
-          targetIndex={insertIndex(index, 'before')}
-        />
-      )}
-      <Surface
+      <div
         aria-label={`${label} item ${index + 1}`}
         className={styles.ListFieldRow()}
         data-dragging={isDragging || undefined}
+        data-first-row={index === 0 ? 'true' : undefined}
         role="listitem"
-        variant="muted"
       >
         <SurfaceHeader
           className={styles.ListFieldRow.header()}
@@ -517,25 +519,51 @@ function ListFieldRow({
           />
         </SurfaceHeader>
         {expanded && (
-          <SurfaceContent className={styles.ListFieldRow.body()}>
+          <div className={styles.ListFieldRow.body()}>
             <NodeEditor node={row as ReactiveNode<object>} type={type} />
-          </SurfaceContent>
+          </div>
         )}
-      </Surface>
-      <ListFieldSeparator
-        items={typeItems}
-        label={label}
-        pasted={pasted && schema[pasted._type] ? pasted : undefined}
-        showPicker={index < rows - 1}
-        onMoveRow={onMoveRow}
-        onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
-        onSelect={(item, position) =>
-          addBetweenRow(createRow(item.id, item.type), position)
-        }
-        position="after"
-        readOnly={readOnly}
-        targetIndex={insertIndex(index, 'after')}
-      />
+        {!expanded && (
+          <div className={styles.ListFieldRow.footer()}>
+            <CompactRecordFields
+              fields={Type.fields(type)}
+              layout="footer"
+              value={value}
+            />
+          </div>
+        )}
+      </div>
+      {index < rows - 1 && (
+        <ListFieldSeparator
+          items={typeItems}
+          label={label}
+          pasted={pasted && schema[pasted._type] ? pasted : undefined}
+          onMoveRow={onMoveRow}
+          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
+          onSelect={(item, position) =>
+            addBetweenRow(createRow(item.id, item.type), position)
+          }
+          position="after"
+          readOnly={readOnly}
+          targetIndex={insertIndex(index, 'after')}
+        />
+      )}
+      {index === rows - 1 && (
+        <ListFieldSeparator
+          items={typeItems}
+          label={label}
+          pasted={pasted && schema[pasted._type] ? pasted : undefined}
+          showPicker={false}
+          onMoveRow={onMoveRow}
+          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
+          onSelect={(item, position) =>
+            addBetweenRow(createRow(item.id, item.type), position)
+          }
+          position="after"
+          readOnly={readOnly}
+          targetIndex={insertIndex(index, 'after')}
+        />
+      )}
     </>
   )
 }
@@ -673,19 +701,6 @@ function dragRowItem(id: string): DragItem {
     'text/plain': id,
     [LIST_FIELD_ROW_DRAG_TYPE]: id
   }
-}
-
-async function getDraggedRowId(items: Array<DropItem>): Promise<string | null> {
-  for (const item of items) {
-    if (
-      item.kind === 'text' &&
-      item.types.has(LIST_FIELD_ROW_DRAG_TYPE) &&
-      item.getText
-    ) {
-      return item.getText(LIST_FIELD_ROW_DRAG_TYPE)
-    }
-  }
-  return null
 }
 
 interface ListFieldTypePickerProps {

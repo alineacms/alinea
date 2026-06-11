@@ -1,6 +1,7 @@
 export const viewKeys = {
   CheckInput: 'alinea/field/check/CheckField.view#CheckFieldView',
   CodeInput: 'alinea/field/code/CodeField.view#CodeFieldView',
+  CompactField: 'alinea/dashboard/app/CompactField#CompactField',
   DateInput: 'alinea/field/date/DateField.view#DateFieldView',
   HiddenInput: 'alinea/field/hidden/HiddenField.view#HiddenInput',
   JsonInput: 'alinea/field/json/JsonField.view#JsonFieldView',
@@ -17,6 +18,8 @@ export const viewKeys = {
   NumberInput: 'alinea/field/number/NumberField.view#NumberFieldView',
   ObjectInput: 'alinea/field/object/ObjectField.view#ObjectFieldView',
   PathInput: 'alinea/field/path/PathField.view#PathFieldView',
+  RichTextCompact:
+    'alinea/field/richtext/RichTextField.view#RichTextFieldCompactView',
   RichTextInput: 'alinea/field/richtext/RichTextField.view#RichTextFieldView',
   SelectInput: 'alinea/field/select/SelectField.view#SelectFieldView',
   MultipleSelectInput:

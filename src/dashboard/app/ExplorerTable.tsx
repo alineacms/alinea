@@ -25,6 +25,7 @@ import type {
   DashboardExplorer
 } from '../store.js'
 import {dashboardEntryOverviewColumnCount} from '../store.js'
+import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
 import {Surface} from './ui/Surface.js'
 
@@ -98,7 +99,9 @@ function ExplorerTableDisplayRow({
     return (
       <Cell
         className={styles.ExplorerTable.cell()}
-        textValue={cell ? `${cell.label} ${cell.value}` : undefined}
+        textValue={
+          cell ? `${cell.label} ${compactFieldText(cell.field, cell.value)}` : undefined
+        }
       >
         {cell && (
           <span className={styles.ExplorerTable.field()}>
@@ -106,7 +109,7 @@ function ExplorerTableDisplayRow({
               {cell.label}
             </span>
             <span className={styles.ExplorerTable.field.value()}>
-              {cell.value}
+              <CompactField field={cell.field} value={cell.value} />
             </span>
           </span>
         )}

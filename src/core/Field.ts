@@ -37,6 +37,10 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   view: View<{
     field: Field<StoredValue, QueryValue, Mutator, Options>
   }>
+  compactView?: View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+    value: StoredValue
+  }>
   queryValue?: (value: StoredValue, loader: LinkResolver) => Promise<QueryValue>
   references?: (
     value: StoredValue,
@@ -125,9 +129,28 @@ export namespace Field {
 
   export function referencedViews(field: Field): Array<string> {
     const fieldView = Field.view(field)
-    if (typeof fieldView === 'string')
-      return [fieldView, ...(getField(field).referencedViews ?? [])]
-    return getField(field).referencedViews ?? []
+    const compactView = Field.compactView(field)
+    return [
+      typeof fieldView === 'string' ? fieldView : undefined,
+      typeof compactView === 'string' ? compactView : undefined,
+      ...(getField(field).referencedViews ?? [])
+    ].filter((view): view is string => typeof view === 'string')
+  }
+
+  export function compactView<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ):
+    | View<{
+        field: Field<StoredValue, QueryValue, Mutator, Options>
+        value: StoredValue
+      }>
+    | undefined {
+    return getField(field).compactView
   }
 
   export function options<

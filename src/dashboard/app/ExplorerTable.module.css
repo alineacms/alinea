@@ -214,7 +214,7 @@
   min-width: 0;
   width: 100%;
   max-width: 100%;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
   overflow: hidden;
   font-size: 12px;
@@ -223,9 +223,11 @@
 }
 
 .ExplorerTable-field-label {
-  flex: 0 1 auto;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 clamp(52px, 7vw, 76px);
   min-width: 0;
-  max-width: 50%;
+  max-width: clamp(52px, 7vw, 76px);
   overflow: hidden;
   text-overflow: ellipsis;
   color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
@@ -234,8 +236,11 @@
 }
 
 .ExplorerTable-field-value {
+  display: inline-flex;
+  align-items: center;
   flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--alinea-fg);
