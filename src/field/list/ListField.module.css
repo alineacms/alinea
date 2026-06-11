@@ -12,6 +12,8 @@
   padding-block: 0;
   margin-left: -8px;
   margin-bottom: 4px;
+  line-height: 1;
+  border: none;
 }
 
 .ListFieldView-label[data-hovered],
