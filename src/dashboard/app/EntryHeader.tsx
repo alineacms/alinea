@@ -1,14 +1,14 @@
-import {Button, Menu, MenuItem} from '#/components.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
-import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {type ReactNode, useTransition} from 'react'
-import {usePolicy} from '../hooks.js'
-import {IcRoundCheck, IcRoundMoreHoriz, IcRoundSave} from '../icons.js'
-import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
-import {EditorBackButton} from './EditorBackButton.js'
+import { Button, Icon, Menu, MenuItem } from '#/components.js'
+import { MediaFile } from '#/core/media/MediaTypes.js'
+import { styler } from '@alinea/styler'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { ComponentType, type ReactNode, useTransition } from 'react'
+import { usePolicy } from '../hooks.js'
+import { IcRoundArchive, IcRoundCheck, IcRoundDelete, IcRoundMoreHoriz, IcRoundSave, IcRoundSync, IcRoundVisibilityOff } from '../icons.js'
+import { DashboardEntryData, ReactiveNode } from '../store/Dashboard.js'
+import { EditorBackButton } from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
-import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import { EntrySidebarToggle } from './EntrySidebarToggle.js'
 
 const styles = styler(css)
 
@@ -44,6 +44,7 @@ interface EntryHeaderMenuItem {
   id: string
   label: string
   action: () => void | Promise<void>
+  icon?: ComponentType
 }
 
 interface EntryHeaderBackButtonProps {
@@ -144,21 +145,24 @@ function EntryHeaderMoreActions({
           menuItems.push({
             id: 'delete',
             label: 'Delete',
-            action: deleteAndNavigate
+            action: deleteAndNavigate,
+            icon: IcRoundDelete
           })
         }
         if (!isParentUnpublished && access.archive) {
           menuItems.push({
             id: 'archive',
             label: 'Archive',
-            action: archive
+            action: archive,
+            icon: IcRoundArchive
           })
         }
       } else if (access.update) {
         menuItems.push({
           id: 'remove-draft',
           label: 'Remove draft',
-          action: discardDraft
+          action: discardDraft,
+          icon: IcRoundDelete
         })
       }
     }
@@ -169,14 +173,16 @@ function EntryHeaderMoreActions({
           menuItems.push({
             id: 'replace',
             label: 'Replace',
-            action: replaceMediaFile
+            action: replaceMediaFile,
+            icon: IcRoundSync
           })
         }
         if (canDelete && access.delete) {
           menuItems.push({
             id: 'delete',
             label: 'Delete',
-            action: deleteAndNavigate
+            action: deleteAndNavigate,
+            icon: IcRoundDelete
           })
         }
       } else {
@@ -184,14 +190,16 @@ function EntryHeaderMoreActions({
           menuItems.push({
             id: 'unpublish',
             label: 'Unpublish',
-            action: unpublish
+            action: unpublish,
+            icon: IcRoundVisibilityOff,
           })
         }
         if (canDelete && access.archive) {
           menuItems.push({
             id: 'archive',
             label: 'Archive',
-            action: archive
+            action: archive,
+            icon: IcRoundArchive
           })
         }
       }
@@ -202,14 +210,16 @@ function EntryHeaderMoreActions({
         menuItems.push({
           id: 'publish',
           label: 'Publish',
-          action: publishArchived
+          action: publishArchived,
+          icon: IcRoundCheck
         })
       }
       if (canDelete && access.delete) {
         menuItems.push({
           id: 'delete',
           label: 'Delete',
-          action: deleteAndNavigate
+          action: deleteAndNavigate,
+          icon: IcRoundDelete
         })
       }
     }
@@ -241,6 +251,7 @@ function EntryHeaderMoreActions({
             runAction(item.action)
           }}
         >
+          {item.icon && <Icon icon={item.icon} />}
           {item.label}
         </MenuItem>
       ))}
