@@ -208,11 +208,14 @@ export class DashboardWorker extends EventTarget {
     }
     this.#currentRevision = revision
     const db = new LocalDB(config, this.#source)
+    let recoverFromRemote = false
     try {
       if (this.#defer) this.#defer()
       await this.#syncLocalIndex(db).catch(
         // We end up syncing afterwards with remote anyway
-        () => {}
+        () => {
+          recoverFromRemote = true
+        }
       )
       this.#nextLoad.resolve({db, client})
       this.#localDB = db
@@ -231,6 +234,8 @@ export class DashboardWorker extends EventTarget {
     } finally {
       this.#nextLoad = trigger()
     }
+    if (recoverFromRemote)
+      await remote(() => db.syncWith(client)).catch(() => {})
     this.#startSyncing()
   }
 
