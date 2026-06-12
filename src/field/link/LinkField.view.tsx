@@ -20,6 +20,7 @@ import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
 import {Surface, SurfaceHeader} from '#/dashboard/app/ui/Surface.js'
+import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useDashboard,
   useField,
@@ -708,6 +709,7 @@ function LinkRowActions({
 }: LinkRowActionsProps) {
   return (
     <div className={className}>
+      <LinkRowOpenAction type={type} value={value} />
       {picker && (
         <LinkPickerAction
           ariaLabel="Edit link"
@@ -748,6 +750,67 @@ function LinkRowActions({
         onPress={onRemove}
       />
     </div>
+  )
+}
+
+interface LinkRowOpenActionProps {
+  type: PickerType
+  value: LinkFieldRow
+}
+
+function LinkRowOpenAction({type, value}: LinkRowOpenActionProps) {
+  if (!('_entry' in value)) return null
+  return <EntryLinkOpenButton entryId={value._entry} type={type} />
+}
+
+interface EntryLinkOpenButtonProps {
+  entryId: string
+  type: PickerType
+}
+
+function EntryLinkOpenButton({entryId, type}: EntryLinkOpenButtonProps) {
+  const dashboard = useDashboard()
+  const route = useAtomValue(dashboard.route)
+  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  if (!data) {
+    return (
+      <Button
+        aria-label="Open link"
+        appearance="plain"
+        icon={IcRoundOpenInNew}
+        isDisabled
+        size="icon-small"
+      />
+    )
+  }
+  return (
+    <LoadedEntryLinkOpenButton
+      entry={data}
+      locale={type === 'entry' ? route.locale : undefined}
+    />
+  )
+}
+
+interface LoadedEntryLinkOpenButtonProps {
+  entry: DashboardEntryData
+  locale?: string
+}
+
+function LoadedEntryLinkOpenButton({
+  entry,
+  locale
+}: LoadedEntryLinkOpenButtonProps) {
+  const workspace = useAtomValue(entry.workspaceKey)
+  const root = useAtomValue(entry.rootKey)
+  const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
+  return (
+    <Button
+      aria-label="Open link"
+      appearance="plain"
+      icon={IcRoundOpenInNew}
+      onPress={() => window.open(href, '_blank', 'noopener,noreferrer')}
+      size="icon-small"
+    />
   )
 }
 

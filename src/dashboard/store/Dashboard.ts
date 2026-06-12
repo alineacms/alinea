@@ -63,16 +63,15 @@ import {
   MutationQueueEvent,
   type MutationQueueEntry
 } from '../boot/MutationQueueEvent.js'
+import {
+  nav,
+  type DashboardRoute
+} from '../DashboardNav.js'
 import {LucideFile} from '../icons.js'
 
 export const dashboardEntryOverviewColumnCount = 5
 
-export interface DashboardRoute {
-  workspace?: string
-  root?: string
-  entry?: string
-  locale?: string
-}
+export type {DashboardRoute} from '../DashboardNav.js'
 
 export type DashboardEntryView = 'edit' | 'overview'
 
@@ -647,12 +646,12 @@ export class Dashboard {
     async (get, set, update: DashboardRoute) => {
       const focused = await get(this.focused)
       const confirm = async () => {
-        let {workspace, root, entry, locale} = update
-        const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
-        const pathname = `/entry/${[workspace, rootPart, entry].filter(Boolean).join('/')}`
+        const {workspace, root, entry, locale} = update
         if (entry) await get(this.entries(entry).routeReady)
         startTransition(() => {
-          set(this.#location, {hash: `#${pathname}`})
+          set(this.#location, {
+            hash: `#${nav.entry(workspace, root, entry, locale)}`
+          })
         })
       }
       if (focused && 'entry' in focused) {
