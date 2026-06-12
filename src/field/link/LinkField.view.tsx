@@ -10,6 +10,7 @@ import {createId} from '#/core/Id.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
+import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
@@ -29,8 +30,6 @@ import {
   useNodes
 } from '#/dashboard/hooks.js'
 import {
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
   IcRoundAttachFile,
   IcRoundClose,
   IcRoundEdit,
@@ -266,7 +265,6 @@ function LoadedEntryRow({
   textOnly
 }: LoadedEntryRowProps) {
   const label = useAtomValue(entry.label)
-  const type = useAtomValue(entry.type)
   const parentIds = useAtomValue(entry.parentIds)
   const [parentsPending, parents] = useAtomValue(entry.parentsState)
   return (
@@ -275,9 +273,7 @@ function LoadedEntryRow({
         <EntryRowImage entry={entry} hasFields={hasFields} />
       )}
       <span className={styles.LinkFieldView.labelText()}>
-        <span className={styles.LinkFieldView.title()}>
-          {label} ({type.label})
-        </span>
+        <span className={styles.LinkFieldView.title()}>{label}</span>
         {(parentsPending && parents === undefined && parentIds.length > 0) ||
         (parents && parents.length > 0) ? (
           <span className={styles.LinkFieldView.meta()}>
@@ -684,32 +680,24 @@ interface SingleLinkRowProps extends StandardFieldActionProps {
 
 interface LinkRowActionsProps {
   className: string
-  isFirst?: boolean
-  isLast?: boolean
   picker?: Picker<LinkFieldRow>
   type: PickerType
   value: LinkFieldRow
-  onMoveDown?: () => void
-  onMoveUp?: () => void
   onPick: (value: LinkFieldRow) => void
   onRemove: () => void
 }
 
 function LinkRowActions({
   className,
-  isFirst = true,
-  isLast = true,
   picker,
   type,
   value,
-  onMoveDown,
-  onMoveUp,
   onPick,
   onRemove
 }: LinkRowActionsProps) {
   return (
     <div className={className}>
-      <LinkRowOpenAction type={type} value={value} />
+      <LinkRowReferenceActions type={type} value={value} />
       {picker && (
         <LinkPickerAction
           ariaLabel="Edit link"
@@ -720,26 +708,6 @@ function LinkRowActions({
           picker={picker}
           type={type}
           value={value}
-        />
-      )}
-      {onMoveUp && (
-        <Button
-          aria-label="Move link up"
-          appearance="plain"
-          isDisabled={isFirst}
-          onPress={onMoveUp}
-          size="icon-small"
-          icon={IcRoundArrowUpward}
-        />
-      )}
-      {onMoveDown && (
-        <Button
-          aria-label="Move link down"
-          appearance="plain"
-          isDisabled={isLast}
-          onPress={onMoveDown}
-          size="icon-small"
-          icon={IcRoundArrowDownward}
         />
       )}
       <Button
@@ -753,22 +721,22 @@ function LinkRowActions({
   )
 }
 
-interface LinkRowOpenActionProps {
+interface LinkRowReferenceActionsProps {
   type: PickerType
   value: LinkFieldRow
 }
 
-function LinkRowOpenAction({type, value}: LinkRowOpenActionProps) {
+function LinkRowReferenceActions({type, value}: LinkRowReferenceActionsProps) {
   if (!('_entry' in value)) return null
-  return <EntryLinkOpenButton entryId={value._entry} type={type} />
+  return <EntryLinkRowActions entryId={value._entry} type={type} />
 }
 
-interface EntryLinkOpenButtonProps {
+interface EntryLinkRowActionsProps {
   entryId: string
   type: PickerType
 }
 
-function EntryLinkOpenButton({entryId, type}: EntryLinkOpenButtonProps) {
+function EntryLinkRowActions({entryId, type}: EntryLinkRowActionsProps) {
   const dashboard = useDashboard()
   const route = useAtomValue(dashboard.route)
   const {data} = useAtomValue(dashboard.entries(entryId).data)
@@ -784,33 +752,43 @@ function EntryLinkOpenButton({entryId, type}: EntryLinkOpenButtonProps) {
     )
   }
   return (
-    <LoadedEntryLinkOpenButton
+    <LoadedEntryLinkRowActions
       entry={data}
       locale={type === 'entry' ? route.locale : undefined}
     />
   )
 }
 
-interface LoadedEntryLinkOpenButtonProps {
+interface LoadedEntryLinkRowActionsProps {
   entry: DashboardEntryData
   locale?: string
 }
 
-function LoadedEntryLinkOpenButton({
+function LoadedEntryLinkRowActions({
   entry,
   locale
-}: LoadedEntryLinkOpenButtonProps) {
+}: LoadedEntryLinkRowActionsProps) {
+  const type = useAtomValue(entry.type)
   const workspace = useAtomValue(entry.workspaceKey)
   const root = useAtomValue(entry.rootKey)
   const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
   return (
-    <Button
-      aria-label="Open link"
-      appearance="plain"
-      icon={IcRoundOpenInNew}
-      onPress={() => window.open(href, '_blank', 'noopener,noreferrer')}
-      size="icon-small"
-    />
+    <>
+      <Badge
+        appearance="contrast"
+        className={styles.LinkFieldView.type()}
+        size="small"
+      >
+        {type.label}
+      </Badge>
+      <Button
+        aria-label="Open link"
+        appearance="plain"
+        icon={IcRoundOpenInNew}
+        onPress={() => window.open(href, '_blank', 'noopener,noreferrer')}
+        size="icon-small"
+      />
+    </>
   )
 }
 
@@ -846,15 +824,16 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
 }
 
 interface MultipleLinkRowProps {
+  dragging: boolean
   expanded: boolean
   field: LinksField<LinkFieldRow, unknown>
   index: number
-  list: ReactiveNode<Array<LinkFieldRow>>
   node: ReactiveNode<LinkFieldRow>
   onMoveRow: (rowId: string, targetIndex: number) => void
+  onRowDragEnd: () => void
+  onRowDragStart: () => void
   onToggleRow: (rowId: string) => void
-  rows: number
-  value?: LinkFieldRow
+  value: LinkFieldRow
 }
 
 interface LinkFieldSeparatorProps {
@@ -862,11 +841,13 @@ interface LinkFieldSeparatorProps {
   label: string
   position: 'before' | 'after'
   readOnly: boolean
+  dragging?: boolean
   onMoveRow: (rowId: string, targetIndex: number) => void
   targetIndex: number
 }
 
 function LinkFieldSeparator({
+  dragging,
   isTop,
   label,
   position,
@@ -875,15 +856,20 @@ function LinkFieldSeparator({
   targetIndex
 }: LinkFieldSeparatorProps) {
   return (
-    <InsertionSeparator
-      dragType={LINK_FIELD_ROW_DRAG_TYPE}
-      label={label}
-      onMoveRow={onMoveRow}
-      placement={isTop ? 'edge' : 'between'}
-      position={position}
-      readOnly={readOnly}
-      targetIndex={targetIndex}
-    />
+    <div
+      className={styles.LinkFieldSeparator()}
+      data-dragging={dragging || undefined}
+    >
+      <InsertionSeparator
+        dragType={LINK_FIELD_ROW_DRAG_TYPE}
+        label={label}
+        onMoveRow={onMoveRow}
+        placement={isTop ? 'edge' : 'between'}
+        position={position}
+        readOnly={readOnly}
+        targetIndex={targetIndex}
+      />
+    </div>
   )
 }
 
@@ -906,20 +892,19 @@ function LinkFieldDragPreview({icon, label}: LinkFieldDragPreviewProps) {
 }
 
 function MultipleLinkRow({
+  dragging,
   expanded,
   field,
   index,
-  list,
   node,
   onMoveRow,
+  onRowDragEnd,
+  onRowDragStart,
   onToggleRow,
-  rows,
   value
 }: MultipleLinkRowProps) {
   const [, setValue] = useField(field)
   const options = useFieldOptions(field)
-  const moveRow = useSetAtom(list.move)
-  if (!value) return null
   const type = getPickerType(value[Reference.type])
   const picker = options.pickers[type] as Picker<LinkFieldRow> | undefined
   const itemId = value[Reference.id]
@@ -933,12 +918,10 @@ function MultipleLinkRow({
       return ['move']
     },
     isDisabled: readOnly,
+    onDragEnd: onRowDragEnd,
+    onDragStart: onRowDragStart,
     preview: dragPreview
   })
-
-  function moveCurrentRow(direction: -1 | 1) {
-    moveRow(index, index + direction)
-  }
 
   return (
     <>
@@ -985,10 +968,6 @@ function MultipleLinkRow({
           {!readOnly && (
             <LinkRowActions
               className={styles.MultipleLinksFieldView.actions()}
-              isFirst={index === 0}
-              isLast={index === rows - 1}
-              onMoveDown={() => moveCurrentRow(1)}
-              onMoveUp={() => moveCurrentRow(-1)}
               onPick={link => {
                 setValue(links =>
                   links.map((current, currentIndex) =>
@@ -1025,6 +1004,7 @@ function MultipleLinkRow({
         )}
       </section>
       <LinkFieldSeparator
+        dragging={dragging}
         label="link"
         onMoveRow={onMoveRow}
         position="after"
@@ -1085,6 +1065,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
   const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
+  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -1148,6 +1129,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
       </Button>
       {hasRows && !readOnly && (
         <LinkFieldSeparator
+          dragging={Boolean(draggingRowId)}
           isTop
           label="link"
           onMoveRow={moveRow}
@@ -1159,20 +1141,25 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
       <Surface className={styles.MultipleLinksFieldView()}>
         {nodes.length > 0 && (
           <div aria-label={options.label || 'Links'} role="list">
-            {nodes.map((node, index) => (
-              <MultipleLinkRow
-                expanded={!foldedIds.has(links[index]?._id || '')}
-                field={field}
-                index={index}
-                key={links[index]?._id || index}
-                list={list}
-                node={node}
-                onMoveRow={moveRow}
-                onToggleRow={toggleRow}
-                rows={nodes.length}
-                value={links[index]}
-              />
-            ))}
+            {nodes.map((node, index) => {
+              const value = links[index]
+              if (!value) return null
+              return (
+                <MultipleLinkRow
+                  dragging={Boolean(draggingRowId)}
+                  expanded={!foldedIds.has(value._id)}
+                  field={field}
+                  index={index}
+                  key={value._id}
+                  node={node}
+                  onMoveRow={moveRow}
+                  onRowDragEnd={() => setDraggingRowId(null)}
+                  onRowDragStart={() => setDraggingRowId(value._id)}
+                  onToggleRow={toggleRow}
+                  value={value}
+                />
+              )
+            })}
           </div>
         )}
         <SurfaceHeader

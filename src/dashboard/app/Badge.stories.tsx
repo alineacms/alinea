@@ -79,6 +79,13 @@ export function Usages() {
         </Badge>
       </div>
 
+      <h2 style={headingStyle}>Muted row label</h2>
+      <div style={rowStyle}>
+        <Badge appearance="contrast" size="small">
+          Page
+        </Badge>
+      </div>
+
       <h2 style={headingStyle}>Sidebar editing state</h2>
       <div style={rowStyle}>
         <Badge appearance="background" icon={IcRoundEdit} size="small">

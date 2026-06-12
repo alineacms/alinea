@@ -11,7 +11,7 @@ const styles = styler(css)
 
 interface BadgeProps extends ComponentPropsWithoutRef<'span'> {
   icon?: ComponentType | ReactElement
-  appearance?: 'background' | 'outline' | 'plain' | 'default'
+  appearance?: 'background' | 'contrast' | 'outline' | 'plain' | 'default'
   size?: 'default' | 'small'
   status?: 'success' | 'warning' | 'neutral' | 'danger' | 'accent'
 }

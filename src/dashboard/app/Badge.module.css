@@ -7,6 +7,7 @@
   --alinea-badge-padding: 0 10px;
   --alinea-badge-font-size: 12px;
   --alinea-badge-font-weight: 600;
+  --alinea-badge-line-height: 1.2;
 
   display: inline-flex;
   align-items: center;
@@ -20,7 +21,7 @@
   border: 1px solid transparent;
   font-size: var(--alinea-badge-font-size);
   font-weight: var(--alinea-badge-font-weight);
-  line-height: 1;
+  line-height: var(--alinea-badge-line-height);
   min-width: 0;
 
   [data-slot='icon'] {
@@ -82,6 +83,14 @@
     border-color: transparent;
   }
 
+  &[data-appearance='contrast'] {
+    --alinea-badge-color: var(--alinea-fg);
+    --alinea-badge-background: var(--alinea-bg);
+    --alinea-badge-border: var(--alinea-border);
+
+    border-color: var(--alinea-badge-border);
+  }
+
   &[data-appearance='outline'] {
     border-color: var(--alinea-badge-border);
   }
@@ -90,7 +99,7 @@
 .Badge-label {
   min-width: 0;
   overflow: hidden;
-  line-height: 1;
+  line-height: var(--alinea-badge-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
