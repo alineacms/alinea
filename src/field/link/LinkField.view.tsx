@@ -52,7 +52,7 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import type {ComponentType, ReactNode} from 'react'
+import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
@@ -784,7 +784,18 @@ function LinkMetaLabel({className, node, value}: LinkMetaLabelProps) {
       />
     )
   }
-  return <ResolvedLinkMetaLabel className={className} label={customLabel} />
+  return (
+    <ResolvedLinkMetaLabel
+      className={className}
+      label={customLabel || linkFallbackLabel(value)}
+    />
+  )
+}
+
+function linkFallbackLabel(value: LinkFieldRow): string | undefined {
+  if ('_title' in value && value._title) return value._title
+  if ('_url' in value && value._url) return value._url
+  return undefined
 }
 
 interface EntryLinkMetaLabelProps {
@@ -854,36 +865,77 @@ function ResolvedLinkMetaLabel({className, label}: ResolvedLinkMetaLabelProps) {
   return <span className={className}>{value}</span>
 }
 
-interface LinkEntryTypeBadgeProps {
+interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
+  picker?: Picker<LinkFieldRow>
+  type: PickerType
   value: LinkFieldRow
 }
 
-function LinkEntryTypeBadge({value}: LinkEntryTypeBadgeProps) {
-  if (!('_entry' in value)) return null
-  return <EntryLinkTypeBadge entryId={value._entry} />
+function LinkTypeBadge({
+  picker,
+  type,
+  value,
+  ...props
+}: LinkTypeBadgeProps) {
+  const fallbackIcon = getLinkIcon(type)
+  const fallbackLabel = picker?.label ?? type
+  if ('_entry' in value) {
+    return (
+      <EntryLinkTypeBadge
+        {...props}
+        entryId={value._entry}
+        fallbackIcon={fallbackIcon}
+        fallbackLabel={fallbackLabel}
+      />
+    )
+  }
+  return (
+    <Badge {...props} icon={fallbackIcon} size="small">
+      {fallbackLabel}
+    </Badge>
+  )
 }
 
-interface EntryLinkTypeBadgeProps {
+interface EntryLinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
   entryId: string
+  fallbackIcon: ComponentType
+  fallbackLabel: string
 }
 
-function EntryLinkTypeBadge({entryId}: EntryLinkTypeBadgeProps) {
+function EntryLinkTypeBadge({
+  entryId,
+  fallbackIcon,
+  fallbackLabel,
+  ...props
+}: EntryLinkTypeBadgeProps) {
   const dashboard = useDashboard()
   const {data} = useAtomValue(dashboard.entries(entryId).data)
-  if (!data) return null
-  return <LoadedEntryTypeBadge entry={data} />
+  if (!data) {
+    return (
+      <Badge {...props} icon={fallbackIcon} size="small">
+        {fallbackLabel}
+      </Badge>
+    )
+  }
+  return <LoadedEntryTypeBadge {...props} entry={data} />
 }
 
-interface LoadedEntryTypeBadgeProps {
+interface LoadedEntryTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
   entry: DashboardEntryData
 }
 
-function LoadedEntryTypeBadge({entry}: LoadedEntryTypeBadgeProps) {
+function LoadedEntryTypeBadge({
+  className,
+  entry,
+  ...props
+}: LoadedEntryTypeBadgeProps) {
   const type = useAtomValue(entry.type)
   return (
     <Badge
+      {...props}
       appearance="contrast"
-      className={styles.LinkFieldView.type()}
+      className={styles.LinkFieldView.type(styler.merge({className}))}
+      icon={type.icon || IcRoundLink}
       size="small"
     >
       {type.label}
@@ -1053,13 +1105,17 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
     <>
       <SurfaceHeader className={styles.LinkFieldView.row()}>
         <div className={styles.LinkFieldView.actions()}>
-          <LinkRow hasFields={Boolean(picker?.fields)} node={node} />
+          <LinkTypeBadge
+            className={styles.LinkFieldView.type()}
+            picker={picker}
+            type={type}
+            value={value}
+          />
           <LinkMetaLabel
             className={styles.LinkFieldView.metaLabel()}
             node={node}
             value={value}
           />
-          <LinkEntryTypeBadge value={value} />
         </div>
         {!options.readOnly && (
           <DialogTrigger>
@@ -1223,25 +1279,20 @@ function MultipleLinkRow({
             className={styles.MultipleLinksFieldRow.drag()}
             data-dragging={isDragging || undefined}
           >
-            <Badge
+            <LinkTypeBadge
               {...dragProps}
               aria-label={`Drag link item ${index + 1}`}
               className={styles.MultipleLinksFieldRow.dragHandle()}
               data-dragging={isDragging || undefined}
-              icon={getLinkIcon(type)}
-              size="small"
-            >
-              {picker?.label ?? type}
-            </Badge>
-            <span className={styles.MultipleLinksFieldRow.link()}>
-              <LinkRowText node={node} />
-            </span>
+              picker={picker}
+              type={type}
+              value={value}
+            />
             <LinkMetaLabel
               className={styles.MultipleLinksFieldRow.metaLabel()}
               node={node}
               value={value}
             />
-            <LinkEntryTypeBadge value={value} />
           </div>
           <div className={styles.MultipleLinksFieldRow.actions()}>
             <Button
