@@ -4,7 +4,10 @@ import {
   FoldIcon,
   Icon,
   Label,
-  SharedLabelBadge
+  MenuSeparator,
+  Popover,
+  SharedLabelBadge,
+  TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
 import type {Picker} from '#/core/Picker.js'
@@ -34,6 +37,7 @@ import {
   IcRoundClose,
   IcRoundEdit,
   IcRoundLink,
+  IcRoundMoreHoriz,
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
@@ -49,7 +53,7 @@ import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {useMemo, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
@@ -409,6 +413,7 @@ interface LinkPickerActionProps {
   buttonSize?: 'small' | 'icon' | 'icon-small'
   children?: ReactNode
   className?: string
+  isDisabled?: boolean
   picker: Picker<LinkFieldRow>
   selection?: Array<LinkFieldRow>
   type: PickerType
@@ -459,6 +464,7 @@ function LinkPickerAction({
   buttonSize = 'small',
   children,
   className,
+  isDisabled,
   onPick,
   onPickMany,
   picker,
@@ -478,6 +484,7 @@ function LinkPickerAction({
           appearance={buttonAppearance}
           className={className}
           icon={buttonIcon}
+          isDisabled={isDisabled}
           size={buttonSize}
         >
           {children}
@@ -528,6 +535,7 @@ function LinkPickerAction({
           appearance={buttonAppearance}
           className={className}
           icon={buttonIcon}
+          isDisabled={isDisabled}
           size={buttonSize}
         >
           {children}
@@ -546,6 +554,7 @@ function LinkPickerAction({
         appearance={buttonAppearance}
         className={className}
         icon={buttonIcon}
+        isDisabled={isDisabled}
         size={buttonSize}
       >
         {children}
@@ -680,6 +689,7 @@ interface SingleLinkRowProps extends StandardFieldActionProps {
 
 interface LinkRowActionsProps {
   className: string
+  isDisabled?: boolean
   picker?: Picker<LinkFieldRow>
   type: PickerType
   value: LinkFieldRow
@@ -689,6 +699,7 @@ interface LinkRowActionsProps {
 
 function LinkRowActions({
   className,
+  isDisabled,
   picker,
   type,
   value,
@@ -703,21 +714,267 @@ function LinkRowActions({
           ariaLabel="Edit link"
           buttonAppearance="plain"
           buttonIcon={IcRoundEdit}
-          buttonSize="icon-small"
+          buttonSize="small"
+          isDisabled={isDisabled}
           onPick={onPick}
           picker={picker}
           type={type}
           value={value}
-        />
+        >
+          Edit link
+        </LinkPickerAction>
       )}
       <Button
         aria-label="Remove link"
         appearance="plain"
-        size="icon-small"
         icon={IcRoundClose}
+        isDisabled={isDisabled}
         onPress={onRemove}
-      />
+        size="small"
+      >
+        Remove link
+      </Button>
     </div>
+  )
+}
+
+interface LinkLabelFieldProps {
+  isDisabled?: boolean
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function LinkLabelField({isDisabled, node, value}: LinkLabelFieldProps) {
+  const customLabel = useAtomValue(node.field('_label')) as string | undefined
+  const setCustomLabel = useSetAtom(node.field('_label'))
+  if ('_entry' in value) {
+    return (
+      <EntryLinkLabelField
+        customLabel={customLabel}
+        entryId={value._entry}
+        isDisabled={isDisabled}
+        onChange={setCustomLabel}
+      />
+    )
+  }
+  return (
+    <ResolvedLinkLabelField
+      customLabel={customLabel}
+      isDisabled={isDisabled}
+      onChange={setCustomLabel}
+    />
+  )
+}
+
+interface LinkMetaLabelProps {
+  className: string
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function LinkMetaLabel({className, node, value}: LinkMetaLabelProps) {
+  const customLabel = useAtomValue(node.field('_label')) as string | undefined
+  if ('_entry' in value) {
+    return (
+      <EntryLinkMetaLabel
+        className={className}
+        customLabel={customLabel}
+        entryId={value._entry}
+        node={node}
+      />
+    )
+  }
+  return <ResolvedLinkMetaLabel className={className} label={customLabel} />
+}
+
+interface EntryLinkMetaLabelProps {
+  className: string
+  customLabel?: string
+  entryId: string
+  node: ReactiveNode<LinkFieldRow>
+}
+
+function EntryLinkMetaLabel({
+  className,
+  customLabel,
+  entryId,
+  node
+}: EntryLinkMetaLabelProps) {
+  const dashboard = useDashboard()
+  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  if (!data) {
+    return <ResolvedLinkMetaLabel className={className} label={customLabel} />
+  }
+  return (
+    <LoadedEntryLinkMetaLabel
+      className={className}
+      customLabel={customLabel}
+      data={data}
+      node={node}
+    />
+  )
+}
+
+interface LoadedEntryLinkMetaLabelProps {
+  className: string
+  customLabel?: string
+  data: DashboardEntryData
+  node: ReactiveNode<LinkFieldRow>
+}
+
+function LoadedEntryLinkMetaLabel({
+  className,
+  customLabel,
+  data,
+  node
+}: LoadedEntryLinkMetaLabelProps) {
+  const fallbackLabel = useAtomValue(data.label)
+  const setCustomLabel = useSetAtom(node.field('_label'))
+  useEffect(() => {
+    if (customLabel === undefined && fallbackLabel) {
+      setCustomLabel(fallbackLabel)
+    }
+  }, [customLabel, fallbackLabel, setCustomLabel])
+  return (
+    <ResolvedLinkMetaLabel
+      className={className}
+      label={customLabel ?? fallbackLabel}
+    />
+  )
+}
+
+interface ResolvedLinkMetaLabelProps {
+  className: string
+  label?: string
+}
+
+function ResolvedLinkMetaLabel({className, label}: ResolvedLinkMetaLabelProps) {
+  const value = label?.trim()
+  if (!value) return null
+  return <span className={className}>{value}</span>
+}
+
+interface LinkEntryTypeBadgeProps {
+  value: LinkFieldRow
+}
+
+function LinkEntryTypeBadge({value}: LinkEntryTypeBadgeProps) {
+  if (!('_entry' in value)) return null
+  return <EntryLinkTypeBadge entryId={value._entry} />
+}
+
+interface EntryLinkTypeBadgeProps {
+  entryId: string
+}
+
+function EntryLinkTypeBadge({entryId}: EntryLinkTypeBadgeProps) {
+  const dashboard = useDashboard()
+  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  if (!data) return null
+  return <LoadedEntryTypeBadge entry={data} />
+}
+
+interface LoadedEntryTypeBadgeProps {
+  entry: DashboardEntryData
+}
+
+function LoadedEntryTypeBadge({entry}: LoadedEntryTypeBadgeProps) {
+  const type = useAtomValue(entry.type)
+  return (
+    <Badge
+      appearance="contrast"
+      className={styles.LinkFieldView.type()}
+      size="small"
+    >
+      {type.label}
+    </Badge>
+  )
+}
+
+interface EntryLinkLabelFieldProps {
+  customLabel?: string
+  entryId: string
+  isDisabled?: boolean
+  onChange: (value: string | undefined) => void
+}
+
+function EntryLinkLabelField({
+  customLabel,
+  entryId,
+  isDisabled,
+  onChange
+}: EntryLinkLabelFieldProps) {
+  const dashboard = useDashboard()
+  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  if (data) {
+    return (
+      <LoadedEntryLinkLabelField
+        customLabel={customLabel}
+        data={data}
+        isDisabled={isDisabled}
+        onChange={onChange}
+      />
+    )
+  }
+  return (
+    <ResolvedLinkLabelField
+      customLabel={customLabel}
+      isDisabled={isDisabled}
+      onChange={onChange}
+    />
+  )
+}
+
+interface LoadedEntryLinkLabelFieldProps {
+  customLabel?: string
+  data: DashboardEntryData
+  isDisabled?: boolean
+  onChange: (value: string | undefined) => void
+}
+
+function LoadedEntryLinkLabelField({
+  customLabel,
+  data,
+  isDisabled,
+  onChange
+}: LoadedEntryLinkLabelFieldProps) {
+  const fallbackLabel = useAtomValue(data.label)
+  useEffect(() => {
+    if (customLabel === undefined && fallbackLabel) {
+      onChange(fallbackLabel)
+    }
+  }, [customLabel, fallbackLabel, onChange])
+  return (
+    <ResolvedLinkLabelField
+      customLabel={customLabel}
+      fallbackLabel={fallbackLabel}
+      isDisabled={isDisabled}
+      onChange={onChange}
+    />
+  )
+}
+
+interface ResolvedLinkLabelFieldProps {
+  customLabel?: string
+  fallbackLabel?: string
+  isDisabled?: boolean
+  onChange: (value: string | undefined) => void
+}
+
+function ResolvedLinkLabelField({
+  customLabel,
+  fallbackLabel = '',
+  isDisabled,
+  onChange
+}: ResolvedLinkLabelFieldProps) {
+  return (
+    <TextField
+      autoFocus
+      isDisabled={isDisabled}
+      label="Label"
+      onChange={onChange}
+      value={customLabel ?? fallbackLabel}
+    />
   )
 }
 
@@ -747,8 +1004,10 @@ function EntryLinkRowActions({entryId, type}: EntryLinkRowActionsProps) {
         appearance="plain"
         icon={IcRoundOpenInNew}
         isDisabled
-        size="icon-small"
-      />
+        size="small"
+      >
+        Open link
+      </Button>
     )
   }
   return (
@@ -768,27 +1027,19 @@ function LoadedEntryLinkRowActions({
   entry,
   locale
 }: LoadedEntryLinkRowActionsProps) {
-  const type = useAtomValue(entry.type)
   const workspace = useAtomValue(entry.workspaceKey)
   const root = useAtomValue(entry.rootKey)
   const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
   return (
-    <>
-      <Badge
-        appearance="contrast"
-        className={styles.LinkFieldView.type()}
-        size="small"
-      >
-        {type.label}
-      </Badge>
-      <Button
-        aria-label="Open link"
-        appearance="plain"
-        icon={IcRoundOpenInNew}
-        onPress={() => window.open(href, '_blank', 'noopener,noreferrer')}
-        size="icon-small"
-      />
-    </>
+    <Button
+      aria-label="Open link"
+      appearance="plain"
+      icon={IcRoundOpenInNew}
+      onPress={() => window.open(href, '_blank', 'noopener,noreferrer')}
+      size="small"
+    >
+      Open link
+    </Button>
   )
 }
 
@@ -797,21 +1048,44 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const options = useFieldOptions(field)
   const type = getPickerType(value[Reference.type])
   const picker = options.pickers[type] as Picker<LinkFieldRow> | undefined
+  const customLabel = (useAtomValue(node.field('_label')) as string) ?? ''
   return (
     <>
       <SurfaceHeader className={styles.LinkFieldView.row()}>
         <div className={styles.LinkFieldView.actions()}>
           <LinkRow hasFields={Boolean(picker?.fields)} node={node} />
-        </div>
-        {!options.readOnly && (
-          <LinkRowActions
-            className={styles.LinkFieldView.actions()}
-            onPick={setValue}
-            onRemove={() => setValue(undefined!)}
-            picker={picker}
-            type={type}
+          <LinkMetaLabel
+            className={styles.LinkFieldView.metaLabel()}
+            node={node}
             value={value}
           />
+          <LinkEntryTypeBadge value={value} />
+        </div>
+        {!options.readOnly && (
+          <DialogTrigger>
+            <Button
+              appearance="plain"
+              aria-label="Link settings"
+              className={styles.LinkFieldView.settingsTrigger()}
+              data-filled={customLabel.trim() || undefined}
+              icon={IcRoundMoreHoriz}
+              size="icon-small"
+            />
+            <Popover placement="bottom right">
+              <div className={styles.LinkFieldView.settings()}>
+                <LinkLabelField node={node} value={value} />
+              </div>
+              <MenuSeparator />
+              <LinkRowActions
+                className={styles.LinkFieldView.menuActions()}
+                onPick={setValue}
+                onRemove={() => setValue(undefined!)}
+                picker={picker}
+                type={type}
+                value={value}
+              />
+            </Popover>
+          </DialogTrigger>
         )}
       </SurfaceHeader>
       <LinkRowEditor
@@ -908,6 +1182,7 @@ function MultipleLinkRow({
   const type = getPickerType(value[Reference.type])
   const picker = options.pickers[type] as Picker<LinkFieldRow> | undefined
   const itemId = value[Reference.id]
+  const customLabel = (useAtomValue(node.field('_label')) as string) ?? ''
   const readOnly = Boolean(options.readOnly)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
   const {dragProps, isDragging} = useDrag({
@@ -945,46 +1220,83 @@ function MultipleLinkRow({
             )}
           </DragPreview>
           <div
-            {...dragProps}
-            aria-label={`Drag link item ${index + 1}`}
             className={styles.MultipleLinksFieldRow.drag()}
             data-dragging={isDragging || undefined}
           >
+            <Badge
+              {...dragProps}
+              aria-label={`Drag link item ${index + 1}`}
+              className={styles.MultipleLinksFieldRow.dragHandle()}
+              data-dragging={isDragging || undefined}
+              icon={getLinkIcon(type)}
+              size="small"
+            >
+              {picker?.label ?? type}
+            </Badge>
+            <span className={styles.MultipleLinksFieldRow.link()}>
+              <LinkRowText node={node} />
+            </span>
+            <LinkMetaLabel
+              className={styles.MultipleLinksFieldRow.metaLabel()}
+              node={node}
+              value={value}
+            />
+            <LinkEntryTypeBadge value={value} />
+          </div>
+          <div className={styles.MultipleLinksFieldRow.actions()}>
             <Button
               appearance="plain"
               aria-label={expanded ? 'Collapse link' : 'Expand link'}
-              className={styles.MultipleLinksFieldRow.toggle()}
-              data-expanded={expanded ? 'true' : undefined}
+              className={styles.MultipleLinksFieldRow.fold()}
               onPress={() => onToggleRow(itemId)}
+              size="icon-small"
             >
-              <LinkRow hasFields={Boolean(picker?.fields)} node={node} />
               <FoldIcon
                 aria-hidden
                 className={styles.MultipleLinksFieldRow.foldIcon()}
                 expanded={expanded}
               />
             </Button>
+            <DialogTrigger>
+              <Button
+                appearance="plain"
+                aria-label="Link settings"
+                className={styles.MultipleLinksFieldRow.settingsTrigger()}
+                data-filled={customLabel.trim() || undefined}
+                icon={IcRoundMoreHoriz}
+                size="icon-small"
+              />
+              <Popover placement="bottom right">
+                <div className={styles.MultipleLinksFieldRow.settings()}>
+                  <LinkLabelField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                </div>
+                <MenuSeparator />
+                <LinkRowActions
+                  className={styles.MultipleLinksFieldRow.menuActions()}
+                  isDisabled={readOnly}
+                  onPick={link => {
+                    setValue(links =>
+                      links.map((current, currentIndex) =>
+                        currentIndex === index ? link : current
+                      )
+                    )
+                  }}
+                  onRemove={() =>
+                    setValue(links =>
+                      links.filter((_, currentIndex) => currentIndex !== index)
+                    )
+                  }
+                  picker={picker}
+                  type={type}
+                  value={value}
+                />
+              </Popover>
+            </DialogTrigger>
           </div>
-          {!readOnly && (
-            <LinkRowActions
-              className={styles.MultipleLinksFieldView.actions()}
-              onPick={link => {
-                setValue(links =>
-                  links.map((current, currentIndex) =>
-                    currentIndex === index ? link : current
-                  )
-                )
-              }}
-              onRemove={() =>
-                setValue(links =>
-                  links.filter((_, currentIndex) => currentIndex !== index)
-                )
-              }
-              picker={picker}
-              type={type}
-              value={value}
-            />
-          )}
         </SurfaceHeader>
         {expanded && (
           <LinkRowEditor

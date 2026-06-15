@@ -1,6 +1,6 @@
 .LinkFieldView {
   margin-bottom: 8px;
-  background: var(--alinea-bg);
+  background: var(--alinea-bg-muted);
 }
 
 .LinkFieldView-row {
@@ -8,7 +8,7 @@
   min-height: 32px;
   height: 32px;
   justify-content: space-between;
-  background: var(--alinea-bg-muted);
+  background: inherit;
 }
 
 .LinkFieldView-rowCenter {
@@ -20,6 +20,47 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+.LinkFieldView-metaLabel {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.LinkFieldView-settingsTrigger {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.LinkFieldView-settingsTrigger[data-filled]::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--alinea-primary);
+  box-shadow: 0 0 0 1px var(--alinea-bg);
+}
+
+.LinkFieldView-settings {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.LinkFieldView-menuActions {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .LinkFieldView-createActions {
@@ -158,13 +199,13 @@
   gap: 12px;
   align-items: normal;
   padding: 16px;
-  background: var(--alinea-bg);
+  background: inherit;
   border-top: 1px solid var(--alinea-border);
 }
 
 .MultipleLinksFieldView {
   margin-bottom: 8px;
-  background: var(--alinea-bg);
+  background: var(--alinea-bg-muted);
 }
 
 .MultipleLinksFieldView-label {
@@ -186,7 +227,7 @@
 .MultipleLinksFieldView-row {
   min-height: 32px;
   justify-content: space-between;
-  background: var(--alinea-bg-muted);
+  background: inherit;
 }
 
 .MultipleLinksFieldView-rowCenter {
@@ -236,7 +277,7 @@
   display: grid;
   position: relative;
   border-top: 1px solid var(--alinea-border);
-  background: var(--alinea-bg-muted);
+  background: inherit;
   overflow: hidden;
 }
 
@@ -251,15 +292,10 @@
 .MultipleLinksFieldRow-header {
   box-sizing: border-box;
   min-height: 32px;
-  height: 32px;
   justify-content: space-between;
   min-width: 0;
-  background: var(--alinea-bg-muted);
-  transition: background 140ms ease-out;
-}
-
-.MultipleLinksFieldRow-header:has(.MultipleLinksFieldRow-drag:hover) {
-  background: color-mix(in srgb, var(--alinea-primary) 5%, var(--alinea-bg-muted));
+  padding: 2px 8px;
+  background: inherit;
 }
 
 .MultipleLinksFieldRow-drag {
@@ -269,30 +305,49 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+}
+
+.MultipleLinksFieldRow-dragHandle {
   cursor: grab;
 }
 
-.MultipleLinksFieldRow-drag[data-dragging] {
+.MultipleLinksFieldRow-dragHandle[data-dragging] {
   cursor: grabbing;
 }
 
-.MultipleLinksFieldRow-toggle {
-  align-self: stretch;
+.MultipleLinksFieldRow-link {
   min-width: 0;
   max-width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--alinea-fg-muted);
-  margin-left: -8px;
-  cursor: pointer;
+  overflow: hidden;
 }
 
-.MultipleLinksFieldRow-toggle[data-hovered],
-.MultipleLinksFieldRow-toggle[data-pressed],
-.MultipleLinksFieldRow-toggle[data-active] {
-  background: transparent;
+.MultipleLinksFieldRow-metaLabel {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.MultipleLinksFieldRow-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+
+.MultipleLinksFieldRow-fold {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+}
+
+.MultipleLinksFieldRow-fold[data-hovered],
+.MultipleLinksFieldRow-fold[data-pressed],
+.MultipleLinksFieldRow-fold[data-active] {
+  color: var(--alinea-fg);
 }
 
 .MultipleLinksFieldRow-foldIcon {
@@ -305,20 +360,49 @@
   gap: 12px;
   align-items: normal;
   padding: 16px;
-  background: var(--alinea-bg);
+  background: inherit;
   border-top: 1px solid var(--alinea-border);
 }
 
 .MultipleLinksFieldRow-footer {
   box-sizing: border-box;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
   min-height: 44px;
   padding: 6px 12px;
-  overflow: hidden;
-  background: var(--alinea-bg);
+  background: inherit;
   border-top: 1px solid var(--alinea-border);
+}
+
+.MultipleLinksFieldRow-settingsTrigger {
+  position: relative;
+}
+
+.MultipleLinksFieldRow-settingsTrigger[data-filled]::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--alinea-primary);
+  box-shadow: 0 0 0 1px var(--alinea-bg);
+}
+
+.MultipleLinksFieldRow-settings {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.MultipleLinksFieldRow-menuActions {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .MultipleLinksFieldRow-dragPreview {
