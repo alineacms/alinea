@@ -227,8 +227,9 @@
   }
 
   &[data-size='icon-small'] {
-    width: 1rem;
-    height: 1rem;
+    width: 26px;
+    height: 26px;
+    min-height: 0;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;

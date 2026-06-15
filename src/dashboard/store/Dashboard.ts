@@ -3375,15 +3375,19 @@ export class ReactiveNode<Value = unknown> {
         if (isObject<any>(structure))
           if (structure[key])
             set((structure[key] as ReactiveNode).value, update)
-          else
+          else {
             set(this.nodes, {
               ...structure,
               [key]: new ReactiveNode(update, this.readOnly)
             })
-        else
+            set(this.#dirty, true)
+          }
+        else {
           set(this.nodes, {
             [key]: new ReactiveNode(update, this.readOnly)
           })
+          set(this.#dirty, true)
+        }
       }
     )
   })

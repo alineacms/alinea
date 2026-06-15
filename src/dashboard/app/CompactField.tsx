@@ -44,7 +44,10 @@ export function CompactRecordFields({
 }: CompactRecordFieldsProps) {
   return (
     <span className={styles.CompactField()} data-layout={layout}>
-      {renderRecordValue(fields, value)}
+      {renderRecordValue(fields, value, {
+        includeEmpty: layout === 'footer',
+        limit: layout === 'footer' ? undefined : 3
+      })}
     </span>
   )
 }
@@ -132,14 +135,17 @@ function renderArrayValue(
 
 function renderRecordValue(
   fields: Record<string, Field>,
-  value: Record<string, unknown>
+  value: Record<string, unknown>,
+  options: CompactRecordValueOptions = {}
 ): ReactNode {
+  const includeEmpty = options.includeEmpty ?? false
+  const limit = options.limit ?? (includeEmpty ? undefined : 3)
   const entries = Object.entries(fields)
     .filter(([key, field]) => {
-      const options = Field.options(field)
-      return !options.hidden && !isEmptyValue(value[key])
+      const fieldOptions = Field.options(field)
+      return !fieldOptions.hidden && (includeEmpty || !isEmptyValue(value[key]))
     })
-    .slice(0, 3)
+    .slice(0, limit)
   if (entries.length === 0)
     return <span className={styles.CompactField.muted()}>-</span>
   return (
@@ -156,6 +162,11 @@ function renderRecordValue(
       ))}
     </span>
   )
+}
+
+interface CompactRecordValueOptions {
+  includeEmpty?: boolean
+  limit?: number
 }
 
 function compactRecordText(

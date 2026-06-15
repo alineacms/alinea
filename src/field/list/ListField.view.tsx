@@ -16,6 +16,7 @@ import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
@@ -39,6 +40,7 @@ import {
 } from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {ListOptions} from '#/field/list.js'
+import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -459,7 +461,14 @@ function ListFieldRow({
 }: ListFieldRowProps) {
   const itemId = useAtomValue(row.field('_id')) as string
   const typeName = useAtomValue(row.field('_type')) as string
+  const customLabelValue = useAtomValue(row.field('_label')) as
+    | string
+    | undefined
+  const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
+  const customLabel = customLabelValue ?? ''
   const value = useAtomValue(row.value) as Record<string, unknown>
+  const setCustomLabel = useSetAtom(row.field('_label'))
+  const setAnchor = useSetAtom(row.field('_anchor'))
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
@@ -477,7 +486,7 @@ function ListFieldRow({
   if (!type) return null
 
   const label = Type.label(type)
-  const typeIcon = getType(type).icon
+  const typeIcon = getType(type).icon || IcRoundAdd
   const expanded = !foldedIds.has(itemId)
   const isCopied = copiedRowId === itemId
 
@@ -487,6 +496,18 @@ function ListFieldRow({
 
   function deleteRow() {
     removeRow(index)
+  }
+
+  function updateCustomLabel(nextValue: string) {
+    setCustomLabel(nextValue || undefined)
+    const currentLabelSlug = slugify(customLabel)
+    const shouldSyncAnchor =
+      anchorValue === undefined || anchorValue === currentLabelSlug
+    if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
+  }
+
+  function updateAnchor(nextValue: string) {
+    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
   }
 
   return (
@@ -510,8 +531,12 @@ function ListFieldRow({
           isFirstRow={index === 0}
           isLastRow={index === rows - 1}
           label={label}
+          customLabel={customLabel}
+          anchor={anchorValue}
           readOnly={readOnly}
           typeIcon={typeIcon}
+          onAnchorChange={updateAnchor}
+          onCustomLabelChange={updateCustomLabel}
           onCopy={() => onCopyRow(itemId)}
           onDelete={deleteRow}
           onMoveDown={() => moveCurrentRow(1)}
@@ -598,8 +623,12 @@ interface ListFieldRowHeaderProps {
   isLastRow: boolean
   isPreview?: boolean
   label: string
+  customLabel: string
+  anchor?: string
   readOnly: boolean
   typeIcon: ComponentType
+  onAnchorChange: (value: string) => void
+  onCustomLabelChange: (value: string) => void
   onCopy?: () => void
   onDelete?: () => void
   onMoveDown?: () => void
@@ -617,14 +646,22 @@ function ListFieldRowHeader({
   isLastRow,
   isPreview,
   label,
+  customLabel,
+  anchor,
   readOnly,
   typeIcon,
+  onAnchorChange,
+  onCustomLabelChange,
   onCopy,
   onDelete,
   onMoveDown,
   onMoveUp,
   onToggle
 }: ListFieldRowHeaderProps) {
+  const displayLabel = customLabel.trim()
+  const displayAnchor = (anchor ?? slugify(displayLabel)).trim()
+  const showAnchor = Boolean(displayAnchor && !displayLabel)
+  const hasSettings = Boolean(displayLabel || displayAnchor)
   return (
     <div
       className={className}
@@ -632,14 +669,33 @@ function ListFieldRowHeader({
       data-first-row={isFirstRow ? 'true' : undefined}
     >
       <div
-        {...dragProps}
         className={styles.ListFieldRow.drag()}
         data-dragging={isDragging || undefined}
       >
-        <Badge size="small" icon={typeIcon}>
-          {label}
-        </Badge>
-        {/*<Button
+        <div className={styles.ListFieldRow.badges()}>
+          <Badge
+            {...dragProps}
+            className={styles.ListFieldRow.dragHandle()}
+            data-dragging={isDragging || undefined}
+            icon={typeIcon}
+            size="small"
+          >
+            {label}
+          </Badge>
+          {displayLabel && (
+            <span className={styles.ListFieldRow.metaLabel()}>
+              {displayLabel}
+            </span>
+          )}
+          {showAnchor && (
+            <Badge size="small" appearance="outline">
+              #{displayAnchor}
+            </Badge>
+          )}
+        </div>
+      </div>
+      <div className={styles.ListFieldRow.actions()}>
+        <Button
           appearance="plain"
           aria-label={
             isPreview
@@ -648,35 +704,41 @@ function ListFieldRowHeader({
                 ? `Collapse ${label}`
                 : `Expand ${label}`
           }
-          className={styles.ListFieldRow.toggle()}
-          data-expanded={expanded ? 'true' : undefined}
+          className={styles.ListFieldRow.fold()}
           isDisabled={isPreview}
           onPress={onToggle}
+          size="icon-small"
         >
-          <Icon
-            aria-hidden
-            className={styles.ListFieldRow.icon()}
-            icon={typeIcon}
-          />
-          <strong className={styles.ListFieldRow.title()}>{label}</strong>
           <FoldIcon
             aria-hidden
             className={styles.ListFieldRow.foldIcon()}
             expanded={expanded}
           />
-        </Button>*/}
-      </div>
-      <div className={styles.ListFieldRow.actions()}>
+        </Button>
         <DialogTrigger>
           <Button
             appearance="plain"
             size="icon-small"
             icon={IcRoundMoreHoriz}
+            className={styles.ListFieldRow.settingsTrigger()}
+            data-filled={hasSettings || undefined}
           />
           <Popover placement="bottom right">
             <div className={styles.ListFieldRow.settings()}>
-              <TextField label="Label" autoFocus />
-              <TextField label="Anchor" />
+              <TextField
+                label="Label"
+                autoFocus
+                isDisabled={readOnly || isPreview}
+                onChange={onCustomLabelChange}
+                value={customLabel}
+              />
+              <SlugField
+                fieldValue={anchor}
+                label="Anchor"
+                isDisabled={readOnly || isPreview}
+                onChange={onAnchorChange}
+                source={customLabel}
+              />
             </div>
             <MenuSeparator />
             <Button appearance="plain" onPress={onCopy}>

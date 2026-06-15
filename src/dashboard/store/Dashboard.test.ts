@@ -1135,3 +1135,15 @@ test('ReactiveNode inserts array values at the requested index', () => {
 
   test.equal(ids(store.get(node.value)), ['top', 'a', 'middle', 'b', 'end'])
 })
+
+test('ReactiveNode marks missing field writes as dirty', () => {
+  const store = createStore()
+  const node = new ReactiveNode<Record<string, unknown>>({title: 'Initial'})
+
+  test.equal(store.get(node.isDirty), false)
+  store.set(node.field('anchor'), 'intro')
+
+  test.equal(store.get(node.isDirty), true)
+  test.equal(store.get(node.field('anchor')), 'intro')
+  test.equal(store.get(node.value).anchor, 'intro')
+})

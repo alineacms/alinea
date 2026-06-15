@@ -16,10 +16,12 @@
 }
 
 .CompactField[data-layout='footer'] {
+  display: block;
   width: 100%;
   max-width: 100%;
   min-width: 0;
   line-height: 1.2;
+  white-space: normal;
 }
 
 .CompactField-items {
@@ -64,9 +66,11 @@
 }
 
 .CompactField[data-layout='footer'] .CompactField-record {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   width: 100%;
   max-width: 100%;
-  gap: 0;
+  gap: 10px 12px;
 }
 
 .CompactField-record-field {
@@ -81,14 +85,8 @@
 }
 
 .CompactField[data-layout='footer'] .CompactField-record-field {
-  flex: 1 1 0;
   min-width: 0;
-  max-width: none;
-}
-
-.CompactField[data-layout='footer'] .CompactField-record-field + .CompactField-record-field {
-  margin-left: 10px;
-  padding-left: 10px;
+  max-width: 100%;
 }
 
 .CompactField-record-label {

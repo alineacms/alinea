@@ -13,7 +13,11 @@ import {text} from '#/field/text.js'
 import {atom, type Atom} from 'jotai'
 import type {ComponentType} from 'react'
 import {afterEach, expect, test} from 'bun:test'
-import {CompactField, compactFieldText} from './CompactField.js'
+import {
+  CompactField,
+  CompactRecordFields,
+  compactFieldText
+} from './CompactField.js'
 
 interface TestDashboard {
   view(key: string): Atom<ComponentType | undefined>
@@ -74,6 +78,32 @@ test('CompactField renders object field summaries', () => {
   expect(compactFieldText(field, {title: 'Explorer table'})).toContain(
     'Title Explorer table'
   )
+})
+
+test('CompactRecordFields footer renders all visible fields', () => {
+  const fields = {
+    title: text('Title'),
+    summary: text('Summary'),
+    priority: text('Priority'),
+    status: text('Status')
+  }
+  render(
+    <DashboardScopeInternal dashboard={dashboard}>
+      <CompactRecordFields
+        fields={fields}
+        layout="footer"
+        value={{title: 'Explorer table', priority: 'High'}}
+      />
+    </DashboardScopeInternal>
+  )
+
+  expect(screen.getByText('Title')).toBeDefined()
+  expect(screen.getByText('Summary')).toBeDefined()
+  expect(screen.getByText('Priority')).toBeDefined()
+  expect(screen.getByText('Status')).toBeDefined()
+  expect(screen.getByText('Explorer table')).toBeDefined()
+  expect(screen.getByText('High')).toBeDefined()
+  expect(screen.getAllByText('-')).toHaveLength(2)
 })
 
 test('CompactField renders list fields as a count', () => {

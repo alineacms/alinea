@@ -222,50 +222,42 @@
   overflow: hidden;
   display: flex;
   align-items: center;
+}
+
+.ListFieldRow-dragHandle {
   cursor: grab;
 }
 
-.ListFieldRow-drag[data-dragging] {
+.ListFieldRow-dragHandle[data-dragging] {
   cursor: grabbing;
 }
 
-.ListFieldRow-toggle {
-  align-self: stretch;
-  flex: 1 1 auto;
+.ListFieldRow-fold {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+}
+
+.ListFieldRow-fold[data-hovered],
+.ListFieldRow-fold[data-pressed],
+.ListFieldRow-fold[data-active] {
+  color: var(--alinea-fg);
+}
+
+.ListFieldRow-badges {
+  display: inline-flex;
+  align-items: center;
   min-width: 0;
   max-width: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  color: var(--alinea-fg-muted);
-  margin-left: -8px;
-  cursor: pointer;
+  gap: 4px;
+  overflow: hidden;
 }
 
-.ListFieldRow-toggle[data-hovered],
-.ListFieldRow-toggle[data-pressed],
-.ListFieldRow-toggle[data-active] {
-  background: transparent;
-}
-
-.ListFieldRow-toggle[data-disabled] {
-  cursor: default;
-}
-
-.ListFieldRow-icon {
-  flex-shrink: 0;
-  color: var(--alinea-fg);
-  font-size: 16px;
-}
-
-.ListFieldRow-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--alinea-fg-muted);
+.ListFieldRow-metaLabel {
   min-width: 0;
   overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -274,7 +266,22 @@
   display: flex;
   align-items: center;
   flex: 0 0 auto;
-  gap: 8px;
+}
+
+.ListFieldRow-settingsTrigger {
+  position: relative;
+}
+
+.ListFieldRow-settingsTrigger[data-filled]::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--alinea-primary);
+  box-shadow: 0 0 0 1px var(--alinea-bg);
 }
 
 .ListFieldRow-foldIcon {
@@ -291,10 +298,9 @@
 
 .ListFieldRow-footer {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
   padding: 8px 16px;
-  overflow: hidden;
   background: inherit;
 }
 

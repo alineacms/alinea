@@ -26,6 +26,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
+      {...props}
       data-status={status}
       data-appearance={appearance}
       data-size={size}
