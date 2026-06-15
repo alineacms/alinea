@@ -108,8 +108,8 @@
 .ExplorerTable-cell {
   box-sizing: border-box;
   min-width: 0;
-  height: 32px;
-  padding: 0 10px;
+  height: 44px;
+  padding: 5px 10px;
   overflow: hidden;
   vertical-align: middle;
   border: 0;
@@ -120,7 +120,7 @@
   box-sizing: border-box;
   display: flex;
   width: 30px;
-  height: 32px;
+  height: 44px;
   padding: 0 8px;
   align-items: center;
   justify-content: center;
@@ -132,7 +132,7 @@
   box-sizing: border-box;
   display: flex;
   min-width: 0;
-  height: 32px;
+  height: 44px;
   padding: 0 12px 0 0;
   align-items: center;
   gap: 3px;
@@ -147,7 +147,7 @@
 
 .ExplorerTable-cell-filler {
   box-sizing: border-box;
-  height: 32px;
+  height: 44px;
   padding: 0;
   overflow: hidden;
   border: 0;
@@ -157,7 +157,7 @@
   display: inline-flex;
   box-sizing: border-box;
   width: 12px;
-  height: 32px;
+  height: 44px;
   padding: 0;
   flex: 0 0 12px;
   align-items: center;
@@ -204,33 +204,36 @@
   color: inherit;
   font-size: 13px;
   font-weight: 400;
-  line-height: 32px;
+  line-height: 44px;
   text-align: left;
   white-space: nowrap;
 }
 
 .ExplorerTable-field {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   width: 100%;
   max-width: 100%;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
   overflow: hidden;
   font-size: 12px;
-  line-height: 32px;
+  line-height: 1.2;
   vertical-align: middle;
 }
 
 .ExplorerTable-field-label {
   display: inline-flex;
   align-items: center;
-  flex: 0 0 clamp(52px, 7vw, 76px);
+  flex: 0 0 auto;
   min-width: 0;
-  max-width: clamp(52px, 7vw, 76px);
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -238,8 +241,9 @@
 .ExplorerTable-field-value {
   display: inline-flex;
   align-items: center;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
+  width: 100%;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -1,7 +1,22 @@
 .ListFieldView {
+  --ListFieldView-background: var(--alinea-backdrop);
+
   display: flex;
   flex-direction: column;
-  background: var(--alinea-bg);
+  background: var(--ListFieldView-background);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 0 1.4px rgba(0, 0, 0, 0.078),
+    0 0.125rem 0.21875rem rgba(0, 0, 0, 0.078);
+}
+
+.ListFieldView[data-depth='base'] {
+  --ListFieldView-background: var(--alinea-bg);
+}
+
+.ListFieldView[data-depth='muted'] {
+  --ListFieldView-background: var(--alinea-bg-muted);
 }
 
 .ListFieldView-label {
@@ -11,7 +26,7 @@
   min-height: auto;
   padding-block: 0;
   margin-left: -8px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
   line-height: 1;
   border: none;
 }
@@ -88,7 +103,7 @@
 }
 
 .ListFieldView-create {
-  background: var(--alinea-bg-muted);
+  background: inherit;
 }
 
 .ListFieldView-create[data-empty] .ListFieldView-createRow {
@@ -100,8 +115,8 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  min-height: 32px;
-  background: var(--alinea-bg-muted);
+  height: 40px;
+  background: inherit;
   border-top: 1px solid var(--alinea-border);
 }
 
@@ -136,7 +151,6 @@
 }
 
 .ListFieldTypePicker-list {
-  box-sizing: border-box;
   max-height: 260px;
   overflow: auto;
   padding: 4px;
@@ -181,7 +195,7 @@
   display: grid;
   position: relative;
   border-top: 1px solid var(--alinea-border);
-  background: var(--alinea-bg-muted);
+  background: inherit;
   overflow: hidden;
 
   &[data-dragging] {
@@ -194,18 +208,11 @@
 }
 
 .ListFieldRow-header {
-  box-sizing: border-box;
-  min-height: 32px;
-  height: 32px;
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   min-width: 0;
-  transition: background 140ms ease-out;
-}
-
-.ListFieldRow-header:has(.ListFieldRow-drag:hover),
-.ListFieldRow-header:has(.ListFieldRow-toggle[data-hovered]),
-.ListFieldRow-header:has(.ListFieldRow-toggle[data-pressed]) {
-  background: color-mix(in srgb, var(--alinea-primary) 5%, var(--alinea-bg-muted));
+  padding: 2px 8px;
 }
 
 .ListFieldRow-drag {
@@ -224,10 +231,13 @@
 
 .ListFieldRow-toggle {
   align-self: stretch;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   color: var(--alinea-fg-muted);
   margin-left: -8px;
@@ -275,21 +285,17 @@
   display: grid;
   gap: 12px;
   align-items: normal;
-  padding: 16px;
-  background: var(--alinea-bg);
-  border-top: 1px solid var(--alinea-border);
+  padding: 8px 16px 16px 16px;
+  background: inherit;
 }
 
 .ListFieldRow-footer {
-  box-sizing: border-box;
   display: flex;
   align-items: center;
   min-width: 0;
-  height: 32px;
-  padding: 0 12px;
+  padding: 8px 16px;
   overflow: hidden;
-  background: var(--alinea-bg);
-  border-top: 1px solid var(--alinea-border);
+  background: inherit;
 }
 
 .ListFieldRow-settings {

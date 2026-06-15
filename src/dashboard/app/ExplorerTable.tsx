@@ -228,7 +228,7 @@ export function ExplorerTable({
   )
   const layoutOptions = useMemo<TableLayoutProps>(
     () => ({
-      rowHeight: 32,
+      rowHeight: 44,
       headingHeight: 0,
       padding: 0,
       gap: 0

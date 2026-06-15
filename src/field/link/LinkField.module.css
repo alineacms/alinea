@@ -314,8 +314,8 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  height: 32px;
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 6px 12px;
   overflow: hidden;
   background: var(--alinea-bg);
   border-top: 1px solid var(--alinea-border);

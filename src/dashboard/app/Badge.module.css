@@ -37,6 +37,8 @@
     --alinea-badge-padding: 0 6px;
     --alinea-badge-font-size: 11px;
     --alinea-badge-font-weight: 600;
+    --alinea-badge-padding: 0 4px;
+    border-radius: 4px;
 
     [data-slot='icon'] {
       width: 12px;
