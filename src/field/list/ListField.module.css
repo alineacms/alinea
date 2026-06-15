@@ -291,3 +291,10 @@
   background: var(--alinea-bg);
   border-top: 1px solid var(--alinea-border);
 }
+
+.ListFieldRow-settings {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

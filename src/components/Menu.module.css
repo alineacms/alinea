@@ -52,4 +52,5 @@
   height: 1px;
   margin: 4px 8px;
   background-color: var(--alinea-border);
+  border: none;
 }

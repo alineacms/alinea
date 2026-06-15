@@ -4,11 +4,12 @@ import {
   DialogTrigger,
   FoldIcon,
   Icon,
+  MenuSeparator,
   Popover,
   SearchField,
-  SharedLabelBadge
+  SharedLabelBadge,
+  TextField
 } from '#/components.js'
-
 import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
@@ -17,11 +18,8 @@ import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {
-  Surface,
-  SurfaceHeader
-} from '#/dashboard/app/ui/Surface.js'
 import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
+import {Surface, SurfaceHeader} from '#/dashboard/app/ui/Surface.js'
 import {
   useFieldError,
   useFieldNode,
@@ -35,6 +33,8 @@ import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundClose,
+  IcRoundFirstPage,
+  IcRoundLastPage,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
@@ -652,38 +652,72 @@ function ListFieldRowHeader({
             icon={typeIcon}
           />
           <strong className={styles.ListFieldRow.title()}>{label}</strong>
-          <FoldIcon
+          {/*<FoldIcon
             aria-hidden
             className={styles.ListFieldRow.foldIcon()}
             expanded={expanded}
-          />
+          />*/}
         </Button>
       </div>
       <div className={styles.ListFieldRow.actions()}>
-        <Button
+        <DialogTrigger>
+          <Button
+            appearance="plain"
+            size="icon-small"
+            icon={IcRoundMoreHoriz}
+          />
+          <Popover placement="bottom right">
+            <div className={styles.ListFieldRow.settings()}>
+              <TextField label="Label" autoFocus />
+              <TextField label="Anchor" />
+            </div>
+            <MenuSeparator />
+            <Button appearance="plain" onPress={onCopy}>
+              <Icon icon={IcBaselineContentCopy} />
+              Copy
+            </Button>
+            <MenuSeparator />
+            {!isFirstRow && (
+              <Button appearance="plain" onPress={onMoveUp}>
+                <Icon icon={IcRoundArrowUpward} />
+                Move up
+              </Button>
+            )}
+            {!isLastRow && (
+              <Button appearance="plain" onPress={onMoveDown}>
+                <Icon icon={IcRoundArrowDownward} />
+                Move down
+              </Button>
+            )}
+            {isFirstRow && (
+              <Button appearance="plain">
+                <Icon icon={IcRoundFirstPage} />
+                Insert before
+              </Button>
+            )}
+            <Button appearance="plain">
+              <Icon icon={IcRoundLastPage} />
+              Insert afer
+            </Button>
+            <MenuSeparator />
+            <Button
+              appearance="plain"
+              onPress={onDelete}
+              isDisabled={readOnly || isPreview}
+            >
+              <Icon icon={IcRoundClose} />
+              Delete
+            </Button>
+          </Popover>
+        </DialogTrigger>
+
+        {/*<Button
           aria-label={isCopied ? `${label} is copied` : `Copy ${label}`}
           appearance={isCopied ? 'active' : 'plain'}
           isDisabled={readOnly || isPreview}
           onPress={onCopy}
           size="icon-small"
           icon={IcBaselineContentCopy}
-        />
-
-        <Button
-          aria-label={`Move ${label} up`}
-          appearance="plain"
-          isDisabled={readOnly || isPreview || isFirstRow}
-          onPress={onMoveUp}
-          size="icon-small"
-          icon={IcRoundArrowUpward}
-        />
-        <Button
-          aria-label={`Move ${label} down`}
-          appearance="plain"
-          isDisabled={readOnly || isPreview || isLastRow}
-          onPress={onMoveDown}
-          size="icon-small"
-          icon={IcRoundArrowDownward}
         />
         <Button
           aria-label={`Remove ${label}`}
@@ -692,7 +726,7 @@ function ListFieldRowHeader({
           onPress={onDelete}
           size="icon-small"
           icon={IcRoundClose}
-        />
+        />*/}
       </div>
     </>
   )
