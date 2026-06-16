@@ -10,7 +10,10 @@
     "apps/dev"
   ],
   "imports": {
-    "#/*": "./src/*",
+    "#/*": {
+      "alinea-src": "./src/*",
+      "default": "./dist/*"
+    },
     "#test/*": "./test/*"
   },
   "exports": {

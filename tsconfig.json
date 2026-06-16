@@ -4,6 +4,7 @@
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "bundler",
+    "customConditions": ["alinea-src"],
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
