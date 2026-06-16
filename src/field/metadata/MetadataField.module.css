@@ -91,8 +91,8 @@
   padding: 8px 10px;
   border: 1px solid var(--alinea-border);
   border-radius: 6px;
-  background: var(--alinea-input);
-  color: var(--alinea-fg);
+  background: var(--alinea-input-disabled);
+  color: var(--alinea-fg-disabled);
   font-size: 14px;
   font-family: var(--alinea-mono-font);
 }
@@ -105,8 +105,8 @@
   padding: 8px 10px;
   border: 1px solid var(--alinea-border);
   border-radius: 6px;
-  background: var(--alinea-input);
-  color: var(--alinea-fg);
+  background: var(--alinea-input-disabled);
+  color: var(--alinea-fg-disabled);
   overflow: hidden;
 }
 
