@@ -1,73 +1,165 @@
-import {Group} from 'react-aria-components'
+import {DialogTrigger} from 'react-aria-components'
 import {
   IcRoundClose,
   IcRoundEdit,
-  IcOutlineSettings as IcRoundSettings
+  IcOutlineSettings as IcRoundSettings,
+  IcRoundMoreHoriz,
+  IcRoundPanorama
 } from '../dashboard/icons.js'
+import {Badge} from '../dashboard/app/Badge.js'
 import {Button} from './Button.js'
 import {Elevation} from './Elevation.js'
-import {Icon} from './Icon.js'
-import {List, ListItem} from './List.js'
+import {
+  List,
+  ListCreateRow,
+  ListDragPreview,
+  ListError,
+  ListItem,
+  ListLabel,
+  ListRow,
+  ListRowActions,
+  ListRowBadges,
+  ListRowBody,
+  ListRowDrag,
+  ListRowFoldButton,
+  ListRowFooter,
+  ListRowHeader,
+  ListRowMeta,
+  ListRowSettings,
+  ListRowSettingsButton
+} from './List.js'
+import {Popover} from './Popover.js'
 import {TextField} from './TextField.js'
 
 const itemControls = (
-  <Group>
-    <Button size="icon" appearance="plain">
-      <IcRoundEdit data-slot="icon" />
-    </Button>
-    <Button size="icon" appearance="plain">
-      <IcRoundClose data-slot="icon" />
-    </Button>
-  </Group>
+  <div style={{display: 'flex'}}>
+    <Button size="icon" appearance="plain" icon={IcRoundEdit} />
+    <Button size="icon" appearance="plain" icon={IcRoundClose} />
+  </div>
 )
 
 export function Basic() {
   return (
-    <>
-      <style>{`
-        strong{font-weight:500}
-      `}</style>
-      <List>
-        <ListItem
-          inner="This is a simple list item with a short description."
-          trailing={itemControls}
-        >
-          <strong>Welcome</strong>
-        </ListItem>
-        <ListItem
-          inner="Drafts updated by your team show up here."
-          trailing={itemControls}
-        >
-          <strong>Recent activity</strong>
-        </ListItem>
-        <ListItem
-          leading={<Icon icon={IcRoundSettings} />}
-          trailing={itemControls}
-          inner={
-            <Elevation>
-              <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-                You can put more complex content in the body, including links
-                and controls.
-                <TextField
-                  placeholder="Type something..."
-                  label="Inner field"
-                />
-                <List>
-                  <ListItem trailing={itemControls}>
-                    <strong>Inner list</strong>
-                  </ListItem>
-                  <ListItem trailing={itemControls}>
-                    <strong>Is possible</strong>
-                  </ListItem>
-                </List>
-              </div>
-            </Elevation>
-          }
-        >
-          <strong>About this workspace</strong>
-        </ListItem>
-      </List>
-    </>
+    <List>
+      <ListItem
+        inner="This is a simple list item with a short description."
+        trailing={itemControls}
+      >
+        <strong>Welcome</strong>
+      </ListItem>
+      <ListItem
+        inner="Drafts updated by your team show up here."
+        trailing={itemControls}
+      >
+        <strong>Recent activity</strong>
+      </ListItem>
+      <ListItem
+        leading={<IcRoundSettings data-slot="icon" />}
+        trailing={itemControls}
+        inner={
+          <Elevation>
+            <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+              You can put more complex content in the body, including links and
+              controls.
+              <TextField placeholder="Type something..." label="Inner field" />
+            </div>
+          </Elevation>
+        }
+      >
+        <strong>About this workspace</strong>
+      </ListItem>
+    </List>
   )
 }
+
+export function FieldRows() {
+  return (
+    <div style={{maxWidth: 720}}>
+      <ListLabel aria-label="Collapse all items" expanded hasRows shared>
+        Sections
+      </ListLabel>
+      <List data-depth="muted">
+        <ListRow aria-label="Hero item 1" first role="listitem">
+          <ListRowHeader expanded first>
+            <ListRowDrag>
+              <ListRowBadges>
+                <ListRowFoldButton
+                  aria-label="Collapse hero"
+                  expanded
+                  onPress={() => undefined}
+                />
+                <Badge icon={IcRoundPanorama} size="small">
+                  Hero
+                </Badge>
+                <ListRowMeta>Landing page intro</ListRowMeta>
+                <Badge size="small" appearance="outline">
+                  #landing-page-intro
+                </Badge>
+              </ListRowBadges>
+            </ListRowDrag>
+            <ListRowActions>
+              <DialogTrigger>
+                <ListRowSettingsButton
+                  aria-label="Hero settings"
+                  icon={IcRoundMoreHoriz}
+                />
+                <Popover placement="bottom right">
+                  <ListRowSettings>
+                    <TextField label="Label" value="Landing page intro" />
+                    <TextField label="Anchor" value="landing-page-intro" />
+                  </ListRowSettings>
+                </Popover>
+              </DialogTrigger>
+            </ListRowActions>
+          </ListRowHeader>
+          <ListRowBody>
+            <TextField label="Heading" value="Build structured pages" />
+            <TextField
+              label="Body"
+              value="Compose reusable content sections with a list field."
+            />
+          </ListRowBody>
+        </ListRow>
+        <ListRow aria-label="Quote item 2" role="listitem">
+          <ListRowHeader>
+            <ListRowDrag>
+              <ListRowBadges>
+                <ListRowFoldButton
+                  aria-label="Expand quote"
+                  expanded={false}
+                  onPress={() => undefined}
+                />
+                <Badge size="small">Quote</Badge>
+                <ListRowMeta>Editorial quote</ListRowMeta>
+              </ListRowBadges>
+            </ListRowDrag>
+            <ListRowActions>
+              <ListRowSettingsButton
+                aria-label="Quote settings"
+                icon={IcRoundMoreHoriz}
+              />
+            </ListRowActions>
+          </ListRowHeader>
+          <ListRowFooter>
+            Quote: Content editing should stay close...
+          </ListRowFooter>
+        </ListRow>
+        <ListCreateRow>
+          <Button appearance="plain" size="small">
+            Add Hero
+          </Button>
+          <Button appearance="plain" size="small">
+            Add Quote
+          </Button>
+        </ListCreateRow>
+      </List>
+      <ListError>At least one section is required.</ListError>
+    </div>
+  )
+}
+
+export function DragPreview() {
+  return <ListDragPreview icon={IcRoundPanorama} label="Hero" />
+}
+
 export default {title: 'Components / List'}

@@ -1,12 +1,24 @@
 import {
   Button,
   DialogTrigger,
-  FoldIcon,
   Icon,
-  Label,
+  List,
+  ListCreateRow,
+  ListDragPreview,
+  ListLabel,
+  ListRow,
+  ListRowActions,
+  ListRowBadges,
+  ListRowBody,
+  ListRowDrag,
+  ListRowFoldButton,
+  ListRowFooter,
+  ListRowHeader,
+  ListRowMeta,
+  ListRowSettings,
+  ListRowSettingsButton,
   MenuSeparator,
   Popover,
-  SharedLabelBadge,
   TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
@@ -23,7 +35,6 @@ import {
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
-import {Surface, SurfaceHeader} from '#/dashboard/app/ui/Surface.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useDashboard,
@@ -53,7 +64,7 @@ import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
-import {useEffect, useMemo, useRef, useState} from 'react'
+import {useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
@@ -422,6 +433,17 @@ interface LinkPickerActionProps {
   onPickMany?: (value: Array<LinkFieldRow>) => void
 }
 
+interface LinkPickerDialogProps {
+  isOpen: boolean
+  onOpenChange: (isOpen: boolean) => void
+  onPick: (value: LinkFieldRow) => void
+  onPickMany?: (value: Array<LinkFieldRow>) => void
+  picker: Picker<LinkFieldRow>
+  selection?: Array<LinkFieldRow>
+  type: PickerType
+  value?: LinkFieldRow
+}
+
 function createEntryLink(
   type: PickerType,
   entryId: string,
@@ -461,7 +483,7 @@ function LinkPickerAction({
   ariaLabel,
   buttonAppearance = 'plain',
   buttonIcon,
-  buttonSize = 'small',
+  buttonSize,
   children,
   className,
   isDisabled,
@@ -564,6 +586,91 @@ function LinkPickerAction({
   )
 }
 
+function LinkPickerDialog({
+  isOpen,
+  onOpenChange,
+  onPick,
+  onPickMany,
+  picker,
+  selection,
+  type,
+  value
+}: LinkPickerDialogProps) {
+  const dashboard = useDashboard()
+  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
+  const selectedRoot = useAtomValue(dashboard.selectedRoot)
+  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+
+  function handlePick(link: LinkFieldRow) {
+    onPick(link)
+    onOpenChange(false)
+  }
+
+  if (type === 'url') {
+    return (
+      <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Button style={{display: 'none'}}>Edit link</Button>
+        <ExternalLinkPicker
+          initialValue={externalLinkValue(value)}
+          selectionMode="single"
+          submitLabel={value ? 'Save link' : undefined}
+          onConfirm={link => handlePick(createUrlLink(link, picker, value))}
+        />
+      </DialogTrigger>
+    )
+  }
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition =
+    typeof options.condition === 'function' ? undefined : options.condition
+  const fallbackRoot =
+    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
+  const fallbackLocation =
+    selectedWorkspace && fallbackRoot
+      ? {workspace: selectedWorkspace, root: fallbackRoot}
+      : undefined
+  const location =
+    typeof options.location === 'function'
+      ? fallbackLocation
+      : (options.location ?? fallbackLocation)
+  const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const pickerProps: ExplorerOptions = {
+    condition,
+    location,
+    selectionMode: handlesMultiple ? 'multiple' : 'single',
+    selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
+    initialSelection: initialSelection(value, selection),
+    onConfirm(selection: Array<string>) {
+      const links = selection.map(entryId =>
+        createEntryLink(type, entryId, picker)
+      )
+      if (onPickMany) {
+        onPickMany(links)
+        onOpenChange(false)
+        return
+      }
+      const [link] = links
+      if (link) handlePick(link)
+    }
+  } as const
+  if (type === 'file' || type === 'image') {
+    return (
+      <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Button style={{display: 'none'}}>Edit link</Button>
+        <ImagePicker
+          {...pickerProps}
+          label={type === 'file' ? 'Pick a file' : 'Pick an image'}
+        />
+      </DialogTrigger>
+    )
+  }
+  return (
+    <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Button style={{display: 'none'}}>Edit link</Button>
+      <LinkPicker {...pickerProps} />
+    </DialogTrigger>
+  )
+}
+
 function externalLinkValue(
   value?: LinkFieldRow
 ): ExternalLinkValue | undefined {
@@ -610,6 +717,7 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
     <div className={styles.LinkFieldView.create()}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
+          buttonSize="small"
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={setValue}
@@ -637,10 +745,11 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   if (options.readOnly) return null
   if (!showCreate) return null
   return (
-    <div className={styles.MultipleLinksFieldView.create()}>
+    <div className={styles.LinkFieldView.create()}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
-          className={styles.MultipleLinksFieldView.createButton()}
+          buttonSize="small"
+          className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={link => {
             setValue(links => [...(links ?? []), link])
@@ -670,16 +779,11 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
 interface LinkRowEditorProps {
   node: ReactiveNode<LinkFieldRow>
   picker?: Picker<LinkFieldRow>
-  className: string
 }
 
-function LinkRowEditor({className, node, picker}: LinkRowEditorProps) {
+function LinkRowEditor({node, picker}: LinkRowEditorProps) {
   if (!picker?.fields) return null
-  return (
-    <div className={className}>
-      <NodeEditor node={node as ReactiveNode<object>} type={picker.fields} />
-    </div>
-  )
+  return <NodeEditor node={node as ReactiveNode<object>} type={picker.fields} />
 }
 
 interface SingleLinkRowProps extends StandardFieldActionProps {
@@ -688,53 +792,58 @@ interface SingleLinkRowProps extends StandardFieldActionProps {
 }
 
 interface LinkRowActionsProps {
-  className: string
+  closeActions: () => void
   isDisabled?: boolean
   picker?: Picker<LinkFieldRow>
   type: PickerType
   value: LinkFieldRow
-  onPick: (value: LinkFieldRow) => void
+  onEdit: () => void
   onRemove: () => void
 }
 
 function LinkRowActions({
-  className,
+  closeActions,
   isDisabled,
   picker,
   type,
   value,
-  onPick,
+  onEdit,
   onRemove
 }: LinkRowActionsProps) {
   return (
-    <div className={className}>
-      <LinkRowReferenceActions type={type} value={value} />
+    <>
+      <LinkRowReferenceActions
+        closeActions={closeActions}
+        type={type}
+        value={value}
+      />
       {picker && (
-        <LinkPickerAction
-          ariaLabel="Edit link"
-          buttonAppearance="plain"
-          buttonIcon={IcRoundEdit}
-          buttonSize="small"
+        <Button
+          aria-label="Edit link"
+          appearance="plain"
+          icon={IcRoundEdit}
           isDisabled={isDisabled}
-          onPick={onPick}
-          picker={picker}
-          type={type}
-          value={value}
+          onPress={() => {
+            closeActions()
+            onEdit()
+          }}
         >
           Edit link
-        </LinkPickerAction>
+        </Button>
       )}
       <Button
         aria-label="Remove link"
         appearance="plain"
         icon={IcRoundClose}
         isDisabled={isDisabled}
-        onPress={onRemove}
-        size="small"
+        onPress={() => {
+          onRemove()
+          closeActions()
+        }}
       >
         Remove link
       </Button>
-    </div>
+    </>
   )
 }
 
@@ -780,7 +889,6 @@ function LinkMetaLabel({className, node, value}: LinkMetaLabelProps) {
         className={className}
         customLabel={customLabel}
         entryId={value._entry}
-        node={node}
       />
     )
   }
@@ -802,14 +910,12 @@ interface EntryLinkMetaLabelProps {
   className: string
   customLabel?: string
   entryId: string
-  node: ReactiveNode<LinkFieldRow>
 }
 
 function EntryLinkMetaLabel({
   className,
   customLabel,
-  entryId,
-  node
+  entryId
 }: EntryLinkMetaLabelProps) {
   const dashboard = useDashboard()
   const {data} = useAtomValue(dashboard.entries(entryId).data)
@@ -821,7 +927,6 @@ function EntryLinkMetaLabel({
       className={className}
       customLabel={customLabel}
       data={data}
-      node={node}
     />
   )
 }
@@ -830,22 +935,14 @@ interface LoadedEntryLinkMetaLabelProps {
   className: string
   customLabel?: string
   data: DashboardEntryData
-  node: ReactiveNode<LinkFieldRow>
 }
 
 function LoadedEntryLinkMetaLabel({
   className,
   customLabel,
-  data,
-  node
+  data
 }: LoadedEntryLinkMetaLabelProps) {
   const fallbackLabel = useAtomValue(data.label)
-  const setCustomLabel = useSetAtom(node.field('_label'))
-  useEffect(() => {
-    if (customLabel === undefined && fallbackLabel) {
-      setCustomLabel(fallbackLabel)
-    }
-  }, [customLabel, fallbackLabel, setCustomLabel])
   return (
     <ResolvedLinkMetaLabel
       className={className}
@@ -871,14 +968,17 @@ interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
   value: LinkFieldRow
 }
 
-function LinkTypeBadge({
-  picker,
-  type,
-  value,
-  ...props
-}: LinkTypeBadgeProps) {
+function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
   const fallbackIcon = getLinkIcon(type)
   const fallbackLabel = picker?.label ?? type
+  if (type === 'image') return null
+  if (type === 'file') {
+    return (
+      <Badge {...props} icon={IcRoundAttachFile} size="small">
+        File
+      </Badge>
+    )
+  }
   if ('_entry' in value) {
     return (
       <EntryLinkTypeBadge
@@ -894,6 +994,40 @@ function LinkTypeBadge({
       {fallbackLabel}
     </Badge>
   )
+}
+
+interface EntryLinkImagePreviewProps {
+  entryId: string
+}
+
+function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
+  const dashboard = useDashboard()
+  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  if (!data)
+    return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
+  return <LoadedEntryLinkImagePreview entry={data} />
+}
+
+interface LoadedEntryLinkImagePreviewProps {
+  entry: DashboardEntryData
+}
+
+function LoadedEntryLinkImagePreview({
+  entry
+}: LoadedEntryLinkImagePreviewProps) {
+  const {pending, data: fileInfo} = useAtomValue(entry.fileInfoState)
+  if (fileInfo?.preview) {
+    return (
+      <img
+        alt=""
+        className={styles.LinkFieldView.previewImage()}
+        src={fileInfo.preview}
+      />
+    )
+  }
+  if (pending)
+    return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
+  return null
 }
 
 interface EntryLinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
@@ -933,7 +1067,6 @@ function LoadedEntryTypeBadge({
   return (
     <Badge
       {...props}
-      appearance="contrast"
       className={styles.LinkFieldView.type(styler.merge({className}))}
       icon={type.icon || IcRoundLink}
       size="small"
@@ -991,11 +1124,6 @@ function LoadedEntryLinkLabelField({
   onChange
 }: LoadedEntryLinkLabelFieldProps) {
   const fallbackLabel = useAtomValue(data.label)
-  useEffect(() => {
-    if (customLabel === undefined && fallbackLabel) {
-      onChange(fallbackLabel)
-    }
-  }, [customLabel, fallbackLabel, onChange])
   return (
     <ResolvedLinkLabelField
       customLabel={customLabel}
@@ -1030,22 +1158,44 @@ function ResolvedLinkLabelField({
   )
 }
 
+function LinkSettingsButton() {
+  return (
+    <ListRowSettingsButton aria-label="Link settings" icon={IcRoundMoreHoriz} />
+  )
+}
+
 interface LinkRowReferenceActionsProps {
+  closeActions: () => void
   type: PickerType
   value: LinkFieldRow
 }
 
-function LinkRowReferenceActions({type, value}: LinkRowReferenceActionsProps) {
+function LinkRowReferenceActions({
+  closeActions,
+  type,
+  value
+}: LinkRowReferenceActionsProps) {
   if (!('_entry' in value)) return null
-  return <EntryLinkRowActions entryId={value._entry} type={type} />
+  return (
+    <EntryLinkRowActions
+      closeActions={closeActions}
+      entryId={value._entry}
+      type={type}
+    />
+  )
 }
 
 interface EntryLinkRowActionsProps {
+  closeActions: () => void
   entryId: string
   type: PickerType
 }
 
-function EntryLinkRowActions({entryId, type}: EntryLinkRowActionsProps) {
+function EntryLinkRowActions({
+  closeActions,
+  entryId,
+  type
+}: EntryLinkRowActionsProps) {
   const dashboard = useDashboard()
   const route = useAtomValue(dashboard.route)
   const {data} = useAtomValue(dashboard.entries(entryId).data)
@@ -1064,6 +1214,7 @@ function EntryLinkRowActions({entryId, type}: EntryLinkRowActionsProps) {
   }
   return (
     <LoadedEntryLinkRowActions
+      closeActions={closeActions}
       entry={data}
       locale={type === 'entry' ? route.locale : undefined}
     />
@@ -1071,11 +1222,13 @@ function EntryLinkRowActions({entryId, type}: EntryLinkRowActionsProps) {
 }
 
 interface LoadedEntryLinkRowActionsProps {
+  closeActions: () => void
   entry: DashboardEntryData
   locale?: string
 }
 
 function LoadedEntryLinkRowActions({
+  closeActions,
   entry,
   locale
 }: LoadedEntryLinkRowActionsProps) {
@@ -1087,8 +1240,10 @@ function LoadedEntryLinkRowActions({
       aria-label="Open link"
       appearance="plain"
       icon={IcRoundOpenInNew}
-      onPress={() => window.open(href, '_blank', 'noopener,noreferrer')}
-      size="small"
+      onPress={() => {
+        window.open(href, '_blank', 'noopener,noreferrer')
+        closeActions()
+      }}
     >
       Open link
     </Button>
@@ -1100,55 +1255,76 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   const options = useFieldOptions(field)
   const type = getPickerType(value[Reference.type])
   const picker = options.pickers[type] as Picker<LinkFieldRow> | undefined
-  const customLabel = (useAtomValue(node.field('_label')) as string) ?? ''
+  const hasFields = Boolean(picker?.fields)
+  const imagePreviewEntryId =
+    type === 'image' && '_entry' in value ? value._entry : undefined
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+
+  function closeActions() {
+    setActionsOpen(false)
+  }
+
   return (
     <>
-      <SurfaceHeader className={styles.LinkFieldView.row()}>
-        <div className={styles.LinkFieldView.actions()}>
-          <LinkTypeBadge
-            className={styles.LinkFieldView.type()}
-            picker={picker}
-            type={type}
-            value={value}
-          />
-          <LinkMetaLabel
-            className={styles.LinkFieldView.metaLabel()}
-            node={node}
-            value={value}
-          />
-        </div>
-        {!options.readOnly && (
-          <DialogTrigger>
-            <Button
-              appearance="plain"
-              aria-label="Link settings"
-              className={styles.LinkFieldView.settingsTrigger()}
-              data-filled={customLabel.trim() || undefined}
-              icon={IcRoundMoreHoriz}
-              size="icon-small"
-            />
-            <Popover placement="bottom right">
-              <div className={styles.LinkFieldView.settings()}>
-                <LinkLabelField node={node} value={value} />
-              </div>
-              <MenuSeparator />
-              <LinkRowActions
-                className={styles.LinkFieldView.menuActions()}
-                onPick={setValue}
-                onRemove={() => setValue(undefined!)}
+      <ListRow aria-label="Link item 1" first role="listitem">
+        <ListRowHeader first hasFold={false}>
+          {imagePreviewEntryId && (
+            <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+          )}
+          <ListRowDrag>
+            <ListRowBadges>
+              <LinkTypeBadge
+                className={styles.LinkFieldView.type()}
                 picker={picker}
                 type={type}
                 value={value}
               />
-            </Popover>
-          </DialogTrigger>
+              <LinkMetaLabel
+                className={styles.LinkFieldView.metaLabel()}
+                node={node}
+                value={value}
+              />
+            </ListRowBadges>
+          </ListRowDrag>
+          {!options.readOnly && (
+            <ListRowActions>
+              <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+                <LinkSettingsButton />
+                <Popover placement="bottom right">
+                  <ListRowSettings>
+                    <LinkLabelField node={node} value={value} />
+                  </ListRowSettings>
+                  <MenuSeparator />
+                  <LinkRowActions
+                    closeActions={closeActions}
+                    onEdit={() => setEditOpen(true)}
+                    onRemove={() => setValue(undefined!)}
+                    picker={picker}
+                    type={type}
+                    value={value}
+                  />
+                </Popover>
+              </DialogTrigger>
+            </ListRowActions>
+          )}
+        </ListRowHeader>
+        {hasFields && (
+          <ListRowBody>
+            <LinkRowEditor node={node} picker={picker} />
+          </ListRowBody>
         )}
-      </SurfaceHeader>
-      <LinkRowEditor
-        className={styles.LinkFieldView.fields()}
-        node={node}
-        picker={picker}
-      />
+      </ListRow>
+      {picker && (
+        <LinkPickerDialog
+          isOpen={editOpen}
+          onOpenChange={setEditOpen}
+          onPick={setValue}
+          picker={picker}
+          type={type}
+          value={value}
+        />
+      )}
     </>
   )
 }
@@ -1209,16 +1385,7 @@ interface LinkFieldDragPreviewProps {
 }
 
 function LinkFieldDragPreview({icon, label}: LinkFieldDragPreviewProps) {
-  return (
-    <div className={styles.MultipleLinksFieldRow.dragPreview()}>
-      <div className={styles.MultipleLinksFieldRow.dragPreviewIcon()}>
-        <Icon aria-hidden icon={icon} />
-      </div>
-      <strong className={styles.MultipleLinksFieldRow.dragPreviewTitle()}>
-        {label}
-      </strong>
-    </div>
-  )
+  return <ListDragPreview icon={icon} label={label} />
 }
 
 function MultipleLinkRow({
@@ -1237,9 +1404,13 @@ function MultipleLinkRow({
   const options = useFieldOptions(field)
   const type = getPickerType(value[Reference.type])
   const picker = options.pickers[type] as Picker<LinkFieldRow> | undefined
+  const hasFields = Boolean(picker?.fields)
+  const imagePreviewEntryId =
+    type === 'image' && '_entry' in value ? value._entry : undefined
   const itemId = value[Reference.id]
-  const customLabel = (useAtomValue(node.field('_label')) as string) ?? ''
   const readOnly = Boolean(options.readOnly)
+  const [actionsOpen, setActionsOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
   const {dragProps, isDragging} = useDrag({
     getItems() {
@@ -1254,19 +1425,22 @@ function MultipleLinkRow({
     preview: dragPreview
   })
 
+  function closeActions() {
+    setActionsOpen(false)
+  }
+
   return (
     <>
-      <section
+      <ListRow
         aria-label={`Link item ${index + 1}`}
-        className={styles.MultipleLinksFieldRow()}
-        data-dragging={isDragging || undefined}
-        data-first-row={index === 0 ? 'true' : undefined}
+        dragging={isDragging}
+        first={index === 0}
         role="listitem"
       >
-        <SurfaceHeader
-          className={styles.MultipleLinksFieldRow.header()}
-          data-first-row={index === 0 ? 'true' : undefined}
-        >
+        <ListRowHeader first={index === 0} hasFold={hasFields}>
+          {imagePreviewEntryId && !hasFields && (
+            <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+          )}
           <DragPreview ref={dragPreview}>
             {() => (
               <LinkFieldDragPreview
@@ -1275,67 +1449,50 @@ function MultipleLinkRow({
               />
             )}
           </DragPreview>
-          <div
-            className={styles.MultipleLinksFieldRow.drag()}
-            data-dragging={isDragging || undefined}
-          >
-            <LinkTypeBadge
-              {...dragProps}
-              aria-label={`Drag link item ${index + 1}`}
-              className={styles.MultipleLinksFieldRow.dragHandle()}
-              data-dragging={isDragging || undefined}
-              picker={picker}
-              type={type}
-              value={value}
-            />
-            <LinkMetaLabel
-              className={styles.MultipleLinksFieldRow.metaLabel()}
-              node={node}
-              value={value}
-            />
-          </div>
-          <div className={styles.MultipleLinksFieldRow.actions()}>
-            <Button
-              appearance="plain"
-              aria-label={expanded ? 'Collapse link' : 'Expand link'}
-              className={styles.MultipleLinksFieldRow.fold()}
-              onPress={() => onToggleRow(itemId)}
-              size="icon-small"
-            >
-              <FoldIcon
-                aria-hidden
-                className={styles.MultipleLinksFieldRow.foldIcon()}
-                expanded={expanded}
+          <ListRowDrag dragging={isDragging}>
+            <ListRowBadges>
+              {hasFields && (
+                <ListRowFoldButton
+                  aria-label={expanded ? 'Collapse link' : 'Expand link'}
+                  expanded={expanded}
+                  onPress={() => onToggleRow(itemId)}
+                />
+              )}
+              {imagePreviewEntryId && hasFields && (
+                <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+              )}
+              <LinkTypeBadge
+                {...dragProps}
+                aria-label={`Drag link item ${index + 1}`}
+                className={styles.LinkFieldView.dragHandle()}
+                data-dragging={isDragging || undefined}
+                picker={picker}
+                type={type}
+                value={value}
               />
-            </Button>
-            <DialogTrigger>
-              <Button
-                appearance="plain"
-                aria-label="Link settings"
-                className={styles.MultipleLinksFieldRow.settingsTrigger()}
-                data-filled={customLabel.trim() || undefined}
-                icon={IcRoundMoreHoriz}
-                size="icon-small"
+              <LinkMetaLabel
+                className={styles.LinkFieldView.metaLabel()}
+                node={node}
+                value={value}
               />
+            </ListRowBadges>
+          </ListRowDrag>
+          <ListRowActions>
+            <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+              <LinkSettingsButton />
               <Popover placement="bottom right">
-                <div className={styles.MultipleLinksFieldRow.settings()}>
+                <ListRowSettings>
                   <LinkLabelField
                     isDisabled={readOnly}
                     node={node}
                     value={value}
                   />
-                </div>
+                </ListRowSettings>
                 <MenuSeparator />
                 <LinkRowActions
-                  className={styles.MultipleLinksFieldRow.menuActions()}
+                  closeActions={closeActions}
                   isDisabled={readOnly}
-                  onPick={link => {
-                    setValue(links =>
-                      links.map((current, currentIndex) =>
-                        currentIndex === index ? link : current
-                      )
-                    )
-                  }}
+                  onEdit={() => setEditOpen(true)}
                   onRemove={() =>
                     setValue(links =>
                       links.filter((_, currentIndex) => currentIndex !== index)
@@ -1347,25 +1504,39 @@ function MultipleLinkRow({
                 />
               </Popover>
             </DialogTrigger>
-          </div>
-        </SurfaceHeader>
-        {expanded && (
-          <LinkRowEditor
-            className={styles.MultipleLinksFieldRow.body()}
-            node={node}
-            picker={picker}
-          />
+          </ListRowActions>
+        </ListRowHeader>
+        {expanded && hasFields && (
+          <ListRowBody>
+            <LinkRowEditor node={node} picker={picker} />
+          </ListRowBody>
         )}
         {!expanded && picker?.fields && (
-          <div className={styles.MultipleLinksFieldRow.footer()}>
+          <ListRowFooter>
             <CompactRecordFields
               fields={Type.fields(picker.fields)}
               layout="footer"
               value={value}
             />
-          </div>
+          </ListRowFooter>
         )}
-      </section>
+      </ListRow>
+      {picker && (
+        <LinkPickerDialog
+          isOpen={editOpen}
+          onOpenChange={setEditOpen}
+          onPick={link => {
+            setValue(links =>
+              links.map((current, currentIndex) =>
+                currentIndex === index ? link : current
+              )
+            )
+          }}
+          picker={picker}
+          type={type}
+          value={value}
+        />
+      )}
       <LinkFieldSeparator
         dragging={dragging}
         label="link"
@@ -1389,29 +1560,44 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const nodeIsEmpty = useAtomValue(node.isEmpty)
   const selectedValue = isLinkFieldRow(value) ? value : undefined
   const isEmpty = nodeIsEmpty || !selectedValue
+  const hasRows = Boolean(selectedValue)
+  const readOnly = Boolean(options.readOnly)
+  const selectedPicker = selectedValue
+    ? (options.pickers[getPickerType(selectedValue[Reference.type])] as
+        | Picker<LinkFieldRow>
+        | undefined)
+    : undefined
+  const showFold = Boolean(selectedPicker?.fields)
+  const content = (hasRows || !readOnly) && (
+    <List aria-label={options.label || 'Link'} data-depth="muted">
+      {selectedValue && (
+        <SingleLinkRow
+          field={field}
+          node={node as ReactiveNode<LinkFieldRow>}
+          value={selectedValue}
+        />
+      )}
+      {isEmpty && !readOnly && (
+        <ListCreateRow empty>
+          <SingleLinkCreateActions field={field} />
+        </ListCreateRow>
+      )}
+    </List>
+  )
   return (
-    <Label label={options.label} shared={options.shared}>
-      <Surface className={styles.LinkFieldView()}>
-        {selectedValue && (
-          <SingleLinkRow
-            field={field}
-            node={node as ReactiveNode<LinkFieldRow>}
-            value={selectedValue}
-          />
-        )}
-        {isEmpty && (
-          <SurfaceHeader
-            className={styles.LinkFieldView.row(
-              styles.LinkFieldView.rowCenter()
-            )}
-          >
-            <div className={styles.LinkFieldView.createActions()}>
-              <SingleLinkCreateActions field={field} />
-            </div>
-          </SurfaceHeader>
-        )}
-      </Surface>
-    </Label>
+    <>
+      <ListLabel
+        aria-label={hasRows ? 'Link selected' : 'No link selected'}
+        expanded
+        hasRows={hasRows}
+        isDisabled
+        shared={options.shared}
+        showFold={showFold}
+      >
+        {options.label}
+      </ListLabel>
+      {content}
+    </>
   )
 }
 
@@ -1427,6 +1613,12 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const nodes = useNodes(list) ?? []
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
+  const hasFoldableRows = links.some(link => {
+    const picker = options.pickers[getPickerType(link[Reference.type])] as
+      | Picker<LinkFieldRow>
+      | undefined
+    return Boolean(picker?.fields)
+  })
   const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
   const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
   const rowIdsAtom = useMemo(
@@ -1470,9 +1662,42 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     })
   }
 
+  const content = (hasRows || !readOnly) && (
+    <List aria-label={options.label || 'Links'} data-depth="muted">
+      {nodes.length > 0 && (
+        <>
+          {nodes.map((node, index) => {
+            const value = links[index]
+            if (!value) return null
+            return (
+              <MultipleLinkRow
+                dragging={Boolean(draggingRowId)}
+                expanded={!foldedIds.has(value._id)}
+                field={field}
+                index={index}
+                key={value._id}
+                node={node}
+                onMoveRow={moveRow}
+                onRowDragEnd={() => setDraggingRowId(null)}
+                onRowDragStart={() => setDraggingRowId(value._id)}
+                onToggleRow={toggleRow}
+                value={value}
+              />
+            )
+          })}
+        </>
+      )}
+      {!readOnly && (
+        <ListCreateRow empty={!hasRows}>
+          <MultipleLinkCreateActions field={field} />
+        </ListCreateRow>
+      )}
+    </List>
+  )
+
   return (
     <>
-      <Button
+      <ListLabel
         aria-label={
           hasRows
             ? allExpanded
@@ -1480,16 +1705,15 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
               : 'Expand all links'
             : 'No links to fold'
         }
-        appearance="plain"
-        className={styles.MultipleLinksFieldView.label()}
-        data-has-rows={hasRows ? 'true' : undefined}
-        isDisabled={!hasRows}
+        expanded={allExpanded}
+        hasRows={hasRows}
+        isDisabled={!hasFoldableRows}
         onPress={toggleAll}
+        shared={options.shared}
+        showFold={hasFoldableRows}
       >
         {options.label}
-        {options.shared && <SharedLabelBadge />}
-        <FoldIcon aria-hidden data-slot="icon" expanded={allExpanded} />
-      </Button>
+      </ListLabel>
       {hasRows && !readOnly && (
         <LinkFieldSeparator
           dragging={Boolean(draggingRowId)}
@@ -1501,40 +1725,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
           targetIndex={0}
         />
       )}
-      <Surface className={styles.MultipleLinksFieldView()}>
-        {nodes.length > 0 && (
-          <div aria-label={options.label || 'Links'} role="list">
-            {nodes.map((node, index) => {
-              const value = links[index]
-              if (!value) return null
-              return (
-                <MultipleLinkRow
-                  dragging={Boolean(draggingRowId)}
-                  expanded={!foldedIds.has(value._id)}
-                  field={field}
-                  index={index}
-                  key={value._id}
-                  node={node}
-                  onMoveRow={moveRow}
-                  onRowDragEnd={() => setDraggingRowId(null)}
-                  onRowDragStart={() => setDraggingRowId(value._id)}
-                  onToggleRow={toggleRow}
-                  value={value}
-                />
-              )
-            })}
-          </div>
-        )}
-        <SurfaceHeader
-          className={styles.MultipleLinksFieldView.row(
-            styles.MultipleLinksFieldView.rowCenter()
-          )}
-        >
-          <div className={styles.MultipleLinksFieldView.createActions()}>
-            <MultipleLinkCreateActions field={field} />
-          </div>
-        </SurfaceHeader>
-      </Surface>
+      {content}
     </>
   )
 }

@@ -2,12 +2,26 @@ import {
   Button,
   Dialog,
   DialogTrigger,
-  FoldIcon,
   Icon,
+  List,
+  ListCreateRow,
+  ListDragPreview,
+  ListError,
+  ListLabel,
+  ListRow as ComponentListRow,
+  ListRowActions,
+  ListRowBadges,
+  ListRowBody,
+  ListRowDrag,
+  ListRowFoldButton,
+  ListRowFooter,
+  ListRowHeader,
+  ListRowMeta,
+  ListRowSettings,
+  ListRowSettingsButton,
   MenuSeparator,
   Popover,
   SearchField,
-  SharedLabelBadge,
   TextField
 } from '#/components.js'
 import {ListField as CoreListField} from '#/core/field/ListField.js'
@@ -193,11 +207,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
           targetIndex={0}
         />
       )}
-      <div
+      <List
         aria-label={options.label || 'List items'}
-        className={styles.ListFieldView()}
         data-depth={depth % 2 === 0 ? 'muted' : 'base'}
-        role="list"
       >
         {nodes.map((row, index) => (
           <ListFieldRow
@@ -205,7 +217,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
             addBetweenRow={(value, position = 'after') =>
               insertRow(insertIndex(index, position), value)
             }
-            copiedRowId={pasted?._id}
             foldedIds={foldedIds}
             index={index}
             list={list}
@@ -222,29 +233,24 @@ export function ListFieldView({field}: ListFieldViewProps) {
         ))}
 
         {!readOnly && (
-          <div
-            className={styles.ListFieldView.create()}
-            data-empty={!hasRows || undefined}
-          >
-            <div className={styles.ListFieldView.createRow()}>
-              <ListFieldCreateActions
-                items={typeItems}
-                pasted={
-                  pasted && options.schema[pasted._type] ? pasted : undefined
-                }
-                onPaste={row => pushRow(cloneRow(row))}
-                onSelect={item => addRow(item.id, item.type)}
-              />
-            </div>
-          </div>
+          <ListCreateRow empty={!hasRows}>
+            <ListFieldCreateActions
+              items={typeItems}
+              pasted={
+                pasted && options.schema[pasted._type] ? pasted : undefined
+              }
+              onPaste={row => pushRow(cloneRow(row))}
+              onSelect={item => addRow(item.id, item.type)}
+            />
+          </ListCreateRow>
         )}
-      </div>
+      </List>
     </>
   )
 
   return (
     <ListFieldDepthContext.Provider value={depth + 1}>
-      <Button
+      <ListLabel
         aria-label={
           hasRows
             ? allExpanded
@@ -252,18 +258,16 @@ export function ListFieldView({field}: ListFieldViewProps) {
               : 'Expand all items'
             : 'No list items to fold'
         }
-        appearance="plain"
-        className={styles.ListFieldView.label()}
-        data-has-rows={hasRows ? 'true' : undefined}
+        expanded={allExpanded}
+        hasRows={hasRows}
         isDisabled={!hasRows}
         onPress={toggleAll}
+        shared={options.shared}
       >
         {options.label}
-        {options.shared && <SharedLabelBadge />}
-        <FoldIcon aria-hidden data-slot="icon" expanded={allExpanded} />
-      </Button>
+      </ListLabel>
       {content}
-      {error && <div className={styles.ListFieldView.error()}>{error}</div>}
+      {error && <ListError>{error}</ListError>}
     </ListFieldDepthContext.Provider>
   )
 }
@@ -370,7 +374,6 @@ interface ListFieldRowProps {
   typeItems: Array<ListFieldTypeItem>
   pasted?: ListValue
   foldedIds: Set<string>
-  copiedRowId?: string
   onToggleRow: (rowId: string) => void
   onCopyRow: (rowId: string) => void
   onMoveRow: (rowId: string, targetIndex: number) => void
@@ -453,7 +456,6 @@ function ListFieldRow({
   typeItems,
   pasted,
   foldedIds,
-  copiedRowId,
   onToggleRow,
   onCopyRow,
   onMoveRow,
@@ -486,10 +488,8 @@ function ListFieldRow({
   if (!type) return null
 
   const label = Type.label(type)
-  const typeIcon = getType(type).icon || IcRoundAdd
+  const typeIcon = getType(type).icon
   const expanded = !foldedIds.has(itemId)
-  const isCopied = copiedRowId === itemId
-
   function moveCurrentRow(direction: -1 | 1) {
     moveListRow(index, index + direction)
   }
@@ -512,21 +512,18 @@ function ListFieldRow({
 
   return (
     <>
-      <div
+      <ComponentListRow
         aria-label={`${label} item ${index + 1}`}
-        className={styles.ListFieldRow()}
-        data-dragging={isDragging || undefined}
-        data-first-row={index === 0 ? 'true' : undefined}
+        dragging={isDragging}
+        first={index === 0}
         role="listitem"
       >
         <DragPreview ref={dragPreview}>
           {() => <ListFieldDragPreview icon={typeIcon} label={label} />}
         </DragPreview>
         <ListFieldRowHeader
-          className={styles.ListFieldRow.header()}
           dragProps={dragProps}
           expanded={expanded}
-          isCopied={isCopied}
           isDragging={isDragging}
           isFirstRow={index === 0}
           isLastRow={index === rows - 1}
@@ -544,20 +541,20 @@ function ListFieldRow({
           onToggle={() => onToggleRow(itemId)}
         />
         {expanded && (
-          <div className={styles.ListFieldRow.body()}>
+          <ListRowBody>
             <NodeEditor node={row as ReactiveNode<object>} type={type} />
-          </div>
+          </ListRowBody>
         )}
         {!expanded && (
-          <div className={styles.ListFieldRow.footer()}>
+          <ListRowFooter>
             <CompactRecordFields
               fields={Type.fields(type)}
               layout="footer"
               value={value}
             />
-          </div>
+          </ListRowFooter>
         )}
-      </div>
+      </ComponentListRow>
       {index < rows - 1 && (
         <ListFieldSeparator
           items={typeItems}
@@ -594,30 +591,18 @@ function ListFieldRow({
 }
 
 interface ListFieldDragPreviewProps {
-  icon: ComponentType
+  icon?: ComponentType
   label: string
 }
 
 function ListFieldDragPreview({icon, label}: ListFieldDragPreviewProps) {
-  return (
-    <div className={styles.ListFieldView.dragPreview()}>
-      <div className={styles.ListFieldView.dragPreviewIcon()}>
-        <Icon aria-hidden icon={icon} />
-      </div>
-      <div className={styles.ListFieldView.dragPreviewBody()}>
-        <strong className={styles.ListFieldView.dragPreviewTitle()}>
-          {label}
-        </strong>
-      </div>
-    </div>
-  )
+  return <ListDragPreview icon={icon} label={label} />
 }
 
 interface ListFieldRowHeaderProps {
   className?: string
   dragProps?: ReturnType<typeof useDrag>['dragProps']
   expanded: boolean
-  isCopied: boolean
   isDragging: boolean
   isFirstRow: boolean
   isLastRow: boolean
@@ -626,7 +611,7 @@ interface ListFieldRowHeaderProps {
   customLabel: string
   anchor?: string
   readOnly: boolean
-  typeIcon: ComponentType
+  typeIcon?: ComponentType
   onAnchorChange: (value: string) => void
   onCustomLabelChange: (value: string) => void
   onCopy?: () => void
@@ -640,7 +625,6 @@ function ListFieldRowHeader({
   className,
   dragProps,
   expanded,
-  isCopied,
   isDragging,
   isFirstRow,
   isLastRow,
@@ -661,70 +645,50 @@ function ListFieldRowHeader({
   const displayLabel = customLabel.trim()
   const displayAnchor = (anchor ?? slugify(displayLabel)).trim()
   const showAnchor = Boolean(displayAnchor && !displayLabel)
-  const hasSettings = Boolean(displayLabel || displayAnchor)
+  const [actionsOpen, setActionsOpen] = useState(false)
+
+  function closeActions() {
+    setActionsOpen(false)
+  }
+
   return (
-    <div
-      className={className}
-      data-expanded={expanded ? 'true' : undefined}
-      data-first-row={isFirstRow ? 'true' : undefined}
-    >
-      <div
-        className={styles.ListFieldRow.drag()}
-        data-dragging={isDragging || undefined}
-      >
-        <div className={styles.ListFieldRow.badges()}>
+    <ListRowHeader className={className} expanded={expanded} first={isFirstRow}>
+      <ListRowDrag dragging={isDragging}>
+        <ListRowBadges>
+          <ListRowFoldButton
+            aria-label={
+              isPreview
+                ? undefined
+                : expanded
+                  ? `Collapse ${label}`
+                  : `Expand ${label}`
+            }
+            expanded={expanded}
+            isDisabled={isPreview}
+            onPress={onToggle}
+          />
           <Badge
             {...dragProps}
-            className={styles.ListFieldRow.dragHandle()}
+            className={styles.ListFieldView.dragHandle()}
             data-dragging={isDragging || undefined}
             icon={typeIcon}
             size="small"
           >
             {label}
           </Badge>
-          {displayLabel && (
-            <span className={styles.ListFieldRow.metaLabel()}>
-              {displayLabel}
-            </span>
-          )}
+          {displayLabel && <ListRowMeta>{displayLabel}</ListRowMeta>}
           {showAnchor && (
             <Badge size="small" appearance="outline">
               #{displayAnchor}
             </Badge>
           )}
-        </div>
-      </div>
-      <div className={styles.ListFieldRow.actions()}>
-        <Button
-          appearance="plain"
-          aria-label={
-            isPreview
-              ? undefined
-              : expanded
-                ? `Collapse ${label}`
-                : `Expand ${label}`
-          }
-          className={styles.ListFieldRow.fold()}
-          isDisabled={isPreview}
-          onPress={onToggle}
-          size="icon-small"
-        >
-          <FoldIcon
-            aria-hidden
-            className={styles.ListFieldRow.foldIcon()}
-            expanded={expanded}
-          />
-        </Button>
-        <DialogTrigger>
-          <Button
-            appearance="plain"
-            size="icon-small"
-            icon={IcRoundMoreHoriz}
-            className={styles.ListFieldRow.settingsTrigger()}
-            data-filled={hasSettings || undefined}
-          />
+        </ListRowBadges>
+      </ListRowDrag>
+      <ListRowActions>
+        <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+          <ListRowSettingsButton icon={IcRoundMoreHoriz} />
           <Popover placement="bottom right">
-            <div className={styles.ListFieldRow.settings()}>
+            <ListRowSettings>
               <TextField
                 label="Label"
                 autoFocus
@@ -739,21 +703,39 @@ function ListFieldRowHeader({
                 onChange={onAnchorChange}
                 source={customLabel}
               />
-            </div>
+            </ListRowSettings>
             <MenuSeparator />
-            <Button appearance="plain" onPress={onCopy}>
+            <Button
+              appearance="plain"
+              onPress={() => {
+                onCopy?.()
+                closeActions()
+              }}
+            >
               <Icon icon={IcBaselineContentCopy} />
               Copy
             </Button>
             <MenuSeparator />
             {!isFirstRow && (
-              <Button appearance="plain" onPress={onMoveUp}>
+              <Button
+                appearance="plain"
+                onPress={() => {
+                  onMoveUp?.()
+                  closeActions()
+                }}
+              >
                 <Icon icon={IcRoundArrowUpward} />
                 Move up
               </Button>
             )}
             {!isLastRow && (
-              <Button appearance="plain" onPress={onMoveDown}>
+              <Button
+                appearance="plain"
+                onPress={() => {
+                  onMoveDown?.()
+                  closeActions()
+                }}
+              >
                 <Icon icon={IcRoundArrowDownward} />
                 Move down
               </Button>
@@ -766,12 +748,15 @@ function ListFieldRowHeader({
             )}
             <Button appearance="plain">
               <Icon icon={IcRoundLastPage} />
-              Insert afer
+              Insert after
             </Button>
             <MenuSeparator />
             <Button
               appearance="plain"
-              onPress={onDelete}
+              onPress={() => {
+                onDelete?.()
+                closeActions()
+              }}
               isDisabled={readOnly || isPreview}
             >
               <Icon icon={IcRoundClose} />
@@ -779,25 +764,8 @@ function ListFieldRowHeader({
             </Button>
           </Popover>
         </DialogTrigger>
-
-        {/*<Button
-          aria-label={isCopied ? `${label} is copied` : `Copy ${label}`}
-          appearance={isCopied ? 'active' : 'plain'}
-          isDisabled={readOnly || isPreview}
-          onPress={onCopy}
-          size="icon-small"
-          icon={IcBaselineContentCopy}
-        />
-        <Button
-          aria-label={`Remove ${label}`}
-          appearance="plain"
-          isDisabled={readOnly || isPreview}
-          onPress={onDelete}
-          size="icon-small"
-          icon={IcRoundClose}
-        />*/}
-      </div>
-    </div>
+      </ListRowActions>
+    </ListRowHeader>
   )
 }
 

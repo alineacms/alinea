@@ -86,16 +86,9 @@ function ExternalLinkPickerDialog({
           <DashboardModalCloseButton />
         </DashboardModalFormHeader>
         <DashboardModalFormBody>
+          <TextField label="URL" value={url} onChange={setUrl} isRequired />
           <TextField
-            label="URL"
-            description="Url of the link"
-            value={url}
-            onChange={setUrl}
-            isRequired
-          />
-          <TextField
-            label="Description"
-            description="Text to display inside the link element"
+            label="Label"
             value={title}
             onChange={setTitle}
             isRequired

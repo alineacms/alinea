@@ -1,22 +1,35 @@
 .List {
+  --List-background: var(--alinea-backdrop);
+
   color: var(--alinea-fg);
-  border: 1px solid var(--alinea-border);
-  background: var(--alinea-muted);
+  display: flex;
+  flex-direction: column;
+  background: var(--List-background);
   border-radius: 8px;
-  cursor: default;
   overflow: hidden;
+  border: 1px solid var(--alinea-border);
+  cursor: default;
   position: relative;
   font-size: var(--alinea-font-size-base);
+}
+
+.List[data-depth='base'] {
+  --List-background: var(--alinea-bg);
+}
+
+.List[data-depth='muted'] {
+  --List-background: var(--alinea-bg-muted);
 }
 
 .ListItem {
   display: flex;
   flex-direction: column;
   position: relative;
+  background: inherit;
+}
 
-  & + & {
-    box-shadow: var(--alinea-divider-top);
-  }
+.ListItem + .ListItem {
+  box-shadow: var(--alinea-divider-top);
 }
 
 .ListItem-header {
@@ -24,7 +37,7 @@
   display: flex;
   gap: 8px;
   padding: 6px 8px;
-  height: 26px;
+  min-height: 26px;
 }
 
 .ListItem-content {
@@ -50,4 +63,199 @@
 
 .ListItem-header + .ListItem-inner {
   padding-top: 4px;
+}
+
+.ListLabel {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  min-height: auto;
+  padding-block: 0;
+  margin-left: -8px;
+  margin-bottom: 8px;
+  line-height: 1;
+  border: none;
+}
+
+.ListLabel[data-hovered],
+.ListLabel[data-pressed],
+.ListLabel[data-active] {
+  background: transparent;
+}
+
+.ListError {
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+  padding-top: 4px;
+}
+
+.ListCreateRow {
+  background: inherit;
+}
+
+.ListCreateRow[data-empty] .ListCreateRow-inner {
+  box-shadow: none;
+}
+
+.ListCreateRow-inner {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  min-height: 36px;
+  background: inherit;
+  box-shadow: var(--alinea-divider-top);
+}
+
+.ListRow {
+  display: grid;
+  position: relative;
+  box-shadow: var(--alinea-divider-top);
+  background: inherit;
+  overflow: hidden;
+}
+
+.ListRow[data-dragging] {
+  opacity: 0.5;
+}
+
+.ListRow[data-first-row] {
+  box-shadow: none;
+}
+
+.ListRowHeader {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 36px;
+  padding: 2px 4px;
+}
+
+.ListRowHeader:not([data-has-fold]) {
+  padding-left: 8px;
+}
+
+.ListRowDrag {
+  flex: 1 1 0;
+  align-self: stretch;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.ListRowDrag[data-dragging] {
+  cursor: grabbing;
+}
+
+.ListRowBadges {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+  line-height: 18px;
+  overflow: hidden;
+}
+
+.ListRowMeta {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ListRowActions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.ListRowFoldButton {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+}
+
+.ListRowFoldButton[data-hovered],
+.ListRowFoldButton[data-pressed],
+.ListRowFoldButton[data-active] {
+  color: var(--alinea-fg);
+}
+
+.ListRowFoldButton-icon {
+  font-size: 16px;
+}
+
+.ListRowSettingsButton {
+  position: relative;
+}
+
+.ListRowBody {
+  display: grid;
+  gap: 12px;
+  align-items: normal;
+  padding: 8px 16px 16px 16px;
+  background: inherit;
+}
+
+.ListRowFooter {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 8px 16px;
+  background: inherit;
+}
+
+.ListRowSettings {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ListDragPreview {
+  min-width: 220px;
+  max-width: 300px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--alinea-border) 70%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--alinea-bg) 94%, white);
+  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+}
+
+.ListDragPreview-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-primary);
+  background: color-mix(in srgb, var(--alinea-primary) 12%, transparent);
+}
+
+.ListDragPreview-body {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ListDragPreview-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alinea-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
