@@ -343,7 +343,11 @@ function EntryEditor({entry}: EntryEditorProps) {
   }
 
   if (View) {
-    return <View type={type.type} />
+    return (
+      <EntryScope entry={entry}>
+        <View type={type.type} />
+      </EntryScope>
+    )
   }
 
   const hasSidebar = !isUntranslated
