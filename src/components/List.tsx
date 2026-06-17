@@ -276,13 +276,20 @@ export function ListRowFooter({className, ...props}: ListRowFooterProps) {
   )
 }
 
-export interface ListRowSettingsProps extends ComponentPropsWithoutRef<'div'> {}
+export interface ListRowSettingsProps extends ComponentPropsWithoutRef<'div'> {
+  actions?: boolean
+}
 
-export function ListRowSettings({className, ...props}: ListRowSettingsProps) {
+export function ListRowSettings({
+  actions,
+  className,
+  ...props
+}: ListRowSettingsProps) {
   return (
     <div
       {...props}
       className={styles.ListRowSettings(styler.merge({className}))}
+      data-actions={actions || undefined}
     />
   )
 }

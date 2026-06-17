@@ -705,63 +705,69 @@ function ListFieldRowHeader({
               />
             </ListRowSettings>
             <MenuSeparator />
-            <Button
-              appearance="plain"
-              onPress={() => {
-                onCopy?.()
-                closeActions()
-              }}
-            >
-              <Icon icon={IcBaselineContentCopy} />
-              Copy
-            </Button>
+            <ListRowSettings actions>
+              <Button
+                appearance="plain"
+                onPress={() => {
+                  onCopy?.()
+                  closeActions()
+                }}
+              >
+                <Icon icon={IcBaselineContentCopy} />
+                Copy
+              </Button>
+            </ListRowSettings>
             <MenuSeparator />
-            {!isFirstRow && (
-              <Button
-                appearance="plain"
-                onPress={() => {
-                  onMoveUp?.()
-                  closeActions()
-                }}
-              >
-                <Icon icon={IcRoundArrowUpward} />
-                Move up
-              </Button>
-            )}
-            {!isLastRow && (
-              <Button
-                appearance="plain"
-                onPress={() => {
-                  onMoveDown?.()
-                  closeActions()
-                }}
-              >
-                <Icon icon={IcRoundArrowDownward} />
-                Move down
-              </Button>
-            )}
-            {isFirstRow && (
+            <ListRowSettings actions>
+              {!isFirstRow && (
+                <Button
+                  appearance="plain"
+                  onPress={() => {
+                    onMoveUp?.()
+                    closeActions()
+                  }}
+                >
+                  <Icon icon={IcRoundArrowUpward} />
+                  Move up
+                </Button>
+              )}
+              {!isLastRow && (
+                <Button
+                  appearance="plain"
+                  onPress={() => {
+                    onMoveDown?.()
+                    closeActions()
+                  }}
+                >
+                  <Icon icon={IcRoundArrowDownward} />
+                  Move down
+                </Button>
+              )}
+              {isFirstRow && (
+                <Button appearance="plain">
+                  <Icon icon={IcRoundFirstPage} />
+                  Insert before
+                </Button>
+              )}
               <Button appearance="plain">
-                <Icon icon={IcRoundFirstPage} />
-                Insert before
+                <Icon icon={IcRoundLastPage} />
+                Insert after
               </Button>
-            )}
-            <Button appearance="plain">
-              <Icon icon={IcRoundLastPage} />
-              Insert after
-            </Button>
+            </ListRowSettings>
             <MenuSeparator />
-            <Button
-              appearance="plain"
-              onPress={() => {
-                onDelete?.()
-                closeActions()
-              }}
-              isDisabled={readOnly || isPreview}
-            >
-              <Icon icon={IcRoundClose} />
-              Delete
-            </Button>
+            <ListRowSettings actions>
+              <Button
+                appearance="plain"
+                onPress={() => {
+                  onDelete?.()
+                  closeActions()
+                }}
+                isDisabled={readOnly || isPreview}
+              >
+                <Icon icon={IcRoundClose} />
+                Delete
+              </Button>
+            </ListRowSettings>
           </Popover>
         </DialogTrigger>
       </ListRowActions>

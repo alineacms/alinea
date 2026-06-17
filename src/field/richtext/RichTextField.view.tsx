@@ -11,6 +11,7 @@ import {
   ListRowDrag,
   ListRowFoldButton,
   ListRowHeader,
+  ListRowSettings,
   ListRowSettingsButton,
   MenuSeparator,
   Popover
@@ -129,29 +130,33 @@ function TypeExtensionHeader({
             icon={IcRoundMoreHoriz}
           />
           <Popover placement="bottom right">
-            <Button
-              appearance="plain"
-              isDisabled={readOnly}
-              onPress={() => {
-                onCopy()
-                closeActions()
-              }}
-            >
-              <Icon icon={IcBaselineContentCopy} />
-              Duplicate
-            </Button>
+            <ListRowSettings actions>
+              <Button
+                appearance="plain"
+                isDisabled={readOnly}
+                onPress={() => {
+                  onCopy()
+                  closeActions()
+                }}
+              >
+                <Icon icon={IcBaselineContentCopy} />
+                Duplicate
+              </Button>
+            </ListRowSettings>
             <MenuSeparator />
-            <Button
-              appearance="plain"
-              isDisabled={readOnly}
-              onPress={() => {
-                onDelete()
-                closeActions()
-              }}
-            >
-              <Icon icon={IcRoundClose} />
-              Delete
-            </Button>
+            <ListRowSettings actions>
+              <Button
+                appearance="plain"
+                isDisabled={readOnly}
+                onPress={() => {
+                  onDelete()
+                  closeActions()
+                }}
+              >
+                <Icon icon={IcRoundClose} />
+                Delete
+              </Button>
+            </ListRowSettings>
           </Popover>
         </DialogTrigger>
       </ListRowActions>

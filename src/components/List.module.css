@@ -220,6 +220,11 @@
   gap: 8px;
 }
 
+.ListRowSettings[data-actions] {
+  padding: 0;
+  gap: 0;
+}
+
 .ListDragPreview {
   min-width: 220px;
   max-width: 300px;

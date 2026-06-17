@@ -1296,14 +1296,16 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                     <LinkLabelField node={node} value={value} />
                   </ListRowSettings>
                   <MenuSeparator />
-                  <LinkRowActions
-                    closeActions={closeActions}
-                    onEdit={() => setEditOpen(true)}
-                    onRemove={() => setValue(undefined!)}
-                    picker={picker}
-                    type={type}
-                    value={value}
-                  />
+                  <ListRowSettings actions>
+                    <LinkRowActions
+                      closeActions={closeActions}
+                      onEdit={() => setEditOpen(true)}
+                      onRemove={() => setValue(undefined!)}
+                      picker={picker}
+                      type={type}
+                      value={value}
+                    />
+                  </ListRowSettings>
                 </Popover>
               </DialogTrigger>
             </ListRowActions>
@@ -1489,19 +1491,23 @@ function MultipleLinkRow({
                   />
                 </ListRowSettings>
                 <MenuSeparator />
-                <LinkRowActions
-                  closeActions={closeActions}
-                  isDisabled={readOnly}
-                  onEdit={() => setEditOpen(true)}
-                  onRemove={() =>
-                    setValue(links =>
-                      links.filter((_, currentIndex) => currentIndex !== index)
-                    )
-                  }
-                  picker={picker}
-                  type={type}
-                  value={value}
-                />
+                <ListRowSettings actions>
+                  <LinkRowActions
+                    closeActions={closeActions}
+                    isDisabled={readOnly}
+                    onEdit={() => setEditOpen(true)}
+                    onRemove={() =>
+                      setValue(links =>
+                        links.filter(
+                          (_, currentIndex) => currentIndex !== index
+                        )
+                      )
+                    }
+                    picker={picker}
+                    type={type}
+                    value={value}
+                  />
+                </ListRowSettings>
               </Popover>
             </DialogTrigger>
           </ListRowActions>
