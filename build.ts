@@ -7,17 +7,18 @@ import esbuild, {
 } from 'esbuild'
 import fsExtra from 'fs-extra'
 import glob from 'glob'
+import {
+  transform,
+  type CSSModuleExport,
+  type CSSModuleExports,
+  type CSSModuleReference
+} from 'lightningcss'
 import {spawn} from 'node:child_process'
 import fs from 'node:fs'
 import {builtinModules} from 'node:module'
 import path from 'node:path'
-import {pathToFileURL} from 'node:url'
-import postcss from 'postcss'
-import postcssModules from 'postcss-modules'
-import pxtorem from 'postcss-pxtorem'
 import prettyBytes from 'pretty-bytes'
 import sade from 'sade'
-import * as sass from 'sass-embedded'
 import {sync} from 'symlink-dir'
 
 sync('.', 'node_modules/alinea')
@@ -27,12 +28,8 @@ const SERVER_TARGET = 'server'
 const CSS_ENTRY = 'css-entry'
 const JS_ENTRY = 'js-entry'
 
-const isWindows = process.platform === 'win32'
-const prefix = 'alinea/'
 const llmsHandbookUrl = 'https://alineacms.com/llms-full.txt'
 const llmsHandbookFile = 'llms-full.txt'
-
-const sassCompiler = await sass.initAsyncCompiler()
 
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
@@ -47,24 +44,6 @@ const external = builtinModules
     'react-dom',
     'esbuild'
   ])
-
-const scssOptions: sass.Options<'async'> = {
-  loadPaths: ['./node_modules'],
-  quietDeps: true,
-  silenceDeprecations: ['import'],
-  importers: [
-    {
-      findFileUrl(url) {
-        if (!url.startsWith(prefix)) return null
-        return pathToFileURL('src/' + url.slice(prefix.length)) as URL
-      }
-    }
-  ]
-}
-
-function hash(files: Array<string>) {
-  return files.map(file => fs.statSync(file).mtimeMs).join('-')
-}
 
 function dirsOf(source: string) {
   const contents = fs.readdirSync(source, {withFileTypes: true})
@@ -195,22 +174,21 @@ const internalPlugin: Plugin = {
   }
 }
 
-const sassJsPlugin: Plugin = {
-  name: 'js-sass',
+const cssModulesJsPlugin: Plugin = {
+  name: 'js-css-modules',
   setup(build) {
-    build.onLoad({filter: /\.scss$/}, async args => {
-      const {isModule, json, watchFiles} = await processScss(args.path)
-      if (!isModule) return {contents: '', loader: 'js', watchFiles}
+    build.onLoad({filter: /\.module\.css$/}, args => {
+      const {json, watchFiles} = processCssModule(args.path)
       return {contents: json, loader: 'js', watchFiles}
     })
   }
 }
 
-const sassCssPlugin: Plugin = {
-  name: 'css-sass',
+const cssModulesPlugin: Plugin = {
+  name: 'css-modules',
   setup(build) {
-    build.onLoad({filter: /\.scss$/}, async args => {
-      const {css, watchFiles} = await processScss(args.path)
+    build.onLoad({filter: /\.module\.css$/}, args => {
+      const {css, watchFiles} = processCssModule(args.path)
       return {contents: css, loader: 'css', watchFiles}
     })
   }
@@ -265,7 +243,7 @@ const cssEntry: Plugin = {
     build.onLoad(
       {filter: new RegExp(`^${CSS_ENTRY}$`), namespace: CSS_ENTRY},
       args => {
-        const files = glob.sync('src/**/*.{scss,css}')
+        const files = glob.sync('src/**/*.css')
         const entryPoint = [`@import url('./src/dashboard/global.css');`]
           .concat(files.map(file => `@import url('./${file}');`))
           .join('\n')
@@ -293,7 +271,6 @@ const externalize: Plugin = {
     build.onResolve({filter: /^(\.|#)/}, args => {
       if (args.kind === 'entry-point') return
       if (
-        args.path.endsWith('.scss') ||
         args.path.endsWith('.json') ||
         args.path.endsWith('.css') ||
         args.path.endsWith('.woff2')
@@ -365,7 +342,7 @@ function jsEntry({
   report: boolean
 }): Plugin {
   const plugins = [
-    sassJsPlugin,
+    cssModulesJsPlugin,
     internalPlugin,
     externalize,
     oauthIsoCrypto,
@@ -454,71 +431,51 @@ function jsEntry({
   }
 }
 
-const sassExports = new Map()
-const sassCache = new Map()
-
-const postCssPlugins = [
-  pxtorem({
-    minPixelValue: 2,
-    propList: ['*']
-  }),
-  postcssModules({
-    localsConvention: 'dashes',
-    generateScopedName(name, fileName) {
-      const module = path.basename(fileName).split('.')[0]
-      if (name.startsWith('root-')) name = name.slice(5)
-      if (name.startsWith('root')) name = name.slice(4)
-      return `alinea-${module}${name ? '-' + name : ''}`
-    },
-    getJSON(file, json) {
-      sassExports.set(file, `export default ${JSON.stringify(json, null, 2)}`)
-    }
-  })
-]
-
-type ProcessScssResult = {
-  key: string
+interface ProcessCssModuleResult {
   css: string
   watchFiles: string[]
-  isModule?: boolean
   json?: string
 }
 
-async function processScss(file: string): Promise<ProcessScssResult> {
-  const prev = sassCache.get(file)
-  if (prev) {
-    const key = hash(prev.watchFiles)
-    if (key === prev.key) return prev
-  }
-  const {css, loadedUrls, sourceMap} = await sassCompiler.compileAsync(
-    file,
-    scssOptions
-  )
-  const watchFiles = loadedUrls.map(url => {
-    return url.pathname.substring(isWindows ? 1 : 0)
-  })
-  const key = hash(watchFiles)
-  if (!file.endsWith('.module.scss')) {
-    const result = {key, css, watchFiles}
-    sassCache.set(file, result)
-    return result
-  }
-  const processed = await postcss(postCssPlugins).process(css, {
-    from: file,
-    map: {
-      inline: true,
-      prev: sourceMap
+function processCssModule(file: string): ProcessCssModuleResult {
+  const result = transform({
+    filename: file,
+    code: fs.readFileSync(file),
+    cssModules: {
+      pattern: 'alinea-[local]'
     }
   })
-  const result = {
-    key,
-    css: processed.css,
-    watchFiles,
-    isModule: true,
-    json: sassExports.get(file)
+  const classes = cssModuleClasses(result.exports || {})
+  return {
+    css: Buffer.from(result.code).toString(),
+    watchFiles: [file],
+    json: `export default ${JSON.stringify(classes, null, 2)}`
   }
-  sassCache.set(file, result)
-  return result
+}
+
+function cssModuleClasses(exports: CSSModuleExports): Record<string, string> {
+  const classes: Record<string, string> = {}
+  for (const [name, value] of Object.entries(exports)) {
+    const className = cssModuleClassName(value)
+    classes[name] = className
+    const dashedName = name.replace(
+      /-+([a-zA-Z0-9])/g,
+      (_match: string, character: string) => character.toUpperCase()
+    )
+    classes[dashedName] = className
+  }
+  return classes
+}
+
+function cssModuleClassName(cssModule: CSSModuleExport): string {
+  return [cssModule.name]
+    .concat(cssModule.composes.flatMap(cssModuleReferenceNames))
+    .join(' ')
+}
+
+function cssModuleReferenceNames(reference: CSSModuleReference): Array<string> {
+  if (reference.type === 'dependency') return []
+  return [reference.name]
 }
 
 function forwardCmd() {
@@ -612,7 +569,7 @@ async function build({
   }
   const plugins = [
     cssEntry,
-    sassCssPlugin,
+    cssModulesPlugin,
     cleanup,
     jsEntry({watch, test, report}),
     bundleTs,
@@ -644,6 +601,5 @@ sade('build', true)
   .option('--watch', `Watch for changes`)
   .action(async opts => {
     await build(opts)
-    if (!opts.watch) sassCompiler.dispose()
   })
   .parse(process.argv)
