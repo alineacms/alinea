@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
 import {writeFileSync} from 'node:fs'
+import {defaultClientConditions} from 'vite'
 import {defineConfig} from 'vite-plus'
 import {alineaFixturePlugin} from './src/dashboard/plugins/alineaFixturePlugin.js'
 
@@ -7,6 +8,9 @@ const generateScopedName = 'alinea-[local]'
 
 export default defineConfig({
   plugins: [alineaFixturePlugin(), react() /*, alineaPlugin('apps/dev')*/],
+  resolve: {
+    conditions: ['alinea-src', ...defaultClientConditions]
+  },
   css: {modules: {generateScopedName}},
   // This doesn't work for Ladle
   /*experimental: {
