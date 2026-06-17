@@ -71,19 +71,12 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
 
 export function MetadataFieldView({field}: MetadataFieldViewProps) {
   const options = useFieldOptions(field)
-  const error = useFieldError(field)
   const node = useFieldNode<object>(field)
   const dashboard = useDashboard()
   const metadata = useAtomValue(dashboard.previewMetadata)
   return (
     <>
-      <Label label={options.label} errorMessage={error}>
-        <Surface variant="muted">
-          <SurfaceContent>
-            <NodeEditor node={node} type={options.fields} />
-          </SurfaceContent>
-        </Surface>
-      </Label>
+      <NodeEditor node={node} type={options.fields} />
       <MetadataPreview metadata={metadata} origin={origin} />
     </>
   )
