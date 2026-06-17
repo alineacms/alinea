@@ -1,5 +1,4 @@
 import {ReporterPlugin} from '@esbx/reporter'
-import {getManifest} from '@esbx/workspaces'
 import {dequal} from 'dequal'
 import esbuild, {
   type BuildContext,
@@ -356,67 +355,6 @@ const externalize: Plugin = {
   }
 }
 
-const targetPlugin: Plugin = {
-  name: 'target',
-  setup(build) {
-    const browserFiles = new Set()
-    const serverFiles = new Set()
-    build.onStart(() => {
-      for (const file of glob.sync(`src/**/*.${BROWSER_TARGET}.tsx`))
-        browserFiles.add(
-          file.slice('src/'.length, -`.${BROWSER_TARGET}.tsx`.length)
-        )
-      for (const file of glob.sync(`src/**/*.${BROWSER_TARGET}.ts`))
-        browserFiles.add(
-          file.slice('src/'.length, -`.${BROWSER_TARGET}.ts`.length)
-        )
-      for (const file of glob.sync(`src/**/*.${SERVER_TARGET}.tsx`))
-        serverFiles.add(
-          file.slice('src/'.length, -`.${SERVER_TARGET}.tsx`.length)
-        )
-      for (const file of glob.sync(`src/**/*.${SERVER_TARGET}.ts`))
-        serverFiles.add(
-          file.slice('src/'.length, -`.${SERVER_TARGET}.ts`.length)
-        )
-      const pkg = getManifest('.')
-      const exports: Record<string, string | Record<string, string>> = {
-        './package.json': './package.json',
-        '.': './dist/index.js',
-        './css': './dist/index.css',
-        './next': {
-          'edge-light': './dist/next.edge.js',
-          require: './dist/next.cjs',
-          default: './dist/next.js'
-        },
-        './*.cjs': './dist/*.cjs',
-        './*': './dist/*.js'
-      }
-      const bFiles = [...browserFiles].sort()
-      for (const file of bFiles) {
-        exports[`./${file}`] = {
-          'edge-light': `./dist/${file}.js`,
-          worker: `./dist/${file}.js`,
-          browser: `./dist/${file}.${BROWSER_TARGET}.js`,
-          default: `./dist/${file}.js`
-        }
-      }
-      const sFiles = [...serverFiles].sort()
-      for (const file of sFiles) {
-        exports[`./${file}`] = {
-          'edge-light': `./dist/${file}.${SERVER_TARGET}.js`,
-          worker: `./dist/${file}.${SERVER_TARGET}.js`,
-          browser: `./dist/${file}.js`,
-          default: `./dist/${file}.${SERVER_TARGET}.js`
-        }
-      }
-      fs.writeFileSync(
-        'package.json',
-        JSON.stringify({...pkg, exports}, null, 2) + '\n'
-      )
-    })
-  }
-}
-
 function jsEntry({
   watch,
   test,
@@ -673,7 +611,6 @@ async function build({
     console.info(`Refreshed ${llmsHandbookFile} from ${llmsHandbookUrl}`)
   }
   const plugins = [
-    targetPlugin,
     cssEntry,
     sassCssPlugin,
     cleanup,
