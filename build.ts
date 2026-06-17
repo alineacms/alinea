@@ -77,6 +77,16 @@ function dirsOf(source: string) {
     })
 }
 
+function rewriteDeclarationImports(contents: string): string {
+  return contents
+    .replace(/(["'])#\/index\.js\1/g, (_match, quote) => {
+      return `${quote}alinea${quote}`
+    })
+    .replace(/(["'])#\/(.*?)\.js\1/g, (_match, quote, specifier) => {
+      return `${quote}alinea/${specifier}${quote}`
+    })
+}
+
 const cjsModules: Plugin = {
   name: 'cjs-modules',
   setup(build) {
@@ -106,6 +116,8 @@ const bundleTs: Plugin = {
         const location = entry.slice(0, -'.d.ts'.length)
         const absolute = location === 'index' ? 'alinea' : `alinea/${location}`
         let contents = fs.readFileSync(path.join(root, entry), 'utf-8')
+        contents = rewriteDeclarationImports(contents)
+        fs.writeFileSync(path.join(root, entry), contents)
         // Strip shebang
         if (contents.startsWith('#!')) {
           contents = contents.slice(contents.indexOf('\n') + 1)
