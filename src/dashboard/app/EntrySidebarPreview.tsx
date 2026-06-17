@@ -102,7 +102,7 @@ function EntrySidebarBrowserPreviewHeader({
     <RailHeader className={styles.EntrySidebarPreview.subheader()}>
       <div className={styles.EntrySidebarPreview.controls()}>
         <Button
-          appearance="outline"
+          appearance="plain"
           size="icon"
           icon={IcRoundArrowBack}
           aria-label="Go back in preview"
@@ -110,7 +110,7 @@ function EntrySidebarBrowserPreviewHeader({
           onPress={onPrevious}
         />
         <Button
-          appearance="outline"
+          appearance="plain"
           size="icon"
           icon={IcRoundArrowForward}
           aria-label="Go forward in preview"
@@ -118,7 +118,7 @@ function EntrySidebarBrowserPreviewHeader({
           onPress={onNext}
         />
         <Button
-          appearance="outline"
+          appearance="plain"
           size="icon"
           icon={IcRoundRefresh}
           aria-label={reloadLabel}
@@ -127,7 +127,7 @@ function EntrySidebarBrowserPreviewHeader({
         />
       </div>
       <Button
-        appearance="outline"
+        appearance="plain"
         size="icon"
         icon={IcRoundOpenInNew}
         aria-label="Open preview in new tab"

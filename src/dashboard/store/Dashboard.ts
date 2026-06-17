@@ -63,10 +63,7 @@ import {
   MutationQueueEvent,
   type MutationQueueEntry
 } from '../boot/MutationQueueEvent.js'
-import {
-  nav,
-  type DashboardRoute
-} from '../DashboardNav.js'
+import {nav, type DashboardRoute} from '../DashboardNav.js'
 import {LucideFile} from '../icons.js'
 
 export const dashboardEntryOverviewColumnCount = 5
@@ -240,7 +237,7 @@ export class Dashboard {
     failed: 0,
     blocked: 0
   })
-  entrySidebarTab = atom<DashboardEntrySidebarTab>('history')
+  entrySidebarTab = atom<DashboardEntrySidebarTab>('preview')
   #entryReferenceScan = atom<EntryReferenceScan>()
   #uploadQueue = atom<Array<MutationQueueEntry>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(

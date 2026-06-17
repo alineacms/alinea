@@ -15,7 +15,7 @@ import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {useState, type ComponentType, type ReactNode} from 'react'
+import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
@@ -46,7 +46,7 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
   const isMediaFile = type.type === MediaFile
   const allowedTabs: Array<DashboardEntrySidebarTab> = isMediaFile
     ? ['references']
-    : ['history', 'preview', 'references']
+    : ['preview', 'history', 'references']
   const selectedKey = allowedTabs.includes(selectedTab)
     ? selectedTab
     : allowedTabs[0]
@@ -67,8 +67,8 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
           <TabList aria-label="Entry sidebar">
             {!isMediaFile && (
               <>
-                <Tab id="history">History</Tab>
                 <Tab id="preview">Preview</Tab>
+                <Tab id="history">History</Tab>
               </>
             )}
             <Tab id="references">References</Tab>
@@ -85,7 +85,9 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
                 id="history"
                 className={styles.EntrySidebar.historyPanel()}
               >
-                <EntrySidebarHistory entry={entry} />
+                <Suspense fallback={<EntrySidebarHistoryLoading />}>
+                  <EntrySidebarHistory entry={entry} />
+                </Suspense>
               </TabPanel>
               <TabPanel
                 id="preview"
