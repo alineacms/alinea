@@ -1,22 +1,33 @@
-import {Button, Icon, Label} from '#/components.js'
+import {
+  Button,
+  DialogTrigger,
+  Icon,
+  Label,
+  List,
+  ListRow,
+  ListRowActions,
+  ListRowBadges,
+  ListRowBody,
+  ListRowDrag,
+  ListRowFoldButton,
+  ListRowHeader,
+  ListRowSettingsButton,
+  MenuSeparator,
+  Popover
+} from '#/components.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
 import {Schema} from '#/core/Schema.js'
 import {BlockNode, Node, TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {entries, values} from '#/core/util/Objects.js'
+import {Badge} from '#/dashboard/app/Badge.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {
-  Surface,
-  SurfaceContent,
-  SurfaceHeader,
-  SurfaceRow
-} from '#/dashboard/app/ui/Surface.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
-  IcRoundKeyboardArrowDown,
-  IcRoundKeyboardArrowUp
+  IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {
@@ -65,65 +76,86 @@ interface NodeViewProps {
 }
 
 interface TypeExtensionHeaderProps {
-  type: Type
   exp: boolean
+  readOnly: boolean
+  type: Type
   onDelete: () => void
-  onToggle: () => void
   onCopy: () => void
+  onToggle: () => void
 }
 
 function TypeExtensionHeader({
+  exp,
+  readOnly,
   type,
   onDelete,
-  onToggle,
-  exp,
-  onCopy
+  onCopy,
+  onToggle
 }: TypeExtensionHeaderProps) {
   const label = Type.label(type)
+  const typeIcon = getType(type).icon
+  const [actionsOpen, setActionsOpen] = useState(false)
+
+  function closeActions() {
+    setActionsOpen(false)
+  }
+
   return (
-    <SurfaceHeader className={styles.RichTextFieldBlock.header()}>
-      <div
-        className={styles.RichTextFieldBlock.title()}
-        data-drag-handle
-        role="button"
-      >
-        <Button
-          appearance="plain"
-          intent="secondary"
-          size="icon-nav"
-          className={styles.RichTextFieldBlock.fold()}
-          onPress={onToggle}
-        >
-          <Icon
-            aria-hidden
-            icon={
-              exp === true ? IcRoundKeyboardArrowDown : IcRoundKeyboardArrowUp
-            }
+    <ListRowHeader
+      className={styles.RichTextFieldBlock.header()}
+      expanded={exp}
+    >
+      <ListRowDrag>
+        <ListRowBadges>
+          <ListRowFoldButton
+            aria-label={exp ? `Collapse ${label}` : `Expand ${label}`}
+            expanded={exp}
+            onPress={onToggle}
           />
-        </Button>
-        {label}
-      </div>
-      <div className={styles.RichTextFieldBlock.actions()}>
-        <Button
-          aria-label={`Duplicate ${label}`}
-          appearance="outline"
-          intent="secondary"
-          onPress={onCopy}
-          size="icon"
-        >
-          <Icon aria-hidden icon={IcBaselineContentCopy} />
-        </Button>
-        <Button
-          aria-label={`Remove ${label}`}
-          appearance="outline"
-          intent="danger"
-          onPress={onDelete}
-          size="icon"
-        >
-          <Icon aria-hidden icon={IcRoundClose} />
-        </Button>
-      </div>
-    </SurfaceHeader>
+          <Badge
+            className={styles.RichTextFieldBlock.dragHandle()}
+            data-drag-handle
+            icon={typeIcon}
+            size="small"
+          >
+            {label}
+          </Badge>
+        </ListRowBadges>
+      </ListRowDrag>
+      <ListRowActions>
+        <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+          <ListRowSettingsButton
+            aria-label={`${label} actions`}
+            icon={IcRoundMoreHoriz}
+          />
+          <Popover placement="bottom right">
+            <Button
+              appearance="plain"
+              isDisabled={readOnly}
+              onPress={() => {
+                onCopy()
+                closeActions()
+              }}
+            >
+              <Icon icon={IcBaselineContentCopy} />
+              Duplicate
+            </Button>
+            <MenuSeparator />
+            <Button
+              appearance="plain"
+              isDisabled={readOnly}
+              onPress={() => {
+                onDelete()
+                closeActions()
+              }}
+            >
+              <Icon icon={IcRoundClose} />
+              Delete
+            </Button>
+          </Popover>
+        </DialogTrigger>
+      </ListRowActions>
+    </ListRowHeader>
   )
 }
 
@@ -131,7 +163,8 @@ function typeExtension(
   reactive: ReactiveNode<TextDoc>,
   name: string,
   type: Type,
-  expandedByBlockId: Map<string, boolean>
+  expandedByBlockId: Map<string, boolean>,
+  readOnly: boolean
 ) {
   const fieldKeys = entries(Type.initialValue(type)).map(([key]) => key)
 
@@ -226,22 +259,23 @@ function typeExtension(
     if (!rowNode) return null
     return (
       <NodeViewWrapper>
-        <Surface className={styles.RichTextFieldBlock()} tabIndex={0}>
-          <SurfaceRow>
+        <List className={styles.RichTextFieldBlock()} data-depth="muted">
+          <ListRow role="listitem" tabIndex={0}>
             <TypeExtensionHeader
               type={type}
+              readOnly={readOnly}
               onDelete={deleteNode}
               onToggle={onToggle}
               onCopy={onCopy}
               exp={exp}
             />
-          </SurfaceRow>
-          {exp && (
-            <SurfaceContent className={styles.RichTextFieldBlock.body()}>
-              <NodeEditor type={type} node={rowNode} />
-            </SurfaceContent>
-          )}
-        </Surface>
+            {exp && (
+              <ListRowBody>
+                <NodeEditor type={type} node={rowNode} />
+              </ListRowBody>
+            )}
+          </ListRow>
+        </List>
       </NodeViewWrapper>
     )
   }
@@ -309,11 +343,12 @@ function isBlockNode(value: unknown): value is BlockNode {
 function schemaToExtensions(
   reactive: ReactiveNode<TextDoc>,
   schema: Schema | undefined,
-  expandedByBlockId: Map<string, boolean>
+  expandedByBlockId: Map<string, boolean>,
+  readOnly: boolean
 ) {
   if (!schema) return []
   return entries(schema).map(([name, type]) => {
-    return typeExtension(reactive, name, type, expandedByBlockId)
+    return typeExtension(reactive, name, type, expandedByBlockId, readOnly)
   })
 }
 
@@ -340,16 +375,17 @@ function RTView<Blocks extends Schema>({
   const base = useMemo(() => {
     return values(options.extensions ?? baseExtensions)
   }, [options.extensions])
+  const readOnly = options.readOnly || node.readOnly
+  const editable = !readOnly
   const extensions = useMemo(() => {
     const schemaExtensions = schemaToExtensions(
       node,
       options.schema,
-      expandedByBlockId.current
+      expandedByBlockId.current,
+      readOnly
     )
     return [...base, ...schemaExtensions]
-  }, [base, node, options.schema])
-  const readOnly = options.readOnly || node.readOnly
-  const editable = !readOnly
+  }, [base, node, options.schema, readOnly])
   const focusToggle = useCallback(function focusToggle(
     target: EventTarget | null
   ) {

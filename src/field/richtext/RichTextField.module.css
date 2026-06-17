@@ -67,6 +67,7 @@
   margin: 14px 0;
   outline: 4px solid transparent;
   transition: var(--alinea-transition);
+  transition-property: outline-color;
 }
 
 .RichTextFieldView {
@@ -79,27 +80,12 @@
 }
 
 .RichTextFieldBlock-header {
-  padding-left: 4px !important;
-  padding-right: 8px !important;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
-.RichTextFieldBlock-fold {
-  flex: 0 0 auto;
-}
-
-.RichTextFieldBlock-title {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-  color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 600;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.RichTextFieldBlock-dragHandle {
+  cursor: grab;
 
   &:is(:hover) {
     cursor: grab;
@@ -108,15 +94,4 @@
   &:active {
     cursor: grabbing;
   }
-}
-
-.RichTextFieldBlock-actions {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 4px;
-  align-items: center;
-}
-
-.RichTextFieldBlock-body {
-  background: var(--alinea-input);
 }
