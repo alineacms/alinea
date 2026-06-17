@@ -1,7 +1,7 @@
 import {Button, Icon, Tree, TreeItem} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValue, useSetAtom, type Getter} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {type ComponentType, memo, useMemo} from 'react'
 import {
@@ -54,7 +54,6 @@ export interface SidebarTreeExplorerProps {
 }
 
 interface SidebarItemProps {
-  foldersOnly?: boolean
   item: DashboardEntry
   tree: DashboardTree
 }
@@ -108,16 +107,7 @@ function affectedStatus(
   return ownStatus
 }
 
-function folderItems(get: Getter, items: Array<DashboardEntry>) {
-  return items.filter(item => {
-    const {data} = get(item.data)
-    if (!data) return true
-    return get(data.hasChildren)
-  })
-}
-
 const SidebarItem = memo(function SidebarItem({
-  foldersOnly = false,
   item,
   tree
 }: SidebarItemProps) {
@@ -129,7 +119,6 @@ const SidebarItem = memo(function SidebarItem({
       data={data}
       tree={tree}
       pending={pending}
-      foldersOnly={foldersOnly}
     />
   )
 })
@@ -166,7 +155,6 @@ function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
 }
 
 interface SidebarLoadedItemProps {
-  foldersOnly: boolean
   item: DashboardEntry
   data: DashboardEntryData
   tree: DashboardTree
@@ -174,7 +162,6 @@ interface SidebarLoadedItemProps {
 }
 
 const SidebarLoadedItem = memo(function SidebarLoadedItem({
-  foldersOnly,
   item,
   data,
   tree,
@@ -186,28 +173,12 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   const selectedAncestorStatus = useAtomValue(
     useMemo(() => unwrap(tree.selectedAncestorStatus(item)), [item, tree])
   )
-  const childItemsAtom = useMemo(() => {
-    const childrenAtom = foldersOnly
-      ? tree.visibleChildren(item)
-      : tree.children(item)
-    if (!foldersOnly) return childrenAtom
-    return atom(get => {
-      const children = get(childrenAtom)
-      if (!children) return children
-      return folderItems(get, children)
-    })
-  }, [foldersOnly, item, tree])
+  const childItemsAtom = useMemo(() => tree.children(item), [item, tree])
   const childItems = useAtomValue(childItemsAtom)
   let icon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
-  const hasVisibleChildren = foldersOnly
-    ? childItems === undefined
-      ? hasChildren
-      : childItems.length > 0
-    : hasChildren
   if (!icon) icon = hasChildren ? LucideFolder : LucideFile
-  const isLoadingChildren =
-    hasVisibleChildren && isExpanded && childItems === undefined
+  const isLoadingChildren = hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
   const rowStatus = affectedStatus(status, selectedAncestorStatus)
   const isArchived = rowStatus.status === 'archived'
@@ -218,7 +189,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
       id={item.id}
       textValue={label}
       title={label}
-      hasChildItems={hasVisibleChildren}
+      hasChildItems={hasChildren}
       icon={icon}
       className={styles.SidebarTree.item({
         archived: isArchived,
@@ -248,9 +219,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
     >
       {isExpanded && childItems && (
         <Collection items={childItems}>
-          {child => (
-            <SidebarItem item={child} tree={tree} foldersOnly={foldersOnly} />
-          )}
+          {child => <SidebarItem item={child} tree={tree} />}
         </Collection>
       )}
     </TreeItem>
@@ -266,9 +235,8 @@ const treeLayoutOptions = {
 interface SidebarTreeBodyProps {
   ariaLabel?: string
   disableDragAndDrop?: boolean
-  foldersOnly?: boolean
   onSelectionChange?: (keys: Selection) => void
-  root?: DashboardRoot
+  root: DashboardRoot
   selectedKeys?: Set<Key>
   tree: DashboardTree
 }
@@ -283,7 +251,6 @@ interface SidebarTreeContentProps extends SidebarTreeBodyProps {
 const SidebarTreeBody = memo(function SidebarTreeBody({
   ariaLabel = 'Content tree',
   disableDragAndDrop = false,
-  foldersOnly = false,
   onSelectionChange,
   root,
   selectedKeys,
@@ -291,16 +258,8 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
 }: SidebarTreeBodyProps) {
   const [treeSelectedKeys, setTreeSelectedKeys] = useAtom(tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(tree.expandedKeys)
-  const itemsAtom = useMemo(() => {
-    return atom(async get => {
-      const items = root
-        ? (await get(root.children)).map(id => tree.entryItems(id))
-        : await get(tree.items)
-      if (!foldersOnly) return items
-      return folderItems(get, items)
-    })
-  }, [foldersOnly, root, tree])
-  const items = useAtomValue(itemsAtom)
+  const rootChildren = useAtomValue(root.children)
+  const items = rootChildren.map(id => tree.entryItems(id))
   const dragDisabled = useAtomValue(tree.dragDisabled)
   const getItems = useSetAtom(tree.getItems)
   const getDropOperation = useSetAtom(tree.getDropOperation)
@@ -335,9 +294,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
             controlledSelection ? onSelectionChange : setTreeSelectedKeys
           }
         >
-          {item => (
-            <SidebarItem item={item} tree={tree} foldersOnly={foldersOnly} />
-          )}
+          {item => <SidebarItem item={item} tree={tree} />}
         </Tree>
       </Virtualizer>
     </div>
@@ -457,7 +414,6 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
     <SidebarTreeContent
       ariaLabel={ariaLabel}
       disableDragAndDrop={disableDragAndDrop}
-      foldersOnly
       onRootPress={onRootPress}
       onSelectionChange={onSelectionChange}
       root={root}
