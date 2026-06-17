@@ -1,8 +1,8 @@
 import {cleanup, render, screen, within} from '#test/react.js'
 import type {TextDoc} from 'alinea/core/TextDoc'
 import {afterEach, expect, test} from 'bun:test'
-import type {PropsWithChildren} from 'react'
-import {RichText} from './RichText.js'
+import type {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
+import {RichText, type RichTextProps} from './RichText.js'
 
 afterEach(cleanup)
 
@@ -126,27 +126,56 @@ test('RichText renders tables with spans', () => {
   expect(cell?.rowSpan).toBe(2)
 })
 
-test('RichText supports custom views for elements and text', () => {
+test('RichText supports custom HTML views for elements and text', () => {
   const doc = [
     {
+      _type: 'heading',
+      level: 2,
+      content: [{_type: 'text', text: 'Title'}]
+    },
+    {
       _type: 'paragraph',
+      textAlign: 'right',
       content: [{_type: 'text', text: 'Custom'}]
     }
   ] satisfies TextDoc
-  function Paragraph({children}: PropsWithChildren) {
-    return <section data-testid="paragraph">{children}</section>
+  let headingLevel: unknown
+  function H2({
+    children,
+    ...props
+  }: ComponentPropsWithoutRef<'h2'> & {level?: unknown}) {
+    headingLevel = props.level
+    return (
+      <h2 data-testid="heading" {...props}>
+        {children}
+      </h2>
+    )
+  }
+  function P({children, ...props}: ComponentPropsWithoutRef<'p'>) {
+    return (
+      <section data-testid="paragraph" {...props}>
+        {children}
+      </section>
+    )
   }
   function Text({children}: {children?: string}) {
     return <span data-testid="text">{children}</span>
   }
 
-  render(<RichText doc={doc} paragraph={Paragraph} text={Text} />)
+  render(<RichText doc={doc} h2={H2} p={P} text={Text} />)
 
+  expect(screen.getByTestId('heading').tagName).toBe('H2')
+  expect(screen.getByTestId('heading').id).toBe('title')
+  expect(headingLevel).toBeUndefined()
   expect(screen.getByTestId('paragraph').tagName).toBe('SECTION')
-  expect(screen.getByTestId('text').textContent).toBe('Custom')
+  expect(screen.getByTestId('paragraph').style.textAlign).toBe('right')
+  expect(screen.getAllByTestId('text').map(element => element.textContent)).toEqual([
+    'Title',
+    'Custom'
+  ])
 })
 
-test('RichText supports custom views for marks and React elements', () => {
+test('RichText supports custom HTML views for marks and React elements', () => {
   const doc = [
     {
       _type: 'paragraph',
@@ -166,7 +195,7 @@ test('RichText supports custom views for marks and React elements', () => {
   render(
     <RichText
       doc={doc}
-      bold={Bold}
+      b={Bold}
       small={<em data-testid="small" className="quiet" />}
     />
   )
@@ -235,8 +264,9 @@ test('RichText renders custom block nodes', () => {
   function Callout({message}: {message: string}) {
     return <aside data-testid="callout">{message}</aside>
   }
+  const props = {doc, Callout} satisfies RichTextProps<Blocks>
 
-  render(<RichText<Blocks> doc={doc} Callout={Callout} />)
+  render(<RichText<Blocks> {...props} />)
 
   expect(screen.getByTestId('callout').textContent).toBe('Read this')
 })

@@ -22,8 +22,13 @@ type Element = keyof JSX.IntrinsicElements
 type Attributes = Record<string, unknown>
 type View = ComponentType<Attributes & {children?: ReactNode}> | ReactElement
 type TextAlign = CSSProperties['textAlign']
+type NoInferType<T> = [T][T extends unknown ? 0 : never]
 type RichTextBlockViews<Blocks extends object> = {
   [K in keyof Blocks]?: ComponentType<Infer<Blocks[K]>>
+}
+interface RichTextBaseProps<Blocks extends object> {
+  doc: TextDoc<Blocks>
+  text?: ComponentType<{children: string | undefined}>
 }
 
 function textContent(doc: TextDoc): string {
@@ -47,7 +52,7 @@ function nodeElement(
   switch (type) {
     case 'heading': {
       const level = attributes?.level
-      const Tag = `h${typeof level === 'number' ? level : 1}` as 'h1'
+      const Tag = headingTag(level)
       const id =
         attributes?.id ?? (content ? slugify(textContent(content)) : undefined)
       return <Tag style={style} id={typeof id === 'string' ? id : undefined} />
@@ -111,6 +116,15 @@ function nodeElement(
   }
 }
 
+function headingTag(level: unknown): 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' {
+  if (level === 2) return 'h2'
+  if (level === 3) return 'h3'
+  if (level === 4) return 'h4'
+  if (level === 5) return 'h5'
+  if (level === 6) return 'h6'
+  return 'h1'
+}
+
 function numberAttribute(value: unknown) {
   if (typeof value === 'number') return value
   if (typeof value === 'string') return Number(value)
@@ -155,9 +169,9 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
       type: mark[Mark.type],
       element: nodeElement(mark[Mark.type], mark)
     }))
-    return (wrappers ?? []).reduce((children, {type, element}) => {
+    return (wrappers ?? []).reduce((children, {element}) => {
       if (!element?.type) return children
-      const View = views[type] ?? views[String(element.type)]
+      const View = views[String(element.type)]
       if (isComponentView(View)) {
         const Component = View
         return <Component {...element.props}>{children}</Component>
@@ -173,7 +187,7 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
   if (Node.isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
     const element = nodeElement(type, attrs, content)
-    const View = views[type] ?? views[element?.type ? String(element.type) : type]
+    const View = element?.type ? views[String(element.type)] : undefined
     const inner =
       content?.map((node: Node, i: number) => (
         <RichTextNodeView key={i} views={views} node={node} />
@@ -181,7 +195,7 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
     if (isComponentView(View)) {
       const Component = View
       return (
-        <Component {...element?.props} {...attrs}>
+        <Component {...element?.props}>
           {inner}
         </Component>
       )
@@ -202,34 +216,50 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
   }
 }
 
-export interface RichTextProps<Blocks extends object = {}> {
-  doc: TextDoc<Blocks>
-  text?: ComponentType<{children: string | undefined}>
-  heading?: ComponentType<JSX.IntrinsicElements['h1']> | ReactElement
-  paragraph?: ComponentType<JSX.IntrinsicElements['p']> | ReactElement
-  bold?: ComponentType<JSX.IntrinsicElements['b']> | ReactElement
-  italic?: ComponentType<JSX.IntrinsicElements['i']> | ReactElement
-  bulletList?: ComponentType<JSX.IntrinsicElements['ul']> | ReactElement
-  orderedList?: ComponentType<JSX.IntrinsicElements['ol']> | ReactElement
-  listItem?: ComponentType<JSX.IntrinsicElements['li']> | ReactElement
+interface RichTextElementViews {
+  h1?: ComponentType<JSX.IntrinsicElements['h1']> | ReactElement
+  h2?: ComponentType<JSX.IntrinsicElements['h2']> | ReactElement
+  h3?: ComponentType<JSX.IntrinsicElements['h3']> | ReactElement
+  h4?: ComponentType<JSX.IntrinsicElements['h4']> | ReactElement
+  h5?: ComponentType<JSX.IntrinsicElements['h5']> | ReactElement
+  h6?: ComponentType<JSX.IntrinsicElements['h6']> | ReactElement
+  p?: ComponentType<JSX.IntrinsicElements['p']> | ReactElement
+  b?: ComponentType<JSX.IntrinsicElements['b']> | ReactElement
+  i?: ComponentType<JSX.IntrinsicElements['i']> | ReactElement
+  ul?: ComponentType<JSX.IntrinsicElements['ul']> | ReactElement
+  ol?: ComponentType<JSX.IntrinsicElements['ol']> | ReactElement
+  li?: ComponentType<JSX.IntrinsicElements['li']> | ReactElement
   blockquote?: ComponentType<JSX.IntrinsicElements['blockquote']> | ReactElement
-  horizontalRule?: ComponentType<JSX.IntrinsicElements['hr']> | ReactElement
-  hardBreak?: ComponentType<JSX.IntrinsicElements['br']> | ReactElement
+  hr?: ComponentType<JSX.IntrinsicElements['hr']> | ReactElement
+  br?: ComponentType<JSX.IntrinsicElements['br']> | ReactElement
   small?: ComponentType<JSX.IntrinsicElements['small']> | ReactElement
-  subscript?: ComponentType<JSX.IntrinsicElements['sub']> | ReactElement
-  superscript?: ComponentType<JSX.IntrinsicElements['sup']> | ReactElement
-  link?: ComponentType<JSX.IntrinsicElements['a']> | ReactElement
+  sub?: ComponentType<JSX.IntrinsicElements['sub']> | ReactElement
+  sup?: ComponentType<JSX.IntrinsicElements['sup']> | ReactElement
+  a?: ComponentType<JSX.IntrinsicElements['a']> | ReactElement
   table?: ComponentType<JSX.IntrinsicElements['table']> | ReactElement
-  tableBody?: ComponentType<JSX.IntrinsicElements['tbody']> | ReactElement
-  tableCell?: ComponentType<JSX.IntrinsicElements['td']> | ReactElement
-  tableHeader?: ComponentType<JSX.IntrinsicElements['th']> | ReactElement
-  tableRow?: ComponentType<JSX.IntrinsicElements['tr']> | ReactElement
+  tbody?: ComponentType<JSX.IntrinsicElements['tbody']> | ReactElement
+  td?: ComponentType<JSX.IntrinsicElements['td']> | ReactElement
+  th?: ComponentType<JSX.IntrinsicElements['th']> | ReactElement
+  tr?: ComponentType<JSX.IntrinsicElements['tr']> | ReactElement
 }
 
+export type RichTextProps<Blocks extends object = {}> =
+  RichTextBaseProps<Blocks> &
+    RichTextElementViews &
+    RichTextBlockViews<Blocks>
+
+type RichTextComponentProps<Blocks extends object> =
+  RichTextBaseProps<Blocks> &
+    RichTextElementViews &
+    RichTextBlockViews<NoInferType<Blocks>>
+
+export function RichText<Blocks extends object = {}>(
+  props: RichTextComponentProps<Blocks>
+): ReactElement | null
 export function RichText<Blocks extends object = {}>({
   doc,
   ...views
-}: RichTextProps<Blocks> & RichTextBlockViews<NoInfer<Blocks>>) {
+}: RichTextProps<Blocks>) {
   if (!Array.isArray(doc)) return null
   return (
     <Fragment>
