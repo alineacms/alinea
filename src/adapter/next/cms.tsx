@@ -32,6 +32,7 @@ export class NextCMS<
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
     const {generatedSource} =
+      // @ts-ignore
       await import('alinea/backend/store/GeneratedSource')
     const source = await generatedSource
     const db = new LocalDB(this.config, source)
