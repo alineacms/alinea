@@ -3,6 +3,7 @@ import {
   IcRoundArchive,
   IcRoundCheck,
   IcRoundEdit,
+  IcRoundFlashOn,
   IcRoundPublic,
   IcRoundVisibility
 } from '../icons.js'
@@ -35,60 +36,44 @@ export function Usages() {
     <div style={storyStyle}>
       <h2 style={headingStyle}>Shared label</h2>
       <div style={rowStyle}>
-        <Badge
-          appearance="background"
-          icon={IcRoundPublic}
-          size="small"
-          status="accent"
-        >
+        <Badge icon={IcRoundPublic} size="small">
           Shared
         </Badge>
       </div>
 
       <h2 style={headingStyle}>Compact multi-select</h2>
       <div style={rowStyle}>
-        <Badge appearance="background" size="small">
-          Web
-        </Badge>
-        <Badge appearance="background" size="small">
-          App
-        </Badge>
-        <Badge appearance="background" size="small">
-          Email
-        </Badge>
+        <Badge size="small">Web</Badge>
+        <Badge size="small">App</Badge>
+        <Badge size="small">Email</Badge>
       </div>
 
       <h2 style={headingStyle}>Reference statuses</h2>
       <div style={rowStyle}>
-        <Badge icon={IcRoundCheck} status="success">
+        <Badge icon={IcRoundCheck} status="published">
           Published
         </Badge>
-        <Badge icon={IcRoundEdit} status="warning">
+        <Badge icon={IcRoundEdit} status="draft">
           Draft
         </Badge>
-        <Badge icon={IcRoundArchive} status="neutral">
+        <Badge icon={IcRoundFlashOn} status="unpublished">
+          Unpublished
+        </Badge>
+        <Badge icon={IcRoundArchive} status="archived">
           Archived
         </Badge>
-        <Badge status="danger">Failed</Badge>
       </div>
 
       <h2 style={headingStyle}>Details bar</h2>
       <div style={rowStyle}>
-        <Badge appearance="plain" icon={IcRoundVisibility}>
+        <Badge icon={IcRoundVisibility} status="published">
           Published
-        </Badge>
-      </div>
-
-      <h2 style={headingStyle}>Muted row label</h2>
-      <div style={rowStyle}>
-        <Badge appearance="contrast" size="small">
-          Page
         </Badge>
       </div>
 
       <h2 style={headingStyle}>Sidebar editing state</h2>
       <div style={rowStyle}>
-        <Badge appearance="background" icon={IcRoundEdit} size="small">
+        <Badge icon={IcRoundEdit} size="small">
           Editing
         </Badge>
       </div>

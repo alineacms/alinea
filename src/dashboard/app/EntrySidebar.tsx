@@ -198,11 +198,7 @@ function EntrySidebarStatusItem({
         meta={formatMeta(currentRevision)}
         onPress={() => setSelectedVersion({type: 'status', status})}
       >
-        {isEditing && (
-          <Badge appearance="background" size="small">
-            Editing
-          </Badge>
-        )}
+        {isEditing && <Badge size="small">Editing</Badge>}
       </EntrySidebarVersionRow>
     </li>
   )

@@ -85,9 +85,7 @@ function renderCompactValue(field: Field, value: unknown): ReactNode {
     return <span className={styles.CompactField.muted()}>-</span>
   if (typeof value === 'boolean') {
     return (
-      <span className={styles.CompactField.text()}>
-        {value ? 'Yes' : 'No'}
-      </span>
+      <span className={styles.CompactField.text()}>{value ? 'Yes' : 'No'}</span>
     )
   }
   if (typeof value === 'string') {
@@ -125,7 +123,7 @@ function renderArrayValue(
   return (
     <span className={styles.CompactField.items()}>
       {value.slice(0, 4).map((item, index) => (
-        <Badge appearance="background" key={index} size="small">
+        <Badge key={index} size="small">
           {compactValueText(item, options)}
         </Badge>
       ))}
@@ -203,7 +201,8 @@ function itemCount(length: number): string {
 
 function textContent(value: unknown): string {
   if (typeof value === 'string') return value
-  if (Array.isArray(value)) return value.map(textContent).filter(Boolean).join(' ')
+  if (Array.isArray(value))
+    return value.map(textContent).filter(Boolean).join(' ')
   if (!isRecord(value)) return ''
   const text = value.text
   const content = value.content

@@ -31,9 +31,7 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} =
-      // @ts-ignore
-      await import('alinea/backend/store/GeneratedSource')
+    const {generatedSource} = await import('#/backend/store/GeneratedSource.js')
     const source = await generatedSource
     const db = new LocalDB(this.config, source)
     await db.sync()

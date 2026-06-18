@@ -1,9 +1,9 @@
 import styler from '@alinea/styler'
+import type {ReactNode} from 'react'
 import {
   Label as LabelPrimitive,
   type LabelProps as LabelPrimitiveProps
 } from 'react-aria-components'
-import type {ReactNode} from 'react'
 import {Badge} from '../dashboard/app/Badge.js'
 import {IcRoundPublic} from '../dashboard/icons.js'
 import css from './Label.module.css'
@@ -30,13 +30,7 @@ export interface SharedLabelBadgeProps {
 
 export function SharedLabelBadge({label = 'Shared'}: SharedLabelBadgeProps) {
   return (
-    <Badge
-      appearance="background"
-      icon={IcRoundPublic}
-      size="small"
-      status="accent"
-      title="Shared field"
-    >
+    <Badge icon={IcRoundPublic} size="small" title="Shared field">
       {label}
     </Badge>
   )
@@ -83,7 +77,9 @@ export function Label({
         </header>
       )}
       {children}
-      {errorMessage && <div className={styles.Label.error()}>{errorMessage}</div>}
+      {errorMessage && (
+        <div className={styles.Label.error()}>{errorMessage}</div>
+      )}
     </div>
   )
 }

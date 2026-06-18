@@ -1,14 +1,26 @@
-import { Button, Icon, Menu, MenuItem } from '#/components.js'
-import { MediaFile } from '#/core/media/MediaTypes.js'
-import { styler } from '@alinea/styler'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { ComponentType, type ReactNode, useTransition } from 'react'
-import { usePolicy } from '../hooks.js'
-import { IcRoundArchive, IcRoundCheck, IcRoundDelete, IcRoundMoreHoriz, IcRoundSave, IcRoundSync, IcRoundVisibilityOff } from '../icons.js'
-import { DashboardEntryData, ReactiveNode } from '../store/Dashboard.js'
-import { EditorBackButton } from './EditorBackButton.js'
+import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import {styler} from '@alinea/styler'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {ComponentType, type ReactNode, useTransition} from 'react'
+import {usePolicy} from '../hooks.js'
+import {
+  IcOutlineArchive,
+  IcRoundArchive,
+  IcRoundCheck,
+  IcRoundDelete,
+  IcRoundEdit,
+  IcRoundFlashOn,
+  IcRoundMoreHoriz,
+  IcRoundSave,
+  IcRoundSync,
+  IcRoundVisibilityOff
+} from '../icons.js'
+import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
+import {Badge} from './Badge.js'
+import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
-import { EntrySidebarToggle } from './EntrySidebarToggle.js'
+import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 
 const styles = styler(css)
 
@@ -191,7 +203,7 @@ function EntryHeaderMoreActions({
             id: 'unpublish',
             label: 'Unpublish',
             action: unpublish,
-            icon: IcRoundVisibilityOff,
+            icon: IcRoundVisibilityOff
           })
         }
         if (canDelete && access.archive) {
@@ -379,6 +391,27 @@ function EntryHeaderActions({
   )
 }
 
+const variantDescription = {
+  published: 'Published',
+  unpublished: 'Unpublished',
+  archived: 'Archived',
+  draft: 'Draft'
+}
+
+const badgeStatus = {
+  published: 'published',
+  unpublished: 'unpublished',
+  archived: 'archived',
+  draft: 'draft'
+} as const
+
+const badgeIcon = {
+  published: IcRoundCheck,
+  unpublished: IcRoundFlashOn,
+  archived: IcOutlineArchive,
+  draft: IcRoundEdit
+}
+
 export function EntryHeader({
   controls,
   entry,
@@ -389,16 +422,30 @@ export function EntryHeader({
   const title = useAtomValue(entry.label)
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
+  const viewedEntry = useAtomValue(entry.currentEntry)
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
   const isDirty = useAtomValue(node.isDirty)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
+  const viewedStatus = viewedEntry?.status ?? activeStatus
+  const viewedIsUnpublished = Boolean(
+    viewedEntry?.main && viewedStatus === 'draft'
+  )
+  const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
+  const displayStatus = variantDescription[status]
   return (
     <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.content()}>
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
+          <Badge
+            className={styles.EntryHeader.status()}
+            icon={badgeIcon[status]}
+            status={badgeStatus[status]}
+          >
+            {displayStatus}
+          </Badge>
           {controls}
           <EntryHeaderMoreActions
             entry={entry}

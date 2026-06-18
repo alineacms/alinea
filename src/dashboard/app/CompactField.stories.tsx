@@ -1,9 +1,9 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {type} from '#/core/Type.js'
-import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {Dashboard} from '#/dashboard/store.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
@@ -45,11 +45,7 @@ const compactCustomField = new ScalarField<string, FieldOptions<string>>({
   options: {label: 'Custom'},
   view: viewKeys.HiddenInput,
   compactView({value}) {
-    return (
-      <Badge appearance="background" size="small" status="success">
-        Custom: {value}
-      </Badge>
-    )
+    return <Badge size="small">Custom: {value}</Badge>
   }
 })
 

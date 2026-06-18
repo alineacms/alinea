@@ -332,11 +332,9 @@ function EntryEditor({entry}: EntryEditorProps) {
     editorBody = (
       <>
         <RailBody className={styles.EntryEditor.body()}>
-          <RailContent>
-            <NodeEditor node={node} type={type.type}>
-              <FileEditor entry={entry} />
-            </NodeEditor>
-          </RailContent>
+          <NodeEditor node={node} type={type.type}>
+            <FileEditor entry={entry} />
+          </NodeEditor>
         </RailBody>
       </>
     )

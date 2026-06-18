@@ -1,5 +1,6 @@
 import {
   Button,
+  ListRow as ComponentListRow,
   Dialog,
   DialogTrigger,
   Icon,
@@ -8,7 +9,6 @@ import {
   ListDragPreview,
   ListError,
   ListLabel,
-  ListRow as ComponentListRow,
   ListRowActions,
   ListRowBadges,
   ListRowBody,
@@ -677,11 +677,7 @@ function ListFieldRowHeader({
             {label}
           </Badge>
           {displayLabel && <ListRowMeta>{displayLabel}</ListRowMeta>}
-          {showAnchor && (
-            <Badge size="small" appearance="outline">
-              #{displayAnchor}
-            </Badge>
-          )}
+          {showAnchor && <Badge size="small">#{displayAnchor}</Badge>}
         </ListRowBadges>
       </ListRowDrag>
       <ListRowActions>

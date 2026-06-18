@@ -14,8 +14,8 @@ import {
 import type {
   DashboardEntryData,
   DashboardEntryReference,
-  DashboardEntryReferencesState,
-  DashboardEntryReferenceSource
+  DashboardEntryReferenceSource,
+  DashboardEntryReferencesState
 } from '../store.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
@@ -150,7 +150,6 @@ function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
             )}
             {item.statuses.map(status => (
               <Badge
-                appearance="default"
                 className={styles.EntryReferences.status()}
                 icon={badgeIcon(status)}
                 key={status}
@@ -310,14 +309,7 @@ function statusOrder(status: EntryStatus): number {
 }
 
 function badgeStatus(status: EntryStatus) {
-  switch (status) {
-    case 'published':
-      return 'success'
-    case 'draft':
-      return 'warning'
-    case 'archived':
-      return 'neutral'
-  }
+  return status
 }
 
 function badgeIcon(status: EntryStatus) {

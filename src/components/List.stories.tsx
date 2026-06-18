@@ -1,14 +1,13 @@
 import {DialogTrigger} from 'react-aria-components'
+import {Badge} from '../dashboard/app/Badge.js'
 import {
   IcRoundClose,
   IcRoundEdit,
-  IcOutlineSettings as IcRoundSettings,
   IcRoundMoreHoriz,
-  IcRoundPanorama
+  IcRoundPanorama,
+  IcOutlineSettings as IcRoundSettings
 } from '../dashboard/icons.js'
-import {Badge} from '../dashboard/app/Badge.js'
 import {Button} from './Button.js'
-import {Surface, SurfaceContent} from './Surface.js'
 import {
   List,
   ListCreateRow,
@@ -29,6 +28,7 @@ import {
   ListRowSettingsButton
 } from './List.js'
 import {Popover} from './Popover.js'
+import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
 
 const itemControls = (
@@ -97,9 +97,7 @@ export function FieldRows() {
                   Hero
                 </Badge>
                 <ListRowMeta>Landing page intro</ListRowMeta>
-                <Badge size="small" appearance="outline">
-                  #landing-page-intro
-                </Badge>
+                <Badge size="small">#landing-page-intro</Badge>
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>

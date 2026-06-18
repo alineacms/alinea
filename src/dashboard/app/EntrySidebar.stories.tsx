@@ -6,11 +6,11 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
+import {Badge} from './Badge.js'
 import {
   EntrySidebarVersionRow,
   type EntrySidebarVersionStatus
 } from './EntrySidebar.js'
-import {Badge} from './Badge.js'
 
 const storyStyle: CSSProperties = {
   width: 322,
@@ -84,9 +84,7 @@ function VersionRows({selected, showEditing}: VersionRowsProps) {
           meta="Stijn Codeurs - Today at 10:40"
         >
           {showEditing && row.status === 'draft' && (
-            <Badge appearance="background" size="small">
-              Editing
-            </Badge>
+            <Badge size="small">Editing</Badge>
           )}
         </EntrySidebarVersionRow>
       ))}

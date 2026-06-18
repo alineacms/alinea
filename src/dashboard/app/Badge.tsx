@@ -11,29 +11,26 @@ const styles = styler(css)
 
 interface BadgeProps extends ComponentPropsWithoutRef<'span'> {
   icon?: ComponentType | ReactElement
-  appearance?: 'background' | 'contrast' | 'outline' | 'plain' | 'default'
   size?: 'default' | 'small'
-  status?: 'success' | 'warning' | 'neutral' | 'danger' | 'accent'
+  status?: 'published' | 'draft' | 'unpublished' | 'archived'
 }
 
 export function Badge({
   children,
   icon,
   size = 'default',
-  status = 'neutral',
-  appearance = 'default',
+  status,
   ...props
 }: BadgeProps) {
   return (
     <span
       {...props}
       data-status={status}
-      data-appearance={appearance}
       data-size={size}
       className={styles.Badge(styler.merge(props))}
     >
       {icon && <Icon icon={icon} />}
-      <span className={styles.Badge.label()}>{children}</span>
+      <span>{children}</span>
     </span>
   )
 }

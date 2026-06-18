@@ -69,7 +69,7 @@
   --alinea-fg-hover: light-dark(var(--alinea-gray-700), var(--alinea-gray-300));
   --alinea-fg-strong: light-dark(var(--alinea-gray-900), var(--alinea-gray-100));
 
-  --alinea-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
+  --alinea-border: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
   --alinea-border-muted: light-dark(var(--alinea-gray-300), var(--alinea-gray-800));
   --alinea-border-hover: light-dark(var(--alinea-gray-400), var(--alinea-gray-500));
   --alinea-border-pressed: light-dark(var(--alinea-gray-500), var(--alinea-gray-400));
@@ -173,11 +173,11 @@
       inset 0 1px 0 var(--alinea-border)
     );
 
-  --alinea-status-published-fg: light-dark(var(--alinea-green-700), var(--alinea-green-200));
-  --alinea-status-published-bg: light-dark(var(--alinea-green-50), var(--alinea-green-700));
+  --alinea-status-published-fg: var(--alinea-green-800);
+  --alinea-status-published-bg: var(--alinea-green-300);
   --alinea-status-unpublished-fg: light-dark(var(--alinea-orange-700), var(--alinea-orange-200));
   --alinea-status-unpublished-bg: light-dark(var(--alinea-orange-50), var(--alinea-orange-700));
-  --alinea-status-draft-fg: light-dark(var(--alinea-blue-700), var(--alinea-blue-50));
+  --alinea-status-draft-fg: light-dark(var(--alinea-blue-800), var(--alinea-blue-50));
   --alinea-status-draft-bg: light-dark(var(--alinea-blue-50), var(--alinea-blue-700));
   --alinea-status-archived-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
   --alinea-status-archived-bg: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
