@@ -13,7 +13,6 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
-  ListRowFoldButton,
   ListRowFooter,
   ListRowHeader,
   ListRowMeta,
@@ -655,18 +654,6 @@ function ListFieldRowHeader({
     <ListRowHeader className={className} expanded={expanded} first={isFirstRow}>
       <ListRowDrag dragging={isDragging}>
         <ListRowBadges>
-          <ListRowFoldButton
-            aria-label={
-              isPreview
-                ? undefined
-                : expanded
-                  ? `Collapse ${label}`
-                  : `Expand ${label}`
-            }
-            expanded={expanded}
-            isDisabled={isPreview}
-            onPress={onToggle}
-          />
           <Badge
             {...dragProps}
             className={styles.ListFieldView.dragHandle()}
