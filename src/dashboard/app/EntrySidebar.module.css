@@ -61,6 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  flex-grow: 1;
 }
 
 .EntrySidebar-historyItem {
@@ -68,10 +69,10 @@
 }
 
 .EntrySidebar-versionButton {
-  --EntrySidebar-version-background: var(--alinea-bg);
+  /* --EntrySidebar-version-background: var(--alinea-bg);
   --EntrySidebar-version-border: var(--alinea-border);
   --EntrySidebar-version-color: var(--alinea-fg);
-  --EntrySidebar-version-icon-background: var(--alinea-bg-muted);
+  --EntrySidebar-version-icon-background: var(--alinea-bg-muted); */
 
   width: 100%;
   height: auto;
@@ -282,4 +283,67 @@
   margin: 0;
   border-radius: 0;
   overflow: auto;
+}
+
+.EntrySidebar-Versions-Timeline {
+  width: 32px;
+  display: flex;
+  list-style: none;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 16px;
+}
+
+.Timeline-element {
+  height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.Timeline-element:last-child .Timeline-element-trail {
+  background-color: transparent;
+}
+
+.Timeline-element-outerCircle {
+  display: flex;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #e7e8ec;
+  border-radius: 50%;
+}
+
+.Timeline-element-innerCircle {
+  display: block;
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #e7e8ec;
+
+  &[data-status='draft'] {
+    background-color: #626ef2;
+  }
+  &[data-status='unpublished'] {
+    background-color: #f6ac5f;
+  }
+  &[data-status='published'] {
+    background-color: #2da27b;
+  }
+}
+
+.Timeline-element-trail {
+  display: block;
+  background-color: #e7e8ec;
+  width: 2px;
+  height: 100%;
+}
+
+.EntrySidebar-Versions {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
 }

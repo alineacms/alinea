@@ -3,7 +3,6 @@ import {
   Disclosure,
   DisclosureHeader,
   DisclosurePanel,
-  Icon,
   ProgressCircle,
   Tab,
   TabList,
@@ -156,16 +155,39 @@ function EntrySidebarPreviousVersions({entry}: EntrySidebarHistoryProps) {
       <p className={styles.EntrySidebar.empty()}>No previous versions yet</p>
     )
   return (
-    <ul className={styles.EntrySidebar.historyList()}>
-      {history.map(revision => (
-        <EntrySidebarRevisionItem
-          key={`${revision.file}:${revision.ref}`}
-          entry={entry}
-          revision={revision}
-          isLatest={false}
+    <section className={styles.EntrySidebar.Versions()}>
+      <ul className={styles.EntrySidebar.Versions.Timeline()}>
+        {history.map(revision => EntrySidebarTimelineElement(revision))}
+      </ul>
+      <ul className={styles.EntrySidebar.historyList()}>
+        {history.map(revision => (
+          <EntrySidebarRevisionItem
+            key={`${revision.file}:${revision.ref}`}
+            entry={entry}
+            revision={revision}
+            isLatest={false}
+          />
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+function EntrySidebarTimelineElement(revision: Revision) {
+  const status = getRevisionKind(revision).status
+  return (
+    <li
+      key={`${revision.file}:${revision.ref}-line`}
+      className={styles.Timeline.element()}
+    >
+      <span className={styles.Timeline.element.outerCircle()}>
+        <span
+          className={styles.Timeline.element.innerCircle()}
+          data-status={status}
         />
-      ))}
-    </ul>
+      </span>
+      <span className={styles.Timeline.element.trail()} />
+    </li>
   )
 }
 
@@ -231,8 +253,10 @@ function EntrySidebarRevisionItem({
         selected={selected}
         status={revisionKind.status}
         icon={isLatest ? IcRoundPublishedWithChanges : revisionKind.icon}
-        title={revision.description ?? 'Page published'}
-        meta={formatMeta(revision)}
+        // title={revision.description ?? 'Page published'}
+        // meta={formatMeta(revision)}
+        title={formatTime(revision.createdAt)}
+        meta={revision?.user?.name}
         onPress={() =>
           setSelectedVersion({
             type: 'history',
@@ -260,7 +284,6 @@ export interface EntrySidebarVersionRowProps {
 export function EntrySidebarVersionRow({
   selected = false,
   status = 'none',
-  icon,
   title,
   meta,
   children,
@@ -274,9 +297,6 @@ export function EntrySidebarVersionRow({
       data-status={status}
       onPress={onPress}
     >
-      <span className={styles.EntrySidebar.historyIcon()}>
-        <Icon icon={icon} />
-      </span>
       <span className={styles.EntrySidebar.versionContent()}>
         <span className={styles.EntrySidebar.versionTitle()}>{title}</span>
         <span className={styles.EntrySidebar.versionMeta()}>{meta}</span>
@@ -345,6 +365,22 @@ function formatMeta(revision?: Revision) {
   const user = revision?.user?.name
   if (!revision) return user
   return `${user} - ${formatRelativeTime(revision.createdAt)}`
+}
+
+function formatTime(timestamp: number) {
+  const date = new Date(timestamp)
+
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date'
+  }
+
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+
+  return `${day}/${month}/${year} - ${hours}:${minutes}`
 }
 
 function formatRelativeTime(timestamp: number) {
