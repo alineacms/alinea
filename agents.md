@@ -14,6 +14,7 @@ Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 - CSS module naming in `src/dashboard`: every selector starts with the exact component name, eg `.ComponentName`; replace `.root` with that component name; nested selectors become `.ComponentName-part`, deeper nesting becomes `.ComponentName-part-subpart`; flatten unused parent segments.
 - Do not style child elements with tag selectors such as `> span`, `> p`, or `> li`. Always add and target a named CSS module class instead.
 - CSS variable names from v1 will not work in v2
+- CSS variables should use simple names prefixed with `--alinea-`
 - Bundle all icons into the same file src/dashboard/icons.tsx, download them if needed
   from icones (https://icones.js.org/) using the Google Material Icons set.
 
@@ -25,22 +26,3 @@ Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 - Imports should be relative if in same src subdir, otherwise absolute starting
   with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
   If absolute do not include any extension.
-
-## Verification
-- Run typescript compiler with `bun tsgo` to verify types
-
-## Testability
-- Use react-testing-library for testing, and test the public API of components
-- Dom implementation is preloaded
-- Create a test file for each component, named `ComponentName.test.tsx`
-- Use `bun test` for running tests
-- Do not mock `@alinea/components` in tests; test using the real components.
-- Do not add runtime-only TipTap options such as `immediatelyRender: false` just to silence warnings that only happen under tests.
-- If a component is very complex and a browser environment is needed use 
-  `@playwright/experimental-ct-react` and name the test file `ComponentName.spec.tsx`
-
-
-## Known todos
-- Link view: pick external links + distinction of files/images/entries
-- Link picker in RichTextField
-- Path field: slugify, mask and unique validation
