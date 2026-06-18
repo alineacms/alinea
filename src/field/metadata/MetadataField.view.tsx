@@ -1,7 +1,6 @@
-import {Button, Label} from '#/components.js'
+import {Button, Label, Surface, SurfaceContent} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {Surface, SurfaceContent} from '#/dashboard/app/ui/Surface.js'
 import {
   useDashboard,
   useFieldError,

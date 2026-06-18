@@ -1,4 +1,5 @@
 import {type} from '#/config.js'
+import {Surface} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -18,7 +19,6 @@ import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
 import {FieldsEditor, NodeEditor} from '../Editor.js'
-import {Surface} from '../ui/Surface.js'
 import css from './FileEditor.module.css'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
 

@@ -1,4 +1,4 @@
-import {Checkbox, Icon} from '#/components.js'
+import {Checkbox, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
@@ -27,7 +27,6 @@ import type {
 import {dashboardEntryOverviewColumnCount} from '../store.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
-import {Surface} from './ui/Surface.js'
 
 const styles = styler(css)
 

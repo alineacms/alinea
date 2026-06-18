@@ -1,6 +1,5 @@
-import {Label} from '#/components.js'
+import {Label, Surface, SurfaceContent} from '#/components.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {Surface, SurfaceContent} from '#/dashboard/app/ui/Surface.js'
 import {
   useFieldError,
   useFieldNode,

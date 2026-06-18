@@ -1,4 +1,4 @@
-import {Checkbox, Icon} from '#/components.js'
+import {Checkbox, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -27,7 +27,6 @@ import type {
 } from '../store.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
-import {Surface} from './ui/Surface.js'
 
 const styles = styler(css)
 
