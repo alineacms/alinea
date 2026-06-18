@@ -160,7 +160,10 @@
   --alinea-dashboard-code-regex: light-dark(var(--alinea-yellow-500), var(--alinea-yellow-400));
   --alinea-dashboard-code-punctuation: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
 
-  --alinea-shadow-raised: lch(0 0 0 / 0.022) 0 3px 6px -2px, lch(0 0 0 / 0.044) 0 1px 1px;
+  --alinea-shadow-raised: 0 1px 3.5px rgba(0, 0, 0, 0.08); /*, 0 1px 1px rgba(0, 0, 0, 0.08);*/
+  --alinea-shadow-muted:
+    0 0 2px rgba(0, 0, 0, 0.08), 0 3px 6px -2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.1);
+
   --alinea-shadow-tooltip: 0 8px 20px rgb(from var(--alinea-gray-900) r g b / 10%);
   --alinea-shadow-modal: 0 2px 13px rgb(from var(--alinea-gray-900) r g b / 11%);
   --alinea-divider-top:
