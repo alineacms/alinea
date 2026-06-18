@@ -69,7 +69,7 @@
   --alinea-fg-hover: light-dark(var(--alinea-gray-700), var(--alinea-gray-300));
   --alinea-fg-strong: light-dark(var(--alinea-gray-900), var(--alinea-gray-100));
 
-  --alinea-border: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
+  --alinea-border: light-dark(var(--alinea-gray-100), var(--alinea-gray-900));
   --alinea-border-muted: light-dark(var(--alinea-gray-300), var(--alinea-gray-800));
   --alinea-border-hover: light-dark(var(--alinea-gray-400), var(--alinea-gray-500));
   --alinea-border-pressed: light-dark(var(--alinea-gray-500), var(--alinea-gray-400));
@@ -161,8 +161,7 @@
   --alinea-dashboard-code-punctuation: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
 
   --alinea-shadow-raised: 0 1px 3.5px rgba(0, 0, 0, 0.08); /*, 0 1px 1px rgba(0, 0, 0, 0.08);*/
-  --alinea-shadow-muted:
-    0 0 2px rgba(0, 0, 0, 0.08), 0 3px 6px -2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.1);
+  --alinea-shadow-muted: 0 1px 3.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.06);
 
   --alinea-shadow-tooltip: 0 8px 20px rgb(from var(--alinea-gray-900) r g b / 10%);
   --alinea-shadow-modal: 0 2px 13px rgb(from var(--alinea-gray-900) r g b / 11%);
