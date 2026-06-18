@@ -60,7 +60,7 @@
 }
 
 :global(.ExplorerItem[data-selected]) .ExplorerFileCard-preview::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -91,11 +91,7 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: color-mix(
-    in srgb,
-    var(--alinea-fg) 74%,
-    transparent
-  );
+  color: color-mix(in srgb, var(--alinea-fg) 74%, transparent);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--alinea-dashboard-explorer-card-footer-background) 18%, transparent),
@@ -147,7 +143,7 @@
   color: var(--alinea-fg);
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
 }

@@ -122,7 +122,7 @@
 .EntryReferences-empty {
   margin: 0;
   color: var(--alinea-fg-muted);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .EntryReferences-other {
