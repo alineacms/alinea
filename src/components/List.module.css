@@ -1,42 +1,14 @@
-.List {
-  --List-background: var(--alinea-backdrop);
-
-  color: var(--alinea-fg);
-  display: flex;
-  flex-direction: column;
-  background: var(--List-background);
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--alinea-border);
-  cursor: default;
-  position: relative;
-  font-size: var(--alinea-font-size-base);
-}
-
-.List[data-depth='base'] {
-  --List-background: var(--alinea-bg);
-}
-
-.List[data-depth='muted'] {
-  --List-background: var(--alinea-bg-muted);
-}
-
 .ListItem {
-  display: flex;
   flex-direction: column;
-  position: relative;
-  background: inherit;
-}
-
-.ListItem + .ListItem {
-  box-shadow: var(--alinea-divider-top);
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
 }
 
 .ListItem-header {
   align-items: center;
   display: flex;
   gap: 8px;
-  padding: 6px 8px;
   min-height: 26px;
 }
 
@@ -52,7 +24,6 @@
   align-items: center;
   display: flex;
   gap: 8px;
-  padding: 0;
   position: relative;
 }
 
@@ -89,12 +60,8 @@
   padding-top: 4px;
 }
 
-.ListCreateRow {
-  background: inherit;
-}
-
 .ListCreateRow[data-empty] .ListCreateRow-inner {
-  box-shadow: none;
+  border-top: 0;
 }
 
 .ListCreateRow-inner {
@@ -104,15 +71,12 @@
   flex-direction: row;
   justify-content: center;
   min-height: 36px;
-  background: inherit;
-  box-shadow: var(--alinea-divider-top);
+  border-top: 1px solid var(--alinea-border);
 }
 
 .ListRow {
   display: grid;
-  position: relative;
-  box-shadow: var(--alinea-divider-top);
-  background: inherit;
+  border-top: 1px solid var(--alinea-border);
   overflow: hidden;
 }
 
@@ -121,7 +85,7 @@
 }
 
 .ListRow[data-first-row] {
-  box-shadow: none;
+  border-top: 0;
 }
 
 .ListRowHeader {
@@ -202,7 +166,6 @@
   gap: 12px;
   align-items: normal;
   padding: 8px 16px 16px 16px;
-  background: inherit;
 }
 
 .ListRowFooter {
@@ -210,7 +173,6 @@
   align-items: flex-start;
   min-width: 0;
   padding: 8px 16px;
-  background: inherit;
 }
 
 .ListRowSettings {

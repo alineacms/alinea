@@ -41,10 +41,7 @@
   gap: 8px;
   min-height: 40px;
   padding: 0 16px;
-}
-
-.SurfaceHeader:not(:first-child) {
-  border-top: 1px solid var(--alinea-border);
+  border-bottom: 1px solid var(--alinea-border);
 }
 
 .SurfaceContent {
@@ -52,10 +49,6 @@
   flex-direction: column;
   gap: 8px;
   padding: 16px;
-}
-
-.SurfaceContent:not(:first-child) {
-  border-top: 1px solid var(--alinea-border);
 }
 
 .SurfaceRow {

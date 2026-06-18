@@ -10,15 +10,14 @@ import {Button, type ButtonProps} from './Button.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {SharedLabelBadge} from './Label.js'
+import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
 
 const styles = styler(css)
 
-export interface ListProps extends HTMLAttributes<HTMLDivElement> {}
+export interface ListProps extends SurfaceProps {}
 
-export function List(props: ListProps) {
-  return (
-    <div role="list" {...props} className={styles.List(styler.merge(props))} />
-  )
+export function List({className, ...props}: ListProps) {
+  return <Surface role="list" {...props} className={className} />
 }
 
 export interface ListItemProps extends Omit<
@@ -38,7 +37,7 @@ export function ListItem({
   ...props
 }: ListItemProps) {
   return (
-    <div {...props} className={styles.ListItem(styler.merge(props))}>
+    <SurfaceRow {...props} className={styles.ListItem(styler.merge(props))}>
       <header className={styles.ListItem.header()}>
         {leading && <div className={styles.ListItem.leading()}>{leading}</div>}
         {children && (
@@ -49,7 +48,7 @@ export function ListItem({
         )}
       </header>
       {inner && <div className={styles.ListItem.inner()}>{inner}</div>}
-    </div>
+    </SurfaceRow>
   )
 }
 

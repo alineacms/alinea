@@ -8,7 +8,7 @@ import {
 } from '../dashboard/icons.js'
 import {Badge} from '../dashboard/app/Badge.js'
 import {Button} from './Button.js'
-import {Elevation} from './Elevation.js'
+import {Surface, SurfaceContent} from './Surface.js'
 import {
   List,
   ListCreateRow,
@@ -57,13 +57,18 @@ export function Basic() {
         leading={<IcRoundSettings data-slot="icon" />}
         trailing={itemControls}
         inner={
-          <Elevation>
-            <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-              You can put more complex content in the body, including links and
-              controls.
-              <TextField placeholder="Type something..." label="Inner field" />
-            </div>
-          </Elevation>
+          <Surface>
+            <SurfaceContent>
+              <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+                You can put more complex content in the body, including links
+                and controls.
+                <TextField
+                  placeholder="Type something..."
+                  label="Inner field"
+                />
+              </div>
+            </SurfaceContent>
+          </Surface>
         }
       >
         <strong>About this workspace</strong>
