@@ -10,12 +10,43 @@
   flex-shrink: 0;
 }
 
-.ListFieldView-dragHandle {
-  cursor: grab;
+.ListFieldView-rowDropTarget {
+  display: grid;
 }
 
-.ListFieldView-dragHandle[data-dragging] {
-  cursor: grabbing;
+.ListFieldView-insertAction {
+  align-self: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.ListFieldView-dropIndicator {
+  position: relative;
+  z-index: 2;
+  height: 8px;
+  margin: -4px 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease-out;
+}
+
+.ListFieldView-dropIndicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  max-width: calc(100% - 20px);
+  height: 6px;
+  background: var(--alinea-primary);
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.ListFieldView-dropIndicator[data-active] {
+  opacity: 1;
 }
 
 .ListFieldTypePicker-empty {
@@ -29,6 +60,12 @@
   flex-shrink: 0;
   min-width: 2rem;
   width: 2rem;
+}
+
+.ListFieldTypePicker-trigger.ListFieldView-insertAction {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
 }
 
 .ListFieldTypePicker-popover {

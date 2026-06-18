@@ -130,7 +130,27 @@ export function ListRow({className, dragging, first, ...props}: ListRowProps) {
       {...props}
       className={styles.ListRow(styler.merge({className}))}
       data-dragging={dragging || undefined}
-      data-first-row={first ? 'true' : undefined}
+      data-first-row={
+        first === undefined ? undefined : first ? 'true' : 'false'
+      }
+    />
+  )
+}
+
+export interface ListRowDragHandleProps extends ComponentPropsWithoutRef<'span'> {
+  dragging?: boolean
+}
+
+export function ListRowDragHandle({
+  className,
+  dragging,
+  ...props
+}: ListRowDragHandleProps) {
+  return (
+    <span
+      {...props}
+      className={styles.ListRowDragHandle(styler.merge({className}))}
+      data-dragging={dragging || undefined}
     />
   )
 }

@@ -9,6 +9,7 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
+  ListRowDragHandle,
   ListRowFoldButton,
   ListRowHeader,
   ListRowSettings,
@@ -106,6 +107,12 @@ function TypeExtensionHeader({
       className={styles.RichTextFieldBlock.header()}
       expanded={exp}
     >
+      {!readOnly && (
+        <ListRowDragHandle
+          aria-label={`Drag ${label} block`}
+          data-drag-handle
+        />
+      )}
       <ListRowDrag>
         <ListRowBadges>
           <ListRowFoldButton
@@ -113,12 +120,7 @@ function TypeExtensionHeader({
             expanded={exp}
             onPress={onToggle}
           />
-          <Badge
-            className={styles.RichTextFieldBlock.dragHandle()}
-            data-drag-handle
-            icon={typeIcon}
-            size="small"
-          >
+          <Badge icon={typeIcon} size="small">
             {label}
           </Badge>
         </ListRowBadges>

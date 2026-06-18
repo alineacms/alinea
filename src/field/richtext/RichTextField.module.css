@@ -83,15 +83,3 @@
   padding-left: 4px;
   padding-right: 4px;
 }
-
-.RichTextFieldBlock-dragHandle {
-  cursor: grab;
-
-  &:is(:hover) {
-    cursor: grab;
-  }
-
-  &:active {
-    cursor: grabbing;
-  }
-}

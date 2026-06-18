@@ -75,17 +75,54 @@
 }
 
 .ListRow {
+  position: relative;
   display: grid;
-  border-top: 1px solid var(--alinea-border);
   overflow: hidden;
+}
+
+.ListRow:not(:first-child),
+.ListRow[data-first-row='false'] {
+  border-top: 1px solid var(--alinea-border);
 }
 
 .ListRow[data-dragging] {
   opacity: 0.5;
 }
 
-.ListRow[data-first-row] {
+.ListRow[data-first-row='true'] {
   border-top: 0;
+}
+
+.ListRowDragHandle {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  z-index: 3;
+  width: 56px;
+  height: 22px;
+  cursor: grab;
+  opacity: 0;
+  outline: none;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 140ms ease-out;
+}
+
+.ListRowDragHandle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 4px;
+  background: light-dark(var(--alinea-gray-300), var(--alinea-gray-400));
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.ListRowDragHandle[data-dragging],
+.ListRowDragHandle:active {
+  cursor: grabbing;
 }
 
 .ListRowHeader {
@@ -96,6 +133,13 @@
   min-width: 0;
   min-height: 36px;
   padding: 2px 8px;
+}
+
+.ListRowHeader:hover > .ListRowDragHandle,
+.ListRowHeader:focus-within > .ListRowDragHandle,
+.ListRowDragHandle[data-dragging] {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .ListRowHeader:not([data-has-fold]) {

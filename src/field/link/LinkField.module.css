@@ -146,20 +146,43 @@
   flex-shrink: 0;
 }
 
-.LinkFieldView-dragHandle {
-  cursor: grab;
+.LinkFieldView-rowDropTarget {
+  display: grid;
 }
 
-.LinkFieldView-dragHandle[data-dragging] {
-  cursor: grabbing;
+.LinkFieldView-insertAction {
+  align-self: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
 }
 
-.LinkFieldSeparator {
+.LinkFieldView-dropIndicator {
+  position: relative;
+  z-index: 2;
+  height: 8px;
+  margin: -4px 0;
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 140ms ease-out;
 }
 
-.LinkFieldSeparator[data-dragging] {
-  pointer-events: auto;
+.LinkFieldView-dropIndicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  max-width: calc(100% - 20px);
+  height: 6px;
+  background: var(--alinea-primary);
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.LinkFieldView-dropIndicator[data-active] {
+  opacity: 1;
 }
 
 @keyframes LinkFieldView-skeleton-pulse {

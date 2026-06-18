@@ -13,6 +13,7 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
+  ListRowDragHandle,
   ListRowFooter,
   ListRowHeader,
   ListRowMeta,
@@ -33,7 +34,6 @@ import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {InsertionSeparator} from '#/dashboard/app/ui/InsertionSeparator.js'
 import {
   useFieldError,
   useFieldNode,
@@ -58,12 +58,21 @@ import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {ComponentType} from 'react'
-import {createContext, useContext, useMemo, useRef, useState} from 'react'
+import {
+  createContext,
+  Fragment,
+  useContext,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import {
   type DragItem,
   DragPreview,
   type DragPreviewRenderer,
+  type DropItem,
   useDrag,
+  useDrop,
   useFilter
 } from 'react-aria'
 import {
@@ -132,6 +141,9 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
   const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
+  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
+  const [dropIndicator, setDropIndicator] =
+    useState<ListFieldDropIndicatorState | null>(null)
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -190,46 +202,63 @@ export function ListFieldView({field}: ListFieldViewProps) {
     pushRow(createRow(typeName, type))
   }
 
+  function isBoundaryDropTarget(index: number) {
+    return (
+      (dropIndicator?.index === index && dropIndicator.position === 'before') ||
+      (dropIndicator?.index === index - 1 && dropIndicator.position === 'after')
+    )
+  }
+
   const content = (hasRows || !readOnly) && (
     <>
-      {hasRows && !readOnly && (
-        <ListFieldSeparator
-          items={typeItems}
-          label="first block"
-          pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
-          onMoveRow={moveRow}
-          onPaste={row => insertRow(0, cloneRow(row))}
-          onSelect={item => insertRow(0, createRow(item.id, item.type))}
-          placement="edge"
-          position="before"
-          readOnly={readOnly}
-          targetIndex={0}
-        />
-      )}
+      <ListFieldDropIndicator
+        active={
+          dropIndicator?.index === 0 && dropIndicator.position === 'before'
+        }
+      />
       <List
         aria-label={options.label || 'List items'}
         data-depth={depth % 2 === 0 ? 'muted' : 'base'}
       >
         {nodes.map((row, index) => (
-          <ListFieldRow
-            key={rowIds[index] || index}
-            addBetweenRow={(value, position = 'after') =>
-              insertRow(insertIndex(index, position), value)
-            }
-            foldedIds={foldedIds}
-            index={index}
-            list={list}
-            readOnly={readOnly}
-            onCopyRow={copyRow}
-            onMoveRow={moveRow}
-            onToggleRow={toggleRow}
-            row={row}
-            rows={nodes.length}
-            schema={options.schema}
-            pasted={pasted}
-            typeItems={typeItems}
-          />
+          <Fragment key={rowIds[index] || index}>
+            {index > 0 && (
+              <ListFieldDropIndicator active={isBoundaryDropTarget(index)} />
+            )}
+            <ListFieldRow
+              addBetweenRow={(value, position = 'after') =>
+                insertRow(insertIndex(index, position), value)
+              }
+              draggingRowId={draggingRowId}
+              foldedIds={foldedIds}
+              index={index}
+              list={list}
+              readOnly={readOnly}
+              onCopyRow={copyRow}
+              onMoveRow={moveRow}
+              onRowDragEnd={() => {
+                setDraggingRowId(null)
+                setDropIndicator(null)
+              }}
+              onRowDragStart={() => setDraggingRowId(rowIds[index] ?? null)}
+              onDropIndicatorChange={position =>
+                setDropIndicator(position ? {index, position} : null)
+              }
+              onToggleRow={toggleRow}
+              row={row}
+              rows={nodes.length}
+              schema={options.schema}
+              pasted={pasted}
+              typeItems={typeItems}
+            />
+          </Fragment>
         ))}
+        <ListFieldDropIndicator
+          active={
+            dropIndicator?.index === nodes.length - 1 &&
+            dropIndicator.position === 'after'
+          }
+        />
 
         {!readOnly && (
           <ListCreateRow empty={!hasRows}>
@@ -364,6 +393,7 @@ function ListFieldCreateActions({
 }
 
 interface ListFieldRowProps {
+  draggingRowId: string | null
   index: number
   list: ReactiveNode<Array<ListValue>>
   readOnly: boolean
@@ -376,76 +406,130 @@ interface ListFieldRowProps {
   onToggleRow: (rowId: string) => void
   onCopyRow: (rowId: string) => void
   onMoveRow: (rowId: string, targetIndex: number) => void
+  onRowDragEnd: () => void
+  onRowDragStart: () => void
+  onDropIndicatorChange: (position: 'before' | 'after' | null) => void
   addBetweenRow: (row: ListValue, position?: 'before' | 'after') => void
 }
 
-interface ListFieldSeparatorProps {
-  label: string
-  placement?: 'between' | 'edge'
+interface ListFieldDropIndicatorState {
+  index: number
   position: 'before' | 'after'
-  readOnly: boolean
-  items: Array<ListFieldTypeItem>
-  pasted?: ListValue
-  showPicker?: boolean
-  onPaste: (row: ListValue, position: 'before' | 'after') => void
-  onSelect: (item: ListFieldTypeItem, position: 'before' | 'after') => void
-  onMoveRow?: (rowId: string, targetIndex: number) => void
-  targetIndex?: number
 }
 
-function ListFieldSeparator({
-  label,
-  placement = 'between',
-  position,
-  readOnly,
+interface ListFieldInsertActionProps {
+  icon: ComponentType
+  isDisabled: boolean
+  items: Array<ListFieldTypeItem>
+  label: string
+  pasted?: ListValue
+  onClose: () => void
+  onOpenPicker: () => void
+  onSelect: (item: ListFieldTypeItem) => void
+}
+
+function ListFieldInsertAction({
+  icon,
+  isDisabled,
   items,
+  label,
   pasted,
-  showPicker = true,
-  onPaste,
-  onSelect,
-  onMoveRow,
-  targetIndex
-}: ListFieldSeparatorProps) {
-  const [isPickerOpen, setIsPickerOpen] = useState(false)
-  const directAddItem =
-    showPicker && !pasted && items.length === 1 ? items[0] : undefined
+  onClose,
+  onOpenPicker,
+  onSelect
+}: ListFieldInsertActionProps) {
+  const directAddItem = !pasted && items.length === 1 ? items[0] : undefined
+  if (directAddItem) {
+    return (
+      <Button
+        appearance="plain"
+        className={styles.ListFieldView.insertAction()}
+        icon={icon}
+        isDisabled={isDisabled}
+        onPress={() => {
+          onSelect(directAddItem)
+          onClose()
+        }}
+      >
+        {label}
+      </Button>
+    )
+  }
   return (
-    <InsertionSeparator
-      controlOpen={isPickerOpen}
-      dragType={LIST_FIELD_ROW_DRAG_TYPE}
-      label={label}
-      onMoveRow={onMoveRow}
-      placement={placement}
-      position={position}
-      readOnly={readOnly}
-      targetIndex={targetIndex}
+    <Button
+      appearance="plain"
+      className={styles.ListFieldView.insertAction()}
+      isDisabled={isDisabled}
+      onPress={() => {
+        onOpenPicker()
+      }}
+      icon={icon}
     >
-      {directAddItem && (
-        <Button
-          aria-label={`Add ${directAddItem.label} ${position}`}
-          icon={getType(directAddItem.type).icon || IcRoundAdd}
-          isDisabled={readOnly}
-          onPress={() => onSelect(directAddItem, position)}
-          size="icon"
+      {label}
+    </Button>
+  )
+}
+
+interface ListFieldInsertPanelProps {
+  items: Array<ListFieldTypeItem>
+  label: string
+  pasted?: ListValue
+  pasteLabel?: string
+  onPaste: (row: ListValue) => void
+  onSelect: (item: ListFieldTypeItem) => void
+}
+
+function ListFieldInsertPanel({
+  items,
+  label,
+  pasted,
+  pasteLabel,
+  onPaste,
+  onSelect
+}: ListFieldInsertPanelProps) {
+  const {contains} = useFilter({sensitivity: 'base'})
+  const pickerItems = useListFieldPickerItems(
+    items,
+    pasted,
+    pasteLabel,
+    onPaste
+  )
+  return (
+    <div className={styles.ListFieldTypePicker.dialog()}>
+      <Autocomplete filter={contains}>
+        <SearchField
+          aria-label="Search types"
+          autoFocus
+          className={styles.ListFieldTypePicker.search()}
+          hasIcon
+          placeholder="Search types..."
         />
-      )}
-      {showPicker && !directAddItem && (
-        <ListFieldTypePicker
-          isDisabled={readOnly}
-          items={items}
-          label={`Add ${label} ${position}`}
-          onOpenChange={setIsPickerOpen}
-          pasted={pasted}
-          pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
-          onPaste={row => onPaste(row, position)}
-          onSelect={item => onSelect(item, position)}
-        />
-      )}
-    </InsertionSeparator>
+        <ListBox
+          aria-label={label}
+          className={styles.ListFieldTypePicker.list()}
+          items={pickerItems}
+          renderEmptyState={() => (
+            <div className={styles.ListFieldTypePicker.empty()}>
+              No matching types
+            </div>
+          )}
+        >
+          {item => (
+            <ListFieldTypePickerAction
+              key={item.id}
+              item={item}
+              onPaste={onPaste}
+              onSelect={onSelect}
+            />
+          )}
+        </ListBox>
+      </Autocomplete>
+    </div>
   )
 }
 
 function ListFieldRow({
+  draggingRowId,
   index,
   list,
   readOnly,
@@ -458,6 +542,9 @@ function ListFieldRow({
   onToggleRow,
   onCopyRow,
   onMoveRow,
+  onRowDragEnd,
+  onRowDragStart,
+  onDropIndicatorChange,
   addBetweenRow
 }: ListFieldRowProps) {
   const itemId = useAtomValue(row.field('_id')) as string
@@ -473,6 +560,7 @@ function ListFieldRow({
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
   const {dragProps, isDragging} = useDrag({
     getItems() {
       return [dragRowItem(itemId)]
@@ -480,8 +568,40 @@ function ListFieldRow({
     getAllowedDropOperations() {
       return ['move']
     },
+    onDragEnd: onRowDragEnd,
+    onDragStart: onRowDragStart,
     isDisabled: readOnly,
     preview: dragPreview
+  })
+  const {dropProps, isDropTarget} = useDrop({
+    ref: rowRef,
+    isDisabled: readOnly || draggingRowId === null,
+    getDropOperation(types, allowedOperations) {
+      if (!types.has(LIST_FIELD_ROW_DRAG_TYPE)) return 'cancel'
+      return allowedOperations.includes('move') ? 'move' : 'cancel'
+    },
+    getDropOperationForPoint(types, allowedOperations) {
+      if (!types.has(LIST_FIELD_ROW_DRAG_TYPE)) return 'cancel'
+      return allowedOperations.includes('move') ? 'move' : 'cancel'
+    },
+    onDropEnter(event) {
+      const position = rowDropPosition(rowRef.current, event.y)
+      onDropIndicatorChange(position)
+    },
+    onDropMove(event) {
+      const position = rowDropPosition(rowRef.current, event.y)
+      onDropIndicatorChange(position)
+    },
+    onDropExit() {
+      onDropIndicatorChange(null)
+    },
+    async onDrop(event) {
+      const position = rowDropPosition(rowRef.current, event.y)
+      const rowId = await getDraggedRowId(event.items, LIST_FIELD_ROW_DRAG_TYPE)
+      onDropIndicatorChange(null)
+      if (!rowId) return
+      onMoveRow(rowId, insertIndex(index, position))
+    }
   })
   const type = schema[typeName]
   if (!type) return null
@@ -511,81 +631,77 @@ function ListFieldRow({
 
   return (
     <>
-      <ComponentListRow
-        aria-label={`${label} item ${index + 1}`}
-        dragging={isDragging}
-        first={index === 0}
-        role="listitem"
+      <div
+        {...dropProps}
+        className={styles.ListFieldView.rowDropTarget()}
+        ref={rowRef}
       >
-        <DragPreview ref={dragPreview}>
-          {() => <ListFieldDragPreview icon={typeIcon} label={label} />}
-        </DragPreview>
-        <ListFieldRowHeader
-          dragProps={dragProps}
-          expanded={expanded}
-          isDragging={isDragging}
-          isFirstRow={index === 0}
-          isLastRow={index === rows - 1}
-          label={label}
-          customLabel={customLabel}
-          anchor={anchorValue}
-          readOnly={readOnly}
-          typeIcon={typeIcon}
-          onAnchorChange={updateAnchor}
-          onCustomLabelChange={updateCustomLabel}
-          onCopy={() => onCopyRow(itemId)}
-          onDelete={deleteRow}
-          onMoveDown={() => moveCurrentRow(1)}
-          onMoveUp={() => moveCurrentRow(-1)}
-          onToggle={() => onToggleRow(itemId)}
-        />
-        {expanded && (
-          <ListRowBody>
-            <NodeEditor node={row as ReactiveNode<object>} type={type} />
-          </ListRowBody>
-        )}
-        {!expanded && (
-          <ListRowFooter>
-            <CompactRecordFields
-              fields={Type.fields(type)}
-              layout="footer"
-              value={value}
-            />
-          </ListRowFooter>
-        )}
-      </ComponentListRow>
-      {index < rows - 1 && (
-        <ListFieldSeparator
-          items={typeItems}
-          label={label}
-          pasted={pasted && schema[pasted._type] ? pasted : undefined}
-          onMoveRow={onMoveRow}
-          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
-          onSelect={(item, position) =>
-            addBetweenRow(createRow(item.id, item.type), position)
-          }
-          position="after"
-          readOnly={readOnly}
-          targetIndex={insertIndex(index, 'after')}
-        />
-      )}
-      {index === rows - 1 && (
-        <ListFieldSeparator
-          items={typeItems}
-          label={label}
-          pasted={pasted && schema[pasted._type] ? pasted : undefined}
-          showPicker={false}
-          onMoveRow={onMoveRow}
-          onPaste={(row, position) => addBetweenRow(cloneRow(row), position)}
-          onSelect={(item, position) =>
-            addBetweenRow(createRow(item.id, item.type), position)
-          }
-          position="after"
-          readOnly={readOnly}
-          targetIndex={insertIndex(index, 'after')}
-        />
-      )}
+        <ComponentListRow
+          aria-label={`${label} item ${index + 1}`}
+          dragging={isDragging}
+          first={index === 0}
+          role="listitem"
+        >
+          <DragPreview ref={dragPreview}>
+            {() => <ListFieldDragPreview icon={typeIcon} label={label} />}
+          </DragPreview>
+          <ListFieldRowHeader
+            dragProps={dragProps}
+            expanded={expanded}
+            isDragging={isDragging}
+            isFirstRow={index === 0}
+            isLastRow={index === rows - 1}
+            label={label}
+            customLabel={customLabel}
+            anchor={anchorValue}
+            dragLabel={`Drag ${label} item ${index + 1}`}
+            readOnly={readOnly}
+            typeIcon={typeIcon}
+            insertItems={typeItems}
+            pasted={pasted && schema[pasted._type] ? pasted : undefined}
+            onAnchorChange={updateAnchor}
+            onCustomLabelChange={updateCustomLabel}
+            onCopy={() => onCopyRow(itemId)}
+            onDelete={deleteRow}
+            onInsertBefore={(value: ListValue) =>
+              addBetweenRow(value, 'before')
+            }
+            onInsertAfter={(value: ListValue) => addBetweenRow(value, 'after')}
+            onMoveDown={() => moveCurrentRow(1)}
+            onMoveUp={() => moveCurrentRow(-1)}
+            onToggle={() => onToggleRow(itemId)}
+          />
+          {expanded && (
+            <ListRowBody>
+              <NodeEditor node={row as ReactiveNode<object>} type={type} />
+            </ListRowBody>
+          )}
+          {!expanded && (
+            <ListRowFooter>
+              <CompactRecordFields
+                fields={Type.fields(type)}
+                layout="footer"
+                value={value}
+              />
+            </ListRowFooter>
+          )}
+        </ComponentListRow>
+      </div>
     </>
+  )
+}
+
+interface ListFieldDropIndicatorProps {
+  active: boolean
+}
+
+function ListFieldDropIndicator({active}: ListFieldDropIndicatorProps) {
+  return (
+    <div
+      aria-hidden
+      className={styles.ListFieldView.dropIndicator()}
+      data-active={active || undefined}
+    />
   )
 }
 
@@ -606,15 +722,20 @@ interface ListFieldRowHeaderProps {
   isFirstRow: boolean
   isLastRow: boolean
   isPreview?: boolean
+  insertItems: Array<ListFieldTypeItem>
   label: string
+  dragLabel: string
   customLabel: string
   anchor?: string
+  pasted?: ListValue
   readOnly: boolean
   typeIcon?: ComponentType
   onAnchorChange: (value: string) => void
   onCustomLabelChange: (value: string) => void
   onCopy?: () => void
   onDelete?: () => void
+  onInsertBefore: (value: ListValue) => void
+  onInsertAfter: (value: ListValue) => void
   onMoveDown?: () => void
   onMoveUp?: () => void
   onToggle?: () => void
@@ -628,15 +749,20 @@ function ListFieldRowHeader({
   isFirstRow,
   isLastRow,
   isPreview,
+  insertItems,
   label,
+  dragLabel,
   customLabel,
   anchor,
+  pasted,
   readOnly,
   typeIcon,
   onAnchorChange,
   onCustomLabelChange,
   onCopy,
   onDelete,
+  onInsertBefore,
+  onInsertAfter,
   onMoveDown,
   onMoveUp,
   onToggle
@@ -645,22 +771,27 @@ function ListFieldRowHeader({
   const displayAnchor = (anchor ?? slugify(displayLabel)).trim()
   const showAnchor = Boolean(displayAnchor && !displayLabel)
   const [actionsOpen, setActionsOpen] = useState(false)
+  const [insertPosition, setInsertPosition] = useState<
+    'before' | 'after' | null
+  >(null)
 
   function closeActions() {
     setActionsOpen(false)
+    setInsertPosition(null)
   }
 
   return (
     <ListRowHeader className={className} expanded={expanded} first={isFirstRow}>
+      {!readOnly && (
+        <ListRowDragHandle
+          {...dragProps}
+          aria-label={dragLabel}
+          dragging={isDragging}
+        />
+      )}
       <ListRowDrag dragging={isDragging}>
         <ListRowBadges>
-          <Badge
-            {...dragProps}
-            className={styles.ListFieldView.dragHandle()}
-            data-dragging={isDragging || undefined}
-            icon={typeIcon}
-            size="small"
-          >
+          <Badge icon={typeIcon} size="small">
             {label}
           </Badge>
           {displayLabel && <ListRowMeta>{displayLabel}</ListRowMeta>}
@@ -671,86 +802,124 @@ function ListFieldRowHeader({
         <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
           <ListRowSettingsButton icon={IcRoundMoreHoriz} />
           <Popover placement="bottom right">
-            <ListRowSettings>
-              <TextField
-                label="Label"
-                autoFocus
-                isDisabled={readOnly || isPreview}
-                onChange={onCustomLabelChange}
-                value={customLabel}
-              />
-              <SlugField
-                fieldValue={anchor}
-                label="Anchor"
-                isDisabled={readOnly || isPreview}
-                onChange={onAnchorChange}
-                source={customLabel}
-              />
-            </ListRowSettings>
-            <MenuSeparator />
-            <ListRowSettings actions>
-              <Button
-                appearance="plain"
-                onPress={() => {
-                  onCopy?.()
+            {insertPosition ? (
+              <ListFieldInsertPanel
+                items={insertItems}
+                label={`Insert ${insertPosition}`}
+                pasted={pasted}
+                pasteLabel={
+                  pasted ? pasteBlockLabel(pasted, insertItems) : undefined
+                }
+                onPaste={row => {
+                  if (insertPosition === 'before') onInsertBefore(cloneRow(row))
+                  else onInsertAfter(cloneRow(row))
                   closeActions()
                 }}
-              >
-                <Icon icon={IcBaselineContentCopy} />
-                Copy
-              </Button>
-            </ListRowSettings>
-            <MenuSeparator />
-            <ListRowSettings actions>
-              {!isFirstRow && (
-                <Button
-                  appearance="plain"
-                  onPress={() => {
-                    onMoveUp?.()
-                    closeActions()
-                  }}
-                >
-                  <Icon icon={IcRoundArrowUpward} />
-                  Move up
-                </Button>
-              )}
-              {!isLastRow && (
-                <Button
-                  appearance="plain"
-                  onPress={() => {
-                    onMoveDown?.()
-                    closeActions()
-                  }}
-                >
-                  <Icon icon={IcRoundArrowDownward} />
-                  Move down
-                </Button>
-              )}
-              {isFirstRow && (
-                <Button appearance="plain">
-                  <Icon icon={IcRoundFirstPage} />
-                  Insert before
-                </Button>
-              )}
-              <Button appearance="plain">
-                <Icon icon={IcRoundLastPage} />
-                Insert after
-              </Button>
-            </ListRowSettings>
-            <MenuSeparator />
-            <ListRowSettings actions>
-              <Button
-                appearance="plain"
-                onPress={() => {
-                  onDelete?.()
+                onSelect={item => {
+                  const row = createRow(item.id, item.type)
+                  if (insertPosition === 'before') onInsertBefore(row)
+                  else onInsertAfter(row)
                   closeActions()
                 }}
-                isDisabled={readOnly || isPreview}
-              >
-                <Icon icon={IcRoundClose} />
-                Delete
-              </Button>
-            </ListRowSettings>
+              />
+            ) : (
+              <>
+                <ListRowSettings>
+                  <TextField
+                    label="Label"
+                    autoFocus
+                    isDisabled={readOnly || isPreview}
+                    onChange={onCustomLabelChange}
+                    value={customLabel}
+                  />
+                  <SlugField
+                    fieldValue={anchor}
+                    label="Anchor"
+                    isDisabled={readOnly || isPreview}
+                    onChange={onAnchorChange}
+                    source={customLabel}
+                  />
+                </ListRowSettings>
+                <MenuSeparator />
+                <ListRowSettings actions>
+                  <Button
+                    appearance="plain"
+                    onPress={() => {
+                      onCopy?.()
+                      closeActions()
+                    }}
+                  >
+                    <Icon icon={IcBaselineContentCopy} />
+                    Copy
+                  </Button>
+                </ListRowSettings>
+                <MenuSeparator />
+                <ListRowSettings actions>
+                  {!isFirstRow && (
+                    <Button
+                      appearance="plain"
+                      onPress={() => {
+                        onMoveUp?.()
+                        closeActions()
+                      }}
+                    >
+                      <Icon icon={IcRoundArrowUpward} />
+                      Move up
+                    </Button>
+                  )}
+                  {!isLastRow && (
+                    <Button
+                      appearance="plain"
+                      onPress={() => {
+                        onMoveDown?.()
+                        closeActions()
+                      }}
+                    >
+                      <Icon icon={IcRoundArrowDownward} />
+                      Move down
+                    </Button>
+                  )}
+                  <ListFieldInsertAction
+                    icon={IcRoundFirstPage}
+                    isDisabled={Boolean(readOnly || isPreview)}
+                    items={insertItems}
+                    label="Insert before"
+                    pasted={pasted}
+                    onClose={closeActions}
+                    onOpenPicker={() => setInsertPosition('before')}
+                    onSelect={item =>
+                      onInsertBefore(createRow(item.id, item.type))
+                    }
+                  />
+                  <ListFieldInsertAction
+                    icon={IcRoundLastPage}
+                    isDisabled={Boolean(readOnly || isPreview)}
+                    items={insertItems}
+                    label="Insert after"
+                    pasted={pasted}
+                    onClose={closeActions}
+                    onOpenPicker={() => setInsertPosition('after')}
+                    onSelect={item =>
+                      onInsertAfter(createRow(item.id, item.type))
+                    }
+                  />
+                </ListRowSettings>
+                <MenuSeparator />
+                <ListRowSettings actions>
+                  <Button
+                    appearance="plain"
+                    onPress={() => {
+                      onDelete?.()
+                      closeActions()
+                    }}
+                    isDisabled={readOnly || isPreview}
+                  >
+                    <Icon icon={IcRoundClose} />
+                    Delete
+                  </Button>
+                </ListRowSettings>
+              </>
+            )}
           </Popover>
         </DialogTrigger>
       </ListRowActions>
@@ -763,6 +932,26 @@ function dragRowItem(id: string): DragItem {
     'text/plain': id,
     [LIST_FIELD_ROW_DRAG_TYPE]: id
   }
+}
+
+function rowDropPosition(
+  row: HTMLDivElement | null,
+  y: number
+): 'before' | 'after' {
+  if (!row) return 'after'
+  return y < row.offsetHeight / 2 ? 'before' : 'after'
+}
+
+async function getDraggedRowId(
+  items: Array<DropItem>,
+  dragType: string
+): Promise<string | null> {
+  for (const item of items) {
+    if (item.kind === 'text' && item.types.has(dragType) && item.getText) {
+      return item.getText(dragType)
+    }
+  }
+  return null
 }
 
 interface ListFieldTypePickerProps {
@@ -792,37 +981,16 @@ function ListFieldTypePicker({
 }: ListFieldTypePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
   const {contains} = useFilter({sensitivity: 'base'})
-  const pickerItems = useMemo<Array<ListFieldPickerOption>>(() => {
-    const pasteItem =
-      pasted && onPaste
-        ? [
-            {
-              id: 'paste',
-              label: pasteLabel || 'Paste block',
-              icon: IcBaselineContentPasteGo,
-              pasted
-            }
-          ]
-        : []
-    return [
-      ...pasteItem,
-      ...items.map(item => ({
-        id: item.id,
-        label: item.label,
-        icon: getType(item.type).icon || IcRoundAdd,
-        typeItem: item
-      }))
-    ]
-  }, [items, onPaste, pasteLabel, pasted])
+  const pickerItems = useListFieldPickerItems(
+    items,
+    pasted,
+    pasteLabel,
+    onPaste
+  )
 
   function handleOpenChange(nextOpen: boolean) {
     setIsOpen(nextOpen)
     onOpenChange?.(nextOpen)
-    if (nextOpen) return
-    globalThis.setTimeout(() => {
-      const activeElement = document.activeElement
-      if (activeElement instanceof HTMLElement) activeElement.blur()
-    }, 0)
   }
 
   return (
@@ -871,6 +1039,36 @@ function ListFieldTypePicker({
       </Popover>
     </DialogTrigger>
   )
+}
+
+function useListFieldPickerItems(
+  items: Array<ListFieldTypeItem>,
+  pasted?: ListValue,
+  pasteLabel?: string,
+  onPaste?: (row: ListValue) => void
+): Array<ListFieldPickerOption> {
+  return useMemo<Array<ListFieldPickerOption>>(() => {
+    const pasteItem =
+      pasted && onPaste
+        ? [
+            {
+              id: 'paste',
+              label: pasteLabel || 'Paste block',
+              icon: IcBaselineContentPasteGo,
+              pasted
+            }
+          ]
+        : []
+    return [
+      ...pasteItem,
+      ...items.map(item => ({
+        id: item.id,
+        label: item.label,
+        icon: getType(item.type).icon || IcRoundAdd,
+        typeItem: item
+      }))
+    ]
+  }, [items, onPaste, pasteLabel, pasted])
 }
 
 interface ListFieldTypePickerActionProps {
