@@ -20,7 +20,10 @@
   width: 100%;
   display: flex;
   min-width: 0;
-  border: 1px solid var(--alinea-border);
+  /*border: 1px solid var(--alinea-border);*/
+  box-shadow:
+    lch(0 0 0 / 0.02) 0px 3px 6px -2px,
+    lch(0 0 0 / 0.04) 0px 1px 1px;
 }
 
 .AppShell-footer {

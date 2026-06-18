@@ -1,4 +1,4 @@
-import {Button, Link, ProgressCircle} from '#/components.js'
+import {Button, Link, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
@@ -93,7 +93,7 @@ function AuthViewFrame({title, children}: AuthViewFrameProps) {
   return (
     <div className={styles.AuthView()}>
       <div className={styles.AuthView.panel()}>
-        <section className={styles.AuthView.surface()}>
+        <Surface className={styles.AuthView.surface()}>
           <div className={styles.AuthView.heading()}>
             <span className={styles.AuthView.mark()}>
               <IcRoundPublish />
@@ -101,7 +101,7 @@ function AuthViewFrame({title, children}: AuthViewFrameProps) {
             <h1 className={styles.AuthView.title()}>{title}</h1>
           </div>
           {children}
-        </section>
+        </Surface>
       </div>
     </div>
   )

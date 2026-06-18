@@ -1,4 +1,4 @@
-import {Select, SelectItem} from '#/components.js'
+import {Select, SelectItem, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {DashboardEntryData} from '../store/Dashboard.js'
@@ -21,7 +21,7 @@ export function EntryTranslationBanner({
   if (!untranslated) return null
 
   return (
-    <div className={styles.EntryTranslationBanner()}>
+    <Surface className={styles.EntryTranslationBanner()}>
       <div className={styles.EntryTranslationBanner.body()}>
         <p className={styles.EntryTranslationBanner.title()}>
           This entry has not been translated yet
@@ -53,6 +53,6 @@ export function EntryTranslationBanner({
           </Select>
         </div>
       )}
-    </div>
+    </Surface>
   )
 }

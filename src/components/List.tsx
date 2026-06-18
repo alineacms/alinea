@@ -81,10 +81,10 @@ export function ListLabel({
       data-has-rows={hasRows ? 'true' : undefined}
       isDisabled={props.isDisabled ?? !hasRows}
     >
+      {children}
       {showFold && (
         <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
       )}
-      {children}
       {shared && <SharedLabelBadge />}
     </Button>
   )

@@ -1,7 +1,10 @@
 .Surface {
   --alinea-surface-bg: var(--alinea-bg);
   background: var(--alinea-surface-bg);
-  border: 1px solid var(--alinea-border);
+  /*border: 1px solid var(--alinea-border);*/
+  box-shadow:
+    lch(0 0 0 / 0.02) 0px 3px 6px -2px,
+    lch(0 0 0 / 0.04) 0px 1px 1px;
   border-radius: 8px;
   color: var(--alinea-fg);
   cursor: default;

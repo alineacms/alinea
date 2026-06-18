@@ -1,4 +1,4 @@
-import {Button, Icon} from '#/components.js'
+import {Button, Icon, Surface} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {RootData} from '#/core/Root.js'
@@ -155,7 +155,7 @@ function NotFoundPanel({
   return (
     <Rail main>
       <RailBody className={styles.MissingEntry()}>
-        <div className={styles.MissingEntry.card()}>
+        <Surface className={styles.MissingEntry.card()}>
           <div className={styles.MissingEntry.icon()}>
             <Icon icon={IcBaselineErrorOutline} />
           </div>
@@ -168,7 +168,7 @@ function NotFoundPanel({
           {onAction && actionLabel && (
             <Button onPress={onAction}>{actionLabel}</Button>
           )}
-        </div>
+        </Surface>
       </RailBody>
     </Rail>
   )
