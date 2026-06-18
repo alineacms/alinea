@@ -4,8 +4,8 @@
   display: flex;
   justify-content: space-between;
   border: 1px solid var(--alinea-border);
-  outline: 4px solid transparent;
-  border-radius: 6px;
+  outline: 3px solid transparent;
+  border-radius: 8px;
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   min-width: 100px;
@@ -124,7 +124,7 @@
     transition: var(--alinea-transition);
     opacity: 0;
     border: 1px solid transparent;
-    outline: 4px solid transparent;
+    outline: 3px solid transparent;
   }
 
   &:hover:after {

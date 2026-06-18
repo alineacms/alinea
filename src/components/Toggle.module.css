@@ -17,7 +17,7 @@
 .ToggleButton {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--alinea-fg-subtle);
   cursor: pointer;

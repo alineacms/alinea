@@ -47,8 +47,6 @@ import {
   IcRoundAttachFile,
   IcRoundClose,
   IcRoundEdit,
-  IcRoundFirstPage,
-  IcRoundLastPage,
   IcRoundLink,
   IcRoundMoreHoriz,
   IcRoundOpenInNew,
@@ -825,19 +823,6 @@ interface LinkRowActionsProps {
   onRemove: () => void
 }
 
-interface LinkInsertActionsProps {
-  field: LinksField<LinkFieldRow, unknown>
-  isDisabled?: boolean
-  position: 'before' | 'after'
-  onOpenPicker: (request: LinkInsertPickerRequest) => void
-}
-
-interface LinkInsertPickerRequest {
-  picker: Picker<LinkFieldRow>
-  position: 'before' | 'after'
-  type: PickerType
-}
-
 function LinkRowActions({
   closeActions,
   isDisabled,
@@ -880,44 +865,6 @@ function LinkRowActions({
       >
         Remove link
       </Button>
-    </>
-  )
-}
-
-function LinkInsertActions({
-  field,
-  isDisabled,
-  position,
-  onOpenPicker
-}: LinkInsertActionsProps) {
-  const options = useFieldOptions(field)
-  const [value] = useField(field)
-  const links = value ?? []
-  const canInsert = options.max ? links.length < options.max : true
-  const icon = position === 'before' ? IcRoundFirstPage : IcRoundLastPage
-  const labelPrefix = position === 'before' ? 'Insert before' : 'Insert after'
-
-  return (
-    <>
-      {Object.entries(options.pickers).map(([type, picker]) => (
-        <Button
-          aria-label={`${labelPrefix} ${picker.label}`}
-          appearance="plain"
-          className={styles.LinkFieldView.insertAction()}
-          icon={icon}
-          isDisabled={isDisabled || !canInsert}
-          key={type}
-          onPress={() =>
-            onOpenPicker({
-              picker: picker as Picker<LinkFieldRow>,
-              position,
-              type: type as PickerType
-            })
-          }
-        >
-          {labelPrefix} {picker.label}
-        </Button>
-      ))}
     </>
   )
 }
@@ -1459,8 +1406,6 @@ function MultipleLinkRow({
   const readOnly = Boolean(options.readOnly)
   const [actionsOpen, setActionsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  const [insertPicker, setInsertPicker] =
-    useState<LinkInsertPickerRequest | null>(null)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
   const rowRef = useRef<HTMLDivElement>(null)
   const {dragProps, isDragging} = useDrag({
@@ -1508,30 +1453,6 @@ function MultipleLinkRow({
 
   function closeActions() {
     setActionsOpen(false)
-  }
-
-  function openInsertPicker(request: LinkInsertPickerRequest) {
-    closeActions()
-    setInsertPicker(request)
-  }
-
-  function insertPicked(picked: Array<LinkFieldRow>) {
-    if (!insertPicker) return
-    setValue(currentValue => {
-      const current = currentValue ?? []
-      const targetIndex = insertIndex(index, insertPicker.position)
-      const available = options.max
-        ? Math.max(options.max - current.length, 0)
-        : picked.length
-      const insert = picked.slice(0, available)
-      if (insert.length === 0) return current
-      return [
-        ...current.slice(0, targetIndex),
-        ...insert,
-        ...current.slice(targetIndex)
-      ]
-    })
-    setInsertPicker(null)
   }
 
   return (
@@ -1615,21 +1536,6 @@ function MultipleLinkRow({
                       value={value}
                     />
                   </ListRowSettings>
-                  <MenuSeparator />
-                  <ListRowSettings actions>
-                    <LinkInsertActions
-                      field={field}
-                      isDisabled={readOnly}
-                      onOpenPicker={openInsertPicker}
-                      position="before"
-                    />
-                    <LinkInsertActions
-                      field={field}
-                      isDisabled={readOnly}
-                      onOpenPicker={openInsertPicker}
-                      position="after"
-                    />
-                  </ListRowSettings>
                 </Popover>
               </DialogTrigger>
             </ListRowActions>
@@ -1664,19 +1570,6 @@ function MultipleLinkRow({
           picker={picker}
           type={type}
           value={value}
-        />
-      )}
-      {insertPicker && (
-        <LinkPickerDialog
-          isOpen
-          onOpenChange={isOpen => {
-            if (!isOpen) setInsertPicker(null)
-          }}
-          onPick={link => insertPicked([link])}
-          onPickMany={insertPicked}
-          picker={insertPicker.picker}
-          selection={links.filter(row => row._type === insertPicker.type)}
-          type={insertPicker.type}
         />
       )}
     </>

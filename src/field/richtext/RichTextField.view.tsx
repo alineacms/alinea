@@ -10,7 +10,6 @@ import {
   ListRowBody,
   ListRowDrag,
   ListRowDragHandle,
-  ListRowFoldButton,
   ListRowHeader,
   ListRowSettings,
   ListRowSettingsButton,
@@ -27,17 +26,17 @@ import {entries, values} from '#/core/util/Objects.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
-  IcBaselineContentCopy,
-  IcRoundClose,
-  IcRoundMoreHoriz
-} from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
-import {
   useFieldError,
   useFieldNode,
   useFieldOptions,
   useFieldSetter
 } from '#/dashboard/hooks.js'
+import {
+  IcBaselineContentCopy,
+  IcRoundClose,
+  IcRoundMoreHoriz
+} from '#/dashboard/icons.js'
+import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import styler from '@alinea/styler'
 import {Node as TipTapNode} from '@tiptap/core'
@@ -83,7 +82,6 @@ interface TypeExtensionHeaderProps {
   type: Type
   onDelete: () => void
   onCopy: () => void
-  onToggle: () => void
 }
 
 function TypeExtensionHeader({
@@ -91,8 +89,7 @@ function TypeExtensionHeader({
   readOnly,
   type,
   onDelete,
-  onCopy,
-  onToggle
+  onCopy
 }: TypeExtensionHeaderProps) {
   const label = Type.label(type)
   const typeIcon = getType(type).icon
@@ -115,11 +112,6 @@ function TypeExtensionHeader({
       )}
       <ListRowDrag>
         <ListRowBadges>
-          <ListRowFoldButton
-            aria-label={exp ? `Collapse ${label}` : `Expand ${label}`}
-            expanded={exp}
-            onPress={onToggle}
-          />
           <Badge icon={typeIcon} size="small">
             {label}
           </Badge>
@@ -182,14 +174,6 @@ function typeExtension(
     const [exp, setExp] = useState(() => {
       return expandedByBlockId.get(blockId) ?? true
     })
-
-    function onToggle() {
-      setExp(exp => {
-        const next = !exp
-        expandedByBlockId.set(blockId, next)
-        return next
-      })
-    }
 
     const rowNodeAtom = useMemo(() => {
       return atom(get => {
@@ -272,7 +256,6 @@ function typeExtension(
               type={type}
               readOnly={readOnly}
               onDelete={deleteNode}
-              onToggle={onToggle}
               onCopy={onCopy}
               exp={exp}
             />

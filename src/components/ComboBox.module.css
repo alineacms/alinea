@@ -4,8 +4,8 @@
   display: flex;
   justify-content: space-between;
   border: 1px solid var(--alinea-border);
-  outline: 4px solid transparent;
-  border-radius: 6px;
+  outline: 3px solid transparent;
+  border-radius: 8px;
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
   text-align: left;
@@ -97,7 +97,7 @@
       transition: var(--alinea-transition);
       opacity: 0;
       border: 1px solid transparent;
-      outline: 4px solid transparent;
+      outline: 3px solid transparent;
     }
 
     &:hover:after {
@@ -137,7 +137,7 @@
   min-height: unset;
   max-height: inherit;
   padding: 4px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid var(--alinea-border);
   background-color: var(--alinea-input);
 }
@@ -173,7 +173,7 @@
     transition: var(--alinea-transition);
     opacity: 0;
     border: 1px solid transparent;
-    outline: 4px solid transparent;
+    outline: 3px solid transparent;
   }
   &:hover:after {
     opacity: 1;

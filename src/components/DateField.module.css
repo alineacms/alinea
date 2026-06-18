@@ -6,8 +6,8 @@
   padding: 8px 10px;
   background: var(--alinea-input);
   border: 1px solid var(--alinea-border);
-  border-radius: 6px;
-  outline: 4px solid transparent;
+  border-radius: 8px;
+  outline: 3px solid transparent;
   color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;

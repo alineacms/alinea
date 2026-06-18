@@ -34,7 +34,7 @@
 
   &[data-hovered] .Switch-track {
     border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
+    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
   }
 
   &[data-focus-visible] .Switch-track {
@@ -54,7 +54,7 @@
     }
 
     &[data-hovered] .Switch-track {
-      box-shadow: 0 0 0 4px var(--alinea-primary-overlay);
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
     }
 
     &[data-focus-visible] .Switch-track {

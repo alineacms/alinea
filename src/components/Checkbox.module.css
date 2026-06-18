@@ -36,7 +36,7 @@
 
   &[data-hovered] .Checkbox-box {
     border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
+    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
   }
 
   &[data-focus-visible] .Checkbox-box {
@@ -52,7 +52,7 @@
     }
 
     &[data-hovered] .Checkbox-box {
-      box-shadow: 0 0 0 4px var(--alinea-primary-overlay);
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
     }
 
     &[data-focus-visible] .Checkbox-box {
@@ -77,7 +77,7 @@
     }
 
     &[data-hovered] .Checkbox-box {
-      box-shadow: 0 0 0 4px var(--alinea-danger-overlay);
+      box-shadow: 0 0 0 3px var(--alinea-danger-overlay);
     }
 
     &[data-focus-visible] .Checkbox-box {

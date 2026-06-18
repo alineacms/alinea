@@ -39,7 +39,7 @@
 
   &[data-hovered]:before {
     border-color: var(--alinea-border-hover);
-    box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
+    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
   }
 
   &[data-pressed]:before {
@@ -53,7 +53,7 @@
     }
 
     &[data-hovered]:before {
-      box-shadow: 0 0 0 4px var(--alinea-primary-overlay);
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
     }
 
     &[data-pressed]:before {

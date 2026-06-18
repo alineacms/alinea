@@ -2,8 +2,8 @@
   overflow: hidden;
   background-color: var(--alinea-input);
   border: 1px solid var(--alinea-border);
-  border-radius: 6px;
-  outline: 4px solid transparent;
+  border-radius: 8px;
+  outline: 3px solid transparent;
   transition: var(--alinea-transition);
   transition-property: border-color, outline-color, background-color;
 
@@ -65,18 +65,9 @@
 
 .RichTextFieldBlock {
   margin: 14px 0;
-  outline: 4px solid transparent;
+  outline: 3px solid transparent;
   transition: var(--alinea-transition);
   transition-property: outline-color;
-}
-
-.RichTextFieldView {
-  &:focus-within:not(:has(.RichTextFieldBlock:focus-within)) {
-    :global(.ProseMirror-selectednode) .RichTextFieldBlock {
-      border-color: var(--alinea-border-hover);
-      outline-color: var(--alinea-ring-subtle);
-    }
-  }
 }
 
 .RichTextFieldBlock-header {

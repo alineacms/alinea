@@ -13,8 +13,8 @@
     padding: 8px 10px;
     background-color: var(--alinea-input);
     border: 1px solid var(--alinea-border);
-    border-radius: 6px;
-    outline: 4px solid transparent;
+    border-radius: 8px;
+    outline: 1px solid transparent;
     color: var(--alinea-fg);
     font-size: var(--alinea-font-size-base);
     line-height: 1.5;
@@ -26,11 +26,10 @@
 
     &[data-hovered] {
       border-color: var(--alinea-border-hover);
-      outline-color: var(--alinea-ring-subtle);
     }
     &[data-focused] {
       border-color: var(--alinea-border-accent);
-      outline-color: var(--alinea-primary-overlay);
+      outline-color: var(--alinea-border-accent);
     }
     &[data-invalid='true'] {
       border-color: var(--alinea-border-danger);

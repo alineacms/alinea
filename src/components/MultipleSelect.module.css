@@ -30,8 +30,8 @@
   min-height: 39px;
   background-color: var(--alinea-input);
   border: 1px solid var(--alinea-border);
-  border-radius: 6px;
-  outline: 4px solid transparent;
+  border-radius: 8px;
+  outline: 3px solid transparent;
   position: relative;
   transition: var(--alinea-transition);
 
@@ -127,8 +127,8 @@
       align-items: center;
       background-color: var(--alinea-input);
       border: 1px solid var(--alinea-border);
-      border-radius: 6px;
-      outline: 4px solid transparent;
+      border-radius: 8px;
+      outline: 3px solid transparent;
       transition: var(--alinea-transition);
     }
 

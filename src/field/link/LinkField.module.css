@@ -150,14 +150,6 @@
   display: grid;
 }
 
-.LinkFieldView-insertAction {
-  align-self: stretch;
-  justify-content: flex-start;
-  width: 100%;
-  min-width: 0;
-  white-space: nowrap;
-}
-
 .LinkFieldView-dropIndicator {
   position: relative;
   z-index: 2;

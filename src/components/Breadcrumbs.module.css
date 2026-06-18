@@ -35,7 +35,7 @@
     content: '';
     position: absolute;
     inset: -2px -4px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 2px solid var(--alinea-ring);
   }
 

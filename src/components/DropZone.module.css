@@ -6,7 +6,7 @@
   justify-content: center;
   padding: 24px;
   margin-inline: auto;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 2px dashed var(--alinea-border);
   color: var(--alinea-fg);
   transition: var(--alinea-transition);
@@ -16,5 +16,5 @@
 .DropZone[data-drop-target] {
   background-color: var(--alinea-primary-overlay);
   border-color: var(--alinea-primary);
-  box-shadow: 0 0 0 4px var(--alinea-primary-overlay);
+  box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
 }

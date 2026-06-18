@@ -11,7 +11,7 @@
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--alinea-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--alinea-input);
 
   white-space: nowrap;
@@ -22,7 +22,7 @@
 
 .TimeField-input:focus-within {
   border-color: var(--alinea-primary);
-  box-shadow: 0 0 0 4px var(--alinea-primary-overlay);
+  box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
   outline: none;
 }
 

@@ -101,7 +101,7 @@
   --alinea-primary-subtle-fg: light-dark(var(--alinea-blue-700), var(--alinea-blue-300));
   --alinea-primary-disabled-fg: var(--alinea-blue-400);
   --alinea-primary-icon: light-dark(var(--alinea-blue-700), var(--alinea-blue-200));
-  --alinea-primary-overlay: rgb(from var(--alinea-primary) r g b / 20%);
+  --alinea-primary-overlay: var(--alinea-blue-100);
 
   --alinea-danger: light-dark(var(--alinea-red-400), var(--alinea-red-500));
   --alinea-danger-fg: var(--alinea-gray-50);

@@ -83,7 +83,7 @@
   min-height: 50px;
   padding: 8px 12px;
   border: 1px solid var(--EntrySidebar-version-border);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--EntrySidebar-version-background);
   color: var(--EntrySidebar-version-color);
 }

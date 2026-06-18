@@ -10,23 +10,23 @@
     display: flex;
     position: relative;
     border: 1px solid var(--alinea-border);
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: var(--alinea-input);
     transition: var(--alinea-transition);
 
     &[data-hovered] {
       border-color: var(--alinea-border-hover);
-      box-shadow: 0 0 0 4px var(--alinea-ring-subtle);
+      box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
     }
 
     &:focus-within {
       border-color: var(--alinea-primary);
-      box-shadow: 0 0 0 4px var(--alinea-primary-overlay);
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
     }
 
     &[data-invalid] {
       border: 1px solid var(--alinea-border-danger);
-      box-shadow: 0 0 0 4px var(--alinea-danger-overlay);
+      box-shadow: 0 0 0 3px var(--alinea-danger-overlay);
     }
 
     .NumberField-input {
