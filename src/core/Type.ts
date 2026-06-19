@@ -263,6 +263,15 @@ export function type<Fields extends FieldsDefinition>(
   label: string,
   config: TypeConfig<Fields>
 ): Type<Fields> {
+  const instance = createType(label, config)
+  Type.validate(instance)
+  return instance
+}
+
+export function createType<Fields extends FieldsDefinition>(
+  label: string,
+  config: TypeConfig<Fields>
+): Type<Fields> {
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
   const addCurrent = () => {
@@ -287,7 +296,7 @@ export function type<Fields extends FieldsDefinition>(
   }
   addCurrent()
   const allFields = fromEntries(fields) as Fields
-  const instance = {
+  return {
     ...allFields,
     [internalType]: {
       ...config,
@@ -296,6 +305,4 @@ export function type<Fields extends FieldsDefinition>(
       label
     }
   }
-  Type.validate(instance)
-  return instance
 }

@@ -1,5 +1,5 @@
 import {Tab, TabList, TabPanel, Tabs} from '#/components.js'
-import {type as createType} from '#/core/Type.js'
+import {createType} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {ReactiveNode, useFieldNode} from '#/dashboard/store.js'
 import {type LocalisedField} from '#/field/localiser.js'
