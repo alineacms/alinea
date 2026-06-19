@@ -6,12 +6,12 @@ import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
 import {Fragment, memo, useMemo} from 'react'
 import {
+  Button as AriaButton,
   type DragAndDropHooks,
   GridLayout,
   type GridLayoutOptions,
   GridList,
   GridListItem,
-  Button as AriaButton,
   type Key,
   Virtualizer
 } from 'react-aria-components'
@@ -118,8 +118,6 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const hasChildren = useAtomValue(data.hasChildren)
-  const parentIds = useAtomValue(data.parentIds)
-  const [parentsPending, parents] = useAtomValue(data.parentsState)
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -140,29 +138,11 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         className={styles.ExplorerCards.item.card({file: Boolean(info)})}
       >
         {info ? (
-          <ExplorerFileCard
-            file={info}
-            label={label}
-            layout="card"
-            parents={
-              <ExplorerCardParents
-                loading={parentsPending && parents === undefined}
-                parentIds={parentIds}
-                parents={parents ?? []}
-              />
-            }
-          />
+          <ExplorerFileCard file={info} label={label} layout="card" />
         ) : (
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
-            parents={
-              <ExplorerCardParents
-                loading={parentsPending && parents === undefined}
-                parentIds={parentIds}
-                parents={parents ?? []}
-              />
-            }
             typeLabel={type.label}
           />
         )}
