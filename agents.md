@@ -26,3 +26,6 @@ Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 - Imports should be relative if in same src subdir, otherwise absolute starting
   with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
   If absolute do not include any extension.
+
+## Verify
+- `bun test` and `bun lint` are available
