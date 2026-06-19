@@ -1,13 +1,14 @@
 import type {Handler} from '#/backend/Handler.js'
 import {router} from '#/backend/router/Router.js'
 import type {CMS} from '#/core/CMS.js'
+import {HttpError} from '#/core/HttpError.js'
 import {type Trigger, trigger} from '#/core/Trigger.js'
 import type {User} from '#/core/User.js'
+import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {ReadableStream, type Request, Response} from '@alinea/iso'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
-import {Readable} from 'node:stream'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
@@ -218,19 +219,36 @@ export function createLocalServer(
       })
     }),
     router.queryMatcher.post('/upload').map(async ({request, url}) => {
-      if (!request.body)
-        return new Response('No body', {
-          status: 400,
-          headers: uploadCorsHeaders(request)
-        })
-      const file = url.searchParams.get('file')!
-      const dir = path.join(rootDir, path.dirname(file))
-      await fs.promises.mkdir(dir, {recursive: true})
-      await fs.promises.writeFile(
-        path.join(rootDir, file),
-        Readable.fromWeb(request.body as any)
-      )
-      return new Response('Upload ok', {headers: uploadCorsHeaders(request)})
+      try {
+        if (!request.body)
+          return new Response('No body', {
+            status: 400,
+            headers: uploadCorsHeaders(request)
+          })
+        const file = url.searchParams.get('file')!
+        const maxUploadSize = cms.config.maxUploadSize
+        const contentLength = request.headers.get('content-length')
+        assertUploadSize(
+          file,
+          contentLength ? Number(contentLength) : undefined,
+          maxUploadSize
+        )
+        const dir = path.join(rootDir, path.dirname(file))
+        await fs.promises.mkdir(dir, {recursive: true})
+        await writeUploadFile(
+          path.join(rootDir, file),
+          request.body,
+          maxUploadSize
+        )
+        return new Response('Upload ok', {headers: uploadCorsHeaders(request)})
+      } catch (error) {
+        if (error instanceof HttpError)
+          return new Response(error.message, {
+            status: error.code,
+            headers: uploadCorsHeaders(request)
+          })
+        throw error
+      }
     }),
     router.compress(
       matcher.all('/api').map(async ({url, request}) => {
@@ -289,4 +307,46 @@ export function createLocalServer(
       return (await httpRouter.handle(request))!
     }
   }
+}
+
+async function writeUploadFile(
+  file: string,
+  body: ReadableStream<Uint8Array>,
+  maxUploadSize: number | undefined
+) {
+  const writer = fs.createWriteStream(file)
+  const reader = body.getReader()
+  let size = 0
+  try {
+    while (true) {
+      const {done, value} = await reader.read()
+      if (done) break
+      const chunk = value
+      size += chunk.byteLength
+      assertUploadSize(file, size, maxUploadSize)
+      if (!writer.write(chunk)) await waitForDrain(writer)
+    }
+    await closeWriter(writer)
+  } catch (error) {
+    writer.destroy()
+    await fs.promises.rm(file, {force: true}).catch(() => {})
+    throw error
+  } finally {
+    reader.releaseLock()
+  }
+}
+
+function waitForDrain(writer: fs.WriteStream) {
+  return new Promise<void>((resolve, reject) => {
+    writer.once('drain', resolve)
+    writer.once('error', reject)
+  })
+}
+
+function closeWriter(writer: fs.WriteStream) {
+  return new Promise<void>((resolve, reject) => {
+    writer.once('finish', resolve)
+    writer.once('error', reject)
+    writer.end()
+  })
 }

@@ -16,6 +16,7 @@ import {Permission} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64} from '#/core/util/Encoding.js'
+import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -255,7 +256,15 @@ export function createHandler({
         }
         const isPost = request.method === 'POST'
         if (isPost && cnx.handleUpload) {
-          await cnx.handleUpload(entryId, await request.blob())
+          const contentLength = request.headers.get('content-length')
+          assertUploadSize(
+            entryId,
+            contentLength ? Number(contentLength) : undefined,
+            cms.config.maxUploadSize
+          )
+          const file = await request.blob()
+          assertUploadSize(entryId, file.size, cms.config.maxUploadSize)
+          await cnx.handleUpload(entryId, file)
           return new Response('OK', {status: 200})
         }
       }

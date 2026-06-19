@@ -21,9 +21,11 @@ import type {Expr} from '#/core/Expr.js'
 import {Field, FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Order} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {Permission, Policy, type Resource} from '#/core/Role.js'
 import {Root, type RootData, type RootI18n} from '#/core/Root.js'
@@ -491,10 +493,11 @@ export class Dashboard {
     if (retry) await retry.call(db)
   })
 
-  discardMutationQueue = atom(null, get => {
+  discardMutationQueue = atom(null, (get, set) => {
     const db = get(this.db)
     const discard = (db as Partial<MutationQueueDiscard>).discardMutationQueue
     if (discard) discard.call(db)
+    set(this.#uploadQueue, [])
   })
 
   uploadProgress = atom(
@@ -516,6 +519,11 @@ export class Dashboard {
         | {
             type: 'finish'
             ids: Array<string>
+          }
+        | {
+            type: 'fail'
+            uploads: Array<{id: string; file: File; error: string}>
+            destination: MutationQueueEntry['upload']
           }
     ) => {
       if (update.type === 'start') {
@@ -551,6 +559,27 @@ export class Dashboard {
             }
           })
         )
+        return
+      }
+      if (update.type === 'fail') {
+        set(this.#uploadQueue, current => [
+          ...update.uploads.map(
+            ({id, file, error}): MutationQueueEntry => ({
+              id,
+              status: 'failed',
+              error,
+              upload: update.destination,
+              mutations: [
+                {
+                  op: 'uploadFile',
+                  title: file.name,
+                  progress: {loaded: 0, total: file.size || undefined}
+                }
+              ]
+            })
+          ),
+          ...current
+        ])
         return
       }
       set(this.#uploadQueue, current =>
@@ -1341,7 +1370,27 @@ export class DashboardExplorer {
     })
     const uploadFiles = Array.from(files)
     if (uploadFiles.length === 0) return
-    const ops = uploadFiles.map(file => {
+    const maxUploadSize = get(this.dashboard.config).maxUploadSize
+    const invalidUploads = uploadFiles.flatMap(file => {
+      const error = uploadSizeError(file, maxUploadSize)
+      return error ? [{id: createId(), file, error}] : []
+    })
+    if (invalidUploads.length > 0) {
+      set(this.dashboard.uploadProgress, {
+        type: 'fail',
+        uploads: invalidUploads,
+        destination: {
+          workspace: location.workspace,
+          root: location.root,
+          parentId: location.parentId
+        }
+      })
+    }
+    const validFiles = uploadFiles.filter(
+      file => !invalidUploads.some(upload => upload.file === file)
+    )
+    if (validFiles.length === 0) return
+    const ops = validFiles.map(file => {
       const op = new UploadOperation({
         file,
         createPreview: createPreview,
@@ -1358,7 +1407,7 @@ export class DashboardExplorer {
       })
       return op
     })
-    const uploads = uploadFiles.map((file, index) => ({
+    const uploads = validFiles.map((file, index) => ({
       id: ops[index]!.id,
       file
     }))
@@ -2741,6 +2790,19 @@ export class DashboardEntryData {
     policy.assert(Permission.Update, activeVersion)
     policy.assert(Permission.Upload, activeVersion)
     const db = get(this.dashboard.db)
+    const error = uploadSizeError(file, get(this.dashboard.config).maxUploadSize)
+    if (error) {
+      set(this.dashboard.uploadProgress, {
+        type: 'fail',
+        uploads: [{id: createId(), file, error}],
+        destination: {
+          workspace: activeVersion.workspace,
+          root: activeVersion.root,
+          parentId: activeVersion.parentId ?? undefined
+        }
+      })
+      return
+    }
     await db.commit(
       new UploadOperation({
         file,
@@ -3198,6 +3260,18 @@ function mutationQueueState(
     failed: entries.filter(entry => entry.status === 'failed').length,
     blocked: entries.filter(entry => entry.status === 'blocked').length,
     error: entries.find(entry => entry.status === 'failed')?.error
+  }
+}
+
+function uploadSizeError(
+  file: File,
+  maxUploadSize: number | undefined
+): string | undefined {
+  try {
+    assertUploadSize(file.name, file.size, maxUploadSize)
+    return undefined
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
   }
 }
 

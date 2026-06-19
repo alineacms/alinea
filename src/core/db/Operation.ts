@@ -5,9 +5,9 @@ import {createId} from '../Id.js'
 import type {StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {isImage} from '../media/IsImage.js'
+import {assertUploadSize} from '../media/UploadLimits.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
-import {assert} from '../util/Assert.js'
 import {createFileHash} from '../util/ContentHash.js'
 import {workspaceMediaDir} from '../util/EntryFilenames.js'
 import {basename, extname, join, normalize} from '../util/Paths.js'
@@ -205,12 +205,14 @@ export class UploadOperation extends Operation {
       const {file, createPreview} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
-      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-      const contentType =
-        file instanceof Blob ? file.type : 'application/octet-stream'
       const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
       const root =
         _root ?? Workspace.defaultMediaRoot(db.config.workspaces[workspace])
+      const fileSize = Array.isArray(file) ? file[1].byteLength : file.size
+      assertUploadSize(fileName, fileSize, db.config.maxUploadSize)
+      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
+      const contentType =
+        file instanceof Blob ? file.type : 'application/octet-stream'
       const extension = extname(fileName)
       const path = slugify(basename(fileName, extension))
       const directory = workspaceMediaDir(db.config, workspace)
@@ -311,9 +313,7 @@ function uploadFileWithProgress(
         resolve()
         return
       }
-      reject(
-        new HttpError(request.status, 'Could not reach server for upload')
-      )
+      reject(new HttpError(request.status, 'Could not reach server for upload'))
     })
     request.addEventListener('error', () => {
       reject(new HttpError(request.status, 'Could not reach server for upload'))

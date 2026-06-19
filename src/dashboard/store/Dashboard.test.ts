@@ -1228,6 +1228,45 @@ test('DashboardExplorer filters queued uploads to its current folder', () => {
   test.equal(store.get(explorer.uploadsInCurrentFolder).length, 0)
 })
 
+test('DashboardExplorer reports oversized uploads in the mutation queue', async () => {
+  const media = root('Media', {isMediaRoot: true})
+  const main = workspace('Main', {
+    source: 'content/main',
+    roots: {media}
+  })
+  const config = createConfig({
+    schema: {},
+    workspaces: {main},
+    maxUploadSize: 3,
+    roles: {
+      admin: role('Admin', {
+        permissions(policy) {
+          policy.allowAll()
+        }
+      })
+    }
+  })
+  const store = createStore()
+  const dashboard = new Dashboard(
+    new TestGraph(config),
+    config,
+    new EventTarget(),
+    new Client({config, url: 'https://example.com/api'}),
+    {},
+    {local: true}
+  )
+  const explorer = dashboard.explore({workspace: 'main', root: 'media'})
+
+  await store.set(dashboard.setUserRoles, ['admin'])
+  await waitForPolicy(dashboard, store)
+  await store.set(explorer.upload, [new File(['abcd'], 'large.txt')])
+
+  const queue = store.get(dashboard.mutationQueue)
+  test.is(queue.failed, 1)
+  test.ok(queue.error?.includes('exceeds the configured limit'))
+  test.is(store.get(explorer.uploadsInCurrentFolder)[0]?.status, 'failed')
+})
+
 test('ReactiveNode inserts array values at the requested index', () => {
   const store = createStore()
   const node = new ReactiveNode<Array<Row>>([
