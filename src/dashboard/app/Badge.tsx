@@ -29,7 +29,7 @@ export function Badge({
       data-size={size}
       className={styles.Badge(styler.merge(props))}
     >
-      {icon && <Icon icon={icon} />}
+      {icon && <Icon icon={icon} data-slot="icon" />}
       <span>{children}</span>
     </span>
   )

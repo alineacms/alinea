@@ -17,14 +17,12 @@
   align-self: center;
   background-color: var(--alinea-badge-background);
   font-size: var(--alinea-badge-font-size);
+  line-height: var(--alinea-badge-height);
   font-weight: var(--alinea-badge-font-weight);
   min-width: 0;
 
   [data-slot='icon'] {
-    color: inherit;
-    flex-shrink: 0;
-    width: 14px;
-    height: 14px;
+    font-size: 14px;
   }
 
   &[data-size='small'] {
@@ -37,8 +35,7 @@
     border-radius: 4px;
 
     [data-slot='icon'] {
-      width: 12px;
-      height: 12px;
+      font-size: 12px;
     }
   }
 
