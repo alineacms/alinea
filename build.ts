@@ -369,6 +369,8 @@ function jsEntry({
           const files = glob.sync('src/**/*.{ts,tsx}').filter(file => {
             if (file.endsWith('UIStory.tsx')) return false
             if (!test && file.endsWith('.test.ts')) return false
+            if (!test && file.endsWith('.spec.tsx')) return false
+            if (!test && file.endsWith('.story.tsx')) return false
             if (!test && file.endsWith('.test.tsx')) return false
             return !file.endsWith('.d.ts') && !file.endsWith('.stories.tsx')
           })

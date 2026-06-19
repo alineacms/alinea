@@ -16,4 +16,5 @@ node_modules
 /generated
 .next
 /.playwright/.cache
+/test-results
 llms-full.txt
