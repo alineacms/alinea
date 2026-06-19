@@ -26,6 +26,7 @@ jobs:
       - name: Check cycles
         run: bun cycles
       - run: bun test
+      - run: bun lint
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}
