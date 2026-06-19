@@ -3,7 +3,6 @@ import {suite} from '@alinea/suite'
 import {Config, Edit, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import {createId} from '#/core/Id.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 
@@ -13,17 +12,6 @@ const Page = Config.document('Page', {
     image: Field.image('Example image')
   }
 })
-const main = Config.workspace('Main', {
-  source: 'content',
-  roots: {
-    pages: Config.root('Pages', {contains: [Page]}),
-    media: Config.media()
-  }
-})
-const cms = createCMS({
-  schema: {Page},
-  workspaces: {main}
-})
 
 const example = new File(
   [fs.readFileSync('test/fixtures/example.jpg')],
@@ -31,24 +19,43 @@ const example = new File(
 )
 
 class DB extends LocalDB {
+  uploads = 0
+
   async prepareUpload(file: string): Promise<UploadResponse> {
-    const id = createId()
+    const id = `upload-${++this.uploads}`
     return {
       entryId: id,
-      location: `media/${file}_${id}`,
-      previewUrl: `preview/${file}_${id}`,
+      location: `${file}_${id}`,
+      previewUrl: '',
       url: `https://uploads.alinea.test/${file}_${id}`
     }
   }
 }
 
-test('upload urls', async () => {
+function cmsWithMediaDir(mediaDir?: string, mediaUrl?: string) {
+  const main = Config.workspace('Main', {
+    source: 'content',
+    mediaDir,
+    mediaUrl,
+    roots: {
+      pages: Config.root('Pages', {contains: [Page]}),
+      media: Config.media()
+    }
+  })
+  return createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+}
+
+async function queryUploadedImageSrc(mediaDir?: string, mediaUrl?: string) {
   const fetch = globalThis.fetch
   const uploadFetch: typeof fetch = Object.assign(
     async () => new Response(null, {status: 204}),
     {preconnect: fetch.preconnect}
   )
   globalThis.fetch = uploadFetch
+  const cms = cmsWithMediaDir(mediaDir, mediaUrl)
   const db = new DB(cms.config)
   try {
     const upload = await db.upload({
@@ -62,8 +69,28 @@ test('upload urls', async () => {
         image: Edit.link(Page.image).addImage(upload._id).value()
       }
     })
-    test.is(page.image.src, upload.previewUrl)
+    return page.image.src
   } finally {
     globalThis.fetch = fetch
   }
+}
+
+test('upload urls', async () => {
+  const src = await queryUploadedImageSrc()
+  test.is(src, 'example.jpg_upload-1')
+})
+
+test('upload urls keep default public mediaDir out of image URLs', async () => {
+  const src = await queryUploadedImageSrc('/public')
+  test.is(src, '/example.jpg_upload-1')
+})
+
+test('upload urls derive nested public mediaDir from publicDir', async () => {
+  const src = await queryUploadedImageSrc('/public/media')
+  test.is(src, '/media/example.jpg_upload-1')
+})
+
+test('upload urls use configured mediaUrl', async () => {
+  const src = await queryUploadedImageSrc('/assets/uploads', '/media')
+  test.is(src, '/media/example.jpg_upload-1')
 })

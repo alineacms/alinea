@@ -47,7 +47,11 @@ export function filePicker<Fields>(
     condition: {or: [fileCondition, {_type: 'MediaLibrary'}]},
     showMedia: true,
     defaultView: 'thumb',
-    selection: FileLink
+    selection: {
+      ...FileLink,
+      root: Entry.root,
+      workspace: Entry.workspace
+    }
   })
 }
 

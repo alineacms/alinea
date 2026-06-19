@@ -8,6 +8,7 @@ import {Reference} from '#/core/Reference.js'
 import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
+import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
 import {assign, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
@@ -89,6 +90,17 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         row[unresolvedEntryMarker] = true
         return
       }
+      if (type === 'file') {
+        const {href, url, root, workspace, ...rest} = extra
+        const location = typeof href === 'string' ? href : url
+        assign(row, rest)
+        const publicUrl = mediaEntryUrl(loader, workspace, location)
+        if (typeof publicUrl === 'string') {
+          row.href = publicUrl
+          if (typeof url === 'string') row.url = publicUrl
+        }
+        return
+      }
       if (type !== 'image') return assign(row, extra)
       const {src: location, previewUrl, filePath, alt, root, workspace, ...rest} =
         extra
@@ -97,19 +109,33 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         workspace
       })
       if (!previewUrl) {
-        assign(row, rest, {src: location})
+        const src = mediaEntryUrl(loader, workspace, location)
+        assign(row, rest, {src})
         if (typeof selectedAlt === 'string') row.alt = selectedAlt
         return
       }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
-      const src = locationAvailable ? location : previewUrl
+      const src =
+        locationAvailable
+          ? mediaEntryUrl(loader, workspace, location)
+          : previewUrl
       row.src = src
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)
     }
   }
+}
+
+function mediaEntryUrl(
+  loader: LinkResolver,
+  workspace: unknown,
+  location: unknown
+): unknown {
+  if (typeof location !== 'string') return location
+  if (typeof workspace !== 'string') return location
+  return mediaLocationUrl(loader.resolver.config, workspace, location)
 }
 
 interface LinkedEntryLocation {

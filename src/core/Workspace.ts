@@ -17,6 +17,8 @@ export interface WorkspaceMeta {
   source: string
   /** The directory where media files are placed in case a file backend is used */
   mediaDir?: string
+  /** The public URL prefix used when querying media files */
+  mediaUrl?: string
   /** The main theme color used in the dashboard */
   color?: string
   icon?: ComponentType

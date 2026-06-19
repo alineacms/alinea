@@ -14,6 +14,7 @@ import {
   type TextNode
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
+import {mediaLocationUrl} from '../util/EntryFilenames.js'
 import {entries} from '../util/Objects.js'
 
 export type RichTextMutator<R> = {
@@ -23,6 +24,7 @@ export type RichTextMutator<R> = {
 const linkInfoFields = {
   id: Entry.id,
   url: Entry.url,
+  workspace: Entry.workspace,
   location: MediaFile.location
 }
 
@@ -162,7 +164,11 @@ async function applyLinkMarks(
   for (const [mark, entryId] of links) {
     const type = mark[LinkMark.link] as 'entry' | 'file' | undefined
     const data = info.get(entryId)
-    if (data) mark.href = type === 'file' ? data.location : data.url
+    if (!data) continue
+    mark.href =
+      type === 'file'
+        ? mediaLocationUrl(loader.resolver.config, data.workspace, data.location)
+        : data.url
   }
 }
 
