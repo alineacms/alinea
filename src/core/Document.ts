@@ -12,6 +12,8 @@ import {
   type
 } from './Type.js'
 
+const documentMarker = Symbol.for('@alinea.Document')
+
 export type Document = {
   title: TextField
   path: PathField
@@ -39,8 +41,9 @@ export function document<Fields extends FieldsDefinition>(
       fields: {metadata}
     })
   )
-  return type(label, {
+  const result = type(label, {
     ...config,
     fields: fieldsWithMeta
   })
+  return Object.assign(result, {[documentMarker]: true})
 }
