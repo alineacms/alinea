@@ -2,4 +2,4 @@
 linker = "hoisted"
 
 [test]
-pathIgnorePatterns = ["v1/**"]
+pathIgnorePatterns = ["v1/**", "**/*.spec.tsx"]

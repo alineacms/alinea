@@ -1,2 +1,2 @@
 import '@alinea/components/css'
-import '../src/dashboard/index.css'
+import '../src/dashboard/global.css'
