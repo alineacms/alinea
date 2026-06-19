@@ -270,7 +270,6 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   })
   const controlledSelection =
     selectedKeys !== undefined && onSelectionChange !== undefined
-  console.log('should expand to:', Array.from(expandedKeys))
   return (
     <div className={styles.SidebarTree.tree.viewport()}>
       <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
