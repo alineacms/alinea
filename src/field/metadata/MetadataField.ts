@@ -1,6 +1,5 @@
+import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
 import {RecordField} from '#/core/field/RecordField.js'
-import type {FieldBeforeSaveContext} from '#/core/Field.js'
-import type {FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {Type, type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'

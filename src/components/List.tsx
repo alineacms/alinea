@@ -5,11 +5,11 @@ import type {
   HTMLAttributes,
   ReactNode
 } from 'react'
-import css from './List.module.css'
 import {Button, type ButtonProps} from './Button.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {SharedLabelBadge} from './Label.js'
+import css from './List.module.css'
 import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
 
 const styles = styler(css)
@@ -58,6 +58,7 @@ export interface ListLabelProps extends Omit<
 > {
   children: ReactNode
   className?: string
+  description?: ReactNode
   expanded: boolean
   hasRows?: boolean
   shared?: boolean
@@ -66,6 +67,7 @@ export interface ListLabelProps extends Omit<
 
 export function ListLabel({
   children,
+  description,
   expanded,
   hasRows,
   shared,
@@ -74,19 +76,24 @@ export function ListLabel({
   ...props
 }: ListLabelProps) {
   return (
-    <Button
-      {...props}
-      appearance="plain"
-      className={styles.ListLabel(styler.merge({className}))}
-      data-has-rows={hasRows ? 'true' : undefined}
-      isDisabled={props.isDisabled ?? !hasRows}
-    >
-      {children}
-      {showFold && (
-        <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
+    <div className={styles.ListLabelHeader(styler.merge({className}))}>
+      <Button
+        {...props}
+        appearance="plain"
+        className={styles.ListLabel()}
+        data-has-rows={hasRows ? 'true' : undefined}
+        isDisabled={props.isDisabled ?? !hasRows}
+      >
+        {children}
+        {showFold && (
+          <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
+        )}
+        {shared && <SharedLabelBadge />}
+      </Button>
+      {description && (
+        <div className={styles.ListLabelDescription()}>{description}</div>
       )}
-      {shared && <SharedLabelBadge />}
-    </Button>
+    </div>
   )
 }
 

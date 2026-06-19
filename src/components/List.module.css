@@ -36,6 +36,15 @@
   padding-top: 4px;
 }
 
+.ListLabelHeader {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
 .ListLabel {
   color: var(--alinea-fg-muted);
   font-size: var(--alinea-font-size-base);
@@ -43,7 +52,6 @@
   min-height: auto;
   padding-block: 0;
   margin-left: -8px;
-  margin-bottom: 8px;
   line-height: 1;
   border: none;
 }
@@ -52,6 +60,18 @@
 .ListLabel[data-pressed],
 .ListLabel[data-active] {
   background: transparent;
+}
+
+.ListLabelDescription {
+  display: block;
+  max-width: 100%;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.1;
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 .ListError {
