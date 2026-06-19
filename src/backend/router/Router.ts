@@ -105,6 +105,9 @@ export namespace router {
       delete(path: string) {
         return withMethod('DELETE').map(withPath(path, getPathname))
       },
+      options(path: string) {
+        return withMethod('OPTIONS').map(withPath(path, getPathname))
+      },
       all(path: string) {
         return withPath(path, getPathname)
       }
