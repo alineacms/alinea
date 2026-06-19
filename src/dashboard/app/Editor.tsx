@@ -1,6 +1,6 @@
 import {Button, Icon, Surface} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {RootData} from '#/core/Root.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
@@ -285,12 +285,16 @@ function EntryEditor({entry}: EntryEditorProps) {
   const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
   const [, startTransition] = useTransition()
-  const save = useSetAtom(entry.saveDraft)
+  const saveDraft = useSetAtom(entry.saveDraft)
+  const publishEdits = useSetAtom(entry.publishEdits)
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
   const [isSidebarOpen, setSidebarOpen] = useState(true)
   const defaultView = useAtomValue(entry.defaultView)
+  const isMediaFile = type.type === MediaFile
+  const isMediaLibrary = type.type === MediaLibrary
+  const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   const discardAndConfirm = () => {
     startTransition(() => {
@@ -300,9 +304,15 @@ function EntryEditor({entry}: EntryEditorProps) {
   }
 
   const saveAndConfirm = () => {
-    startTransition(() => {
-      save(node)
-      routeBlock?.confirm()
+    startTransition(async () => {
+      if (mediaDraftsDisabled) {
+        await publishEdits(node)
+      } else {
+        await saveDraft(node)
+      }
+      startTransition(() => {
+        routeBlock?.confirm()
+      })
     })
   }
 
@@ -327,7 +337,6 @@ function EntryEditor({entry}: EntryEditorProps) {
     </>
   )
 
-  const isMediaFile = type.type === MediaFile
   if (isMediaFile) {
     editorBody = (
       <>
@@ -386,7 +395,7 @@ function EntryEditor({entry}: EntryEditorProps) {
                 Discard my changes
               </Button>
               <Button onPress={saveAndConfirm} intent="primary">
-                Save as draft
+                {mediaDraftsDisabled ? 'Publish' : 'Save as draft'}
               </Button>
             </DashboardModalFooter>
           </DashboardModalDialog>

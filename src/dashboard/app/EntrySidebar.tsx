@@ -11,12 +11,17 @@ import {
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
+import {
+  Suspense,
+  useState,
+  type ComponentType,
+  type ReactNode
+} from 'react'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
@@ -45,12 +50,17 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
   const [selectedTab, setSelectedTab] = useAtom(entry.dashboard.entrySidebarTab)
   const isMediaFile = type.type === MediaFile
+  const isMediaLibrary = type.type === MediaLibrary
+  const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs: Array<DashboardEntrySidebarTab> = isMediaFile
     ? ['references']
-    : ['preview', 'history', 'references']
+    : hasPreview
+      ? ['preview', 'history', 'references']
+      : ['history', 'references']
   const selectedKey = allowedTabs.includes(selectedTab)
     ? selectedTab
     : allowedTabs[0]
+
   return (
     <Sidebar>
       <Tabs
@@ -66,12 +76,14 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
       >
         <RailHeader className={styles.EntrySidebar.header()}>
           <TabList aria-label="Entry sidebar">
-            {!isMediaFile && (
+            {hasPreview ? (
               <>
                 <Tab id="preview">Preview</Tab>
                 <Tab id="history">History</Tab>
               </>
-            )}
+            ) : !isMediaFile ? (
+              <Tab id="history">History</Tab>
+            ) : null}
             <Tab id="references">References</Tab>
           </TabList>
           {onOpenChange && (
@@ -90,12 +102,14 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
                   <EntrySidebarHistory entry={entry} />
                 </Suspense>
               </TabPanel>
-              <TabPanel
-                id="preview"
-                className={styles.EntrySidebar.previewPanel()}
-              >
-                <EntrySidebarPreview entry={entry} />
-              </TabPanel>
+              {hasPreview && (
+                <TabPanel
+                  id="preview"
+                  className={styles.EntrySidebar.previewPanel()}
+                >
+                  <EntrySidebarPreview entry={entry} />
+                </TabPanel>
+              )}
             </>
           )}
           <TabPanel

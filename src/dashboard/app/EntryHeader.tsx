@@ -1,5 +1,5 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useTransition} from 'react'
@@ -116,6 +116,7 @@ function EntryHeaderMoreActions({
   const access = policy.get(activeVersion)
   const canDelete = activeVersion.seeded === null
   const isMediaFile = type.type === MediaFile
+  const isMediaLibrary = type.type === MediaLibrary
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
@@ -198,7 +199,7 @@ function EntryHeaderMoreActions({
           })
         }
       } else {
-        if (config.enableDrafts && access.publish) {
+        if (!isMediaLibrary && config.enableDrafts && access.publish) {
           menuItems.push({
             id: 'unpublish',
             label: 'Unpublish',
@@ -296,10 +297,14 @@ function EntryHeaderActions({
   const publishEdits = useSetAtom(entry.publishEdits)
   const publishDraft = useSetAtom(entry.publishDraft)
   const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const type = useAtomValue(entry.type)
   const access = policy.get(activeVersion)
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
+  const isMediaFile = type.type === MediaFile
+  const isMediaLibrary = type.type === MediaLibrary
+  const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
@@ -313,7 +318,8 @@ function EntryHeaderActions({
     setSelectedVersion({type: 'status', status: 'draft'})
   }
 
-  const saveDraftVisible = config.enableDrafts && access.update
+  const saveDraftVisible =
+    !mediaDraftsDisabled && config.enableDrafts && access.update
   const actionButtons =
     isRevision && saveDraftVisible ? (
       <Button

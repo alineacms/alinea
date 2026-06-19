@@ -1021,7 +1021,8 @@ export class Dashboard {
         root: request.root,
         parentId: request.parentId,
         locale: request.locale,
-        status: config.enableDrafts ? 'draft' : 'published',
+        status:
+          type === MediaLibrary || !config.enableDrafts ? 'published' : 'draft',
         insertOrder:
           parentInsertOrder && parentInsertOrder !== 'free'
             ? parentInsertOrder
@@ -2452,6 +2453,7 @@ export class DashboardEntryData {
 
   preview = atom(get => {
     const type = get(this.type).type
+    if (type === MediaLibrary) return undefined
     const typePreview = Type.preview(type)
     if (typePreview !== undefined) return typePreview
     const config = get(this.dashboard.config)
