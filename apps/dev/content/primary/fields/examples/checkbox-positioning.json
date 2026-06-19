@@ -1,0 +1,12 @@
+{
+  "_id": "checkboxPositioningExample",
+  "_type": "CheckboxPositioning",
+  "_index": "a1",
+  "title": "Checkbox positioning",
+  "plain": false,
+  "required": false,
+  "shared": false,
+  "requiredShared": false,
+  "withDescription": false,
+  "withHelp": false
+}
