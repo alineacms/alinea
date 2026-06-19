@@ -207,8 +207,22 @@ export function createLocalServer(
         }
       })
     }),
+    router.queryMatcher.all('/upload').map(({request}) => {
+      if (!isAllowedUploadOrigin(request))
+        return new Response('Forbidden', {status: 403})
+    }),
+    router.queryMatcher.options('/upload').map(({request}) => {
+      return new Response(undefined, {
+        status: 204,
+        headers: uploadCorsHeaders(request)
+      })
+    }),
     router.queryMatcher.post('/upload').map(async ({request, url}) => {
-      if (!request.body) return new Response('No body', {status: 400})
+      if (!request.body)
+        return new Response('No body', {
+          status: 400,
+          headers: uploadCorsHeaders(request)
+        })
       const file = url.searchParams.get('file')!
       const dir = path.join(rootDir, path.dirname(file))
       await fs.promises.mkdir(dir, {recursive: true})
@@ -216,7 +230,7 @@ export function createLocalServer(
         path.join(rootDir, file),
         Readable.fromWeb(request.body as any)
       )
-      return new Response('Upload ok')
+      return new Response('Upload ok', {headers: uploadCorsHeaders(request)})
     }),
     router.compress(
       matcher.all('/api').map(async ({url, request}) => {
@@ -245,6 +259,27 @@ export function createLocalServer(
       serveBrowserBuild
     )
   ).notFound(() => new Response('Not found', {status: 404}))
+
+  function uploadCorsHeaders(request: Request) {
+    const origin = request.headers.get('origin')
+    return {
+      ...(origin ? {'access-control-allow-origin': origin} : {}),
+      'access-control-allow-methods': 'POST, OPTIONS',
+      'access-control-allow-headers':
+        request.headers.get('access-control-request-headers') ?? 'content-type',
+      vary: 'Origin, Access-Control-Request-Headers'
+    }
+  }
+
+  function isAllowedUploadOrigin(request: Request) {
+    const origin = request.headers.get('origin')
+    if (!origin) return true
+    try {
+      return new URL(origin).hostname === new URL(request.url).hostname
+    } catch {
+      return false
+    }
+  }
 
   return {
     close() {
