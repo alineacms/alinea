@@ -12,6 +12,8 @@ import {
 import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {Type} from '#/core/Type.js'
+import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
@@ -194,14 +196,12 @@ function EntrySidebarTimelineElement(revision: Revision) {
 interface EntrySidebarStatusItemProps {
   entry: DashboardEntryData
   status: EntryStatus
-  currentRevision?: Revision
 }
 
-function EntrySidebarStatusItem({
-  entry,
-  status,
-  currentRevision
-}: EntrySidebarStatusItemProps) {
+function EntrySidebarStatusItem({entry, status}: EntrySidebarStatusItemProps) {
+  const type = useAtomValue(entry.type)
+  const sourceLocale = useAtomValue(entry.sourceLocale)
+  const versions = useAtomValue(entry.languages(sourceLocale).versions)
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
   const currentlyEditing = useAtomValue(entry.currentlyEditing)
@@ -210,6 +210,9 @@ function EntrySidebarStatusItem({
   const selected =
     selectedVersion.type === 'status' && selectedVersion.status === status
   const rowStatus = getStatusItemVersionStatus(status, activeVersion?.main)
+  const version = versions.get(status)
+  const hasMetadata = Type.field(type.type, 'metadata') instanceof MetadataField
+  const meta = hasMetadata ? formatMetadata(version?.data.metadata) : undefined
   return (
     <li className={styles.EntrySidebar.historyItem()}>
       <EntrySidebarVersionRow
@@ -217,7 +220,7 @@ function EntrySidebarStatusItem({
         status={rowStatus}
         icon={getVersionStatusIcon(rowStatus)}
         title={formatStatus(status)}
-        meta={formatMeta(currentRevision)}
+        meta={meta}
         onPress={() => setSelectedVersion({type: 'status', status})}
       >
         {isEditing && (
@@ -361,51 +364,39 @@ function formatStatus(status: EntryStatus) {
   return status[0].toUpperCase() + status.slice(1)
 }
 
-function formatMeta(revision?: Revision) {
-  const user = revision?.user?.name
-  if (!revision) return user
-  return `${user} - ${formatRelativeTime(revision.createdAt)}`
-}
-
 function formatTime(timestamp: number) {
   const date = new Date(timestamp)
-
   if (isNaN(date.getTime())) {
     return 'Invalid Date'
   }
-
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${day}/${month}/${year} - ${hours}:${minutes}`
-}
-
-function formatRelativeTime(timestamp: number) {
-  const date = new Date(timestamp)
-  const now = new Date()
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  ).getTime()
-  const startOfDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  ).getTime()
+  const ddmmyyyy = date.toLocaleDateString('nl-BE')
   const time = date.toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit'
   })
-  if (startOfDate === startOfToday) return `Today at ${time}`
-  if (startOfDate === startOfToday - 24 * 60 * 60 * 1000)
-    return `Yesterday at ${time}`
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return `${ddmmyyyy} - ${time}`
+}
+
+function formatMetadata(metadata: unknown) {
+  if (!isMetadata(metadata) || typeof metadata.updatedAt !== 'number') {
+    return undefined
+  }
+  const updatedAt = formatTime(metadata.updatedAt * 1000)
+  const updatedBy = metadata.updatedBy.name
+  return updatedBy ? `${updatedBy} ${updatedAt}` : updatedAt
+}
+
+function isMetadata(value: unknown): value is Metadata {
+  if (!isRecord(value)) return false
+  const updatedBy = value.updatedBy
+  return (
+    (typeof value.updatedAt === 'number' || value.updatedAt === null) &&
+    isRecord(updatedBy) &&
+    typeof updatedBy.name === 'string' &&
+    typeof updatedBy.email === 'string'
+  )
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
