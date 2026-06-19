@@ -21,20 +21,7 @@ export function mediaLocationUrl(
   workspace: string,
   location: string
 ): string {
-  const {mediaDir, mediaUrl: configuredUrl} = Workspace.data(
-    config.workspaces[workspace]
-  )
-  let mediaUrl = configuredUrl
-  if (mediaUrl === undefined && mediaDir) {
-    const publicDir = config.publicDir ?? '/public'
-    const publicRelative = paths.relative(publicDir, mediaDir)
-    const inPublicDir =
-      publicRelative &&
-      !publicRelative.startsWith('..') &&
-      !paths.isAbsolute(publicRelative)
-    if (publicRelative === '') mediaUrl = ''
-    else mediaUrl = join('/', inPublicDir ? publicRelative : mediaDir)
-  }
+  const {mediaUrl} = Workspace.data(config.workspaces[workspace])
   if (!mediaUrl) return location
   return joinPaths(mediaUrl, location)
 }

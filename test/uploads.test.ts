@@ -85,9 +85,9 @@ test('upload urls keep default public mediaDir out of image URLs', async () => {
   test.is(src, '/example.jpg_upload-1')
 })
 
-test('upload urls derive nested public mediaDir from publicDir', async () => {
+test('upload urls keep nested mediaDir out of image URLs by default', async () => {
   const src = await queryUploadedImageSrc('/public/media')
-  test.is(src, '/media/example.jpg_upload-1')
+  test.is(src, '/example.jpg_upload-1')
 })
 
 test('upload urls use configured mediaUrl', async () => {
