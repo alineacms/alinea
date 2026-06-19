@@ -15,7 +15,6 @@ import {
   ListRowFoldButton,
   ListRowFooter,
   ListRowHeader,
-  ListRowMeta,
   ListRowSettings,
   ListRowSettingsButton,
   MenuSeparator,
@@ -897,6 +896,31 @@ function LinkLabelField({isDisabled, node, value}: LinkLabelFieldProps) {
   )
 }
 
+interface EntryLinkSuffixFieldProps {
+  isDisabled?: boolean
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function EntryLinkSuffixField({
+  isDisabled,
+  node,
+  value
+}: EntryLinkSuffixFieldProps) {
+  const suffix = useAtomValue(node.field('_suffix')) as string | undefined
+  const setSuffix = useSetAtom(node.field('_suffix'))
+  if (value[Reference.type] !== 'entry') return null
+  return (
+    <TextField
+      description="For example: #id"
+      isDisabled={isDisabled}
+      label="URL suffix"
+      onChange={next => setSuffix(next || undefined)}
+      value={suffix ?? ''}
+    />
+  )
+}
+
 interface LinkMetaLabelProps {
   className: string
   node: ReactiveNode<LinkFieldRow>
@@ -1316,6 +1340,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 <Popover placement="bottom right">
                   <ListRowSettings>
                     <LinkLabelField node={node} value={value} />
+                    <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
                   <MenuSeparator />
                   <ListRowSettings actions>
@@ -1513,6 +1538,11 @@ function MultipleLinkRow({
                 <Popover placement="bottom right">
                   <ListRowSettings>
                     <LinkLabelField
+                      isDisabled={readOnly}
+                      node={node}
+                      value={value}
+                    />
+                    <EntryLinkSuffixField
                       isDisabled={readOnly}
                       node={node}
                       value={value}

@@ -74,6 +74,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [Reference.id]: id,
         [Reference.type]: type,
         [EntryReference.entry]: entryId,
+        [EntryReference.suffix]: suffix,
         [ListRow.index]: index,
         ...fields
       } = row as EntryReference & ListRow
@@ -101,7 +102,11 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         }
         return
       }
-      if (type !== 'image') return assign(row, extra)
+      if (type !== 'image') {
+        assign(row, extra)
+        applyUrlSuffix(row, suffix)
+        return
+      }
       const {src: location, previewUrl, filePath, alt, root, workspace, ...rest} =
         extra
       const selectedAlt = selectImageAlt(alt, loader, {
@@ -126,6 +131,14 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       assign(row, rest)
     }
   }
+}
+
+function applyUrlSuffix(row: Record<string, unknown>, suffix: unknown) {
+  if (typeof suffix !== 'string') return
+  const value = suffix.trim()
+  if (!value) return
+  if (typeof row.url === 'string') row.url = `${row.url}${value}`
+  if (typeof row.href === 'string') row.href = `${row.href}${value}`
 }
 
 function mediaEntryUrl(

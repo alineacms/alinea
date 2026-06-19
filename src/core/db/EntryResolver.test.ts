@@ -10,6 +10,7 @@ import {suite} from '@alinea/suite'
 import {Expr} from '../Expr.js'
 import type {GraphQuery} from '../Graph.js'
 import {FSSource} from '../source/FSSource.js'
+import {Node} from '../TextDoc.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver, statusChecker} from './EntryResolver.js'
 
@@ -202,6 +203,7 @@ const Article = Config.document('Article', {
     text: Field.text('Text'),
     single: Field.entry('Single'),
     multi: Field.entry.multiple('Multi'),
+    body: Field.richText('Body'),
     heroImage: Field.image('Hero image'),
     gallery: Field.image.multiple('Gallery'),
     meta: Field.object('Meta', {
@@ -262,8 +264,33 @@ const advancedEntries = [
       title: 'Alpha',
       score: 5,
       text: 'one two cookie four five',
-      single: {_entry: 'child-2'},
+      single: {
+        _id: 'single-link',
+        _type: 'entry',
+        _entry: 'child-2',
+        _suffix: '?filter=active'
+      },
       multi: [{_entry: 'child-2'}, {_entry: 'missing'}],
+      body: [
+        {
+          _type: 'paragraph',
+          content: [
+            {
+              _type: 'text',
+              text: 'Filtered child',
+              marks: [
+                {
+                  _type: 'link',
+                  _id: 'body-link',
+                  _link: 'entry',
+                  _entry: 'child-2',
+                  _suffix: '?filter=active'
+                }
+              ]
+            }
+          ]
+        }
+      ],
       heroImage: {_type: 'image', _id: 'image-link-1', _entry: 'image-plain'},
       gallery: [
         {
@@ -600,6 +627,32 @@ test('locales, translations and link edges', async () => {
     select: Article.multi.find({select: Query.id})
   })
   test.equal(linkedMany, ['child-2'])
+})
+
+test('entry link suffixes are appended to query URLs', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const linkedEntry = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.single
+  })
+  test.is(linkedEntry?.url, '/parent/beta?filter=active')
+  test.is(linkedEntry?.href, '/parent/beta?filter=active')
+
+  const body = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.body
+  })
+  const firstNode = body?.[0]
+  if (!firstNode || !Node.isElement(firstNode)) {
+    throw new Error('Expected first rich text node to be an element')
+  }
+  const firstText = firstNode.content?.[0]
+  if (!firstText || !Node.isText(firstText)) {
+    throw new Error('Expected first rich text child to be text')
+  }
+  test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active')
 })
 
 test('image fields include alt text in query values', async () => {

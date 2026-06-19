@@ -165,11 +165,18 @@ async function applyLinkMarks(
     const type = mark[LinkMark.link] as 'entry' | 'file' | undefined
     const data = info.get(entryId)
     if (!data) continue
-    mark.href =
+    const href =
       type === 'file'
         ? mediaLocationUrl(loader.resolver.config, data.workspace, data.location)
         : data.url
+    mark.href = applyUrlSuffix(href, mark[LinkMark.suffix])
   }
+}
+
+function applyUrlSuffix(url: string, suffix: string | undefined): string {
+  const value = suffix?.trim()
+  if (!value) return url
+  return `${url}${value}`
 }
 
 function richTextSearchableText<Blocks>(

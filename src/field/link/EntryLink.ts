@@ -18,6 +18,7 @@ export interface EntryLink<InferredFields = undefined> extends EntryReference {
   title: string
   path: string
   href: string
+  url: string
   fields: InferredFields
 }
 

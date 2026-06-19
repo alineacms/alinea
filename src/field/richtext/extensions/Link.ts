@@ -4,6 +4,7 @@ interface LinkAttributes {
   'data-id'?: string
   'data-entry'?: string
   'data-link'?: string
+  'data-suffix'?: string
   href?: string
   target?: string
   title?: string
@@ -43,6 +44,9 @@ export const Link = Mark.create<LinkOptions>({
         default: null
       },
       'data-link': {
+        default: null
+      },
+      'data-suffix': {
         default: null
       },
       href: {
