@@ -21,18 +21,18 @@ import {
   RiFlashlightFill
 } from '../icons.js'
 import {
+  createDashboardTreeSelection,
   Dashboard,
-  type DashboardLocaleSelection,
   DashboardEntry,
   DashboardEntryData,
   type DashboardEntryTreeStatus,
+  type DashboardLocaleSelection,
   DashboardRoot,
   DashboardTree,
-  DashboardWorkspace,
-  createDashboardTreeSelection
+  DashboardWorkspace
 } from '../store/Dashboard.js'
-import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
+import css from './SidebarTree.module.css'
 import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
@@ -107,19 +107,11 @@ function affectedStatus(
   return ownStatus
 }
 
-const SidebarItem = memo(function SidebarItem({
-  item,
-  tree
-}: SidebarItemProps) {
+const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
   const {pending, data} = useAtomValue(item.data)
   if (!data) return <SidebarLoadingItem item={item} pending={pending} />
   return (
-    <SidebarLoadedItem
-      item={item}
-      data={data}
-      tree={tree}
-      pending={pending}
-    />
+    <SidebarLoadedItem item={item} data={data} tree={tree} pending={pending} />
   )
 })
 
@@ -178,7 +170,8 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   let icon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
   if (!icon) icon = hasChildren ? LucideFolder : LucideFile
-  const isLoadingChildren = hasChildren && isExpanded && childItems === undefined
+  const isLoadingChildren =
+    hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
   const rowStatus = affectedStatus(status, selectedAncestorStatus)
   const isArchived = rowStatus.status === 'archived'
@@ -277,6 +270,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   })
   const controlledSelection =
     selectedKeys !== undefined && onSelectionChange !== undefined
+  console.log('should expand to:', Array.from(expandedKeys))
   return (
     <div className={styles.SidebarTree.tree.viewport()}>
       <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
@@ -327,10 +321,7 @@ function SidebarTreeRootButton({
       </Button>
       {i18n && i18n.locales.length > 0 && (
         <span className={styles.SidebarTree.rootButton.locale()}>
-          <LocaleMenu
-            root={root}
-            selectedLocale={selectedLocale}
-          />
+          <LocaleMenu root={root} selectedLocale={selectedLocale} />
         </span>
       )}
     </div>

@@ -644,8 +644,18 @@ export class Dashboard {
       const focused = await get(this.focused)
       const confirm = async () => {
         const {workspace, root, entry, locale} = update
-        if (entry) await get(this.entries(entry).routeReady)
+        const ready = entry
+          ? await get(this.entries(entry).routeReady)
+          : undefined
         startTransition(() => {
+          if (workspace && ready?.data) {
+            const tree = this.workspace(workspace).tree
+            const expandedKeys = get(tree.expandedKeys)
+            const nextExpandedKeys = new Set(expandedKeys)
+            for (const parentId of get(ready.data.parentIds))
+              nextExpandedKeys.add(parentId)
+            set(tree.expandedKeys, nextExpandedKeys)
+          }
           set(this.#location, {
             hash: `#${nav.entry(workspace, root, entry, locale)}`
           })
