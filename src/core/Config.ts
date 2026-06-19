@@ -28,6 +28,8 @@ export interface Config {
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
+  /** Maximum file upload size in bytes */
+  maxUploadSize?: number
 
   /** The base url of the application */
   baseUrl?: string | {development?: string; production?: string}

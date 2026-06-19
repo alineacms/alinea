@@ -32,7 +32,11 @@ class DB extends LocalDB {
   }
 }
 
-function cmsWithMediaDir(mediaDir?: string, mediaUrl?: string) {
+function cmsWithMediaDir(
+  mediaDir?: string,
+  mediaUrl?: string,
+  maxUploadSize?: number
+) {
   const main = Config.workspace('Main', {
     source: 'content',
     mediaDir,
@@ -44,7 +48,8 @@ function cmsWithMediaDir(mediaDir?: string, mediaUrl?: string) {
   })
   return createCMS({
     schema: {Page},
-    workspaces: {main}
+    workspaces: {main},
+    maxUploadSize
   })
 }
 
@@ -93,4 +98,16 @@ test('upload urls keep nested mediaDir out of image URLs by default', async () =
 test('upload urls use configured mediaUrl', async () => {
   const src = await queryUploadedImageSrc('/assets/uploads', '/media')
   test.is(src, '/media/example.jpg_upload-1')
+})
+
+test('uploads reject files over maxUploadSize before upload', async () => {
+  const cms = cmsWithMediaDir(undefined, undefined, 3)
+  const db = new DB(cms.config)
+
+  await test.throws(async () => {
+    await db.upload({
+      file: new File(['abcd'], 'large.txt')
+    })
+  }, 'exceeds the configured limit')
+  test.is(db.uploads, 0)
 })
