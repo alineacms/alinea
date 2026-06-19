@@ -334,7 +334,7 @@ function pasteBlockLabel(
   items: Array<ListFieldTypeItem>
 ): string {
   const item = items.find(item => item.id === row._type)
-  return item ? `Paste ${item.label} block` : 'Paste block'
+  return item ? `Paste ${item.label}` : 'Paste block'
 }
 
 interface ListFieldCreateActionsProps {
