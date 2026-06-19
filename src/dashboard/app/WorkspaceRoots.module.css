@@ -35,7 +35,8 @@
 
   &[data-selected] {
     background: var(--alinea-bg);
-    color: var(--alinea-selected-fg);
+    color: var(--alinea-fg);
+    box-shadow: var(--alinea-shadow-raised);
   }
 }
 
