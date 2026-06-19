@@ -249,10 +249,63 @@ class HierarchyGraph extends TestGraph {
         filePath: 'pages/blog/post.json',
         seeded: null,
         data: {title: 'Post', path: 'post'}
+      },
+      {
+        id: 'folder',
+        type: 'Page',
+        parentId: null,
+        workspace: 'main',
+        root: 'pages',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'folder',
+        title: 'Folder',
+        url: '/folder',
+        filePath: 'pages/folder.json',
+        seeded: null,
+        data: {title: 'Folder', path: 'folder'}
+      },
+      {
+        id: 'hidden-child',
+        type: 'HiddenPage',
+        parentId: 'folder',
+        workspace: 'main',
+        root: 'pages',
+        locale: null,
+        status: 'published',
+        main: true,
+        path: 'folder/hidden-child',
+        title: 'Hidden child',
+        url: '/folder/hidden-child',
+        filePath: 'pages/folder/hidden-child.json',
+        seeded: null,
+        data: {title: 'Hidden child', path: 'hidden-child'}
       }
     ] as const
     if ('parentId' in query && hasInFilter(query.parentId)) {
-      return Promise.resolve(['blog'] as AnyQueryResult<Query>)
+      const typeFilter =
+        'filter' in query &&
+        typeof query.filter === 'object' &&
+        query.filter !== null &&
+        '_type' in query.filter
+          ? (query.filter._type as {in?: Array<string>})
+          : undefined
+      const parentIds = [
+        ...new Set(
+          entries
+            .filter(entry => {
+              if (!query.parentId.in.includes(entry.parentId ?? ''))
+                return false
+              if (typeFilter?.in && !typeFilter.in.includes(entry.type))
+                return false
+              return true
+            })
+            .map(entry => entry.parentId)
+            .filter(parentId => parentId !== null)
+        )
+      ]
+      return Promise.resolve(parentIds as AnyQueryResult<Query>)
     }
     const idFilter = 'id' in query ? query.id : undefined
     if (hasInFilter(idFilter)) {
@@ -272,6 +325,16 @@ class HierarchyGraph extends TestGraph {
                       main: true
                     }
                   ]
+                : entry.id === 'hidden-child'
+                  ? [
+                      {
+                        id: 'folder',
+                        path: 'folder',
+                        type: 'Page',
+                        status: 'published',
+                        main: true
+                      }
+                    ]
                 : [],
             entries: [entry]
           })) as AnyQueryResult<Query>
@@ -1026,6 +1089,49 @@ test('DashboardRoot explorer opens child overviews from the root listing', async
       })
     }
   }
+})
+
+test('DashboardEntryData ignores hidden child types for hasChildren', async () => {
+  const Page = createType('Page', {fields: {}, defaultView: 'edit'})
+  const HiddenPage = createType('Hidden page', {
+    hidden: true,
+    fields: {}
+  })
+  const pages = root('Pages')
+  const main = workspace('Main', {
+    source: 'content/main',
+    roots: {pages}
+  })
+  const config = createConfig({
+    schema: {Page, HiddenPage},
+    workspaces: {main},
+    roles: {
+      admin: role('Admin', {
+        permissions(policy) {
+          policy.allowAll()
+        }
+      })
+    }
+  })
+  const store = createStore()
+  const dashboard = new Dashboard(
+    new HierarchyGraph(config),
+    config,
+    new EventTarget(),
+    new Client({config, url: 'https://example.com/api'}),
+    {},
+    {local: true}
+  )
+  await store.set(dashboard.setUserRoles, ['admin'])
+  await waitForPolicy(dashboard, store)
+
+  const folder = dashboard.entries('folder')
+  const ready = await store.get(folder.readyState)
+  const data = ready.data
+  if (!data) throw new Error('Folder entry should be loaded')
+
+  test.equal(store.get(data.hasChildren), false)
+  test.equal(store.get(data.defaultView), 'edit')
 })
 
 test('DashboardExplorer can search all roots after typing', async () => {

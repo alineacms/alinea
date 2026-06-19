@@ -910,8 +910,12 @@ export class Dashboard {
   })
 
   entryLoader = atom(get => {
+    const config = get(this.config)
     const db = get(this.db)
     const policy = get(this.policy)
+    const visibleTypes = entries(config.schema)
+      .filter(([, type]) => !Type.isHidden(type))
+      .map(([name]) => name)
     return loader(async ids => {
       const rows = await db.find({
         groupBy: Entry.id,
@@ -938,6 +942,7 @@ export class Dashboard {
       const parentIds = await db.find({
         select: Entry.parentId,
         parentId: {in: ids},
+        filter: {_type: {in: visibleTypes}},
         groupBy: Entry.parentId,
         status: 'preferDraft'
       })
