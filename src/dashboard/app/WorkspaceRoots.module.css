@@ -35,6 +35,7 @@
 
   &[data-selected] {
     background: var(--alinea-bg);
+    color: var(--alinea-selected-fg);
   }
 }
 
