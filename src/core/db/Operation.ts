@@ -9,9 +9,13 @@ import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {assert} from '../util/Assert.js'
 import {createFileHash} from '../util/ContentHash.js'
-import {workspaceMediaDir} from '../util/EntryFilenames.js'
+import {
+  workspaceMediaDir,
+  workspaceMediaFile,
+  workspaceMediaLocation
+} from '../util/EntryFilenames.js'
 import {keys} from '../util/Objects.js'
-import {basename, extname, join, normalize} from '../util/Paths.js'
+import {basename, extname, join} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
 import {Workspace} from '../Workspace.js'
 import type {Mutation} from './Mutation.js'
@@ -229,16 +233,15 @@ export class UploadOperation extends Operation {
       })
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
-      const {mediaDir} = Workspace.data(db.config.workspaces[workspace])
-      const prefix = mediaDir && normalize(mediaDir)
-      const fileLocation =
-        prefix && info.location.startsWith(prefix)
-          ? info.location.slice(prefix.length)
-          : info.location
+      const fileLocation = workspaceMediaLocation(
+        db.config,
+        workspace,
+        info.location
+      )
       const uploadFile: Mutation = {
         op: 'uploadFile',
         url: info.previewUrl,
-        location: join(prefix, fileLocation)
+        location: workspaceMediaFile(db.config, workspace, fileLocation)
       }
       const createEntry: Mutation = {
         op: 'create',
