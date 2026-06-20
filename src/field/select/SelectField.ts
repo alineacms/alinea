@@ -16,6 +16,8 @@ export interface SelectConfig<Key> extends FieldOptions<Key> {
   inline?: boolean
   /** Choose a custom placeholder (eg. 'Select an option')  */
   placeholder?: string
+  /** Display as a native select, with limited styling (usable to prevent issues in edge cases) */
+  native?: boolean
 }
 
 export interface SelectOptions<Key extends string> extends SelectConfig<Key> {
