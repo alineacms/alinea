@@ -8,8 +8,12 @@ const editor = Config.role('Editor', {
   permissions(policy) {
     policy.set(
       {
+        workspace: cms.workspaces.secondary,
+        allow: {explore: false, read: false},
+      },
+      {
         workspace: cms.workspaces.primary,
-        allow: {read: true},
+        allow: {read: true, explore: true},
         grant: 'explicit'
       },
       {

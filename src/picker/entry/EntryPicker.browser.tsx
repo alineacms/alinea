@@ -13,6 +13,7 @@ import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
 import {useFocusList} from 'alinea/dashboard/hook/UseFocusList'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {useLocale} from 'alinea/dashboard/hook/UseLocale'
+import {usePolicy} from 'alinea/dashboard/hook/UsePolicy'
 import {useRoot} from 'alinea/dashboard/hook/UseRoot'
 import {useWorkspace} from 'alinea/dashboard/hook/UseWorkspace'
 import {Breadcrumbs, BreadcrumbsItem} from 'alinea/dashboard/view/Breadcrumbs'
@@ -61,6 +62,28 @@ const styles = styler(css)
 export interface EntryPickerModalProps
   extends PickerProps<EntryPickerOptions> {}
 
+function firstExplorableRootName(
+  workspaceName: string,
+  workspace: Workspace,
+  policy: ReturnType<typeof usePolicy>
+) {
+  return entries(workspace).find(([rootName]) =>
+    policy.canExplore({workspace: workspaceName, root: rootName})
+  )?.[0]
+}
+
+function firstExplorableMediaRootName(
+  workspaceName: string,
+  workspace: Workspace,
+  policy: ReturnType<typeof usePolicy>
+) {
+  return entries(workspace).find(
+    ([rootName, root]) =>
+      Root.isMediaRoot(root) &&
+      policy.canExplore({workspace: workspaceName, root: rootName})
+  )?.[0]
+}
+
 export function EntryPickerModal({
   type,
   options,
@@ -70,6 +93,7 @@ export function EntryPickerModal({
 }: EntryPickerModalProps) {
   const config = useConfig()
   const graph = useGraph()
+  const policy = usePolicy()
   const editor = useEntryEditor()
   const {title, defaultView, max, pickChildren, showMedia} = options
   const [search, setSearch] = useState('')
@@ -98,18 +122,72 @@ export function EntryPickerModal({
     {suspense: true}
   )
   const location = locationQuery.data
+  const explorableWorkspaces = useMemo(() => {
+    return entries(config.workspaces).filter(([name]) =>
+      policy.canExplore({workspace: name})
+    )
+  }, [config.workspaces, policy])
+  const availableWorkspaces = useMemo(() => {
+    if (!showMedia) return explorableWorkspaces
+    return explorableWorkspaces.filter(([name, workspace]) =>
+      Boolean(firstExplorableMediaRootName(name, workspace, policy))
+    )
+  }, [explorableWorkspaces, policy, showMedia])
+  const defaultWorkspaceName =
+    showMedia &&
+    firstExplorableMediaRootName(
+      currentWorkspace,
+      config.workspaces[currentWorkspace],
+      policy
+    )
+      ? currentWorkspace
+      : availableWorkspaces[0]?.[0] ?? currentWorkspace
+  const defaultMediaRoot = firstExplorableMediaRootName(
+    defaultWorkspaceName,
+    config.workspaces[defaultWorkspaceName],
+    policy
+  )
+  const defaultRoot = firstExplorableRootName(
+    defaultWorkspaceName,
+    config.workspaces[defaultWorkspaceName],
+    policy
+  )
   const [destination, setDestination] = useState<PickerLocation>({
-    workspace: currentWorkspace,
+    workspace: defaultWorkspaceName,
     parentId: pickChildren ? editor?.entryId : undefined,
-    root: showMedia
-      ? Workspace.defaultMediaRoot(config.workspaces[currentWorkspace])
-      : currentRoot,
+    root: showMedia ? defaultMediaRoot ?? currentRoot : defaultRoot ?? currentRoot,
     ...location,
     locale: locale
   })
-  const workspace = config.workspaces[destination.workspace]
+  const destinationWorkspaceName =
+    config.workspaces[destination.workspace]
+      ? showMedia &&
+        !firstExplorableMediaRootName(
+          destination.workspace,
+          config.workspaces[destination.workspace],
+          policy
+        )
+        ? defaultWorkspaceName
+        : destination.workspace
+      : defaultWorkspaceName
+  const workspace = config.workspaces[destinationWorkspaceName]
+  const explorableRoots = useMemo(() => {
+    return entries(workspace).filter(([name]) =>
+      policy.canExplore({workspace: destinationWorkspaceName, root: name})
+    )
+  }, [workspace, policy, destinationWorkspaceName])
+  const destinationRootName =
+    explorableRoots.some(([name]) => name === destination.root)
+      ? destination.root
+      : showMedia
+        ? firstExplorableMediaRootName(
+            destinationWorkspaceName,
+            workspace,
+            policy
+          ) ?? currentRoot
+        : explorableRoots[0]?.[0] ?? currentRoot
   const workspaceData = Workspace.data(workspace)
-  const destinationRoot = Root.data(workspace[destination.root])
+  const destinationRoot = Root.data(workspace[destinationRootName])
   const locales = destinationRoot.i18n?.locales
   const destinationLocale = !destinationRoot.i18n
     ? undefined
@@ -143,6 +221,8 @@ export function EntryPickerModal({
   )
   const withNavigation =
     options.enableNavigation || (!options.condition && !options.pickChildren)
+  const canSwitchWorkspace = availableWorkspaces.length > 1
+  const showHeaderNavigation = withNavigation || (showMedia && canSwitchWorkspace)
   const conditionQuery = useQuery(
     ['entry-condition', graph, entry],
     () => {
@@ -164,8 +244,8 @@ export function EntryPickerModal({
       and: [
         condition,
         {
-          _workspace: destination.workspace,
-          _root: destination.root,
+          _workspace: destinationWorkspaceName,
+          _root: destinationRootName,
           _parentId: parentId,
           _locale: destinationLocale
         }
@@ -179,6 +259,8 @@ export function EntryPickerModal({
   }, [
     withNavigation,
     destination,
+    destinationWorkspaceName,
+    destinationRootName,
     destinationLocale,
     search,
     conditionQuery.data
@@ -240,76 +322,124 @@ export function EntryPickerModal({
             <HStack align="flex-end" gap={18}>
               <IconButton icon={IcRoundArrowBack} onClick={goUp} />
               <VStack>
-                {withNavigation && (
+                {showHeaderNavigation && (
                   <Breadcrumbs>
                     <BreadcrumbsItem>
-                      <button
-                        type="button"
-                        style={{cursor: 'pointer'}}
-                        onClick={toRoot}
-                      >
-                        {workspaceData.label}
-                      </button>
+                      {canSwitchWorkspace ? (
+                        <DropdownMenu.Root bottom>
+                          <DropdownMenu.Trigger>
+                            <HStack center gap={4}>
+                              {workspaceData.label}
+                              <Icon icon={IcRoundUnfoldMore} />
+                            </HStack>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Items>
+                            {availableWorkspaces.map(([name, workspace]) => {
+                              const nextRoot = showMedia
+                                ? firstExplorableMediaRootName(
+                                    name,
+                                    workspace,
+                                    policy
+                                  )!
+                                : firstExplorableRootName(
+                                    name,
+                                    workspace,
+                                    policy
+                                  )!
+                              const root = workspace[nextRoot]
+                              return (
+                                <DropdownMenu.Item
+                                  key={name}
+                                  onClick={() => {
+                                    setDestination({
+                                      workspace: name,
+                                      root: nextRoot,
+                                      parentId: undefined,
+                                      locale: Root.defaultLocale(root)
+                                    })
+                                  }}
+                                >
+                                  {Workspace.label(workspace)}
+                                </DropdownMenu.Item>
+                              )
+                            })}
+                          </DropdownMenu.Items>
+                        </DropdownMenu.Root>
+                      ) : (
+                        <button
+                          type="button"
+                          style={{cursor: 'pointer'}}
+                          onClick={toRoot}
+                        >
+                          {workspaceData.label}
+                        </button>
+                      )}
                     </BreadcrumbsItem>
-                    <BreadcrumbsItem>
-                      <DropdownMenu.Root bottom>
-                        <DropdownMenu.Trigger>
-                          <HStack center gap={4}>
-                            {Root.label(workspace[destination.root])}
-                            <Icon icon={IcRoundUnfoldMore} />
-                          </HStack>
-                        </DropdownMenu.Trigger>
-                        <DropdownMenu.Items>
-                          {entries(workspace).map(([name, root]) => {
-                            return (
-                              <DropdownMenu.Item
-                                key={name}
+                    {withNavigation && (
+                      <>
+                        <BreadcrumbsItem>
+                          <DropdownMenu.Root bottom>
+                            <DropdownMenu.Trigger>
+                              <HStack center gap={4}>
+                                {Root.label(workspace[destinationRootName])}
+                                <Icon icon={IcRoundUnfoldMore} />
+                              </HStack>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Items>
+                              {explorableRoots.map(([name, root]) => {
+                                return (
+                                  <DropdownMenu.Item
+                                    key={name}
+                                    onClick={() => {
+                                      setDestination({
+                                        workspace: destinationWorkspaceName,
+                                        root: name,
+                                        parentId: undefined,
+                                        locale: Root.defaultLocale(root)
+                                      })
+                                    }}
+                                  >
+                                    {Root.label(root)}
+                                  </DropdownMenu.Item>
+                                )
+                              })}
+                            </DropdownMenu.Items>
+                          </DropdownMenu.Root>
+                          {destinationRoot.i18n && (
+                            <Langswitch
+                              inline
+                              selected={destinationLocale!}
+                              locales={destinationRoot.i18n.locales}
+                              onChange={locale => {
+                                setDestination({
+                                  ...destination,
+                                  parentId: undefined,
+                                  locale
+                                })
+                              }}
+                            />
+                          )}
+                        </BreadcrumbsItem>
+                        {parentEntries?.map(({id, title}) => {
+                          return (
+                            <BreadcrumbsItem key={id}>
+                              <button
+                                type="button"
+                                style={{cursor: 'pointer'}}
                                 onClick={() => {
                                   setDestination({
-                                    workspace: destination.workspace,
-                                    root: name
+                                    ...destination,
+                                    parentId: id
                                   })
                                 }}
                               >
-                                {Root.label(root)}
-                              </DropdownMenu.Item>
-                            )
-                          })}
-                        </DropdownMenu.Items>
-                      </DropdownMenu.Root>
-                      {destinationRoot.i18n && (
-                        <Langswitch
-                          inline
-                          selected={destinationLocale!}
-                          locales={destinationRoot.i18n.locales}
-                          onChange={locale => {
-                            setDestination({
-                              ...destination,
-                              parentId: undefined,
-                              locale
-                            })
-                          }}
-                        />
-                      )}
-                    </BreadcrumbsItem>
-                    {parentEntries?.map(({id, title}) => {
-                      return (
-                        <BreadcrumbsItem key={id}>
-                          <button
-                            type="button"
-                            style={{cursor: 'pointer'}}
-                            onClick={() => {
-                              setDestination({
-                                ...destination,
-                                parentId: id
-                              })
-                            }}
-                          >
-                            {title}
-                          </button>
-                        </BreadcrumbsItem>
-                      )
-                    })}
+                                {title}
+                              </button>
+                            </BreadcrumbsItem>
+                          )
+                        })}
+                      </>
+                    )}
                   </Breadcrumbs>
                 )}
                 <h2>
@@ -375,7 +505,9 @@ export function EntryPickerModal({
               position="left"
               destination={{
                 ...destination,
-                directory: workspaceMediaDir(config, destination.workspace)
+                workspace: destinationWorkspaceName,
+                root: destinationRootName,
+                directory: workspaceMediaDir(config, destinationWorkspaceName)
               }}
               max={max}
               toggleSelect={handleSelect}
