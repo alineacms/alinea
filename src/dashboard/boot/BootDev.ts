@@ -29,6 +29,7 @@ async function* getConfig(): ConfigGenerator {
     const next =
       batch?.revision !== revision ? await createConfig(revision) : batch
     yield next
+    batch = next
     revision = await new Promise<string>(resolve => {
       source.addEventListener(
         'message',
