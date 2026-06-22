@@ -5,22 +5,19 @@ import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useTransition} from 'react'
 import {usePolicy} from '../hooks.js'
 import {
-  IcOutlineArchive,
   IcRoundArchive,
   IcRoundCheck,
   IcRoundDelete,
-  IcRoundEdit,
-  IcRoundFlashOn,
   IcRoundMoreHoriz,
   IcRoundSave,
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
-import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {StatusBadge} from './StatusBadge.js'
 
 const styles = styler(css)
 
@@ -397,27 +394,6 @@ function EntryHeaderActions({
   )
 }
 
-const variantDescription = {
-  published: 'Published',
-  unpublished: 'Unpublished',
-  archived: 'Archived',
-  draft: 'Draft'
-}
-
-const badgeStatus = {
-  published: 'published',
-  unpublished: 'unpublished',
-  archived: 'archived',
-  draft: 'draft'
-} as const
-
-const badgeIcon = {
-  published: IcRoundCheck,
-  unpublished: IcRoundFlashOn,
-  archived: IcOutlineArchive,
-  draft: IcRoundEdit
-}
-
 export function EntryHeader({
   controls,
   entry,
@@ -438,20 +414,14 @@ export function EntryHeader({
     viewedEntry?.main && viewedStatus === 'draft'
   )
   const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
-  const displayStatus = variantDescription[status]
   return (
     <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.content()}>
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
-          <Badge
-            className={styles.EntryHeader.status()}
-            icon={badgeIcon[status]}
-            status={badgeStatus[status]}
-          >
-            {displayStatus}
-          </Badge>
+
+          <StatusBadge status={status} />
           {controls}
           <EntryHeaderMoreActions
             entry={entry}
