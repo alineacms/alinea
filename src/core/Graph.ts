@@ -182,6 +182,12 @@ export declare class QuerySettings {
   path?: Condition<string>
   /** Filter by url */
   url?: Condition<string>
+  /** Filter by a metadata URL alias */
+  alias?: string
+  /** Filter by metadata created timestamp */
+  createdAt?: Condition<number | null>
+  /** Filter by metadata updated timestamp */
+  updatedAt?: Condition<number | null>
   /** Filter by workspace */
   workspace?: Condition<string> | Workspace
   /** Filter by root */

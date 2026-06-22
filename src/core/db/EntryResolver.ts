@@ -1,6 +1,6 @@
 import type {Type} from '#/index.js'
 import type {Config} from '#/core/Config.js'
-import type {Entry} from '#/core/Entry.js'
+import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
@@ -111,7 +111,7 @@ export class EntryResolver implements Resolver {
         return result
       }
       case 'entryField':
-        return entry[internal.name as keyof Entry]
+        return entryFieldValue(entry, internal.name, internal.path)
       case 'call':
         return this.call(ctx, entry, internal)
       case 'value':
@@ -295,7 +295,7 @@ export class EntryResolver implements Resolver {
     const checkFilter =
       query.filter &&
       filterChecker(query.filter, (entry, name) => {
-        if (name.startsWith('_')) return entry[name.slice(1)]
+        if (name.startsWith('_')) return entryFieldValue(entry, name.slice(1))
         return entry.data[name]
       })
     const multipleIds =
@@ -560,7 +560,7 @@ interface Check {
   (input: Entry): boolean
 }
 
-function isObject(input: any): input is object {
+function isObject(input: any): input is Record<string, unknown> {
   return input && typeof input === 'object'
 }
 
@@ -573,15 +573,55 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
     isObject(query.workspace) && hasWorkspace(query.workspace)
       ? scope.nameOf(query.workspace)
       : query.workspace
-  return filterChecker({
-    id: query.id,
-    parentId: query.parentId,
-    path: query.path,
-    url: query.url,
-    level: query.level,
-    workspace,
-    root
-  })
+  const base = filterChecker(
+    {
+      id: query.id,
+      parentId: query.parentId,
+      path: query.path,
+      url: query.url,
+      createdAt: query.createdAt,
+      updatedAt: query.updatedAt,
+      level: query.level,
+      workspace,
+      root
+    },
+    entryFieldValue
+  )
+  if (query.alias === undefined) return base
+  const hasAlias = aliasChecker(query.alias)
+  return entry => base(entry) && hasAlias(entry)
+}
+
+function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
+  if (path) return valueAtPath(entry.data, [...path, name])
+  const expr = EntryExprs[name as keyof typeof EntryExprs]
+  if (expr) {
+    const internal = getExpr(expr)
+    if (internal.type === 'entryField' && internal.path)
+      return valueAtPath(entry.data, [...internal.path, internal.name])
+  }
+  return entry[name as keyof Entry]
+}
+
+function valueAtPath(value: unknown, path: Array<string>): unknown {
+  let current = value
+  for (const segment of path) {
+    if (!isObject(current)) return undefined
+    current = current[segment]
+  }
+  return current
+}
+
+function aliasChecker(alias: string): Check {
+  return entry => {
+    const aliases = entryFieldValue(entry, 'aliases')
+    if (!Array.isArray(aliases)) return false
+    for (const row of aliases) {
+      if (!isObject(row)) continue
+      if (row.url === alias) return true
+    }
+    return false
+  }
 }
 
 function typeChecker(type: Array<string> | string): Check {
