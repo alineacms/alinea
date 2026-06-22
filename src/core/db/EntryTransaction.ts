@@ -474,8 +474,7 @@ export class EntryTransaction {
           : (targetEntry?.parentId ?? null)
     const root =
       targetType === 'root' ? target : (targetEntry?.root ?? entries[0].root)
-    const workspace =
-      targetEntry?.workspace ?? entries[0].workspace
+    const workspace = targetEntry?.workspace ?? entries[0].workspace
     const action =
       parentId !== entries[0].parentId || root !== entries[0].root
         ? Permission.Move

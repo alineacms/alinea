@@ -167,7 +167,11 @@ async function applyLinkMarks(
     if (!data) continue
     const href =
       type === 'file'
-        ? mediaLocationUrl(loader.resolver.config, data.workspace, data.location)
+        ? mediaLocationUrl(
+            loader.resolver.config,
+            data.workspace,
+            data.location
+          )
         : data.url
     mark.href = applyUrlSuffix(href, mark[LinkMark.suffix])
   }

@@ -4,7 +4,12 @@ import {Tooltip} from './Tooltip.js'
 export const Basic = () => (
   <div style={{paddingBlock: '80px'}}>
     <div
-      style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 64}}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 64
+      }}
     >
       <Tooltip tooltip="Save">
         <Button>💾</Button>
@@ -20,7 +25,12 @@ export const Basic = () => (
 export const Positions = () => (
   <div style={{paddingBlock: '80px'}}>
     <div
-      style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32}}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 32
+      }}
     >
       <Tooltip
         placement="start"

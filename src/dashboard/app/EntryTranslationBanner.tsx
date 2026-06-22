@@ -10,9 +10,7 @@ export interface EntryTranslationBannerProps {
   entry: DashboardEntryData
 }
 
-export function EntryTranslationBanner({
-  entry
-}: EntryTranslationBannerProps) {
+export function EntryTranslationBanner({entry}: EntryTranslationBannerProps) {
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)

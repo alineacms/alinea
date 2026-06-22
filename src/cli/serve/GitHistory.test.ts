@@ -9,7 +9,8 @@ import {GitHistory} from './GitHistory.js'
 const tempDirs = Array<string>()
 
 afterEach(() => {
-  for (const dir of tempDirs.splice(0)) rmSync(dir, {recursive: true, force: true})
+  for (const dir of tempDirs.splice(0))
+    rmSync(dir, {recursive: true, force: true})
 })
 
 test('GitHistory preserves unicode paths from git history', async () => {
@@ -42,9 +43,9 @@ test('GitHistory preserves unicode paths from git history', async () => {
 
   expect(revisions).toHaveLength(2)
   expect(revisions.every(revision => revision.file === file)).toBe(true)
-  expect(await history.revisionData(revisions[0].file, revisions[0].ref)).toEqual(
-    {_id: 'entry', _type: 'Page', _index: 'a', title: 'Second'}
-  )
+  expect(
+    await history.revisionData(revisions[0].file, revisions[0].ref)
+  ).toEqual({_id: 'entry', _type: 'Page', _index: 'a', title: 'Second'})
 })
 
 function git(cwd: string, ...args: Array<string>) {

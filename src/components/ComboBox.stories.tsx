@@ -116,7 +116,12 @@ export const Dynamic = () => {
         {item => <ComboBoxItem key={item.id}>{item.name}</ComboBoxItem>}
       </ComboBox>
       <div
-        style={{display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 16}}
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-end',
+          gap: 16
+        }}
       >
         <TextField
           label="Add option"

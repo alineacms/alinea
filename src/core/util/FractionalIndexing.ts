@@ -42,17 +42,17 @@ function midpoint(a: string, b: string | null, digits: string): string {
     const midDigit = Math.round(0.5 * (digitA + digitB))
     return digits[midDigit]
   }
-    // first digits are consecutive
-    if (b && b.length > 1) {
-      return b.slice(0, 1)
-    }
-      // `b` is null or has length 1 (a single digit).
-      // the first digit of `a` is the previous digit to `b`,
-      // or 9 if `b` is null.
-      // given, for example, midpoint('49', '5'), return
-      // '4' + midpoint('9', null), which will become
-      // '4' + '9' + midpoint('', null), which is '495'
-      return digits[digitA] + midpoint(a.slice(1), null, digits)
+  // first digits are consecutive
+  if (b && b.length > 1) {
+    return b.slice(0, 1)
+  }
+  // `b` is null or has length 1 (a single digit).
+  // the first digit of `a` is the previous digit to `b`,
+  // or 9 if `b` is null.
+  // given, for example, midpoint('49', '5'), return
+  // '4' + midpoint('9', null), which will become
+  // '4' + '9' + midpoint('', null), which is '495'
+  return digits[digitA] + midpoint(a.slice(1), null, digits)
 }
 
 function validateInteger(int: string) {
@@ -64,10 +64,11 @@ function validateInteger(int: string) {
 function getIntegerLength(head: string) {
   if (head >= 'a' && head <= 'z') {
     return head.charCodeAt(0) - 'a'.charCodeAt(0) + 2
-  }if (head >= 'A' && head <= 'Z') {
+  }
+  if (head >= 'A' && head <= 'Z') {
     return 'Z'.charCodeAt(0) - head.charCodeAt(0) + 2
   }
-    throw new Error(`invalid order key head: ${head}`)
+  throw new Error(`invalid order key head: ${head}`)
 }
 
 function getIntegerPart(key: string) {
@@ -130,7 +131,7 @@ function incrementInteger(x: string, digits: string) {
     }
     return h + digs.join('')
   }
-    return head + digs.join('')
+  return head + digs.join('')
 }
 
 // note that this may return null, as there is a smallest integer
@@ -162,7 +163,7 @@ function decrementInteger(x: string, digits: string) {
     }
     return h + digs.join('')
   }
-    return head + digs.join('')
+  return head + digs.join('')
 }
 
 // `a` is an order key or null (START).

@@ -329,12 +329,12 @@ function entryWithState(
   route = atom<DashboardRoute>({}),
   selectedLocale: string | null = null
 ): DashboardEntryData {
-  return ({
+  return {
     incomingReferencesState: atom(state),
     incomingReferences: atom(new Promise(() => {})),
     root: atom({
       selectedLocale: atom(selectedLocale)
     }),
     dashboard: {route}
-  } as unknown) as DashboardEntryData
+  } as unknown as DashboardEntryData
 }

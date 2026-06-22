@@ -12,7 +12,8 @@ import css from './Tooltip.module.css'
 const styles = styler(css)
 
 export interface TooltipProps
-  extends TooltipPrimitiveProps,
+  extends
+    TooltipPrimitiveProps,
     Omit<TooltipTriggerComponentProps, 'children'> {
   children: ReactNode
   tooltip: ReactNode

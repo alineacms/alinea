@@ -43,14 +43,9 @@ function EmptyResults({root}: EmptyResultsProps) {
 function SearchIdleState() {
   return (
     <div className={styles.ExplorerList.empty()}>
-      <Icon
-        icon={IcRoundSearch}
-        className={styles.ExplorerList.empty.icon()}
-      />
+      <Icon icon={IcRoundSearch} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>
-          Search entries
-        </div>
+        <div className={styles.ExplorerList.empty.title()}>Search entries</div>
         <div className={styles.ExplorerList.empty.text()}>
           Type to search all roots in this workspace.
         </div>

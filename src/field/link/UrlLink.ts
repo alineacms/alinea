@@ -8,7 +8,11 @@ import {
   createLink,
   createLinks
 } from '#/field/link/LinkField.js'
-import {type UrlPickerOptions, type UrlReference, urlPicker} from '#/picker/url.js'
+import {
+  type UrlPickerOptions,
+  type UrlReference,
+  urlPicker
+} from '#/picker/url.js'
 
 export interface UrlLink<InferredFields = undefined> extends UrlReference {
   href: string
@@ -24,7 +28,8 @@ export namespace UrlLink {
 }
 
 export interface UrlOptions<Fields>
-  extends LinkFieldOptions<UrlReference & InferStoredValue<Fields>>,
+  extends
+    LinkFieldOptions<UrlReference & InferStoredValue<Fields>>,
     UrlPickerOptions<Fields> {}
 
 export function url<Fields>(
@@ -44,7 +49,8 @@ export namespace url {
   type UrlRows<Fields> = UrlLink<Type.Infer<Fields>> & ListRow
 
   export interface UrlOptions<Fields>
-    extends LinkFieldOptions<
+    extends
+      LinkFieldOptions<
         Array<UrlReference & ListRow & InferStoredValue<Fields>>
       >,
       UrlPickerOptions<Fields> {}

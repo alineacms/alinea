@@ -120,8 +120,11 @@ export type QueryResult<Selection, Types, Include> = Expand<
   InferResult<Selection, Types, Include>
 >
 
-interface CountQuery<Selection, Types, Include>
-  extends GraphQuery<Selection, Types, Include> {
+interface CountQuery<Selection, Types, Include> extends GraphQuery<
+  Selection,
+  Types,
+  Include
+> {
   count: true
 }
 type FirstQuery<Selection, Types, Include> =
@@ -130,24 +133,24 @@ type FirstQuery<Selection, Types, Include> =
   | (GraphQuery<Selection, Types, Include> & {edge: 'next'})
   | (GraphQuery<Selection, Types, Include> & {edge: 'previous'})
 
-interface GetQuery<Selection, Types, Include>
-  extends GraphQuery<Selection, Types, Include> {
+interface GetQuery<Selection, Types, Include> extends GraphQuery<
+  Selection,
+  Types,
+  Include
+> {
   get: true
 }
 
-export type AnyQueryResult<Query extends GraphQuery> = Query extends CountQuery<
-  any,
-  any,
-  any
->
-  ? number
-  : Query extends GetQuery<infer S, infer T, infer I>
-    ? QueryResult<S, T, I>
-    : Query extends FirstQuery<infer S, infer T, infer I>
-      ? QueryResult<S, T, I> | null
-      : Query extends GraphQuery<infer S, infer T, infer I>
-        ? Array<QueryResult<S, T, I>>
-        : unknown
+export type AnyQueryResult<Query extends GraphQuery> =
+  Query extends CountQuery<any, any, any>
+    ? number
+    : Query extends GetQuery<infer S, infer T, infer I>
+      ? QueryResult<S, T, I>
+      : Query extends FirstQuery<infer S, infer T, infer I>
+        ? QueryResult<S, T, I> | null
+        : Query extends GraphQuery<infer S, infer T, infer I>
+          ? Array<QueryResult<S, T, I>>
+          : unknown
 
 export type Status =
   /** Only published entries */

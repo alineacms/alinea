@@ -1,9 +1,5 @@
 import {AuthResultType} from '#/cloud/AuthResult.js'
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from '#/core/Connection.js'
+import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
 import type {User} from '#/core/User.js'
 
 import {atob} from '#/core/util/Encoding.js'

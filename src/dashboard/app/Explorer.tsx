@@ -1,10 +1,10 @@
-import { Button, Popover, SearchField } from '#/components.js'
-import { MediaFile, MediaLibrary } from '#/core/media/MediaTypes.js'
-import { slugify } from '#/core/util/Slugs.js'
-import { ViewToggle } from '#/dashboard/app/ViewToggle.js'
+import {Button, Popover, SearchField} from '#/components.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {slugify} from '#/core/util/Slugs.js'
+import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { unwrap } from 'jotai/utils'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import {
   useEffect,
   useMemo,
@@ -13,7 +13,7 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import { DialogTrigger, FileTrigger, type Key } from 'react-aria-components'
+import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
 import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
@@ -21,18 +21,18 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type { DashboardEntry, DashboardEntryData } from '../store.js'
+import type {DashboardEntry, DashboardEntryData} from '../store.js'
 import {
   DashboardExplorer,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
 } from '../store.js'
-import { EditorBackButton } from './EditorBackButton.js'
+import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
-import { ExplorerList } from './ExplorerList.js'
-import { MutationQueueStatus } from './MutationQueueStatus.js'
-import { RailBody, RailHeader } from './ui/Rail.js'
+import {ExplorerList} from './ExplorerList.js'
+import {MutationQueueStatus} from './MutationQueueStatus.js'
+import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
@@ -77,7 +77,10 @@ interface ExplorerHeaderParentMainProps {
 
 function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
   const items = useAtomValue(
-    useMemo(() => unwrap(explorer.items, previous => previous ?? []), [explorer])
+    useMemo(
+      () => unwrap(explorer.items, previous => previous ?? []),
+      [explorer]
+    )
   )
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
@@ -143,8 +146,7 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
       moveSelection(-1)
     } else if (event.key === 'Enter') {
       const entry =
-        selectedEntry() ??
-        (explorer.autoSelectFirstItem ? items[0] : undefined)
+        selectedEntry() ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
       performAction(entry)

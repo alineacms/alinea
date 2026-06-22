@@ -1,10 +1,7 @@
 import type {Reference} from '#/core/Reference.js'
 import type {TextDoc} from '#/core/TextDoc.js'
 import {ListEditor, type ListField} from '#/core/field/ListField.js'
-import {
-  RichTextEditor,
-  type RichTextField
-} from '#/core/field/RichTextField.js'
+import {RichTextEditor, type RichTextField} from '#/core/field/RichTextField.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {LinkEditor, LinksEditor} from '#/field/link/LinkEditor.js'
 import type {LinkField, LinksField} from '#/field/link/LinkField.js'

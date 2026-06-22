@@ -16,12 +16,7 @@ import {Type} from '#/core/Type.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {
-  Suspense,
-  useState,
-  type ComponentType,
-  type ReactNode
-} from 'react'
+import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
   IcRoundArchive,

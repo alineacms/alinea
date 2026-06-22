@@ -107,8 +107,15 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         applyUrlSuffix(row, suffix)
         return
       }
-      const {src: location, previewUrl, filePath, alt, root, workspace, ...rest} =
-        extra
+      const {
+        src: location,
+        previewUrl,
+        filePath,
+        alt,
+        root,
+        workspace,
+        ...rest
+      } = extra
       const selectedAlt = selectImageAlt(alt, loader, {
         root,
         workspace
@@ -122,10 +129,9 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
-      const src =
-        locationAvailable
-          ? mediaEntryUrl(loader, workspace, location)
-          : previewUrl
+      const src = locationAvailable
+        ? mediaEntryUrl(loader, workspace, location)
+        : previewUrl
       row.src = src
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)

@@ -335,15 +335,16 @@ class HierarchyGraph extends TestGraph {
                         main: true
                       }
                     ]
-                : [],
+                  : [],
             entries: [entry]
           })) as AnyQueryResult<Query>
       )
     }
     if ('parentId' in query) {
       return Promise.resolve(
-        entries.filter(entry => entry.parentId === query.parentId) as
-          AnyQueryResult<Query>
+        entries.filter(
+          entry => entry.parentId === query.parentId
+        ) as AnyQueryResult<Query>
       )
     }
     return Promise.resolve(entries as AnyQueryResult<Query>)
@@ -670,13 +671,10 @@ test('DashboardEntryData exposes five overview cells', async () => {
         check()
       }
     )
-    test.equal(cells.map(cell => cell.id), [
-      'first',
-      'second',
-      'third',
-      'fourth',
-      'fifth'
-    ])
+    test.equal(
+      cells.map(cell => cell.id),
+      ['first', 'second', 'third', 'fourth', 'fifth']
+    )
     test.equal(cells.length, dashboardEntryOverviewColumnCount)
   } finally {
     if (originalWindow === undefined) {
@@ -1052,8 +1050,7 @@ test('DashboardRoot explorer opens child overviews from the root listing', async
       await new Promise<void>(resolve => {
         let unsubscribe = () => {}
         const check = () => {
-          if (store.get(rootModel.explorer.location).parentId !== 'blog')
-            return
+          if (store.get(rootModel.explorer.location).parentId !== 'blog') return
           unsubscribe()
           resolve()
         }
@@ -1180,7 +1177,10 @@ test('DashboardExplorer can search all roots after typing', async () => {
   const items = await store.get(explorer.items)
   const searchQuery = graph.queries.find(query => query.search === 'nested')
 
-  test.equal(items.map(item => item.id), ['nested-page', 'media-file'])
+  test.equal(
+    items.map(item => item.id),
+    ['nested-page', 'media-file']
+  )
   test.equal(searchQuery?.workspace, 'main')
   test.equal(searchQuery?.root, undefined)
   test.equal(searchQuery?.parentId, undefined)

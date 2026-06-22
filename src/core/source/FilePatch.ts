@@ -44,7 +44,10 @@ export async function applyFilePatch(
   const baseBytes = encoder.encode(base)
   const expectedBaseHash = patch.subarray(0, HASH_BYTES)
   const actualBaseHash = await computeSha1Bytes(baseBytes)
-  assert(bytesEqual(expectedBaseHash, actualBaseHash), 'Patch does not match base')
+  assert(
+    bytesEqual(expectedBaseHash, actualBaseHash),
+    'Patch does not match base'
+  )
 
   const delta = patch.subarray(HASH_BYTES, patch.length - HASH_BYTES)
   const result = applyGitDelta(baseBytes, delta)

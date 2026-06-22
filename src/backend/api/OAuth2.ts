@@ -6,11 +6,7 @@ import {
 } from '@badgateway/oauth2-client'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Config} from '#/core/Config.js'
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from '#/core/Connection.js'
+import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {outcome} from '#/core/Outcome.js'

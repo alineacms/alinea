@@ -6,8 +6,10 @@ import css from './FoldIcon.module.css'
 
 const styles = styler(css)
 
-export interface FoldIconProps
-  extends Omit<ComponentProps<typeof Icon>, 'icon'> {
+export interface FoldIconProps extends Omit<
+  ComponentProps<typeof Icon>,
+  'icon'
+> {
   expanded?: boolean
 }
 

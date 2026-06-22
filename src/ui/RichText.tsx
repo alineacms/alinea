@@ -194,11 +194,7 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
       )) ?? null
     if (isComponentView(View)) {
       const Component = View
-      return (
-        <Component {...element?.props}>
-          {inner}
-        </Component>
-      )
+      return <Component {...element?.props}>{inner}</Component>
     }
     const el = View ?? element ?? {type: Fragment, props: {}}
     return (
@@ -244,14 +240,11 @@ interface RichTextElementViews {
 }
 
 export type RichTextProps<Blocks extends object = {}> =
-  RichTextBaseProps<Blocks> &
-    RichTextElementViews &
-    RichTextBlockViews<Blocks>
+  RichTextBaseProps<Blocks> & RichTextElementViews & RichTextBlockViews<Blocks>
 
-type RichTextComponentProps<Blocks extends object> =
-  RichTextBaseProps<Blocks> &
-    RichTextElementViews &
-    RichTextBlockViews<NoInferType<Blocks>>
+type RichTextComponentProps<Blocks extends object> = RichTextBaseProps<Blocks> &
+  RichTextElementViews &
+  RichTextBlockViews<NoInferType<Blocks>>
 
 export function RichText<Blocks extends object = {}>(
   props: RichTextComponentProps<Blocks>

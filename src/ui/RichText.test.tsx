@@ -169,10 +169,9 @@ test('RichText supports custom HTML views for elements and text', () => {
   expect(headingLevel).toBeUndefined()
   expect(screen.getByTestId('paragraph').tagName).toBe('SECTION')
   expect(screen.getByTestId('paragraph').style.textAlign).toBe('right')
-  expect(screen.getAllByTestId('text').map(element => element.textContent)).toEqual([
-    'Title',
-    'Custom'
-  ])
+  expect(
+    screen.getAllByTestId('text').map(element => element.textContent)
+  ).toEqual(['Title', 'Custom'])
 })
 
 test('RichText supports custom HTML views for marks and React elements', () => {

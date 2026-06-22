@@ -34,17 +34,19 @@ export function Disclosure({className, ...props}: DisclosurePrimitiveProps) {
   )
 }
 
-export function DisclosureHeader({children, className, ...props}: HeadingProps) {
+export function DisclosureHeader({
+  children,
+  className,
+  ...props
+}: HeadingProps) {
   return (
     <Heading
       {...props}
-      className={
-        styles.Disclosure.heading(
-          styler.merge({
-            className
-          })
-        )
-      }
+      className={styles.Disclosure.heading(
+        styler.merge({
+          className
+        })
+      )}
     >
       <Button slot="trigger" className={styles.Disclosure.trigger()}>
         <Icon

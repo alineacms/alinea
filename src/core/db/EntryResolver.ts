@@ -57,7 +57,10 @@ export class EntryResolver implements Resolver {
   index: EntryIndex
   #scope: Scope
 
-  constructor(public config: Config, index: EntryIndex) {
+  constructor(
+    public config: Config,
+    index: EntryIndex
+  ) {
     this.#scope = getScope(config)
     this.index = index
   }
@@ -320,11 +323,11 @@ export class EntryResolver implements Resolver {
   isSingleResult(query: GraphQuery & Partial<Edge>): boolean {
     return Boolean(
       query.first ||
-        query.get ||
-        query.count ||
-        query.edge === 'parent' ||
-        query.edge === 'next' ||
-        query.edge === 'previous'
+      query.get ||
+      query.count ||
+      query.edge === 'parent' ||
+      query.edge === 'next' ||
+      query.edge === 'previous'
     )
   }
 
@@ -400,11 +403,7 @@ export class EntryResolver implements Resolver {
         const entry = entries[0]
         if (results[0]) {
           const linkResolver = new LinkResolver(this, ctx, entry.locale)
-          return (await this.postRow(
-            {linkResolver},
-            results[0],
-            asEdge
-          )) as any
+          return (await this.postRow({linkResolver}, results[0], asEdge)) as any
         }
         return results[0] as any
       }
@@ -472,7 +471,8 @@ export class EntryResolver implements Resolver {
             interim[key],
             value as EdgeQuery<Projection>
           )
-        else interim[key] = await this.postExpr(ctx, interim[key], value as Expr)
+        else
+          interim[key] = await this.postExpr(ctx, interim[key], value as Expr)
       })
     )
     return interim

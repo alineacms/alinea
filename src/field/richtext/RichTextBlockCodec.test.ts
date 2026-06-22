@@ -50,7 +50,10 @@ test('creates isolated caches', () => {
 
 test('accepts valid block shapes only', () => {
   test.is(isRichTextSerializedBlock(block), true)
-  test.is(isRichTextSerializedBlock({_type: 'paragraph', _id: 'block-1'}), false)
+  test.is(
+    isRichTextSerializedBlock({_type: 'paragraph', _id: 'block-1'}),
+    false
+  )
   test.is(isRichTextSerializedBlock({_type: 'Callout', _id: 1}), false)
   test.is(isRichTextSerializedBlock({_type: 1, _id: 'block-1'}), false)
   test.is(isRichTextSerializedBlock(null), false)

@@ -22,8 +22,7 @@ export type Link<InferredFields> =
   | FileLink<InferredFields>
 
 export interface LinkOptions<Definition, Row>
-  extends LinkFieldOptions<Row>,
-    EntryPickerConditions {
+  extends LinkFieldOptions<Row>, EntryPickerConditions {
   fields?: Definition | Type<Definition>
 }
 

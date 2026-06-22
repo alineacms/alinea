@@ -107,19 +107,11 @@ function affectedStatus(
   return ownStatus
 }
 
-const SidebarItem = memo(function SidebarItem({
-  item,
-  tree
-}: SidebarItemProps) {
+const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
   const {pending, data} = useAtomValue(item.data)
   if (!data) return <SidebarLoadingItem item={item} pending={pending} />
   return (
-    <SidebarLoadedItem
-      item={item}
-      data={data}
-      tree={tree}
-      pending={pending}
-    />
+    <SidebarLoadedItem item={item} data={data} tree={tree} pending={pending} />
   )
 })
 
@@ -178,7 +170,8 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   let icon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
   if (!icon) icon = hasChildren ? LucideFolder : LucideFile
-  const isLoadingChildren = hasChildren && isExpanded && childItems === undefined
+  const isLoadingChildren =
+    hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
   const rowStatus = affectedStatus(status, selectedAncestorStatus)
   const isArchived = rowStatus.status === 'archived'
@@ -327,10 +320,7 @@ function SidebarTreeRootButton({
       </Button>
       {i18n && i18n.locales.length > 0 && (
         <span className={styles.SidebarTree.rootButton.locale()}>
-          <LocaleMenu
-            root={root}
-            selectedLocale={selectedLocale}
-          />
+          <LocaleMenu root={root} selectedLocale={selectedLocale} />
         </span>
       )}
     </div>

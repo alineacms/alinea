@@ -89,10 +89,7 @@ interface LoadedEntryBreadcrumbProps {
   onAction: (id: string) => void
 }
 
-function LoadedEntryBreadcrumb({
-  entry,
-  onAction
-}: LoadedEntryBreadcrumbProps) {
+function LoadedEntryBreadcrumb({entry, onAction}: LoadedEntryBreadcrumbProps) {
   const label = useAtomValue(entry.label)
   return (
     <Button

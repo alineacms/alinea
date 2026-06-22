@@ -132,11 +132,7 @@
 .EntrySidebar-versionButton[data-selected] {
   --EntrySidebar-version-background: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
   --EntrySidebar-version-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-500));
-  --EntrySidebar-version-meta-color: color-mix(
-    in srgb,
-    var(--alinea-fg-muted) 72%,
-    transparent
-  );
+  --EntrySidebar-version-meta-color: color-mix(in srgb, var(--alinea-fg-muted) 72%, transparent);
   --EntrySidebar-version-icon-background: light-dark(
     var(--alinea-gray-200),
     var(--alinea-gray-600)

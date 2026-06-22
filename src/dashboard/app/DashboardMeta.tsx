@@ -13,12 +13,7 @@ export interface DashboardMetaProps {
 
 function faviconHref(color: string, Icon: ComponentType): string {
   const svg = renderToString(
-    <LogoShape
-      width="36"
-      height="36"
-      background={color}
-      icon={Icon}
-    />
+    <LogoShape width="36" height="36" background={color} icon={Icon} />
   )
   return `data:image/svg+xml;base64,${btoa(svg)}`
 }

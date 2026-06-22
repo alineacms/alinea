@@ -99,7 +99,9 @@ function ExplorerTableDisplayRow({
       <Cell
         className={styles.ExplorerTable.cell()}
         textValue={
-          cell ? `${cell.label} ${compactFieldText(cell.field, cell.value)}` : undefined
+          cell
+            ? `${cell.label} ${compactFieldText(cell.field, cell.value)}`
+            : undefined
         }
       >
         {cell && (

@@ -56,7 +56,8 @@ export function filePicker<Fields>(
 }
 
 export interface FileOptions<Fields>
-  extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
+  extends
+    LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
     Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
 export function file<Fields = undefined>(
@@ -74,7 +75,8 @@ export function file<Fields = undefined>(
 
 export namespace file {
   export interface FilesOptions<Fields>
-    extends LinkFieldOptions<
+    extends
+      LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
       >,
       Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}

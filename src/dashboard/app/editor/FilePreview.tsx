@@ -100,12 +100,11 @@ export function FilePreview({
     }
   }, [isPreviewVisible, previewSource])
 
-  function locateFocusPoint(
-    event: PointerEvent<HTMLDivElement>
-  ): FocusPoint {
+  function locateFocusPoint(event: PointerEvent<HTMLDivElement>): FocusPoint {
     const rect = imageRef.current?.getBoundingClientRect()
     const fallbackRect = event.currentTarget.getBoundingClientRect()
-    const targetRect = rect && rect.width > 0 && rect.height > 0 ? rect : fallbackRect
+    const targetRect =
+      rect && rect.width > 0 && rect.height > 0 ? rect : fallbackRect
     const x = (event.clientX - targetRect.left) / targetRect.width
     const y = (event.clientY - targetRect.top) / targetRect.height
     return {
@@ -123,8 +122,7 @@ export function FilePreview({
         ref={interactiveRef}
         className={styles.FilePreview.interactive()}
         style={{
-          aspectRatio:
-            width && height ? `${width} / ${height}` : undefined
+          aspectRatio: width && height ? `${width} / ${height}` : undefined
         }}
         onPointerMove={event => onHoverPointChange?.(locateFocusPoint(event))}
         onPointerDown={event => {

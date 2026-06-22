@@ -8,13 +8,7 @@ import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
 import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
-import {
-  basename,
-  contains,
-  dirname,
-  extname,
-  join
-} from '#/core/util/Paths.js'
+import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 
 export interface DevDBOptions {

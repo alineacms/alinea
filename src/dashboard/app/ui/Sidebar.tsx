@@ -31,10 +31,7 @@ export interface SidebarBodyProps
 
 export function SidebarBody({children, className, ...props}: SidebarBodyProps) {
   return (
-    <div
-      {...props}
-      className={styles.SidebarBody(styler.merge({className}))}
-    >
+    <div {...props} className={styles.SidebarBody(styler.merge({className}))}>
       {children}
     </div>
   )

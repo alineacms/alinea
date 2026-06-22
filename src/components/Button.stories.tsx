@@ -32,13 +32,7 @@ const VStack = (props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>) => (
   />
 )
 
-const IconExample = ({
-  title,
-  props
-}: {
-  title: string
-  props?: ButtonProps
-}) => (
+const IconExample = ({title, props}: {title: string; props?: ButtonProps}) => (
   <div
     style={{
       display: 'flex',

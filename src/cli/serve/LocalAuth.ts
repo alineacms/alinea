@@ -1,8 +1,4 @@
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from '#/core/Connection.js'
+import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
 import type {User} from '#/core/User.js'
 
 export class LocalAuth implements AuthApi {

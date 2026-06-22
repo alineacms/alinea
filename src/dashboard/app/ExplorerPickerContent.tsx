@@ -3,10 +3,7 @@ import {startTransition} from 'react'
 import type {Key, Selection} from 'react-aria-components'
 import type {DashboardExplorer, ExplorerOptions} from '../store.js'
 import {ExplorerBody} from './Explorer.js'
-import {
-  ExplorerModalContent,
-  ExplorerModalNavigation
-} from './ExplorerModal.js'
+import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
 
 export interface ExplorerPickerContentProps {

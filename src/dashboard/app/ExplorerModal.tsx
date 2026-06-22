@@ -44,8 +44,9 @@ export function ExplorerModalSuspense({children}: PropsWithChildren) {
   return <Suspense fallback={<ExplorerModalLoading />}>{children}</Suspense>
 }
 
-export interface ExplorerModalFooterProps
-  extends ComponentProps<typeof RailHeader> {}
+export interface ExplorerModalFooterProps extends ComponentProps<
+  typeof RailHeader
+> {}
 
 export function ExplorerModalFooter(props: ExplorerModalFooterProps) {
   return (
@@ -56,8 +57,7 @@ export function ExplorerModalFooter(props: ExplorerModalFooterProps) {
   )
 }
 
-export interface ExplorerModalSelectionProps
-  extends ComponentProps<'span'> {}
+export interface ExplorerModalSelectionProps extends ComponentProps<'span'> {}
 
 export function ExplorerModalSelection(props: ExplorerModalSelectionProps) {
   return (

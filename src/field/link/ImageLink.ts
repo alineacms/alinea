@@ -46,11 +46,10 @@ export namespace ImageLink {
   export const focus = MediaFile.focus
 }
 
-export interface ImageField<Fields = undefined>
-  extends LinkField<
-    EntryReference & InferStoredValue<Fields>,
-    ImageLink<Type.Infer<Fields>>
-  > {}
+export interface ImageField<Fields = undefined> extends LinkField<
+  EntryReference & InferStoredValue<Fields>,
+  ImageLink<Type.Infer<Fields>>
+> {}
 
 const imageCondition = {
   _type: 'MediaFile',
@@ -86,7 +85,8 @@ function imagePicker<Fields>(
 }
 
 export interface ImageOptions<Fields>
-  extends LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
+  extends
+    LinkFieldOptions<EntryReference & InferStoredValue<Fields>>,
     Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}
 
 export function image<Fields = undefined>(
@@ -102,15 +102,15 @@ export function image<Fields = undefined>(
   })
 }
 
-export interface ImagesField<Fields = undefined>
-  extends LinksField<
-    EntryReference & ListRow & InferStoredValue<Fields>,
-    ImageLink<Type.Infer<Fields>>
-  > {}
+export interface ImagesField<Fields = undefined> extends LinksField<
+  EntryReference & ListRow & InferStoredValue<Fields>,
+  ImageLink<Type.Infer<Fields>>
+> {}
 
 export namespace image {
   export interface ImagesOptions<Fields>
-    extends LinkFieldOptions<
+    extends
+      LinkFieldOptions<
         Array<EntryReference & ListRow & InferStoredValue<Fields>>
       >,
       Omit<EntryPickerOptions<Fields>, 'label' | 'selection'> {}

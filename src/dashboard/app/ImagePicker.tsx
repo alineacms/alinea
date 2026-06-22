@@ -1,12 +1,7 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {
-  Suspense,
-  startTransition,
-  useState,
-  type ReactNode
-} from 'react'
+import {Suspense, startTransition, useState, type ReactNode} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
 import {ExplorerHeader} from './Explorer.js'
 import {

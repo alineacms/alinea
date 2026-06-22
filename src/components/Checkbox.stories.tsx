@@ -19,7 +19,12 @@ export const Example = () => (
 
     <form onSubmit={e => e.preventDefault()}>
       <div
-        style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8}}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 8
+        }}
       >
         <Checkbox isRequired label="isRequired" />
         <Button type="submit">Submit</Button>

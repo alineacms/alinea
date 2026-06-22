@@ -75,7 +75,9 @@ const Article = Config.type('Article', {
   }
 })
 
-function assertQueryValue(value: Pick<Infer<typeof Article>, 'localisedTitle'>) {
+function assertQueryValue(
+  value: Pick<Infer<typeof Article>, 'localisedTitle'>
+) {
   const title: string = value.localisedTitle
   return title
 }

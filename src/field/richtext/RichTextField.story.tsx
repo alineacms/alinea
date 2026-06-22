@@ -88,10 +88,7 @@ interface RichTextBlockStoryProps {
   type: typeof entryType | typeof nestedEntryType
 }
 
-function RichTextBlockStory({
-  initialBody,
-  type
-}: RichTextBlockStoryProps) {
+function RichTextBlockStory({initialBody, type}: RichTextBlockStoryProps) {
   const {dashboard, editor, node} = useMemo(() => {
     const dashboard = createDashboard()
     const node = new ReactiveNode<object>({
