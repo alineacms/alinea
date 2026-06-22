@@ -1510,7 +1510,8 @@ export class DashboardExplorer {
       },
       orderBy,
       status: 'preferDraft',
-      type: filter
+      type: filter,
+      groupBy: Entry.id
     })
     const entries = children
       .filter(child => policy.canRead(child))
@@ -2790,7 +2791,10 @@ export class DashboardEntryData {
     policy.assert(Permission.Update, activeVersion)
     policy.assert(Permission.Upload, activeVersion)
     const db = get(this.dashboard.db)
-    const error = uploadSizeError(file, get(this.dashboard.config).maxUploadSize)
+    const error = uploadSizeError(
+      file,
+      get(this.dashboard.config).maxUploadSize
+    )
     if (error) {
       set(this.dashboard.uploadProgress, {
         type: 'fail',
