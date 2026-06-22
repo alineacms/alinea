@@ -22,18 +22,20 @@ import type {
   DashboardEntry,
   DashboardEntryData,
   DashboardEntryOverviewCell,
+  DashboardEntryTreeStatus,
   DashboardExplorer
 } from '../store.js'
 import {dashboardEntryOverviewColumnCount} from '../store.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
+import {StatusBadge} from './StatusBadge.js'
 
 const styles = styler(css)
 
 interface ExplorerTableColumn {
   id: string
   index?: number
-  kind: 'selection' | 'title' | 'overview' | 'filler'
+  kind: 'selection' | 'title' | 'overview' | 'filler' | 'status'
   minWidth?: number
   width: number | '1fr'
 }
@@ -51,6 +53,7 @@ interface ExplorerTableDisplayRowProps {
   label: string
   icon: ComponentType
   cells: Array<DashboardEntryOverviewCell>
+  status?: DashboardEntryTreeStatus['status']
 }
 
 function ExplorerTableDisplayRow({
@@ -59,7 +62,8 @@ function ExplorerTableDisplayRow({
   entry,
   label,
   icon,
-  cells
+  cells,
+  status
 }: ExplorerTableDisplayRowProps) {
   function renderCell(columnOrId: ExplorerTableColumn | Key) {
     const column =
@@ -87,6 +91,13 @@ function ExplorerTableDisplayRow({
             <Icon icon={icon} className={styles.ExplorerTable.icon()} />
           </AriaButton>
           <span className={styles.ExplorerTable.titleAction()}>{label}</span>
+        </Cell>
+      )
+    }
+    if (column.kind === 'status') {
+      return (
+        <Cell className={styles.ExplorerTable.cell.status()} textValue={status}>
+          {status && <StatusBadge status={status} />}
         </Cell>
       )
     }
@@ -123,7 +134,7 @@ function ExplorerTableDisplayRow({
       textValue={label}
       className={styles.ExplorerTable.row()}
       columns={columns}
-      dependencies={[columns, label, icon, cells]}
+      dependencies={[columns, label, icon, cells, status]}
       style={{width: '100%', minWidth: '100%', height: 'inherit'}}
     >
       {renderCell}
@@ -162,6 +173,8 @@ function ExplorerTableLoadedRow({
   const configuredIcon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
   const cells = useAtomValue(data.overviewCells)
+  const treeStatus = useAtomValue(data.treeStatus)
+  const status = treeStatus.status
   const icon = configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)
   return (
     <ExplorerTableDisplayRow
@@ -171,6 +184,7 @@ function ExplorerTableLoadedRow({
       label={label}
       icon={icon}
       cells={cells}
+      status={status}
     />
   )
 }
@@ -210,6 +224,7 @@ export function ExplorerTable({
         ? [{id: 'selection', kind: 'selection' as const, width: 30}]
         : []),
       {id: 'title', kind: 'title', width: 220},
+      {id: 'status', kind: 'status', width: 150},
       ...Array.from(
         {length: dashboardEntryOverviewColumnCount},
         (_, index) => ({
@@ -251,7 +266,11 @@ export function ExplorerTable({
             selectionMode={hasSelection ? selectionMode : undefined}
             onSelectionChange={hasSelection ? setSelected : undefined}
             onRowAction={onRowAction}
-            style={{display: 'block', width: '100%', height: '100%'}}
+            style={{
+              display: 'block',
+              width: '100%',
+              height: '100%'
+            }}
           >
             <TableHeader
               className={styles.ExplorerTable.header()}
