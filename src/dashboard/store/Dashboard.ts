@@ -644,18 +644,8 @@ export class Dashboard {
       const focused = await get(this.focused)
       const confirm = async () => {
         const {workspace, root, entry, locale} = update
-        const ready = entry
-          ? await get(this.entries(entry).routeReady)
-          : undefined
+        if (entry) await get(this.entries(entry).routeReady)
         startTransition(() => {
-          if (workspace && ready?.data) {
-            const tree = this.workspace(workspace).tree
-            const expandedKeys = get(tree.expandedKeys)
-            const nextExpandedKeys = new Set(expandedKeys)
-            for (const parentId of get(ready.data.parentIds))
-              nextExpandedKeys.add(parentId)
-            set(tree.expandedKeys, nextExpandedKeys)
-          }
           set(this.#location, {
             hash: `#${nav.entry(workspace, root, entry, locale)}`
           })
@@ -1663,37 +1653,26 @@ export class DashboardTree {
     this.#syncRouteExpansion = options.syncRouteExpansion ?? true
   }
 
-  #routeExpandedKeys = atom(async get => {
-    if (!this.#syncRouteExpansion) return new Set<Key>()
+  routeExpandedKeys = atom(get => {
+    if (!this.#syncRouteExpansion) return undefined
     const route = get(this.workspace.dashboard.route)
-    if (!route.entry || route.workspace !== this.workspace.key)
-      return new Set<Key>()
+    if (!route.entry || route.workspace !== this.workspace.key) return undefined
     const entry = this.workspace.dashboard.entries(route.entry)
     const {data} = get(entry.data)
-    if (!data) return new Set<Key>()
-    return new Set<Key>(get(data.parentIds))
+    if (!data) return undefined
+    return {
+      entry: route.entry,
+      keys: new Set<Key>(get(data.parentIds))
+    }
   })
 
-  expandedKeys = Object.assign(
-    atom(
-      get => get(this.#expandedKeys),
-      (get, set, next: 'init' | Set<Key>) => {
-        startTransition(() => {
-          if (next === 'init') {
-            get(this.#routeExpandedKeys).then(routeKeys => {
-              if (routeKeys.size === 0) return
-              const current = get(this.#expandedKeys)
-              const merged = new Set(current)
-              for (const key of routeKeys) merged.add(key)
-              set(this.#expandedKeys, merged)
-            })
-          } else {
-            set(this.#expandedKeys, next)
-          }
-        })
-      }
-    ),
-    {onMount: (setSelf: (value: 'init') => void) => setSelf('init')}
+  expandedKeys = atom(
+    get => get(this.#expandedKeys),
+    (_get, set, next: Set<Key>) => {
+      startTransition(() => {
+        set(this.#expandedKeys, next)
+      })
+    }
   )
   #expandedKeys = atom(new Set<Key>())
 

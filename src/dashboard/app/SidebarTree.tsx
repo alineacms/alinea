@@ -3,7 +3,7 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {type ComponentType, memo, useMemo} from 'react'
+import {type ComponentType, memo, useEffect, useMemo, useRef} from 'react'
 import {
   Collection,
   type Key,
@@ -251,6 +251,8 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
 }: SidebarTreeBodyProps) {
   const [treeSelectedKeys, setTreeSelectedKeys] = useAtom(tree.selectedKeys)
   const [expandedKeys, setExpandedKeys] = useAtom(tree.expandedKeys)
+  const routeExpandedKeys = useAtomValue(tree.routeExpandedKeys)
+  const syncedRouteEntry = useRef<string | undefined>(undefined)
   const rootChildren = useAtomValue(root.children)
   const items = rootChildren.map(id => tree.entryItems(id))
   const dragDisabled = useAtomValue(tree.dragDisabled)
@@ -270,6 +272,18 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   })
   const controlledSelection =
     selectedKeys !== undefined && onSelectionChange !== undefined
+  useEffect(() => {
+    if (!routeExpandedKeys) {
+      syncedRouteEntry.current = undefined
+      return
+    }
+    if (routeExpandedKeys.entry === syncedRouteEntry.current) return
+    syncedRouteEntry.current = routeExpandedKeys.entry
+    if (routeExpandedKeys.keys.size === 0) return
+    const nextExpandedKeys = new Set(expandedKeys)
+    for (const key of routeExpandedKeys.keys) nextExpandedKeys.add(key)
+    setExpandedKeys(nextExpandedKeys)
+  }, [expandedKeys, routeExpandedKeys, setExpandedKeys])
   return (
     <div className={styles.SidebarTree.tree.viewport()}>
       <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
