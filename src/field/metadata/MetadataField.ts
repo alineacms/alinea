@@ -1,10 +1,12 @@
+import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
+import type {ListField} from '#/core/field/ListField.js'
 import {RecordField} from '#/core/field/RecordField.js'
-import type {FieldBeforeSaveContext} from '#/core/Field.js'
-import type {FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {Type, type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
+import {list} from '#/field/list.js'
 import {type ObjectField, object} from '#/field/object.js'
 import {type TextField, text} from '#/field/text.js'
 
@@ -19,6 +21,7 @@ export interface MetadataUserOptions extends FieldOptions<MetadataAuditUser> {
 export interface MetadataFields {
   title: TextField
   description: TextField
+  aliases: AliasesField
   openGraph: ObjectField<{
     image: ImageField
     title: TextField
@@ -35,9 +38,14 @@ export interface MetadataAuditUser {
   email: string
 }
 
+export interface MetadataAlias extends ListRow {
+  url: string
+}
+
 export interface Metadata {
   title: string
   description: string
+  aliases: Array<MetadataAlias>
   openGraph: {
     image: ImageLink
     title: string
@@ -64,10 +72,17 @@ export class MetadataUserField extends ScalarField<
   MetadataUserOptions
 > {}
 
-export function metadata(
-  label = 'Metadata',
-  options: Partial<MetadataFields> = {}
-) {
+type AliasType = Type<{url: TextField}>
+type AliasesField = ListField<
+  MetadataAlias,
+  MetadataAlias,
+  {
+    label: string
+    schema: {alias: AliasType}
+  }
+>
+
+export function metadata(label = 'Metadata') {
   const fields = type('Fields', {
     fields: {
       title: text('Title'),
@@ -76,6 +91,17 @@ export function metadata(
         help: 'Optimal length: 120–160 characters',
         validate(value) {
           if (value.length > 160) return 'Too many characters.'
+        }
+      }),
+      aliases: list('URL aliases', {
+        schema: {
+          alias: type('URL alias', {
+            fields: {
+              url: text('URL', {
+                help: 'A previous URL that should redirect to this entry'
+              })
+            }
+          })
         }
       }),
       openGraph: object('Open Graph', {
@@ -99,7 +125,6 @@ export function metadata(
   return new MetadataField(fields, {
     options: {
       label,
-      ...options,
       fields
     },
     defaultValue() {
