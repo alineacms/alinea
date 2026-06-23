@@ -19,7 +19,11 @@ export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
   hidden: true,
   fields: {
-    title: text('Title'),
+    title: text('Title', {
+      validate(value) {
+        if (!value?.trim()) return 'Title is required'
+      }
+    }),
     path: hidden<string>('Path'),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
