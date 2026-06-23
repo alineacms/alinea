@@ -24,6 +24,7 @@ import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
 import type {EntryIndex} from './EntryIndex.js'
+import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
   ArchiveMutation,
   CreateMutation,
@@ -36,7 +37,6 @@ import type {
   UpdateMutation,
   UploadFileMutation
 } from './Mutation.js'
-import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 
 type Op<T> = Omit<T, 'op'>
 
@@ -451,7 +451,8 @@ export class EntryTransaction {
     if (previousUrl === this.#canonicalUrl(candidate)) return candidate.data
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
-    return dataWithUrlAlias(type, candidate.data, previousUrl)
+    const currentUrl = this.#canonicalUrl(candidate)
+    return dataWithUrlAlias(type, candidate.data, previousUrl, currentUrl)
   }
 
   #publishedEntry(id: string, locale: string | null): Entry | undefined {
@@ -1040,17 +1041,35 @@ function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
 function dataWithUrlAlias(
   type: Type,
   data: Record<string, unknown>,
-  url: string
+  previousUrl: string,
+  currentUrl: string
 ): Record<string, unknown> {
   if (!typeSupportsMetadataAliases(type)) return data
-  if (aliasUrlsFromData(data).includes(url)) return data
+  const aliasUrls = aliasUrlsFromData(data)
+  if (aliasUrls.includes(previousUrl)) return data
+
   const metadata = isRecord(data.metadata) ? data.metadata : {}
   const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
+
+  if (aliasUrls.includes(currentUrl)) {
+    const aliasesWithoutCurrent = aliases.filter(
+      alias => alias.url !== currentUrl
+    )
+    return {
+      ...data,
+      metadata: {
+        ...metadata,
+        aliases: aliasesWithoutCurrent.concat(
+          createUrlAliasRow(previousUrl, aliasesWithoutCurrent)
+        )
+      }
+    }
+  }
   return {
     ...data,
     metadata: {
       ...metadata,
-      aliases: aliases.concat(createUrlAliasRow(url, aliases))
+      aliases: aliases.concat(createUrlAliasRow(previousUrl, aliases))
     }
   }
 }
