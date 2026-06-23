@@ -267,8 +267,8 @@ function formatEmpty(
   selectedLocale: string | null,
   otherSummary: OtherLocaleSummary | undefined
 ): string {
-  if (!otherSummary) return 'No incoming references'
-  return `No incoming references in ${formatSelectedLocale(selectedLocale)}`
+  if (!otherSummary) return 'This entry is not referenced anywhere'
+  return `This entry is not referenced in ${formatSelectedLocale(selectedLocale)}`
 }
 
 function formatOtherSummary(summary: OtherLocaleSummary): string {
