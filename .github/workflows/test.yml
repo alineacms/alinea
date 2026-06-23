@@ -1,61 +1,61 @@
 name: ci
 
 on:
-    push:
-        branches: [main]
-        tags: [v*]
-    pull_request:
-        branches: [main, v2]
+  push:
+    branches: [main]
+    tags: [v*]
+  pull_request:
+    branches: [main, v2]
 
 jobs:
-    ci:
-        runs-on: ubuntu-latest
-        permissions:
-            contents: write # To create release
-            id-token: write # To use OIDC for npm publish
-        steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "24"
-                  registry-url: "https://registry.npmjs.org"
-            - uses: oven-sh/setup-bun@v2
-              with:
-                  bun-version: 1.3.13
-            - run: bun i --frozen-lockfile
-            # - name: Check cycles
-            # run: bun cycles
-            - run: bun test
-            - run: bun lint
-            - run: bun format:check
-            - uses: nowsprinting/check-version-format-action@v3
-              id: version
-              with: { prefix: "v" }
-            - if: steps.version.outputs.is_valid != 'true'
-              env:
-                  SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-              run: |
-                  bun bump 0.0.0-$SHA
-                  bun run build
-                  bunx pkg-pr-new publish
-            - if: steps.version.outputs.is_valid == 'true'
-              run: bun bump ${GITHUB_REF#refs/tags/v}
-            - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
-              run: npm publish --provenance --access public
-            - if: steps.version.outputs.prerelease
-              run: npm publish --provenance --access public --tag preview
-            - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
-              id: extract-release-notes
-              uses: ffurrer2/extract-release-notes@v1
-              with:
-                  changelog_file: changelog.md
-            - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: ${{ github.ref }}
-                  release_name: ${{ github.ref }}
-                  draft: false
-                  prerelease: false
-                  body: ${{ steps.extract-release-notes.outputs.release_notes }}
+  ci:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # To create release
+      id-token: write # To use OIDC for npm publish
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - run: bun i --frozen-lockfile
+      # - name: Check cycles
+      # run: bun cycles
+      - run: bun test
+      - run: bun lint
+      - run: bun format:check
+      - uses: nowsprinting/check-version-format-action@v3
+        id: version
+        with: {prefix: 'v'}
+      - if: steps.version.outputs.is_valid != 'true'
+        env:
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          bun bump 0.0.0-$SHA
+          bun run build
+          bunx pkg-pr-new publish
+      - if: steps.version.outputs.is_valid == 'true'
+        run: bun bump ${GITHUB_REF#refs/tags/v}
+      - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
+        run: npm publish --provenance --access public
+      - if: steps.version.outputs.prerelease
+        run: npm publish --provenance --access public --tag preview
+      - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
+        id: extract-release-notes
+        uses: ffurrer2/extract-release-notes@v1
+        with:
+          changelog_file: changelog.md
+      - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.extract-release-notes.outputs.release_notes }}
