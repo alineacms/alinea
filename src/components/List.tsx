@@ -62,6 +62,7 @@ export interface ListLabelProps extends Omit<
   hasRows?: boolean
   shared?: boolean
   showFold?: boolean
+  description?: ReactNode
 }
 
 export function ListLabel({
@@ -71,6 +72,7 @@ export function ListLabel({
   shared,
   showFold = true,
   className,
+  description,
   ...props
 }: ListLabelProps) {
   return (
@@ -84,6 +86,9 @@ export function ListLabel({
       {children}
       {showFold && (
         <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
+      )}
+      {description && (
+        <div className={styles.List.description()}>{description}</div>
       )}
       {shared && <SharedLabelBadge />}
     </Button>

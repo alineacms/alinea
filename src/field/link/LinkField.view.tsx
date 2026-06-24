@@ -1627,6 +1627,7 @@ export interface SingleLinkFieldViewProps {
 export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const [value] = useField(field)
   const options = useFieldOptions(field)
+  // if (options.help) console.log(options.help)
   const node = useFieldNode(field)
   const nodeIsEmpty = useAtomValue(node.isEmpty)
   const selectedValue = isLinkFieldRow(value) ? value : undefined
@@ -1664,6 +1665,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         isDisabled
         shared={options.shared}
         showFold={showFold}
+        description={options.help}
       >
         {options.label}
       </ListLabel>

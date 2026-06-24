@@ -81,7 +81,7 @@
 }
 
 .ListRow:not(:first-child),
-.ListRow[data-first-row='false'] {
+.ListRow[data-first-row="false"] {
   border-top: 1px solid var(--alinea-border);
 }
 
@@ -89,7 +89,7 @@
   opacity: 0.5;
 }
 
-.ListRow[data-first-row='true'] {
+.ListRow[data-first-row="true"] {
   border-top: 0;
 }
 
@@ -109,7 +109,7 @@
 }
 
 .ListRowDragHandle::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 50%;
   top: 50%;
@@ -265,4 +265,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.List-description {
+  display: block;
+  max-width: 100%;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.1;
+  font-weight: 400;
+  font-style: italic;
+  white-space: normal;
+  word-wrap: break-word;
 }
