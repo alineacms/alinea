@@ -1,8 +1,8 @@
-import type {Request, Response} from '@alinea/iso'
 import type {PreviewInfo} from '#/backend/Previews.js'
-import type {Draft, DraftKey} from './Draft.js'
+import type {Request, Response} from '@alinea/iso'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
+import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import type {ReadonlyTree} from './source/Tree.js'
@@ -11,6 +11,13 @@ import type {User} from './User.js'
 export interface AuthApi {
   authenticate(request: Request): Promise<Response>
   verify(request: Request): Promise<AuthedContext>
+}
+
+export interface UserApi {
+  enrichUser(user: User): Promise<User>
+  listUsers(): Promise<Array<User>>
+  createUser(user: User): Promise<User>
+  updateUser(request: User): Promise<User>
 }
 
 export interface RemoteConnection extends Connection, AuthApi {}

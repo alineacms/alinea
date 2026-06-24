@@ -39,6 +39,17 @@ const UploadTable = table('alinea_upload', {
   content: column.blob().notNull()
 })
 
+const UserTable = table('alinea_user', {
+  id: column.text().primaryKey(),
+  name: column.text().notNull(),
+  email: column.text().notNull()
+})
+
+const UserRoleTable = table('alinea_user_role', {
+  userId: column.text().notNull().references(UserTable.id),
+  role: column.text().notNull()
+})
+
 export class DatabaseApi implements DraftsApi, UploadsApi {
   #context: RequestContext
   #db: Promise<Database>
