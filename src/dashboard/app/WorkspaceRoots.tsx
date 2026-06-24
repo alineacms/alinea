@@ -41,6 +41,7 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
       <div className={styles.WorkspaceRoots.workspace()}>
         <WorkspaceAvatarMenu dashboard={dashboard} />
       </div>
+      <WorkspaceUsersButton dashboard={dashboard} />
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
           <WorkspaceRootButton key={root.key} root={root} />
@@ -51,6 +52,25 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
         <WorkspaceProfileMenu dashboard={dashboard} />
       </div>
     </aside>
+  )
+}
+
+function WorkspaceUsersButton({dashboard}: WorkspaceRootsProps) {
+  const route = useAtomValue(dashboard.route)
+  const setRoute = useSetAtom(dashboard.route)
+  const selected = route.page === 'users'
+  return (
+    <Tooltip placement="right" delay={100} tooltip="Users">
+      <Button
+        size="icon-nav"
+        className={styles.WorkspaceRoots.rootButton()}
+        aria-label="Users"
+        onPress={() => void setRoute({page: 'users'})}
+        data-selected={selected ? '' : undefined}
+      >
+        <Icon icon={IcBaselineAccountCircle} data-slot="icon" />
+      </Button>
+    </Tooltip>
   )
 }
 

@@ -11,7 +11,14 @@ import type {User} from '#/core/User.js'
 import {basename, extname} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {type Database, eq, InferSelectModel, primaryKey, table} from 'rado'
+import {
+  type Database,
+  eq,
+  InferSelectModel,
+  primaryKey,
+  sql,
+  table
+} from 'rado'
 import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
@@ -51,6 +58,13 @@ const UserRoleTable = table('alinea_user_role', {
   userId: column.text().notNull().references(UserTable.sub),
   role: column.text().notNull()
 })
+
+interface NormalizedUser {
+  sub: string
+  email: string
+  name?: string
+  roles: Array<string>
+}
 
 export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   #context: RequestContext
@@ -144,7 +158,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   }
 
   async enrichUser(user: User): Promise<User> {
-    const found = await this.#getUser(user.sub)
+    const found = await this.#getUser(user.sub, user.email)
     if (!found) return user
     return {...user, ...found}
   }
@@ -157,30 +171,47 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
 
   async createUser(user: User): Promise<User> {
     const db = await this.#db
+    const existing = await this.#getUser(user.sub, user.email)
+    if (existing) return this.updateUser({...user, sub: existing.sub})
+    const record = normalizeUser(user)
     await db.transaction(async tx => {
-      await tx.insert(UserTable).values(user)
-      await this.#replaceRoles(tx, user.sub, user.roles ?? [])
+      await tx.insert(UserTable).values(userRecord(record))
+      await this.#replaceRoles(tx, record.sub, record.roles ?? [])
     })
-    return (await this.#getUser(user.sub)) ?? user
+    return (await this.#getUser(record.sub, record.email)) ?? record
   }
 
   async updateUser(user: User): Promise<User> {
     const db = await this.#db
-    const found = await this.#getUser(user.sub)
+    const found = await this.#getUser(user.sub, user.email)
     if (!found) return this.createUser(user)
+    const record = normalizeUser({...user, sub: found.sub})
     await db.transaction(async tx => {
-      await tx.update(UserTable).set(user).where(eq(UserTable.sub, user.sub))
-      await this.#replaceRoles(tx, user.sub, user.roles ?? [])
+      await tx
+        .update(UserTable)
+        .set({
+          email: record.email,
+          name: record.name
+        })
+        .where(eq(UserTable.sub, found.sub))
+      await this.#replaceRoles(tx, found.sub, record.roles ?? [])
     })
-    return (await this.#getUser(user.sub)) ?? user
+    return (await this.#getUser(found.sub, record.email)) ?? record
   }
 
-  async #getUser(sub: string): Promise<User | undefined> {
+  async #getUser(
+    sub: string,
+    email: string | undefined = sub
+  ): Promise<User | undefined> {
     const db = await this.#db
+    const normalizedSub = normalizeUserKey(sub)
+    const normalizedEmail = email ? normalizeUserKey(email) : normalizedSub
     const user = await db
       .select()
       .from(UserTable)
-      .where(eq(UserTable.sub, sub))
+      .where(
+        sql`lower(${UserTable.sub}) = ${normalizedSub} or lower(${UserTable.email}) = ${normalizedEmail}`
+      )
       .get()
     if (!user) return undefined
     return this.#toUser(user)
@@ -214,4 +245,31 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
       })
     )
   }
+}
+
+function normalizeUser(user: User): NormalizedUser {
+  const email = normalizeUserKey(user.email ?? user.sub)
+  return {
+    sub: normalizeUserKey(user.sub || email),
+    email,
+    name: normalizeUserName(user.name),
+    roles: Array.from(new Set(user.roles ?? []))
+  }
+}
+
+function userRecord(user: NormalizedUser) {
+  return {
+    sub: user.sub,
+    email: user.email,
+    name: user.name
+  }
+}
+
+function normalizeUserKey(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+function normalizeUserName(value: string | undefined): string | undefined {
+  const name = value?.trim()
+  return name || undefined
 }

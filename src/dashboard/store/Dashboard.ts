@@ -661,17 +661,25 @@ export class Dashboard {
         .slice(1)
         .split('/')
         .slice(1) as Array<string | undefined>
+      const page = action === 'users' ? 'users' : 'entry'
       const [root, locale] = rootPart.split(':')
       return {
-        workspace,
-        root,
-        entry,
-        locale
+        page,
+        workspace: page === 'entry' ? workspace : undefined,
+        root: page === 'entry' ? root : undefined,
+        entry: page === 'entry' ? entry : undefined,
+        locale: page === 'entry' ? locale : undefined
       }
     },
     async (get, set, update: DashboardRoute) => {
       const focused = await get(this.focused)
       const confirm = async () => {
+        if (update.page === 'users') {
+          startTransition(() => {
+            set(this.#location, {hash: `#${nav.users()}`})
+          })
+          return
+        }
         const {workspace, root, entry, locale} = update
         if (entry) await get(this.entries(entry).routeReady)
         startTransition(() => {
@@ -689,6 +697,8 @@ export class Dashboard {
   )
 
   focused = atom((get): FocusedItem | Promise<FocusedItem> => {
+    const {page} = get(this.route)
+    if (page === 'users') return null
     const workspace = get(this.selectedWorkspace)
     const root = get(this.selectedRoot)
     const {root: routeRoot, entry} = get(this.route)
@@ -838,6 +848,8 @@ export class Dashboard {
 
   title = swr(
     atom(async get => {
+      const route = get(this.route)
+      if (route.page === 'users') return 'Users'
       const workspace = get(this.currentWorkspace)
       const workspaceLabel = workspace ? get(workspace.label) : 'Alinea'
       const focused = await get(this.focused)
@@ -3039,6 +3051,8 @@ export class DashboardRoot {
 
   selected = atom(
     get => {
+      const route = get(this.workspace.dashboard.route)
+      if (route.page === 'users') return false
       if (
         get(this.workspace.dashboard.selectedWorkspace) !== this.workspace.key
       )

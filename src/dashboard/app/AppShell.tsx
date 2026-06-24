@@ -12,6 +12,7 @@ import {SidebarTree} from './SidebarTree.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
 import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
+import {UsersPage} from './UsersPage.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 
@@ -34,6 +35,7 @@ export function AppShell({dashboard}: AppShellProps) {
 
 function AppShellContent({dashboard}: AppShellProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
+  const route = useAtomValue(dashboard.route)
 
   if (workspaces.length === 0) {
     return (
@@ -48,6 +50,17 @@ function AppShellContent({dashboard}: AppShellProps) {
             </p>
           </div>
         </Rail>
+      </div>
+    )
+  }
+
+  if (route.page === 'users') {
+    return (
+      <div className={styles.AppShellWorkspace()}>
+        <WorkspaceRoots dashboard={dashboard} />
+        <div className={styles.AppShellContent()}>
+          <UsersPage dashboard={dashboard} />
+        </div>
       </div>
     )
   }
