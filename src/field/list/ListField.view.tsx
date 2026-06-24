@@ -290,6 +290,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
         hasRows={hasRows}
         isDisabled={!hasRows}
         onPress={toggleAll}
+        description={options.help}
         shared={options.shared}
       >
         {options.label}

@@ -9,9 +9,13 @@ import css from './List.module.css'
 import {Button, type ButtonProps} from './Button.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
-import {SharedLabelBadge} from './Label.js'
+import {
+  LabelDescription,
+  LabelInline,
+  LabelLabel,
+  SharedLabelBadge
+} from './Label.js'
 import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
-import {DescriptionLabel} from './DescriptionLabel.js'
 
 const styles = styler(css)
 
@@ -84,11 +88,13 @@ export function ListLabel({
       data-has-rows={hasRows ? 'true' : undefined}
       isDisabled={props.isDisabled ?? !hasRows}
     >
-      {children}
-      {showFold && (
-        <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
-      )}
-      {description && <DescriptionLabel description={description} />}
+      <LabelInline>
+        <LabelLabel asLabel={false} label={children} />
+        {showFold && (
+          <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
+        )}
+      </LabelInline>
+      {description && <LabelDescription description={description} />}
       {shared && <SharedLabelBadge />}
     </Button>
   )

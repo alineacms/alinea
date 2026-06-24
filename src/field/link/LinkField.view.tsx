@@ -1662,6 +1662,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         expanded
         hasRows={hasRows}
         isDisabled
+        description={options.help}
         shared={options.shared}
         showFold={showFold}
       >
@@ -1814,6 +1815,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         hasRows={hasRows}
         isDisabled={!hasFoldableRows}
         onPress={toggleAll}
+        description={options.help}
         shared={options.shared}
         showFold={hasFoldableRows}
       >

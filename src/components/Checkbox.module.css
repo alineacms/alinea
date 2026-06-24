@@ -4,8 +4,7 @@
   position: relative;
   cursor: pointer;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   gap: 0.571rem;
   font-size: var(--alinea-font-size-base);
   line-height: 1;
@@ -13,6 +12,7 @@
   forced-color-adjust: none;
 
   .Checkbox-box {
+    flex: 0 0 auto;
     width: 16px;
     height: 16px;
     display: flex;

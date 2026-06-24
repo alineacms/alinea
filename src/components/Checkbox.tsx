@@ -1,18 +1,20 @@
 import styler from '@alinea/styler'
+import type {ReactNode} from 'react'
 import {
   Checkbox as CheckboxPrimitive,
   type CheckboxProps as CheckboxPrimitiveProps
 } from 'react-aria-components'
 import css from './Checkbox.module.css'
-import {DescriptionLabel} from './DescriptionLabel.js'
+import {LabelDescription, LabelLabel, LabelStack} from './Label.js'
 
 const styles = styler(css)
 
 export type {CheckboxProps} from 'react-aria-components'
 
-interface CheckboxProps extends CheckboxPrimitiveProps {
-  label?: string
-  description?: string
+interface CheckboxProps extends Omit<CheckboxPrimitiveProps, 'children'> {
+  children?: ReactNode
+  label?: ReactNode
+  description?: ReactNode
 }
 
 export function Checkbox({
@@ -51,8 +53,19 @@ export function Checkbox({
               )}
             </svg>
           </div>
-          {label || children}
-          {description && <DescriptionLabel description={description} />}
+          <LabelStack>
+            <LabelLabel
+              asLabel={false}
+              label={label}
+              tone="inherit"
+              weight="normal"
+            >
+              {children}
+            </LabelLabel>
+            {description && (
+              <LabelDescription description={description} size="small" />
+            )}
+          </LabelStack>
         </>
       )}
     </CheckboxPrimitive>
