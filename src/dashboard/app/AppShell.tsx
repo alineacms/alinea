@@ -8,11 +8,10 @@ import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
-import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {SidebarTree} from './SidebarTree.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
-import {Sidebar, SidebarFooter, SidebarHeader} from './ui/Sidebar.js'
+import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 
@@ -35,19 +34,6 @@ export function AppShell({dashboard}: AppShellProps) {
 
 function AppShellContent({dashboard}: AppShellProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
-  const footer = (
-    <SidebarFooter className={styles.AppShell.footer()}>
-      <MutationQueueStatus dashboard={dashboard} openOnFail />
-      {/*<div className={styles.AppShell.status()}>
-              <span className={styles.AppShell.status.sha()}>
-                db.sha: {sha ?? '-'}
-              </span>
-              <Button appearance="outline" intent="secondary" onPress={sync}>
-                Sync
-              </Button>
-            </div>*/}
-    </SidebarFooter>
-  )
 
   if (workspaces.length === 0) {
     return (
