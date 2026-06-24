@@ -65,8 +65,14 @@ function ExternalLinkPickerDialog({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     event.stopPropagation()
+    const normalizedUrl = URL.parse(url) ? url : `https://${url}`
+    if (!URL.parse(normalizedUrl)) return
     startTransition(() => {
-      onConfirm({url, title, target: openInNewTab ? '_blank' : '_self'})
+      onConfirm({
+        url: normalizedUrl,
+        title,
+        target: openInNewTab ? '_blank' : '_self'
+      })
       modal.close()
     })
   }
