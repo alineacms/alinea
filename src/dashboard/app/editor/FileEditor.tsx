@@ -104,7 +104,13 @@ export function FileEditor({entry}: FileEditorProps) {
                 <div className={styles.FileEditor.metadata.item({full: true})}>
                   <dt className={styles.FileEditor.metadata.term()}>URL</dt>
                   <dd className={styles.FileEditor.metadata.value()}>
-                    {liveUrl.pathname}
+                    <a
+                      href={liveUrl.pathname}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {liveUrl.pathname}
+                    </a>
                   </dd>
                 </div>
               )}
