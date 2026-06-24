@@ -52,7 +52,6 @@ function AppShellContent({dashboard}: AppShellProps) {
   if (workspaces.length === 0) {
     return (
       <div className={styles.AppShellContent()}>
-        <Sidebar>{footer}</Sidebar>
         <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
           <div className={styles.AppShell.empty()}>
             <h1 className={styles.AppShell.empty.title()}>
