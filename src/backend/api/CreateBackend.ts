@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
@@ -69,7 +70,12 @@ export function createBackend(
 export function createRemote(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
-  const reversed = impl.reverse()
+  const fallback: Partial<RemoteConnection> = {
+    enrichUser(user: User) {
+      return Promise.resolve(user)
+    }
+  }
+  const reversed = impl.reverse().concat(fallback)
   const call = (name: keyof RemoteConnection): any => {
     const use = reversed.find(i => name in i)
     return use
@@ -90,6 +96,10 @@ export function createRemote(
     storeDraft: call('storeDraft'),
     prepareUpload: call('prepareUpload'),
     handleUpload: call('handleUpload'),
-    previewUpload: call('previewUpload')
+    previewUpload: call('previewUpload'),
+    enrichUser: call('enrichUser'),
+    listUsers: call('listUsers'),
+    createUser: call('createUser'),
+    updateUser: call('updateUser')
   }
 }

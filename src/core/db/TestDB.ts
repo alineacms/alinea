@@ -11,6 +11,22 @@ export class TestDB extends LocalDB implements LocalConnection {
     return localUser
   }
 
+  async enrichUser(user: User): Promise<User> {
+    return user
+  }
+
+  async listUsers(): Promise<Array<User>> {
+    return [localUser]
+  }
+
+  async createUser(user: User): Promise<User> {
+    return user
+  }
+
+  async updateUser(user: User): Promise<User> {
+    return user
+  }
+
   async revisions() {
     return []
   }

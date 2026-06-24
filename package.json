@@ -57,6 +57,7 @@
     "format:check": "oxfmt --check src",
     "lint": "oxlint --ignore-path .gitignore src/dashboard",
     "prepublishOnly": "bun run build",
+    "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "ladle serve",
     "tag": "bun tag.js",
     "spec": "playwright test -c .playwright/playwright.config.ts",

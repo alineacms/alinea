@@ -2,14 +2,16 @@ import type {
   DraftsApi,
   RequestContext,
   UploadResponse,
-  UploadsApi
+  UploadsApi,
+  UserApi
 } from '#/core/Connection.js'
 import {type Draft, type DraftKey, parseDraftKey} from '#/core/Draft.js'
 import {createId} from '#/core/Id.js'
+import type {User} from '#/core/User.js'
 import {basename, extname} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {type Database, eq, primaryKey, table} from 'rado'
+import {type Database, eq, InferSelectModel, primaryKey, table} from 'rado'
 import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
@@ -40,24 +42,26 @@ const UploadTable = table('alinea_upload', {
 })
 
 const UserTable = table('alinea_user', {
-  id: column.text().primaryKey(),
-  name: column.text().notNull(),
-  email: column.text().notNull()
+  sub: column.text().primaryKey(),
+  email: column.text().notNull().unique(),
+  name: column.text()
 })
 
 const UserRoleTable = table('alinea_user_role', {
-  userId: column.text().notNull().references(UserTable.id),
+  userId: column.text().notNull().references(UserTable.sub),
   role: column.text().notNull()
 })
 
-export class DatabaseApi implements DraftsApi, UploadsApi {
+export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   #context: RequestContext
   #db: Promise<Database>
 
   constructor(context: RequestContext, {db}: DatabaseOptions) {
     this.#context = context
     this.#db = PLazy.from(async () => {
-      await db.create(DraftTable, UploadTable).catch(() => {})
+      await db
+        .create(DraftTable, UploadTable, UserTable, UserRoleTable)
+        .catch(() => {})
       return db
     })
   }
@@ -137,5 +141,77 @@ export class DatabaseApi implements DraftsApi, UploadsApi {
         'content-disposition': `inline; filename="${entryId}"`
       }
     })
+  }
+
+  async enrichUser(user: User): Promise<User> {
+    const found = await this.#getUser(user.sub)
+    if (!found) return user
+    return {...user, ...found}
+  }
+
+  async listUsers(): Promise<Array<User>> {
+    const db = await this.#db
+    const users = await db.select().from(UserTable)
+    return Promise.all(users.map(user => this.#toUser(user)))
+  }
+
+  async createUser(user: User): Promise<User> {
+    const db = await this.#db
+    await db.transaction(async tx => {
+      await tx.insert(UserTable).values(user)
+      await this.#replaceRoles(tx, user.sub, user.roles ?? [])
+    })
+    return (await this.#getUser(user.sub)) ?? user
+  }
+
+  async updateUser(user: User): Promise<User> {
+    const db = await this.#db
+    const found = await this.#getUser(user.sub)
+    if (!found) return this.createUser(user)
+    await db.transaction(async tx => {
+      await tx.update(UserTable).set(user).where(eq(UserTable.sub, user.sub))
+      await this.#replaceRoles(tx, user.sub, user.roles ?? [])
+    })
+    return (await this.#getUser(user.sub)) ?? user
+  }
+
+  async #getUser(sub: string): Promise<User | undefined> {
+    const db = await this.#db
+    const user = await db
+      .select()
+      .from(UserTable)
+      .where(eq(UserTable.sub, sub))
+      .get()
+    if (!user) return undefined
+    return this.#toUser(user)
+  }
+
+  async #toUser(user: InferSelectModel<typeof UserTable>): Promise<User> {
+    const db = await this.#db
+    const roles = await db
+      .select()
+      .from(UserRoleTable)
+      .where(eq(UserRoleTable.userId, user.sub))
+    return {
+      sub: user.sub,
+      name: user.name ?? undefined,
+      email: user.email,
+      roles: roles.map(role => role.role)
+    }
+  }
+
+  async #replaceRoles(
+    db: Database,
+    userId: string,
+    roles: Array<string>
+  ): Promise<void> {
+    const uniqueRoles = Array.from(new Set(roles))
+    await db.delete(UserRoleTable).where(eq(UserRoleTable.userId, userId))
+    if (uniqueRoles.length === 0) return
+    await db.insert(UserRoleTable).values(
+      uniqueRoles.map(role => {
+        return {userId, role}
+      })
+    )
   }
 }

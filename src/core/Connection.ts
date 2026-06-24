@@ -64,7 +64,12 @@ export interface UploadsApi {
 }
 
 export interface Connection
-  extends CommitApi, SyncApi, HistoryApi, DraftsApi, UploadsApi {}
+  extends CommitApi,
+    SyncApi,
+    HistoryApi,
+    DraftsApi,
+    UploadsApi,
+    UserApi {}
 
 export interface RequestContext {
   isDev: boolean

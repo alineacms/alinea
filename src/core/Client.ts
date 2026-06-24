@@ -84,6 +84,43 @@ export class Client implements LocalConnection {
       .then(user => user ?? undefined)
   }
 
+  enrichUser(user: User): Promise<User> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'enrich'},
+      {
+        method: 'POST',
+        body: JSON.stringify(user)
+      }
+    ).then<User>(this.#failOnHttpError)
+  }
+
+  listUsers(): Promise<Array<User>> {
+    return this.#requestJson({
+      action: HandleAction.User,
+      operation: 'list'
+    }).then<Array<User>>(this.#failOnHttpError)
+  }
+
+  createUser(user: User): Promise<User> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'create'},
+      {
+        method: 'POST',
+        body: JSON.stringify(user)
+      }
+    ).then<User>(this.#failOnHttpError)
+  }
+
+  updateUser(user: User): Promise<User> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'update'},
+      {
+        method: 'POST',
+        body: JSON.stringify(user)
+      }
+    ).then<User>(this.#failOnHttpError)
+  }
+
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

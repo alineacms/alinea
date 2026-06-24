@@ -16,6 +16,7 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import type {User} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
@@ -108,6 +109,10 @@ export function createHandler({
       try {
         userCtx = await cnx.verify(request)
         cnx = remote(userCtx)
+        userCtx = {
+          ...userCtx,
+          user: await cnx.enrichUser(userCtx.user)
+        }
       } catch (cause) {
         if (cause instanceof MissingCredentialsError) {
           const authorization = request.headers.get('authorization')
@@ -124,7 +129,11 @@ export function createHandler({
       }
 
       // User
-      if (action === HandleAction.User && request.method === 'GET') {
+      if (
+        action === HandleAction.User &&
+        request.method === 'GET' &&
+        !params.has('operation')
+      ) {
         expectJson()
         return Response.json(userCtx ? userCtx.user : null)
       }
@@ -148,6 +157,27 @@ export function createHandler({
         if (!isJson) throw new Response('Expected JSON', {status: 400})
         return request.json()
       })
+
+      if (action === HandleAction.User) {
+        expectUser()
+        expectJson()
+        const operation = params.get('operation')
+        if (request.method === 'GET' && operation === 'list') {
+          return Response.json(await cnx.listUsers())
+        }
+        if (request.method === 'POST') {
+          const user = parseUser(await body)
+          if (operation === 'enrich') {
+            return Response.json(await cnx.enrichUser(user))
+          }
+          if (operation === 'create') {
+            return Response.json(await cnx.createUser(user))
+          }
+          if (operation === 'update') {
+            return Response.json(await cnx.updateUser(user))
+          }
+        }
+      }
 
       // Sign preview token
       if (action === HandleAction.PreviewToken && request.method === 'POST') {
@@ -308,4 +338,29 @@ export function createHandler({
       )
     }
   }
+}
+
+function parseUser(input: unknown): User {
+  if (!isRecord(input)) throw new HttpError(400, 'Expected user object')
+  const {sub, name, email, roles} = input
+  if (typeof sub !== 'string') {
+    throw new HttpError(400, 'Expected user sub')
+  }
+  if (name !== undefined && typeof name !== 'string') {
+    throw new HttpError(400, 'Expected user name')
+  }
+  if (email !== undefined && typeof email !== 'string') {
+    throw new HttpError(400, 'Expected user email')
+  }
+  if (
+    roles !== undefined &&
+    (!Array.isArray(roles) || roles.some(role => typeof role !== 'string'))
+  ) {
+    throw new HttpError(400, 'Expected user roles')
+  }
+  return {sub, name, email, roles}
+}
+
+function isRecord(input: unknown): input is Record<string, unknown> {
+  return input !== null && typeof input === 'object' && !Array.isArray(input)
 }
