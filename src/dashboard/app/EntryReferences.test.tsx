@@ -318,7 +318,7 @@ test('EntryReferences shows other locale totals when selected locale is empty', 
   render(<EntryReferences entry={entry} />)
 
   expect(screen.queryAllByRole('button')).toHaveLength(0)
-  expect(screen.getByText('No incoming references in EN')).toBeTruthy()
+  expect(screen.getByText('This entry is not referenced in EN')).toBeTruthy()
   expect(
     screen.getByText('1 reference in other languages: FR (1)')
   ).toBeTruthy()
