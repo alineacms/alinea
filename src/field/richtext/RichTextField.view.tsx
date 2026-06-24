@@ -100,10 +100,7 @@ function TypeExtensionHeader({
   }
 
   return (
-    <ListRowHeader
-      className={styles.RichTextFieldBlock.header()}
-      expanded={exp}
-    >
+    <ListRowHeader expanded={exp}>
       {!readOnly && (
         <ListRowDragHandle
           aria-label={`Drag ${label} block`}

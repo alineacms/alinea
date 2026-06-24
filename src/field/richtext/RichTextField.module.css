@@ -66,11 +66,4 @@
 .RichTextFieldBlock {
   margin: 14px 0;
   outline: 3px solid transparent;
-  transition: var(--alinea-transition);
-  transition-property: outline-color;
-}
-
-.RichTextFieldBlock-header {
-  padding-left: 4px;
-  padding-right: 4px;
 }
