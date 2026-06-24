@@ -59,6 +59,10 @@
   color: var(--alinea-fg);
   font-size: 13px;
   line-height: 1.35;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .FileEditor-focus {
