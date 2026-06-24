@@ -1,8 +1,7 @@
-import {Checkbox, Label} from '#/components.js'
+import {Checkbox, Label, SharedLabelBadge} from '#/components.js'
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
 import {CheckField} from '#/field/check.js'
 import styler from '@alinea/styler'
-import {SharedLabelBadge} from 'alinea/components'
 import css from './CheckField.module.css'
 
 const styles = styler(css)
