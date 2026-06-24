@@ -4,6 +4,7 @@ import {
   type CheckboxProps as CheckboxPrimitiveProps
 } from 'react-aria-components'
 import css from './Checkbox.module.css'
+import {DescriptionLabel} from './DescriptionLabel.js'
 
 const styles = styler(css)
 
@@ -51,9 +52,7 @@ export function Checkbox({
             </svg>
           </div>
           {label || children}
-          {description && (
-            <div className={styles.Checkbox.description()}>{description}</div>
-          )}
+          {description && <DescriptionLabel description={description} />}
         </>
       )}
     </CheckboxPrimitive>

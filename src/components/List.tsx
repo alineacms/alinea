@@ -11,6 +11,7 @@ import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {SharedLabelBadge} from './Label.js'
 import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
+import {DescriptionLabel} from './DescriptionLabel.js'
 
 const styles = styler(css)
 
@@ -62,6 +63,7 @@ export interface ListLabelProps extends Omit<
   hasRows?: boolean
   shared?: boolean
   showFold?: boolean
+  description?: ReactNode
 }
 
 export function ListLabel({
@@ -71,6 +73,7 @@ export function ListLabel({
   shared,
   showFold = true,
   className,
+  description,
   ...props
 }: ListLabelProps) {
   return (
@@ -85,6 +88,7 @@ export function ListLabel({
       {showFold && (
         <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
       )}
+      {description && <DescriptionLabel description={description} />}
       {shared && <SharedLabelBadge />}
     </Button>
   )

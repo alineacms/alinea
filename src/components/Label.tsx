@@ -7,6 +7,7 @@ import {
 import {Badge} from '../dashboard/app/Badge.js'
 import {IcRoundPublic} from '../dashboard/icons.js'
 import css from './Label.module.css'
+import {DescriptionLabel} from './DescriptionLabel.js'
 
 const styles = styler(css)
 
@@ -68,11 +69,9 @@ export function Label({
                   )}
                 </LabelPrimitive>
               )}
+              {description && <DescriptionLabel description={description} />}
               {shared && <SharedLabelBadge />}
             </div>
-          )}
-          {description && (
-            <div className={styles.Label.description()}>{description}</div>
           )}
         </header>
       )}

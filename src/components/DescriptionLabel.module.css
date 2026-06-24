@@ -1,0 +1,11 @@
+.DescriptionLabel {
+  display: block;
+  max-width: 100%;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.1;
+  font-weight: 400;
+  font-style: italic;
+  white-space: normal;
+  word-wrap: break-word;
+}

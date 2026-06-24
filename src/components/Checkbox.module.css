@@ -108,14 +108,4 @@
       border-color: var(--alinea-border);
     }
   }
-
-  .Checkbox-description {
-    color: var(--alinea-fg-muted);
-    font-size: 12px;
-    line-height: normal;
-    font-weight: 400;
-    font-style: italic;
-    white-space: normal;
-    word-wrap: break-word;
-  }
 }
