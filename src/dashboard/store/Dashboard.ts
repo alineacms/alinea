@@ -596,7 +596,7 @@ export class Dashboard {
 
   #policyResource = atom(async get => {
     const user = await get(this.user)
-    if (!user) return Policy.ALLOW_NONE
+    if (!user?.roles) return Policy.ALLOW_NONE
     const db = get(this.db)
     get(this.sha) // subscribe to content changes
     return db.createPolicy(user.roles)

@@ -8,15 +8,15 @@ import type {
   RemoteConnection,
   RequestContext
 } from '#/core/Connection.js'
-import type {DraftKey} from '#/core/Draft.js'
 import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
-import {Permission} from '#/core/Role.js'
+import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64} from '#/core/util/Encoding.js'
-import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -131,7 +131,14 @@ export function createHandler({
 
       const expectUser = () => {
         if (!userCtx) throw new Response('Unauthorized', {status: 401})
-        return userCtx.user
+        const claims = userCtx.user
+        return {
+          claims,
+          policy: PLazy.from(async () => {
+            const roles = claims.roles
+            return !roles ? Policy.ALLOW_NONE : local.createPolicy(roles)
+          })
+        }
       }
 
       const body = PLazy.from(() => {
@@ -168,7 +175,7 @@ export function createHandler({
       if (action === HandleAction.Mutate && request.method === 'POST') {
         const user = expectUser()
         expectJson()
-        const policy = await local.createPolicy(user.roles)
+        const policy = await user.policy
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
@@ -245,7 +252,7 @@ export function createHandler({
       // Media
       if (action === HandleAction.Upload) {
         const user = expectUser()
-        const policy = await local.createPolicy(user.roles)
+        const policy = await user.policy
         policy.assert(Permission.Upload)
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {

@@ -89,8 +89,8 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set<Key>(user.roles)
   const roleLabel =
-    user.roles
-      .map(role => config.roles?.[role]?.label ?? role)
+    user
+      .roles!.map(role => config.roles?.[role]?.label ?? role)
       .filter(Boolean)
       .join(', ') || 'No roles'
   const userName = user.name ?? user.sub

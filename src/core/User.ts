@@ -1,6 +1,6 @@
 export interface User {
   sub: string
-  roles: Array<string>
+  roles?: Array<string>
   email?: string
   name?: string
 }
