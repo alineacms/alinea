@@ -123,7 +123,6 @@
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
     "@typescript/analyze-trace": "^0.9.1",
-    "@typescript/native-preview": "7.0.0-dev.20260325.1",
     "@vitejs/plugin-react": "^6.0.1",
     "cito": "^0.3.3",
     "color2k": "^1.2.4",
