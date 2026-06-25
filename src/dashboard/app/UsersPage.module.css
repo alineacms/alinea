@@ -33,12 +33,21 @@
 
 .UsersPage-header {
   display: flex;
-  min-height: 56px;
   align-items: center;
   gap: 8px;
   border-bottom: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
   padding: 8px 16px;
+}
+
+.UsersPage-header-title {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .UsersPage-search {
@@ -64,16 +73,14 @@
   width: 100%;
 }
 
-.UsersPage-actionColumn,
-.UsersPage-actionCell {
-  width: 1%;
-  padding-right: 4px;
-  padding-left: 4px;
-  text-align: center;
-  white-space: nowrap;
+.UsersPage-identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
 }
 
-.UsersPage-identity {
+.UsersPage-identity-text {
   display: grid;
   min-width: 0;
   gap: 2px;
@@ -105,12 +112,6 @@
   gap: 6px;
 }
 
-.UsersPage-actions {
-  display: flex;
-  justify-content: center;
-  white-space: nowrap;
-}
-
 .UsersPage-noRoles {
   color: var(--alinea-fg-muted);
 }
@@ -138,6 +139,7 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  gap: 16px;
 }
 
 .UsersPage-form-fields {

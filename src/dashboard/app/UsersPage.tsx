@@ -17,15 +17,11 @@ import {
 } from '#/components.js'
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {type FormEvent, useEffect, useMemo, useState} from 'react'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useMemo, useState, type FormEvent} from 'react'
 import {useListData} from 'react-stately'
-import {
-  IcRoundAdd,
-  IcRoundArrowBack,
-  IcRoundEdit
-} from '../icons.js'
-import type {Dashboard} from '../store/Dashboard.js'
+import {IcRoundAdd, IcRoundArrowBack, IcRoundEdit} from '../icons.js'
+import {dashboardAtom, type Dashboard} from '../store/Dashboard.js'
 import {Badge} from './Badge.js'
 import {
   DashboardModal,
@@ -34,6 +30,7 @@ import {
   DashboardModalFooter,
   useDashboardModal
 } from './ui/DashboardModal.js'
+import {SidebarHeader} from './ui/Sidebar.js'
 import css from './UsersPage.module.css'
 
 const styles = styler(css)
@@ -48,46 +45,85 @@ interface RoleItem {
 }
 
 interface UserColumn {
-  id: 'user' | 'roles' | 'actions'
+  id: 'user' | 'roles'
   name: string
   isRowHeader?: boolean
 }
 
 const userColumns: Array<UserColumn> = [
   {id: 'user', name: 'User', isRowHeader: true},
-  {id: 'roles', name: 'Roles'},
-  {id: 'actions', name: ''}
+  {id: 'roles', name: 'Roles'}
 ]
 
-export function UsersPage({dashboard}: UsersPageProps) {
-  const client = useAtomValue(dashboard.client)
-  const config = useAtomValue(dashboard.config)
-  const [users, setUsers] = useState<Array<User>>([])
-  const [query, setQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string>()
+interface UsersState {
+  error?: string
+  status: 'loading' | 'loaded' | 'error'
+  users: Array<User>
+}
 
-  useEffect(() => {
-    let cancelled = false
-    async function loadUsers() {
-      setIsLoading(true)
-      setError(undefined)
+type UsersAction =
+  | {type: 'load'}
+  | {type: 'create'; user: UserInput}
+  | {type: 'update'; user: UserInput}
+
+const usersStateAtom = atom<UsersState>({
+  status: 'loading',
+  users: []
+})
+
+const usersAtom = atom(
+  get => get(usersStateAtom),
+  async (get, set, action: UsersAction): Promise<User | undefined> => {
+    const dashboard = get(dashboardAtom)
+    const client = get(dashboard.client)
+    if (action.type === 'load') {
+      const current = get(usersStateAtom)
+      set(usersStateAtom, {...current, error: undefined, status: 'loading'})
       try {
-        const loaded = await client.listUsers()
-        if (!cancelled) setUsers(loaded)
+        const users = await client.listUsers()
+        set(usersStateAtom, {status: 'loaded', users})
       } catch (cause) {
-        if (!cancelled) {
-          setError(cause instanceof Error ? cause.message : String(cause))
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false)
+        set(usersStateAtom, {
+          error: cause instanceof Error ? cause.message : String(cause),
+          status: 'error',
+          users: current.users
+        })
       }
+      return undefined
     }
-    void loadUsers()
-    return () => {
-      cancelled = true
-    }
-  }, [client])
+    const saved =
+      action.type === 'create'
+        ? await client.createUser(action.user)
+        : await client.updateUser(action.user)
+    set(usersStateAtom, current => {
+      return {
+        status: 'loaded',
+        users: upsertUser(current.users, saved)
+      }
+    })
+    return saved
+  }
+)
+
+usersAtom.onMount = dispatch => {
+  void dispatch({type: 'load'})
+}
+
+function upsertUser(users: Array<User>, user: User): Array<User> {
+  const existing = users.findIndex(
+    item => item.email?.toLowerCase() === user.email?.toLowerCase()
+  )
+  if (existing === -1) return [...users, user]
+  const next = users.slice()
+  next[existing] = user
+  return next
+}
+
+export function UsersPage({dashboard}: UsersPageProps) {
+  const config = useAtomValue(dashboard.config)
+  const [usersState] = useAtom(usersAtom)
+  const [query, setQuery] = useState('')
+  const users = usersState.users
 
   const filteredUsers = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -99,21 +135,11 @@ export function UsersPage({dashboard}: UsersPageProps) {
     return filtered.toSorted(compareUsers)
   }, [config.roles, query, users])
 
-  function handleSaved(user: User) {
-    setUsers(current => {
-      const existing = current.findIndex(
-        item => item.email?.toLowerCase() === user.email?.toLowerCase()
-      )
-      if (existing === -1) return [...current, user]
-      const next = current.slice()
-      next[existing] = user
-      return next
-    })
-  }
-
   return (
     <div className={styles.UsersPage()}>
-      <header className={styles.UsersPage.header()}>
+      <SidebarHeader>
+        <div className={styles.UsersPage.header.title()}>Manage members</div>
+
         <SearchField
           aria-label="Search users"
           placeholder="Search users"
@@ -131,21 +157,20 @@ export function UsersPage({dashboard}: UsersPageProps) {
             Create user
           </Button>
           <DashboardModal>
-            <UserModal dashboard={dashboard} onSaved={handleSaved} />
+            <UserModal dashboard={dashboard} />
           </DashboardModal>
         </DialogTrigger>
-      </header>
+      </SidebarHeader>
       <div className={styles.UsersPage.content()}>
-        {isLoading ? (
+        {usersState.status === 'loading' ? (
           <UsersPageStatus label="Loading users" pending />
-        ) : error ? (
-          <UsersPageStatus label={error} />
+        ) : usersState.status === 'error' ? (
+          <UsersPageStatus label={usersState.error ?? 'Failed to load users'} />
         ) : (
           <UsersTable
             users={filteredUsers}
             roleLabel={role => config.roles?.[role]?.label}
             dashboard={dashboard}
-            onSaved={handleSaved}
           />
         )}
       </div>
@@ -206,25 +231,16 @@ function UsersPageStatus({label, pending}: UsersPageStatusProps) {
 
 interface UsersTableProps {
   dashboard: Dashboard
-  onSaved: (user: User) => void
   users: Array<User>
   roleLabel: (role: string) => string | undefined
 }
 
-function UsersTable({dashboard, onSaved, users, roleLabel}: UsersTableProps) {
+function UsersTable({dashboard, users, roleLabel}: UsersTableProps) {
   return (
     <Table aria-label="Users" className={styles.UsersPage.table()}>
       <TableHeader columns={userColumns}>
         {column => (
-          <Column
-            id={column.id}
-            isRowHeader={column.isRowHeader}
-            className={
-              column.id === 'actions'
-                ? styles.UsersPage.actionColumn()
-                : undefined
-            }
-          >
+          <Column id={column.id} isRowHeader={column.isRowHeader}>
             {column.name}
           </Column>
         )}
@@ -238,15 +254,7 @@ function UsersTable({dashboard, onSaved, users, roleLabel}: UsersTableProps) {
         {user => (
           <Row id={user.email ?? user.sub} columns={userColumns}>
             {column => (
-              <Cell
-                className={
-                  column.id === 'actions'
-                    ? styles.UsersPage.actionCell()
-                    : undefined
-                }
-              >
-                {renderUserCell(user, column.id, roleLabel, dashboard, onSaved)}
-              </Cell>
+              <Cell>{renderUserCell(user, column.id, roleLabel, dashboard)}</Cell>
             )}
           </Row>
         )}
@@ -259,24 +267,11 @@ function renderUserCell(
   user: User,
   column: UserColumn['id'],
   roleLabel: (role: string) => string | undefined,
-  dashboard: Dashboard,
-  onSaved: (user: User) => void
+  dashboard: Dashboard
 ) {
   if (column === 'user') {
     return (
       <span className={styles.UsersPage.identity()}>
-        {user.name && (
-          <span className={styles.UsersPage.identity.title()}>{user.name}</span>
-        )}
-        <span className={styles.UsersPage.identity.email()}>
-          {user.email || user.sub}
-        </span>
-      </span>
-    )
-  }
-  if (column === 'actions') {
-    return (
-      <span className={styles.UsersPage.actions()}>
         <DialogTrigger>
           <Button
             size="icon-small"
@@ -285,9 +280,19 @@ function renderUserCell(
             aria-label={`Edit ${user.name || user.email || user.sub}`}
           />
           <DashboardModal>
-            <UserModal dashboard={dashboard} user={user} onSaved={onSaved} />
+            <UserModal dashboard={dashboard} user={user} />
           </DashboardModal>
         </DialogTrigger>
+        <span className={styles.UsersPage.identity.text()}>
+          {user.name && (
+            <span className={styles.UsersPage.identity.title()}>
+              {user.name}
+            </span>
+          )}
+          <span className={styles.UsersPage.identity.email()}>
+            {user.email || user.sub}
+          </span>
+        </span>
       </span>
     )
   }
@@ -313,13 +318,12 @@ function renderUserCell(
 
 interface UserModalProps {
   dashboard: Dashboard
-  onSaved: (user: User) => void
   user?: User
 }
 
-function UserModal({dashboard, onSaved, user}: UserModalProps) {
-  const client = useAtomValue(dashboard.client)
+function UserModal({dashboard, user}: UserModalProps) {
   const config = useAtomValue(dashboard.config)
+  const saveUser = useSetAtom(usersAtom)
   const modal = useDashboardModal()
   const isEditing = user !== undefined
   const [email, setEmail] = useState(user?.email ?? '')
@@ -353,10 +357,10 @@ function UserModal({dashboard, onSaved, user}: UserModalProps) {
         name: userName || undefined,
         roles: selectedRoles.items.map(item => String(item.id))
       }
-      const saved = isEditing
-        ? await client.updateUser(request)
-        : await client.createUser(request)
-      onSaved(saved)
+      await saveUser({
+        type: isEditing ? 'update' : 'create',
+        user: request
+      })
       modal.close()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause))
