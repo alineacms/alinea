@@ -128,6 +128,11 @@
       opacity: 1;
     }
 
+    &[data-expanded="true"] {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
     &[data-focus-visible] {
       outline-color: var(--alinea-primary-subtle-fg);
       outline-offset: -4px;
