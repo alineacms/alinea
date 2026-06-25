@@ -21,7 +21,7 @@
     transition: var(--alinea-transition);
 
     &::placeholder {
-      color: var(--alinea-fg-subtle);
+      color: var(--alinea-input-placeholder);
     }
 
     &[data-hovered] {

@@ -8,5 +8,27 @@
   "shared": false,
   "requiredShared": false,
   "withDescription": false,
+  "withHelpAndDescription": false,
+  "withHelpNoDescription": false,
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1782303163,
+    "createdBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "updatedAt": 1782303163,
+    "updatedBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    }
+  },
   "withHelp": false
 }

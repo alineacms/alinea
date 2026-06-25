@@ -18,10 +18,22 @@ export const CheckboxPositioning = Config.document('Checkbox positioning', {
       required: true,
       shared: true
     }),
-    withHelp: Field.check('Checkbox with help text', {
-      help: 'Help text should render above the checkbox row.',
-      required: true,
-      shared: true
-    })
+    withHelpAndDescription: Field.check(
+      'Checkbox with help & description text',
+      {
+        help: 'Help text should render above the checkbox row.',
+        description: 'This text should stay next to the checkbox.',
+        required: true,
+        shared: true
+      }
+    ),
+    withHelpNoDescription: Field.check(
+      'Checkbox with help but without description text',
+      {
+        help: 'Help renders in the description position.',
+        required: true,
+        shared: true
+      }
+    )
   }
 })
