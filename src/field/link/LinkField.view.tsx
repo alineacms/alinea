@@ -37,9 +37,11 @@ import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useDashboard,
+  useEntry,
   useField,
   useFieldNode,
   useFieldOptions,
+  useGraph,
   useNodes
 } from '#/dashboard/hooks.js'
 import {
@@ -59,11 +61,15 @@ import {
 } from '#/dashboard/store.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
-import type {EntryPickerOptions} from '#/picker/entry.js'
+import type {
+  EditorInfo,
+  EditorLocation,
+  EntryPickerOptions
+} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
-import {Fragment, useMemo, useRef, useState} from 'react'
+import {Fragment, useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
@@ -499,6 +505,17 @@ function LinkPickerAction({
   const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
   const selectedRoot = useAtomValue(dashboard.selectedRoot)
   const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition =
+    typeof options.condition === 'function' ? undefined : options.condition
+  const fallbackRoot =
+    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
+  const fallbackLocation: EditorLocation | undefined =
+    selectedWorkspace && fallbackRoot
+      ? {workspace: selectedWorkspace, root: fallbackRoot}
+      : undefined
+  const location = useResolvedEntryPickerLocation(options, fallbackLocation)
+
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -521,19 +538,6 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
-  const fallbackRoot =
-    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
-  const fallbackLocation =
-    selectedWorkspace && fallbackRoot
-      ? {workspace: selectedWorkspace, root: fallbackRoot}
-      : undefined
-  const location =
-    typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
@@ -565,6 +569,7 @@ function LinkPickerAction({
         </Button>
         <ImagePicker
           {...pickerProps}
+          key={`${location?.workspace}:${location?.root}:${location?.parentId}`}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -582,7 +587,10 @@ function LinkPickerAction({
       >
         {children}
       </Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker
+        {...pickerProps}
+        key={`${location?.workspace}:${location?.root}:${location?.parentId}`}
+      />
     </DialogTrigger>
   )
 }
@@ -607,6 +615,17 @@ function LinkPickerDialog({
     onOpenChange(false)
   }
 
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition =
+    typeof options.condition === 'function' ? undefined : options.condition
+  const fallbackRoot =
+    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
+  const fallbackLocation: EditorLocation | undefined =
+    selectedWorkspace && fallbackRoot
+      ? {workspace: selectedWorkspace, root: fallbackRoot}
+      : undefined
+  const location = useResolvedEntryPickerLocation(options, fallbackLocation)
+
   if (type === 'url') {
     return (
       <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -620,19 +639,6 @@ function LinkPickerDialog({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
-  const fallbackRoot =
-    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
-  const fallbackLocation =
-    selectedWorkspace && fallbackRoot
-      ? {workspace: selectedWorkspace, root: fallbackRoot}
-      : undefined
-  const location =
-    typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
@@ -659,6 +665,7 @@ function LinkPickerDialog({
         <Button style={{display: 'none'}}>Edit link</Button>
         <ImagePicker
           {...pickerProps}
+          key={`${location?.workspace}:${location?.root}:${location?.parentId}`}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -667,9 +674,66 @@ function LinkPickerDialog({
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Edit link</Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker
+        {...pickerProps}
+        key={`${location?.workspace}:${location?.root}:${location?.parentId}`}
+      />
     </DialogTrigger>
   )
+}
+
+function useResolvedEntryPickerLocation(
+  options: Partial<EntryPickerOptions>,
+  fallbackLocation: EditorLocation | undefined
+): EditorLocation | undefined {
+  const graph = useGraph()
+  const entry = useEntry()
+  const [location, setLocation] = useState(() =>
+    typeof options.location === 'function'
+      ? fallbackLocation
+      : (options.location ?? fallbackLocation)
+  )
+
+  useEffect(() => {
+    if (typeof options.location !== 'function') {
+      setLocation(options.location ?? fallbackLocation)
+      return
+    }
+
+    if (!entry) {
+      setLocation(fallbackLocation)
+      return
+    }
+
+    let cancelled = false
+    const info: EditorInfo = {graph, entry}
+    Promise.resolve(options.location(info))
+      .then(location => {
+        if (!cancelled) setLocation(location ?? fallbackLocation)
+      })
+      .catch(error => {
+        console.error('Failed to resolve entry picker location', error)
+        if (!cancelled) setLocation(fallbackLocation)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    entry?.id,
+    entry?.locale,
+    entry?.parentId,
+    entry?.root,
+    entry?.type,
+    entry?.workspace,
+    fallbackLocation?.parentId,
+    fallbackLocation?.root,
+    fallbackLocation?.workspace,
+    graph,
+    options.location
+  ])
+
+  return location
 }
 
 function externalLinkValue(
