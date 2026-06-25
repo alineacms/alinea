@@ -87,9 +87,15 @@ const vite = await createServer({
     }
   ],
   server: {
-    host: 'localhost',
+    forwardConsole: false,
+    host: '127.0.0.1',
+    hmr: {
+      clientPort: port,
+      host: '127.0.0.1',
+      protocol: 'ws'
+    },
     port,
-    strictPort: false
+    strictPort: true
   },
   resolve: {
     alias: {

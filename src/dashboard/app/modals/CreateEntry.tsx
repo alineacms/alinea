@@ -26,22 +26,18 @@ import {
   type FormEvent,
   type SetStateAction
 } from 'react'
+import {useDashboard} from '../../hooks.js'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
 import {
   ReactiveNode,
   dashboardAtom,
   type ExplorerLocation
 } from '../../store.js'
-import {useDashboard} from '../../hooks.js'
 import {NodeEditor} from '../Editor.js'
 import {
-  DashboardModalCloseButton,
+  DashboardModalContent,
   DashboardModalDialog,
-  DashboardModalForm,
-  DashboardModalFormBody,
-  DashboardModalFormFooter,
-  DashboardModalFormHeader,
-  DashboardModalTitle,
+  DashboardModalFooter,
   useDashboardModal
 } from '../ui/DashboardModal.js'
 import css from './CreateEntry.module.css'
@@ -330,13 +326,13 @@ function CreateEntryForm() {
   const canCreate = Boolean(selectedType && title.trim())
 
   return (
-    <DashboardModalDialog aria-label="Create entry" variant="explorer">
-      <DashboardModalForm onSubmit={onSubmit}>
-        <DashboardModalFormHeader>
-          <DashboardModalTitle>Create entry</DashboardModalTitle>
-          <DashboardModalCloseButton />
-        </DashboardModalFormHeader>
-        <DashboardModalFormBody>
+    <DashboardModalDialog
+      aria-label="Create entry"
+      variant="explorer"
+      label="Create entry"
+    >
+      <form onSubmit={onSubmit} id="submit">
+        <DashboardModalContent>
           <TextField
             autoFocus
             value={title}
@@ -397,22 +393,23 @@ function CreateEntryForm() {
           </div>
 
           <NodeEditor node={copyFrom.node} type={copyFrom.type} />
-        </DashboardModalFormBody>
+        </DashboardModalContent>
+      </form>
 
-        <DashboardModalFormFooter>
-          <Button type="button" appearance="outline" onPress={modal.close}>
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            intent="primary"
-            isDisabled={!canCreate}
-            isPending={isCreating}
-          >
-            Create entry
-          </Button>
-        </DashboardModalFormFooter>
-      </DashboardModalForm>
+      <DashboardModalFooter>
+        <Button type="button" appearance="outline" onPress={modal.close}>
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          form="submit"
+          intent="primary"
+          isDisabled={!canCreate}
+          isPending={isCreating}
+        >
+          Create entry
+        </Button>
+      </DashboardModalFooter>
     </DashboardModalDialog>
   )
 }

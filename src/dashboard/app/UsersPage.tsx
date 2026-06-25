@@ -254,7 +254,9 @@ function UsersTable({dashboard, users, roleLabel}: UsersTableProps) {
         {user => (
           <Row id={user.email ?? user.sub} columns={userColumns}>
             {column => (
-              <Cell>{renderUserCell(user, column.id, roleLabel, dashboard)}</Cell>
+              <Cell>
+                {renderUserCell(user, column.id, roleLabel, dashboard)}
+              </Cell>
             )}
           </Row>
         )}
@@ -371,7 +373,7 @@ function UserModal({dashboard, user}: UserModalProps) {
 
   return (
     <DashboardModalDialog label={isEditing ? 'Edit user' : 'Create user'}>
-      <form className={styles.UsersPage.form()} onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} id="submit">
         <DashboardModalContent>
           <div className={styles.UsersPage.form.fields()}>
             <TextField
@@ -391,7 +393,6 @@ function UserModal({dashboard, user}: UserModalProps) {
               label="Name"
               value={name}
               onChange={setName}
-              placeholder="Optional"
               autoFocus={isEditing}
               inputProps={{
                 autoComplete: 'off',
@@ -419,20 +420,25 @@ function UserModal({dashboard, user}: UserModalProps) {
             )}
           </div>
         </DashboardModalContent>
-        <DashboardModalFooter>
-          <Button
-            type="button"
-            appearance="outline"
-            intent="secondary"
-            onPress={modal.close}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" intent="primary" isPending={isPending}>
-            {isEditing ? 'Save changes' : 'Create user'}
-          </Button>
-        </DashboardModalFooter>
       </form>
+      <DashboardModalFooter>
+        <Button
+          type="button"
+          appearance="outline"
+          intent="secondary"
+          onPress={modal.close}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          intent="primary"
+          isPending={isPending}
+          form="submit"
+        >
+          {isEditing ? 'Save changes' : 'Create user'}
+        </Button>
+      </DashboardModalFooter>
     </DashboardModalDialog>
   )
 }
