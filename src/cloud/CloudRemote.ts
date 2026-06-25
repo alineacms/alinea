@@ -17,7 +17,7 @@ import {
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import type {User} from '#/core/User.js'
+import type {User, UserInput} from '#/core/User.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import {base64} from '#/core/util/Encoding.js'
 import {entries, values} from '#/core/util/Objects.js'
@@ -265,19 +265,22 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     )
   }
 
-  enrichUser(user: User): Promise<User> {
-    return Promise.resolve(user)
+  enrichUser(user: UserInput): Promise<User> {
+    return Promise.resolve({
+      ...user,
+      sub: user.sub ?? user.email
+    })
   }
 
   listUsers(): Promise<Array<User>> {
     throw new Error('Cloud user API is not implemented')
   }
 
-  createUser(user: User): Promise<User> {
+  createUser(user: UserInput): Promise<User> {
     throw new Error('Cloud user API is not implemented')
   }
 
-  updateUser(user: User): Promise<User> {
+  updateUser(user: UserInput): Promise<User> {
     throw new Error('Cloud user API is not implemented')
   }
 }

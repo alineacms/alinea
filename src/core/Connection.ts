@@ -6,7 +6,7 @@ import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import type {ReadonlyTree} from './source/Tree.js'
-import type {User} from './User.js'
+import type {User, UserInput} from './User.js'
 
 export interface AuthApi {
   authenticate(request: Request): Promise<Response>
@@ -14,10 +14,10 @@ export interface AuthApi {
 }
 
 export interface UserApi {
-  enrichUser(user: User): Promise<User>
+  enrichUser(user: UserInput): Promise<User>
   listUsers(): Promise<Array<User>>
-  createUser(user: User): Promise<User>
-  updateUser(request: User): Promise<User>
+  createUser(user: UserInput): Promise<User>
+  updateUser(request: UserInput): Promise<User>
 }
 
 export interface RemoteConnection extends Connection, AuthApi {}

@@ -14,7 +14,7 @@ import {
   Tag,
   TextField
 } from '#/components.js'
-import type {User} from '#/core/User.js'
+import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {type FormEvent, useEffect, useMemo, useState} from 'react'
@@ -98,7 +98,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
   function handleSaved(user: User) {
     setUsers(current => {
       const existing = current.findIndex(
-        item => item.sub.toLowerCase() === user.sub.toLowerCase()
+        item => item.email?.toLowerCase() === user.email?.toLowerCase()
       )
       if (existing === -1) return [...current, user]
       const next = current.slice()
@@ -195,7 +195,7 @@ function UsersTable({dashboard, onSaved, users, roleLabel}: UsersTableProps) {
         )}
       >
         {user => (
-          <Row id={user.sub} columns={userColumns}>
+          <Row id={user.email ?? user.sub} columns={userColumns}>
             {column => (
               <Cell
                 className={
@@ -302,9 +302,8 @@ function UserModal({dashboard, onSaved, user}: UserModalProps) {
     setIsPending(true)
     setError(undefined)
     try {
-      const request = {
-        sub: user?.sub ?? userEmail,
-        email: user?.email ?? userEmail,
+      const request: UserInput = {
+        email: userEmail,
         name: userName || undefined,
         roles: selectedRoles.items.map(item => String(item.id))
       }

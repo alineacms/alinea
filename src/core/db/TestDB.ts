@@ -1,5 +1,5 @@
 import type {LocalConnection} from '../Connection.js'
-import {type User, localUser} from '../User.js'
+import {type User, type UserInput, localUser} from '../User.js'
 import {LocalDB} from './LocalDB.js'
 
 export class TestDB extends LocalDB implements LocalConnection {
@@ -11,20 +11,29 @@ export class TestDB extends LocalDB implements LocalConnection {
     return localUser
   }
 
-  async enrichUser(user: User): Promise<User> {
-    return user
+  async enrichUser(user: UserInput): Promise<User> {
+    return {
+      ...user,
+      sub: user.sub ?? user.email
+    }
   }
 
   async listUsers(): Promise<Array<User>> {
     return [localUser]
   }
 
-  async createUser(user: User): Promise<User> {
-    return user
+  async createUser(user: UserInput): Promise<User> {
+    return {
+      ...user,
+      sub: user.sub ?? user.email
+    }
   }
 
-  async updateUser(user: User): Promise<User> {
-    return user
+  async updateUser(user: UserInput): Promise<User> {
+    return {
+      ...user,
+      sub: user.sub ?? user.email
+    }
   }
 
   async revisions() {

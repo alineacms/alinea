@@ -7,18 +7,12 @@ import type {
 } from '#/core/Connection.js'
 import {type Draft, type DraftKey, parseDraftKey} from '#/core/Draft.js'
 import {createId} from '#/core/Id.js'
-import type {User} from '#/core/User.js'
+import type {User, UserInput} from '#/core/User.js'
+import {assert} from '#/core/util/Assert.js'
 import {basename, extname} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {
-  type Database,
-  eq,
-  InferSelectModel,
-  primaryKey,
-  sql,
-  table
-} from 'rado'
+import {Builder, type Database, eq, include, primaryKey, table} from 'rado'
 import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
@@ -49,21 +43,24 @@ const UploadTable = table('alinea_upload', {
 })
 
 const UserTable = table('alinea_user', {
-  sub: column.text().primaryKey(),
+  id: column.id(),
   email: column.text().notNull().unique(),
   name: column.text()
 })
 
 const UserRoleTable = table('alinea_user_role', {
-  userId: column.text().notNull().references(UserTable.sub),
+  userId: column.number().notNull().references(UserTable.id),
   role: column.text().notNull()
 })
 
-interface NormalizedUser {
-  sub: string
-  email: string
-  name?: string
-  roles: Array<string>
+const selectUser = {
+  ...UserTable,
+  roles: include(
+    new Builder()
+      .select()
+      .from(UserRoleTable)
+      .where(eq(UserRoleTable.userId, UserTable.id))
+  )
 }
 
 export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
@@ -157,83 +154,80 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
     })
   }
 
-  async enrichUser(user: User): Promise<User> {
-    const found = await this.#getUser(user.sub, user.email)
-    if (!found) return user
-    return {...user, ...found}
+  async enrichUser(user: UserInput): Promise<User> {
+    const normalized = normalizeUser(user)
+    const found = await this.#getUser(normalized.email)
+    if (!found) return {...normalized, sub: normalized.sub ?? normalized.email}
+    return {...normalized, ...found}
   }
 
   async listUsers(): Promise<Array<User>> {
     const db = await this.#db
-    const users = await db.select().from(UserTable)
-    return Promise.all(users.map(user => this.#toUser(user)))
+    const users = await db.select(selectUser).from(UserTable)
+    return users.map(userFromRow)
   }
 
-  async createUser(user: User): Promise<User> {
+  async createUser(user: UserInput): Promise<User> {
+    const normalized = normalizeUser(user)
     const db = await this.#db
-    const existing = await this.#getUser(user.sub, user.email)
-    if (existing) return this.updateUser({...user, sub: existing.sub})
-    const record = normalizeUser(user)
+    const existing = await this.#getUser(normalized.email)
+    if (existing) return this.updateUser(normalized)
     await db.transaction(async tx => {
-      await tx.insert(UserTable).values(userRecord(record))
-      await this.#replaceRoles(tx, record.sub, record.roles ?? [])
+      await tx.insert(UserTable).values({
+        email: normalized.email,
+        name: normalized.name
+      })
+      const inserted = await tx
+        .select()
+        .from(UserTable)
+        .where(eq(UserTable.email, normalized.email))
+        .get()
+      assert(inserted, `Failed to insert user`)
+      await this.#replaceRoles(tx, inserted.id, normalized.roles ?? [])
     })
-    return (await this.#getUser(record.sub, record.email)) ?? record
+    const result = await this.#getUser(normalized.email)
+    assert(result, `Failed to retrieve user after creation`)
+    return result
   }
 
-  async updateUser(user: User): Promise<User> {
+  async updateUser(user: UserInput): Promise<User> {
+    const normalized = normalizeUser(user)
     const db = await this.#db
-    const found = await this.#getUser(user.sub, user.email)
-    if (!found) return this.createUser(user)
-    const record = normalizeUser({...user, sub: found.sub})
     await db.transaction(async tx => {
+      const row = await tx
+        .select()
+        .from(UserTable)
+        .where(eq(UserTable.email, normalized.email))
+        .get()
+      assert(row, `User with email ${normalized.email} not found`)
       await tx
         .update(UserTable)
         .set({
-          email: record.email,
-          name: record.name
+          email: normalized.email,
+          name: normalized.name
         })
-        .where(eq(UserTable.sub, found.sub))
-      await this.#replaceRoles(tx, found.sub, record.roles ?? [])
+        .where(eq(UserTable.id, row.id))
+      await this.#replaceRoles(tx, row.id, normalized.roles ?? [])
     })
-    return (await this.#getUser(found.sub, record.email)) ?? record
+    const updatedUser = await this.#getUser(normalized.email)
+    assert(updatedUser, `Failed to retrieve user after update`)
+    return updatedUser
   }
 
-  async #getUser(
-    sub: string,
-    email: string | undefined = sub
-  ): Promise<User | undefined> {
+  async #getUser(email: string): Promise<User | undefined> {
     const db = await this.#db
-    const normalizedSub = normalizeUserKey(sub)
-    const normalizedEmail = email ? normalizeUserKey(email) : normalizedSub
     const user = await db
-      .select()
+      .select(selectUser)
       .from(UserTable)
-      .where(
-        sql`lower(${UserTable.sub}) = ${normalizedSub} or lower(${UserTable.email}) = ${normalizedEmail}`
-      )
+      .where(eq(UserTable.email, email))
       .get()
-    if (!user) return undefined
-    return this.#toUser(user)
-  }
-
-  async #toUser(user: InferSelectModel<typeof UserTable>): Promise<User> {
-    const db = await this.#db
-    const roles = await db
-      .select()
-      .from(UserRoleTable)
-      .where(eq(UserRoleTable.userId, user.sub))
-    return {
-      sub: user.sub,
-      name: user.name ?? undefined,
-      email: user.email,
-      roles: roles.map(role => role.role)
-    }
+    if (user) return userFromRow(user)
+    return undefined
   }
 
   async #replaceRoles(
     db: Database,
-    userId: string,
+    userId: number,
     roles: Array<string>
   ): Promise<void> {
     const uniqueRoles = Array.from(new Set(roles))
@@ -247,29 +241,31 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   }
 }
 
-function normalizeUser(user: User): NormalizedUser {
-  const email = normalizeUserKey(user.email ?? user.sub)
+interface UserRow {
+  id: number
+  email: string
+  name: string | null
+  roles: Array<{role: string}>
+}
+
+function userFromRow(row: UserRow): User {
   return {
-    sub: normalizeUserKey(user.sub || email),
-    email,
-    name: normalizeUserName(user.name),
-    roles: Array.from(new Set(user.roles ?? []))
+    sub: row.email,
+    email: row.email,
+    name: row.name ?? undefined,
+    roles: row.roles.map(role => role.role)
   }
 }
 
-function userRecord(user: NormalizedUser) {
+function normalizeUser(user: UserInput): UserInput {
+  const email = user.email.trim().toLowerCase()
+  assert(email, 'User email is required')
+  const name = user.name?.trim() || undefined
+  const roles = Array.from(new Set(user.roles ?? []))
   return {
     sub: user.sub,
-    email: user.email,
-    name: user.name
+    email,
+    name,
+    roles
   }
-}
-
-function normalizeUserKey(value: string): string {
-  return value.trim().toLowerCase()
-}
-
-function normalizeUserName(value: string | undefined): string | undefined {
-  const name = value?.trim()
-  return name || undefined
 }

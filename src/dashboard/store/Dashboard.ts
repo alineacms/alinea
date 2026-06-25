@@ -599,7 +599,8 @@ export class Dashboard {
     if (!user?.roles) return Policy.ALLOW_NONE
     const db = get(this.db)
     get(this.sha) // subscribe to content changes
-    return db.createPolicy(user.roles)
+    const roles = get(this.config).roles ?? {}
+    return db.createPolicy(user.roles.filter(role => role in roles))
   })
 
   #policyState = atomWithPending(this.#policyResource)

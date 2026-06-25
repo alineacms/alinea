@@ -16,7 +16,7 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import type {User} from '#/core/User.js'
+import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
@@ -111,7 +111,7 @@ export function createHandler({
         cnx = remote(userCtx)
         userCtx = {
           ...userCtx,
-          user: await cnx.enrichUser(userCtx.user)
+          user: await cnx.enrichUser(requireUserEmail(userCtx.user))
         }
       } catch (cause) {
         if (cause instanceof MissingCredentialsError) {
@@ -340,16 +340,16 @@ export function createHandler({
   }
 }
 
-function parseUser(input: unknown): User {
+function parseUser(input: unknown): UserInput {
   if (!isRecord(input)) throw new HttpError(400, 'Expected user object')
   const {sub, name, email, roles} = input
-  if (typeof sub !== 'string') {
+  if (sub !== undefined && typeof sub !== 'string') {
     throw new HttpError(400, 'Expected user sub')
   }
   if (name !== undefined && typeof name !== 'string') {
     throw new HttpError(400, 'Expected user name')
   }
-  if (email !== undefined && typeof email !== 'string') {
+  if (typeof email !== 'string') {
     throw new HttpError(400, 'Expected user email')
   }
   if (
@@ -359,6 +359,13 @@ function parseUser(input: unknown): User {
     throw new HttpError(400, 'Expected user roles')
   }
   return {sub, name, email, roles}
+}
+
+function requireUserEmail(user: User): UserInput {
+  if (typeof user.email !== 'string') {
+    throw new HttpError(400, 'Expected user email')
+  }
+  return {...user, email: user.email}
 }
 
 function isRecord(input: unknown): input is Record<string, unknown> {

@@ -17,7 +17,7 @@ import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
-import type {User} from './User.js'
+import type {User, UserInput} from './User.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
@@ -35,10 +35,6 @@ export class Client implements LocalConnection {
   #options: ClientOptions
   constructor(options: ClientOptions) {
     this.#options = options
-  }
-
-  get url() {
-    return this.#options.url
   }
 
   authStatus(): Promise<AuthResult> {
@@ -84,7 +80,7 @@ export class Client implements LocalConnection {
       .then(user => user ?? undefined)
   }
 
-  enrichUser(user: User): Promise<User> {
+  enrichUser(user: UserInput): Promise<User> {
     return this.#requestJson(
       {action: HandleAction.User, operation: 'enrich'},
       {
@@ -101,7 +97,7 @@ export class Client implements LocalConnection {
     }).then<Array<User>>(this.#failOnHttpError)
   }
 
-  createUser(user: User): Promise<User> {
+  createUser(user: UserInput): Promise<User> {
     return this.#requestJson(
       {action: HandleAction.User, operation: 'create'},
       {
@@ -111,7 +107,7 @@ export class Client implements LocalConnection {
     ).then<User>(this.#failOnHttpError)
   }
 
-  updateUser(user: User): Promise<User> {
+  updateUser(user: UserInput): Promise<User> {
     return this.#requestJson(
       {action: HandleAction.User, operation: 'update'},
       {
@@ -234,10 +230,13 @@ export class Client implements LocalConnection {
     init: RequestInit = {},
     retry = false
   ): Promise<Response> {
-    const {url, applyAuth = v => v, unauthorized} = this.#options
+    const {url: baseUrl, applyAuth = v => v, unauthorized} = this.#options
     const controller = new AbortController()
     const signal = controller.signal
-    const location = `${url}?${new URLSearchParams(params).toString()}`
+    const location = new URL(
+      `${baseUrl}?${new URLSearchParams(params).toString()}`,
+      window.location.href
+    )
     const promise = fetch(location, {
       ...applyAuth(init),
       signal

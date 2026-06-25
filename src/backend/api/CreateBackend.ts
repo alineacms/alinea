@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
-import type {User} from '#/core/User.js'
+import type {UserInput} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
@@ -71,8 +71,11 @@ export function createRemote(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
   const fallback: Partial<RemoteConnection> = {
-    enrichUser(user: User) {
-      return Promise.resolve(user)
+    enrichUser(user: UserInput) {
+      return Promise.resolve({
+        ...user,
+        sub: user.sub ?? user.email
+      })
     }
   }
   const reversed = impl.reverse().concat(fallback)
