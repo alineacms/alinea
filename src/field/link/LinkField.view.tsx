@@ -37,6 +37,7 @@ import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useDashboard,
+  useEntry,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -496,6 +497,7 @@ function LinkPickerAction({
   value
 }: LinkPickerActionProps) {
   const dashboard = useDashboard()
+  const currentEntry = useEntry()
   const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
   const selectedRoot = useAtomValue(dashboard.selectedRoot)
   const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
@@ -524,21 +526,32 @@ function LinkPickerAction({
   const options = picker.options as Partial<EntryPickerOptions>
   const condition =
     typeof options.condition === 'function' ? undefined : options.condition
+  const childLocation =
+    options.pickChildren && currentEntry
+      ? {
+          workspace: currentEntry.workspace,
+          root: currentEntry.root,
+          parentId: currentEntry.id
+        }
+      : undefined
+  const pickingChildren = Boolean(childLocation)
   const fallbackRoot =
     type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
   const fallbackLocation =
     selectedWorkspace && fallbackRoot
       ? {workspace: selectedWorkspace, root: fallbackRoot}
       : undefined
-  const location =
-    typeof options.location === 'function'
+  const location = childLocation
+    ? childLocation
+    : typeof options.location === 'function'
       ? fallbackLocation
       : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
-    enableNavigation: options.enableNavigation,
+    enableNavigation: options.enableNavigation ?? !pickingChildren,
     location,
+    pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -599,6 +612,7 @@ function LinkPickerDialog({
   value
 }: LinkPickerDialogProps) {
   const dashboard = useDashboard()
+  const currentEntry = useEntry()
   const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
   const selectedRoot = useAtomValue(dashboard.selectedRoot)
   const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
@@ -624,21 +638,32 @@ function LinkPickerDialog({
   const options = picker.options as Partial<EntryPickerOptions>
   const condition =
     typeof options.condition === 'function' ? undefined : options.condition
+  const childLocation =
+    options.pickChildren && currentEntry
+      ? {
+          workspace: currentEntry.workspace,
+          root: currentEntry.root,
+          parentId: currentEntry.id
+        }
+      : undefined
+  const pickingChildren = Boolean(childLocation)
   const fallbackRoot =
     type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
   const fallbackLocation =
     selectedWorkspace && fallbackRoot
       ? {workspace: selectedWorkspace, root: fallbackRoot}
       : undefined
-  const location =
-    typeof options.location === 'function'
+  const location = childLocation
+    ? childLocation
+    : typeof options.location === 'function'
       ? fallbackLocation
       : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
-    enableNavigation: options.enableNavigation,
+    enableNavigation: options.enableNavigation ?? !pickingChildren,
     location,
+    pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
