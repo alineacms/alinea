@@ -1153,6 +1153,7 @@ export interface ExplorerOptions {
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
+  pickChildren?: boolean
   selectedLocale?: string | null
   rootScope?: 'current' | 'workspace'
   selectionMode?: 'none' | 'single' | 'multiple'
@@ -1491,7 +1492,9 @@ export class DashboardExplorer {
     if (!root && !allRoots) return []
     const locale = allRoots ? undefined : get(this.selectedLocale)
     const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
-    const flatList = Boolean(this.#options.condition) || searchAll
+    const flatList =
+      (Boolean(this.#options.condition) && !this.#options.pickChildren) ||
+      searchAll
     const policy = get(this.dashboard.policy)
     const children = await db.find({
       locale,
