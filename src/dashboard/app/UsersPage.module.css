@@ -1,14 +1,44 @@
-.UsersPage-header {
-  gap: 16px;
-  min-height: 56px;
-}
-
-.UsersPage-header-controls {
+.UsersPage {
   display: flex;
+  flex-direction: column;
   width: 100%;
   min-width: 0;
+  height: 100%;
+  min-height: 0;
+  background: var(--alinea-bg);
+}
+
+.UsersPageSidebar {
+  display: flex;
+  flex: 0 0 32px;
+  flex-direction: column;
+  width: 32px;
+  height: 100%;
+  padding: 12px 0;
+}
+
+.UsersPageSidebar-nav {
+  display: grid;
+  justify-items: center;
+}
+
+.UsersPageSidebar-item {
+  color: var(--alinea-fg-muted);
+}
+
+.UsersPageSidebar-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+}
+
+.UsersPage-header {
+  display: flex;
+  min-height: 56px;
   align-items: center;
   gap: 8px;
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
+  padding: 8px 16px;
 }
 
 .UsersPage-search {
@@ -16,9 +46,16 @@
   flex: 1;
 }
 
+.UsersPage-createButton {
+  flex-shrink: 0;
+}
+
 .UsersPage-content {
   box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
   max-width: none;
+  overflow: auto;
   width: 100%;
   padding: 16px;
 }
@@ -115,14 +152,14 @@
 }
 
 @media (max-width: 720px) {
+  .UsersPageSidebar {
+    flex-basis: 32px;
+  }
+
   .UsersPage-header {
     align-items: stretch;
     flex-direction: column;
     padding-top: 10px;
     padding-bottom: 10px;
-  }
-
-  .UsersPage-header-controls {
-    width: 100%;
   }
 }

@@ -12,7 +12,7 @@ import {SidebarTree} from './SidebarTree.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
 import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
-import {UsersPage} from './UsersPage.js'
+import {UsersPage, UsersPageSidebar} from './UsersPage.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 
@@ -57,7 +57,7 @@ function AppShellContent({dashboard}: AppShellProps) {
   if (route.page === 'users') {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <WorkspaceRoots dashboard={dashboard} />
+        <UsersPageSidebar dashboard={dashboard} />
         <div className={styles.AppShellContent()}>
           <UsersPage dashboard={dashboard} />
         </div>

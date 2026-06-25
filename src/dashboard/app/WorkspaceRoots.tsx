@@ -14,6 +14,7 @@ import {unwrap} from 'jotai/utils'
 import {useMemo} from 'react'
 import {
   IcBaselineAccountCircle,
+  IcOutlineSettings,
   IcRoundBrightness2,
   IcRoundDesktopWindows,
   IcRoundLogout,
@@ -41,7 +42,6 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
       <div className={styles.WorkspaceRoots.workspace()}>
         <WorkspaceAvatarMenu dashboard={dashboard} />
       </div>
-      <WorkspaceUsersButton dashboard={dashboard} />
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
           <WorkspaceRootButton key={root.key} root={root} />
@@ -52,25 +52,6 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
         <WorkspaceProfileMenu dashboard={dashboard} />
       </div>
     </aside>
-  )
-}
-
-function WorkspaceUsersButton({dashboard}: WorkspaceRootsProps) {
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
-  const selected = route.page === 'users'
-  return (
-    <Tooltip placement="right" delay={100} tooltip="Users">
-      <Button
-        size="icon-nav"
-        className={styles.WorkspaceRoots.rootButton()}
-        aria-label="Users"
-        onPress={() => void setRoute({page: 'users'})}
-        data-selected={selected ? '' : undefined}
-      >
-        <Icon icon={IcBaselineAccountCircle} data-slot="icon" />
-      </Button>
-    </Tooltip>
   )
 }
 
@@ -104,6 +85,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
   const canLogout = useAtomValue(dashboard.canLogout)
   const [theme, setTheme] = useAtom(dashboard.theme)
   const setUserRoles = useSetAtom(dashboard.setUserRoles)
+  const setRoute = useSetAtom(dashboard.route)
   const logout = useSetAtom(dashboard.logout)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
@@ -214,19 +196,39 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
             </li>
           )}
           {canLogout && (
-            <li className={styles.WorkspaceRoots.profile.popover.item()}>
-              <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
-                Logout
-              </p>
+            <li className={styles.WorkspaceRoots.profile.popover.action()}>
               <Button
-                size="icon"
-                appearance="outline"
+                appearance="plain"
                 aria-label="Logout"
-                icon={IcRoundLogout}
+                className={styles.WorkspaceRoots.profile.popover.action.button()}
                 onPress={logout}
-              />
+              >
+                <Icon icon={IcRoundLogout} />
+                <span
+                  className={
+                    styles.WorkspaceRoots.profile.popover.action.label()
+                  }
+                >
+                  Logout
+                </span>
+              </Button>
             </li>
           )}
+          <li className={styles.WorkspaceRoots.profile.popover.action()}>
+            <Button
+              appearance="plain"
+              aria-label="Manage members"
+              className={styles.WorkspaceRoots.profile.popover.action.button()}
+              onPress={() => void setRoute({page: 'users'})}
+            >
+              <Icon icon={IcOutlineSettings} />
+              <span
+                className={styles.WorkspaceRoots.profile.popover.action.label()}
+              >
+                Manage members
+              </span>
+            </Button>
+          </li>
         </ul>
       </Popover>
     </DialogTrigger>

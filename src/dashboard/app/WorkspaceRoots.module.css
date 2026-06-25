@@ -102,6 +102,31 @@
   gap: 8px;
 }
 
+.WorkspaceRoots-profile-popover-action {
+  display: flex;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.WorkspaceRoots-profile-popover-action:first-of-type {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.WorkspaceRoots-profile-popover-action-button {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.WorkspaceRoots-profile-popover-action-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .WorkspaceRoots-trigger {
   min-width: 96px;
   justify-content: space-between;

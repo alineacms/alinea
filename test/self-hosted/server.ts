@@ -47,6 +47,7 @@ await local.sync()
 
 const sqlite = new BunSqlite(':memory:')
 const db = driver['bun:sqlite'](sqlite)
+await seedSampleUsers()
 const history = new GitHistory(cms.config, fixtureDir)
 const handleApi = createHandler({
   cms,
@@ -104,3 +105,24 @@ const actualPort = typeof address === 'object' && address ? address.port : port
 
 console.log(`Self-hosted dashboard: http://localhost:${actualPort}/`)
 console.log(`Content source: ${contentDir}`)
+
+async function seedSampleUsers(): Promise<void> {
+  const database = new DatabaseApi(requestContext(new Request('http://localhost/api')), {
+    db
+  })
+  await database.createUser({
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    roles: ['admin']
+  })
+  await database.createUser({
+    email: 'grace@example.com',
+    name: 'Grace Hopper',
+    roles: ['editor']
+  })
+  await database.createUser({
+    email: 'linus@example.com',
+    name: 'Linus Torvalds',
+    roles: ['viewer']
+  })
+}
