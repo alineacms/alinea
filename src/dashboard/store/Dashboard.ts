@@ -429,6 +429,8 @@ export class Dashboard {
     })
   )
 
+  currentUser = unwrap(this.user)
+
   setUserRoles = atom(null, async (get, set, roles: Array<string>) => {
     const user = await get(this.user)
     if (!user) return
@@ -608,6 +610,11 @@ export class Dashboard {
   policyReady = atom(get => {
     const [pending] = get(this.#policyState)
     return !pending
+  })
+
+  canManageMembers = atom(get => {
+    const [, policy] = get(this.#policyState)
+    return policy?.canManageMembers() ?? false
   })
 
   #initialContentLoaded = atom(false)

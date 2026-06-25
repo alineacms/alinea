@@ -190,6 +190,7 @@ function SearchPopup() {
 
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
+  const canManageMembers = useAtomValue(dashboard.canManageMembers)
   const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
   const label = useAtomValue(workspace.label)
@@ -199,7 +200,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
       <WorkspaceSelectorMenu
         dashboard={dashboard}
         ariaLabel="Workspace"
-        includeUsersLink
+        includeUsersLink={canManageMembers}
         label={
           <AriaButton className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>

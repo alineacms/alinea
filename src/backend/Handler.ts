@@ -159,22 +159,25 @@ export function createHandler({
       })
 
       if (action === HandleAction.User) {
-        expectUser()
+        const user = expectUser()
         expectJson()
+        const policy = await user.policy
+        policy.assert(Permission.ManageMembers)
         const operation = params.get('operation')
         if (request.method === 'GET' && operation === 'list') {
           return Response.json(await cnx.listUsers())
         }
         if (request.method === 'POST') {
-          const user = parseUser(await body)
-          if (operation === 'enrich') {
-            return Response.json(await cnx.enrichUser(user))
-          }
-          if (operation === 'create') {
-            return Response.json(await cnx.createUser(user))
-          }
-          if (operation === 'update') {
-            return Response.json(await cnx.updateUser(user))
+          const requestUser = parseUser(await body)
+          switch (operation) {
+            case 'enrich':
+              return Response.json(await cnx.enrichUser(requestUser))
+            case 'create':
+              return Response.json(await cnx.createUser(requestUser))
+            case 'update':
+              return Response.json(await cnx.updateUser(requestUser))
+            default:
+              throw new HttpError(400, 'Unknown operation')
           }
         }
       }

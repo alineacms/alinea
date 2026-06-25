@@ -10,8 +10,6 @@ import {
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {useMemo} from 'react'
 import {
   IcBaselineAccountCircle,
   IcOutlineSettings,
@@ -80,7 +78,8 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
 }
 
 function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
-  const user = useAtomValue(useMemo(() => unwrap(dashboard.user), [dashboard]))
+  const user = useAtomValue(dashboard.currentUser)
+  const canManageMembers = useAtomValue(dashboard.canManageMembers)
   const config = useAtomValue(dashboard.config)
   const canLogout = useAtomValue(dashboard.canLogout)
   const [theme, setTheme] = useAtom(dashboard.theme)
@@ -214,21 +213,25 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
               </Button>
             </li>
           )}
-          <li className={styles.WorkspaceRoots.profile.popover.action()}>
-            <Button
-              appearance="plain"
-              aria-label="Manage members"
-              className={styles.WorkspaceRoots.profile.popover.action.button()}
-              onPress={() => void setRoute({page: 'users'})}
-            >
-              <Icon icon={IcOutlineSettings} />
-              <span
-                className={styles.WorkspaceRoots.profile.popover.action.label()}
+          {canManageMembers && (
+            <li className={styles.WorkspaceRoots.profile.popover.action()}>
+              <Button
+                appearance="plain"
+                aria-label="Manage members"
+                className={styles.WorkspaceRoots.profile.popover.action.button()}
+                onPress={() => void setRoute({page: 'users'})}
               >
-                Manage members
-              </span>
-            </Button>
-          </li>
+                <Icon icon={IcOutlineSettings} />
+                <span
+                  className={
+                    styles.WorkspaceRoots.profile.popover.action.label()
+                  }
+                >
+                  Manage members
+                </span>
+              </Button>
+            </li>
+          )}
         </ul>
       </Popover>
     </DialogTrigger>
