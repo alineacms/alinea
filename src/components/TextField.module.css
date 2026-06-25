@@ -32,7 +32,7 @@
       border-color: var(--alinea-border-accent);
       outline-color: var(--alinea-primary-overlay);
     }
-    &[data-invalid="true"] {
+    &[data-invalid='true'] {
       border-color: var(--alinea-border-danger);
       outline-color: var(--alinea-danger-overlay);
     }

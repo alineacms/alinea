@@ -57,85 +57,40 @@
 :root {
   --alinea-transition: 0.2s ease-out;
   --alinea-font-size-base: 0.8125rem;
-  --alinea-mono-font: "JetBrains Mono", monospace;
+  --alinea-mono-font: 'JetBrains Mono', monospace;
 
   --alinea-backdrop: light-dark(var(--alinea-gray-100), var(--alinea-gray-900));
   --alinea-bg: light-dark(var(--alinea-gray-0), var(--alinea-gray-800));
   --alinea-bg-muted: light-dark(var(--alinea-gray-50), var(--alinea-gray-900));
   --alinea-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
   --alinea-fg-muted: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
-  --alinea-fg-subtle: light-dark(
-    var(--alinea-gray-600),
-    var(--alinea-gray-300)
-  );
-  --alinea-fg-disabled: light-dark(
-    var(--alinea-gray-500),
-    var(--alinea-gray-600)
-  );
+  --alinea-fg-subtle: light-dark(var(--alinea-gray-600), var(--alinea-gray-300));
+  --alinea-fg-disabled: light-dark(var(--alinea-gray-500), var(--alinea-gray-600));
   --alinea-fg-hover: light-dark(var(--alinea-gray-700), var(--alinea-gray-300));
-  --alinea-fg-strong: light-dark(
-    var(--alinea-gray-900),
-    var(--alinea-gray-100)
-  );
+  --alinea-fg-strong: light-dark(var(--alinea-gray-900), var(--alinea-gray-100));
 
   --alinea-border: light-dark(var(--alinea-gray-200), var(--alinea-gray-900));
-  --alinea-border-muted: light-dark(
-    var(--alinea-gray-300),
-    var(--alinea-gray-800)
-  );
-  --alinea-border-hover: light-dark(
-    var(--alinea-gray-400),
-    var(--alinea-gray-500)
-  );
-  --alinea-border-pressed: light-dark(
-    var(--alinea-gray-500),
-    var(--alinea-gray-400)
-  );
-  --alinea-border-accent: light-dark(
-    var(--alinea-blue-500),
-    var(--alinea-blue-400)
-  );
-  --alinea-border-danger: light-dark(
-    var(--alinea-red-500),
-    var(--alinea-red-400)
-  );
+  --alinea-border-muted: light-dark(var(--alinea-gray-300), var(--alinea-gray-800));
+  --alinea-border-hover: light-dark(var(--alinea-gray-400), var(--alinea-gray-500));
+  --alinea-border-pressed: light-dark(var(--alinea-gray-500), var(--alinea-gray-400));
+  --alinea-border-accent: light-dark(var(--alinea-blue-500), var(--alinea-blue-400));
+  --alinea-border-danger: light-dark(var(--alinea-red-500), var(--alinea-red-400));
   --alinea-border-danger-pressed: var(--alinea-red-600);
 
   --alinea-input: light-dark(var(--alinea-gray-0), var(--alinea-gray-900));
-  --alinea-input-placeholder: light-dark(
-    var(--alinea-gray-400),
-    var(--alinea-gray-800)
-  );
-  --alinea-input-disabled: light-dark(
-    var(--alinea-gray-50),
-    var(--alinea-gray-800)
-  );
+  --alinea-input-placeholder: light-dark(var(--alinea-gray-400), var(--alinea-gray-800));
+  --alinea-input-disabled: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
   --alinea-muted: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
-  --alinea-muted-hover: light-dark(
-    var(--alinea-gray-200),
-    var(--alinea-gray-700)
-  );
-  --alinea-muted-pressed: light-dark(
-    var(--alinea-gray-300),
-    var(--alinea-gray-600)
-  );
+  --alinea-muted-hover: light-dark(var(--alinea-gray-200), var(--alinea-gray-700));
+  --alinea-muted-pressed: light-dark(var(--alinea-gray-300), var(--alinea-gray-600));
   --alinea-overlay: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
-  --alinea-overlay-hover: light-dark(
-    var(--alinea-gray-50),
-    var(--alinea-gray-700)
-  );
+  --alinea-overlay-hover: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
   --alinea-header: light-dark(var(--alinea-gray-50), var(--alinea-gray-800));
 
   --alinea-primary: light-dark(var(--alinea-blue-800), var(--alinea-blue-600));
   --alinea-primary-fg: var(--alinea-gray-50);
-  --alinea-primary-hover: light-dark(
-    var(--alinea-blue-700),
-    var(--alinea-blue-600)
-  );
-  --alinea-primary-pressed: light-dark(
-    var(--alinea-blue-900),
-    var(--alinea-blue-800)
-  );
+  --alinea-primary-hover: light-dark(var(--alinea-blue-700), var(--alinea-blue-600));
+  --alinea-primary-pressed: light-dark(var(--alinea-blue-900), var(--alinea-blue-800));
   --alinea-primary-subtle: light-dark(
     var(--alinea-blue-50),
     rgb(from var(--alinea-blue-800) r g b / 20%)
@@ -144,54 +99,30 @@
     rgb(from var(--alinea-blue-200) r g b / 50%),
     rgb(from var(--alinea-blue-800) r g b / 30%)
   );
-  --alinea-primary-subtle-fg: light-dark(
-    var(--alinea-blue-700),
-    var(--alinea-blue-300)
-  );
+  --alinea-primary-subtle-fg: light-dark(var(--alinea-blue-700), var(--alinea-blue-300));
   --alinea-primary-disabled-fg: var(--alinea-blue-400);
-  --alinea-primary-icon: light-dark(
-    var(--alinea-blue-700),
-    var(--alinea-blue-200)
-  );
+  --alinea-primary-icon: light-dark(var(--alinea-blue-700), var(--alinea-blue-200));
   --alinea-primary-overlay: var(--alinea-blue-100);
 
   --alinea-danger: light-dark(var(--alinea-red-400), var(--alinea-red-500));
   --alinea-danger-fg: var(--alinea-gray-50);
-  --alinea-danger-hover: light-dark(
-    var(--alinea-red-500),
-    var(--alinea-red-400)
-  );
-  --alinea-danger-strong: light-dark(
-    var(--alinea-red-600),
-    var(--alinea-red-500)
-  );
+  --alinea-danger-hover: light-dark(var(--alinea-red-500), var(--alinea-red-400));
+  --alinea-danger-strong: light-dark(var(--alinea-red-600), var(--alinea-red-500));
   --alinea-danger-subtle: light-dark(
     var(--alinea-red-50),
     rgb(from var(--alinea-red-500) r g b / 20%)
   );
-  --alinea-danger-subtle-fg: light-dark(
-    var(--alinea-red-500),
-    var(--alinea-red-300)
-  );
+  --alinea-danger-subtle-fg: light-dark(var(--alinea-red-500), var(--alinea-red-300));
   --alinea-danger-overlay: rgb(from var(--alinea-danger) r g b / 20%);
 
-  --alinea-warning: light-dark(
-    var(--alinea-yellow-400),
-    var(--alinea-yellow-500)
-  );
+  --alinea-warning: light-dark(var(--alinea-yellow-400), var(--alinea-yellow-500));
   --alinea-warning-fg: var(--alinea-gray-900);
-  --alinea-warning-hover: light-dark(
-    var(--alinea-yellow-500),
-    var(--alinea-yellow-400)
-  );
+  --alinea-warning-hover: light-dark(var(--alinea-yellow-500), var(--alinea-yellow-400));
   --alinea-warning-subtle: light-dark(
     var(--alinea-yellow-50),
     rgb(from var(--alinea-yellow-500) r g b / 18%)
   );
-  --alinea-warning-subtle-fg: light-dark(
-    var(--alinea-yellow-600),
-    var(--alinea-yellow-200)
-  );
+  --alinea-warning-subtle-fg: light-dark(var(--alinea-yellow-600), var(--alinea-yellow-200));
 
   --alinea-selected: light-dark(
     var(--alinea-blue-50),
@@ -199,19 +130,10 @@
   );
   --alinea-selected-fg: var(--alinea-primary-subtle-fg);
   --alinea-link: var(--alinea-primary-subtle-fg);
-  --alinea-link-hover: light-dark(
-    var(--alinea-blue-800),
-    var(--alinea-blue-300)
-  );
-  --alinea-link-pressed: light-dark(
-    var(--alinea-blue-900),
-    var(--alinea-blue-200)
-  );
+  --alinea-link-hover: light-dark(var(--alinea-blue-800), var(--alinea-blue-300));
+  --alinea-link-pressed: light-dark(var(--alinea-blue-900), var(--alinea-blue-200));
   --alinea-ring: var(--alinea-blue-500);
-  --alinea-ring-subtle: light-dark(
-    var(--alinea-gray-200),
-    var(--alinea-gray-800)
-  );
+  --alinea-ring-subtle: light-dark(var(--alinea-gray-200), var(--alinea-gray-800));
   --alinea-scrim: rgb(from var(--alinea-gray-900) r g b / 50%);
 
   --alinea-dashboard-explorer-card-background: var(--alinea-overlay);
@@ -231,41 +153,18 @@
     color-mix(in srgb, var(--alinea-overlay) 88%, var(--alinea-border-accent)),
     color-mix(in srgb, var(--alinea-overlay) 78%, var(--alinea-border-accent))
   );
-  --alinea-dashboard-code-comment: light-dark(
-    var(--alinea-gray-400),
-    var(--alinea-gray-500)
-  );
-  --alinea-dashboard-code-keyword: light-dark(
-    var(--alinea-gray-700),
-    var(--alinea-gray-200)
-  );
-  --alinea-dashboard-code-identifier: light-dark(
-    var(--alinea-blue-500),
-    var(--alinea-blue-300)
-  );
-  --alinea-dashboard-code-number: light-dark(
-    var(--alinea-red-500),
-    var(--alinea-red-300)
-  );
-  --alinea-dashboard-code-string: light-dark(
-    var(--alinea-yellow-600),
-    var(--alinea-yellow-200)
-  );
-  --alinea-dashboard-code-regex: light-dark(
-    var(--alinea-yellow-500),
-    var(--alinea-yellow-400)
-  );
-  --alinea-dashboard-code-punctuation: light-dark(
-    var(--alinea-gray-600),
-    var(--alinea-gray-400)
-  );
+  --alinea-dashboard-code-comment: light-dark(var(--alinea-gray-400), var(--alinea-gray-500));
+  --alinea-dashboard-code-keyword: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
+  --alinea-dashboard-code-identifier: light-dark(var(--alinea-blue-500), var(--alinea-blue-300));
+  --alinea-dashboard-code-number: light-dark(var(--alinea-red-500), var(--alinea-red-300));
+  --alinea-dashboard-code-string: light-dark(var(--alinea-yellow-600), var(--alinea-yellow-200));
+  --alinea-dashboard-code-regex: light-dark(var(--alinea-yellow-500), var(--alinea-yellow-400));
+  --alinea-dashboard-code-punctuation: light-dark(var(--alinea-gray-600), var(--alinea-gray-400));
 
   --alinea-shadow-raised: 0 1px 3.5px rgba(0, 0, 0, 0.08); /*, 0 1px 1px rgba(0, 0, 0, 0.08);*/
-  --alinea-shadow-muted:
-    0 1px 3.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.06);
+  --alinea-shadow-muted: 0 1px 3.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.06);
 
-  --alinea-shadow-tooltip: 0 8px 20px
-    rgb(from var(--alinea-gray-900) r g b / 10%);
+  --alinea-shadow-tooltip: 0 8px 20px rgb(from var(--alinea-gray-900) r g b / 10%);
   --alinea-shadow-modal: 0 2px 13px rgb(from var(--alinea-gray-900) r g b / 11%);
   --alinea-divider-top:
     light-dark(
@@ -279,36 +178,18 @@
 
   --alinea-status-published-fg: var(--alinea-green-800);
   --alinea-status-published-bg: var(--alinea-green-300);
-  --alinea-status-unpublished-fg: light-dark(
-    var(--alinea-orange-700),
-    var(--alinea-orange-200)
-  );
-  --alinea-status-unpublished-bg: light-dark(
-    var(--alinea-orange-50),
-    var(--alinea-orange-700)
-  );
-  --alinea-status-draft-fg: light-dark(
-    var(--alinea-blue-800),
-    var(--alinea-blue-50)
-  );
-  --alinea-status-draft-bg: light-dark(
-    var(--alinea-blue-50),
-    var(--alinea-blue-700)
-  );
-  --alinea-status-archived-fg: light-dark(
-    var(--alinea-gray-700),
-    var(--alinea-gray-200)
-  );
-  --alinea-status-archived-bg: light-dark(
-    var(--alinea-gray-50),
-    var(--alinea-gray-700)
-  );
+  --alinea-status-unpublished-fg: light-dark(var(--alinea-orange-700), var(--alinea-orange-200));
+  --alinea-status-unpublished-bg: light-dark(var(--alinea-orange-50), var(--alinea-orange-700));
+  --alinea-status-draft-fg: light-dark(var(--alinea-blue-800), var(--alinea-blue-50));
+  --alinea-status-draft-bg: light-dark(var(--alinea-blue-50), var(--alinea-blue-700));
+  --alinea-status-archived-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
+  --alinea-status-archived-bg: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
 }
 
-:root[data-theme="light"] {
+:root[data-theme='light'] {
   color-scheme: light;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   color-scheme: dark;
 }

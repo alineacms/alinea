@@ -27,11 +27,11 @@
   transition: var(--alinea-transition);
   transition-property: color;
 
-  &[data-tone="inherit"] {
+  &[data-tone='inherit'] {
     color: inherit;
   }
 
-  &[data-weight="normal"] {
+  &[data-weight='normal'] {
     font-weight: 400;
   }
 }
@@ -59,7 +59,7 @@
   word-wrap: break-word;
 }
 
-.LabelDescription[data-size="small"] {
+.LabelDescription[data-size='small'] {
   font-size: var(--alinea-font-size-small);
   line-height: 1.25;
 }
