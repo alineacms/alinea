@@ -46,7 +46,10 @@ export function TextField({
               </div>
             </div>
           ) : (
-            <Input className={styles.TextField.input()} />
+            <Input
+              className={styles.TextField.input()}
+              placeholder={props.placeholder}
+            />
           )}
         </div>
       </Label>

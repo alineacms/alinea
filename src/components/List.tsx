@@ -68,6 +68,7 @@ export interface ListLabelProps extends Omit<
   shared?: boolean
   showFold?: boolean
   description?: ReactNode
+  inline?: boolean
 }
 
 export function ListLabel({
@@ -78,6 +79,7 @@ export function ListLabel({
   showFold = true,
   className,
   description,
+  inline = false,
   ...props
 }: ListLabelProps) {
   return (
@@ -89,7 +91,7 @@ export function ListLabel({
       isDisabled={props.isDisabled ?? !hasRows}
     >
       <LabelInline>
-        <LabelLabel asLabel={false} label={children} />
+        {!inline && <LabelLabel asLabel={false} label={children} />}
         {showFold && (
           <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
         )}

@@ -292,6 +292,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
         onPress={toggleAll}
         description={options.help}
         shared={options.shared}
+        inline={options.inline}
       >
         {options.label}
       </ListLabel>

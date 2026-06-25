@@ -1665,6 +1665,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         description={options.help}
         shared={options.shared}
         showFold={showFold}
+        inline={options.inline}
       >
         {options.label}
       </ListLabel>
@@ -1818,6 +1819,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         description={options.help}
         shared={options.shared}
         showFold={hasFoldableRows}
+        inline={options.inline}
       >
         {options.label}
       </ListLabel>
