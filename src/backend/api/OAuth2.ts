@@ -235,12 +235,7 @@ export class OAuth2 implements AuthApi {
     } catch (error) {
       if (!refreshToken) throw error
       const key = selectKey(jwks, refreshToken)
-      const [, failed] = await outcome(verify(refreshToken, key))
-      if (failed)
-        throw new InvalidCredentialsError('Invalid refresh token', {
-          cause: [failed, error]
-        })
-      // Refresh token is valid, but access token is not
+      // Access token is not, but we have a refresh token
       const token = {accessToken, refreshToken, expiresAt: null}
       const newToken = await this.#client.refreshToken(token).catch(cause => {
         throw new InvalidCredentialsError('Failed to refresh token', {
