@@ -42,6 +42,7 @@ interface ExplorerTableRowProps {
   columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
   entry: DashboardEntry
+  breadcrumbs: boolean
 }
 
 interface ExplorerTableDisplayRowProps {
@@ -51,6 +52,71 @@ interface ExplorerTableDisplayRowProps {
   label: string
   icon: ComponentType
   cells: Array<DashboardEntryOverviewCell>
+  breadcrumbs?: boolean | undefined
+  parents: Array<DashboardEntry>
+  rootLabel?: string
+}
+
+interface ExplorerTableBreadcrumbsProps {
+  entries: Array<DashboardEntry>
+  rootLabel?: string
+}
+
+function ExplorerTableBreadcrumbs({
+  entries,
+  rootLabel
+}: ExplorerTableBreadcrumbsProps) {
+  return (
+    <span className={styles.ExplorerTable.breadcrumbs()}>
+      {entries.length === 0 && rootLabel && (
+        <span className={styles.ExplorerTable.breadcrumb.root()}>
+          {rootLabel}
+        </span>
+      )}
+      {entries.map((entry, index) => (
+        <span key={entry.id} className={styles.ExplorerTable.breadcrumb()}>
+          <ExplorerTableBreadcrumb entry={entry} index={index} />
+        </span>
+      ))}
+    </span>
+  )
+}
+
+interface ExplorerTableBreadcrumbProps {
+  entry: DashboardEntry
+  index: number
+}
+
+function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
+  const {data} = useAtomValue(entry.data)
+  if (!data) return null
+  return <ExplorerTableLoadedBreadcrumb data={data} index={index} />
+}
+
+interface ExplorerTableLoadedBreadcrumbProps {
+  data: DashboardEntryData
+  index: number
+}
+
+function ExplorerTableLoadedBreadcrumb({
+  data,
+  index
+}: ExplorerTableLoadedBreadcrumbProps) {
+  const label = useAtomValue(data.label)
+  const root = useAtomValue(data.root)
+  const rootLabel = useAtomValue(root.label)
+  return (
+    <>
+      {index === 0 && (
+        <span className={styles.ExplorerTable.breadcrumb.root()}>
+          {rootLabel}
+        </span>
+      )}
+      <span
+        className={styles.ExplorerTable.breadcrumb.label()}
+      >{`/ ${label}`}</span>
+    </>
+  )
 }
 
 function ExplorerTableDisplayRow({
@@ -59,7 +125,10 @@ function ExplorerTableDisplayRow({
   entry,
   label,
   icon,
-  cells
+  cells,
+  breadcrumbs,
+  parents,
+  rootLabel
 }: ExplorerTableDisplayRowProps) {
   function renderCell(columnOrId: ExplorerTableColumn | Key) {
     const column =
@@ -86,7 +155,17 @@ function ExplorerTableDisplayRow({
           >
             <Icon icon={icon} className={styles.ExplorerTable.icon()} />
           </AriaButton>
-          <span className={styles.ExplorerTable.titleAction()}>{label}</span>
+          <span className={styles.ExplorerTable.field()}>
+            {breadcrumbs && (
+              <span className={styles.ExplorerTable.field.label()}>
+                <ExplorerTableBreadcrumbs
+                  entries={parents}
+                  rootLabel={rootLabel}
+                />
+              </span>
+            )}
+            <span className={styles.ExplorerTable.field.value()}>{label}</span>
+          </span>
         </Cell>
       )
     }
@@ -123,7 +202,7 @@ function ExplorerTableDisplayRow({
       textValue={label}
       className={styles.ExplorerTable.row()}
       columns={columns}
-      dependencies={[columns, label, icon, cells]}
+      dependencies={[columns, label, icon, cells, breadcrumbs, parents]}
       style={{width: '100%', minWidth: '100%', height: 'inherit'}}
     >
       {renderCell}
@@ -134,7 +213,8 @@ function ExplorerTableDisplayRow({
 function ExplorerTableLoadingRow({
   columnById,
   columns,
-  entry
+  entry,
+  breadcrumbs
 }: ExplorerTableRowProps) {
   return (
     <ExplorerTableDisplayRow
@@ -144,6 +224,8 @@ function ExplorerTableLoadingRow({
       label="Loading entry"
       icon={LucideFile}
       cells={[]}
+      breadcrumbs={breadcrumbs}
+      parents={[]}
     />
   )
 }
@@ -156,12 +238,16 @@ function ExplorerTableLoadedRow({
   columnById,
   columns,
   data,
-  entry
+  entry,
+  breadcrumbs
 }: ExplorerTableLoadedRowProps) {
+  const root = useAtomValue(data.root)
+  const rootLabel = useAtomValue(root.label)
   const label = useAtomValue(data.label)
   const configuredIcon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
   const cells = useAtomValue(data.overviewCells)
+  const parents = useAtomValue(data.parents)
   const icon = configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)
   return (
     <ExplorerTableDisplayRow
@@ -171,6 +257,9 @@ function ExplorerTableLoadedRow({
       label={label}
       icon={icon}
       cells={cells}
+      breadcrumbs={breadcrumbs}
+      parents={parents}
+      rootLabel={rootLabel}
     />
   )
 }
@@ -197,6 +286,7 @@ export function ExplorerTable({
   const [selected, setSelected] = useAtom(explorer.selection)
   const onAction = useSetAtom(explorer.onAction)
   const selectionMode = explorer.selectionMode
+  const breadcrumbs = explorer.breadcrumbs
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
@@ -282,6 +372,7 @@ export function ExplorerTable({
             >
               {item => (
                 <ExplorerTableRow
+                  breadcrumbs={breadcrumbs}
                   columnById={columnById}
                   columns={columns}
                   entry={item}
