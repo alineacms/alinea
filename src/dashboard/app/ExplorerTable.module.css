@@ -27,7 +27,7 @@
   border-collapse: collapse;
 
   &[data-drop-target]::before {
-    content: "";
+    content: '';
     position: absolute;
     inset: 0;
     z-index: 10;
@@ -82,7 +82,7 @@
   cursor: pointer;
 
   &::after {
-    content: "";
+    content: '';
     position: absolute;
     right: 0;
     bottom: 0;

@@ -128,7 +128,7 @@
       opacity: 1;
     }
 
-    &[data-expanded="true"] {
+    &[data-expanded='true'] {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
     }
