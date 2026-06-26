@@ -14,7 +14,7 @@ export interface AuthApi {
 }
 
 export interface UserApi {
-  enrichUser(user: UserInput): Promise<User>
+  enrichUser(user: User): Promise<User>
   listUsers(): Promise<Array<User>>
   createUser(user: UserInput): Promise<User>
   updateUser(request: UserInput): Promise<User>
@@ -65,12 +65,7 @@ export interface UploadsApi {
 }
 
 export interface Connection
-  extends CommitApi,
-    SyncApi,
-    HistoryApi,
-    DraftsApi,
-    UploadsApi,
-    UserApi {}
+  extends CommitApi, SyncApi, HistoryApi, DraftsApi, UploadsApi, UserApi {}
 
 export interface RequestContext {
   isDev: boolean

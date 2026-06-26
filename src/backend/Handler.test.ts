@@ -59,11 +59,8 @@ test('requires member management capability for user management', async () => {
             }
           }
         },
-        async enrichUser(user: UserInput): Promise<User> {
-          return {
-            ...user,
-            sub: user.sub ?? user.email
-          }
+        async enrichUser(user: User): Promise<User> {
+          return user
         },
         async listUsers(): Promise<Array<User>> {
           listCalls += 1

@@ -24,16 +24,16 @@ const fixtureConnection: LocalConnection = {
     return Promise.resolve(localUser)
   },
   enrichUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email})
+    return Promise.resolve(user)
   },
   listUsers() {
     return Promise.resolve([localUser])
   },
   createUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email})
+    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
   },
   updateUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email})
+    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
   },
   removeUser() {
     return Promise.resolve()

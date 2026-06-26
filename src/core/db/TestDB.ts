@@ -11,11 +11,8 @@ export class TestDB extends LocalDB implements LocalConnection {
     return localUser
   }
 
-  async enrichUser(user: UserInput): Promise<User> {
-    return {
-      ...user,
-      sub: user.sub ?? user.email
-    }
+  async enrichUser(user: User): Promise<User> {
+    return user
   }
 
   async listUsers(): Promise<Array<User>> {
@@ -25,14 +22,14 @@ export class TestDB extends LocalDB implements LocalConnection {
   async createUser(user: UserInput): Promise<User> {
     return {
       ...user,
-      sub: user.sub ?? user.email
+      sub: user.sub ?? user.email ?? 'test'
     }
   }
 
   async updateUser(user: UserInput): Promise<User> {
     return {
       ...user,
-      sub: user.sub ?? user.email
+      sub: user.sub ?? user.email ?? 'test'
     }
   }
 

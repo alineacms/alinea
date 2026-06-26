@@ -154,7 +154,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
     })
   }
 
-  async enrichUser(user: UserInput): Promise<User> {
+  async enrichUser(user: User): Promise<User> {
     const normalized = normalizeUser(user)
     const found = await this.#getUser(normalized.email)
     if (!found) return {...normalized, sub: normalized.sub ?? normalized.email}
@@ -271,7 +271,11 @@ function userFromRow(row: UserRow): User {
   }
 }
 
-function normalizeUser(user: UserInput): UserInput {
+interface NormalizedDatabaseUser extends UserInput {
+  email: string
+}
+
+function normalizeUser(user: UserInput): NormalizedDatabaseUser {
   const email = normalizeEmail(user.email)
   const name = user.name?.trim() || undefined
   const roles = Array.from(new Set(user.roles ?? []))
@@ -283,7 +287,8 @@ function normalizeUser(user: UserInput): UserInput {
   }
 }
 
-function normalizeEmail(email: string): string {
+function normalizeEmail(email: string | undefined): string {
+  assert(email, 'User email is required')
   const normalized = email.trim().toLowerCase()
   assert(normalized, 'User email is required')
   return normalized

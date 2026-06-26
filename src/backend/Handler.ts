@@ -111,7 +111,7 @@ export function createHandler({
         cnx = remote(userCtx)
         userCtx = {
           ...userCtx,
-          user: await cnx.enrichUser(requireUserEmail(userCtx.user))
+          user: await cnx.enrichUser(userCtx.user)
         }
       } catch (cause) {
         if (cause instanceof MissingCredentialsError) {
@@ -171,13 +171,13 @@ export function createHandler({
           const requestUser = parseUser(await body)
           switch (operation) {
             case 'enrich':
-              return Response.json(await cnx.enrichUser(requestUser))
+              return Response.json(await cnx.enrichUser(requireSub(requestUser)))
             case 'create':
               return Response.json(await cnx.createUser(requestUser))
             case 'update':
               return Response.json(await cnx.updateUser(requestUser))
             case 'remove':
-              await cnx.removeUser(requestUser.email)
+              await cnx.removeUser(requireEmail(requestUser))
               return new Response(null, {status: 204})
             default:
               throw new HttpError(400, 'Unknown operation')
@@ -355,7 +355,7 @@ function parseUser(input: unknown): UserInput {
   if (name !== undefined && typeof name !== 'string') {
     throw new HttpError(400, 'Expected user name')
   }
-  if (typeof email !== 'string') {
+  if (email !== undefined && typeof email !== 'string') {
     throw new HttpError(400, 'Expected user email')
   }
   if (
@@ -367,11 +367,18 @@ function parseUser(input: unknown): UserInput {
   return {sub, name, email, roles}
 }
 
-function requireUserEmail(user: User): UserInput {
+function requireEmail(user: UserInput): string {
   if (typeof user.email !== 'string') {
     throw new HttpError(400, 'Expected user email')
   }
-  return {...user, email: user.email}
+  return user.email
+}
+
+function requireSub(user: UserInput): User {
+  if (typeof user.sub !== 'string') {
+    throw new HttpError(400, 'Expected user sub')
+  }
+  return {...user, sub: user.sub}
 }
 
 function isRecord(input: unknown): input is Record<string, unknown> {

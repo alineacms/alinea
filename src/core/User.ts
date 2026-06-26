@@ -8,7 +8,7 @@ export interface User {
 export interface UserInput {
   sub?: string
   roles?: Array<string>
-  email: string
+  email?: string
   name?: string
 }
 

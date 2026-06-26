@@ -17,8 +17,8 @@ import {
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import type {User, UserInput} from '#/core/User.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {entries, values} from '#/core/util/Objects.js'
 import {Workspace} from '#/core/Workspace.js'
@@ -233,7 +233,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   async storeDraft(draft: Draft): Promise<void> {
     const ctx = this.#context
     const key = formatDraftKey({id: draft.entryId, locale: draft.locale})
-    return parseOutcome(
+    return parseOutcome<void>(
       fetch(
         `${cloudConfig.drafts}/${key}`,
         json({
@@ -250,7 +250,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
 
   revisions(file: string): Promise<Array<Revision>> {
     const ctx = this.#context
-    return parseOutcome(
+    return parseOutcome<Array<Revision>>(
       fetch(
         `${cloudConfig.history}?${new URLSearchParams({file})}`,
         json({headers: bearer(ctx)})
@@ -263,7 +263,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     revisionId: string
   ): Promise<EntryRecord | undefined> {
     const ctx = this.#context
-    return parseOutcome(
+    return parseOutcome<EntryRecord | undefined>(
       fetch(
         `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId})}`,
         json({headers: bearer(ctx)})
@@ -271,27 +271,57 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     )
   }
 
-  enrichUser(user: UserInput): Promise<User> {
-    return Promise.resolve({
-      ...user,
-      sub: user.sub ?? user.email
-    })
+  async enrichUser(user: User): Promise<User> {
+    // User claims already contain all data needed
+    return user
   }
 
   listUsers(): Promise<Array<User>> {
-    throw new Error('Cloud user API is not implemented')
+    const ctx = this.#context
+    return parseOutcome<Array<User>>(
+      fetch(cloudConfig.users, json({headers: bearer(ctx)}))
+    )
   }
 
   createUser(user: UserInput): Promise<User> {
-    throw new Error('Cloud user API is not implemented')
+    const ctx = this.#context
+    return parseOutcome<User>(
+      fetch(
+        cloudConfig.users,
+        json({
+          method: 'POST',
+          headers: bearer(ctx),
+          body: JSON.stringify(user)
+        })
+      )
+    )
   }
 
   updateUser(user: UserInput): Promise<User> {
-    throw new Error('Cloud user API is not implemented')
+    const ctx = this.#context
+    return parseOutcome<User>(
+      fetch(
+        cloudConfig.users,
+        json({
+          method: 'PUT',
+          headers: bearer(ctx),
+          body: JSON.stringify(user)
+        })
+      )
+    )
   }
 
   removeUser(email: string): Promise<void> {
-    throw new Error('Cloud user API is not implemented')
+    const ctx = this.#context
+    return parseOutcome<void>(
+      fetch(
+        `${cloudConfig.users}/${encodeURIComponent(email)}`,
+        json({
+          method: 'DELETE',
+          headers: bearer(ctx)
+        })
+      )
+    )
   }
 }
 
