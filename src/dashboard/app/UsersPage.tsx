@@ -142,6 +142,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
   const [usersState] = useAtom(usersAtom)
   const [query, setQuery] = useState('')
   const [editingUser, setEditingUser] = useState<User>()
+  const [deletingUser, setDeletingUser] = useState<User>()
   const users = usersState.users
 
   const filteredUsers = useMemo(() => {
@@ -157,7 +158,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
   return (
     <div className={styles.UsersPage()}>
       <SidebarHeader>
-        <div className={styles.UsersPage.header.title()}>Manage members</div>
+        <div className={styles.UsersPage.header.title()}>Manage users</div>
 
         <SearchField
           aria-label="Search users"
@@ -190,6 +191,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
             users={filteredUsers}
             roleLabel={role => config.roles?.[role]?.label}
             onEdit={setEditingUser}
+            onDeactivate={setDeletingUser}
           />
         )}
       </div>
@@ -200,6 +202,14 @@ export function UsersPage({dashboard}: UsersPageProps) {
         }}
       >
         {editingUser && <UserModal dashboard={dashboard} user={editingUser} />}
+      </DashboardModal>
+      <DashboardModal
+        isOpen={deletingUser !== undefined}
+        onOpenChange={isOpen => {
+          if (!isOpen) setDeletingUser(undefined)
+        }}
+      >
+        {deletingUser && <DeactivateUserModal user={deletingUser} />}
       </DashboardModal>
     </div>
   )
@@ -258,11 +268,17 @@ function UsersPageStatus({label, pending}: UsersPageStatusProps) {
 
 interface UsersTableProps {
   onEdit: (user: User) => void
+  onDeactivate: (user: User) => void
   users: Array<User>
   roleLabel: (role: string) => string | undefined
 }
 
-function UsersTable({onEdit, users, roleLabel}: UsersTableProps) {
+function UsersTable({
+  onDeactivate,
+  onEdit,
+  users,
+  roleLabel
+}: UsersTableProps) {
   return (
     <Table aria-label="Users" className={styles.UsersPage.table()}>
       <TableHeader columns={userColumns}>
@@ -282,7 +298,13 @@ function UsersTable({onEdit, users, roleLabel}: UsersTableProps) {
           <Row id={user.email ?? user.sub} columns={userColumns}>
             {column => (
               <Cell>
-                {renderUserCell(user, column.id, roleLabel, onEdit)}
+                {renderUserCell(
+                  user,
+                  column.id,
+                  roleLabel,
+                  onEdit,
+                  onDeactivate
+                )}
               </Cell>
             )}
           </Row>
@@ -296,7 +318,8 @@ function renderUserCell(
   user: User,
   column: UserColumn['id'],
   roleLabel: (role: string) => string | undefined,
-  onEdit: (user: User) => void
+  onEdit: (user: User) => void,
+  onDeactivate: (user: User) => void
 ) {
   if (column === 'user') {
     return (
@@ -333,7 +356,11 @@ function renderUserCell(
           ))}
         </span>
       )}
-      <UserActionsMenu user={user} onEdit={onEdit} />
+      <UserActionsMenu
+        user={user}
+        onEdit={onEdit}
+        onDeactivate={onDeactivate}
+      />
     </span>
   )
 }
@@ -341,26 +368,20 @@ function renderUserCell(
 interface UserActionsMenuProps {
   user: User
   onEdit: (user: User) => void
+  onDeactivate: (user: User) => void
 }
 
-function UserActionsMenu({user, onEdit}: UserActionsMenuProps) {
-  const saveUser = useSetAtom(usersAtom)
-  const [isPending, setIsPending] = useState(false)
+function UserActionsMenu({user, onDeactivate, onEdit}: UserActionsMenuProps) {
   const email = user.email
   const label = user.name || user.email || user.sub
 
-  async function handleAction(key: Key) {
+  function handleAction(key: Key) {
     if (key === 'edit') {
       onEdit(user)
       return
     }
     if (key !== 'deactivate' || !email) return
-    setIsPending(true)
-    try {
-      await saveUser({type: 'remove', email})
-    } finally {
-      setIsPending(false)
-    }
+    onDeactivate(user)
   }
 
   return (
@@ -371,16 +392,79 @@ function UserActionsMenu({user, onEdit}: UserActionsMenuProps) {
           aria-label={`Actions for ${label}`}
           appearance="plain"
           size="icon-small"
-          isDisabled={isPending}
           icon={IcRoundMoreHoriz}
         />
       }
       disabledKeys={email ? undefined : ['deactivate']}
-      onAction={key => void handleAction(key)}
+      onAction={handleAction}
     >
       <MenuItem id="edit">Edit</MenuItem>
       <MenuItem id="deactivate">Deactivate account</MenuItem>
     </Menu>
+  )
+}
+
+interface DeactivateUserModalProps {
+  user: User
+}
+
+function DeactivateUserModal({user}: DeactivateUserModalProps) {
+  const saveUser = useSetAtom(usersAtom)
+  const modal = useDashboardModal()
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState<string>()
+  const email = user.email
+  const label = user.name || user.email || user.sub
+
+  async function handleDeactivate() {
+    if (!email) return
+    setIsPending(true)
+    setError(undefined)
+    try {
+      await saveUser({type: 'remove', email})
+      modal.close()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setIsPending(false)
+    }
+  }
+
+  return (
+    <DashboardModalDialog label="Deactivate account">
+      <DashboardModalContent>
+        <div className={styles.UsersPage.form.fields()}>
+          <p className={styles.UsersPage.confirmation()}>
+            Are you sure you want to deactivate {label}? This will remove the
+            user account and role assignments.
+          </p>
+          {error && (
+            <p className={styles.UsersPage.form.error()} role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+      </DashboardModalContent>
+      <DashboardModalFooter>
+        <Button
+          type="button"
+          appearance="outline"
+          intent="secondary"
+          onPress={modal.close}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          intent="danger"
+          isDisabled={!email}
+          isPending={isPending}
+          onPress={handleDeactivate}
+        >
+          Deactivate account
+        </Button>
+      </DashboardModalFooter>
+    </DashboardModalDialog>
   )
 }
 

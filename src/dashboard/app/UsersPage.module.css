@@ -155,6 +155,13 @@
   font-size: 13px;
 }
 
+.UsersPage-confirmation {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 @media (max-width: 720px) {
   .UsersPageSidebar {
     flex-basis: 32px;

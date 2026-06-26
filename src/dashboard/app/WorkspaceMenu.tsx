@@ -110,12 +110,12 @@ function WorkspaceSelectorMenu({
       ))}
       {includeUsersLink && <MenuSeparator />}
       {includeUsersLink && (
-        <MenuItem id="users" textValue="Manage members">
+        <MenuItem id="users" textValue="Manage users">
           <Icon
             icon={IcOutlineSettings}
             className={styles.WorkspaceMenu.menuItemIcon()}
           />
-          Manage members
+          Manage users
         </MenuItem>
       )}
     </Menu>

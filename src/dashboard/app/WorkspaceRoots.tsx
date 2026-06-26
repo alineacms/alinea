@@ -217,7 +217,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
             <li className={styles.WorkspaceRoots.profile.popover.action()}>
               <Button
                 appearance="plain"
-                aria-label="Manage members"
+                aria-label="Manage users"
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
                 onPress={() => void setRoute({page: 'users'})}
               >
@@ -227,7 +227,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
                     styles.WorkspaceRoots.profile.popover.action.label()
                   }
                 >
-                  Manage members
+                  Manage users
                 </span>
               </Button>
             </li>
