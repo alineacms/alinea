@@ -1,9 +1,3 @@
-import {Request, Response} from '@alinea/iso'
-import {
-  generateCodeVerifier,
-  OAuth2Client,
-  type OAuth2Token
-} from '@badgateway/oauth2-client'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Config} from '#/core/Config.js'
 import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
@@ -12,7 +6,13 @@ import {createId} from '#/core/Id.js'
 import {outcome} from '#/core/Outcome.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {decode, verify} from '#/core/util/JWT.js'
+import {decode, JWTPayload, verify} from '#/core/util/JWT.js'
+import {Request, Response} from '@alinea/iso'
+import {
+  generateCodeVerifier,
+  OAuth2Client,
+  type OAuth2Token
+} from '@badgateway/oauth2-client'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
 import {
@@ -64,6 +64,12 @@ export interface OAuth2Options {
    * Required for revoking tokens. Not supported by all servers.
    */
   revocationEndpoint?: string
+
+  /**
+   * Extra claims to validate, such as `iss` or `aud`,
+   * If the claims are invalid, an error should be thrown.
+   */
+  validateClaims?(claims: JWTPayload): void
 }
 
 const COOKIE_VERIFIER = 'alinea.cv'
@@ -75,10 +81,12 @@ export class OAuth2 implements AuthApi {
   #config: Config
   #client: OAuth2Client
   #jwks: Promise<Array<JsonWebKey & {kid: string}>>
+  #validateClaims?: OAuth2Options['validateClaims']
 
   constructor(context: RequestContext, config: Config, options: OAuth2Options) {
     this.#context = context
     this.#config = config
+    this.#validateClaims = options.validateClaims
     this.#client = new OAuth2Client({
       ...options,
       authenticationMethod: 'client_secret_basic_interop',
@@ -148,7 +156,8 @@ export class OAuth2 implements AuthApi {
                   value: codeVerifier,
                   path: redirectUri.pathname,
                   secure: redirectUri.protocol === 'https:',
-                  httpOnly: true
+                  httpOnly: true,
+                  sameSite: 'lax'
                 })
               }
             }
@@ -223,33 +232,31 @@ export class OAuth2 implements AuthApi {
       if (!accessToken)
         throw new MissingCredentialsError('Missing access token cookie')
       const key = selectKey(jwks, accessToken)
-      const user = await verify<User & {exp: number}>(accessToken, key)
+      const user = await verify<JWTPayload & User>(accessToken, key)
+      this.#validateClaims?.(user)
+      assert(user.exp, 'Missing exp claim in access token')
       const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
       if (expiresSoon && refreshToken)
         throw new InvalidCredentialsError('Access token will expire soon') // Trigger refresh
       return {...ctx, user, token: accessToken}
     } catch (error) {
       if (!refreshToken) throw error
-      const key = selectKey(jwks, refreshToken)
-      const [, failed] = await outcome(verify(refreshToken, key))
-      if (failed)
-        throw new InvalidCredentialsError('Invalid refresh token', {
-          cause: [failed, error]
-        })
-      // Refresh token is valid, but access token is not
+      // Access token is not valid, but we have a refresh token
       const token = {accessToken, refreshToken, expiresAt: null}
       const newToken = await this.#client.refreshToken(token).catch(cause => {
         throw new InvalidCredentialsError('Failed to refresh token', {
           cause: [cause, error]
         })
       })
-      await verify<User>(newToken.accessToken, key, {
+      const key = selectKey(jwks, newToken.accessToken)
+      const user = await verify<JWTPayload & User>(newToken.accessToken, key, {
         clockTolerance: 30
       }).catch(cause => {
         throw new InvalidCredentialsError('Failed to verify user', {
           cause: [cause, error]
         })
       })
+      this.#validateClaims?.(user)
       // Respond with 401 and instruct the client to retry request
       throw Response.json(
         {type: AuthResultType.NeedsRefresh},
@@ -268,10 +275,40 @@ function selectKey(
   jwks: Array<JsonWebKey & {kid: string}>,
   token: string
 ): JsonWebKey {
-  const kid = decode(token).header.kid
-  if (!kid) return jwks[0]
+  const {header} = decode(token)
+  const kid = header.kid
+  const alg = header.alg
+
+  // Token has no Key ID
+  if (!kid) {
+    // If the provider only publishes exactly one key, it's safe to assume it's the right one
+    if (jwks.length === 1) {
+      const key = jwks[0]
+      // Ensure the key type and algorithm match what the token claims to use
+      if (key.alg && alg && key.alg !== alg) {
+        throw new Error(
+          `Algorithm mismatch: token uses ${alg}, but key specifies ${key.alg}`
+        )
+      }
+      return key
+    }
+
+    // If there are multiple keys and no kid, it is cryptographically ambiguous
+    throw new Error(
+      'Token is missing "kid" header, and JWKS contains multiple keys'
+    )
+  }
+
+  // Token has a Key ID, find the exact match
   const key = jwks.find(k => k.kid === kid)
   if (!key) throw new Error(`No key found for kid: ${kid}`)
+
+  // Verify the algorithm matches to prevent algorithm confusion
+  if (key.alg && alg && key.alg !== alg)
+    throw new Error(
+      `Algorithm mismatch: token uses ${alg}, but key specifies ${key.alg}`
+    )
+
   return key
 }
 
@@ -283,7 +320,8 @@ function clearCookies(redirectUri: URL): string {
       expires: new Date(0),
       path: '/',
       secure: redirectUri.protocol === 'https:',
-      httpOnly: true
+      httpOnly: true,
+      sameSite: 'lax'
     },
     {
       name: COOKIE_REFRESH_TOKEN,
@@ -306,7 +344,8 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
       expires: token.expiresAt ? new Date(token.expiresAt) : undefined,
       path: '/',
       secure: redirectUri.protocol === 'https:',
-      httpOnly: true
+      httpOnly: true,
+      sameSite: 'lax'
     },
     {
       name: COOKIE_REFRESH_TOKEN,
