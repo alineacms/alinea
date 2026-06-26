@@ -230,13 +230,10 @@ export class Client implements LocalConnection {
     init: RequestInit = {},
     retry = false
   ): Promise<Response> {
-    const {url: baseUrl, applyAuth = v => v, unauthorized} = this.#options
+    const {url, applyAuth = v => v, unauthorized} = this.#options
     const controller = new AbortController()
     const signal = controller.signal
-    const location = new URL(
-      `${baseUrl}?${new URLSearchParams(params).toString()}`,
-      window.location.href
-    )
+    const location = `${url}?${new URLSearchParams(params).toString()}`
     const promise = fetch(location, {
       ...applyAuth(init),
       signal
