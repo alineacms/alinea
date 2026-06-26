@@ -289,6 +289,10 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   updateUser(user: UserInput): Promise<User> {
     throw new Error('Cloud user API is not implemented')
   }
+
+  removeUser(email: string): Promise<void> {
+    throw new Error('Cloud user API is not implemented')
+  }
 }
 
 function validApiKey(apiKey: string | undefined): boolean {

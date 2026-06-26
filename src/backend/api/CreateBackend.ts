@@ -103,6 +103,7 @@ export function createRemote(
     enrichUser: call('enrichUser'),
     listUsers: call('listUsers'),
     createUser: call('createUser'),
-    updateUser: call('updateUser')
+    updateUser: call('updateUser'),
+    removeUser: call('removeUser')
   }
 }

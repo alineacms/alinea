@@ -36,6 +36,8 @@ export class TestDB extends LocalDB implements LocalConnection {
     }
   }
 
+  async removeUser() {}
+
   async revisions() {
     return []
   }

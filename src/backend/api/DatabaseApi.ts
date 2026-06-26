@@ -214,6 +214,21 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
     return updatedUser
   }
 
+  async removeUser(email: string): Promise<void> {
+    const normalized = normalizeEmail(email)
+    const db = await this.#db
+    await db.transaction(async tx => {
+      const row = await tx
+        .select()
+        .from(UserTable)
+        .where(eq(UserTable.email, normalized))
+        .get()
+      assert(row, `User with email ${normalized} not found`)
+      await tx.delete(UserRoleTable).where(eq(UserRoleTable.userId, row.id))
+      await tx.delete(UserTable).where(eq(UserTable.id, row.id))
+    })
+  }
+
   async #getUser(email: string): Promise<User | undefined> {
     const db = await this.#db
     const user = await db
@@ -257,8 +272,7 @@ function userFromRow(row: UserRow): User {
 }
 
 function normalizeUser(user: UserInput): UserInput {
-  const email = user.email.trim().toLowerCase()
-  assert(email, 'User email is required')
+  const email = normalizeEmail(user.email)
   const name = user.name?.trim() || undefined
   const roles = Array.from(new Set(user.roles ?? []))
   return {
@@ -267,4 +281,10 @@ function normalizeUser(user: UserInput): UserInput {
     name,
     roles
   }
+}
+
+function normalizeEmail(email: string): string {
+  const normalized = email.trim().toLowerCase()
+  assert(normalized, 'User email is required')
+  return normalized
 }

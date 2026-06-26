@@ -176,6 +176,9 @@ export function createHandler({
               return Response.json(await cnx.createUser(requestUser))
             case 'update':
               return Response.json(await cnx.updateUser(requestUser))
+            case 'remove':
+              await cnx.removeUser(requestUser.email)
+              return new Response(null, {status: 204})
             default:
               throw new HttpError(400, 'Unknown operation')
           }

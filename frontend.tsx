@@ -35,6 +35,9 @@ const fixtureConnection: LocalConnection = {
   updateUser(user) {
     return Promise.resolve({...user, sub: user.sub ?? user.email})
   },
+  removeUser() {
+    return Promise.resolve()
+  },
   write(request) {
     return db.write(request)
   },

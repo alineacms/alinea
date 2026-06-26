@@ -117,6 +117,16 @@ export class Client implements LocalConnection {
     ).then<User>(this.#failOnHttpError)
   }
 
+  removeUser(email: string): Promise<void> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'remove'},
+      {
+        method: 'POST',
+        body: JSON.stringify({email})
+      }
+    ).then<void>(res => this.#failOnHttpError(res, false))
+  }
+
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

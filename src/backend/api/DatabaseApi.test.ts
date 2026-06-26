@@ -44,6 +44,9 @@ test('users are matched case-insensitively and roles are replaced', async () => 
 
     const users = await api.listUsers()
     test.is(users.length, 1)
+
+    await api.removeUser('ADA@EXAMPLE.COM')
+    test.equal(await api.listUsers(), [])
   } finally {
     sqlite.close()
   }

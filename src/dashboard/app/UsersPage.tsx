@@ -4,6 +4,8 @@ import {
   Column,
   DialogTrigger,
   Icon,
+  Menu,
+  MenuItem,
   MultipleSelect,
   MultipleSelectItem,
   ProgressCircle,
@@ -18,9 +20,9 @@ import {
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useMemo, useState, type FormEvent} from 'react'
+import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
-import {IcRoundAdd, IcRoundArrowBack, IcRoundEdit} from '../icons.js'
+import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../icons.js'
 import {dashboardAtom, type Dashboard} from '../store/Dashboard.js'
 import {Badge} from './Badge.js'
 import {
@@ -65,6 +67,7 @@ type UsersAction =
   | {type: 'load'}
   | {type: 'create'; user: UserInput}
   | {type: 'update'; user: UserInput}
+  | {type: 'remove'; email: string}
 
 const usersStateAtom = atom<UsersState>({
   status: 'loading',
@@ -89,6 +92,16 @@ const usersAtom = atom(
           users: current.users
         })
       }
+      return undefined
+    }
+    if (action.type === 'remove') {
+      await client.removeUser(action.email)
+      set(usersStateAtom, current => {
+        return {
+          status: 'loaded',
+          users: removeUser(current.users, action.email)
+        }
+      })
       return undefined
     }
     const saved =
@@ -119,10 +132,16 @@ function upsertUser(users: Array<User>, user: User): Array<User> {
   return next
 }
 
+function removeUser(users: Array<User>, email: string): Array<User> {
+  const normalized = email.toLowerCase()
+  return users.filter(user => user.email?.toLowerCase() !== normalized)
+}
+
 export function UsersPage({dashboard}: UsersPageProps) {
   const config = useAtomValue(dashboard.config)
   const [usersState] = useAtom(usersAtom)
   const [query, setQuery] = useState('')
+  const [editingUser, setEditingUser] = useState<User>()
   const users = usersState.users
 
   const filteredUsers = useMemo(() => {
@@ -170,10 +189,18 @@ export function UsersPage({dashboard}: UsersPageProps) {
           <UsersTable
             users={filteredUsers}
             roleLabel={role => config.roles?.[role]?.label}
-            dashboard={dashboard}
+            onEdit={setEditingUser}
           />
         )}
       </div>
+      <DashboardModal
+        isOpen={editingUser !== undefined}
+        onOpenChange={isOpen => {
+          if (!isOpen) setEditingUser(undefined)
+        }}
+      >
+        {editingUser && <UserModal dashboard={dashboard} user={editingUser} />}
+      </DashboardModal>
     </div>
   )
 }
@@ -230,12 +257,12 @@ function UsersPageStatus({label, pending}: UsersPageStatusProps) {
 }
 
 interface UsersTableProps {
-  dashboard: Dashboard
+  onEdit: (user: User) => void
   users: Array<User>
   roleLabel: (role: string) => string | undefined
 }
 
-function UsersTable({dashboard, users, roleLabel}: UsersTableProps) {
+function UsersTable({onEdit, users, roleLabel}: UsersTableProps) {
   return (
     <Table aria-label="Users" className={styles.UsersPage.table()}>
       <TableHeader columns={userColumns}>
@@ -255,7 +282,7 @@ function UsersTable({dashboard, users, roleLabel}: UsersTableProps) {
           <Row id={user.email ?? user.sub} columns={userColumns}>
             {column => (
               <Cell>
-                {renderUserCell(user, column.id, roleLabel, dashboard)}
+                {renderUserCell(user, column.id, roleLabel, onEdit)}
               </Cell>
             )}
           </Row>
@@ -269,22 +296,11 @@ function renderUserCell(
   user: User,
   column: UserColumn['id'],
   roleLabel: (role: string) => string | undefined,
-  dashboard: Dashboard
+  onEdit: (user: User) => void
 ) {
   if (column === 'user') {
     return (
       <span className={styles.UsersPage.identity()}>
-        <DialogTrigger>
-          <Button
-            size="icon-small"
-            appearance="plain"
-            icon={IcRoundEdit}
-            aria-label={`Edit ${user.name || user.email || user.sub}`}
-          />
-          <DashboardModal>
-            <UserModal dashboard={dashboard} user={user} />
-          </DashboardModal>
-        </DialogTrigger>
         <span className={styles.UsersPage.identity.text()}>
           {user.name && (
             <span className={styles.UsersPage.identity.title()}>
@@ -304,17 +320,67 @@ function renderUserCell(
       return label ? {id: role, label} : undefined
     })
     .filter((role): role is {id: string; label: string} => Boolean(role))
-  if (roles.length === 0) {
-    return <span className={styles.UsersPage.noRoles()}>No roles</span>
-  }
   return (
-    <span className={styles.UsersPage.roles()}>
-      {roles.map(role => (
-        <Badge key={role.id} size="small">
-          {role.label}
-        </Badge>
-      ))}
+    <span className={styles.UsersPage.rolesCell()}>
+      {roles.length === 0 ? (
+        <span className={styles.UsersPage.noRoles()}>No roles</span>
+      ) : (
+        <span className={styles.UsersPage.roles()}>
+          {roles.map(role => (
+            <Badge key={role.id} size="small">
+              {role.label}
+            </Badge>
+          ))}
+        </span>
+      )}
+      <UserActionsMenu user={user} onEdit={onEdit} />
     </span>
+  )
+}
+
+interface UserActionsMenuProps {
+  user: User
+  onEdit: (user: User) => void
+}
+
+function UserActionsMenu({user, onEdit}: UserActionsMenuProps) {
+  const saveUser = useSetAtom(usersAtom)
+  const [isPending, setIsPending] = useState(false)
+  const email = user.email
+  const label = user.name || user.email || user.sub
+
+  async function handleAction(key: Key) {
+    if (key === 'edit') {
+      onEdit(user)
+      return
+    }
+    if (key !== 'deactivate' || !email) return
+    setIsPending(true)
+    try {
+      await saveUser({type: 'remove', email})
+    } finally {
+      setIsPending(false)
+    }
+  }
+
+  return (
+    <Menu
+      aria-label={`Actions for ${label}`}
+      label={
+        <Button
+          aria-label={`Actions for ${label}`}
+          appearance="plain"
+          size="icon-small"
+          isDisabled={isPending}
+          icon={IcRoundMoreHoriz}
+        />
+      }
+      disabledKeys={email ? undefined : ['deactivate']}
+      onAction={key => void handleAction(key)}
+    >
+      <MenuItem id="edit">Edit</MenuItem>
+      <MenuItem id="deactivate">Deactivate account</MenuItem>
+    </Menu>
   )
 }
 

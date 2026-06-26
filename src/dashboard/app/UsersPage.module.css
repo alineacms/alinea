@@ -105,14 +105,24 @@
   white-space: nowrap;
 }
 
+.UsersPage-rolesCell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 10px;
+}
+
 .UsersPage-roles {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-wrap: wrap;
   gap: 6px;
 }
 
 .UsersPage-noRoles {
+  flex: 1;
   color: var(--alinea-fg-muted);
 }
 

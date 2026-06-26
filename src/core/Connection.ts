@@ -18,6 +18,7 @@ export interface UserApi {
   listUsers(): Promise<Array<User>>
   createUser(user: UserInput): Promise<User>
   updateUser(request: UserInput): Promise<User>
+  removeUser(email: string): Promise<void>
 }
 
 export interface RemoteConnection extends Connection, AuthApi {}
