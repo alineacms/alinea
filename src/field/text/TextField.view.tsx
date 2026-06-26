@@ -19,14 +19,16 @@ export const TextFieldView = memo(function TextFieldView({
       description={options.help}
       errorMessage={error}
       isDisabled={options.readOnly}
-      label={options.label}
+      label={options.inline ? undefined : options.label}
       isRequired={options.required}
       shared={options.shared}
       multiline={options.multiline}
       value={value}
       onChange={setValue}
       isInvalid={Boolean(error)}
-      placeholder={options.placeholder}
+      placeholder={
+        options.placeholder ?? (options.inline ? options.label : undefined)
+      }
       type={options.type}
     />
   )

@@ -57,6 +57,7 @@ export function TextField({
               className={styles.TextField.input(
                 styler.merge({className: inputProps?.className})
               )}
+              placeholder={props.placeholder}
             />
           )}
         </div>

@@ -1173,6 +1173,7 @@ export interface ExplorerOptions {
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
+  pickChildren?: boolean
   selectedLocale?: string | null
   rootScope?: 'current' | 'workspace'
   selectionMode?: 'none' | 'single' | 'multiple'
@@ -1180,6 +1181,7 @@ export interface ExplorerOptions {
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
+  breadcrumbs?: boolean
   // initialSort?: ExplorerSort
   onAction?: WritableAtom<void, [entry: DashboardEntry], void>
   onConfirm?: (selection: Array<string>) => void
@@ -1263,6 +1265,10 @@ export class DashboardExplorer {
 
   get hasRowAction() {
     return Boolean(this.#options.onAction)
+  }
+
+  get breadcrumbs() {
+    return this.#options.breadcrumbs ?? false
   }
 
   onAction = atom(null, (get, set, entry: DashboardEntry) => {
@@ -1511,7 +1517,9 @@ export class DashboardExplorer {
     if (!root && !allRoots) return []
     const locale = allRoots ? undefined : get(this.selectedLocale)
     const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
-    const flatList = Boolean(this.#options.condition) || searchAll
+    const flatList =
+      (Boolean(this.#options.condition) && !this.#options.pickChildren) ||
+      searchAll
     const policy = get(this.dashboard.policy)
     const children = await db.find({
       locale,
@@ -2398,7 +2406,7 @@ export class DashboardEntryData {
 
   parentsState = atomWithPending(this.#parents)
 
-  parents = swr(this.#parents)
+  parents = unwrap(this.#parents, prev => prev ?? [])
 
   #incomingReferences = atom(async get => {
     get(this.dashboard.revisions(this.id))

@@ -167,7 +167,8 @@ function SearchPopup() {
             locale: get(data.sourceLocale) ?? undefined
           })
           modal.close()
-        })
+        }),
+        breadcrumbs: true
       }
     )
   )
