@@ -279,10 +279,40 @@ function selectKey(
   jwks: Array<JsonWebKey & {kid: string}>,
   token: string
 ): JsonWebKey {
-  const kid = decode(token).header.kid
-  if (!kid) return jwks[0]
+  const {header} = decode(token)
+  const kid = header.kid
+  const alg = header.alg
+
+  // Token has no Key ID
+  if (!kid) {
+    // If the provider only publishes exactly one key, it's safe to assume it's the right one
+    if (jwks.length === 1) {
+      const key = jwks[0]
+      // Ensure the key type and algorithm match what the token claims to use
+      if (key.alg && alg && key.alg !== alg) {
+        throw new Error(
+          `Algorithm mismatch: token uses ${alg}, but key specifies ${key.alg}`
+        )
+      }
+      return key
+    }
+
+    // If there are multiple keys and no kid, it is cryptographically ambiguous
+    throw new Error(
+      'Token is missing "kid" header, and JWKS contains multiple keys'
+    )
+  }
+
+  // Token has a Key ID, find the exact match
   const key = jwks.find(k => k.kid === kid)
   if (!key) throw new Error(`No key found for kid: ${kid}`)
+
+  // Verify the algorithm matches to prevent algorithm confusion
+  if (key.alg && alg && key.alg !== alg)
+    throw new Error(
+      `Algorithm mismatch: token uses ${alg}, but key specifies ${key.alg}`
+    )
+
   return key
 }
 
