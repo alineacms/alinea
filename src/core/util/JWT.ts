@@ -31,7 +31,16 @@ type JWTHeader = {
   [key: string]: any
 }
 
-type JWTPayload = Record<string, any>
+export type JWTPayload = {
+  iss?: string
+  sub?: string
+  aud?: string | string[]
+  exp?: number
+  nbf?: number
+  iat?: number
+  jti?: string
+  [key: string]: unknown
+}
 
 type JWT = {
   header: JWTHeader
@@ -217,15 +226,17 @@ export async function verify(
   const clockTimestamp = options.clockTimestamp || Math.floor(Date.now() / 1000)
   const clockTolerance = options.clockTolerance || 0
 
-  const nbf = payload.nbf
-  if (nbf && typeof nbf !== 'number') throw new Error('Invalid nbf value')
-  if (payload.nbf > clockTimestamp + clockTolerance)
-    throw new Error('Token not yet valid')
-  const exp = payload.exp
-  if (exp && typeof payload.exp !== 'number')
-    throw new Error('Invalid exp value')
-  if (clockTimestamp >= payload.exp + clockTolerance)
-    throw new Error('Token expired')
+  if ('nbf' in payload) {
+    const nbf = payload.nbf
+    if (typeof nbf !== 'number') throw new Error('Invalid nbf value')
+    if (nbf > clockTimestamp + clockTolerance)
+      throw new Error('Token not yet valid')
+  }
+  if ('exp' in payload) {
+    const exp = payload.exp
+    if (typeof exp !== 'number') throw new Error('Invalid exp value')
+    if (clockTimestamp >= exp + clockTolerance) throw new Error('Token expired')
+  }
 
   return payload
 }

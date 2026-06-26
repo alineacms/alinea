@@ -38,7 +38,13 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
       jwksUri: cloudConfig.jwks,
       tokenEndpoint: cloudConfig.token,
       authorizationEndpoint: cloudConfig.auth,
-      revocationEndpoint: cloudConfig.revocation
+      revocationEndpoint: cloudConfig.revocation,
+      validateClaims(claims) {
+        if (claims.iss !== cloudConfig.url)
+          throw new HttpError(401, `Invalid issuer: ${claims.iss}`)
+        if (claims.cid !== clientId)
+          throw new HttpError(401, `Invalid client id: ${claims.cid}`)
+      }
     })
     this.#context = context
     this.#config = config

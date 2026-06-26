@@ -16,7 +16,7 @@ import {createId} from 'alinea/core/Id'
 import {outcome} from 'alinea/core/Outcome'
 import type {User} from 'alinea/core/User'
 import {assert} from 'alinea/core/util/Assert'
-import {decode, verify} from 'alinea/core/util/JWT'
+import {decode, JWTPayload, verify} from 'alinea/core/util/JWT'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
 import {
@@ -68,6 +68,12 @@ export interface OAuth2Options {
    * Required for revoking tokens. Not supported by all servers.
    */
   revocationEndpoint?: string
+
+  /**
+   * Extra claims to validate, such as `iss` or `aud`,
+   * If the claims are invalid, an error should be thrown.
+   */
+  validateClaims?(claims: JWTPayload): void
 }
 
 const COOKIE_VERIFIER = 'alinea.cv'
@@ -79,10 +85,12 @@ export class OAuth2 implements AuthApi {
   #config: Config
   #client: OAuth2Client
   #jwks: Promise<Array<JsonWebKey & {kid: string}>>
+  #validateClaims?: OAuth2Options['validateClaims']
 
   constructor(context: RequestContext, config: Config, options: OAuth2Options) {
     this.#context = context
     this.#config = config
+    this.#validateClaims = options.validateClaims
     this.#client = new OAuth2Client({
       ...options,
       authenticationMethod: 'client_secret_basic_interop',
@@ -228,28 +236,31 @@ export class OAuth2 implements AuthApi {
       if (!accessToken)
         throw new MissingCredentialsError('Missing access token cookie')
       const key = selectKey(jwks, accessToken)
-      const user = await verify<User & {exp: number}>(accessToken, key)
+      const user = await verify<JWTPayload & User>(accessToken, key)
+      this.#validateClaims?.(user)
+      assert(user.exp, 'Missing exp claim in access token')
       const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
       if (expiresSoon && refreshToken)
         throw new InvalidCredentialsError('Access token will expire soon') // Trigger refresh
       return {...ctx, user, token: accessToken}
     } catch (error) {
       if (!refreshToken) throw error
-      const key = selectKey(jwks, refreshToken)
-      // Access token is not, but we have a refresh token
+      // Access token is not valid, but we have a refresh token
       const token = {accessToken, refreshToken, expiresAt: null}
       const newToken = await this.#client.refreshToken(token).catch(cause => {
         throw new InvalidCredentialsError('Failed to refresh token', {
           cause: [cause, error]
         })
       })
-      await verify<User>(newToken.accessToken, key, {
+      const key = selectKey(jwks, newToken.accessToken)
+      const user = await verify<JWTPayload & User>(newToken.accessToken, key, {
         clockTolerance: 30
       }).catch(cause => {
         throw new InvalidCredentialsError('Failed to verify user', {
           cause: [cause, error]
         })
       })
+      this.#validateClaims?.(user)
       // Respond with 401 and instruct the client to retry request
       throw Response.json(
         {type: AuthResultType.NeedsRefresh},
