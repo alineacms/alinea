@@ -57,7 +57,7 @@ const selectUser = {
   ...UserTable,
   roles: include(
     new Builder()
-      .select()
+      .select(UserRoleTable.role)
       .from(UserRoleTable)
       .where(eq(UserRoleTable.userId, UserTable.id))
   )
@@ -245,15 +245,14 @@ interface UserRow {
   id: number
   email: string
   name: string | null
-  roles: Array<{role: string}>
+  roles: Array<string>
 }
 
 function userFromRow(row: UserRow): User {
   return {
+    ...row,
     sub: row.email,
-    email: row.email,
-    name: row.name ?? undefined,
-    roles: row.roles.map(role => role.role)
+    name: row.name ?? undefined
   }
 }
 
