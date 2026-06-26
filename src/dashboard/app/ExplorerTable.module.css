@@ -27,7 +27,7 @@
   border-collapse: collapse;
 
   &[data-drop-target]::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     z-index: 10;
@@ -82,7 +82,7 @@
   cursor: pointer;
 
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     right: 0;
     bottom: 0;
@@ -119,7 +119,7 @@
 .ExplorerTable-cell-selection {
   box-sizing: border-box;
   display: flex;
-  width: 30px;
+  width: 44px;
   height: 44px;
   padding: 0 8px;
   align-items: center;
@@ -133,9 +133,9 @@
   display: flex;
   min-width: 0;
   height: 44px;
-  padding: 0 12px 0 0;
+  padding: 5px 10px;
   align-items: center;
-  gap: 3px;
+  gap: 8px;
   overflow: hidden;
   border: 0;
   white-space: nowrap;
@@ -209,6 +209,38 @@
   white-space: nowrap;
 }
 
+.ExplorerTable-breadcrumbs {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ExplorerTable-breadcrumb {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.ExplorerTable-breadcrumb-root {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ExplorerTable-breadcrumb-label {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .ExplorerTable-field {
   display: flex;
   flex-direction: column;
@@ -222,6 +254,7 @@
   font-size: 12px;
   line-height: 1.2;
   vertical-align: middle;
+  height: 100%;
 }
 
 .ExplorerTable-field-label {
@@ -242,6 +275,8 @@
   display: inline-flex;
   align-items: center;
   flex: 0 1 auto;
+  font-size: 13px;
+  line-height: 1.3;
   min-width: 0;
   width: 100%;
   max-width: 100%;
