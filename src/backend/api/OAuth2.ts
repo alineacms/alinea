@@ -152,7 +152,8 @@ export class OAuth2 implements AuthApi {
                   value: codeVerifier,
                   path: redirectUri.pathname,
                   secure: redirectUri.protocol === 'https:',
-                  httpOnly: true
+                  httpOnly: true,
+                  sameSite: 'lax'
                 })
               }
             }
@@ -282,7 +283,8 @@ function clearCookies(redirectUri: URL): string {
       expires: new Date(0),
       path: '/',
       secure: redirectUri.protocol === 'https:',
-      httpOnly: true
+      httpOnly: true,
+      sameSite: 'lax'
     },
     {
       name: COOKIE_REFRESH_TOKEN,
@@ -305,7 +307,8 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
       expires: token.expiresAt ? new Date(token.expiresAt) : undefined,
       path: '/',
       secure: redirectUri.protocol === 'https:',
-      httpOnly: true
+      httpOnly: true,
+      sameSite: 'lax'
     },
     {
       name: COOKIE_REFRESH_TOKEN,
