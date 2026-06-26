@@ -31,7 +31,7 @@ type JWTHeader = {
   [key: string]: any
 }
 
-export type JWTPayload = {
+export type JWTRegisteredClaims = {
   iss?: string
   sub?: string
   aud?: string | string[]
@@ -39,8 +39,9 @@ export type JWTPayload = {
   nbf?: number
   iat?: number
   jti?: string
-  [key: string]: unknown
 }
+
+export type JWTPayload = JWTRegisteredClaims & Record<string, unknown>
 
 type JWT = {
   header: JWTHeader
@@ -112,8 +113,8 @@ export type SignOptions = {
  * @param options - Options for signing, including algorithm and header.
  * @returns The signed JWT as a string.
  */
-export async function sign(
-  payload: JWTPayload,
+export async function sign<Payload extends object>(
+  payload: Payload & JWTRegisteredClaims,
   secret: string | JsonWebKey,
   options: SignOptions = {algorithm: 'HS256'}
 ): Promise<string> {
@@ -223,8 +224,8 @@ export async function verify(
   )
   if (!isValid) throw new Error('Invalid signature')
 
-  const clockTimestamp = options.clockTimestamp || Math.floor(Date.now() / 1000)
-  const clockTolerance = options.clockTolerance || 0
+  const clockTimestamp = options.clockTimestamp ?? Math.floor(Date.now() / 1000)
+  const clockTolerance = options.clockTolerance ?? 0
 
   if ('nbf' in payload) {
     const nbf = payload.nbf
@@ -255,6 +256,8 @@ export function decode(token: string): JWT {
   const payload = JSON.parse(
     textDecoder.decode(base64url.parse(parts[1], {loose: true}))
   )
+  if (typeof payload !== 'object' || payload === null)
+    throw new Error('Invalid payload')
   const signature = base64url.parse(parts[2], {loose: true})
   return {header, payload, signature}
 }

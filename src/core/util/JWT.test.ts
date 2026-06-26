@@ -73,7 +73,7 @@ test('verify with PEM string triggers pkcs8 branch', async () => {
     const token = await sign(payload, pem, {algorithm: 'HS256'})
     await verify(token, pem, {algorithms: ['HS256']})
     test.ok(true) // If it doesn't throw, branch is covered
-  } catch (e) {
+  } catch {
     test.ok(true) // Accept error, just want branch coverage
   }
 })
@@ -86,7 +86,7 @@ test('importKey with PEM string', async () => {
   try {
     await importKey(pem, {name: 'HMAC', hash: {name: 'SHA-256'}}, 'sign')
     test.ok(true)
-  } catch (e) {
+  } catch {
     test.ok(true) // Accept error, just want branch coverage
   }
 })
@@ -173,7 +173,7 @@ test('verify errors', async () => {
   )
 
   // nbf and exp errors (signed tokens)
-  const payloadNbf = {...example1.payload, nbf: 'bad'}
+  const payloadNbf: any = {...example1.payload, nbf: 'bad'}
   const nbfToken = await sign(payloadNbf, example1.secret, {
     algorithm: example1.alg,
     header: example1.header
@@ -182,7 +182,7 @@ test('verify errors', async () => {
     () => verify(nbfToken, example1.secret),
     'Invalid nbf value'
   )
-  const payloadExp = {...example1.payload, exp: 'bad'}
+  const payloadExp: any = {...example1.payload, exp: 'bad'}
   const expToken = await sign(payloadExp, example1.secret, {
     algorithm: example1.alg,
     header: example1.header
