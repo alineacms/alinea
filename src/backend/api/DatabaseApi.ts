@@ -70,9 +70,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   constructor(context: RequestContext, {db}: DatabaseOptions) {
     this.#context = context
     this.#db = PLazy.from(async () => {
-      await db
-        .create(DraftTable, UploadTable, UserTable, UserRoleTable)
-        .catch(() => {})
+      await db.migrate(DraftTable, UploadTable, UserTable, UserRoleTable)
       return db
     })
   }
