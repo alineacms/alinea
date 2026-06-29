@@ -1,5 +1,3 @@
-import type {LocalConnection} from '#/core/Connection.js'
-import {localUser} from '#/core/User.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {
   Dashboard,
@@ -8,6 +6,7 @@ import {
 } from '#/dashboard/store.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {views} from '#/field/views.js'
+import {createTestConnection} from '#test/CreateConnection.js'
 import '#/theme.css'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
@@ -26,59 +25,7 @@ const emptyStyle: CSSProperties = {
   color: 'var(--alinea-fg-muted)'
 }
 
-const fixtureConnection: LocalConnection = {
-  mutate(mutations) {
-    return db.mutate(mutations)
-  },
-  previewToken() {
-    return Promise.resolve('dev-preview-token')
-  },
-  resolve(query) {
-    return db.resolve(query)
-  },
-  user() {
-    return Promise.resolve(localUser)
-  },
-  enrichUser(user) {
-    return Promise.resolve(user)
-  },
-  listUsers() {
-    return Promise.resolve([localUser])
-  },
-  createUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
-  },
-  updateUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
-  },
-  removeUser() {
-    return Promise.resolve()
-  },
-  write(request) {
-    return db.write(request)
-  },
-  getTreeIfDifferent(sha) {
-    return db.getTreeIfDifferent(sha)
-  },
-  getBlobs(shas) {
-    return db.getBlobs(shas)
-  },
-  revisions(file) {
-    return db.revisions(file)
-  },
-  revisionData(file, revisionId) {
-    return db.revisionData(file, revisionId)
-  },
-  getDraft() {
-    return Promise.resolve(undefined)
-  },
-  storeDraft() {
-    return Promise.resolve()
-  },
-  prepareUpload(file) {
-    return db.prepareUpload(file)
-  }
-}
+const fixtureConnection = createTestConnection(db)
 
 const dashboard = new Dashboard(
   db,

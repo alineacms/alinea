@@ -102,7 +102,12 @@ export function createHandler({
 
       if (action === HandleAction.Capabilities && request.method === 'GET') {
         expectJson()
-        return Response.json(await cnx.capabilities())
+        const capabilities = cnx.capabilities
+        return Response.json(
+          capabilities
+            ? await capabilities()
+            : {users: typeof cnx.listUsers === 'function'}
+        )
       }
 
       if (action === HandleAction.Upload && request.method === 'GET') {

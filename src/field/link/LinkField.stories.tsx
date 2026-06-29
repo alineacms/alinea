@@ -1,10 +1,8 @@
 import {Button, DialogTrigger} from '#/components.js'
-import type {LocalConnection} from '#/core/Connection.js'
 import {Field} from '#/core/Field.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
-import {localUser} from '#/core/User.js'
 import {ExternalLinkPicker} from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
@@ -15,6 +13,7 @@ import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
+import {createTestConnection} from '#test/CreateConnection.js'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import {views} from '../views.js'
@@ -99,59 +98,7 @@ const pickerStoryStyle: CSSProperties = {
   padding: 24
 }
 
-const fixtureConnection: LocalConnection = {
-  mutate(mutations) {
-    return db.mutate(mutations)
-  },
-  previewToken() {
-    return Promise.resolve('dev-preview-token')
-  },
-  resolve(query) {
-    return db.resolve(query)
-  },
-  user() {
-    return Promise.resolve(localUser)
-  },
-  enrichUser(user) {
-    return Promise.resolve(user)
-  },
-  listUsers() {
-    return Promise.resolve([localUser])
-  },
-  createUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
-  },
-  updateUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
-  },
-  removeUser() {
-    return Promise.resolve()
-  },
-  write(request) {
-    return db.write(request)
-  },
-  getTreeIfDifferent(sha) {
-    return db.getTreeIfDifferent(sha)
-  },
-  getBlobs(shas) {
-    return db.getBlobs(shas)
-  },
-  revisions(file) {
-    return db.revisions(file)
-  },
-  revisionData(file, revisionId) {
-    return db.revisionData(file, revisionId)
-  },
-  getDraft() {
-    return Promise.resolve(undefined)
-  },
-  storeDraft() {
-    return Promise.resolve()
-  },
-  prepareUpload(file) {
-    return db.prepareUpload(file)
-  }
-}
+const fixtureConnection = createTestConnection(db)
 
 const dashboard = new Dashboard(
   db,

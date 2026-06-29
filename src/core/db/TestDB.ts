@@ -3,6 +3,10 @@ import {type User, type UserInput, localUser} from '../User.js'
 import {LocalDB} from './LocalDB.js'
 
 export class TestDB extends LocalDB implements LocalConnection {
+  async capabilities() {
+    return {users: true}
+  }
+
   async previewToken(): Promise<string> {
     return 'dev'
   }
