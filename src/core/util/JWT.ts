@@ -31,7 +31,17 @@ type JWTHeader = {
   [key: string]: any
 }
 
-type JWTPayload = Record<string, any>
+export type JWTRegisteredClaims = {
+  iss?: string
+  sub?: string
+  aud?: string | string[]
+  exp?: number
+  nbf?: number
+  iat?: number
+  jti?: string
+}
+
+export type JWTPayload = JWTRegisteredClaims & Record<string, unknown>
 
 type JWT = {
   header: JWTHeader
@@ -103,8 +113,8 @@ export type SignOptions = {
  * @param options - Options for signing, including algorithm and header.
  * @returns The signed JWT as a string.
  */
-export async function sign(
-  payload: JWTPayload,
+export async function sign<Payload extends object>(
+  payload: Payload & JWTRegisteredClaims,
   secret: string | JsonWebKey,
   options: SignOptions = {algorithm: 'HS256'}
 ): Promise<string> {
@@ -214,18 +224,20 @@ export async function verify(
   )
   if (!isValid) throw new Error('Invalid signature')
 
-  const clockTimestamp = options.clockTimestamp || Math.floor(Date.now() / 1000)
-  const clockTolerance = options.clockTolerance || 0
+  const clockTimestamp = options.clockTimestamp ?? Math.floor(Date.now() / 1000)
+  const clockTolerance = options.clockTolerance ?? 0
 
-  const nbf = payload.nbf
-  if (nbf && typeof nbf !== 'number') throw new Error('Invalid nbf value')
-  if (payload.nbf > clockTimestamp + clockTolerance)
-    throw new Error('Token not yet valid')
-  const exp = payload.exp
-  if (exp && typeof payload.exp !== 'number')
-    throw new Error('Invalid exp value')
-  if (clockTimestamp >= payload.exp + clockTolerance)
-    throw new Error('Token expired')
+  if ('nbf' in payload) {
+    const nbf = payload.nbf
+    if (typeof nbf !== 'number') throw new Error('Invalid nbf value')
+    if (nbf > clockTimestamp + clockTolerance)
+      throw new Error('Token not yet valid')
+  }
+  if ('exp' in payload) {
+    const exp = payload.exp
+    if (typeof exp !== 'number') throw new Error('Invalid exp value')
+    if (clockTimestamp >= exp + clockTolerance) throw new Error('Token expired')
+  }
 
   return payload
 }
@@ -244,6 +256,8 @@ export function decode(token: string): JWT {
   const payload = JSON.parse(
     textDecoder.decode(base64url.parse(parts[1], {loose: true}))
   )
+  if (typeof payload !== 'object' || payload === null)
+    throw new Error('Invalid payload')
   const signature = base64url.parse(parts[2], {loose: true})
   return {header, payload, signature}
 }

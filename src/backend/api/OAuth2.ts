@@ -1,34 +1,38 @@
-import {Request, Response} from '@alinea/iso'
+import { Request, Response } from "@alinea/iso";
 import {
   generateCodeVerifier,
   OAuth2Client,
-  type OAuth2Token
-} from '@badgateway/oauth2-client'
-import {AuthResultType} from '#/cloud/AuthResult.js'
-import {Config} from '#/core/Config.js'
-import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
-import {HttpError} from '#/core/HttpError.js'
-import {createId} from '#/core/Id.js'
-import {outcome} from '#/core/Outcome.js'
-import type {User} from '#/core/User.js'
-import {assert} from '#/core/util/Assert.js'
-import {decode, verify} from '#/core/util/JWT.js'
-import {parse} from 'cookie-es'
-import PLazy from 'p-lazy'
+  type OAuth2Token,
+} from "@badgateway/oauth2-client";
+import { AuthResultType } from "#/cloud/AuthResult.js";
+import { Config } from "#/core/Config.js";
+import type {
+  AuthApi,
+  AuthedContext,
+  RequestContext,
+} from "#/core/Connection.js";
+import { HttpError } from "#/core/HttpError.js";
+import { createId } from "#/core/Id.js";
+import { outcome } from "#/core/Outcome.js";
+import type { User } from "#/core/User.js";
+import { assert } from "#/core/util/Assert.js";
+import { decode, JWTPayload, verify } from "#/core/util/JWT.js";
+import { parse } from "cookie-es";
+import PLazy from "p-lazy";
 import {
   AuthAction,
   InvalidCredentialsError,
-  MissingCredentialsError
-} from '../Auth.js'
-import {router} from '../router/Router.js'
+  MissingCredentialsError,
+} from "../Auth.js";
+import { router } from "../router/Router.js";
 
-type JWKS = {keys: Array<JsonWebKey & {kid: string}>}
+type JWKS = { keys: Array<JsonWebKey & { kid: string }> };
 
 export interface OAuth2Options {
   /**
    * OAuth2 clientId
    */
-  clientId: string
+  clientId: string;
 
   /**
    * OAuth2 clientSecret
@@ -37,276 +41,315 @@ export interface OAuth2Options {
    * for the client_credentials and password flows, but not authorization_code
    * or implicit.
    */
-  clientSecret?: string
+  clientSecret?: string;
 
   /**
    * The JSON Web Key Set (JWKS) URI.
    */
-  jwksUri: string
+  jwksUri: string;
 
   /**
    * The /authorize endpoint.
    *
    * Required only for the browser-portion of the authorization_code flow.
    */
-  authorizationEndpoint: string
+  authorizationEndpoint: string;
 
   /**
    * The token endpoint.
    *
    * Required for most grant types and refreshing tokens.
    */
-  tokenEndpoint: string
+  tokenEndpoint: string;
 
   /**
    * Revocation endpoint.
    *
    * Required for revoking tokens. Not supported by all servers.
    */
-  revocationEndpoint?: string
+  revocationEndpoint?: string;
+
+  /**
+   * Extra claims to validate, such as `iss` or `aud`,
+   * If the claims are invalid, an error should be thrown.
+   */
+  validateClaims?(claims: JWTPayload): void;
 }
 
-const COOKIE_VERIFIER = 'alinea.cv'
-const COOKIE_ACCESS_TOKEN = 'alinea.at'
-const COOKIE_REFRESH_TOKEN = 'alinea.rt'
+const COOKIE_VERIFIER = "alinea.cv";
+const COOKIE_ACCESS_TOKEN = "alinea.at";
+const COOKIE_REFRESH_TOKEN = "alinea.rt";
 
 export class OAuth2 implements AuthApi {
-  #context: RequestContext
-  #config: Config
-  #client: OAuth2Client
-  #jwks: Promise<Array<JsonWebKey & {kid: string}>>
+  #context: RequestContext;
+  #config: Config;
+  #client: OAuth2Client;
+  #jwks: Promise<Array<JsonWebKey & { kid: string }>>;
+  #validateClaims?: OAuth2Options["validateClaims"];
 
   constructor(context: RequestContext, config: Config, options: OAuth2Options) {
-    this.#context = context
-    this.#config = config
+    this.#context = context;
+    this.#config = config;
+    this.#validateClaims = options.validateClaims;
     this.#client = new OAuth2Client({
       ...options,
-      authenticationMethod: 'client_secret_basic_interop',
+      authenticationMethod: "client_secret_basic_interop",
       fetch: (async (input, init) => {
-        const request = new Request(input, init)
-        const response = await fetch(request)
+        const request = new Request(input, init);
+        const response = await fetch(request);
         if (!response.ok) {
-          const text = await response.text()
-          throw new HttpError(response.status, text)
+          const text = await response.text();
+          throw new HttpError(response.status, text);
         }
-        return response
-      }) as typeof fetch
-    })
-    const loadJwks = async (): Promise<Array<JsonWebKey & {kid: string}>> => {
+        return response;
+      }) as typeof fetch,
+    });
+    const loadJwks = async (): Promise<Array<JsonWebKey & { kid: string }>> => {
       try {
-        const res = await fetch(options.jwksUri)
+        const res = await fetch(options.jwksUri);
         if (res.status !== 200)
-          throw new HttpError(res.status, await res.text())
-        const jwks: JWKS = await res.json()
-        return jwks.keys
+          throw new HttpError(res.status, await res.text());
+        const jwks: JWKS = await res.json();
+        return jwks.keys;
       } catch (cause) {
-        this.#jwks = PLazy.from(loadJwks)
-        throw new Error('Remote unavailable', {cause})
+        this.#jwks = PLazy.from(loadJwks);
+        throw new Error("Remote unavailable", { cause });
       }
-    }
-    this.#jwks = PLazy.from(loadJwks)
+    };
+    this.#jwks = PLazy.from(loadJwks);
   }
 
   get #redirectUri(): URL {
-    const url = new URL(this.#context.handlerUrl)
-    url.searchParams.set('auth', 'login')
-    return url
+    const url = new URL(this.#context.handlerUrl);
+    url.searchParams.set("auth", "login");
+    return url;
   }
 
   async authenticate(request: Request): Promise<Response> {
     try {
-      const url = new URL(request.url)
-      const action = url.searchParams.get('auth')
-      const redirectUri = this.#redirectUri
+      const url = new URL(request.url);
+      const action = url.searchParams.get("auth");
+      const redirectUri = this.#redirectUri;
       switch (action) {
         case AuthAction.Status: {
-          const [ctx, err] = await outcome(this.verify(request))
-          if (err instanceof Response) return err
+          const [ctx, err] = await outcome(this.verify(request));
+          if (err instanceof Response) return err;
           if (ctx) {
             return Response.json({
               type: AuthResultType.Authenticated,
-              user: ctx.user
-            })
+              user: ctx.user,
+            });
           }
-          const codeVerifier = await generateCodeVerifier()
-          const state = createId()
+          const codeVerifier = await generateCodeVerifier();
+          const state = createId();
           const redirectUrl =
             await this.#client.authorizationCode.getAuthorizeUri({
               redirectUri: redirectUri.toString(),
               state,
-              codeVerifier
-            })
+              codeVerifier,
+            });
           return Response.json(
             {
               type: AuthResultType.UnAuthenticated,
-              redirect: redirectUrl
+              redirect: redirectUrl,
             },
             {
               headers: {
-                'set-cookie': router.cookie({
+                "set-cookie": router.cookie({
                   name: COOKIE_VERIFIER,
                   value: codeVerifier,
                   path: redirectUri.pathname,
-                  secure: redirectUri.protocol === 'https:',
-                  httpOnly: true
-                })
-              }
-            }
-          )
+                  secure: redirectUri.protocol === "https:",
+                  httpOnly: true,
+                  sameSite: "lax",
+                }),
+              },
+            },
+          );
         }
         case AuthAction.Login: {
-          const code = url.searchParams.get('code')
-          const state = url.searchParams.get('state')
+          const code = url.searchParams.get("code");
+          const state = url.searchParams.get("state");
           if (!code || !state)
-            throw new HttpError(400, 'Missing code or state parameter')
-          const cookieHeader = request.headers.get('cookie')
-          if (!cookieHeader) throw new HttpError(400, 'Missing cookies')
-          const {[COOKIE_VERIFIER]: codeVerifier} = parse(cookieHeader)
+            throw new HttpError(400, "Missing code or state parameter");
+          const cookieHeader = request.headers.get("cookie");
+          if (!cookieHeader) throw new HttpError(400, "Missing cookies");
+          const { [COOKIE_VERIFIER]: codeVerifier } = parse(cookieHeader);
           if (!codeVerifier)
-            throw new HttpError(400, 'Missing code verifier cookie')
+            throw new HttpError(400, "Missing code verifier cookie");
           const token = await this.#client.authorizationCode.getToken({
             redirectUri: redirectUri.toString(),
             code,
-            codeVerifier
-          })
-          assert(token.refreshToken, 'Missing refresh token in response')
+            codeVerifier,
+          });
+          assert(token.refreshToken, "Missing refresh token in response");
 
-          const config = this.#config
-          let dashboardPath = Config.adminPath(config)
-          if (!dashboardPath.startsWith('/'))
-            dashboardPath = `/${dashboardPath}`
-          const dashboardUrl = new URL(dashboardPath, url)
+          const config = this.#config;
+          let dashboardPath = Config.adminPath(config);
+          if (!dashboardPath.startsWith("/"))
+            dashboardPath = `/${dashboardPath}`;
+          const dashboardUrl = new URL(dashboardPath, url);
           return router.redirect(dashboardUrl, {
             headers: {
-              'set-cookie': tokenToCookie(token, redirectUri)
-            }
-          })
+              "set-cookie": tokenToCookie(token, redirectUri),
+            },
+          });
         }
         case AuthAction.Logout: {
-          const cookieHeader = request.headers.get('cookie')
-          if (!cookieHeader) throw new HttpError(400, 'Missing cookies')
-          const cookies = parse(cookieHeader)
-          const accessToken = cookies[COOKIE_ACCESS_TOKEN]
-          const refreshToken = cookies[COOKIE_REFRESH_TOKEN]
-          const token = {accessToken, refreshToken, expiresAt: null}
-          await this.#client.revoke(token).catch(() => {})
+          const cookieHeader = request.headers.get("cookie");
+          if (!cookieHeader) throw new HttpError(400, "Missing cookies");
+          const cookies = parse(cookieHeader);
+          const accessToken = cookies[COOKIE_ACCESS_TOKEN];
+          const refreshToken = cookies[COOKIE_REFRESH_TOKEN];
+          const token = { accessToken, refreshToken, expiresAt: null };
+          await this.#client.revoke(token).catch(() => {});
           return new Response(undefined, {
             status: 204,
             headers: {
-              'set-cookie': clearCookies(redirectUri)
-            }
-          })
+              "set-cookie": clearCookies(redirectUri),
+            },
+          });
         }
         default:
-          return new Response('Bad request', {status: 400})
+          return new Response("Bad request", { status: 400 });
       }
     } catch (error) {
       if (error instanceof HttpError)
-        return new Response(error.message, {status: error.code})
+        return new Response(error.message, { status: error.code });
       return Response.json(
-        error instanceof Error ? error.message : 'Unknown error',
-        {status: 401}
-      )
+        error instanceof Error ? error.message : "Unknown error",
+        { status: 401 },
+      );
     }
   }
 
   async verify(request: Request): Promise<AuthedContext> {
-    const ctx = this.#context
-    const cookieHeader = request.headers.get('cookie')
-    if (!cookieHeader) throw new MissingCredentialsError('Missing cookies')
+    const ctx = this.#context;
+    const cookieHeader = request.headers.get("cookie");
+    if (!cookieHeader) throw new MissingCredentialsError("Missing cookies");
     const {
       [COOKIE_ACCESS_TOKEN]: accessToken,
-      [COOKIE_REFRESH_TOKEN]: refreshToken
-    } = parse(cookieHeader)
-    const jwks = await this.#jwks
+      [COOKIE_REFRESH_TOKEN]: refreshToken,
+    } = parse(cookieHeader);
+    const jwks = await this.#jwks;
     try {
       if (!accessToken)
-        throw new MissingCredentialsError('Missing access token cookie')
-      const key = selectKey(jwks, accessToken)
-      const user = await verify<User & {exp: number}>(accessToken, key)
-      const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
+        throw new MissingCredentialsError("Missing access token cookie");
+      const key = selectKey(jwks, accessToken);
+      const user = await verify<JWTPayload & User>(accessToken, key);
+      this.#validateClaims?.(user);
+      assert(user.exp, "Missing exp claim in access token");
+      const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30;
       if (expiresSoon && refreshToken)
-        throw new InvalidCredentialsError('Access token will expire soon') // Trigger refresh
-      return {...ctx, user, token: accessToken}
+        throw new InvalidCredentialsError("Access token will expire soon"); // Trigger refresh
+      return { ...ctx, user, token: accessToken };
     } catch (error) {
-      if (!refreshToken) throw error
-      const key = selectKey(jwks, refreshToken)
-      const [, failed] = await outcome(verify(refreshToken, key))
-      if (failed)
-        throw new InvalidCredentialsError('Invalid refresh token', {
-          cause: [failed, error]
-        })
-      // Refresh token is valid, but access token is not
-      const token = {accessToken, refreshToken, expiresAt: null}
-      const newToken = await this.#client.refreshToken(token).catch(cause => {
-        throw new InvalidCredentialsError('Failed to refresh token', {
-          cause: [cause, error]
-        })
-      })
-      await verify<User>(newToken.accessToken, key, {
-        clockTolerance: 30
-      }).catch(cause => {
-        throw new InvalidCredentialsError('Failed to verify user', {
-          cause: [cause, error]
-        })
-      })
+      if (!refreshToken) throw error;
+      // Access token is not valid, but we have a refresh token
+      const token = { accessToken, refreshToken, expiresAt: null };
+      const newToken = await this.#client.refreshToken(token).catch((cause) => {
+        throw new InvalidCredentialsError("Failed to refresh token", {
+          cause: [cause, error],
+        });
+      });
+      const key = selectKey(jwks, newToken.accessToken);
+      const user = await verify<JWTPayload & User>(newToken.accessToken, key, {
+        clockTolerance: 30,
+      }).catch((cause) => {
+        throw new InvalidCredentialsError("Failed to verify user", {
+          cause: [cause, error],
+        });
+      });
+      this.#validateClaims?.(user);
       // Respond with 401 and instruct the client to retry request
       throw Response.json(
-        {type: AuthResultType.NeedsRefresh},
+        { type: AuthResultType.NeedsRefresh },
         {
           status: 401,
           headers: {
-            'set-cookie': tokenToCookie(newToken, this.#redirectUri)
-          }
-        }
-      )
+            "set-cookie": tokenToCookie(newToken, this.#redirectUri),
+          },
+        },
+      );
     }
   }
 }
 
 function selectKey(
-  jwks: Array<JsonWebKey & {kid: string}>,
-  token: string
+  jwks: Array<JsonWebKey & { kid: string }>,
+  token: string,
 ): JsonWebKey {
-  const kid = decode(token).header.kid
-  if (!kid) return jwks[0]
-  const key = jwks.find(k => k.kid === kid)
-  if (!key) throw new Error(`No key found for kid: ${kid}`)
-  return key
+  const { header } = decode(token);
+  const kid = header.kid;
+  const alg = header.alg;
+
+  // Token has no Key ID
+  if (!kid) {
+    // If the provider only publishes exactly one key, it's safe to assume it's the right one
+    if (jwks.length === 1) {
+      const key = jwks[0];
+      // Ensure the key type and algorithm match what the token claims to use
+      if (key.alg && alg && key.alg !== alg) {
+        throw new Error(
+          `Algorithm mismatch: token uses ${alg}, but key specifies ${key.alg}`,
+        );
+      }
+      return key;
+    }
+
+    // If there are multiple keys and no kid, it is cryptographically ambiguous
+    throw new Error(
+      'Token is missing "kid" header, and JWKS contains multiple keys',
+    );
+  }
+
+  // Token has a Key ID, find the exact match
+  const key = jwks.find((k) => k.kid === kid);
+  if (!key) throw new Error(`No key found for kid: ${kid}`);
+
+  // Verify the algorithm matches to prevent algorithm confusion
+  if (key.alg && alg && key.alg !== alg)
+    throw new Error(
+      `Algorithm mismatch: token uses ${alg}, but key specifies ${key.alg}`,
+    );
+
+  return key;
 }
 
 function clearCookies(redirectUri: URL): string {
   return router.cookie(
     {
       name: COOKIE_ACCESS_TOKEN,
-      value: '',
+      value: "",
       expires: new Date(0),
-      path: '/',
-      secure: redirectUri.protocol === 'https:',
-      httpOnly: true
+      path: "/",
+      secure: redirectUri.protocol === "https:",
+      httpOnly: true,
+      sameSite: "lax",
     },
     {
       name: COOKIE_REFRESH_TOKEN,
-      value: '',
+      value: "",
       expires: new Date(0),
       path: redirectUri.pathname,
-      secure: redirectUri.protocol === 'https:',
+      secure: redirectUri.protocol === "https:",
       httpOnly: true,
-      sameSite: 'strict'
-    }
-  )
+      sameSite: "strict",
+    },
+  );
 }
 
 function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
-  assert(token.refreshToken, 'Missing refresh token in response')
+  assert(token.refreshToken, "Missing refresh token in response");
   return router.cookie(
     {
       name: COOKIE_ACCESS_TOKEN,
       value: token.accessToken,
       expires: token.expiresAt ? new Date(token.expiresAt) : undefined,
-      path: '/',
-      secure: redirectUri.protocol === 'https:',
-      httpOnly: true
+      path: "/",
+      secure: redirectUri.protocol === "https:",
+      httpOnly: true,
+      sameSite: "lax",
     },
     {
       name: COOKIE_REFRESH_TOKEN,
@@ -314,9 +357,9 @@ function tokenToCookie(token: OAuth2Token, redirectUri: URL): string {
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       // TODO: make sure we can create a separate path to do refreshes
       path: redirectUri.pathname,
-      secure: redirectUri.protocol === 'https:',
+      secure: redirectUri.protocol === "https:",
       httpOnly: true,
-      sameSite: 'strict'
-    }
-  )
+      sameSite: "strict",
+    },
+  );
 }
