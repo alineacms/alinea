@@ -1,6 +1,5 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
-import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
@@ -70,9 +69,17 @@ export function createBackend(
 export function createRemote(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
+  const hasMethod = (name: keyof RemoteConnection): boolean => {
+    return impl.some(i => typeof i[name] === 'function')
+  }
   const fallback: Partial<RemoteConnection> = {
-    enrichUser(user: User) {
-      return Promise.resolve(user)
+    async enrichUser(user) {
+      return user
+    },
+    async capabilities() {
+      return {
+        users: hasMethod('listUsers')
+      }
     }
   }
   const reversed = impl.reverse().concat(fallback)
@@ -87,6 +94,7 @@ export function createRemote(
   return {
     authenticate: call('authenticate'),
     verify: call('verify'),
+    capabilities: call('capabilities'),
     getTreeIfDifferent: call('getTreeIfDifferent'),
     getBlobs: call('getBlobs'),
     write: call('write'),

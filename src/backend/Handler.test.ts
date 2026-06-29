@@ -4,7 +4,7 @@ import {createCMS} from '#/core.js'
 import type {AuthedContext, RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {role} from '#/core/Role.js'
-import type {User, UserInput} from '#/core/User.js'
+import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
 import {suite} from '@alinea/suite'
 
@@ -80,8 +80,62 @@ test('requires member management capability for user management', async () => {
   test.is(listCalls, 1)
 })
 
+test('reports missing user api capability without listUsers', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return createRemote({})
+    }
+  })
+
+  const response = await handle(capabilitiesRequest(), requestContext())
+  test.is(response.status, 200)
+  test.equal(await response.json(), {
+    users: false
+  })
+})
+
+test('reports user api capability when listUsers exists', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return createRemote({
+        async listUsers(): Promise<Array<User>> {
+          return []
+        }
+      })
+    }
+  })
+
+  const response = await handle(capabilitiesRequest(), requestContext())
+  test.is(response.status, 200)
+  test.equal(await response.json(), {
+    users: true
+  })
+})
+
 function userRequest(operation: string): Request {
   return new Request(`http://localhost/api?action=user&operation=${operation}`, {
+    headers: {
+      accept: 'application/json'
+    }
+  })
+}
+
+function capabilitiesRequest(): Request {
+  return new Request('http://localhost/api?action=capabilities', {
     headers: {
       accept: 'application/json'
     }

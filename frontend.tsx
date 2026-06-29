@@ -11,32 +11,35 @@ import {cms, db} from './src/dashboard/fixture/cms.ts?alinea'
 
 const elem = document.getElementById('root')!
 const fixtureConnection: LocalConnection = {
+  async capabilities() {
+    return {users: true}
+  },
   mutate(mutations) {
     return db.mutate(mutations)
   },
-  previewToken() {
-    return Promise.resolve('dev-preview-token')
+  async previewToken() {
+    return 'dev-preview-token'
   },
   resolve(query) {
     return db.resolve(query)
   },
-  user() {
-    return Promise.resolve(localUser)
+  async user() {
+    return localUser
   },
-  enrichUser(user) {
-    return Promise.resolve(user)
+  async enrichUser(user) {
+    return user
   },
-  listUsers() {
-    return Promise.resolve([localUser])
+  async listUsers() {
+    return [localUser]
   },
-  createUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
+  async createUser(user) {
+    return {...user, sub: user.sub ?? user.email ?? 'user'}
   },
-  updateUser(user) {
-    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
+  async updateUser(user) {
+    return {...user, sub: user.sub ?? user.email ?? 'user'}
   },
-  removeUser() {
-    return Promise.resolve()
+  async removeUser() {
+    return
   },
   write(request) {
     return db.write(request)
@@ -53,11 +56,11 @@ const fixtureConnection: LocalConnection = {
   revisionData(file, revisionId) {
     return db.revisionData(file, revisionId)
   },
-  getDraft() {
-    return Promise.resolve(undefined)
+  async getDraft() {
+    return undefined
   },
-  storeDraft() {
-    return Promise.resolve()
+  async storeDraft() {
+    return
   },
   prepareUpload(file) {
     return db.prepareUpload(file)

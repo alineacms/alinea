@@ -21,13 +21,22 @@ export interface UserApi {
   removeUser(email: string): Promise<void>
 }
 
+export interface BackendCapabilities {
+  users: boolean
+}
+
+export interface CapabilitiesApi {
+  capabilities?(): Promise<BackendCapabilities>
+}
+
 export interface RemoteConnection extends Connection, AuthApi {}
 
 export interface BrowserConnection extends Connection {
   logout?(): Promise<void>
 }
 
-export interface LocalConnection extends Connection {
+export interface LocalConnection extends Connection, CapabilitiesApi {
+  capabilities(): Promise<BackendCapabilities>
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   previewToken(request: PreviewInfo): Promise<string>
   resolve<Query extends GraphQuery>(

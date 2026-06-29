@@ -4,6 +4,7 @@ import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import type {Config} from './Config.js'
 import type {
+  BackendCapabilities,
   DraftTransport,
   LocalConnection,
   Revision,
@@ -52,6 +53,12 @@ export class Client implements LocalConnection {
     })
       .then(res => this.#failOnHttpError(res, false))
       .then(endSession)
+  }
+
+  capabilities(): Promise<BackendCapabilities> {
+    return this.#requestJson({
+      action: HandleAction.Capabilities
+    }).then<BackendCapabilities>(this.#failOnHttpError)
   }
 
   previewToken(request: PreviewInfo): Promise<string> {

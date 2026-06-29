@@ -596,6 +596,13 @@ export class Dashboard {
     return typeof (client as Partial<LogoutConnection>).logout === 'function'
   })
 
+  #backendCapabilitiesResource = atom(async get => {
+    const client = get(this.client)
+    if (!client.capabilities)
+      throw new Error('Backend capabilities are not available')
+    return client.capabilities()
+  })
+
   #policyResource = atom(async get => {
     const user = await get(this.user)
     if (!user?.roles) return Policy.ALLOW_NONE
@@ -612,9 +619,11 @@ export class Dashboard {
     return !pending
   })
 
-  canManageMembers = atom(get => {
-    const [, policy] = get(this.#policyState)
-    return policy?.canManageMembers() ?? false
+  canManageMembers = atom(async get => {
+    const capabilities = await get(this.#backendCapabilitiesResource)
+    if (!capabilities.users) return false
+    const policy = await get(this.#policyResource)
+    return policy.canManageMembers()
   })
 
   #initialContentLoaded = atom(false)

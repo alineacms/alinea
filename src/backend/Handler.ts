@@ -100,6 +100,11 @@ export function createHandler({
         if (!acceptsJson) throw new Response('Expected JSON', {status: 400})
       }
 
+      if (action === HandleAction.Capabilities && request.method === 'GET') {
+        expectJson()
+        return Response.json(await cnx.capabilities())
+      }
+
       if (action === HandleAction.Upload && request.method === 'GET') {
         const entryId = url.searchParams.get('entryId')
         if (entryId && cnx.previewUpload)
@@ -171,7 +176,9 @@ export function createHandler({
           const requestUser = parseUser(await body)
           switch (operation) {
             case 'enrich':
-              return Response.json(await cnx.enrichUser(requireSub(requestUser)))
+              return Response.json(
+                await cnx.enrichUser(requireSub(requestUser))
+              )
             case 'create':
               return Response.json(await cnx.createUser(requestUser))
             case 'update':
