@@ -29,7 +29,8 @@ export interface CapabilitiesApi {
   capabilities?(): Promise<BackendCapabilities>
 }
 
-export interface RemoteConnection extends Connection, AuthApi, CapabilitiesApi {}
+export interface RemoteConnection
+  extends Connection, AuthApi, CapabilitiesApi {}
 
 export interface BrowserConnection extends Connection {
   logout?(): Promise<void>

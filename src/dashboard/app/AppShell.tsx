@@ -76,9 +76,7 @@ function NoWorkspaceAccess({
     <div className={styles.AppShellContent()}>
       <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
         <div className={styles.AppShell.empty()}>
-          <h1 className={styles.AppShell.empty.title()}>
-            No workspace access
-          </h1>
+          <h1 className={styles.AppShell.empty.title()}>No workspace access</h1>
           <p className={styles.AppShell.empty.text()}>
             Your current roles do not grant permission to read any workspace.
           </p>

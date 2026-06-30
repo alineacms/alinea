@@ -204,9 +204,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
               >
                 <Icon icon={IcRoundLogout} />
                 <span
-                  className={
-                    styles.WorkspaceRoots.profile.popover.action.label()
-                  }
+                  className={styles.WorkspaceRoots.profile.popover.action.label()}
                 >
                   Logout
                 </span>
@@ -223,9 +221,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
               >
                 <Icon icon={IcOutlineSettings} />
                 <span
-                  className={
-                    styles.WorkspaceRoots.profile.popover.action.label()
-                  }
+                  className={styles.WorkspaceRoots.profile.popover.action.label()}
                 >
                   Manage users
                 </span>

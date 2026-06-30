@@ -273,12 +273,7 @@ interface UsersTableProps {
   roleLabel: (role: string) => string | undefined
 }
 
-function UsersTable({
-  onDeactivate,
-  onEdit,
-  users,
-  roleLabel
-}: UsersTableProps) {
+function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
   return (
     <Table aria-label="Users" className={styles.UsersPage.table()}>
       <TableHeader columns={userColumns}>

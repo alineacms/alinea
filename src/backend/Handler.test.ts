@@ -127,11 +127,14 @@ test('reports user api capability when listUsers exists', async () => {
 })
 
 function userRequest(operation: string): Request {
-  return new Request(`http://localhost/api?action=user&operation=${operation}`, {
-    headers: {
-      accept: 'application/json'
+  return new Request(
+    `http://localhost/api?action=user&operation=${operation}`,
+    {
+      headers: {
+        accept: 'application/json'
+      }
     }
-  })
+  )
 }
 
 function capabilitiesRequest(): Request {
