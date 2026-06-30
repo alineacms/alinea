@@ -51,3 +51,8 @@
 .WorkspaceMenu-search {
   flex-shrink: 0;
 }
+
+.WorkspaceMenu-menuItemIcon {
+  flex: 0 0 auto;
+  font-size: 16px;
+}

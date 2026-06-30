@@ -1,53 +1,15 @@
 import {views} from '#/field/views.js'
+import {createTestConnection} from '#test/CreateConnection.js'
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
-import type {LocalConnection} from './src/core/Connection.js'
 import {MemorySource} from './src/core/source/MemorySource.js'
-import {localUser} from './src/core/User.js'
 import {App} from './src/dashboard/App.js'
 import {DashboardWorker} from './src/dashboard/boot/DashboardWorker.js'
 import {WorkerDB} from './src/dashboard/boot/WorkerDB.js'
 import {cms, db} from './src/dashboard/fixture/cms.ts?alinea'
 
 const elem = document.getElementById('root')!
-const fixtureConnection: LocalConnection = {
-  mutate(mutations) {
-    return db.mutate(mutations)
-  },
-  previewToken() {
-    return Promise.resolve('dev-preview-token')
-  },
-  resolve(query) {
-    return db.resolve(query)
-  },
-  user() {
-    return Promise.resolve(localUser)
-  },
-  write(request) {
-    return db.write(request)
-  },
-  getTreeIfDifferent(sha) {
-    return db.getTreeIfDifferent(sha)
-  },
-  getBlobs(shas) {
-    return db.getBlobs(shas)
-  },
-  revisions(file) {
-    return db.revisions(file)
-  },
-  revisionData(file, revisionId) {
-    return db.revisionData(file, revisionId)
-  },
-  getDraft() {
-    return Promise.resolve(undefined)
-  },
-  storeDraft() {
-    return Promise.resolve()
-  },
-  prepareUpload(file) {
-    return db.prepareUpload(file)
-  }
-}
+const fixtureConnection = createTestConnection(db)
 
 const sourceMutate = db.mutate.bind(db)
 

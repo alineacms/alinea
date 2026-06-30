@@ -58,6 +58,7 @@ export class BasicAuth implements AuthApi {
       typeof authorized === 'boolean'
         ? {
             sub: username,
+            email: username,
             roles: ['admin']
           }
         : authorized

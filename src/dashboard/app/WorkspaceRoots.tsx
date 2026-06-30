@@ -10,10 +10,9 @@ import {
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {useMemo} from 'react'
 import {
   IcBaselineAccountCircle,
+  IcOutlineSettings,
   IcRoundBrightness2,
   IcRoundDesktopWindows,
   IcRoundLogout,
@@ -79,11 +78,13 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
 }
 
 function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
-  const user = useAtomValue(useMemo(() => unwrap(dashboard.user), [dashboard]))
+  const user = useAtomValue(dashboard.currentUser)
+  const canManageMembers = useAtomValue(dashboard.canManageMembers)
   const config = useAtomValue(dashboard.config)
   const canLogout = useAtomValue(dashboard.canLogout)
   const [theme, setTheme] = useAtom(dashboard.theme)
   const setUserRoles = useSetAtom(dashboard.setUserRoles)
+  const setRoute = useSetAtom(dashboard.route)
   const logout = useSetAtom(dashboard.logout)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
@@ -194,17 +195,37 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
             </li>
           )}
           {canLogout && (
-            <li className={styles.WorkspaceRoots.profile.popover.item()}>
-              <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
-                Logout
-              </p>
+            <li className={styles.WorkspaceRoots.profile.popover.action()}>
               <Button
-                size="icon"
-                appearance="outline"
+                appearance="plain"
                 aria-label="Logout"
-                icon={IcRoundLogout}
+                className={styles.WorkspaceRoots.profile.popover.action.button()}
                 onPress={logout}
-              />
+              >
+                <Icon icon={IcRoundLogout} />
+                <span
+                  className={styles.WorkspaceRoots.profile.popover.action.label()}
+                >
+                  Logout
+                </span>
+              </Button>
+            </li>
+          )}
+          {canManageMembers && (
+            <li className={styles.WorkspaceRoots.profile.popover.action()}>
+              <Button
+                appearance="plain"
+                aria-label="Manage users"
+                className={styles.WorkspaceRoots.profile.popover.action.button()}
+                onPress={() => void setRoute({page: 'users'})}
+              >
+                <Icon icon={IcOutlineSettings} />
+                <span
+                  className={styles.WorkspaceRoots.profile.popover.action.label()}
+                >
+                  Manage users
+                </span>
+              </Button>
             </li>
           )}
         </ul>

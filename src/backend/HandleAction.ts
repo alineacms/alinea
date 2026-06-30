@@ -1,5 +1,6 @@
 export enum HandleAction {
   Auth = 'auth',
+  Capabilities = 'capabilities',
   User = 'user',
   Resolve = 'resolve',
   Pending = 'pending',

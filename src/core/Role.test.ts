@@ -110,6 +110,7 @@ test('admin permissions', async () => {
   test.ok(policy.canArchive(a))
   test.ok(policy.canUpload(a))
   test.ok(policy.canExplore(a))
+  test.ok(policy.canManageMembers())
 })
 
 test('editB negative checks', async () => {
@@ -123,6 +124,19 @@ test('editB negative checks', async () => {
   test.not.ok(policy.canArchive(b))
   test.not.ok(policy.canUpload(b))
   test.not.ok(policy.canExplore(b))
+  test.not.ok(policy.canManageMembers())
+})
+
+test('manage members permission', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.set({
+    allow: {
+      manageMembers: true
+    }
+  })
+
+  test.ok(policy.canManageMembers())
+  test.not.ok(policy.canRead(a))
 })
 
 test('explicitDeny negative checks', async () => {

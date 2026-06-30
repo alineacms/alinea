@@ -5,6 +5,13 @@ export interface User {
   name?: string
 }
 
+export interface UserInput {
+  sub?: string
+  roles?: Array<string>
+  email?: string
+  name?: string
+}
+
 export const localUser = {
   sub: 'local',
   name: 'Local user',

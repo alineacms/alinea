@@ -5,13 +5,15 @@ import {
   Icon as IconComp,
   Menu,
   MenuItem,
+  MenuSeparator,
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValue} from 'jotai'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {
+  IcOutlineSettings,
   IcRoundSearch,
   IcRoundUnfoldMore,
   MaterialSymbolsEditSquareOutlineRounded
@@ -50,6 +52,7 @@ interface WorkspaceAvatarProps {
 interface WorkspaceSelectorMenuProps {
   ariaLabel: string
   dashboard: Dashboard
+  includeUsersLink?: boolean
   label: ReactNode
   popoverProps?: Omit<PopoverProps, 'children'>
 }
@@ -75,19 +78,28 @@ export {WorkspaceAvatar}
 function WorkspaceSelectorMenu({
   ariaLabel,
   dashboard,
+  includeUsersLink,
   label,
   popoverProps
 }: WorkspaceSelectorMenuProps) {
   const [selected, setSelected] = useAtom(dashboard.selectedWorkspace)
+  const route = useAtomValue(dashboard.route)
+  const setRoute = useSetAtom(dashboard.route)
   const workspaces = useAtomValue(dashboard.workspaces)
-  if (workspaces.length <= 1) return label
+  if (workspaces.length <= 1 && !includeUsersLink) return label
   return (
     <Menu
       label={label}
       aria-label={ariaLabel}
       selectionMode="single"
-      selectedKeys={[selected]}
-      onAction={key => setSelected(String(key))}
+      selectedKeys={[route.page === 'users' ? 'users' : selected]}
+      onAction={key => {
+        if (key === 'users') {
+          void setRoute({page: 'users'})
+          return
+        }
+        setSelected(String(key))
+      }}
       popoverProps={popoverProps}
     >
       {workspaces.map(workspace => (
@@ -96,6 +108,16 @@ function WorkspaceSelectorMenu({
           workspace={dashboard.workspace(workspace)}
         />
       ))}
+      {includeUsersLink && <MenuSeparator />}
+      {includeUsersLink && (
+        <MenuItem id="users" textValue="Manage users">
+          <Icon
+            icon={IcOutlineSettings}
+            className={styles.WorkspaceMenu.menuItemIcon()}
+          />
+          Manage users
+        </MenuItem>
+      )}
     </Menu>
   )
 }
@@ -169,6 +191,7 @@ function SearchPopup() {
 
 export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
+  const canManageMembers = useAtomValue(dashboard.canManageMembers)
   const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
   const label = useAtomValue(workspace.label)
@@ -178,6 +201,7 @@ export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
       <WorkspaceSelectorMenu
         dashboard={dashboard}
         ariaLabel="Workspace"
+        includeUsersLink={canManageMembers}
         label={
           <AriaButton className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>

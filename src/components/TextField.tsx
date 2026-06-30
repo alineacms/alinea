@@ -1,4 +1,5 @@
 import styler from '@alinea/styler'
+import type {InputHTMLAttributes} from 'react'
 import {
   Input,
   TextArea,
@@ -16,12 +17,17 @@ export interface TextFieldProps
   rows?: number
   placeholder?: string
   className?: string
+  inputProps?: TextFieldInputProps
 }
+
+type TextFieldInputProps = InputHTMLAttributes<HTMLInputElement> &
+  Record<`data-${string}`, string | boolean | undefined>
 
 export function TextField({
   multiline,
   rows,
   className,
+  inputProps,
   ...props
 }: TextFieldProps) {
   const hasValue =
@@ -47,7 +53,10 @@ export function TextField({
             </div>
           ) : (
             <Input
-              className={styles.TextField.input()}
+              {...inputProps}
+              className={styles.TextField.input(
+                styler.merge({className: inputProps?.className})
+              )}
               placeholder={props.placeholder}
             />
           )}

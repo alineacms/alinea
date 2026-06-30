@@ -1,9 +1,3 @@
-import {Request, Response} from '@alinea/iso'
-import {
-  generateCodeVerifier,
-  OAuth2Client,
-  type OAuth2Token
-} from '@badgateway/oauth2-client'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Config} from '#/core/Config.js'
 import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
@@ -13,6 +7,12 @@ import {outcome} from '#/core/Outcome.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {decode, JWTPayload, verify} from '#/core/util/JWT.js'
+import {Request, Response} from '@alinea/iso'
+import {
+  generateCodeVerifier,
+  OAuth2Client,
+  type OAuth2Token
+} from '@badgateway/oauth2-client'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
 import {
