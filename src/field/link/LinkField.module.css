@@ -1,0 +1,189 @@
+.LinkFieldView-label {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 100%;
+}
+
+.LinkFieldView-label.is-loading {
+  min-width: 180px;
+}
+
+.LinkFieldView-label.is-missing {
+  color: var(--alinea-fg-muted);
+}
+
+.LinkFieldView-label.is-missing .LinkFieldView-imagePlaceholder {
+  animation: none;
+}
+
+.LinkFieldView-labelText {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.LinkFieldView-icon {
+  flex-shrink: 0;
+  color: var(--alinea-fg);
+  font-size: 16px;
+}
+
+.LinkFieldView-label.is-loading .LinkFieldView-labelText {
+  align-items: center;
+  width: 100%;
+}
+
+.LinkFieldView-image {
+  align-self: center;
+  aspect-ratio: 1;
+  height: 32px;
+  width: 32px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--alinea-bg-muted);
+  margin-left: -16px;
+  border-radius: 4px;
+}
+
+.LinkFieldView-imagePlaceholder {
+  align-self: center;
+  aspect-ratio: 1;
+  height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  margin-left: -16px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
+  animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
+.LinkFieldView-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alinea-fg-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.LinkFieldView-type {
+  flex: 0 1 auto;
+  max-width: 120px;
+}
+
+.LinkFieldView-previewImage,
+.LinkFieldView-previewImagePlaceholder {
+  align-self: center;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  flex-shrink: 0;
+  height: 36px;
+  margin: -2px 0;
+  margin-left: -8px;
+  margin-right: 8px;
+  width: 36px;
+}
+
+.LinkFieldView-previewImage {
+  background: var(--alinea-bg-muted);
+  object-fit: cover;
+}
+
+.LinkFieldView-previewImagePlaceholder {
+  background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
+  animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
+.LinkFieldView-meta {
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.LinkFieldView-metaLabel {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.LinkFieldView-skeleton {
+  display: inline-block;
+  width: 48px;
+  height: 10px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--alinea-fg-muted) 16%, transparent);
+  animation: LinkFieldView-skeleton-pulse 1100ms ease-in-out infinite;
+}
+
+.LinkFieldView-skeleton.is-wide {
+  width: 120px;
+}
+
+.LinkFieldView-create {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+}
+
+.LinkFieldView-createButton {
+  flex-shrink: 0;
+}
+
+.LinkFieldView-rowDropTarget {
+  display: grid;
+}
+
+.LinkFieldView-dropIndicator {
+  position: relative;
+  z-index: 2;
+  height: 8px;
+  margin: -4px 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease-out;
+}
+
+.LinkFieldView-dropIndicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  max-width: calc(100% - 20px);
+  height: 6px;
+  background: var(--alinea-primary);
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.LinkFieldView-dropIndicator[data-active] {
+  opacity: 1;
+}
+
+@keyframes LinkFieldView-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}

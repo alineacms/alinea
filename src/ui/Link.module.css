@@ -1,0 +1,22 @@
+.Link {
+  outline: none;
+  cursor: pointer;
+  color: var(--alinea-link);
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-underline-offset: 2px;
+  transition: var(--alinea-transition);
+}
+
+.Link:hover {
+  color: var(--alinea-link-hover);
+}
+
+.Link:active {
+  color: var(--alinea-link-pressed);
+}
+
+.Link:focus-visible {
+  outline: 2px solid var(--alinea-ring);
+  outline-offset: 3px;
+}

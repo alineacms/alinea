@@ -1,11 +1,12 @@
 {
   "_id": "2dgg6MP0uZIrdG8zhknFbkdF7yg",
   "_type": "LinkFields",
-  "_index": "a8",
+  "_index": "a4",
   "title": "Link fields",
-  "externalLink": {},
-  "entry": {},
-  "entryWithCondition": {},
+  "externalLink": null,
+  "entry": null,
+  "entryWithCondition": null,
+  "entryWithLocation": null,
   "linkMultiple": [
     {
       "_id": "2mBuT1TZFS5gx3z62yF4hh6X6SJ",
@@ -36,18 +37,40 @@
       "_entry": "2aUFgENnh2qSfIWH1sHV5We80G3"
     }
   ],
-  "image": {},
-  "images": [],
-  "file": {},
-  "withFields": {},
+  "image": null,
+  "images": [
+    {
+      "_id": "3EGUknMFTu3GvyTBpZMOTonZ5qw",
+      "_type": "image",
+      "_index": "",
+      "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+    }
+  ],
+  "file": null,
+  "withFields": null,
   "multipleWithFields": [],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "image": {},
+      "image": {
+        "_id": "3EGUqg71WkcHALx0afMmS1Rwtc7",
+        "_type": "image",
+        "_index": "",
+        "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+      },
       "title": "",
       "description": ""
+    },
+    "createdAt": 1779804544,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1779804591,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

@@ -1,13 +1,14 @@
-import type {Client} from 'alinea/core/Client'
-import type {Config} from 'alinea/core/Config'
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
+import type {Client} from '#/core/Client.js'
+import type {Config} from '#/core/Config.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
+import {MutationQueueEvent} from './MutationQueueEvent.js'
 import {WorkerDB} from './WorkerDB.js'
 
 export interface ConfigBatch {
@@ -39,7 +40,8 @@ export async function boot(gen: ConfigGenerator) {
     const element = scripts[scripts.length - 1]
     const into = document.createElement('div')
     into.id = 'root'
-    element.parentElement!.replaceChild(into, element)
+    if (element.parentElement === document.head) document.body.append(into)
+    else element.parentElement!.replaceChild(into, element)
     const root = createRoot(into)
     let lastRevision: string | undefined
     for await (const batch of gen) {
@@ -56,7 +58,7 @@ export async function boot(gen: ConfigGenerator) {
       if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
       if (batch.revision !== lastRevision) {
         const db = new WorkerDB(batch.config, worker, batch.client, events)
-        root.render(<App db={db} {...batch} />)
+        root.render(<App graph={db} events={events} {...batch} />)
       }
       lastRevision = batch.revision
     }
@@ -72,6 +74,8 @@ function createSharedWorker(): [EventTarget, DashboardWorker] {
   worker.port.addEventListener('message', ({data}) => {
     if (data.type === IndexEvent.type) {
       events.dispatchEvent(new IndexEvent(data.data))
+    } else if (data.type === MutationQueueEvent.type) {
+      events.dispatchEvent(new MutationQueueEvent(data.entries))
     }
   })
   return [events, Comlink.wrap(worker.port) as any] as const

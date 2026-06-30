@@ -1,6 +1,6 @@
-﻿import {suite} from '@alinea/suite'
-import {RichTextEditor} from 'alinea/core'
-import type {TextDoc} from 'alinea/core/TextDoc'
+import {RichTextEditor} from '#/core.js'
+import type {TextDoc} from '#/core/TextDoc.js'
+import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
 

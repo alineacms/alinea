@@ -1,10 +1,8 @@
-import type {Picker} from 'alinea/core/Picker'
-import {Reference} from 'alinea/core/Reference'
-import {Type, type} from 'alinea/core/Type'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {keys} from 'alinea/core/util/Objects'
+import type {Picker} from '#/core/Picker.js'
+import {Reference} from '#/core/Reference.js'
+import {Type, type} from '#/core/Type.js'
+import {ListRow} from '#/core/ListRow.js'
+import {keys} from '#/core/util/Objects.js'
 
 export interface UrlReference extends Reference {
   _type: 'url'
@@ -33,15 +31,7 @@ export function urlPicker<Fields>(
   const fieldType = Type.isType(options.fields)
     ? options.fields
     : options.fields && type('URL fields', {fields: options.fields as any})
-  const extra = fieldType && Type.shape(fieldType)
   return {
-    shape: new RecordShape('Url', {
-      [Reference.id]: new ScalarShape('Id'),
-      [Reference.type]: new ScalarShape('Type'),
-      [UrlReference.url]: new ScalarShape('Url'),
-      [UrlReference.title]: new ScalarShape('Title'),
-      [UrlReference.target]: new ScalarShape('Target')
-    }).concat(extra),
     label: 'External link',
     handlesMultiple: false,
     fields: fieldType,

@@ -1,103 +1,20 @@
 {
-  "bin": "./dist/cli.js",
   "name": "alinea",
   "version": "0.0.0",
   "description": "Headless git-based CMS",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/alineacms/alinea.git"
-  },
+  "repository": "github:alineacms/alinea",
   "license": "MIT",
-  "type": "module",
-  "scripts": {
-    "dev": "run-p dev:run",
-    "web": "run-p dev:check web:run",
-    "tag": "bun tag.js",
-    "bump": "bun bump.js",
-    "stories": "ladle serve",
-    "build": "tsgo --noEmit false --declaration --emitDeclarationOnly && bun build.ts",
-    "lint": "oxlint --ignore-path .gitignore .",
-    "lint:fix": "oxlint --fix --ignore-path .gitignore .",
-    "format": "oxfmt --write .",
-    "format:check": "oxfmt --check .",
-    "cycles:server": "CHECK_CYCLES=server bun build.ts && bunx --bun madge --warning --circular dist/index.js",
-    "cycles:browser": "CHECK_CYCLES=browser bun build.ts && bunx --bun madge --warning --circular dist/index.js dist/ui.js dist/dashboard/App.js",
-    "type": "tsgo --diagnostics",
-    "dev:check": "tsgo -w",
-    "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
-    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev",
-    "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
-    "prepublishOnly": "bun run build"
-  },
   "sideEffects": false,
-  "typesVersions": {
-    "*": {
-      "*": [
-        "./dist/*"
-      ]
-    }
-  },
-  "files": [
-    "dist",
-    "llms-full.txt"
-  ],
+  "type": "module",
   "workspaces": [
-    "apps/dev",
-    "src/adapter",
-    "src/backend",
-    "src/cli",
-    "src/core",
-    "src/dashboard",
-    "src/ui",
-    "src/field/richtext"
+    "apps/dev"
   ],
-  "dependencies": {
-    "@alinea/iso": "^0.3.3",
-    "esbuild": "^0.25.4"
-  },
-  "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
-  },
-  "devDependencies": {
-    "@alinea/styler": "^1.0.3",
-    "@alinea/suite": "^0.6.3",
-    "@esbx/reporter": "^0.0.20",
-    "@esbx/workspaces": "^0.0.20",
-    "@ladle/react": "^4.1.2",
-    "@types/bun": "^1.1.17",
-    "@types/fs-extra": "^11.0.1",
-    "@types/glob": "^7.1.4",
-    "@types/react": "^18.2.13",
-    "@types/node": "^24.0.15",
-    "@types/react-dom": "^18.2.6",
-    "@types/sharedworker": "^0.0.154",
-    "@types/sql.js": "^1.4.4",
-    "@typescript/analyze-trace": "^0.9.1",
-    "@ungap/with-resolvers": "^0.1.0",
-    "glob": "^7.2.0",
-    "madge": "^6.1.0",
-    "next": "^16.1.6",
-    "npm-run-all": "^4.1.5",
-    "postcss-modules": "^6.0.0",
-    "postcss-pxtorem": "^6.0.0",
-    "oxfmt": "^0.39.0",
-    "oxlint": "^1.54.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "sass": "^1.63.4",
-    "sass-embedded": "^1.83.4",
-    "sharp": "0.32.6",
-    "speedscope": "^1.14.0",
-    "symlink-dir": "^6.0.5",
-    "@typescript/native-preview": "7.0.0-dev.20260325.1",
-    "typescript-plugin-css-modules": "^5.2.0",
-    "yjs-src": "npm:yjs@13.6.11"
-  },
-  "packageManager": "yarn@4.5.0",
-  "resolutions": {
-    "yjs": "13.6.11",
-    "lib0": "0.2.88"
+  "imports": {
+    "#/*": {
+      "alinea-src": "./src/*",
+      "default": "./dist/*"
+    },
+    "#test/*": "./test/*"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -110,29 +27,149 @@
     },
     "./*.cjs": "./dist/*.cjs",
     "./*": "./dist/*.js",
-    "./cloud/view/CloudAuth": {
-      "edge-light": "./dist/cloud/view/CloudAuth.js",
-      "worker": "./dist/cloud/view/CloudAuth.js",
-      "browser": "./dist/cloud/view/CloudAuth.browser.js",
-      "default": "./dist/cloud/view/CloudAuth.js"
-    },
     "./core/media/CreatePreview": {
       "edge-light": "./dist/core/media/CreatePreview.js",
       "worker": "./dist/core/media/CreatePreview.js",
       "browser": "./dist/core/media/CreatePreview.browser.js",
       "default": "./dist/core/media/CreatePreview.js"
-    },
-    "./picker/entry/EntryPicker": {
-      "edge-light": "./dist/picker/entry/EntryPicker.js",
-      "worker": "./dist/picker/entry/EntryPicker.js",
-      "browser": "./dist/picker/entry/EntryPicker.browser.js",
-      "default": "./dist/picker/entry/EntryPicker.js"
-    },
-    "./picker/url/UrlPicker": {
-      "edge-light": "./dist/picker/url/UrlPicker.js",
-      "worker": "./dist/picker/url/UrlPicker.js",
-      "browser": "./dist/picker/url/UrlPicker.browser.js",
-      "default": "./dist/picker/url/UrlPicker.js"
     }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*"
+      ]
+    }
+  },
+  "bin": "./dist/cli.js",
+  "files": [
+    "dist",
+    "llms-full.txt"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && bun build.ts",
+    "bump": "bun bump.js",
+    "cycles": "bun run build && bunx --bun madge --warning --circular dist/index.js",
+    "dev": "run-p dev:run",
+    "dev:check": "tsc -w",
+    "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
+    "format": "oxfmt --write src",
+    "format:check": "oxfmt --check src",
+    "lint": "oxlint --ignore-path .gitignore src/dashboard",
+    "prepublishOnly": "bun run build",
+    "self-hosted": "bun test/self-hosted/server.ts",
+    "stories": "ladle serve",
+    "tag": "bun tag.js",
+    "spec": "playwright test -c .playwright/playwright.config.ts",
+    "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
+    "type": "tsc --diagnostics",
+    "web": "run-p dev:check web:run",
+    "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev"
+  },
+  "resolutions": {
+    "lib0": "0.2.88",
+    "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "@alinea/components": "^0.0.50",
+    "@alinea/iso": "^0.3.3",
+    "esbuild": "^0.28.0",
+    "react-aria-components": "^1.17.0"
+  },
+  "devDependencies": {
+    "@alinea/styler": "^1.0.3",
+    "@alinea/suite": "^0.6.3",
+    "@badgateway/oauth2-client": "^3.2.0",
+    "@esbx/reporter": "^0.0.20",
+    "@esbx/workspaces": "^0.0.20",
+    "@happy-dom/global-registrator": "^20.8.3",
+    "@internationalized/date": "^3.12.1",
+    "@ladle/react": "^4.1.2",
+    "@playwright/experimental-ct-react": "1.59.1",
+    "@react-stately/virtualizer": "^4.5.0",
+    "@testing-library/react": "^16.3.2",
+    "@tiptap/core": "^2.1.16",
+    "@tiptap/extension-blockquote": "^2.1.16",
+    "@tiptap/extension-bold": "^2.1.16",
+    "@tiptap/extension-bullet-list": "^2.1.16",
+    "@tiptap/extension-document": "^2.1.16",
+    "@tiptap/extension-dropcursor": "^2.1.16",
+    "@tiptap/extension-floating-menu": "^2.1.16",
+    "@tiptap/extension-gapcursor": "^2.1.16",
+    "@tiptap/extension-hard-break": "^2.1.16",
+    "@tiptap/extension-heading": "^2.1.16",
+    "@tiptap/extension-highlight": "^3.20.1",
+    "@tiptap/extension-history": "^2.1.16",
+    "@tiptap/extension-horizontal-rule": "^2.1.16",
+    "@tiptap/extension-italic": "^2.1.16",
+    "@tiptap/extension-list-item": "^2.1.16",
+    "@tiptap/extension-ordered-list": "^2.1.16",
+    "@tiptap/extension-paragraph": "^2.1.16",
+    "@tiptap/extension-strike": "^2.1.16",
+    "@tiptap/extension-subscript": "^2.2.4",
+    "@tiptap/extension-superscript": "^2.2.4",
+    "@tiptap/extension-table": "^2.1.16",
+    "@tiptap/extension-table-cell": "^2.1.16",
+    "@tiptap/extension-table-header": "^2.1.16",
+    "@tiptap/extension-table-row": "^2.1.16",
+    "@tiptap/extension-text": "^2.1.16",
+    "@tiptap/extension-text-align": "^2.1.16",
+    "@tiptap/pm": "^2.1.16",
+    "@tiptap/react": "^2.1.16",
+    "@types/bun": "^1.3.12",
+    "@types/escape-html": "^1.0.2",
+    "@types/fs-extra": "^11.0.1",
+    "@types/glob": "^7.1.4",
+    "@types/node": "^25.6.0",
+    "@types/react": "^18.2.13",
+    "@types/react-dom": "^18.2.6",
+    "@typescript/analyze-trace": "^0.9.1",
+    "@vitejs/plugin-react": "^6.0.1",
+    "cito": "^0.3.3",
+    "color2k": "^1.2.4",
+    "comlink": "^4.4.2",
+    "compare-versions": "^4.1.3",
+    "cookie-es": "^1.2.2",
+    "escape-html": "^1.0.3",
+    "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
+    "fake-indexeddb": "^6.0.0",
+    "get-tsconfig": "^4.6.0",
+    "glob": "^7.2.0",
+    "htmlparser2": "^9.1.0",
+    "jotai": "^2.19.1",
+    "jotai-location": "^0.6.2",
+    "knip": "^6.4.1",
+    "lib0": "^0.2.88",
+    "lightningcss": "^1.32.0",
+    "lolight": "^1.4.1",
+    "madge": "^6.1.0",
+    "minisearch": "^7.1.2",
+    "next": "^16.1.6",
+    "npm-run-all": "^4.1.5",
+    "oxfmt": "^0.39.0",
+    "oxlint": "^1.54.0",
+    "p-debounce": "^4.0.0",
+    "p-lazy": "^4.0.0",
+    "p-limit": "^4.0.0",
+    "playwright": "^1.59.1",
+    "pretty-bytes": "^6.0.0",
+    "pretty-ms": "^8.0.0",
+    "rado": "^1.3.0-preview.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "regexparam": "^2.0.1",
+    "sade": "^1.8.1",
+    "sass": "^1.63.4",
+    "shared-event-source": "^0.1.3",
+    "sharp": "^0.34.5",
+    "smartcrop": "^2.0.5",
+    "speedscope": "^1.14.0",
+    "symlink-dir": "^6.0.5",
+    "thumbhash": "^0.1.1",
+    "typescript": "^7.0.1-rc",
+    "typescript-plugin-css-modules": "^5.2.0",
+    "use-error-boundary": "^2.0.6",
+    "vite": "^8.0.10",
+    "vite-plus": "^0.1.16"
   }
 }

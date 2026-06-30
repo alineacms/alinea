@@ -1,6 +1,5 @@
-import {CloudAuthView} from 'alinea/cloud/view/CloudAuth'
-import {MediaFile, MediaLibrary} from 'alinea/core/media/MediaTypes'
-import type {Preview} from 'alinea/core/Preview'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
 import {getWorkspace} from './Internal.js'
 import {admin, type Role} from './Role.js'
@@ -29,6 +28,8 @@ export interface Config {
   enableDrafts?: boolean
   /** The interval in seconds at which the frontend will poll for updates */
   syncInterval?: number
+  /** Maximum file upload size in bytes */
+  maxUploadSize?: number
 
   /** The base url of the application */
   baseUrl?: string | {development?: string; production?: string}
@@ -188,7 +189,6 @@ export function createConfig<Definition extends Config>(
   )
     throw new Error(`"MediaLibrary" is a reserved Type name`)
   const res = {
-    auth: CloudAuthView,
     ...definition,
     roles: {admin, ...definition.roles},
     publicDir: definition.publicDir ?? '/public',

@@ -8,6 +8,7 @@ function createCloudConfig(baseUrl: string) {
     logout: `${baseUrl}/api/v1/logout`,
     history: `${baseUrl}/api/v1/history`,
     drafts: `${baseUrl}/api/v1/draft`,
+    users: `${baseUrl}/api/v1/users`,
 
     tree: `${baseUrl}/api/v1/tree`,
     blobs: `${baseUrl}/api/v1/blobs`,

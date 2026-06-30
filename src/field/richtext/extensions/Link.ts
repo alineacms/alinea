@@ -4,32 +4,21 @@ interface LinkAttributes {
   'data-id'?: string
   'data-entry'?: string
   'data-link'?: string
+  'data-suffix'?: string
   href?: string
   target?: string
   title?: string
 }
 
 export interface LinkOptions {
-  /**
-   * A list of HTML attributes to be rendered.
-   */
-  HTMLAttributes: Record<string, any>
+  HTMLAttributes: Record<string, unknown>
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     link: {
-      /**
-       * Set a link mark
-       */
       setLink: (attributes: LinkAttributes) => ReturnType
-      /**
-       * Toggle a link mark
-       */
       toggleLink: (attributes: LinkAttributes) => ReturnType
-      /**
-       * Unset a link mark
-       */
       unsetLink: () => ReturnType
     }
   }
@@ -39,7 +28,6 @@ export const Link = Mark.create<LinkOptions>({
   name: 'link',
   priority: 1000,
   keepOnSplit: false,
-
   addOptions() {
     return {
       HTMLAttributes: {
@@ -47,7 +35,6 @@ export const Link = Mark.create<LinkOptions>({
       }
     }
   },
-
   addAttributes() {
     return {
       'data-id': {
@@ -57,6 +44,9 @@ export const Link = Mark.create<LinkOptions>({
         default: null
       },
       'data-link': {
+        default: null
+      },
+      'data-suffix': {
         default: null
       },
       href: {
@@ -70,11 +60,9 @@ export const Link = Mark.create<LinkOptions>({
       }
     }
   },
-
   parseHTML() {
     return [{tag: 'a:not([href *= "javascript:" i])'}]
   },
-
   renderHTML({HTMLAttributes}) {
     return [
       'a',
@@ -82,13 +70,11 @@ export const Link = Mark.create<LinkOptions>({
       0
     ]
   },
-
   addKeyboardShortcuts() {
     return {
       'Mod-k': () => this.editor.commands.setLink({})
     }
   },
-
   addCommands() {
     return {
       setLink:
@@ -96,7 +82,6 @@ export const Link = Mark.create<LinkOptions>({
         ({chain}) => {
           return chain().setMark(this.name, attributes).run()
         },
-
       toggleLink:
         attributes =>
         ({chain}) => {
@@ -104,7 +89,6 @@ export const Link = Mark.create<LinkOptions>({
             .toggleMark(this.name, attributes, {extendEmptyMarkRange: true})
             .run()
         },
-
       unsetLink:
         () =>
         ({chain}) => {

@@ -1,0 +1,64 @@
+.TimeField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--alinea-fg);
+}
+
+.TimeField-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  background: var(--alinea-input);
+
+  white-space: nowrap;
+  transition: var(--alinea-transition);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+}
+
+.TimeField-input:focus-within {
+  border-color: var(--alinea-primary);
+  box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+  outline: none;
+}
+
+.TimeField-segment {
+  padding: 4px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--alinea-fg);
+}
+
+.TimeField-segment[data-type='literal'] {
+  padding: 0;
+}
+
+.TimeField-segment[data-placeholder] {
+  color: var(--alinea-fg-subtle);
+  font-style: italic;
+}
+
+.TimeField-segment:focus {
+  color: var(--alinea-primary-fg);
+  background: var(--alinea-primary);
+  outline: none;
+  border-radius: 4px;
+  caret-color: transparent;
+}
+
+.TimeField-segment[data-invalid] {
+  color: var(--alinea-border-danger);
+}
+
+.TimeField-segment[data-invalid]:focus {
+  background: var(--alinea-danger-strong);
+  color: var(--alinea-primary-fg);
+}
+
+.TimeField [slot='description'] {
+  font-size: 12px;
+}

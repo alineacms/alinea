@@ -1,0 +1,71 @@
+.TextField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .TextField-input,
+  .TextField-multiline-area,
+  .TextField-multiline-shadow {
+    box-sizing: border-box;
+    font: inherit;
+    outline: none;
+    width: 100%;
+    padding: 8px 10px;
+    background-color: var(--alinea-input);
+    border: 1px solid var(--alinea-border);
+    border-radius: 8px;
+    outline: 3px solid transparent;
+    color: var(--alinea-fg);
+    font-size: var(--alinea-font-size-base);
+    line-height: 1.5;
+    transition: var(--alinea-transition);
+
+    &::placeholder {
+      color: var(--alinea-input-placeholder);
+    }
+
+    &[data-hovered] {
+      border-color: var(--alinea-border-hover);
+      outline-color: var(--alinea-ring-subtle);
+    }
+    &[data-focused] {
+      border-color: var(--alinea-border-accent);
+      outline-color: var(--alinea-primary-overlay);
+    }
+    &[data-invalid='true'] {
+      border-color: var(--alinea-border-danger);
+      outline-color: var(--alinea-danger-overlay);
+    }
+    &[disabled] {
+      pointer-events: none;
+      background-color: var(--alinea-input-disabled);
+      color: var(--alinea-fg-disabled);
+      opacity: 0.5;
+    }
+    &[readonly] {
+      pointer-events: none;
+      background-color: var(--alinea-input-disabled);
+      color: var(--alinea-fg-disabled);
+      opacity: 1;
+    }
+  }
+
+  .TextField-multiline {
+    display: grid;
+    width: 100%;
+  }
+
+  .TextField-multiline-area {
+    grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
+    resize: none;
+    white-space: pre-wrap;
+  }
+
+  .TextField-multiline-shadow {
+    grid-area: 1 / 1 / 2 / 2;
+    overflow-x: auto;
+    visibility: hidden;
+    white-space: pre-wrap;
+  }
+}

@@ -1,31 +1,38 @@
-import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useFieldError, useFieldOptions} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {Sink} from 'alinea/ui/Sink'
-import {IcRoundFeed} from 'alinea/ui/icons/IcRoundFeed'
-import type {ObjectField} from './ObjectField.js'
+import {Label, Surface, SurfaceContent} from '#/components.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {
+  useFieldError,
+  useFieldNode,
+  useFieldOptions
+} from '#/dashboard/hooks.js'
+import {ReactiveNode} from '#/dashboard/store.js'
+import {ObjectField} from '#/field/object.js'
+import {styler} from '@alinea/styler'
+import css from './ObjectFieldView.module.css'
 
-export interface ObjectInputProps<Definition> {
-  field: ObjectField<Definition>
+const styles = styler(css)
+
+export interface ObjectFieldViewProps {
+  field: ObjectField<object>
 }
 
-export function ObjectInput<Definition>({field}: ObjectInputProps<Definition>) {
+export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const options = useFieldOptions(field)
   const error = useFieldError(field)
+  const node = useFieldNode(field)
   return (
-    <InputLabel {...options} error={error} icon={IcRoundFeed}>
-      <Sink.Root>
-        <Sink.Content>
-          <FormRow
-            field={field}
+    <Label label={options.label} shared={options.shared}>
+      <Surface variant="muted">
+        <SurfaceContent>
+          <NodeEditor
+            node={node as ReactiveNode<object>}
             type={options.fields}
-            readOnly={options.readOnly}
-          >
-            <InputForm type={options.fields} />
-          </FormRow>
-        </Sink.Content>
-      </Sink.Root>
-    </InputLabel>
+          />
+          {error && (
+            <div className={styles.ObjectFieldView.error()}>{error}</div>
+          )}
+        </SurfaceContent>
+      </Surface>
+    </Label>
   )
 }

@@ -1,10 +1,10 @@
-import {Entry} from 'alinea/core/Entry'
+import {Entry} from '#/core/Entry.js'
 import type {
   GraphQuery,
   IncludeGuard,
   SelectionGuard,
   TypeGuard
-} from 'alinea/core/Graph'
+} from '#/core/Graph.js'
 
 export const id = Entry.id
 export const title = Entry.title
@@ -17,8 +17,11 @@ export const parentId = Entry.parentId
 export const locale = Entry.locale
 export const path = Entry.path
 export const url = Entry.url
+export const aliases = Entry.aliases
+export const createdAt = Entry.createdAt
+export const updatedAt = Entry.updatedAt
 
-export {snippet} from 'alinea/core/pages/Snippet'
+export {snippet} from '#/core/pages/Snippet.js'
 
 export function children<
   Selection extends SelectionGuard = undefined,

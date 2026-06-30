@@ -1,109 +1,185 @@
+import {Button, Label, Surface, SurfaceContent} from '#/components.js'
+import {PreviewMetadata} from '#/core/Preview.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {
+  useDashboard,
+  useFieldError,
+  useFieldNode,
+  useFieldOptions,
+  useFieldValue
+} from '#/dashboard/hooks.js'
+import {IcRoundPublic} from '#/dashboard/icons.js'
+import {
+  MetadataField,
+  MetadataTimestampField,
+  MetadataUserField
+} from '#/field/metadata.js'
 import styler from '@alinea/styler'
-import type {PreviewMetadata} from 'alinea/core/Preview'
-import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useFieldOptions} from 'alinea/dashboard/editor/UseField'
-import {useEntryEditor} from 'alinea/dashboard/hook/UseEntryEditor'
-import {usePreviewMetadata} from 'alinea/dashboard/view/preview/BrowserPreview'
-import type {MetadataField} from './MetadataField.js'
-import css from './MetadataField.module.scss'
+import {useAtomValue} from 'jotai'
+import css from './MetadataField.module.css'
 
 const styles = styler(css)
 
-export interface MetadataInputProps {
+export interface MetadataFieldViewProps {
   field: MetadataField
 }
 
-export function MetadataInput({field}: MetadataInputProps) {
+export interface MetadataTimestampFieldViewProps {
+  field: MetadataTimestampField
+}
+
+export function MetadataTimestampFieldView({
+  field
+}: MetadataTimestampFieldViewProps) {
+  const value = useFieldValue(field)
   const options = useFieldOptions(field)
-  const editor = useEntryEditor()
-
+  const error = useFieldError(field)
+  const displayValue = formatAuditTimestamp(value)
   return (
-    <>
-      <FormRow type={options.fields} field={field}>
-        <InputForm type={options.fields} border={false} />
-      </FormRow>
-      <div>{editor?.preview && <MetadataPreview />}</div>
-    </>
+    <Label label={options.label} errorMessage={error} shared={options.shared}>
+      <div className={styles.MetadataTimestampFieldView()}>
+        {displayValue || 'Not available'}
+      </div>
+    </Label>
   )
 }
 
-function MetadataPreview() {
-  const metadata = usePreviewMetadata()
-  if (!metadata) return null
-  return (
-    <div className={styles.preview()}>
-      <h2>Preview</h2>
-      <SearchEnginePreview metaTags={metadata} />
-      <OpenGraphPreview metaTags={metadata} />
-    </div>
-  )
+export interface MetadataUserFieldViewProps {
+  field: MetadataUserField
 }
 
-const SearchEnginePreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
+export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
+  const value = useFieldValue(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const name = value?.name || 'Unknown user'
+  const email = value?.email
   return (
-    <>
-      <h4 className={styles.preview.subtitle()}>Search engine</h4>
-      <div className={styles.searchengine()}>
-        <div className={styles.searchengine.intro()}>
-          <div className={styles.searchengine.intro.favicon()}>
-            <span className={styles.searchengine.intro.favicon.icon()}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                  fill="currentColor"
-                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
-                />
-              </svg>
-            </span>
+    <Label label={options.label} errorMessage={error} shared={options.shared}>
+      <div className={styles.MetadataUserFieldView()}>
+        <div className={styles.MetadataUserFieldView.person()}>{name}</div>
+        {email && (
+          <div className={styles.MetadataUserFieldView.contact()}>
+            &lt;{email}&gt;
           </div>
-          <div style={{minWidth: 0}}>
-            {metaTags['og:site_name'] && (
-              <p className={styles.searchengine.intro.sitename()}>
-                {metaTags['og:site_name']}
-              </p>
-            )}
-            <p className={styles.searchengine.intro.url()}>
-              {metaTags['og:url']}
-            </p>
-          </div>
-        </div>
-        <h3 className={styles.searchengine.title()}>{metaTags.title}</h3>
-        {metaTags.description && (
-          <p className={styles.searchengine.description()}>
-            {metaTags.description?.substring(0, 160)}
-          </p>
         )}
       </div>
+    </Label>
+  )
+}
+
+export function MetadataFieldView({field}: MetadataFieldViewProps) {
+  const options = useFieldOptions(field)
+  const node = useFieldNode<object>(field)
+  const dashboard = useDashboard()
+  const metadata = useAtomValue(dashboard.previewMetadata)
+  return (
+    <>
+      <NodeEditor node={node} type={options.fields} />
+      <MetadataPreview metadata={metadata} origin={origin} />
     </>
   )
 }
 
-const OpenGraphPreview = ({metaTags}: {metaTags: PreviewMetadata}) => {
+function formatAuditTimestamp(value: number | string | null): string {
+  if (value === null) return ''
+  const date = new Date(typeof value === 'number' ? value * 1000 : value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short'
+  }).format(date)
+}
+
+interface MetadataPreviewProps {
+  metadata?: PreviewMetadata | undefined
+  origin?: string | undefined
+}
+function MetadataPreview({metadata, origin}: MetadataPreviewProps) {
+  if (!metadata)
+    return (
+      <Label
+        label="Open preview mode to display a metadata preview"
+        style={{marginTop: '32px'}}
+      />
+    )
   return (
-    <>
-      <h4 className={styles.preview.subtitle()}>Social share</h4>
-      <div className={styles.opengraph()}>
-        {metaTags['og:image'] && (
-          <img
-            src={metaTags['og:image']}
-            alt="Open Graph image"
-            className={styles.opengraph.img()}
-          />
-        )}
-        <div className={styles.opengraph.body()}>
-          <p className={styles.opengraph.body.url()}>
-            {metaTags['og:url']?.replace(/^https?:\/\//, '')}
-          </p>
-          <div className={styles.opengraph.body.content()}>
-            <h3 className={styles.opengraph.body.content.title()}>
-              {metaTags['og:title'] || metaTags.title}
-            </h3>
-            <p className={styles.opengraph.body.content.description()}>
-              {metaTags['og:description']}
-            </p>
-          </div>
+    <Label label="Metadata previews" style={{marginTop: '32px'}}>
+      <SearchEnginePreview metadata={metadata} origin={origin} />
+      <OpenGraphPreview metadata={metadata} origin={origin} />
+    </Label>
+  )
+}
+
+interface MetadataProps {
+  metadata: PreviewMetadata
+  origin?: string | undefined
+}
+
+function OpenGraphPreview({metadata, origin}: MetadataProps) {
+  return (
+    <Label label="Open Graph Preview (Social Share)">
+      <Surface className={styles.OpenGraphPreview()}>
+        <div className={styles.OpenGraphPreview.image()}>
+          {metadata['og:image'] ? (
+            <img src={metadata['og:image']} alt="" />
+          ) : (
+            <span>No image</span>
+          )}
         </div>
-      </div>
-    </>
+        <SurfaceContent className={styles.OpenGraphPreview.content()}>
+          <div className={styles.OpenGraphPreview.site()}>
+            {origin || metadata['og:site_name']}
+          </div>
+          <h3 className={styles.OpenGraphPreview.title()}>
+            {metadata['og:title']}
+          </h3>
+          {/* {metadata['og:description'] && (
+            <p className={styles.OpenGraphPreview.description()}>
+              {metadata['og:description']}
+            </p>
+          )} */}
+        </SurfaceContent>
+      </Surface>
+    </Label>
+  )
+}
+
+function SearchEnginePreview({metadata, origin}: MetadataProps) {
+  const fullUrl =
+    origin && metadata['og:url']
+      ? new URL(metadata['og:url'], origin).toString()
+      : metadata['og:url']
+
+  return (
+    <Label
+      label="Search Engine Preview"
+      className={styles.SearchEnginePreview()}
+    >
+      <Surface>
+        <SurfaceContent style={{gap: '0'}}>
+          <div className={styles.SearchEnginePreview.og()}>
+            <Button size="icon" icon={IcRoundPublic} />
+            <div className={styles.SearchEnginePreview.og.label()}>
+              <span>{metadata['og:site_name']}</span>
+              <span className={styles.SearchEnginePreview.og.label.small()}>
+                {fullUrl}
+              </span>
+            </div>
+          </div>
+          <h3 className={styles.SearchEnginePreview.link()}>
+            {metadata['title']}
+          </h3>
+          <p className={styles.SearchEnginePreview.description()}>
+            {metadata['description']}
+          </p>
+        </SurfaceContent>
+      </Surface>
+    </Label>
   )
 }

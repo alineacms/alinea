@@ -1,0 +1,59 @@
+import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {CompactField} from '#/dashboard/app/CompactField.js'
+import {ComponentType} from 'react'
+import {CheckFieldView} from './check/CheckField.view.js'
+import {CodeFieldView} from './code/CodeField.view.js'
+import {DateFieldView} from './date/DateField.view.js'
+import {HiddenInput} from './hidden/HiddenField.view.js'
+import {JsonFieldView} from './json/JsonField.view.js'
+import {LocalisedFieldView} from './localiser/LocalisedField.view.js'
+import {
+  MultipleLinksFieldView,
+  SingleLinkFieldView
+} from './link/LinkField.view.js'
+import {ListFieldView} from './list/ListField.view.js'
+import {
+  MetadataFieldView,
+  MetadataTimestampFieldView,
+  MetadataUserFieldView
+} from './metadata/MetadataField.view.js'
+import {NumberFieldView} from './number/NumberField.view.js'
+import {ObjectFieldView} from './object/ObjectField.view.js'
+import {PathFieldView} from './path/PathField.view.js'
+import {
+  RichTextFieldCompactView,
+  RichTextFieldView
+} from './richtext/RichTextField.view.js'
+import {
+  MultipleSelectFieldView,
+  SelectFieldView
+} from './select/SelectField.view.js'
+import {TabsView} from './tabs/Tabs.view.js'
+import {TextFieldView} from './text/TextField.view.js'
+import {TimeFieldView} from './time/TimeField.view.js'
+
+export const views: Record<string, ComponentType<any>> = {
+  [viewKeys.CheckInput]: CheckFieldView,
+  [viewKeys.CodeInput]: CodeFieldView,
+  [viewKeys.CompactField]: CompactField,
+  [viewKeys.DateInput]: DateFieldView,
+  [viewKeys.JsonInput]: JsonFieldView,
+  [viewKeys.LocalisedInput]: LocalisedFieldView,
+  [viewKeys.SingleLinkInput]: SingleLinkFieldView,
+  [viewKeys.MultipleLinksInput]: MultipleLinksFieldView,
+  [viewKeys.TabsView]: TabsView,
+  [viewKeys.NumberInput]: NumberFieldView,
+  [viewKeys.MetadataInput]: MetadataFieldView,
+  [viewKeys.MetadataTimestampInput]: MetadataTimestampFieldView,
+  [viewKeys.MetadataUserInput]: MetadataUserFieldView,
+  [viewKeys.PathInput]: PathFieldView,
+  [viewKeys.SelectInput]: SelectFieldView,
+  [viewKeys.MultipleSelectInput]: MultipleSelectFieldView,
+  [viewKeys.RichTextCompact]: RichTextFieldCompactView,
+  [viewKeys.RichTextInput]: RichTextFieldView,
+  [viewKeys.TextInput]: TextFieldView,
+  [viewKeys.TimeInput]: TimeFieldView,
+  [viewKeys.ListInput]: ListFieldView,
+  [viewKeys.ObjectInput]: ObjectFieldView,
+  [viewKeys.HiddenInput]: HiddenInput
+}

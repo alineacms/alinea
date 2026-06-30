@@ -1,6 +1,11 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {ListField} from 'alinea/core/field/ListField'
-import {UnionField} from 'alinea/core/field/UnionField'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {
+  type EntryReferenceLinkType,
+  type EntryReferenceTarget,
+  referenceFieldPath
+} from '#/core/db/EntryReference.js'
+import {ListField} from '#/core/field/ListField.js'
+import {UnionField} from '#/core/field/UnionField.js'
 import type {
   EdgeEntries,
   EdgeEntry,
@@ -8,14 +13,14 @@ import type {
   IncludeGuard,
   SelectionGuard,
   TypeGuard
-} from 'alinea/core/Graph'
-import type {Picker} from 'alinea/core/Picker'
-import {Reference} from 'alinea/core/Reference'
-import type {Schema} from 'alinea/core/Schema'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
-import {unresolvedEntryMarker} from 'alinea/picker/entry/EntryPicker'
+} from '#/core/Graph.js'
+import type {Picker} from '#/core/Picker.js'
+import {Reference} from '#/core/Reference.js'
+import type {Schema} from '#/core/Schema.js'
+import {ListRow} from '#/core/ListRow.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {unresolvedEntryMarker} from '#/picker/entry/EntryPicker.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
@@ -58,16 +63,27 @@ export function createLink<StoredValue extends Reference, QueryValue>(
       .filter(([type, picker]) => picker.fields)
       .map(([type, picker]) => [type, picker.fields])
   )
-  const shapes = fromEntries(
-    pickers.map(([type, picker]) => [type, picker.shape])
-  )
-  return new LinkField(schema, shapes, {
-    options: {label, ...options},
-    async postProcess(value, loader) {
+  return new LinkField(schema, {
+    options: {label, initialValue: null!, ...options},
+    async queryValue(value, loader) {
       const type = value[Reference.type]
       const picker = options.pickers[type]
-      if (!picker) return
+      if (!picker) return value as unknown as QueryValue
       if (picker.postProcess) await picker.postProcess(value, loader)
+      return value as unknown as QueryValue
+    },
+    references(value, context) {
+      const entryId = entryIdOf(value)
+      if (!entryId) return []
+      return [
+        {
+          targetId: entryId,
+          fieldPath: referenceFieldPath(context.path),
+          fieldLabel: context.label,
+          linkId: value[Reference.id],
+          linkType: entryLinkType(value[Reference.type])
+        }
+      ]
     },
     view: viewKeys.SingleLinkInput
   })
@@ -120,12 +136,9 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       .filter(([type, picker]) => picker.fields)
       .map(([type, picker]) => [type, picker.fields])
   )
-  const shapes = fromEntries(
-    pickers.map(([type, picker]) => [type, picker.shape])
-  )
-  return new LinksField(schema, shapes, {
+  return new LinksField(schema, {
     options: {label, ...options},
-    async postProcess(rows, loader) {
+    async queryValue(rows, loader) {
       const tasks = []
       for (const row of rows) {
         const type = row[ListRow.type]
@@ -135,10 +148,44 @@ export function createLinks<StoredValue extends ListRow, QueryValue>(
       }
       await Promise.all(tasks)
       for (let index = rows.length - 1; index >= 0; index--) {
-        const row = rows[index] as any
+        const row = rows[index] as StoredValue & {
+          [unresolvedEntryMarker]?: true
+        }
         if (row[unresolvedEntryMarker]) rows.splice(index, 1)
       }
+      return rows as unknown as Array<QueryValue>
+    },
+    references(rows, context) {
+      if (!Array.isArray(rows)) return []
+      const result: Array<EntryReferenceTarget> = []
+      for (const row of rows) {
+        const entryId = entryIdOf(row)
+        if (!entryId) continue
+        const rowId = row[ListRow.id]
+        result.push({
+          targetId: entryId,
+          fieldPath: referenceFieldPath(
+            rowId ? [...context.path, rowId] : context.path
+          ),
+          fieldLabel: context.label,
+          linkId: row[Reference.id],
+          linkType: entryLinkType(row[Reference.type])
+        })
+      }
+      return result
     },
     view: viewKeys.MultipleLinksInput
   })
+}
+
+function entryIdOf(value: Reference | undefined | null): string | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const entry = (value as {_entry?: unknown})._entry
+  return typeof entry === 'string' ? entry : undefined
+}
+
+function entryLinkType(type: string): EntryReferenceLinkType | undefined {
+  return type === 'entry' || type === 'image' || type === 'file'
+    ? type
+    : undefined
 }

@@ -1,20 +1,21 @@
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
-import {IcRoundPermMedia} from 'alinea/ui/icons/IcRoundPermMedia'
+import {LucideImage} from '#/dashboard/icons.js'
 import type {Page} from '../Page.js'
-import {type Root, root} from '../Root.js'
+import {type Root, root, RootOptions} from '../Root.js'
 
 export type MediaRoot<Children extends Record<string, Page>> = Root<Children>
 
 export function createMediaRoot<Children extends Record<string, Page>>(
-  children: Children = {} as Children
+  options?: RootOptions<Children>
 ) {
-  return root('Media', {
-    icon: IcRoundPermMedia,
+  const rootOptions = {
+    icon: LucideImage,
     contains: ['MediaLibrary'],
-    view: viewKeys.MediaExplorer,
+    ...options,
     isMediaRoot: true,
-    children: {
-      ...children
-    }
-  }) as MediaRoot<Children>
+    i18n: undefined,
+    // We move i18n into a separate property to persist it,
+    // but don't treat media files as localised
+    _media: {i18n: options?.i18n}
+  }
+  return root('Media', rootOptions) as MediaRoot<Children>
 }

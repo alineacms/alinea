@@ -1,4 +1,4 @@
-import {dirname, normalize, relative} from 'alinea/core/util/Paths'
+import {dirname, normalize, relative} from '#/core/util/Paths.js'
 import type {Plugin} from 'esbuild'
 import {createPathsMatcher, getTsconfig} from 'get-tsconfig'
 

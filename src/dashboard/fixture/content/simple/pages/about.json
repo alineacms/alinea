@@ -1,0 +1,39 @@
+{
+  "_id": "31Q74HdW0mj4tMy8pUxgL2uXv9F",
+  "_type": "Page",
+  "_index": "a1",
+  "_root": "pages",
+  "title": "About",
+  "path": "about",
+  "summary": "Basic page with no children",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea v2 now includes a dedicated rich text editor built without Y.js field state."
+        }
+      ]
+    },
+    {
+      "_type": "blockquote",
+      "content": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Use this page to verify persisted rich text values render correctly."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "featured": false,
+  "category": "news",
+  "wordCount": 360,
+  "publishDate": "2026-03-04",
+  "publishTime": "11:15"
+}

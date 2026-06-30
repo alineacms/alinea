@@ -1,0 +1,52 @@
+.Rail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--alinea-bg);
+
+  & + & {
+    border-left: 1px solid var(--alinea-border);
+  }
+
+  &.is-main {
+    flex: 1;
+    min-width: 0;
+    background: var(--alinea-bg-muted);
+  }
+}
+
+.RailHeader {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--alinea-border);
+  padding: 0px 16px;
+  overflow-y: hidden;
+  background: var(--alinea-bg);
+  min-height: 40px;
+}
+
+.RailFooter {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--alinea-border);
+}
+
+.RailBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  min-width: 0;
+}
+
+.RailContent {
+  width: 100%;
+  flex: 1;
+  max-width: 960px;
+  margin-inline: auto;
+  min-width: 0;
+}

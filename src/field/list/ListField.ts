@@ -1,16 +1,17 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {createId} from 'alinea/core/Id'
-import type {InferQueryValue, InferStoredValue} from 'alinea/core/Infer'
-import {Schema} from 'alinea/core/Schema'
-import {ListField} from 'alinea/core/field/ListField'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {generateNKeysBetween} from 'alinea/core/util/FractionalIndexing'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ListField} from '#/core/field/ListField.js'
+import {createId} from '#/core/Id.js'
+import type {InferQueryValue, InferStoredValue} from '#/core/Infer.js'
+import type {Schema} from '#/core/Schema.js'
+import {ListRow} from '#/core/ListRow.js'
+import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a list field */
-export interface ListOptions<Definitions extends Schema>
-  extends FieldOptions<Array<InferStoredValue<Definitions>>> {
+export interface ListOptions<Definitions extends Schema> extends FieldOptions<
+  Array<InferStoredValue<Definitions>>
+> {
   /** Allow these types of blocks to be created */
   schema: Definitions
   /** Width of the field in the dashboard UI (0-1) */
@@ -42,7 +43,7 @@ export function list<Definitions extends Schema>(
     InferStoredValue<Definitions> & ListRow,
     InferQueryValue<Definitions> & ListRow,
     ListOptions<Definitions>
-  >(options.schema, Schema.shapes(options.schema), {
+  >(options.schema, {
     options: {
       label,
       ...options,

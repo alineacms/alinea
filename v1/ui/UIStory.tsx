@@ -1,0 +1,54 @@
+import {DashboardProvider} from '#/dashboard/DashboardProvider.js'
+import {defaultViews} from '#/dashboard/editor/DefaultViews.js'
+import {Viewport} from '#/dashboard/view/Viewport.js'
+import {FieldToolbar} from '#/dashboard/view/entry/FieldToolbar.js'
+import type {FunctionComponent, PropsWithChildren} from 'react'
+import '../global.css'
+import {px} from './util/Units.js'
+
+//const example = createExample()
+const client = undefined! // await example.connection()
+
+export interface UIStoryProps extends PropsWithChildren<{}> {
+  fullWidth?: boolean
+  fullHeight?: boolean
+}
+
+export function UIStory({fullWidth, fullHeight, children}: UIStoryProps) {
+  return (
+    <DashboardProvider
+      dev
+      db={undefined!}
+      config={undefined!}
+      client={client}
+      views={defaultViews}
+    >
+      <Viewport attachToBody>
+        <FieldToolbar.Provider>
+          <div
+            style={{
+              zIndex: 0,
+              marginTop: fullHeight ? px(30) : 'auto',
+              marginBottom: fullHeight ? px(30) : 'auto',
+              marginLeft: fullWidth ? px(30) : 'auto',
+              marginRight: fullWidth ? px(30) : 'auto'
+            }}
+          >
+            {children}
+          </div>
+          <FieldToolbar.Root />
+        </FieldToolbar.Provider>
+      </Viewport>
+    </DashboardProvider>
+  )
+}
+
+export function uiDecorator(props: UIStoryProps = {}) {
+  return [
+    (Story: FunctionComponent) => (
+      <UIStory {...props}>
+        <Story />
+      </UIStory>
+    )
+  ]
+}

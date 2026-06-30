@@ -1,0 +1,124 @@
+.CompactField {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.CompactField[data-empty] {
+  color: var(--alinea-fg-muted);
+}
+
+.CompactField[data-layout='footer'] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.CompactField-items {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.CompactField-text {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CompactField-muted {
+  color: var(--alinea-fg-muted);
+}
+
+.CompactField-json {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-family: var(--alinea-font-mono);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CompactField-record {
+  display: inline-flex;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
+  gap: 10px 12px;
+}
+
+.CompactField-record-field {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 0 1 clamp(150px, 22vw, 240px);
+  min-width: 120px;
+  max-width: clamp(150px, 22vw, 240px);
+  gap: 2px;
+  overflow: hidden;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record-field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.CompactField-record-label {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
+  font-size: 11px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record-label {
+  flex: 0 0 auto;
+  max-width: 140px;
+}
+
+.CompactField-record-value {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  width: 100%;
+}
+
+.CompactField[data-layout='footer'] .CompactField-record-value {
+  flex: 0 1 auto;
+}
+
+.CompactField-list-count {
+  flex-shrink: 0;
+  color: var(--alinea-fg-muted);
+}

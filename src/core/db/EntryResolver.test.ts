@@ -1,20 +1,22 @@
+import {createCMS, Entry} from '#/core.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import {ListRow} from '#/core/ListRow.js'
+import {Config, Field, Query} from '#/index.js'
+import {cms} from '#test/cms.js'
+import {createEntryResolver} from '#test/EntryFixture.js'
+import {DemoRecipe} from '#test/schema/DemoRecipe.js'
+import {DemoRecipes} from '#test/schema/DemoRecipes.js'
 import {suite} from '@alinea/suite'
-import {Config, Field, Query} from 'alinea'
-import {createCMS, Entry} from 'alinea/core'
-import {MediaFile} from 'alinea/core/media/MediaTypes'
-import {cms} from '../../test/cms.js'
-import {createEntryResolver} from '../../test/EntryFixture.js'
-import {DemoRecipe} from '../../test/schema/DemoRecipe.js'
-import {DemoRecipes} from '../../test/schema/DemoRecipes.js'
 import {Expr} from '../Expr.js'
 import type {GraphQuery} from '../Graph.js'
 import {FSSource} from '../source/FSSource.js'
+import {Node} from '../TextDoc.js'
 import {EntryIndex} from './EntryIndex.js'
 import {EntryResolver, statusChecker} from './EntryResolver.js'
 
 const test = suite(import.meta)
 
-const dir = 'src/test/fixtures/demo'
+const dir = 'test/fixtures/demo'
 const source = new FSSource(dir)
 
 const index = new EntryIndex(cms.config)
@@ -201,6 +203,9 @@ const Article = Config.document('Article', {
     text: Field.text('Text'),
     single: Field.entry('Single'),
     multi: Field.entry.multiple('Multi'),
+    body: Field.richText('Body'),
+    heroImage: Field.image('Hero image'),
+    gallery: Field.image.multiple('Gallery'),
     meta: Field.object('Meta', {
       fields: {inner: Field.text('Inner')}
     }),
@@ -223,6 +228,15 @@ const mainWorkspace = Config.workspace('Main', {
     localized: Config.root('Localized', {
       i18n: {locales: ['en', 'de']},
       contains: ['Article']
+    }),
+    media: Config.media({
+      i18n: {
+        locales: ['en', 'de', 'fr'],
+        fallback(requested) {
+          if (requested === 'de') return ['fr', 'en']
+          return ['en']
+        }
+      }
     })
   }
 })
@@ -250,9 +264,55 @@ const advancedEntries = [
       title: 'Alpha',
       score: 5,
       text: 'one two cookie four five',
-      single: {_entry: 'child-2'},
+      single: {
+        _id: 'single-link',
+        _type: 'entry',
+        _entry: 'child-2',
+        _suffix: '?filter=active'
+      },
       multi: [{_entry: 'child-2'}, {_entry: 'missing'}],
+      body: [
+        {
+          _type: 'paragraph',
+          content: [
+            {
+              _type: 'text',
+              text: 'Filtered child',
+              marks: [
+                {
+                  _type: 'link',
+                  _id: 'body-link',
+                  _link: 'entry',
+                  _entry: 'child-2',
+                  _suffix: '?filter=active'
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      heroImage: {_type: 'image', _id: 'image-link-1', _entry: 'image-plain'},
+      gallery: [
+        {
+          [ListRow.id]: 'image-row-1',
+          [ListRow.index]: 'a0',
+          [ListRow.type]: 'image',
+          _entry: 'image-plain'
+        }
+      ],
       meta: {inner: 'x'},
+      metadata: {
+        aliases: [
+          {
+            [ListRow.id]: 'alias-1',
+            [ListRow.index]: 'a0',
+            [ListRow.type]: 'alias',
+            url: '/old-alpha'
+          }
+        ],
+        createdAt: 100,
+        updatedAt: 200
+      },
       tags: [{itemId: 'a'}, {itemId: 'b'}]
     }
   },
@@ -267,6 +327,18 @@ const advancedEntries = [
       score: 8,
       text: 'beta text',
       meta: {inner: 'y'},
+      metadata: {
+        aliases: [
+          {
+            [ListRow.id]: 'alias-2',
+            [ListRow.index]: 'a0',
+            [ListRow.type]: 'alias',
+            url: '/old-beta'
+          }
+        ],
+        createdAt: 300,
+        updatedAt: 400
+      },
       tags: [{itemId: 'c'}]
     }
   },
@@ -285,7 +357,12 @@ const advancedEntries = [
     root: 'localized',
     locale: 'en',
     path: 'trans',
-    data: {title: 'Trans EN', score: 1, text: 'trans en'}
+    data: {
+      title: 'Trans EN',
+      score: 1,
+      text: 'trans en',
+      heroImage: {_type: 'image', _id: 'image-link-2', _entry: 'image-i18n'}
+    }
   },
   {
     id: 'trans',
@@ -294,13 +371,111 @@ const advancedEntries = [
     root: 'localized',
     locale: 'de',
     path: 'trans',
-    data: {title: 'Trans DE', score: 1, text: 'trans de'}
+    data: {
+      title: 'Trans DE',
+      score: 1,
+      text: 'trans de',
+      heroImage: {_type: 'image', _id: 'image-link-2', _entry: 'image-i18n'}
+    }
+  },
+  {
+    id: 'image-plain',
+    type: 'MediaFile',
+    index: 'm1',
+    root: 'media',
+    path: 'plain-image',
+    data: {
+      title: 'Plain image',
+      location: '/plain.jpg',
+      previewUrl: '/preview/plain.jpg',
+      extension: '.jpg',
+      size: 12,
+      hash: 'plain-hash',
+      alt: 'Plain image alt',
+      width: 100,
+      height: 80,
+      averageColor: '#fff',
+      focus: {x: 0.5, y: 0.5},
+      thumbHash: 'plain-thumb'
+    }
+  },
+  {
+    id: 'image-i18n',
+    type: 'MediaFile',
+    index: 'm2',
+    root: 'media',
+    path: 'i18n-image',
+    data: {
+      title: 'I18n image',
+      location: '/i18n.jpg',
+      previewUrl: '/preview/i18n.jpg',
+      extension: '.jpg',
+      size: 24,
+      hash: 'i18n-hash',
+      alt: {en: 'English image alt', fr: 'Texte alternatif francais'},
+      width: 120,
+      height: 90,
+      averageColor: '#000',
+      focus: {x: 0.25, y: 0.75},
+      thumbHash: 'i18n-thumb'
+    }
   }
 ]
 
 async function createAdvancedResolver() {
   return createEntryResolver(advancedCms.config, advancedEntries)
 }
+
+test('projects metadata URL aliases as entry shortcuts', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    id: 'child-1',
+    select: {
+      aliases: Entry.aliases,
+      createdAt: Entry.createdAt,
+      updatedAt: Entry.updatedAt
+    },
+    first: true
+  })
+
+  test.equal(result, {
+    aliases: [
+      {
+        [ListRow.id]: 'alias-1',
+        [ListRow.index]: 'a0',
+        [ListRow.type]: 'alias',
+        url: '/old-alpha'
+      }
+    ],
+    createdAt: 100,
+    updatedAt: 200
+  })
+})
+
+test('filters by metadata URL alias', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '/old-beta',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, 'child-2')
+})
+
+test('filters by metadata created and updated shortcuts', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    filter: {
+      _createdAt: 100,
+      _updatedAt: 200
+    },
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, 'child-1')
+})
 
 function valueExpr(value: unknown) {
   return new Expr({type: 'value', value})
@@ -527,6 +702,61 @@ test('locales, translations and link edges', async () => {
     select: Article.multi.find({select: Query.id})
   })
   test.equal(linkedMany, ['child-2'])
+})
+
+test('entry link suffixes are appended to query URLs', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const linkedEntry = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.single
+  })
+  test.is(linkedEntry?.url, '/parent/beta?filter=active')
+  test.is(linkedEntry?.href, '/parent/beta?filter=active')
+
+  const body = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.body
+  })
+  const firstNode = body?.[0]
+  if (!firstNode || !Node.isElement(firstNode)) {
+    throw new Error('Expected first rich text node to be an element')
+  }
+  const firstText = firstNode.content?.[0]
+  if (!firstText || !Node.isText(firstText)) {
+    throw new Error('Expected first rich text child to be text')
+  }
+  test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active')
+})
+
+test('image fields include alt text in query values', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const image = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.heroImage
+  })
+  test.is(image?.alt, 'Plain image alt')
+
+  const gallery = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.gallery
+  })
+  test.is(gallery?.[0]?.alt, 'Plain image alt')
+})
+
+test('image field alt text follows configured locale fallback', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const image = await resolver.resolve({
+    first: true,
+    locale: 'de',
+    root: mainWorkspace.localized,
+    id: 'trans',
+    select: Article.heroImage
+  })
+  test.is(image?.alt, 'Texte alternatif francais')
 })
 
 test('query mode helpers and groupBy validation', async () => {

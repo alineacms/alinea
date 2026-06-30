@@ -1,0 +1,41 @@
+.EntryHeader {
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
+  overflow-y: hidden;
+  background: var(--alinea-bg);
+}
+
+.EntryHeader-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  height: 100%;
+}
+
+.EntryHeader-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.EntryHeader-title {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.EntryHeader-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}

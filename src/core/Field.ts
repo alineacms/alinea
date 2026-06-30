@@ -1,7 +1,11 @@
-import type {LinkResolver} from 'alinea/core/db/LinkResolver'
+import type {
+  EntryReferenceTarget,
+  FieldReferenceContext
+} from '#/core/db/EntryReference.js'
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Expr} from './Expr.js'
 import {type HasField, getField, hasField, internalField} from './Internal.js'
-import type {Shape} from './Shape.js'
+import type {User} from './User.js'
 import type {View} from './View.js'
 
 export interface FieldOptions<StoredValue> {
@@ -9,6 +13,8 @@ export interface FieldOptions<StoredValue> {
   label: string
   /** Hide this field in the dashboard */
   hidden?: boolean
+  /** Display this field in overview listings */
+  overview?: boolean
   /** Mark this field as read-only */
   readOnly?: boolean
   /** The initial value of the field */
@@ -31,13 +37,41 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   view: View<{
     field: Field<StoredValue, QueryValue, Mutator, Options>
   }>
-  postProcess?: (value: StoredValue, loader: LinkResolver) => Promise<void>
+  compactView?: View<{
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+    value: StoredValue
+  }>
+  queryValue?: (value: StoredValue, loader: LinkResolver) => Promise<QueryValue>
+  references?: (
+    value: StoredValue,
+    context: FieldReferenceContext
+  ) => Array<EntryReferenceTarget>
+  beforeSave?: (context: FieldBeforeSaveContext<StoredValue>) => StoredValue
 }
 
-export interface FieldData<StoredValue, QueryValue, Mutator, Options>
-  extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
-  shape: Shape<StoredValue, Mutator>
-  referencedViews: Array<string>
+export type FieldBeforeSaveAction =
+  | 'create'
+  | 'update'
+  | 'publish'
+  | 'translate'
+
+export interface FieldBeforeSaveContext<StoredValue> {
+  value: StoredValue
+  action: FieldBeforeSaveAction
+  user?: User | null
+  now: Date
+}
+
+export interface FieldData<
+  StoredValue,
+  QueryValue,
+  Mutator,
+  Options
+> extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
+  referencedViews?: Array<string>
+  defaultValue?: () => StoredValue
+  applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
+  searchableText?: (value: StoredValue) => string
 }
 
 export interface FieldInternal extends FieldData<any, any, any, any> {
@@ -46,11 +80,11 @@ export interface FieldInternal extends FieldData<any, any, any, any> {
 
 declare const brand: unique symbol
 export class Field<
-    StoredValue = any,
-    QueryValue = any,
-    Mutator = any,
-    Options = any
-  >
+  StoredValue = any,
+  QueryValue = any,
+  Mutator = any,
+  Options = any
+>
   extends Expr<QueryValue>
   implements HasField
 {
@@ -70,16 +104,14 @@ export namespace Field {
     return getField(field).ref
   }
 
-  export function shape(field: HasField): Shape {
-    return getField(field).shape
-  }
-
   export function label(field: HasField): string {
     return getField(field).options.label
   }
 
   export function initialValue(field: HasField): unknown {
-    return getField(field).options.initialValue
+    const data = getField(field)
+    if ('initialValue' in data.options) return data.options.initialValue
+    return data.defaultValue?.()
   }
 
   export function view<
@@ -97,9 +129,28 @@ export namespace Field {
 
   export function referencedViews(field: Field): Array<string> {
     const fieldView = Field.view(field)
-    if (typeof fieldView === 'string')
-      return [fieldView, ...getField(field).referencedViews]
-    return getField(field).referencedViews
+    const compactView = Field.compactView(field)
+    return [
+      typeof fieldView === 'string' ? fieldView : undefined,
+      typeof compactView === 'string' ? compactView : undefined,
+      ...(getField(field).referencedViews ?? [])
+    ].filter((view): view is string => typeof view === 'string')
+  }
+
+  export function compactView<
+    StoredValue,
+    QueryValue,
+    Mutator,
+    Options extends FieldOptions<StoredValue>
+  >(
+    field: Field<StoredValue, QueryValue, Mutator, Options>
+  ):
+    | View<{
+        field: Field<StoredValue, QueryValue, Mutator, Options>
+        value: StoredValue
+      }>
+    | undefined {
+    return getField(field).compactView
   }
 
   export function options<
@@ -108,6 +159,53 @@ export namespace Field {
     Options extends FieldOptions<StoredValue>
   >(field: Field<StoredValue, QueryValue, any, Options>): Options {
     return getField(field).options
+  }
+
+  export async function queryValue<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    loader: LinkResolver
+  ): Promise<QueryValue> {
+    const data = getField(field)
+    if (data.queryValue) return data.queryValue(value, loader)
+    if (data.applyLinks) await data.applyLinks(value, loader)
+    return value as unknown as QueryValue
+  }
+
+  export function beforeSave<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    context: Omit<FieldBeforeSaveContext<StoredValue>, 'value'>
+  ): StoredValue {
+    const data = getField(field)
+    if (!data.beforeSave) return value
+    return data.beforeSave({...context, value})
+  }
+
+  export async function applyLinks<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    loader: LinkResolver
+  ): Promise<void> {
+    const data = getField(field)
+    if (data.applyLinks) await data.applyLinks(value, loader)
+  }
+
+  export function searchableText<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue
+  ): string {
+    const data = getField(field)
+    return data.searchableText?.(value) ?? ''
+  }
+
+  export function references<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    context: FieldReferenceContext
+  ): Array<EntryReferenceTarget> {
+    const data = getField(field)
+    return data.references?.(value, context) ?? []
   }
 
   export function isField(value: any): value is Field {

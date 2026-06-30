@@ -1,4 +1,5 @@
 import styler from '@alinea/styler'
+import {mergeAttributes} from '@tiptap/core'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
 import BulletList from '@tiptap/extension-bullet-list'
@@ -9,6 +10,7 @@ import Gapcursor from '@tiptap/extension-gapcursor'
 import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
 import Highlight from '@tiptap/extension-highlight'
+import History from '@tiptap/extension-history'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
 import Italic from '@tiptap/extension-italic'
 import ListItem from '@tiptap/extension-list-item'
@@ -23,55 +25,82 @@ import TableHeader from '@tiptap/extension-table-header'
 import TableRow from '@tiptap/extension-table-row'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
-import css from './Extensions.module.scss'
+import css from './Extensions.module.css'
 import {Link} from './extensions/Link.js'
 import Small from './extensions/Small.js'
 
 const styles = styler(css)
 
-// These come from the tiptap starter kit, but we omit:
-// code, codeblock -> these can be achieved using a block
-// history -> needs to be configured on the yjs side
+const HeadingWithClasses = Heading.extend({
+  renderHTML({node, HTMLAttributes}) {
+    const level = this.options.levels.includes(node.attrs.level)
+      ? node.attrs.level
+      : this.options.levels[0]
+    return [
+      `h${level}`,
+      mergeAttributes(HTMLAttributes, {
+        class: styles.Heading(`level${level}`)
+      }),
+      0
+    ]
+  }
+})
 
 export const extensions = {
   Document,
   Text,
   Paragraph: Paragraph.configure({
     HTMLAttributes: {
-      class: styles.paragraph()
+      class: styles.Paragraph()
     }
   }),
-  Small,
-  Bold,
-  Italic,
-  Strike,
-  HorizontalRule,
+  Small: Small.configure({
+    HTMLAttributes: {
+      class: styles.Small()
+    }
+  }),
+  Bold: Bold.configure({
+    HTMLAttributes: {
+      class: styles.Bold()
+    }
+  }),
+  Italic: Italic.configure({
+    HTMLAttributes: {
+      class: styles.Italic()
+    }
+  }),
+  Strike: Strike.configure({
+    HTMLAttributes: {
+      class: styles.Strike()
+    }
+  }),
+  HorizontalRule: HorizontalRule.configure({
+    HTMLAttributes: {
+      class: styles.HorizontalRule()
+    }
+  }),
   BulletList: BulletList.configure({
     HTMLAttributes: {
-      class: styles.list()
+      class: styles.BulletList()
     }
   }),
   OrderedList: OrderedList.configure({
     HTMLAttributes: {
-      class: styles.list()
+      class: styles.OrderedList()
     }
   }),
   ListItem: ListItem.configure({
     HTMLAttributes: {
-      class: styles.listItem()
+      class: styles.ListItem()
     }
   }),
   Blockquote: Blockquote.configure({
     HTMLAttributes: {
-      class: styles.blockquote()
+      class: styles.Blockquote()
     }
   }),
   HardBreak,
-  Heading: Heading.configure({
-    HTMLAttributes: {
-      class: styles.heading()
-    }
-  }),
+  Heading: HeadingWithClasses,
   TextAlign: TextAlign.configure({
     types: ['heading', 'paragraph']
   }),
@@ -79,31 +108,40 @@ export const extensions = {
   Gapcursor,
   Link: Link.configure({
     HTMLAttributes: {
-      class: styles.link()
+      class: styles.Link()
     }
   }),
   FloatingMenu,
-  SuperScript,
-  SubScript,
+  SuperScript: SuperScript.configure({
+    HTMLAttributes: {
+      class: styles.SuperScript()
+    }
+  }),
+  SubScript: SubScript.configure({
+    HTMLAttributes: {
+      class: styles.SubScript()
+    }
+  }),
   Table: Table.configure({
     HTMLAttributes: {
-      class: styles.table()
+      class: styles.Table()
     }
   }),
   TableCell: TableCell.configure({
     HTMLAttributes: {
-      class: styles.td()
+      class: styles.TableCell()
     }
   }),
   TableHeader: TableHeader.configure({
     HTMLAttributes: {
-      class: styles.th()
+      class: styles.TableHeader()
     }
   }),
   TableRow,
   Highlight: Highlight.configure({
     HTMLAttributes: {
-      class: styles.highlight()
+      class: styles.Highlight()
     }
-  })
+  }),
+  History
 }

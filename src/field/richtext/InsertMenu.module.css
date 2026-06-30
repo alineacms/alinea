@@ -1,0 +1,14 @@
+.InsertMenu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  background: var(--alinea-muted);
+  border: 1px solid var(--alinea-border);
+}
+
+.InsertMenu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

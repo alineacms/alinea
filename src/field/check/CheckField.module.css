@@ -1,0 +1,8 @@
+.checkline {
+  display: flex;
+  gap: 4px;
+}
+.checkline-required {
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+}

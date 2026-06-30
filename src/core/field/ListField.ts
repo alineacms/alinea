@@ -1,9 +1,18 @@
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {createId} from '../Id.js'
+import {ListRow} from '../ListRow.js'
 import {Schema} from '../Schema.js'
-import {type ListMutator, type ListRow, ListShape} from '../shape/ListShape.js'
-import type {RecordShape} from '../shape/RecordShape.js'
+import {Type} from '../Type.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
+import {entries} from '../util/Objects.js'
+
+export interface ListMutator<Row> {
+  replace(id: string, row: Row): void
+  push(row: Omit<Row, '_id' | '_index'>, insertAt?: number): void
+  remove(id: string): void
+  move(oldIndex: number, newIndex: number): void
+  read(id: string): Row | undefined
+}
 
 export class ListField<
   StoredValue extends ListRow,
@@ -17,7 +26,6 @@ export class ListField<
 > {
   constructor(
     schema: Schema,
-    shapes: Record<string, RecordShape<any>>,
     meta: FieldMeta<
       Array<StoredValue>,
       Array<QueryValue>,
@@ -25,15 +33,69 @@ export class ListField<
       Options
     >
   ) {
+    const customQueryValue = meta.queryValue
+    const customReferences = meta.references
     super({
-      shape: new ListShape(
-        meta.options.label,
-        shapes,
-        meta.options.initialValue,
-        meta.postProcess
-      ),
       referencedViews: Schema.referencedViews(schema),
-      ...meta
+      ...meta,
+      defaultValue() {
+        return meta.options.initialValue ?? []
+      },
+      async applyLinks(value, loader) {
+        const rows = Array.isArray(value) ? value : []
+        await Promise.all(
+          rows.map(async row => {
+            const type = schema[row[ListRow.type]]
+            if (!type) return
+            await Type.applyLinks(type, row as Record<string, unknown>, loader)
+          })
+        )
+      },
+      searchableText(value) {
+        let res = ''
+        const rows = Array.isArray(value) ? value : []
+        for (const row of rows) {
+          const type = schema[row[ListRow.type]]
+          if (type) {
+            const text = Type.searchableText(type, row)
+            if (text) res += ` ${text}`
+          }
+        }
+        return res
+      },
+      references(value, context) {
+        const result = customReferences?.(value, context) ?? []
+        const rows = Array.isArray(value) ? value : []
+        for (const row of rows) {
+          const type = schema[row[ListRow.type]]
+          if (!type) continue
+          const segment = row[ListRow.id] || String(rows.indexOf(row))
+          result.push(
+            ...Type.references(type, row as Record<string, unknown>, [
+              ...context.path,
+              segment
+            ])
+          )
+        }
+        return result
+      },
+      async queryValue(value, loader) {
+        const rows = Array.isArray(value) ? value : []
+        await Promise.all(
+          rows.map(async row => {
+            const type = schema[row[ListRow.type]]
+            if (!type) return
+            const record = row as Record<string, unknown>
+            await Promise.all(
+              entries(Type.fields(type)).map(async ([key, field]) => {
+                record[key] = await Field.queryValue(field, record[key], loader)
+              })
+            )
+          })
+        )
+        if (customQueryValue) return customQueryValue(rows, loader)
+        return rows as unknown as Array<QueryValue>
+      }
     })
   }
 }

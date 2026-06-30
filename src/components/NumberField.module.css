@@ -1,0 +1,104 @@
+.NumberField {
+  color: var(--alinea-fg);
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .NumberField-wrapper {
+    display: flex;
+    position: relative;
+    border: 1px solid var(--alinea-border);
+    border-radius: 8px;
+    background-color: var(--alinea-input);
+    transition: var(--alinea-transition);
+
+    &[data-hovered] {
+      border-color: var(--alinea-border-hover);
+      box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+    }
+
+    &:focus-within {
+      border-color: var(--alinea-primary);
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    }
+
+    &[data-invalid] {
+      border: 1px solid var(--alinea-border-danger);
+      box-shadow: 0 0 0 3px var(--alinea-danger-overlay);
+    }
+
+    .NumberField-input {
+      font: inherit;
+      outline: none;
+      width: 100%;
+      min-width: 70px;
+      padding: 8px 10px;
+      border: none;
+      background: transparent;
+      font-size: var(--alinea-font-size-base);
+      line-height: 1.5;
+      color: var(--alinea-fg);
+      text-align: left;
+
+      &::placeholder {
+        color: var(--alinea-fg-subtle);
+      }
+
+      &[data-disabled] {
+        pointer-events: none;
+        background-color: var(--alinea-muted);
+        opacity: 0.5;
+      }
+
+      &[data-readonly] {
+        pointer-events: none;
+        color: var(--alinea-fg-disabled);
+      }
+    }
+
+    .NumberField-buttons {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--alinea-border);
+
+      .NumberField-button {
+        flex-grow: 1;
+        background: none;
+        border: none;
+        width: 22px;
+        height: 16px;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--alinea-fg-muted);
+        transition: var(--alinea-transition);
+        cursor: pointer;
+
+        &[data-slot='increment'] {
+          border-top-right-radius: 4px;
+        }
+        &[data-slot='decrement'] {
+          border-bottom-right-radius: 4px;
+        }
+
+        &:hover {
+          background-color: var(--alinea-muted-hover);
+          color: var(--alinea-primary-icon);
+        }
+
+        &:active {
+          background-color: var(--alinea-muted-pressed);
+        }
+      }
+    }
+
+    &[data-steppers='false'] {
+      .NumberField-buttons {
+        display: none;
+      }
+    }
+  }
+}

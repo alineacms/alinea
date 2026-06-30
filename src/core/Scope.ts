@@ -1,4 +1,4 @@
-import type {Workspace} from 'alinea/types'
+import type {Workspace} from '#/types.js'
 import type {Config} from './Config.js'
 import {Expr} from './Expr.js'
 import type {Field} from './Field.js'

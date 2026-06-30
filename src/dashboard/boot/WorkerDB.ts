@@ -1,10 +1,14 @@
-import type {Config} from 'alinea/core/Config'
-import type {Connection, UploadResponse} from 'alinea/core/Connection'
-import type {AnyQueryResult, GraphQuery} from 'alinea/core/Graph'
-import {createId} from 'alinea/core/Id'
-import {getScope} from 'alinea/core/Scope'
-import type {Mutation} from 'alinea/core/db/Mutation'
-import {WriteableGraph} from 'alinea/core/db/WriteableGraph'
+import type {Config} from '#/core/Config.js'
+import type {Connection, UploadResponse} from '#/core/Connection.js'
+import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
+import {getScope} from '#/core/Scope.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {DashboardWorker} from './DashboardWorker.js'
 
 export class WorkerDB extends WriteableGraph {
@@ -37,6 +41,18 @@ export class WorkerDB extends WriteableGraph {
 
   sync(): Promise<string> {
     return this.#worker.sync()
+  }
+
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.#worker.referencesTo(query)
+  }
+
+  retryMutationQueue(): Promise<void> {
+    return this.#worker.retryQueue()
+  }
+
+  discardMutationQueue(): void {
+    this.#worker.discardQueue()
   }
 
   prepareUpload(file: string): Promise<UploadResponse> {

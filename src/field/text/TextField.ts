@@ -1,6 +1,6 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {ScalarField} from 'alinea/core/field/ScalarField'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ScalarField} from '#/core/field/ScalarField.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ComponentType, ReactNode} from 'react'
 
 /** Optional settings to configure a text field */
@@ -32,7 +32,12 @@ export class TextField extends ScalarField<string, TextOptions> {}
 /** Create a text field */
 export function text(label: string, options: WithoutLabel<TextOptions> = {}) {
   return new TextField({
-    options: {label, ...options, initialValue: options.initialValue ?? ''},
+    options: {
+      label,
+      overview: !options.multiline,
+      ...options,
+      initialValue: options.initialValue ?? ''
+    },
     view: viewKeys.TextInput
   })
 }

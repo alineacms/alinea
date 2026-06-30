@@ -1,49 +1,46 @@
+import {
+  Button,
+  Icon,
+  Menu,
+  MenuItem,
+  MenuSeparator,
+  Toolbar,
+  ToolbarGroup,
+  ToolbarSeparator
+} from '#/components.js'
+import type {Reference} from '#/core/Reference.js'
+import {entries} from '#/core/util/Objects.js'
+import type {
+  PickTextLinkFunc,
+  PickerValue
+} from '#/field/richtext/PickTextLink.js'
+import {
+  attributesToReference,
+  referenceToAttributes
+} from '#/field/richtext/ReferenceLink.js'
+import type {
+  RichTextToolbarContext,
+  ToolbarButton,
+  ToolbarConfig,
+  ToolbarGroup as ToolbarConfigGroup,
+  ToolbarMenu
+} from '#/field/richtext/Toolbar.js'
+import type {UrlReference} from '#/picker/url.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/react'
-import type {Reference} from 'alinea/core/Reference'
-import {values} from 'alinea/core/util/Objects'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
-import type {UrlReference} from 'alinea/picker/url'
-import {HStack, Icon, px} from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {Fragment, type ReactNode, useMemo} from 'react'
-import type {PickTextLinkFunc} from './PickTextLink.js'
-import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
-import css from './RichTextToolbar.module.scss'
+import {useMemo, type ReactNode} from 'react'
+import css from './RichTextToolbar.module.css'
 import {defaultToolbar} from './Toolbar.js'
 
 const styles = styler(css)
 
 export type RichTextCommand = () => ReturnType<Editor['chain']>
 
-export interface ToolbarButton {
-  icon?: (ctx: RichTextToolbarContext) => ReactNode
-  label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
-  title?: string
-  disabled?: (ctx: RichTextToolbarContext) => boolean
-  active?: (ctx: RichTextToolbarContext) => boolean
-  onSelect: (ctx: RichTextToolbarContext) => void
-}
-
-export interface ToolbarMenu {
-  icon: (ctx: RichTextToolbarContext) => ReactNode
-  label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
-  items: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
-}
-
-export interface ToolbarGroup {
-  group: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
-}
-
-export type ToolbarConfig = {
-  [name: string]: ToolbarMenu | ToolbarButton | ToolbarGroup
-}
-
 export interface RichTextToolbarProps {
   editor: Editor
-  focusToggle: (target: EventTarget | null) => void
-  pickLink: PickTextLinkFunc
   enableTables?: boolean
+  focusToggle: (target: EventTarget | null) => void
+  pickLink?: PickTextLinkFunc
   toolbar?: ToolbarConfig
 }
 
@@ -53,15 +50,16 @@ export function createToolbarExec(editor: Editor): RichTextCommand {
 
 export function createLinkHandler(
   editor: Editor,
-  pickLink: PickTextLinkFunc,
+  pickLink: PickTextLinkFunc | undefined,
   exec = createToolbarExec(editor)
 ) {
   return function handleLink() {
     const attrs = editor.getAttributes('link')
-    const existing: Reference | undefined = attributesToReference(attrs)
     const {view} = editor
     const {from, to} = view.state.selection
     const isSelection = from !== to
+    if (!pickLink) return handleBrowserLink(editor, exec, attrs, isSelection)
+    const existing: Reference | undefined = attributesToReference(attrs)
     return pickLink({
       link: existing,
       title: attrs.title,
@@ -70,34 +68,26 @@ export function createLinkHandler(
       requireDescription: !isSelection
     })
       .then(picked => {
-        if (!picked || !picked.link) {
+        if (picked === undefined) return
+        if (!picked.link) {
           exec().unsetLink().run()
           return
         }
-        const link = picked.link
-        const linkAttrs = {
-          title: picked.title,
-          ...referenceToAttributes(link),
-          target:
-            (link as UrlReference)._target ??
-            (picked.blank ? '_blank' : undefined)
-        }
+        const linkAttributes = createLinkAttributes(picked)
         if (existing) {
-          exec().extendMarkRange('link').setLink(linkAttrs).run()
+          exec().extendMarkRange('link').setLink(linkAttributes).run()
         } else if (isSelection) {
-          exec()
-            .setLink(linkAttrs as any)
-            .run()
+          exec().setLink(linkAttributes).run()
         } else {
           exec()
             .insertContent({
               type: 'text',
               text:
-                picked.title ||
-                (link as UrlReference)._title ||
-                (link as UrlReference)._url ||
+                picked.description ||
+                (picked.link as UrlReference)._title ||
+                (picked.link as UrlReference)._url ||
                 '',
-              marks: [{type: 'link', attrs: linkAttrs}]
+              marks: [{type: 'link', attrs: linkAttributes}]
             })
             .run()
         }
@@ -106,54 +96,65 @@ export function createLinkHandler(
   }
 }
 
-export interface RichTextToolbarContext {
-  editor: Editor
-  focusToggle: (target: EventTarget | null) => void
-  pickLink: PickTextLinkFunc
-  enableTables?: boolean
-  exec: RichTextCommand
-  handleLink: () => void
-  toolbar: ToolbarConfig
+export function RichTextToolbar({
+  editor,
+  enableTables,
+  focusToggle,
+  pickLink,
+  toolbar
+}: RichTextToolbarProps) {
+  const config = useMemo(
+    () => toolbar ?? defaultToolbar(enableTables || false),
+    [enableTables, toolbar]
+  )
+  const ctx = useMemo(() => {
+    const exec = createToolbarExec(editor)
+    return {
+      editor,
+      focusToggle,
+      pickLink: pickLink ?? pickBrowserLink,
+      enableTables,
+      exec,
+      handleLink: createLinkHandler(editor, pickLink, exec),
+      toolbar: config
+    } satisfies RichTextToolbarContext
+  }, [config, editor, enableTables, focusToggle, pickLink])
+  return (
+    <div
+      tabIndex={-1}
+      className={styles.RichTextToolbar()}
+      data-richtext-toolbar="true"
+      onFocus={event => ctx.focusToggle(event.currentTarget)}
+      onBlur={event => ctx.focusToggle(event.relatedTarget)}
+    >
+      <Toolbar aria-label="Text formatting" data-orientation="horizontal">
+        <ToolbarItems config={config} ctx={ctx} subMenu={false} />
+      </Toolbar>
+    </div>
+  )
 }
 
 interface ToolbarButtonProps {
   button: ToolbarButton
   ctx: RichTextToolbarContext
-  subMenu: boolean
 }
 
-function ToolbarButton({button, ctx, subMenu}: ToolbarButtonProps) {
+function ToolbarButtonView({button, ctx}: ToolbarButtonProps) {
   const icon = button.icon?.(ctx)
+  const label = resolveNode(button.label, ctx)
   const active = button.active?.(ctx)
-  const disabled = button.disabled?.(ctx)
-  const label =
-    typeof button.label === 'function' ? button.label(ctx) : button.label
   const title = button.title ?? (typeof label === 'string' ? label : undefined)
-  if (subMenu)
-    return (
-      <DropdownMenu.Item
-        type="button"
-        onClick={() => button.onSelect(ctx)}
-        disabled={disabled}
-      >
-        <HStack gap={8} center>
-          <Icon icon={icon} active={active} size={20} />
-          {label}
-        </HStack>
-      </DropdownMenu.Item>
-    )
   return (
-    <IconButton
-      icon={icon}
-      size={18}
-      onClick={e => {
-        e.preventDefault()
-        button.onSelect(ctx)
-      }}
-      disabled={disabled}
-      active={active}
-      title={title}
-    />
+    <Button
+      size="icon-nav"
+      appearance={active ? 'active' : 'plain'}
+      isDisabled={button.disabled?.(ctx)}
+      onPress={() => button.onSelect(ctx)}
+      aria-label={title}
+    >
+      {icon && <Icon icon={icon} data-slot="icon" />}
+      {!icon && label}
+    </Button>
   )
 }
 
@@ -162,27 +163,23 @@ interface ToolbarMenuProps {
   menu: ToolbarMenu
 }
 
-function ToolbarMenu({ctx, menu}: ToolbarMenuProps) {
+function ToolbarMenuView({ctx, menu}: ToolbarMenuProps) {
   const icon = menu.icon?.(ctx)
-  const label = typeof menu.label === 'function' ? menu.label(ctx) : menu.label
+  const label = resolveNode(menu.label, ctx)
   const config = typeof menu.items === 'function' ? menu.items(ctx) : menu.items
+  const textValue = getTextValue(label) ?? 'Menu'
   return (
-    <DropdownMenu.Root top>
-      <DropdownMenu.Trigger className={styles.root.dropdown()}>
-        <HStack gap={10} center>
-          {icon && <Icon icon={icon} size={18} />}
-          <span>{label}</span>
-        </HStack>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Items>
-        <ToolbarItems
-          subMenu
-          config={config}
-          ctx={ctx}
-          separator={<HorizontalSeparator />}
-        />
-      </DropdownMenu.Items>
-    </DropdownMenu.Root>
+    <Menu
+      aria-label={textValue}
+      label={
+        <Button appearance="plain">
+          {icon && <Icon icon={icon} data-slot="icon" />}
+          {label}
+        </Button>
+      }
+    >
+      <ToolbarItems config={config} ctx={ctx} subMenu={true} />
+    </Menu>
   )
 }
 
@@ -190,87 +187,122 @@ interface ToolbarItemsProps {
   config: ToolbarConfig
   ctx: RichTextToolbarContext
   subMenu: boolean
-  separator?: ReactNode
 }
 
-function ToolbarItems({config, ctx, subMenu, separator}: ToolbarItemsProps) {
-  return values(config)
-    .map(entry => {
-      if ('items' in entry) {
-        return <ToolbarMenu menu={entry} ctx={ctx} />
-      } else if ('group' in entry) {
-        const config =
-          typeof entry.group === 'function' ? entry.group(ctx) : entry.group
-        return <ToolbarItems subMenu={subMenu} config={config} ctx={ctx} />
-      } else {
-        return <ToolbarButton subMenu={subMenu} button={entry} ctx={ctx} />
-      }
-    })
-    .reduce((result, node, index) => {
-      if (index > 0)
-        result.push(<Fragment key={`sep-${index}`}>{separator}</Fragment>)
-      result.push(<Fragment key={`node-${index}`}>{node}</Fragment>)
-      return result
-    }, Array<ReactNode>())
-}
-
-function VerticalSeparator() {
-  return <div className={styles.root.separator()} />
-}
-
-function HorizontalSeparator() {
-  return (
-    <hr
-      style={{
-        border: 'none',
-        marginBlock: '2px',
-        borderTop: '1px solid var(--alinea-outline)'
-      }}
-    />
-  )
-}
-
-export function RichTextToolbar(props: RichTextToolbarProps) {
-  const config: ToolbarConfig = useMemo(
-    () => props.toolbar ?? defaultToolbar(props.enableTables || false),
-    [props.toolbar, props.enableTables]
-  )
-  const ctx = useMemo(() => {
-    const exec = createToolbarExec(props.editor)
-    const handleLink = createLinkHandler(props.editor, props.pickLink, exec)
-    return {
-      editor: props.editor,
-      focusToggle: props.focusToggle,
-      pickLink: props.pickLink,
-      enableTables: props.enableTables,
-      exec,
-      handleLink,
-      toolbar: config
+function ToolbarItems({config, ctx, subMenu}: ToolbarItemsProps) {
+  return entries(config).reduce((result, [name, entry], index) => {
+    if (index > 0) {
+      result.push(
+        subMenu ? (
+          <MenuSeparator key={`${name}-separator`} />
+        ) : (
+          <ToolbarSeparator key={`${name}-separator`} />
+        )
+      )
     }
-  }, [
-    config,
-    props.editor,
-    props.focusToggle,
-    props.pickLink,
-    props.enableTables
-  ])
-  return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: because
-    <div
-      tabIndex={-1}
-      className={styles.root()}
-      data-richtext-toolbar="true"
-      onFocus={e => ctx.focusToggle(e.currentTarget)}
-      onBlur={e => ctx.focusToggle(e.relatedTarget)}
-    >
-      <HStack gap={10} center style={{height: '100%', padding: `${px(4)} 0`}}>
-        <ToolbarItems
-          subMenu={false}
-          config={config}
-          ctx={ctx}
-          separator={<VerticalSeparator />}
-        />
-      </HStack>
-    </div>
-  )
+    result.push(renderEntry(name, entry, ctx, subMenu))
+    return result
+  }, Array<ReactNode>())
+}
+
+function renderEntry(
+  name: string,
+  entry: ToolbarButton | ToolbarMenu | ToolbarConfigGroup,
+  ctx: RichTextToolbarContext,
+  subMenu: boolean
+): ReactNode {
+  if ('items' in entry) {
+    return <ToolbarMenuView key={name} menu={entry} ctx={ctx} />
+  }
+  if ('group' in entry) {
+    const config =
+      typeof entry.group === 'function' ? entry.group(ctx) : entry.group
+    const content: Array<ReactNode> = entries(config).map(
+      ([groupName, groupEntry]) =>
+        renderEntry(`${name}-${groupName}`, groupEntry, ctx, subMenu)
+    )
+    if (subMenu) return content
+    return <ToolbarGroup key={name}>{content}</ToolbarGroup>
+  }
+  if (subMenu) {
+    const label = resolveNode(entry.label, ctx)
+    const title =
+      entry.title ?? getTextValue(label) ?? humanizeToolbarName(name)
+    const icon = entry.icon?.(ctx)
+    return (
+      <MenuItem
+        key={name}
+        id={name}
+        textValue={title}
+        isDisabled={entry.disabled?.(ctx)}
+        onAction={() => entry.onSelect(ctx)}
+      >
+        {icon && <Icon icon={icon} data-slot="icon" />}
+        <span>{label ?? title}</span>
+      </MenuItem>
+    )
+  }
+  return <ToolbarButtonView key={name} button={entry} ctx={ctx} />
+}
+
+function handleBrowserLink(
+  editor: Editor,
+  exec: RichTextCommand,
+  attrs: Record<string, unknown>,
+  isSelection: boolean
+) {
+  if (typeof window === 'undefined') return
+  const currentHref = typeof attrs.href === 'string' ? attrs.href : ''
+  const href = window.prompt('Enter link URL', currentHref)
+  if (href === null) return
+  const nextHref = href.trim()
+  if (!nextHref) {
+    exec().unsetLink().run()
+    return
+  }
+  const linkAttributes = {href: nextHref}
+  if (editor.isActive('link')) {
+    exec().extendMarkRange('link').setLink(linkAttributes).run()
+  } else if (isSelection) {
+    exec().setLink(linkAttributes).run()
+  } else {
+    exec()
+      .insertContent({
+        type: 'text',
+        text: nextHref,
+        marks: [{type: 'link', attrs: linkAttributes}]
+      })
+      .run()
+  }
+}
+
+function createLinkAttributes(picked: PickerValue) {
+  const link = picked.link!
+  return {
+    title: picked.title,
+    ...referenceToAttributes(link),
+    target:
+      (link as UrlReference)._target ?? (picked.blank ? '_blank' : undefined)
+  }
+}
+
+function resolveNode(
+  value: ToolbarButton['label'] | ToolbarMenu['label'],
+  ctx: RichTextToolbarContext
+) {
+  return typeof value === 'function' ? value(ctx) : value
+}
+
+function getTextValue(value: ReactNode) {
+  return typeof value === 'string' ? value : undefined
+}
+
+function humanizeToolbarName(name: string) {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/(^|\s)\w/g, letter => letter.toUpperCase())
+}
+
+async function pickBrowserLink() {
+  return undefined
 }

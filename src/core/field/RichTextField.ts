@@ -1,14 +1,32 @@
 import {Parser} from 'htmlparser2'
+import type {EntryReferenceTarget} from '../db/EntryReference.js'
+import {referenceFieldPath} from '../db/EntryReference.js'
+import {Entry} from '../Entry.js'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
-import {type RichTextMutator, RichTextShape} from '../shape/RichTextShape.js'
 import {
   type ElementNode,
-  type Mark,
+  LinkMark,
+  Mark,
   Node,
   type TextDoc,
   type TextNode
 } from '../TextDoc.js'
+import {Type} from '../Type.js'
+import {mediaLocationUrl} from '../util/EntryFilenames.js'
+import {entries} from '../util/Objects.js'
+
+export type RichTextMutator<R> = {
+  insert: (id: string, block: string) => void
+}
+
+const linkInfoFields = {
+  id: Entry.id,
+  url: Entry.url,
+  workspace: Entry.workspace,
+  location: MediaFile.location
+}
 
 export class RichTextField<
   Blocks,
@@ -30,16 +48,172 @@ export class RichTextField<
       Options
     >
   ) {
+    const customQueryValue = meta.queryValue
+    const customReferences = meta.references
     super({
-      shape: new RichTextShape(
-        meta.options.label,
-        schema && Schema.shapes(schema),
-        meta.options.initialValue,
-        meta.options.searchable
-      ),
       referencedViews: schema ? Schema.referencedViews(schema) : [],
-      ...meta
+      ...meta,
+      defaultValue() {
+        return meta.options.initialValue ?? ([] as TextDoc<Blocks>)
+      },
+      async applyLinks(value, loader) {
+        const doc = Array.isArray(value) ? value : []
+        const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
+        for (const row of doc) {
+          if (!schema || !Node.isBlock(row)) continue
+          const type = schema[row[Node.type]]
+          if (type) tasks.push(Type.applyLinks(type, row, loader))
+        }
+        await Promise.all(tasks)
+      },
+      searchableText(value) {
+        if (!meta.options.searchable) return ''
+        return richTextSearchableText(schema, value)
+      },
+      references(value, context) {
+        const doc = Array.isArray(value) ? value : []
+        const result = customReferences?.(value, context) ?? []
+        result.push(
+          ...richTextReferences(schema, doc, context.path, context.label)
+        )
+        return result
+      },
+      async queryValue(value, loader) {
+        const doc = Array.isArray(value) ? value : []
+        const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
+        for (const row of doc) {
+          if (!schema || !Node.isBlock(row)) continue
+          const type = schema[row[Node.type]]
+          if (!type) continue
+          const record = row as Record<string, unknown>
+          tasks.push(
+            Promise.all(
+              entries(Type.fields(type)).map(async ([key, field]) => {
+                record[key] = await Field.queryValue(field, record[key], loader)
+              })
+            )
+          )
+        }
+        await Promise.all(tasks)
+        if (customQueryValue) return customQueryValue(doc, loader)
+        return doc
+      }
     })
+  }
+}
+
+function richTextReferences<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  path: Array<string>,
+  label?: string
+): Array<EntryReferenceTarget> {
+  const result: Array<EntryReferenceTarget> = []
+  iterMarks(doc, mark => {
+    if (mark[Mark.type] !== 'link') return
+    const entryId = mark[LinkMark.entry]
+    if (typeof entryId !== 'string') return
+    const linkType = richTextLinkType(mark[LinkMark.link])
+    if (linkType === 'url') return
+    const linkId = mark[LinkMark.id]
+    result.push({
+      targetId: entryId,
+      fieldPath: referenceFieldPath(
+        typeof linkId === 'string' ? [...path, linkId] : path
+      ),
+      fieldLabel: label,
+      linkId,
+      linkType
+    })
+  })
+  doc.forEach((row, index) => {
+    if (!schema || !Node.isBlock(row)) return
+    const type = schema[row[Node.type]]
+    if (!type) return
+    result.push(
+      ...Type.references(type, row as Record<string, unknown>, [
+        ...path,
+        row._id ?? String(index)
+      ])
+    )
+  })
+  return result
+}
+
+function richTextLinkType(
+  value: string | undefined
+): 'entry' | 'file' | undefined | 'url' {
+  if (value === 'entry' || value === 'file' || value === 'url') return value
+  return undefined
+}
+
+async function applyLinkMarks(
+  doc: TextDoc<unknown>,
+  loader: import('../db/LinkResolver.js').LinkResolver
+): Promise<void> {
+  if (!Array.isArray(doc)) return
+  const links = new Map<Mark, string>()
+  iterMarks(doc, mark => {
+    if (mark[Mark.type] !== 'link') return
+    const entryId = mark[LinkMark.entry]
+    if (typeof entryId === 'string') links.set(mark, entryId)
+  })
+  const linkIds = Array.from(new Set(links.values()))
+  const entries = await loader.resolveLinks(linkInfoFields, linkIds)
+  const info = new Map(entries.map(entry => [entry.id, entry]))
+  for (const [mark, entryId] of links) {
+    const type = mark[LinkMark.link] as 'entry' | 'file' | undefined
+    const data = info.get(entryId)
+    if (!data) continue
+    const href =
+      type === 'file'
+        ? mediaLocationUrl(
+            loader.resolver.config,
+            data.workspace,
+            data.location
+          )
+        : data.url
+    mark.href = applyUrlSuffix(href, mark[LinkMark.suffix])
+  }
+}
+
+function applyUrlSuffix(url: string, suffix: string | undefined): string {
+  const value = suffix?.trim()
+  if (!value) return url
+  return `${url}${value}`
+}
+
+function richTextSearchableText<Blocks>(
+  schema: Schema | undefined,
+  value: TextDoc<Blocks>
+): string {
+  if (!Array.isArray(value)) return ''
+  return value.reduce((acc, node) => {
+    return acc + richTextNodeText(schema, node)
+  }, '')
+}
+
+function richTextNodeText(schema: Schema | undefined, node: Node): string {
+  if (Node.isText(node)) return node.text ? ` ${node.text}` : ''
+  if (Node.isElement(node) && node.content) {
+    return node.content.reduce((acc, node) => {
+      return acc + richTextNodeText(schema, node)
+    }, '')
+  }
+  if (Node.isBlock(node)) {
+    const type = schema?.[node[Node.type]]
+    if (type) {
+      const text = Type.searchableText(type, node)
+      return text ? ` ${text}` : ''
+    }
+  }
+  return ''
+}
+
+function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
+  for (const row of doc) {
+    if (Node.isText(row)) row.marks?.forEach(fn)
+    else if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
   }
 }
 

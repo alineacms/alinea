@@ -1,85 +1,78 @@
-import styler from '@alinea/styler'
-import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack} from 'alinea/ui'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {TextareaAutosize} from 'alinea/ui/util/TextareaAutosize'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {JsonField} from '#/field/json.js'
 import {useEffect, useState} from 'react'
-import type {JsonField} from './JsonField.js'
-import css from './JsonField.module.scss'
+import {CodeEditorInput} from '../code/CodeField.view.js'
 
-const styles = styler(css)
-
-export interface JsonInputProps<T> {
-  field: JsonField<T>
+export interface JsonFieldViewProps<Value> {
+  field: JsonField<Value>
 }
 
-export function JsonInput<T>({field}: JsonInputProps<T>) {
-  const {options, value, mutator, label, error} = useField(field)
-  const [text, setText] = useState(JSON.stringify(value, null, 2))
-  const [valid, setValid] = useState(true)
-  const [focus, setFocus] = useState(false)
-  const {inline, autoFocus} = options
+function formatJsonValue(value: unknown): string {
+  const formatted = JSON.stringify(value, null, 2)
+  return formatted ?? ''
+}
 
-  // Todo: unlocalise
-  // Todo: redraw textarea on fontSize change
-  const placeholder = inline ? String(label) : ''
-  const empty = value === ''
+function parseJsonValue<Value>(text: string): Value | undefined {
+  if (!text.trim()) return undefined
+  return JSON.parse(text) as Value
+}
 
-  // Todo: @dmerckx - no useEffect needed here, just handle both text and value
-  // setters in the event handlers
-  useEffect(() => {
+export function JsonFieldView<Value>({field}: JsonFieldViewProps<Value>) {
+  const [value, setValue] = useField(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const [text, setText] = useState(() => formatJsonValue(value))
+  const [parseError, setParseError] = useState<string | undefined>()
+  const [isFocused, setIsFocused] = useState(false)
+
+  useEffect(
+    function syncTextFromValue() {
+      if (!isFocused) setText(formatJsonValue(value))
+    },
+    [isFocused, value]
+  )
+
+  function handleValueChange(nextText: string) {
+    setText(nextText)
     try {
-      const newValue = JSON.parse(text)
-      mutator(newValue)
-      setValid(true)
-    } catch (e) {
-      setValid(!text)
+      const parsed = parseJsonValue<Value>(nextText)
+      if (parsed === undefined) {
+        setParseError(undefined)
+        return
+      }
+      setValue(parsed)
+      setParseError(undefined)
+    } catch (parseFailure) {
+      const message =
+        parseFailure instanceof Error ? parseFailure.message : 'Invalid JSON'
+      setParseError(message)
     }
-  }, [text])
+  }
+
+  function handleFocus() {
+    setIsFocused(true)
+  }
+
+  function handleBlur() {
+    setIsFocused(false)
+    if (!parseError) setText(formatJsonValue(value))
+  }
 
   return (
-    <InputLabel
-      asLabel
-      {...options}
-      error={error}
-      focused={focus}
-      icon={IcRoundTextFields}
-      empty={empty}
-    >
-      <HStack center gap={8}>
-        <TextareaAutosize
-          className={styles.root.input({valid})}
-          type="text"
-          value={text || ''}
-          onChange={e => setText(e.currentTarget.value)}
-          onFocus={() => setFocus(true)}
-          onKeyDown={e => {
-            if (e.key === 'Tab') {
-              const target = e.target as HTMLInputElement
-              const start = target.selectionStart!
-              const end = target.selectionEnd!
-              const value = target.value
-
-              if (end !== value.length) {
-                e.preventDefault()
-                target.value =
-                  `${value.substring(0, start)}  ${value.substring(end)}`
-                target.selectionStart = target.selectionEnd = start + 2
-              }
-            }
-          }}
-          onBlur={() => {
-            setFocus(false)
-            if (valid) {
-              setText(JSON.stringify(value, null, 2))
-            }
-          }}
-          placeholder={placeholder}
-          autoFocus={autoFocus}
-          readOnly={options.readOnly}
-        />
-      </HStack>
-    </InputLabel>
+    <CodeEditorInput
+      autoFocus={options.autoFocus}
+      description={options.help}
+      errorMessage={parseError || error}
+      invalid={Boolean(parseError)}
+      isRequired={options.required}
+      label={options.label}
+      shared={options.shared}
+      onValueChange={handleValueChange}
+      placeholder={options.inline ? String(options.label) : undefined}
+      readOnly={options.readOnly}
+      value={text}
+      onBlur={handleBlur}
+      onFocus={handleFocus}
+    />
   )
 }

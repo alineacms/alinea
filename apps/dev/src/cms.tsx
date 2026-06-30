@@ -1,25 +1,30 @@
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/next'
-import {IcRoundTranslate} from 'alinea/ui/icons/IcRoundTranslate'
-import {IcRoundUploadFile} from 'alinea/ui/icons/IcRoundUploadFile'
+import {IcRoundTranslate, IcRoundUploadFile} from '../../../src/dashboard/icons'
 import * as schema from './schema'
 
 const editor = Config.role('Editor', {
   permissions(policy) {
     policy.set(
       {
-        workspace: cms.workspaces.primary,
-        allow: {read: true},
-        grant: 'explicit'
+        allow: {all: true}
+      },
+      {
+        workspace: cms.workspaces.secondary,
+        deny: {read: true}
+      },
+      {
+        root: cms.workspaces.primary.pages,
+        deny: {read: true}
       },
       {
         root: cms.workspaces.primary.fields,
-        allow: {read: true},
-        grant: 'explicit'
+        grant: 'explicit',
+        allow: {read: true}
       },
       {
         id: '2dgfSWKFaEqxaimsO32A1sR9iMw',
-        allow: {all: true}
+        allow: {read: true, update: true}
       },
       {
         field: schema.FieldPermissions.readOnlyByRole,
@@ -42,6 +47,7 @@ export const cms = createCMS({
   },
   schema,
   roles: {editor},
+  maxUploadSize: 100,
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',

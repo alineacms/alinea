@@ -1,0 +1,80 @@
+.LabelHeader {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px 8px;
+  padding-bottom: 8px;
+  line-height: 1;
+}
+
+.LabelTitle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.LabelIcon {
+  font-size: var(--alinea-font-size-base);
+  color: var(--alinea-fg);
+}
+
+.LabelLabel {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  transition: var(--alinea-transition);
+  transition-property: color;
+
+  &[data-tone='inherit'] {
+    color: inherit;
+  }
+
+  &[data-weight='normal'] {
+    font-weight: 400;
+  }
+}
+
+.LabelError {
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+  padding-top: 4px;
+}
+
+.LabelRequired {
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+}
+
+.LabelDescription {
+  display: block;
+  max-width: 100%;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.1;
+  font-weight: 400;
+  font-style: italic;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.LabelDescription[data-size='small'] {
+  font-size: var(--alinea-font-size-small);
+  line-height: 1.25;
+}
+
+.LabelStack {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.LabelInline {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}

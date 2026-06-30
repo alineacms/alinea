@@ -1,0 +1,13 @@
+.AppLoading-progress {
+  animation: AppLoading-progress-fade-in 250ms ease-out both;
+}
+
+@keyframes AppLoading-progress-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}

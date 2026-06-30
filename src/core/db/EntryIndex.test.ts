@@ -1,8 +1,9 @@
 import {suite} from '@alinea/suite'
-import {Config, Field} from 'alinea'
-import {createCMS} from 'alinea/core'
-import {cms} from '../../test/cms.js'
-import {createEntryIndex} from '../../test/EntryFixture.js'
+import {Config, Field} from '#/index.js'
+import {createCMS} from '#/core.js'
+import {cms} from '#test/cms.js'
+import {createEntryIndex} from '#test/EntryFixture.js'
+import type {Entry} from '../Entry.js'
 import {createRecord} from '../EntryRecord.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
@@ -190,7 +191,6 @@ test('entryUrl receives the root key', async () => {
   const [entry] = Array.from(index.filter({}))
   test.is(entry.url, '/main/docs/guide')
 })
-
 test('filters by entry predicate', async () => {
   const {index} = await createEntryIndex(cms.config, fixtureEntries)
   const recipes = Array.from(
@@ -313,6 +313,9 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
     emitted.some(event => event.op === 'entry' && event.value === 'cookie-3')
   )
   test.ok(
+    emitted.some(event => event.op === 'entry' && event.value === 'recipes')
+  )
+  test.ok(
     emitted.some(event => event.op === 'index' && event.value === changedSha)
   )
 
@@ -326,6 +329,286 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
     () => index.indexChanges({fromSha: 'invalid-sha', changes: []}),
     'SHA mismatch'
   )
+})
+
+test('indexChanges dispatches entry events for old and new parents on move', async () => {
+  const {index, source} = await createEntryIndex(cms.config, [
+    ...fixtureEntries,
+    {
+      id: 'desserts',
+      type: 'DemoRecipes',
+      index: 'a2',
+      path: 'desserts',
+      data: {title: 'Desserts'}
+    }
+  ])
+  const emitted = Array<string>()
+  index.addEventListener(IndexEvent.type, event => {
+    const indexEvent = event as IndexEvent
+    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+  })
+
+  const from = await source.getTree()
+  const fromPath = 'pages/recipes/cookie-1.json'
+  const leaf = from.getLeaf(fromPath)
+  const movedRecord = createRecord(
+    {
+      id: 'cookie-1',
+      type: 'DemoRecipe',
+      index: 'a1',
+      parentId: 'desserts',
+      root: 'pages',
+      path: 'cookie-1',
+      title: 'Cookie 1',
+      seeded: null,
+      data: {path: 'cookie-1', title: 'Cookie 1'}
+    },
+    'published'
+  )
+  const contents = new TextEncoder().encode(
+    JSON.stringify(movedRecord, null, 2)
+  )
+  const sha = await hashBlob(contents)
+  await source.applyChanges({
+    fromSha: from.sha,
+    changes: [
+      {op: 'delete', path: fromPath, sha: leaf.sha},
+      {
+        op: 'add',
+        path: 'pages/desserts/cookie-1.json',
+        sha,
+        contents
+      }
+    ]
+  })
+
+  await index.syncWith(source)
+
+  test.ok(emitted.includes('cookie-1'))
+  test.ok(emitted.includes('recipes'))
+  test.ok(emitted.includes('desserts'))
+})
+
+test('referencesTo indexes links reported by fields', async () => {
+  const {index} = await createEntryIndex(
+    referenceCms.config,
+    referenceEntries()
+  )
+
+  const scans = Array<{scanned: number; total: number; complete: boolean}>()
+  index.addEventListener(IndexEvent.type, event => {
+    const indexEvent = event as IndexEvent
+    if (indexEvent.data.op === 'references') {
+      const {scanned, total, complete} = indexEvent.data
+      scans.push({scanned, total, complete})
+    }
+  })
+
+  const result = await index.referencesTo({
+    targetId: 'target',
+    status: 'all'
+  })
+
+  test.is(result.total, 5)
+  test.equal(result.scan, {scanned: 4, total: 4, complete: true})
+  test.equal(scans.at(-1), {scanned: 4, total: 4, complete: true})
+  test.equal(
+    result.references.map(reference => ({
+      sourceId: reference.sourceId,
+      fieldPath: reference.fieldPath,
+      fieldLabel: reference.fieldLabel,
+      linkId: reference.linkId,
+      linkType: reference.linkType
+    })),
+    [
+      {
+        sourceId: 'source',
+        fieldPath: 'related',
+        fieldLabel: 'Related',
+        linkId: 'related-link',
+        linkType: 'entry'
+      },
+      {
+        sourceId: 'source',
+        fieldPath: 'links.row-link',
+        fieldLabel: 'Links',
+        linkId: 'row-link',
+        linkType: 'entry'
+      },
+      {
+        sourceId: 'source',
+        fieldPath: 'hero.image',
+        fieldLabel: 'Image',
+        linkId: 'image-link',
+        linkType: 'image'
+      },
+      {
+        sourceId: 'source',
+        fieldPath: 'body.mark-link',
+        fieldLabel: 'Body',
+        linkId: 'mark-link',
+        linkType: 'entry'
+      },
+      {
+        sourceId: 'source',
+        fieldPath: 'body.block-link.cta',
+        fieldLabel: 'CTA',
+        linkId: 'block-link',
+        linkType: 'entry'
+      }
+    ]
+  )
+
+  test.equal(
+    (await index.referencesFrom('source')).map(reference => reference.targetId),
+    ['target', 'target', 'other', 'media-target', 'target', 'target', 'target']
+  )
+})
+
+test('referencesTo indexes MediaFile targets reported by file fields', async () => {
+  const {index} = await createEntryIndex(
+    referenceCms.config,
+    referenceEntries()
+  )
+
+  const result = await index.referencesTo({
+    targetId: 'media-target',
+    status: 'all'
+  })
+
+  test.is(result.total, 1)
+  test.equal(result.references[0]?.sourceId, 'source')
+  test.equal(result.references[0]?.fieldPath, 'attachment')
+  test.equal(result.references[0]?.fieldLabel, 'Attachment')
+  test.equal(result.references[0]?.linkId, 'file-link')
+  test.equal(result.references[0]?.linkType, 'file')
+})
+
+test('referencesTo applies status and locale filters', async () => {
+  const {index} = await createEntryIndex(referenceCms.config, [
+    {
+      id: 'target',
+      type: 'ReferencePage',
+      index: 'a0',
+      path: 'target',
+      data: {title: 'Target'}
+    },
+    {
+      id: 'other',
+      type: 'ReferencePage',
+      index: 'a1',
+      path: 'other',
+      data: {title: 'Other'}
+    },
+    {
+      id: 'source',
+      type: 'ReferencePage',
+      index: 'a2',
+      path: 'source',
+      status: 'published',
+      data: {
+        title: 'Published source',
+        related: entryLink('target', 'published-link')
+      }
+    },
+    {
+      id: 'source',
+      type: 'ReferencePage',
+      index: 'a2',
+      path: 'source',
+      status: 'draft',
+      data: {
+        title: 'Draft source',
+        related: entryLink('other', 'draft-link')
+      }
+    }
+  ])
+
+  test.is((await index.referencesTo({targetId: 'target'})).total, 1)
+  test.is(
+    (
+      await index.referencesTo({
+        targetId: 'target',
+        status: 'preferDraft'
+      })
+    ).total,
+    0
+  )
+  test.is(
+    (
+      await index.referencesTo({
+        targetId: 'other',
+        status: 'preferDraft'
+      })
+    ).total,
+    1
+  )
+  test.is(
+    (await index.referencesTo({targetId: 'target', locale: 'en'})).total,
+    0
+  )
+})
+
+test('active reference index is updated by later source changes', async () => {
+  const {index, source} = await createEntryIndex(referenceCms.config, [
+    {
+      id: 'target',
+      type: 'ReferencePage',
+      index: 'a0',
+      path: 'target',
+      data: {title: 'Target'}
+    },
+    {
+      id: 'other',
+      type: 'ReferencePage',
+      index: 'a1',
+      path: 'other',
+      data: {title: 'Other'}
+    },
+    {
+      id: 'source',
+      type: 'ReferencePage',
+      index: 'a2',
+      path: 'source',
+      data: {
+        title: 'Source',
+        related: entryLink('other', 'related-link')
+      }
+    }
+  ])
+  test.is((await index.referencesTo({targetId: 'target'})).total, 0)
+
+  const emitted = Array<string>()
+  index.addEventListener(IndexEvent.type, event => {
+    const indexEvent = event as IndexEvent
+    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+  })
+
+  const sourceEntry = index.findFirst(entry => entry.id === 'source')!
+  await replaceFixtureEntry(source, sourceEntry, {
+    ...sourceEntry.data,
+    related: entryLink('target', 'related-link')
+  })
+  await index.syncWith(source)
+
+  test.is((await index.referencesTo({targetId: 'target'})).total, 1)
+  test.ok(emitted.includes('target'))
+
+  const updatedSourceEntry = index.findFirst(entry => entry.id === 'source')!
+  const tree = await source.getTree()
+  await source.applyChanges({
+    fromSha: tree.sha,
+    changes: [
+      {
+        op: 'delete',
+        path: updatedSourceEntry.filePath,
+        sha: tree.getLeaf(updatedSourceEntry.filePath).sha
+      }
+    ]
+  })
+  await index.syncWith(source)
+
+  test.is((await index.referencesTo({targetId: 'target'})).total, 0)
 })
 
 test('seed creates missing seeded entries and reuses i18n ids', async () => {
@@ -411,3 +694,167 @@ test('fix rewrites changed blobs and transaction can be created', async () => {
 
   await index.fix(source)
 })
+
+const ReferenceBlock = Config.type('Reference block', {
+  fields: {
+    cta: Field.entry('CTA')
+  }
+})
+
+const ReferencePage = Config.type('Reference page', {
+  fields: {
+    title: Field.text('Title'),
+    path: Field.path('Path'),
+    related: Field.entry('Related'),
+    links: Field.entry.multiple('Links'),
+    attachment: Field.file('Attachment'),
+    hero: Field.object('Hero', {
+      fields: {
+        image: Field.image('Image')
+      }
+    }),
+    body: Field.richText('Body', {
+      schema: {ReferenceBlock}
+    })
+  }
+})
+
+const referenceCms = createCMS({
+  schema: {ReferencePage, ReferenceBlock},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {pages: Config.root('Pages'), media: Config.root('Media')}
+    })
+  }
+})
+
+function referenceEntries() {
+  return [
+    {
+      id: 'target',
+      type: 'ReferencePage',
+      index: 'a0',
+      path: 'target',
+      data: {title: 'Target'}
+    },
+    {
+      id: 'other',
+      type: 'ReferencePage',
+      index: 'a1',
+      path: 'other',
+      data: {title: 'Other'}
+    },
+    {
+      id: 'media-target',
+      type: 'MediaFile',
+      root: 'media',
+      index: 'a2',
+      path: 'media-target',
+      data: {
+        title: 'Media target',
+        location: '/uploads/media-target.pdf',
+        extension: 'pdf',
+        size: 1200
+      }
+    },
+    {
+      id: 'source',
+      type: 'ReferencePage',
+      index: 'a3',
+      path: 'source',
+      data: {
+        title: 'Source',
+        related: entryLink('target', 'related-link'),
+        links: [
+          {
+            ...entryLink('target', 'row-link'),
+            _index: 'a0'
+          },
+          {
+            ...entryLink('other', 'row-other'),
+            _index: 'a1'
+          }
+        ],
+        attachment: fileLink('media-target', 'file-link'),
+        hero: {
+          image: {
+            _id: 'image-link',
+            _type: 'image',
+            _entry: 'target'
+          }
+        },
+        body: [
+          {
+            _type: 'paragraph',
+            content: [
+              {
+                _type: 'text',
+                text: 'Target',
+                marks: [
+                  {
+                    _type: 'link',
+                    _id: 'mark-link',
+                    _link: 'entry',
+                    _entry: 'target'
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            _id: 'block-link',
+            _type: 'ReferenceBlock',
+            cta: entryLink('target', 'block-link')
+          }
+        ]
+      }
+    }
+  ]
+}
+
+function entryLink(entryId: string, id: string) {
+  return {
+    _id: id,
+    _type: 'entry',
+    _entry: entryId
+  }
+}
+
+function fileLink(entryId: string, id: string) {
+  return {
+    _id: id,
+    _type: 'file',
+    _entry: entryId
+  }
+}
+
+async function replaceFixtureEntry(
+  source: MemorySource,
+  entry: Entry,
+  data: Record<string, unknown>
+) {
+  const record = createRecord(
+    {
+      ...entry,
+      data,
+      title: typeof data.title === 'string' ? data.title : entry.title,
+      path: typeof data.path === 'string' ? data.path : entry.path
+    },
+    entry.status
+  )
+  const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
+  const sha = await hashBlob(contents)
+  const tree = await source.getTree()
+  await source.applyChanges({
+    fromSha: tree.sha,
+    changes: [
+      {
+        op: 'add',
+        path: entry.filePath,
+        sha,
+        contents
+      }
+    ]
+  })
+}

@@ -1,9 +1,9 @@
-import {createId} from 'alinea/core/Id'
-import {Reference} from 'alinea/core/Reference'
-import {ListEditor} from 'alinea/core/field/ListField'
-import type {ListRow} from 'alinea/core/shape/ListShape'
-import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {UrlReference} from 'alinea/picker/url/UrlPicker'
+import {createId} from '#/core/Id.js'
+import {Reference} from '#/core/Reference.js'
+import {ListEditor} from '#/core/field/ListField.js'
+import type {ListRow} from '#/core/ListRow.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
+import {UrlReference} from '#/picker/url/UrlPicker.js'
 
 export class LinkEditor<StoredValue extends Reference> {
   row?: StoredValue

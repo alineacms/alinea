@@ -10,6 +10,10 @@ import type {Source} from '../source/Source.js'
 import {syncWith} from '../source/Source.js'
 import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryIndex} from './EntryIndex.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from './EntryReference.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {Mutation} from './Mutation.js'
@@ -38,6 +42,10 @@ export class LocalDB extends WriteableGraph {
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     return this.#resolver.resolve(query)
+  }
+
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.index.referencesTo(query)
   }
 
   get sha() {

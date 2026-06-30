@@ -1,0 +1,168 @@
+.Calendar {
+  --alinea-border-radius: 8px;
+
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+
+  .Calendar-header {
+    width: 100%;
+    gap: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+    padding-bottom: 8px;
+  }
+
+  .Calendar-heading {
+    flex: 1;
+    margin: 0;
+    font-size: var(--alinea-font-size-base);
+    text-align: center;
+    font-weight: 500;
+  }
+
+  .Calendar-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background-color: transparent;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: var(--alinea-transition);
+    color: var(--alinea-fg-muted);
+    font-size: var(--alinea-font-size-base);
+
+    &[data-hovered],
+    &[data-focus-visible] {
+      background-color: var(--alinea-muted);
+      color: var(--alinea-fg-muted);
+    }
+
+    &[data-focus-visible] {
+      outline-color: var(--alinea-border);
+    }
+
+    &[data-disabled] {
+      cursor: not-allowed;
+      color: var(--alinea-fg-disabled);
+      opacity: 0.5;
+    }
+  }
+
+  .Calendar-grid {
+    border-spacing: 0 4px;
+    font-size: var(--alinea-font-size-base);
+  }
+
+  .Calendar-cell {
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--alinea-border-radius);
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    font-size: var(--alinea-font-size-base);
+    text-align: center;
+    transition: var(--alinea-transition);
+
+    &[data-today] {
+      position: relative;
+
+      &:after {
+        content: '';
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background-color: var(--alinea-primary);
+        position: absolute;
+        bottom: 4px;
+      }
+    }
+
+    &[data-hovered],
+    &[data-focus-visible] {
+      background-color: var(--alinea-muted);
+    }
+
+    &[data-focus-visible] {
+      outline-color: var(--alinea-border);
+    }
+
+    &[data-selected] {
+      background-color: var(--alinea-primary);
+      color: var(--alinea-primary-fg);
+    }
+
+    &[data-selected][data-today]:after {
+      background-color: var(--alinea-primary-fg);
+    }
+
+    &[data-selected][data-focus-visible] {
+      outline-color: var(--alinea-primary);
+      outline-offset: 2px;
+    }
+
+    &[data-disabled] {
+      cursor: not-allowed;
+      color: var(--alinea-fg-disabled);
+      opacity: 0.5;
+    }
+
+    &[data-invalid] {
+      background-color: var(--alinea-danger);
+      color: var(--alinea-danger-fg);
+    }
+  }
+
+  &:has(.Calendar-cell[data-selection-start]),
+  &:has(.Calendar-cell[data-selection-end]) {
+    .Calendar-cell {
+      &[data-selected] {
+        background-color: var(--alinea-primary-overlay);
+        color: var(--alinea-primary);
+        border-radius: 0;
+
+        &[data-selection-start],
+        &[data-selection-end] {
+          background-color: var(--alinea-primary);
+          color: var(--alinea-primary-fg);
+        }
+
+        &[data-selection-start] {
+          border-start-start-radius: var(--alinea-border-radius);
+          border-end-start-radius: var(--alinea-border-radius);
+        }
+
+        &[data-selection-end] {
+          border-start-end-radius: var(--alinea-border-radius);
+          border-end-end-radius: var(--alinea-border-radius);
+        }
+      }
+    }
+
+    td:first-child {
+      .Calendar-cell {
+        border-start-start-radius: var(--alinea-border-radius);
+        border-end-start-radius: var(--alinea-border-radius);
+      }
+    }
+
+    td:last-child {
+      .Calendar-cell {
+        border-start-end-radius: var(--alinea-border-radius);
+        border-end-end-radius: var(--alinea-border-radius);
+      }
+    }
+  }
+}

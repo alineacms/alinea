@@ -1,10 +1,10 @@
-import type {Type} from 'alinea'
-import type {Config} from 'alinea/core/Config'
-import type {Entry} from 'alinea/core/Entry'
-import {EntryFields} from 'alinea/core/EntryFields'
-import type {Expr} from 'alinea/core/Expr'
-import {Field} from 'alinea/core/Field'
-import type {AnyCondition, Filter} from 'alinea/core/Filter'
+import type {Type} from '#/index.js'
+import type {Config} from '#/core/Config.js'
+import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
+import {EntryFields} from '#/core/EntryFields.js'
+import type {Expr} from '#/core/Expr.js'
+import {Field} from '#/core/Field.js'
+import type {AnyCondition, Filter} from '#/core/Filter.js'
 import {
   type AnyQueryResult,
   type Edge,
@@ -14,7 +14,7 @@ import {
   type QuerySettings,
   querySource as queryEdge,
   type Status
-} from 'alinea/core/Graph'
+} from '#/core/Graph.js'
 import {
   getExpr,
   type HasExpr,
@@ -22,12 +22,12 @@ import {
   hasField,
   hasRoot,
   hasWorkspace
-} from 'alinea/core/Internal'
-import type {Resolver} from 'alinea/core/Resolver'
-import {getScope, type Scope} from 'alinea/core/Scope'
-import {hasExact} from 'alinea/core/util/Checks'
-import {entries, fromEntries} from 'alinea/core/util/Objects'
-import {unreachable} from 'alinea/core/util/Types'
+} from '#/core/Internal.js'
+import type {Resolver} from '#/core/Resolver.js'
+import {getScope, type Scope} from '#/core/Scope.js'
+import {hasExact} from '#/core/util/Checks.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
+import {unreachable} from '#/core/util/Types.js'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
@@ -57,7 +57,10 @@ export class EntryResolver implements Resolver {
   index: EntryIndex
   #scope: Scope
 
-  constructor(config: Config, index: EntryIndex) {
+  constructor(
+    public config: Config,
+    index: EntryIndex
+  ) {
     this.#scope = getScope(config)
     this.index = index
   }
@@ -108,7 +111,7 @@ export class EntryResolver implements Resolver {
         return result
       }
       case 'entryField':
-        return entry[internal.name as keyof Entry]
+        return entryFieldValue(entry, internal.name, internal.path)
       case 'call':
         return this.call(ctx, entry, internal)
       case 'value':
@@ -292,7 +295,7 @@ export class EntryResolver implements Resolver {
     const checkFilter =
       query.filter &&
       filterChecker(query.filter, (entry, name) => {
-        if (name.startsWith('_')) return entry[name.slice(1)]
+        if (name.startsWith('_')) return entryFieldValue(entry, name.slice(1))
         return entry.data[name]
       })
     const multipleIds =
@@ -320,11 +323,11 @@ export class EntryResolver implements Resolver {
   isSingleResult(query: GraphQuery & Partial<Edge>): boolean {
     return Boolean(
       query.first ||
-        query.get ||
-        query.count ||
-        query.edge === 'parent' ||
-        query.edge === 'next' ||
-        query.edge === 'previous'
+      query.get ||
+      query.count ||
+      query.edge === 'parent' ||
+      query.edge === 'next' ||
+      query.edge === 'previous'
     )
   }
 
@@ -400,7 +403,7 @@ export class EntryResolver implements Resolver {
         const entry = entries[0]
         if (results[0]) {
           const linkResolver = new LinkResolver(this, ctx, entry.locale)
-          await this.postRow({linkResolver}, results[0], asEdge)
+          return (await this.postRow({linkResolver}, results[0], asEdge)) as any
         }
         return results[0] as any
       }
@@ -414,7 +417,11 @@ export class EntryResolver implements Resolver {
                 ctx,
                 entries[index].locale
               )
-              return this.postRow({linkResolver}, result, asEdge)
+              return this.postRow({linkResolver}, result, asEdge).then(
+                processed => {
+                  results[index] = processed
+                }
+              )
             })
             .filter(Boolean)
         )
@@ -432,48 +439,59 @@ export class EntryResolver implements Resolver {
     ctx: PostContext,
     interim: Interim,
     field: Field
-  ): Promise<void> {
-    const shape = Field.shape(field)
-    await shape.applyLinks(interim, ctx.linkResolver)
+  ): Promise<unknown> {
+    return Field.queryValue(field, interim, ctx.linkResolver)
   }
 
   async postExpr(
     ctx: PostContext,
     interim: Interim,
     expr: HasExpr
-  ): Promise<void> {
-    if (hasField(expr)) await this.postField(ctx, interim, expr as any)
+  ): Promise<unknown> {
+    if (hasField(expr)) return this.postField(ctx, interim, expr as any)
+    return interim
   }
 
   async postRow(
     ctx: PostContext,
     interim: Interim,
     query: GraphQuery<Projection>
-  ): Promise<void> {
-    if (!interim) return
+  ): Promise<unknown> {
+    if (!interim) return interim
     const selected = this.projection(query)
     if (hasExpr(selected)) return this.postExpr(ctx, interim, selected)
     if (queryEdge(selected))
       return this.post(ctx, interim, selected as EdgeQuery<Projection>)
     await Promise.all(
-      entries(selected).map(([key, value]) => {
+      entries(selected).map(async ([key, value]) => {
         const source = queryEdge(value)
         if (source)
-          return this.post(ctx, interim[key], value as EdgeQuery<Projection>)
-        return this.postExpr(ctx, interim[key], value as Expr)
+          interim[key] = await this.post(
+            ctx,
+            interim[key],
+            value as EdgeQuery<Projection>
+          )
+        else
+          interim[key] = await this.postExpr(ctx, interim[key], value as Expr)
       })
     )
+    return interim
   }
 
   async post(
     ctx: PostContext,
     interim: Interim,
     input: EdgeQuery<Projection>
-  ): Promise<void> {
-    if (input.count === true) return
+  ): Promise<unknown> {
+    if (input.count === true) return interim
     const isSingle = this.isSingleResult(input)
     if (isSingle) return this.postRow(ctx, interim, input)
-    await Promise.all(interim.map((row: any) => this.postRow(ctx, row, input)))
+    await Promise.all(
+      interim.map(async (row: any, index: number) => {
+        interim[index] = await this.postRow(ctx, row, input)
+      })
+    )
+    return interim
   }
 
   async resolve<Query extends GraphQuery>(
@@ -542,7 +560,7 @@ interface Check {
   (input: Entry): boolean
 }
 
-function isObject(input: any): input is object {
+function isObject(input: any): input is Record<string, unknown> {
   return input && typeof input === 'object'
 }
 
@@ -555,15 +573,55 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
     isObject(query.workspace) && hasWorkspace(query.workspace)
       ? scope.nameOf(query.workspace)
       : query.workspace
-  return filterChecker({
-    id: query.id,
-    parentId: query.parentId,
-    path: query.path,
-    url: query.url,
-    level: query.level,
-    workspace,
-    root
-  })
+  const base = filterChecker(
+    {
+      id: query.id,
+      parentId: query.parentId,
+      path: query.path,
+      url: query.url,
+      createdAt: query.createdAt,
+      updatedAt: query.updatedAt,
+      level: query.level,
+      workspace,
+      root
+    },
+    entryFieldValue
+  )
+  if (query.alias === undefined) return base
+  const hasAlias = aliasChecker(query.alias)
+  return entry => base(entry) && hasAlias(entry)
+}
+
+function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
+  if (path) return valueAtPath(entry.data, [...path, name])
+  const expr = EntryExprs[name as keyof typeof EntryExprs]
+  if (expr) {
+    const internal = getExpr(expr)
+    if (internal.type === 'entryField' && internal.path)
+      return valueAtPath(entry.data, [...internal.path, internal.name])
+  }
+  return entry[name as keyof Entry]
+}
+
+function valueAtPath(value: unknown, path: Array<string>): unknown {
+  let current = value
+  for (const segment of path) {
+    if (!isObject(current)) return undefined
+    current = current[segment]
+  }
+  return current
+}
+
+function aliasChecker(alias: string): Check {
+  return entry => {
+    const aliases = entryFieldValue(entry, 'aliases')
+    if (!Array.isArray(aliases)) return false
+    for (const row of aliases) {
+      if (!isObject(row)) continue
+      if (row.url === alias) return true
+    }
+    return false
+  }
 }
 
 function typeChecker(type: Array<string> | string): Check {

@@ -2,14 +2,17 @@ import type {
   DraftsApi,
   RequestContext,
   UploadResponse,
-  UploadsApi
-} from 'alinea/core/Connection'
-import {type Draft, type DraftKey, parseDraftKey} from 'alinea/core/Draft'
-import {createId} from 'alinea/core/Id'
-import {basename, extname} from 'alinea/core/util/Paths'
-import {slugify} from 'alinea/core/util/Slugs'
+  UploadsApi,
+  UserApi
+} from '#/core/Connection.js'
+import {type Draft, type DraftKey, parseDraftKey} from '#/core/Draft.js'
+import {createId} from '#/core/Id.js'
+import type {User, UserInput} from '#/core/User.js'
+import {assert} from '#/core/util/Assert.js'
+import {basename, extname} from '#/core/util/Paths.js'
+import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {type Database, eq, primaryKey, table} from 'rado'
+import {Builder, type Database, eq, include, primaryKey, table} from 'rado'
 import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
@@ -39,14 +42,35 @@ const UploadTable = table('alinea_upload', {
   content: column.blob().notNull()
 })
 
-export class DatabaseApi implements DraftsApi, UploadsApi {
+const UserTable = table('alinea_user', {
+  id: column.id(),
+  email: column.text().notNull().unique(),
+  name: column.text()
+})
+
+const UserRoleTable = table('alinea_user_role', {
+  userId: column.number().notNull().references(UserTable.id),
+  role: column.text().notNull()
+})
+
+const selectUser = {
+  ...UserTable,
+  roles: include(
+    new Builder()
+      .select(UserRoleTable.role)
+      .from(UserRoleTable)
+      .where(eq(UserRoleTable.userId, UserTable.id))
+  )
+}
+
+export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   #context: RequestContext
   #db: Promise<Database>
 
   constructor(context: RequestContext, {db}: DatabaseOptions) {
     this.#context = context
     this.#db = PLazy.from(async () => {
-      await db.create(DraftTable, UploadTable).catch(() => {})
+      await db.migrate(DraftTable, UploadTable, UserTable, UserRoleTable)
       return db
     })
   }
@@ -127,4 +151,143 @@ export class DatabaseApi implements DraftsApi, UploadsApi {
       }
     })
   }
+
+  async enrichUser(user: User): Promise<User> {
+    const normalized = normalizeUser(user)
+    const found = await this.#getUser(normalized.email)
+    if (!found) return {...normalized, sub: normalized.sub ?? normalized.email}
+    return {...normalized, ...found}
+  }
+
+  async listUsers(): Promise<Array<User>> {
+    const db = await this.#db
+    const users = await db.select(selectUser).from(UserTable)
+    return users.map(userFromRow)
+  }
+
+  async createUser(user: UserInput): Promise<User> {
+    const normalized = normalizeUser(user)
+    const db = await this.#db
+    const existing = await this.#getUser(normalized.email)
+    if (existing) return this.updateUser(normalized)
+    await db.transaction(async tx => {
+      await tx.insert(UserTable).values({
+        email: normalized.email,
+        name: normalized.name
+      })
+      const inserted = await tx
+        .select()
+        .from(UserTable)
+        .where(eq(UserTable.email, normalized.email))
+        .get()
+      assert(inserted, `Failed to insert user`)
+      await this.#replaceRoles(tx, inserted.id, normalized.roles ?? [])
+    })
+    const result = await this.#getUser(normalized.email)
+    assert(result, `Failed to retrieve user after creation`)
+    return result
+  }
+
+  async updateUser(user: UserInput): Promise<User> {
+    const normalized = normalizeUser(user)
+    const db = await this.#db
+    await db.transaction(async tx => {
+      const row = await tx
+        .select()
+        .from(UserTable)
+        .where(eq(UserTable.email, normalized.email))
+        .get()
+      assert(row, `User with email ${normalized.email} not found`)
+      await tx
+        .update(UserTable)
+        .set({
+          email: normalized.email,
+          name: normalized.name
+        })
+        .where(eq(UserTable.id, row.id))
+      await this.#replaceRoles(tx, row.id, normalized.roles ?? [])
+    })
+    const updatedUser = await this.#getUser(normalized.email)
+    assert(updatedUser, `Failed to retrieve user after update`)
+    return updatedUser
+  }
+
+  async removeUser(email: string): Promise<void> {
+    const normalized = normalizeEmail(email)
+    const db = await this.#db
+    await db.transaction(async tx => {
+      const row = await tx
+        .select()
+        .from(UserTable)
+        .where(eq(UserTable.email, normalized))
+        .get()
+      assert(row, `User with email ${normalized} not found`)
+      await tx.delete(UserRoleTable).where(eq(UserRoleTable.userId, row.id))
+      await tx.delete(UserTable).where(eq(UserTable.id, row.id))
+    })
+  }
+
+  async #getUser(email: string): Promise<User | undefined> {
+    const db = await this.#db
+    const user = await db
+      .select(selectUser)
+      .from(UserTable)
+      .where(eq(UserTable.email, email))
+      .get()
+    if (user) return userFromRow(user)
+    return undefined
+  }
+
+  async #replaceRoles(
+    db: Database,
+    userId: number,
+    roles: Array<string>
+  ): Promise<void> {
+    const uniqueRoles = Array.from(new Set(roles))
+    await db.delete(UserRoleTable).where(eq(UserRoleTable.userId, userId))
+    if (uniqueRoles.length === 0) return
+    await db.insert(UserRoleTable).values(
+      uniqueRoles.map(role => {
+        return {userId, role}
+      })
+    )
+  }
+}
+
+interface UserRow {
+  id: number
+  email: string
+  name: string | null
+  roles: Array<string>
+}
+
+function userFromRow(row: UserRow): User {
+  return {
+    ...row,
+    sub: row.email,
+    name: row.name ?? undefined
+  }
+}
+
+interface NormalizedDatabaseUser extends UserInput {
+  email: string
+}
+
+function normalizeUser(user: UserInput): NormalizedDatabaseUser {
+  const email = normalizeEmail(user.email)
+  const name = user.name?.trim() || undefined
+  const roles = Array.from(new Set(user.roles ?? []))
+  return {
+    sub: user.sub,
+    email,
+    name,
+    roles
+  }
+}
+
+function normalizeEmail(email: string | undefined): string {
+  assert(email, 'User email is required')
+  const normalized = email.trim().toLowerCase()
+  assert(normalized, 'User email is required')
+  return normalized
 }

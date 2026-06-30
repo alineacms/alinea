@@ -1,0 +1,93 @@
+.CodeEditorInput {
+  overflow: hidden;
+  background-color: var(--alinea-input);
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  outline: 3px solid transparent;
+  transition: var(--alinea-transition);
+  transition-property: border-color, outline-color, background-color;
+
+  &:hover {
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
+  }
+
+  &:focus-within {
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-primary-overlay);
+  }
+
+  &[data-invalid='true'] {
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
+  }
+
+  &[data-read-only='true'] {
+    background-color: var(--alinea-input-disabled);
+  }
+
+  &[data-read-only='true']:hover,
+  &[data-read-only='true']:focus-within {
+    border-color: var(--alinea-border);
+    outline-color: transparent;
+  }
+}
+
+.CodeEditorInput-editor {
+  width: 100%;
+  font-family: var(--alinea-mono-font);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.CodeEditorInput-textarea {
+  outline: none;
+  color: var(--alinea-fg);
+
+  &::placeholder {
+    color: var(--alinea-fg-subtle);
+  }
+
+  &:disabled,
+  &[readonly] {
+    color: var(--alinea-fg-disabled);
+  }
+}
+
+.CodeEditorInput-pre {
+  color: var(--alinea-fg);
+  white-space: pre-wrap;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.CodeEditorInput-comment {
+  color: var(--alinea-dashboard-code-comment);
+  font-style: italic;
+}
+
+.CodeEditorInput-keyword {
+  color: var(--alinea-dashboard-code-keyword);
+  font-weight: 600;
+}
+
+.CodeEditorInput-identifier {
+  color: var(--alinea-dashboard-code-identifier);
+}
+
+.CodeEditorInput-number {
+  color: var(--alinea-dashboard-code-number);
+}
+
+.CodeEditorInput-string {
+  color: var(--alinea-dashboard-code-string);
+}
+
+.CodeEditorInput-regex {
+  color: var(--alinea-dashboard-code-regex);
+}
+
+.CodeEditorInput-punctuation {
+  color: var(--alinea-dashboard-code-punctuation);
+}

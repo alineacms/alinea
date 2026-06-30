@@ -1,4 +1,4 @@
-import {Client} from 'alinea/core/Client'
+import {Client} from '#/core/Client.js'
 import {SharedEventSource} from 'shared-event-source'
 import {boot, type ConfigBatch, type ConfigGenerator} from './Boot.js'
 
@@ -29,6 +29,7 @@ async function* getConfig(): ConfigGenerator {
     const next =
       batch?.revision !== revision ? await createConfig(revision) : batch
     yield next
+    batch = next
     revision = await new Promise<string>(resolve => {
       source.addEventListener(
         'message',

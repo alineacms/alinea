@@ -1,0 +1,149 @@
+{
+  "_id": "31Q6y4BTRh5q8Aep0M8H1v7qax1",
+  "_type": "Page",
+  "_index": "a0",
+  "_root": "pages",
+  "title": "Home",
+  "path": "home",
+  "summary": "Simple workspace root page",
+  "intro": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use this intro field to test switching focus between multiple rich text editors on the same page."
+        }
+      ]
+    }
+  ],
+  "codeSample": "export function formatTitle(title: string) {\n  return title.trim().toUpperCase()\n}",
+  "body": [
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Dashboard v2 rich text"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This fixture page exercises the new rich text field with formatting, lists, and tables."
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Edit inline content"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Try toolbar actions"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Insert a table"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This notes field sits below the main body so you can verify the toolbar transitions cleanly between editors."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Try focusing Intro, then Body, then Notes to check stacking and animation."
+        }
+      ]
+    }
+  ],
+  "featured": true,
+  "category": "docs",
+  "wordCount": 820,
+  "publishDate": "2026-03-01",
+  "publishTime": "09:00",
+  "relatedLink": {},
+  "resources": [
+    {
+      "_id": "31QLinkSimpleHomeMulti000001",
+      "_type": "entry",
+      "_index": "a0",
+      "_entry": "31Q7Mce4fyl2rAx9eJ8sP0nVvZd"
+    },
+    {
+      "_id": "31QLinkSimpleHomeMulti000002",
+      "_type": "url",
+      "_index": "a1",
+      "_url": "https://alinea.sh",
+      "_title": "Alinea",
+      "_target": "_blank"
+    }
+  ],
+  "sections": [
+    {
+      "_id": "31QListSimpleHomeCallout0000001",
+      "_type": "callout",
+      "_index": "a0",
+      "heading": "Welcome",
+      "text": "This page now exercises the v2 list field.",
+      "snippet": "const featured = entry.featured === true"
+    },
+    {
+      "_id": "31QListSimpleHomeCallout0000002",
+      "_type": "callout",
+      "_index": "a1",
+      "heading": "Next step",
+      "text": "Try moving, editing, or removing these sections.",
+      "snippet": "await publishEntry(entryId)"
+    }
+  ]
+}

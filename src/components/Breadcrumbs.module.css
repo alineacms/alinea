@@ -1,0 +1,49 @@
+.Breadcrumbs {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.25rem;
+
+  .Breadcrumb:not(:last-child)::after {
+    content: '\203A';
+    content: '\203A' / '';
+    alt: ' ';
+    padding: 0 10px;
+  }
+}
+
+.Breadcrumb {
+  font: inherit;
+  outline: none;
+  position: relative;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--alinea-fg);
+
+  &[data-hovered] {
+    text-decoration: underline;
+  }
+
+  &[data-current] {
+    font-weight: bold;
+  }
+
+  &[data-focus-visible]:after {
+    content: '';
+    position: absolute;
+    inset: -2px -4px;
+    border-radius: 8px;
+    border: 2px solid var(--alinea-ring);
+  }
+
+  &[data-disabled] {
+    cursor: default;
+
+    &:not([data-current]) {
+      color: var(--alinea-fg-disabled);
+    }
+  }
+}

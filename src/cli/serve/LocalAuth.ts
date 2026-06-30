@@ -1,9 +1,5 @@
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from 'alinea/core/Connection'
-import type {User} from 'alinea/core/User'
+import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
+import type {User} from '#/core/User.js'
 
 export class LocalAuth implements AuthApi {
   #context: RequestContext

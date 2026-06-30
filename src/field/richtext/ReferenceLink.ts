@@ -1,13 +1,14 @@
-import {createId} from 'alinea/core/Id'
-import {Reference} from 'alinea/core/Reference'
-import {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {UrlReference} from 'alinea/picker/url'
+import {createId} from '#/core/Id.js'
+import {Reference} from '#/core/Reference.js'
+import {EntryReference} from '#/picker/entry/EntryReference.js'
+import {UrlReference} from '#/picker/url.js'
 import type {HTMLProps} from 'react'
 
 interface Anchor extends HTMLProps<HTMLAnchorElement> {
   'data-id'?: string
   'data-entry'?: string
   'data-link'?: 'entry' | 'file' | 'url'
+  'data-suffix'?: string
 }
 
 export function referenceToAttributes(reference: Reference): Anchor {
@@ -29,6 +30,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
         'data-link': 'entry',
+        'data-suffix': ref._suffix,
         href: undefined,
         target: undefined
       }
@@ -39,6 +41,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
         'data-link': 'file',
+        'data-suffix': undefined,
         href: undefined,
         target: undefined
       }
@@ -62,12 +65,16 @@ export function attributesToReference(
       } as UrlReference
     return
   }
-  if (attributes['data-entry'])
+  if (attributes['data-entry']) {
+    const type = attributes['data-link'] === 'file' ? 'file' : 'entry'
     return {
       [Reference.id]: id,
-      [Reference.type]: attributes['data-link'] === 'file' ? 'file' : 'entry',
-      [EntryReference.entry]: attributes['data-entry']
+      [Reference.type]: type,
+      [EntryReference.entry]: attributes['data-entry'],
+      [EntryReference.suffix]:
+        type === 'entry' ? attributes['data-suffix'] : undefined
     } as EntryReference
+  }
   return {
     [Reference.id]: id,
     [Reference.type]: 'url',

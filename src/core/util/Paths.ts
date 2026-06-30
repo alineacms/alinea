@@ -136,7 +136,8 @@ export function resolve(...args: Array<string>) {
     // Skip empty and invalid entries
     if (typeof path !== 'string') {
       throw new TypeError('Arguments to path.resolve must be strings')
-    }if (!path) {
+    }
+    if (!path) {
       continue
     }
 

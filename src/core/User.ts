@@ -1,6 +1,13 @@
 export interface User {
   sub: string
-  roles: Array<string>
+  roles?: Array<string>
+  email?: string
+  name?: string
+}
+
+export interface UserInput {
+  sub?: string
+  roles?: Array<string>
   email?: string
   name?: string
 }

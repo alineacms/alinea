@@ -1,0 +1,153 @@
+.AppShell {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  background: var(--alinea-backdrop);
+  padding: 8px;
+}
+
+.AppShellWorkspace {
+  display: flex;
+  gap: 8px;
+  height: 100%;
+  width: 100%;
+}
+
+.AppShellContent {
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  min-width: 0;
+  /*border: 1px solid var(--alinea-border);*/
+  box-shadow:
+    lch(0 0 0 / 0.02) 0px 3px 6px -2px,
+    lch(0 0 0 / 0.04) 0px 1px 1px;
+}
+
+.AppShell-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-top: 1px solid var(--alinea-border);
+}
+
+.AppShell-empty {
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+  padding: 24px;
+  text-align: center;
+}
+
+.AppShell-empty-title {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.AppShell-empty-text {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.AppShell-empty-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.AppShell-profile {
+  border: 0;
+  border-radius: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px 8px 8px;
+}
+
+.AppShell-profile-identity {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.AppShell-profile-identity-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AppShell-profile-popover-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  font-size: 14px;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--alinea-border);
+  }
+}
+
+.AppShell-profile-popover-item-label {
+  margin: 0;
+}
+
+.AppShell-profile-popover {
+  min-width: 260px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.AppShell-profile-popover-surface {
+  overflow: hidden;
+  background: var(--alinea-bg);
+}
+
+.AppShell-profile-popover-themeOptions {
+  display: flex;
+  gap: 8px;
+}
+
+.AppShell-trigger {
+  min-width: 96px;
+  justify-content: space-between;
+}
+
+.AppShell-trigger-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.AppShell-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--alinea-border);
+}
+
+.AppShell-status-sha {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+}

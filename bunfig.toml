@@ -1,2 +1,5 @@
 [install]
 linker = "hoisted"
+
+[test]
+pathIgnorePatterns = ["v1/**", "**/*.spec.tsx"]

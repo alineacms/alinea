@@ -1,100 +1,98 @@
-import {
-  type CSSProperties,
-  forwardRef,
-  type HTMLAttributes,
-  type HTMLProps,
-  type PropsWithChildren,
-  type PropsWithRef,
-  useMemo
+import type {
+  CSSProperties,
+  ElementType,
+  HTMLAttributes,
+  PropsWithChildren
 } from 'react'
-import {px} from './util/Units.js'
+import {createElement, forwardRef} from 'react'
 
-export type StackProps = PropsWithRef<
-  Omit<HTMLProps<HTMLDivElement>, 'wrap'> & {
-    gap?: number | string
-    direction?: CSSProperties['flexDirection']
-    align?: CSSProperties['alignItems']
-    justify?: CSSProperties['justifyContent']
-    horizontal?: boolean
-    wrap?: boolean
-    center?: boolean
-    full?: boolean
-    autoWidth?: boolean
-  }
->
+export interface StackProps extends PropsWithChildren<
+  Omit<HTMLAttributes<HTMLElement>, 'wrap'>
+> {
+  as?: ElementType
+  gap?: number | string
+  direction?: CSSProperties['flexDirection']
+  align?: CSSProperties['alignItems']
+  justify?: CSSProperties['justifyContent']
+  horizontal?: boolean
+  wrap?: boolean
+  center?: boolean
+  full?: boolean
+  autoWidth?: boolean
+}
 
-function stack(props: StackProps) {
-  const direction = props.direction || 'column'
-  const styles: any = {
+function toCssSize(value: number | string | undefined): number | string {
+  if (typeof value === 'number') return `${value}px`
+  return value ?? 0
+}
+
+function stackStyle(props: StackProps): CSSProperties {
+  const direction = props.direction ?? (props.horizontal ? 'row' : 'column')
+  return {
     display: 'flex',
     minWidth: 0,
     flexDirection: direction,
-    alignItems: props.center ? 'center' : props.align || 'unset',
-    justifyContent: props.justify || 'unset',
-    gap: px(props.gap || 0)
+    alignItems: props.center ? 'center' : props.align,
+    justifyContent: props.justify,
+    flexWrap: props.wrap ? 'wrap' : undefined,
+    gap: toCssSize(props.gap),
+    width: props.autoWidth
+      ? undefined
+      : props.full && direction === 'row'
+        ? '100%'
+        : undefined,
+    height: props.full && direction !== 'row' ? '100%' : undefined
   }
-  if (props.wrap) styles.flexWrap = 'wrap'
-  if (props.full) styles[direction === 'row' ? 'width' : 'height'] = '100%'
-  return styles
 }
 
-export const VStack = forwardRef<HTMLDivElement, StackProps>(
-  function VStack(props, ref) {
-    const {
-      children,
-      as: tag = 'div',
-      gap,
-      align,
-      direction,
-      justify,
-      center,
-      wrap,
-      full,
-      ...rest
-    } = props
-    const key = `${gap}-${align}-${direction}-${justify}-${center}-${wrap}-${full}`
-    const Tag = tag as any
-    const style = useMemo(() => {
-      return stack(props)
-    }, [key])
-    const inner = (
-      <Tag {...rest} style={{...style, ...props.style}} ref={ref}>
-        {children}
-      </Tag>
-    )
-    if (!wrap) return inner
-    return <div>{inner}</div>
+/**
+ * @deprecated Compatibility component for legacy dashboard extensions.
+ */
+export const VStack = forwardRef<HTMLElement, StackProps>(function VStack(
+  {
+    as: tag = 'div',
+    children,
+    style,
+    gap,
+    direction,
+    align,
+    justify,
+    horizontal,
+    wrap,
+    center,
+    full,
+    autoWidth,
+    ...props
+  },
+  ref
+) {
+  const layout = {
+    gap,
+    direction,
+    align,
+    justify,
+    horizontal,
+    wrap,
+    center,
+    full,
+    autoWidth
   }
-)
-
-export const HStack: typeof VStack = forwardRef(function HStack(props, ref) {
-  return <VStack direction="row" {...props} ref={ref} />
+  return createElement(
+    tag,
+    {
+      ...props,
+      ref,
+      style: {...stackStyle(layout), ...style}
+    },
+    children
+  )
 })
 
-export namespace Stack {
-  export function Left(
-    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
-  ) {
-    return <div {...props} style={{...props.style, marginRight: 'auto'}} />
+/**
+ * @deprecated Compatibility component for legacy dashboard extensions.
+ */
+export const HStack = forwardRef<HTMLElement, StackProps>(
+  function HStack(props, ref) {
+    return createElement(VStack, {...props, direction: 'row', ref})
   }
-  export function Center(
-    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
-  ) {
-    return (
-      <div
-        {...props}
-        style={{...props.style, marginRight: 'auto', marginLeft: 'auto'}}
-      />
-    )
-  }
-  export function Right(
-    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
-  ) {
-    return <div {...props} style={{...props.style, marginLeft: 'auto'}} />
-  }
-  export function Bottom(
-    props: PropsWithChildren<HTMLAttributes<HTMLDivElement>>
-  ) {
-    return <div {...props} style={{...props.style, marginTop: 'auto'}} />
-  }
-}
+)

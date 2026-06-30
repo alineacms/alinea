@@ -1,56 +1,28 @@
-import styler from '@alinea/styler'
-import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {IcRoundNumbers} from 'alinea/ui/icons/IcRoundNumbers'
-import {useEffect, useRef} from 'react'
-import type {NumberField} from './NumberField.js'
-import css from './NumberField.module.scss'
+import {NumberField as RacNumberField} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {NumberField} from '#/field/number.js'
 
-const styles = styler(css)
-
-export interface NumberInputProps {
+export interface NumberFieldViewProps {
   field: NumberField
 }
 
-function tryParseNumber(input: string) {
-  const value = Number.parseFloat(input)
-  return Number.isNaN(value) ? null : value
-}
-
-export function NumberInput({field}: NumberInputProps) {
-  const {options, value, mutator, error} = useField(field)
-  const {minValue, maxValue, readOnly, step} = options
-  const ref = useRef<HTMLInputElement>(null)
-  const defaultValue = String(value ?? '')
-  useEffect(() => {
-    const input = ref.current
-    if (!input) return
-    const currentInput = tryParseNumber(input.value)
-    if (currentInput === value) return
-    // facebook/react#25384
-    input.value = defaultValue
-  }, [defaultValue])
+export function NumberFieldView({field}: NumberFieldViewProps) {
+  const [value, setValue] = useField(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
   return (
-    <InputLabel asLabel {...options} error={error} icon={IcRoundNumbers}>
-      <input
-        type="number"
-        ref={ref}
-        className={styles.root.input()}
-        defaultValue={defaultValue}
-        onChange={({currentTarget}) => {
-          const newValue = tryParseNumber(currentTarget.value)
-          if (newValue !== value) mutator(newValue)
-        }}
-        onBlur={({currentTarget}) => {
-          const newValue = tryParseNumber(currentTarget.value)
-          if (newValue !== value) mutator(newValue)
-          currentTarget.value = String(newValue ?? '')
-        }}
-        min={minValue}
-        max={maxValue}
-        readOnly={readOnly}
-        step={step || 1}
-      />
-    </InputLabel>
+    <RacNumberField
+      description={options.help}
+      errorMessage={error}
+      isDisabled={options.readOnly}
+      isRequired={options.required}
+      label={options.label}
+      shared={options.shared}
+      maxValue={options.maxValue}
+      minValue={options.minValue}
+      onChange={next => setValue(Number.isNaN(next) ? null : next)}
+      step={options.step || 1}
+      value={typeof value === 'number' ? value : 0}
+    />
   )
 }

@@ -1,140 +1,198 @@
+import {Button, TextField} from '#/components.js'
+import {Reference} from '#/core/Reference.js'
+import {type as createType, Type} from '#/core/Type.js'
+import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {
+  DashboardModal,
+  DashboardModalCloseButton,
+  DashboardModalDialog,
+  DashboardModalForm,
+  DashboardModalFormBody,
+  DashboardModalFormFooter,
+  DashboardModalFormHeader,
+  DashboardModalTitle,
+  useDashboardModal
+} from '#/dashboard/app/ui/DashboardModal.js'
+import {ReactiveNode} from '#/dashboard/store.js'
+import {link as createLink, type LinkRow} from '#/field/link.js'
+import type {LinkField} from '#/field/link/LinkField.js'
 import styler from '@alinea/styler'
-import {Reference} from 'alinea/core/Reference'
-import type {ListRow} from 'alinea/core/shape/ListShape'
-import {track} from 'alinea/core/Tracker'
-import {type} from 'alinea/core/Type'
-import {useForm} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {Modal} from 'alinea/dashboard/view/Modal'
-import {check} from 'alinea/field/check'
-import {link as createLink} from 'alinea/field/link'
-import {text} from 'alinea/field/text'
-import type {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {Button, HStack, Stack, VStack} from 'alinea/ui'
-import {useTrigger} from 'alinea/ui/hook/UseTrigger'
-import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {type FormEvent, useMemo} from 'react'
-import css from './PickLink.module.scss'
+import {useAtomValue, type WritableAtom} from 'jotai'
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type FormEvent,
+  type SetStateAction
+} from 'react'
+import css from './PickTextLink.module.css'
 
-const styles = styler(css)
-
-function linkForm(options: PickerOptions) {
-  const isExistingLink = Boolean(options.link)
-  const fields = type('Pick link', {
-    fields: {
-      link: createLink('Link', {
-        required: true,
-        initialValue: options.link as EntryReference & ListRow
-      }),
-      description: text('Description', {
-        help: 'Text to display inside the link element'
-      }),
-      title: text('Tooltip', {
-        help: 'Extra information that describes the link, shown on hover'
-      }),
-      blank: check('Open link in new tab', {
-        inline: true
-      })
-    }
-  })
-  track.options(fields.description, get => {
-    const selected = get(fields.link)
-    const isUrl = selected?.[Reference.type] === 'url'
-    const descriptionRequired =
-      options.requireDescription && !(isExistingLink || isUrl)
-    return {hidden: !descriptionRequired}
-  })
-  track.options(fields.blank, get => {
-    const selected = get(fields.link)
-    const isUrl = selected?.[Reference.type] === 'url'
-    return {hidden: isUrl}
-  })
-  return fields
-}
-
-export type PickerValue = {
+export interface PickerValue {
   link?: Reference
   description?: string
   title?: string
   blank?: boolean
 }
 
-export type PickerOptions = PickerValue & {
+export interface PickerOptions extends PickerValue {
   requireDescription?: boolean
   hasLink?: boolean
 }
 
-export function usePickTextLink() {
-  const trigger = useTrigger<PickerValue, Partial<PickerOptions>>()
-  return {
-    options: trigger.options,
-    open: trigger.isActive,
-    onClose: trigger.reject,
-    resolve: trigger.resolve,
-    pickLink: trigger.request
-  }
+export interface PickTextLinkFunc {
+  (options: Partial<PickerOptions>): Promise<PickerValue | undefined>
 }
 
-export type PickTextLinkState = ReturnType<typeof usePickTextLink>
-export type PickTextLinkFunc = PickTextLinkState['pickLink']
-export type PickTextLinkProps = {picker: PickTextLinkState}
+const styles = styler(css)
 
-export function PickTextLinkForm({
-  open,
-  onClose,
-  resolve,
-  options = {}
-}: PickTextLinkState) {
-  const type = useMemo(() => linkForm(options), [options])
-  const form = useForm(type, {
-    initialValue: options as any
-  })
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    e.stopPropagation()
-    const result = form.data()
-    return resolve(result)
+type TextLinkValueAtom = WritableAtom<
+  LinkRow | null,
+  [SetStateAction<LinkRow | null>],
+  void
+>
+
+interface PendingTextLinkPicker {
+  options: Partial<PickerOptions>
+  resolve: (value: PickerValue | undefined) => void
+}
+
+interface TextLinkEditor {
+  node: ReactiveNode<object>
+  type: Type
+  value: TextLinkValueAtom
+}
+
+export interface PickTextLinkState {
+  isOpen: boolean
+  options: Partial<PickerOptions>
+  pickLink: PickTextLinkFunc
+  cancel: () => void
+  confirm: (value: PickerValue | undefined) => void
+}
+
+export interface PickTextLinkProps {
+  picker: PickTextLinkState
+}
+
+export function usePickTextLink(): PickTextLinkState {
+  const [pending, setPending] = useState<PendingTextLinkPicker | undefined>()
+  const pickLink = useCallback<PickTextLinkFunc>(options => {
+    return new Promise(resolve => {
+      setPending({options, resolve})
+    })
+  }, [])
+  const cancel = useCallback(() => {
+    setPending(current => {
+      current?.resolve(undefined)
+      return undefined
+    })
+  }, [])
+  const confirm = useCallback((value: PickerValue | undefined) => {
+    setPending(current => {
+      current?.resolve(value)
+      return undefined
+    })
+  }, [])
+  return {
+    isOpen: Boolean(pending),
+    options: pending?.options ?? {},
+    pickLink,
+    cancel,
+    confirm
   }
-  return (
-    <>
-      {open && (
-        <form onSubmit={handleSubmit}>
-          <VStack gap={18}>
-            <div>
-              <InputForm form={form} border={false} />
-            </div>
-            <HStack>
-              {options.hasLink && (
-                <Button
-                  icon={IcRoundClose}
-                  outline
-                  type="button"
-                  onClick={() => resolve(undefined)}
-                >
-                  Remove link
-                </Button>
-              )}
-              <Stack.Right>
-                <HStack gap={16}>
-                  <Button outline type="button" onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button>Confirm</Button>
-                </HStack>
-              </Stack.Right>
-            </HStack>
-          </VStack>
-        </form>
-      )}
-    </>
-  )
 }
 
 export function PickTextLink({picker}: PickTextLinkProps) {
-  if (!picker.open) return null
+  if (!picker.isOpen) return null
   return (
-    <Modal open onClose={picker.onClose} className={styles.root()}>
-      <PickTextLinkForm {...picker} />
-    </Modal>
+    <DashboardModal
+      isOpen
+      onOpenChange={isOpen => {
+        if (!isOpen) picker.cancel()
+      }}
+    >
+      <PickTextLinkForm picker={picker} />
+    </DashboardModal>
   )
+}
+
+function PickTextLinkForm({picker}: PickTextLinkProps) {
+  const modal = useDashboardModal()
+  const options = picker.options
+  const linkEditor = useMemo(
+    () => createLinkEditor(referenceToLinkRow(options.link)),
+    [options.link]
+  )
+  const link = useAtomValue(linkEditor.value)
+  const [title, setTitle] = useState(options.title ?? '')
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    if (event.target !== event.currentTarget) return
+    event.preventDefault()
+    picker.confirm({
+      link: link ?? undefined,
+      title: title.trim()
+    })
+    modal.close()
+  }
+
+  return (
+    <DashboardModalDialog aria-label="Pick text link">
+      <DashboardModalForm onSubmit={onSubmit}>
+        <DashboardModalFormHeader>
+          <DashboardModalTitle>Pick text link</DashboardModalTitle>
+          <DashboardModalCloseButton />
+        </DashboardModalFormHeader>
+        <DashboardModalFormBody>
+          <div className={styles.PickTextLink()}>
+            <NodeEditor node={linkEditor.node} type={linkEditor.type} />
+            <TextField
+              description="Extra information that describes the link, shown on hover"
+              label="Tooltip"
+              value={title}
+              onChange={setTitle}
+            />
+          </div>
+        </DashboardModalFormBody>
+        <DashboardModalFormFooter>
+          <Button
+            appearance="outline"
+            intent="secondary"
+            type="button"
+            onPress={modal.close}
+          >
+            Cancel
+          </Button>
+          <Button type="submit">Confirm</Button>
+        </DashboardModalFormFooter>
+      </DashboardModalForm>
+    </DashboardModalDialog>
+  )
+}
+
+function createLinkEditor(initialValue?: LinkRow | null): TextLinkEditor {
+  const field = createLink('Link', {
+    initialValue: initialValue ?? null!
+  }) as LinkField<LinkRow, unknown>
+  const formType = createType('Text link', {
+    fields: {
+      link: field
+    }
+  })
+  const value = Type.initialValue(formType) as Record<string, unknown>
+  if (initialValue !== undefined) value.link = initialValue
+  const node = new ReactiveNode(value as object)
+  return {
+    node,
+    type: formType,
+    value: node.field('link') as TextLinkValueAtom
+  }
+}
+
+function referenceToLinkRow(reference: PickerValue['link']): LinkRow | null {
+  if (!reference) return null
+  return {
+    ...reference,
+    [Reference.id]: reference[Reference.id]
+  } as LinkRow
 }

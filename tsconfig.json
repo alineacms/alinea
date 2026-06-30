@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
     "noEmit": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "module": "ESNext",
     "target": "ESNext",
     "moduleResolution": "bundler",
+    "customConditions": ["alinea-src"],
     "strict": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -13,14 +12,20 @@
     "skipLibCheck": true,
     "preserveWatchOutput": true,
     "moduleDetection": "force",
-    "incremental": true,
+    "isolatedModules": true,
     "jsx": "react-jsx",
-    "plugins": [{"name": "typescript-plugin-css-modules"}],
+    "plugins": [{ "name": "typescript-plugin-css-modules" }],
+    "lib": ["dom.iterable", "dom", "webworker", "es2025"],
+    "types": ["bun"],
     "paths": {
+      // This is only required for bun, which doesn't seem to support the
+      // imports declared in package.json
+      "#/*": ["./src/*"],
+      "#test/*": ["./test/*"],
+      // Required for bun to resolve this package to source during runtime
       "alinea": ["./src/index.ts"],
       "alinea/*": ["./src/*"]
-    },
-    "lib": ["dom.iterable", "dom", "webworker"]
+    }
   },
-  "include": ["src"]
+  "exclude": ["apps", "v1"]
 }

@@ -1,9 +1,9 @@
-import type {Expand, UnionOfValues} from 'alinea/core/util/Types'
+import type {Expand, UnionOfValues} from '#/core/util/Types.js'
 import type {EntryFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'
 import type {Field} from './Field.js'
 import type {InferProjection} from './Graph.js'
-import type {ListRow} from './shape/ListShape.js'
+import type {ListRow} from './ListRow.js'
 import type {Type} from './Type.js'
 
 type QueryList<T> = Expand<
@@ -12,15 +12,16 @@ type QueryList<T> = Expand<
   }>
 >
 
-export type InferQueryValue<T> = T extends Array<Type<infer X>>
-  ? InferQueryValue<X>
-  : T extends Type<infer Fields>
-    ? Type.Infer<Fields>
-    : T extends Expr<infer QueryValue>
-      ? QueryValue
-      : T extends Record<string, Type>
-        ? QueryList<T>
-        : InferProjection<T>
+export type InferQueryValue<T> =
+  T extends Array<Type<infer X>>
+    ? InferQueryValue<X>
+    : T extends Type<infer Fields>
+      ? Type.Infer<Fields>
+      : T extends Expr<infer QueryValue>
+        ? QueryValue
+        : T extends Record<string, Type>
+          ? QueryList<T>
+          : InferProjection<T>
 
 type StoredList<T> = Expand<
   UnionOfValues<{
@@ -34,13 +35,14 @@ export type StoredRow<Definition> = {
     : never]: Definition[K] extends Field<infer T> ? T : never
 }
 
-export type InferStoredValue<T> = T extends Type<infer Fields>
-  ? StoredRow<Fields>
-  : T extends Field<infer StoredValue>
-    ? StoredValue
-    : T extends Record<string, Type>
-      ? StoredList<T>
-      : {}
+export type InferStoredValue<T> =
+  T extends Type<infer Fields>
+    ? StoredRow<Fields>
+    : T extends Field<infer StoredValue>
+      ? StoredValue
+      : T extends Record<string, Type>
+        ? StoredList<T>
+        : {}
 
 export type Infer<T> = InferQueryValue<T>
 

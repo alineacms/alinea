@@ -1,0 +1,18 @@
+{
+  "_id": "31Q9i18nEnHome2b7pD4vXkL5rM",
+  "_type": "Page",
+  "_index": "a0",
+  "_i18nId": "31Q9i18nHomeSharedId000000001",
+  "_root": "pages",
+  "title": "Home",
+  "summary": "English homepage",
+  "sections": [
+    {
+      "_id": "31QListI18nEnHomeCallout000001",
+      "_type": "callout",
+      "_index": "a0",
+      "heading": "Localized content",
+      "text": "This translation includes seeded list sections."
+    }
+  ]
+}

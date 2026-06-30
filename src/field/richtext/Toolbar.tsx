@@ -1,40 +1,77 @@
-import {IcAlignCenter} from 'alinea/ui/icons/IcAlignCenter'
-import {IcAlignJustify} from 'alinea/ui/icons/IcAlignJustify'
-import {IcAlignLeft} from 'alinea/ui/icons/IcAlignLeft'
-import {IcAlignRight} from 'alinea/ui/icons/IcAlignRight'
-import {IcRoundFormatBold} from 'alinea/ui/icons/IcRoundFormatBold'
-import {IcRoundFormatClear} from 'alinea/ui/icons/IcRoundFormatClear'
-import {IcRoundFormatItalic} from 'alinea/ui/icons/IcRoundFormatItalic'
-import {IcRoundFormatListBulleted} from 'alinea/ui/icons/IcRoundFormatListBulleted'
-import {IcRoundFormatListNumbered} from 'alinea/ui/icons/IcRoundFormatListNumbered'
-import {IcRoundFormatPaint} from 'alinea/ui/icons/IcRoundFormatPaint'
-import {IcRoundHorizontalRule} from 'alinea/ui/icons/IcRoundHorizontalRule'
-import {IcRoundLink} from 'alinea/ui/icons/IcRoundLink'
-import {IcRoundQuote} from 'alinea/ui/icons/IcRoundQuote'
-import {IcRoundSubscript} from 'alinea/ui/icons/IcRoundSubscript'
-import {IcRoundSuperscript} from 'alinea/ui/icons/IcRoundSuperscript'
-import {IcRoundTextFields} from 'alinea/ui/icons/IcRoundTextFields'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import {TableDelete} from 'alinea/ui/icons/TableDelete'
-import {TableDeleteColumn} from 'alinea/ui/icons/TableDeleteColumn'
-import {TableDeleteRow} from 'alinea/ui/icons/TableDeleteRow'
-import {TableHeaderCell} from 'alinea/ui/icons/TableHeaderCell'
-import {TableHeaderColumn} from 'alinea/ui/icons/TableHeaderColumn'
-import {TableHeaderRow} from 'alinea/ui/icons/TableHeaderRow'
-import {TableInsert} from 'alinea/ui/icons/TableInsert'
-import {TableInsertColumnAfter} from 'alinea/ui/icons/TableInsertColumnAfter'
-import {TableInsertColumnBefore} from 'alinea/ui/icons/TableInsertColumnBefore'
-import {TableInsertRowAfter} from 'alinea/ui/icons/TableInsertRowAfter'
-import {TableInsertRowBefore} from 'alinea/ui/icons/TableInsertRowBefore'
-import {TableMergeCells} from 'alinea/ui/icons/TableMergeCells'
-import {TableSplitCell} from 'alinea/ui/icons/TableSplitCell'
-import {Typo} from 'alinea/ui/Typo'
-import type {
-  ToolbarButton,
-  ToolbarConfig,
-  ToolbarGroup,
-  ToolbarMenu
-} from './RichTextToolbar.js'
+import {
+  IcAlignCenter,
+  IcAlignJustify,
+  IcAlignLeft,
+  IcAlignRight,
+  IcRoundFormatBold,
+  IcRoundFormatClear,
+  IcRoundFormatItalic,
+  IcRoundFormatListBulleted,
+  IcRoundFormatListNumbered,
+  IcRoundHorizontalRule,
+  IcRoundLink,
+  IcRoundQuote,
+  IcRoundSubscript,
+  IcRoundSuperscript,
+  IcRoundTextFields,
+  IcRoundUnfoldMore,
+  MaterialSymbolsFormatInkHighlighterRounded,
+  TableDelete,
+  TableDeleteColumn,
+  TableDeleteRow,
+  TableHeaderCell,
+  TableHeaderColumn,
+  TableHeaderRow,
+  TableInsert,
+  TableInsertColumnAfter,
+  TableInsertColumnBefore,
+  TableInsertRowAfter,
+  TableInsertRowBefore,
+  TableMergeCells,
+  TableSplitCell
+} from '#/dashboard/icons.js'
+import type {Editor} from '@tiptap/react'
+import type {ComponentType, ReactElement, ReactNode} from 'react'
+import type {PickTextLinkFunc} from './PickTextLink.js'
+
+export interface RichTextCommand {
+  (): ReturnType<Editor['chain']>
+}
+
+type IconType = ComponentType | ReactElement
+
+export interface ToolbarButton {
+  icon?: (ctx: RichTextToolbarContext) => IconType
+  label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
+  title?: string
+  disabled?: (ctx: RichTextToolbarContext) => boolean
+  active?: (ctx: RichTextToolbarContext) => boolean
+  onSelect: (ctx: RichTextToolbarContext) => void
+}
+
+export interface ToolbarMenu {
+  icon?: (ctx: RichTextToolbarContext) => IconType
+  label?: ReactNode | ((ctx: RichTextToolbarContext) => ReactNode)
+  items: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
+}
+
+export interface ToolbarGroup {
+  group: ToolbarConfig | ((ctx: RichTextToolbarContext) => ToolbarConfig)
+}
+
+export interface ToolbarConfig {
+  [name: string]: ToolbarMenu | ToolbarButton | ToolbarGroup
+}
+
+export interface RichTextToolbarContext {
+  editor: Editor
+  focusToggle: (target: EventTarget | null) => void
+  pickLink: PickTextLinkFunc
+  enableTables?: boolean
+  exec: RichTextCommand
+  handleLink: () => void
+  toolbar: ToolbarConfig
+}
 
 const styleLabels = {
   paragraph: 'Normal text',
@@ -65,27 +102,27 @@ export const headings = {
     styles: {
       group: {
         normal: {
-          label: () => <Typo.P flat>Normal text</Typo.P>,
+          label: () => <p>Normal text</p>,
           onSelect: ({exec}) => exec().clearNodes().run()
         },
         h1: {
-          label: () => <Typo.H1 flat>Heading 1</Typo.H1>,
+          label: () => <h1>Heading 1</h1>,
           onSelect: ({exec}) => exec().setHeading({level: 1}).run()
         },
         h2: {
-          label: () => <Typo.H2 flat>Heading 2</Typo.H2>,
+          label: () => <h2>Heading 2</h2>,
           onSelect: ({exec}) => exec().setHeading({level: 2}).run()
         },
         h3: {
-          label: () => <Typo.H3 flat>Heading 3</Typo.H3>,
+          label: () => <h3>Heading 3</h3>,
           onSelect: ({exec}) => exec().setHeading({level: 3}).run()
         },
         h4: {
-          label: () => <Typo.H4 flat>Heading 4</Typo.H4>,
+          label: () => <h4>Heading 4</h4>,
           onSelect: ({exec}) => exec().setHeading({level: 4}).run()
         },
         h5: {
-          label: () => <Typo.H5 flat>Heading 5</Typo.H5>,
+          label: () => <h5>Heading 5</h5>,
           onSelect: ({exec}) => exec().setHeading({level: 5}).run()
         }
       }
@@ -233,7 +270,7 @@ export const formatting = {
       onSelect: ({exec}) => exec().toggleSuperscript().run()
     },
     highlight: {
-      icon: () => <IcRoundFormatPaint />,
+      icon: () => <MaterialSymbolsFormatInkHighlighterRounded />,
       title: 'Highlight',
       active: ({editor}) => editor.isActive('highlight'),
       onSelect: ({exec}) => exec().toggleHighlight().run()

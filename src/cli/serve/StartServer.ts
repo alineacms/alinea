@@ -1,6 +1,6 @@
 import http, {type IncomingMessage, type ServerResponse} from 'node:http'
 import type {Request, Response} from '@alinea/iso'
-import {fromNodeRequest, respondTo} from 'alinea/backend/router/NodeHandler'
+import {fromNodeRequest, respondTo} from '#/backend/router/NodeHandler.js'
 import {createEmitter} from '../util/Emitter.js'
 import {reportWarning} from '../util/Report.js'
 

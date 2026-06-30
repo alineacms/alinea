@@ -33,6 +33,11 @@ export interface Entry<Data extends object = Record<string, unknown>> {
   data: Data
   searchableText: string
 }
+
+export interface EntryAlias {
+  url: string
+}
+
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
   status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
@@ -55,6 +60,21 @@ export const Entry = {
   path: new Expr<string>({type: 'entryField', name: 'path'}),
   fileHash: new Expr<string>({type: 'entryField', name: 'fileHash'}),
   url: new Expr<string>({type: 'entryField', name: 'url'}),
+  aliases: new Expr<Array<EntryAlias>>({
+    type: 'entryField',
+    name: 'aliases',
+    path: ['metadata']
+  }),
+  createdAt: new Expr<number | null>({
+    type: 'entryField',
+    name: 'createdAt',
+    path: ['metadata']
+  }),
+  updatedAt: new Expr<number | null>({
+    type: 'entryField',
+    name: 'updatedAt',
+    path: ['metadata']
+  }),
   data: new Expr<Record<string, any>>({type: 'entryField', name: 'data'}),
   searchableText: new Expr<string>({type: 'entryField', name: 'searchableText'})
 }

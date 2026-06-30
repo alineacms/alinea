@@ -1,0 +1,148 @@
+.MutationQueueStatus {
+  border: 0;
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+}
+
+.MutationQueueStatus.is-syncing {
+  color: var(--alinea-fg);
+}
+
+.MutationQueueStatus.is-failed {
+  color: var(--alinea-danger);
+}
+
+.MutationQueueStatus-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.MutationQueueStatus-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 16px;
+  min-width: 28px;
+}
+
+.MutationQueueStatus-popover {
+  width: 320px;
+  max-width: calc(100vw - 32px);
+}
+
+.MutationQueueStatus-popover-surface {
+  overflow: hidden;
+  background: var(--alinea-bg);
+}
+
+.MutationQueueStatus-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.MutationQueueStatus-popover-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.MutationQueueStatus-popover-message {
+  margin: 0;
+  padding: 12px;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+}
+
+.MutationQueueStatus-popover-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.MutationQueueStatus-popover-error {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--alinea-danger-subtle-fg);
+  background: var(--alinea-danger-subtle);
+  border-bottom: 1px solid var(--alinea-border-danger);
+  font-size: 12px;
+}
+
+.MutationQueueStatus-popover-list {
+  max-height: 280px;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.MutationQueueStatus-popover-item {
+  padding: 10px 12px;
+}
+
+.MutationQueueStatus-popover-item:not(:last-child) {
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.MutationQueueStatus-popover-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.MutationQueueStatus-popover-item-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--alinea-fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.MutationQueueStatus-popover-item-status {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+}
+
+.MutationQueueStatus-popover-item-status.is-failed {
+  color: var(--alinea-danger-subtle-fg);
+}
+
+.MutationQueueStatus-popover-item-status.is-blocked {
+  color: var(--alinea-warning-subtle-fg);
+}
+
+.MutationQueueStatus-popover-item-ops {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0 0;
+  margin: 0;
+  list-style: none;
+}
+
+.MutationQueueStatus-popover-item-op {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--alinea-fg-muted);
+  font-family: var(--alinea-mono-font);
+  font-size: 12px;
+}
+
+.MutationQueueStatus-popover-item-error {
+  margin: 8px 0 0;
+  color: var(--alinea-danger-subtle-fg);
+  font-size: 12px;
+}

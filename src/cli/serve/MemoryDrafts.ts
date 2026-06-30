@@ -1,5 +1,5 @@
-import type {DraftsApi} from 'alinea/core/Connection'
-import type {Draft} from 'alinea/core/Draft'
+import type {DraftsApi} from '#/core/Connection.js'
+import type {Draft} from '#/core/Draft.js'
 
 export class MemoryDrafts implements DraftsApi {
   drafts = new Map<string, Draft>()

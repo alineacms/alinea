@@ -1,18 +1,18 @@
-import type {WithoutLabel} from 'alinea/core/Field'
-import type {Label} from 'alinea/core/Label'
-import type {Type} from 'alinea/core/Type'
-import type {ListRow} from 'alinea/core/shape/ListShape'
-import {type FileLink, filePicker} from 'alinea/field/link/FileLink'
+import type {WithoutLabel} from '#/core/Field.js'
+import type {Label} from '#/core/Label.js'
+import type {Type} from '#/core/Type.js'
+import type {ListRow} from '#/core/ListRow.js'
+import {type FileLink, filePicker} from '#/field/link/FileLink.js'
 import {
   type LinkField,
   type LinkFieldOptions,
   type LinksField,
   createLink,
   createLinks
-} from 'alinea/field/link/LinkField'
-import {type EntryPickerConditions, entryPicker} from 'alinea/picker/entry'
-import type {EntryReference} from 'alinea/picker/entry/EntryReference'
-import {type UrlReference, urlPicker} from 'alinea/picker/url'
+} from '#/field/link/LinkField.js'
+import {type EntryPickerConditions, entryPicker} from '#/picker/entry.js'
+import type {EntryReference} from '#/picker/entry/EntryReference.js'
+import {type UrlReference, urlPicker} from '#/picker/url.js'
 import {EntryLink} from './EntryLink.js'
 import type {UrlLink} from './UrlLink.js'
 
@@ -22,8 +22,7 @@ export type Link<InferredFields> =
   | FileLink<InferredFields>
 
 export interface LinkOptions<Definition, Row>
-  extends LinkFieldOptions<Row>,
-    EntryPickerConditions {
+  extends LinkFieldOptions<Row>, EntryPickerConditions {
   fields?: Definition | Type<Definition>
 }
 

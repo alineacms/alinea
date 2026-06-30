@@ -1,0 +1,69 @@
+.RichTextFieldView {
+  overflow: hidden;
+  background-color: var(--alinea-input);
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  outline: 3px solid transparent;
+  transition: var(--alinea-transition);
+  transition-property: border-color, outline-color, background-color;
+
+  &:hover {
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
+  }
+
+  &:focus-within {
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-primary-overlay);
+  }
+
+  &[data-invalid='true'] {
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
+  }
+
+  &[data-read-only='true'] {
+    background-color: var(--alinea-input-disabled);
+  }
+
+  &[data-read-only='true']:hover,
+  &[data-read-only='true']:focus-within {
+    border-color: var(--alinea-border);
+    outline-color: transparent;
+  }
+
+  :global(.ProseMirror) {
+    outline: none;
+    min-height: calc(1.5em + 16px);
+    padding: 8px 10px;
+    color: var(--alinea-fg);
+    font-size: var(--alinea-font-size-base);
+    line-height: 1.5;
+  }
+
+  &[data-read-only='true'] :global(.ProseMirror) {
+    color: var(--alinea-fg-disabled);
+  }
+}
+
+.RichTextFieldCompactView {
+  display: inline-block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.RichTextFieldCompactView[data-empty] {
+  color: var(--alinea-fg-muted);
+}
+
+.RichTextFieldBlock {
+  margin: 14px 0;
+  outline: 3px solid transparent;
+}

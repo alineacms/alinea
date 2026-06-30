@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import {suite} from '@alinea/suite'
 import {indexedDB} from 'fake-indexeddb'
-import demoTree from '../../test/fixtures/demo.json' with {type: 'json'}
+import demoTree from '#test/fixtures/demo.json' with {type: 'json'}
 import {accumulate} from '../util/Async.js'
 import {MemorySource} from './MemorySource.js'
 import {syncWith} from './Source.js'
@@ -11,7 +11,7 @@ const test = suite(import.meta)
 
 const tree = ReadonlyTree.fromFlat(demoTree)
 const memorySource = new MemorySource(tree)
-const dir = 'src/test/fixtures/demo'
+const dir = 'test/fixtures/demo'
 const files = tree.index()
 const blobs = new Map<string, Uint8Array>()
 for (const [file, sha] of files) {

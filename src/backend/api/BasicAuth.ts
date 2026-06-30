@@ -1,12 +1,8 @@
-import {AuthResultType} from 'alinea/cloud/AuthResult'
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from 'alinea/core/Connection'
-import type {User} from 'alinea/core/User'
+import {AuthResultType} from '#/cloud/AuthResult.js'
+import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
+import type {User} from '#/core/User.js'
 
-import {atob} from 'alinea/core/util/Encoding'
+import {atob} from '#/core/util/Encoding.js'
 import {
   AuthAction,
   InvalidCredentialsError,
@@ -62,6 +58,7 @@ export class BasicAuth implements AuthApi {
       typeof authorized === 'boolean'
         ? {
             sub: username,
+            email: username,
             roles: ['admin']
           }
         : authorized

@@ -1,0 +1,191 @@
+.SelectTrigger {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid var(--alinea-border);
+  outline: 3px solid transparent;
+  border-radius: 8px;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  min-width: 100px;
+  text-align: left;
+  color: var(--alinea-fg);
+  transition: var(--alinea-transition);
+  background: var(--alinea-input);
+
+  &:has(> .SelectTrigger-button[data-hovered]) {
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
+  }
+
+  &:has(> .SelectTrigger-button[data-focus-visible]),
+  &:has(> .SelectTrigger-button[aria-expanded='true']) {
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-primary-overlay);
+  }
+
+  &:has(> .SelectTrigger-button[data-disabled]) {
+    pointer-events: none;
+    background-color: var(--alinea-input-disabled);
+    color: var(--alinea-fg-disabled);
+    opacity: 0.5;
+  }
+
+  .Select[data-invalid='true'] & {
+    border-color: var(--alinea-border-danger);
+    outline-color: var(--alinea-danger-overlay);
+  }
+
+  .SelectTrigger-button {
+    appearance: none;
+    background: none;
+    font: inherit;
+    outline: none;
+    border: none;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    padding: 8px 10px 8px 10px;
+    gap: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+
+    &[data-clear] {
+      padding-right: 0;
+    }
+
+    .SelectTrigger-button-value {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      color: var(--alinea-fg);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      &[data-placeholder] {
+        color: var(--alinea-fg-subtle);
+      }
+    }
+
+    .SelectTrigger-button-arrow {
+      flex-shrink: 0;
+      font-size: 18px;
+      color: var(--alinea-fg-muted);
+
+      [aria-expanded='true'] & {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+.SelectPopover {
+  width: var(--trigger-width);
+
+  &[data-clear] {
+    width: calc(var(--trigger-width) + 40px);
+  }
+}
+
+.SelectClear {
+  position: relative;
+  cursor: pointer;
+  background: none;
+  width: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 100%;
+  background-color: transparent;
+  color: var(--alinea-fg-muted);
+  font-size: 18px;
+  font-size: var(--alinea-font-size-base);
+  outline: none;
+  z-index: 0;
+
+  &:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 100%;
+    background-color: var(--alinea-muted);
+    z-index: -1;
+    transition: var(--alinea-transition);
+    opacity: 0;
+    border: 1px solid transparent;
+    outline: 3px solid transparent;
+  }
+
+  &:hover:after {
+    opacity: 1;
+  }
+
+  &:focus:after {
+    background-color: transparent;
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-primary-overlay);
+    opacity: 1;
+  }
+}
+
+.SelectItem {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+
+  gap: 8px;
+  display: flex;
+  align-items: center;
+  outline: none;
+  border-radius: 4px;
+  position: relative;
+
+  &[data-selected] {
+    padding-right: 2.4rem;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  .SelectItem-check {
+    font-size: 1rem;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+  }
+
+  &[data-focus-visible] {
+    outline: none;
+  }
+
+  &[data-selected] {
+    font-weight: 500;
+    background: var(--alinea-selected);
+    color: var(--alinea-primary-subtle-fg);
+    position: relative;
+  }
+
+  &[data-focused],
+  &[data-pressed] {
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.2;
+  }
+}

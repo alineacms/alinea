@@ -1,6 +1,6 @@
-import type {Config} from 'alinea/core/Config'
-import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
-import {assert} from 'alinea/core/util/Assert'
+import type {Config} from '#/core/Config.js'
+import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import {assert} from '#/core/util/Assert.js'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {DatabaseApi} from './DatabaseApi.js'
@@ -69,7 +69,20 @@ export function createBackend(
 export function createRemote(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
-  const reversed = impl.reverse()
+  const hasMethod = (name: keyof RemoteConnection): boolean => {
+    return impl.some(i => typeof i[name] === 'function')
+  }
+  const fallback: Partial<RemoteConnection> = {
+    async enrichUser(user) {
+      return user
+    },
+    async capabilities() {
+      return {
+        users: hasMethod('listUsers')
+      }
+    }
+  }
+  const reversed = impl.reverse().concat(fallback)
   const call = (name: keyof RemoteConnection): any => {
     const use = reversed.find(i => name in i)
     return use
@@ -81,6 +94,7 @@ export function createRemote(
   return {
     authenticate: call('authenticate'),
     verify: call('verify'),
+    capabilities: call('capabilities'),
     getTreeIfDifferent: call('getTreeIfDifferent'),
     getBlobs: call('getBlobs'),
     write: call('write'),
@@ -90,6 +104,11 @@ export function createRemote(
     storeDraft: call('storeDraft'),
     prepareUpload: call('prepareUpload'),
     handleUpload: call('handleUpload'),
-    previewUpload: call('previewUpload')
+    previewUpload: call('previewUpload'),
+    enrichUser: call('enrichUser'),
+    listUsers: call('listUsers'),
+    createUser: call('createUser'),
+    updateUser: call('updateUser'),
+    removeUser: call('removeUser')
   }
 }

@@ -5,12 +5,11 @@ import {createId} from '../Id.js'
 import type {StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {isImage} from '../media/IsImage.js'
+import {assertUploadSize} from '../media/UploadLimits.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
-import {assert} from '../util/Assert.js'
 import {createFileHash} from '../util/ContentHash.js'
 import {workspaceMediaDir} from '../util/EntryFilenames.js'
-import {keys} from '../util/Objects.js'
 import {basename, extname, join, normalize} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
 import {Workspace} from '../Workspace.js'
@@ -129,15 +128,15 @@ export class UpdateOperation<Definition> extends Operation {
 
 export interface MoveQuery {
   id: string
-  after?: string | null
-  toParent?: string
-  toRoot?: string
+  target: string
+  dropPosition: 'after' | 'before' | 'on'
+  targetType?: 'entry' | 'root'
 }
 
 export class MoveOperation extends Operation {
   constructor(query: MoveQuery) {
     super((): Array<Mutation> => {
-      return [{op: 'move', ...query, after: query.after ?? null}]
+      return [{op: 'move', ...query, targetType: query.targetType ?? 'entry'}]
     })
   }
 }
@@ -188,7 +187,13 @@ export interface UploadQuery {
   root?: string
   parentId?: string | null
   createPreview?(blob: Blob): Promise<ImagePreviewDetails>
+  onProgress?(progress: UploadProgress): void
   replaceId?: string
+}
+
+export interface UploadProgress {
+  loaded: number
+  total?: number
 }
 
 export class UploadOperation extends Operation {
@@ -200,12 +205,14 @@ export class UploadOperation extends Operation {
       const {file, createPreview} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
       const fileName = Array.isArray(file) ? file[0] : file.name
-      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
-      const contentType =
-        file instanceof Blob ? file.type : 'application/octet-stream'
       const workspace = _workspace ?? Object.keys(db.config.workspaces)[0]
       const root =
         _root ?? Workspace.defaultMediaRoot(db.config.workspaces[workspace])
+      const fileSize = Array.isArray(file) ? file[1].byteLength : file.size
+      assertUploadSize(fileName, fileSize, db.config.maxUploadSize)
+      const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
+      const contentType =
+        file instanceof Blob ? file.type : 'application/octet-stream'
       const extension = extname(fileName)
       const path = slugify(basename(fileName, extension))
       const directory = workspaceMediaDir(db.config, workspace)
@@ -216,16 +223,8 @@ export class UploadOperation extends Operation {
             file instanceof Blob ? file : new Blob([body as BlobPart])
           )
         : undefined
-      await fetch(info.url, {
-        method: info.method ?? 'POST',
-        headers: {'Content-Type': contentType},
-        body: body as BodyInit
-      }).then(result => {
-        if (!result.ok)
-          throw new HttpError(
-            result.status,
-            'Could not reach server for upload'
-          )
+      await sendUpload(info.url, info.method ?? 'POST', contentType, body, {
+        onProgress: query.onProgress
       })
       const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
@@ -263,6 +262,64 @@ export class UploadOperation extends Operation {
     })
     this.id = query.replaceId ?? createId()
   }
+}
+
+interface UploadFileOptions {
+  onProgress?(progress: UploadProgress): void
+}
+
+async function sendUpload(
+  url: string,
+  method: string,
+  contentType: string,
+  body: ArrayBuffer | Uint8Array,
+  options: UploadFileOptions
+) {
+  const {onProgress} = options
+  if (onProgress && typeof XMLHttpRequest !== 'undefined') {
+    await uploadFileWithProgress(url, method, contentType, body, onProgress)
+    return
+  }
+  await fetch(url, {
+    method,
+    headers: {'Content-Type': contentType},
+    body: body as BodyInit
+  }).then(result => {
+    if (!result.ok)
+      throw new HttpError(result.status, 'Could not reach server for upload')
+  })
+}
+
+function uploadFileWithProgress(
+  url: string,
+  method: string,
+  contentType: string,
+  body: ArrayBuffer | Uint8Array,
+  onProgress: (progress: UploadProgress) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest()
+    request.open(method, url)
+    request.setRequestHeader('Content-Type', contentType)
+    request.upload.addEventListener('progress', event => {
+      onProgress({
+        loaded: event.loaded,
+        total: event.lengthComputable ? event.total : undefined
+      })
+    })
+    request.addEventListener('load', () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress({loaded: body.byteLength, total: body.byteLength})
+        resolve()
+        return
+      }
+      reject(new HttpError(request.status, 'Could not reach server for upload'))
+    })
+    request.addEventListener('error', () => {
+      reject(new HttpError(request.status, 'Could not reach server for upload'))
+    })
+    request.send(body as XMLHttpRequestBodyInit)
+  })
 }
 
 export function update<Definition>(

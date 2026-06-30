@@ -1,4 +1,5 @@
 export * from './BasicFields'
+export * from './CheckboxPositioning'
 export * from './ConditionalExamples'
 export * from './CustomFieldExample'
 export * from './CustomPageExample'

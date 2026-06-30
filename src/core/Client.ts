@@ -1,23 +1,24 @@
+import {HandleAction} from '#/backend/HandleAction.js'
+import type {PreviewInfo} from '#/backend/Previews.js'
+import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
-import {HandleAction} from 'alinea/backend/HandleAction'
-import type {PreviewInfo} from 'alinea/backend/Previews'
-import {type AuthResult, AuthResultType} from 'alinea/cloud/AuthResult'
 import type {Config} from './Config.js'
 import type {
+  BackendCapabilities,
   DraftTransport,
   LocalConnection,
   Revision,
   UploadResponse
 } from './Connection.js'
-import type {Draft, DraftKey} from './Draft.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
+import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
-import type {User} from './User.js'
+import type {User, UserInput} from './User.js'
 import {base64} from './util/Encoding.js'
 
 export type AuthenticateRequest = (
@@ -37,10 +38,6 @@ export class Client implements LocalConnection {
     this.#options = options
   }
 
-  get url() {
-    return this.#options.url
-  }
-
   authStatus(): Promise<AuthResult> {
     return this.#requestJson({
       action: HandleAction.Auth,
@@ -56,6 +53,12 @@ export class Client implements LocalConnection {
     })
       .then(res => this.#failOnHttpError(res, false))
       .then(endSession)
+  }
+
+  capabilities(): Promise<BackendCapabilities> {
+    return this.#requestJson({
+      action: HandleAction.Capabilities
+    }).then<BackendCapabilities>(this.#failOnHttpError)
   }
 
   previewToken(request: PreviewInfo): Promise<string> {
@@ -82,6 +85,53 @@ export class Client implements LocalConnection {
     return this.#requestJson({action: HandleAction.User})
       .then<User | null>(this.#failOnHttpError)
       .then(user => user ?? undefined)
+  }
+
+  enrichUser(user: UserInput): Promise<User> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'enrich'},
+      {
+        method: 'POST',
+        body: JSON.stringify(user)
+      }
+    ).then<User>(this.#failOnHttpError)
+  }
+
+  listUsers(): Promise<Array<User>> {
+    return this.#requestJson({
+      action: HandleAction.User,
+      operation: 'list'
+    }).then<Array<User>>(this.#failOnHttpError)
+  }
+
+  createUser(user: UserInput): Promise<User> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'create'},
+      {
+        method: 'POST',
+        body: JSON.stringify(user)
+      }
+    ).then<User>(this.#failOnHttpError)
+  }
+
+  updateUser(user: UserInput): Promise<User> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'update'},
+      {
+        method: 'POST',
+        body: JSON.stringify(user)
+      }
+    ).then<User>(this.#failOnHttpError)
+  }
+
+  removeUser(email: string): Promise<void> {
+    return this.#requestJson(
+      {action: HandleAction.User, operation: 'remove'},
+      {
+        method: 'POST',
+        body: JSON.stringify({email})
+      }
+    ).then<void>(res => this.#failOnHttpError(res, false))
   }
 
   resolve<Query extends GraphQuery>(
@@ -154,6 +204,7 @@ export class Client implements LocalConnection {
     ).then(response => this.#failOnHttpError<Response>(response, false))
     const form = await response.formData()
     for (const [key, value] of form.entries()) {
+      // @ts-ignore - Bun types declare entries wrong
       if (value instanceof Blob) {
         const sha = key.slice(0, 40)
         const blob = new Uint8Array(await value.arrayBuffer())

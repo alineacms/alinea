@@ -1,22 +1,18 @@
+import {AuthResultType} from '#/cloud/AuthResult.js'
+import {Config} from '#/core/Config.js'
+import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
+import {HttpError} from '#/core/HttpError.js'
+import {createId} from '#/core/Id.js'
+import {outcome} from '#/core/Outcome.js'
+import type {User} from '#/core/User.js'
+import {assert} from '#/core/util/Assert.js'
+import {decode, JWTPayload, verify} from '#/core/util/JWT.js'
 import {Request, Response} from '@alinea/iso'
 import {
   generateCodeVerifier,
   OAuth2Client,
   type OAuth2Token
 } from '@badgateway/oauth2-client'
-import {AuthResultType} from 'alinea/cloud/AuthResult'
-import {Config} from 'alinea/core/Config'
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from 'alinea/core/Connection'
-import {HttpError} from 'alinea/core/HttpError'
-import {createId} from 'alinea/core/Id'
-import {outcome} from 'alinea/core/Outcome'
-import type {User} from 'alinea/core/User'
-import {assert} from 'alinea/core/util/Assert'
-import {decode, JWTPayload, verify} from 'alinea/core/util/JWT'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
 import {

@@ -1,127 +1,162 @@
-import styler from '@alinea/styler'
 import {
-  autoUpdate,
-  flip,
-  offset,
-  size,
-  useFloating
-} from '@floating-ui/react-dom'
-import {Listbox} from '@headlessui/react'
-import {useField} from 'alinea/dashboard/editor/UseField'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, TextLabel} from 'alinea/ui'
-import {Ellipsis} from 'alinea/ui/Ellipsis'
-import {IcRoundArrowDropDownCircle} from 'alinea/ui/icons/IcRoundArrowDropDownCircle'
-import {IcRoundCheck} from 'alinea/ui/icons/IcRoundCheck'
-import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {IcRoundUnfoldMore} from 'alinea/ui/icons/IcRoundUnfoldMore'
-import type {SelectField} from './SelectField.js'
-import css from './SelectField.module.scss'
+  MultipleSelect,
+  MultipleSelectItem,
+  Select,
+  SelectItem,
+  Tag
+} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
+import type {Key} from '@react-types/shared'
+import {type ReactNode, useMemo} from 'react'
+import {useListData} from 'react-stately'
+import type {
+  MultipleSelectOptions,
+  SelectField,
+  SelectOptions
+} from './SelectField.js'
 
-const styles = styler(css)
-
-export interface SelectInputProps<Key extends string> {
-  field: SelectField<Key>
+interface SelectItemData<KeyType extends string> {
+  id: KeyType
+  name: string
+  label: string
 }
 
-export function SelectInput<Key extends string>({
-  field
-}: SelectInputProps<Key>) {
-  const {value = null, mutator, label, options, error} = useField(field)
-  const {readOnly} = options
-  const items = options.options as Record<string, string>
-  const {x, y, reference, floating, refs, strategy} = useFloating({
-    whileElementsMounted: autoUpdate,
-    strategy: 'fixed',
-    placement: 'bottom-start',
-    middleware: [
-      offset(4),
-      flip(),
-      size({
-        apply({rects}) {
-          if (refs.floating.current)
-            Object.assign(refs.floating.current.style, {
-              width: `${rects.reference.width}px`
-            })
-        }
+export interface SelectFieldViewProps<
+  Value extends KeyType | null,
+  KeyType extends string
+> {
+  field: SelectField<Value, KeyType>
+}
+
+export function SelectFieldView<
+  Value extends KeyType | null,
+  KeyType extends string
+>({field}: SelectFieldViewProps<Value, KeyType>) {
+  const [value, setValue] = useField(field)
+  const options = useFieldOptions(field) as SelectOptions<KeyType, Value>
+  const error = useFieldError(field)
+  const items = useMemo(() => {
+    return Object.entries<string>(options.options).map(
+      ([id, label]): SelectItemData<KeyType> => ({
+        id: id as KeyType,
+        name: label,
+        label
       })
-    ]
+    )
+  }, [options.options])
+
+  function handleSelectionChange(key: Key | null) {
+    setValue((key === null ? null : String(key)) as Value)
+  }
+
+  return (
+    <Select
+      description={options.help}
+      errorMessage={error}
+      isDisabled={options.readOnly}
+      isRequired={options.required}
+      items={items}
+      label={options.label}
+      shared={options.shared}
+      onSelectionChange={handleSelectionChange}
+      placeholder={options.placeholder}
+      selectedKey={value}
+    >
+      {item => <SelectItem id={item.id}>{item.label}</SelectItem>}
+    </Select>
+  )
+}
+
+export interface MultipleSelectFieldViewProps<KeyType extends string> {
+  field: SelectField<Array<KeyType>, KeyType>
+}
+
+export function MultipleSelectFieldView<KeyType extends string>({
+  field
+}: MultipleSelectFieldViewProps<KeyType>) {
+  const [value, setValue] = useField(field)
+  const options = useFieldOptions(field) as MultipleSelectOptions<KeyType>
+  const error = useFieldError(field)
+  const items = useMemo(() => {
+    return Object.entries<string>(options.options).map(
+      ([id, label]): SelectItemData<KeyType> => ({
+        id: id as KeyType,
+        name: label,
+        label
+      })
+    )
+  }, [options.options])
+
+  function handleItemInserted(key: Key) {
+    const itemKey = String(key) as KeyType
+    setValue(current => {
+      if (current.includes(itemKey)) return current
+      return [...current, itemKey]
+    })
+  }
+
+  function handleItemCleared(key: Key) {
+    const itemKey = String(key) as KeyType
+    setValue(current => {
+      return current.filter(key => key !== itemKey)
+    })
+  }
+
+  return (
+    <SelectFieldMultipleInput
+      key={value.join('\0')}
+      description={options.help}
+      errorMessage={error}
+      isDisabled={options.readOnly}
+      isRequired={options.required}
+      items={items}
+      label={options.label}
+      shared={options.shared}
+      onItemCleared={handleItemCleared}
+      onItemInserted={handleItemInserted}
+      placeholder={options.placeholder}
+      selectedKeys={value}
+    />
+  )
+}
+
+interface SelectFieldMultipleViewProps<KeyType extends string> {
+  description?: ReactNode
+  errorMessage?: string
+  isDisabled?: boolean
+  isRequired?: boolean
+  items: Array<SelectItemData<KeyType>>
+  label: ReactNode
+  shared?: boolean
+  onItemCleared: (key: Key) => void
+  onItemInserted: (key: Key) => void
+  placeholder?: string
+  selectedKeys: Array<KeyType>
+}
+
+function SelectFieldMultipleInput<KeyType extends string>({
+  items,
+  selectedKeys,
+  ...props
+}: SelectFieldMultipleViewProps<KeyType>) {
+  const selectedItems = useListData<SelectItemData<KeyType>>({
+    initialItems: selectedKeys
+      .map(key => items.find(item => item.id === key))
+      .filter((item): item is SelectItemData<KeyType> => Boolean(item))
   })
 
   return (
-    <InputLabel {...options} error={error} icon={IcRoundArrowDropDownCircle}>
-      <div className={styles.root({readOnly})}>
-        <Listbox value={value} onChange={mutator} disabled={options.readOnly}>
-          {({open}) => (
-            <div>
-              <div className={styles.root.input({open})}>
-                <Listbox.Button
-                  ref={reference}
-                  className={styles.root.input.button()}
-                >
-                  <span
-                    className={styles.root.input.label({placeholder: !value})}
-                  >
-                    <TextLabel
-                      label={
-                        (value ? items[value] : options.placeholder) || label
-                      }
-                      title={value ? items[value] : undefined}
-                    />
-                  </span>
-                  <Icon
-                    icon={IcRoundUnfoldMore}
-                    className={styles.root.input.icon()}
-                    title={open ? 'Close options' : 'Open options'}
-                  />
-                </Listbox.Button>
-                {value && !options.required && (
-                  <IconButton
-                    icon={IcRoundClose}
-                    onClick={() => mutator(null!)}
-                    className={styles.root.input.delete()}
-                    title="Clear selection"
-                  />
-                )}
-              </div>
-              <Listbox.Options
-                ref={floating}
-                style={{
-                  position: strategy,
-                  top: `${y || 0}px`,
-                  left: `${x || 0}px`
-                }}
-                className={styles.root.dropdown()}
-              >
-                <div className={styles.root.dropdown.inner()}>
-                  {Object.entries(items).map(([key, label]) => (
-                    <Listbox.Option key={key} value={key}>
-                      {({active, selected}) => (
-                        <HStack
-                          center
-                          gap={4}
-                          className={styles.root.dropdown.option({
-                            active,
-                            selected
-                          })}
-                        >
-                          <Ellipsis>
-                            <TextLabel label={label} title={label} />
-                          </Ellipsis>
-                          <div className={styles.root.dropdown.option.icon()}>
-                            {selected && <Icon size={18} icon={IcRoundCheck} />}
-                          </div>
-                        </HStack>
-                      )}
-                    </Listbox.Option>
-                  ))}
-                </div>
-              </Listbox.Options>
-            </div>
-          )}
-        </Listbox>
-      </div>
-    </InputLabel>
+    <MultipleSelect
+      {...props}
+      items={items}
+      selectedItems={selectedItems}
+      tag={item => <Tag data-shape="circle">{item.label}</Tag>}
+    >
+      {item => (
+        <MultipleSelectItem id={item.id} textValue={item.label}>
+          {item.label}
+        </MultipleSelectItem>
+      )}
+    </MultipleSelect>
   )
 }

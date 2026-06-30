@@ -1,0 +1,120 @@
+.Explorer {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ExplorerHeader {
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
+  overflow-y: hidden;
+  background: var(--alinea-bg);
+}
+
+.ExplorerHeader-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  height: 100%;
+  width: 100%;
+}
+
+.ExplorerHeader-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.ExplorerHeader-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.Explorer-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.Explorer-toolbar-tools {
+  flex: 1 1 0;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: end;
+}
+
+.Explorer-toolbar-mediaActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.Explorer-breadcrumbs {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.Explorer-searchSlot {
+  display: flex;
+  flex: 1;
+  align-items: center;
+}
+
+.Explorer-search {
+  width: 100%;
+  flex-grow: 1 !important;
+}
+
+.Explorer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.Explorer-viewport {
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+}
+
+.Popover {
+  display: flex;
+  flex-direction: column;
+}
+
+.Popover-Label {
+  padding: 4px 8px;
+  color: var(--alinea-fg-subtle);
+  font-size: 12px;
+}
+
+.Sorting-button {
+  width: 100%;
+  display: flex;
+
+  & + & {
+    margin-top: 2px;
+  }
+}

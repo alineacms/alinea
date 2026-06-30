@@ -1,0 +1,48 @@
+import styler from '@alinea/styler'
+import {Chip, HStack, Icon, Loader, TextLabel, VStack} from '#/ui.js'
+import {Ellipsis} from '#/ui/Ellipsis.js'
+import {IcBaselineErrorOutline} from '#/ui/icons/IcBaselineErrorOutline.js'
+import {IcRoundCheck} from '#/ui/icons/IcRoundCheck.js'
+import {IcRoundInsertDriveFile} from '#/ui/icons/IcRoundInsertDriveFile.js'
+import {type Upload, UploadStatus} from '../../hook/UseUploads.js'
+import css from './FileUploadRow.module.scss'
+
+const styles = styler(css)
+
+export function FileUploadRow(upload: Upload) {
+  return (
+    <HStack center full gap={10} className={styles.root()}>
+      <div className={styles.root.preview()}>
+        {upload.preview ? (
+          <img
+            alt="Uploaded file"
+            src={upload.preview}
+            className={styles.root.preview.image()}
+          />
+        ) : (
+          <div className={styles.root.preview.icon()}>
+            <IcRoundInsertDriveFile />
+          </div>
+        )}
+      </div>
+      <VStack>
+        <Ellipsis>
+          <TextLabel label={upload.file.name} />
+        </Ellipsis>
+      </VStack>
+      <Chip style={{marginLeft: 'auto'}}>
+        {upload.file.name.toLowerCase().split('.').pop()!}
+      </Chip>
+      <div className={styles.root.status()}>
+        {upload.status === UploadStatus.Done ? (
+          <Icon
+            icon={upload.error ? IcBaselineErrorOutline : IcRoundCheck}
+            title={upload.error ? upload.error.message : 'Done'}
+          />
+        ) : (
+          <Loader />
+        )}
+      </div>
+    </HStack>
+  )
+}

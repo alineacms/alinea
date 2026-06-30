@@ -1,7 +1,11 @@
-import type {Graph} from 'alinea/core/Graph'
+import type {Graph} from '#/core/Graph.js'
 import {useAtomValue} from 'jotai'
-import {dbAtom} from '../atoms/DbAtoms.js'
+import {useDashboard} from '../store.js'
 
+/**
+ * @deprecated Compatibility hook for legacy dashboard extensions.
+ */
 export function useGraph(): Graph {
-  return useAtomValue(dbAtom)
+  const dashboard = useDashboard()
+  return useAtomValue(dashboard.db)
 }
