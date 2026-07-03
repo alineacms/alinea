@@ -15,7 +15,8 @@ import {
   not,
   or,
   sql,
-  type SyncDatabase
+  type SyncDatabase,
+  type SyncStatement
 } from 'rado'
 import {index, integer, sqliteTable, text, uniqueIndex} from 'rado/sqlite'
 import {assert} from '../util/Assert.js'
@@ -210,8 +211,7 @@ const EdgeTable = sqliteTable(
   {
     fromUid: integer().notNull(),
     fromId: text().notNull(),
-    fromVariant: text('fromVariant', {mode: 'json'})
-      .$type<DocVariant>(),
+    fromVariant: text('fromVariant', {mode: 'json'}).$type<DocVariant>(),
     path: text().notNull(),
     toId: text().notNull()
   },
@@ -310,6 +310,18 @@ interface DocRow {
   data: Record<string, unknown>
 }
 
+interface RawDocRow {
+  docUid: number
+  nodeUid: number
+  id: string
+  parent: string | null
+  kind: string | null
+  index: string | null
+  variant: string | null
+  level: number
+  data: string
+}
+
 interface NodeRow {
   uid: number
   id: string
@@ -332,6 +344,14 @@ function fromRow(row: DocRow): Doc {
   }
 }
 
+function fromRawRow(row: RawDocRow): Doc {
+  return fromRow({
+    ...row,
+    variant: row.variant ? (JSON.parse(row.variant) as DocVariant) : null,
+    data: JSON.parse(row.data) as Record<string, unknown>
+  })
+}
+
 export class DocDB {
   #db: SyncDatabase<'sqlite'>
   #options: DocDBOptions
@@ -339,6 +359,7 @@ export class DocDB {
   #getById
   #getByIdVariant
   #refsTo
+  #dataEq = new Map<string, SyncStatement>()
 
   constructor(db: SyncDatabase<'sqlite'>, options: DocDBOptions = {}) {
     this.#db = db
@@ -487,7 +508,8 @@ export class DocDB {
     for (const operation of operations) {
       switch (operation.op) {
         case 'put':
-          hierarchyChanged = this.#upsertNode(tx, operation.doc) || hierarchyChanged
+          hierarchyChanged =
+            this.#upsertNode(tx, operation.doc) || hierarchyChanged
           this.#upsertVersion(tx, operation.doc)
           break
         case 'remove':
@@ -505,11 +527,7 @@ export class DocDB {
 
   #upsertNode(tx: SyncDatabase<'sqlite'>, doc: DocInput): boolean {
     const existing = syncResult(
-      tx
-        .select()
-        .from(NodeTable)
-        .where(eq(NodeTable.id, doc.id))
-        .get()
+      tx.select().from(NodeTable).where(eq(NodeTable.id, doc.id)).get()
     ) as NodeRow | null
     if (doc.parent !== undefined) {
       assert(doc.parent !== doc.id, `Document cannot parent itself: ${doc.id}`)
@@ -684,6 +702,43 @@ export class DocDB {
     ]).map(fromRow)
   }
 
+  getByDataEq(
+    conditions: ReadonlyArray<{path: string; value: unknown}>,
+    take?: number
+  ): Array<Doc> {
+    assert(conditions.length > 0, 'Expected at least one data condition')
+    const key = `${conditions.map(condition => condition.path).join('\0')}:${
+      take ?? ''
+    }`
+    let statement = this.#dataEq.get(key)
+    if (!statement) {
+      const where = conditions
+        .map(condition => `doc.data->>${jsonPath(condition.path)} = ?`)
+        .join(' AND ')
+      statement = this.#db.driver.prepare(
+        `SELECT
+          doc.uid AS docUid,
+          doc_node.uid AS nodeUid,
+          doc.id AS id,
+          doc_node.parentId AS parent,
+          doc_node.kind AS kind,
+          doc_node."index" AS "index",
+          doc.variant AS variant,
+          doc_node.level AS level,
+          doc.data AS data
+        FROM doc
+        INNER JOIN doc_node ON doc_node.uid = doc.nodeUid
+        WHERE ${where}
+        ORDER BY doc.uid${take === undefined ? '' : ` LIMIT ${take}`}`,
+        {isSelection: true}
+      ) as SyncStatement
+      this.#dataEq.set(key, statement)
+    }
+    return statement
+      .all(conditions.map(condition => condition.value))
+      .map(row => fromRawRow(row as RawDocRow))
+  }
+
   query(query: DocQuery): Array<Doc> {
     const conditions = this.#conditionsOf(query)
     const order = (query.orderBy ?? []).map(by => {
@@ -797,7 +852,8 @@ export class DocDB {
     }
     if (query.variantWhere !== undefined) {
       for (const [path, value] of Object.entries(query.variantWhere)) {
-        conditions.push(eq(variantField(path), value))
+        const field = variantField(path)
+        conditions.push(value === null ? isNull(field) : eq(field, value))
       }
     }
     if (query.parent !== undefined) {
