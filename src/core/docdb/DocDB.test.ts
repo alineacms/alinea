@@ -17,7 +17,8 @@ const options: DocDBOptions = {
       body: typeof data.text === 'string' ? data.text : ''
     }
   },
-  indexPaths: ['type', 'category']
+  indexPaths: ['type', 'category'],
+  variantIndexPaths: ['status', 'locale']
 }
 
 function createDb() {
@@ -34,6 +35,8 @@ test('insert and get', () => {
   test.equal(a, {
     id: 'a',
     parent: null,
+    kind: null,
+    index: null,
     variant: null,
     level: 0,
     data: {type: 'Page', title: 'Root A'}
@@ -56,6 +59,39 @@ test('variants', () => {
   test.is(db.get('a', 'published')!.data.title, 'Published')
   db.remove([{id: 'a', variant: 'draft'}])
   test.is(db.getMany(['a']).length, 1)
+})
+
+test('structured variants', () => {
+  const db = createDb()
+  db.insert([
+    {
+      id: 'a',
+      variant: {status: 'published', locale: 'en'},
+      data: {title: 'Published EN'}
+    },
+    {
+      id: 'a',
+      variant: {locale: 'en', status: 'draft'},
+      data: {title: 'Draft EN'}
+    },
+    {
+      id: 'a',
+      variant: {status: 'published', locale: 'nl'},
+      data: {title: 'Published NL'}
+    }
+  ])
+  test.is(
+    db.get('a', {locale: 'en', status: 'draft'})!.data.title,
+    'Draft EN'
+  )
+  test.equal(
+    db.query({variantWhere: {status: 'published'}}).map(doc => doc.data.title),
+    ['Published EN', 'Published NL']
+  )
+  test.equal(
+    db.query({variantWhere: {locale: 'en'}}).map(doc => doc.data.title),
+    ['Published EN', 'Draft EN']
+  )
 })
 
 test('replace on conflict', () => {
@@ -93,6 +129,18 @@ test('hierarchy', () => {
   test.equal(
     level1.map(doc => doc.id),
     ['a-b']
+  )
+  db.insert([{id: 'a-b', parent: 'z', data: {title: 'B moved'}}])
+  test.is(db.get('a-b-c')!.level, 2)
+  test.equal(
+    db.query({descendantOf: 'z'}).map(doc => doc.id),
+    ['a-b', 'a-b-c']
+  )
+  db.insert([{id: 'a-b', data: {title: 'B updated'}}])
+  test.is(db.get('a-b')!.parent, 'z')
+  test.equal(
+    db.query({descendantOf: 'z'}).map(doc => doc.id),
+    ['a-b', 'a-b-c']
   )
 })
 
@@ -194,4 +242,40 @@ test('boot from serialized image', () => {
     restored.query({search: 'hello'}).map(doc => doc.id),
     ['a']
   )
+})
+
+test('transactional preview overlay rolls back', () => {
+  const db = createDb()
+  db.insert([
+    {id: 'a', data: {title: 'Base'}},
+    {id: 'b', data: {title: 'Keep'}}
+  ])
+  const titles = db.withOverlay(
+    {
+      overlay: [
+        {op: 'put', doc: {id: 'a', data: {title: 'Preview'}}},
+        {op: 'remove', id: 'b'}
+      ]
+    },
+    preview => {
+      return [preview.get('a')!.data.title, preview.get('b')]
+    }
+  )
+  test.equal(titles, ['Preview', undefined])
+  test.is(db.get('a')!.data.title, 'Base')
+  test.is(db.get('b')!.data.title, 'Keep')
+})
+
+test('transactional preview overlay rethrows callback errors', () => {
+  const db = createDb()
+  db.insert([{id: 'a', data: {title: 'Base'}}])
+  test.throws(() => {
+    db.withOverlay(
+      {overlay: [{op: 'put', doc: {id: 'a', data: {title: 'Preview'}}}]},
+      () => {
+        throw new Error('Preview failed')
+      }
+    )
+  }, 'Preview failed')
+  test.is(db.get('a')!.data.title, 'Base')
 })
