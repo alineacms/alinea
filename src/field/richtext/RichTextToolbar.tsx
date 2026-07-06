@@ -11,6 +11,7 @@ import {
 import type {Reference} from '#/core/Reference.js'
 import {entries} from '#/core/util/Objects.js'
 import type {
+  PickRichTextImageFunc,
   PickTextLinkFunc,
   PickerValue
 } from '#/field/richtext/PickTextLink.js'
@@ -39,7 +40,9 @@ export type RichTextCommand = () => ReturnType<Editor['chain']>
 export interface RichTextToolbarProps {
   editor: Editor
   enableTables?: boolean
+  enableImages?: boolean
   focusToggle: (target: EventTarget | null) => void
+  pickImage?: PickRichTextImageFunc
   pickLink?: PickTextLinkFunc
   toolbar?: ToolbarConfig
 }
@@ -98,14 +101,17 @@ export function createLinkHandler(
 
 export function RichTextToolbar({
   editor,
+  enableImages,
   enableTables,
   focusToggle,
+  pickImage,
   pickLink,
   toolbar
 }: RichTextToolbarProps) {
   const config = useMemo(
-    () => toolbar ?? defaultToolbar(enableTables || false),
-    [enableTables, toolbar]
+    () =>
+      toolbar ?? defaultToolbar(enableTables || false, enableImages || false),
+    [enableImages, enableTables, toolbar]
   )
   const ctx = useMemo(() => {
     const exec = createToolbarExec(editor)
@@ -113,12 +119,22 @@ export function RichTextToolbar({
       editor,
       focusToggle,
       pickLink: pickLink ?? pickBrowserLink,
+      enableImages,
       enableTables,
       exec,
+      handleImage: createImageHandler(editor, pickImage, exec),
       handleLink: createLinkHandler(editor, pickLink, exec),
       toolbar: config
     } satisfies RichTextToolbarContext
-  }, [config, editor, enableTables, focusToggle, pickLink])
+  }, [
+    config,
+    editor,
+    enableImages,
+    enableTables,
+    focusToggle,
+    pickImage,
+    pickLink
+  ])
   return (
     <div
       tabIndex={-1}
@@ -243,6 +259,47 @@ function renderEntry(
     )
   }
   return <ToolbarButtonView key={name} button={entry} ctx={ctx} />
+}
+
+export function createImageHandler(
+  editor: Editor,
+  pickImage: PickRichTextImageFunc | undefined,
+  exec = createToolbarExec(editor)
+) {
+  return function handleImage() {
+    if (!pickImage) return
+    const attrs = editor.getAttributes('image')
+    const existing = attributesToReference(attrs)
+    return pickImage({link: existing})
+      .then(picked => {
+        if (picked === undefined) return
+        if (!picked.link) {
+          if (editor.isActive('image')) exec().deleteSelection().run()
+          return
+        }
+        const link = picked.link
+        if (link._type !== 'image' || !('_entry' in link)) return
+        const attributes = {
+          height: picked.height,
+          src: picked.src ?? '',
+          width: picked.width,
+          _id: link._id,
+          _entry: link._entry,
+          _link: 'image'
+        }
+        if (editor.isActive('image')) {
+          exec().updateAttributes('image', attributes).run()
+          return
+        }
+        exec()
+          .insertContent({
+            type: 'image',
+            attrs: attributes
+          })
+          .run()
+      })
+      .catch(console.error)
+  }
 }
 
 function handleBrowserLink(

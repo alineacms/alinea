@@ -23,6 +23,8 @@ export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
   searchable?: boolean
   /** Enable inserting and editing tables */
   enableTables?: boolean
+  /** Enable inserting images */
+  enableImages?: boolean
   /** Configure the toolbar layout and items */
   toolbar?: ToolbarConfig
   /** Configure tiptap extensions */

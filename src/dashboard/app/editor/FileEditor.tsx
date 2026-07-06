@@ -1,9 +1,7 @@
 import {type} from '#/config.js'
 import {Surface} from '#/components.js'
-import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
 import {
   DashboardEntryData,
@@ -21,6 +19,7 @@ import {thumbHashToDataURL} from 'thumbhash'
 import {FieldsEditor, NodeEditor} from '../Editor.js'
 import css from './FileEditor.module.css'
 import {FilePreview, type FocusPoint} from './FilePreview.js'
+import {mediaLiveUrl} from './MediaImageSource.js'
 
 const styles = styler(css)
 
@@ -50,9 +49,8 @@ export function FileEditor({entry}: FileEditorProps) {
   }, [thumbHash])
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
-  const [liveUrl] = outcome(
-    () => new URL(location, Config.baseUrl(config) ?? window.location.href)
-  )
+  const liveUrl = mediaLiveUrl(config, location)
+  const liveUrlPath = liveUrl ? new URL(liveUrl).pathname : undefined
   const displayedFocusPoint = hoverPoint ?? focusPoint
   const workspace = useAtomValue(entry.workspaceKey)
   const root = useAtomValue(entry.rootKey)
@@ -100,16 +98,16 @@ export function FileEditor({entry}: FileEditorProps) {
                   </dd>
                 </div>
               )}
-              {liveUrl && (
+              {liveUrlPath && (
                 <div className={styles.FileEditor.metadata.item({full: true})}>
                   <dt className={styles.FileEditor.metadata.term()}>URL</dt>
                   <dd className={styles.FileEditor.metadata.value()}>
                     <a
-                      href={liveUrl.pathname}
+                      href={liveUrlPath}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {liveUrl.pathname}
+                      {liveUrlPath}
                     </a>
                   </dd>
                 </div>

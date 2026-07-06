@@ -39,7 +39,7 @@ import {
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {RichTextOptions} from '#/field/richtext/RichTextField.js'
 import styler from '@alinea/styler'
-import {Node as TipTapNode} from '@tiptap/core'
+import {Node as TipTapNode, type AnyExtension} from '@tiptap/core'
 import type {Editor as TipTapEditor} from '@tiptap/react'
 import {
   EditorContent,
@@ -65,6 +65,7 @@ import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
 
 const styles = styler(css)
+const gatedExtensionOptions = new Set(['Image'])
 
 interface NodeViewProps {
   editor: TipTapEditor
@@ -360,8 +361,8 @@ function RTView<Blocks extends Schema>({
     }
   }, [peekValue])
   const base = useMemo(() => {
-    return values(options.extensions ?? baseExtensions)
-  }, [options.extensions])
+    return fieldExtensions(options.extensions, options.enableImages)
+  }, [options.enableImages, options.extensions])
   const readOnly = options.readOnly || node.readOnly
   const editable = !readOnly
   const extensions = useMemo(() => {
@@ -441,8 +442,10 @@ function RTView<Blocks extends Schema>({
         createPortal(
           <RichTextToolbar
             editor={editor}
+            enableImages={options.enableImages}
             enableTables={options.enableTables}
             focusToggle={focusToggle}
+            pickImage={picker.pickImage}
             pickLink={picker.pickLink}
             toolbar={options.toolbar}
           />,
@@ -450,6 +453,19 @@ function RTView<Blocks extends Schema>({
         )}
     </>
   )
+}
+
+function fieldExtensions(
+  configuredExtensions: Record<string, AnyExtension> | undefined,
+  enableImages: boolean | undefined
+) {
+  const allExtensions = configuredExtensions ?? baseExtensions
+  return entries(allExtensions)
+    .filter(([name]) => {
+      if (enableImages && name === 'Image') return true
+      return !gatedExtensionOptions.has(name)
+    })
+    .map(([, extension]) => extension)
 }
 
 export interface RichTextFieldViewProps<Blocks extends Schema> {

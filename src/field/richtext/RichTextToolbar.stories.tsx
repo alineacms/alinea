@@ -28,12 +28,16 @@ const editorStyle: CSSProperties = {
 }
 
 interface ToolbarStoryProps {
+  enableImages?: boolean
   enableTables?: boolean
 }
 
-function ToolbarStory({enableTables}: ToolbarStoryProps) {
+function ToolbarStory({enableImages, enableTables}: ToolbarStoryProps) {
   const editor = useEditor({
-    extensions: storyExtensions,
+    extensions: storyExtensions.filter(extension => {
+      if (enableImages) return true
+      return extension.name !== 'image'
+    }),
     content: {
       type: 'doc',
       content: [
@@ -57,8 +61,10 @@ function ToolbarStory({enableTables}: ToolbarStoryProps) {
       <div style={toolbarFrameStyle}>
         <RichTextToolbar
           editor={editor}
+          enableImages={enableImages}
           enableTables={enableTables}
           focusToggle={() => undefined}
+          pickImage={() => Promise.resolve(undefined)}
           pickLink={() => Promise.resolve(undefined)}
         />
       </div>
@@ -75,4 +81,8 @@ export function Example() {
 
 export function WithTables() {
   return <ToolbarStory enableTables />
+}
+
+export function WithImages() {
+  return <ToolbarStory enableImages />
 }

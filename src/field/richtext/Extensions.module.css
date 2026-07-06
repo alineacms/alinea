@@ -114,6 +114,39 @@ h5.Heading {
   }
 }
 
+.ImageFrame {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+
+  &:global(.ProseMirror-selectednode) {
+    outline: 2px solid var(--alinea-primary);
+    outline-offset: 2px;
+  }
+}
+
+.Image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+
+  &:not(:last-child) {
+    margin-bottom: 14px;
+  }
+}
+
+.ImageResizeHandle {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--alinea-bg);
+  border-radius: 50%;
+  background: var(--alinea-primary);
+  cursor: nwse-resize;
+}
+
 .Table {
   width: 100%;
   overflow: hidden;

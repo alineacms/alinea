@@ -4,6 +4,7 @@ import type {PointerEvent} from 'react'
 import {useField} from '#/dashboard/store.js'
 import {useEffect, useRef, useState} from 'react'
 import css from './FilePreview.module.css'
+import {loadPreferredImageSource} from './MediaImageSource.js'
 
 const styles = styler(css)
 
@@ -50,24 +51,12 @@ export function FilePreview({
 
   useEffect(() => {
     setIsPreviewVisible(false)
-    if (!liveUrl) {
-      setPreviewSource(preview)
-      return
-    }
-
     let isActive = true
-    const image = new Image()
-    image.onload = () => {
-      if (isActive) setPreviewSource(liveUrl)
-    }
-    image.onerror = () => {
-      if (isActive) setPreviewSource(preview)
-    }
-    image.src = liveUrl
+    loadPreferredImageSource(liveUrl, preview).then(source => {
+      if (isActive) setPreviewSource(source)
+    })
     return () => {
       isActive = false
-      image.onload = null
-      image.onerror = null
     }
   }, [liveUrl, preview])
 

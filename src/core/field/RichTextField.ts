@@ -7,6 +7,7 @@ import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
   type ElementNode,
+  type ImageNode,
   LinkMark,
   Mark,
   Node,
@@ -58,7 +59,7 @@ export class RichTextField<
       },
       async applyLinks(value, loader) {
         const doc = Array.isArray(value) ? value : []
-        const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
+        const tasks: Array<Promise<unknown>> = [applyLinks(doc, loader)]
         for (const row of doc) {
           if (!schema || !Node.isBlock(row)) continue
           const type = schema[row[Node.type]]
@@ -80,7 +81,7 @@ export class RichTextField<
       },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
-        const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
+        const tasks: Array<Promise<unknown>> = [applyLinks(doc, loader)]
         for (const row of doc) {
           if (!schema || !Node.isBlock(row)) continue
           const type = schema[row[Node.type]]
@@ -126,6 +127,22 @@ function richTextReferences<Blocks>(
       linkType
     })
   })
+  iterImageNodes(doc, (node, index) => {
+    const entryId = node._entry
+    if (typeof entryId !== 'string') return
+    const linkId = node._id
+    result.push({
+      targetId: entryId,
+      fieldPath: referenceFieldPath(
+        typeof linkId === 'string'
+          ? [...path, linkId]
+          : [...path, String(index)]
+      ),
+      fieldLabel: label,
+      linkId,
+      linkType: 'image'
+    })
+  })
   doc.forEach((row, index) => {
     if (!schema || !Node.isBlock(row)) return
     const type = schema[row[Node.type]]
@@ -147,7 +164,7 @@ function richTextLinkType(
   return undefined
 }
 
-async function applyLinkMarks(
+async function applyLinks(
   doc: TextDoc<unknown>,
   loader: import('../db/LinkResolver.js').LinkResolver
 ): Promise<void> {
@@ -158,7 +175,13 @@ async function applyLinkMarks(
     const entryId = mark[LinkMark.entry]
     if (typeof entryId === 'string') links.set(mark, entryId)
   })
-  const linkIds = Array.from(new Set(links.values()))
+  const images = new Map<ImageNode, string>()
+  iterImageNodes(doc, node => {
+    if (node._link !== 'image') return
+    const entryId = node._entry
+    if (typeof entryId === 'string') images.set(node, entryId)
+  })
+  const linkIds = Array.from(new Set([...links.values(), ...images.values()]))
   const entries = await loader.resolveLinks(linkInfoFields, linkIds)
   const info = new Map(entries.map(entry => [entry.id, entry]))
   for (const [mark, entryId] of links) {
@@ -174,6 +197,15 @@ async function applyLinkMarks(
           )
         : data.url
     mark.href = applyUrlSuffix(href, mark[LinkMark.suffix])
+  }
+  for (const [node, entryId] of images) {
+    const data = info.get(entryId)
+    if (!data?.location) continue
+    node.src = mediaLocationUrl(
+      loader.resolver.config,
+      data.workspace,
+      data.location
+    )
   }
 }
 
@@ -215,6 +247,17 @@ function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
     if (Node.isText(row)) row.marks?.forEach(fn)
     else if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
   }
+}
+
+function iterImageNodes(
+  doc: TextDoc<unknown>,
+  fn: (node: ImageNode, index: number) => void
+) {
+  doc.forEach((row, index) => {
+    if (!Node.isElement(row)) return
+    if (row._type === 'image') fn(row as ImageNode, index)
+    if (row.content) iterImageNodes(row.content, fn)
+  })
 }
 
 export class RichTextEditor<Blocks> {

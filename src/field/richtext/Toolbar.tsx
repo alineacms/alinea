@@ -9,6 +9,7 @@ import {
   IcRoundFormatListBulleted,
   IcRoundFormatListNumbered,
   IcRoundHorizontalRule,
+  IcRoundImage,
   IcRoundLink,
   IcRoundQuote,
   IcRoundSubscript,
@@ -68,8 +69,10 @@ export interface RichTextToolbarContext {
   focusToggle: (target: EventTarget | null) => void
   pickLink: PickTextLinkFunc
   enableTables?: boolean
+  enableImages?: boolean
   exec: RichTextCommand
   handleLink: () => void
+  handleImage: () => void
   toolbar: ToolbarConfig
 }
 
@@ -341,6 +344,17 @@ export const links = {
   }
 } satisfies ToolbarGroup
 
+export const images = {
+  group: {
+    image: {
+      icon: () => <IcRoundImage />,
+      title: 'Image',
+      active: ({editor}) => editor.isActive('image'),
+      onSelect: ({handleImage}) => handleImage()
+    }
+  }
+} satisfies ToolbarGroup
+
 export const quotes = {
   icon: () => <IcRoundQuote />,
   title: 'Blockquote',
@@ -354,10 +368,29 @@ export const inserts = {
   onSelect: ({exec}) => exec().setHorizontalRule().run()
 } satisfies ToolbarButton
 
-export function defaultToolbar(enableTables: boolean): ToolbarConfig {
+export function defaultToolbar(
+  enableTables: boolean,
+  enableImages: boolean
+): ToolbarConfig {
+  const base = {
+    headings,
+    formatting,
+    alignment,
+    lists,
+    links,
+    quotes,
+    inserts
+  }
+  if (!enableTables && !enableImages) return base
   if (!enableTables)
     return {
+      ...base,
+      images
+    }
+  if (!enableImages)
+    return {
       headings,
+      tables,
       formatting,
       alignment,
       lists,
@@ -372,6 +405,7 @@ export function defaultToolbar(enableTables: boolean): ToolbarConfig {
     alignment,
     lists,
     links,
+    images,
     quotes,
     inserts
   }

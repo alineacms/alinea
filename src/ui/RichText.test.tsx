@@ -126,6 +126,27 @@ test('RichText renders tables with spans', () => {
   expect(cell?.rowSpan).toBe(2)
 })
 
+test('RichText renders image attributes', () => {
+  const doc = [
+    {
+      _type: 'image',
+      src: 'https://example.com/image.jpg',
+      alt: 'Example image',
+      title: 'Example title',
+      width: 640,
+      height: '480'
+    }
+  ] satisfies TextDoc
+
+  render(<RichText doc={doc} />)
+
+  const image = screen.getByRole('img', {name: 'Example image'})
+  expect(image.getAttribute('src')).toBe('https://example.com/image.jpg')
+  expect(image.getAttribute('title')).toBe('Example title')
+  expect(image.getAttribute('width')).toBe('640')
+  expect(image.getAttribute('height')).toBe('480')
+})
+
 test('RichText supports custom HTML views for elements and text', () => {
   const doc = [
     {
