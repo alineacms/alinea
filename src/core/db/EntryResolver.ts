@@ -35,10 +35,10 @@ import {assert} from '../util/Assert.js'
 import {
   combineConditions,
   type EntryCondition,
+  type EntryFilter,
   type EntryGraph,
   type EntryIndex,
-  type EntryNode,
-  type EntryRow
+  type EntryNode
 } from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
 
@@ -64,7 +64,7 @@ export class EntryResolver implements Resolver {
 
   call(
     ctx: ResolveContext,
-    entry: EntryRow | Entry,
+    entry: Entry,
     internal: {method: string; args: Array<Expr>}
   ): unknown {
     switch (internal.method) {
@@ -89,13 +89,15 @@ export class EntryResolver implements Resolver {
     }
   }
 
-  field(entry: EntryRow | Entry, field: Expr): unknown {
+  field(entry: Entry, field: Expr): unknown {
     const name = this.#scope.nameOf(field)
     if (!name) throw new Error(`Expression has no name ${field}`)
-    return readDataField(entry, name)
+    /*const isEntryField = name === 'path' || name === 'title'
+    if (isEntryField) return entry[name]*/
+    return entry.data[name]
   }
 
-  expr(ctx: ResolveContext, entry: EntryRow | Entry, expr: Expr): unknown {
+  expr(ctx: ResolveContext, entry: Entry, expr: Expr): unknown {
     const internal = getExpr(expr)
     switch (internal.type) {
       case 'field': {
@@ -106,7 +108,7 @@ export class EntryResolver implements Resolver {
         return result
       }
       case 'entryField':
-        return readEntryField(entry, internal.name)
+        return entry[internal.name as keyof Entry]
       case 'call':
         return this.call(ctx, entry, internal)
       case 'value':
@@ -138,7 +140,7 @@ export class EntryResolver implements Resolver {
 
   sourceFilter(
     ctx: ResolveContext,
-    entry: EntryRow | Entry,
+    entry: Entry,
     query: EdgeQuery
   ): EntryCondition {
     switch (query.edge) {
@@ -153,7 +155,7 @@ export class EntryResolver implements Resolver {
           ? ctx.graph.byId(entry.parentId)
           : undefined
         const [next] = Array.from(
-          ctx.graph.rows({
+          ctx.graph.filter({
             nodes: parent?.children() ?? [],
             node: node => node.index > entry.index,
             language: lang => lang.locale === entry.locale
@@ -167,7 +169,7 @@ export class EntryResolver implements Resolver {
           ? ctx.graph.byId(entry.parentId)
           : undefined
         const [previous] = Array.from(
-          ctx.graph.rows({
+          ctx.graph.filter({
             nodes: parent?.children() ?? [],
             node: node => node.index < entry.index,
             language: lang => lang.locale === entry.locale
@@ -199,7 +201,7 @@ export class EntryResolver implements Resolver {
       case 'children': {
         const depth = query?.depth ?? 1
         return {
-          row: e => e.filePath.startsWith(entry.childrenDir),
+          entry: e => e.filePath.startsWith(entry.childrenDir),
           node: node =>
             node.level > entry.level && node.level <= entry.level + depth
         }
@@ -231,7 +233,7 @@ export class EntryResolver implements Resolver {
 
   selectProjection(
     ctx: ResolveContext,
-    entry: EntryRow | Entry,
+    entry: Entry,
     value: Projection
   ): unknown {
     if (value && hasExpr(value)) return this.expr(ctx, entry, value as Expr)
@@ -252,7 +254,7 @@ export class EntryResolver implements Resolver {
 
   select(
     ctx: ResolveContext,
-    entry: EntryRow | Entry | null,
+    entry: Entry | null,
     query: GraphQuery<Projection>
   ): unknown {
     if (!entry) return null
@@ -262,7 +264,7 @@ export class EntryResolver implements Resolver {
     return this.selectProjection(ctx, entry, fields)
   }
 
-  condition(ctx: ResolveContext, query: EdgeQuery) {
+  condition(ctx: ResolveContext, query: EdgeQuery): EntryFilter {
     const location = Array.isArray(query.location)
       ? query.location
       : query.location && this.#scope.locationOf(query.location)
@@ -290,8 +292,8 @@ export class EntryResolver implements Resolver {
     const checkFilter =
       query.filter &&
       filterChecker(query.filter, (entry, name) => {
-        if (name.startsWith('_')) return readEntryField(entry, name.slice(1))
-        return readDataField(entry, name)
+        if (name.startsWith('_')) return entry[name.slice(1)]
+        return entry.data[name]
       })
     const multipleIds =
       typeof query.id === 'object' && query.id !== null && query.id.in
@@ -302,7 +304,7 @@ export class EntryResolver implements Resolver {
         : undefined
     return {
       ids,
-      condition(entry: EntryRow | Entry) {
+      condition(entry: Entry) {
         if (!checkStatus(entry)) return false
         if (checkLocation && !checkLocation(entry)) return false
         if (checkType && !checkType(entry)) return false
@@ -337,16 +339,16 @@ export class EntryResolver implements Resolver {
     const filter: EntryCondition = {
       search: Array.isArray(search) ? search.join(' ') : search,
       node: node => (ids ? ids.includes(node.id) : true),
-      row: condition
+      entry: condition
     }
     let entries = Array.from(
-      ctx.graph.rows(
+      ctx.graph.filter(
         preFilter ? combineConditions(filter, preFilter) : filter
       )
     )
     if (groupBy) {
       assert(!Array.isArray(groupBy), 'groupBy must be a single field')
-      const groups = new Map<unknown, EntryRow>()
+      const groups = new Map<unknown, Entry>()
       for (const entry of entries) {
         const value = this.expr(ctx, entry, groupBy)
         if (!groups.has(value)) groups.set(value, entry)
@@ -512,6 +514,7 @@ export class EntryResolver implements Resolver {
 }
 
 export interface ResolveContext {
+  //entries: Array<Entry>
   status: Status
   locale?: string | null
   graph: EntryGraph
@@ -536,29 +539,11 @@ export function statusChecker(status: Status): Check {
 }
 
 interface Check {
-  (input: any): boolean
+  (input: Entry): boolean
 }
 
 function isObject(input: any): input is object {
   return input && typeof input === 'object'
-}
-
-function isEntryRow(input: unknown): input is EntryRow {
-  return (
-    isObject(input) &&
-    'entryField' in input &&
-    typeof input.entryField === 'function'
-  )
-}
-
-function readEntryField(input: EntryRow | Entry, name: string): unknown {
-  if (isEntryRow(input)) return input.entryField(name)
-  return input[name as keyof Entry]
-}
-
-function readDataField(input: EntryRow | Entry, name: string): unknown {
-  if (isEntryRow(input)) return input.field(name)
-  return input.data[name]
 }
 
 function entryChecker(scope: Scope, query: QuerySettings): Check {
@@ -612,7 +597,7 @@ function locationChecker(location: Array<string>): Check {
 }
 
 function localeChecker(locale: string | null, preferred: boolean): Check {
-  return (entry: EntryRow) => {
+  return (entry: Entry) => {
     if (preferred && entry.locale === null) return true
     if (typeof entry.locale === 'string')
       return entry.locale.toLowerCase() === locale

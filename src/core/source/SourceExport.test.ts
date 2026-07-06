@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {accumulate} from '../util/Async.js'
 import {FSSource} from './FSSource.js'
-import {exportSource, importSource} from './SourceExport.js'
+import {exportSource, exportSourceChunks, importSource} from './SourceExport.js'
 
 const test = suite(import.meta)
 
@@ -19,4 +19,14 @@ test('export/import', async () => {
     const [fromImport] = await accumulate(imported.getBlobs([sha]))
     test.equal(fromSource[1], fromImport[1])
   }
+})
+
+test('export/import chunks', async () => {
+  const tree = await fsSource.getTree()
+  const exported = JSON.stringify(
+    await exportSourceChunks(fsSource, {targetBytes: 128})
+  )
+  const imported = await importSource(JSON.parse(exported))
+  const exportedTree = await imported.getTree()
+  test.ok(tree.equals(exportedTree))
 })

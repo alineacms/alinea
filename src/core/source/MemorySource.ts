@@ -5,9 +5,14 @@ import {ShaMismatchError} from './ShaMismatchError.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 
+type BlobContents = Uint8Array | string
+
+const encoder = new TextEncoder()
+const decoder = new TextDecoder()
+
 export class MemorySource implements Source {
   #tree: ReadonlyTree
-  #blobs = new Map<string, Uint8Array>()
+  #blobs = new Map<string, BlobContents>()
 
   constructor(
     tree = ReadonlyTree.EMPTY,
@@ -15,6 +20,12 @@ export class MemorySource implements Source {
   ) {
     this.#tree = tree
     this.#blobs = blobs
+  }
+
+  static fromTexts(tree: ReadonlyTree, blobs: Map<string, string>) {
+    const source = new MemorySource(tree)
+    source.#blobs = blobs
+    return source
   }
 
   async getTree() {
@@ -31,7 +42,17 @@ export class MemorySource implements Source {
     for (const sha of shas) {
       const blob = this.#blobs.get(sha)
       assert(blob, `Blob not found: ${sha}`)
-      yield [sha, blob]
+      yield [sha, typeof blob === 'string' ? encoder.encode(blob) : blob]
+    }
+  }
+
+  async *getBlobTexts(
+    shas: Array<string>
+  ): AsyncGenerator<[sha: string, text: string]> {
+    for (const sha of shas) {
+      const blob = this.#blobs.get(sha)
+      assert(blob, `Blob not found: ${sha}`)
+      yield [sha, typeof blob === 'string' ? blob : decoder.decode(blob)]
     }
   }
 

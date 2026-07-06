@@ -3,7 +3,7 @@ import {createRequire} from 'node:module'
 import path from 'node:path'
 import type {CMS} from 'alinea/core/CMS'
 import {Config} from 'alinea/core/Config'
-import {exportSource} from 'alinea/core/source/SourceExport'
+import {exportSourceChunks} from 'alinea/core/source/SourceExport'
 import {genEffect} from 'alinea/core/util/Async'
 import {basename, join} from 'alinea/core/util/Paths'
 import prettyBytes from 'pretty-bytes'
@@ -102,7 +102,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
-    const exported = await exportSource(db.source)
+    const exported = await exportSourceChunks(db.source)
     const data = JSON.stringify(exported, null, 2)
     await fsp.writeFile(
       join(context.outDir, 'source.js'),

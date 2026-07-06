@@ -10,7 +10,7 @@ import {Schema} from '../Schema.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
-import {bundleContents, type Source} from '../source/Source.js'
+import type {BlobTextSource, RemoteSource, Source} from '../source/Source.js'
 import {ReadonlyTree} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
 import {Type} from '../Type.js'
@@ -33,7 +33,6 @@ export interface EntryCondition {
   nodes?: Iterable<EntryNode>
   node?(node: EntryNode): boolean
   language?(language: EntryLanguageNode): boolean
-  row?(row: EntryRow): boolean
   entry?(entry: Entry): boolean
 }
 
@@ -53,9 +52,6 @@ export function combineConditions(
         (b.language ? b.language(language) : true)
       )
     },
-    row(row) {
-      return (a.row ? a.row(row) : true) && (b.row ? b.row(row) : true)
-    },
     entry(entry) {
       return (
         (a.entry ? a.entry(entry) : true) && (b.entry ? b.entry(entry) : true)
@@ -68,7 +64,7 @@ interface EntryVersionData {
   id: string
   type: string
   index: string
-  searchableText: string
+  readonly searchableText: string
   title: string
   data: Record<string, unknown>
   seeded: string | null
@@ -88,51 +84,17 @@ interface EntryVersion extends EntryVersionData {
   level: number
 }
 
-export interface EntryRow {
-  readonly id: string
-  readonly type: string
-  readonly index: string
-  readonly searchableText: string
-  readonly title: string
-  readonly data: Record<string, unknown>
-  readonly seeded: string | null
-  readonly rowHash: string
-  readonly fileHash: string
-  readonly locale: string | null
-  readonly workspace: string
-  readonly root: string
-  readonly path: string
-  readonly status: EntryStatus
-  readonly parentDir: string
-  readonly childrenDir: string
-  readonly filePath: string
-  readonly level: number
-  readonly parentId: string | null
-  readonly active: boolean
-  readonly main: boolean
-  readonly parents: Array<string>
-  readonly url: string
-  field(name: string): unknown
-  entryField(name: string): unknown
-  toEntry(): Entry
-}
-
-class EntryLanguage {
+class EntryLanguage extends Map<EntryStatus, EntryVersion> {
   readonly locale: string | null
   readonly parentDir: string
   readonly selfDir: string
-  #versions: Array<EntryVersion>
-  #draft: EntryVersion | undefined
-  #published: EntryVersion | undefined
-  #archived: EntryVersion | undefined
-
   constructor(versions: Array<EntryVersion>) {
-    this.#versions = versions
+    super(versions.map(phase => [phase.status, phase] as const))
     this.locale = versions[0].locale
     this.parentDir = versions[0].parentDir
     this.selfDir = versions[0].childrenDir
-    const first = versions[0]
-    for (const version of versions) {
+    const [first, ...rest] = versions
+    for (const version of rest) {
       assert(
         version.locale === first.locale,
         `Mismatched locales for ${first.id} "${version.locale}" <> "${first.locale}"`
@@ -149,49 +111,14 @@ class EntryLanguage {
         version.path === first.path,
         `Mismatched paths for ${first.id} "${version.path}" <> "${first.path}"`
       )
-      switch (version.status) {
-        case 'draft':
-          this.#draft = version
-          break
-        case 'published':
-          this.#published = version
-          break
-        case 'archived':
-          this.#archived = version
-          break
-      }
     }
-  }
-
-  get(status: EntryStatus): EntryVersion | undefined {
-    switch (status) {
-      case 'draft':
-        return this.#draft
-      case 'published':
-        return this.#published
-      case 'archived':
-        return this.#archived
-    }
-  }
-
-  has(status: EntryStatus): boolean {
-    return this.get(status) !== undefined
-  }
-
-  values(): IterableIterator<EntryVersion> {
-    return this.#versions.values()
-  }
-
-  *[Symbol.iterator](): IterableIterator<[EntryStatus, EntryVersion]> {
-    for (const version of this.#versions) yield [version.status, version]
   }
 }
 
-class EntryCollection {
+class EntryCollection extends Map<string | null, EntryLanguage> {
   readonly type: string
-  #languages: Array<[string | null, EntryLanguage]>
-
   constructor(public versions: Array<EntryVersion>) {
+    super()
     const [first, ...rest] = versions
     this.type = first.type
     for (const version of rest) {
@@ -218,17 +145,9 @@ class EntryCollection {
       collection.push(language)
       byLanguage.set(language.locale, collection)
     }
-    this.#languages = Array.from(byLanguage, ([locale, entries]) => {
-      return [locale, new EntryLanguage(entries)]
-    })
-  }
-
-  values(): IterableIterator<EntryLanguage> {
-    return this.#languages.map(([, language]) => language).values()
-  }
-
-  [Symbol.iterator](): IterableIterator<[string | null, EntryLanguage]> {
-    return this.#languages.values()
+    for (const [locale, entries] of byLanguage) {
+      this.set(locale, new EntryLanguage(entries))
+    }
   }
 }
 
@@ -236,10 +155,10 @@ class EntryLanguageNode {
   inheritedStatus: EntryStatus | undefined
   main: EntryVersion
   active: EntryVersion
-  #url: string | undefined
+  url: string
   locale: string | null
   path: string
-  #rows: Array<EntryRow> | undefined
+  #entries: Array<Entry> | undefined
   readonly seeded: string | null = null
   constructor(
     private node: EntryNode,
@@ -267,20 +186,16 @@ class EntryLanguageNode {
     this.main = main
     assert(active, `EntryLanguageNode missing active version`)
     this.active = active
+    this.url = entryUrl(node.entryType, {
+      status: main.status,
+      path: main.path,
+      parentPaths: this.parentPaths,
+      locale: main.locale,
+      workspace: node.workspace,
+      root: node.root
+    })
     this.path = this.main.path
     this.seeded = this.main.seeded
-  }
-
-  get url(): string {
-    this.#url ??= entryUrl(this.node.entryType, {
-      status: this.main.status,
-      path: this.main.path,
-      parentPaths: this.parentPaths,
-      locale: this.main.locale,
-      workspace: this.node.workspace,
-      root: this.node.root
-    })
-    return this.#url
   }
 
   [Symbol.iterator]() {
@@ -303,201 +218,30 @@ class EntryLanguageNode {
     return paths
   }
 
-  get rows() {
-    if (this.#rows) return this.#rows
-    const rows = (
+  get entries() {
+    if (this.#entries) return this.#entries
+    const entries = (
       this.inheritedStatus ? [this.active] : [...this.language.values()]
-    ).map(version => {
-      return new EntryRowImpl(this.node, this, version)
-    })
-    this.#rows = rows
-    return rows
-  }
-
-  *rowsMatching(filter: EntryCondition): Generator<EntryRow> {
-    for (const row of this.rows) {
-      if (filter.row && !filter.row(row)) continue
-      if (filter.entry && !filter.entry(row.toEntry())) continue
-      yield row
-    }
-  }
-}
-
-class EntryRowImpl implements EntryRow {
-  #entry: Entry | undefined
-
-  constructor(
-    private node: EntryNode,
-    private language: EntryLanguageNode,
-    private version: EntryVersion
-  ) {}
-
-  get id() {
-    return this.version.id
-  }
-
-  get type() {
-    return this.version.type
-  }
-
-  get index() {
-    return this.version.index
-  }
-
-  get searchableText() {
-    return this.version.searchableText
-  }
-
-  get title() {
-    return this.version.title
-  }
-
-  get data() {
-    return this.version.data
-  }
-
-  get seeded() {
-    return this.version.seeded
-  }
-
-  get rowHash() {
-    return this.version.rowHash
-  }
-
-  get fileHash() {
-    return this.version.fileHash
-  }
-
-  get locale() {
-    return this.version.locale
-  }
-
-  get workspace() {
-    return this.version.workspace
-  }
-
-  get root() {
-    return this.version.root
-  }
-
-  get path() {
-    return this.version.path
-  }
-
-  get status() {
-    return this.language.inheritedStatus ?? this.version.status
-  }
-
-  get parentDir() {
-    return this.version.parentDir
-  }
-
-  get childrenDir() {
-    return this.version.childrenDir
-  }
-
-  get filePath() {
-    return this.version.filePath
-  }
-
-  get level() {
-    return this.version.level
-  }
-
-  get parentId() {
-    return this.node.parentId
-  }
-
-  get active() {
-    return this.version === this.language.active
-  }
-
-  get main() {
-    return this.version === this.language.main
-  }
-
-  get parents() {
-    return this.node.parents
-  }
-
-  get url() {
-    return this.language.url
-  }
-
-  field(name: string) {
-    return this.version.data[name]
-  }
-
-  entryField(name: string) {
-    switch (name) {
-      case 'id':
-        return this.id
-      case 'type':
-        return this.type
-      case 'index':
-        return this.index
-      case 'searchableText':
-        return this.searchableText
-      case 'title':
-        return this.title
-      case 'data':
-        return this.data
-      case 'seeded':
-        return this.seeded
-      case 'rowHash':
-        return this.rowHash
-      case 'fileHash':
-        return this.fileHash
-      case 'locale':
-        return this.locale
-      case 'workspace':
-        return this.workspace
-      case 'root':
-        return this.root
-      case 'path':
-        return this.path
-      case 'status':
-        return this.status
-      case 'parentDir':
-        return this.parentDir
-      case 'childrenDir':
-        return this.childrenDir
-      case 'filePath':
-        return this.filePath
-      case 'level':
-        return this.level
-      case 'parentId':
-        return this.parentId
-      case 'active':
-        return this.active
-      case 'main':
-        return this.main
-      case 'parents':
-        return this.parents
-      case 'url':
-        return this.url
-      default:
-        return undefined
-    }
-  }
-
-  toEntry(): Entry {
-    if (this.#entry) return this.#entry
-    const row = this
-    this.#entry = {
-      ...this.version,
-      status: this.status,
-      parentId: this.parentId,
-      active: this.active,
-      main: this.main,
-      get parents() {
-        return row.parents
-      },
-      get url() {
-        return row.url
+    ).map((version): Entry => {
+      return {
+        ...version,
+        status: this.inheritedStatus ?? version.status,
+        parentId: this.node.parentId,
+        parents: this.node.parents,
+        url: this.url,
+        active: version === this.active,
+        main: version === this.main
       }
+    })
+    this.#entries = entries
+    return entries
+  }
+
+  *filter(filter: EntryCondition): Generator<Entry> {
+    for (const entry of this.entries) {
+      if (filter.entry && !filter.entry(entry)) continue
+      yield entry
     }
-    return this.#entry
   }
 }
 
@@ -505,7 +249,7 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
   readonly id: string
   readonly index: string
   readonly parentId: string | null
-  #parents: Array<string> | undefined
+  readonly parents: Array<string>
   readonly workspace: string
   readonly root: string
   readonly type: string
@@ -527,33 +271,26 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
     this.type = first.type
     this.level = first.level
     this.parentId = parent ? parent.id : null
+    this.parents = []
+    let next = parent
+    while (next) {
+      assert(
+        !this.parents.includes(next.id),
+        `Cyclic parent reference: ${this.parents}`
+      )
+      this.parents.unshift(next.id)
+      next = next.parent
+    }
     for (const [locale, language] of collection) {
       this.set(locale, new EntryLanguageNode(this, language))
     }
   }
 
-  get parents(): Array<string> {
-    if (this.#parents) return this.#parents
-    const parents = Array<string>()
-    let next = this.parent
-    while (next) {
-      assert(!parents.includes(next.id), `Cyclic parent reference: ${parents}`)
-      parents.unshift(next.id)
-      next = next.parent
-    }
-    this.#parents = parents
-    return parents
-  }
-
-  *rows(filter: EntryCondition): Generator<EntryRow> {
+  *filter(filter: EntryCondition): Generator<Entry> {
     for (const node of this.values()) {
       if (filter.language && !filter.language(node)) continue
-      yield* node.rowsMatching(filter)
+      yield* node.filter(filter)
     }
-  }
-
-  *filter(filter: EntryCondition): Generator<Entry> {
-    for (const row of this.rows(filter)) yield row.toEntry()
   }
 }
 
@@ -584,6 +321,7 @@ export class EntryGraph {
       : keys(config.workspaces)[0]
     this.#search = new MiniSearch({
       fields: ['title', 'searchableText'],
+      storeFields: ['entry'],
       tokenize(text) {
         return text
           .normalize('NFD')
@@ -635,39 +373,57 @@ export class EntryGraph {
     return new EntryGraph(this.#config, versions, this.#seeds)
   }
 
-  *rows({search, ...filter}: EntryCondition): Generator<EntryRow> {
+  async withSourceChanges(source: RemoteSource, batch: ChangesBatch) {
+    const parser = getParser(this.#config)
+    const versions = new Map(this.#versionData)
+    for (const change of batch.changes) {
+      if (change.op === 'delete') {
+        assert(versions.delete(change.path), 'Missing version to delete')
+      }
+    }
+    await addSourceVersions(source, parser, versions, batch.changes)
+    return new EntryGraph(this.#config, versions, this.#seeds)
+  }
+
+  async withSourceTree(source: RemoteSource, tree: ReadonlyTree) {
+    const parser = getParser(this.#config)
+    const versions = new Map<string, EntryVersionData>()
+    const changes = Array.from(tree.index(), ([path, sha]) => {
+      return {op: 'add' as const, path, sha}
+    })
+    await addSourceVersions(source, parser, versions, changes)
+    return new EntryGraph(this.#config, versions, this.#seeds)
+  }
+
+  *filter({search, ...filter}: EntryCondition): Generator<Entry> {
     if (search) {
-      const found = new Map<string, EntryRow>()
-      for (const row of this.rows(filter)) {
-        found.set(row.filePath, row)
-        if (!this.#search.has(row.filePath)) this.#updateSearch(row)
+      const found = new Set(this.filter(filter))
+      for (const entry of found) {
+        if (!this.#search.has(entry.filePath)) this.#updateSearch(entry)
       }
       const results = this.#search
         .search(search, {
           prefix: true,
           fuzzy: 0.1,
           boost: {title: 2},
-          filter: result => found.has(result.id)
+          filter: result => found.has(result.entry)
         })
-        .map(result => found.get(result.id)!)
+        .map(result => result.entry)
       yield* results
       return
     }
     for (const node of filter.nodes ?? this.nodes) {
       if (filter.node && !filter.node(node)) continue
-      yield* node.rows(filter)
+      yield* node.filter(filter)
     }
   }
 
-  *filter(filter: EntryCondition): Generator<Entry> {
-    for (const row of this.rows(filter)) yield row.toEntry()
-  }
-
-  #updateSearch(row: EntryRow) {
+  #updateSearch(entry: Entry) {
     this.#search.add({
-      id: row.filePath,
-      title: row.title,
-      searchableText: row.searchableText
+      id: entry.filePath,
+      title: entry.title,
+      searchableText: entry.searchableText,
+      entry
     })
   }
 
@@ -709,7 +465,15 @@ export class EntryGraph {
     const level = segments.length - levelOffset - 1
 
     return {
-      ...version,
+      id: version.id,
+      type: version.type,
+      index: version.index,
+      seeded: version.seeded,
+      rowHash: version.rowHash,
+      fileHash: version.fileHash,
+      get searchableText() {
+        return version.searchableText
+      },
       data,
       title: data.title as string,
       locale,
@@ -761,32 +525,32 @@ export class EntryGraph {
 
 class VersionParser extends Map<string, EntryVersionData> {
   #config: Config
+  #decoder = new TextDecoder()
   constructor(config: Config) {
     super()
     this.#config = config
   }
   parse(sha: string, blob: Uint8Array): EntryVersionData {
+    return this.parseText(sha, this.#decoder.decode(blob))
+  }
+  parseText(sha: string, text: string): EntryVersionData {
     if (super.has(sha)) return super.get(sha)!
-    const decoder = new TextDecoder()
-    const text = decoder.decode(blob)
     const raw = JSON.parse(text)
     const {meta, data} = parseRecord(raw)
     const entryType = this.#config.schema[meta.type]
-    assert(entryType, `Unknown type: ${meta.type}`)
     let searchableText: string | undefined
-    const version: EntryVersionData = {
+    const version = {
       id: meta.id,
       type: meta.type,
       index: meta.index,
       data,
       title: data.title as string,
+      get searchableText() {
+        return (searchableText ??= Type.searchableText(entryType, data))
+      },
       seeded: meta.seeded ?? null,
       rowHash: sha,
-      fileHash: sha,
-      get searchableText() {
-        searchableText ??= Type.searchableText(entryType, data)
-        return searchableText
-      }
+      fileHash: sha
     }
     this.set(sha, version)
     return version
@@ -802,6 +566,39 @@ class ParserCache extends WeakMap<Config, VersionParser> {
 
 const getParser = new ParserCache().get
 
+function hasTextBlobs(source: RemoteSource): source is BlobTextSource {
+  return 'getBlobTexts' in source
+}
+
+async function addSourceVersions(
+  source: RemoteSource,
+  parser: VersionParser,
+  versions: Map<string, EntryVersionData>,
+  changes: ChangesBatch['changes']
+) {
+  const added = changes.filter(change => change.op === 'add')
+  const shas = Array.from(new Set(added.map(change => change.sha)))
+  if (shas.length === 0) return
+  const pathsBySha = new Map<string, Array<string>>()
+  for (const change of added) {
+    const paths = pathsBySha.get(change.sha) ?? []
+    paths.push(change.path)
+    pathsBySha.set(change.sha, paths)
+  }
+  const addVersion = (sha: string, version: EntryVersionData) => {
+    for (const path of pathsBySha.get(sha)!) versions.set(path, version)
+  }
+  if (hasTextBlobs(source)) {
+    for await (const [sha, text] of source.getBlobTexts(shas)) {
+      addVersion(sha, parser.parseText(sha, text))
+    }
+  } else {
+    for await (const [sha, blob] of source.getBlobs(shas)) {
+      addVersion(sha, parser.parse(sha, blob))
+    }
+  }
+}
+
 function getNodePath(filePath: string) {
   const lastSlash = filePath.lastIndexOf('/')
   const dir = filePath.slice(0, lastSlash)
@@ -813,15 +610,17 @@ function getNodePath(filePath: string) {
   return `${dir}/${base}`
 }
 
-export class EntryIndex extends EventTarget {
+export class EntryIndex {
   tree = ReadonlyTree.EMPTY
   initialSync: ReadonlyTree | undefined
   graph: EntryGraph
   #config: Config
   #seeds: Map<string, Seed>
   #singleWorkspace: string | undefined
-  constructor(config: Config) {
-    super()
+  constructor(
+    config: Config,
+    private events?: EventTarget
+  ) {
     this.#config = config
     this.#seeds = entrySeeds(config)
     this.graph = new EntryGraph(config, new Map(), this.#seeds)
@@ -835,9 +634,6 @@ export class EntryIndex extends EventTarget {
   filter(filter: EntryCondition): Iterable<Entry> {
     return this.graph.filter(filter)
   }
-  rows(filter: EntryCondition): Iterable<EntryRow> {
-    return this.graph.rows(filter)
-  }
   findFirst<T extends Record<string, unknown>>(
     filter: (entry: Entry) => boolean
   ): Entry<T> | undefined {
@@ -850,44 +646,66 @@ export class EntryIndex extends EventTarget {
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
     if (!this.initialSync) this.initialSync = tree
-    const batch = await bundleContents(source, this.tree.diff(tree))
+    if (this.tree.sha === tree.sha) return tree.sha
+    if (this.tree.isEmpty) {
+      this.graph = await this.graph.withSourceTree(source, tree)
+      this.tree = tree
+      if (this.events) this.#dispatchChanges(new Set(this.graph.nodes), tree.sha)
+      return tree.sha
+    }
+    const batch = this.tree.diff(tree)
     if (batch.changes.length === 0) return tree.sha
-    return this.indexChanges(batch)
+    return this.#applyBatch(batch, () =>
+      this.graph.withSourceChanges(source, batch)
+    )
   }
   async indexChanges(batch: ChangesBatch) {
+    return this.#applyBatch(batch, () => this.graph.withChanges(batch))
+  }
+  async #applyBatch(
+    batch: ChangesBatch,
+    applyGraph: () => EntryGraph | Promise<EntryGraph>
+  ) {
     const {fromSha, changes} = batch
     if (fromSha !== this.tree.sha)
       throw new ShaMismatchError(fromSha, this.tree.sha)
     if (changes.length === 0) return this.tree.sha
-    const changed = new Set<EntryNode>()
-    for (const change of changes) {
-      if (change.op !== 'delete') continue
-      const nodePath = getNodePath(change.path)
-      const node = this.graph.byDir(nodePath)
-      assert(node, `Missing node for deleted path: ${change.path}`)
-      changed.add(node)
+    const changed = this.events ? new Set<EntryNode>() : undefined
+    if (changed) {
+      for (const change of changes) {
+        if (change.op !== 'delete') continue
+        const nodePath = getNodePath(change.path)
+        const node = this.graph.byDir(nodePath)
+        assert(node, `Missing node for deleted path: ${change.path}`)
+        changed.add(node)
+      }
     }
-    this.graph = this.graph.withChanges(batch)
-    for (const change of changes) {
-      if (change.op !== 'add') continue
-      const nodePath = getNodePath(change.path)
-      const node = this.graph.byDir(nodePath)
-      assert(node, `Missing node for added path: ${change.path}`)
-      changed.add(node)
+    this.graph = await applyGraph()
+    if (changed) {
+      for (const change of changes) {
+        if (change.op !== 'add') continue
+        const nodePath = getNodePath(change.path)
+        const node = this.graph.byDir(nodePath)
+        assert(node, `Missing node for added path: ${change.path}`)
+        changed.add(node)
+      }
     }
     const updatedTree = await this.tree.withChanges(batch)
     const sha = updatedTree.sha
     this.tree = updatedTree
+    if (changed) this.#dispatchChanges(changed, sha)
+    return sha
+  }
+  #dispatchChanges(changed: Set<EntryNode>, sha: string) {
     const pool = Array.from(changed)
     while (pool.length > 0) {
       const node = pool.shift()!
-      this.dispatchEvent(new IndexEvent({op: 'entry', id: node.id}))
+      this.events!.dispatchEvent(new IndexEvent({op: 'entry', id: node.id}))
       for (const child of node.children()) {
         if (!changed.has(child)) pool.push(child)
       }
     }
-    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
-    return sha
+    this.events!.dispatchEvent(new IndexEvent({op: 'index', sha}))
   }
   async seed(source: Source) {
     for (const [nodePath, seed] of this.#seeds) {

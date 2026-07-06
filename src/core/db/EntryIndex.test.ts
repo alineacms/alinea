@@ -261,9 +261,12 @@ test('search handles punctuation and diacritics', async () => {
 })
 
 test('syncWith and indexChanges dispatch entry/index events', async () => {
-  const {index, source} = await createEntryIndex(cms.config, fixtureEntries)
+  const {source} = await createEntryIndex(cms.config, fixtureEntries)
+  const events = new EventTarget()
+  const index = new EntryIndex(cms.config, events)
+  await index.syncWith(source)
   const emitted = Array<{op: string; value: string}>()
-  index.addEventListener(IndexEvent.type, event => {
+  events.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
     if (indexEvent.data.op === 'entry')
       emitted.push({op: 'entry', value: indexEvent.data.id})

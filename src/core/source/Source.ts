@@ -8,6 +8,10 @@ export interface RemoteSource {
   getBlobs(shas: Array<string>): AsyncGenerator<[sha: string, blob: Uint8Array]>
 }
 
+export interface BlobTextSource extends RemoteSource {
+  getBlobTexts(shas: Array<string>): AsyncGenerator<[sha: string, text: string]>
+}
+
 export interface Source extends RemoteSource {
   getTree(): Promise<ReadonlyTree>
   applyChanges(batch: ChangesBatch): Promise<void>

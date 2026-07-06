@@ -19,6 +19,7 @@ const limit = pLimit(1)
 
 export class LocalDB extends WriteableGraph {
   public index: EntryIndex
+  public events = new EventTarget()
   source: Source
   #resolver: EntryResolver
 
@@ -27,7 +28,7 @@ export class LocalDB extends WriteableGraph {
     source: Source = new MemorySource()
   ) {
     super()
-    const index = new EntryIndex(config)
+    const index = new EntryIndex(config, this.events)
     const resolver = new EntryResolver(config, index)
     this.#resolver = resolver
     this.index = index

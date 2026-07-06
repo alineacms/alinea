@@ -3,36 +3,33 @@ import type {LocalConnection} from 'alinea/core/Connection'
 import type {GraphQuery} from 'alinea/core/Graph'
 import {getScope} from 'alinea/core/Scope'
 import {trigger} from 'alinea/core/Trigger'
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {IndexEvent, type IndexOp} from 'alinea/core/db/IndexEvent'
 import {LocalDB} from 'alinea/core/db/LocalDB'
 import type {Mutation} from 'alinea/core/db/Mutation'
 import type {Source} from 'alinea/core/source/Source'
 import pLimit from 'p-limit'
 
-export class MutateEvent extends Event {
-  static readonly type = 'mutate'
-  constructor(
-    public id: string,
-    public status: 'success' | 'failure',
-    public error?: Error
-  ) {
-    super(MutateEvent.type)
-  }
-}
-
 const remote = pLimit(1)
 
-export class DashboardWorker extends EventTarget {
+export class DashboardWorker {
   #source: Source
   #localDB: LocalDB | undefined
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<{db: LocalDB; client: LocalConnection}>()
   #defer: Function | undefined
   #currentRevision: string | undefined
+  #indexSubscriptions = new Set<(data: IndexOp) => void>()
 
   constructor(source: Source) {
-    super()
     this.#source = source
+  }
+
+  subscribeIndex(listener: (data: IndexOp) => void) {
+    this.#indexSubscriptions.add(listener)
+  }
+
+  #emitIndex(data: IndexOp) {
+    for (const listener of this.#indexSubscriptions) listener(data)
   }
 
   get db() {
@@ -89,12 +86,11 @@ export class DashboardWorker extends EventTarget {
       this.#localDB = db
       this.#localClient = client
       const listen = (event: Event) => {
-        if (event instanceof IndexEvent)
-          this.dispatchEvent(new IndexEvent(event.data))
+        if (event instanceof IndexEvent) this.#emitIndex(event.data)
       }
-      db.index.addEventListener(IndexEvent.type, listen)
+      db.events.addEventListener(IndexEvent.type, listen)
       this.#defer = () => {
-        db.index.removeEventListener(IndexEvent.type, listen)
+        db.events.removeEventListener(IndexEvent.type, listen)
       }
     } catch (error) {
       this.#nextLoad.reject(new Error('Failed to load database'))

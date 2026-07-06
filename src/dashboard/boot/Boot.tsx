@@ -1,6 +1,6 @@
 import type {Client} from 'alinea/core/Client'
 import type {Config} from 'alinea/core/Config'
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
+import {IndexEvent, type IndexOp} from 'alinea/core/db/IndexEvent'
 import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
@@ -29,11 +29,13 @@ export async function boot(gen: ConfigGenerator) {
     let events: EventTarget
     let worker: DashboardWorker
     try {
-      ;[events, worker] = createSharedWorker()
+      worker = createSharedWorker()
+      events = await connectEvents(worker, true)
     } catch (error) {
       console.warn('Shared worker not supported, falling back to local worker.')
       const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
-      events = worker = new DashboardWorker(source)
+      worker = new DashboardWorker(source)
+      events = await connectEvents(worker, false)
     }
     const scripts = document.getElementsByTagName('script')
     const element = scripts[scripts.length - 1]
@@ -63,18 +65,21 @@ export async function boot(gen: ConfigGenerator) {
   }
 }
 
-function createSharedWorker(): [EventTarget, DashboardWorker] {
-  const events = new EventTarget()
+function createSharedWorker(): DashboardWorker {
   const worker = new SharedWorker(import.meta.url, {
     type: 'module',
     name: 'Alinea dashboard'
   })
-  worker.port.addEventListener('message', ({data}) => {
-    if (data.type === IndexEvent.type) {
-      events.dispatchEvent(new IndexEvent(data.data))
-    }
-  })
-  return [events, Comlink.wrap(worker.port) as any] as const
+  return Comlink.wrap(worker.port) as any
+}
+
+async function connectEvents(worker: DashboardWorker, remote: boolean) {
+  const events = new EventTarget()
+  const listen = (data: IndexOp) => {
+    events.dispatchEvent(new IndexEvent(data))
+  }
+  await worker.subscribeIndex(remote ? Comlink.proxy(listen) : listen)
+  return events
 }
 
 function isWorkerScope() {
