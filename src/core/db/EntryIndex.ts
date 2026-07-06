@@ -33,6 +33,7 @@ export interface EntryCondition {
   nodes?: Iterable<EntryNode>
   node?(node: EntryNode): boolean
   language?(language: EntryLanguageNode): boolean
+  row?(row: EntryRow): boolean
   entry?(entry: Entry): boolean
 }
 
@@ -51,6 +52,9 @@ export function combineConditions(
         (a.language ? a.language(language) : true) &&
         (b.language ? b.language(language) : true)
       )
+    },
+    row(row) {
+      return (a.row ? a.row(row) : true) && (b.row ? b.row(row) : true)
     },
     entry(entry) {
       return (
@@ -84,17 +88,51 @@ interface EntryVersion extends EntryVersionData {
   level: number
 }
 
-class EntryLanguage extends Map<EntryStatus, EntryVersion> {
+export interface EntryRow {
+  readonly id: string
+  readonly type: string
+  readonly index: string
+  readonly searchableText: string
+  readonly title: string
+  readonly data: Record<string, unknown>
+  readonly seeded: string | null
+  readonly rowHash: string
+  readonly fileHash: string
+  readonly locale: string | null
+  readonly workspace: string
+  readonly root: string
+  readonly path: string
+  readonly status: EntryStatus
+  readonly parentDir: string
+  readonly childrenDir: string
+  readonly filePath: string
+  readonly level: number
+  readonly parentId: string | null
+  readonly active: boolean
+  readonly main: boolean
+  readonly parents: Array<string>
+  readonly url: string
+  field(name: string): unknown
+  entryField(name: string): unknown
+  toEntry(): Entry
+}
+
+class EntryLanguage {
   readonly locale: string | null
   readonly parentDir: string
   readonly selfDir: string
+  #versions: Array<EntryVersion>
+  #draft: EntryVersion | undefined
+  #published: EntryVersion | undefined
+  #archived: EntryVersion | undefined
+
   constructor(versions: Array<EntryVersion>) {
-    super(versions.map(phase => [phase.status, phase] as const))
+    this.#versions = versions
     this.locale = versions[0].locale
     this.parentDir = versions[0].parentDir
     this.selfDir = versions[0].childrenDir
-    const [first, ...rest] = versions
-    for (const version of rest) {
+    const first = versions[0]
+    for (const version of versions) {
       assert(
         version.locale === first.locale,
         `Mismatched locales for ${first.id} "${version.locale}" <> "${first.locale}"`
@@ -111,14 +149,49 @@ class EntryLanguage extends Map<EntryStatus, EntryVersion> {
         version.path === first.path,
         `Mismatched paths for ${first.id} "${version.path}" <> "${first.path}"`
       )
+      switch (version.status) {
+        case 'draft':
+          this.#draft = version
+          break
+        case 'published':
+          this.#published = version
+          break
+        case 'archived':
+          this.#archived = version
+          break
+      }
     }
+  }
+
+  get(status: EntryStatus): EntryVersion | undefined {
+    switch (status) {
+      case 'draft':
+        return this.#draft
+      case 'published':
+        return this.#published
+      case 'archived':
+        return this.#archived
+    }
+  }
+
+  has(status: EntryStatus): boolean {
+    return this.get(status) !== undefined
+  }
+
+  values(): IterableIterator<EntryVersion> {
+    return this.#versions.values()
+  }
+
+  *[Symbol.iterator](): IterableIterator<[EntryStatus, EntryVersion]> {
+    for (const version of this.#versions) yield [version.status, version]
   }
 }
 
-class EntryCollection extends Map<string | null, EntryLanguage> {
+class EntryCollection {
   readonly type: string
+  #languages: Array<[string | null, EntryLanguage]>
+
   constructor(public versions: Array<EntryVersion>) {
-    super()
     const [first, ...rest] = versions
     this.type = first.type
     for (const version of rest) {
@@ -145,9 +218,17 @@ class EntryCollection extends Map<string | null, EntryLanguage> {
       collection.push(language)
       byLanguage.set(language.locale, collection)
     }
-    for (const [locale, entries] of byLanguage) {
-      this.set(locale, new EntryLanguage(entries))
-    }
+    this.#languages = Array.from(byLanguage, ([locale, entries]) => {
+      return [locale, new EntryLanguage(entries)]
+    })
+  }
+
+  values(): IterableIterator<EntryLanguage> {
+    return this.#languages.map(([, language]) => language).values()
+  }
+
+  [Symbol.iterator](): IterableIterator<[string | null, EntryLanguage]> {
+    return this.#languages.values()
   }
 }
 
@@ -155,10 +236,10 @@ class EntryLanguageNode {
   inheritedStatus: EntryStatus | undefined
   main: EntryVersion
   active: EntryVersion
-  url: string
+  #url: string | undefined
   locale: string | null
   path: string
-  #entries: Array<Entry> | undefined
+  #rows: Array<EntryRow> | undefined
   readonly seeded: string | null = null
   constructor(
     private node: EntryNode,
@@ -186,16 +267,20 @@ class EntryLanguageNode {
     this.main = main
     assert(active, `EntryLanguageNode missing active version`)
     this.active = active
-    this.url = entryUrl(node.entryType, {
-      status: main.status,
-      path: main.path,
-      parentPaths: this.parentPaths,
-      locale: main.locale,
-      workspace: node.workspace,
-      root: node.root
-    })
     this.path = this.main.path
     this.seeded = this.main.seeded
+  }
+
+  get url(): string {
+    this.#url ??= entryUrl(this.node.entryType, {
+      status: this.main.status,
+      path: this.main.path,
+      parentPaths: this.parentPaths,
+      locale: this.main.locale,
+      workspace: this.node.workspace,
+      root: this.node.root
+    })
+    return this.#url
   }
 
   [Symbol.iterator]() {
@@ -218,30 +303,201 @@ class EntryLanguageNode {
     return paths
   }
 
-  get entries() {
-    if (this.#entries) return this.#entries
-    const entries = (
+  get rows() {
+    if (this.#rows) return this.#rows
+    const rows = (
       this.inheritedStatus ? [this.active] : [...this.language.values()]
-    ).map((version): Entry => {
-      return {
-        ...version,
-        status: this.inheritedStatus ?? version.status,
-        parentId: this.node.parentId,
-        parents: this.node.parents,
-        url: this.url,
-        active: version === this.active,
-        main: version === this.main
-      }
+    ).map(version => {
+      return new EntryRowImpl(this.node, this, version)
     })
-    this.#entries = entries
-    return entries
+    this.#rows = rows
+    return rows
   }
 
-  *filter(filter: EntryCondition): Generator<Entry> {
-    for (const entry of this.entries) {
-      if (filter.entry && !filter.entry(entry)) continue
-      yield entry
+  *rowsMatching(filter: EntryCondition): Generator<EntryRow> {
+    for (const row of this.rows) {
+      if (filter.row && !filter.row(row)) continue
+      if (filter.entry && !filter.entry(row.toEntry())) continue
+      yield row
     }
+  }
+}
+
+class EntryRowImpl implements EntryRow {
+  #entry: Entry | undefined
+
+  constructor(
+    private node: EntryNode,
+    private language: EntryLanguageNode,
+    private version: EntryVersion
+  ) {}
+
+  get id() {
+    return this.version.id
+  }
+
+  get type() {
+    return this.version.type
+  }
+
+  get index() {
+    return this.version.index
+  }
+
+  get searchableText() {
+    return this.version.searchableText
+  }
+
+  get title() {
+    return this.version.title
+  }
+
+  get data() {
+    return this.version.data
+  }
+
+  get seeded() {
+    return this.version.seeded
+  }
+
+  get rowHash() {
+    return this.version.rowHash
+  }
+
+  get fileHash() {
+    return this.version.fileHash
+  }
+
+  get locale() {
+    return this.version.locale
+  }
+
+  get workspace() {
+    return this.version.workspace
+  }
+
+  get root() {
+    return this.version.root
+  }
+
+  get path() {
+    return this.version.path
+  }
+
+  get status() {
+    return this.language.inheritedStatus ?? this.version.status
+  }
+
+  get parentDir() {
+    return this.version.parentDir
+  }
+
+  get childrenDir() {
+    return this.version.childrenDir
+  }
+
+  get filePath() {
+    return this.version.filePath
+  }
+
+  get level() {
+    return this.version.level
+  }
+
+  get parentId() {
+    return this.node.parentId
+  }
+
+  get active() {
+    return this.version === this.language.active
+  }
+
+  get main() {
+    return this.version === this.language.main
+  }
+
+  get parents() {
+    return this.node.parents
+  }
+
+  get url() {
+    return this.language.url
+  }
+
+  field(name: string) {
+    return this.version.data[name]
+  }
+
+  entryField(name: string) {
+    switch (name) {
+      case 'id':
+        return this.id
+      case 'type':
+        return this.type
+      case 'index':
+        return this.index
+      case 'searchableText':
+        return this.searchableText
+      case 'title':
+        return this.title
+      case 'data':
+        return this.data
+      case 'seeded':
+        return this.seeded
+      case 'rowHash':
+        return this.rowHash
+      case 'fileHash':
+        return this.fileHash
+      case 'locale':
+        return this.locale
+      case 'workspace':
+        return this.workspace
+      case 'root':
+        return this.root
+      case 'path':
+        return this.path
+      case 'status':
+        return this.status
+      case 'parentDir':
+        return this.parentDir
+      case 'childrenDir':
+        return this.childrenDir
+      case 'filePath':
+        return this.filePath
+      case 'level':
+        return this.level
+      case 'parentId':
+        return this.parentId
+      case 'active':
+        return this.active
+      case 'main':
+        return this.main
+      case 'parents':
+        return this.parents
+      case 'url':
+        return this.url
+      default:
+        return undefined
+    }
+  }
+
+  toEntry(): Entry {
+    if (this.#entry) return this.#entry
+    const row = this
+    this.#entry = {
+      ...this.version,
+      status: this.status,
+      parentId: this.parentId,
+      active: this.active,
+      main: this.main,
+      get parents() {
+        return row.parents
+      },
+      get url() {
+        return row.url
+      }
+    }
+    return this.#entry
   }
 }
 
@@ -249,7 +505,7 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
   readonly id: string
   readonly index: string
   readonly parentId: string | null
-  readonly parents: Array<string>
+  #parents: Array<string> | undefined
   readonly workspace: string
   readonly root: string
   readonly type: string
@@ -271,26 +527,33 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
     this.type = first.type
     this.level = first.level
     this.parentId = parent ? parent.id : null
-    this.parents = []
-    let next = parent
-    while (next) {
-      assert(
-        !this.parents.includes(next.id),
-        `Cyclic parent reference: ${this.parents}`
-      )
-      this.parents.unshift(next.id)
-      next = next.parent
-    }
     for (const [locale, language] of collection) {
       this.set(locale, new EntryLanguageNode(this, language))
     }
   }
 
-  *filter(filter: EntryCondition): Generator<Entry> {
+  get parents(): Array<string> {
+    if (this.#parents) return this.#parents
+    const parents = Array<string>()
+    let next = this.parent
+    while (next) {
+      assert(!parents.includes(next.id), `Cyclic parent reference: ${parents}`)
+      parents.unshift(next.id)
+      next = next.parent
+    }
+    this.#parents = parents
+    return parents
+  }
+
+  *rows(filter: EntryCondition): Generator<EntryRow> {
     for (const node of this.values()) {
       if (filter.language && !filter.language(node)) continue
-      yield* node.filter(filter)
+      yield* node.rowsMatching(filter)
     }
+  }
+
+  *filter(filter: EntryCondition): Generator<Entry> {
+    for (const row of this.rows(filter)) yield row.toEntry()
   }
 }
 
@@ -321,7 +584,6 @@ export class EntryGraph {
       : keys(config.workspaces)[0]
     this.#search = new MiniSearch({
       fields: ['title', 'searchableText'],
-      storeFields: ['entry'],
       tokenize(text) {
         return text
           .normalize('NFD')
@@ -373,35 +635,39 @@ export class EntryGraph {
     return new EntryGraph(this.#config, versions, this.#seeds)
   }
 
-  *filter({search, ...filter}: EntryCondition): Generator<Entry> {
+  *rows({search, ...filter}: EntryCondition): Generator<EntryRow> {
     if (search) {
-      const found = new Set(this.filter(filter))
-      for (const entry of found) {
-        if (!this.#search.has(entry.filePath)) this.#updateSearch(entry)
+      const found = new Map<string, EntryRow>()
+      for (const row of this.rows(filter)) {
+        found.set(row.filePath, row)
+        if (!this.#search.has(row.filePath)) this.#updateSearch(row)
       }
       const results = this.#search
         .search(search, {
           prefix: true,
           fuzzy: 0.1,
           boost: {title: 2},
-          filter: result => found.has(result.entry)
+          filter: result => found.has(result.id)
         })
-        .map(result => result.entry)
+        .map(result => found.get(result.id)!)
       yield* results
       return
     }
     for (const node of filter.nodes ?? this.nodes) {
       if (filter.node && !filter.node(node)) continue
-      yield* node.filter(filter)
+      yield* node.rows(filter)
     }
   }
 
-  #updateSearch(entry: Entry) {
+  *filter(filter: EntryCondition): Generator<Entry> {
+    for (const row of this.rows(filter)) yield row.toEntry()
+  }
+
+  #updateSearch(row: EntryRow) {
     this.#search.add({
-      id: entry.filePath,
-      title: entry.title,
-      searchableText: entry.searchableText,
-      entry
+      id: row.filePath,
+      title: row.title,
+      searchableText: row.searchableText
     })
   }
 
@@ -506,17 +772,21 @@ class VersionParser extends Map<string, EntryVersionData> {
     const raw = JSON.parse(text)
     const {meta, data} = parseRecord(raw)
     const entryType = this.#config.schema[meta.type]
-    const searchableText = Type.searchableText(entryType, data)
-    const version = {
+    assert(entryType, `Unknown type: ${meta.type}`)
+    let searchableText: string | undefined
+    const version: EntryVersionData = {
       id: meta.id,
       type: meta.type,
       index: meta.index,
       data,
       title: data.title as string,
-      searchableText,
       seeded: meta.seeded ?? null,
       rowHash: sha,
-      fileHash: sha
+      fileHash: sha,
+      get searchableText() {
+        searchableText ??= Type.searchableText(entryType, data)
+        return searchableText
+      }
     }
     this.set(sha, version)
     return version
@@ -564,6 +834,9 @@ export class EntryIndex extends EventTarget {
   }
   filter(filter: EntryCondition): Iterable<Entry> {
     return this.graph.filter(filter)
+  }
+  rows(filter: EntryCondition): Iterable<EntryRow> {
+    return this.graph.rows(filter)
   }
   findFirst<T extends Record<string, unknown>>(
     filter: (entry: Entry) => boolean

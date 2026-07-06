@@ -1,7 +1,6 @@
 import type {Stats} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
-import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
 import {assert} from '../util/Assert.js'
 import {accumulate} from '../util/Async.js'
@@ -112,10 +111,10 @@ export class CachedFSSource extends FSSource {
     super(cwd)
   }
 
-  refresh = pDebounce(async () => {
+  async refresh() {
     this.#blobs = new Map()
     return (this.#tree = super.getTree())
-  }, 50)
+  }
 
   getTree() {
     if (!this.#tree) return this.refresh()
