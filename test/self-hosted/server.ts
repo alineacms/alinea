@@ -11,6 +11,8 @@ import type {User} from '#/core/User.js'
 import {cms} from '#/dashboard/fixture/cms.js'
 import {Database as BunSqlite} from 'bun:sqlite'
 import path from 'node:path'
+import type {Client as PgClient} from 'pg'
+import type {Database} from 'rado'
 import * as driver from 'rado/driver'
 import react from '@vitejs/plugin-react'
 import {createServer} from 'vite'
@@ -45,8 +47,7 @@ const local = new DevDB({
 })
 await local.sync()
 
-const sqlite = new BunSqlite(':memory:')
-const db = driver['bun:sqlite'](sqlite)
+const {db, label: databaseLabel} = await createDatabase()
 await seedSampleUsers()
 const history = new GitHistory(cms.config, fixtureDir)
 const handleApi = createHandler({
@@ -111,11 +112,62 @@ const actualPort = typeof address === 'object' && address ? address.port : port
 
 console.log(`Self-hosted dashboard: http://localhost:${actualPort}/`)
 console.log(`Content source: ${contentDir}`)
+console.log(`Database: ${databaseLabel}`)
+
+interface DatabaseConnection {
+  db: Database
+  label: string
+}
+
+interface PgModule {
+  Client: new (options: {connectionString: string}) => PgClient
+}
+
+async function createDatabase(): Promise<DatabaseConnection> {
+  const connection = process.env.SELF_HOSTED_CONNECTION
+  if (!connection)
+    return createSqliteDatabase(':memory:', 'bun:sqlite (:memory:)')
+
+  const url = new URL(connection)
+  switch (url.protocol) {
+    case 'postgres:':
+    case 'postgresql:':
+      return createPgDatabase(connection)
+  }
+
+  throw new Error(
+    `Unsupported SELF_HOSTED_CONNECTION protocol: ${url.protocol}. Only postgres: and postgresql: are supported.`
+  )
+}
+
+async function createPgDatabase(
+  connection: string
+): Promise<DatabaseConnection> {
+  const moduleName = 'pg'
+  const {Client} = (await import(moduleName)) as PgModule
+  const client = new Client({connectionString: connection})
+  await client.connect()
+  return {
+    db: driver.pg(client),
+    label: 'pg'
+  }
+}
+
+function createSqliteDatabase(file: string, label: string): DatabaseConnection {
+  const sqlite = new BunSqlite(file)
+  return {
+    db: driver['bun:sqlite'](sqlite),
+    label
+  }
+}
 
 async function seedSampleUsers(): Promise<void> {
-  const database = new DatabaseApi(requestContext(new Request('http://localhost/api')), {
-    db
-  })
+  const database = new DatabaseApi(
+    requestContext(new Request('http://localhost/api')),
+    {
+      db
+    }
+  )
   await database.createUser({
     email: 'ada@example.com',
     name: 'Ada Lovelace',

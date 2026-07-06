@@ -49,7 +49,7 @@ const UserTable = table('alinea_user', {
 })
 
 const UserRoleTable = table('alinea_user_role', {
-  userId: column.number().notNull().references(UserTable.id),
+  userId: column.integer().notNull().references(UserTable.id),
   role: column.text().notNull()
 })
 
