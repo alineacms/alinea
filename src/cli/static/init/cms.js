@@ -1,5 +1,5 @@
 import {Config, Field} from 'alinea'
-import {createCMS} from '#/core.js'
+import {createCMS} from 'alinea/core'
 
 // Create types for your CMS schema
 const Page = Config.type('Page', {
