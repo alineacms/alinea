@@ -12,7 +12,7 @@ import {assert} from '#/core/util/Assert.js'
 import {basename, extname} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {Builder, type Database, eq, include, primaryKey, table} from 'rado'
+import {Builder, type Database, eq, include, primaryKey, sql, table} from 'rado'
 import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
@@ -53,6 +53,8 @@ const UserRoleTable = table('alinea_user_role', {
   role: column.text().notNull()
 })
 
+const tables = [DraftTable, UploadTable, UserTable, UserRoleTable]
+
 const selectUser = {
   ...UserTable,
   roles: include(
@@ -70,7 +72,10 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   constructor(context: RequestContext, {db}: DatabaseOptions) {
     this.#context = context
     this.#db = PLazy.from(async () => {
-      await db.migrate(DraftTable, UploadTable, UserTable, UserRoleTable)
+      await db.migrate(...tables)
+      // Enable RLS so our tables are not exposed to the world if a user puts
+      // this in Supabase.
+      await enablePostgresRowLevelSecurity(db)
       return db
     })
   }
@@ -251,6 +256,13 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
         return {userId, role}
       })
     )
+  }
+}
+
+async function enablePostgresRowLevelSecurity(db: Database): Promise<void> {
+  if (db.dialect.runtime !== 'postgres') return
+  for (const table of tables) {
+    await db.run(sql`alter table ${table} enable row level security`)
   }
 }
 
