@@ -54,6 +54,7 @@ const UserRoleTable = table('alinea_user_role', {
 })
 
 const tables = [DraftTable, UploadTable, UserTable, UserRoleTable]
+const preparedDatabases = new WeakMap<Database, Promise<Database>>()
 
 const selectUser = {
   ...UserTable,
@@ -71,13 +72,7 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
 
   constructor(context: RequestContext, {db}: DatabaseOptions) {
     this.#context = context
-    this.#db = PLazy.from(async () => {
-      await db.migrate(...tables)
-      // Enable RLS so our tables are not exposed to the world if a user puts
-      // this in Supabase.
-      await enablePostgresRowLevelSecurity(db)
-      return db
-    })
+    this.#db = prepareDatabase(db)
   }
 
   async getDraft(draftKey: DraftKey): Promise<Draft | undefined> {
@@ -257,6 +252,20 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
       })
     )
   }
+}
+
+function prepareDatabase(db: Database): Promise<Database> {
+  const existing = preparedDatabases.get(db)
+  if (existing) return existing
+  const prepared = PLazy.from(async () => {
+    await db.migrate(...tables)
+    // Enable RLS so our tables are not exposed to the world if a user puts
+    // this in Supabase.
+    await enablePostgresRowLevelSecurity(db)
+    return db
+  })
+  preparedDatabases.set(db, prepared)
+  return prepared
 }
 
 async function enablePostgresRowLevelSecurity(db: Database): Promise<void> {
