@@ -90,7 +90,7 @@
         "playwright": "^1.59.1",
         "pretty-bytes": "^6.0.0",
         "pretty-ms": "^8.0.0",
-        "rado": "^1.3.0-preview.5",
+        "rado": "^1.3.0-preview.6",
         "react": "^19.2.4",
         "react-dom": "^19.2.4",
         "regexparam": "^2.0.1",
@@ -1968,7 +1968,7 @@
 
     "quote-unquote": ["quote-unquote@1.0.0", "", {}, "sha512-twwRO/ilhlG/FIgYeKGFqyHhoEhqgnKVkcmqMKi2r524gz3ZbDTcyFt38E9xjJI2vT+KbRNHVbnJ/e0I25Azwg=="],
 
-    "rado": ["rado@1.3.0-preview.5", "", {}, "sha512-H+vxo5WM//7I/r3OnmPq2FUer/9myuAZkgsBJNja5oDJv4nLWYz+CdO+62JSkdyoWlPm2ohq+vdPbYnpl9ApUQ=="],
+    "rado": ["rado@1.3.0-preview.6", "", {}, "sha512-bwoRppbsyX8snSER8o2YjYh5vDPdALG5ukT0/GM+7TOg9vhB+9Ya517v4NMdYIQsKa8+dVd/v03PFn8vbtEYsg=="],
 
     "rc": ["rc@1.2.8", "", { "dependencies": { "deep-extend": "^0.6.0", "ini": "~1.3.0", "minimist": "^1.2.0", "strip-json-comments": "~2.0.1" }, "bin": { "rc": "./cli.js" } }, "sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw=="],
 
