@@ -9,8 +9,12 @@ import type {ReadonlyTree} from './source/Tree.js'
 import type {User, UserInput} from './User.js'
 
 export interface AuthApi {
-  authenticate(request: Request): Promise<Response>
+  authenticate(request: Request, options?: AuthOptions): Promise<Response>
   verify(request: Request): Promise<AuthedContext>
+}
+
+export interface AuthOptions {
+  enrichUser?(user: User): Promise<User>
 }
 
 export interface UserApi {

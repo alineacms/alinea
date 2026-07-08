@@ -1,6 +1,11 @@
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Config} from '#/core/Config.js'
-import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
+import type {
+  AuthApi,
+  AuthOptions,
+  AuthedContext,
+  RequestContext
+} from '#/core/Connection.js'
 import {HttpError} from '#/core/HttpError.js'
 import {createId} from '#/core/Id.js'
 import {outcome} from '#/core/Outcome.js'
@@ -121,7 +126,10 @@ export class OAuth2 implements AuthApi {
     return url
   }
 
-  async authenticate(request: Request): Promise<Response> {
+  async authenticate(
+    request: Request,
+    options?: AuthOptions
+  ): Promise<Response> {
     try {
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
@@ -131,9 +139,12 @@ export class OAuth2 implements AuthApi {
           const [ctx, err] = await outcome(this.verify(request))
           if (err instanceof Response) return err
           if (ctx) {
+            const user = options?.enrichUser
+              ? await options.enrichUser(ctx.user)
+              : ctx.user
             return Response.json({
               type: AuthResultType.Authenticated,
-              user: ctx.user
+              user
             })
           }
           const codeVerifier = await generateCodeVerifier()

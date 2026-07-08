@@ -3,6 +3,7 @@ import {AuthAction} from '#/backend/Auth.js'
 import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
+  AuthOptions,
   RemoteConnection,
   RequestContext,
   Revision
@@ -118,7 +119,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     })
   }
 
-  async authenticate(request: Request) {
+  async authenticate(request: Request, options?: AuthOptions) {
     const ctx = this.#context
     const config = this.#config
     const url = new URL(request.url)
@@ -131,7 +132,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
             type: AuthResultType.MissingApiKey,
             setupUrl: cloudConfig.setup
           })
-        return super.authenticate(request)
+        return super.authenticate(request, options)
       }
       // The cloud server will request a handshake confirmation on this route
       case AuthAction.Handshake: {
@@ -182,7 +183,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
         return new Response('alinea cloud handshake')
       }
       default:
-        return super.authenticate(request)
+        return super.authenticate(request, options)
     }
   }
 

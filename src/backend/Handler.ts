@@ -90,7 +90,13 @@ export function createHandler({
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
 
-      if (auth) return cnx.authenticate(request)
+      if (auth) {
+        return cnx.authenticate(request, {
+          enrichUser(user) {
+            return cnx.enrichUser(user)
+          }
+        })
+      }
 
       const action = params.get('action') as HandleAction
       const expectJson = () => {

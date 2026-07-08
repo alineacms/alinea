@@ -1,7 +1,12 @@
 import {createHandler} from '#/backend/Handler.js'
 import {createRemote} from '#/backend/api/CreateBackend.js'
+import {AuthResultType} from '#/cloud/AuthResult.js'
 import {createCMS} from '#/core.js'
-import type {AuthedContext, RequestContext} from '#/core/Connection.js'
+import type {
+  AuthOptions,
+  AuthedContext,
+  RequestContext
+} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
@@ -126,6 +131,51 @@ test('reports user api capability when listUsers exists', async () => {
   })
 })
 
+test('enriches authenticated user in auth status response', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return createRemote({
+        async authenticate(
+          _request: Request,
+          options?: AuthOptions
+        ): Promise<Response> {
+          const user = {
+            email: 'ada@example.com',
+            roles: [],
+            sub: 'ada@example.com'
+          }
+          return Response.json({
+            type: AuthResultType.Authenticated,
+            user: options?.enrichUser ? await options.enrichUser(user) : user
+          })
+        },
+        async enrichUser(user: User): Promise<User> {
+          return {...user, roles: ['admin']}
+        }
+      })
+    }
+  })
+
+  const response = await handle(authStatusRequest(), requestContext())
+
+  test.is(response.status, 200)
+  test.equal(await response.json(), {
+    type: AuthResultType.Authenticated,
+    user: {
+      email: 'ada@example.com',
+      roles: ['admin'],
+      sub: 'ada@example.com'
+    }
+  })
+})
+
 function userRequest(operation: string): Request {
   return new Request(
     `http://localhost/api?action=user&operation=${operation}`,
@@ -135,6 +185,14 @@ function userRequest(operation: string): Request {
       }
     }
   )
+}
+
+function authStatusRequest(): Request {
+  return new Request('http://localhost/api?auth=status', {
+    headers: {
+      accept: 'application/json'
+    }
+  })
 }
 
 function capabilitiesRequest(): Request {
