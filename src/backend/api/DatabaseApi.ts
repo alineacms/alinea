@@ -5,40 +5,23 @@ import type {
   UploadsApi,
   UserApi
 } from '#/core/Connection.js'
-import {type Draft, type DraftKey, parseDraftKey} from '#/core/Draft.js'
+import {type Draft, type DraftKey} from '#/core/Draft.js'
 import {createId} from '#/core/Id.js'
 import type {User, UserInput} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {basename, extname} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import PLazy from 'p-lazy'
-import {Builder, type Database, eq, include, primaryKey, sql, table} from 'rado'
-import type {IsMysql, IsPostgres, IsSqlite} from 'rado/core/MetaData'
+import {Builder, type Database, eq, include, sql, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {HandleAction} from '../HandleAction.js'
-import {is} from '../util/ORM.js'
 
 export interface DatabaseOptions {
   db: Database
 }
 
-const DraftTable = table(
-  'alinea_draft',
-  {
-    entryId: column.text().notNull(),
-    locale: column.text(),
-    fileHash: column.text().notNull(),
-    draft: column.blob().notNull()
-  },
-  Draft => {
-    return {
-      primary: primaryKey(Draft.entryId, Draft.locale)
-    }
-  }
-)
-
 const UploadTable = table('alinea_upload', {
-  entryId: column.text().primaryKey(),
+  entryId: column.varchar(undefined, {length: 27}).primaryKey(),
   content: column.blob().notNull()
 })
 
@@ -53,7 +36,7 @@ const UserRoleTable = table('alinea_user_role', {
   role: column.text().notNull()
 })
 
-const tables = [DraftTable, UploadTable, UserTable, UserRoleTable]
+const tables = [UploadTable, UserTable, UserRoleTable]
 const preparedDatabases = new WeakMap<Database, Promise<Database>>()
 
 const selectUser = {
@@ -76,34 +59,11 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
   }
 
   async getDraft(draftKey: DraftKey): Promise<Draft | undefined> {
-    const db = await this.#db
-    const {entryId, locale} = parseDraftKey(draftKey)
-    const found = await db
-      .select()
-      .from(DraftTable)
-      .where(eq(DraftTable.entryId, entryId), is(DraftTable.locale, locale))
-      .get()
-    return found ?? undefined
+    throw new Error('Not longer supported')
   }
 
   async storeDraft(draft: Draft): Promise<void> {
-    const db = await this.#db
-    const query =
-      db.dialect.runtime === 'mysql'
-        ? (<Database<IsMysql>>db)
-            .insert(DraftTable)
-            .values(draft)
-            .onDuplicateKeyUpdate({
-              set: draft
-            })
-        : (<Database<IsPostgres | IsSqlite>>db)
-            .insert(DraftTable)
-            .values(draft)
-            .onConflictDoUpdate({
-              target: DraftTable.entryId,
-              set: draft
-            })
-    await query
+    throw new Error('Not longer supported')
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {
