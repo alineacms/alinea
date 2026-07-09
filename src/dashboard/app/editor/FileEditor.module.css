@@ -2,6 +2,27 @@
   width: 100%;
 }
 
+.FileEditor-tabs {
+  min-width: 0;
+}
+
+.FileEditor-tabs-header {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.FileEditor-tabPanel {
+  min-width: 0;
+}
+
+.FileEditor-metadataPanel {
+  min-width: 0;
+  padding: 16px;
+}
+
 .FileEditor {
   display: flex;
   flex-wrap: wrap;

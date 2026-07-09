@@ -1,14 +1,22 @@
 import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
-import type {ListField} from '#/core/field/ListField.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
-import type {ListRow} from '#/core/ListRow.js'
 import {Type, type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
-import {list} from '#/field/list.js'
 import {type ObjectField, object} from '#/field/object.js'
 import {type TextField, text} from '#/field/text.js'
+import {
+  aliases,
+  type AliasesField,
+  type MetadataAlias
+} from './MetadataAliases.js'
+
+export {
+  aliases,
+  type AliasesField,
+  type MetadataAlias
+} from './MetadataAliases.js'
 
 export interface MetadataTimestampOptions extends FieldOptions<number | null> {
   width?: number
@@ -36,10 +44,6 @@ export interface MetadataFields {
 export interface MetadataAuditUser {
   name: string
   email: string
-}
-
-export interface MetadataAlias extends ListRow {
-  url: string
 }
 
 export interface Metadata {
@@ -72,16 +76,6 @@ export class MetadataUserField extends ScalarField<
   MetadataUserOptions
 > {}
 
-type AliasType = Type<{url: TextField}>
-type AliasesField = ListField<
-  MetadataAlias,
-  MetadataAlias,
-  {
-    label: string
-    schema: {alias: AliasType}
-  }
->
-
 export function metadata(label = 'Metadata') {
   const fields = type('Fields', {
     fields: {
@@ -93,17 +87,7 @@ export function metadata(label = 'Metadata') {
           if (value.length > 160) return 'Too many characters.'
         }
       }),
-      aliases: list('URL aliases', {
-        schema: {
-          alias: type('URL alias', {
-            fields: {
-              url: text('URL', {
-                help: 'A previous URL that should redirect to this entry'
-              })
-            }
-          })
-        }
-      }),
+      aliases: aliases(),
       openGraph: object('Open Graph', {
         fields: {
           image: image('Image', {

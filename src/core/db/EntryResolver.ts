@@ -593,6 +593,7 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
 }
 
 function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
+  if (name === 'aliases') return aliasesFromData(entry.data)
   if (path) return valueAtPath(entry.data, [...path, name])
   const expr = EntryExprs[name as keyof typeof EntryExprs]
   if (expr) {
@@ -614,14 +615,38 @@ function valueAtPath(value: unknown, path: Array<string>): unknown {
 
 function aliasChecker(alias: string): Check {
   return entry => {
-    const aliases = entryFieldValue(entry, 'aliases')
-    if (!Array.isArray(aliases)) return false
+    const aliases = aliasesFromData(entry.data) ?? []
     for (const row of aliases) {
-      if (!isObject(row)) continue
-      if (row.url === alias) return true
+      const url = typeof row === 'string' ? row.trim() : urlFromAliasRow(row)
+      if (url === alias) return true
     }
     return false
   }
+}
+
+function aliasesFromData(
+  data: Record<string, unknown>
+): Array<unknown> | undefined {
+  const result = Array<unknown>()
+  let hasAliases = false
+  if (Array.isArray(data.aliases)) {
+    hasAliases = true
+    result.push(...data.aliases)
+  }
+  const metadata = data.metadata
+  if (isObject(metadata) && Array.isArray(metadata.aliases)) {
+    hasAliases = true
+    result.push(...metadata.aliases)
+  }
+  return hasAliases ? result : undefined
+}
+
+function urlFromAliasRow(value: unknown): string | undefined {
+  if (!isObject(value)) return undefined
+  const url = value.url
+  if (typeof url !== 'string') return undefined
+  const trimmed = url.trim()
+  return trimmed.length > 0 ? trimmed : undefined
 }
 
 function typeChecker(type: Array<string> | string): Check {

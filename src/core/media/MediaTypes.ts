@@ -1,5 +1,7 @@
 import {IcRoundPermMedia} from '#/dashboard/icons.js'
 import {hidden} from '#/field/hidden/HiddenField.js'
+import {aliases} from '#/field/metadata/MetadataAliases.js'
+import {object} from '#/field/object/ObjectField.js'
 import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
 import {type Type, type} from '../Type.js'
@@ -20,7 +22,12 @@ export const MediaFile = type('Media file', {
   hidden: true,
   fields: {
     title: text('Title'),
-    path: hidden<string>('Path'),
+    path: path('Path'),
+    metadata: object('Metadata', {
+      fields: {
+        aliases: aliases()
+      }
+    }),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
     extension: hidden<string>('Extension'),

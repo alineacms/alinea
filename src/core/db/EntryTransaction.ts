@@ -1026,13 +1026,9 @@ export class EntryTransaction {
 }
 
 function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
-  const metadata = data.metadata
-  if (!isRecord(metadata)) return []
-  const aliases = metadata.aliases
-  if (!Array.isArray(aliases)) return []
   const result = new Set<string>()
-  for (const alias of aliases) {
-    const url = typeof alias === 'string' ? alias : urlFromAliasRow(alias)
+  for (const alias of aliasRowsFromData(data)) {
+    const url = aliasUrl(alias)
     if (url) result.add(url)
   }
   return Array.from(result)
@@ -1044,43 +1040,78 @@ function dataWithUrlAlias(
   previousUrl: string,
   currentUrl: string
 ): Record<string, unknown> {
-  if (!typeSupportsMetadataAliases(type)) return data
+  const target = typeAliasTarget(type)
+  if (!target) return data
   const aliasUrls = aliasUrlsFromData(data)
   if (aliasUrls.includes(previousUrl)) return data
 
   const metadata = isRecord(data.metadata) ? data.metadata : {}
-  const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
+  const aliases =
+    target === 'metadata'
+      ? Array.isArray(metadata.aliases)
+        ? metadata.aliases
+        : []
+      : Array.isArray(data.aliases)
+        ? data.aliases
+        : []
 
   if (aliasUrls.includes(currentUrl)) {
     const aliasesWithoutCurrent = aliases.filter(
-      alias => alias.url !== currentUrl
+      alias => aliasUrl(alias) !== currentUrl
     )
-    return {
-      ...data,
-      metadata: {
-        ...metadata,
-        aliases: aliasesWithoutCurrent.concat(
-          createUrlAliasRow(previousUrl, aliasesWithoutCurrent)
-        )
-      }
-    }
+    return dataWithAliases(
+      data,
+      target,
+      metadata,
+      aliasesWithoutCurrent.concat(
+        createUrlAliasRow(previousUrl, aliasesWithoutCurrent)
+      )
+    )
   }
+  return dataWithAliases(
+    data,
+    target,
+    metadata,
+    aliases.concat(createUrlAliasRow(previousUrl, aliases))
+  )
+}
+
+function aliasRowsFromData(data: Record<string, unknown>): Array<unknown> {
+  const result = Array<unknown>()
+  if (Array.isArray(data.aliases)) result.push(...data.aliases)
+  const metadata = data.metadata
+  if (isRecord(metadata) && Array.isArray(metadata.aliases)) {
+    result.push(...metadata.aliases)
+  }
+  return result
+}
+
+function dataWithAliases(
+  data: Record<string, unknown>,
+  target: AliasTarget,
+  metadata: Record<string, unknown>,
+  aliases: Array<unknown>
+): Record<string, unknown> {
+  if (target === 'aliases') return {...data, aliases}
   return {
     ...data,
     metadata: {
       ...metadata,
-      aliases: aliases.concat(createUrlAliasRow(previousUrl, aliases))
+      aliases
     }
   }
 }
 
-function typeSupportsMetadataAliases(type: Type): boolean {
+type AliasTarget = 'aliases' | 'metadata'
+
+function typeAliasTarget(type: Type): AliasTarget | undefined {
+  if (Type.field(type, 'aliases')) return 'aliases'
   const metadata = Type.field(type, 'metadata')
-  if (!metadata) return false
+  if (!metadata) return undefined
   const options = Field.options(metadata)
   const fields = (options as {fields?: unknown}).fields
-  if (!Type.isType(fields)) return false
-  return Boolean(Type.field(fields, 'aliases'))
+  if (!Type.isType(fields)) return undefined
+  return Type.field(fields, 'aliases') ? 'metadata' : undefined
 }
 
 function createUrlAliasRow(url: string, aliases: Array<unknown>) {
@@ -1106,6 +1137,10 @@ function urlFromAliasRow(value: unknown): string | undefined {
   if (typeof url !== 'string') return undefined
   const trimmed = url.trim()
   return trimmed.length > 0 ? trimmed : undefined
+}
+
+function aliasUrl(value: unknown): string | undefined {
+  return typeof value === 'string' ? value.trim() : urlFromAliasRow(value)
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
