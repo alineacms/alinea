@@ -15,6 +15,7 @@ import {
   IcRoundDelete,
   IcRoundEdit,
   IcRoundFlashOn,
+  IcRoundPublishedWithChanges,
   IcRoundMoreHoriz,
   IcRoundSave,
   IcRoundSync,
@@ -533,6 +534,7 @@ export function EntryHeader({
   const title = useAtomValue(entry.label)
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
   const viewedEntry = useAtomValue(entry.currentEntry)
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
@@ -544,6 +546,7 @@ export function EntryHeader({
   )
   const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
   const displayStatus = variantDescription[status]
+  const isRevision = selectedVersion.type === 'history'
   return (
     <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.content()}>
@@ -552,10 +555,10 @@ export function EntryHeader({
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
           <Badge
             className={styles.EntryHeader.status()}
-            icon={badgeIcon[status]}
-            status={badgeStatus[status]}
+            icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
+            status={isRevision ? undefined : badgeStatus[status]}
           >
-            {displayStatus}
+            {isRevision ? 'Revision' : displayStatus}
           </Badge>
           {controls}
           <EntryHeaderMoreActions
