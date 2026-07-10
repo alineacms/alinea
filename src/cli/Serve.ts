@@ -4,7 +4,6 @@ import {createHandler} from 'alinea/backend/Handler'
 import {gitUser} from 'alinea/backend/util/ExecGit'
 import {CloudRemote} from 'alinea/cloud/CloudRemote'
 import type {CMS} from 'alinea/core/CMS'
-import {Config} from 'alinea/core/Config'
 import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
 import {createId} from 'alinea/core/Id'
 import {genEffect} from 'alinea/core/util/Async'
@@ -96,7 +95,7 @@ export async function serve(options: ServeOptions): Promise<void> {
     ...options,
     dashboardUrl,
     watch: cmd === 'dev',
-    onAfterGenerate(msg, config) {
+    onAfterGenerate(msg) {
       dashboardUrl.then(url => {
         const version = gray(pkg.version)
         const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
@@ -106,8 +105,7 @@ export async function serve(options: ServeOptions): Promise<void> {
         const footer = showUrl ? `${gray('╰')} Local CMS:    ${url}\n\n` : '\n'
         process.stdout.write(header + details + footer)
         options.onAfterGenerate?.({
-          ALINEA_DEV_SERVER: url,
-          ALINEA_ADMIN_PATH: Config.adminPath(config)
+          ALINEA_DEV_SERVER: url
         })
       })
     }

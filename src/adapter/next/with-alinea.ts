@@ -24,11 +24,11 @@ export function createCMS() {
 }
 
 export function withAlinea(config: NextConfig = {}): NextConfig {
-  if (!process.env.ALINEA_ADMIN_PATH) {
+  const adminPath = resolveAdminPath()
+  if (!adminPath) {
     console.warn(
-      'ALINEA_ADMIN_PATH environment variable is not set, did you run with the Alinea CLI?'
+      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI and deploy @alinea/generated.'
     )
-    return config
   }
   let nextVersion = 15
   try {
@@ -53,9 +53,12 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     ...imagesConfig,
     remotePatterns
   }
-  const adminPath = normalizeBasePath(process.env.ALINEA_ADMIN_PATH)
-  const redirects = createRedirects(config, adminPath)
-  const rewrites = createRewrites(config, adminPath)
+  const redirects = adminPath
+    ? createRedirects(config, adminPath)
+    : config.redirects
+  const rewrites = adminPath
+    ? createRewrites(config, adminPath)
+    : config.rewrites
   if (nextVersion < 15)
     return {
       ...config,
@@ -136,6 +139,7 @@ function createRewrites(config: NextConfig, adminPath: string) {
     return {
       ...rewrites,
       afterFiles: [
+        ...rewrites.afterFiles,
         {
           source: adminPath,
           destination: `${adminPath}.html`
@@ -143,6 +147,22 @@ function createRewrites(config: NextConfig, adminPath: string) {
       ]
     }
   }
+}
+
+interface GeneratedSettings {
+  adminPath?: unknown
+}
+
+function resolveAdminPath(): string | undefined {
+  try {
+    const require = createRequire(resolve('./index.js'))
+    const location = require.resolve('@alinea/generated/settings.json')
+    const settings = JSON.parse(
+      readFileSync(location, 'utf-8')
+    ) as GeneratedSettings
+    if (typeof settings.adminPath === 'string' && settings.adminPath)
+      return normalizeBasePath(settings.adminPath)
+  } catch {}
 }
 
 function normalizeBasePath(value: string): string {
