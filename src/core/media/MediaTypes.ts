@@ -17,9 +17,9 @@ export const MediaLibrary = type('Media directory', {
 
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
-  hidden: true,
-  fields: {
-    title: text('Title'),
+    hidden: true,
+    fields: {
+        title: text('Title', { required: true }),
     path: hidden<string>('Path'),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
