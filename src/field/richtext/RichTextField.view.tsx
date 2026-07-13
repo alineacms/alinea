@@ -348,6 +348,7 @@ function RTView<Blocks extends Schema>({
   const picker = usePickTextLink()
   const setValue = useFieldSetter(field)
   const node = useFieldNode<TextDoc>(field)
+  const pushNode = useSetAtom(node.push)
   const peekValue = useSetAtom(node.peek)
   const [focus, setFocus] = useState(false)
   const expandedByBlockId = useRef(new Map<string, boolean>())
@@ -422,8 +423,12 @@ function RTView<Blocks extends Schema>({
                 [BlockNode.id]: id,
                 ...(type ? Type.initialValue(type) : {})
               } as BlockNode
-              setValue(current => [...(current ?? []), block])
               return block
+            }}
+            onInserted={block => {
+              if (block) {
+                queueMicrotask(() => pushNode(block))
+              }
             }}
           />
         )}

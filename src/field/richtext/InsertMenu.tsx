@@ -7,7 +7,8 @@ import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
 import {IcRoundAddCircle} from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
-import {Editor, FloatingMenu} from '@tiptap/react'
+import type {Editor} from '@tiptap/core'
+import {FloatingMenu} from '@tiptap/react/menus'
 import css from './InsertMenu.module.css'
 import {richTextBlockAttributes} from './RichTextBlockCodec.js'
 
@@ -17,18 +18,18 @@ export interface InsertMenuProps {
   editor: Editor
   schema: Schema | undefined
   onInsert: (id: string, type: string) => BlockNode | undefined
+  onInserted?: (block: BlockNode | undefined) => void
 }
 
-export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
+export function InsertMenu({
+  editor,
+  schema,
+  onInsert,
+  onInserted
+}: InsertMenuProps) {
   if (!schema) return null
   return (
-    <FloatingMenu
-      editor={editor}
-      tippyOptions={{
-        zIndex: 1,
-        maxWidth: 'none'
-      }}
-    >
+    <FloatingMenu editor={editor} className={styles.InsertMenu.menu()}>
       <Menu
         aria-label="Insert block"
         label={
@@ -49,7 +50,7 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
               onAction={() => {
                 const id = createId()
                 const block = onInsert(id, key)
-                editor
+                const inserted = editor
                   .chain()
                   .focus()
                   .insertContent({
@@ -59,6 +60,7 @@ export function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
                       : {[BlockNode.id]: id}
                   })
                   .run()
+                if (inserted) onInserted?.(block)
               }}
             >
               <span className={styles.InsertMenu.item()}>

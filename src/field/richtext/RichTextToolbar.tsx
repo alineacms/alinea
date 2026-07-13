@@ -27,7 +27,7 @@ import type {
 } from '#/field/richtext/Toolbar.js'
 import type {UrlReference} from '#/picker/url.js'
 import styler from '@alinea/styler'
-import type {Editor} from '@tiptap/react'
+import type {Editor} from '@tiptap/core'
 import {useMemo, type ReactNode} from 'react'
 import css from './RichTextToolbar.module.css'
 import {defaultToolbar} from './Toolbar.js'

@@ -141,6 +141,10 @@ export function RichTextBlockEditingStory() {
   return <RichTextBlockStory initialBody={initialBody} type={entryType} />
 }
 
+export function RichTextBlockInsertStory() {
+  return <RichTextBlockStory initialBody={insertInitialBody} type={entryType} />
+}
+
 export function RichTextNestedBlockStory() {
   return (
     <RichTextBlockStory
@@ -192,6 +196,21 @@ const initialBody = [
   },
   {
     _id: 'cta-block',
+    _type: 'Cta'
+  },
+  {
+    _type: 'paragraph',
+    content: [{_type: 'text', text: 'After the block.'}]
+  }
+]
+
+const insertInitialBody = [
+  {
+    _type: 'paragraph',
+    content: [{_type: 'text', text: 'Before the block.'}]
+  },
+  {
+    _id: 'insert-cta-block',
     _type: 'Cta'
   },
   {
