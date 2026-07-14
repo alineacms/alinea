@@ -7,6 +7,11 @@ import {
   type TextDoc
 } from '#/core/TextDoc.js'
 import type {JSONContent} from '@tiptap/core'
+import {
+  blockAttributes,
+  decodeBlockValue,
+  richTextBlockValueAttribute
+} from './RichTextBlockValue.js'
 
 export function editorContent(nodes: TextDoc): JSONContent {
   return {
@@ -17,7 +22,11 @@ export function editorContent(nodes: TextDoc): JSONContent {
 
 export function editorNodes(
   content: JSONContent,
-  resolveBlock?: (id: string, typeName: string) => BlockNode | undefined
+  resolveBlock?: (
+    id: string,
+    typeName: string,
+    snapshot: BlockNode | undefined
+  ) => BlockNode | undefined
 ): TextDoc {
   const nodes =
     content.content?.flatMap(node => contentToNodes(node, resolveBlock)) ?? []
@@ -28,7 +37,7 @@ function nodeToContent(node: Node): JSONContent {
   if (isBlock(node)) {
     return {
       type: node[Node.type],
-      attrs: {[BlockNode.id]: node[BlockNode.id]}
+      attrs: blockAttributes(node)
     }
   }
   if (isText(node)) {
@@ -53,13 +62,18 @@ function nodeToContent(node: Node): JSONContent {
 
 function contentToNodes(
   content: JSONContent,
-  resolveBlock?: (id: string, typeName: string) => BlockNode | undefined
+  resolveBlock?: (
+    id: string,
+    typeName: string,
+    snapshot: BlockNode | undefined
+  ) => BlockNode | undefined
 ): TextDoc {
   const {type, text, marks, attrs} = content
   if (!type) return []
   if (Node.isBlock({[Node.type]: type})) {
-    const id = String(attrs?.[BlockNode.id] ?? '')
-    const block = resolveBlock?.(id, type)
+    const snapshot = decodeBlockValue(attrs?.[richTextBlockValueAttribute])
+    const id = String(attrs?.[BlockNode.id] ?? snapshot?.[BlockNode.id] ?? '')
+    const block = resolveBlock?.(id, type, snapshot) ?? snapshot
     return block
       ? [block]
       : [{[Node.type]: type, [BlockNode.id]: id} as BlockNode]

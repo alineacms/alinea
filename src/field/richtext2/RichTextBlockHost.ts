@@ -38,6 +38,12 @@ export class RichTextBlockHosts {
       return {
         dom,
         ignoreMutation: () => true,
+        update(updatedNode) {
+          return (
+            updatedNode.type === node.type &&
+            String(updatedNode.attrs._id) === host.id
+          )
+        },
         stopEvent(event) {
           const target = event.target
           const dragHandle =

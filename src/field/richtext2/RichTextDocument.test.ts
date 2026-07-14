@@ -29,16 +29,24 @@ test('round trips text, element attributes and mark attributes', () => {
   test.equal(editorNodes(content), [{...paragraph, textAlign: 'center'}])
 })
 
-test('stores only block identity in ProseMirror', () => {
+test('stores block identity with a recovery snapshot in ProseMirror', () => {
   const content = editorContent([paragraph, block, paragraph])
   test.equal(content.content?.[1], {
     type: 'Callout',
-    attrs: {[BlockNode.id]: 'block-1'}
+    attrs: {
+      [BlockNode.id]: 'block-1',
+      'data-alinea-block': block
+    }
   })
   test.equal(
     editorNodes(content, id => (id === 'block-1' ? block : undefined)),
     [paragraph, block, paragraph]
   )
+})
+
+test('restores a block from its snapshot when its live node is unavailable', () => {
+  const content = editorContent([block])
+  test.equal(editorNodes(content, () => undefined), [block])
 })
 
 test('normalizes the editor empty paragraph to an empty field value', () => {

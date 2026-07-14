@@ -64,3 +64,17 @@ test('block field updates propagate to the complete document value', () => {
     }
   ])
 })
+
+test('equal text nodes are not rewritten during document reconciliation', () => {
+  const value: TextDoc = [paragraph('Unchanged')]
+  const reactive = new ReactiveNode(value)
+  const store = createStore()
+  const children = store.get(reactive.nodes) as Array<ReactiveNode>
+  let updates = 0
+  const unsubscribe = store.sub(children[0].value, () => updates++)
+
+  store.set(documentUpdateAtom(reactive), [paragraph('Unchanged')])
+  unsubscribe()
+
+  test.is(updates, 0)
+})

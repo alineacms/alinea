@@ -1,13 +1,17 @@
 import type {Schema} from '#/core/Schema.js'
+import {createId} from '#/core/Id.js'
 import {BlockNode} from '#/core/TextDoc.js'
 import {entries} from '#/core/util/Objects.js'
 import styler from '@alinea/styler'
 import {
+  Extension,
   Mark,
   mergeAttributes,
   Node as TipTapNode,
   type AnyExtension
 } from '@tiptap/core'
+import {Fragment, type Node as ProseMirrorNode, Slice} from '@tiptap/pm/model'
+import {Plugin} from '@tiptap/pm/state'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
 import Document from '@tiptap/extension-document'
@@ -27,6 +31,11 @@ import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
 import {Dropcursor, Gapcursor, UndoRedo} from '@tiptap/extensions'
 import type {RichTextBlockHosts} from './RichTextBlockHost.js'
+import {
+  decodeBlockValue,
+  encodeBlockValue,
+  richTextBlockValueAttribute
+} from './RichTextBlockValue.js'
 import css from './RichTextExtensions.module.css'
 
 const styles = styler(css)
@@ -165,6 +174,21 @@ export function richTextDocumentExtension(hasEmbeddedBlocks: boolean) {
   })
 }
 
+export const RichTextBlockClipboard = Extension.create({
+  name: 'richTextBlockClipboard',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          transformPasted(slice) {
+            return renewPastedBlockIds(slice)
+          }
+        }
+      })
+    ]
+  }
+})
+
 export function defaultExtensions(): Array<AnyExtension> {
   return [
     Text,
@@ -243,7 +267,23 @@ export function blockExtensions(
       draggable: true,
       selectable: true,
       addAttributes() {
-        return {[BlockNode.id]: {default: null}}
+        return {
+          [BlockNode.id]: {default: null},
+          [richTextBlockValueAttribute]: {
+            default: null,
+            parseHTML(element) {
+              return decodeBlockValue(
+                element.getAttribute(richTextBlockValueAttribute)
+              )
+            },
+            renderHTML(attributes) {
+              const encoded = encodeBlockValue(
+                attributes[richTextBlockValueAttribute]
+              )
+              return encoded ? {[richTextBlockValueAttribute]: encoded} : {}
+            }
+          }
+        }
       },
       parseHTML() {
         return [{tag: `[data-richtext-block-type="${name}"]`}]
@@ -260,5 +300,38 @@ export function blockExtensions(
         return hosts.nodeView(name)
       }
     })
+  )
+}
+
+function renewPastedBlockIds(slice: Slice): Slice {
+  return new Slice(
+    renewPastedContent(slice.content),
+    slice.openStart,
+    slice.openEnd
+  )
+}
+
+function renewPastedContent(content: Fragment): Fragment {
+  const nodes: Array<ProseMirrorNode> = []
+  content.forEach(node => nodes.push(renewPastedNode(node)))
+  return Fragment.fromArray(nodes)
+}
+
+function renewPastedNode(node: ProseMirrorNode): ProseMirrorNode {
+  const content = renewPastedContent(node.content)
+  const groups = node.type.spec.group?.split(' ') ?? []
+  if (!groups.includes('richTextBlock')) return node.copy(content)
+  const id = createId()
+  const snapshot = decodeBlockValue(node.attrs[richTextBlockValueAttribute])
+  return node.type.create(
+    {
+      ...node.attrs,
+      [BlockNode.id]: id,
+      [richTextBlockValueAttribute]: snapshot
+        ? {...snapshot, [BlockNode.id]: id}
+        : null
+    },
+    content,
+    node.marks
   )
 }

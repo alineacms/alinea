@@ -11,7 +11,7 @@ import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
 import {select} from '#/field/select.js'
 import {text} from '#/field/text/TextField.js'
-import {atom, useAtomValue} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {views} from '../views.js'
 
@@ -105,10 +105,21 @@ function RichText2Fixture({initialBody, entryType}: RichText2FixtureProps) {
   const field = state.editor.field('body')
   if (!field) throw new Error('Body field not found')
   const value = useAtomValue(field.value)
+  const reset = useSetAtom(field.reset)
+  const replace = useSetAtom(field.value)
   return (
     <DashboardScopeInternal dashboard={state.dashboard}>
       <EditorScope editor={state.editor}>
         <div id="alinea-toolbar" />
+        <button type="button" onClick={() => reset()}>
+          Reset body
+        </button>
+        <button
+          type="button"
+          onClick={() => replace([paragraph('Externally replaced.')])}
+        >
+          Replace body
+        </button>
         <FieldsEditor />
         <pre data-testid="value">{JSON.stringify(value)}</pre>
       </EditorScope>

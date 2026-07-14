@@ -15,7 +15,14 @@ import styler from '@alinea/styler'
 import type {AnyExtension, Editor} from '@tiptap/core'
 import {EditorContent, useEditor} from '@tiptap/react'
 import {useAtomValue, useSetAtom, useStore} from 'jotai'
-import {useId, useMemo, useRef, useState, useSyncExternalStore} from 'react'
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
 import {createPortal} from 'react-dom'
 import {RichTextBlock} from './RichTextBlock.js'
 import {
@@ -30,8 +37,15 @@ import {editorContent, editorNodes} from './RichTextDocument.js'
 import {
   blockExtensions,
   defaultExtensions,
+  RichTextBlockClipboard,
   richTextDocumentExtension
 } from './RichTextExtensions.js'
+import {
+  blockAttributes,
+  decodeBlockValue,
+  encodeBlockValue,
+  richTextBlockValueAttribute
+} from './RichTextBlockValue.js'
 import css from './RichTextField.module.css'
 import {RichTextInsertMenu} from './RichTextInsertMenu.js'
 import {documentUpdateAtom} from './RichTextState.js'
@@ -73,6 +87,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     const blocks = blockExtensions(options.schema, hosts)
     return [
       richTextDocumentExtension(blocks.length > 0),
+      RichTextBlockClipboard,
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
@@ -82,7 +97,11 @@ export function RichTextFieldView<Blocks extends Schema>({
     [fieldNode, store]
   )
 
-  function resolveBlock(id: string, typeName: string): BlockNode | undefined {
+  function resolveBlock(
+    id: string,
+    typeName: string,
+    snapshot: BlockNode | undefined
+  ): BlockNode | undefined {
     const pending = pendingBlocks.current.get(id)
     if (pending) return pending
     const part = blocksRef.current.find(part => part.id === id)
@@ -90,6 +109,7 @@ export function RichTextFieldView<Blocks extends Schema>({
       const value = store.get(part.node.value)
       if (Node.isBlock(value)) return value
     }
+    if (snapshot?.[Node.type] === typeName) return snapshot
     const type = options.schema?.[typeName]
     if (!type) return
     return {
@@ -120,6 +140,16 @@ export function RichTextFieldView<Blocks extends Schema>({
           pendingBlocks.current.delete(String(node[BlockNode.id]))
     }
   })
+
+  useEffect(() => {
+    if (!editor) return
+    return store.sub(fieldNode.value, () => {
+      const value = store.get(fieldNode.value)
+      const current = editorNodes(editor.getJSON())
+      if (documentIdentity(value) === documentIdentity(current)) return
+      editor.commands.setContent(editorContent(value), {emitUpdate: false})
+    })
+  }, [editor, fieldNode, store])
 
   const toolbarTarget =
     typeof document === 'undefined'
@@ -276,17 +306,66 @@ function RichTextBlockPortals({
     const type = schema?.[host.typeName]
     if (!part || !type) return null
     return createPortal(
-      <RichTextBlock
-        node={part.node}
-        type={type}
-        readOnly={readOnly}
-        onDelete={() => remove(host)}
-        onDuplicate={() => duplicate(host, part)}
-      />,
+      <>
+        <RichTextBlockSnapshot editor={editor} host={host} node={part.node} />
+        <RichTextBlock
+          node={part.node}
+          type={type}
+          readOnly={readOnly}
+          onDelete={() => remove(host)}
+          onDuplicate={() => duplicate(host, part)}
+        />
+      </>,
       host.dom,
       host.id
     )
   })
+}
+
+interface RichTextBlockSnapshotProps {
+  editor: Editor
+  host: RichTextBlockHost
+  node: ReactiveRichTextBlock['node']
+}
+
+function RichTextBlockSnapshot({
+  editor,
+  host,
+  node
+}: RichTextBlockSnapshotProps) {
+  const value = useAtomValue(node.value)
+
+  useEffect(() => {
+    if (!Node.isBlock(value)) return
+    host.dom.dataset.debugBlockValue = JSON.stringify(value)
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    const editorNode = editor.state.doc.nodeAt(position)
+    if (!editorNode || editorNode.type.name !== host.typeName) return
+    const current = decodeBlockValue(
+      editorNode.attrs[richTextBlockValueAttribute]
+    )
+    if (encodeBlockValue(current) === encodeBlockValue(value)) return
+    const transaction = editor.state.tr.setNodeMarkup(
+      position,
+      undefined,
+      blockAttributes(value)
+    )
+    transaction.setMeta('addToHistory', false)
+    editor.view.dispatch(transaction)
+  }, [editor, host, value])
+
+  return null
+}
+
+function documentIdentity(value: TextDoc): string {
+  return JSON.stringify(
+    value.map(node =>
+      Node.isBlock(node)
+        ? {[Node.type]: node[Node.type], [BlockNode.id]: node[BlockNode.id]}
+        : node
+    )
+  )
 }
 
 export interface RichTextFieldCompactViewProps<Blocks extends Schema> {

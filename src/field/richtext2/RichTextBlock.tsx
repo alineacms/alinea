@@ -26,7 +26,7 @@ import {
 } from '#/dashboard/icons.js'
 import type {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import styler from '@alinea/styler'
-import {useState} from 'react'
+import {memo, useState} from 'react'
 import css from './RichTextBlock.module.css'
 
 const styles = styler(css)
@@ -39,7 +39,7 @@ export interface RichTextBlockProps {
   onDuplicate: () => void
 }
 
-export function RichTextBlock({
+export const RichTextBlock = memo(function RichTextBlock({
   node,
   type,
   readOnly,
@@ -124,4 +124,4 @@ export function RichTextBlock({
       </ListRow>
     </List>
   )
-}
+})

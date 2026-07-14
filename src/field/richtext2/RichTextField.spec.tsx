@@ -318,6 +318,94 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(1)
 })
 
+/**
+ * Regression: a block form can look updated while the surrounding rich-text
+ * value still contains its previous object. This must cross the real
+ * NodeEditor -> ReactiveNode -> root field boundary; the unit-level atom test
+ * alone cannot prove that dashboard field controls commit their values.
+ */
+test('persists embedded field and nested rich-text edits', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichText2Story />)
+
+  const title = page.getByRole('textbox', {name: 'Title'})
+  await title.fill('Persisted title')
+  await page.locator('.ProseMirror').first().getByText('After the block.').click()
+  await expect(page.locator('[data-richtext-block-host]').first()).toHaveAttribute(
+    'data-debug-block-value',
+    /Persisted title/
+  )
+  await expect(page.getByTestId('value')).toContainText(
+    '"title":"Persisted title"'
+  )
+
+  const nested = page.locator('[data-richtext-field]').nth(1).locator('.ProseMirror')
+  await nested.getByText('Nested details.').click()
+  await page.keyboard.press('End')
+  await page.keyboard.type(' Persisted details.')
+  await page.locator('.ProseMirror').first().getByText('After the block.').click()
+  await expect(page.getByTestId('value')).toContainText('Persisted details.')
+})
+
+/**
+ * ProseMirror history restores the deleted atom node after Jotai has removed
+ * its live ReactiveNode. The node therefore carries a recovery snapshot. The
+ * snapshot is not the rendering source; it is only used when no live block
+ * with that id exists.
+ */
+test('undoes block deletion without losing edited field values', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichText2Story />)
+
+  const title = page.getByRole('textbox', {name: 'Title'})
+  await title.fill('Keep this value')
+  await page.locator('.ProseMirror').first().getByText('After the block.').click()
+  await expect(page.getByTestId('value')).toContainText('Keep this value')
+
+  await page.getByRole('button', {name: 'Callout actions'}).click()
+  await page.getByRole('button', {name: 'Delete'}).click()
+  await expect(title).toHaveCount(0)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.click()
+  await page.keyboard.press('Control+z')
+
+  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveValue(
+    'Keep this value'
+  )
+  await expect(page.getByTestId('value')).toContainText('Keep this value')
+})
+
+/**
+ * Tiptap is intentionally uncontrolled while the user types, but dashboard
+ * reset/reload operations update the Jotai field from outside ProseMirror.
+ * Structural external changes must replace the editor document without
+ * treating nested block-field keystrokes as whole-document replacements.
+ */
+test('synchronizes external replacements and resets', async ({mount, page}) => {
+  await mount(<RichText2Story />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('Before the block.').click()
+  await page.keyboard.press('End')
+  await page.keyboard.type(' Changed')
+  await expect(editor).toContainText('Changed')
+
+  await page.getByRole('button', {name: 'Reset body'}).click()
+  await expect(editor).not.toContainText('Changed')
+  await expect(editor).toContainText('Before the block.')
+
+  await page.getByRole('button', {name: 'Replace body'}).click()
+  await expect(editor).toHaveText('Externally replaced.')
+  await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
+    0
+  )
+})
+
 test('inserts a block at the active text position', async ({mount, page}) => {
   const errors: Array<string> = []
   page.on('pageerror', error => errors.push(error.message))
