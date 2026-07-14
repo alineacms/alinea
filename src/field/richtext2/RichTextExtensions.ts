@@ -240,6 +240,7 @@ export function blockExtensions(
       name,
       group: 'richTextBlock',
       atom: true,
+      draggable: true,
       selectable: true,
       addAttributes() {
         return {[BlockNode.id]: {default: null}}

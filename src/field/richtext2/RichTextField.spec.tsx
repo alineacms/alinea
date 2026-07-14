@@ -198,6 +198,50 @@ test('selects text in block fields without dragging the block', async ({
   )
 })
 
+test('selects and edits nested rich text without dragging the block', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichText2Story />)
+
+  const fields = page.locator('[data-richtext-field]')
+  const nestedField = fields.nth(1)
+  const nestedEditor = nestedField.locator('.ProseMirror')
+  const nestedText = nestedEditor.getByText('Nested details.', {exact: true})
+  const bounds = await nestedText.boundingBox()
+  if (!bounds) throw new Error('Nested rich text bounds not found')
+
+  await page.mouse.move(bounds.x + 2, bounds.y + bounds.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(
+    bounds.x + bounds.width - 2,
+    bounds.y + bounds.height / 2,
+    {
+      steps: 8
+    }
+  )
+  await page.mouse.up()
+
+  const selected = await nestedEditor.evaluate(() =>
+    window.getSelection()?.toString().trim()
+  )
+  expect(selected).toContain('Nested details')
+
+  await nestedText.click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  await page.keyboard.type('Another nested paragraph.')
+  await expect(nestedEditor).toContainText('Another nested paragraph.')
+
+  const value = await page.getByTestId('value').textContent()
+  expect(value?.indexOf('Before the block.')).toBeLessThan(
+    value?.indexOf('callout-1') ?? -1
+  )
+  expect(value?.indexOf('callout-1')).toBeLessThan(
+    value?.indexOf('After the block.') ?? -1
+  )
+})
+
 test('keeps the owning rich text toolbar open while focus moves', async ({
   mount,
   page

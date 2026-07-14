@@ -20,10 +20,13 @@ export class RichTextBlockHosts {
   snapshot = () => this.#snapshot
 
   nodeView(typeName: string): NodeViewRenderer {
-    return ({node, getPos, editor}) => {
+    return ({node, getPos}) => {
       const dom = document.createElement('div')
       dom.contentEditable = 'false'
       dom.dataset.richtextBlockHost = 'true'
+      // ProseMirror marks draggable atom nodes at construction time. The drag
+      // handle remains draggable; the host must not capture field selection.
+      queueMicrotask(() => dom.removeAttribute('draggable'))
       const host: RichTextBlockHost = {
         dom,
         getPos,
@@ -40,11 +43,6 @@ export class RichTextBlockHosts {
           const dragHandle =
             target instanceof Element &&
             target.closest('[data-richtext-drag-handle]')
-          if (event.type === 'dragstart' && dragHandle) {
-            const position = getPos()
-            if (typeof position === 'number')
-              editor.commands.setNodeSelection(position)
-          }
           if (event.type.startsWith('drag') || event.type === 'drop')
             return false
           return !dragHandle
