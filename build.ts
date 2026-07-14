@@ -42,6 +42,7 @@ const external = builtinModules
     'sharp',
     'react',
     'react-dom',
+    'use-sync-external-store',
     'esbuild'
   ])
 
@@ -399,13 +400,7 @@ function jsEntry({
                 'lib0/webcrypto': `data:text/javascript,
                   import {crypto} from '@alinea/iso'
                   export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`,
-
-                'use-sync-external-store': `data:text/javascript,
-                  export const useSyncExternalStore = () => {
-                    throw new Error('useSyncExternalStore is not supported in this environment')
-                  }
-                //`
+                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
               },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33

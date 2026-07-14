@@ -1,0 +1,106 @@
+.RichTextExtensions-heading {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: break-word;
+  white-space: pre-line;
+}
+
+.RichTextExtensions-heading:not(:last-child) {
+  margin-bottom: 20px;
+}
+
+.RichTextExtensions-heading-level1 {
+  font-size: 33px;
+  line-height: 1.25;
+}
+
+.RichTextExtensions-heading-level2 {
+  margin-bottom: 9px;
+  font-size: 18px;
+  line-height: 1.33;
+}
+
+.RichTextExtensions-heading-level3 {
+  margin-bottom: 5px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.RichTextExtensions-heading-level4 {
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.RichTextExtensions-heading-level5 {
+  margin-bottom: 3px;
+  font-size: 11.5px;
+}
+
+.RichTextExtensions-bulletList,
+.RichTextExtensions-orderedList {
+  margin-left: 20px;
+}
+
+.RichTextExtensions-bulletList:not(:last-child),
+.RichTextExtensions-orderedList:not(:last-child) {
+  margin-bottom: 14px;
+}
+
+.RichTextExtensions-listItem:not(:last-child) {
+  margin-bottom: 5px;
+}
+
+.RichTextExtensions-blockquote {
+  padding: 4px 16px;
+  border-left: 2px solid color-mix(in srgb, var(--alinea-danger) 50%, transparent);
+}
+
+.RichTextExtensions-blockquote:not(:last-child) {
+  margin-bottom: 14px;
+}
+
+.RichTextExtensions-link {
+  cursor: text;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--alinea-danger) 40%, transparent);
+  text-underline-offset: 0.3em;
+  overflow-wrap: break-word;
+}
+
+.RichTextExtensions-link:hover {
+  text-decoration-color: currentcolor;
+}
+
+.RichTextExtensions-table {
+  width: 100%;
+  overflow: hidden;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.RichTextExtensions-table:not(:last-child) {
+  margin-bottom: 14px;
+}
+
+.RichTextExtensions-tableCell,
+.RichTextExtensions-tableHeader {
+  padding: 4px 8px;
+  border: 1px solid var(--alinea-border);
+}
+
+.RichTextExtensions-tableCell:global(.selectedCell),
+.RichTextExtensions-tableHeader:global(.selectedCell) {
+  background-color: var(--alinea-primary-subtle);
+}
+
+.RichTextExtensions-tableHeader {
+  background: var(--alinea-header);
+  text-align: left;
+  font-weight: 600;
+}
+
+.RichTextExtensions-highlight {
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
+}

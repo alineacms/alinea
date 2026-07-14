@@ -1,4 +1,5 @@
 import type {GlobalProvider} from '@ladle/react'
+import 'alinea/css'
 import {
   Component,
   type CSSProperties,

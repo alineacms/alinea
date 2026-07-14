@@ -9,6 +9,7 @@
         "@alinea/iso": "^0.3.3",
         "esbuild": "^0.28.0",
         "react-aria-components": "1.17.0",
+        "use-sync-external-store": "^1.6.0",
       },
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
