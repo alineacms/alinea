@@ -63,6 +63,7 @@ import {
 import {cacheRichTextBlocks, fromContent, toContent} from './RichTextContent.js'
 import css from './RichTextField.module.css'
 import {RichTextToolbar} from './RichTextToolbar.js'
+import {PickTextAnchor, usePickTextAnchor} from './PickTextAnchor.js'
 
 const styles = styler(css)
 
@@ -345,7 +346,8 @@ function RTView<Blocks extends Schema>({
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const toolbar = document.getElementById('alinea-toolbar')
-  const picker = usePickTextLink()
+  const linkPicker = usePickTextLink()
+  const anchorPicker = usePickTextAnchor()
   const setValue = useFieldSetter(field)
   const node = useFieldNode<TextDoc>(field)
   const peekValue = useSetAtom(node.peek)
@@ -403,7 +405,8 @@ function RTView<Blocks extends Schema>({
   })
   return (
     <>
-      <PickTextLink picker={picker} />
+      <PickTextLink picker={linkPicker} />
+      <PickTextAnchor picker={anchorPicker} />
       <Label
         description={options.help}
         errorMessage={error}
@@ -443,7 +446,8 @@ function RTView<Blocks extends Schema>({
             editor={editor}
             enableTables={options.enableTables}
             focusToggle={focusToggle}
-            pickLink={picker.pickLink}
+            pickLink={linkPicker.pickLink}
+            pickAnchor={anchorPicker.pickAnchor}
             toolbar={options.toolbar}
           />,
           toolbar

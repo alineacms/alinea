@@ -98,6 +98,10 @@ h5.Heading {
   }
 }
 
+.Anchor {
+  background-color: red;
+}
+
 .Link {
   cursor: text;
   color: inherit;

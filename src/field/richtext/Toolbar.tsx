@@ -3,6 +3,7 @@ import {
   IcAlignJustify,
   IcAlignLeft,
   IcAlignRight,
+  IcRoundAnchor,
   IcRoundFormatBold,
   IcRoundFormatClear,
   IcRoundFormatItalic,
@@ -70,6 +71,7 @@ export interface RichTextToolbarContext {
   enableTables?: boolean
   exec: RichTextCommand
   handleLink: () => void
+  handleAnchor: () => void
   toolbar: ToolbarConfig
 }
 
@@ -341,6 +343,17 @@ export const links = {
   }
 } satisfies ToolbarGroup
 
+export const anchors = {
+  group: {
+    anchor: {
+      icon: () => <IcRoundAnchor />,
+      title: 'Anchor',
+      active: ({editor}) => editor.isActive('anchor'),
+      onSelect: ({handleAnchor}) => handleAnchor()
+    }
+  }
+} satisfies ToolbarGroup
+
 export const quotes = {
   icon: () => <IcRoundQuote />,
   title: 'Blockquote',
@@ -362,6 +375,7 @@ export function defaultToolbar(enableTables: boolean): ToolbarConfig {
       alignment,
       lists,
       links,
+      anchors,
       quotes,
       inserts
     }
@@ -372,6 +386,7 @@ export function defaultToolbar(enableTables: boolean): ToolbarConfig {
     alignment,
     lists,
     links,
+    anchors,
     quotes,
     inserts
   }

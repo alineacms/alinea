@@ -28,10 +28,17 @@ import TextAlign from '@tiptap/extension-text-align'
 import css from './Extensions.module.css'
 import {Link} from './extensions/Link.js'
 import Small from './extensions/Small.js'
-
+import Anchor from './extensions/Anchor.js'
+import {slugify} from 'alinea/core/util/Slugs'
+import {Plugin} from '@tiptap/pm/state'
 const styles = styler(css)
 
-const HeadingWithClasses = Heading.extend({
+const HeadingWithClassesAndIds = Heading.extend({
+  addAttributes() {
+    return {
+      id: {default: null}
+    }
+  },
   renderHTML({node, HTMLAttributes}) {
     const level = this.options.levels.includes(node.attrs.level)
       ? node.attrs.level
@@ -39,9 +46,29 @@ const HeadingWithClasses = Heading.extend({
     return [
       `h${level}`,
       mergeAttributes(HTMLAttributes, {
-        class: styles.Heading(`level${level}`)
+        class: styles.Heading(`level${level}`),
+        id: node.attrs.id
       }),
       0
+    ]
+  },
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        appendTransaction(_transaction, _oldState, newState) {
+          const tr = newState.tr
+          let modified = false
+          newState.doc.descendants((node, pos) => {
+            if (node.type.name !== 'heading') return
+            const slug = slugify(node.textContent)
+            if (node.attrs.id !== slug) {
+              tr.setNodeMarkup(pos, undefined, {...node.attrs, id: slug})
+              modified = true
+            }
+          })
+          return modified ? tr : null
+        }
+      })
     ]
   }
 })
@@ -49,6 +76,11 @@ const HeadingWithClasses = Heading.extend({
 export const extensions = {
   Document,
   Text,
+  Anchor: Anchor.configure({
+    HTMLAttributes: {
+      class: styles.Anchor()
+    }
+  }),
   Paragraph: Paragraph.configure({
     HTMLAttributes: {
       class: styles.Paragraph()
@@ -100,7 +132,7 @@ export const extensions = {
     }
   }),
   HardBreak,
-  Heading: HeadingWithClasses,
+  Heading: HeadingWithClassesAndIds,
   TextAlign: TextAlign.configure({
     types: ['heading', 'paragraph']
   }),

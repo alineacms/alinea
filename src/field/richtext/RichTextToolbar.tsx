@@ -31,6 +31,7 @@ import type {Editor} from '@tiptap/react'
 import {useMemo, type ReactNode} from 'react'
 import css from './RichTextToolbar.module.css'
 import {defaultToolbar} from './Toolbar.js'
+import {PickTextAnchorFunc} from '#/field/richtext/PickTextAnchor.js'
 
 const styles = styler(css)
 
@@ -41,6 +42,7 @@ export interface RichTextToolbarProps {
   enableTables?: boolean
   focusToggle: (target: EventTarget | null) => void
   pickLink?: PickTextLinkFunc
+  pickAnchor?: PickTextAnchorFunc
   toolbar?: ToolbarConfig
 }
 
@@ -96,11 +98,30 @@ export function createLinkHandler(
   }
 }
 
+export function createAnchorHandler(
+  editor: Editor,
+  pickAnchor: PickTextAnchorFunc,
+  exec = createToolbarExec(editor)
+) {
+  return function handleAnchor() {
+    const attr = editor.getAttributes('anchor')
+    return pickAnchor(attr.id).then(picked => {
+      if (picked === undefined) return
+      if (picked.id === '') {
+        exec().unsetAnchor().run()
+        return
+      }
+      exec().setAnchor(picked).run()
+    })
+  }
+}
+
 export function RichTextToolbar({
   editor,
   enableTables,
   focusToggle,
   pickLink,
+  pickAnchor,
   toolbar
 }: RichTextToolbarProps) {
   const config = useMemo(
@@ -116,9 +137,10 @@ export function RichTextToolbar({
       enableTables,
       exec,
       handleLink: createLinkHandler(editor, pickLink, exec),
+      handleAnchor: createAnchorHandler(editor, pickAnchor, exec),
       toolbar: config
     } satisfies RichTextToolbarContext
-  }, [config, editor, enableTables, focusToggle, pickLink])
+  }, [config, editor, enableTables, focusToggle, pickLink, pickAnchor])
   return (
     <div
       tabIndex={-1}
