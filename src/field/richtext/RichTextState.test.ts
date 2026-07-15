@@ -37,6 +37,80 @@ test('document updates preserve reordered block node identity', () => {
   ])
 })
 
+test('complex document updates retain every surviving block node', () => {
+  const first = {
+    [Node.type]: 'Callout',
+    [BlockNode.id]: 'block-1',
+    title: 'First'
+  }
+  const removed = {
+    [Node.type]: 'Callout',
+    [BlockNode.id]: 'block-2',
+    title: 'Removed'
+  }
+  const last = {
+    [Node.type]: 'Callout',
+    [BlockNode.id]: 'block-3',
+    title: 'Last'
+  }
+  const inserted = {
+    [Node.type]: 'Callout',
+    [BlockNode.id]: 'block-4',
+    title: 'Inserted'
+  }
+  const reactive = new ReactiveNode<TextDoc>([
+    paragraph('Before'),
+    first,
+    paragraph('Between first and removed'),
+    removed,
+    last,
+    paragraph('After')
+  ])
+  const store = createStore()
+  const before = store.get(reactive.nodes) as Array<ReactiveNode>
+  const firstNode = before[1]
+  const removedNode = before[3]
+  const lastNode = before[4]
+
+  const next: TextDoc = [
+    last,
+    paragraph('New leading text'),
+    inserted,
+    first,
+    paragraph('New trailing text')
+  ]
+  store.set(documentUpdateAtom(reactive), next)
+
+  const after = store.get(reactive.nodes) as Array<ReactiveNode>
+  test.is(after[0], lastNode)
+  test.is(after[3], firstNode)
+  test.is(after.includes(removedNode), false)
+  test.equal(store.get(reactive.value), next)
+})
+
+test('changing a block type keeps its position node and replaces its fields', () => {
+  const reactive = new ReactiveNode<TextDoc>([
+    {
+      [Node.type]: 'Callout',
+      [BlockNode.id]: 'block-1',
+      title: 'Old field'
+    }
+  ])
+  const store = createStore()
+  const before = (store.get(reactive.nodes) as Array<ReactiveNode>)[0]
+  const replacement = {
+    [Node.type]: 'Banner',
+    [BlockNode.id]: 'block-1',
+    message: 'New field'
+  }
+
+  store.set(documentUpdateAtom(reactive), [replacement])
+
+  const after = (store.get(reactive.nodes) as Array<ReactiveNode>)[0]
+  test.is(after, before)
+  test.equal(store.get(after.value), replacement)
+})
+
 test('block field updates propagate to the complete document value', () => {
   const reactive = new ReactiveNode<TextDoc>([
     {

@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {type TextDoc} from '#/core/TextDoc.js'
+import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {createStore} from 'jotai'
 import {richTextBlocksAtom} from './RichTextBlocks.js'
@@ -21,4 +21,38 @@ test('nested block edits do not invalidate the block index', () => {
   store.set(blockFields.title.value, 'Changed')
 
   test.is(store.get(blocksAtom), before)
+})
+
+test('tracks block order and preserves its reactive node associations', () => {
+  const first = {
+    [Node.type]: 'Callout',
+    [BlockNode.id]: 'block-1',
+    title: 'First'
+  }
+  const second = {
+    [Node.type]: 'Banner',
+    [BlockNode.id]: 'block-2',
+    title: 'Second'
+  }
+  const reactive = new ReactiveNode<TextDoc>([
+    first,
+    {_type: 'paragraph', content: [{_type: 'text', text: 'Between'}]},
+    second
+  ])
+  const store = createStore()
+  const blocksAtom = richTextBlocksAtom(reactive)
+  const before = store.get(blocksAtom)
+
+  store.set(reactive.move, 2, 0)
+
+  const after = store.get(blocksAtom)
+  test.equal(
+    after.map(({id, index, typeName}) => ({id, index, typeName})),
+    [
+      {id: 'block-2', index: 0, typeName: 'Banner'},
+      {id: 'block-1', index: 1, typeName: 'Callout'}
+    ]
+  )
+  test.is(after[0]?.node, before[1]?.node)
+  test.is(after[1]?.node, before[0]?.node)
 })

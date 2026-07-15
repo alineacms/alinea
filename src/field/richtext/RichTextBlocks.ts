@@ -1,4 +1,5 @@
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
+import {isRecord} from '#/core/util/Objects.js'
 import type {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {atom, type Getter} from 'jotai'
 
@@ -40,13 +41,7 @@ function childValue(
   key: string
 ): unknown {
   const children = get(node.nodes)
-  if (!isReactiveObject(children)) return
-  const child = children[key]
+  if (!isRecord(children)) return
+  const child = children[key] as ReactiveNode | undefined
   return child ? get(child.value) : undefined
-}
-
-function isReactiveObject(
-  value: unknown
-): value is Record<string, ReactiveNode> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

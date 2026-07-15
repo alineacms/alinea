@@ -4,6 +4,7 @@ import {
   RichTextCustomToolbarStory,
   RichTextLargeStory,
   RichTextPlainStory,
+  RichTextReadOnlyStory,
   RichTextStory
 } from './RichTextField.story.js'
 
@@ -25,6 +26,17 @@ test.afterEach(async ({page}) => {
 async function expectNoPageErrors(page: Page) {
   await page.waitForTimeout(50)
   expect(pageErrors.get(page)).toEqual([])
+}
+
+interface StoredRichTextNode {
+  [key: string]: unknown
+  _id?: string
+  _type?: string
+}
+
+async function storedValue(page: Page): Promise<Array<StoredRichTextNode>> {
+  const value = await page.getByTestId('value').textContent()
+  return JSON.parse(value ?? '[]')
 }
 
 test('renders a rich text field without an embedded block schema', async ({
@@ -148,6 +160,59 @@ test('preserves rich formatting when copying and pasting', async ({
   await expect(editor.locator('strong')).toHaveText('Pasted bold')
 })
 
+test('pastes embedded blocks with fresh ids and independent fields', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  const titles = page.getByRole('textbox', {name: 'Title'})
+  await titles.fill('Clipboard source')
+  await expect(
+    page.locator('[data-richtext-block-host]').first()
+  ).toHaveAttribute('data-debug-block-value', /Clipboard source/)
+
+  await editor.getByText('After the block.', {exact: true}).click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  await editor.evaluate(element => {
+    const host = element.querySelector<HTMLElement>(
+      '[data-richtext-block-host]'
+    )
+    const serialized = host?.dataset.debugBlockValue
+    if (!serialized) throw new Error('Serialized block snapshot not found')
+    const block = JSON.parse(serialized) as {_id: string; _type: string}
+    const blockElement = document.createElement('div')
+    blockElement.dataset.richtextBlockType = block._type
+    blockElement.setAttribute('_id', block._id)
+    blockElement.setAttribute('data-alinea-block', serialized)
+    const clipboard = new DataTransfer()
+    clipboard.setData('text/plain', '')
+    clipboard.setData('text/html', blockElement.outerHTML)
+    element.dispatchEvent(
+      new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: clipboard
+      })
+    )
+  })
+
+  await expect(titles).toHaveCount(2)
+  await expect(titles.first()).toHaveValue('Clipboard source')
+  await expect(titles.last()).toHaveValue('Clipboard source')
+  const calloutIds = (await storedValue(page))
+    .filter(node => node._type === 'Callout')
+    .map(node => node._id)
+  expect(calloutIds).toHaveLength(2)
+  expect(new Set(calloutIds).size).toBe(2)
+
+  await titles.last().fill('Clipboard copy')
+  await expect(titles.first()).toHaveValue('Clipboard source')
+  await expect(page.getByTestId('value')).toContainText('Clipboard copy')
+})
+
 test('edits text around a React-owned block without page errors', async ({
   mount,
   page
@@ -193,7 +258,6 @@ test('selects text in block fields without dragging the block', async ({
 }) => {
   await mount(<RichTextStory />)
 
-  const block = page.locator('[data-richtext-block="true"]').first()
   const host = page.locator('[data-richtext-block-host]').first()
   const handle = page.getByLabel('Drag Callout block').first()
   const title = page.getByRole('textbox', {name: 'Title'})
@@ -345,6 +409,146 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await page.getByRole('button', {name: 'Callout actions'}).first().click()
   await page.getByRole('button', {name: 'Delete'}).click()
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(1)
+})
+
+test('moves a complex block and keeps its fields editable', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('Before the block.', {exact: true}).click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  await page.getByRole('button', {name: 'Insert block'}).click()
+  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+
+  const titles = page.getByRole('textbox', {name: 'CTA title'})
+  await titles.fill('Original CTA')
+
+  const ctaBlocks = page
+    .locator('[data-richtext-block="true"]')
+    .filter({has: page.getByRole('textbox', {name: 'CTA title'})})
+  await ctaBlocks.first().locator('[data-richtext-block-header="true"]').hover()
+  await page
+    .getByLabel('Drag Call to action block')
+    .first()
+    .dragTo(editor.getByText('After the block.', {exact: true}))
+  await expect
+    .poll(async () => page.getByTestId('value').textContent())
+    .toMatch(/After the block\..*Original CTA/)
+
+  await titles.fill('Moved CTA')
+  await expect(page.getByTestId('value')).toContainText('Moved CTA')
+})
+
+test('duplicates and independently edits a complex block', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('Before the block.', {exact: true}).click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  await page.getByRole('button', {name: 'Insert block'}).click()
+  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+
+  const titles = page.getByRole('textbox', {name: 'CTA title'})
+  await titles.fill('Original CTA')
+  await page.getByRole('button', {name: 'Call to action actions'}).click()
+  await page.getByRole('button', {name: 'Duplicate'}).click()
+
+  await expect(titles).toHaveCount(2)
+  await expect(titles.first()).toHaveValue('Original CTA')
+  await expect(titles.last()).toHaveValue('Original CTA')
+  await titles.last().fill('Copied CTA')
+  await expect(titles.first()).toHaveValue('Original CTA')
+
+  const ctaBlocks = page
+    .locator('[data-richtext-block="true"]')
+    .filter({has: page.getByRole('textbox', {name: 'CTA title'})})
+  const copiedDetails = ctaBlocks
+    .last()
+    .locator('[data-richtext-field] .ProseMirror')
+  await copiedDetails.click()
+  await page.keyboard.type('Copied nested details')
+  await expect(copiedDetails).toContainText('Copied nested details')
+
+  await expect(titles.first()).toHaveValue('Original CTA')
+  await expect(titles.last()).toHaveValue('Copied CTA')
+  await expect(
+    ctaBlocks.last().locator('[data-richtext-field] .ProseMirror')
+  ).toContainText('Copied nested details')
+  const value = await page.getByTestId('value').textContent()
+  expect(value?.indexOf('Original CTA')).toBeLessThan(
+    value?.indexOf('Copied CTA') ?? -1
+  )
+})
+
+test('inserts a block in nested rich text and preserves it while moving', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const outerEditor = page.locator('.ProseMirror').first()
+  const nestedField = page.locator('[data-richtext-field]').nth(1)
+  const nestedEditor = nestedField.locator('.ProseMirror')
+  await nestedEditor.getByText('Nested details.', {exact: true}).click()
+  await page.keyboard.press('End')
+  await page.keyboard.press('Enter')
+  const insertBlock = nestedField.getByRole('button', {name: 'Insert block'})
+  await insertBlock.focus()
+  await page.keyboard.press('Enter')
+  const noteItem = page.getByRole('menuitem', {name: 'Note'})
+  await expect(noteItem).toBeVisible()
+  await noteItem.press('Enter')
+
+  const noteText = page.getByRole('textbox', {name: 'Text'})
+  await expect(page.getByRole('button', {name: 'Note actions'})).toBeVisible()
+  await noteText.fill('Nested note value')
+  await expect(page.getByTestId('value')).toContainText('Nested note value')
+
+  const outerBlock = page.locator('[data-richtext-block="true"]').first()
+  await outerBlock
+    .locator('[data-richtext-block-header="true"]')
+    .first()
+    .hover()
+  await page
+    .getByLabel('Drag Callout block')
+    .dragTo(outerEditor.getByText('After the block.', {exact: true}))
+
+  await expect(noteText).toHaveValue('Nested note value')
+  await noteText.fill('Nested note after move')
+  const value = await page.getByTestId('value').textContent()
+  expect(value?.indexOf('After the block.')).toBeLessThan(
+    value?.indexOf('Nested note after move') ?? -1
+  )
+})
+
+test('keeps outer and inner block fields read only', async ({mount, page}) => {
+  await mount(<RichTextReadOnlyStory />)
+
+  const editors = page.locator('.ProseMirror')
+  const fields = page.locator('[data-richtext-field]')
+  await expect(editors.first()).toHaveAttribute('contenteditable', 'false')
+  await expect(page.locator('[data-richtext-block="true"]')).toHaveAttribute(
+    'data-read-only',
+    'true'
+  )
+  await expect(fields.nth(1)).toHaveAttribute('data-read-only', 'true')
+  await expect(editors.last()).toHaveAttribute('contenteditable', 'false')
+  await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
+  await expect(page.getByLabel('Drag Callout block')).toHaveCount(0)
+  await expect(page.locator('[data-richtext-toolbar="true"]')).toHaveCount(0)
+  await expect(page.getByRole('textbox', {name: 'Title'})).toBeDisabled()
+
+  await page.getByRole('button', {name: 'Callout actions'}).click()
+  await expect(page.getByRole('button', {name: 'Duplicate'})).toBeDisabled()
+  await expect(page.getByRole('button', {name: 'Delete'})).toBeDisabled()
 })
 
 /**
@@ -755,6 +959,48 @@ test('reorders embedded blocks by dragging', async ({mount, page}) => {
     targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
   })
 
+  await expect(titles.first()).toHaveValue('Second')
+  await expect(titles.last()).toHaveValue('Important')
+})
+
+test('undoes and redoes block duplication and movement', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  const titles = page.getByRole('textbox', {name: 'Title'})
+  await page.getByRole('button', {name: 'Callout actions'}).click()
+  await page.getByRole('button', {name: 'Duplicate'}).click()
+  await expect(titles).toHaveCount(2)
+
+  await editor.getByText('Before the block.', {exact: true}).click()
+  await page.keyboard.press('Control+z')
+  await expect(titles).toHaveCount(1)
+  await page.keyboard.press('Control+Shift+z')
+  await expect(titles).toHaveCount(2)
+  await expect(titles.last()).toHaveValue('Important')
+
+  await titles.last().fill('Second')
+  const blocks = page.locator('[data-richtext-block="true"]')
+  await blocks.first().locator('[data-richtext-block-header="true"]').hover()
+  const targetBounds = await blocks.last().boundingBox()
+  if (!targetBounds) throw new Error('Drop target not found')
+  await page
+    .getByLabel('Drag Callout block')
+    .first()
+    .dragTo(blocks.last(), {
+      targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
+    })
+  await expect(titles.first()).toHaveValue('Second')
+  await expect(titles.last()).toHaveValue('Important')
+
+  await editor.getByText('Before the block.', {exact: true}).click()
+  await page.keyboard.press('Control+z')
+  await expect(titles.first()).toHaveValue('Important')
+  await expect(titles.last()).toHaveValue('Second')
+  await page.keyboard.press('Control+Shift+z')
   await expect(titles.first()).toHaveValue('Second')
   await expect(titles.last()).toHaveValue('Important')
 })

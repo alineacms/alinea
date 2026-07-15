@@ -52,6 +52,74 @@ test('restores a block from its snapshot when its live node is unavailable', () 
   )
 })
 
+test('rejects recovery snapshots with a mismatched type or id', () => {
+  test.equal(
+    editorNodes({
+      type: 'doc',
+      content: [
+        {
+          type: 'Callout',
+          attrs: {
+            [BlockNode.id]: 'block-1',
+            'data-alinea-block': {...block, [Node.type]: 'Banner'}
+          }
+        },
+        {
+          type: 'Callout',
+          attrs: {
+            [BlockNode.id]: 'block-2',
+            'data-alinea-block': block
+          }
+        }
+      ]
+    }),
+    [
+      {[Node.type]: 'Callout', [BlockNode.id]: 'block-1'},
+      {[Node.type]: 'Callout', [BlockNode.id]: 'block-2'}
+    ]
+  )
+})
+
+test('rejects a resolver result for another block', () => {
+  const content = editorContent([block])
+
+  test.equal(
+    editorNodes(content, () => ({...block, [BlockNode.id]: 'other'})),
+    [block]
+  )
+})
+
+test('drops internal block snapshots and nullish attributes from elements', () => {
+  test.equal(
+    editorNodes({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          attrs: {
+            textAlign: 'right',
+            empty: null,
+            missing: undefined,
+            'data-alinea-block': block
+          },
+          content: [{type: 'text', text: 'Aligned'}]
+        },
+        {type: 'horizontalRule'}
+      ]
+    }),
+    [
+      {
+        [Node.type]: 'paragraph',
+        textAlign: 'right',
+        [ElementNode.content]: [
+          {[Node.type]: 'text', [TextNode.text]: 'Aligned'}
+        ]
+      },
+      {[Node.type]: 'horizontalRule'}
+    ]
+  )
+})
+
 test('normalizes the editor empty paragraph to an empty field value', () => {
   test.equal(
     editorNodes({

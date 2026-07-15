@@ -168,13 +168,13 @@ export function RichTextFieldView<Blocks extends Schema>({
   useEffect(() => {
     if (!editor) return
     const current = editorNodes(editor.getJSON(), resolveBlock)
-    if (documentIdentity(documentValue) === documentIdentity(current)) return
+    if (documentKey === documentIdentity(current)) return
     editor.commands.setContent(editorContent(documentValue), {
       emitUpdate: false
     })
     lastEditorDocument.current = documentKey
     pendingExternalDocument.current = undefined
-  }, [documentValue, editor, resolveBlock])
+  }, [documentKey, documentValue, editor, resolveBlock])
 
   const toolbarTarget =
     typeof document === 'undefined'
@@ -187,10 +187,11 @@ export function RichTextFieldView<Blocks extends Schema>({
     pendingBlocks.current.set(id, block)
     // The menu preserves the editor selection. Refocusing here makes React
     // inspect ProseMirror-owned DOM while the new block portal is mounting.
-    editor
+    const inserted = editor
       .chain()
       .insertContent({type: block[Node.type], attrs: {[BlockNode.id]: id}})
       .run()
+    if (!inserted) pendingBlocks.current.delete(id)
   }
 
   function checkFocus() {
@@ -335,14 +336,14 @@ function RichTextBlockPortals({
     const id = createId()
     const block = {...value, [BlockNode.id]: id}
     pendingBlocks.set(id, block)
-    editor
+    const inserted = editor
       .chain()
-      .focus()
       .insertContentAt(position + 1, {
         type: host.typeName,
         attrs: {[BlockNode.id]: id}
       })
       .run()
+    if (!inserted) pendingBlocks.delete(id)
   }
 
   return mounted.map(host => {

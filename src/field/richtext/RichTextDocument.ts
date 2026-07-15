@@ -72,9 +72,17 @@ function contentToNodes(
   const {type, text, marks, attrs} = content
   if (!type) return []
   if (Node.isBlock({[Node.type]: type})) {
-    const snapshot = decodeBlockValue(attrs?.[richTextBlockValueAttribute])
-    const id = String(attrs?.[BlockNode.id] ?? snapshot?.[BlockNode.id] ?? '')
-    const block = resolveBlock?.(id, type, snapshot) ?? snapshot
+    const decodedSnapshot = decodeBlockValue(
+      attrs?.[richTextBlockValueAttribute]
+    )
+    const id = String(
+      attrs?.[BlockNode.id] ?? decodedSnapshot?.[BlockNode.id] ?? ''
+    )
+    const snapshot = isMatchingBlock(decodedSnapshot, id, type)
+      ? decodedSnapshot
+      : undefined
+    const resolved = resolveBlock?.(id, type, snapshot)
+    const block = isMatchingBlock(resolved, id, type) ? resolved : snapshot
     return block
       ? [block]
       : [{[Node.type]: type, [BlockNode.id]: id} as BlockNode]
@@ -87,13 +95,16 @@ function contentToNodes(
     if (marks?.length) node[TextNode.marks] = marks.map(contentToMark)
     return [node]
   }
+  const {[richTextBlockValueAttribute]: _blockSnapshot, ...elementAttributes} =
+    attrs ?? {}
+  const children = content.content?.flatMap(node =>
+    contentToNodes(node, resolveBlock)
+  )
   return [
     {
       [Node.type]: type,
-      ...withoutNullish(attrs),
-      [ElementNode.content]: content.content?.flatMap(node =>
-        contentToNodes(node, resolveBlock)
-      )
+      ...withoutNullish(elementAttributes),
+      ...(children === undefined ? {} : {[ElementNode.content]: children})
     }
   ]
 }
@@ -155,4 +166,17 @@ function isElement(value: unknown): value is ElementNode {
 
 function isBlock(value: unknown): value is BlockNode {
   return isRecord(value) && Node.isBlock(value)
+}
+
+function isMatchingBlock(
+  value: unknown,
+  id: string,
+  typeName: string
+): value is BlockNode {
+  return (
+    isBlock(value) &&
+    value[Node.type] === typeName &&
+    typeof value[BlockNode.id] === 'string' &&
+    value[BlockNode.id] === id
+  )
 }

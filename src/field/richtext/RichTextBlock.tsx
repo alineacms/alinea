@@ -25,10 +25,10 @@ import {
   IcRoundClose,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
-import type {ReactiveNode} from '#/dashboard/store/Dashboard.js'
+import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
-import {memo, useState} from 'react'
+import {memo, useMemo, useState} from 'react'
 import css from './RichTextBlock.module.css'
 
 const styles = styler(css)
@@ -51,6 +51,10 @@ export const RichTextBlock = memo(function RichTextBlock({
   const label = Type.label(type)
   const typeIcon = getType(type).icon
   const value = useAtomValue(node.value)
+  const editorNode = useMemo(
+    () => (readOnly ? new ReactiveNode<object>(value, true) : node),
+    [node, readOnly, value]
+  )
   const id = Node.isBlock(value) ? String(value[BlockNode.id]) : ''
   const [actionsOpen, setActionsOpen] = useState(false)
 
@@ -62,6 +66,7 @@ export const RichTextBlock = memo(function RichTextBlock({
     <List
       className={styles.RichTextBlock()}
       data-depth="muted"
+      data-read-only={readOnly || undefined}
       data-richtext-block="true"
     >
       <ListRow role="listitem" tabIndex={0}>
@@ -127,7 +132,7 @@ export const RichTextBlock = memo(function RichTextBlock({
           </ListRowActions>
         </ListRowHeader>
         <ListRowBody data-richtext-block-editor="true">
-          <NodeEditor type={type} node={node} />
+          <NodeEditor type={type} node={editorNode} />
         </ListRowBody>
       </ListRow>
     </List>
