@@ -73,8 +73,7 @@
   "dependencies": {
     "@alinea/iso": "^0.3.3",
     "esbuild": "^0.28.0",
-    "react-aria-components": "^1.17.0",
-    "use-sync-external-store": "^1.6.0"
+    "react-aria-components": "^1.17.0"
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
@@ -125,6 +124,7 @@
     "comlink": "^4.4.2",
     "compare-versions": "^4.1.3",
     "cookie-es": "^1.2.2",
+    "dequal": "^2.0.3",
     "escape-html": "^1.0.3",
     "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "fake-indexeddb": "^6.0.0",

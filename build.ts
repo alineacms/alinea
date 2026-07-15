@@ -42,9 +42,18 @@ const external = builtinModules
     'sharp',
     'react',
     'react-dom',
-    'use-sync-external-store',
     'esbuild'
   ])
+
+const reactSyncExternalStore: Plugin = {
+  name: 'react-sync-external-store',
+  setup(build) {
+    build.onResolve(
+      {filter: /^use-sync-external-store\/shim(?:\/index\.js)?$/},
+      () => ({path: 'react', external: true})
+    )
+  }
+}
 
 function dirsOf(source: string) {
   const contents = fs.readdirSync(source, {withFileTypes: true})
@@ -344,6 +353,7 @@ function jsEntry({
 }): Plugin {
   const plugins = [
     cssModulesJsPlugin,
+    reactSyncExternalStore,
     internalPlugin,
     externalize,
     oauthIsoCrypto,
