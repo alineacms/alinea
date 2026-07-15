@@ -46,7 +46,10 @@ test('stores block identity with a recovery snapshot in ProseMirror', () => {
 
 test('restores a block from its snapshot when its live node is unavailable', () => {
   const content = editorContent([block])
-  test.equal(editorNodes(content, () => undefined), [block])
+  test.equal(
+    editorNodes(content, () => undefined),
+    [block]
+  )
 })
 
 test('normalizes the editor empty paragraph to an empty field value', () => {

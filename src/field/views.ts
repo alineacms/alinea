@@ -23,7 +23,7 @@ import {PathFieldView} from './path/PathField.view.js'
 import {
   RichTextFieldCompactView,
   RichTextFieldView
-} from './richtext2/RichTextField.view.js'
+} from './richtext/RichTextField.view.js'
 import {
   MultipleSelectFieldView,
   SelectFieldView

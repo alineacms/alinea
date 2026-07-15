@@ -19,8 +19,8 @@ export const viewKeys = {
   ObjectInput: 'alinea/field/object/ObjectField.view#ObjectFieldView',
   PathInput: 'alinea/field/path/PathField.view#PathFieldView',
   RichTextCompact:
-    'alinea/field/richtext2/RichTextField.view#RichTextFieldCompactView',
-  RichTextInput: 'alinea/field/richtext2/RichTextField.view#RichTextFieldView',
+    'alinea/field/richtext/RichTextField.view#RichTextFieldCompactView',
+  RichTextInput: 'alinea/field/richtext/RichTextField.view#RichTextFieldView',
   SelectInput: 'alinea/field/select/SelectField.view#SelectFieldView',
   MultipleSelectInput:
     'alinea/field/select/SelectField.view#MultipleSelectFieldView',

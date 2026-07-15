@@ -4,15 +4,15 @@ import {richText} from '#/field/richtext/RichTextField.js'
 
 const test = suite(import.meta)
 
-test('Field.richText references the richtext2 views', () => {
+test('Field.richText references the richtext views', () => {
   const field = richText('Body')
 
   test.is(
     Field.view(field),
-    'alinea/field/richtext2/RichTextField.view#RichTextFieldView'
+    'alinea/field/richtext/RichTextField.view#RichTextFieldView'
   )
   test.is(
     Field.compactView(field),
-    'alinea/field/richtext2/RichTextField.view#RichTextFieldCompactView'
+    'alinea/field/richtext/RichTextField.view#RichTextFieldCompactView'
   )
 })

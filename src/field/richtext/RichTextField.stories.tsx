@@ -1,10 +1,10 @@
 import 'alinea/theme.css'
 import type {CSSProperties, ReactNode} from 'react'
 import {
-  RichText2EmptyStory,
-  RichText2PlainStory,
-  RichText2ReadOnlyStory,
-  RichText2Story
+  RichTextEmptyStory,
+  RichTextPlainStory,
+  RichTextReadOnlyStory,
+  RichTextStory
 } from './RichTextField.story.js'
 
 const storyStyle: CSSProperties = {
@@ -23,7 +23,7 @@ function StoryFrame({children}: StoryFrameProps) {
 export function Blocks() {
   return (
     <StoryFrame>
-      <RichText2Story />
+      <RichTextStory />
     </StoryFrame>
   )
 }
@@ -31,7 +31,7 @@ export function Blocks() {
 export function PlainText() {
   return (
     <StoryFrame>
-      <RichText2PlainStory />
+      <RichTextPlainStory />
     </StoryFrame>
   )
 }
@@ -39,7 +39,7 @@ export function PlainText() {
 export function Empty() {
   return (
     <StoryFrame>
-      <RichText2EmptyStory />
+      <RichTextEmptyStory />
     </StoryFrame>
   )
 }
@@ -47,7 +47,7 @@ export function Empty() {
 export function ReadOnly() {
   return (
     <StoryFrame>
-      <RichText2ReadOnlyStory />
+      <RichTextReadOnlyStory />
     </StoryFrame>
   )
 }

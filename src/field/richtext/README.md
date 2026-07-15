@@ -1,4 +1,4 @@
-# Rich text v2
+# Rich text
 
 The existing editor places React `NodeEditor` trees inside ProseMirror node
 views. ProseMirror owns and synchronously mutates that DOM while React also
@@ -17,11 +17,12 @@ blocks are atom node views containing only a stable DOM host. React portals the
 `NodeEditor` into that host; ProseMirror owns the host and React owns everything
 inside it, so neither renderer mutates the other's DOM.
 
-`RichTextDocument.ts` is the pure conversion boundary. ProseMirror stores only
-each block's type and `_id`, never its form value. `RichTextState.ts` reconciles
-the document order into Jotai while retaining existing block `ReactiveNode`
-instances. `RichTextBlocks.ts` observes only block identity and order, so typing
-in a nested field does not rerender the document or surrounding text.
+`RichTextDocument.ts` is the pure conversion boundary. ProseMirror stores each
+block's type and `_id`, plus a recovery snapshot for undo and redo; live block
+values remain in Jotai. `RichTextState.ts` reconciles the document order into
+Jotai while retaining existing block `ReactiveNode` instances.
+`RichTextBlocks.ts` observes only block identity and order, so typing in a
+nested field does not rerender the document or surrounding text.
 
 The toolbar, embedded block shell and insert menu use the v2 component surface
 from `src/components.ts`. Their small layout wrappers are styled locally with

@@ -6,80 +6,31 @@ import {
   DashboardEditor,
   ReactiveNode
 } from '#/dashboard/store/Dashboard.js'
-import {atom, useAtomValue, type Atom} from 'jotai'
-import {useMemo, type ComponentType} from 'react'
-import {check} from '../check/CheckField.js'
-import {code} from '../code/CodeField.js'
-import {select} from '../select/SelectField.js'
-import {text} from '../text/TextField.js'
-import {views} from '../views.js'
 import {richText} from './RichTextField.js'
+import {check} from '#/field/check.js'
+import {code} from '#/field/code.js'
+import {select} from '#/field/select.js'
+import {text} from '#/field/text/TextField.js'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {useMemo} from 'react'
+import {views} from '../views.js'
 
-interface TestDashboard {
-  view(key: string): Atom<ComponentType | undefined>
-}
-
-const ctaType = type('Call to action', {
-  fields: {}
+const note = type('Note', {
+  fields: {text: text('Text', {multiline: true})}
 })
 
-const noteType = type('Note', {
-  fields: {}
-})
-
-const nestedCtaType = type('Call to action', {
-  fields: {
-    details: richText('Details', {
-      schema: {
-        Note: noteType
-      }
-    })
-  }
-})
-
-const bodyField = richText('Body', {
-  schema: {
-    Cta: ctaType
-  }
-})
-
-const nestedBodyField = richText('Body', {
-  schema: {
-    Cta: nestedCtaType
-  }
-})
-
-const entryType = type('Entry', {
-  fields: {
-    body: bodyField
-  }
-})
-
-const nestedEntryType = type('Entry', {
-  fields: {
-    body: nestedBodyField
-  }
-})
-
-const fixtureNoteType = type('Note', {
-  fields: {
-    text: text('Text', {
-      multiline: true,
-      placeholder: 'Add a nested note'
-    })
-  }
-})
-
-const fixtureCtaType = type('Call to action', {
+const callout = type('Callout', {
   fields: {
     title: text('Title'),
-    text: text('Text', {
-      multiline: true,
-      placeholder: 'Write a short prompt'
-    }),
-    actionCode: code('Action code', {
-      language: 'ts'
-    }),
+    details: richText('Details', {schema: {Note: note}})
+  }
+})
+
+const cta = type('Call to action', {
+  fields: {
+    title: text('CTA title'),
+    text: text('CTA text', {multiline: true}),
+    actionCode: code('Action code', {language: 'ts'}),
     variant: select('Variant', {
       options: {
         primary: 'Primary',
@@ -89,200 +40,116 @@ const fixtureCtaType = type('Call to action', {
       initialValue: 'primary'
     }),
     targets: select.multiple('Targets', {
-      options: {
-        header: 'Header',
-        sidebar: 'Sidebar',
-        footer: 'Footer'
-      },
+      options: {header: 'Header', sidebar: 'Sidebar', footer: 'Footer'},
       initialValue: ['header', 'footer']
     }),
-    details: richText('Details', {
-      schema: {
-        Note: fixtureNoteType
-      }
-    }),
+    details: richText('CTA details', {schema: {Note: note}}),
     featured: check('Featured')
   }
 })
 
-const fixtureQuoteType = type('Quote', {
-  fields: {
-    quote: text('Quote', {
-      multiline: true,
-      placeholder: 'Add a quote'
-    }),
-    attribution: text('Attribution')
-  }
+const body = richText('Body', {
+  schema: {Callout: callout, Cta: cta},
+  enableTables: true
 })
+const entry = type('Entry', {fields: {body}})
+const plainBody = richText('Body', {enableTables: true})
+const plainEntry = type('Plain entry', {fields: {body: plainBody}})
+const readOnlyBody = richText('Body', {
+  schema: {Callout: callout, Cta: cta},
+  enableTables: true,
+  readOnly: true
+})
+const readOnlyEntry = type('Read-only entry', {fields: {body: readOnlyBody}})
 
-const fixtureBodyField = richText('Body', {
-  schema: {
-    Cta: fixtureCtaType,
-    Quote: fixtureQuoteType
-  }
-})
+export function RichTextStory() {
+  return <RichTextFixture initialBody={blocksValue} entryType={entry} />
+}
 
-const fixtureType = type('Entry', {
-  fields: {
-    body: fixtureBodyField
-  }
-})
+export function RichTextPlainStory() {
+  return (
+    <RichTextFixture
+      initialBody={[
+        paragraph('Select this text to try headings, formatting and links.'),
+        paragraph('Press Enter to create another paragraph and test history.')
+      ]}
+      entryType={plainEntry}
+    />
+  )
+}
+
+export function RichTextEmptyStory() {
+  return <RichTextFixture initialBody={[]} entryType={plainEntry} />
+}
+
+export function RichTextReadOnlyStory() {
+  return <RichTextFixture initialBody={blocksValue} entryType={readOnlyEntry} />
+}
+
+interface RichTextFixtureProps {
+  initialBody: Array<object>
+  entryType: typeof entry | typeof plainEntry | typeof readOnlyEntry
+}
+
+function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
+  const state = useMemo(() => {
+    const dashboard = createDashboard()
+    const node = new ReactiveNode<object>({
+      body: structuredClone(initialBody)
+    })
+    return {
+      dashboard,
+      editor: new DashboardEditor(dashboard, entryType, node)
+    }
+  }, [entryType, initialBody])
+  const field = state.editor.field('body')
+  if (!field) throw new Error('Body field not found')
+  const value = useAtomValue(field.value)
+  const reset = useSetAtom(state.editor.node.reset)
+  const replace = useSetAtom(field.value)
+  return (
+    <DashboardScopeInternal dashboard={state.dashboard}>
+      <EditorScope editor={state.editor}>
+        <div id="alinea-toolbar" />
+        <button type="button" onClick={() => reset()}>
+          Reset body
+        </button>
+        <button
+          type="button"
+          onClick={() => replace([paragraph('Externally replaced.')])}
+        >
+          Replace body
+        </button>
+        <FieldsEditor />
+        <pre data-testid="value">{JSON.stringify(value)}</pre>
+      </EditorScope>
+    </DashboardScopeInternal>
+  )
+}
 
 function createDashboard(): Dashboard {
   const dashboard = {
     view(key: string) {
       return atom(() => views[key])
     }
-  } satisfies TestDashboard
+  }
   return dashboard as unknown as Dashboard
 }
 
-export function RichTextBlockEditingStory() {
-  return <RichTextBlockStory initialBody={initialBody} type={entryType} />
-}
-
-export function RichTextBlockInsertStory() {
-  return <RichTextBlockStory initialBody={insertInitialBody} type={entryType} />
-}
-
-export function RichTextNestedBlockStory() {
-  return (
-    <RichTextBlockStory
-      initialBody={nestedInitialBody}
-      type={nestedEntryType}
-    />
-  )
-}
-
-export function RichTextFixtureBlocksStory() {
-  return <RichTextBlockStory initialBody={fixtureBlocksBody} type={fixtureType} />
-}
-
-interface RichTextBlockStoryProps {
-  initialBody: Array<object>
-  type: typeof entryType | typeof nestedEntryType | typeof fixtureType
-}
-
-function RichTextBlockStory({initialBody, type}: RichTextBlockStoryProps) {
-  const {dashboard, editor, node} = useMemo(() => {
-    const dashboard = createDashboard()
-    const node = new ReactiveNode<object>({
-      body: initialBody
-    })
-    return {
-      dashboard,
-      node,
-      editor: new DashboardEditor(dashboard, type, node)
-    }
-  }, [initialBody, type])
-  const body = editor.field('body')
-  if (!body) throw new Error('Body field not found')
-  const bodyValue = useAtomValue(body.value)
-  return (
-    <DashboardScopeInternal dashboard={dashboard}>
-      <EditorScope editor={editor}>
-        <div id="alinea-toolbar" />
-        <FieldsEditor />
-        <pre data-testid="value">{JSON.stringify({body: bodyValue})}</pre>
-      </EditorScope>
-    </DashboardScopeInternal>
-  )
-}
-
-const initialBody = [
-  {
+function paragraph(text: string) {
+  return {
     _type: 'paragraph',
-    content: [{_type: 'text', text: 'Before the block.'}]
-  },
-  {
-    _id: 'cta-block',
-    _type: 'Cta'
-  },
-  {
-    _type: 'paragraph',
-    content: [{_type: 'text', text: 'After the block.'}]
+    content: [{_type: 'text', text}]
   }
-]
+}
 
-const insertInitialBody = [
+const blocksValue = [
+  paragraph('Before the block.'),
   {
-    _type: 'paragraph',
-    content: [{_type: 'text', text: 'Before the block.'}]
+    _type: 'Callout',
+    _id: 'callout-1',
+    title: 'Important',
+    details: [paragraph('Nested details.')]
   },
-  {
-    _id: 'insert-cta-block',
-    _type: 'Cta'
-  },
-  {
-    _type: 'paragraph',
-    content: [{_type: 'text', text: 'After the block.'}]
-  }
-]
-
-const nestedInitialBody = [
-  {
-    _type: 'paragraph',
-    content: [{_type: 'text', text: 'Before the block.'}]
-  },
-  {
-    _id: 'cta-block',
-    _type: 'Cta',
-    details: [
-      {
-        _type: 'paragraph',
-        content: [{_type: 'text', text: 'Nested details before note.'}]
-      },
-      {
-        _id: 'note-block',
-        _type: 'Note'
-      },
-      {
-        _type: 'paragraph',
-        content: [{_type: 'text', text: 'Nested details after note.'}]
-      }
-    ]
-  },
-  {
-    _type: 'paragraph',
-    content: [{_type: 'text', text: 'After the block.'}]
-  }
-]
-
-const fixtureBlocksBody = [
-  {
-    _type: 'paragraph',
-    content: [
-      {
-        _type: 'text',
-        text: 'This fixture page includes rich text blocks so the v2 insert menu has something real to work with.'
-      }
-    ]
-  },
-  {
-    _type: 'Cta',
-    _id: 'fixture-cta-block',
-    title: 'Try inserting another block',
-    text: 'Use the insert menu to add more blocks between text fragments.',
-    actionCode: "router.push('/docs/blocks')",
-    variant: 'primary',
-    targets: ['header', 'footer'],
-    details: [],
-    featured: true
-  },
-  {
-    _type: 'paragraph',
-    content: [
-      {
-        _type: 'text',
-        text: 'The quote below is another rich text block instance stored inline with the document.'
-      }
-    ]
-  },
-  {
-    _type: 'Quote',
-    _id: 'fixture-quote-block',
-    quote:
-      'Blocks should feel like first-class parts of the document, not a bolted-on exception.',
-    attribution: 'Fixture content'
-  }
+  paragraph('After the block.')
 ]
