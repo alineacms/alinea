@@ -1,5 +1,6 @@
 import {createCMS, Entry} from '#/core.js'
 import {ListRow} from '#/core/ListRow.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {Config, Field} from '#/index.js'
 import {createEntryIndex} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
@@ -147,10 +148,6 @@ function aliasUrls(value: unknown): Array<string> {
     const url = alias.url
     return typeof url === 'string' ? [url] : []
   })
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 test('create blocks duplicate metadata URL aliases per root', async () => {

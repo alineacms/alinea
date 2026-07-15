@@ -18,6 +18,7 @@ import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -397,8 +398,4 @@ function requireSub(user: UserInput): User {
     throw new HttpError(400, 'Expected user sub')
   }
   return {...user, sub: user.sub}
-}
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return input !== null && typeof input === 'object' && !Array.isArray(input)
 }

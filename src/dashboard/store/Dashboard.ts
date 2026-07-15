@@ -1602,7 +1602,10 @@ export class DashboardField {
     const defaultOptions = Field.options(this.field)
     const tracker = optionTrackerOf(this.field)
     const update = tracker ? tracker(get(this.#getter)) : undefined
-    const options = {...defaultOptions, ...update}
+    const trackedOptions = {...defaultOptions, ...update}
+    const options = this.draft.node.readOnly
+      ? {...trackedOptions, readOnly: true}
+      : trackedOptions
     const resource = this.draft.resource
     if (!resource) return options
     const config = get(this.draft.dashboard.config)
