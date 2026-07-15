@@ -1,4 +1,5 @@
 import {BlockNode, Node} from '#/core/TextDoc.js'
+import {isRecord} from '#/core/util/Objects.js'
 
 export const richTextBlockValueAttribute = 'data-alinea-block'
 
@@ -26,9 +27,7 @@ export function decodeBlockValue(value: unknown): BlockNode | undefined {
 
 function isBlockValue(value: unknown): value is BlockNode {
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value) &&
+    isRecord(value) &&
     Node.isBlock(value) &&
     typeof value[BlockNode.id] === 'string'
   )

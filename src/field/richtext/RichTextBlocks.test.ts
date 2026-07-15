@@ -2,7 +2,7 @@ import {suite} from '@alinea/suite'
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {createStore} from 'jotai'
-import {richTextBlocksAtom} from './RichTextBlocks.js'
+import {richTextBlocksAtom, richTextStructureAtom} from './RichTextBlocks.js'
 
 const test = suite(import.meta)
 
@@ -21,6 +21,28 @@ test('nested block edits do not invalidate the block index', () => {
   store.set(blockFields.title.value, 'Changed')
 
   test.is(store.get(blocksAtom), before)
+})
+
+test('projects block identity without subscribing to its fields', () => {
+  const reactive = new ReactiveNode<TextDoc>([
+    {
+      [Node.type]: 'Callout',
+      [BlockNode.id]: 'block-1',
+      title: 'Before'
+    }
+  ])
+  const store = createStore()
+  const documentAtom = richTextStructureAtom(reactive)
+  const before = store.get(documentAtom)
+  const [blockNode] = store.get(reactive.nodes) as Array<ReactiveNode<object>>
+  const fields = store.get(blockNode.nodes) as Record<string, ReactiveNode>
+
+  store.set(fields.title.value, 'After')
+
+  test.is(store.get(documentAtom), before)
+  test.equal(before.structure, [
+    {[Node.type]: 'Callout', [BlockNode.id]: 'block-1'}
+  ])
 })
 
 test('tracks block order and preserves its reactive node associations', () => {

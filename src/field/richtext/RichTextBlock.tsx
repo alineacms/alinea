@@ -16,7 +16,6 @@ import {
   Popover
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
-import {BlockNode, Node} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
@@ -34,6 +33,7 @@ import css from './RichTextBlock.module.css'
 const styles = styler(css)
 
 export interface RichTextBlockProps {
+  id: string
   node: ReactiveNode<object>
   type: Type
   readOnly: boolean
@@ -42,6 +42,7 @@ export interface RichTextBlockProps {
 }
 
 export const RichTextBlock = memo(function RichTextBlock({
+  id,
   node,
   type,
   readOnly,
@@ -50,12 +51,6 @@ export const RichTextBlock = memo(function RichTextBlock({
 }: RichTextBlockProps) {
   const label = Type.label(type)
   const typeIcon = getType(type).icon
-  const value = useAtomValue(node.value)
-  const editorNode = useMemo(
-    () => (readOnly ? new ReactiveNode<object>(value, true) : node),
-    [node, readOnly, value]
-  )
-  const id = Node.isBlock(value) ? String(value[BlockNode.id]) : ''
   const [actionsOpen, setActionsOpen] = useState(false)
 
   function closeActions() {
@@ -132,9 +127,27 @@ export const RichTextBlock = memo(function RichTextBlock({
           </ListRowActions>
         </ListRowHeader>
         <ListRowBody data-richtext-block-editor="true">
-          <NodeEditor type={type} node={editorNode} />
+          {readOnly ? (
+            <ReadOnlyBlockEditor node={node} type={type} />
+          ) : (
+            <NodeEditor node={node} type={type} />
+          )}
         </ListRowBody>
       </ListRow>
     </List>
   )
 })
+
+interface ReadOnlyBlockEditorProps {
+  node: ReactiveNode<object>
+  type: Type
+}
+
+function ReadOnlyBlockEditor({node, type}: ReadOnlyBlockEditorProps) {
+  const value = useAtomValue(node.value)
+  const readOnlyNode = useMemo(
+    () => new ReactiveNode<object>(value, true),
+    [value]
+  )
+  return <NodeEditor node={readOnlyNode} type={type} />
+}

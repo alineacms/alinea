@@ -5,7 +5,6 @@ import {entries} from '#/core/util/Objects.js'
 import styler from '@alinea/styler'
 import {
   Extension,
-  Mark,
   mergeAttributes,
   Node as TipTapNode,
   type AnyExtension
@@ -38,124 +37,13 @@ import {
   encodeBlockValue,
   richTextBlockValueAttribute
 } from './RichTextBlockValue.js'
+import {Link} from './extensions/Link.js'
+import Small from './extensions/Small.js'
 import css from './RichTextExtensions.module.css'
 
 const styles = styler(css)
 
-interface MarkOptions {
-  HTMLAttributes: Record<string, unknown>
-}
-
-interface LinkAttributes {
-  'data-id'?: string
-  'data-entry'?: string
-  'data-link'?: string
-  'data-suffix'?: string
-  href?: string
-  target?: string
-  title?: string
-}
-
-declare module '@tiptap/core' {
-  interface Commands<ReturnType> {
-    link: {
-      setLink: (attributes: LinkAttributes) => ReturnType
-      toggleLink: (attributes: LinkAttributes) => ReturnType
-      unsetLink: () => ReturnType
-    }
-    small: {
-      setSmall: () => ReturnType
-      toggleSmall: () => ReturnType
-      unsetSmall: () => ReturnType
-    }
-  }
-}
-
-const Link = Mark.create<MarkOptions>({
-  name: 'link',
-  priority: 1000,
-  keepOnSplit: false,
-  addOptions() {
-    return {HTMLAttributes: {rel: 'noopener noreferrer nofollow'}}
-  },
-  addAttributes() {
-    return {
-      'data-id': {default: null},
-      'data-entry': {default: null},
-      'data-link': {default: null},
-      'data-suffix': {default: null},
-      href: {default: null},
-      target: {default: this.options.HTMLAttributes.target},
-      title: {default: null}
-    }
-  },
-  parseHTML() {
-    return [{tag: 'a:not([href *= "javascript:" i])'}]
-  },
-  renderHTML({HTMLAttributes}) {
-    return [
-      'a',
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
-      0
-    ]
-  },
-  addKeyboardShortcuts() {
-    return {'Mod-k': () => this.editor.commands.setLink({})}
-  },
-  addCommands() {
-    return {
-      setLink:
-        attributes =>
-        ({chain}) =>
-          chain().setMark(this.name, attributes).run(),
-      toggleLink:
-        attributes =>
-        ({chain}) =>
-          chain()
-            .toggleMark(this.name, attributes, {extendEmptyMarkRange: true})
-            .run(),
-      unsetLink:
-        () =>
-        ({chain}) =>
-          chain().unsetMark(this.name, {extendEmptyMarkRange: true}).run()
-    }
-  }
-})
-
-const Small = Mark.create<MarkOptions>({
-  name: 'small',
-  addOptions() {
-    return {HTMLAttributes: {}}
-  },
-  parseHTML() {
-    return [{tag: 'small'}]
-  },
-  renderHTML({HTMLAttributes}) {
-    return [
-      'small',
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
-      0
-    ]
-  },
-  addCommands() {
-    return {
-      setSmall:
-        () =>
-        ({commands}) =>
-          commands.setMark(this.name),
-      toggleSmall:
-        () =>
-        ({commands}) =>
-          commands.toggleMark(this.name),
-      unsetSmall:
-        () =>
-        ({commands}) =>
-          commands.unsetMark(this.name)
-    }
-  }
-})
-
-const StyledHeading = Heading.extend({
+const HeadingWithClasses = Heading.extend({
   renderHTML({node, HTMLAttributes}) {
     const level = this.options.levels.includes(node.attrs.level)
       ? node.attrs.level
@@ -176,7 +64,7 @@ export function richTextDocumentExtension(hasEmbeddedBlocks: boolean) {
   })
 }
 
-export const RichTextBlockClipboard = Extension.create({
+export const richTextBlockClipboard = Extension.create({
   name: 'richTextBlockClipboard',
   addProseMirrorPlugins() {
     let draggedBlockId: string | undefined
@@ -223,72 +111,13 @@ export const RichTextBlockClipboard = Extension.create({
   }
 })
 
+export const extensions = createExtensions()
+
 export function defaultExtensions(): Array<AnyExtension> {
-  return [
-    Text,
-    Paragraph.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.paragraph()}
-    }),
-    Small.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.small()}
-    }),
-    Bold.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.bold()}
-    }),
-    Italic.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.italic()}
-    }),
-    Strike.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.strike()}
-    }),
-    HorizontalRule.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.rule()}
-    }),
-    BulletList.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.bulletList()}
-    }),
-    OrderedList.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.orderedList()}
-    }),
-    ListItem.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.listItem()}
-    }),
-    Blockquote.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.blockquote()}
-    }),
-    HardBreak,
-    StyledHeading,
-    TextAlign.configure({types: ['heading', 'paragraph']}),
-    Dropcursor,
-    Gapcursor,
-    Link.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.link()}
-    }),
-    FloatingMenu,
-    Superscript.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.superscript()}
-    }),
-    Subscript.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.subscript()}
-    }),
-    Table.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.table()}
-    }),
-    TableCell.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.tableCell()}
-    }),
-    TableHeader.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.tableHeader()}
-    }),
-    TableRow,
-    Highlight.configure({
-      HTMLAttributes: {class: styles.RichTextExtensions.highlight()}
-    }),
-    UndoRedo
-  ]
+  return Object.values(createExtensions())
 }
 
-export function blockExtensions(
+export function richTextBlockExtensions(
   schema: Schema | undefined,
   hosts: RichTextBlockHosts
 ): Array<AnyExtension> {
@@ -335,6 +164,72 @@ export function blockExtensions(
       }
     })
   )
+}
+
+function createExtensions() {
+  return {
+    Document,
+    Text,
+    Paragraph: Paragraph.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.paragraph()}
+    }),
+    Small: Small.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.small()}
+    }),
+    Bold: Bold.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.bold()}
+    }),
+    Italic: Italic.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.italic()}
+    }),
+    Strike: Strike.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.strike()}
+    }),
+    HorizontalRule: HorizontalRule.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.rule()}
+    }),
+    BulletList: BulletList.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.bulletList()}
+    }),
+    OrderedList: OrderedList.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.orderedList()}
+    }),
+    ListItem: ListItem.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.listItem()}
+    }),
+    Blockquote: Blockquote.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.blockquote()}
+    }),
+    HardBreak,
+    Heading: HeadingWithClasses,
+    TextAlign: TextAlign.configure({types: ['heading', 'paragraph']}),
+    Dropcursor,
+    Gapcursor,
+    Link: Link.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.link()}
+    }),
+    FloatingMenu,
+    SuperScript: Superscript.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.superscript()}
+    }),
+    SubScript: Subscript.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.subscript()}
+    }),
+    Table: Table.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.table()}
+    }),
+    TableCell: TableCell.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.tableCell()}
+    }),
+    TableHeader: TableHeader.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.tableHeader()}
+    }),
+    TableRow,
+    Highlight: Highlight.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.highlight()}
+    }),
+    UndoRedo
+  }
 }
 
 function moveDroppedBlock(

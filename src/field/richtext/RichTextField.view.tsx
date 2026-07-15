@@ -29,7 +29,7 @@ import {createPortal} from 'react-dom'
 import {RichTextBlock} from './RichTextBlock.js'
 import {
   type ReactiveRichTextBlock,
-  richTextBlocksAtom
+  richTextStructureAtom
 } from './RichTextBlocks.js'
 import {
   type RichTextBlockHost,
@@ -37,9 +37,9 @@ import {
 } from './RichTextBlockHost.js'
 import {editorContent, editorNodes} from './RichTextDocument.js'
 import {
-  blockExtensions,
   defaultExtensions,
-  RichTextBlockClipboard,
+  richTextBlockClipboard,
+  richTextBlockExtensions,
   richTextDocumentExtension
 } from './RichTextExtensions.js'
 import {
@@ -65,16 +65,19 @@ export function RichTextFieldView<Blocks extends Schema>({
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const fieldNode = useFieldNode<TextDoc>(field)
-  const documentValue = useAtomValue(fieldNode.value)
   const store = useStore()
-  const blocks = useAtomValue(
-    useMemo(() => richTextBlocksAtom(fieldNode), [fieldNode])
+  const {blocks, structure} = useAtomValue(
+    useMemo(() => richTextStructureAtom(fieldNode), [fieldNode])
   )
-  const blocksRef = useRef(blocks)
-  blocksRef.current = blocks
+  const blocksById = useMemo(
+    () => new Map(blocks.map(block => [block.id, block])),
+    [blocks]
+  )
+  const blocksByIdRef = useRef(blocksById)
+  blocksByIdRef.current = blocksById
   const lastEditorDocument = useRef<string>()
   const pendingExternalDocument = useRef<string>()
-  const documentKey = documentIdentity(documentValue)
+  const documentKey = documentStructureKey(structure)
   if (lastEditorDocument.current && lastEditorDocument.current !== documentKey)
     pendingExternalDocument.current = documentKey
   const updateDocument = useSetAtom(
@@ -93,10 +96,10 @@ export function RichTextFieldView<Blocks extends Schema>({
     const configured = options.extensions
       ? Object.values(options.extensions)
       : defaultExtensions()
-    const blocks = blockExtensions(options.schema, hosts)
+    const blocks = richTextBlockExtensions(options.schema, hosts)
     return [
       richTextDocumentExtension(blocks.length > 0),
-      RichTextBlockClipboard,
+      richTextBlockClipboard,
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
@@ -114,7 +117,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     ): BlockNode | undefined {
       const pending = pendingBlocks.current.get(id)
       if (pending) return pending
-      const part = blocksRef.current.find(part => part.id === id)
+      const part = blocksByIdRef.current.get(id)
       if (part) {
         const value = store.get(part.node.value)
         if (Node.isBlock(value)) return value
@@ -138,8 +141,8 @@ export function RichTextFieldView<Blocks extends Schema>({
     onCreate({editor}) {
       // ProseMirror owns selection restoration. React's contenteditable
       // traversal cannot safely inspect nested ProseMirror-owned DOM.
-      editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
-      lastEditorDocument.current = documentIdentity(
+      setEditorReadOnly(editor, readOnly)
+      lastEditorDocument.current = documentStructureKey(
         editorNodes(editor.getJSON(), resolveBlock)
       )
     },
@@ -149,7 +152,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     },
     onUpdate({editor}) {
       const next = editorNodes(editor.getJSON(), resolveBlock)
-      const nextKey = documentIdentity(next)
+      const nextKey = documentStructureKey(next)
       if (
         pendingExternalDocument.current &&
         nextKey === lastEditorDocument.current
@@ -166,15 +169,20 @@ export function RichTextFieldView<Blocks extends Schema>({
   })
 
   useEffect(() => {
+    if (editor) setEditorReadOnly(editor, readOnly)
+  }, [editor, readOnly])
+
+  useEffect(() => {
     if (!editor) return
     const current = editorNodes(editor.getJSON(), resolveBlock)
-    if (documentKey === documentIdentity(current)) return
+    if (documentKey === documentStructureKey(current)) return
+    const documentValue = store.get(fieldNode.value)
     editor.commands.setContent(editorContent(documentValue), {
       emitUpdate: false
     })
     lastEditorDocument.current = documentKey
     pendingExternalDocument.current = undefined
-  }, [documentKey, documentValue, editor, resolveBlock])
+  }, [documentKey, editor, fieldNode, resolveBlock, store])
 
   const toolbarTarget =
     typeof document === 'undefined'
@@ -262,7 +270,7 @@ export function RichTextFieldView<Blocks extends Schema>({
           <EditorContent editor={editor} />
           {editor && (
             <RichTextBlockPortals
-              blocks={blocks}
+              blocksById={blocksById}
               editor={editor}
               hosts={hosts}
               pendingBlocks={pendingBlocks.current}
@@ -297,8 +305,13 @@ export function RichTextFieldView<Blocks extends Schema>({
   )
 }
 
+function setEditorReadOnly(editor: Editor, readOnly: boolean) {
+  editor.setEditable(!readOnly)
+  editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
+}
+
 interface RichTextBlockPortalsProps {
-  blocks: Array<ReactiveRichTextBlock>
+  blocksById: ReadonlyMap<string, ReactiveRichTextBlock>
   editor: Editor
   hosts: RichTextBlockHosts
   pendingBlocks: Map<string, BlockNode>
@@ -308,7 +321,7 @@ interface RichTextBlockPortalsProps {
 }
 
 function RichTextBlockPortals({
-  blocks,
+  blocksById,
   editor,
   hosts,
   pendingBlocks,
@@ -347,13 +360,14 @@ function RichTextBlockPortals({
   }
 
   return mounted.map(host => {
-    const part = blocks.find(block => block.id === host.id)
+    const part = blocksById.get(host.id)
     const type = schema?.[host.typeName]
     if (!part || !type) return null
     return createPortal(
       <>
         <RichTextBlockSnapshot editor={editor} host={host} node={part.node} />
         <RichTextBlock
+          id={part.id}
           node={part.node}
           type={type}
           readOnly={readOnly}
@@ -382,7 +396,6 @@ function RichTextBlockSnapshot({
 
   useEffect(() => {
     if (!Node.isBlock(value)) return
-    host.dom.dataset.debugBlockValue = JSON.stringify(value)
     const position = host.getPos()
     if (typeof position !== 'number') return
     const editorNode = editor.state.doc.nodeAt(position)
@@ -403,7 +416,7 @@ function RichTextBlockSnapshot({
   return null
 }
 
-function documentIdentity(value: TextDoc): string {
+function documentStructureKey(value: TextDoc): string {
   return stableStringify(
     value.map(node =>
       Node.isBlock(node)
@@ -447,9 +460,8 @@ function previewText(value: unknown): string {
   if (typeof value === 'string') return value
   if (Array.isArray(value))
     return value.map(previewText).filter(Boolean).join(' ')
-  if (!value || typeof value !== 'object') return ''
-  const record = value as Record<string, unknown>
-  return [previewText(record.text), previewText(record.content)]
+  if (!isRecord(value)) return ''
+  return [previewText(value.text), previewText(value.content)]
     .filter(Boolean)
     .join(' ')
 }

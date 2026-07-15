@@ -1,3 +1,4 @@
+import {BlockNode} from '#/core/TextDoc.js'
 import type {NodeViewRenderer, NodeViewRendererProps} from '@tiptap/core'
 
 export interface RichTextBlockHost {
@@ -30,7 +31,7 @@ export class RichTextBlockHosts {
       const host: RichTextBlockHost = {
         dom,
         getPos,
-        id: String(node.attrs._id),
+        id: String(node.attrs[BlockNode.id]),
         typeName
       }
       dom.dataset.richtextBlockId = host.id
@@ -42,7 +43,7 @@ export class RichTextBlockHosts {
         update(updatedNode) {
           return (
             updatedNode.type === node.type &&
-            String(updatedNode.attrs._id) === host.id
+            String(updatedNode.attrs[BlockNode.id]) === host.id
           )
         },
         stopEvent(event) {

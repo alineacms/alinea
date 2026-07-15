@@ -10,28 +10,37 @@ export interface ReactiveRichTextBlock {
   typeName: string
 }
 
+export interface RichTextStructure {
+  blocks: Array<ReactiveRichTextBlock>
+  structure: TextDoc
+}
+
 /** Watches block identity and order without subscribing to nested fields. */
 export function richTextBlocksAtom(reactive: ReactiveNode<TextDoc>) {
-  return atom(get => {
-    const structure = get(reactive.nodes)
-    if (!Array.isArray(structure)) return []
-    return structure.flatMap((node, index) => {
+  const structure = richTextStructureAtom(reactive)
+  return atom(get => get(structure).blocks)
+}
+
+/** Watches ordinary content plus block identity, but not block field values. */
+export function richTextStructureAtom(reactive: ReactiveNode<TextDoc>) {
+  return atom<RichTextStructure>(get => {
+    const nodes = get(reactive.nodes)
+    if (!Array.isArray(nodes)) return {blocks: [], structure: []}
+    const blocks: Array<ReactiveRichTextBlock> = []
+    const structure: TextDoc = []
+    nodes.forEach((node, index) => {
       const reactiveNode = node as ReactiveNode<object>
       const typeName = childValue(get, reactiveNode, Node.type)
       if (
-        typeof typeName !== 'string' ||
-        !Node.isBlock({[Node.type]: typeName})
-      )
-        return []
-      return [
-        {
-          id: String(childValue(get, reactiveNode, BlockNode.id) ?? index),
-          index,
-          node: reactiveNode,
-          typeName
-        }
-      ]
+        typeof typeName === 'string' &&
+        Node.isBlock({[Node.type]: typeName})
+      ) {
+        const id = String(childValue(get, reactiveNode, BlockNode.id) ?? index)
+        blocks.push({id, index, node: reactiveNode, typeName})
+        structure.push({[Node.type]: typeName, [BlockNode.id]: id})
+      } else structure.push(get(reactiveNode.value) as TextDoc[number])
     })
+    return {blocks, structure}
   })
 }
 

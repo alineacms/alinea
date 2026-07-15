@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import type {Page} from 'playwright'
+import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
   RichTextLargeStory,
@@ -34,9 +34,34 @@ interface StoredRichTextNode {
   _type?: string
 }
 
+interface StoredRichTextBlock extends StoredRichTextNode {
+  _id: string
+  _type: string
+}
+
 async function storedValue(page: Page): Promise<Array<StoredRichTextNode>> {
   const value = await page.getByTestId('value').textContent()
   return JSON.parse(value ?? '[]')
+}
+
+function isStoredBlock(node: StoredRichTextNode): node is StoredRichTextBlock {
+  return typeof node._id === 'string' && typeof node._type === 'string'
+}
+
+async function createEmptyParagraphAfter(page: Page, target: Locator) {
+  await target.evaluate(element => {
+    const editor = element.closest('[contenteditable]')
+    const selection = window.getSelection()
+    if (!(editor instanceof HTMLElement) || !selection)
+      throw new Error('Rich text selection target not found')
+    editor.focus()
+    const range = document.createRange()
+    range.selectNodeContents(element)
+    range.collapse(false)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  })
+  await page.keyboard.press('Enter')
 }
 
 test('renders a rich text field without an embedded block schema', async ({
@@ -169,20 +194,19 @@ test('pastes embedded blocks with fresh ids and independent fields', async ({
   const editor = page.locator('.ProseMirror').first()
   const titles = page.getByRole('textbox', {name: 'Title'})
   await titles.fill('Clipboard source')
-  await expect(
-    page.locator('[data-richtext-block-host]').first()
-  ).toHaveAttribute('data-debug-block-value', /Clipboard source/)
+  await expect(page.getByTestId('value')).toContainText('Clipboard source')
+  const sourceBlock = (await storedValue(page)).find(
+    (node): node is StoredRichTextBlock =>
+      isStoredBlock(node) && node._type === 'Callout'
+  )
+  if (!sourceBlock) throw new Error('Stored block snapshot not found')
 
-  await editor.getByText('After the block.', {exact: true}).click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
-  await editor.evaluate(element => {
-    const host = element.querySelector<HTMLElement>(
-      '[data-richtext-block-host]'
-    )
-    const serialized = host?.dataset.debugBlockValue
-    if (!serialized) throw new Error('Serialized block snapshot not found')
-    const block = JSON.parse(serialized) as {_id: string; _type: string}
+  await createEmptyParagraphAfter(
+    page,
+    editor.getByText('After the block.', {exact: true})
+  )
+  await editor.evaluate((element, block) => {
+    const serialized = JSON.stringify(block)
     const blockElement = document.createElement('div')
     blockElement.dataset.richtextBlockType = block._type
     blockElement.setAttribute('_id', block._id)
@@ -197,7 +221,7 @@ test('pastes embedded blocks with fresh ids and independent fields', async ({
         clipboardData: clipboard
       })
     )
-  })
+  }, sourceBlock)
 
   await expect(titles).toHaveCount(2)
   await expect(titles.first()).toHaveValue('Clipboard source')
@@ -418,9 +442,10 @@ test('moves a complex block and keeps its fields editable', async ({
   await mount(<RichTextStory />)
 
   const editor = page.locator('.ProseMirror').first()
-  await editor.getByText('Before the block.', {exact: true}).click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
+  await createEmptyParagraphAfter(
+    page,
+    editor.getByText('Before the block.', {exact: true})
+  )
   await page.getByRole('button', {name: 'Insert block'}).click()
   await page.getByRole('menuitem', {name: 'Call to action'}).click()
 
@@ -450,9 +475,10 @@ test('duplicates and independently edits a complex block', async ({
   await mount(<RichTextStory />)
 
   const editor = page.locator('.ProseMirror').first()
-  await editor.getByText('Before the block.', {exact: true}).click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
+  await createEmptyParagraphAfter(
+    page,
+    editor.getByText('Before the block.', {exact: true})
+  )
   await page.getByRole('button', {name: 'Insert block'}).click()
   await page.getByRole('menuitem', {name: 'Call to action'}).click()
 
@@ -497,9 +523,10 @@ test('inserts a block in nested rich text and preserves it while moving', async 
   const outerEditor = page.locator('.ProseMirror').first()
   const nestedField = page.locator('[data-richtext-field]').nth(1)
   const nestedEditor = nestedField.locator('.ProseMirror')
-  await nestedEditor.getByText('Nested details.', {exact: true}).click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
+  await createEmptyParagraphAfter(
+    page,
+    nestedEditor.getByText('Nested details.', {exact: true})
+  )
   const insertBlock = nestedField.getByRole('button', {name: 'Insert block'})
   await insertBlock.focus()
   await page.keyboard.press('Enter')
@@ -570,9 +597,6 @@ test('persists embedded field and nested rich-text edits', async ({
     .first()
     .getByText('After the block.')
     .click()
-  await expect(
-    page.locator('[data-richtext-block-host]').first()
-  ).toHaveAttribute('data-debug-block-value', /Persisted title/)
   await expect(page.getByTestId('value')).toContainText(
     '"title":"Persisted title"'
   )
@@ -658,13 +682,8 @@ test('inserts a block at the active text position', async ({mount, page}) => {
   page.on('pageerror', error => errors.push(error.message))
   await mount(<RichTextStory />)
 
-  await page
-    .locator('.ProseMirror')
-    .first()
-    .getByText('Before the block.')
-    .click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
+  const editor = page.locator('.ProseMirror').first()
+  await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
   await page.getByRole('button', {name: 'Insert block'}).click()
   await page.getByRole('menuitem', {name: 'Callout'}).click()
 
@@ -708,9 +727,7 @@ test('inserts a complex CTA block without a detached DOM error', async ({
   await mount(<RichTextStory />)
 
   const editor = page.locator('.ProseMirror').first()
-  await editor.getByText('Before the block.').click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
+  await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
   await page.getByRole('button', {name: 'Insert block'}).click()
   await page.getByRole('menuitem', {name: 'Call to action'}).click()
 
@@ -750,9 +767,10 @@ test('edits complex block controls and moves between nested editors', async ({
 
   const outerEditor = page.locator('.ProseMirror').first()
   await expect(outerEditor).toHaveAttribute('contenteditable', 'plaintext-only')
-  await outerEditor.getByText('Before the block.', {exact: true}).click()
-  await page.keyboard.press('End')
-  await page.keyboard.press('Enter')
+  await createEmptyParagraphAfter(
+    page,
+    outerEditor.getByText('Before the block.', {exact: true})
+  )
   await page.getByRole('button', {name: 'Insert block'}).click()
   await page.getByRole('menuitem', {name: 'Call to action'}).click()
 
