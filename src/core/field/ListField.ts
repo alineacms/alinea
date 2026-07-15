@@ -1,3 +1,4 @@
+import {referenceFieldPath} from '../db/EntryReference.js'
 import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
 import {createId} from '../Id.js'
 import {ListRow} from '../ListRow.js'
@@ -5,6 +6,7 @@ import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {entries} from '../util/Objects.js'
+import {slugify} from '../util/Slugs.js'
 
 export interface ListMutator<Row> {
   replace(id: string, row: Row): void
@@ -35,6 +37,7 @@ export class ListField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
+    const customAnchors = meta.anchors
     super({
       referencedViews: Schema.referencedViews(schema),
       ...meta,
@@ -72,6 +75,39 @@ export class ListField<
           const segment = row[ListRow.id] || String(rows.indexOf(row))
           result.push(
             ...Type.references(type, row as Record<string, unknown>, [
+              ...context.path,
+              segment
+            ])
+          )
+        }
+        return result
+      },
+      anchors(value, context) {
+        const result = customAnchors?.(value, context) ?? []
+        const rows = Array.isArray(value) ? value : []
+        for (const row of rows) {
+          const record = row as Record<string, unknown>
+          const segment = row[ListRow.id] || String(rows.indexOf(row))
+          const customLabel =
+            typeof record._label === 'string' ? record._label : undefined
+          const anchor =
+            typeof record._anchor === 'string'
+              ? record._anchor
+              : customLabel
+                ? slugify(customLabel)
+                : undefined
+          if (anchor) {
+            result.push({
+              id: anchor,
+              label: `#${anchor}`,
+              fieldPath: referenceFieldPath([...context.path, segment, anchor]),
+              fieldLabel: context.label
+            })
+          }
+          const type = schema[row[ListRow.type]]
+          if (!type) continue
+          result.push(
+            ...Type.anchors(type, row as Record<string, unknown>, [
               ...context.path,
               segment
             ])

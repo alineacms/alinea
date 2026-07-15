@@ -36,7 +36,8 @@ const styles = styler(css)
 const HeadingWithClassesAndIds = Heading.extend({
   addAttributes() {
     return {
-      id: {default: null}
+      ...(this.parent?.() ?? {}),
+      _anchor: {default: null}
     }
   },
   renderHTML({node, HTMLAttributes}) {
@@ -46,8 +47,7 @@ const HeadingWithClassesAndIds = Heading.extend({
     return [
       `h${level}`,
       mergeAttributes(HTMLAttributes, {
-        class: styles.Heading(`level${level}`),
-        id: node.attrs.id
+        class: styles.Heading(`level${level}`)
       }),
       0
     ]
@@ -61,8 +61,24 @@ const HeadingWithClassesAndIds = Heading.extend({
           newState.doc.descendants((node, pos) => {
             if (node.type.name !== 'heading') return
             const slug = slugify(node.textContent)
-            if (node.attrs.id !== slug) {
-              tr.setNodeMarkup(pos, undefined, {...node.attrs, id: slug})
+            if (node.attrs._anchor !== slug) {
+              tr.setNodeMarkup(pos, undefined, {
+                ...node.attrs,
+                _anchor: slug
+              })
+
+              node.descendants((child, childPos) => {
+                if (!child.isText) return true
+                if (!child.text) return true
+
+                const from = pos + childPos + 1
+                const to = from + child.text.length
+                const anchorType = newState.schema.marks.anchor
+
+                tr.addMark(from, to, anchorType.create({id: slug}))
+                return false
+              })
+
               modified = true
             }
           })

@@ -19,6 +19,8 @@ import {
   ListRowSettingsButton,
   MenuSeparator,
   Popover,
+  Select,
+  SelectItem,
   TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
@@ -939,12 +941,102 @@ function EntryLinkSuffixField({
   if (value[Reference.type] !== 'entry') return null
   return (
     <TextField
-      description="For example: #id"
+      description="E.g. ?s=search"
       isDisabled={isDisabled}
       label="URL suffix"
       onChange={next => setSuffix(next || undefined)}
       value={suffix ?? ''}
     />
+  )
+}
+
+interface EntryAnchorFieldProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  const setAnchor = useSetAtom(node.field('_anchor'))
+  if (value._type !== 'entry') return null
+  return (
+    <EntryAnchorFieldInner
+      entryId={value._entry}
+      anchor={anchor}
+      onChange={setAnchor}
+    />
+  )
+}
+
+function EntryAnchorFieldInner({
+  entryId,
+  anchor,
+  onChange
+}: {
+  entryId: string
+  anchor?: string
+  onChange: (value: string | undefined) => void
+}) {
+  const dashboard = useDashboard()
+  const fieldDataAtom = useMemo(() => {
+    const entry = dashboard.entries(entryId)
+    return atom(get => {
+      const state = get(entry.data)
+      if (!state.data) return null
+      const selectedNode = get(state.data.selectedNode)
+      if (!(selectedNode instanceof ReactiveNode)) return null
+      const type = get(state.data.type).type
+      return {
+        type,
+        value: get(selectedNode.value)
+      }
+    })
+  }, [dashboard, entryId])
+  const anchorData = useAtomValue(fieldDataAtom)
+  const anchors = useMemo(() => {
+    if (!anchorData) return []
+    const found = Type.anchors(
+      anchorData.type,
+      anchorData.value as Record<string, unknown>
+    )
+    const unique = new Map<
+      string,
+      {id: string; label: string; location: string}
+    >()
+    for (const anchor of found) {
+      if (unique.has(anchor.id)) continue
+      unique.set(anchor.id, {
+        id: anchor.id,
+        label: anchor.label ?? `#${anchor.id}`,
+        location: anchor.fieldLabel ?? anchor.fieldPath
+      })
+    }
+    return [...unique.values()]
+  }, [anchorData])
+  if (!anchorData) {
+    return
+  }
+  return (
+    <Select
+      items={anchors}
+      label="Anchor"
+      onChange={next => onChange(next === null ? undefined : String(next))}
+      value={anchor ?? null}
+      valueDisplay="textValue"
+    >
+      {item => (
+        <SelectItem id={item.id} textValue={item.label}>
+          <span className={styles.LinkFieldView.anchorOption()}>
+            <span className={styles.LinkFieldView.anchorOption.label()}>
+              {item.label}
+            </span>
+            <span className={styles.LinkFieldView.anchorOption.location()}>
+              {item.location}
+            </span>
+          </span>
+        </SelectItem>
+      )}
+    </Select>
   )
 }
 
@@ -1367,6 +1459,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 <Popover placement="bottom right">
                   <ListRowSettings>
                     <LinkLabelField node={node} value={value} />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
                   <MenuSeparator />
@@ -1569,6 +1662,7 @@ function MultipleLinkRow({
                       node={node}
                       value={value}
                     />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField
                       isDisabled={readOnly}
                       node={node}

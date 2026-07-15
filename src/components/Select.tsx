@@ -27,15 +27,17 @@ export interface SelectProps<T extends object>
   extends Omit<SelectPrimitiveProps<T>, 'children'>, LabelSharedProps {
   items?: Iterable<T>
   children: React.ReactNode | ((item: T) => React.ReactNode)
+  valueDisplay?: 'children' | 'textValue'
 }
 
 export function Select<T extends object>({
   className,
+  valueDisplay,
   ...props
 }: SelectProps<T>) {
   const content = (
     <>
-      <SelectTrigger {...props} />
+      <SelectTrigger {...props} valueDisplay={valueDisplay} />
       <SelectPopover {...props} />
     </>
   )
@@ -62,6 +64,7 @@ export function Select<T extends object>({
 function SelectTrigger<T extends object>({
   children,
   items,
+  valueDisplay = 'children',
   ...props
 }: SelectProps<T>) {
   const state = useContext(SelectStateContext)
@@ -73,7 +76,13 @@ function SelectTrigger<T extends object>({
         data-expanded={props.isOpen}
         data-clear={hasClear || undefined}
       >
-        <SelectValue className={styles.SelectTrigger.button.value()} />
+        {valueDisplay === 'textValue' ? (
+          <SelectValue className={styles.SelectTrigger.button.value()}>
+            {({selectedText}) => selectedText}
+          </SelectValue>
+        ) : (
+          <SelectValue className={styles.SelectTrigger.button.value()} />
+        )}
         <IcRoundKeyboardArrowDown
           className={styles.SelectTrigger.button.arrow()}
         />

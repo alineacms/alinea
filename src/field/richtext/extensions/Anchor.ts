@@ -1,4 +1,4 @@
-import {Mark, mergeAttributes} from '@tiptap/core'
+import {getMarkRange, Mark, mergeAttributes} from '@tiptap/core'
 
 interface AnchorAttributes {
   id: string
@@ -44,10 +44,21 @@ const Anchor = Mark.create<AnchorOptions>({
   },
   addCommands() {
     return {
+      // setAnchor:
+      //   attributes =>
+      //   ({commands}) => {
+      //     return commands.setMark(this.name, attributes)
+      //   },
       setAnchor:
         attributes =>
-        ({commands}) => {
-          return commands.setMark(this.name, attributes)
+        ({tr, state, dispatch}) => {
+          const anchorType = state.schema.marks[this.name]
+          const range = getMarkRange(tr.selection.$from, anchorType)
+          const {from, to} = range ?? tr.selection
+          tr.removeMark(from, to, anchorType)
+          tr.addMark(from, to, anchorType.create(attributes))
+          if (dispatch) dispatch()
+          return true
         },
       toggleAnchor:
         attributes =>

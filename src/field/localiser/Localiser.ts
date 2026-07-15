@@ -103,6 +103,15 @@ export function localiser<const Locale extends string>({
             })
           )
         },
+        anchors(value, context) {
+          const record = value ?? initialValue()
+          return locales.flatMap(locale =>
+            Field.anchors(field, record[locale], {
+              ...context,
+              path: [...context.path, locale]
+            })
+          )
+        },
         async queryValue(value, loader) {
           const selected = selectLocalisedValue<Locale, StoredValue>({
             value: value ?? initialValue(),

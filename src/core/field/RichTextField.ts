@@ -2,7 +2,12 @@ import {Parser} from 'htmlparser2'
 import type {EntryReferenceTarget} from '../db/EntryReference.js'
 import {referenceFieldPath} from '../db/EntryReference.js'
 import {Entry} from '../Entry.js'
-import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
+import {
+  Field,
+  type EntryAnchorTarget,
+  type FieldMeta,
+  type FieldOptions
+} from '../Field.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
@@ -50,6 +55,7 @@ export class RichTextField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
+    const customAnchors = meta.anchors
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
@@ -78,6 +84,12 @@ export class RichTextField<
         )
         return result
       },
+      anchors(value, context) {
+        const doc = Array.isArray(value) ? value : []
+        const result = customAnchors?.(value, context) ?? []
+        result.push(...richTextAnchors(schema, doc, context.path, context.label))
+        return result
+      },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
         const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
@@ -100,6 +112,52 @@ export class RichTextField<
       }
     })
   }
+}
+
+function richTextAnchors<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  path: Array<string>,
+  label?: string
+): Array<EntryAnchorTarget> {
+  const result: Array<EntryAnchorTarget> = []
+  iterNodes(doc, (node, nodePath) => {
+    if (Node.isElement(node)) {
+      const anchor = node._anchor
+      if (typeof anchor === 'string') {
+        result.push({
+          id: anchor,
+          label: `#${anchor}`,
+          fieldPath: referenceFieldPath([...path, ...nodePath, anchor]),
+          fieldLabel: label
+        })
+      }
+    }
+    if (!Node.isText(node)) return
+    for (const mark of node.marks ?? []) {
+      if (mark[Mark.type] !== 'anchor') continue
+      const anchor = mark.id
+      if (typeof anchor !== 'string') continue
+      result.push({
+        id: anchor,
+        label: `#${anchor}`,
+        fieldPath: referenceFieldPath([...path, ...nodePath, anchor]),
+        fieldLabel: label
+      })
+    }
+  })
+  doc.forEach((row, index) => {
+    if (!schema || !Node.isBlock(row)) return
+    const type = schema[row[Node.type]]
+    if (!type) return
+    result.push(
+      ...Type.anchors(type, row as Record<string, unknown>, [
+        ...path,
+        row._id ?? String(index)
+      ])
+    )
+  })
+  return result
 }
 
 function richTextReferences<Blocks>(
@@ -215,6 +273,20 @@ function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
     if (Node.isText(row)) row.marks?.forEach(fn)
     else if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
   }
+}
+
+function iterNodes(
+  doc: TextDoc<unknown>,
+  fn: (node: Node, path: Array<string>) => void,
+  path: Array<string> = []
+) {
+  doc.forEach((row, index) => {
+    const rowPath = [...path, String(index)]
+    fn(row, rowPath)
+    if (Node.isElement(row) && row.content) {
+      iterNodes(row.content, fn, [...rowPath, 'content'])
+    }
+  })
 }
 
 export class RichTextEditor<Blocks> {

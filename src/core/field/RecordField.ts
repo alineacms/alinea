@@ -35,6 +35,13 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
           context.path
         )
       },
+      anchors(value, context) {
+        return Type.anchors(
+          type,
+          (value ?? {}) as Record<string, unknown>,
+          context.path
+        )
+      },
       async queryValue(value, loader) {
         const row = (value ?? {}) as Record<string, unknown>
         await Promise.all(

@@ -15,6 +15,7 @@ export class UnionField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
+    const customAnchors = meta.anchors
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
@@ -36,6 +37,13 @@ export class UnionField<
         if (!value) return result
         const type = schema?.[value[UnionRow.type]]
         if (type) result.push(...Type.references(type, value, context.path))
+        return result
+      },
+      anchors(value, context) {
+        const result = customAnchors?.(value, context) ?? []
+        if (!value) return result
+        const type = schema?.[value[UnionRow.type]]
+        if (type) result.push(...Type.anchors(type, value, context.path))
         return result
       },
       async queryValue(value, loader) {

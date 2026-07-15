@@ -2,7 +2,11 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {EntryStatus} from './Entry.js'
 import type {Expr} from './Expr.js'
-import {Field, type FieldBeforeSaveContext} from './Field.js'
+import {
+  Field,
+  type EntryAnchorTarget,
+  type FieldBeforeSaveContext
+} from './Field.js'
 import {type HasType, getType, hasType, internalType} from './Internal.js'
 import type {Label} from './Label.js'
 import type {OrderBy} from './OrderBy.js'
@@ -57,6 +61,20 @@ export namespace Type {
       res += Field.searchableText(field, self[key])
     }
     return res.trim()
+  }
+
+  export function anchors(
+    type: Type,
+    value: Record<string, unknown>,
+    path: Array<string> = []
+  ): Array<EntryAnchorTarget> {
+    const self = value || {}
+    return entries(fields(type)).flatMap(([key, field]) => {
+      return Field.anchors(field, self[key], {
+        path: [...path, key],
+        label: Field.label(field)
+      })
+    })
   }
 
   export function references(
