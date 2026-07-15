@@ -5,7 +5,6 @@
     "": {
       "name": "alinea",
       "dependencies": {
-        "@alinea/components": "^0.0.50",
         "@alinea/iso": "^0.3.3",
         "esbuild": "^0.28.0",
         "react-aria-components": "^1.17.0",
@@ -118,8 +117,6 @@
   },
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.3.3", "", {}, "sha512-rE0Pygv0sEZ4vBWHlAgJLGDU7Pm8xoO6p3wsEceb7GYAjScrOHpEo8KK/eVkAcnSM+slAEtXjA2JpdjLp4fJQQ=="],
-
-    "@alinea/components": ["@alinea/components@0.0.50", "", { "peerDependencies": { "react-aria-components": "^1.16.0" } }, "sha512-HaMZoWjqHM2Pir4BQsjynU/tjmetGC2nzyq2FiC5mvSRDOSwEAs7KeuDsb5VW7SRkfE2mkiDi0NKemzJlSJ2dg=="],
 
     "@alinea/dev": ["@alinea/dev@workspace:apps/dev"],
 
