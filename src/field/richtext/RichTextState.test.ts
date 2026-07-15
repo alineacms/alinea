@@ -79,6 +79,31 @@ test('equal text nodes are not rewritten during document reconciliation', () => 
   test.is(updates, 0)
 })
 
+test('equivalent text nodes with different key order are not rewritten', () => {
+  const reactive = new ReactiveNode<TextDoc>([
+    {
+      _type: 'paragraph',
+      align: 'center',
+      content: [{_type: 'text', text: 'Unchanged'}]
+    }
+  ])
+  const store = createStore()
+  const children = store.get(reactive.nodes) as Array<ReactiveNode>
+  let updates = 0
+  const unsubscribe = store.sub(children[0].value, () => updates++)
+
+  store.set(documentUpdateAtom(reactive), [
+    {
+      _type: 'paragraph',
+      content: [{_type: 'text', text: 'Unchanged'}],
+      align: 'center'
+    }
+  ])
+  unsubscribe()
+
+  test.is(updates, 0)
+})
+
 test('field atoms update their backing reactive child', () => {
   const node = new ReactiveNode({title: 'Important'})
   const store = createStore()

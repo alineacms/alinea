@@ -23,6 +23,7 @@ Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 - Use function instead of arrow functions when defining React components
 - Always name props interfaces with a `Props` suffix
 - Do not use the `any` type, unless communicated explicitly in the code review
+- Reuse shared generic utilities before adding local copies; in particular, use `isRecord` from `alinea/core/util/Objects` instead of defining another local record guard.
 - Imports should be relative if in same src subdir, otherwise absolute starting
   with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
   If absolute do not include any extension.

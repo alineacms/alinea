@@ -1,5 +1,6 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {useDashboard} from '#/dashboard/hooks.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
@@ -224,10 +225,6 @@ function jsonText(value: unknown): string {
 
 function isEmptyValue(value: unknown): boolean {
   return value === undefined || value === null || value === ''
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 interface CompactFieldOptions {

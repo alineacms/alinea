@@ -1,4 +1,5 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
@@ -352,10 +353,6 @@ function entryUrlConflictInfo(
       root: info.root
     }
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object'
 }
 
 function EntryHeaderActions({

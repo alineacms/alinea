@@ -33,7 +33,7 @@ export function RichTextInsertMenu({
         return (
           editor.isFocused &&
           selection.empty &&
-          !hasListItemParent(selection.$from) &&
+          selection.$from.depth === 1 &&
           selection.$from.parent.isTextblock &&
           selection.$from.parent.content.size === 0
         )
@@ -72,13 +72,4 @@ export function RichTextInsertMenu({
       </Menu>
     </FloatingMenu>
   )
-}
-
-function hasListItemParent(position: {
-  depth: number
-  node: (depth: number) => {type: {name: string}}
-}): boolean {
-  for (let depth = position.depth; depth > 0; depth -= 1)
-    if (position.node(depth).type.name === 'listItem') return true
-  return false
 }

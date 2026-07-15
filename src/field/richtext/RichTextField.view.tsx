@@ -181,7 +181,7 @@ export function RichTextFieldView<Blocks extends Schema>({
       : document.getElementById('alinea-toolbar')
 
   function insertBlock(block: BlockNode) {
-    if (!editor) return
+    if (!editor || editor.state.selection.$from.depth !== 1) return
     const id = String(block[BlockNode.id])
     pendingBlocks.current.set(id, block)
     // The menu preserves the editor selection. Refocusing here makes React

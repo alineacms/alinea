@@ -11,7 +11,7 @@ import {
   generateKeyBetween,
   generateNKeysBetween
 } from '#/core/util/FractionalIndexing.js'
-import {entries, fromEntries, keys} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
 import * as paths from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {unreachable} from '#/core/util/Types.js'
@@ -1106,10 +1106,6 @@ function urlFromAliasRow(value: unknown): string | undefined {
   if (typeof url !== 'string') return undefined
   const trimmed = url.trim()
   return trimmed.length > 0 ? trimmed : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function startsWithSegments(

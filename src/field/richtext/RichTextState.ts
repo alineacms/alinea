@@ -1,4 +1,5 @@
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
+import {isRecord} from '#/core/util/Objects.js'
 import type {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {atom} from 'jotai'
 
@@ -38,7 +39,24 @@ export function documentUpdateAtom(reactive: ReactiveNode<TextDoc>) {
 }
 
 function sameValue(left: unknown, right: unknown): boolean {
-  return left === right || JSON.stringify(left) === JSON.stringify(right)
+  if (left === right) return true
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false
+    return (
+      left.length === right.length &&
+      left.every((value, index) => sameValue(value, right[index]))
+    )
+  }
+  if (!isRecord(left) || !isRecord(right)) return false
+  const keys = Object.keys(left)
+  return (
+    keys.length === Object.keys(right).length &&
+    keys.every(
+      key =>
+        Object.prototype.hasOwnProperty.call(right, key) &&
+        sameValue(left[key], right[key])
+    )
+  )
 }
 
 function sameBlockType(left: unknown, right: BlockNode): boolean {

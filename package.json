@@ -84,7 +84,7 @@
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
     "@happy-dom/global-registrator": "^20.8.3",
-    "@internationalized/date": "^3.12.1",
+    "@internationalized/date": "3.12.1",
     "@ladle/react": "^4.1.2",
     "@playwright/experimental-ct-react": "1.61.1",
     "@react-stately/virtualizer": "^4.5.0",

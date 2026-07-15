@@ -78,6 +78,10 @@ export function RichTextPlainStory() {
   )
 }
 
+export function RichTextLargeStory() {
+  return <RichTextFixture initialBody={largeBody} entryType={plainEntry} />
+}
+
 export function RichTextEmptyStory() {
   return <RichTextFixture initialBody={[]} entryType={plainEntry} />
 }
@@ -153,3 +157,7 @@ const blocksValue = [
   },
   paragraph('After the block.')
 ]
+
+const largeBody = Array.from({length: 500}, (_, index) =>
+  paragraph(`Large document paragraph ${index + 1}`)
+)

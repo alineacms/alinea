@@ -12,6 +12,7 @@ import {
   decodeBlockValue,
   richTextBlockValueAttribute
 } from './RichTextBlockValue.js'
+import {isRecord} from '#/core/util/Objects.js'
 
 export function editorContent(nodes: TextDoc): JSONContent {
   return {
@@ -154,8 +155,4 @@ function isElement(value: unknown): value is ElementNode {
 
 function isBlock(value: unknown): value is BlockNode {
   return isRecord(value) && Node.isBlock(value)
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

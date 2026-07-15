@@ -1,6 +1,10 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import type {Page} from '@playwright/test'
-import {RichTextPlainStory, RichTextStory} from './RichTextField.story.js'
+import type {Page} from 'playwright'
+import {
+  RichTextLargeStory,
+  RichTextPlainStory,
+  RichTextStory
+} from './RichTextField.story.js'
 
 const pageErrors = new WeakMap<Page, Array<string>>()
 
@@ -34,6 +38,26 @@ test('renders a rich text field without an embedded block schema', async ({
     'Select this text'
   )
   expect(errors).toEqual([])
+})
+
+test('edits the end of a large document', async ({mount, page}) => {
+  await mount(<RichTextLargeStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  const lastParagraph = editor.getByText('Large document paragraph 500', {
+    exact: true
+  })
+  await expect(lastParagraph).toBeVisible()
+  await lastParagraph.click()
+  await page.keyboard.press('End')
+  await page.keyboard.type(' Edited')
+
+  await expect(editor.locator('p').last()).toHaveText(
+    'Large document paragraph 500 Edited'
+  )
+  await expect(page.getByTestId('value')).toContainText(
+    'Large document paragraph 500 Edited'
+  )
 })
 
 test('inserts, splits and joins ordinary text', async ({mount, page}) => {
@@ -643,6 +667,28 @@ test('disallows embedded blocks inside list items', async ({mount, page}) => {
     .dragTo(editor.locator('li').last())
 
   await expect(editor.locator('li [data-richtext-block-host]')).toHaveCount(0)
+  await expect(
+    editor.locator(':scope > [data-richtext-block-host]')
+  ).toHaveCount(1)
+})
+
+test('disallows embedded blocks inside tables', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('After the block.', {exact: true}).click()
+  await page.getByRole('button', {name: 'Table'}).click()
+  await page.getByRole('menuitem', {name: 'Insert table'}).click()
+
+  const cell = editor.locator('td').first()
+  await cell.click()
+  await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
+
+  const block = page.locator('[data-richtext-block="true"]')
+  await block.locator('[data-richtext-block-header="true"]').hover()
+  await page.getByLabel('Drag Callout block').dragTo(cell)
+
+  await expect(cell.locator('[data-richtext-block-host]')).toHaveCount(0)
   await expect(
     editor.locator(':scope > [data-richtext-block-host]')
   ).toHaveCount(1)

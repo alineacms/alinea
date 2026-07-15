@@ -182,6 +182,11 @@ export const RichTextBlockClipboard = Extension.create({
     let draggedBlockId: string | undefined
     return [
       new Plugin({
+        filterTransaction(transaction) {
+          return (
+            !transaction.docChanged || !hasNestedRichTextBlock(transaction.doc)
+          )
+        },
         props: {
           handleDOMEvents: {
             dragstart(_view, event) {
@@ -391,6 +396,18 @@ function moveDroppedBlock(
 
 function isRichTextBlockNode(node: ProseMirrorNode): boolean {
   return node.type.spec.group?.split(' ').includes('richTextBlock') ?? false
+}
+
+function hasNestedRichTextBlock(doc: ProseMirrorNode): boolean {
+  let nested = false
+  doc.descendants((node, position) => {
+    if (isRichTextBlockNode(node) && doc.resolve(position).depth !== 0) {
+      nested = true
+      return false
+    }
+    return !nested
+  })
+  return nested
 }
 
 function renewPastedBlockIds(slice: Slice): Slice {
