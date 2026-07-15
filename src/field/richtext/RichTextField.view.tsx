@@ -4,6 +4,7 @@ import {createId} from '#/core/Id.js'
 import type {Schema} from '#/core/Schema.js'
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {
   useFieldError,
   useFieldNode,
@@ -402,13 +403,24 @@ function RichTextBlockSnapshot({
 }
 
 function documentIdentity(value: TextDoc): string {
-  return JSON.stringify(
+  return stableStringify(
     value.map(node =>
       Node.isBlock(node)
         ? {[Node.type]: node[Node.type], [BlockNode.id]: node[BlockNode.id]}
         : node
     )
   )
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map(item => stableStringify(item)).join(',')}]`
+  if (isRecord(value))
+    return `{${Object.keys(value)
+      .sort()
+      .map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(',')}}`
+  return JSON.stringify(value) ?? String(value)
 }
 
 export interface RichTextFieldCompactViewProps<Blocks extends Schema> {

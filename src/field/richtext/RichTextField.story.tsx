@@ -7,6 +7,17 @@ import {
   ReactiveNode
 } from '#/dashboard/store/Dashboard.js'
 import {richText} from './RichTextField.js'
+import {extensions} from './Extensions.js'
+import {
+  alignment,
+  formatting,
+  headings,
+  inserts,
+  links,
+  lists,
+  quotes,
+  tables
+} from './Toolbar.js'
 import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
 import {select} from '#/field/select.js'
@@ -55,6 +66,42 @@ const body = richText('Body', {
 const entry = type('Entry', {fields: {body}})
 const plainBody = richText('Body', {enableTables: true})
 const plainEntry = type('Plain entry', {fields: {body: plainBody}})
+const customBody = richText('Body', {
+  enableTables: true,
+  extensions: {
+    ...extensions,
+    Table: extensions.Table.configure({resizable: true})
+  },
+  toolbar: {
+    headings,
+    tables: {
+      ...tables,
+      items(ctx) {
+        const items = tables.items(ctx)
+        if (ctx.editor.isActive('table')) return items
+        return {
+          quickInsert: {
+            label: 'Quick 2x4 table',
+            onSelect: ({
+              exec
+            }: {
+              exec: () => ReturnType<typeof ctx.editor.chain>
+            }) =>
+              exec().insertTable({rows: 2, cols: 4, withHeaderRow: false}).run()
+          },
+          ...items
+        }
+      }
+    },
+    formatting,
+    alignment,
+    lists,
+    links,
+    quotes,
+    inserts
+  }
+})
+const customEntry = type('Custom entry', {fields: {body: customBody}})
 const readOnlyBody = richText('Body', {
   schema: {Callout: callout, Cta: cta},
   enableTables: true,
@@ -82,6 +129,15 @@ export function RichTextLargeStory() {
   return <RichTextFixture initialBody={largeBody} entryType={plainEntry} />
 }
 
+export function RichTextCustomToolbarStory() {
+  return (
+    <RichTextFixture
+      initialBody={[paragraph('Custom toolbar content.')]}
+      entryType={customEntry}
+    />
+  )
+}
+
 export function RichTextEmptyStory() {
   return <RichTextFixture initialBody={[]} entryType={plainEntry} />
 }
@@ -92,7 +148,11 @@ export function RichTextReadOnlyStory() {
 
 interface RichTextFixtureProps {
   initialBody: Array<object>
-  entryType: typeof entry | typeof plainEntry | typeof readOnlyEntry
+  entryType:
+    | typeof entry
+    | typeof plainEntry
+    | typeof customEntry
+    | typeof readOnlyEntry
 }
 
 function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {

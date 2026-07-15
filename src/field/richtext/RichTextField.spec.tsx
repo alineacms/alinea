@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import type {Page} from 'playwright'
 import {
+  RichTextCustomToolbarStory,
   RichTextLargeStory,
   RichTextPlainStory,
   RichTextStory
@@ -692,6 +693,48 @@ test('disallows embedded blocks inside tables', async ({mount, page}) => {
   await expect(
     editor.locator(':scope > [data-richtext-block-host]')
   ).toHaveCount(1)
+})
+
+test('deletes a table from the table menu', async ({mount, page}) => {
+  await mount(<RichTextCustomToolbarStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('Custom toolbar content.', {exact: true}).click()
+  await page.getByRole('button', {name: 'Table'}).click()
+  await page.getByRole('menuitem', {name: 'Quick 2x4 table'}).click()
+  await expect(editor.locator('table')).toHaveCount(1)
+
+  await editor.locator('td').first().click()
+  await page.getByRole('button', {name: 'Table'}).click()
+  await page.getByRole('menuitem', {name: 'Delete table'}).click()
+
+  await expect(editor.locator('table')).toHaveCount(0)
+})
+
+test('keeps focus in the selected table cell while typing', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextCustomToolbarStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('Custom toolbar content.', {exact: true}).click()
+  await page.getByRole('button', {name: 'Table'}).click()
+  await page.getByRole('menuitem', {name: 'Quick 2x4 table'}).click()
+
+  const cells = editor.locator('td')
+  const firstCell = cells.first()
+  const lastCell = cells.last()
+  await lastCell.click()
+  await page.keyboard.type('Last cell')
+  await page.waitForTimeout(100)
+  await firstCell.click()
+  await page.keyboard.type('F')
+  await page.waitForTimeout(100)
+  await page.keyboard.type('irst cell')
+
+  await expect(lastCell).toContainText('Last cell')
+  await expect(firstCell).toContainText('First cell')
 })
 
 test('reorders embedded blocks by dragging', async ({mount, page}) => {
