@@ -65,6 +65,7 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
 import {Fragment, useMemo, useRef, useState} from 'react'
 import {
@@ -978,50 +979,28 @@ function EntryAnchorFieldInner({
   onChange: (value: string | undefined) => void
 }) {
   const dashboard = useDashboard()
-  const fieldDataAtom = useMemo(() => {
+  const entryAnchorsAtom = useMemo(() => {
     const entry = dashboard.entries(entryId)
     return atom(get => {
-      const state = get(entry.data)
-      if (!state.data) return null
-      const selectedNode = get(state.data.selectedNode)
-      if (!(selectedNode instanceof ReactiveNode)) return null
-      const type = get(state.data.type).type
-      return {
-        type,
-        value: get(selectedNode.value)
-      }
+      const {data} = get(entry.data)
+      if (!data) return []
+      return get(unwrap(data.anchors, previous => previous ?? []))
     })
   }, [dashboard, entryId])
-  const anchorData = useAtomValue(fieldDataAtom)
+  const entryAnchors = useAtomValue(entryAnchorsAtom)
   const anchors = useMemo(() => {
-    if (!anchorData) return []
-    const found = Type.anchors(
-      anchorData.type,
-      anchorData.value as Record<string, unknown>
-    )
-    const unique = new Map<
-      string,
-      {id: string; label: string; location: string}
-    >()
-    for (const anchor of found) {
-      unique.set(anchor.id, {
-        id: anchor.id,
-        label: anchor.label ?? `#${anchor.id}`,
-        location: anchor.fieldLabel ?? anchor.fieldPath
-      })
-    }
-    return [...unique.values()]
-  }, [anchorData])
-  if (!anchorData) {
-    return
-  }
+    return entryAnchors.map(anchor => ({
+      id: anchor.id,
+      label: anchor.label ?? `#${anchor.id}`,
+      location: anchor.fieldLabel ?? anchor.fieldPath
+    }))
+  }, [entryAnchors])
   return (
     <Select
       items={anchors}
       label="Anchor"
       onChange={next => onChange(next === null ? undefined : String(next))}
       value={anchor ?? null}
-      valueDisplay="textValue"
     >
       {item => (
         <SelectItem id={item.id} textValue={item.label}>

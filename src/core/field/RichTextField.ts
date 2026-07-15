@@ -55,7 +55,6 @@ export class RichTextField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
-    const customAnchors = meta.anchors
     super({
       referencedViews: schema ? Schema.referencedViews(schema) : [],
       ...meta,
@@ -86,8 +85,10 @@ export class RichTextField<
       },
       anchors(value, context) {
         const doc = Array.isArray(value) ? value : []
-        const result = customAnchors?.(value, context) ?? []
-        result.push(...richTextAnchors(schema, doc, context.path, context.label))
+        const result = []
+        result.push(
+          ...richTextAnchors(schema, doc, context.path, context.label)
+        )
         return result
       },
       async queryValue(value, loader) {

@@ -36,9 +36,10 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
         )
       },
       anchors(value, context) {
+        if (value === undefined || value === null) return []
         return Type.anchors(
           type,
-          (value ?? {}) as Record<string, unknown>,
+          value as Record<string, unknown>,
           context.path
         )
       },

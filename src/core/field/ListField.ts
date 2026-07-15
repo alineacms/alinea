@@ -37,7 +37,6 @@ export class ListField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
-    const customAnchors = meta.anchors
     super({
       referencedViews: Schema.referencedViews(schema),
       ...meta,
@@ -83,7 +82,7 @@ export class ListField<
         return result
       },
       anchors(value, context) {
-        const result = customAnchors?.(value, context) ?? []
+        const result = []
         const rows = Array.isArray(value) ? value : []
         for (const row of rows) {
           const record = row as Record<string, unknown>
