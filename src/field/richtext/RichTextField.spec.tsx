@@ -48,8 +48,8 @@ function isStoredBlock(node: StoredRichTextNode): node is StoredRichTextBlock {
   return typeof node._id === 'string' && typeof node._type === 'string'
 }
 
-async function createEmptyParagraphAfter(page: Page, target: Locator) {
-  await target.evaluate(element => {
+async function placeCaret(target: Locator, position: 'start' | 'end') {
+  await target.evaluate((element, position) => {
     const editor = element.closest('[contenteditable]')
     const selection = window.getSelection()
     if (!(editor instanceof HTMLElement) || !selection)
@@ -57,10 +57,16 @@ async function createEmptyParagraphAfter(page: Page, target: Locator) {
     editor.focus()
     const range = document.createRange()
     range.selectNodeContents(element)
-    range.collapse(false)
+    range.collapse(position === 'start')
     selection.removeAllRanges()
     selection.addRange(range)
-  })
+    document.dispatchEvent(new Event('selectionchange'))
+    return new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  }, position)
+}
+
+async function createEmptyParagraphAfter(page: Page, target: Locator) {
+  await placeCaret(target, 'end')
   await page.keyboard.press('Enter')
 }
 
@@ -102,12 +108,11 @@ test('inserts, splits and joins ordinary text', async ({mount, page}) => {
   await mount(<RichTextPlainStory />)
 
   const editor = page.locator('.ProseMirror').first()
-  await editor.getByText('Select this text', {exact: false}).click()
-  await page.keyboard.press('End')
+  await placeCaret(editor.locator('p').first(), 'end')
   await page.keyboard.type(' Added')
   await page.keyboard.press('Enter')
   await page.keyboard.type('Temporary paragraph')
-  await page.keyboard.press('Home')
+  await placeCaret(editor.locator('p').nth(1), 'start')
   await page.keyboard.press('Backspace')
 
   await expect(editor).toContainText('AddedTemporary paragraph')
