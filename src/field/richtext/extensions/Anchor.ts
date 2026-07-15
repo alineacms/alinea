@@ -28,7 +28,12 @@ const Anchor = Mark.create<AnchorOptions>({
   addAttributes() {
     return {
       id: {
-        default: null
+        default: null,
+        parseHTML: element => element.getAttribute('data-anchor'),
+        renderHTML: attributes => {
+          if (!attributes.id) return {}
+          return {'data-anchor': attributes.id}
+        }
       }
     }
   },
@@ -44,11 +49,6 @@ const Anchor = Mark.create<AnchorOptions>({
   },
   addCommands() {
     return {
-      // setAnchor:
-      //   attributes =>
-      //   ({commands}) => {
-      //     return commands.setMark(this.name, attributes)
-      //   },
       setAnchor:
         attributes =>
         ({tr, state, dispatch}) => {

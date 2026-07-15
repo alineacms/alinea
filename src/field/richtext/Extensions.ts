@@ -29,6 +29,7 @@ import css from './Extensions.module.css'
 import {Link} from './extensions/Link.js'
 import Small from './extensions/Small.js'
 import Anchor from './extensions/Anchor.js'
+import {createUniqueAnchor} from 'alinea/core/util/Anchors'
 import {slugify} from 'alinea/core/util/Slugs'
 import {Plugin} from '@tiptap/pm/state'
 const styles = styler(css)
@@ -58,9 +59,11 @@ const HeadingWithClassesAndIds = Heading.extend({
         appendTransaction(_transaction, _oldState, newState) {
           const tr = newState.tr
           let modified = false
+          const anchors = new Set<string>()
           newState.doc.descendants((node, pos) => {
             if (node.type.name !== 'heading') return
-            const slug = slugify(node.textContent)
+            const slug =
+              createUniqueAnchor(slugify(node.textContent), anchors) ?? null
             if (node.attrs._anchor !== slug) {
               tr.setNodeMarkup(pos, undefined, {
                 ...node.attrs,
@@ -75,7 +78,7 @@ const HeadingWithClassesAndIds = Heading.extend({
                 const to = from + child.text.length
                 const anchorType = newState.schema.marks.anchor
 
-                tr.addMark(from, to, anchorType.create({id: slug}))
+                if (slug) tr.addMark(from, to, anchorType.create({id: slug}))
                 return false
               })
 

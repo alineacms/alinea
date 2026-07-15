@@ -28,6 +28,7 @@ import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
+import {createUniqueAnchor} from '#/core/util/Anchors.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
@@ -331,6 +332,39 @@ function cloneRow(row: ListValue): ListValue {
   }
 }
 
+function isGeneratedAnchorForLabel(anchor: string | undefined, label: string) {
+  if (anchor === undefined) return true
+  const labelSlug = slugify(label)
+  if (!labelSlug) return false
+  if (anchor === labelSlug) return true
+  if (!anchor.startsWith(`${labelSlug}-`)) return false
+  return /^\d+$/.test(anchor.slice(labelSlug.length + 1))
+}
+
+function useSiblingListAnchors(
+  list: ReactiveNode<Array<ListValue>>,
+  itemId: string
+) {
+  const siblingAnchorsAtom = useMemo(
+    () =>
+      atom(get => {
+        const rowNodes = get(list.nodes) as Array<ReactiveNode<ListValue>>
+        const anchors = new Set<string>()
+        for (const rowNode of rowNodes) {
+          const rowId = get(rowNode.field('_id')) as string | undefined
+          if (rowId === itemId) continue
+          const rowAnchor = get(rowNode.field('_anchor')) as string | undefined
+          const rowLabel = get(rowNode.field('_label')) as string | undefined
+          const anchor = rowAnchor ?? (rowLabel ? slugify(rowLabel) : undefined)
+          if (anchor) anchors.add(anchor)
+        }
+        return anchors
+      }),
+    [itemId, list]
+  )
+  return useAtomValue(siblingAnchorsAtom)
+}
+
 function pasteBlockLabel(
   row: ListValue,
   items: Array<ListFieldTypeItem>
@@ -556,6 +590,7 @@ function ListFieldRow({
     | undefined
   const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
   const customLabel = customLabelValue ?? ''
+  const siblingAnchors = useSiblingListAnchors(list, itemId)
   const value = useAtomValue(row.value) as Record<string, unknown>
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))
@@ -620,15 +655,25 @@ function ListFieldRow({
   }
 
   function updateCustomLabel(nextValue: string) {
+    const shouldSyncAnchor = isGeneratedAnchorForLabel(anchorValue, customLabel)
     setCustomLabel(nextValue || undefined)
-    const currentLabelSlug = slugify(customLabel)
-    const shouldSyncAnchor =
-      anchorValue === undefined || anchorValue === currentLabelSlug
     if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
   }
 
+  function commitCustomLabel() {
+    if (isGeneratedAnchorForLabel(anchorValue, customLabel)) {
+      setAnchor(
+        createUniqueAnchor(slugify(customLabel), new Set(siblingAnchors))
+      )
+    }
+  }
+
   function updateAnchor(nextValue: string) {
-    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
+    setAnchor(slugify(nextValue) || undefined)
+  }
+
+  function commitAnchor(value: string) {
+    setAnchor(createUniqueAnchor(value, new Set(siblingAnchors)))
   }
 
   return (
@@ -661,7 +706,9 @@ function ListFieldRow({
             typeIcon={typeIcon}
             insertItems={typeItems}
             pasted={pasted && schema[pasted._type] ? pasted : undefined}
+            onAnchorBlur={commitAnchor}
             onAnchorChange={updateAnchor}
+            onCustomLabelBlur={commitCustomLabel}
             onCustomLabelChange={updateCustomLabel}
             onCopy={() => onCopyRow(itemId)}
             onDelete={deleteRow}
@@ -732,7 +779,9 @@ interface ListFieldRowHeaderProps {
   pasted?: ListValue
   readOnly: boolean
   typeIcon?: ComponentType
+  onAnchorBlur: (value: string) => void
   onAnchorChange: (value: string) => void
+  onCustomLabelBlur: () => void
   onCustomLabelChange: (value: string) => void
   onCopy?: () => void
   onDelete?: () => void
@@ -759,7 +808,9 @@ function ListFieldRowHeader({
   pasted,
   readOnly,
   typeIcon,
+  onAnchorBlur,
   onAnchorChange,
+  onCustomLabelBlur,
   onCustomLabelChange,
   onCopy,
   onDelete,
@@ -831,6 +882,7 @@ function ListFieldRowHeader({
                     label="Label"
                     autoFocus
                     isDisabled={readOnly || isPreview}
+                    onBlur={onCustomLabelBlur}
                     onChange={onCustomLabelChange}
                     value={customLabel}
                   />
@@ -838,6 +890,7 @@ function ListFieldRowHeader({
                     fieldValue={anchor}
                     label="Anchor"
                     isDisabled={readOnly || isPreview}
+                    onBlur={onAnchorBlur}
                     onChange={onAnchorChange}
                     source={customLabel}
                   />

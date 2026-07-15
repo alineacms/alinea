@@ -1004,7 +1004,6 @@ function EntryAnchorFieldInner({
       {id: string; label: string; location: string}
     >()
     for (const anchor of found) {
-      if (unique.has(anchor.id)) continue
       unique.set(anchor.id, {
         id: anchor.id,
         label: anchor.label ?? `#${anchor.id}`,
