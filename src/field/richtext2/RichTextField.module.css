@@ -18,6 +18,16 @@
   outline-color: var(--alinea-primary-overlay);
 }
 
+.RichTextFieldView[data-focused='true'] {
+  border-color: var(--alinea-border-accent);
+  outline-color: var(--alinea-primary-overlay);
+}
+
+.RichTextFieldView:focus-within:not([data-focused='true']) {
+  border-color: var(--alinea-border);
+  outline-color: transparent;
+}
+
 .RichTextFieldView[data-invalid='true'] {
   border-color: var(--alinea-border-danger);
   outline-color: var(--alinea-danger-overlay);

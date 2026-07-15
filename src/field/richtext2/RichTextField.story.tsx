@@ -96,7 +96,9 @@ interface RichText2FixtureProps {
 function RichText2Fixture({initialBody, entryType}: RichText2FixtureProps) {
   const state = useMemo(() => {
     const dashboard = createDashboard()
-    const node = new ReactiveNode<object>({body: initialBody})
+    const node = new ReactiveNode<object>({
+      body: structuredClone(initialBody)
+    })
     return {
       dashboard,
       editor: new DashboardEditor(dashboard, entryType, node)
@@ -105,7 +107,7 @@ function RichText2Fixture({initialBody, entryType}: RichText2FixtureProps) {
   const field = state.editor.field('body')
   if (!field) throw new Error('Body field not found')
   const value = useAtomValue(field.value)
-  const reset = useSetAtom(field.reset)
+  const reset = useSetAtom(state.editor.node.reset)
   const replace = useSetAtom(field.value)
   return (
     <DashboardScopeInternal dashboard={state.dashboard}>

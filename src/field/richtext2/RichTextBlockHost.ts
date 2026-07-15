@@ -33,6 +33,7 @@ export class RichTextBlockHosts {
         id: String(node.attrs._id),
         typeName
       }
+      dom.dataset.richtextBlockId = host.id
       this.#hosts.set(dom, host)
       this.#publish()
       return {

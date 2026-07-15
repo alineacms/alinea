@@ -16,14 +16,18 @@ export function documentUpdateAtom(reactive: ReactiveNode<TextDoc>) {
           return Node.isBlock(value) && String(value[BlockNode.id]) === id
         })
         if (currentIndex < 0) set(reactive.insert, index, node)
-        else if (currentIndex !== index) set(reactive.move, currentIndex, index)
+        else {
+          const current = children[currentIndex]
+          const value = get(current.value)
+          if (!sameBlockType(value, node)) set(current.value, node)
+          if (currentIndex !== index) set(reactive.move, currentIndex, index)
+        }
         return
       }
       const current = children[index]
       if (current && !Node.isBlock(get(current.value))) {
         if (!sameValue(get(current.value), node)) set(current.value, node)
-      }
-      else set(reactive.insert, index, node)
+      } else set(reactive.insert, index, node)
     })
 
     const structure = get(reactive.nodes)
@@ -35,4 +39,8 @@ export function documentUpdateAtom(reactive: ReactiveNode<TextDoc>) {
 
 function sameValue(left: unknown, right: unknown): boolean {
   return left === right || JSON.stringify(left) === JSON.stringify(right)
+}
+
+function sameBlockType(left: unknown, right: BlockNode): boolean {
+  return Node.isBlock(left) && left[Node.type] === right[Node.type]
 }

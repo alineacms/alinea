@@ -11,6 +11,8 @@ import {
   type AnyExtension
 } from '@tiptap/core'
 import {Fragment, type Node as ProseMirrorNode, Slice} from '@tiptap/pm/model'
+import {dropPoint} from '@tiptap/pm/transform'
+import type {EditorView} from '@tiptap/pm/view'
 import {Plugin} from '@tiptap/pm/state'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
@@ -177,11 +179,38 @@ export function richTextDocumentExtension(hasEmbeddedBlocks: boolean) {
 export const RichTextBlockClipboard = Extension.create({
   name: 'richTextBlockClipboard',
   addProseMirrorPlugins() {
+    let draggedBlockId: string | undefined
     return [
       new Plugin({
         props: {
+          handleDOMEvents: {
+            dragstart(_view, event) {
+              const target = event.target
+              draggedBlockId =
+                target instanceof Element
+                  ? target.closest<HTMLElement>('[data-richtext-block-host]')
+                      ?.dataset.richtextBlockId
+                  : undefined
+              return false
+            },
+            dragend() {
+              draggedBlockId = undefined
+              return false
+            }
+          },
           transformPasted(slice) {
             return renewPastedBlockIds(slice)
+          },
+          handleDrop(view, event, slice, moved) {
+            const handled = moveDroppedBlock(
+              view,
+              event,
+              slice,
+              moved,
+              draggedBlockId
+            )
+            draggedBlockId = undefined
+            return handled
           }
         }
       })
@@ -301,6 +330,67 @@ export function blockExtensions(
       }
     })
   )
+}
+
+function moveDroppedBlock(
+  view: EditorView,
+  event: DragEvent,
+  slice: Slice,
+  moved: boolean,
+  draggedBlockId?: string
+): boolean {
+  if (!moved) return false
+  const dragged =
+    slice.content.childCount === 1 ? slice.content.firstChild : undefined
+  if (!dragged || !isRichTextBlockNode(dragged)) return false
+  const sourceId =
+    draggedBlockId ||
+    event.dataTransfer?.getData('application/x-alinea-richtext-block') ||
+    String(dragged.attrs[BlockNode.id])
+
+  const coordinates = view.posAtCoords({
+    left: event.clientX,
+    top: event.clientY
+  })
+  if (!coordinates) return false
+
+  const drop = dropPoint(view.state.doc, coordinates.pos, slice)
+  if (drop == null) return false
+  const resolvedDrop = view.state.doc.resolve(drop)
+  if (resolvedDrop.depth !== 0) return false
+
+  let sourcePosition: number | undefined
+  let sourceNode: ProseMirrorNode | undefined
+  view.state.doc.forEach((node, offset) => {
+    if (
+      sourceNode ||
+      !isRichTextBlockNode(node) ||
+      String(node.attrs[BlockNode.id]) !== sourceId
+    )
+      return
+    sourcePosition = offset
+    sourceNode = node
+  })
+  if (sourcePosition === undefined || !sourceNode) return false
+  if (drop >= sourcePosition && drop <= sourcePosition + sourceNode.nodeSize) {
+    event.preventDefault()
+    return true
+  }
+
+  const transaction = view.state.tr.delete(
+    sourcePosition,
+    sourcePosition + sourceNode.nodeSize
+  )
+  const insertPosition = transaction.mapping.map(drop)
+  transaction.insert(insertPosition, sourceNode)
+  transaction.scrollIntoView()
+  event.preventDefault()
+  view.dispatch(transaction)
+  return true
+}
+
+function isRichTextBlockNode(node: ProseMirrorNode): boolean {
+  return node.type.spec.group?.split(' ').includes('richTextBlock') ?? false
 }
 
 function renewPastedBlockIds(slice: Slice): Slice {

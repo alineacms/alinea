@@ -274,6 +274,9 @@ test('keeps the owning rich text toolbar open while focus moves', async ({
     outerOwner
   )
 
+  await page.getByRole('textbox', {name: 'Title'}).fill('Inner field')
+  await expect(fields.first()).not.toHaveAttribute('data-focused', 'true')
+
   await page.getByRole('textbox', {name: 'Title'}).fill('Still important')
   await expect(toolbar).toHaveAttribute(
     'data-richtext-toolbar-owner',
@@ -281,6 +284,7 @@ test('keeps the owning rich text toolbar open while focus moves', async ({
   )
 
   await page.locator('.ProseMirror').getByText('Nested details.').click()
+  await expect(fields.first()).not.toHaveAttribute('data-focused', 'true')
   await expect(toolbar).toHaveCount(1)
   await expect(toolbar).toHaveAttribute(
     'data-richtext-toolbar-owner',
@@ -332,20 +336,30 @@ test('persists embedded field and nested rich-text edits', async ({
 
   const title = page.getByRole('textbox', {name: 'Title'})
   await title.fill('Persisted title')
-  await page.locator('.ProseMirror').first().getByText('After the block.').click()
-  await expect(page.locator('[data-richtext-block-host]').first()).toHaveAttribute(
-    'data-debug-block-value',
-    /Persisted title/
-  )
+  await page
+    .locator('.ProseMirror')
+    .first()
+    .getByText('After the block.')
+    .click()
+  await expect(
+    page.locator('[data-richtext-block-host]').first()
+  ).toHaveAttribute('data-debug-block-value', /Persisted title/)
   await expect(page.getByTestId('value')).toContainText(
     '"title":"Persisted title"'
   )
 
-  const nested = page.locator('[data-richtext-field]').nth(1).locator('.ProseMirror')
+  const nested = page
+    .locator('[data-richtext-field]')
+    .nth(1)
+    .locator('.ProseMirror')
   await nested.getByText('Nested details.').click()
   await page.keyboard.press('End')
   await page.keyboard.type(' Persisted details.')
-  await page.locator('.ProseMirror').first().getByText('After the block.').click()
+  await page
+    .locator('.ProseMirror')
+    .first()
+    .getByText('After the block.')
+    .click()
   await expect(page.getByTestId('value')).toContainText('Persisted details.')
 })
 
@@ -363,7 +377,11 @@ test('undoes block deletion without losing edited field values', async ({
 
   const title = page.getByRole('textbox', {name: 'Title'})
   await title.fill('Keep this value')
-  await page.locator('.ProseMirror').first().getByText('After the block.').click()
+  await page
+    .locator('.ProseMirror')
+    .first()
+    .getByText('After the block.')
+    .click()
   await expect(page.getByTestId('value')).toContainText('Keep this value')
 
   await page.getByRole('button', {name: 'Callout actions'}).click()
@@ -395,11 +413,11 @@ test('synchronizes external replacements and resets', async ({mount, page}) => {
   await page.keyboard.type(' Changed')
   await expect(editor).toContainText('Changed')
 
-  await page.getByRole('button', {name: 'Reset body'}).click()
+  await page.getByRole('button', {name: 'Reset body'}).dispatchEvent('click')
   await expect(editor).not.toContainText('Changed')
   await expect(editor).toContainText('Before the block.')
 
-  await page.getByRole('button', {name: 'Replace body'}).click()
+  await page.getByRole('button', {name: 'Replace body'}).dispatchEvent('click')
   await expect(editor).toHaveText('Externally replaced.')
   await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
     0

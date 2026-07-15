@@ -78,3 +78,33 @@ test('equal text nodes are not rewritten during document reconciliation', () => 
 
   test.is(updates, 0)
 })
+
+test('field atoms update their backing reactive child', () => {
+  const node = new ReactiveNode({title: 'Important'})
+  const store = createStore()
+  const title = node.field('title')
+  const children = store.get(node.nodes) as Record<string, ReactiveNode>
+
+  store.set(title, 'Persisted title')
+
+  test.is(store.get(title), 'Persisted title')
+  test.is(store.get(children.title.value), 'Persisted title')
+})
+
+test('reset restores nested reactive values', () => {
+  const initial = [
+    {_type: 'paragraph', content: [{_type: 'text', text: 'Before'}]}
+  ]
+  const node = new ReactiveNode({body: initial})
+  const store = createStore()
+
+  store.set(node.field('body'), [
+    {_type: 'paragraph', content: [{_type: 'text', text: 'Changed'}]}
+  ])
+  store.set(node.reset)
+
+  test.is(
+    JSON.stringify(store.get(node.field('body'))),
+    JSON.stringify(initial)
+  )
+})

@@ -16,6 +16,7 @@ import {
   Popover
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
+import {BlockNode, Node} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
@@ -26,6 +27,7 @@ import {
 } from '#/dashboard/icons.js'
 import type {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import styler from '@alinea/styler'
+import {useAtomValue} from 'jotai'
 import {memo, useState} from 'react'
 import css from './RichTextBlock.module.css'
 
@@ -48,6 +50,8 @@ export const RichTextBlock = memo(function RichTextBlock({
 }: RichTextBlockProps) {
   const label = Type.label(type)
   const typeIcon = getType(type).icon
+  const value = useAtomValue(node.value)
+  const id = Node.isBlock(value) ? String(value[BlockNode.id]) : ''
   const [actionsOpen, setActionsOpen] = useState(false)
 
   function closeActions() {
@@ -70,6 +74,10 @@ export const RichTextBlock = memo(function RichTextBlock({
               draggable
               onDragStart={event => {
                 event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData(
+                  'application/x-alinea-richtext-block',
+                  id
+                )
               }}
             />
           )}

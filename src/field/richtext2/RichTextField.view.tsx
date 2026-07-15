@@ -16,6 +16,7 @@ import type {AnyExtension, Editor} from '@tiptap/core'
 import {EditorContent, useEditor} from '@tiptap/react'
 import {useAtomValue, useSetAtom, useStore} from 'jotai'
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -63,12 +64,18 @@ export function RichTextFieldView<Blocks extends Schema>({
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   const fieldNode = useFieldNode<TextDoc>(field)
+  const documentValue = useAtomValue(fieldNode.value)
   const store = useStore()
   const blocks = useAtomValue(
     useMemo(() => richTextBlocksAtom(fieldNode), [fieldNode])
   )
   const blocksRef = useRef(blocks)
   blocksRef.current = blocks
+  const lastEditorDocument = useRef<string>()
+  const pendingExternalDocument = useRef<string>()
+  const documentKey = documentIdentity(documentValue)
+  if (lastEditorDocument.current && lastEditorDocument.current !== documentKey)
+    pendingExternalDocument.current = documentKey
   const updateDocument = useSetAtom(
     useMemo(() => documentUpdateAtom(fieldNode), [fieldNode])
   )
@@ -76,6 +83,7 @@ export function RichTextFieldView<Blocks extends Schema>({
   const pendingBlocks = useRef(new Map<string, BlockNode>())
   const [activeEditor, setActiveEditor] = useState<Editor>()
   const [focused, setFocused] = useState(false)
+  const [innerBlockFocused, setInnerBlockFocused] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const ownerId = useId()
   const picker = usePickTextLink()
@@ -97,27 +105,30 @@ export function RichTextFieldView<Blocks extends Schema>({
     [fieldNode, store]
   )
 
-  function resolveBlock(
-    id: string,
-    typeName: string,
-    snapshot: BlockNode | undefined
-  ): BlockNode | undefined {
-    const pending = pendingBlocks.current.get(id)
-    if (pending) return pending
-    const part = blocksRef.current.find(part => part.id === id)
-    if (part) {
-      const value = store.get(part.node.value)
-      if (Node.isBlock(value)) return value
-    }
-    if (snapshot?.[Node.type] === typeName) return snapshot
-    const type = options.schema?.[typeName]
-    if (!type) return
-    return {
-      [Node.type]: typeName,
-      [BlockNode.id]: id,
-      ...Type.initialValue(type)
-    } as BlockNode
-  }
+  const resolveBlock = useCallback(
+    function resolveBlock(
+      id: string,
+      typeName: string,
+      snapshot: BlockNode | undefined
+    ): BlockNode | undefined {
+      const pending = pendingBlocks.current.get(id)
+      if (pending) return pending
+      const part = blocksRef.current.find(part => part.id === id)
+      if (part) {
+        const value = store.get(part.node.value)
+        if (Node.isBlock(value)) return value
+      }
+      if (snapshot?.[Node.type] === typeName) return snapshot
+      const type = options.schema?.[typeName]
+      if (!type) return
+      return {
+        [Node.type]: typeName,
+        [BlockNode.id]: id,
+        ...Type.initialValue(type)
+      } as BlockNode
+    },
+    [options.schema, store]
+  )
 
   const editor = useEditor({
     content,
@@ -127,6 +138,9 @@ export function RichTextFieldView<Blocks extends Schema>({
       // ProseMirror owns selection restoration. React's contenteditable
       // traversal cannot safely inspect nested ProseMirror-owned DOM.
       editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
+      lastEditorDocument.current = documentIdentity(
+        editorNodes(editor.getJSON(), resolveBlock)
+      )
     },
     onFocus({editor}) {
       setActiveEditor(editor)
@@ -134,6 +148,15 @@ export function RichTextFieldView<Blocks extends Schema>({
     },
     onUpdate({editor}) {
       const next = editorNodes(editor.getJSON(), resolveBlock)
+      const nextKey = documentIdentity(next)
+      if (
+        pendingExternalDocument.current &&
+        nextKey === lastEditorDocument.current
+      )
+        return
+      lastEditorDocument.current = nextKey
+      if (nextKey === pendingExternalDocument.current)
+        pendingExternalDocument.current = undefined
       updateDocument(next)
       for (const node of next)
         if (Node.isBlock(node))
@@ -143,13 +166,14 @@ export function RichTextFieldView<Blocks extends Schema>({
 
   useEffect(() => {
     if (!editor) return
-    return store.sub(fieldNode.value, () => {
-      const value = store.get(fieldNode.value)
-      const current = editorNodes(editor.getJSON())
-      if (documentIdentity(value) === documentIdentity(current)) return
-      editor.commands.setContent(editorContent(value), {emitUpdate: false})
+    const current = editorNodes(editor.getJSON(), resolveBlock)
+    if (documentIdentity(documentValue) === documentIdentity(current)) return
+    editor.commands.setContent(editorContent(documentValue), {
+      emitUpdate: false
     })
-  }, [editor, fieldNode, store])
+    lastEditorDocument.current = documentKey
+    pendingExternalDocument.current = undefined
+  }, [documentValue, editor, resolveBlock])
 
   const toolbarTarget =
     typeof document === 'undefined'
@@ -170,21 +194,34 @@ export function RichTextFieldView<Blocks extends Schema>({
 
   function checkFocus() {
     requestAnimationFrame(() => {
-      setFocused(ownsFocus(document.activeElement))
+      const target = document.activeElement
+      setFocused(ownsFocus(target))
+      setInnerBlockFocused(isInnerBlockField(target))
     })
   }
 
   function handleBlur(nextTarget: EventTarget | null) {
-    if (nextTarget instanceof HTMLElement) setFocused(ownsFocus(nextTarget))
-    else checkFocus()
+    if (nextTarget instanceof HTMLElement) {
+      setFocused(ownsFocus(nextTarget))
+      setInnerBlockFocused(isInnerBlockField(nextTarget))
+    } else checkFocus()
   }
 
   function ownsFocus(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false
     const richText = target.closest<HTMLElement>('[data-richtext-field]')
-    if (richText) return richText === root.current
+    if (richText && richText !== root.current) return false
+    if (root.current?.contains(target)) return true
     const toolbar = target.closest<HTMLElement>('[data-richtext-toolbar-owner]')
     return toolbar?.dataset.richtextToolbarOwner === ownerId
+  }
+
+  function isInnerBlockField(target: EventTarget | null): boolean {
+    return (
+      target instanceof HTMLElement &&
+      root.current?.contains(target) === true &&
+      target.closest('[data-richtext-block-editor]') !== null
+    )
   }
 
   return (
@@ -203,8 +240,14 @@ export function RichTextFieldView<Blocks extends Schema>({
           data-richtext-field={ownerId}
           data-inline={options.inline || undefined}
           data-invalid={Boolean(error) || undefined}
+          data-focused={
+            focused && !innerBlockFocused && !readOnly ? 'true' : undefined
+          }
           data-read-only={readOnly || undefined}
-          onFocusCapture={event => setFocused(ownsFocus(event.target))}
+          onFocusCapture={event => {
+            setFocused(ownsFocus(event.target))
+            setInnerBlockFocused(isInnerBlockField(event.target))
+          }}
           onBlurCapture={event => handleBlur(event.relatedTarget)}
         >
           {editor && !readOnly && options.schema && (
@@ -242,7 +285,7 @@ export function RichTextFieldView<Blocks extends Schema>({
               toolbar={options.toolbar}
               onFocusChange={(next, nextTarget) => {
                 if (next) setFocused(true)
-                else handleBlur(nextTarget)
+                else handleBlur(nextTarget ?? null)
               }}
             />,
             toolbarTarget
