@@ -6,10 +6,12 @@ import {createId} from '#/core/Id.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
+import {ListEditor} from '#/core/field/ListField.js'
 import {entryUrl, pathSuffix} from '#/core/util/EntryFilenames.js'
 import {
   generateKeyBetween,
-  generateNKeysBetween
+  generateNKeysBetween,
+  isValidOrderKey
 } from '#/core/util/FractionalIndexing.js'
 import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
 import * as paths from '#/core/util/Paths.js'
@@ -1104,6 +1106,11 @@ function dataWithAliases(
 
 type AliasTarget = 'aliases' | 'metadata'
 
+interface UrlAliasRow extends ListRow {
+  _type: 'alias'
+  url: string
+}
+
 function typeAliasTarget(type: Type): AliasTarget | undefined {
   if (Type.field(type, 'aliases')) return 'aliases'
   const metadata = Type.field(type, 'metadata')
@@ -1115,20 +1122,26 @@ function typeAliasTarget(type: Type): AliasTarget | undefined {
 }
 
 function createUrlAliasRow(url: string, aliases: Array<unknown>) {
-  const previousIndex = aliases
-    .map(alias => {
-      if (!isRecord(alias)) return undefined
-      const index = alias[ListRow.index]
-      return typeof index === 'string' ? index : undefined
-    })
-    .filter((index): index is string => index !== undefined)
-    .at(-1)
-  return {
-    [ListRow.id]: createId(),
-    [ListRow.index]: generateKeyBetween(previousIndex ?? null, null),
-    [ListRow.type]: 'alias',
-    url
-  }
+  const orderedAliases = aliases.filter(isOrderedUrlAliasRow)
+  const editor = new ListEditor<UrlAliasRow>(orderedAliases)
+  const created = editor.add('alias', {url}).value().at(-1)
+  assert(created)
+  return created
+}
+
+function isOrderedUrlAliasRow(value: unknown): value is UrlAliasRow {
+  if (!isRecord(value)) return false
+  const id = value[ListRow.id]
+  const index = value[ListRow.index]
+  const type = value[ListRow.type]
+  const url = value.url
+  return (
+    typeof id === 'string' &&
+    typeof index === 'string' &&
+    isValidOrderKey(index) &&
+    type === 'alias' &&
+    typeof url === 'string'
+  )
 }
 
 function urlFromAliasRow(value: unknown): string | undefined {

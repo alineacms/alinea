@@ -323,6 +323,40 @@ test('update preserves the previous MediaFile URL as an alias', async () => {
   test.equal(aliasUrls(result.aliases), ['/one'])
 })
 
+test('update preserves a MediaFile URL with an empty alias row', async () => {
+  const db = await createEmptyDb()
+  const emptyAlias = {
+    ...alias(''),
+    [ListRow.index]: ''
+  }
+  const data = mediaFileData('One', 'one', [])
+  const entry = await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: {
+      ...data,
+      metadata: {
+        ...data.metadata,
+        aliases: [emptyAlias]
+      }
+    }
+  })
+
+  await db.update({
+    type: MediaFile,
+    id: entry._id,
+    status: 'published',
+    set: {path: 'two'}
+  })
+
+  const aliases = await db.get({
+    id: entry._id,
+    select: Entry.aliases
+  })
+  test.equal(aliasUrls(aliases), ['', '/one'])
+})
+
 test('publish preserves the previous published URL as an alias', async () => {
   const db = await createDocumentDb()
   const entry = await db.create({
