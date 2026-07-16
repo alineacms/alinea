@@ -10,12 +10,9 @@ import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useState, useTransition} from 'react'
 import {usePolicy} from '../hooks.js'
 import {
-  IcOutlineArchive,
   IcRoundArchive,
   IcRoundCheck,
   IcRoundDelete,
-  IcRoundEdit,
-  IcRoundFlashOn,
   IcRoundPublishedWithChanges,
   IcRoundMoreHoriz,
   IcRoundSave,
@@ -27,6 +24,7 @@ import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {StatusBadge} from './StatusBadge.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -500,27 +498,6 @@ function EntryHeaderActions({
   )
 }
 
-const variantDescription = {
-  published: 'Published',
-  unpublished: 'Unpublished',
-  archived: 'Archived',
-  draft: 'Draft'
-}
-
-const badgeStatus = {
-  published: 'published',
-  unpublished: 'unpublished',
-  archived: 'archived',
-  draft: 'draft'
-} as const
-
-const badgeIcon = {
-  published: IcRoundCheck,
-  unpublished: IcRoundFlashOn,
-  archived: IcOutlineArchive,
-  draft: IcRoundEdit
-}
-
 export function EntryHeader({
   controls,
   entry,
@@ -542,7 +519,6 @@ export function EntryHeader({
     viewedEntry?.main && viewedStatus === 'draft'
   )
   const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
-  const displayStatus = variantDescription[status]
   const isRevision = selectedVersion.type === 'history'
   return (
     <header className={styles.EntryHeader()}>
@@ -550,13 +526,11 @@ export function EntryHeader({
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
-          <Badge
-            className={styles.EntryHeader.status()}
-            icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
-            status={isRevision ? undefined : badgeStatus[status]}
-          >
-            {isRevision ? 'Revision' : displayStatus}
-          </Badge>
+          {isRevision ? (
+            <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
+          ) : (
+            <StatusBadge status={status} />
+          )}
           {controls}
           <EntryHeaderMoreActions
             entry={entry}
