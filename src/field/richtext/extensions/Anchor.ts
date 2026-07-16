@@ -1,4 +1,5 @@
 import {getMarkRange, Mark, mergeAttributes} from '@tiptap/core'
+import type {Transaction} from '@tiptap/pm/state'
 
 interface AnchorAttributes {
   id: string
@@ -55,6 +56,7 @@ const Anchor = Mark.create<AnchorOptions>({
           const anchorType = state.schema.marks[this.name]
           const range = getMarkRange(tr.selection.$from, anchorType)
           const {from, to} = range ?? tr.selection
+          setHeadingAnchor(tr, attributes.id)
           tr.removeMark(from, to, anchorType)
           tr.addMark(from, to, anchorType.create(attributes))
           if (dispatch) dispatch()
@@ -67,11 +69,30 @@ const Anchor = Mark.create<AnchorOptions>({
         },
       unsetAnchor:
         () =>
-        ({commands}) => {
-          return commands.unsetMark(this.name)
+        ({tr, state, dispatch}) => {
+          const anchorType = state.schema.marks[this.name]
+          const range = getMarkRange(tr.selection.$from, anchorType)
+          const {from, to} = range ?? tr.selection
+          setHeadingAnchor(tr, null)
+          tr.removeMark(from, to, anchorType)
+          if (dispatch) dispatch()
+          return true
         }
     }
   }
 })
+
+function setHeadingAnchor(transaction: Transaction, anchor: string | null) {
+  const {$from} = transaction.selection
+  for (let depth = $from.depth; depth > 0; depth--) {
+    const node = $from.node(depth)
+    if (node.type.name !== 'heading') continue
+    transaction.setNodeMarkup($from.before(depth), undefined, {
+      ...node.attrs,
+      _anchor: anchor
+    })
+    return
+  }
+}
 
 export default Anchor

@@ -65,15 +65,34 @@ const HeadingWithClasses = Heading.extend({
   addProseMirrorPlugins() {
     return [
       new Plugin({
-        appendTransaction(_transaction, _oldState, newState) {
+        appendTransaction(_transaction, oldState, newState) {
           const tr = newState.tr
           let modified = false
           const anchors = new Set<string>()
+          const previousHeadings: Array<ProseMirrorNode> = []
+          oldState.doc.descendants(node => {
+            if (node.type.name === 'heading') previousHeadings.push(node)
+          })
+          const headings: Array<{
+            node: ProseMirrorNode
+            pos: number
+            custom: boolean
+          }> = []
+          let headingIndex = 0
           newState.doc.descendants((node, pos) => {
             if (node.type.name !== 'heading') return
-            const slug =
-              createUniqueAnchor(slugify(node.textContent), anchors) ?? null
-            if (node.attrs._anchor === slug) return
+            const previous = previousHeadings[headingIndex++]
+            const custom = isCustomHeadingAnchor(node, previous)
+            headings.push({node, pos, custom})
+            if (custom && typeof node.attrs._anchor === 'string')
+              anchors.add(node.attrs._anchor)
+          })
+          for (const {node, pos, custom} of headings) {
+            const slug = custom
+              ? node.attrs._anchor
+              : (createUniqueAnchor(slugify(node.textContent), anchors) ?? null)
+            if (!custom && typeof slug === 'string') anchors.add(slug)
+            if (node.attrs._anchor === slug) continue
             tr.setNodeMarkup(pos, undefined, {...node.attrs, _anchor: slug})
             node.descendants((child, childPos) => {
               if (!child.isText || !child.text) return true
@@ -88,13 +107,28 @@ const HeadingWithClasses = Heading.extend({
               return false
             })
             modified = true
-          })
+          }
           return modified ? tr : null
         }
       })
     ]
   }
 })
+
+function isCustomHeadingAnchor(
+  heading: ProseMirrorNode,
+  previous: ProseMirrorNode | undefined
+): boolean {
+  const anchor = heading.attrs._anchor
+  const generated = slugify(heading.textContent)
+  if (!previous) return anchor != null && anchor !== generated
+  const previousAnchor = previous.attrs._anchor
+  if (heading.textContent === previous.textContent && anchor !== previousAnchor)
+    return anchor !== generated
+  return (
+    previousAnchor != null && previousAnchor !== slugify(previous.textContent)
+  )
+}
 
 export function richTextDocumentExtension(hasEmbeddedBlocks: boolean) {
   return Document.extend({
