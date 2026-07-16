@@ -933,6 +933,23 @@ test('disallows embedded blocks inside tables', async ({mount, page}) => {
   ).toHaveCount(1)
 })
 
+test('renders inserted tables with an explicit tbody', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextPlainStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.getByText('Press Enter', {exact: false}).click()
+  await page.getByRole('button', {name: 'Table'}).click()
+  await page.getByRole('menuitem', {name: 'Insert table'}).click()
+
+  const table = editor.locator('table')
+  await expect(table.locator(':scope > tbody')).toHaveCount(1)
+  await expect(table.locator(':scope > tbody > tr')).toHaveCount(3)
+  await expect(table.locator(':scope > thead')).toHaveCount(0)
+})
+
 test('deletes a table from the table menu', async ({mount, page}) => {
   await mount(<RichTextCustomToolbarStory />)
 

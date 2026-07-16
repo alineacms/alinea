@@ -127,6 +127,48 @@ test('RichText renders tables with spans', () => {
   expect(cell?.rowSpan).toBe(2)
 })
 
+test('RichText adds a table body for rows directly under a table', () => {
+  const doc = [
+    {
+      _type: 'table',
+      content: [
+        {
+          _type: 'tableRow',
+          content: [
+            {
+              _type: 'tableHeader',
+              content: [
+                {_type: 'paragraph', content: [{_type: 'text', text: 'Name'}]}
+              ]
+            }
+          ]
+        },
+        {
+          _type: 'tableRow',
+          content: [
+            {
+              _type: 'tableCell',
+              content: [
+                {_type: 'paragraph', content: [{_type: 'text', text: 'Value'}]}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ] satisfies TextDoc
+
+  const {container} = render(<RichText doc={doc} />)
+  const table = container.querySelector('table')!
+
+  expect(table.querySelector(':scope > tbody > tr > th')?.textContent).toBe(
+    'Name'
+  )
+  expect(table.querySelector(':scope > tbody > tr > td')?.textContent).toBe(
+    'Value'
+  )
+})
+
 test('RichText supports custom HTML views for elements and text', () => {
   const doc = [
     {
