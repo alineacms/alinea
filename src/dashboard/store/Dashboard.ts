@@ -760,7 +760,13 @@ export class Dashboard {
   #sha = atom<string>()
   sha = Object.assign(
     atom(
-      get => get(this.#sha),
+      async get => {
+        const current = get(this.#sha)
+        if (current) return current
+        const db = get(this.db)
+        if (!isSyncableGraph(db)) return undefined
+        return db.sync()
+      },
       (get, set) => {
         const events = get(this.events)
         const listen = (event: Event) => {
@@ -2607,7 +2613,7 @@ export class DashboardEntryData {
     const node = await get(this.selectedNode)
     const value = get(node.value)
     if (!isObject<Record<string, unknown>>(value)) return undefined
-    const sha = get(this.dashboard.sha)
+    const sha = await get(this.dashboard.sha)
     if (!sha) return undefined
 
     const root = get(this.root)
