@@ -61,6 +61,20 @@ export class RichTextField<
       defaultValue() {
         return meta.options.initialValue ?? ([] as TextDoc<Blocks>)
       },
+      withInitialValue(value) {
+        if (!schema || !Array.isArray(value)) return value
+        let next = value
+        value.forEach((node, index) => {
+          if (!Node.isBlock(node)) return
+          const type = schema[node[Node.type]]
+          if (!type) return
+          const initialized = Type.withInitialValue(type, node)
+          if (initialized === node) return
+          if (next === value) next = [...value]
+          next[index] = initialized as TextDoc<Blocks>[number]
+        })
+        return next
+      },
       async applyLinks(value, loader) {
         const doc = Array.isArray(value) ? value : []
         const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]

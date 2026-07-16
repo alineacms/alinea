@@ -81,6 +81,7 @@ export interface FieldData<
 > extends FieldMeta<StoredValue, QueryValue, Mutator, Options> {
   referencedViews?: Array<string>
   defaultValue?: () => StoredValue
+  withInitialValue?: (value: StoredValue) => StoredValue
   applyLinks?: (value: StoredValue, loader: LinkResolver) => Promise<void>
   searchableText?: (value: StoredValue) => string
 }
@@ -123,6 +124,13 @@ export namespace Field {
     const data = getField(field)
     if ('initialValue' in data.options) return data.options.initialValue
     return data.defaultValue?.()
+  }
+
+  export function withInitialValue<StoredValue>(
+    field: HasField,
+    value: StoredValue
+  ): StoredValue {
+    return getField(field).withInitialValue?.(value) ?? value
   }
 
   export function view<
