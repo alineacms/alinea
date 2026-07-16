@@ -1,9 +1,9 @@
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
-import type {Field} from '#/core/Field.js'
+import type {EntryAnchorTarget, Field} from '#/core/Field.js'
+import type {Type} from '#/core/Type.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {Type} from '#/index.js'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
@@ -87,6 +87,15 @@ export function useEditor() {
   const editor = useContext(editorContext)
   assert(editor, 'DashboardEditor not found in context')
   return editor
+}
+
+/**
+ * Returns all anchors in the entry currently being edited.
+ */
+export function useEntryAnchors(): Array<EntryAnchorTarget> {
+  let editor = useEditor()
+  while (editor.parent) editor = editor.parent
+  return useAtomValue(editor.anchors)
 }
 
 /**

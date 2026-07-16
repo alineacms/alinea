@@ -58,7 +58,8 @@ test('RichText renders text marks and link attributes', () => {
             {_type: 'italic'},
             {
               _type: 'link',
-              href: 'https://example.com',
+              _anchor: 'details',
+              href: 'https://example.com/page#details',
               target: '_blank',
               title: 'Example'
             }
@@ -71,7 +72,7 @@ test('RichText renders text marks and link attributes', () => {
   const {container} = render(<RichText doc={doc} />)
 
   const link = screen.getByRole('link', {name: 'Marked'})
-  expect(link.getAttribute('href')).toBe('https://example.com')
+  expect(link.getAttribute('href')).toBe('https://example.com/page#details')
   expect(link.getAttribute('target')).toBe('_blank')
   expect(link.getAttribute('title')).toBe('Example')
   expect(container.querySelector('a > i > b')?.textContent).toBe('Marked')
@@ -289,6 +290,22 @@ test('RichText uses provided heading ids and ignores left alignment', () => {
 
   expect(heading.id).toBe('custom-id')
   expect(heading.style.textAlign).toBe('')
+})
+
+test('RichText renders stored heading anchors as ids', () => {
+  const doc: TextDoc = [
+    {
+      _type: 'heading',
+      _anchor: 'stable-anchor',
+      level: 2,
+      content: [{_type: 'text', text: 'Renamed heading'}]
+    }
+  ]
+
+  const heading = render(<RichText doc={doc} />).getByRole('heading', {
+    name: 'Renamed heading'
+  })
+  expect(heading.id).toBe('stable-anchor')
 })
 
 test('RichText renders custom block nodes', () => {

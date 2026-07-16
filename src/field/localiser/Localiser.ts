@@ -80,6 +80,18 @@ export function localiser<const Locale extends string>({
         } as Omit<Options, 'initialValue' | 'validate'> &
           FieldOptions<LocalisedValue<Locale, StoredValue>>,
         defaultValue: initialValue,
+        withInitialValue(value) {
+          const record = value ?? initialValue()
+          let next = record
+          for (const locale of locales) {
+            const before = record[locale]
+            const after = Field.withInitialValue(field, before)
+            if (after === before) continue
+            if (next === record) next = {...record}
+            next[locale] = after
+          }
+          return next
+        },
         async applyLinks(value, loader) {
           const record = value ?? initialValue()
           await Promise.all(
@@ -102,6 +114,27 @@ export function localiser<const Locale extends string>({
               path: [...context.path, locale]
             })
           )
+        },
+        anchors(value, context) {
+          const record = value ?? initialValue()
+          return locales.flatMap(locale =>
+            Field.anchors(field, record[locale], {
+              ...context,
+              path: [...context.path, locale]
+            })
+          )
+        },
+        normalizeAnchors(value, context) {
+          const record = value ?? initialValue()
+          let next = record
+          for (const locale of locales) {
+            const before = record[locale]
+            const after = Field.normalizeAnchors(field, before, context)
+            if (after === before) continue
+            if (next === record) next = {...record}
+            next[locale] = after
+          }
+          return next
         },
         async queryValue(value, loader) {
           const selected = selectLocalisedValue<Locale, StoredValue>({

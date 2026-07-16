@@ -18,7 +18,7 @@ import {
 import type {EntryFields} from '#/core/EntryFields.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {Expr} from '#/core/Expr.js'
-import {Field, FieldOptions} from '#/core/Field.js'
+import {Field, type EntryAnchorTarget, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Order} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
@@ -1137,6 +1137,7 @@ export class Dashboard {
 
 export class DashboardEditor {
   value: Atom<object>
+  anchors: Atom<Array<EntryAnchorTarget>>
   sections: Array<DashboardSection>
   constructor(
     public dashboard: Dashboard,
@@ -1147,6 +1148,9 @@ export class DashboardEditor {
   ) {
     this.resource ??= parent?.resource
     this.value = node.value
+    this.anchors = atom(get =>
+      Type.anchors(this.type, get(this.value) as Record<string, unknown>)
+    )
     this.sections = getType(this.type).sections.map(
       section => new DashboardSection(this.dashboard, section)
     )
@@ -2558,6 +2562,13 @@ export class DashboardEntryData {
     })
   )
 
+  anchors = swr(
+    atom(async get => {
+      const locale = get(this.sourceLocale)
+      return get(this.languages(locale).anchors)
+    })
+  )
+
   parentNeedsTranslation = swr(
     atom(async get => {
       if (!get(this.untranslated)) return false
@@ -3005,6 +3016,14 @@ export class DashboardEntryLanguage {
         `No versions found for entry ${this.entry.id} and locale ${this.locale}`
       )
       return first
+    })
+  )
+
+  anchors = swr(
+    atom(async (get): Promise<Array<EntryAnchorTarget>> => {
+      const type = get(this.entry.type).type
+      const entry = await get(this.activeVersion)
+      return Type.anchors(type, entry.data)
     })
   )
 

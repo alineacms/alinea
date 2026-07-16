@@ -11,12 +11,15 @@ import {
 import type {Reference} from '#/core/Reference.js'
 import {entries} from '#/core/util/Objects.js'
 import type {UrlReference} from '#/picker/url.js'
+import {createUniqueAnchor, usedAnchors} from 'alinea/core/util/Anchors'
+import {slugify} from 'alinea/core/util/Slugs'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/core'
 import {useEditorState} from '@tiptap/react'
 import {useMemo, type ReactNode} from 'react'
 import type {PickTextLinkFunc, PickerValue} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
+import {currentAnchor} from './extensions/Anchor.js'
 import {
   defaultToolbar,
   type RichTextToolbarContext,
@@ -26,6 +29,7 @@ import {
   type ToolbarMenu
 } from './Toolbar.js'
 import css from './RichTextToolbar.module.css'
+import type {PickTextAnchorFunc} from './PickTextAnchor.js'
 
 const styles = styler(css)
 
@@ -34,6 +38,8 @@ export interface RichTextToolbarProps {
   enableTables?: boolean
   ownerId: string
   pickLink?: PickTextLinkFunc
+  pickAnchor?: PickTextAnchorFunc
+  entryAnchors: Array<string>
   toolbar?: ToolbarConfig
   onFocusChange: (focused: boolean, nextTarget?: EventTarget | null) => void
 }
@@ -43,6 +49,8 @@ export function RichTextToolbar({
   enableTables,
   ownerId,
   pickLink,
+  pickAnchor,
+  entryAnchors,
   toolbar,
   onFocusChange
 }: RichTextToolbarProps) {
@@ -60,9 +68,20 @@ export function RichTextToolbar({
       focusToggle: target => onFocusChange(Boolean(target)),
       pickLink: pickLink ?? emptyPicker,
       handleLink: createLinkHandler(editor, pickLink, exec),
+      handleAnchor: pickAnchor
+        ? createAnchorHandler(editor, pickAnchor, entryAnchors, exec)
+        : () => undefined,
       toolbar: config
     } satisfies RichTextToolbarContext
-  }, [config, editor, enableTables, onFocusChange, pickLink])
+  }, [
+    config,
+    editor,
+    enableTables,
+    entryAnchors,
+    onFocusChange,
+    pickAnchor,
+    pickLink
+  ])
 
   return (
     <div
@@ -194,6 +213,26 @@ function createLinkHandler(
       hasLink: Boolean(existing),
       requireDescription: !selected
     }).then(picked => applyLink(editor, exec, picked, existing, selected))
+  }
+}
+
+function createAnchorHandler(
+  editor: Editor,
+  picker: PickTextAnchorFunc,
+  entryAnchors: Array<string>,
+  exec: () => ReturnType<Editor['chain']>
+) {
+  return function handleAnchor() {
+    void picker(currentAnchor(editor)).then(picked => {
+      if (picked === undefined) return
+      if (!picked.id) return void exec().unsetAnchor().run()
+      const current = currentAnchor(editor)
+      const anchor = createUniqueAnchor(
+        slugify(picked.id),
+        usedAnchors(entryAnchors, current)
+      )
+      if (anchor) exec().setAnchor({id: anchor}).run()
+    })
   }
 }
 

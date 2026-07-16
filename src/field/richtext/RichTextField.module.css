@@ -1,5 +1,4 @@
 .RichTextFieldView {
-  overflow: hidden;
   background-color: var(--alinea-input);
   border: 1px solid var(--alinea-border);
   border-radius: 8px;

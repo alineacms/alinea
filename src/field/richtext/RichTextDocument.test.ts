@@ -10,7 +10,14 @@ const paragraph = {
     {
       [Node.type]: 'text',
       [TextNode.text]: 'Hello',
-      [TextNode.marks]: [{[Mark.type]: 'link', _id: 'link-1', href: '/hello'}]
+      [TextNode.marks]: [
+        {
+          [Mark.type]: 'link',
+          _id: 'link-1',
+          _anchor: 'details',
+          href: '/hello#details'
+        }
+      ]
     }
   ]
 }
@@ -26,6 +33,11 @@ test('round trips text, element attributes and mark attributes', () => {
     {...paragraph, textAlign: 'center', empty: undefined}
   ])
 
+  test.equal(content.content?.[0]?.content?.[0]?.marks?.[0]?.attrs, {
+    'data-id': 'link-1',
+    'data-anchor': 'details',
+    href: '/hello#details'
+  })
   test.equal(editorNodes(content), [{...paragraph, textAlign: 'center'}])
 })
 
