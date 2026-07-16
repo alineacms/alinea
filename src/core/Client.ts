@@ -1,5 +1,4 @@
 import {HandleAction} from '#/backend/HandleAction.js'
-import type {PreviewInfo} from '#/backend/Previews.js'
 import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import type {Config} from './Config.js'
@@ -61,12 +60,11 @@ export class Client implements LocalConnection {
     }).then<BackendCapabilities>(this.#failOnHttpError)
   }
 
-  previewToken(request: PreviewInfo): Promise<string> {
+  previewToken(): Promise<string> {
     return this.#requestJson(
       {action: HandleAction.PreviewToken},
       {
-        method: 'POST',
-        body: JSON.stringify(request)
+        method: 'POST'
       }
     ).then<string>(this.#failOnHttpError)
   }

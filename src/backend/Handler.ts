@@ -30,10 +30,6 @@ const PrepareBody = object({
   filename: string
 })
 
-const PreviewBody = object({
-  url: string
-})
-
 export interface Handler {
   (request: Request, context: RequestContext): Promise<Response>
 }
@@ -208,7 +204,7 @@ export function createHandler({
       if (action === HandleAction.PreviewToken && request.method === 'POST') {
         expectUser()
         expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
+        return Response.json(await previews.sign())
       }
 
       // Resolve

@@ -30,7 +30,6 @@ function EntryPreviewUrl({editor}: EntryPreviewUrlProps) {
   const config = useConfig()
   const payload = useAtomValue(unwrap(editor.previewPayload))
   const previewToken = useAtomValue(editor.previewToken)
-  const previewSearch = `?preview=${previewToken}`
   const [api, setApi] = useState<LivePreview | undefined>(undefined)
   useEffect(() => {
     if (payload) api?.preview(payload)
@@ -39,8 +38,9 @@ function EntryPreviewUrl({editor}: EntryPreviewUrlProps) {
     config.handlerUrl ?? '',
     Config.baseUrl(config) ?? location.href
   )
-  const url = new URL(previewSearch, base)
-  return <BrowserPreview url={url.toString()} registerLivePreview={setApi} />
+  base.searchParams.set('preview', previewToken)
+  base.searchParams.set('returnTo', editor.activeVersion.url)
+  return <BrowserPreview url={base.toString()} registerLivePreview={setApi} />
 }
 
 interface EntryPreviewComponentProps {
