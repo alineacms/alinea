@@ -2,8 +2,8 @@ import type {Schema} from '#/core/Schema.js'
 import {createId} from '#/core/Id.js'
 import {BlockNode} from '#/core/TextDoc.js'
 import {entries} from '#/core/util/Objects.js'
-import {createUniqueAnchor, isGeneratedAnchor} from 'alinea/core/util/Anchors'
-import {slugify} from 'alinea/core/util/Slugs'
+import {createUniqueAnchor, isGeneratedAnchor} from '#/core/util/Anchors.js'
+import {slugify} from '#/core/util/Slugs.js'
 import styler from '@alinea/styler'
 import {
   Extension,
