@@ -248,6 +248,7 @@ export class Dashboard {
     undefined
   )
   #options: DashboardOptions
+  entrySideBarOpen = atom(true)
 
   constructor(
     graph: WriteableGraph,
