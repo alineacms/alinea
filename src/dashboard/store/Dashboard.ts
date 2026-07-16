@@ -293,6 +293,30 @@ export class Dashboard {
 
   previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
+  #previewSessionOrigins = atom<Record<string, true>>({})
+  #previewSessionTokens = new Map<string, Promise<string>>()
+  previewSessionOrigins = atom(get => get(this.#previewSessionOrigins))
+
+  previewSessionToken(origin: string, client: LocalConnection, url: string) {
+    const current = this.#previewSessionTokens.get(origin)
+    if (current) return current
+    const token = client.previewToken({url}).catch(error => {
+      this.#previewSessionTokens.delete(origin)
+      throw error
+    })
+    this.#previewSessionTokens.set(origin, token)
+    return token
+  }
+
+  markPreviewSessionReady = atom(null, (get, set, origin: string) => {
+    if (get(this.#previewSessionOrigins)[origin]) return
+    this.#previewSessionTokens.delete(origin)
+    set(this.#previewSessionOrigins, current => ({
+      ...current,
+      [origin]: true
+    }))
+  })
+
   revisions = dispense(id => atom(0))
 
   entryReferenceScan = Object.assign(
@@ -2666,13 +2690,23 @@ export class DashboardEntryData {
     const activeVersion = await get(this.languages(locale).activeVersion)
     if (!activeVersion) return undefined
     try {
-      const previewToken = await client.previewToken({url: activeVersion.url})
       const base = new URL(
         config.handlerUrl ?? '',
         Config.baseUrl(config) ??
           (typeof location === 'undefined' ? 'http://localhost' : location.href)
       )
-      return new URL(`?preview=${previewToken}`, base).toString()
+      const origin = base.origin
+      if (get(this.dashboard.previewSessionOrigins)[origin])
+        return new URL(activeVersion.url, origin).toString()
+
+      const previewToken = await this.dashboard.previewSessionToken(
+        origin,
+        client,
+        activeVersion.url
+      )
+      base.searchParams.set('preview', previewToken)
+      base.searchParams.set('returnTo', activeVersion.url)
+      return base.toString()
     } catch {
       return undefined
     }

@@ -208,7 +208,8 @@ export function createHandler({
       if (action === HandleAction.PreviewToken && request.method === 'POST') {
         expectUser()
         expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
+        PreviewBody(await body)
+        return Response.json(await previews.sign())
       }
 
       // Resolve

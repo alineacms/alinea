@@ -166,6 +166,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
   const hasPreviewListener = useRef(false)
   const dashboard = useDashboard()
   const setMetadata = useSetAtom(dashboard.previewMetadata)
+  const markPreviewSessionReady = useSetAtom(dashboard.markPreviewSessionReady)
 
   const targetOrigin = useMemo(() => {
     if (!previewUrl) return undefined
@@ -187,6 +188,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
       if (event.origin !== targetOrigin) return
       if (event.data.action === PreviewAction.Ping) {
         hasPreviewListener.current = true
+        markPreviewSessionReady(targetOrigin)
         iframe.current?.contentWindow?.postMessage(
           {action: PreviewAction.Pong},
           targetOrigin
@@ -205,7 +207,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
     }
     addEventListener('message', handleMessage)
     return () => removeEventListener('message', handleMessage)
-  }, [targetOrigin, setMetadata])
+  }, [markPreviewSessionReady, targetOrigin, setMetadata])
 
   useEffect(() => {
     let cancelled = false
