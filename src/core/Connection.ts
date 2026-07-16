@@ -1,4 +1,3 @@
-import type {PreviewInfo} from '#/backend/Previews.js'
 import type {Request, Response} from '@alinea/iso'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
@@ -43,7 +42,7 @@ export interface BrowserConnection extends Connection {
 export interface LocalConnection extends Connection, CapabilitiesApi {
   capabilities(): Promise<BackendCapabilities>
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
-  previewToken(request: PreviewInfo): Promise<string>
+  previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>

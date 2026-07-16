@@ -18,7 +18,7 @@ function createDashboard() {
   )
 }
 
-test('shares one preview token request across entries in an origin session', async () => {
+test('shares concurrent preview token requests for an origin', async () => {
   const dashboard = createDashboard()
   let requests = 0
   const client = {
@@ -28,18 +28,15 @@ test('shares one preview token request across entries in an origin session', asy
     }
   } as unknown as LocalConnection
 
-  const first = dashboard.previewSessionToken(
-    'https://example.com',
-    client,
-    '/first'
-  )
-  const second = dashboard.previewSessionToken(
-    'https://example.com',
-    client,
-    '/second'
-  )
+  const first = dashboard.previewSessionToken('https://example.com', client)
+  const second = dashboard.previewSessionToken('https://example.com', client)
 
   expect(first).toBe(second)
   expect(await second).toBe('session-token')
   expect(requests).toBe(1)
+
+  expect(
+    await dashboard.previewSessionToken('https://example.com', client)
+  ).toBe('session-token')
+  expect(requests).toBe(2)
 })

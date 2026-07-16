@@ -294,23 +294,22 @@ export class Dashboard {
   previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
   #previewSessionOrigins = atom<Record<string, true>>({})
-  #previewSessionTokens = new Map<string, Promise<string>>()
+  #previewTokenRequests = new Map<string, Promise<string>>()
   previewSessionOrigins = atom(get => get(this.#previewSessionOrigins))
 
-  previewSessionToken(origin: string, client: LocalConnection, url: string) {
-    const current = this.#previewSessionTokens.get(origin)
+  previewSessionToken(origin: string, client: LocalConnection) {
+    const current = this.#previewTokenRequests.get(origin)
     if (current) return current
-    const token = client.previewToken({url}).catch(error => {
-      this.#previewSessionTokens.delete(origin)
-      throw error
+    const request = client.previewToken().finally(() => {
+      if (this.#previewTokenRequests.get(origin) === request)
+        this.#previewTokenRequests.delete(origin)
     })
-    this.#previewSessionTokens.set(origin, token)
-    return token
+    this.#previewTokenRequests.set(origin, request)
+    return request
   }
 
   markPreviewSessionReady = atom(null, (get, set, origin: string) => {
     if (get(this.#previewSessionOrigins)[origin]) return
-    this.#previewSessionTokens.delete(origin)
     set(this.#previewSessionOrigins, current => ({
       ...current,
       [origin]: true
@@ -2701,8 +2700,7 @@ export class DashboardEntryData {
 
       const previewToken = await this.dashboard.previewSessionToken(
         origin,
-        client,
-        activeVersion.url
+        client
       )
       base.searchParams.set('preview', previewToken)
       base.searchParams.set('returnTo', activeVersion.url)

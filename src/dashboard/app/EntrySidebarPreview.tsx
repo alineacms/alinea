@@ -186,6 +186,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
     function handleMessage(event: MessageEvent<PreviewMessage>) {
       if (!event.data || typeof event.data !== 'object') return
       if (event.origin !== targetOrigin) return
+      if (event.source !== iframe.current?.contentWindow) return
       if (event.data.action === PreviewAction.Ping) {
         hasPreviewListener.current = true
         markPreviewSessionReady(targetOrigin)

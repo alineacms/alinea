@@ -1,5 +1,8 @@
 import {sign, verify} from '#/core/util/JWT.js'
-import type {Previews, PreviewToken} from '../Previews.js'
+import {isRecord} from '#/core/util/Objects.js'
+import type {Previews} from '../Previews.js'
+
+const previewTokenLifetime = 5 * 60
 
 export class JWTPreviews implements Previews {
   constructor(private secret: string) {}
@@ -9,16 +12,22 @@ export class JWTPreviews implements Previews {
     return sign(
       {
         purpose: 'preview',
-        issuedAt,
-        expiresAt: issuedAt + 300,
-        exp: issuedAt + 300,
+        exp: issuedAt + previewTokenLifetime,
         iat: issuedAt
       },
       this.secret
     )
   }
 
-  verify(token: string): Promise<PreviewToken> {
-    return verify(token, this.secret)
+  async verify(token: string): Promise<void> {
+    const payload = await verify(token, this.secret)
+    if (
+      !isRecord(payload) ||
+      payload.purpose !== 'preview' ||
+      typeof payload.iat !== 'number' ||
+      typeof payload.exp !== 'number'
+    ) {
+      throw new Error('Invalid preview token')
+    }
   }
 }
