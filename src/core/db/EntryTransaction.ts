@@ -25,6 +25,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
+import {aliasesFromData, aliasUrl} from './EntryAliases.js'
 import type {EntryIndex} from './EntryIndex.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
@@ -1029,7 +1030,7 @@ export class EntryTransaction {
 
 function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
   const result = new Set<string>()
-  for (const alias of aliasRowsFromData(data)) {
+  for (const alias of aliasesFromData(data) ?? []) {
     const url = aliasUrl(alias)
     if (url) result.add(url)
   }
@@ -1046,44 +1047,46 @@ function dataWithUrlAlias(
   if (!target) return data
   const aliasUrls = aliasUrlsFromData(data)
   if (aliasUrls.includes(previousUrl)) return data
-
-  const metadata = isRecord(data.metadata) ? data.metadata : {}
+  const nextData = aliasUrls.includes(currentUrl)
+    ? dataWithoutUrlAlias(data, currentUrl)
+    : data
+  const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
   const aliases =
     target === 'metadata'
       ? Array.isArray(metadata.aliases)
         ? metadata.aliases
         : []
-      : Array.isArray(data.aliases)
-        ? data.aliases
+      : Array.isArray(nextData.aliases)
+        ? nextData.aliases
         : []
-
-  if (aliasUrls.includes(currentUrl)) {
-    const aliasesWithoutCurrent = aliases.filter(
-      alias => aliasUrl(alias) !== currentUrl
-    )
-    return dataWithAliases(
-      data,
-      target,
-      metadata,
-      aliasesWithoutCurrent.concat(
-        createUrlAliasRow(previousUrl, aliasesWithoutCurrent)
-      )
-    )
-  }
   return dataWithAliases(
-    data,
+    nextData,
     target,
     metadata,
     aliases.concat(createUrlAliasRow(previousUrl, aliases))
   )
 }
 
-function aliasRowsFromData(data: Record<string, unknown>): Array<unknown> {
-  const result = Array<unknown>()
-  if (Array.isArray(data.aliases)) result.push(...data.aliases)
+function dataWithoutUrlAlias(
+  data: Record<string, unknown>,
+  url: string
+): Record<string, unknown> {
+  let result = data
+  if (Array.isArray(data.aliases)) {
+    result = {
+      ...result,
+      aliases: data.aliases.filter(alias => aliasUrl(alias) !== url)
+    }
+  }
   const metadata = data.metadata
   if (isRecord(metadata) && Array.isArray(metadata.aliases)) {
-    result.push(...metadata.aliases)
+    result = {
+      ...result,
+      metadata: {
+        ...metadata,
+        aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
+      }
+    }
   }
   return result
 }
@@ -1142,18 +1145,6 @@ function isOrderedUrlAliasRow(value: unknown): value is UrlAliasRow {
     type === 'alias' &&
     typeof url === 'string'
   )
-}
-
-function urlFromAliasRow(value: unknown): string | undefined {
-  if (!isRecord(value)) return undefined
-  const url = value.url
-  if (typeof url !== 'string') return undefined
-  const trimmed = url.trim()
-  return trimmed.length > 0 ? trimmed : undefined
-}
-
-function aliasUrl(value: unknown): string | undefined {
-  return typeof value === 'string' ? value.trim() : urlFromAliasRow(value)
 }
 
 function startsWithSegments(

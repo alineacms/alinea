@@ -12,7 +12,7 @@ export const MediaLibrary = type('Media directory', {
   contains: ['MediaLibrary', 'MediaFile'],
   defaultView: 'overview',
   fields: {
-    title: text('Title'),
+    title: text('Title', {required: true}),
     path: path('Path')
   }
 })

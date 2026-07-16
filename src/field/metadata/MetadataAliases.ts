@@ -5,6 +5,7 @@ import {list} from '#/field/list.js'
 import {type TextField, text} from '#/field/text.js'
 
 export interface MetadataAlias extends ListRow {
+  _type: 'alias'
   url: string
 }
 

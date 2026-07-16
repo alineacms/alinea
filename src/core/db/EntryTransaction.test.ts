@@ -2,6 +2,7 @@ import {createCMS, Entry} from '#/core.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {isRecord} from '#/core/util/Objects.js'
+import type {MetadataAlias} from '#/field/metadata/MetadataAliases.js'
 import {Config, Field} from '#/index.js'
 import {createEntryIndex} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
@@ -55,7 +56,7 @@ const documentCms = createCMS({
   }
 })
 
-function alias(url: string) {
+function alias(url: string): MetadataAlias {
   return {
     [ListRow.id]: `alias-${url}`,
     [ListRow.index]: 'a0',
@@ -355,6 +356,37 @@ test('update preserves a MediaFile URL with an empty alias row', async () => {
     select: Entry.aliases
   })
   test.equal(aliasUrls(aliases), ['', '/one'])
+})
+
+test('update removes a current MediaFile URL from legacy aliases', async () => {
+  const {source} = await createEntryIndex(cms.config, [
+    {
+      id: 'media-one',
+      type: 'MediaFile',
+      index: 'a1',
+      root: 'media',
+      path: 'one',
+      data: {
+        ...mediaFileData('One', 'one', []),
+        aliases: [alias('/two')]
+      }
+    }
+  ])
+  const db = new TestDB(cms.config, source)
+  await db.sync()
+
+  await db.update({
+    type: MediaFile,
+    id: 'media-one',
+    status: 'published',
+    set: {path: 'two'}
+  })
+
+  const aliases = await db.get({
+    id: 'media-one',
+    select: Entry.aliases
+  })
+  test.equal(aliasUrls(aliases), ['/one'])
 })
 
 test('publish preserves the previous published URL as an alias', async () => {

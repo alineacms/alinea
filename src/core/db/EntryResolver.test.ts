@@ -417,6 +417,7 @@ const advancedEntries = [
     path: 'i18n-image',
     data: {
       title: 'I18n image',
+      aliases: ['   '],
       location: '/i18n.jpg',
       previewUrl: '/preview/i18n.jpg',
       extension: '.jpg',
@@ -500,6 +501,17 @@ test('filters by MediaFile URL alias', async () => {
   })
 
   test.is(result, 'image-plain')
+})
+
+test('does not match empty URL aliases', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, undefined)
 })
 
 test('filters by metadata created and updated shortcuts', async () => {

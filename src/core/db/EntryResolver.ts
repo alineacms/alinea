@@ -26,12 +26,13 @@ import {
 import type {Resolver} from '#/core/Resolver.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {hasExact} from '#/core/util/Checks.js'
-import {entries, fromEntries} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {unreachable} from '#/core/util/Types.js'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
+import {aliasesFromData, aliasUrl} from './EntryAliases.js'
 import {
   combineConditions,
   type EntryCondition,
@@ -560,17 +561,13 @@ interface Check {
   (input: Entry): boolean
 }
 
-function isObject(input: any): input is Record<string, unknown> {
-  return input && typeof input === 'object'
-}
-
 function entryChecker(scope: Scope, query: QuerySettings): Check {
   const root =
-    isObject(query.root) && hasRoot(query.root)
+    isRecord(query.root) && hasRoot(query.root)
       ? scope.nameOf(query.root)
       : query.root
   const workspace =
-    isObject(query.workspace) && hasWorkspace(query.workspace)
+    isRecord(query.workspace) && hasWorkspace(query.workspace)
       ? scope.nameOf(query.workspace)
       : query.workspace
   const base = filterChecker(
@@ -607,7 +604,7 @@ function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
 function valueAtPath(value: unknown, path: Array<string>): unknown {
   let current = value
   for (const segment of path) {
-    if (!isObject(current)) return undefined
+    if (!isRecord(current)) return undefined
     current = current[segment]
   }
   return current
@@ -617,36 +614,10 @@ function aliasChecker(alias: string): Check {
   return entry => {
     const aliases = aliasesFromData(entry.data) ?? []
     for (const row of aliases) {
-      const url = typeof row === 'string' ? row.trim() : urlFromAliasRow(row)
-      if (url === alias) return true
+      if (aliasUrl(row) === alias) return true
     }
     return false
   }
-}
-
-function aliasesFromData(
-  data: Record<string, unknown>
-): Array<unknown> | undefined {
-  const result = Array<unknown>()
-  let hasAliases = false
-  if (Array.isArray(data.aliases)) {
-    hasAliases = true
-    result.push(...data.aliases)
-  }
-  const metadata = data.metadata
-  if (isObject(metadata) && Array.isArray(metadata.aliases)) {
-    hasAliases = true
-    result.push(...metadata.aliases)
-  }
-  return hasAliases ? result : undefined
-}
-
-function urlFromAliasRow(value: unknown): string | undefined {
-  if (!isObject(value)) return undefined
-  const url = value.url
-  if (typeof url !== 'string') return undefined
-  const trimmed = url.trim()
-  return trimmed.length > 0 ? trimmed : undefined
 }
 
 function typeChecker(type: Array<string> | string): Check {
