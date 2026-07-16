@@ -16,6 +16,7 @@ import {generateDashboard} from './generate/GenerateDashboard.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
+import {writeFileIfContentsDiffer} from './util/FS.js'
 import {reportError, reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
@@ -111,6 +112,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     return data.length
   }
   for await (const cms of builds) {
+    await writeFileIfContentsDiffer(
+      join(context.outDir, 'settings.json'),
+      JSON.stringify({adminPath: Config.adminPath(cms.config)}, null, 2)
+    )
     if (cmd === 'build') {
       const handlerUrl = cms.config.handlerUrl
       const baseUrl = Config.baseUrl(cms.config, 'production')

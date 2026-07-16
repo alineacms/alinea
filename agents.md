@@ -3,10 +3,9 @@
 Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 
 ## Goals and Constraints
-- UI toolkit: use `@alinea/components` as the default UI surface.
   It is a theme of react-aria-components, docs are here: https://react-aria.adobe.com/llms.txt
 - Core integration: keep using `alinea/core` for config/schema/db/query/policy primitives.
-- Field rendering: do not reuse existing dashboard field views; build new v2 field views wired to `@alinea/components`. Do not use Y.js for field state management, but instead use Jotai atoms.
+- Field rendering: do not reuse existing dashboard field views; build new v2 field views wired to `src/components`. Do not use Y.js for field state management, but instead use Jotai atoms.
 - Styling: use CSS Modules plus `@alinea/styler`.
 - Styling ownership: each component should use its own CSS Module file. Do not import another component's CSS Module into a different component.
 - Do not export CSS module styler instances or style objects from component modules. Expose named wrapper components for shared layout/styling instead.
@@ -23,6 +22,7 @@ Find the v2 dashboard in ./src/dashboard, and v1 in ./v1/dashboard.
 - Use function instead of arrow functions when defining React components
 - Always name props interfaces with a `Props` suffix
 - Do not use the `any` type, unless communicated explicitly in the code review
+- Reuse shared generic utilities before adding local copies; in particular, use `isRecord` from `alinea/core/util/Objects` instead of defining another local record guard.
 - Imports should be relative if in same src subdir, otherwise absolute starting
   with 'alinea', eg 'alinea/core/Config'. If relative, include .js extension.
   If absolute do not include any extension.

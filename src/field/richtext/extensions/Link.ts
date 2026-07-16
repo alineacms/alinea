@@ -29,35 +29,17 @@ export const Link = Mark.create<LinkOptions>({
   priority: 1000,
   keepOnSplit: false,
   addOptions() {
-    return {
-      HTMLAttributes: {
-        rel: 'noopener noreferrer nofollow'
-      }
-    }
+    return {HTMLAttributes: {rel: 'noopener noreferrer nofollow'}}
   },
   addAttributes() {
     return {
-      'data-id': {
-        default: null
-      },
-      'data-entry': {
-        default: null
-      },
-      'data-link': {
-        default: null
-      },
-      'data-suffix': {
-        default: null
-      },
-      href: {
-        default: null
-      },
-      target: {
-        default: this.options.HTMLAttributes.target
-      },
-      title: {
-        default: null
-      }
+      'data-id': {default: null},
+      'data-entry': {default: null},
+      'data-link': {default: null},
+      'data-suffix': {default: null},
+      href: {default: null},
+      target: {default: this.options.HTMLAttributes.target},
+      title: {default: null}
     }
   },
   parseHTML() {
@@ -71,31 +53,24 @@ export const Link = Mark.create<LinkOptions>({
     ]
   },
   addKeyboardShortcuts() {
-    return {
-      'Mod-k': () => this.editor.commands.setLink({})
-    }
+    return {'Mod-k': () => this.editor.commands.setLink({})}
   },
   addCommands() {
     return {
       setLink:
         attributes =>
-        ({chain}) => {
-          return chain().setMark(this.name, attributes).run()
-        },
+        ({chain}) =>
+          chain().setMark(this.name, attributes).run(),
       toggleLink:
         attributes =>
-        ({chain}) => {
-          return chain()
+        ({chain}) =>
+          chain()
             .toggleMark(this.name, attributes, {extendEmptyMarkRange: true})
-            .run()
-        },
+            .run(),
       unsetLink:
         () =>
-        ({chain}) => {
-          return chain()
-            .unsetMark(this.name, {extendEmptyMarkRange: true})
-            .run()
-        }
+        ({chain}) =>
+          chain().unsetMark(this.name, {extendEmptyMarkRange: true}).run()
     }
   }
 })

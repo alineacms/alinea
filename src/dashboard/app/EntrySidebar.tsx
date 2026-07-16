@@ -13,6 +13,7 @@ import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
@@ -400,8 +401,4 @@ function isMetadata(value: unknown): value is Metadata {
     typeof updatedBy.name === 'string' &&
     typeof updatedBy.email === 'string'
   )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

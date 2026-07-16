@@ -2,6 +2,7 @@ import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
 import {RecordField} from '#/core/field/RecordField.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {Type, type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
 import {type ObjectField, object} from '#/field/object.js'
@@ -209,8 +210,4 @@ function timestampFromValue(value: unknown): number | undefined {
 function isMetadataAuditUser(value: unknown): value is MetadataAuditUser {
   if (!isRecord(value)) return false
   return typeof value.name === 'string' && typeof value.email === 'string'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
