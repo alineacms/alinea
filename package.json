@@ -73,7 +73,8 @@
   "dependencies": {
     "@alinea/iso": "^0.3.3",
     "esbuild": "^0.28.0",
-    "react-aria-components": "^1.17.0"
+    "react-aria-components": "^1.17.0",
+    "use-sync-external-store": "^1.6.0"
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
@@ -82,6 +83,7 @@
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
     "@happy-dom/global-registrator": "^20.8.3",
+    "@hyrious/esbuild-plugin-commonjs": "^0.2.6",
     "@internationalized/date": "3.12.1",
     "@ladle/react": "^4.1.2",
     "@playwright/experimental-ct-react": "1.61.1",

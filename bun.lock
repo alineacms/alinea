@@ -8,6 +8,7 @@
         "@alinea/iso": "^0.3.3",
         "esbuild": "^0.28.0",
         "react-aria-components": "^1.17.0",
+        "use-sync-external-store": "^1.6.0",
       },
       "devDependencies": {
         "@alinea/styler": "^1.0.3",
@@ -17,6 +18,7 @@
         "@esbx/workspaces": "^0.0.20",
         "@floating-ui/dom": "^1.8.0",
         "@happy-dom/global-registrator": "^20.8.3",
+        "@hyrious/esbuild-plugin-commonjs": "^0.2.6",
         "@internationalized/date": "3.12.1",
         "@ladle/react": "^4.1.2",
         "@playwright/experimental-ct-react": "1.61.1",
@@ -273,6 +275,8 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
+
+    "@hyrious/esbuild-plugin-commonjs": ["@hyrious/esbuild-plugin-commonjs@0.2.6", "", { "peerDependencies": { "cjs-module-lexer": "*", "esbuild": "*" }, "optionalPeers": ["cjs-module-lexer"] }, "sha512-LIPT8Y6EbNaHdV7lS9Ki6nnK0G1fP4bhzlMU1fgbOEJkR+yOA6FCORnPhjbQyeRTjG/ALPXdqCMRxTGwroL9CQ=="],
 
     "@img/colour": ["@img/colour@1.1.0", "", {}, "sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ=="],
 
