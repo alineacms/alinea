@@ -10,7 +10,10 @@ import {
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import type {RichTextOptions} from './RichTextField.js'
+import {
+  configureRichTextExtensions,
+  type RichTextOptions
+} from './RichTextField.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import styler from '@alinea/styler'
 import type {AnyExtension, Editor} from '@tiptap/core'
@@ -37,7 +40,7 @@ import {
 } from './RichTextBlockHost.js'
 import {editorContent, editorNodes} from './RichTextDocument.js'
 import {
-  defaultExtensions,
+  defaultExtensionConfig,
   richTextBlockClipboard,
   richTextBlockExtensions,
   richTextDocumentExtension
@@ -95,9 +98,9 @@ export function RichTextFieldView<Blocks extends Schema>({
   const anchorPicker = usePickTextAnchor()
   const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
   const extensions = useMemo<Array<AnyExtension>>(() => {
-    const configured = options.extensions
-      ? Object.values(options.extensions)
-      : defaultExtensions()
+    const configured = Object.values(
+      configureRichTextExtensions(options.extensions, defaultExtensionConfig())
+    )
     const blocks = richTextBlockExtensions(options.schema, hosts)
     return [
       richTextDocumentExtension(blocks.length > 0),

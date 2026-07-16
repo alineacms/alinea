@@ -151,8 +151,12 @@ export const richTextBlockClipboard = Extension.create({
 
 export const extensions = createExtensions()
 
+export function defaultExtensionConfig() {
+  return createExtensions()
+}
+
 export function defaultExtensions(): Array<AnyExtension> {
-  return Object.values(createExtensions())
+  return Object.values(defaultExtensionConfig())
 }
 
 export function richTextBlockExtensions(

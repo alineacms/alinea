@@ -7,7 +7,10 @@ import {
   DashboardEditor,
   ReactiveNode
 } from '#/dashboard/store/Dashboard.js'
-import {richText} from '#/field/richtext/RichTextField.js'
+import {
+  configureRichTextExtensions,
+  richText
+} from '#/field/richtext/RichTextField.js'
 import {check} from '#/field/check/CheckField.js'
 import {createStore} from 'jotai'
 
@@ -23,6 +26,13 @@ test('Field.richText references the richtext views', () => {
   test.is(
     Field.compactView(field),
     'alinea/field/richtext/RichTextField.view#RichTextFieldCompactView'
+  )
+})
+
+test('rejects eager rich text extension configuration', () => {
+  test.throws(
+    () => configureRichTextExtensions({} as never, {}),
+    'Rich text extensions must be configured with a function'
   )
 })
 
