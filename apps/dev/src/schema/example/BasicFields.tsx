@@ -1,15 +1,20 @@
-import { Config, Field } from 'alinea'
+import {Config, Field} from 'alinea'
 
 export const BasicFields = Config.document('Basic fields', {
   fields: {
     path: Field.path('Path (read-only)', {
       readOnly: true,
       required: true,
-      width: 0.5,
+      width: 0.5
     }),
     text: Field.text('Text field'),
+    textInline: Field.text('inline text field', {inline: true}),
     hello: Field.text('Text field with validation', {
-      help: <p>This field only accepts "<b>hello</b>"</p>,
+      help: (
+        <p>
+          This field only accepts "<b>hello</b>"
+        </p>
+      ),
       validate: value => {
         if (value !== 'hello') {
           return 'Only "hello" is allowed'

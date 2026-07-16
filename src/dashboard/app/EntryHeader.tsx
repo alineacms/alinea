@@ -1,23 +1,36 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {isRecord} from '#/core/util/Objects.js'
+import {
+  EntryUrlConflictError,
+  type EntryUrlConflictErrorInfo
+} from '#/core/db/EntryUrlConflictError.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {ComponentType, type ReactNode, useTransition} from 'react'
+import {ComponentType, type ReactNode, useState, useTransition} from 'react'
 import {usePolicy} from '../hooks.js'
 import {
   IcRoundArchive,
   IcRoundCheck,
   IcRoundDelete,
+  IcRoundPublishedWithChanges,
   IcRoundMoreHoriz,
   IcRoundSave,
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
 import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
+import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 import {StatusBadge} from './StatusBadge.js'
+import {
+  DashboardModal,
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from './ui/DashboardModal.js'
 
 const styles = styler(css)
 
@@ -115,6 +128,7 @@ function EntryHeaderMoreActions({
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const [isPending, startTransition] = useTransition()
+  const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
   const menuItems: Array<EntryHeaderMenuItem> = []
@@ -122,7 +136,16 @@ function EntryHeaderMoreActions({
   function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
     startTransition(async () => {
-      await action()
+      try {
+        await action()
+      } catch (error) {
+        const conflict = entryUrlConflictInfo(error)
+        if (conflict) {
+          setUrlConflict(conflict)
+          return
+        }
+        throw error
+      }
     })
   }
 
@@ -237,36 +260,98 @@ function EntryHeaderMoreActions({
 
   if (menuItems.length === 0) return null
   return (
-    <Menu
-      label={
-        <Button
-          size="icon"
-          appearance="plain"
-          aria-label="More actions"
-          icon={IcRoundMoreHoriz}
-          isDisabled={isActionDisabled}
-          isPending={isPending}
-        />
-      }
-      aria-label="More actions"
-      popoverProps={{placement: 'bottom start'}}
-    >
-      {menuItems.map(item => (
-        <MenuItem
-          key={item.id}
-          id={item.id}
-          textValue={item.label}
-          isDisabled={isActionDisabled}
-          onAction={() => {
-            runAction(item.action)
-          }}
-        >
-          {item.icon && <Icon icon={item.icon} />}
-          {item.label}
-        </MenuItem>
-      ))}
-    </Menu>
+    <>
+      <Menu
+        label={
+          <Button
+            size="icon"
+            appearance="plain"
+            aria-label="More actions"
+            icon={IcRoundMoreHoriz}
+            isDisabled={isActionDisabled}
+            isPending={isPending}
+          />
+        }
+        aria-label="More actions"
+        popoverProps={{placement: 'bottom start'}}
+      >
+        {menuItems.map(item => (
+          <MenuItem
+            key={item.id}
+            id={item.id}
+            textValue={item.label}
+            isDisabled={isActionDisabled}
+            onAction={() => {
+              runAction(item.action)
+            }}
+          >
+            {item.icon && <Icon icon={item.icon} />}
+            {item.label}
+          </MenuItem>
+        ))}
+      </Menu>
+      <UrlConflictModal
+        conflict={urlConflict}
+        onClose={() => setUrlConflict(undefined)}
+      />
+    </>
   )
+}
+
+interface UrlConflictModalProps {
+  conflict?: EntryUrlConflictErrorInfo
+  onClose(): void
+}
+
+function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
+  return (
+    <DashboardModal
+      isOpen={Boolean(conflict)}
+      onOpenChange={isOpen => {
+        if (!isOpen) onClose()
+      }}
+    >
+      {conflict && (
+        <DashboardModalDialog label="URL alias already in use">
+          <DashboardModalContent>
+            <p>
+              The URL alias <strong>{conflict.url}</strong> is already defined
+              on entry <strong>{conflict.entryId}</strong>.
+            </p>
+            <p>Remove or change this alias, then publish again.</p>
+          </DashboardModalContent>
+          <DashboardModalFooter>
+            <Button intent="primary" onPress={onClose}>
+              OK
+            </Button>
+          </DashboardModalFooter>
+        </DashboardModalDialog>
+      )}
+    </DashboardModal>
+  )
+}
+
+function entryUrlConflictInfo(
+  error: unknown
+): EntryUrlConflictErrorInfo | undefined {
+  if (error instanceof EntryUrlConflictError) return error.info
+  if (!isRecord(error)) return undefined
+  if (error.name !== 'EntryUrlConflictError') return undefined
+  const info = error.info
+  if (!isRecord(info)) return undefined
+  if (
+    typeof info.url === 'string' &&
+    typeof info.entryId === 'string' &&
+    typeof info.workspace === 'string' &&
+    typeof info.root === 'string'
+  ) {
+    return {
+      url: info.url,
+      entryId: info.entryId,
+      workspace: info.workspace,
+      root: info.root
+    }
+  }
 }
 
 function EntryHeaderActions({
@@ -297,6 +382,7 @@ function EntryHeaderActions({
   const type = useAtomValue(entry.type)
   const access = policy.get(activeVersion)
   const [isPending, startTransition] = useTransition()
+  const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
   const isMediaFile = type.type === MediaFile
@@ -306,7 +392,16 @@ function EntryHeaderActions({
   function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
     startTransition(async () => {
-      await action()
+      try {
+        await action()
+      } catch (error) {
+        const conflict = entryUrlConflictInfo(error)
+        if (conflict) {
+          setUrlConflict(conflict)
+          return
+        }
+        throw error
+      }
     })
   }
 
@@ -385,12 +480,21 @@ function EntryHeaderActions({
     ) : null
 
   return (
-    <div className={styles.EntryHeader.actions()}>
-      {actionButtons}
-      {onSidebarOpenChange && !isSidebarOpen && (
-        <EntrySidebarToggle isOpen={false} onOpenChange={onSidebarOpenChange} />
-      )}
-    </div>
+    <>
+      <div className={styles.EntryHeader.actions()}>
+        {actionButtons}
+        {onSidebarOpenChange && !isSidebarOpen && (
+          <EntrySidebarToggle
+            isOpen={false}
+            onOpenChange={onSidebarOpenChange}
+          />
+        )}
+      </div>
+      <UrlConflictModal
+        conflict={urlConflict}
+        onClose={() => setUrlConflict(undefined)}
+      />
+    </>
   )
 }
 
@@ -404,6 +508,7 @@ export function EntryHeader({
   const title = useAtomValue(entry.label)
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
   const viewedEntry = useAtomValue(entry.currentEntry)
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
@@ -414,14 +519,18 @@ export function EntryHeader({
     viewedEntry?.main && viewedStatus === 'draft'
   )
   const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
+  const isRevision = selectedVersion.type === 'history'
   return (
     <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.content()}>
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
-
-          <StatusBadge status={status} />
+          {isRevision ? (
+            <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
+          ) : (
+            <StatusBadge status={status} />
+          )}
           {controls}
           <EntryHeaderMoreActions
             entry={entry}

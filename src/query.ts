@@ -17,6 +17,9 @@ export const parentId = Entry.parentId
 export const locale = Entry.locale
 export const path = Entry.path
 export const url = Entry.url
+export const aliases = Entry.aliases
+export const createdAt = Entry.createdAt
+export const updatedAt = Entry.updatedAt
 
 export {snippet} from '#/core/pages/Snippet.js'
 

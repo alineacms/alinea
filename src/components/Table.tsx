@@ -23,6 +23,7 @@ import {
   IcRoundKeyboardArrowUp
 } from '../dashboard/icons.js'
 import {Checkbox} from './Checkbox.js'
+import {Surface} from './Surface.js'
 import css from './Table.module.css'
 
 const styles = styler(css)
@@ -40,7 +41,7 @@ export interface TableProps extends TablePrimitiveProps {
 
 export function Table(props: TableProps) {
   return (
-    <div
+    <Surface
       className={styles.Table(
         styler.merge({
           className:
@@ -50,7 +51,7 @@ export function Table(props: TableProps) {
       data-striped={props.striped}
     >
       <TablePrimitive {...props} className={styles.Table.table()} />
-    </div>
+    </Surface>
   )
 }
 

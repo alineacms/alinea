@@ -19,6 +19,5 @@
   },
   "[javascriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "typescript.native-preview.tsdk": "node_modules/@typescript/native-preview"
+  }
 }

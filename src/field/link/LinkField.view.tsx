@@ -19,6 +19,8 @@ import {
   ListRowSettingsButton,
   MenuSeparator,
   Popover,
+  Select,
+  SelectItem,
   TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
@@ -37,6 +39,7 @@ import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useDashboard,
+  useEntry,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -62,6 +65,7 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
 import {Fragment, useMemo, useRef, useState} from 'react'
 import {
@@ -496,6 +500,7 @@ function LinkPickerAction({
   value
 }: LinkPickerActionProps) {
   const dashboard = useDashboard()
+  const currentEntry = useEntry()
   const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
   const selectedRoot = useAtomValue(dashboard.selectedRoot)
   const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
@@ -524,20 +529,32 @@ function LinkPickerAction({
   const options = picker.options as Partial<EntryPickerOptions>
   const condition =
     typeof options.condition === 'function' ? undefined : options.condition
+  const childLocation =
+    options.pickChildren && currentEntry
+      ? {
+          workspace: currentEntry.workspace,
+          root: currentEntry.root,
+          parentId: currentEntry.id
+        }
+      : undefined
+  const pickingChildren = Boolean(childLocation)
   const fallbackRoot =
     type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
   const fallbackLocation =
     selectedWorkspace && fallbackRoot
       ? {workspace: selectedWorkspace, root: fallbackRoot}
       : undefined
-  const location =
-    typeof options.location === 'function'
+  const location = childLocation
+    ? childLocation
+    : typeof options.location === 'function'
       ? fallbackLocation
       : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
+    enableNavigation: options.enableNavigation ?? !pickingChildren,
     location,
+    pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -598,6 +615,7 @@ function LinkPickerDialog({
   value
 }: LinkPickerDialogProps) {
   const dashboard = useDashboard()
+  const currentEntry = useEntry()
   const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
   const selectedRoot = useAtomValue(dashboard.selectedRoot)
   const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
@@ -623,20 +641,32 @@ function LinkPickerDialog({
   const options = picker.options as Partial<EntryPickerOptions>
   const condition =
     typeof options.condition === 'function' ? undefined : options.condition
+  const childLocation =
+    options.pickChildren && currentEntry
+      ? {
+          workspace: currentEntry.workspace,
+          root: currentEntry.root,
+          parentId: currentEntry.id
+        }
+      : undefined
+  const pickingChildren = Boolean(childLocation)
   const fallbackRoot =
     type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
   const fallbackLocation =
     selectedWorkspace && fallbackRoot
       ? {workspace: selectedWorkspace, root: fallbackRoot}
       : undefined
-  const location =
-    typeof options.location === 'function'
+  const location = childLocation
+    ? childLocation
+    : typeof options.location === 'function'
       ? fallbackLocation
       : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
+    enableNavigation: options.enableNavigation ?? !pickingChildren,
     location,
+    pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -912,12 +942,90 @@ function EntryLinkSuffixField({
   if (value[Reference.type] !== 'entry') return null
   return (
     <TextField
-      description="For example: #id"
+      description="E.g. ?s=search"
       isDisabled={isDisabled}
       label="URL suffix"
       onChange={next => setSuffix(next || undefined)}
       value={suffix ?? ''}
     />
+  )
+}
+
+interface EntryAnchorFieldProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  const setAnchor = useSetAtom(node.field('_anchor'))
+  if (value[Reference.type] !== 'entry') return null
+  return (
+    <EntryAnchorFieldInner
+      entryId={value._entry}
+      anchor={anchor}
+      onChange={setAnchor}
+    />
+  )
+}
+
+interface EntryAnchorFieldInnerProps {
+  entryId: string
+  anchor?: string
+  onChange: (value: string | undefined) => void
+}
+
+function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  if (value[Reference.type] !== 'entry' || !anchor) return null
+  return <Badge size="small">#{anchor}</Badge>
+}
+
+function EntryAnchorFieldInner({
+  entryId,
+  anchor,
+  onChange
+}: EntryAnchorFieldInnerProps) {
+  const dashboard = useDashboard()
+  const entryAnchorsAtom = useMemo(() => {
+    const entry = dashboard.entries(entryId)
+    return unwrap(
+      atom(async get => {
+        const {data} = await get(entry.readyState)
+        if (!data) return []
+        return get(data.anchors)
+      }),
+      previous => previous ?? []
+    )
+  }, [dashboard, entryId])
+  const entryAnchors = useAtomValue(entryAnchorsAtom)
+  const anchors = useMemo(() => {
+    return entryAnchors.map(anchor => ({
+      id: anchor.id,
+      label: anchor.label ?? `#${anchor.id}`,
+      location: anchor.fieldLabel ?? anchor.fieldPath
+    }))
+  }, [entryAnchors])
+  return (
+    <Select
+      items={anchors}
+      label="Anchor"
+      onChange={next => onChange(next === null ? undefined : String(next))}
+      value={anchor ?? null}
+    >
+      {item => (
+        <SelectItem id={item.id} textValue={item.label}>
+          <span className={styles.LinkFieldView.anchorOption()}>
+            <span className={styles.LinkFieldView.anchorOption.label()}>
+              {item.label}
+            </span>
+            <span className={styles.LinkFieldView.anchorOption.location()}>
+              {item.location}
+            </span>
+          </span>
+        </SelectItem>
+      )}
+    </Select>
   )
 }
 
@@ -1331,6 +1439,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 node={node}
                 value={value}
               />
+              <EntryAnchorBadge node={node} value={value} />
             </ListRowBadges>
           </ListRowDrag>
           {!options.readOnly && (
@@ -1340,6 +1449,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 <Popover placement="bottom right">
                   <ListRowSettings>
                     <LinkLabelField node={node} value={value} />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
                   <MenuSeparator />
@@ -1530,6 +1640,7 @@ function MultipleLinkRow({
                   node={node}
                   value={value}
                 />
+                <EntryAnchorBadge node={node} value={value} />
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
@@ -1542,6 +1653,7 @@ function MultipleLinkRow({
                       node={node}
                       value={value}
                     />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField
                       isDisabled={readOnly}
                       node={node}
@@ -1662,8 +1774,10 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         expanded
         hasRows={hasRows}
         isDisabled
+        description={options.help}
         shared={options.shared}
         showFold={showFold}
+        inline={options.inline}
       >
         {options.label}
       </ListLabel>
@@ -1814,8 +1928,10 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         hasRows={hasRows}
         isDisabled={!hasFoldableRows}
         onPress={toggleAll}
+        description={options.help}
         shared={options.shared}
         showFold={hasFoldableRows}
+        inline={options.inline}
       >
         {options.label}
       </ListLabel>

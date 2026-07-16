@@ -58,12 +58,17 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       const previewToken = searchParams.get('preview')
       if (previewToken) {
         const {draftMode} = await import('next/headers')
-        const {url} = await previews.verify(previewToken)
+        await previews.verify(previewToken)
         const source = new URL(request.url)
         // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
         // listening on all interfaces
         if (source.hostname === '0.0.0.0') source.hostname = 'localhost'
-        const location = new URL(url, source.origin)
+        const returnTo = searchParams.get('returnTo') ?? '/'
+        if (!returnTo.startsWith('/') || returnTo.startsWith('//'))
+          throw new Error('Invalid preview return URL')
+        const location = new URL(returnTo, source.origin)
+        if (location.origin !== source.origin)
+          throw new Error('Invalid preview return origin')
         const dm = await draftMode()
         dm.enable()
         return new Response('Redirecting...', {

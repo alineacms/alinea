@@ -1,18 +1,18 @@
-import {ProgressCircle} from '#/components.js'
+import {Button, ProgressCircle} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
 import {DashboardScopeInternal} from '../store.js'
 import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
-import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {SidebarTree} from './SidebarTree.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
-import {Sidebar, SidebarFooter, SidebarHeader} from './ui/Sidebar.js'
+import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
+import {UsersPage, UsersPageSidebar} from './UsersPage.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 
@@ -35,39 +35,66 @@ export function AppShell({dashboard}: AppShellProps) {
 
 function AppShellContent({dashboard}: AppShellProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
-  const footer = (
-    <SidebarFooter className={styles.AppShell.footer()}>
-      <MutationQueueStatus dashboard={dashboard} openOnFail />
-      {/*<div className={styles.AppShell.status()}>
-              <span className={styles.AppShell.status.sha()}>
-                db.sha: {sha ?? '-'}
-              </span>
-              <Button appearance="outline" intent="secondary" onPress={sync}>
-                Sync
-              </Button>
-            </div>*/}
-    </SidebarFooter>
-  )
+  const route = useAtomValue(dashboard.route)
+  const canManageMembers = useAtomValue(dashboard.canManageMembers)
 
-  if (workspaces.length === 0) {
+  if (route.page === 'users' && canManageMembers) {
     return (
-      <div className={styles.AppShellContent()}>
-        <Sidebar>{footer}</Sidebar>
-        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-          <div className={styles.AppShell.empty()}>
-            <h1 className={styles.AppShell.empty.title()}>
-              No workspace access
-            </h1>
-            <p className={styles.AppShell.empty.text()}>
-              Your current roles do not grant permission to read any workspace.
-            </p>
-          </div>
-        </Rail>
+      <div className={styles.AppShellWorkspace()}>
+        <UsersPageSidebar dashboard={dashboard} />
+        <div className={styles.AppShellContent()}>
+          <UsersPage dashboard={dashboard} />
+        </div>
       </div>
     )
   }
 
+  if (workspaces.length === 0) {
+    return (
+      <NoWorkspaceAccess
+        canManageMembers={canManageMembers}
+        dashboard={dashboard}
+      />
+    )
+  }
+
   return <AppShellWorkspace dashboard={dashboard} />
+}
+
+interface NoWorkspaceAccessProps {
+  canManageMembers: boolean
+  dashboard: Dashboard
+}
+
+function NoWorkspaceAccess({
+  canManageMembers,
+  dashboard
+}: NoWorkspaceAccessProps) {
+  const setRoute = useSetAtom(dashboard.route)
+
+  return (
+    <div className={styles.AppShellContent()}>
+      <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+        <div className={styles.AppShell.empty()}>
+          <h1 className={styles.AppShell.empty.title()}>No workspace access</h1>
+          <p className={styles.AppShell.empty.text()}>
+            Your current roles do not grant permission to read any workspace.
+          </p>
+          {canManageMembers && (
+            <div className={styles.AppShell.empty.actions()}>
+              <Button
+                appearance="plain"
+                intent="primary"
+                onPress={() => void setRoute({page: 'users'})}
+              >
+                Manage users
+              </Button>
+            </div>
+          )}
+        </div>
+      </Rail>
+    </div>
+  )
 }
 
 function AppShellWorkspace({dashboard}: AppShellProps) {

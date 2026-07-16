@@ -11,6 +11,7 @@ import type {
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
 import pLimit from 'p-limit'
 import {
@@ -98,6 +99,10 @@ export class DashboardWorker extends EventTarget {
         this.#flush(item)
         return item.sha
       } catch (error) {
+        if (error instanceof EntryUrlConflictError) {
+          this.#removeQueueItem(item)
+          throw error
+        }
         this.#blocked = true
         item.status = 'failed'
         item.error = errorMessage(error)

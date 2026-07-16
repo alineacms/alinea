@@ -3,6 +3,7 @@ import {
   IcAlignJustify,
   IcAlignLeft,
   IcAlignRight,
+  IcRoundAnchor,
   IcRoundFormatBold,
   IcRoundFormatClear,
   IcRoundFormatItalic,
@@ -33,6 +34,7 @@ import {
 import type {Editor} from '@tiptap/react'
 import type {ComponentType, ReactElement, ReactNode} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
+import {currentAnchor} from './extensions/Anchor.js'
 
 export interface RichTextCommand {
   (): ReturnType<Editor['chain']>
@@ -70,6 +72,7 @@ export interface RichTextToolbarContext {
   enableTables?: boolean
   exec: RichTextCommand
   handleLink: () => void
+  handleAnchor: () => void
   toolbar: ToolbarConfig
 }
 
@@ -85,18 +88,10 @@ const styleLabels = {
 export const headings = {
   icon: () => <IcRoundUnfoldMore />,
   label({editor}) {
-    const selected = editor.isActive('heading', {level: 1})
-      ? 'h1'
-      : editor.isActive('heading', {level: 2})
-        ? 'h2'
-        : editor.isActive('heading', {level: 3})
-          ? 'h3'
-          : editor.isActive('heading', {level: 4})
-            ? 'h4'
-            : editor.isActive('heading', {level: 5})
-              ? 'h5'
-              : 'paragraph'
-    return styleLabels[selected as keyof typeof styleLabels]
+    const level = ([1, 2, 3, 4, 5] as const).find(level =>
+      editor.isActive('heading', {level})
+    )
+    return level ? styleLabels[`h${level}`] : styleLabels.paragraph
   },
   items: {
     styles: {
@@ -246,10 +241,7 @@ export const formatting = {
     clear: {
       icon: () => <IcRoundFormatClear />,
       title: 'Clear format',
-      onSelect: ({exec}) => {
-        exec().unsetAllMarks().run()
-        exec().unsetTextAlign().run()
-      }
+      onSelect: ({exec}) => exec().unsetAllMarks().unsetTextAlign().run()
     },
     small: {
       icon: () => <IcRoundTextFields />,
@@ -341,6 +333,17 @@ export const links = {
   }
 } satisfies ToolbarGroup
 
+export const anchors = {
+  group: {
+    anchor: {
+      icon: () => <IcRoundAnchor />,
+      title: 'Anchor',
+      active: ({editor}) => currentAnchor(editor) !== undefined,
+      onSelect: ({handleAnchor}) => handleAnchor()
+    }
+  }
+} satisfies ToolbarGroup
+
 export const quotes = {
   icon: () => <IcRoundQuote />,
   title: 'Blockquote',
@@ -362,6 +365,7 @@ export function defaultToolbar(enableTables: boolean): ToolbarConfig {
       alignment,
       lists,
       links,
+      anchors,
       quotes,
       inserts
     }
@@ -372,6 +376,7 @@ export function defaultToolbar(enableTables: boolean): ToolbarConfig {
     alignment,
     lists,
     links,
+    anchors,
     quotes,
     inserts
   }

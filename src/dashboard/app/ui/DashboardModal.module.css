@@ -57,11 +57,6 @@
   padding: 0;
   background: var(--alinea-bg);
 
-  &.is-explorer {
-    gap: 0;
-    min-height: 0;
-  }
-
   &.is-loading {
     align-items: center;
     justify-content: center;
@@ -89,7 +84,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 22px 22px 0;
+  padding: 8px 16px;
 }
 
 .DashboardModalCloseButton {
@@ -102,14 +97,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 22px 22px;
+  padding: 8px 16px;
 }
 
 .DashboardModalContent {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0 22px;
+  padding: 0 16px;
   font-size: var(--alinea-font-size-base);
 }
 

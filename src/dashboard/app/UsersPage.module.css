@@ -1,0 +1,176 @@
+.UsersPage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  background: var(--alinea-bg);
+}
+
+.UsersPageSidebar {
+  display: flex;
+  flex: 0 0 32px;
+  flex-direction: column;
+  width: 32px;
+  height: 100%;
+  padding: 12px 0;
+}
+
+.UsersPageSidebar-nav {
+  display: grid;
+  justify-items: center;
+}
+
+.UsersPageSidebar-item {
+  color: var(--alinea-fg-muted);
+}
+
+.UsersPageSidebar-icon {
+  flex: 0 0 auto;
+  font-size: 18px;
+}
+
+.UsersPage-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
+  padding: 8px 16px;
+}
+
+.UsersPage-header-title {
+  font-size: 13px;
+  font-weight: 600;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.UsersPage-search {
+  min-width: 0;
+  flex: 1;
+}
+
+.UsersPage-createButton {
+  flex-shrink: 0;
+}
+
+.UsersPage-content {
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  overflow: auto;
+  width: 100%;
+  padding: 16px;
+}
+
+.UsersPage-table {
+  width: 100%;
+}
+
+.UsersPage-identity {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.UsersPage-identity-text {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.UsersPage-identity-title {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.UsersPage-identity-email {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.UsersPage-rolesCell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  gap: 10px;
+}
+
+.UsersPage-roles {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.UsersPage-noRoles {
+  flex: 1;
+  color: var(--alinea-fg-muted);
+}
+
+.UsersPage-empty {
+  color: var(--alinea-fg-muted);
+}
+
+.UsersPage-status {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--alinea-fg-muted);
+}
+
+.UsersPage-status-text {
+  margin: 0;
+  font-size: 14px;
+}
+
+.UsersPage-form-fields {
+  display: grid;
+  gap: 16px;
+}
+
+.UsersPage-form-error {
+  margin: 0;
+  color: var(--alinea-danger-subtle-fg);
+  font-size: 13px;
+}
+
+.UsersPage-confirmation {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .UsersPageSidebar {
+    flex-basis: 32px;
+  }
+
+  .UsersPage-header {
+    align-items: stretch;
+    flex-direction: column;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}

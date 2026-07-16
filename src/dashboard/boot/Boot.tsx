@@ -40,7 +40,8 @@ export async function boot(gen: ConfigGenerator) {
     const element = scripts[scripts.length - 1]
     const into = document.createElement('div')
     into.id = 'root'
-    element.parentElement!.replaceChild(into, element)
+    if (element.parentElement === document.head) document.body.append(into)
+    else element.parentElement!.replaceChild(into, element)
     const root = createRoot(into)
     let lastRevision: string | undefined
     for await (const batch of gen) {

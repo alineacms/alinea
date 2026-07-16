@@ -1,12 +1,23 @@
+import type {FieldBeforeSaveContext, FieldOptions} from '#/core/Field.js'
 import {RecordField} from '#/core/field/RecordField.js'
-import type {FieldBeforeSaveContext} from '#/core/Field.js'
-import type {FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {Type, type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {type ImageField, type ImageLink, image} from '#/field/link.js'
 import {type ObjectField, object} from '#/field/object.js'
 import {type TextField, text} from '#/field/text.js'
+import {
+  aliases,
+  type AliasesField,
+  type MetadataAlias
+} from './MetadataAliases.js'
+
+export {
+  aliases,
+  type AliasesField,
+  type MetadataAlias
+} from './MetadataAliases.js'
 
 export interface MetadataTimestampOptions extends FieldOptions<number | null> {
   width?: number
@@ -19,6 +30,7 @@ export interface MetadataUserOptions extends FieldOptions<MetadataAuditUser> {
 export interface MetadataFields {
   title: TextField
   description: TextField
+  aliases: AliasesField
   openGraph: ObjectField<{
     image: ImageField
     title: TextField
@@ -38,6 +50,7 @@ export interface MetadataAuditUser {
 export interface Metadata {
   title: string
   description: string
+  aliases: Array<MetadataAlias>
   openGraph: {
     image: ImageLink
     title: string
@@ -64,10 +77,7 @@ export class MetadataUserField extends ScalarField<
   MetadataUserOptions
 > {}
 
-export function metadata(
-  label = 'Metadata',
-  options: Partial<MetadataFields> = {}
-) {
+export function metadata(label = 'Metadata') {
   const fields = type('Fields', {
     fields: {
       title: text('Title'),
@@ -78,6 +88,7 @@ export function metadata(
           if (value.length > 160) return 'Too many characters.'
         }
       }),
+      aliases: aliases(),
       openGraph: object('Open Graph', {
         fields: {
           image: image('Image', {
@@ -99,7 +110,6 @@ export function metadata(
   return new MetadataField(fields, {
     options: {
       label,
-      ...options,
       fields
     },
     defaultValue() {
@@ -200,8 +210,4 @@ function timestampFromValue(value: unknown): number | undefined {
 function isMetadataAuditUser(value: unknown): value is MetadataAuditUser {
   if (!isRecord(value)) return false
   return typeof value.name === 'string' && typeof value.email === 'string'
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

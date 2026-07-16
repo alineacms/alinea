@@ -98,7 +98,6 @@ export function DashboardModalContent({children}: PropsWithChildren) {
 export function DashboardModalFooter({children}: PropsWithChildren) {
   return (
     <>
-      <DashboardModalSeparator />
       <footer className={styles.DashboardModalFooter()}>{children}</footer>
     </>
   )

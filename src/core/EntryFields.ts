@@ -12,6 +12,8 @@ export interface EntryFields {
   _locale: string | null
   _path: string
   _url: string
+  _createdAt: number | null
+  _updatedAt: number | null
   _active: boolean
 }
 
@@ -26,5 +28,7 @@ export const EntryFields = {
   _locale: Entry.locale,
   _path: Entry.path,
   _url: Entry.url,
+  _createdAt: Entry.createdAt,
+  _updatedAt: Entry.updatedAt,
   _active: Entry.active
 }

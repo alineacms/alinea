@@ -61,6 +61,7 @@ export interface Permissions {
   archive: boolean
   upload: boolean
   explore: boolean
+  manageMembers: boolean
   all: boolean
 }
 
@@ -77,6 +78,7 @@ export enum Permission {
   Archive = 1 << total++,
   Upload = 1 << total++,
   Explore = 1 << total++,
+  ManageMembers = 1 << total++,
   All = (1 << total) - 1,
   Explicit = 1 << total++
 }
@@ -92,6 +94,7 @@ const permissionMap = {
   archive: Permission.Archive,
   upload: Permission.Upload,
   explore: Permission.Explore,
+  manageMembers: Permission.ManageMembers,
   all: Permission.All
 }
 
@@ -138,6 +141,7 @@ function entitlements(packed: number): Permissions {
     archive: Boolean(packed & Permission.Archive),
     upload: Boolean(packed & Permission.Upload),
     explore: Boolean(packed & Permission.Explore),
+    manageMembers: Boolean(packed & Permission.ManageMembers),
     all: Boolean(packed & Permission.All)
   }
 }
@@ -299,6 +303,10 @@ export class Policy {
 
   canExplore(resource?: Resource): boolean {
     return this.check(Permission.Explore, resource)
+  }
+
+  canManageMembers(): boolean {
+    return this.check(Permission.ManageMembers)
   }
 
   canAll(resource?: Resource): boolean {

@@ -268,6 +268,7 @@ const advancedEntries = [
         _id: 'single-link',
         _type: 'entry',
         _entry: 'child-2',
+        _anchor: 'details',
         _suffix: '?filter=active'
       },
       multi: [{_entry: 'child-2'}, {_entry: 'missing'}],
@@ -284,6 +285,7 @@ const advancedEntries = [
                   _id: 'body-link',
                   _link: 'entry',
                   _entry: 'child-2',
+                  _anchor: 'details',
                   _suffix: '?filter=active'
                 }
               ]
@@ -301,6 +303,18 @@ const advancedEntries = [
         }
       ],
       meta: {inner: 'x'},
+      metadata: {
+        aliases: [
+          {
+            [ListRow.id]: 'alias-1',
+            [ListRow.index]: 'a0',
+            [ListRow.type]: 'alias',
+            url: '/old-alpha'
+          }
+        ],
+        createdAt: 100,
+        updatedAt: 200
+      },
       tags: [{itemId: 'a'}, {itemId: 'b'}]
     }
   },
@@ -315,6 +329,18 @@ const advancedEntries = [
       score: 8,
       text: 'beta text',
       meta: {inner: 'y'},
+      metadata: {
+        aliases: [
+          {
+            [ListRow.id]: 'alias-2',
+            [ListRow.index]: 'a0',
+            [ListRow.type]: 'alias',
+            url: '/old-beta'
+          }
+        ],
+        createdAt: 300,
+        updatedAt: 400
+      },
       tags: [{itemId: 'c'}]
     }
   },
@@ -367,6 +393,16 @@ const advancedEntries = [
       extension: '.jpg',
       size: 12,
       hash: 'plain-hash',
+      metadata: {
+        aliases: [
+          {
+            [ListRow.id]: 'media-alias-1',
+            [ListRow.index]: 'a0',
+            [ListRow.type]: 'alias',
+            url: '/old-plain-image'
+          }
+        ]
+      },
       alt: 'Plain image alt',
       width: 100,
       height: 80,
@@ -383,6 +419,7 @@ const advancedEntries = [
     path: 'i18n-image',
     data: {
       title: 'I18n image',
+      aliases: ['   '],
       location: '/i18n.jpg',
       previewUrl: '/preview/i18n.jpg',
       extension: '.jpg',
@@ -401,6 +438,97 @@ const advancedEntries = [
 async function createAdvancedResolver() {
   return createEntryResolver(advancedCms.config, advancedEntries)
 }
+
+test('projects metadata URL aliases as entry shortcuts', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    id: 'child-1',
+    select: {
+      aliases: Entry.aliases,
+      createdAt: Entry.createdAt,
+      updatedAt: Entry.updatedAt
+    },
+    first: true
+  })
+
+  test.equal(result, {
+    aliases: [
+      {
+        [ListRow.id]: 'alias-1',
+        [ListRow.index]: 'a0',
+        [ListRow.type]: 'alias',
+        url: '/old-alpha'
+      }
+    ],
+    createdAt: 100,
+    updatedAt: 200
+  })
+})
+
+test('filters by metadata URL alias', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '/old-beta',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, 'child-2')
+})
+
+test('projects MediaFile URL aliases as entry shortcuts', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    id: 'image-plain',
+    select: Entry.aliases,
+    first: true
+  })
+
+  test.equal(result, [
+    {
+      [ListRow.id]: 'media-alias-1',
+      [ListRow.index]: 'a0',
+      [ListRow.type]: 'alias',
+      url: '/old-plain-image'
+    }
+  ])
+})
+
+test('filters by MediaFile URL alias', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '/old-plain-image',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, 'image-plain')
+})
+
+test('does not match empty URL aliases', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, undefined)
+})
+
+test('filters by metadata created and updated shortcuts', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    filter: {
+      _createdAt: 100,
+      _updatedAt: 200
+    },
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, 'child-1')
+})
 
 function valueExpr(value: unknown) {
   return new Expr({type: 'value', value})
@@ -636,8 +764,8 @@ test('entry link suffixes are appended to query URLs', async () => {
     id: 'child-1',
     select: Article.single
   })
-  test.is(linkedEntry?.url, '/parent/beta?filter=active')
-  test.is(linkedEntry?.href, '/parent/beta?filter=active')
+  test.is(linkedEntry?.url, '/parent/beta?filter=active#details')
+  test.is(linkedEntry?.href, '/parent/beta?filter=active#details')
 
   const body = await resolver.resolve({
     first: true,
@@ -652,7 +780,7 @@ test('entry link suffixes are appended to query URLs', async () => {
   if (!firstText || !Node.isText(firstText)) {
     throw new Error('Expected first rich text child to be text')
   }
-  test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active')
+  test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active#details')
 })
 
 test('image fields include alt text in query values', async () => {

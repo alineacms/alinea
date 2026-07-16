@@ -114,6 +114,7 @@ test('metadata fields can be initialized deeply before editing', () => {
   test.equal(result.metadata, {
     title: 'Title',
     description: '',
+    aliases: [],
     openGraph: {
       image: null,
       title: '',
