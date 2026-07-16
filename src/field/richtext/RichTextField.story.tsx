@@ -142,6 +142,15 @@ export function RichTextEmptyStory() {
   return <RichTextFixture initialBody={[]} entryType={plainEntry} />
 }
 
+export function RichTextLegacyEmptyStory() {
+  return (
+    <RichTextFixture
+      initialBody={[{_type: 'paragraph'}]}
+      entryType={plainEntry}
+    />
+  )
+}
+
 export function RichTextReadOnlyStory() {
   return <RichTextFixture initialBody={blocksValue} entryType={readOnlyEntry} />
 }
@@ -169,6 +178,7 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
   const field = state.editor.field('body')
   if (!field) throw new Error('Body field not found')
   const value = useAtomValue(field.value)
+  const dirty = useAtomValue(state.editor.node.isDirty)
   const reset = useSetAtom(state.editor.node.reset)
   const replace = useSetAtom(field.value)
   return (
@@ -186,6 +196,7 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
         </button>
         <FieldsEditor />
         <pre data-testid="value">{JSON.stringify(value)}</pre>
+        <output data-testid="dirty">{String(dirty)}</output>
       </EditorScope>
     </DashboardScopeInternal>
   )

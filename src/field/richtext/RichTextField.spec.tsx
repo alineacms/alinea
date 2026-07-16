@@ -3,6 +3,7 @@ import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
   RichTextLargeStory,
+  RichTextLegacyEmptyStory,
   RichTextPlainStory,
   RichTextReadOnlyStory,
   RichTextStory
@@ -82,6 +83,16 @@ test('renders a rich text field without an embedded block schema', async ({
     'Select this text'
   )
   expect(errors).toEqual([])
+})
+
+test('does not dirty or normalize an empty paragraph while mounting', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextLegacyEmptyStory />)
+
+  await expect(page.getByTestId('value')).toHaveText('[{"_type":"paragraph"}]')
+  await expect(page.getByTestId('dirty')).toHaveText('false')
 })
 
 test('edits the end of a large document', async ({mount, page}) => {

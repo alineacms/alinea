@@ -150,7 +150,8 @@ export function RichTextFieldView<Blocks extends Schema>({
       setActiveEditor(editor)
       setFocused(true)
     },
-    onUpdate({editor}) {
+    onUpdate({editor, transaction}) {
+      if (!transaction.docChanged) return
       const next = editorNodes(editor.getJSON(), resolveBlock)
       const nextKey = documentStructureKey(next)
       if (
@@ -306,7 +307,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 }
 
 function setEditorReadOnly(editor: Editor, readOnly: boolean) {
-  editor.setEditable(!readOnly)
+  editor.setEditable(!readOnly, false)
   editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
 }
 
