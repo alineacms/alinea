@@ -35,9 +35,9 @@ export function createTestConnection(
     mutate(mutations) {
       return db.mutate(mutations)
     },
-    previewToken(request) {
+    previewToken() {
       return (
-        db.previewToken?.(request) ??
+        db.previewToken?.() ??
         Promise.resolve(options.previewToken ?? 'dev-preview-token')
       )
     },

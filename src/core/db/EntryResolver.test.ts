@@ -391,6 +391,16 @@ const advancedEntries = [
       extension: '.jpg',
       size: 12,
       hash: 'plain-hash',
+      metadata: {
+        aliases: [
+          {
+            [ListRow.id]: 'media-alias-1',
+            [ListRow.index]: 'a0',
+            [ListRow.type]: 'alias',
+            url: '/old-plain-image'
+          }
+        ]
+      },
       alt: 'Plain image alt',
       width: 100,
       height: 80,
@@ -407,6 +417,7 @@ const advancedEntries = [
     path: 'i18n-image',
     data: {
       title: 'I18n image',
+      aliases: ['   '],
       location: '/i18n.jpg',
       previewUrl: '/preview/i18n.jpg',
       extension: '.jpg',
@@ -461,6 +472,46 @@ test('filters by metadata URL alias', async () => {
   })
 
   test.is(result, 'child-2')
+})
+
+test('projects MediaFile URL aliases as entry shortcuts', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    id: 'image-plain',
+    select: Entry.aliases,
+    first: true
+  })
+
+  test.equal(result, [
+    {
+      [ListRow.id]: 'media-alias-1',
+      [ListRow.index]: 'a0',
+      [ListRow.type]: 'alias',
+      url: '/old-plain-image'
+    }
+  ])
+})
+
+test('filters by MediaFile URL alias', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '/old-plain-image',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, 'image-plain')
+})
+
+test('does not match empty URL aliases', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: '',
+    select: Entry.id,
+    first: true
+  })
+
+  test.is(result, undefined)
 })
 
 test('filters by metadata created and updated shortcuts', async () => {

@@ -87,18 +87,10 @@ const styleLabels = {
 export const headings = {
   icon: () => <IcRoundUnfoldMore />,
   label({editor}) {
-    const selected = editor.isActive('heading', {level: 1})
-      ? 'h1'
-      : editor.isActive('heading', {level: 2})
-        ? 'h2'
-        : editor.isActive('heading', {level: 3})
-          ? 'h3'
-          : editor.isActive('heading', {level: 4})
-            ? 'h4'
-            : editor.isActive('heading', {level: 5})
-              ? 'h5'
-              : 'paragraph'
-    return styleLabels[selected as keyof typeof styleLabels]
+    const level = ([1, 2, 3, 4, 5] as const).find(level =>
+      editor.isActive('heading', {level})
+    )
+    return level ? styleLabels[`h${level}`] : styleLabels.paragraph
   },
   items: {
     styles: {
@@ -248,10 +240,7 @@ export const formatting = {
     clear: {
       icon: () => <IcRoundFormatClear />,
       title: 'Clear format',
-      onSelect: ({exec}) => {
-        exec().unsetAllMarks().run()
-        exec().unsetTextAlign().run()
-      }
+      onSelect: ({exec}) => exec().unsetAllMarks().unsetTextAlign().run()
     },
     small: {
       icon: () => <IcRoundTextFields />,

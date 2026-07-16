@@ -18,6 +18,7 @@ import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {array, object, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -27,10 +28,6 @@ import {createThrottledSync} from './util/Syncable.js'
 
 const PrepareBody = object({
   filename: string
-})
-
-const PreviewBody = object({
-  url: string
 })
 
 export interface Handler {
@@ -207,7 +204,7 @@ export function createHandler({
       if (action === HandleAction.PreviewToken && request.method === 'POST') {
         expectUser()
         expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
+        return Response.json(await previews.sign())
       }
 
       // Resolve
@@ -397,8 +394,4 @@ function requireSub(user: UserInput): User {
     throw new HttpError(400, 'Expected user sub')
   }
   return {...user, sub: user.sub}
-}
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return input !== null && typeof input === 'object' && !Array.isArray(input)
 }

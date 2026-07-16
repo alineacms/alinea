@@ -65,7 +65,6 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
 import {Fragment, useMemo, useRef, useState} from 'react'
 import {
@@ -981,10 +980,10 @@ function EntryAnchorFieldInner({
   const dashboard = useDashboard()
   const entryAnchorsAtom = useMemo(() => {
     const entry = dashboard.entries(entryId)
-    return atom(get => {
-      const {data} = get(entry.data)
+    return atom(async get => {
+      const {data} = await get(entry.readyState)
       if (!data) return []
-      return get(unwrap(data.anchors, previous => previous ?? []))
+      return get(data.anchors)
     })
   }, [dashboard, entryId])
   const entryAnchors = useAtomValue(entryAnchorsAtom)

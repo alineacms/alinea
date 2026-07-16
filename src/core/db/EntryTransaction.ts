@@ -6,12 +6,14 @@ import {createId} from '#/core/Id.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
+import {ListEditor} from '#/core/field/ListField.js'
 import {entryUrl, pathSuffix} from '#/core/util/EntryFilenames.js'
 import {
   generateKeyBetween,
-  generateNKeysBetween
+  generateNKeysBetween,
+  isValidOrderKey
 } from '#/core/util/FractionalIndexing.js'
-import {entries, fromEntries, keys} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
 import * as paths from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {unreachable} from '#/core/util/Types.js'
@@ -23,6 +25,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
+import {aliasesFromData, aliasUrl} from './EntryAliases.js'
 import type {EntryIndex} from './EntryIndex.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
@@ -1026,13 +1029,9 @@ export class EntryTransaction {
 }
 
 function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
-  const metadata = data.metadata
-  if (!isRecord(metadata)) return []
-  const aliases = metadata.aliases
-  if (!Array.isArray(aliases)) return []
   const result = new Set<string>()
-  for (const alias of aliases) {
-    const url = typeof alias === 'string' ? alias : urlFromAliasRow(alias)
+  for (const alias of aliasesFromData(data) ?? []) {
+    const url = aliasUrl(alias)
     if (url) result.add(url)
   }
   return Array.from(result)
@@ -1044,72 +1043,108 @@ function dataWithUrlAlias(
   previousUrl: string,
   currentUrl: string
 ): Record<string, unknown> {
-  if (!typeSupportsMetadataAliases(type)) return data
+  const target = typeAliasTarget(type)
+  if (!target) return data
   const aliasUrls = aliasUrlsFromData(data)
   if (aliasUrls.includes(previousUrl)) return data
+  const nextData = aliasUrls.includes(currentUrl)
+    ? dataWithoutUrlAlias(data, currentUrl)
+    : data
+  const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
+  const aliases =
+    target === 'metadata'
+      ? Array.isArray(metadata.aliases)
+        ? metadata.aliases
+        : []
+      : Array.isArray(nextData.aliases)
+        ? nextData.aliases
+        : []
+  return dataWithAliases(
+    nextData,
+    target,
+    metadata,
+    aliases.concat(createUrlAliasRow(previousUrl, aliases))
+  )
+}
 
-  const metadata = isRecord(data.metadata) ? data.metadata : {}
-  const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
-
-  if (aliasUrls.includes(currentUrl)) {
-    const aliasesWithoutCurrent = aliases.filter(
-      alias => alias.url !== currentUrl
-    )
-    return {
-      ...data,
+function dataWithoutUrlAlias(
+  data: Record<string, unknown>,
+  url: string
+): Record<string, unknown> {
+  let result = data
+  if (Array.isArray(data.aliases)) {
+    result = {
+      ...result,
+      aliases: data.aliases.filter(alias => aliasUrl(alias) !== url)
+    }
+  }
+  const metadata = data.metadata
+  if (isRecord(metadata) && Array.isArray(metadata.aliases)) {
+    result = {
+      ...result,
       metadata: {
         ...metadata,
-        aliases: aliasesWithoutCurrent.concat(
-          createUrlAliasRow(previousUrl, aliasesWithoutCurrent)
-        )
+        aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
       }
     }
   }
+  return result
+}
+
+function dataWithAliases(
+  data: Record<string, unknown>,
+  target: AliasTarget,
+  metadata: Record<string, unknown>,
+  aliases: Array<unknown>
+): Record<string, unknown> {
+  if (target === 'aliases') return {...data, aliases}
   return {
     ...data,
     metadata: {
       ...metadata,
-      aliases: aliases.concat(createUrlAliasRow(previousUrl, aliases))
+      aliases
     }
   }
 }
 
-function typeSupportsMetadataAliases(type: Type): boolean {
+type AliasTarget = 'aliases' | 'metadata'
+
+interface UrlAliasRow extends ListRow {
+  _type: 'alias'
+  url: string
+}
+
+function typeAliasTarget(type: Type): AliasTarget | undefined {
+  if (Type.field(type, 'aliases')) return 'aliases'
   const metadata = Type.field(type, 'metadata')
-  if (!metadata) return false
+  if (!metadata) return undefined
   const options = Field.options(metadata)
   const fields = (options as {fields?: unknown}).fields
-  if (!Type.isType(fields)) return false
-  return Boolean(Type.field(fields, 'aliases'))
+  if (!Type.isType(fields)) return undefined
+  return Type.field(fields, 'aliases') ? 'metadata' : undefined
 }
 
 function createUrlAliasRow(url: string, aliases: Array<unknown>) {
-  const previousIndex = aliases
-    .map(alias => {
-      if (!isRecord(alias)) return undefined
-      const index = alias[ListRow.index]
-      return typeof index === 'string' ? index : undefined
-    })
-    .filter((index): index is string => index !== undefined)
-    .at(-1)
-  return {
-    [ListRow.id]: createId(),
-    [ListRow.index]: generateKeyBetween(previousIndex ?? null, null),
-    [ListRow.type]: 'alias',
-    url
-  }
+  const orderedAliases = aliases.filter(isOrderedUrlAliasRow)
+  const editor = new ListEditor<UrlAliasRow>(orderedAliases)
+  const created = editor.add('alias', {url}).value().at(-1)
+  assert(created)
+  return created
 }
 
-function urlFromAliasRow(value: unknown): string | undefined {
-  if (!isRecord(value)) return undefined
+function isOrderedUrlAliasRow(value: unknown): value is UrlAliasRow {
+  if (!isRecord(value)) return false
+  const id = value[ListRow.id]
+  const index = value[ListRow.index]
+  const type = value[ListRow.type]
   const url = value.url
-  if (typeof url !== 'string') return undefined
-  const trimmed = url.trim()
-  return trimmed.length > 0 ? trimmed : undefined
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
+  return (
+    typeof id === 'string' &&
+    typeof index === 'string' &&
+    isValidOrderKey(index) &&
+    type === 'alias' &&
+    typeof url === 'string'
+  )
 }
 
 function startsWithSegments(

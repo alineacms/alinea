@@ -293,6 +293,29 @@ export class Dashboard {
 
   previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
+  #previewSessionOrigins = atom<Record<string, true>>({})
+  #previewTokenRequests = new Map<string, Promise<string>>()
+  previewSessionOrigins = atom(get => get(this.#previewSessionOrigins))
+
+  previewSessionToken(origin: string, client: LocalConnection) {
+    const current = this.#previewTokenRequests.get(origin)
+    if (current) return current
+    const request = client.previewToken().finally(() => {
+      if (this.#previewTokenRequests.get(origin) === request)
+        this.#previewTokenRequests.delete(origin)
+    })
+    this.#previewTokenRequests.set(origin, request)
+    return request
+  }
+
+  markPreviewSessionReady = atom(null, (get, set, origin: string) => {
+    if (get(this.#previewSessionOrigins)[origin]) return
+    set(this.#previewSessionOrigins, current => ({
+      ...current,
+      [origin]: true
+    }))
+  })
+
   revisions = dispense(id => atom(0))
 
   entryReferenceScan = Object.assign(
@@ -760,7 +783,13 @@ export class Dashboard {
   #sha = atom<string>()
   sha = Object.assign(
     atom(
-      get => get(this.#sha),
+      async get => {
+        const current = get(this.#sha)
+        if (current) return current
+        const db = get(this.db)
+        if (!isSyncableGraph(db)) return undefined
+        return db.sync()
+      },
       (get, set) => {
         const events = get(this.events)
         const listen = (event: Event) => {
@@ -1602,7 +1631,10 @@ export class DashboardField {
     const defaultOptions = Field.options(this.field)
     const tracker = optionTrackerOf(this.field)
     const update = tracker ? tracker(get(this.#getter)) : undefined
-    const options = {...defaultOptions, ...update}
+    const trackedOptions = {...defaultOptions, ...update}
+    const options = this.draft.node.readOnly
+      ? {...trackedOptions, readOnly: true}
+      : trackedOptions
     const resource = this.draft.resource
     if (!resource) return options
     const config = get(this.draft.dashboard.config)
@@ -2611,7 +2643,7 @@ export class DashboardEntryData {
     const node = await get(this.selectedNode)
     const value = get(node.value)
     if (!isObject<Record<string, unknown>>(value)) return undefined
-    const sha = get(this.dashboard.sha)
+    const sha = await get(this.dashboard.sha)
     if (!sha) return undefined
 
     const root = get(this.root)
@@ -2664,13 +2696,22 @@ export class DashboardEntryData {
     const activeVersion = await get(this.languages(locale).activeVersion)
     if (!activeVersion) return undefined
     try {
-      const previewToken = await client.previewToken({url: activeVersion.url})
       const base = new URL(
         config.handlerUrl ?? '',
         Config.baseUrl(config) ??
           (typeof location === 'undefined' ? 'http://localhost' : location.href)
       )
-      return new URL(`?preview=${previewToken}`, base).toString()
+      const origin = base.origin
+      if (get(this.dashboard.previewSessionOrigins)[origin])
+        return new URL(activeVersion.url, origin).toString()
+
+      const previewToken = await this.dashboard.previewSessionToken(
+        origin,
+        client
+      )
+      base.searchParams.set('preview', previewToken)
+      base.searchParams.set('returnTo', activeVersion.url)
+      return base.toString()
     } catch {
       return undefined
     }

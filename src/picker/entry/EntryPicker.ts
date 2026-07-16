@@ -9,7 +9,7 @@ import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
 import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
-import {assign, keys} from '#/core/util/Objects.js'
+import {assign, isRecord, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
 
@@ -191,8 +191,4 @@ function linkedLocalisation(
   if (!rootConfig) return
   const rootData = Root.data(rootConfig)
   return Root.mediaI18n(rootData) ?? rootData.i18n
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

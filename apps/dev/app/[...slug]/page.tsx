@@ -1,14 +1,15 @@
 import {cms} from '@/cms'
+import {ExampleView} from '@/ExampleView'
 import {Entry} from 'alinea/core'
 import type {Metadata} from 'next'
 import {notFound} from 'next/navigation'
 import {cache} from 'react'
 
-type PageProps = {
+interface PageProps {
   params: Promise<{slug: Array<string>}>
 }
 
-type MetadataImage = {
+interface MetadataImage {
   src?: string
   url?: string
   width?: number
@@ -16,7 +17,7 @@ type MetadataImage = {
   title?: string
 }
 
-type MetadataValue = {
+interface MetadataValue {
   title?: string
   description?: string
   openGraph?: {
@@ -26,7 +27,7 @@ type MetadataValue = {
   }
 }
 
-type PageFields = Record<string, unknown> & {
+interface PageFields extends Record<string, unknown> {
   _url?: string
   metadata?: MetadataValue
   summary?: unknown
@@ -118,7 +119,23 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 }
 
 export default async function Example(props: PageProps) {
-  const page = await pageFromParams(props.params)
+  const url = await urlFromParams(props.params)
+  const [page, fields] = await Promise.all([
+    pageFromParams(props.params),
+    pageFieldsByUrl(url)
+  ])
   if (!page) return notFound()
-  return <div>{JSON.stringify(page)}</div>
+
+  const content = fields ?? (page.data as PageFields)
+  const title = text(content.title) ?? page.title
+  return (
+    <ExampleView
+      content={content}
+      status={page.status}
+      summary={text(content.summary)}
+      title={title}
+      type={page.type}
+      url={page.url}
+    />
+  )
 }

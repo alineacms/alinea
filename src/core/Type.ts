@@ -16,7 +16,7 @@ import type {View} from './View.js'
 import type {EntryReferenceTarget} from './db/EntryReference.js'
 import type {SummaryProps} from './media/Summary.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries, keys, values} from './util/Objects.js'
+import {entries, fromEntries, isRecord, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
 
 export interface EntryUrlMeta {
@@ -221,10 +221,6 @@ function mergeInitialValue(value: unknown, initialValue: unknown): unknown {
     }
   }
   return next
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
