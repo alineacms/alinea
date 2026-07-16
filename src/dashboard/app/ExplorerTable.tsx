@@ -213,15 +213,7 @@ function ExplorerTableDisplayRow({
       textValue={label}
       className={styles.ExplorerTable.row()}
       columns={columns}
-      dependencies={[
-        columns,
-        label,
-        icon,
-        cells,
-        status,
-        breadcrumbs,
-        parents
-      ]}
+      dependencies={[columns, label, icon, cells, status, breadcrumbs, parents]}
       style={{width: '100%', minWidth: '100%', height: 'inherit'}}
     >
       {renderCell}
