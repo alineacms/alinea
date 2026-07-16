@@ -18,7 +18,6 @@ import {
   type ReactNode
 } from 'react'
 
-type Element = keyof JSX.IntrinsicElements
 type Attributes = Record<string, unknown>
 type View = ComponentType<Attributes & {children?: ReactNode}> | ReactElement
 type TextAlign = CSSProperties['textAlign']
@@ -40,11 +39,23 @@ function textContent(doc: TextDoc): string {
   }, '')
 }
 
+interface TableProps {
+  children?: ReactNode
+}
+
+function Table({children}: TableProps) {
+  return (
+    <table>
+      <tbody>{children}</tbody>
+    </table>
+  )
+}
+
 function nodeElement(
   type: string,
   attributes: Attributes | undefined,
   content?: TextDoc
-): ReactElement<Attributes, Element> | undefined {
+): ReactElement | undefined {
   const textAlign = textAlignAttribute(attributes?.textAlign)
   const style = {
     textAlign: textAlign === 'left' ? undefined : textAlign
@@ -94,9 +105,7 @@ function nodeElement(
       )
     }
     case 'table':
-      return <table />
-    case 'tableBody':
-      return <tbody />
+      return <Table />
     case 'tableCell':
       return (
         <td
@@ -187,7 +196,12 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
   if (Node.isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
     const element = nodeElement(type, attrs, content)
-    const View = element?.type ? views[String(element.type)] : undefined
+    const View =
+      type === 'table'
+        ? views.table
+        : element?.type
+          ? views[String(element.type)]
+          : undefined
     const inner =
       content?.map((node: Node, i: number) => (
         <RichTextNodeView key={i} views={views} node={node} />
@@ -233,7 +247,6 @@ interface RichTextElementViews {
   sup?: ComponentType<JSX.IntrinsicElements['sup']> | ReactElement
   a?: ComponentType<JSX.IntrinsicElements['a']> | ReactElement
   table?: ComponentType<JSX.IntrinsicElements['table']> | ReactElement
-  tbody?: ComponentType<JSX.IntrinsicElements['tbody']> | ReactElement
   td?: ComponentType<JSX.IntrinsicElements['td']> | ReactElement
   th?: ComponentType<JSX.IntrinsicElements['th']> | ReactElement
   tr?: ComponentType<JSX.IntrinsicElements['tr']> | ReactElement
