@@ -1,4 +1,5 @@
 import {ReporterPlugin} from '@esbx/reporter'
+import {commonjs} from '@hyrious/esbuild-plugin-commonjs'
 import {dequal} from 'dequal'
 import esbuild, {
   type BuildContext,
@@ -44,16 +45,6 @@ const external = builtinModules
     'react-dom',
     'esbuild'
   ])
-
-const reactSyncExternalStore: Plugin = {
-  name: 'react-sync-external-store',
-  setup(build) {
-    build.onResolve(
-      {filter: /^use-sync-external-store\/shim(?:\/index\.js)?$/},
-      () => ({path: 'react', external: true})
-    )
-  }
-}
 
 function dirsOf(source: string) {
   const contents = fs.readdirSync(source, {withFileTypes: true})
@@ -352,8 +343,11 @@ function jsEntry({
   report: boolean
 }): Plugin {
   const plugins = [
+    commonjs({
+      filter: /node_modules[\\/]use-sync-external-store[\\/].*\.js$/,
+      only: ['react']
+    }),
     cssModulesJsPlugin,
-    reactSyncExternalStore,
     internalPlugin,
     externalize,
     oauthIsoCrypto,
