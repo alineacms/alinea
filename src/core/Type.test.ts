@@ -50,7 +50,11 @@ const value = {
       [Node.type]: 'heading',
       _anchor: 'rich-heading',
       [ElementNode.content]: [
-        {[Node.type]: 'text', [TextNode.text]: 'Rich text'}
+        {
+          [Node.type]: 'text',
+          [TextNode.text]: 'Rich text',
+          [TextNode.marks]: [{[Mark.type]: 'anchor', id: 'rich-heading'}]
+        }
       ]
     },
     {

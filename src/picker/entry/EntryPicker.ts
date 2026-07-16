@@ -8,6 +8,7 @@ import {Reference} from '#/core/Reference.js'
 import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
+import {applyUrlSuffix} from '#/core/util/Anchors.js'
 import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
 import {assign, isRecord, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
@@ -105,7 +106,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       if (type !== 'image') {
         assign(row, extra)
-        applyUrlSuffix(row, suffix, anchor)
+        applyUrlSuffixToRow(row, suffix, anchor)
         return
       }
       const {
@@ -140,18 +141,15 @@ export function entryPicker<Ref extends EntryReference, Fields>(
   }
 }
 
-function applyUrlSuffix(
+function applyUrlSuffixToRow(
   row: Record<string, unknown>,
-  suffix: unknown,
-  anchor: unknown
+  suffix: string | undefined,
+  anchor: string | undefined
 ) {
-  const suffixValue = typeof suffix === 'string' ? suffix.trim() : ''
-  const anchorValue =
-    typeof anchor === 'string' ? anchor.trim().replace(/^#/, '') : ''
-  const value = `${suffixValue}${anchorValue ? `#${anchorValue}` : ''}`
-  if (!value) return
-  if (typeof row.url === 'string') row.url = `${row.url}${value}`
-  if (typeof row.href === 'string') row.href = `${row.href}${value}`
+  if (typeof row.url === 'string')
+    row.url = applyUrlSuffix(row.url, suffix, anchor)
+  if (typeof row.href === 'string')
+    row.href = applyUrlSuffix(row.href, suffix, anchor)
 }
 
 function mediaEntryUrl(

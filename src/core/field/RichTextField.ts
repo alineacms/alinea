@@ -19,6 +19,7 @@ import {
   type TextNode
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
+import {applyUrlSuffix} from '../util/Anchors.js'
 import {mediaLocationUrl} from '../util/EntryFilenames.js'
 import {entries} from '../util/Objects.js'
 
@@ -136,10 +137,12 @@ function richTextAnchors<Blocks>(
   label?: string
 ): Array<EntryAnchorTarget> {
   const result: Array<EntryAnchorTarget> = []
+  const anchors = new Set<string>()
   iterNodes(doc, (node, nodePath) => {
     if (Node.isElement(node)) {
       const anchor = node._anchor
-      if (typeof anchor === 'string') {
+      if (typeof anchor === 'string' && !anchors.has(anchor)) {
+        anchors.add(anchor)
         result.push({
           id: anchor,
           label: `#${anchor}`,
@@ -152,7 +155,8 @@ function richTextAnchors<Blocks>(
     for (const mark of node.marks ?? []) {
       if (mark[Mark.type] !== 'anchor') continue
       const anchor = mark.id
-      if (typeof anchor !== 'string') continue
+      if (typeof anchor !== 'string' || anchors.has(anchor)) continue
+      anchors.add(anchor)
       result.push({
         id: anchor,
         label: `#${anchor}`,
@@ -252,16 +256,6 @@ async function applyLinkMarks(
       mark[LinkMark.anchor]
     )
   }
-}
-
-function applyUrlSuffix(
-  url: string,
-  suffix: string | undefined,
-  anchor: string | undefined
-): string {
-  const suffixValue = suffix?.trim() ?? ''
-  const anchorValue = anchor?.trim().replace(/^#/, '')
-  return `${url}${suffixValue}${anchorValue ? `#${anchorValue}` : ''}`
 }
 
 function richTextSearchableText<Blocks>(
