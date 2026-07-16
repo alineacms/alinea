@@ -969,6 +969,12 @@ function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
   )
 }
 
+function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  if (value[Reference.type] !== 'entry' || !anchor) return null
+  return <Badge size="small">#{anchor}</Badge>
+}
+
 function EntryAnchorFieldInner({
   entryId,
   anchor,
@@ -1431,6 +1437,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 node={node}
                 value={value}
               />
+              <EntryAnchorBadge node={node} value={value} />
             </ListRowBadges>
           </ListRowDrag>
           {!options.readOnly && (
@@ -1631,6 +1638,7 @@ function MultipleLinkRow({
                   node={node}
                   value={value}
                 />
+                <EntryAnchorBadge node={node} value={value} />
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>

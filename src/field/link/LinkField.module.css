@@ -125,17 +125,24 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .LinkFieldView-anchorOption-label {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .LinkFieldView-anchorOption-location {
   font-size: 12px;
   font-weight: 400;
   opacity: 0.65;
+  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .LinkFieldView-skeleton {

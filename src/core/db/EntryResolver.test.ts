@@ -268,6 +268,7 @@ const advancedEntries = [
         _id: 'single-link',
         _type: 'entry',
         _entry: 'child-2',
+        _anchor: 'details',
         _suffix: '?filter=active'
       },
       multi: [{_entry: 'child-2'}, {_entry: 'missing'}],
@@ -284,6 +285,7 @@ const advancedEntries = [
                   _id: 'body-link',
                   _link: 'entry',
                   _entry: 'child-2',
+                  _anchor: 'details',
                   _suffix: '?filter=active'
                 }
               ]
@@ -762,8 +764,8 @@ test('entry link suffixes are appended to query URLs', async () => {
     id: 'child-1',
     select: Article.single
   })
-  test.is(linkedEntry?.url, '/parent/beta?filter=active')
-  test.is(linkedEntry?.href, '/parent/beta?filter=active')
+  test.is(linkedEntry?.url, '/parent/beta?filter=active#details')
+  test.is(linkedEntry?.href, '/parent/beta?filter=active#details')
 
   const body = await resolver.resolve({
     first: true,
@@ -778,7 +780,7 @@ test('entry link suffixes are appended to query URLs', async () => {
   if (!firstText || !Node.isText(firstText)) {
     throw new Error('Expected first rich text child to be text')
   }
-  test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active')
+  test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active#details')
 })
 
 test('image fields include alt text in query values', async () => {

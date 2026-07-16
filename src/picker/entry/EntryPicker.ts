@@ -74,6 +74,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [Reference.id]: id,
         [Reference.type]: type,
         [EntryReference.entry]: entryId,
+        [EntryReference.anchor]: anchor,
         [EntryReference.suffix]: suffix,
         [ListRow.index]: index,
         ...fields
@@ -104,7 +105,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       if (type !== 'image') {
         assign(row, extra)
-        applyUrlSuffix(row, suffix)
+        applyUrlSuffix(row, suffix, anchor)
         return
       }
       const {
@@ -139,9 +140,15 @@ export function entryPicker<Ref extends EntryReference, Fields>(
   }
 }
 
-function applyUrlSuffix(row: Record<string, unknown>, suffix: unknown) {
-  if (typeof suffix !== 'string') return
-  const value = suffix.trim()
+function applyUrlSuffix(
+  row: Record<string, unknown>,
+  suffix: unknown,
+  anchor: unknown
+) {
+  const suffixValue = typeof suffix === 'string' ? suffix.trim() : ''
+  const anchorValue =
+    typeof anchor === 'string' ? anchor.trim().replace(/^#/, '') : ''
+  const value = `${suffixValue}${anchorValue ? `#${anchorValue}` : ''}`
   if (!value) return
   if (typeof row.url === 'string') row.url = `${row.url}${value}`
   if (typeof row.href === 'string') row.href = `${row.href}${value}`

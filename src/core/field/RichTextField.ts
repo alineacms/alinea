@@ -246,14 +246,22 @@ async function applyLinkMarks(
             data.location
           )
         : data.url
-    mark.href = applyUrlSuffix(href, mark[LinkMark.suffix])
+    mark.href = applyUrlSuffix(
+      href,
+      mark[LinkMark.suffix],
+      mark[LinkMark.anchor]
+    )
   }
 }
 
-function applyUrlSuffix(url: string, suffix: string | undefined): string {
-  const value = suffix?.trim()
-  if (!value) return url
-  return `${url}${value}`
+function applyUrlSuffix(
+  url: string,
+  suffix: string | undefined,
+  anchor: string | undefined
+): string {
+  const suffixValue = suffix?.trim() ?? ''
+  const anchorValue = anchor?.trim().replace(/^#/, '')
+  return `${url}${suffixValue}${anchorValue ? `#${anchorValue}` : ''}`
 }
 
 function richTextSearchableText<Blocks>(

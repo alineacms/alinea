@@ -58,7 +58,8 @@ test('RichText renders text marks and link attributes', () => {
             {_type: 'italic'},
             {
               _type: 'link',
-              href: 'https://example.com',
+              _anchor: 'details',
+              href: 'https://example.com/page#details',
               target: '_blank',
               title: 'Example'
             }
@@ -71,7 +72,7 @@ test('RichText renders text marks and link attributes', () => {
   const {container} = render(<RichText doc={doc} />)
 
   const link = screen.getByRole('link', {name: 'Marked'})
-  expect(link.getAttribute('href')).toBe('https://example.com')
+  expect(link.getAttribute('href')).toBe('https://example.com/page#details')
   expect(link.getAttribute('target')).toBe('_blank')
   expect(link.getAttribute('title')).toBe('Example')
   expect(container.querySelector('a > i > b')?.textContent).toBe('Marked')
