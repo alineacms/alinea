@@ -959,7 +959,7 @@ interface EntryAnchorFieldProps {
 function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
   const anchor = useAtomValue(node.field('_anchor')) as string | undefined
   const setAnchor = useSetAtom(node.field('_anchor'))
-  if (value._type !== 'entry') return null
+  if (value[Reference.type] !== 'entry') return null
   return (
     <EntryAnchorFieldInner
       entryId={value._entry}
@@ -967,6 +967,12 @@ function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
       onChange={setAnchor}
     />
   )
+}
+
+interface EntryAnchorFieldInnerProps {
+  entryId: string
+  anchor?: string
+  onChange: (value: string | undefined) => void
 }
 
 function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
@@ -979,11 +985,7 @@ function EntryAnchorFieldInner({
   entryId,
   anchor,
   onChange
-}: {
-  entryId: string
-  anchor?: string
-  onChange: (value: string | undefined) => void
-}) {
+}: EntryAnchorFieldInnerProps) {
   const dashboard = useDashboard()
   const entryAnchorsAtom = useMemo(() => {
     const entry = dashboard.entries(entryId)

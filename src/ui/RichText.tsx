@@ -54,7 +54,9 @@ function nodeElement(
       const level = attributes?.level
       const Tag = headingTag(level)
       const id =
-        attributes?.id ?? (content ? slugify(textContent(content)) : undefined)
+        attributes?._anchor ??
+        attributes?.id ??
+        (content ? slugify(textContent(content)) : undefined)
       return <Tag style={style} id={typeof id === 'string' ? id : undefined} />
     }
     case 'paragraph':

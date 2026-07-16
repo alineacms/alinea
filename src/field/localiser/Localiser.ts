@@ -124,6 +124,18 @@ export function localiser<const Locale extends string>({
             })
           )
         },
+        normalizeAnchors(value, context) {
+          const record = value ?? initialValue()
+          let next = record
+          for (const locale of locales) {
+            const before = record[locale]
+            const after = Field.normalizeAnchors(field, before, context)
+            if (after === before) continue
+            if (next === record) next = {...record}
+            next[locale] = after
+          }
+          return next
+        },
         async queryValue(value, loader) {
           const selected = selectLocalisedValue<Locale, StoredValue>({
             value: value ?? initialValue(),

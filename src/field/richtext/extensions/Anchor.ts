@@ -1,4 +1,5 @@
-import {getMarkRange, Mark, mergeAttributes} from '@tiptap/core'
+import {getMarkRange, Mark, mergeAttributes, type Editor} from '@tiptap/core'
+import type {MarkType} from '@tiptap/pm/model'
 import type {Transaction} from '@tiptap/pm/state'
 
 interface AnchorAttributes {
@@ -56,16 +57,18 @@ const Anchor = Mark.create<AnchorOptions>({
           const anchorType = state.schema.marks[this.name]
           const range = getMarkRange(tr.selection.$from, anchorType)
           const {from, to} = range ?? tr.selection
-          setHeadingAnchor(tr, attributes.id)
           tr.removeMark(from, to, anchorType)
-          tr.addMark(from, to, anchorType.create(attributes))
+          if (!setHeadingAnchor(tr, attributes.id, anchorType))
+            tr.addMark(from, to, anchorType.create(attributes))
           if (dispatch) dispatch()
           return true
         },
       toggleAnchor:
         attributes =>
-        ({commands}) => {
-          return commands.toggleMark(this.name, attributes)
+        ({commands, editor}) => {
+          return currentAnchor(editor)
+            ? commands.unsetAnchor()
+            : commands.setAnchor(attributes)
         },
       unsetAnchor:
         () =>
@@ -73,8 +76,8 @@ const Anchor = Mark.create<AnchorOptions>({
           const anchorType = state.schema.marks[this.name]
           const range = getMarkRange(tr.selection.$from, anchorType)
           const {from, to} = range ?? tr.selection
-          setHeadingAnchor(tr, null)
           tr.removeMark(from, to, anchorType)
+          setHeadingAnchor(tr, null, anchorType)
           if (dispatch) dispatch()
           return true
         }
@@ -82,17 +85,35 @@ const Anchor = Mark.create<AnchorOptions>({
   }
 })
 
-function setHeadingAnchor(transaction: Transaction, anchor: string | null) {
+export function currentAnchor(editor: Editor): string | undefined {
+  const heading = editor.getAttributes('heading')._anchor
+  if (typeof heading === 'string') return heading
+  const inline = editor.getAttributes('anchor').id
+  return typeof inline === 'string' ? inline : undefined
+}
+
+function setHeadingAnchor(
+  transaction: Transaction,
+  anchor: string | null,
+  anchorType: MarkType
+): boolean {
   const {$from} = transaction.selection
   for (let depth = $from.depth; depth > 0; depth--) {
     const node = $from.node(depth)
     if (node.type.name !== 'heading') continue
-    transaction.setNodeMarkup($from.before(depth), undefined, {
+    const position = $from.before(depth)
+    transaction.setNodeMarkup(position, undefined, {
       ...node.attrs,
       _anchor: anchor
     })
-    return
+    transaction.removeMark(
+      position + 1,
+      position + node.content.size + 1,
+      anchorType
+    )
+    return true
   }
+  return false
 }
 
 export default Anchor

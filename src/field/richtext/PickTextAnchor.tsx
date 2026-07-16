@@ -1,4 +1,3 @@
-import {useCallback, useState, type FormEvent} from 'react'
 import {Button, TextField} from '#/components.js'
 import {
   DashboardModal,
@@ -11,6 +10,7 @@ import {
   DashboardModalTitle,
   useDashboardModal
 } from '#/dashboard/app/ui/DashboardModal.js'
+import {useCallback, useState, type FormEvent} from 'react'
 
 interface PickerValue {
   id: string
@@ -25,7 +25,7 @@ export interface PickTextAnchorFunc {
   (anchor?: string): Promise<PickerValue | undefined>
 }
 
-interface PickTextAnchorState {
+export interface PickTextAnchorState {
   isOpen: boolean
   pickAnchor: (anchor?: string) => Promise<PickerValue | undefined>
   anchor: string
@@ -33,11 +33,11 @@ interface PickTextAnchorState {
   confirm: (value: PickerValue | undefined) => void
 }
 
-interface PickTextAnchorProps {
+export interface PickTextAnchorProps {
   picker: PickTextAnchorState
 }
 
-export function usePickTextAnchor() {
+export function usePickTextAnchor(): PickTextAnchorState {
   const [pending, setPending] = useState<PendingTextAnchorPicker | undefined>()
   const pickAnchor = useCallback((anchor?: string) => {
     return new Promise<PickerValue | undefined>(resolve => {
@@ -81,7 +81,7 @@ export function PickTextAnchor({picker}: PickTextAnchorProps) {
 
 function PickTextAnchorForm({picker}: PickTextAnchorProps) {
   const modal = useDashboardModal()
-  const [name, setName] = useState(picker.anchor ?? '')
+  const [name, setName] = useState(picker.anchor)
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     if (event.target !== event.currentTarget) return
@@ -91,10 +91,10 @@ function PickTextAnchorForm({picker}: PickTextAnchorProps) {
   }
 
   return (
-    <DashboardModalDialog aria-label="Pick text anchor">
+    <DashboardModalDialog aria-label="Set text anchor">
       <DashboardModalForm onSubmit={onSubmit}>
         <DashboardModalFormHeader>
-          <DashboardModalTitle>Pick anchor link</DashboardModalTitle>
+          <DashboardModalTitle>Set text anchor</DashboardModalTitle>
           <DashboardModalCloseButton />
         </DashboardModalFormHeader>
         <DashboardModalFormBody>

@@ -19,9 +19,10 @@ import {
   type TextNode
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
-import {applyUrlSuffix} from '../util/Anchors.js'
+import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
 import {mediaLocationUrl} from '../util/EntryFilenames.js'
 import {entries} from '../util/Objects.js'
+import {slugify} from '../util/Slugs.js'
 
 export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
@@ -106,6 +107,10 @@ export class RichTextField<
         )
         return result
       },
+      normalizeAnchors(value, context) {
+        if (!Array.isArray(value)) return value
+        return normalizeRichTextAnchors(schema, value, context.anchors)
+      },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
         const tasks: Array<Promise<unknown>> = [applyLinkMarks(doc, loader)]
@@ -128,6 +133,104 @@ export class RichTextField<
       }
     })
   }
+}
+
+function normalizeRichTextAnchors<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  anchors: Set<string>
+): TextDoc<Blocks> {
+  function normalizeNode(
+    node: Node,
+    insideHeading: boolean,
+    activeManualAnchors: Map<string, string>
+  ): Node {
+    if (Node.isBlock(node)) {
+      activeManualAnchors.clear()
+      const type = schema?.[node[Node.type]]
+      return type
+        ? (Type.normalizeAnchors(type, node, {anchors}) as Node)
+        : node
+    }
+    if (Node.isText(node)) {
+      const marks = node.marks
+      if (!marks) {
+        activeManualAnchors.clear()
+        return node
+      }
+      if (insideHeading) {
+        activeManualAnchors.clear()
+        const nextMarks = marks.filter(mark => mark[Mark.type] !== 'anchor')
+        return nextMarks.length === marks.length
+          ? node
+          : {...node, marks: nextMarks.length ? nextMarks : undefined}
+      }
+      let nextMarks = marks
+      const nextActiveManualAnchors = new Map<string, string>()
+      marks.forEach((mark, index) => {
+        if (mark[Mark.type] !== 'anchor' || typeof mark.id !== 'string') return
+        let unique = activeManualAnchors.get(mark.id)
+        if (!unique) {
+          unique = createUniqueAnchor(mark.id, anchors)
+        }
+        if (unique) nextActiveManualAnchors.set(mark.id, unique)
+        if (!unique || unique === mark.id) return
+        if (nextMarks === marks) nextMarks = [...marks]
+        nextMarks[index] = {...mark, id: unique}
+      })
+      activeManualAnchors.clear()
+      for (const [anchor, unique] of nextActiveManualAnchors)
+        activeManualAnchors.set(anchor, unique)
+      return nextMarks === marks ? node : {...node, marks: nextMarks}
+    }
+
+    activeManualAnchors.clear()
+    const source =
+      typeof node._anchor === 'string'
+        ? node._anchor
+        : node[Node.type] === 'heading'
+          ? slugify(textContent(node))
+          : undefined
+    const unique = createUniqueAnchor(source, anchors)
+    const nextInsideHeading = insideHeading || node[Node.type] === 'heading'
+    const content = node.content
+    let nextContent = content
+    if (content) {
+      let updated = content
+      const activeManualAnchors = new Map<string, string>()
+      content.forEach((child, index) => {
+        const normalized = normalizeNode(
+          child,
+          nextInsideHeading,
+          activeManualAnchors
+        )
+        if (normalized === child) return
+        if (updated === content) updated = [...content]
+        updated[index] = normalized
+      })
+      nextContent = updated
+    }
+    if (unique === node._anchor && nextContent === content) return node
+    return unique === node._anchor
+      ? {...node, content: nextContent}
+      : {...node, _anchor: unique, content: nextContent}
+  }
+
+  let next = doc
+  const activeManualAnchors = new Map<string, string>()
+  doc.forEach((node, index) => {
+    const normalized = normalizeNode(node, false, activeManualAnchors)
+    if (normalized === node) return
+    if (next === doc) next = [...doc]
+    next[index] = normalized
+  })
+  return next
+}
+
+function textContent(node: Node): string {
+  if (Node.isText(node)) return node.text ?? ''
+  if (!Node.isElement(node) || !node.content) return ''
+  return node.content.map(textContent).join('')
 }
 
 function richTextAnchors<Blocks>(

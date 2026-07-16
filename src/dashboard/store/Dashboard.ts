@@ -1136,6 +1136,7 @@ export class Dashboard {
 
 export class DashboardEditor {
   value: Atom<object>
+  anchors: Atom<Array<EntryAnchorTarget>>
   sections: Array<DashboardSection>
   constructor(
     public dashboard: Dashboard,
@@ -1146,6 +1147,9 @@ export class DashboardEditor {
   ) {
     this.resource ??= parent?.resource
     this.value = node.value
+    this.anchors = atom(get =>
+      Type.anchors(this.type, get(this.value) as Record<string, unknown>)
+    )
     this.sections = getType(this.type).sections.map(
       section => new DashboardSection(this.dashboard, section)
     )

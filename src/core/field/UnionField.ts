@@ -45,6 +45,12 @@ export class UnionField<
         if (type) result.push(...Type.anchors(type, value, context.path))
         return result
       },
+      normalizeAnchors(value, context) {
+        if (!value) return value
+        const type = schema?.[value[UnionRow.type]]
+        if (!type) return value
+        return Type.normalizeAnchors(type, value, context) as StoredValue
+      },
       async queryValue(value, loader) {
         if (!value) return value as QueryValue
         const type = schema?.[value[UnionRow.type]]

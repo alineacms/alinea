@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
 import {list, richText, text} from '#/field.js'
-import {ElementNode, Mark, Node, TextNode} from './TextDoc.js'
+import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
 const Test = type('Test', {
@@ -52,8 +52,7 @@ const value = {
       [ElementNode.content]: [
         {
           [Node.type]: 'text',
-          [TextNode.text]: 'Rich text',
-          [TextNode.marks]: [{[Mark.type]: 'anchor', id: 'rich-heading'}]
+          [TextNode.text]: 'Rich text'
         }
       ]
     },
@@ -107,5 +106,94 @@ test('Anchors', () => {
         fieldLabel: 'Rich'
       }
     ]
+  )
+})
+
+test('Normalizes anchors across every field in an entry', () => {
+  const Anchored = type('Anchored', {
+    fields: {
+      intro: richText('Intro'),
+      sections: list('Sections', {
+        schema: {
+          Section: type('Section', {fields: {title: text('Title')}})
+        }
+      }),
+      outro: richText('Outro')
+    }
+  })
+  const duplicateHeading = {
+    [Node.type]: 'heading',
+    _anchor: 'same',
+    [ElementNode.content]: [
+      {
+        [Node.type]: 'text',
+        [TextNode.text]: 'Same',
+        [TextNode.marks]: [{[Mark.type]: 'anchor', id: 'same'}]
+      }
+    ]
+  }
+  const input = {
+    intro: [
+      duplicateHeading,
+      {
+        [Node.type]: 'paragraph',
+        [ElementNode.content]: [
+          {
+            [Node.type]: 'text',
+            [TextNode.text]: 'First inline',
+            [TextNode.marks]: [{[Mark.type]: 'anchor', id: 'same'}]
+          },
+          {
+            [Node.type]: 'text',
+            [TextNode.text]: ' separator '
+          },
+          {
+            [Node.type]: 'text',
+            [TextNode.text]: 'Second inline',
+            [TextNode.marks]: [{[Mark.type]: 'anchor', id: 'same'}]
+          }
+        ]
+      }
+    ],
+    sections: [
+      {
+        [ListRow.type]: 'Section',
+        [ListRow.id]: 'first',
+        _label: 'Same'
+      },
+      {
+        [ListRow.type]: 'Section',
+        [ListRow.id]: 'second',
+        _anchor: 'same'
+      }
+    ],
+    outro: [duplicateHeading]
+  }
+
+  const initialized = Type.withInitialValue(Anchored, input)
+  const initializedIntro = initialized.intro as TextDoc
+  const initializedHeading = initializedIntro[0]
+  const initializedHeadingText = Node.isElement(initializedHeading)
+    ? initializedHeading.content?.[0]
+    : undefined
+  test.is(
+    initializedHeadingText && Node.isText(initializedHeadingText)
+      ? initializedHeadingText.marks
+      : undefined,
+    undefined
+  )
+  test.equal(
+    Type.anchors(Anchored, initialized).map(anchor => anchor.id),
+    ['same', 'same-2', 'same-3', 'same-4', 'same-5', 'same-6']
+  )
+  test.equal(
+    Type.anchors(
+      Anchored,
+      Type.beforeSave(Anchored, input, {
+        action: 'update',
+        now: new Date(0)
+      })
+    ).map(anchor => anchor.id),
+    ['same', 'same-2', 'same-3', 'same-4', 'same-5', 'same-6']
   )
 })

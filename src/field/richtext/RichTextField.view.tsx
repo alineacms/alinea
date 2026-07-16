@@ -7,6 +7,7 @@ import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {
   useFieldError,
+  useEntryAnchors,
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
@@ -96,10 +97,21 @@ export function RichTextFieldView<Blocks extends Schema>({
   const ownerId = useId()
   const picker = usePickTextLink()
   const anchorPicker = usePickTextAnchor()
+  const entryAnchors = useEntryAnchors()
+  const entryAnchorIds = useMemo(
+    () => entryAnchors.map(anchor => anchor.id),
+    [entryAnchors]
+  )
+  const entryAnchorIdsRef = useRef(entryAnchorIds)
+  entryAnchorIdsRef.current = entryAnchorIds
+  const getEntryAnchors = useCallback(() => entryAnchorIdsRef.current, [])
   const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
   const extensions = useMemo<Array<AnyExtension>>(() => {
     const configured = Object.values(
-      configureRichTextExtensions(options.extensions, defaultExtensionConfig())
+      configureRichTextExtensions(
+        options.extensions,
+        defaultExtensionConfig(getEntryAnchors)
+      )
     )
     const blocks = richTextBlockExtensions(options.schema, hosts)
     return [
@@ -108,7 +120,7 @@ export function RichTextFieldView<Blocks extends Schema>({
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
-  }, [hosts, options.extensions, options.schema])
+  }, [getEntryAnchors, hosts, options.extensions, options.schema])
   const content = useMemo(
     () => editorContent(store.get(fieldNode.value)),
     [fieldNode, store]
@@ -300,6 +312,7 @@ export function RichTextFieldView<Blocks extends Schema>({
               ownerId={ownerId}
               pickLink={picker.pickLink}
               pickAnchor={anchorPicker.pickAnchor}
+              entryAnchors={entryAnchorIds}
               toolbar={options.toolbar}
               onFocusChange={(next, nextTarget) => {
                 if (next) setFocused(true)

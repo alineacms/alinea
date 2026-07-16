@@ -5,6 +5,7 @@ import type {Expr} from './Expr.js'
 import {
   Field,
   type EntryAnchorTarget,
+  type FieldAnchorContext,
   type FieldBeforeSaveContext
 } from './Field.js'
 import {type HasType, getType, hasType, internalType} from './Internal.js'
@@ -144,6 +145,22 @@ export namespace Type {
       if (next === merged) next = {...merged}
       next[key] = after
     }
+    return normalizeAnchors(type, next)
+  }
+
+  export function normalizeAnchors(
+    type: Type,
+    value: Record<string, unknown>,
+    context: FieldAnchorContext = {anchors: new Set()}
+  ): Record<string, unknown> {
+    let next = value
+    for (const [key, field] of entries(fields(type))) {
+      const before = next[key]
+      const after = Field.normalizeAnchors(field, before, context)
+      if (after === before) continue
+      if (next === value) next = {...value}
+      next[key] = after
+    }
     return next
   }
 
@@ -160,7 +177,7 @@ export namespace Type {
       if (next === value) next = {...value}
       next[key] = after
     }
-    return next
+    return normalizeAnchors(type, next)
   }
 
   export async function applyLinks(

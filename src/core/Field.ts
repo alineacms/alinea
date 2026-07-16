@@ -34,6 +34,10 @@ export interface EntryAnchorTarget {
   label?: string
 }
 
+export interface FieldAnchorContext {
+  anchors: Set<string>
+}
+
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
   Options,
   'label'
@@ -57,6 +61,10 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
     value: StoredValue,
     context: FieldReferenceContext
   ) => Array<EntryAnchorTarget>
+  normalizeAnchors?: (
+    value: StoredValue,
+    context: FieldAnchorContext
+  ) => StoredValue
   beforeSave?: (context: FieldBeforeSaveContext<StoredValue>) => StoredValue
 }
 
@@ -234,6 +242,14 @@ export namespace Field {
   ): Array<EntryAnchorTarget> {
     const data = getField(field)
     return data.anchors?.(value, context) ?? []
+  }
+
+  export function normalizeAnchors<StoredValue>(
+    field: HasField,
+    value: StoredValue,
+    context: FieldAnchorContext
+  ): StoredValue {
+    return getField(field).normalizeAnchors?.(value, context) ?? value
   }
 
   export function isField(value: any): value is Field {

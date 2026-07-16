@@ -250,6 +250,22 @@ test('RichText uses provided heading ids and ignores left alignment', () => {
   expect(heading.style.textAlign).toBe('')
 })
 
+test('RichText renders stored heading anchors as ids', () => {
+  const doc: TextDoc = [
+    {
+      _type: 'heading',
+      _anchor: 'stable-anchor',
+      level: 2,
+      content: [{_type: 'text', text: 'Renamed heading'}]
+    }
+  ]
+
+  const heading = render(<RichText doc={doc} />).getByRole('heading', {
+    name: 'Renamed heading'
+  })
+  expect(heading.id).toBe('stable-anchor')
+})
+
 test('RichText renders custom block nodes', () => {
   interface Blocks {
     Callout: {message: string}

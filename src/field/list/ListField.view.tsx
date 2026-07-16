@@ -28,7 +28,11 @@ import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
-import {createUniqueAnchor} from '#/core/util/Anchors.js'
+import {
+  createUniqueAnchor,
+  isGeneratedAnchor,
+  usedAnchors
+} from '#/core/util/Anchors.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
@@ -37,6 +41,7 @@ import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   useFieldError,
+  useEntryAnchors,
   useFieldNode,
   useFieldOptions,
   useNodes
@@ -332,39 +337,6 @@ function cloneRow(row: ListValue): ListValue {
   }
 }
 
-function isGeneratedAnchorForLabel(anchor: string | undefined, label: string) {
-  if (anchor === undefined) return true
-  const labelSlug = slugify(label)
-  if (!labelSlug) return false
-  if (anchor === labelSlug) return true
-  if (!anchor.startsWith(`${labelSlug}-`)) return false
-  return /^\d+$/.test(anchor.slice(labelSlug.length + 1))
-}
-
-function useSiblingListAnchors(
-  list: ReactiveNode<Array<ListValue>>,
-  itemId: string
-) {
-  const siblingAnchorsAtom = useMemo(
-    () =>
-      atom(get => {
-        const rowNodes = get(list.nodes) as Array<ReactiveNode<ListValue>>
-        const anchors = new Set<string>()
-        for (const rowNode of rowNodes) {
-          const rowId = get(rowNode.field('_id')) as string | undefined
-          if (rowId === itemId) continue
-          const rowAnchor = get(rowNode.field('_anchor')) as string | undefined
-          const rowLabel = get(rowNode.field('_label')) as string | undefined
-          const anchor = rowAnchor ?? (rowLabel ? slugify(rowLabel) : undefined)
-          if (anchor) anchors.add(anchor)
-        }
-        return anchors
-      }),
-    [itemId, list]
-  )
-  return useAtomValue(siblingAnchorsAtom)
-}
-
 function pasteBlockLabel(
   row: ListValue,
   items: Array<ListFieldTypeItem>
@@ -590,7 +562,7 @@ function ListFieldRow({
     | undefined
   const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
   const customLabel = customLabelValue ?? ''
-  const siblingAnchors = useSiblingListAnchors(list, itemId)
+  const entryAnchors = useEntryAnchors()
   const value = useAtomValue(row.value) as Record<string, unknown>
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))
@@ -655,15 +627,24 @@ function ListFieldRow({
   }
 
   function updateCustomLabel(nextValue: string) {
-    const shouldSyncAnchor = isGeneratedAnchorForLabel(anchorValue, customLabel)
+    const shouldSyncAnchor = isGeneratedAnchor(
+      anchorValue,
+      slugify(customLabel)
+    )
     setCustomLabel(nextValue || undefined)
     if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
   }
 
   function commitCustomLabel() {
-    if (isGeneratedAnchorForLabel(anchorValue, customLabel)) {
+    if (isGeneratedAnchor(anchorValue, slugify(customLabel))) {
       setAnchor(
-        createUniqueAnchor(slugify(customLabel), new Set(siblingAnchors))
+        createUniqueAnchor(
+          slugify(customLabel),
+          usedAnchors(
+            entryAnchors.map(anchor => anchor.id),
+            anchorValue
+          )
+        )
       )
     }
   }
@@ -673,7 +654,15 @@ function ListFieldRow({
   }
 
   function commitAnchor(value: string) {
-    setAnchor(createUniqueAnchor(value, new Set(siblingAnchors)))
+    setAnchor(
+      createUniqueAnchor(
+        value,
+        usedAnchors(
+          entryAnchors.map(anchor => anchor.id),
+          anchorValue
+        )
+      )
+    )
   }
 
   return (

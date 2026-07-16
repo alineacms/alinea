@@ -34,6 +34,7 @@ import {
 import type {Editor} from '@tiptap/react'
 import type {ComponentType, ReactElement, ReactNode} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
+import {currentAnchor} from './extensions/Anchor.js'
 
 export interface RichTextCommand {
   (): ReturnType<Editor['chain']>
@@ -337,7 +338,7 @@ export const anchors = {
     anchor: {
       icon: () => <IcRoundAnchor />,
       title: 'Anchor',
-      active: ({editor}) => editor.isActive('anchor'),
+      active: ({editor}) => currentAnchor(editor) !== undefined,
       onSelect: ({handleAnchor}) => handleAnchor()
     }
   }

@@ -1,9 +1,15 @@
 import {referenceFieldPath} from '../db/EntryReference.js'
-import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
+import {
+  Field,
+  type EntryAnchorTarget,
+  type FieldMeta,
+  type FieldOptions
+} from '../Field.js'
 import {createId} from '../Id.js'
 import {ListRow} from '../ListRow.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
+import {createUniqueAnchor} from '../util/Anchors.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
@@ -82,11 +88,11 @@ export class ListField<
         return result
       },
       anchors(value, context) {
-        const result = []
+        const result: Array<EntryAnchorTarget> = []
         const rows = Array.isArray(value) ? value : []
-        for (const row of rows) {
+        rows.forEach((row, index) => {
           const record = row as Record<string, unknown>
-          const segment = row[ListRow.id] || String(rows.indexOf(row))
+          const segment = row[ListRow.id] || String(index)
           const customLabel =
             typeof record._label === 'string' ? record._label : undefined
           const anchor =
@@ -104,15 +110,41 @@ export class ListField<
             })
           }
           const type = schema[row[ListRow.type]]
-          if (!type) continue
-          result.push(
-            ...Type.anchors(type, row as Record<string, unknown>, [
-              ...context.path,
-              segment
-            ])
-          )
-        }
+          if (type)
+            result.push(
+              ...Type.anchors(type, row as Record<string, unknown>, [
+                ...context.path,
+                segment
+              ])
+            )
+        })
         return result
+      },
+      normalizeAnchors(value, context) {
+        if (!Array.isArray(value)) return value
+        let next = value
+        value.forEach((row, index) => {
+          const record = row as Record<string, unknown>
+          const customLabel =
+            typeof record._label === 'string' ? record._label : undefined
+          const source =
+            typeof record._anchor === 'string'
+              ? record._anchor
+              : customLabel
+                ? slugify(customLabel)
+                : undefined
+          const anchor = createUniqueAnchor(source, context.anchors)
+          let normalized = record
+          if (source !== undefined && anchor !== record._anchor)
+            normalized = {...record, _anchor: anchor}
+          const type = schema[row[ListRow.type]]
+          if (type)
+            normalized = Type.normalizeAnchors(type, normalized, context)
+          if (normalized === record) return
+          if (next === value) next = [...value]
+          next[index] = normalized as StoredValue
+        })
+        return next
       },
       async queryValue(value, loader) {
         const rows = Array.isArray(value) ? value : []
