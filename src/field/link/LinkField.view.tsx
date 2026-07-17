@@ -550,11 +550,12 @@ function LinkPickerAction({
       ? fallbackLocation
       : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const isMediaPicker = type === 'file' || type === 'image'
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
     flatResults: options.enableNavigation ?? !pickingChildren,
-    showNavigationSidebar: false,
+    showNavigationSidebar: isMediaPicker,
     location,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -664,11 +665,12 @@ function LinkPickerDialog({
       ? fallbackLocation
       : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const isMediaPicker = type === 'file' || type === 'image'
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
     flatResults: options.enableNavigation ?? !pickingChildren,
-    showNavigationSidebar: false,
+    showNavigationSidebar: isMediaPicker,
     location,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
