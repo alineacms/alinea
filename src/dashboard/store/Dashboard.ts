@@ -1213,6 +1213,7 @@ export interface ExplorerOptions {
   autoSelectFirstItem?: boolean
   condition?: Filter<EntryFields>
   enableNavigation?: boolean
+  flatResults?: boolean
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
@@ -1561,7 +1562,9 @@ export class DashboardExplorer {
     const locale = allRoots ? undefined : get(this.selectedLocale)
     const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
     const flatList =
-      (Boolean(this.#options.condition) && !this.#options.pickChildren) ||
+      (Boolean(this.#options.condition) &&
+        !this.#options.pickChildren &&
+        this.#options.flatResults !== false) ||
       searchAll
     const policy = get(this.dashboard.policy)
     const children = await db.find({

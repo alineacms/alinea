@@ -44,7 +44,7 @@ export function filePicker<Fields>(
     max: multiple ? undefined : 1,
     label: 'File',
     title: multiple ? 'Select files' : 'Select a file',
-    condition: {or: [fileCondition, {_type: 'MediaLibrary'}]},
+    condition: fileCondition,
     showMedia: true,
     defaultView: 'thumb',
     selection: {
