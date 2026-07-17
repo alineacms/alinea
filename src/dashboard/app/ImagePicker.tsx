@@ -59,6 +59,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const [explorer] = useState(() =>
     dashboard.explore(location, {
       ...options,
+      flatResults: false,
       searchDepth: 'all'
     })
   )

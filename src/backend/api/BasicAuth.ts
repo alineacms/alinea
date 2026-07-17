@@ -1,5 +1,10 @@
 import {AuthResultType} from '#/cloud/AuthResult.js'
-import type {AuthApi, AuthedContext, RequestContext} from '#/core/Connection.js'
+import type {
+  AuthApi,
+  AuthOptions,
+  AuthedContext,
+  RequestContext
+} from '#/core/Connection.js'
 import type {User} from '#/core/User.js'
 
 import {atob} from '#/core/util/Encoding.js'
@@ -24,16 +29,22 @@ export class BasicAuth implements AuthApi {
     this.#verify = verify
   }
 
-  async authenticate(request: Request): Promise<Response> {
+  async authenticate(
+    request: Request,
+    options?: AuthOptions
+  ): Promise<Response> {
     try {
       const verified = await this.verify(request)
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
       switch (action) {
         case AuthAction.Status: {
+          const user = options?.enrichUser
+            ? await options.enrichUser(verified.user)
+            : verified.user
           return Response.json({
             type: AuthResultType.Authenticated,
-            user: verified.user
+            user
           })
         }
         default:

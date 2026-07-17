@@ -17,9 +17,7 @@ declare module '@tiptap/core' {
 const Small = Mark.create<SmallOptions>({
   name: 'small',
   addOptions() {
-    return {
-      HTMLAttributes: {}
-    }
+    return {HTMLAttributes: {}}
   },
   parseHTML() {
     return [{tag: 'small'}]
@@ -35,19 +33,16 @@ const Small = Mark.create<SmallOptions>({
     return {
       setSmall:
         () =>
-        ({commands}) => {
-          return commands.setMark(this.name)
-        },
+        ({commands}) =>
+          commands.setMark(this.name),
       toggleSmall:
         () =>
-        ({commands}) => {
-          return commands.toggleMark(this.name)
-        },
+        ({commands}) =>
+          commands.toggleMark(this.name),
       unsetSmall:
         () =>
-        ({commands}) => {
-          return commands.unsetMark(this.name)
-        }
+        ({commands}) =>
+          commands.unsetMark(this.name)
     }
   }
 })

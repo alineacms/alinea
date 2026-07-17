@@ -19,6 +19,8 @@ import {
   ListRowSettingsButton,
   MenuSeparator,
   Popover,
+  Select,
+  SelectItem,
   TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
@@ -63,6 +65,7 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
 import {Fragment, useMemo, useRef, useState} from 'react'
 import {
@@ -939,12 +942,90 @@ function EntryLinkSuffixField({
   if (value[Reference.type] !== 'entry') return null
   return (
     <TextField
-      description="For example: #id"
+      description="E.g. ?s=search"
       isDisabled={isDisabled}
       label="URL suffix"
       onChange={next => setSuffix(next || undefined)}
       value={suffix ?? ''}
     />
+  )
+}
+
+interface EntryAnchorFieldProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  const setAnchor = useSetAtom(node.field('_anchor'))
+  if (value[Reference.type] !== 'entry') return null
+  return (
+    <EntryAnchorFieldInner
+      entryId={value._entry}
+      anchor={anchor}
+      onChange={setAnchor}
+    />
+  )
+}
+
+interface EntryAnchorFieldInnerProps {
+  entryId: string
+  anchor?: string
+  onChange: (value: string | undefined) => void
+}
+
+function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  if (value[Reference.type] !== 'entry' || !anchor) return null
+  return <Badge size="small">#{anchor}</Badge>
+}
+
+function EntryAnchorFieldInner({
+  entryId,
+  anchor,
+  onChange
+}: EntryAnchorFieldInnerProps) {
+  const dashboard = useDashboard()
+  const entryAnchorsAtom = useMemo(() => {
+    const entry = dashboard.entries(entryId)
+    return unwrap(
+      atom(async get => {
+        const {data} = await get(entry.readyState)
+        if (!data) return []
+        return get(data.anchors)
+      }),
+      previous => previous ?? []
+    )
+  }, [dashboard, entryId])
+  const entryAnchors = useAtomValue(entryAnchorsAtom)
+  const anchors = useMemo(() => {
+    return entryAnchors.map(anchor => ({
+      id: anchor.id,
+      label: anchor.label ?? `#${anchor.id}`,
+      location: anchor.fieldLabel ?? anchor.fieldPath
+    }))
+  }, [entryAnchors])
+  return (
+    <Select
+      items={anchors}
+      label="Anchor"
+      onChange={next => onChange(next === null ? undefined : String(next))}
+      value={anchor ?? null}
+    >
+      {item => (
+        <SelectItem id={item.id} textValue={item.label}>
+          <span className={styles.LinkFieldView.anchorOption()}>
+            <span className={styles.LinkFieldView.anchorOption.label()}>
+              {item.label}
+            </span>
+            <span className={styles.LinkFieldView.anchorOption.location()}>
+              {item.location}
+            </span>
+          </span>
+        </SelectItem>
+      )}
+    </Select>
   )
 }
 
@@ -1358,6 +1439,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 node={node}
                 value={value}
               />
+              <EntryAnchorBadge node={node} value={value} />
             </ListRowBadges>
           </ListRowDrag>
           {!options.readOnly && (
@@ -1367,6 +1449,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 <Popover placement="bottom right">
                   <ListRowSettings>
                     <LinkLabelField node={node} value={value} />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
                   <MenuSeparator />
@@ -1557,6 +1640,7 @@ function MultipleLinkRow({
                   node={node}
                   value={value}
                 />
+                <EntryAnchorBadge node={node} value={value} />
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
@@ -1569,6 +1653,7 @@ function MultipleLinkRow({
                       node={node}
                       value={value}
                     />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField
                       isDisabled={readOnly}
                       node={node}

@@ -20,7 +20,8 @@
             }
           ]
         }
-      ]
+      ],
+      "_anchor": "anchor-testing"
     },
     {
       "_id": "3D4PkN2KurCf9mNusbYqSoCVcGa",
@@ -37,7 +38,9 @@
             }
           ]
         }
-      ]
+      ],
+      "_label": "mijn anchor",
+      "_anchor": "anchor-testing"
     }
   ],
   "metadata": {
@@ -47,6 +50,17 @@
       "image": null,
       "title": "",
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1784019630,
+    "createdBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "updatedAt": 1784119863,
+    "updatedBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
     }
   }
 }

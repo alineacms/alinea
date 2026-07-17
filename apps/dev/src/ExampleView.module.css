@@ -1,0 +1,173 @@
+.ExampleView {
+  --alinea-accent: #5f46d8;
+  --alinea-border: #e5e5ea;
+  --alinea-muted: #6b6b76;
+  color: #202026;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  margin: 0 auto;
+  max-width: 960px;
+  padding: clamp(40px, 8vw, 96px) 24px;
+}
+
+.ExampleViewHeader {
+  border-bottom: 1px solid var(--alinea-border);
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+}
+
+.ExampleViewTitle {
+  font-size: clamp(36px, 7vw, 64px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 10px 0 16px;
+}
+
+.ExampleViewEyebrow {
+  color: var(--alinea-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.ExampleViewSummary {
+  color: var(--alinea-muted);
+  font-size: 20px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+  max-width: 720px;
+}
+
+.ExampleViewDetails {
+  align-items: center;
+  color: var(--alinea-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.ExampleViewDetail {
+  background: #f5f4f8;
+  border-radius: 999px;
+  padding: 5px 10px;
+}
+
+.ContentView {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+}
+
+.ContentViewEmpty {
+  background: #f8f7fb;
+  border: 1px dashed #cbc7dd;
+  border-radius: 12px;
+  color: var(--alinea-muted);
+  margin: 0;
+  padding: 28px;
+}
+
+.FieldView {
+  border: 1px solid var(--alinea-border);
+  border-radius: 12px;
+  min-width: 0;
+  padding: 20px;
+}
+
+.FieldViewTitle {
+  color: var(--alinea-muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+}
+
+.LinkValue {
+  color: var(--alinea-accent);
+  overflow-wrap: anywhere;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.BooleanValue {
+  background: #ece9ff;
+  border-radius: 999px;
+  color: #4934b0;
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 9px;
+}
+
+.ListValue {
+  display: grid;
+  gap: 12px;
+}
+
+.ListValueItem {
+  background: #f8f7fb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.ObjectFields {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.ObjectFieldsRow {
+  display: grid;
+  gap: 4px;
+}
+
+.ObjectFieldsTerm {
+  color: var(--alinea-muted);
+  font-size: 12px;
+}
+
+.ObjectFieldsValue {
+  margin: 0;
+}
+
+.ImageValue {
+  margin: 0;
+}
+
+.ImageValueImage {
+  border-radius: 8px;
+  display: block;
+  height: auto;
+  max-height: 420px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.ImageValueCaption {
+  color: var(--alinea-muted);
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.RichTextValue {
+  line-height: 1.7;
+}
+
+@media (max-width: 600px) {
+  .ExampleView {
+    padding-inline: 16px;
+  }
+
+  .ExampleViewHeader {
+    margin-bottom: 24px;
+  }
+}

@@ -141,6 +141,12 @@
   white-space: nowrap;
 }
 
+.ExplorerTable-cell-status {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
 .ExplorerTable.is-noSelectionControls .ExplorerTable-cell-title {
   padding-left: 16px;
 }

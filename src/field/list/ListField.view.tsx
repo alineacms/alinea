@@ -28,6 +28,11 @@ import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
+import {
+  createUniqueAnchor,
+  isGeneratedAnchor,
+  usedAnchors
+} from '#/core/util/Anchors.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
@@ -36,6 +41,7 @@ import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   useFieldError,
+  useEntryAnchors,
   useFieldNode,
   useFieldOptions,
   useNodes
@@ -556,6 +562,7 @@ function ListFieldRow({
     | undefined
   const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
   const customLabel = customLabelValue ?? ''
+  const entryAnchors = useEntryAnchors()
   const value = useAtomValue(row.value) as Record<string, unknown>
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))
@@ -620,15 +627,42 @@ function ListFieldRow({
   }
 
   function updateCustomLabel(nextValue: string) {
+    const shouldSyncAnchor = isGeneratedAnchor(
+      anchorValue,
+      slugify(customLabel)
+    )
     setCustomLabel(nextValue || undefined)
-    const currentLabelSlug = slugify(customLabel)
-    const shouldSyncAnchor =
-      anchorValue === undefined || anchorValue === currentLabelSlug
     if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
   }
 
+  function commitCustomLabel() {
+    if (isGeneratedAnchor(anchorValue, slugify(customLabel))) {
+      setAnchor(
+        createUniqueAnchor(
+          slugify(customLabel),
+          usedAnchors(
+            entryAnchors.map(anchor => anchor.id),
+            anchorValue
+          )
+        )
+      )
+    }
+  }
+
   function updateAnchor(nextValue: string) {
-    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
+    setAnchor(slugify(nextValue) || undefined)
+  }
+
+  function commitAnchor(value: string) {
+    setAnchor(
+      createUniqueAnchor(
+        value,
+        usedAnchors(
+          entryAnchors.map(anchor => anchor.id),
+          anchorValue
+        )
+      )
+    )
   }
 
   return (
@@ -661,7 +695,9 @@ function ListFieldRow({
             typeIcon={typeIcon}
             insertItems={typeItems}
             pasted={pasted && schema[pasted._type] ? pasted : undefined}
+            onAnchorBlur={commitAnchor}
             onAnchorChange={updateAnchor}
+            onCustomLabelBlur={commitCustomLabel}
             onCustomLabelChange={updateCustomLabel}
             onCopy={() => onCopyRow(itemId)}
             onDelete={deleteRow}
@@ -732,7 +768,9 @@ interface ListFieldRowHeaderProps {
   pasted?: ListValue
   readOnly: boolean
   typeIcon?: ComponentType
+  onAnchorBlur: (value: string) => void
   onAnchorChange: (value: string) => void
+  onCustomLabelBlur: () => void
   onCustomLabelChange: (value: string) => void
   onCopy?: () => void
   onDelete?: () => void
@@ -759,7 +797,9 @@ function ListFieldRowHeader({
   pasted,
   readOnly,
   typeIcon,
+  onAnchorBlur,
   onAnchorChange,
+  onCustomLabelBlur,
   onCustomLabelChange,
   onCopy,
   onDelete,
@@ -831,6 +871,7 @@ function ListFieldRowHeader({
                     label="Label"
                     autoFocus
                     isDisabled={readOnly || isPreview}
+                    onBlur={onCustomLabelBlur}
                     onChange={onCustomLabelChange}
                     value={customLabel}
                   />
@@ -838,6 +879,7 @@ function ListFieldRowHeader({
                     fieldValue={anchor}
                     label="Anchor"
                     isDisabled={readOnly || isPreview}
+                    onBlur={onAnchorBlur}
                     onChange={onAnchorChange}
                     source={customLabel}
                   />

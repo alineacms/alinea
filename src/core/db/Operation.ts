@@ -217,7 +217,9 @@ export class UploadOperation extends Operation {
       const path = slugify(basename(fileName, extension))
       const directory = workspaceMediaDir(db.config, workspace)
       const uploadLocation = join(directory, path + extension)
-      const info = await db.prepareUpload(uploadLocation)
+      const info = await db.prepareUpload(uploadLocation, {
+        size: fileSize
+      })
       const previewData = isImage(fileName)
         ? await createPreview?.(
             file instanceof Blob ? file : new Blob([body as BlobPart])

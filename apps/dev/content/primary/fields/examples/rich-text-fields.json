@@ -75,10 +75,17 @@
       "content": [
         {
           "_type": "text",
-          "text": "Heading 2"
+          "text": "Heading 2",
+          "marks": [
+            {
+              "_type": "anchor",
+              "id": "heading-2"
+            }
+          ]
         }
       ],
-      "level": 2
+      "_anchor": "heading-2",
+      "level": 1
     },
     {
       "_type": "heading",
@@ -86,10 +93,42 @@
       "content": [
         {
           "_type": "text",
-          "text": "Heading 3"
+          "text": "Heading 3",
+          "marks": [
+            {
+              "_type": "anchor",
+              "id": "heading-3"
+            }
+          ]
         }
       ],
-      "level": 3
+      "_anchor": "heading-3",
+      "level": 1
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left"
+    },
+    {
+      "_type": "heading",
+      "content": [
+        {
+          "_type": "text",
+          "text": "heading met effectief tekst",
+          "marks": [
+            {
+              "_type": "anchor",
+              "id": "heading-met-effectief-tekst"
+            }
+          ]
+        }
+      ],
+      "level": 3,
+      "_anchor": "heading-met-effectief-tekst"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left"
     },
     {
       "_type": "paragraph",
@@ -110,6 +149,19 @@
           "text": "Cras eleifend non dui ac faucibus. Nullam vitae lacus nec turpis gravida cursus ac id leo. Maecenas accumsan velit sit amet nisi condimentum varius. Aliquam vitae justo et odio malesuada malesuada eget sit amet sapien."
         }
       ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left"
+    },
+    {
+      "_type": "horizontalRule"
+    },
+    {
+      "_type": "horizontalRule"
+    },
+    {
+      "_type": "paragraph"
     }
   ],
   "withInitial": [
@@ -135,7 +187,52 @@
   ],
   "nested": [
     {
-      "_type": "paragraph"
+      "_type": "Inner",
+      "content": [
+        {
+          "_type": "heading",
+          "content": [
+            {
+              "_type": "text",
+              "text": "new nested heading",
+              "marks": [
+                {
+                  "_type": "anchor",
+                  "id": "new-nested-heading"
+                }
+              ]
+            }
+          ],
+          "level": 3,
+          "_anchor": "new-nested-heading"
+        }
+      ],
+      "_id": "3GX3XCNInfdChNWf7LqRKj6CyNl",
+      "title": ""
+    },
+    {
+      "_type": "Inner",
+      "_id": "3GX3Ka2SK4nAzKzPI2hqZixIXZI",
+      "title": "",
+      "content": [
+        {
+          "_type": "heading",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Nested heading",
+              "marks": [
+                {
+                  "_type": "anchor",
+                  "id": "nested-heading"
+                }
+              ]
+            }
+          ],
+          "level": 2,
+          "_anchor": "nested-heading"
+        }
+      ]
     }
   ],
   "table": [
@@ -371,10 +468,11 @@
       "name": "Stijn Van Doorslaer",
       "email": "stijn@codeurs.be"
     },
-    "updatedAt": 1781077454,
+    "updatedAt": 1784104132,
     "updatedBy": {
-      "name": "Stijn Van Doorslaer",
-      "email": "stijn@codeurs.be"
-    }
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "aliases": []
   }
 }

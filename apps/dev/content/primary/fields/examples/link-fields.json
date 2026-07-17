@@ -25,16 +25,17 @@
       "_target": "_blank"
     },
     {
-      "_id": "2mBuUMTZMHyBXwcsKDKcL35k0k0",
-      "_index": "a2",
+      "_id": "3GX3o8NK2whi7rwjn5W93vjBP2M",
+      "_index": "",
       "_type": "entry",
-      "_entry": "2dgfSWKFaEqxaimsO32A1sR9iMw"
+      "_entry": "2dgg9AopqPd4gasFaAefPYSS4tf"
     },
     {
-      "_id": "2mBuUHMu7Pln9Gx4EWQTWQP6kOq",
-      "_index": "a3",
+      "_id": "3GX3oCtTtClHyauBt8kZj8YJodX",
       "_type": "entry",
-      "_entry": "2aUFgENnh2qSfIWH1sHV5We80G3"
+      "_index": "",
+      "_entry": "2dgg7Hkjt0lksSEgm2gDjLTXL9t",
+      "_anchor": "mijn-anchor"
     }
   ],
   "image": null,
@@ -49,6 +50,48 @@
   "file": null,
   "withFields": null,
   "multipleWithFields": [],
+  "entryWithMultipleConditions": null,
+  "entryWithArrayConditions": null,
+  "entryWithParentCondition": null,
+  "entryWithConditionLocation": null,
+  "entryEnableNavigation": null,
+  "entryPickChildren": null,
+  "entryPickChildrenWithCondition": null,
+  "entryAdvancedConditions": [],
+  "externalLinkHelp": null,
+  "externalLinkInline": null,
+  "externalLinkWidth": null,
+  "externalLinkWithFields": null,
+  "externalLinkMultiple": [],
+  "externalLinkMultipleWithFields": [],
+  "entryInline": null,
+  "entryWidth": null,
+  "entryDefaultViewThumb": null,
+  "entryWithStaticLocation": null,
+  "entryMultiple": [],
+  "entryMultipleWithCondition": [],
+  "entryMultipleWithMax": [],
+  "entryMultipleWithFields": [],
+  "fileInline": null,
+  "fileWithFields": null,
+  "fileMultiple": [],
+  "fileMultipleWithMax": [],
+  "fileMultipleWithFields": [],
+  "imageInline": null,
+  "imageWithFields": null,
+  "imageMultipleWithMax": [],
+  "imageMultipleWithFields": [],
+  "link": null,
+  "linkInline": null,
+  "linkWithCondition": null,
+  "linkWithLocation": null,
+  "linkWithEnableNavigation": null,
+  "linkWithFields": null,
+  "linkMultipleWithCondition": [],
+  "linkMultipleWithLocation": [],
+  "linkMultipleWithMax": [],
+  "linkMultiplePickChildren": [],
+  "linkMultipleEnableNavigation": [],
   "metadata": {
     "title": "",
     "description": "",
@@ -67,10 +110,11 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1779804591,
+    "updatedAt": 1784104272,
     "updatedBy": {
-      "name": "Ben Merckx",
-      "email": "ben@codeurs.be"
-    }
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "aliases": []
   }
 }

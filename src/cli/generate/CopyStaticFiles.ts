@@ -16,6 +16,7 @@ const packageJson = {
     './package.json': './package.json',
     './config.js': './config.js',
     './release.js': './release.js',
+    './settings.json': './settings.json',
     './source.js': {
       'edge-light': './empty-source.js',
       default: './source.js'

@@ -290,7 +290,9 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
-  const [isSidebarOpen, setSidebarOpen] = useState(true)
+  const [isSidebarOpen, setSidebarOpen] = useAtom(
+    entry.dashboard.entrySideBarOpen
+  )
   const defaultView = useAtomValue(entry.defaultView)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary

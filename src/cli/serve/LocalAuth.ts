@@ -10,7 +10,7 @@ export class LocalAuth implements AuthApi {
     this.#user = user
   }
 
-  async authenticate() {
+  async authenticate(): Promise<Response> {
     return new Response('ok')
   }
 

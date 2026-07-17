@@ -1,4 +1,5 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
@@ -9,12 +10,10 @@ import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useState, useTransition} from 'react'
 import {usePolicy} from '../hooks.js'
 import {
-  IcOutlineArchive,
   IcRoundArchive,
   IcRoundCheck,
   IcRoundDelete,
-  IcRoundEdit,
-  IcRoundFlashOn,
+  IcRoundPublishedWithChanges,
   IcRoundMoreHoriz,
   IcRoundSave,
   IcRoundSync,
@@ -25,6 +24,7 @@ import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {StatusBadge} from './StatusBadge.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -354,10 +354,6 @@ function entryUrlConflictInfo(
   }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object'
-}
-
 function EntryHeaderActions({
   entry,
   node,
@@ -502,27 +498,6 @@ function EntryHeaderActions({
   )
 }
 
-const variantDescription = {
-  published: 'Published',
-  unpublished: 'Unpublished',
-  archived: 'Archived',
-  draft: 'Draft'
-}
-
-const badgeStatus = {
-  published: 'published',
-  unpublished: 'unpublished',
-  archived: 'archived',
-  draft: 'draft'
-} as const
-
-const badgeIcon = {
-  published: IcRoundCheck,
-  unpublished: IcRoundFlashOn,
-  archived: IcOutlineArchive,
-  draft: IcRoundEdit
-}
-
 export function EntryHeader({
   controls,
   entry,
@@ -533,6 +508,7 @@ export function EntryHeader({
   const title = useAtomValue(entry.label)
   const activeStatus = useAtomValue(entry.activeStatus)
   const activeVersion = useAtomValue(entry.activeVersion)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
   const viewedEntry = useAtomValue(entry.currentEntry)
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
@@ -543,20 +519,18 @@ export function EntryHeader({
     viewedEntry?.main && viewedStatus === 'draft'
   )
   const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
-  const displayStatus = variantDescription[status]
+  const isRevision = selectedVersion.type === 'history'
   return (
     <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.content()}>
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
-          <Badge
-            className={styles.EntryHeader.status()}
-            icon={badgeIcon[status]}
-            status={badgeStatus[status]}
-          >
-            {displayStatus}
-          </Badge>
+          {isRevision ? (
+            <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
+          ) : (
+            <StatusBadge status={status} />
+          )}
           {controls}
           <EntryHeaderMoreActions
             entry={entry}

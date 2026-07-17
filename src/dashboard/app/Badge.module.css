@@ -49,6 +49,11 @@
     --alinea-badge-background: var(--alinea-status-draft-bg);
   }
 
+  &[data-status='untranslated'] {
+    --alinea-badge-color: var(--alinea-status-draft-fg);
+    --alinea-badge-background: var(--alinea-status-draft-bg);
+  }
+
   &[data-status='archived'] {
     --alinea-badge-color: var(--alinea-status-archived-fg);
     --alinea-badge-background: var(--alinea-status-archived-bg);

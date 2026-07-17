@@ -145,11 +145,11 @@
 }
 
 .SidebarTree-item.is-parentSelected[data-hovered]:not([data-selected]):not(
-    .SidebarTree-item.is-archived
-  ),
+  .SidebarTree-item.is-archived
+),
 .SidebarTree-item.is-parentSelected[data-hovered]:not([data-selected]):not(
-    .SidebarTree-item.is-unpublished
-  ) {
+  .SidebarTree-item.is-unpublished
+) {
   background: var(--alinea-selected);
   border-radius: 0;
 }

@@ -1,0 +1,13 @@
+.RichTextInsertMenu {
+  z-index: 1;
+}
+
+.RichTextInsertMenu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.RichTextInsertMenu-label {
+  min-width: 0;
+}

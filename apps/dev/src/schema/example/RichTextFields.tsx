@@ -1,5 +1,4 @@
 import { Config, Field } from 'alinea'
-import { extensions } from 'alinea/field/richtext/Extensions'
 import {
   alignment,
   formatting,
@@ -83,12 +82,10 @@ export const RichTextFields = Config.document('Rich text fields', {
     tableCustom: Field.richText('With custom toolbar', {
       enableImages: true,
       enableTables: true,
-      extensions: {
+      extensions: extensions => ({
         ...extensions,
-        Table: extensions.Table.configure({
-          resizable: true
-        })
-      },
+        Table: extensions.Table.configure({resizable: true})
+      }),
       toolbar: {
         headings,
         tables: {

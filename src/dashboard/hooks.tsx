@@ -1,9 +1,9 @@
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
-import type {Field} from '#/core/Field.js'
+import type {EntryAnchorTarget, Field} from '#/core/Field.js'
+import type {Type} from '#/core/Type.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {Type} from '#/index.js'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
@@ -90,6 +90,15 @@ export function useEditor() {
 }
 
 /**
+ * Returns all anchors in the entry currently being edited.
+ */
+export function useEntryAnchors(): Array<EntryAnchorTarget> {
+  let editor = useEditor()
+  while (editor.parent) editor = editor.parent
+  return useAtomValue(editor.anchors)
+}
+
+/**
  * Returns the editor metadata for a field in the active editor scope.
  */
 function useFieldInfo(field: Field) {
@@ -131,7 +140,6 @@ export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
   const key = useFieldKey(field)
   const editor = useEditor()
   const nodes = useAtomValue(editor.node.nodes) as Record<string, ReactiveNode>
-  if (!nodes[key]) console.trace(editor.node)
   assert(nodes[key], `Node not found for field key: ${key}`)
   return nodes[key] as ReactiveNode<Value>
 }
@@ -142,8 +150,8 @@ export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): StoredValue {
-  const info = useFieldInfo(field)
-  return useAtomValue(info.value) as StoredValue
+  const node = useFieldNode<StoredValue>(field)
+  return useAtomValue(node.value)
 }
 
 /**
@@ -153,11 +161,15 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): [StoredValue, Dispatch<SetStateAction<StoredValue>>] {
   const info = useFieldInfo(field)
-  // Todo: "mutator" will not really be relevant anymore
-  return useAtom(info.value) as [
-    StoredValue,
-    Dispatch<SetStateAction<StoredValue>>
-  ]
+  const node = useFieldNode<StoredValue>(field)
+  const value = useAtomValue(node.value)
+  const setNodeValue = useSetAtom(node.value)
+  const setFieldValue = useSetAtom(info.value)
+  function setValue(update: SetStateAction<StoredValue>) {
+    setFieldValue(update)
+    setNodeValue(update)
+  }
+  return [value, setValue]
 }
 
 /**
@@ -167,7 +179,13 @@ export function useFieldSetter<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): Dispatch<SetStateAction<StoredValue>> {
   const info = useFieldInfo(field)
-  return useSetAtom(info.value) as Dispatch<SetStateAction<StoredValue>>
+  const node = useFieldNode<StoredValue>(field)
+  const setNodeValue = useSetAtom(node.value)
+  const setFieldValue = useSetAtom(info.value)
+  return function setValue(update: SetStateAction<StoredValue>) {
+    setFieldValue(update)
+    setNodeValue(update)
+  }
 }
 
 /**

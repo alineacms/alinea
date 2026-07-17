@@ -1,6 +1,12 @@
 import {TextField as RacTextField} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
+import {
+  useField,
+  useFieldError,
+  useFieldNode,
+  useFieldOptions
+} from '#/dashboard/hooks.js'
 import {TextField} from '#/field/text.js'
+import {useSetAtom} from 'jotai'
 import {memo} from 'react'
 
 export interface TextInputProps {
@@ -11,6 +17,8 @@ export const TextFieldView = memo(function TextFieldView({
   field
 }: TextInputProps) {
   const [value = '', setValue] = useField(field)
+  const fieldNode = useFieldNode(field)
+  const setFieldNode = useSetAtom(fieldNode.value)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
   return (
@@ -24,7 +32,10 @@ export const TextFieldView = memo(function TextFieldView({
       shared={options.shared}
       multiline={options.multiline}
       value={value}
-      onChange={setValue}
+      onChange={value => {
+        setValue(value)
+        setFieldNode(value)
+      }}
       isInvalid={Boolean(error)}
       placeholder={
         options.placeholder ?? (options.inline ? options.label : undefined)

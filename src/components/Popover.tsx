@@ -9,6 +9,7 @@ const styles = styler(css)
 
 export interface PopoverProps extends Omit<AriaPopoverProps, 'children'> {
   children: React.ReactNode
+  'data-richtext-toolbar-owner'?: string
 }
 
 export function Popover({children, ...props}: PopoverProps) {

@@ -2,7 +2,12 @@ import {Parser} from 'htmlparser2'
 import type {EntryReferenceTarget} from '../db/EntryReference.js'
 import {referenceFieldPath} from '../db/EntryReference.js'
 import {Entry} from '../Entry.js'
-import {Field, type FieldMeta, type FieldOptions} from '../Field.js'
+import {
+  Field,
+  type EntryAnchorTarget,
+  type FieldMeta,
+  type FieldOptions
+} from '../Field.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
@@ -15,8 +20,10 @@ import {
   type TextNode
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
+import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
 import {mediaLocationUrl} from '../util/EntryFilenames.js'
 import {entries} from '../util/Objects.js'
+import {slugify} from '../util/Slugs.js'
 
 export type RichTextMutator<R> = {
   insert: (id: string, block: string) => void
@@ -57,6 +64,20 @@ export class RichTextField<
       defaultValue() {
         return meta.options.initialValue ?? ([] as TextDoc<Blocks>)
       },
+      withInitialValue(value) {
+        if (!schema || !Array.isArray(value)) return value
+        let next = value
+        value.forEach((node, index) => {
+          if (!Node.isBlock(node)) return
+          const type = schema[node[Node.type]]
+          if (!type) return
+          const initialized = Type.withInitialValue(type, node)
+          if (initialized === node) return
+          if (next === value) next = [...value]
+          next[index] = initialized as TextDoc<Blocks>[number]
+        })
+        return next
+      },
       async applyLinks(value, loader) {
         const doc = Array.isArray(value) ? value : []
         const tasks: Array<Promise<unknown>> = [applyLinks(doc, loader)]
@@ -78,6 +99,18 @@ export class RichTextField<
           ...richTextReferences(schema, doc, context.path, context.label)
         )
         return result
+      },
+      anchors(value, context) {
+        const doc = Array.isArray(value) ? value : []
+        const result = []
+        result.push(
+          ...richTextAnchors(schema, doc, context.path, context.label)
+        )
+        return result
+      },
+      normalizeAnchors(value, context) {
+        if (!Array.isArray(value)) return value
+        return normalizeRichTextAnchors(schema, value, context.anchors)
       },
       async queryValue(value, loader) {
         const doc = Array.isArray(value) ? value : []
@@ -101,6 +134,153 @@ export class RichTextField<
       }
     })
   }
+}
+
+function normalizeRichTextAnchors<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  anchors: Set<string>
+): TextDoc<Blocks> {
+  function normalizeNode(
+    node: Node,
+    insideHeading: boolean,
+    activeManualAnchors: Map<string, string>
+  ): Node {
+    if (Node.isBlock(node)) {
+      activeManualAnchors.clear()
+      const type = schema?.[node[Node.type]]
+      return type
+        ? (Type.normalizeAnchors(type, node, {anchors}) as Node)
+        : node
+    }
+    if (Node.isText(node)) {
+      const marks = node.marks
+      if (!marks) {
+        activeManualAnchors.clear()
+        return node
+      }
+      if (insideHeading) {
+        activeManualAnchors.clear()
+        const nextMarks = marks.filter(mark => mark[Mark.type] !== 'anchor')
+        return nextMarks.length === marks.length
+          ? node
+          : {...node, marks: nextMarks.length ? nextMarks : undefined}
+      }
+      let nextMarks = marks
+      const nextActiveManualAnchors = new Map<string, string>()
+      marks.forEach((mark, index) => {
+        if (mark[Mark.type] !== 'anchor' || typeof mark.id !== 'string') return
+        let unique = activeManualAnchors.get(mark.id)
+        if (!unique) {
+          unique = createUniqueAnchor(mark.id, anchors)
+        }
+        if (unique) nextActiveManualAnchors.set(mark.id, unique)
+        if (!unique || unique === mark.id) return
+        if (nextMarks === marks) nextMarks = [...marks]
+        nextMarks[index] = {...mark, id: unique}
+      })
+      activeManualAnchors.clear()
+      for (const [anchor, unique] of nextActiveManualAnchors)
+        activeManualAnchors.set(anchor, unique)
+      return nextMarks === marks ? node : {...node, marks: nextMarks}
+    }
+
+    activeManualAnchors.clear()
+    const source =
+      typeof node._anchor === 'string'
+        ? node._anchor
+        : node[Node.type] === 'heading'
+          ? slugify(textContent(node))
+          : undefined
+    const unique = createUniqueAnchor(source, anchors)
+    const nextInsideHeading = insideHeading || node[Node.type] === 'heading'
+    const content = node.content
+    let nextContent = content
+    if (content) {
+      let updated = content
+      const activeManualAnchors = new Map<string, string>()
+      content.forEach((child, index) => {
+        const normalized = normalizeNode(
+          child,
+          nextInsideHeading,
+          activeManualAnchors
+        )
+        if (normalized === child) return
+        if (updated === content) updated = [...content]
+        updated[index] = normalized
+      })
+      nextContent = updated
+    }
+    if (unique === node._anchor && nextContent === content) return node
+    return unique === node._anchor
+      ? {...node, content: nextContent}
+      : {...node, _anchor: unique, content: nextContent}
+  }
+
+  let next = doc
+  const activeManualAnchors = new Map<string, string>()
+  doc.forEach((node, index) => {
+    const normalized = normalizeNode(node, false, activeManualAnchors)
+    if (normalized === node) return
+    if (next === doc) next = [...doc]
+    next[index] = normalized
+  })
+  return next
+}
+
+function textContent(node: Node): string {
+  if (Node.isText(node)) return node.text ?? ''
+  if (!Node.isElement(node) || !node.content) return ''
+  return node.content.map(textContent).join('')
+}
+
+function richTextAnchors<Blocks>(
+  schema: Schema | undefined,
+  doc: TextDoc<Blocks>,
+  path: Array<string>,
+  label?: string
+): Array<EntryAnchorTarget> {
+  const result: Array<EntryAnchorTarget> = []
+  const anchors = new Set<string>()
+  iterNodes(doc, (node, nodePath) => {
+    if (Node.isElement(node)) {
+      const anchor = node._anchor
+      if (typeof anchor === 'string' && !anchors.has(anchor)) {
+        anchors.add(anchor)
+        result.push({
+          id: anchor,
+          label: `#${anchor}`,
+          fieldPath: referenceFieldPath([...path, ...nodePath, anchor]),
+          fieldLabel: label
+        })
+      }
+    }
+    if (!Node.isText(node)) return
+    for (const mark of node.marks ?? []) {
+      if (mark[Mark.type] !== 'anchor') continue
+      const anchor = mark.id
+      if (typeof anchor !== 'string' || anchors.has(anchor)) continue
+      anchors.add(anchor)
+      result.push({
+        id: anchor,
+        label: `#${anchor}`,
+        fieldPath: referenceFieldPath([...path, ...nodePath, anchor]),
+        fieldLabel: label
+      })
+    }
+  })
+  doc.forEach((row, index) => {
+    if (!schema || !Node.isBlock(row)) return
+    const type = schema[row[Node.type]]
+    if (!type) return
+    result.push(
+      ...Type.anchors(type, row as Record<string, unknown>, [
+        ...path,
+        row._id ?? String(index)
+      ])
+    )
+  })
+  return result
 }
 
 function richTextReferences<Blocks>(
@@ -196,7 +376,11 @@ async function applyLinks(
             data.location
           )
         : data.url
-    mark.href = applyUrlSuffix(href, mark[LinkMark.suffix])
+    mark.href = applyUrlSuffix(
+      href,
+      mark[LinkMark.suffix],
+      mark[LinkMark.anchor]
+    )
   }
   for (const [node, entryId] of images) {
     const data = info.get(entryId)
@@ -207,12 +391,6 @@ async function applyLinks(
       data.location
     )
   }
-}
-
-function applyUrlSuffix(url: string, suffix: string | undefined): string {
-  const value = suffix?.trim()
-  if (!value) return url
-  return `${url}${value}`
 }
 
 function richTextSearchableText<Blocks>(
@@ -260,6 +438,20 @@ function iterImageNodes(
   })
 }
 
+function iterNodes(
+  doc: TextDoc<unknown>,
+  fn: (node: Node, path: Array<string>) => void,
+  path: Array<string> = []
+) {
+  doc.forEach((row, index) => {
+    const rowPath = [...path, String(index)]
+    fn(row, rowPath)
+    if (Node.isElement(row) && row.content) {
+      iterNodes(row.content, fn, [...rowPath, 'content'])
+    }
+  })
+}
+
 export class RichTextEditor<Blocks> {
   constructor(private doc: TextDoc<Blocks> = []) {}
 
@@ -300,6 +492,18 @@ function mapNode(
       return {_type: 'blockquote', content: []}
     case 'hr':
       return {_type: 'horizontalRule'}
+    case 'img':
+      return {
+        _type: 'image',
+        src: attributes.src,
+        alt: attributes.alt,
+        title: attributes.title,
+        width: attributes.width,
+        height: attributes.height,
+        _id: attributes['data-id'],
+        _entry: attributes['data-entry'],
+        _link: attributes['data-link'] as 'image' | undefined
+      }
     case 'br':
       return {_type: 'hardBreak'}
     case 'table':

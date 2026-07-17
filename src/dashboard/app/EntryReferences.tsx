@@ -1,5 +1,6 @@
 import {Button, Icon, ProgressCircle} from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
@@ -36,18 +37,20 @@ export function EntryReferences({entry}: EntryReferencesProps) {
 
 function EntryReferencesContent({entry}: EntryReferencesProps) {
   const state = useAtomValue(entry.incomingReferencesState)
+  const type = useAtomValue(entry.type)
   const root = useAtomValue(entry.root)
   const selectedLocale = useAtomValue(root.selectedLocale)
   const setRoute = useSetAtom(entry.dashboard.route)
   if (state.pending && state.data === undefined)
     return <EntryReferencesInitialLoad entry={entry} />
   const references = state.data?.references ?? []
-  const currentReferences = references.filter(item =>
-    matchesLocale(item, selectedLocale)
-  )
-  const otherReferences = references.filter(
-    item => !matchesLocale(item, selectedLocale)
-  )
+  const showAllLocales = type.type === MediaFile || type.type === MediaLibrary
+  const currentReferences = showAllLocales
+    ? references
+    : references.filter(item => matchesLocale(item, selectedLocale))
+  const otherReferences = showAllLocales
+    ? []
+    : references.filter(item => !matchesLocale(item, selectedLocale))
   const groups = groupReferences(currentReferences)
   const otherGroups = groupReferences(otherReferences)
   const otherSummary = formatOtherLocales(otherGroups)
