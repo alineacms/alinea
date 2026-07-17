@@ -315,6 +315,8 @@ export class GithubApi
 
   async #fetchUploadedContent(url: string): Promise<string> {
     const response = await fetch(url)
+    if (!response.ok)
+      throw new HttpError(response.status, await response.text())
     return base64.stringify(new Uint8Array(await response.arrayBuffer()))
   }
 }

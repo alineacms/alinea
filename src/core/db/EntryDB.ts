@@ -1,5 +1,9 @@
 import type {Config} from '../Config.js'
-import type {LocalConnection, UploadResponse} from '../Connection.js'
+import type {
+  LocalConnection,
+  UploadMetadata,
+  UploadResponse
+} from '../Connection.js'
 import type {Source} from '../source/Source.js'
 import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryTransaction} from './EntryTransaction.js'
@@ -46,9 +50,12 @@ export class EntryDB extends LocalDB {
     throw new Error('This must be implemented on the server')
   }
 
-  async prepareUpload(file: string): Promise<UploadResponse> {
+  async prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
     const remote = await this.connect()
-    return remote.prepareUpload(file)
+    return remote.prepareUpload(file, metadata)
   }
 
   async syncWithRemote() {

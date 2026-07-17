@@ -14,13 +14,12 @@ interface TestConnectionOptions {
   users?: Array<User>
 }
 
-interface ConnectionOverrides
-  extends Partial<
-    Pick<
-      LocalConnection,
-      'getDraft' | 'previewToken' | 'revisionData' | 'revisions' | 'storeDraft'
-    >
-  > {}
+interface ConnectionOverrides extends Partial<
+  Pick<
+    LocalConnection,
+    'getDraft' | 'previewToken' | 'revisionData' | 'revisions' | 'storeDraft'
+  >
+> {}
 
 export function createTestConnection(
   db: LocalDB & ConnectionOverrides,
@@ -78,7 +77,9 @@ export function createTestConnection(
       return db.getBlobs(shas)
     },
     revisions(file) {
-      return db.revisions?.(file) ?? Promise.resolve([] satisfies Array<Revision>)
+      return (
+        db.revisions?.(file) ?? Promise.resolve([] satisfies Array<Revision>)
+      )
     },
     revisionData(file, revisionId) {
       return db.revisionData?.(file, revisionId) ?? Promise.resolve(undefined)
@@ -89,8 +90,8 @@ export function createTestConnection(
     storeDraft(draft) {
       return db.storeDraft?.(draft) ?? Promise.resolve()
     },
-    prepareUpload(file) {
-      return db.prepareUpload(file)
+    prepareUpload(file, metadata) {
+      return db.prepareUpload(file, metadata)
     }
   }
 }

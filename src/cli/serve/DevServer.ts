@@ -1,6 +1,6 @@
 import path from 'node:path'
 import type {Request, Response} from '@alinea/iso'
-import {createRemote} from '#/backend/api/CreateBackend.js'
+import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
@@ -145,7 +145,7 @@ export async function createDevServer(
           if (process.env.ALINEA_CLOUD_URL)
             return new CloudRemote(context, cms.config)
           const auth = new LocalAuth(context, user)
-          return createRemote(auth, db, drafts, history)
+          return composeBackend(auth, db, drafts, history)
         }
       }
 
