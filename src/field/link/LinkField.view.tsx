@@ -553,6 +553,7 @@ function LinkPickerAction({
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
+    showNavigationSidebar: false,
     location,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -665,6 +666,7 @@ function LinkPickerDialog({
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
+    showNavigationSidebar: false,
     location,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',

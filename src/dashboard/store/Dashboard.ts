@@ -1214,6 +1214,7 @@ export interface ExplorerOptions {
   condition?: Filter<EntryFields>
   enableNavigation?: boolean
   flatResults?: boolean
+  showNavigationSidebar?: boolean
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
