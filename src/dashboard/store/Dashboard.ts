@@ -1242,6 +1242,7 @@ export class DashboardExplorer {
   #options: ExplorerOptions
   #selectedLocale: DashboardLocaleSelection
   selection
+  expandedKeys = atom(new Set<Key>())
   constructor(
     public dashboard: Dashboard,
     location: WritableAtom<
@@ -1265,7 +1266,7 @@ export class DashboardExplorer {
     )
   }
 
-  isSelectable(entry: DashboardEntry) {
+  isSelectable = dispense((entry: DashboardEntry) => {
     return atom(get => {
       const condition = this.#options.condition
       if (!condition) return true
@@ -1276,10 +1277,68 @@ export class DashboardExplorer {
       const currentEntry = get(data.currentEntry)
       if (!currentEntry || currentEntry instanceof Promise) return false
 
-      const checker = filterChecker(condition)
+      const checker = filterChecker(condition, (entry: EntryRecord, name) => {
+        if (name.startsWith('_'))
+          return entry[name.slice(1) as keyof EntryRecord]
+        return entry.data[name]
+      })
       return checker(currentEntry)
     })
-  }
+  })
+
+  isExpanded = dispense((entry: DashboardEntry) => {
+    return atom(get => get(this.expandedKeys).has(entry.id))
+  })
+
+  children = dispense((entry: DashboardEntry) => {
+    return atom(async get => {
+      const {data} = get(entry.data)
+      if (!data) return []
+      if (!get(data.hasChildren)) return []
+      const db = get(this.dashboard.db)
+      const policy = get(this.dashboard.policy)
+      const sort = get(this.sort)
+      const filter = get(this.filter)
+      const root = get(data.root)
+      const locale = get(root.selectedLocale)
+      const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
+        title: Entry.title,
+        path: Entry.path,
+        size: MediaFile.size,
+        id: Entry.id,
+        index: Entry.index
+      }
+      const fieldToSort = fieldMap[sort.sortBy]
+      const orderBy = {
+        [sort.direction]: fieldToSort,
+        caseSensitive: fieldToSort !== Entry.id
+      }
+      const children = await db.find({
+        locale,
+        workspace: get(data.workspaceKey),
+        root: get(data.rootKey),
+        parentId: entry.id,
+        filter: undefined,
+        select: {
+          id: Entry.id,
+          type: Entry.type,
+          workspace: Entry.workspace,
+          root: Entry.root,
+          parents: Entry.parents,
+          locale: Entry.locale
+        },
+        orderBy,
+        status: 'preferDraft',
+        type: filter,
+        groupBy: Entry.id
+      })
+      const entries = children
+        .filter(child => policy.canRead(child))
+        .map(child => this.dashboard.entries(child.id))
+      await Promise.all(entries.map(entry => get(entry.preload)))
+      return entries
+    })
+  })
 
   get selectionMode() {
     return this.#options.selectionMode ?? 'single'

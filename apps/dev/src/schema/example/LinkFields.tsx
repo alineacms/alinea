@@ -2,6 +2,11 @@ import {Config, Field} from 'alinea'
 
 export const LinkFields = Config.document('Link fields', {
   fields: {
+    entryNavigationConditionTest: Field.entry('Navigation condition test', {
+      help: 'Shows hierarchy, but only BasicFields rows should be selectable.',
+      enableNavigation: true,
+      condition: {_type: 'BasicFields'}
+    }),
     externalLink: Field.url('External link'),
     entry: Field.entry('Internal link'),
     entryWithCondition: Field.entry('With condition', {
