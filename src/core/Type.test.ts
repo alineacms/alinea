@@ -1,4 +1,5 @@
 import {suite} from '@alinea/suite'
+import {Field} from '#/core/Field.js'
 import {Type, type} from '#/core/Type.js'
 import {list, richText, text} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
@@ -196,4 +197,66 @@ test('Normalizes anchors across every field in an entry', () => {
     ).map(anchor => anchor.id),
     ['same', 'same-2', 'same-3', 'same-4', 'same-5', 'same-6']
   )
+})
+
+test('List block settings are initialized and processed as a nested record', async () => {
+  const Block = type('Block', {
+    fields: {
+      body: text('Body')
+    },
+    settings: {
+      eyebrow: text('Eyebrow', {initialValue: 'Default', searchable: true}),
+      notes: richText('Notes')
+    }
+  })
+  const Page = type('Page', {
+    fields: {
+      blocks: list('Blocks', {schema: {Block}})
+    }
+  })
+  const input = {
+    blocks: [
+      {
+        [ListRow.id]: 'block',
+        [ListRow.type]: 'Block',
+        body: 'Body',
+        settings: {
+          notes: [
+            {
+              [Node.type]: 'heading',
+              _anchor: 'settings-heading',
+              [ElementNode.content]: [
+                {[Node.type]: 'text', [TextNode.text]: 'Settings heading'}
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+
+  const initialized = Type.withInitialValue(Page, input)
+  const [block] = initialized.blocks as Array<Record<string, unknown>>
+  test.equal(block.settings, {
+    eyebrow: 'Default',
+    notes: input.blocks[0].settings.notes
+  })
+  test.is(Type.searchableText(Page, initialized), 'Default')
+  const queried = await Field.queryValue(Page.blocks, initialized.blocks, {
+    resolveLinks: async () => []
+  } as never)
+  test.is(queried[0].settings.eyebrow, 'Default')
+  test.equal(
+    Type.anchors(Page, initialized).map(anchor => ({
+      id: anchor.id,
+      fieldPath: anchor.fieldPath
+    })),
+    [
+      {
+        id: 'settings-heading',
+        fieldPath: 'blocks.block.settings.notes.0.settings-heading'
+      }
+    ]
+  )
+  test.is(Type.settings(Block) !== undefined, true)
 })

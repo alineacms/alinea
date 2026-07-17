@@ -28,10 +28,13 @@ function documentFields() {
   }
 }
 
-export function document<Fields extends FieldsDefinition>(
+export function document<
+  Fields extends FieldsDefinition,
+  Settings extends FieldsDefinition | undefined = undefined
+>(
   label: string,
-  {fields, ...config}: TypeConfig<Fields>
-): Type<Document & Fields> {
+  {fields, ...config}: TypeConfig<Fields, Settings>
+): Type<Document & Fields, Settings> {
   const {title, path, metadata} = documentFields()
   const fieldsWithMeta: Document & Fields = <any>tabs(
     tab('Document', {

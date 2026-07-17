@@ -11,7 +11,7 @@ import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {createUniqueAnchor} from '../util/Anchors.js'
 import {generateKeyBetween} from '../util/FractionalIndexing.js'
-import {entries} from '../util/Objects.js'
+import {entries, isRecord} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
 
 export interface ListMutator<Row> {
@@ -43,6 +43,7 @@ export class ListField<
   ) {
     const customQueryValue = meta.queryValue
     const customReferences = meta.references
+    const customBeforeSave = meta.beforeSave
     super({
       referencedViews: Schema.referencedViews(schema),
       ...meta,
@@ -56,6 +57,10 @@ export class ListField<
             const type = schema[row[ListRow.type]]
             if (!type) return
             await Type.applyLinks(type, row as Record<string, unknown>, loader)
+            const settings = Type.settings(type)
+            const settingsValue = row[ListRow.settings]
+            if (settings && isRecord(settingsValue))
+              await Type.applyLinks(settings, settingsValue, loader)
           })
         )
       },
@@ -67,6 +72,12 @@ export class ListField<
           if (type) {
             const text = Type.searchableText(type, row)
             if (text) res += ` ${text}`
+            const settings = Type.settings(type)
+            const settingsValue = row[ListRow.settings]
+            if (settings && isRecord(settingsValue)) {
+              const settingsText = Type.searchableText(settings, settingsValue)
+              if (settingsText) res += ` ${settingsText}`
+            }
           }
         }
         return res
@@ -84,6 +95,16 @@ export class ListField<
               segment
             ])
           )
+          const settings = Type.settings(type)
+          const settingsValue = row[ListRow.settings]
+          if (settings && isRecord(settingsValue))
+            result.push(
+              ...Type.references(settings, settingsValue, [
+                ...context.path,
+                segment,
+                ListRow.settings
+              ])
+            )
         }
         return result
       },
@@ -117,8 +138,47 @@ export class ListField<
                 segment
               ])
             )
+          const settings = type && Type.settings(type)
+          const settingsValue = row[ListRow.settings]
+          if (settings && isRecord(settingsValue))
+            result.push(
+              ...Type.anchors(settings, settingsValue, [
+                ...context.path,
+                segment,
+                ListRow.settings
+              ])
+            )
         })
         return result
+      },
+      withInitialValue(value) {
+        if (!Array.isArray(value)) return value
+        let next = value
+        value.forEach((row, index) => {
+          const type = schema[row[ListRow.type]]
+          if (!type) return
+          const record = row as Record<string, unknown>
+          let initialized = Type.withInitialValue(type, record)
+          const settings = Type.settings(type)
+          if (settings) {
+            const currentSettings = isRecord(initialized[ListRow.settings])
+              ? initialized[ListRow.settings]
+              : {}
+            const initializedSettings = Type.withInitialValue(
+              settings,
+              currentSettings
+            )
+            if (initializedSettings !== initialized[ListRow.settings])
+              initialized = {
+                ...initialized,
+                [ListRow.settings]: initializedSettings
+              }
+          }
+          if (initialized === record) return
+          if (next === value) next = [...value]
+          next[index] = initialized as StoredValue
+        })
+        return next
       },
       normalizeAnchors(value, context) {
         if (!Array.isArray(value)) return value
@@ -140,6 +200,20 @@ export class ListField<
           const type = schema[row[ListRow.type]]
           if (type)
             normalized = Type.normalizeAnchors(type, normalized, context)
+          const settings = type && Type.settings(type)
+          const settingsValue = normalized[ListRow.settings]
+          if (settings && isRecord(settingsValue)) {
+            const normalizedSettings = Type.normalizeAnchors(
+              settings,
+              settingsValue,
+              context
+            )
+            if (normalizedSettings !== settingsValue)
+              normalized = {
+                ...normalized,
+                [ListRow.settings]: normalizedSettings
+              }
+          }
           if (normalized === record) return
           if (next === value) next = [...value]
           next[index] = normalized as StoredValue
@@ -158,10 +232,49 @@ export class ListField<
                 record[key] = await Field.queryValue(field, record[key], loader)
               })
             )
+            const settings = Type.settings(type)
+            const settingsValue = record[ListRow.settings]
+            if (settings && isRecord(settingsValue))
+              await Promise.all(
+                entries(Type.fields(settings)).map(async ([key, field]) => {
+                  settingsValue[key] = await Field.queryValue(
+                    field,
+                    settingsValue[key],
+                    loader
+                  )
+                })
+              )
           })
         )
         if (customQueryValue) return customQueryValue(rows, loader)
         return rows as unknown as Array<QueryValue>
+      },
+      beforeSave({value, ...context}) {
+        if (!Array.isArray(value)) return value
+        let next = value
+        value.forEach((row, index) => {
+          const type = schema[row[ListRow.type]]
+          if (!type) return
+          const record = row as Record<string, unknown>
+          let saved = Type.beforeSave(type, record, context)
+          const settings = Type.settings(type)
+          const settingsValue = saved[ListRow.settings]
+          if (settings && isRecord(settingsValue)) {
+            const savedSettings = Type.beforeSave(
+              settings,
+              settingsValue,
+              context
+            )
+            if (savedSettings !== settingsValue)
+              saved = {...saved, [ListRow.settings]: savedSettings}
+          }
+          if (saved === record) return
+          if (next === value) next = [...value]
+          next[index] = saved as StoredValue
+        })
+        return customBeforeSave
+          ? customBeforeSave({value: next, ...context})
+          : next
       }
     })
   }
