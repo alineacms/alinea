@@ -7,6 +7,7 @@ import type {
   DraftTransport,
   LocalConnection,
   Revision,
+  UploadMetadata,
   UploadResponse
 } from './Connection.js'
 import type {CommitRequest} from './db/CommitRequest.js'
@@ -69,12 +70,15 @@ export class Client implements LocalConnection {
     ).then<string>(this.#failOnHttpError)
   }
 
-  prepareUpload(file: string): Promise<UploadResponse> {
+  prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
     return this.#requestJson(
       {action: HandleAction.Upload},
       {
         method: 'POST',
-        body: JSON.stringify({filename: file})
+        body: JSON.stringify({filename: file, ...metadata})
       }
     ).then<UploadResponse>(this.#failOnHttpError)
   }

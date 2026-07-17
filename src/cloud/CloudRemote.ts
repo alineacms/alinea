@@ -6,7 +6,8 @@ import type {
   AuthOptions,
   RemoteConnection,
   RequestContext,
-  Revision
+  Revision,
+  UploadMetadata
 } from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {
@@ -187,7 +188,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     }
   }
 
-  prepareUpload(file: string) {
+  prepareUpload(file: string, metadata?: UploadMetadata) {
     const ctx = this.#context
     return parseOutcome<{
       entryId: string
@@ -201,7 +202,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
         json({
           method: 'POST',
           headers: bearer(ctx),
-          body: JSON.stringify({filename: file})
+          body: JSON.stringify({filename: file, ...metadata})
         })
       )
     ).then(({upload, ...rest}) => {

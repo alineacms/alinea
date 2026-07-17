@@ -6,6 +6,15 @@ import {BasicAuth} from './BasicAuth.js'
 import {DatabaseApi} from './DatabaseApi.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
 import {OAuth2, type OAuth2Options} from './OAuth2.js'
+import {S3Uploads, type S3UploadsOptions} from './S3Uploads.js'
+
+export type BackendPart =
+  | Partial<RemoteConnection>
+  | ((context: RequestContext, config: Config) => Partial<RemoteConnection>)
+
+export interface BackendFactory {
+  (context: RequestContext, config: Config): RemoteConnection
+}
 
 export type AvailableDrivers =
   | 'd1'
@@ -40,14 +49,14 @@ export interface BackendOptions {
   oauth2?: OAuth2Options
   database: DatabaseDeclaration
   github: GithubOptions
+  uploads?: {
+    s3: S3UploadsOptions
+  }
 }
 
-export function createBackend(
-  config: Config,
-  options: BackendOptions
-): (context: RequestContext) => RemoteConnection {
+export function backendFromOptions(options: BackendOptions): BackendFactory {
   const db = driver[options.database.driver](options.database.client)
-  return context => {
+  return (context, config) => {
     const {user} = context
     const author =
       user?.name && user.email
@@ -58,15 +67,28 @@ export function createBackend(
       ...options.github
     })
     const dbApi = new DatabaseApi(context, {db})
+    const uploadsApi = options.uploads?.s3
+      ? new S3Uploads(options.uploads.s3, config.maxUploadSize)
+      : undefined
     assert(options.oauth2 ?? options.auth, 'No auth method provided')
     const auth = options.oauth2
       ? new OAuth2(context, config, options.oauth2)
       : new BasicAuth(context, options.auth!)
-    return createRemote(ghApi, dbApi, auth)
+    return composeBackend(ghApi, dbApi, uploadsApi ?? {}, auth)
   }
 }
 
-export function createRemote(
+export function createBackend(...parts: Array<BackendPart>): BackendFactory {
+  return (context, config) => {
+    return composeBackend(
+      ...parts.map(part =>
+        typeof part === 'function' ? part(context, config) : part
+      )
+    )
+  }
+}
+
+export function composeBackend(
   ...impl: Array<Partial<RemoteConnection>>
 ): RemoteConnection {
   const hasMethod = (name: keyof RemoteConnection): boolean => {
@@ -82,7 +104,7 @@ export function createRemote(
       }
     }
   }
-  const reversed = impl.reverse().concat(fallback)
+  const reversed = [...impl].reverse().concat(fallback)
   const call = (name: keyof RemoteConnection): any => {
     const use = reversed.find(i => name in i)
     return use

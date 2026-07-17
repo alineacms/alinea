@@ -72,7 +72,10 @@ export interface DraftsApi {
 }
 
 export interface UploadsApi {
-  prepareUpload(file: string): Promise<UploadResponse>
+  prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse>
   handleUpload?(entryId: string, file: Blob): Promise<void>
   previewUpload?(entryId: string): Promise<Response>
 }
@@ -105,6 +108,10 @@ export interface UploadDestination {
   entryId: string
   location: string
   previewUrl: string
+}
+
+export interface UploadMetadata {
+  size: number
 }
 
 export interface UploadResponse extends UploadDestination {

@@ -1,6 +1,6 @@
 import pLimit from 'p-limit'
 import type {Config} from '../Config.js'
-import type {SyncApi, UploadResponse} from '../Connection.js'
+import type {SyncApi, UploadMetadata, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
 import type {Policy} from '../Role.js'
@@ -131,7 +131,10 @@ export class LocalDB extends WriteableGraph {
     return {sha: await this.sync()}
   }
 
-  async prepareUpload(file: string): Promise<UploadResponse> {
+  async prepareUpload(
+    file: string,
+    _metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
     throw new Error('Uploads not supported on local DB')
   }
 }

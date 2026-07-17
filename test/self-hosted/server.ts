@@ -1,5 +1,5 @@
 import {BasicAuth} from '#/backend/api/BasicAuth.js'
-import {createRemote} from '#/backend/api/CreateBackend.js'
+import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {DatabaseApi} from '#/backend/api/DatabaseApi.js'
 import {createHandler} from '#/backend/Handler.js'
 import {fromNodeRequest, respondTo} from '#/backend/router/NodeHandler.js'
@@ -56,7 +56,7 @@ const handleApi = createHandler({
   remote(context) {
     const auth = new BasicAuth(context, userForCredentials)
     const database = new DatabaseApi(context, {db})
-    return createRemote(auth, local, database, history)
+    return composeBackend(auth, local, database, history)
   }
 })
 

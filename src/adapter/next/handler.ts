@@ -1,6 +1,7 @@
 import {
+  type BackendFactory,
   type BackendOptions,
-  createBackend
+  backendFromOptions
 } from '#/backend/api/CreateBackend.js'
 import {
   createHandler as createCoreHandler,
@@ -9,7 +10,7 @@ import {
 import {generatedSource} from '#/backend/store/GeneratedSource.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
-import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import type {RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -20,19 +21,20 @@ const handlers = new WeakMap<NextCMS, Handler>()
 
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
-  backend?: BackendOptions
-  remote?: (context: RequestContext) => RemoteConnection
+  backend?: BackendFactory | BackendOptions
 }
 
 export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const options = input instanceof NextCMS ? {cms: input} : input
-  const remote =
-    options.remote ??
-    (options.backend
-      ? createBackend(options.cms.config, options.backend)
-      : context => new CloudRemote(context, options.cms.config))
   if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config
+  const backend: BackendFactory =
+    typeof options.backend === 'function'
+      ? options.backend
+      : options.backend
+        ? backendFromOptions(options.backend)
+        : (context: RequestContext) => new CloudRemote(context, config)
+  const remote = (context: RequestContext) => backend(context, config)
   const db = PLazy.from(async () => {
     const source = await generatedSource
     const db = new LocalDB(config, source)
