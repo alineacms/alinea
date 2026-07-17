@@ -554,7 +554,7 @@ function LinkPickerAction({
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
-    flatResults: options.enableNavigation ?? !pickingChildren,
+    flatResults: !(options.enableNavigation ?? pickingChildren),
     showNavigationSidebar: isMediaPicker,
     location,
     pickChildren: pickingChildren,
@@ -669,7 +669,7 @@ function LinkPickerDialog({
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
-    flatResults: options.enableNavigation ?? !pickingChildren,
+    flatResults: !(options.enableNavigation ?? pickingChildren),
     showNavigationSidebar: isMediaPicker,
     location,
     pickChildren: pickingChildren,
