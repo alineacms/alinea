@@ -18,4 +18,5 @@
   justify-content: space-between;
   flex-shrink: 0;
   height: 48px;
+  gap: 8px;
 }

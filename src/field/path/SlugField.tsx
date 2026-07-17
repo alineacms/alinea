@@ -13,6 +13,7 @@ export interface SlugFieldProps {
   isRequired?: boolean
   label?: ReactNode
   shared?: boolean
+  onBlur?: (value: string) => void
   onChange: (value: string) => void
   source?: string
 }
@@ -27,6 +28,7 @@ export function SlugField({
   isRequired,
   label,
   shared,
+  onBlur,
   onChange,
   source = ''
 }: SlugFieldProps) {
@@ -41,6 +43,7 @@ export function SlugField({
 
   function handleBlur() {
     setEndsWithSeparator(false)
+    onBlur?.(value)
   }
 
   return (

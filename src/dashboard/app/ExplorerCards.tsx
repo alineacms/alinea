@@ -92,7 +92,9 @@ function ExplorerCardLoadingItem({
           <div className={styles.ExplorerCards.entry.body()}>
             <div className={styles.ExplorerCards.entry.body.inner()}>
               <div
-                className={styles.ExplorerCards.entry.skeleton({wide: true})}
+                className={styles.ExplorerCards.entry.skeleton({
+                  wide: true
+                })}
               />
               <div className={styles.ExplorerCards.entry.skeleton()} />
             </div>
@@ -122,6 +124,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+
   return (
     <GridListItem
       id={entry.id}
@@ -135,7 +138,9 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         className={styles.ExplorerCards.item.drag.handle()}
       />
       <Surface
-        className={styles.ExplorerCards.item.card({file: Boolean(info)})}
+        className={styles.ExplorerCards.item.card({
+          file: Boolean(info)
+        })}
       >
         {info ? (
           <ExplorerFileCard file={info} label={label} layout="card" />
@@ -164,7 +169,6 @@ function ExplorerCardCheckbox({label}: ExplorerCardCheckboxProps) {
     />
   )
 }
-
 interface ExplorerEntryCardProps {
   icon?: ComponentType
   label: string
@@ -232,7 +236,9 @@ function ExplorerCardParentsLoading() {
   return (
     <div className={styles.ExplorerCards.parents()}>
       <span
-        className={styles.ExplorerCards.parents.skeleton({wide: true})}
+        className={styles.ExplorerCards.parents.skeleton({
+          wide: true
+        })}
         aria-hidden="true"
       />
       <IcRoundKeyboardArrowRight

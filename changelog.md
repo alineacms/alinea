@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.7.0]
+- Add user roles and permission policies. Permissions can now be scoped by
+  workspace, root, type, field, entry id and locale, and cover actions such as
+  create, read, update, delete, reorder, move, publish, archive, upload and
+  explore. The dashboard and backend now enforce these policies.
+- Add configurable rich text toolbars and custom Tiptap extension support.
+- Improve the Next.js integration. `withAlinea` now uses the CLI-provided admin
+  path, proxies the dashboard in development, rewrites to the generated
+  dashboard in production and supports custom `dashboardFile` values.
+- Allow `baseUrl` to be configured per environment.
+- Add workspace and root information to `EntryUrlMeta`.
+- Return CORS headers for local uploads.
+- Improve OAuth and JWT handling with explicit SameSite cookies, access-token
+  refresh without treating refresh tokens as JWTs, stricter JWKS key selection
+  and optional extra claim validation.
+- Fix rich text HTML parsing so marks are applied across nested content and
+  root-level whitespace is ignored.
+- Filter unresolved entry links from multi-link query results.
+- Add `llms-full.txt` to the published package.
+
 ## [1.6.4]
 - Don't use Y.js for preview deltas, but a more predictable diff
 
@@ -193,4 +213,3 @@
 - Creating custom fields can now be done through `Field.create`.
 - Entries now have a single id. If you are upgrading and were using i18n you
   can stabilize your ids by running `npx alinea build --fix`.
-

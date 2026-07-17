@@ -3,6 +3,7 @@ import {AuthAction} from '#/backend/Auth.js'
 import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
+  AuthOptions,
   RemoteConnection,
   RequestContext,
   Revision
@@ -18,6 +19,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {entries, values} from '#/core/util/Objects.js'
 import {Workspace} from '#/core/Workspace.js'
@@ -38,7 +40,13 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
       jwksUri: cloudConfig.jwks,
       tokenEndpoint: cloudConfig.token,
       authorizationEndpoint: cloudConfig.auth,
-      revocationEndpoint: cloudConfig.revocation
+      revocationEndpoint: cloudConfig.revocation,
+      validateClaims(claims) {
+        if (claims.iss !== cloudConfig.url)
+          throw new HttpError(401, `Invalid issuer: ${claims.iss}`)
+        if (claims.cid !== clientId)
+          throw new HttpError(401, `Invalid client id: ${claims.cid}`)
+      }
     })
     this.#context = context
     this.#config = config
@@ -111,7 +119,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     })
   }
 
-  async authenticate(request: Request) {
+  async authenticate(request: Request, options?: AuthOptions) {
     const ctx = this.#context
     const config = this.#config
     const url = new URL(request.url)
@@ -124,7 +132,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
             type: AuthResultType.MissingApiKey,
             setupUrl: cloudConfig.setup
           })
-        return super.authenticate(request)
+        return super.authenticate(request, options)
       }
       // The cloud server will request a handshake confirmation on this route
       case AuthAction.Handshake: {
@@ -175,7 +183,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
         return new Response('alinea cloud handshake')
       }
       default:
-        return super.authenticate(request)
+        return super.authenticate(request, options)
     }
   }
 
@@ -226,7 +234,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   async storeDraft(draft: Draft): Promise<void> {
     const ctx = this.#context
     const key = formatDraftKey({id: draft.entryId, locale: draft.locale})
-    return parseOutcome(
+    return parseOutcome<void>(
       fetch(
         `${cloudConfig.drafts}/${key}`,
         json({
@@ -243,7 +251,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
 
   revisions(file: string): Promise<Array<Revision>> {
     const ctx = this.#context
-    return parseOutcome(
+    return parseOutcome<Array<Revision>>(
       fetch(
         `${cloudConfig.history}?${new URLSearchParams({file})}`,
         json({headers: bearer(ctx)})
@@ -256,10 +264,63 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     revisionId: string
   ): Promise<EntryRecord | undefined> {
     const ctx = this.#context
-    return parseOutcome(
+    return parseOutcome<EntryRecord | undefined>(
       fetch(
         `${cloudConfig.history}?${new URLSearchParams({file, ref: revisionId})}`,
         json({headers: bearer(ctx)})
+      )
+    )
+  }
+
+  async enrichUser(user: User): Promise<User> {
+    // User claims already contain all data needed
+    return user
+  }
+
+  listUsers(): Promise<Array<User>> {
+    const ctx = this.#context
+    return parseOutcome<Array<User>>(
+      fetch(cloudConfig.users, json({headers: bearer(ctx)}))
+    )
+  }
+
+  createUser(user: UserInput): Promise<User> {
+    const ctx = this.#context
+    return parseOutcome<User>(
+      fetch(
+        cloudConfig.users,
+        json({
+          method: 'POST',
+          headers: bearer(ctx),
+          body: JSON.stringify(user)
+        })
+      )
+    )
+  }
+
+  updateUser(user: UserInput): Promise<User> {
+    const ctx = this.#context
+    return parseOutcome<User>(
+      fetch(
+        cloudConfig.users,
+        json({
+          method: 'PUT',
+          headers: bearer(ctx),
+          body: JSON.stringify(user)
+        })
+      )
+    )
+  }
+
+  removeUser(email: string): Promise<void> {
+    const ctx = this.#context
+    return parseOutcome<void>(
+      fetch(
+        `${cloudConfig.users}/${encodeURIComponent(email)}`,
+        json({
+          method: 'DELETE',
+          headers: bearer(ctx)
+        })
       )
     )
   }

@@ -1,12 +1,9 @@
-import {Config, Field} from 'alinea'
-import {createCMS} from '#/core.js'
+import {Config} from 'alinea'
+import {createCMS} from 'alinea/core'
 
 // Create types for your CMS schema
-const Page = Config.type('Page', {
-  fields: {
-    title: Field.text('Title'),
-    path: Field.path('Path')
-  }
+const Page = Config.document('Page', {
+  fields: {}
 })
 
 export const cms = createCMS({

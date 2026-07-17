@@ -7,6 +7,7 @@ import type {HTMLProps} from 'react'
 interface Anchor extends HTMLProps<HTMLAnchorElement> {
   'data-id'?: string
   'data-entry'?: string
+  'data-anchor'?: string
   'data-link'?: 'entry' | 'file' | 'url'
   'data-suffix'?: string
 }
@@ -19,6 +20,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': undefined,
+        'data-anchor': undefined,
         'data-link': 'url',
         href: ref._url,
         target: ref._target
@@ -29,6 +31,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-anchor': ref[EntryReference.anchor],
         'data-link': 'entry',
         'data-suffix': ref._suffix,
         href: undefined,
@@ -40,6 +43,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-anchor': undefined,
         'data-link': 'file',
         'data-suffix': undefined,
         href: undefined,
@@ -71,6 +75,8 @@ export function attributesToReference(
       [Reference.id]: id,
       [Reference.type]: type,
       [EntryReference.entry]: attributes['data-entry'],
+      [EntryReference.anchor]:
+        type === 'entry' ? attributes['data-anchor'] : undefined,
       [EntryReference.suffix]:
         type === 'entry' ? attributes['data-suffix'] : undefined
     } as EntryReference

@@ -158,19 +158,44 @@ import {cms} from ${importPath}
 const exportedSource = ${serialized}
 const fixtureHistory = ${serializedHistory}
 const source = await importSource(exportedSource)
+const fixtureUser = {
+  sub: 'fixture-user',
+  name: 'Stijn Codeurs',
+  email: 'stijn@example.com',
+  roles: ['admin']
+}
 
 class FixtureDB extends LocalDB {
+  capabilities() {
+    return Promise.resolve({users: true})
+  }
+
   previewToken() {
     return Promise.resolve('dev-preview-token')
   }
 
   user() {
-    return Promise.resolve({
-      sub: 'fixture-user',
-      name: 'Stijn Codeurs',
-      email: 'stijn@example.com',
-      roles: ['admin']
-    })
+    return Promise.resolve(fixtureUser)
+  }
+
+  enrichUser(user) {
+    return Promise.resolve(user)
+  }
+
+  listUsers() {
+    return Promise.resolve([fixtureUser])
+  }
+
+  createUser(user) {
+    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
+  }
+
+  updateUser(user) {
+    return Promise.resolve({...user, sub: user.sub ?? user.email ?? 'user'})
+  }
+
+  removeUser() {
+    return Promise.resolve()
   }
 
   revisions(file) {

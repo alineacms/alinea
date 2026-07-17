@@ -52,13 +52,18 @@ export interface ImageField<Fields = undefined> extends LinkField<
 > {}
 
 const imageCondition = {
-  _type: 'MediaFile',
-  extension: {
-    in: [
-      ...imageExtensions,
-      ...imageExtensions.map(e => e.toUpperCase()) //Fix for historic files with case-insensitive extensions
-    ]
-  }
+  or: [
+    {
+      _type: 'MediaFile',
+      extension: {
+        in: [
+          ...imageExtensions,
+          ...imageExtensions.map(e => e.toUpperCase()) //Fix for historic files with case-insensitive extensions
+        ]
+      }
+    },
+    {_type: 'MediaLibrary'}
+  ]
 }
 
 function imagePicker<Fields>(

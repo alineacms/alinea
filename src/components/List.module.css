@@ -38,14 +38,12 @@
 
 .ListLabel {
   color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 600;
   min-height: auto;
   padding-block: 0;
   margin-left: -8px;
   margin-bottom: 8px;
-  line-height: 1;
   border: none;
+  align-items: flex-start;
 }
 
 .ListLabel[data-hovered],
