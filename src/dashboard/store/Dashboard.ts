@@ -1591,7 +1591,7 @@ export class DashboardExplorer {
       workspace: location.workspace,
       root: allRoots ? undefined : location.root,
       parentId: flatList ? undefined : (location.parentId ?? null),
-      filter: this.#options.condition,
+      filter: flatList ? this.#options.condition : undefined,
       select: {
         id: Entry.id,
         type: Entry.type,

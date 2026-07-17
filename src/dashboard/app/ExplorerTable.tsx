@@ -260,6 +260,7 @@ function ExplorerTableLoadingRow({
       parents={[]}
       hasChildren={false}
       onNavigate={onNavigate}
+      isSelectable={false}
     />
   )
 }
@@ -304,7 +305,7 @@ function ExplorerTableLoadedRow({
       rootLabel={rootLabel}
       hasChildren={hasChildren}
       onNavigate={onNavigate}
-      isSelectable={false}
+      isSelectable={isSelectable}
     />
   )
 }

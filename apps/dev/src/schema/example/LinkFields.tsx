@@ -53,7 +53,7 @@ export const LinkFields = Config.document('Link fields', {
     }),
 
     entryEnableNavigation: Field.entry('Enable navigation', {
-      enableNavigation: true,
+        enableNavigation: true,
       condition: {_type: 'LinkFields'}
     }),
 
