@@ -10,7 +10,8 @@ import {HttpError} from '#/core/HttpError.js'
 import type {CommitChange, CommitRequest} from '#/core/db/CommitRequest.js'
 import {
   GithubSource,
-  type GithubSourceOptions
+  type GithubSourceOptions,
+  normalizeGithubSourceOptions
 } from '#/core/source/GithubSource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
@@ -26,8 +27,9 @@ export class GithubApi
   #options: GithubOptions
 
   constructor(options: GithubOptions) {
-    super(options)
-    this.#options = options
+    const normalized = normalizeGithubSourceOptions(options)
+    super(normalized)
+    this.#options = normalized
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
