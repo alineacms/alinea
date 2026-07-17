@@ -51,8 +51,8 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.retryQueue()
   }
 
-  discardMutationQueue(): void {
-    this.#worker.discardQueue()
+  discardMutationQueue(): Promise<void> {
+    return this.#worker.discardQueue()
   }
 
   prepareUpload(file: string): Promise<UploadResponse> {

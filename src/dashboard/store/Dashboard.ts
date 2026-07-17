@@ -192,7 +192,7 @@ interface MutationQueueRetry {
 }
 
 interface MutationQueueDiscard {
-  discardMutationQueue(): void
+  discardMutationQueue(): Promise<void>
 }
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
@@ -519,10 +519,10 @@ export class Dashboard {
     if (retry) await retry.call(db)
   })
 
-  discardMutationQueue = atom(null, (get, set) => {
+  discardMutationQueue = atom(null, async (get, set) => {
     const db = get(this.db)
     const discard = (db as Partial<MutationQueueDiscard>).discardMutationQueue
-    if (discard) discard.call(db)
+    if (discard) await discard.call(db)
     set(this.#uploadQueue, [])
   })
 
