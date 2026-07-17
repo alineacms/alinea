@@ -46,6 +46,7 @@ interface ExplorerTableRowProps {
   entry: DashboardEntry
   breadcrumbs: boolean
   onNavigate: (entry: DashboardEntry) => void
+  explorer: DashboardExplorer
 }
 
 interface ExplorerTableDisplayRowProps {
@@ -61,6 +62,7 @@ interface ExplorerTableDisplayRowProps {
   rootLabel?: string
   hasChildren?: boolean
   onNavigate: (entry: DashboardEntry) => void
+  isSelectable: boolean
 }
 
 interface ExplorerTableBreadcrumbsProps {
@@ -137,7 +139,8 @@ function ExplorerTableDisplayRow({
   parents,
   rootLabel,
   hasChildren,
-  onNavigate
+  onNavigate,
+  isSelectable
 }: ExplorerTableDisplayRowProps) {
   function renderCell(columnOrId: ExplorerTableColumn | Key) {
     const column =
@@ -231,6 +234,7 @@ function ExplorerTableDisplayRow({
       columns={columns}
       dependencies={[columns, label, icon, cells, status, breadcrumbs, parents]}
       style={{width: '100%', minWidth: '100%', height: 'inherit'}}
+      isDisabled={!isSelectable}
     >
       {renderCell}
     </Row>
@@ -270,6 +274,7 @@ function ExplorerTableLoadedRow({
   data,
   entry,
   breadcrumbs,
+  explorer,
   onNavigate
 }: ExplorerTableLoadedRowProps) {
   const root = useAtomValue(data.root)
@@ -282,6 +287,9 @@ function ExplorerTableLoadedRow({
   const status = treeStatus.status
   const parents = useAtomValue(data.parents)
   const icon = configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)
+  const isSelectable = useAtomValue(
+    useMemo(() => explorer.isSelectable(entry), [explorer, entry])
+  )
   return (
     <ExplorerTableDisplayRow
       columnById={columnById}
@@ -296,6 +304,7 @@ function ExplorerTableLoadedRow({
       rootLabel={rootLabel}
       hasChildren={hasChildren}
       onNavigate={onNavigate}
+      isSelectable={false}
     />
   )
 }
@@ -418,6 +427,7 @@ export function ExplorerTable({
                   columns={columns}
                   entry={item}
                   onNavigate={onAction}
+                  explorer={explorer}
                 />
               )}
             </TableBody>
