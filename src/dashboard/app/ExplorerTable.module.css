@@ -291,3 +291,14 @@
   color: var(--alinea-fg);
   white-space: nowrap;
 }
+
+.ExplorerTable-chevron {
+  display: inline-flex;
+  width: 16px;
+  height: 44px;
+  flex: 0 0 16px;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-fg-muted);
+  font-size: 16px;
+}

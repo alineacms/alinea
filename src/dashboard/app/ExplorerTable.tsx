@@ -1,4 +1,4 @@
-import {Checkbox, Icon, Surface} from '#/components.js'
+import {Checkbox, FoldIcon, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
@@ -45,6 +45,7 @@ interface ExplorerTableRowProps {
   columns: Array<ExplorerTableColumn>
   entry: DashboardEntry
   breadcrumbs: boolean
+  onNavigate: (entry: DashboardEntry) => void
 }
 
 interface ExplorerTableDisplayRowProps {
@@ -58,6 +59,8 @@ interface ExplorerTableDisplayRowProps {
   breadcrumbs?: boolean | undefined
   parents: Array<DashboardEntry>
   rootLabel?: string
+  hasChildren?: boolean
+  onNavigate: (entry: DashboardEntry) => void
 }
 
 interface ExplorerTableBreadcrumbsProps {
@@ -132,7 +135,9 @@ function ExplorerTableDisplayRow({
   status,
   breadcrumbs,
   parents,
-  rootLabel
+  rootLabel,
+  hasChildren,
+  onNavigate
 }: ExplorerTableDisplayRowProps) {
   function renderCell(columnOrId: ExplorerTableColumn | Key) {
     const column =
@@ -152,6 +157,17 @@ function ExplorerTableDisplayRow({
     if (column.kind === 'title') {
       return (
         <Cell className={styles.ExplorerTable.cell.title()} textValue={label}>
+          <span className={styles.ExplorerTable.chevron()}>
+            {hasChildren && (
+              <AriaButton
+                className={styles.ExplorerTable.chevron.button()}
+                aria-label={`Open ${label}`}
+                onPress={() => onNavigate(entry)}
+              >
+                <FoldIcon aria-hidden expanded={false} />
+              </AriaButton>
+            )}
+          </span>
           <AriaButton
             slot="drag"
             className={styles.ExplorerTable.iconDrag()}
@@ -225,7 +241,8 @@ function ExplorerTableLoadingRow({
   columnById,
   columns,
   entry,
-  breadcrumbs
+  breadcrumbs,
+  onNavigate
 }: ExplorerTableRowProps) {
   return (
     <ExplorerTableDisplayRow
@@ -237,6 +254,8 @@ function ExplorerTableLoadingRow({
       cells={[]}
       breadcrumbs={breadcrumbs}
       parents={[]}
+      hasChildren={false}
+      onNavigate={onNavigate}
     />
   )
 }
@@ -250,7 +269,8 @@ function ExplorerTableLoadedRow({
   columns,
   data,
   entry,
-  breadcrumbs
+  breadcrumbs,
+  onNavigate
 }: ExplorerTableLoadedRowProps) {
   const root = useAtomValue(data.root)
   const rootLabel = useAtomValue(root.label)
@@ -274,6 +294,8 @@ function ExplorerTableLoadedRow({
       breadcrumbs={breadcrumbs}
       parents={parents}
       rootLabel={rootLabel}
+      hasChildren={hasChildren}
+      onNavigate={onNavigate}
     />
   )
 }
@@ -395,6 +417,7 @@ export function ExplorerTable({
                   columnById={columnById}
                   columns={columns}
                   entry={item}
+                  onNavigate={onAction}
                 />
               )}
             </TableBody>
