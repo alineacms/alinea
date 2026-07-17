@@ -67,6 +67,7 @@ import {
 } from '../boot/MutationQueueEvent.js'
 import {nav, type DashboardRoute} from '../DashboardNav.js'
 import {LucideFile} from '../icons.js'
+import {filterChecker} from '#/core/db/EntryResolver.js'
 
 export const dashboardEntryOverviewColumnCount = 5
 
@@ -1262,6 +1263,22 @@ export class DashboardExplorer {
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
+  }
+
+  isSelectable(entry: DashboardEntry) {
+    return atom(get => {
+      const condition = this.#options.condition
+      if (!condition) return true
+
+      const {data} = get(entry.data)
+      if (!data) return false
+
+      const currentEntry = get(data.currentEntry)
+      if (!currentEntry || currentEntry instanceof Promise) return false
+
+      const checker = filterChecker(condition)
+      return checker(currentEntry)
+    })
   }
 
   get selectionMode() {
