@@ -1,7 +1,7 @@
+import {createBackend} from '#/backend/api/CreateBackend.js'
+import type {Config} from '#/core/Config.js'
+import type {RequestContext} from '#/core/Connection.js'
 import {suite} from '@alinea/suite'
-import {createBackend} from 'alinea/backend'
-import type {Config} from 'alinea/core/Config'
-import type {RequestContext} from 'alinea/core/Connection'
 
 const test = suite(import.meta)
 

@@ -231,7 +231,10 @@ export function createHandler({
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
-          const request = await local.request(mutations, policy)
+          const request = {
+            ...(await local.request(mutations, policy)),
+            user: user.claims
+          }
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {

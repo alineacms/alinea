@@ -1,7 +1,6 @@
-import type {CommitApi, SyncApi} from '../Connection.js'
 import type {Change, ChangeFile, ChangesBatch} from '../source/Change.js'
 import type {ReadonlyTree} from '../source/Tree.js'
-import type {LocalDB} from './LocalDB.js'
+import type {User} from '../User.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
 
 export interface AddContent extends ChangeFile {
@@ -64,6 +63,7 @@ export function sourceChanges(request: CommitRequest): ChangesBatch {
 
 export interface CommitRequest {
   description: string
+  user?: User
   fromSha: string
   intoSha: string
   checks: Array<[path: string, sha: string]>
