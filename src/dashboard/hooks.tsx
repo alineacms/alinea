@@ -258,6 +258,14 @@ export function useEntry(): EntryRecord<Record<string, unknown>> | null {
 }
 
 /**
+ * Returns the atom for the selected entry version.
+ */
+export function useEntryAtom() {
+  const entry = useEntryModel()
+  return entry?.currentEntry ?? nullEntryAtom
+}
+
+/**
  * Returns a writable value tuple for a reactive node.
  */
 export function useValue<Value>(node: ReactiveNode<Value>) {
