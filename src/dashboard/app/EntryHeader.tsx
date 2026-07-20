@@ -513,6 +513,7 @@ export function EntryHeader({
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
   const isDirty = useAtomValue(node.isDirty)
+  const type = useAtomValue(entry.type)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   const viewedStatus = viewedEntry?.status ?? activeStatus
   const viewedIsUnpublished = Boolean(
@@ -531,6 +532,7 @@ export function EntryHeader({
           ) : (
             <StatusBadge status={status} />
           )}
+          <Badge icon={type.icon}>{type.label}</Badge>
           {controls}
           <EntryHeaderMoreActions
             entry={entry}
