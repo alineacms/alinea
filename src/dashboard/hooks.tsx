@@ -276,3 +276,15 @@ export function useNodes<Value extends object>(
 export function useNodes(node: ReactiveNode<any>) {
   return useAtomValue(node.nodes)
 }
+
+/**
+ * Returns all the atom's related to toasts
+ */
+export function useToast() {
+  const dashboard = useDashboard()
+  const toasts = useAtomValue(dashboard.toasts)
+  const toast = useSetAtom(dashboard.pushToast)
+  const dismiss = useSetAtom(dashboard.dismissToast)
+  const clear = useSetAtom(dashboard.clearToasts)
+  return {toasts, toast, dismiss, clear}
+}

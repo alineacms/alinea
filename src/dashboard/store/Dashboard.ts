@@ -198,6 +198,21 @@ interface MutationQueueDiscard {
 export type DashboardTheme = 'system' | 'light' | 'dark'
 export type DashboardEntrySidebarTab = 'history' | 'preview' | 'references'
 
+export type DashboardToastType = 'error' | 'warning' | 'info' | 'success'
+export interface DashboardToastAction {
+  label: string
+  onPress: () => void
+}
+export interface DashboardToast {
+  id: string
+  type: DashboardToastType
+  message: string
+  actions?: Array<DashboardToastAction>
+  blocking: boolean
+  duration?: number
+}
+export type DashboardToastInput = Omit<DashboardToast, 'id'>
+
 export class MissingEntryError extends Error {
   constructor(public id: string) {
     super(`Missing entry ${id}`)
@@ -247,6 +262,7 @@ export class Dashboard {
     'system',
     undefined
   )
+  #toasts = atom<Array<DashboardToast>>([])
   #options: DashboardOptions
   entrySideBarOpen = atom(true)
 
@@ -291,6 +307,21 @@ export class Dashboard {
       }
     )
   }
+
+  toasts = atom(get => get(this.#toasts))
+  pushToast = atom(null, (_, set, payload: DashboardToastInput) => {
+    let newToast = {
+      id: createId(),
+      ...payload
+    }
+    set(this.#toasts, current => [...current, newToast])
+  })
+  dismissToast = atom(null, (_, set, id: string) => {
+    set(this.#toasts, current => current.filter(toast => toast.id !== id))
+  })
+  clearToasts = atom(null, (_, set) => {
+    set(this.#toasts, [])
+  })
 
   previewMetadata = atom<PreviewMetadata | undefined>(undefined)
 
