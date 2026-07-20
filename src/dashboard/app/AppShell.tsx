@@ -16,6 +16,7 @@ import {UsersPage, UsersPageSidebar} from './UsersPage.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 import {ToastContainer, BlockingToast } from './ToastContainer.js'
+import {ToastRouter} from './ToastRouter.js'
 
 const styles = styler(css)
 
@@ -29,6 +30,7 @@ export function AppShell({dashboard}: AppShellProps) {
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
         <AppShellContent dashboard={dashboard} />
+        <ToastRouter />
         <ToastContainer />
         <BlockingToast />
       </DashboardScopeInternal>
