@@ -320,22 +320,22 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
           >
             <TreeItemContent>
               {({level}) => (
+                <div
+                  className={styles.ExplorerTable.row.grid()}
+                  role="presentation"
+                  style={{gridTemplateColumns: props.gridTemplateColumns}}
+                >
                   <div
-                    className={styles.ExplorerTable.row.grid()}
-                    role="presentation"
-                    style={{gridTemplateColumns: props.gridTemplateColumns}}
+                    className={styles.ExplorerTable.cell.title()}
+                    role="gridcell"
+                    aria-colindex={1}
+                    style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
                   >
-                    <div
-                      className={styles.ExplorerTable.cell.title()}
-                      role="gridcell"
-                      aria-colindex={1}
-                      style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
-                    >
-                      <span className={styles.ExplorerTable.chevron()} />
-                      <span className={styles.ExplorerTable.loadingIcon()} />
-                      <span className={styles.ExplorerTable.loadingText()} />
-                    </div>
+                    <span className={styles.ExplorerTable.chevron()} />
+                    <span className={styles.ExplorerTable.loadingIcon()} />
+                    <span className={styles.ExplorerTable.loadingText()} />
                   </div>
+                </div>
               )}
             </TreeItemContent>
           </TreeItem>
