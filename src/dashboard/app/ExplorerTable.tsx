@@ -59,6 +59,7 @@ interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
 
 interface ExplorerTableCellProps extends ExplorerTableDisplayRowProps {
   column: ExplorerTableColumn
+  columnIndex: number
   expanded: boolean
   level: number
 }
@@ -130,6 +131,7 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
     breadcrumbs,
     cells,
     column,
+    columnIndex,
     expanded,
     hasChildren,
     icon,
@@ -141,7 +143,11 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
   } = props
   if (column.kind === 'selection') {
     return (
-      <div className={styles.ExplorerTable.cell.selection()}>
+      <div
+        className={styles.ExplorerTable.cell.selection()}
+        role="gridcell"
+        aria-colindex={columnIndex + 1}
+      >
         <Checkbox
           slot="selection"
           className={styles.ExplorerTable.checkbox()}
@@ -154,6 +160,8 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
     return (
       <div
         className={styles.ExplorerTable.cell.title()}
+        role="gridcell"
+        aria-colindex={columnIndex + 1}
         style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
       >
         <span className={styles.ExplorerTable.chevron()}>
@@ -190,19 +198,31 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
   }
   if (column.kind === 'status') {
     return (
-      <div className={styles.ExplorerTable.cell.status()}>
+      <div
+        className={styles.ExplorerTable.cell.status()}
+        role="gridcell"
+        aria-colindex={columnIndex + 1}
+      >
         {status && <StatusBadge status={status} />}
       </div>
     )
   }
   if (column.kind === 'filler') {
-    return <div className={styles.ExplorerTable.cell.filler()} />
+    return (
+      <div
+        className={styles.ExplorerTable.cell.filler()}
+        role="gridcell"
+        aria-colindex={columnIndex + 1}
+      />
+    )
   }
   const cell =
     typeof column.index === 'number' ? cells[column.index] : undefined
   return (
     <div
       className={styles.ExplorerTable.cell()}
+      role="gridcell"
+      aria-colindex={columnIndex + 1}
       title={
         cell
           ? `${cell.label} ${compactFieldText(cell.field, cell.value)}`
@@ -225,6 +245,7 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
 
 function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
   const {
+    cells,
     columns,
     entry,
     explorer,
@@ -237,10 +258,17 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     useMemo(() => explorer.isExpanded(entry), [explorer, entry])
   )
   const onAction = useSetAtom(explorer.onAction)
+  const textValue = useMemo(
+    () =>
+      [label, ...cells.map(cell => compactFieldText(cell.field, cell.value))]
+        .filter(Boolean)
+        .join(' '),
+    [label, cells]
+  )
   return (
     <TreeItem
       id={entry.id}
-      textValue={label}
+      textValue={textValue}
       hasChildItems={hasChildren}
       isDisabled={!isSelectable}
       onAction={explorer.hasRowAction ? () => onAction(entry) : undefined}
@@ -250,12 +278,14 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
         {({isExpanded: renderExpanded, level}) => (
           <div
             className={styles.ExplorerTable.row.grid()}
+            role="presentation"
             style={{gridTemplateColumns}}
           >
-            {columns.map(column => (
+            {columns.map((column, i) => (
               <ExplorerTableCell
                 {...props}
                 column={column}
+                columnIndex={i}
                 expanded={renderExpanded}
                 key={column.id}
                 level={level}
@@ -290,19 +320,22 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
           >
             <TreeItemContent>
               {({level}) => (
-                <div
-                  className={styles.ExplorerTable.row.grid()}
-                  style={{gridTemplateColumns: props.gridTemplateColumns}}
-                >
                   <div
-                    className={styles.ExplorerTable.cell.title()}
-                    style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
+                    className={styles.ExplorerTable.row.grid()}
+                    role="presentation"
+                    style={{gridTemplateColumns: props.gridTemplateColumns}}
                   >
-                    <span className={styles.ExplorerTable.chevron()} />
-                    <span className={styles.ExplorerTable.loadingIcon()} />
-                    <span className={styles.ExplorerTable.loadingText()} />
+                    <div
+                      className={styles.ExplorerTable.cell.title()}
+                      role="gridcell"
+                      aria-colindex={1}
+                      style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
+                    >
+                      <span className={styles.ExplorerTable.chevron()} />
+                      <span className={styles.ExplorerTable.loadingIcon()} />
+                      <span className={styles.ExplorerTable.loadingText()} />
+                    </div>
                   </div>
-                </div>
               )}
             </TreeItemContent>
           </TreeItem>
