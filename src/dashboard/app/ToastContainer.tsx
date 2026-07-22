@@ -5,6 +5,7 @@ import {useToast} from '#/dashboard/store.js'
 import {IcRoundClose, IcRoundCheck, IcRoundWarning} from '#/dashboard/icons.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from './Badge.js'
+import {ToastRouter} from './ToastRouter.js'
 import type {DashboardToastType} from '#/dashboard/store/Dashboard.js'
 import css from './ToastContainer.module.css'
 
@@ -29,7 +30,14 @@ function renderMessage(message: string) {
   return parts.map((part, i) => {
     const match = part.match(/^of type (\w+)$/)
     if (match) {
-      return <>of type <Badge size="small" key={i}>{match[1]}</Badge></>
+      return (
+        <>
+          of type{' '}
+          <Badge size="small" key={i}>
+            {match[1]}
+          </Badge>
+        </>
+      )
     }
     return <span key={i}>{part}</span>
   })
@@ -51,10 +59,22 @@ export function ToastContainer() {
   )
 }
 
+export function Toast() {
+  return (
+    <>
+      <ToastRouter />
+      <ToastContainer />
+      <BlockingToast />
+    </>
+  )
+}
+
 export function BlockingToast() {
   const {toasts, dismiss} = useToast()
   const toast = toasts.find(toast => toast.blocking)
-  const [retryState, setRetryState] = useState<'idle' | 'pending' | 'failed'>('idle')
+  const [retryState, setRetryState] = useState<'idle' | 'pending' | 'failed'>(
+    'idle'
+  )
   if (toast == null) return null
 
   const retryAction = toast.actions?.find(a => a.label === 'Retry')
@@ -65,9 +85,13 @@ export function BlockingToast() {
       <Dialog>
         <div className={styles.BlockingToastHeader()}>
           <Icon icon={toastIcons[toast.type]} data-slot="icon" />
-          <h2 className={styles.BlockingToastTitle()}>{toastTitles[toast.type]}</h2>
+          <h2 className={styles.BlockingToastTitle()}>
+            {toastTitles[toast.type]}
+          </h2>
         </div>
-        <p className={styles.BlockingToastMessage()}>{renderMessage(toast.message)}</p>
+        <p className={styles.BlockingToastMessage()}>
+          {renderMessage(toast.message)}
+        </p>
         <div className={styles.BlockingToastActions()}>
           {retryAction && (
             <Button
@@ -94,15 +118,25 @@ export function BlockingToast() {
             </Button>
           )}
           {discardAction && (
-            <Button onPress={() => { discardAction.onPress(); dismiss(toast.id) }}>
+            <Button
+              onPress={() => {
+                discardAction.onPress()
+                dismiss(toast.id)
+              }}
+            >
               {discardAction.label}
             </Button>
           )}
-          {!retryAction && !discardAction && toast.actions?.map(action => (
-            <Button key={slugify(action.label)} onPress={() => action.onPress()}>
-              {action.label}
-            </Button>
-          ))}
+          {!retryAction &&
+            !discardAction &&
+            toast.actions?.map(action => (
+              <Button
+                key={slugify(action.label)}
+                onPress={() => action.onPress()}
+              >
+                {action.label}
+              </Button>
+            ))}
         </div>
       </Dialog>
     </Modal>
