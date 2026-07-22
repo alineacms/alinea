@@ -201,7 +201,7 @@ export type DashboardEntrySidebarTab = 'history' | 'preview' | 'references'
 export type DashboardToastType = 'error' | 'warning' | 'info' | 'success'
 export interface DashboardToastAction {
   label: string
-  onPress: () => void
+  onPress: () => void | Promise<void>
 }
 export interface DashboardToast {
   id: string

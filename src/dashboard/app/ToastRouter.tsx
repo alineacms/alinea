@@ -14,8 +14,8 @@ export function ToastRouter() {
         message: next.error ?? 'Sync failed',
         blocking: true,
         actions: [
-          {label: 'Retry', onPress: () => retry()},
-          {label: 'Discard', onPress: () => discard()}
+          {label: 'Retry', onPress: retry},
+          {label: 'Discard', onPress: discard}
         ]
       }
     }

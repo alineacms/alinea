@@ -46,7 +46,7 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <MutationQueueStatus dashboard={dashboard} openOnFail />
+        <MutationQueueStatus dashboard={dashboard} />
         <WorkspaceProfileMenu dashboard={dashboard} />
       </div>
     </aside>
