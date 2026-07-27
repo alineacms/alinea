@@ -4,10 +4,22 @@ import type {EntryAnchorTarget, Field} from '#/core/Field.js'
 import type {Type} from '#/core/Type.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useHydrateAtoms} from 'jotai/utils'
+import {
+  atom,
+  createStore,
+  Provider,
+  useAtom,
+  useAtomValue,
+  useSetAtom
+} from 'jotai'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
-import {createContext, createElement, useContext, useMemo} from 'react'
+import {
+  createContext,
+  createElement,
+  useContext,
+  useMemo,
+  useState
+} from 'react'
 import type {
   Dashboard,
   DashboardEntryData,
@@ -23,8 +35,12 @@ export function DashboardScopeInternal({
   children,
   dashboard
 }: PropsWithChildren<{dashboard: Dashboard}>) {
-  useHydrateAtoms([[dashboardAtom, dashboard]])
-  return children
+  const [store] = useState(() => {
+    const store = createStore()
+    store.set(dashboardAtom, dashboard)
+    return store
+  })
+  return createElement(Provider, {store}, children)
 }
 
 /**

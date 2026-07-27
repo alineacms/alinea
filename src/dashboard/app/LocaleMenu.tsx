@@ -1,7 +1,7 @@
 import {Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
-import {useTransition} from 'react'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {useState} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
 import type {
@@ -65,8 +65,9 @@ export function LocaleMenu({
   selectedLocale: selectedLocaleAtom = root.selectedLocale
 }: LocaleMenuProps) {
   const i18n = useAtomValue(root.i18n)
-  const [selectedLocale, setSelectedLocale] = useAtom(selectedLocaleAtom)
-  const [isPending, startTransition] = useTransition()
+  const selectedLocale = useAtomValue(selectedLocaleAtom)
+  const setSelectedLocale = useSetAtom(selectedLocaleAtom)
+  const [isPending, setIsPending] = useState(false)
   if (!i18n || i18n.locales.length === 0) return null
   const activeLocale = selectedLocale ?? i18n.locales[0]
   if (!activeLocale) return null
@@ -85,10 +86,13 @@ export function LocaleMenu({
       popoverProps={{placement: 'bottom right'}}
       selectionMode="single"
       selectedKeys={[activeLocale]}
-      onAction={key => {
-        startTransition(() => {
-          setSelectedLocale(String(key))
-        })
+      onAction={async key => {
+        setIsPending(true)
+        try {
+          await setSelectedLocale(String(key))
+        } finally {
+          setIsPending(false)
+        }
       }}
     >
       {i18n.locales.map(locale => {

@@ -52,9 +52,8 @@ import {
 } from '@react-types/shared'
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
-import {atomWithLocation} from 'jotai-location'
 import {atomWithStorage, unwrap} from 'jotai/utils'
-import {SetStateAction, startTransition, type ComponentType} from 'react'
+import {SetStateAction, type ComponentType} from 'react'
 import type {
   DroppableCollectionInsertDropEvent,
   DroppableCollectionOnItemDropEvent,
@@ -65,12 +64,15 @@ import {
   MutationQueueEvent,
   type MutationQueueEntry
 } from '../boot/MutationQueueEvent.js'
-import {nav, type DashboardRoute} from '../DashboardNav.js'
 import {LucideFile} from '../icons.js'
+import {loadEntryPage, loadEntrySidebar} from './loaders/Entry.js'
+import {createRouteLoader, type LoadedRoute} from './loaders/Route.js'
+import {createBrowserHistory, type RouteHistory} from './navigation/History.js'
+import {createNavigation, type Navigation} from './navigation/Navigation.js'
 
 export const dashboardEntryOverviewColumnCount = 5
 
-export type {DashboardRoute} from '../DashboardNav.js'
+export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
 
 export type DashboardEntryView = 'edit' | 'overview'
 
@@ -99,6 +101,7 @@ export interface DashboardEntryOverviewCell {
 
 export interface DashboardOptions {
   alineaDev?: boolean
+  history?: RouteHistory
   local?: boolean
 }
 
@@ -239,8 +242,25 @@ export class Dashboard {
     failed: 0,
     blocked: 0
   })
-  entrySidebarTab = atom<DashboardEntrySidebarTab>('preview')
-  #entryReferenceScan = atom<EntryReferenceScan>()
+  #loadRoute!: ReturnType<typeof createRouteLoader>
+  #routeLoadSequence = 0
+  #entrySidebarTab = atom<DashboardEntrySidebarTab>('preview')
+  entrySidebarTab = atom(
+    get => get(this.#entrySidebarTab),
+    async (get, set, tab: DashboardEntrySidebarTab) => {
+      const page = await get(this.page)
+      if (page.type === 'entry') {
+        const sidebar = await loadEntrySidebar(
+          get,
+          page.entry,
+          page.locale,
+          tab
+        )
+        set(this.navigation.prepared, {...page, sidebar})
+      }
+      set(this.#entrySidebarTab, tab)
+    }
+  )
   #uploadQueue = atom<Array<MutationQueueEntry>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
@@ -248,7 +268,47 @@ export class Dashboard {
     undefined
   )
   #options: DashboardOptions
-  entrySideBarOpen = atom(true)
+  #entrySideBarOpen = atom(true)
+  entrySideBarOpen = atom(
+    get => get(this.#entrySideBarOpen),
+    async (get, set, open: boolean) => {
+      const page = await get(this.page)
+      if (open) {
+        if (page.type === 'entry') {
+          const sidebar = await loadEntrySidebar(
+            get,
+            page.entry,
+            page.locale,
+            get(this.entrySidebarTab)
+          )
+          set(this.navigation.prepared, {...page, sidebar})
+        }
+      } else {
+        if (page.type === 'entry')
+          set(this.navigation.prepared, {
+            ...page,
+            sidebar: {type: 'closed'}
+          })
+      }
+      set(this.#entrySideBarOpen, open)
+    }
+  )
+  navigation: Navigation<LoadedRoute>
+  route: Navigation['route']
+  page: Atom<LoadedRoute | Promise<LoadedRoute>>
+  reloadPage = atom(null, async (get, set) => {
+    const sequence = ++this.#routeLoadSequence
+    const controller = new AbortController()
+    const page = await this.#loadRoute(get, get(this.route), controller.signal)
+    if (sequence === this.#routeLoadSequence)
+      set(this.navigation.prepared, page)
+  })
+  refreshPageFor = atom(null, async (get, set, explorer: DashboardExplorer) => {
+    const page = await get(this.page)
+    if (page.type !== 'explorer') return
+    if (page.root.explorer !== explorer) return
+    await set(this.reloadPage)
+  })
 
   constructor(
     graph: WriteableGraph,
@@ -273,9 +333,8 @@ export class Dashboard {
           const listen = (event: Event) => {
             if (event instanceof IndexEvent && event.data.op === 'entry') {
               const id = event.data.id
-              startTransition(() =>
-                set(this.revisions(id), current => current + 1)
-              )
+              set(this.revisions(id), current => current + 1)
+              if (get(this.route).entry === id) void set(this.reloadPage)
             }
           }
           events.addEventListener(IndexEvent.type, listen)
@@ -290,6 +349,34 @@ export class Dashboard {
         }
       }
     )
+    const history = options.history ?? createBrowserHistory()
+    const loadRoute = createRouteLoader({
+      policy: this.#policyResource,
+      canManageMembers: this.canManageMembers,
+      workspaces: this.workspaces,
+      workspace: key => this.workspace(key),
+      entry: id => this.entries(id)
+    })
+    this.#loadRoute = loadRoute
+    const initialPage = atom(async get => {
+      return loadRoute(get, history.read(), new AbortController().signal)
+    })
+    this.navigation = createNavigation<LoadedRoute>({
+      history,
+      allow: async (_route, {get, set, signal}) => {
+        const page = await get(this.page)
+        if (signal.aborted) return false
+        if (page.type !== 'entry') return true
+        return set(page.entry.needsBlock, signal)
+      },
+      prepare: async (route, {get, signal}) => {
+        const page = await loadRoute(get, route, signal)
+        this.#routeLoadSequence++
+        return page
+      }
+    })
+    this.route = this.navigation.route
+    this.page = atom(get => get(this.navigation.prepared) ?? get(initialPage))
   }
 
   previewMetadata = atom<PreviewMetadata | undefined>(undefined)
@@ -318,32 +405,6 @@ export class Dashboard {
   })
 
   revisions = dispense(id => atom(0))
-
-  entryReferenceScan = Object.assign(
-    atom(
-      get => get(this.#entryReferenceScan),
-      (get, set) => {
-        const events = get(this.events)
-        const listen = (event: Event) => {
-          if (event instanceof IndexEvent && event.data.op === 'references') {
-            const {scanned, total, complete} = event.data
-            startTransition(() => {
-              set(this.#entryReferenceScan, {scanned, total, complete})
-            })
-          }
-        }
-        events.addEventListener(IndexEvent.type, listen)
-        return () => {
-          events.removeEventListener(IndexEvent.type, listen)
-        }
-      }
-    ),
-    {
-      onMount(init: () => void) {
-        init()
-      }
-    }
-  )
 
   authRequired = atom((get): boolean => {
     const forceAuth =
@@ -499,9 +560,7 @@ export class Dashboard {
         const events = get(this.events)
         const listen = (event: Event) => {
           if (event instanceof MutationQueueEvent) {
-            startTransition(() =>
-              set(this.#mutationQueue, mutationQueueState(event.entries))
-            )
+            set(this.#mutationQueue, mutationQueueState(event.entries))
           }
         }
         events.addEventListener(MutationQueueEvent.type, listen)
@@ -654,14 +713,12 @@ export class Dashboard {
 
   #initialContentResource = atom(async get => {
     if (get(this.#initialContentLoaded)) return true
-    await get(this.#policyResource)
+    await get(this.page)
     const workspace = get(this.currentWorkspace)
     if (!workspace) return true
     const roots = get(workspace.roots)
     if (roots.length === 0) return true
     await get(workspace.tree.items)
-    const {entry} = get(this.route)
-    if (entry) await get(this.entries(entry).readyState)
     return true
   })
 
@@ -684,58 +741,6 @@ export class Dashboard {
     const [, policy] = get(this.#policyState)
     return policy ?? Policy.ALLOW_NONE
   })
-
-  #location = atomWithLocation({
-    subscribe(setLocation) {
-      // workaround facebook/react#35966
-      const transition = () =>
-        requestAnimationFrame(() => startTransition(setLocation))
-      window.addEventListener('popstate', transition)
-      return () => window.removeEventListener('popstate', transition)
-    }
-  })
-
-  route = atom(
-    get => {
-      const {hash = '/'} = get(this.#location)
-      const [action, workspace, rootPart = '', entry] = hash
-        .slice(1)
-        .split('/')
-        .slice(1) as Array<string | undefined>
-      const page = action === 'users' ? 'users' : 'entry'
-      const [root, locale] = rootPart.split(':')
-      return {
-        page,
-        workspace: page === 'entry' ? workspace : undefined,
-        root: page === 'entry' ? root : undefined,
-        entry: page === 'entry' ? entry : undefined,
-        locale: page === 'entry' ? locale : undefined
-      }
-    },
-    async (get, set, update: DashboardRoute) => {
-      const focused = await get(this.focused)
-      const confirm = async () => {
-        if (update.page === 'users') {
-          startTransition(() => {
-            set(this.#location, {hash: `#${nav.users()}`})
-          })
-          return
-        }
-        const {workspace, root, entry, locale} = update
-        if (entry) await get(this.entries(entry).routeReady)
-        startTransition(() => {
-          set(this.#location, {
-            hash: `#${nav.entry(workspace, root, entry, locale)}`
-          })
-        })
-      }
-      if (focused && 'entry' in focused) {
-        const blockNavigation = set(focused.entry.needsBlock, confirm)
-        if (blockNavigation) return
-      }
-      await confirm()
-    }
-  )
 
   focused = atom((get): FocusedItem | Promise<FocusedItem> => {
     const {page} = get(this.route)
@@ -796,7 +801,7 @@ export class Dashboard {
         const listen = (event: Event) => {
           if (event instanceof IndexEvent && event.data.op === 'index') {
             const sha = event.data.sha
-            startTransition(() => set(this.#sha, sha))
+            set(this.#sha, sha)
           }
         }
         events.addEventListener(IndexEvent.type, listen)
@@ -845,9 +850,7 @@ export class Dashboard {
       return workspaceKeys[0] ?? null
     },
     (get, set, workspace: string) => {
-      startTransition(() => {
-        set(this.route, {workspace})
-      })
+      return set(this.route, {workspace})
     }
   )
 
@@ -1239,6 +1242,8 @@ export class DashboardExplorer {
   >
   #options: ExplorerOptions
   #selectedLocale: DashboardLocaleSelection
+  #items = new Map<string, Atom<Promise<Array<DashboardEntry>>>>()
+  #navigationSequence = 0
   selection
   constructor(
     public dashboard: Dashboard,
@@ -1333,7 +1338,14 @@ export class DashboardExplorer {
       this.#options.onConfirm([...selection].map(String))
   })
 
-  search = atom('')
+  #search = atom('')
+  search = atom(
+    get => get(this.#search),
+    (_get, set, search: string) => {
+      set(this.#search, search)
+      void set(this.dashboard.refreshPageFor, this)
+    }
+  )
   showResults = atom(get => {
     if (!this.hideResultsUntilSearch) return true
     return Boolean(get(this.search).trim())
@@ -1378,6 +1390,7 @@ export class DashboardExplorer {
       const direction =
         sort.sortBy === sortBy && sort.direction === 'desc' ? 'asc' : 'desc'
       set(this.#sort, {sortBy, direction})
+      void set(this.dashboard.refreshPageFor, this)
     }
   )
   #filter = atom<ExplorerTypeFilters | undefined>(undefined)
@@ -1387,12 +1400,30 @@ export class DashboardExplorer {
       const filter = get(this.#filter)
       const payload = filter === filterBy ? undefined : filterBy
       set(this.#filter, payload)
+      void set(this.dashboard.refreshPageFor, this)
     }
   )
   location = atom(
     get => get(this.#location),
     (get, set, update: SetStateAction<ExplorerLocation>) => {
       set(this.#location, update)
+    }
+  )
+  navigate = atom(
+    null,
+    async (get, set, update: SetStateAction<ExplorerLocation>) => {
+      const sequence = ++this.#navigationSequence
+      const current = get(this.location)
+      const next = typeof update === 'function' ? update(current) : update
+      const allRoots = this.rootScope === 'workspace'
+      let locale: string | null = null
+      if (!allRoots && next.root) {
+        const root = this.dashboard.workspace(next.workspace).root(next.root)
+        locale = get(this.#selectedLocale) ?? get(root.selectedLocale)
+      }
+      await get(this.itemsAt(next, locale))
+      if (sequence !== this.#navigationSequence) return
+      set(this.location, next)
     }
   )
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
@@ -1535,13 +1566,48 @@ export class DashboardExplorer {
     }
   )
 
+  itemsAt(
+    location: ExplorerLocation,
+    locale: string | null
+  ): Atom<Promise<Array<DashboardEntry>>> {
+    const key = JSON.stringify([
+      location.workspace,
+      location.root ?? null,
+      location.parentId ?? null,
+      locale
+    ])
+    const cached = this.#items.get(key)
+    if (cached) return cached
+    const items = atom(async get => {
+      return this.#queryItems(get, location, locale)
+    })
+    this.#items.set(key, items)
+    return items
+  }
+
   items = atom(async get => {
-    get(this.dashboard.sha) // subscribe to content changes, todo: refine
     const location = get(this.location)
+    const allRoots = this.rootScope === 'workspace'
+    const locale = allRoots ? null : get(this.selectedLocale)
+    return get(this.itemsAt(location, locale))
+  })
+
+  async #queryItems(
+    get: Getter,
+    location: ExplorerLocation,
+    selectedLocale: string | null
+  ) {
+    get(this.dashboard.sha) // subscribe to content changes, todo: refine
     const db = get(this.dashboard.db)
     const search = get(this.search)
-    const root = get(this.root)
-    const sort = get(this.sort)
+    const root = location.root
+      ? this.dashboard.workspace(location.workspace).root(location.root)
+      : undefined
+    const isMedia = root ? get(root.isMedia) : false
+    const sort = get(this.#sort) ?? {
+      sortBy: isMedia ? 'title' : 'index',
+      direction: 'asc'
+    }
     const filter = get(this.filter)
     const searchStarted = Boolean(search.trim())
     const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
@@ -1559,7 +1625,7 @@ export class DashboardExplorer {
     if (this.hideResultsUntilSearch && !searchStarted) return []
     const allRoots = this.rootScope === 'workspace'
     if (!root && !allRoots) return []
-    const locale = allRoots ? undefined : get(this.selectedLocale)
+    const locale = allRoots ? undefined : selectedLocale
     const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
     const flatList =
       (Boolean(this.#options.condition) &&
@@ -1592,7 +1658,7 @@ export class DashboardExplorer {
       .map(child => this.dashboard.entries(child.id))
     await Promise.all(entries.map(entry => get(entry.preload)))
     return entries
-  })
+  }
 
   parentsMenu = unwrap(
     atom(async get => {
@@ -1727,11 +1793,11 @@ export class DashboardWorkspace {
       const root = get(this.dashboard.selectedRoot)
       const selectedKey = next.values().next().value
       if (!selectedKey) {
-        set(this.dashboard.route, {workspace: this.key})
+        await set(this.dashboard.route, {workspace: this.key})
         return
       }
       const selectedId = String(selectedKey)
-      set(this.dashboard.route, {
+      await set(this.dashboard.route, {
         workspace: this.key,
         root: root ?? undefined,
         entry: selectedId,
@@ -1800,19 +1866,17 @@ export class DashboardTree {
     atom(
       get => get(this.#expandedKeys),
       (get, set, next: 'init' | Set<Key>) => {
-        startTransition(() => {
-          if (next === 'init') {
-            get(this.#routeExpandedKeys).then(routeKeys => {
-              if (routeKeys.size === 0) return
-              const current = get(this.#expandedKeys)
-              const merged = new Set(current)
-              for (const key of routeKeys) merged.add(key)
-              set(this.#expandedKeys, merged)
-            })
-          } else {
-            set(this.#expandedKeys, next)
-          }
-        })
+        if (next === 'init') {
+          get(this.#routeExpandedKeys).then(routeKeys => {
+            if (routeKeys.size === 0) return
+            const current = get(this.#expandedKeys)
+            const merged = new Set(current)
+            for (const key of routeKeys) merged.add(key)
+            set(this.#expandedKeys, merged)
+          })
+        } else {
+          set(this.#expandedKeys, next)
+        }
       }
     ),
     {onMount: (setSelf: (value: 'init') => void) => setSelf('init')}
@@ -1821,17 +1885,18 @@ export class DashboardTree {
 
   selectedKeys = atom(
     get => get(this.#treeSelection),
-    (get, set, next: 'all' | Set<Key>) => {
-      startTransition(() => {
-        assert(next !== 'all', 'Selecting all items is not supported')
-        const [first] = next
-        if (first) {
-          const expandedKeys = get(this.#expandedKeys)
-          if (!expandedKeys.has(first))
-            set(this.#expandedKeys, new Set(expandedKeys).add(first))
-        }
-        set(this.#treeSelection, next)
-      })
+    async (get, set, next: 'all' | Set<Key>) => {
+      assert(next !== 'all', 'Selecting all items is not supported')
+      const [first] = next
+      await set(this.#treeSelection, next)
+      if (
+        first &&
+        get(this.workspace.dashboard.route).entry === String(first)
+      ) {
+        const expandedKeys = get(this.#expandedKeys)
+        if (!expandedKeys.has(first))
+          set(this.#expandedKeys, new Set(expandedKeys).add(first))
+      }
     }
   )
 
@@ -2034,12 +2099,6 @@ export interface DashboardFileInfoState {
   data: Infer<typeof MediaFile> | null | undefined
 }
 
-export interface DashboardEntryReferencesState {
-  pending: boolean
-  data: DashboardEntryReferences | undefined
-  scan: EntryReferenceScan | undefined
-}
-
 export interface DashboardEntryReferences {
   references: Array<DashboardEntryReference>
   total: number
@@ -2067,10 +2126,20 @@ type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
 
+export interface EntryRouteBlock {
+  confirm(): void
+  cancel(): void
+}
+
+interface NodeSelection {
+  locale: string | null
+  untranslated: boolean
+  version: SelectedVersion
+}
+
 export class DashboardEntry {
   data: Atom<DashboardEntryState>
   readyState: Atom<Promise<DashboardEntryState>>
-  routeReady: Atom<Promise<DashboardEntryState>>
   #selectedView = atom<DashboardEntryView | undefined>(undefined)
 
   constructor(
@@ -2108,12 +2177,6 @@ export class DashboardEntry {
       }
     })
     this.readyState = state
-    this.routeReady = atom(async get => {
-      const ready = await get(this.readyState)
-      if (ready.data && get(ready.data.view) === 'edit')
-        await get(ready.data.selectedNode)
-      return ready
-    })
     this.data = unwrap(state, prev => ({
       pending: true,
       data: prev?.data,
@@ -2134,8 +2197,16 @@ export class DashboardEntry {
 
   view = atom(
     get => get(this.#selectedView),
-    (get, set, view: DashboardEntryView | undefined) => {
-      startTransition(() => set(this.#selectedView, view))
+    async (get, set, view: DashboardEntryView | undefined) => {
+      if (view === 'edit') {
+        const ready = await get(this.readyState)
+        if (ready.data) {
+          const root = get(ready.data.root)
+          await loadEntryPage(get, ready.data, get(root.selectedLocale))
+        }
+      }
+      set(this.#selectedView, view)
+      await set(this.dashboard.reloadPage)
     }
   )
 }
@@ -2154,7 +2225,6 @@ export class DashboardEntryData {
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<DashboardType>
-  currentEntry: Atom<Promise<Entry | null> | Entry | null>
   overviewCells: Atom<Array<DashboardEntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
   view: WritableAtom<DashboardEntryView, [view: DashboardEntryView], void>
@@ -2163,6 +2233,66 @@ export class DashboardEntryData {
   parentIds: Atom<Array<string>>
   root: Atom<DashboardRoot>
   #translationSourceLocale = atom<string | null | undefined>(undefined)
+  #nodes = new Map<string, Atom<Promise<ReactiveNode<object>>>>()
+
+  #untranslatedFor(get: Getter, locale: string | null) {
+    return !get(this.locales).has(locale)
+  }
+
+  #sourceLocaleFor(get: Getter, locale: string | null) {
+    if (this.#untranslatedFor(get, locale))
+      return get(this.translationSourceLocale)
+    return locale
+  }
+
+  sourceLocaleFor(get: Getter, locale: string | null) {
+    return this.#sourceLocaleFor(get, locale)
+  }
+
+  #selectedVersionFor(get: Getter, locale: string | null): SelectedVersion {
+    const selected = get(this.#selection)
+    if (selected) return selected
+    const sourceLocale = this.#sourceLocaleFor(get, locale)
+    const entry = get(this.locales).get(sourceLocale)
+    assert(entry, `Entry ${this.id} has no data for locale ${sourceLocale}`)
+    return {type: 'status', status: entry.status}
+  }
+
+  currentEntryFor = dispense((locale: string | null) =>
+    atom(async (get): Promise<Entry | null> => {
+      const selected = this.#selectedVersionFor(get, locale)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const language = this.languages(sourceLocale)
+      const versions = await get(language.versionsResource)
+      const fallback = versions.values().next().value ?? null
+      if (selected.type === 'status') {
+        return versions.get(selected.status) ?? fallback
+      }
+      const activeVersion = await get(language.activeVersionResource)
+      const data = await get(this.historyData(historyDataKey(selected)))
+      if (!data) return activeVersion
+      const parsedData = parseRecord(data).data
+      return {
+        ...activeVersion,
+        title:
+          typeof parsedData.title === 'string'
+            ? parsedData.title
+            : activeVersion.title,
+        path:
+          typeof parsedData.path === 'string'
+            ? parsedData.path
+            : activeVersion.path,
+        data: parsedData
+      }
+    })
+  )
+
+  currentEntry = swr(
+    atom(async get => {
+      const root = get(this.root)
+      return get(this.currentEntryFor(get(root.selectedLocale)))
+    })
+  )
 
   customView = atom(get => {
     const type = get(this.type)
@@ -2176,7 +2306,6 @@ export class DashboardEntryData {
     public entryData: Atom<EntryData>
   ) {
     const dashboard = entry.dashboard
-    const id = entry.id
     const data = this.entryData
     this.workspaceKey = atom(get => get(data).workspace)
     this.rootKey = atom(get => get(data).root)
@@ -2195,7 +2324,7 @@ export class DashboardEntryData {
         return get(this.defaultView)
       },
       (get, set, view: DashboardEntryView) => {
-        set(this.entry.view, view)
+        return set(this.entry.view, view)
       }
     )
     this.parentId = atom(get => get(data).parentId)
@@ -2213,34 +2342,6 @@ export class DashboardEntryData {
       const root = get(this.rootKey)
       return dashboard.workspace(workspace).root(root)
     })
-    this.currentEntry = swr(
-      atom(async (get): Promise<Entry | null> => {
-        const selected = get(this.selectedVersion)
-        const locale = get(this.sourceLocale)
-        const language = this.languages(locale)
-        const versions = await get(language.versions)
-        const fallback = versions.values().next().value ?? null
-        if (selected.type === 'status') {
-          return versions.get(selected.status) ?? fallback
-        }
-        const activeVersion = await get(language.activeVersion)
-        const data = await get(this.historyData(historyDataKey(selected)))
-        if (!data) return activeVersion
-        const parsedData = parseRecord(data).data
-        return {
-          ...activeVersion,
-          title:
-            typeof parsedData.title === 'string'
-              ? parsedData.title
-              : activeVersion.title,
-          path:
-            typeof parsedData.path === 'string'
-              ? parsedData.path
-              : activeVersion.path,
-          data: parsedData
-        }
-      })
-    )
     this.overviewCells = atom(get => {
       const entry = get(this.currentEntry)
       if (!entry || entry instanceof Promise) return []
@@ -2279,19 +2380,27 @@ export class DashboardEntryData {
       if (locale && available.includes(locale)) return locale
       return available[0] ?? null
     },
-    (get, set, locale: string) => {
+    async (get, set, locale: string) => {
       if (get(this.#translationSourceLocale) === locale) return
-      startTransition(() => {
-        set(this.#translationSourceLocale, locale)
-        set(this.currentlyEditing, undefined)
-        set(this.#selection, undefined)
-      })
+      const localized = get(this.locales).get(locale)
+      assert(localized, `Entry ${this.id} has no data for locale ${locale}`)
+      await get(
+        this.#node({
+          locale,
+          untranslated: get(this.untranslated),
+          version: {type: 'status', status: localized.status}
+        })
+      )
+      set(this.#translationSourceLocale, locale)
+      set(this.currentlyEditing, undefined)
+      set(this.#selection, undefined)
+      await set(this.dashboard.reloadPage)
     }
   )
 
   sourceLocale = atom(get => {
-    if (get(this.untranslated)) return get(this.translationSourceLocale)
-    return get(get(this.root).selectedLocale)
+    const root = get(this.root)
+    return this.#sourceLocaleFor(get, get(root.selectedLocale))
   })
 
   activeStatus = atom(get => {
@@ -2305,36 +2414,35 @@ export class DashboardEntryData {
   #selection = atom<SelectedVersion>()
   selectedVersion = atom(
     (get): SelectedVersion => {
-      const current = get(this.#selection)
-      if (current) return current
-      const status = get(this.activeStatus)
-      return {type: 'status', status}
+      const root = get(this.root)
+      return this.#selectedVersionFor(get, get(root.selectedLocale))
     },
-    (get, set, next: SelectedVersion) => {
-      startTransition(() => {
-        set(this.#selection, next)
-      })
+    async (get, set, next: SelectedVersion) => {
+      await get(
+        this.#node({
+          locale: get(this.sourceLocale),
+          untranslated: get(this.untranslated),
+          version: next
+        })
+      )
+      set(this.#selection, next)
+      await set(this.dashboard.reloadPage)
     }
   )
 
-  #historyFile = atom(get => {
-    const config = get(this.dashboard.config)
-    const locale = get(this.sourceLocale)
-    const data = get(this.locales).get(locale)
-    assert(data, `No locale data found for locale ${locale}`)
-    return dashboardEntryFile(config, {
-      workspace: get(this.workspaceKey),
-      root: get(this.rootKey),
-      filePath: data.filePath
-    })
-  })
-
-  history = unwrap(
+  historyFor = dispense((locale: string | null) =>
     atom(async (get): Promise<Array<Revision>> => {
-      const file = get(this.#historyFile)
+      const config = get(this.dashboard.config)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const data = get(this.locales).get(sourceLocale)
+      assert(data, `No locale data found for locale ${sourceLocale}`)
+      const file = dashboardEntryFile(config, {
+        workspace: get(this.workspaceKey),
+        root: get(this.rootKey),
+        filePath: data.filePath
+      })
       const client = get(this.dashboard.client)
       const revisions = await client.revisions(file)
-      // Sort revisions by date
       return revisions.slice(1)
     })
   )
@@ -2347,14 +2455,17 @@ export class DashboardEntryData {
     })
   })
 
-  selectedNode = swr(
-    atom(async (get): Promise<ReactiveNode<object>> => {
-      const version = get(this.selectedVersion)
+  #node(selection: NodeSelection): Atom<Promise<ReactiveNode<object>>> {
+    const key = JSON.stringify(selection)
+    const cached = this.#nodes.get(key)
+    if (cached) return cached
+    const selected = atom(async (get): Promise<ReactiveNode<object>> => {
+      const {locale, untranslated, version} = selection
+      const localized = get(this.locales).get(locale)
+      assert(localized, `Entry ${this.id} has no data for locale ${locale}`)
       if (version.type === 'status') {
-        const untranslated = get(this.untranslated)
-        const locale = get(this.sourceLocale)
         const language = this.languages(locale)
-        const versions = await get(language.versions)
+        const versions = await get(language.versionsResource)
         const status = versions.has(version.status)
           ? version.status
           : versions.keys().next().value
@@ -2362,10 +2473,6 @@ export class DashboardEntryData {
           status,
           `No versions found for entry ${this.id} and locale ${locale}`
         )
-        if (status === get(this.activeStatus)) {
-          const editing = get(this.currentlyEditing)
-          if (editing) return editing
-        }
         if (untranslated) {
           const sourceNode = await get(language.data(status))
           const sourceValue = get(sourceNode.value) as Record<string, unknown>
@@ -2376,9 +2483,8 @@ export class DashboardEntryData {
         }
         return get(language.data(status))
       }
-      const locale = get(this.sourceLocale)
       const language = this.languages(locale)
-      const activeVersion = await get(language.activeVersion)
+      const activeVersion = await get(language.activeVersionResource)
       const data = await get(this.historyData(historyDataKey(version)))
       const type = get(this.type).type
       const historyData = data ? parseRecord(data).data : activeVersion.data
@@ -2397,6 +2503,35 @@ export class DashboardEntryData {
         }),
         true
       )
+    })
+    this.#nodes.set(key, selected)
+    return selected
+  }
+
+  selectedNodeFor = dispense((locale: string | null) =>
+    atom(async get => {
+      const version = this.#selectedVersionFor(get, locale)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      if (version.type === 'status') {
+        const editing = get(this.currentlyEditing)
+        const active = get(this.locales).get(sourceLocale)
+        if (editing && active && version.status === active.status)
+          return editing
+      }
+      return get(
+        this.#node({
+          locale: sourceLocale,
+          untranslated: this.#untranslatedFor(get, locale),
+          version
+        })
+      )
+    })
+  )
+
+  selectedNode = swr(
+    atom(async get => {
+      const root = get(this.root)
+      return get(this.selectedNodeFor(get(root.selectedLocale)))
     })
   )
 
@@ -2503,16 +2638,7 @@ export class DashboardEntryData {
       scan: result.scan
     } satisfies DashboardEntryReferences
   })
-
-  #incomingReferencesPending = atomWithPending(this.#incomingReferences)
-
-  incomingReferencesState: Atom<DashboardEntryReferencesState> = atom(get => {
-    const [pending, data] = get(this.#incomingReferencesPending)
-    const scan = pending ? get(this.dashboard.entryReferenceScan) : data?.scan
-    return {pending, data, scan}
-  })
-
-  incomingReferences = swr(this.#incomingReferences)
+  incomingReferencesResource = this.#incomingReferences
 
   canPublish = atom(get => {
     return get(this.parentInfo).every(parent => parent.status === 'published')
@@ -2528,40 +2654,51 @@ export class DashboardEntryData {
 
   icon = atom(get => get(this.type).icon)
 
-  children = swr(
-    atom(async get => {
-      const root = get(this.root)
-      const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
-      return queryTreeChildren(get, root, this.id, orderChildrenBy)
-    })
-  )
+  childrenFor = dispense((locale: string | null) => {
+    return swr(
+      atom(async get => {
+        const root = get(this.root)
+        const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
+        return queryTreeChildren(get, root, this.id, orderChildrenBy, locale)
+      })
+    )
+  })
+
+  children = atom(get => {
+    const root = get(this.root)
+    return get(this.childrenFor(get(root.selectedLocale)))
+  })
 
   untranslated = atom(get => {
     const root = get(this.root)
-    const locales = get(this.locales)
-    const locale = get(root.selectedLocale)
-    return !locales.has(locale)
+    return this.#untranslatedFor(get, get(root.selectedLocale))
   })
 
-  availableStatuses = swr(
+  availableStatusesFor = dispense((locale: string | null) =>
     atom(async get => {
-      const locale = get(this.sourceLocale)
-      const language = this.languages(locale)
-      const versions = await get(language.versions)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const versions = await get(this.languages(sourceLocale).versionsResource)
       return [...versions.keys()]
     })
   )
 
-  activeVersion = swr(
+  activeVersionFor = dispense((locale: string | null) =>
     atom(async get => {
       const locales = get(this.locales)
-      const locale = get(this.sourceLocale)
-      const entry = locales.get(locale)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const entry = locales.get(sourceLocale)
       if (entry) return entry
       for (const fallback of locales.values()) {
         if (fallback.title) return fallback
       }
       return null
+    })
+  )
+
+  activeVersion = swr(
+    atom(async get => {
+      const root = get(this.root)
+      return get(this.activeVersionFor(get(root.selectedLocale)))
     })
   )
 
@@ -2572,12 +2709,11 @@ export class DashboardEntryData {
     })
   )
 
-  parentNeedsTranslation = swr(
+  parentNeedsTranslationFor = dispense((locale: string | null) =>
     atom(async get => {
-      if (!get(this.untranslated)) return false
+      if (!this.#untranslatedFor(get, locale)) return false
       const parentId = get(this.parentId)
       if (!parentId) return false
-      const locale = get(get(this.root).selectedLocale)
       if (!locale) return false
       const db = get(this.dashboard.db)
       const parentLink = await db.first({
@@ -2614,13 +2750,13 @@ export class DashboardEntryData {
     set(this.#previewRetry, current => current + 1)
   })
 
-  previewEntry = swr(
+  previewEntryFor = dispense((locale: string | null) =>
     atom(async get => {
       if (!get(this.hasPreview)) return null
-      const locale = get(get(this.root).selectedLocale)
-      const language = this.languages(locale)
-      const activeVersion = await get(language.activeVersion)
-      const node = await get(this.selectedNode)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const language = this.languages(sourceLocale)
+      const activeVersion = await get(language.activeVersionResource)
+      const node = await get(this.selectedNodeFor(locale))
       const value = get(node.value)
       if (!isObject<Record<string, unknown>>(value)) return activeVersion
       const title =
@@ -2693,57 +2829,73 @@ export class DashboardEntryData {
     })
   })
 
-  previewUrl = atom(async get => {
-    if (get(this.preview) !== true) return undefined
-    get(this.#previewRetry)
-    const client = get(this.dashboard.client)
-    if (!client || typeof client.previewToken !== 'function') return undefined
-    const config = get(this.dashboard.config)
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    const activeVersion = await get(this.languages(locale).activeVersion)
-    if (!activeVersion) return undefined
-    try {
-      const base = new URL(
-        config.handlerUrl ?? '',
-        Config.baseUrl(config) ??
-          (typeof location === 'undefined' ? 'http://localhost' : location.href)
+  previewUrlFor = dispense((locale: string | null) =>
+    atom(async get => {
+      if (get(this.preview) !== true) return undefined
+      get(this.#previewRetry)
+      const client = get(this.dashboard.client)
+      if (!client || typeof client.previewToken !== 'function') return undefined
+      const config = get(this.dashboard.config)
+      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const activeVersion = await get(
+        this.languages(sourceLocale).activeVersionResource
       )
-      const origin = base.origin
-      if (get(this.dashboard.previewSessionOrigins)[origin])
-        return new URL(activeVersion.url, origin).toString()
+      if (!activeVersion) return undefined
+      try {
+        const base = new URL(
+          config.handlerUrl ?? '',
+          Config.baseUrl(config) ??
+            (typeof location === 'undefined'
+              ? 'http://localhost'
+              : location.href)
+        )
+        const origin = base.origin
+        if (get(this.dashboard.previewSessionOrigins)[origin])
+          return new URL(activeVersion.url, origin).toString()
 
-      const previewToken = await this.dashboard.previewSessionToken(
-        origin,
-        client
-      )
-      base.searchParams.set('preview', previewToken)
-      base.searchParams.set('returnTo', activeVersion.url)
-      return base.toString()
-    } catch {
-      return undefined
-    }
-  })
+        const previewToken = await this.dashboard.previewSessionToken(
+          origin,
+          client
+        )
+        base.searchParams.set('preview', previewToken)
+        base.searchParams.set('returnTo', activeVersion.url)
+        return base.toString()
+      } catch {
+        return undefined
+      }
+    })
+  )
 
   languages = dispense((locale: string | null) => {
     return new DashboardEntryLanguage(this, locale)
   })
 
-  routeBlock = atom<{confirm: () => void} | null>(null)
+  routeBlock = atom<EntryRouteBlock | null>(null)
 
-  needsBlock = atom(null, (get, set, confirm: () => void): boolean => {
-    const currentNode = get(this.currentlyEditing)
-    if (!currentNode) return false
-    const isDirty = get(currentNode.isDirty)
-    if (isDirty)
-      set(this.routeBlock, {
-        confirm: () => {
+  needsBlock = atom(
+    null,
+    (get, set, signal: AbortSignal): boolean | Promise<boolean> => {
+      if (signal.aborted) return false
+      const currentNode = get(this.currentlyEditing)
+      if (!currentNode || !get(currentNode.isDirty)) return true
+
+      get(this.routeBlock)?.cancel()
+      return new Promise(resolve => {
+        let settled = false
+        const finish = (allowed: boolean) => {
+          if (settled) return
+          settled = true
+          signal.removeEventListener('abort', cancel)
           set(this.routeBlock, null)
-          confirm()
+          resolve(allowed)
         }
+        const confirm = () => finish(true)
+        const cancel = () => finish(false)
+        signal.addEventListener('abort', cancel, {once: true})
+        set(this.routeBlock, {confirm, cancel})
       })
-    return isDirty
-  })
+    }
+  )
 
   currentlyEditing = atom<ReactiveNode<object>>()
 
@@ -2990,37 +3142,37 @@ export class DashboardEntryLanguage {
     public locale: string | null
   ) {}
 
-  versions = swr(
-    atom(async get => {
-      get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
-      const loader = get(this.entry.dashboard.versionLoader)
-      const [entries] = await loader(this.entry.id)
-      if (!entries)
-        throw new Error(`No versions found for entry ${this.entry.id}`)
-      const policy = get(this.entry.dashboard.policy)
-      const readable = entries.filter(entry => {
-        return entry.locale === this.locale && policy.canRead(entry)
-      })
-      // order by draft, published, archived
-      const order = ['draft', 'published', 'archived']
-      readable.sort((a, b) => {
-        return order.indexOf(a.status) - order.indexOf(b.status)
-      })
-      return new Map(readable.map(entry => [entry.status, entry] as const))
+  versionsResource = atom(async get => {
+    get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
+    const loader = get(this.entry.dashboard.versionLoader)
+    const [entries] = await loader(this.entry.id)
+    if (!entries)
+      throw new Error(`No versions found for entry ${this.entry.id}`)
+    const policy = get(this.entry.dashboard.policy)
+    const readable = entries.filter(entry => {
+      return entry.locale === this.locale && policy.canRead(entry)
     })
-  )
+    // order by draft, published, archived
+    const order = ['draft', 'published', 'archived']
+    readable.sort((a, b) => {
+      return order.indexOf(a.status) - order.indexOf(b.status)
+    })
+    return new Map(readable.map(entry => [entry.status, entry] as const))
+  })
 
-  activeVersion = swr(
-    atom(async get => {
-      const versions = await get(this.versions)
-      const first = versions.values().next().value
-      assert(
-        first,
-        `No versions found for entry ${this.entry.id} and locale ${this.locale}`
-      )
-      return first
-    })
-  )
+  versions = swr(this.versionsResource)
+
+  activeVersionResource = atom(async get => {
+    const versions = await get(this.versionsResource)
+    const first = versions.values().next().value
+    assert(
+      first,
+      `No versions found for entry ${this.entry.id} and locale ${this.locale}`
+    )
+    return first
+  })
+
+  activeVersion = swr(this.activeVersionResource)
 
   anchors = swr(
     atom(async (get): Promise<Array<EntryAnchorTarget>> => {
@@ -3033,7 +3185,7 @@ export class DashboardEntryLanguage {
   data = dispense((status: EntryStatus) => {
     return atom(async get => {
       const type = get(this.entry.type).type
-      const versions = await get(this.versions)
+      const versions = await get(this.versionsResource)
       const activeStatus = versions.keys().next().value
       const version = versions.get(status)
       assert(version, `No version found`)
@@ -3167,17 +3319,17 @@ export class DashboardRoot {
       if (preference) return preference
       return i18n?.locales[0] ?? null
     },
-    (get, set, locale: string) => {
+    async (get, set, locale: string) => {
       const route = get(this.workspace.dashboard.route)
-      startTransition(() => {
-        set(this.workspace.dashboard.route, {
-          workspace: this.workspace.key,
-          root: this.key,
-          entry: route.entry,
-          locale
-        })
-        set(this.#languagePreference, locale)
+      const changed = await set(this.workspace.dashboard.route, {
+        workspace: this.workspace.key,
+        root: this.key,
+        entry: route.entry,
+        locale
       })
+      if (changed) {
+        set(this.#languagePreference, locale)
+      }
     }
   )
 
@@ -3208,9 +3360,12 @@ export class DashboardRoot {
       root: this.key
     })
   })
-  children = atom(get =>
-    queryTreeChildren(get, this, null, this.orderChildrenBy)
-  )
+  childrenFor = dispense((locale: string | null) => {
+    return atom(get =>
+      queryTreeChildren(get, this, null, this.orderChildrenBy, locale)
+    )
+  })
+  children = atom(get => get(this.childrenFor(get(this.selectedLocale))))
   isMedia = atom(get => get(this.#settings).isMediaRoot)
 
   hasChildren = atom(async get => {
@@ -3240,14 +3395,14 @@ async function queryTreeChildren(
   get: Getter,
   root: DashboardRoot,
   parentId: null | string,
-  orderByAtom: Atom<Order | Array<Order> | undefined>
+  orderByAtom: Atom<Order | Array<Order> | undefined>,
+  locale: string | null
 ) {
   get(root.workspace.dashboard.sha) // subscribe to content changes
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(root.workspace.dashboard.db)
   const policy = get(root.workspace.dashboard.policy)
   const orderBy = get(orderByAtom)
-  const locale = get(root.selectedLocale)
   const children = await db.find({
     select: {
       id: Entry.id,
@@ -3344,17 +3499,6 @@ function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
     const current = get(withPrev)
     return current ?? get(asyncAtom)
   })
-}
-
-function isPromiseLike<Value>(
-  value: Value | PromiseLike<Value>
-): value is PromiseLike<Value> {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'then' in value &&
-    typeof value.then === 'function'
-  )
 }
 
 function mutationQueueState(

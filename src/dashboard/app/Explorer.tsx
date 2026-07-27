@@ -39,6 +39,7 @@ const styles = styler(css)
 export interface ExplorerProps {
   controls?: ReactNode
   explorer: DashboardExplorer
+  items?: Array<DashboardEntry>
   titleControls?: ReactNode
 }
 
@@ -46,16 +47,19 @@ export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
   explorer: DashboardExplorer
+  items?: Array<DashboardEntry>
   titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
   explorer: DashboardExplorer
+  items?: Array<DashboardEntry>
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
+  items?: Array<DashboardEntry>
 }
 
 interface ExplorerHeaderMainProps {
@@ -75,13 +79,31 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
+interface ExplorerSearchContentProps extends ExplorerSearchProps {
+  items: Array<DashboardEntry>
+}
+
+function ExplorerSearch(props: ExplorerSearchProps) {
+  if (props.items)
+    return <ExplorerSearchContent {...props} items={props.items} />
+  return <ExplorerSearchResource {...props} />
+}
+
+function ExplorerSearchResource(props: ExplorerSearchProps) {
   const items = useAtomValue(
     useMemo(
-      () => unwrap(explorer.items, previous => previous ?? []),
-      [explorer]
+      () => unwrap(props.explorer.items, previous => previous ?? []),
+      [props.explorer]
     )
   )
+  return <ExplorerSearchContent {...props} items={items} />
+}
+
+function ExplorerSearchContent({
+  autoFocus,
+  explorer,
+  items
+}: ExplorerSearchContentProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -377,6 +399,7 @@ export function ExplorerHeader({
   autoFocusSearch,
   controls,
   explorer,
+  items,
   titleControls
 }: ExplorerHeaderProps) {
   return (
@@ -384,7 +407,11 @@ export function ExplorerHeader({
       <div className={styles.ExplorerHeader.content()}>
         <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
         <div className={styles.Explorer.searchSlot()}>
-          <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
+          <ExplorerSearch
+            autoFocus={autoFocusSearch}
+            explorer={explorer}
+            items={items}
+          />
         </div>
         <div className={styles.Explorer.toolbar()}>
           <ExplorerToolbar explorer={explorer} />
@@ -395,25 +422,31 @@ export function ExplorerHeader({
   )
 }
 
-export function ExplorerBody({explorer}: ExplorerBodyProps) {
+export function ExplorerBody({explorer, items}: ExplorerBodyProps) {
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} />
+        <ExplorerList explorer={explorer} items={items} />
       </div>
     </RailBody>
   )
 }
 
-export function Explorer({controls, explorer, titleControls}: ExplorerProps) {
+export function Explorer({
+  controls,
+  explorer,
+  items,
+  titleControls
+}: ExplorerProps) {
   return (
     <>
       <ExplorerHeader
         controls={controls}
         explorer={explorer}
+        items={items}
         titleControls={titleControls}
       />
-      <ExplorerBody explorer={explorer} />
+      <ExplorerBody explorer={explorer} items={items} />
     </>
   )
 }

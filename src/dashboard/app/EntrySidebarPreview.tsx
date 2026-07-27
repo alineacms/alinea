@@ -1,4 +1,4 @@
-import {Button, ProgressCircle} from '#/components.js'
+import {Button} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
@@ -11,6 +11,7 @@ import {
   IcRoundRefresh
 } from '../icons.js'
 import {DashboardEntryData, useDashboard} from '../store.js'
+import type {EntryPageData} from '../store/loaders/Entry.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 
@@ -18,9 +19,10 @@ const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
   entry: DashboardEntryData
+  page: EntryPageData
 }
 
-export function EntrySidebarPreview({entry}: EntrySidebarPreviewProps) {
+export function EntrySidebarPreview({entry, page}: EntrySidebarPreviewProps) {
   const preview = useAtomValue(entry.preview)
   if (!preview)
     return (
@@ -31,10 +33,10 @@ export function EntrySidebarPreview({entry}: EntrySidebarPreviewProps) {
   if (preview === true)
     return (
       <Suspense fallback={<EntrySidebarBrowserPreviewFallback />}>
-        <EntrySidebarBrowserPreview entry={entry} />
+        <EntrySidebarBrowserPreview entry={entry} page={page} />
       </Suspense>
     )
-  return <EntrySidebarComponentPreview entry={entry} preview={preview} />
+  return <EntrySidebarComponentPreview preview={preview} page={page} />
 }
 
 interface EntrySidebarPreviewMessageProps {
@@ -52,15 +54,16 @@ function EntrySidebarPreviewMessage({
 }
 
 interface EntrySidebarComponentPreviewProps {
-  entry: DashboardEntryData
   preview: Exclude<Preview, boolean>
+  page: EntryPageData
 }
 
 function EntrySidebarComponentPreview({
-  entry,
-  preview
+  preview,
+  page
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry = useAtomValue(entry.previewEntry)
+  const previewEntry =
+    page.sidebar.type === 'preview' ? page.sidebar.entry : null
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage>
@@ -79,6 +82,7 @@ function EntrySidebarComponentPreview({
 
 interface EntrySidebarBrowserPreviewProps {
   entry: DashboardEntryData
+  page: EntryPageData
 }
 
 interface EntrySidebarBrowserPreviewHeaderProps {
@@ -145,24 +149,23 @@ function EntrySidebarBrowserPreviewFallback() {
         canOpenPreview={false}
         reloadLabel="Reload preview"
       />
-      <div className={styles.EntrySidebarPreview.browser()}>
-        <div className={styles.EntrySidebarPreview.loading()}>
-          <ProgressCircle isIndeterminate aria-label="Loading preview" />
-        </div>
-      </div>
+      <div className={styles.EntrySidebarPreview.browser()} />
     </div>
   )
 }
 
-function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
-  const previewUrl = useAtomValue(entry.previewUrl)
+function EntrySidebarBrowserPreview({
+  entry,
+  page
+}: EntrySidebarBrowserPreviewProps) {
+  const previewUrl =
+    page.sidebar.type === 'preview' ? page.sidebar.url : undefined
   const previewPayloadSignal = useAtomValue(entry.previewPayloadSignal)
   const updatePreviewPayload = useSetAtom(entry.updatePreviewPayload)
   const retryPreviewUrl = useSetAtom(entry.retryPreviewUrl)
   const iframe = useRef<HTMLIFrameElement>(null)
   const previewPayload = useRef<string | undefined>(undefined)
   const [frameVersion, setFrameVersion] = useState(0)
-  const [loading, setLoading] = useState(true)
   const hasPreviewListener = useRef(false)
   const dashboard = useDashboard()
   const setMetadata = useSetAtom(dashboard.previewMetadata)
@@ -176,7 +179,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
   }, [previewUrl])
 
   useEffect(() => {
-    setLoading(true)
     setFrameVersion(0)
     hasPreviewListener.current = false
   }, [previewUrl, targetOrigin])
@@ -252,7 +254,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
       retryPreviewUrl()
       return
     }
-    setLoading(true)
     if (hasPreviewListener.current) post(PreviewAction.Reload)
     else setFrameVersion(version => version + 1)
   }
@@ -268,11 +269,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
         onOpen={openInNewTab}
       />
       <div className={styles.EntrySidebarPreview.browser()}>
-        {previewUrl && loading && (
-          <div className={styles.EntrySidebarPreview.loading()}>
-            <ProgressCircle isIndeterminate aria-label="Loading preview" />
-          </div>
-        )}
         {previewUrl ? (
           <iframe
             key={`${previewUrl}:${frameVersion}`}
@@ -281,7 +277,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
             sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
             src={previewUrl}
-            onLoad={() => setLoading(false)}
           />
         ) : (
           <p className={styles.EntrySidebarPreview.browserMessage()}>

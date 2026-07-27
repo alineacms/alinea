@@ -6,6 +6,7 @@ import {
   type DashboardEntryData,
   ReactiveNode
 } from '#/dashboard/store.js'
+import type {EntryPageData} from '#/dashboard/store/loaders/Entry.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 
@@ -40,6 +41,9 @@ const entry = {
   }),
   retryPreviewUrl: atom(null, () => {})
 } as unknown as DashboardEntryData
+const page = {
+  sidebar: {type: 'preview', entry: null, url: '/preview-frame'}
+} as EntryPageData
 
 function PreviewTitleField() {
   const titleField = node.field('title')
@@ -61,7 +65,7 @@ export function EntrySidebarPreviewStory() {
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <PreviewTitleField />
-      <EntrySidebarPreview entry={entry} />
+      <EntrySidebarPreview entry={entry} page={page} />
     </DashboardScopeInternal>
   )
 }

@@ -279,8 +279,8 @@ function ExplorerTableLoadedRow({
 }
 
 function ExplorerTableRow(props: ExplorerTableRowProps) {
-  const {data, pending} = useAtomValue(props.entry.data)
-  if (pending || !data) return <ExplorerTableLoadingRow {...props} />
+  const {data} = useAtomValue(props.entry.data)
+  if (!data) return <ExplorerTableLoadingRow {...props} />
   return <ExplorerTableLoadedRow {...props} data={data} />
 }
 

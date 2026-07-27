@@ -28,17 +28,24 @@ import css from './WorkspaceRoots.module.css'
 const styles = styler(css)
 
 interface WorkspaceRootsProps {
+  canManageMembers: boolean
   dashboard: Dashboard
 }
 
-export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
+export function WorkspaceRoots({
+  canManageMembers,
+  dashboard
+}: WorkspaceRootsProps) {
   const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatarMenu dashboard={dashboard} />
+        <WorkspaceAvatarMenu
+          dashboard={dashboard}
+          canManageMembers={canManageMembers}
+        />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
@@ -47,7 +54,10 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
         <MutationQueueStatus dashboard={dashboard} openOnFail />
-        <WorkspaceProfileMenu dashboard={dashboard} />
+        <WorkspaceProfileMenu
+          dashboard={dashboard}
+          canManageMembers={canManageMembers}
+        />
       </div>
     </aside>
   )
@@ -77,9 +87,11 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   )
 }
 
-function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
+function WorkspaceProfileMenu({
+  canManageMembers,
+  dashboard
+}: WorkspaceRootsProps) {
   const user = useAtomValue(dashboard.currentUser)
-  const canManageMembers = useAtomValue(dashboard.canManageMembers)
   const config = useAtomValue(dashboard.config)
   const canLogout = useAtomValue(dashboard.canLogout)
   const [theme, setTheme] = useAtom(dashboard.theme)

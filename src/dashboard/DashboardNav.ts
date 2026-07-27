@@ -1,10 +1,14 @@
-export interface DashboardRoute {
-  page?: 'entry' | 'users'
+export interface Route {
+  page: 'entry' | 'users'
   workspace?: string
   root?: string
   entry?: string
   locale?: string
 }
+
+export type RouteUpdate = Partial<Route>
+
+export type DashboardRoute = RouteUpdate
 
 export const nav = {
   users() {

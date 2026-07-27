@@ -7,14 +7,7 @@ import {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {
-  type ComponentType,
-  memo,
-  PropsWithChildren,
-  useEffect,
-  useState,
-  useTransition
-} from 'react'
+import {type ComponentType, memo, PropsWithChildren, useEffect} from 'react'
 import {
   EditorScope,
   EntryScope,
@@ -36,6 +29,9 @@ import {
   DashboardSection,
   ReactiveNode
 } from '../store/Dashboard.js'
+import type {EntryPageData} from '../store/loaders/Entry.js'
+import type {ExplorerPageData} from '../store/loaders/Explorer.js'
+import type {LoadedRoute, RootPageData} from '../store/loaders/Route.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'
@@ -54,29 +50,30 @@ const styles = styler(css)
 
 export interface EditorProps {
   dashboard: Dashboard
+  page: LoadedRoute
 }
 
-export function Editor({dashboard}: EditorProps) {
-  const focused = useAtomValue(dashboard.focused)
-  if (!focused) return <Rail main />
-  if ('entry' in focused) return <EntryEditor entry={focused.entry} />
-  if ('missingEntry' in focused)
+export function Editor({dashboard, page}: EditorProps) {
+  if (page.type === 'entry') return <EntryEditor page={page} />
+  if (page.type === 'missing-entry')
     return (
       <MissingEntry
         dashboard={dashboard}
-        entryId={focused.missingEntry}
-        root={focused.root}
+        entryId={page.entryId}
+        root={page.root}
       />
     )
-  if ('missingRoot' in focused)
+  if (page.type === 'missing-root')
     return (
       <MissingRoot
         dashboard={dashboard}
-        rootKey={focused.missingRoot}
-        root={focused.root}
+        rootKey={page.rootKey}
+        root={page.root}
       />
     )
-  return <RootEditor root={focused.root} />
+  if (page.type === 'root') return <RootEditor page={page} />
+  if (page.type === 'explorer') return <ExplorerEditor page={page} />
+  return <Rail main />
 }
 
 interface MissingEntryProps {
@@ -178,10 +175,25 @@ interface RootEditorProps {
   root: DashboardRoot
 }
 
-function RootEditor({root}: RootEditorProps) {
+interface LoadedRootEditorProps {
+  page: RootPageData
+}
+
+function RootEditor({page}: LoadedRootEditorProps) {
+  const View = useAtomValue(page.root.view)
+  if (!View) return <Rail main />
+  return <CustomRootEditor root={page.root} view={View} />
+}
+
+interface ExplorerEditorProps {
+  page: ExplorerPageData
+}
+
+function ExplorerEditor({page}: ExplorerEditorProps) {
+  const {root} = page
   const View = useAtomValue(root.view)
   if (View) return <CustomRootEditor root={root} view={View} />
-  return <DefaultRootEditor root={root} />
+  return <DefaultRootEditor page={page} />
 }
 
 interface CustomRootEditorProps {
@@ -200,12 +212,14 @@ function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
   )
 }
 
-function DefaultRootEditor({root}: RootEditorProps) {
+function DefaultRootEditor({page}: ExplorerEditorProps) {
+  const {root} = page
   const route = useAtomValue(root.workspace.dashboard.route)
   return (
     <Rail main>
       <Explorer
         explorer={root.explorer}
+        items={page.items}
         titleControls={
           route.entry ? <RootOverviewControls root={root} /> : undefined
         }
@@ -248,7 +262,7 @@ function RootOverviewControlsButton({entry}: RootOverviewControlsButtonProps) {
 }
 
 interface EntryEditorProps {
-  entry: DashboardEntryData
+  page: EntryPageData
 }
 
 interface EntryViewToggleProps {
@@ -258,7 +272,6 @@ interface EntryViewToggleProps {
 function EntryViewToggle({entry}: EntryViewToggleProps) {
   const view = useAtomValue(entry.view)
   const setView = useSetAtom(entry.view)
-  const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
@@ -267,29 +280,23 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       aria-label={label}
       appearance="plain"
       icon={ViewIcon}
-      isDisabled={isPending}
       size="icon"
-      onPress={() => {
-        startTransition(() => {
-          setView(nextView)
-        })
-      }}
+      onPress={() => setView(nextView)}
     />
   )
 }
 
-function EntryEditor({entry}: EntryEditorProps) {
+function EntryEditor({page}: EntryEditorProps) {
+  const {entry, node} = page
   const View = useAtomValue(entry.customView)
   const isUntranslated = useAtomValue(entry.untranslated)
-  const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
-  const [, startTransition] = useTransition()
   const saveDraft = useSetAtom(entry.saveDraft)
   const publishEdits = useSetAtom(entry.publishEdits)
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
-  const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
+  const routeBlock = useAtomValue(entry.routeBlock)
   const [isSidebarOpen, setSidebarOpen] = useAtom(
     entry.dashboard.entrySideBarOpen
   )
@@ -299,23 +306,17 @@ function EntryEditor({entry}: EntryEditorProps) {
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   const discardAndConfirm = () => {
-    startTransition(() => {
-      reset()
-      routeBlock?.confirm()
-    })
+    reset()
+    routeBlock?.confirm()
   }
 
-  const saveAndConfirm = () => {
-    startTransition(async () => {
-      if (mediaDraftsDisabled) {
-        await publishEdits(node)
-      } else {
-        await saveDraft(node)
-      }
-      startTransition(() => {
-        routeBlock?.confirm()
-      })
-    })
+  const saveAndConfirm = async () => {
+    if (mediaDraftsDisabled) {
+      await publishEdits(node)
+    } else {
+      await saveDraft(node)
+    }
+    routeBlock?.confirm()
   }
 
   useEffect(() => {
@@ -329,7 +330,7 @@ function EntryEditor({entry}: EntryEditorProps) {
         <RailContent>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
-              <EntryTranslationBanner entry={entry} />
+              <EntryTranslationBanner entry={entry} page={page} />
             </div>
           )}
 
@@ -370,6 +371,7 @@ function EntryEditor({entry}: EntryEditorProps) {
           ) : undefined
         }
         entry={entry}
+        page={page}
         isSidebarOpen={isSidebarOpen}
         node={node}
         onSidebarOpenChange={hasSidebar ? setSidebarOpen : undefined}
@@ -385,7 +387,7 @@ function EntryEditor({entry}: EntryEditorProps) {
     <>
       <DashboardModal
         isOpen={Boolean(routeBlock)}
-        onOpenChange={open => !open && setRouteBlock(null)}
+        onOpenChange={open => !open && routeBlock?.cancel()}
       >
         {routeBlock && (
           <DashboardModalDialog label="Confirm navigation">
@@ -406,7 +408,11 @@ function EntryEditor({entry}: EntryEditorProps) {
       <EntryScope entry={entry}>
         {mainEditor}
         {hasSidebar && isSidebarOpen && (
-          <EntrySidebar entry={entry} onOpenChange={setSidebarOpen} />
+          <EntrySidebar
+            entry={entry}
+            page={page}
+            onOpenChange={setSidebarOpen}
+          />
         )}
       </EntryScope>
     </>

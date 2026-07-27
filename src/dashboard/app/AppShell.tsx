@@ -1,10 +1,10 @@
-import {Button, ProgressCircle} from '#/components.js'
+import {Button} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import {DashboardScopeInternal} from '../store.js'
 import type {Dashboard} from '../store/Dashboard.js'
+import type {LoadedRoute} from '../store/loaders/Route.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
@@ -23,22 +23,27 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.initialContentAvailable)
+  const page = useAtomValue(dashboard.page)
+  const navigationPending = useAtomValue(dashboard.navigation.pending)
   return (
-    <main className={styles.AppShell()}>
-      <DashboardScopeInternal dashboard={dashboard}>
-        <AppShellContent dashboard={dashboard} />
-      </DashboardScopeInternal>
+    <main
+      aria-busy={navigationPending !== undefined}
+      className={styles.AppShell()}
+      data-navigation-pending={navigationPending ? '' : undefined}
+    >
+      <AppShellContent dashboard={dashboard} page={page} />
     </main>
   )
 }
 
-function AppShellContent({dashboard}: AppShellProps) {
-  const workspaces = useAtomValue(dashboard.workspaces)
-  const route = useAtomValue(dashboard.route)
-  const canManageMembers = useAtomValue(dashboard.canManageMembers)
+interface AppShellContentProps extends AppShellProps {
+  page: LoadedRoute
+}
 
-  if (route.page === 'users' && canManageMembers) {
+function AppShellContent({dashboard, page}: AppShellContentProps) {
+  const workspaces = useAtomValue(dashboard.workspaces)
+
+  if (page.type === 'users') {
     return (
       <div className={styles.AppShellWorkspace()}>
         <UsersPageSidebar dashboard={dashboard} />
@@ -52,13 +57,13 @@ function AppShellContent({dashboard}: AppShellProps) {
   if (workspaces.length === 0) {
     return (
       <NoWorkspaceAccess
-        canManageMembers={canManageMembers}
+        canManageMembers={page.canManageMembers}
         dashboard={dashboard}
       />
     )
   }
 
-  return <AppShellWorkspace dashboard={dashboard} />
+  return <AppShellWorkspace dashboard={dashboard} page={page} />
 }
 
 interface NoWorkspaceAccessProps {
@@ -97,7 +102,7 @@ function NoWorkspaceAccess({
   )
 }
 
-function AppShellWorkspace({dashboard}: AppShellProps) {
+function AppShellWorkspace({dashboard, page}: AppShellContentProps) {
   const currentWorkspace = useAtomValue(dashboard.currentWorkspace)
   assert(currentWorkspace, 'No workspace selected')
   const roots = useAtomValue(currentWorkspace.roots)
@@ -105,7 +110,10 @@ function AppShellWorkspace({dashboard}: AppShellProps) {
   if (roots.length === 0) {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <WorkspaceRoots dashboard={dashboard} />
+        <WorkspaceRoots
+          dashboard={dashboard}
+          canManageMembers={page.canManageMembers}
+        />
         <div className={styles.AppShellContent()}>
           <Sidebar />
           <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -124,11 +132,17 @@ function AppShellWorkspace({dashboard}: AppShellProps) {
 
   return (
     <div className={styles.AppShellWorkspace()}>
-      <WorkspaceRoots dashboard={dashboard} />
+      <WorkspaceRoots
+        dashboard={dashboard}
+        canManageMembers={page.canManageMembers}
+      />
       <div className={styles.AppShellContent()}>
         <Sidebar>
           <SidebarHeader>
-            <WorkspaceMenu dashboard={dashboard} />
+            <WorkspaceMenu
+              dashboard={dashboard}
+              canManageMembers={page.canManageMembers}
+            />
           </SidebarHeader>
 
           <SidebarTree dashboard={dashboard} />
@@ -138,26 +152,16 @@ function AppShellWorkspace({dashboard}: AppShellProps) {
           <DashboardMeta dashboard={dashboard} />
         </Suspense>
 
-        <EditorBoundary dashboard={dashboard} />
+        <EditorBoundary dashboard={dashboard} page={page} />
       </div>
     </div>
   )
 }
 
-function EditorBoundary({dashboard}: AppShellProps) {
+function EditorBoundary({dashboard, page}: AppShellContentProps) {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<EditorLoading />}>
-        <Editor dashboard={dashboard} />
-      </Suspense>
+      <Editor dashboard={dashboard} page={page} />
     </ErrorBoundary>
-  )
-}
-
-function EditorLoading() {
-  return (
-    <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-      <ProgressCircle isIndeterminate aria-label="Loading editor" />
-    </Rail>
   )
 }

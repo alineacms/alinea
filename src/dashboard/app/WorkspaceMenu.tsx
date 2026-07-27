@@ -40,6 +40,7 @@ import css from './WorkspaceMenu.module.css'
 const styles = styler(css)
 
 interface WorkspaceMenuProps {
+  canManageMembers: boolean
   dashboard: Dashboard
 }
 
@@ -122,7 +123,10 @@ function WorkspaceSelectorMenu({
   )
 }
 
-export function WorkspaceAvatarMenu({dashboard}: WorkspaceMenuProps) {
+export function WorkspaceAvatarMenu({
+  canManageMembers,
+  dashboard
+}: WorkspaceMenuProps) {
   const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
   const color = useAtomValue(workspace.color)
@@ -132,6 +136,7 @@ export function WorkspaceAvatarMenu({dashboard}: WorkspaceMenuProps) {
     <WorkspaceSelectorMenu
       dashboard={dashboard}
       ariaLabel="Workspace"
+      includeUsersLink={canManageMembers}
       popoverProps={{placement: 'right top', offset: 16}}
       label={
         <Button
@@ -189,9 +194,11 @@ function SearchPopup() {
   )
 }
 
-export function WorkspaceMenu({dashboard}: WorkspaceMenuProps) {
+export function WorkspaceMenu({
+  canManageMembers,
+  dashboard
+}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
-  const canManageMembers = useAtomValue(dashboard.canManageMembers)
   const selected = useAtomValue(dashboard.selectedWorkspace)
   const workspace = dashboard.workspace(selected)
   const label = useAtomValue(workspace.label)

@@ -1,6 +1,6 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, startTransition, useState} from 'react'
+import {Suspense, useState} from 'react'
 import {ExplorerOptions, useDashboard} from '../store.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
@@ -59,10 +59,8 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
   const onSubmit = () => {
-    startTransition(() => {
-      onConfirm()
-      modal.close()
-    })
+    onConfirm()
+    modal.close()
   }
   return (
     <DashboardModalDialog aria-label="Pick a link" variant="explorer">

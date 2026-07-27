@@ -110,9 +110,7 @@ function affectedStatus(
 const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
   const {pending, data} = useAtomValue(item.data)
   if (!data) return <SidebarLoadingItem item={item} pending={pending} />
-  return (
-    <SidebarLoadedItem item={item} data={data} tree={tree} pending={pending} />
-  )
+  return <SidebarLoadedItem item={item} data={data} tree={tree} />
 })
 
 interface SidebarLoadingItemProps {
@@ -150,14 +148,12 @@ interface SidebarLoadedItemProps {
   item: DashboardEntry
   data: DashboardEntryData
   tree: DashboardTree
-  pending: boolean
 }
 
 const SidebarLoadedItem = memo(function SidebarLoadedItem({
   item,
   data,
-  tree,
-  pending
+  tree
 }: SidebarLoadedItemProps) {
   const label = useAtomValue(data.label)
   const isExpanded = useAtomValue(tree.isExpanded(item))
@@ -191,7 +187,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
         parentSelected: selectedAncestorStatus !== undefined
       })}
       suffix={
-        isLoadingChildren || pending ? (
+        isLoadingChildren ? (
           <span
             className={styles.SidebarTree.itemLoading()}
             aria-hidden="true"

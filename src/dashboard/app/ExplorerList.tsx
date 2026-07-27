@@ -56,10 +56,24 @@ function SearchIdleState() {
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
+  items?: Array<DashboardEntry>
 }
 
-export function ExplorerList({explorer}: ExplorerListProps) {
-  const items = useAtomValue(explorer.items)
+interface ExplorerListContentProps extends ExplorerListProps {
+  items: Array<DashboardEntry>
+}
+
+export function ExplorerList(props: ExplorerListProps) {
+  if (props.items) return <ExplorerListContent {...props} items={props.items} />
+  return <ExplorerListResource {...props} />
+}
+
+function ExplorerListResource(props: ExplorerListProps) {
+  const items = useAtomValue(props.explorer.items)
+  return <ExplorerListContent {...props} items={items} />
+}
+
+function ExplorerListContent({explorer, items}: ExplorerListContentProps) {
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
