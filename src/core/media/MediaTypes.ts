@@ -30,12 +30,20 @@ export const MediaFile = type('Media file', {
     }),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
-    extension: hidden<string>('Extension'),
-    size: hidden<number>('File size'),
+    extension: hidden<string>('Extension', {
+      overview: true
+    }),
+    size: hidden<number>('File size', {
+      overview: true
+    }),
     hash: hidden<string>('Hash'),
     alt: hidden<object>('Alt text'),
-    width: hidden<number>('Image width'),
-    height: hidden<number>('Image height'),
+    width: hidden<number>('Image width', {
+      overview: true
+    }),
+    height: hidden<number>('Image height', {
+      overview: true
+    }),
     preview: hidden<string>('Preview'),
     averageColor: hidden<string>('Average color'),
     focus: hidden<{x: number; y: number}>('Focus'),
