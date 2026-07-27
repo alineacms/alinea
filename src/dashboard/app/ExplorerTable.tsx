@@ -176,7 +176,7 @@ function ExplorerTableDisplayRow({
     if (column.kind === 'status') {
       return (
         <Cell className={styles.ExplorerTable.cell.status()} textValue={status}>
-          {status && <StatusBadge status={status} />}
+          {status && status !== 'published' && <StatusBadge status={status} />}
         </Cell>
       )
     }
