@@ -15,11 +15,8 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
-import type {
-  Dashboard,
-  DashboardEntry,
-  DashboardEntryData
-} from './Dashboard.js'
+import type {EntryDataState, EntryState} from './Entry.js'
+import type {Store} from './Store.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 
@@ -88,11 +85,11 @@ export interface ExplorerOptions {
   searchDepth?: 'current' | 'all'
   breadcrumbs?: boolean
   // initialSort?: ExplorerSort
-  onAction?: WritableAtom<void, [entry: DashboardEntry], void>
+  onAction?: WritableAtom<void, [entry: EntryState], void>
   onConfirm?: (selection: Array<string>) => void
 }
 
-export class Explorer {
+class ExplorerModel {
   #location: WritableAtom<
     ExplorerLocation,
     [SetStateAction<ExplorerLocation>],
@@ -100,11 +97,11 @@ export class Explorer {
   >
   #options: ExplorerOptions
   #selectedLocale: DashboardLocaleSelection
-  #items = new Map<string, Atom<Promise<Array<DashboardEntry>>>>()
+  #items = new Map<string, Atom<Promise<Array<EntryState>>>>()
   #navigationSequence = 0
   selection
   constructor(
-    public dashboard: Dashboard,
+    public dashboard: Store,
     location: WritableAtom<
       ExplorerLocation,
       [SetStateAction<ExplorerLocation>],
@@ -178,7 +175,7 @@ export class Explorer {
     return this.#options.breadcrumbs ?? false
   }
 
-  onAction = atom(null, (get, set, entry: DashboardEntry) => {
+  onAction = atom(null, (get, set, entry: EntryState) => {
     if (this.#options.onAction) {
       set(this.#options.onAction, entry)
       return
@@ -427,7 +424,7 @@ export class Explorer {
   itemsAt(
     location: ExplorerLocation,
     locale: string | null
-  ): Atom<Promise<Array<DashboardEntry>>> {
+  ): Atom<Promise<Array<EntryState>>> {
     const key = JSON.stringify([
       location.workspace,
       location.root ?? null,
@@ -531,7 +528,7 @@ export class Explorer {
       return [
         ...parents
           .map(entry => get(entry.data).data)
-          .filter((entry): entry is DashboardEntryData => entry !== undefined)
+          .filter((entry): entry is EntryDataState => entry !== undefined)
           .map(entry => ({id: entry.id, label: get(entry.label)})),
         {id: parent.id, label}
       ]
@@ -540,8 +537,10 @@ export class Explorer {
   )
 }
 
+export type Explorer = Pick<ExplorerModel, keyof ExplorerModel>
+
 export function createExplorer(
-  dashboard: Dashboard,
+  dashboard: Store,
   location: WritableAtom<
     ExplorerLocation,
     [SetStateAction<ExplorerLocation>],
@@ -549,8 +548,5 @@ export function createExplorer(
   >,
   options: ExplorerOptions
 ) {
-  return new Explorer(dashboard, location, options)
+  return new ExplorerModel(dashboard, location, options)
 }
-
-/** @deprecated Use Explorer or createExplorer. */
-export {Explorer as DashboardExplorer}

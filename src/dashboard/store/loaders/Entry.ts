@@ -2,15 +2,15 @@ import type {Revision} from '#/core/Connection.js'
 import type {Entry as EntryRecord, EntryStatus} from '#/core/Entry.js'
 import type {Getter} from 'jotai'
 import type {
-  DashboardEntryData,
-  DashboardEntryReferences,
-  DashboardEntrySidebarTab,
-  ReactiveNode
-} from '../Dashboard.js'
+  EntryDataState,
+  DashboardEntryReferences
+} from '../Entry.js'
+import type {EntrySidebarTab} from '../Contracts.js'
+import type {ReactiveNode} from '../ReactiveNode.js'
 
-export interface EntryPageData {
+export interface PreparedEntryPage {
   type: 'entry'
-  entry: DashboardEntryData
+  entry: EntryDataState
   locale: string | null
   node: ReactiveNode<object>
   activeVersion: EntryRecord<Record<string, unknown>> | null
@@ -20,6 +20,8 @@ export interface EntryPageData {
   versions: Map<EntryStatus, EntryRecord<Record<string, unknown>>>
   sidebar: EntrySidebarData
 }
+
+export type EntryPageData = PreparedEntryPage
 
 export type EntrySidebarData =
   | ClosedSidebarData
@@ -50,9 +52,9 @@ export interface ReferencesSidebarData {
 
 export async function loadEntrySidebar(
   get: Getter,
-  entry: DashboardEntryData,
+  entry: EntryDataState,
   locale: string | null,
-  tab: DashboardEntrySidebarTab
+  tab: EntrySidebarTab
 ): Promise<EntrySidebarData> {
   switch (tab) {
     case 'preview': {
@@ -84,7 +86,7 @@ export async function loadEntrySidebar(
 
 export async function loadEntryPage(
   get: Getter,
-  entry: DashboardEntryData,
+  entry: EntryDataState,
   locale: string | null
 ): Promise<EntryPageData> {
   const sourceLocale = entry.sourceLocaleFor(get, locale)

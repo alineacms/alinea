@@ -1,24 +1,24 @@
 import type {Getter} from 'jotai'
-import type {ExplorerLocation} from '../Dashboard.js'
-import type {
-  DashboardEntry,
-  DashboardRoot,
-  DashboardWorkspace
-} from '../Dashboard.js'
+import type {EntryState} from '../Entry.js'
+import type {ExplorerLocation} from '../Explorer.js'
+import type {Root} from '../Root.js'
+import type {Workspace} from '../Workspace.js'
 
-export interface ExplorerPageData {
+export interface PreparedExplorerPage {
   type: 'explorer'
-  root: DashboardRoot
-  items: Array<DashboardEntry>
+  root: Root
+  items: Array<EntryState>
 }
 
+export type ExplorerPageData = PreparedExplorerPage
+
 export interface EntryLookup {
-  entry(id: string): DashboardEntry
+  entry(id: string): EntryState
 }
 
 export async function loadEntries(
   get: Getter,
-  entries: Array<DashboardEntry>,
+  entries: Array<EntryState>,
   signal: AbortSignal
 ) {
   await Promise.all(entries.map(entry => get(entry.readyState)))
@@ -28,7 +28,7 @@ export async function loadEntries(
 export async function loadTree(
   get: Getter,
   lookup: EntryLookup,
-  workspace: DashboardWorkspace,
+  workspace: Workspace,
   rootIds: Array<string>,
   locale: string | null,
   forcedExpanded: Array<string>,
@@ -56,7 +56,7 @@ export async function loadTree(
 
 export async function loadExplorerPage(
   get: Getter,
-  root: DashboardRoot,
+  root: Root,
   location: ExplorerLocation,
   locale: string | null,
   signal: AbortSignal

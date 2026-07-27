@@ -29,20 +29,19 @@ import type {Infer} from '#/types.js'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {
-  Dashboard,
-  DashboardEntryOverviewCell,
-  DashboardEntryView
-} from './Dashboard.js'
 import {
-  dashboardEntryOverviewColumnCount,
+  entryOverviewColumnCount,
+  type EntryOverviewCell,
+  type EntryView,
   MissingEntryError
-} from './Dashboard.js'
+} from './Contracts.js'
 import {type TypeState} from './Editor.js'
 import {loadEntryPage} from './loaders/Entry.js'
 import {ReactiveNode} from './ReactiveNode.js'
-import {queryTreeChildren, type DashboardRoot} from './Root.js'
+import {queryTreeChildren, type Root} from './Root.js'
+import type {Store} from './Store.js'
 import {dispense} from './StoreUtils.js'
+import {debounce, keepPrevious, withPending} from './Async.js'
 
 const decoder = new TextDecoder()
 
@@ -55,34 +54,6 @@ function uploadSizeError(
   } catch (error) {
     return error instanceof Error ? error.message : String(error)
   }
-}
-
-function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
-  const withPrevious = unwrap(asyncAtom, previous => previous)
-  return atom(get => {
-    const current = get(withPrevious)
-    return current ?? get(asyncAtom)
-  })
-}
-
-function atomWithPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {
-  const wrappedAtom = atom(async get => {
-    const data = await get(asyncAtom)
-    return [false, data] as const
-  })
-  return unwrap(wrappedAtom, previous => [true, previous?.[1]] as const)
-}
-
-function atomWithDebounce<Value>(
-  source: Atom<Value>,
-  delayMilliseconds: number
-): Atom<Value | undefined> {
-  const debounced = atom(async get => {
-    const value = get(source)
-    await new Promise(resolve => setTimeout(resolve, delayMilliseconds))
-    return value
-  })
-  return unwrap(debounced)
 }
 
 type EntryVersionData = EntryRecord<Record<string, unknown>>
@@ -110,7 +81,7 @@ export interface DashboardEntryTreeStatus {
 
 export interface DashboardEntryState {
   pending: boolean
-  data: DashboardEntryData | undefined
+  data: EntryDataModel | undefined
   error: MissingEntryError | undefined
 }
 
@@ -157,20 +128,20 @@ interface NodeSelection {
   version: SelectedVersion
 }
 
-export class DashboardEntry {
+class EntryModel {
   data: Atom<DashboardEntryState>
   readyState: Atom<Promise<DashboardEntryState>>
-  #selectedView = atom<DashboardEntryView | undefined>(undefined)
+  #selectedView = atom<EntryView | undefined>(undefined)
 
   constructor(
-    public dashboard: Dashboard,
+    public dashboard: Store,
     public id: string
   ) {
     const entryData = atom<Promise<EntryData>>(async get => {
       get(this.dashboard.revisions(id))
       return get(this.preload)
     })
-    let data: DashboardEntryData
+    let data: EntryDataModel
     const loaded = atom(async get => {
       const initial = await get(entryData)
       return (data ??= createEntryData(
@@ -217,7 +188,7 @@ export class DashboardEntry {
 
   view = atom(
     get => get(this.#selectedView),
-    async (get, set, view: DashboardEntryView | undefined) => {
+    async (get, set, view: EntryView | undefined) => {
       if (view === 'edit') {
         const ready = await get(this.readyState)
         if (ready.data) {
@@ -240,18 +211,18 @@ function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
   })
 }
 
-export class DashboardEntryData {
+class EntryDataModel {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
   type: Atom<TypeState>
-  overviewCells: Atom<Array<DashboardEntryOverviewCell>>
+  overviewCells: Atom<Array<EntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
-  view: WritableAtom<DashboardEntryView, [view: DashboardEntryView], void>
+  view: WritableAtom<EntryView, [view: EntryView], void>
   locales: Atom<Map<string | null, EntryVersionData>>
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
-  root: Atom<DashboardRoot>
+  root: Atom<Root>
   #translationSourceLocale = atom<string | null | undefined>(undefined)
   #nodes = new Map<string, Atom<Promise<ReactiveNode<object>>>>()
 
@@ -307,7 +278,7 @@ export class DashboardEntryData {
     })
   )
 
-  currentEntry = swr(
+  currentEntry = keepPrevious(
     atom(async get => {
       const root = get(this.root)
       return get(this.currentEntryFor(get(root.selectedLocale)))
@@ -322,7 +293,7 @@ export class DashboardEntryData {
   })
 
   constructor(
-    public entry: DashboardEntry,
+    public entry: EntryModel,
     public entryData: Atom<EntryData>
   ) {
     const dashboard = entry.dashboard
@@ -343,7 +314,7 @@ export class DashboardEntryData {
         if (selected) return selected
         return get(this.defaultView)
       },
-      (get, set, view: DashboardEntryView) => {
+      (get, set, view: EntryView) => {
         return set(this.entry.view, view)
       }
     )
@@ -367,7 +338,7 @@ export class DashboardEntryData {
       if (!entry || entry instanceof Promise) return []
       const type = get(this.type).type
       return dashboardEntryOverviewFields(type)
-        .slice(0, dashboardEntryOverviewColumnCount)
+        .slice(0, entryOverviewColumnCount)
         .map(([key, field]) => {
           return {
             id: key,
@@ -548,7 +519,7 @@ export class DashboardEntryData {
     })
   )
 
-  selectedNode = swr(
+  selectedNode = keepPrevious(
     atom(async get => {
       const root = get(this.root)
       return get(this.selectedNodeFor(get(root.selectedLocale)))
@@ -582,7 +553,7 @@ export class DashboardEntryData {
     }
   })
 
-  fileInfo = swr(
+  fileInfo = keepPrevious(
     atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
       if (get(this.type).type !== MediaFile) return null
       const lang = this.languages(null)
@@ -591,7 +562,7 @@ export class DashboardEntryData {
     })
   )
 
-  #fileInfoState = atomWithPending(this.fileInfo)
+  #fileInfoState = withPending(this.fileInfo)
   fileInfoState: Atom<DashboardFileInfoState> = atom(get => {
     const [pending, data] = get(this.#fileInfoState)
     return {pending, data}
@@ -608,7 +579,7 @@ export class DashboardEntryData {
     )
   })
 
-  parentsState = atomWithPending(this.#parents)
+  parentsState = withPending(this.#parents)
 
   parents = unwrap(this.#parents, prev => prev ?? [])
 
@@ -675,7 +646,7 @@ export class DashboardEntryData {
   icon = atom(get => get(this.type).icon)
 
   childrenFor = dispense((locale: string | null) => {
-    return swr(
+    return keepPrevious(
       atom(async get => {
         const root = get(this.root)
         const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
@@ -715,14 +686,14 @@ export class DashboardEntryData {
     })
   )
 
-  activeVersion = swr(
+  activeVersion = keepPrevious(
     atom(async get => {
       const root = get(this.root)
       return get(this.activeVersionFor(get(root.selectedLocale)))
     })
   )
 
-  anchors = swr(
+  anchors = keepPrevious(
     atom(async get => {
       const locale = get(this.sourceLocale)
       return get(this.languages(locale).anchors)
@@ -800,7 +771,7 @@ export class DashboardEntryData {
       selected.type === 'status' ? selected.status : selected.ref
     return [selected.type, selectedKey, currentNode && get(currentNode.value)]
   })
-  previewPayloadSignal = atomWithDebounce(this.#previewPayloadSignal, 250)
+  previewPayloadSignal = debounce(this.#previewPayloadSignal, 250)
 
   updatePreviewPayload = atom(null, async get => {
     if (get(this.preview) !== true) return undefined
@@ -1156,9 +1127,9 @@ function entryReferenceSourceKey(
   return `${source.id}\0${source.locale ?? ''}`
 }
 
-export class DashboardEntryLanguage {
+class EntryLanguageModel {
   constructor(
-    public entry: DashboardEntryData,
+    public entry: EntryDataModel,
     public locale: string | null
   ) {}
 
@@ -1180,7 +1151,7 @@ export class DashboardEntryLanguage {
     return new Map(readable.map(entry => [entry.status, entry] as const))
   })
 
-  versions = swr(this.versionsResource)
+  versions = keepPrevious(this.versionsResource)
 
   activeVersionResource = atom(async get => {
     const versions = await get(this.versionsResource)
@@ -1192,9 +1163,9 @@ export class DashboardEntryLanguage {
     return first
   })
 
-  activeVersion = swr(this.activeVersionResource)
+  activeVersion = keepPrevious(this.activeVersionResource)
 
-  anchors = swr(
+  anchors = keepPrevious(
     atom(async (get): Promise<Array<EntryAnchorTarget>> => {
       const type = get(this.entry.type).type
       const entry = await get(this.activeVersion)
@@ -1225,26 +1196,24 @@ export class DashboardEntryLanguage {
   })
 }
 
-export function createEntry(dashboard: Dashboard, id: string) {
-  return new DashboardEntry(dashboard, id)
+export type EntryState = EntryModel
+export type EntryDataState = EntryDataModel
+export type EntryLanguage = EntryLanguageModel
+
+export function createEntry(dashboard: Store, id: string): EntryState {
+  return new EntryModel(dashboard, id)
 }
 
 export function createEntryData(
-  entry: DashboardEntry,
+  entry: EntryState,
   entryData: Atom<EntryData>
-) {
-  return new DashboardEntryData(entry, entryData)
+): EntryDataState {
+  return new EntryDataModel(entry, entryData)
 }
 
 export function createEntryLanguage(
-  entry: DashboardEntryData,
+  entry: EntryDataState,
   locale: string | null
-) {
-  return new DashboardEntryLanguage(entry, locale)
-}
-
-export {
-  DashboardEntry as EntryState,
-  DashboardEntryData as EntryDataState,
-  DashboardEntryLanguage as EntryLanguage
+): EntryLanguage {
+  return new EntryLanguageModel(entry, locale)
 }

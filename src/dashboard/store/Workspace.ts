@@ -10,7 +10,7 @@ import type {
   DropTarget,
   ItemDropTarget
 } from '@react-types/shared'
-import type {Getter} from 'jotai'
+import type {Atom, Getter} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {
@@ -19,13 +19,14 @@ import type {
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
+import type {TreeSelection} from './Contracts.js'
 import type {
-  Dashboard,
-  DashboardEntry,
-  DashboardEntryTreeStatus,
-  DashboardTreeSelection
-} from './Dashboard.js'
-import {createRoot} from './Root.js'
+  EntryState,
+  DashboardEntryTreeStatus
+} from './Entry.js'
+import type {Store} from './Store.js'
+import {createRoot, type Root} from './Root.js'
+import type {ComponentType} from 'react'
 import {dispense} from './StoreUtils.js'
 
 const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
@@ -42,78 +43,89 @@ function dragItem(id: Key): DragItem {
   }
 }
 
-export class Workspace {
-  constructor(
-    public dashboard: Dashboard,
-    public key: string
-  ) {}
+export interface Workspace {
+  dashboard: Store
+  key: string
+  tree: Tree
+  color: Atom<string>
+  label: Atom<string>
+  icon: Atom<ComponentType | undefined>
+  roots: Atom<Array<string>>
+  root(key: string): Root
+  rootMenu: Atom<
+    Array<{id: string; label: string; icon: ComponentType | undefined}>
+  >
+}
 
-  #treeSelection = atom(
+export function createWorkspace(dashboard: Store, key: string): Workspace {
+  const treeSelection = atom(
     get => {
-      const route = get(this.dashboard.route)
-      if (route.workspace && route.workspace !== this.key) return new Set<Key>()
+      const route = get(dashboard.route)
+      if (route.workspace && route.workspace !== key) return new Set<Key>()
       if (route.entry) return new Set<Key>([route.entry])
       return new Set<Key>()
     },
     async (get, set, next: 'all' | Set<Key>) => {
       if (next === 'all')
         throw new Error('Selecting all items is not supported')
-      const current = get(this.dashboard.route)
-      const root = get(this.dashboard.selectedRoot)
+      const current = get(dashboard.route)
+      const root = get(dashboard.selectedRoot)
       const selectedKey = next.values().next().value
       if (!selectedKey) {
-        await set(this.dashboard.route, {workspace: this.key})
+        await set(dashboard.route, {workspace: key})
         return
       }
       const selectedId = String(selectedKey)
-      await set(this.dashboard.route, {
-        workspace: this.key,
+      await set(dashboard.route, {
+        workspace: key,
         root: root ?? undefined,
         entry: selectedId,
         locale: current.locale
       })
     }
   )
-
-  tree = createTree(this, this.#treeSelection)
-
-  #settings = atom(get => {
-    const config = get(this.dashboard.config)
-    const workspaceConfig = config.workspaces[this.key]
-    assert(workspaceConfig, `Workspace "${this.key}" not found in config`)
+  const settings = atom(get => {
+    const config = get(dashboard.config)
+    const workspaceConfig = config.workspaces[key]
+    assert(workspaceConfig, `Workspace "${key}" not found in config`)
     return getWorkspace(workspaceConfig)
   })
-
-  color = atom(get => get(this.#settings).color)
-  label = atom(get => get(this.#settings).label)
-  icon = atom(get => get(this.#settings).icon)
-
-  roots = atom(get => {
-    const roots = get(this.#settings).roots
-    const policy = get(this.dashboard.policy)
-    return Object.keys(roots).filter(root => {
-      return policy.canRead({workspace: this.key, root})
+  const roots = atom(get => {
+    const configuredRoots = get(settings).roots
+    const policy = get(dashboard.policy)
+    return Object.keys(configuredRoots).filter(root => {
+      return policy.canRead({workspace: key, root})
     })
   })
-
-  root = dispense(key => createRoot(this, key))
-
-  rootMenu = atom(get => {
-    const roots = get(this.roots)
-    return roots.map(root => ({
-      id: root,
-      label: get(this.root(root).label),
-      icon: get(this.root(root).icon)
-    }))
-  })
+  let workspace: Workspace
+  const root = dispense(rootKey => createRoot(workspace, rootKey))
+  workspace = {
+    dashboard,
+    key,
+    tree: undefined as never,
+    color: atom(get => get(settings).color),
+    label: atom(get => get(settings).label),
+    icon: atom(get => get(settings).icon),
+    roots,
+    root,
+    rootMenu: atom(get => {
+      return get(roots).map(rootKey => ({
+        id: rootKey,
+        label: get(root(rootKey).label),
+        icon: get(root(rootKey).icon)
+      }))
+    })
+  }
+  workspace.tree = createTree(workspace, treeSelection)
+  return workspace
 }
 
-export class Tree {
-  #treeSelection: DashboardTreeSelection
+class TreeModel {
+  #treeSelection: TreeSelection
   #syncRouteExpansion: boolean
   constructor(
     private workspace: Workspace,
-    treeSelection: DashboardTreeSelection,
+    treeSelection: TreeSelection,
     options: {syncRouteExpansion?: boolean} = {}
   ) {
     this.#treeSelection = treeSelection
@@ -169,7 +181,7 @@ export class Tree {
     }
   )
 
-  entryItems = dispense((id: string): DashboardEntry => {
+  entryItems = dispense((id: string): EntryState => {
     return this.workspace.dashboard.entries(id)
   })
 
@@ -181,11 +193,11 @@ export class Tree {
     return ids.map(id => this.entryItems(id))
   })
 
-  isExpanded = dispense((entry: DashboardEntry) => {
+  isExpanded = dispense((entry: EntryState) => {
     return atom(get => get(this.expandedKeys).has(entry.id))
   })
 
-  visibleChildren = dispense((entry: DashboardEntry) => {
+  visibleChildren = dispense((entry: EntryState) => {
     return atom(get => {
       const {data} = get(entry.data)
       if (!data) return undefined
@@ -195,7 +207,7 @@ export class Tree {
     })
   })
 
-  selectedAncestorStatus = dispense((entry: DashboardEntry) => {
+  selectedAncestorStatus = dispense((entry: EntryState) => {
     return atom(async (get): Promise<DashboardEntryTreeStatus | undefined> => {
       const {data} = get(entry.data)
       if (!data) return undefined
@@ -211,7 +223,7 @@ export class Tree {
     })
   })
 
-  children = dispense((entry: DashboardEntry) => {
+  children = dispense((entry: EntryState) => {
     return atom(get => {
       if (!get(this.isExpanded(entry))) return undefined
       return get(this.visibleChildren(entry))
@@ -334,19 +346,12 @@ export class Tree {
   })
 }
 
-export function createWorkspace(dashboard: Dashboard, key: string) {
-  return new Workspace(dashboard, key)
-}
+export type Tree = Pick<TreeModel, keyof TreeModel>
 
 export function createTree(
   workspace: Workspace,
-  treeSelection: DashboardTreeSelection,
+  treeSelection: TreeSelection,
   options: {syncRouteExpansion?: boolean} = {}
 ) {
-  return new Tree(workspace, treeSelection, options)
+  return new TreeModel(workspace, treeSelection, options)
 }
-
-/** @deprecated Use Workspace or createWorkspace. */
-export {Workspace as DashboardWorkspace}
-/** @deprecated Use Tree or createTree. */
-export {Tree as DashboardTree}

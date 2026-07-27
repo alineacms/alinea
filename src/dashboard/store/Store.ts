@@ -6,7 +6,6 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry} from '#/core/Entry.js'
-import {Field} from '#/core/Field.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {Permission, Policy} from '#/core/Role.js'
@@ -16,11 +15,10 @@ import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {parents, translations} from '#/query.js'
-import type {Atom, WritableAtom} from 'jotai'
+import type {Atom} from 'jotai'
 import {atom} from 'jotai'
-import {atomWithStorage, unwrap} from 'jotai/utils'
+import {unwrap} from 'jotai/utils'
 import {SetStateAction, type ComponentType} from 'react'
-import type {Key} from 'react-aria-components'
 import {
   MutationQueueEvent,
   type MutationQueueEntry
@@ -28,7 +26,7 @@ import {
 import {createType} from './Editor.js'
 import {
   createEntry,
-  type DashboardEntryData
+  type EntryDataState
 } from './Entry.js'
 import {
   createExplorer,
@@ -37,25 +35,25 @@ import {
   type ExplorerOptions
 } from './Explorer.js'
 import {loadEntrySidebar} from './loaders/Entry.js'
-import {createRouteLoader, type LoadedRoute} from './loaders/Route.js'
+import {createRouteLoader, type PreparedRoute} from './loaders/Route.js'
+import {
+  createMutationQueueState,
+  type MutationQueueState
+} from './Mutation.js'
 import {createBrowserHistory, type RouteHistory} from './navigation/History.js'
 import {createNavigation, type Navigation} from './navigation/Navigation.js'
 import type {Root} from './Root.js'
 import {dispense} from './StoreUtils.js'
+import {createTheme} from './Theme.js'
+import {appendReturnUrl, type AuthState} from './Auth.js'
+import {keepPrevious, withPending} from './Async.js'
 import {createWorkspace} from './Workspace.js'
-
-export {ReactiveNode} from './ReactiveNode.js'
-export * from './Editor.js'
-export * from './Explorer.js'
-export * from './Entry.js'
-export * from './Root.js'
-export * from './Workspace.js'
-
-export const dashboardEntryOverviewColumnCount = 5
+import {
+  type EntrySidebarTab,
+  MissingEntryError
+} from './Contracts.js'
 
 export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
-
-export type DashboardEntryView = 'edit' | 'overview'
 
 export interface DashboardFavicon {
   color: string
@@ -73,52 +71,11 @@ export interface DashboardCreateEntryRequest {
   insertOrder?: 'first' | 'last'
 }
 
-export interface DashboardEntryOverviewCell {
-  id: string
-  field: Field
-  label: string
-  value: unknown
-}
-
 export interface DashboardOptions {
   alineaDev?: boolean
   history?: RouteHistory
   local?: boolean
 }
-
-export interface DashboardAuthLoading {
-  status: 'loading'
-}
-
-export interface DashboardAuthMissingHandler {
-  status: 'missingHandler'
-}
-
-export interface DashboardAuthMissingApiKey {
-  status: 'missingApiKey'
-  setupUrl: string
-}
-
-export interface DashboardAuthRedirecting {
-  status: 'redirecting'
-}
-
-export interface DashboardAuthError {
-  status: 'error'
-  error: Error
-}
-
-export interface DashboardAuthAuthenticated {
-  status: 'authenticated'
-}
-
-export type DashboardAuthState =
-  | DashboardAuthLoading
-  | DashboardAuthMissingHandler
-  | DashboardAuthMissingApiKey
-  | DashboardAuthRedirecting
-  | DashboardAuthError
-  | DashboardAuthAuthenticated
 
 interface DashboardAuthCheck {
   type: 'check'
@@ -130,42 +87,12 @@ interface DashboardAuthSetupCloud {
 
 type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
 
-export type DashboardTreeSelection = WritableAtom<
-  Set<Key>,
-  [next: 'all' | Set<Key>],
-  Promise<void>
->
-
-export function createDashboardTreeSelection(
-  initialSelection = new Set<Key>()
-): DashboardTreeSelection {
-  const base = atom(initialSelection)
-  const selection = atom(
-    get => get(base),
-    async (get, set, next: 'all' | Set<Key>) => {
-      if (next === 'all')
-        throw new Error('Selecting all items is not supported')
-      set(base, next)
-    }
-  )
-  return selection
-}
-
 type FocusedItem =
-  | {entry: DashboardEntryData}
+  | {entry: EntryDataState}
   | {root: Root}
   | {missingEntry: string; root: Root}
   | {missingRoot: string; root: Root}
   | null
-
-export interface DashboardMutationQueue {
-  entries: Array<MutationQueueEntry>
-  pending: number
-  syncing: number
-  failed: number
-  blocked: number
-  error?: string
-}
 
 interface MutationQueueRetry {
   retryMutationQueue(): Promise<void>
@@ -173,16 +100,6 @@ interface MutationQueueRetry {
 
 interface MutationQueueDiscard {
   discardMutationQueue(): Promise<void>
-}
-
-export type DashboardTheme = 'system' | 'light' | 'dark'
-export type DashboardEntrySidebarTab = 'history' | 'preview' | 'references'
-
-export class MissingEntryError extends Error {
-  constructor(public id: string) {
-    super(`Missing entry ${id}`)
-    this.name = 'MissingEntryError'
-  }
 }
 
 const internalDashboard = atom<Store | null>(null)
@@ -197,8 +114,6 @@ export const dashboardAtom = atom(
   }
 )
 
-const dashboardThemeStorageKey = 'alinea-dashboard-theme'
-
 interface LogoutConnection {
   logout(): Promise<void>
 }
@@ -211,8 +126,8 @@ export class Store {
   db: Atom<WriteableGraph>
   events: Atom<EventTarget>
   #userOverride = atom<User | null | undefined>()
-  #authState = atom<DashboardAuthState>({status: 'loading'})
-  #mutationQueue = atom<DashboardMutationQueue>({
+  #authState = atom<AuthState>({status: 'loading'})
+  #mutationQueue = atom<MutationQueueState>({
     entries: [],
     pending: 0,
     syncing: 0,
@@ -221,10 +136,10 @@ export class Store {
   })
   #loadRoute!: ReturnType<typeof createRouteLoader>
   #routeLoadSequence = 0
-  #entrySidebarTab = atom<DashboardEntrySidebarTab>('preview')
+  #entrySidebarTab = atom<EntrySidebarTab>('preview')
   entrySidebarTab = atom(
     get => get(this.#entrySidebarTab),
-    async (get, set, tab: DashboardEntrySidebarTab) => {
+    async (get, set, tab: EntrySidebarTab) => {
       const page = await get(this.page)
       if (page.type === 'entry') {
         const sidebar = await loadEntrySidebar(
@@ -239,11 +154,6 @@ export class Store {
     }
   )
   #uploadQueue = atom<Array<MutationQueueEntry>>([])
-  #themeStorage = atomWithStorage<DashboardTheme>(
-    dashboardThemeStorageKey,
-    'system',
-    undefined
-  )
   #options: DashboardOptions
   #entrySideBarOpen = atom(true)
   entrySideBarOpen = atom(
@@ -270,9 +180,9 @@ export class Store {
       set(this.#entrySideBarOpen, open)
     }
   )
-  navigation: Navigation<LoadedRoute>
+  navigation: Navigation<PreparedRoute>
   route: Navigation['route']
-  page: Atom<LoadedRoute | Promise<LoadedRoute>>
+  page: Atom<PreparedRoute | Promise<PreparedRoute>>
   reloadPage = atom(null, async (get, set) => {
     const sequence = ++this.#routeLoadSequence
     const controller = new AbortController()
@@ -338,7 +248,7 @@ export class Store {
     const initialPage = atom(async get => {
       return loadRoute(get, history.read(), new AbortController().signal)
     })
-    this.navigation = createNavigation<LoadedRoute>({
+    this.navigation = createNavigation<PreparedRoute>({
       history,
       allow: async (_route, {get, set, signal}) => {
         const page = await get(this.page)
@@ -400,7 +310,7 @@ export class Store {
     atom(
       get => {
         if (!get(this.authRequired)) {
-          return {status: 'authenticated'} satisfies DashboardAuthState
+          return {status: 'authenticated'} satisfies AuthState
         }
         return get(this.#authState)
       },
@@ -408,7 +318,7 @@ export class Store {
         if (action.type === 'setupCloud') {
           const state = get(this.#authState)
           if (state.status !== 'missingApiKey') return
-          window.location.href = appendFrom(state.setupUrl)
+          window.location.href = appendReturnUrl(state.setupUrl)
           return
         }
 
@@ -455,7 +365,7 @@ export class Store {
               return
             case AuthResultType.UnAuthenticated:
               set(this.#authState, {status: 'redirecting'})
-              window.location.href = appendFrom(result.redirect)
+              window.location.href = appendReturnUrl(result.redirect)
               return
             case AuthResultType.MissingApiKey:
               set(this.#authState, {
@@ -476,7 +386,7 @@ export class Store {
     }
   )
 
-  user = swr(
+  user = keepPrevious(
     atom(async get => {
       const override = get(this.#userOverride)
       if (override !== undefined) return override
@@ -531,13 +441,13 @@ export class Store {
         const uploads = get(this.#uploadQueue)
         const queue = get(this.#mutationQueue)
         if (uploads.length === 0) return queue
-        return mutationQueueState([...uploads, ...queue.entries])
+        return createMutationQueueState([...uploads, ...queue.entries])
       },
       (get, set) => {
         const events = get(this.events)
         const listen = (event: Event) => {
           if (event instanceof MutationQueueEvent) {
-            set(this.#mutationQueue, mutationQueueState(event.entries))
+            set(this.#mutationQueue, createMutationQueueState(event.entries))
           }
         }
         events.addEventListener(MutationQueueEvent.type, listen)
@@ -672,7 +582,7 @@ export class Store {
     return db.createPolicy(user.roles.filter(role => role in roles))
   })
 
-  #policyState = atomWithPending(this.#policyResource)
+  #policyState = withPending(this.#policyResource)
 
   policyReady = atom(get => {
     const [pending] = get(this.#policyState)
@@ -740,7 +650,7 @@ export class Store {
       }
       throw new Error(`Entry "${entry}" not found`)
     }
-    const entryFocus = (data: DashboardEntryData): FocusedItem => {
+    const entryFocus = (data: EntryDataState): FocusedItem => {
       return get(data.view) === 'edit' ? {entry: data} : rootFocus()
     }
     if (workspace && routeRoot && routeRoot !== root) {
@@ -799,22 +709,7 @@ export class Store {
     return sha
   })
 
-  theme = Object.assign(
-    atom(
-      get => get(this.#themeStorage),
-      (get, set, next: SetStateAction<DashboardTheme>) => {
-        const current = get(this.#themeStorage)
-        const theme = typeof next === 'function' ? next(current) : next
-        set(this.#themeStorage, theme)
-        applyDashboardTheme(theme)
-      }
-    ),
-    {
-      onMount(setTheme: (update: SetStateAction<DashboardTheme>) => void) {
-        setTheme(current => current)
-      }
-    }
-  )
+  theme = createTheme()
 
   selectedWorkspace = atom(
     get => {
@@ -873,7 +768,7 @@ export class Store {
     return roots.find(root => get(workspace.root(root).isMedia)) ?? null
   })
 
-  title = swr(
+  title = keepPrevious(
     atom(async get => {
       const route = get(this.route)
       if (route.page === 'users') return 'Users'
@@ -914,7 +809,7 @@ export class Store {
       const config = get(this.config)
       const type = config.schema[key]
       assert(type, `Type "${key}" not found in config`)
-      return createType(this, type)
+      return createType(type)
     })
   })
 
@@ -1119,8 +1014,6 @@ export function createStore(...args: ConstructorParameters<typeof Store>) {
   return new Store(...args)
 }
 
-/** @deprecated Use Store or createStore. */
-export {Store as Dashboard}
 
 type Result<Value> = [value: Value, error: null] | [value: null, error: Error]
 type BatchLoadFn<V> = (
@@ -1151,70 +1044,6 @@ function loader<Value>(fn: BatchLoadFn<Value>) {
       }
     })
   }
-}
-
-function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
-  const withPrev = unwrap(asyncAtom, prev => prev)
-  return atom(get => {
-    const current = get(withPrev)
-    return current ?? get(asyncAtom)
-  })
-}
-
-function mutationQueueState(
-  entries: Array<MutationQueueEntry>
-): DashboardMutationQueue {
-  return {
-    entries,
-    pending: entries.filter(entry => entry.status === 'pending').length,
-    syncing: entries.filter(entry => entry.status === 'syncing').length,
-    failed: entries.filter(entry => entry.status === 'failed').length,
-    blocked: entries.filter(entry => entry.status === 'blocked').length,
-    error: entries.find(entry => entry.status === 'failed')?.error
-  }
-}
-
-function appendFrom(url: string): string {
-  const {location} = window
-  const from = encodeURIComponent(
-    `${location.protocol}//${location.host}${location.pathname}`
-  )
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}from=${from}`
-}
-
-function atomWithPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {
-  const wrappedAtom = atom(async get => {
-    const data = await get(asyncAtom)
-    return [false, data] as const
-  })
-  return unwrap(wrappedAtom, prev => [true, prev?.[1]] as const)
-}
-
-let enableThemeTransitionsFrame: number | undefined
-
-function suspendTransitionsDuringThemeChange() {
-  if (typeof document === 'undefined') return
-  const {body} = document
-  if (!body) return
-  body.dataset.disableTransition = 'true'
-  void body.offsetWidth
-  if (enableThemeTransitionsFrame)
-    cancelAnimationFrame(enableThemeTransitionsFrame)
-  enableThemeTransitionsFrame = requestAnimationFrame(() => {
-    enableThemeTransitionsFrame = requestAnimationFrame(() => {
-      body.removeAttribute('data-disable-transition')
-      enableThemeTransitionsFrame = undefined
-    })
-  })
-}
-
-function applyDashboardTheme(theme: DashboardTheme) {
-  if (typeof document === 'undefined') return
-  suspendTransitionsDuringThemeChange()
-  const root = document.documentElement
-  if (theme === 'system') root.removeAttribute('data-theme')
-  else root.dataset.theme = theme
 }
 
 interface SyncableGraph {

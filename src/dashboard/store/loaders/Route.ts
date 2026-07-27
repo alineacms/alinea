@@ -1,11 +1,8 @@
 import type {Atom, Getter} from 'jotai'
 import type {Route} from '../../DashboardNav.js'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardRoot,
-  DashboardWorkspace
-} from '../Dashboard.js'
+import type {EntryDataState, EntryState} from '../Entry.js'
+import type {Root} from '../Root.js'
+import type {Workspace} from '../Workspace.js'
 import {loadEntryPage, type EntryPageData} from './Entry.js'
 import {loadExplorerPage, loadTree, type ExplorerPageData} from './Explorer.js'
 
@@ -19,26 +16,26 @@ export interface UsersPageData {
 
 export interface RootPageData {
   type: 'root'
-  root: DashboardRoot
+  root: Root
 }
 
 export interface MissingEntryPageData {
   type: 'missing-entry'
   entryId: string
-  root: DashboardRoot
+  root: Root
 }
 
 export interface MissingRootPageData {
   type: 'missing-root'
   rootKey: string
-  root: DashboardRoot
+  root: Root
 }
 
 export interface RouteShellData {
   canManageMembers: boolean
 }
 
-export type LoadedRoute = RouteShellData &
+export type PreparedRoute = RouteShellData &
   (
     | EmptyPageData
     | UsersPageData
@@ -49,15 +46,31 @@ export type LoadedRoute = RouteShellData &
     | MissingRootPageData
   )
 
+export type LoadedRoute = PreparedRoute
+
+type AsyncAtomKeys<Value> = Value extends unknown
+  ? {
+      [Key in keyof Value]: Value[Key] extends Atom<Promise<unknown>>
+        ? Key
+        : never
+    }[keyof Value]
+  : never
+
+type AssertNoAsyncAtoms<Value extends never> = Value
+
+export type PreparedRouteAsyncFields = AssertNoAsyncAtoms<
+  AsyncAtomKeys<PreparedRoute>
+>
+
 export interface RouteLoaderOptions {
   policy: Atom<Promise<unknown>>
   canManageMembers: Atom<Promise<boolean>>
   workspaces: Atom<Array<string>>
-  workspace(key: string): DashboardWorkspace
-  entry(id: string): DashboardEntry
+  workspace(key: string): Workspace
+  entry(id: string): EntryState
   loadEntry?(
     get: Getter,
-    entry: DashboardEntryData,
+    entry: EntryDataState,
     locale: string | null
   ): Promise<EntryPageData>
 }
@@ -67,7 +80,7 @@ export function createRouteLoader(options: RouteLoaderOptions) {
     get: Getter,
     route: Route,
     signal: AbortSignal
-  ): Promise<LoadedRoute> {
+  ): Promise<PreparedRoute> {
     const [, canManageMembers] = await Promise.all([
       get(options.policy),
       get(options.canManageMembers)

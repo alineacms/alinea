@@ -22,7 +22,7 @@ import {dispense} from './StoreUtils.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 
-export class Root {
+class RootModel {
   explorer: Explorer
   constructor(
     public workspace: Workspace,
@@ -208,6 +208,8 @@ export class Root {
   })
 }
 
+export type Root = RootModel
+
 export async function queryTreeChildren(
   get: Getter,
   root: Root,
@@ -256,8 +258,5 @@ export async function queryTreeChildren(
 }
 
 export function createRoot(workspace: Workspace, key: string) {
-  return new Root(workspace, key)
+  return new RootModel(workspace, key)
 }
-
-/** @deprecated Use Root or createRoot. */
-export {Root as DashboardRoot}

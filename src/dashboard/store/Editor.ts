@@ -9,12 +9,12 @@ import {assert} from '#/core/util/Assert.js'
 import type {Atom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
-import type {Dashboard} from './Dashboard.js'
 import {ReactiveNode} from './ReactiveNode.js'
+import type {Store} from './Store.js'
 import {dispense} from './StoreUtils.js'
 
 export interface Editor {
-  dashboard: Dashboard
+  deps: EditorDeps
   type: ConfigType
   node: ReactiveNode<object>
   parent?: Editor
@@ -26,16 +26,33 @@ export interface Editor {
   get(field: Field): FieldState | undefined
 }
 
+export interface EditorDeps {
+  config: Store['config']
+  policy: Store['policy']
+  view: Store['view']
+}
+
 export function createEditor(
-  dashboard: Dashboard,
+  deps: EditorDeps,
   type: ConfigType,
   node: ReactiveNode<object>,
   parent?: Editor,
   resource?: Resource
 ): Editor {
   const value = node.value
-  const editor: Editor = {
-    dashboard,
+  let editor: Editor
+  const field = dispense(key => {
+    const configField = getType(type).allFields[key]
+    return configField ? createField(editor, key, configField) : undefined
+  })
+  function get(fieldToFind: Field): FieldState | undefined {
+    for (const [key, candidate] of Object.entries(getType(type).allFields)) {
+      if (candidate === fieldToFind) return field(key)
+    }
+    return parent?.get(fieldToFind)
+  }
+  editor = {
+    deps,
     type,
     node,
     parent,
@@ -44,28 +61,16 @@ export function createEditor(
     anchors: atom(get =>
       ConfigType.anchors(type, get(value) as Record<string, unknown>)
     ),
-    sections: [],
-    field: () => undefined,
-    get: () => undefined
-  }
-  editor.sections = getType(type).sections.map(section =>
-    createSection(dashboard, section)
-  )
-  editor.field = dispense(key => {
-    const field = getType(type).allFields[key]
-    return field ? createField(editor, key, field) : undefined
-  })
-  editor.get = field => {
-    for (const [key, candidate] of Object.entries(getType(type).allFields)) {
-      if (candidate === field) return editor.field(key)
-    }
-    return parent?.get(field)
+    sections: getType(type).sections.map(section =>
+      createSection(deps, section)
+    ),
+    field,
+    get
   }
   return editor
 }
 
 export interface Section {
-  dashboard: Dashboard
   section: ConfigSection
   view: Atom<
     | Exclude<ReturnType<typeof ConfigSection.view>, string>
@@ -75,15 +80,14 @@ export interface Section {
 }
 
 export function createSection(
-  dashboard: Dashboard,
+  deps: Pick<EditorDeps, 'view'>,
   section: ConfigSection
 ): Section {
   return {
-    dashboard,
     section,
     view: atom(get => {
       const view = ConfigSection.view(section)
-      return typeof view === 'string' ? get(dashboard.view(view)) : view
+      return typeof view === 'string' ? get(deps.view(view)) : view
     })
   }
 }
@@ -122,10 +126,10 @@ export function createField(
       ? {...trackedOptions, readOnly: true}
       : trackedOptions
     if (!draft.resource) return resolved
-    const config = get(draft.dashboard.config)
+    const config = get(draft.deps.config)
     const fieldName = getScope(config).nameOf(field)
     if (!fieldName) return resolved
-    const policy = get(draft.dashboard.policy)
+    const policy = get(draft.deps.policy)
     const fieldResource = {...draft.resource, field: fieldName}
     return {
       ...resolved,
@@ -159,13 +163,12 @@ export function createField(
     }),
     view: atom(get => {
       const view = Field.view(field)
-      return typeof view === 'string' ? get(draft.dashboard.view(view)) : view
+      return typeof view === 'string' ? get(draft.deps.view(view)) : view
     })
   }
 }
 
 export interface TypeState {
-  dashboard: Dashboard
   type: ConfigType
   readonly contains: ReturnType<typeof getType>['contains']
   readonly label: ReturnType<typeof getType>['label']
@@ -175,13 +178,9 @@ export interface TypeState {
   readonly sections: ReturnType<typeof getType>['sections']
 }
 
-export function createType(
-  dashboard: Dashboard,
-  type: ConfigType
-): TypeState {
+export function createType(type: ConfigType): TypeState {
   const settings = getType(type)
   return {
-    dashboard,
     type,
     contains: settings.contains,
     label: settings.label,
