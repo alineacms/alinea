@@ -2,159 +2,192 @@ import {Field, type EntryAnchorTarget, type FieldOptions} from '#/core/Field.js'
 import {getType} from '#/core/Internal.js'
 import type {Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
-import {Section} from '#/core/Section.js'
+import {Section as ConfigSection} from '#/core/Section.js'
 import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
-import {Type} from '#/core/Type.js'
+import {Type as ConfigType} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import type {Atom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
+import type {ComponentType} from 'react'
 import type {Dashboard} from './Dashboard.js'
 import {ReactiveNode} from './ReactiveNode.js'
 import {dispense} from './StoreUtils.js'
 
-export class DashboardEditor {
+export interface Editor {
+  dashboard: Dashboard
+  type: ConfigType
+  node: ReactiveNode<object>
+  parent?: Editor
+  resource?: Resource
   value: Atom<object>
   anchors: Atom<Array<EntryAnchorTarget>>
-  sections: Array<DashboardSection>
+  sections: Array<Section>
+  field(key: string): FieldState | undefined
+  get(field: Field): FieldState | undefined
+}
 
-  constructor(
-    public dashboard: Dashboard,
-    public type: Type,
-    public node: ReactiveNode<object>,
-    public parent?: DashboardEditor,
-    public resource?: Resource
-  ) {
-    this.resource ??= parent?.resource
-    this.value = node.value
-    this.anchors = atom(get =>
-      Type.anchors(this.type, get(this.value) as Record<string, unknown>)
-    )
-    this.sections = getType(this.type).sections.map(
-      section => new DashboardSection(this.dashboard, section)
-    )
+export function createEditor(
+  dashboard: Dashboard,
+  type: ConfigType,
+  node: ReactiveNode<object>,
+  parent?: Editor,
+  resource?: Resource
+): Editor {
+  const value = node.value
+  const editor: Editor = {
+    dashboard,
+    type,
+    node,
+    parent,
+    resource: resource ?? parent?.resource,
+    value,
+    anchors: atom(get =>
+      ConfigType.anchors(type, get(value) as Record<string, unknown>)
+    ),
+    sections: [],
+    field: () => undefined,
+    get: () => undefined
   }
-
-  field = dispense(key => {
-    const fields = getType(this.type).allFields
-    const field = fields[key]
-    if (!field) return undefined
-    return new DashboardField(this, key, field)
+  editor.sections = getType(type).sections.map(section =>
+    createSection(dashboard, section)
+  )
+  editor.field = dispense(key => {
+    const field = getType(type).allFields[key]
+    return field ? createField(editor, key, field) : undefined
   })
-
-  get(field: Field): DashboardField | undefined {
-    const fields = getType(this.type).allFields
-    for (const [key, candidate] of Object.entries(fields)) {
-      if (candidate === field) return this.field(key)
+  editor.get = field => {
+    for (const [key, candidate] of Object.entries(getType(type).allFields)) {
+      if (candidate === field) return editor.field(key)
     }
-    return this.parent?.get(field)
+    return parent?.get(field)
+  }
+  return editor
+}
+
+export interface Section {
+  dashboard: Dashboard
+  section: ConfigSection
+  view: Atom<
+    | Exclude<ReturnType<typeof ConfigSection.view>, string>
+    | ComponentType
+    | undefined
+  >
+}
+
+export function createSection(
+  dashboard: Dashboard,
+  section: ConfigSection
+): Section {
+  return {
+    dashboard,
+    section,
+    view: atom(get => {
+      const view = ConfigSection.view(section)
+      return typeof view === 'string' ? get(dashboard.view(view)) : view
+    })
   }
 }
 
-export class DashboardSection {
-  constructor(
-    public dashboard: Dashboard,
-    public section: Section
-  ) {}
-
-  view = atom(get => {
-    const view = Section.view(this.section)
-    if (typeof view === 'string') return get(this.dashboard.view(view))
-    return view
-  })
-}
-
-export class DashboardField {
+export interface FieldState {
+  draft: Editor
+  key: string
+  field: Field
   value: WritableAtom<unknown, [unknown], void>
+  options: Atom<FieldOptions<unknown>>
+  error: Atom<string | undefined>
+  view: Atom<
+    Exclude<ReturnType<typeof Field.view>, string> | ComponentType | undefined
+  >
+}
 
-  constructor(
-    public draft: DashboardEditor,
-    public key: string,
-    public field: Field
-  ) {
-    this.value = this.draft.node.field(key)
-  }
-
-  #getter = atom(get => {
-    return ((field: Field) => {
-      const info = this.draft.get(field)
-      assert(info, `Field not found: ${Field.label(field)}`)
+export function createField(
+  draft: Editor,
+  key: string,
+  field: Field
+): FieldState {
+  const value = draft.node.field(key)
+  const getter = atom(get => {
+    return ((requestedField: Field) => {
+      const info = draft.get(requestedField)
+      assert(info, `Field not found: ${Field.label(requestedField)}`)
       return get(info.value)
     }) as FieldGetter
   })
-
-  options = atom(get => {
-    const defaultOptions = Field.options(this.field)
-    const tracker = optionTrackerOf(this.field)
-    const update = tracker ? tracker(get(this.#getter)) : undefined
+  const options = atom(get => {
+    const defaultOptions = Field.options(field)
+    const tracker = optionTrackerOf(field)
+    const update = tracker ? tracker(get(getter)) : undefined
     const trackedOptions = {...defaultOptions, ...update}
-    const options = this.draft.node.readOnly
+    const resolved = draft.node.readOnly
       ? {...trackedOptions, readOnly: true}
       : trackedOptions
-    const resource = this.draft.resource
-    if (!resource) return options
-    const config = get(this.draft.dashboard.config)
-    const fieldName = getScope(config).nameOf(this.field)
-    if (!fieldName) return options
-    const policy = get(this.draft.dashboard.policy)
-    const fieldResource = {...resource, field: fieldName}
+    if (!draft.resource) return resolved
+    const config = get(draft.dashboard.config)
+    const fieldName = getScope(config).nameOf(field)
+    if (!fieldName) return resolved
+    const policy = get(draft.dashboard.policy)
+    const fieldResource = {...draft.resource, field: fieldName}
     return {
-      ...options,
-      hidden: options.hidden || !policy.canRead(fieldResource),
-      readOnly: options.readOnly || !policy.canUpdate(fieldResource)
+      ...resolved,
+      hidden: resolved.hidden || !policy.canRead(fieldResource),
+      readOnly: resolved.readOnly || !policy.canUpdate(fieldResource)
     }
   })
-
-  error = atom((get): string | undefined => {
-    const options = get(this.options) as FieldOptions<unknown>
-    const value = get(this.value)
-    if (options.validate) {
-      const result = options.validate(value)
-      if (typeof result === 'boolean')
-        return result ? 'Field is invalid' : undefined
-      return result
-    }
-    if (options.required) {
-      if (value === undefined || value === null) return 'Field is required'
-      if (typeof value === 'string' && value === '') return 'Field is required'
-      if (Array.isArray(value) && value.length === 0) return 'Field is required'
-    }
-    return undefined
-  })
-
-  view = atom(get => {
-    const view = Field.view(this.field)
-    if (typeof view === 'string') return get(this.draft.dashboard.view(view))
-    return view
-  })
+  return {
+    draft,
+    key,
+    field,
+    value,
+    options,
+    error: atom((get): string | undefined => {
+      const resolved = get(options) as FieldOptions<unknown>
+      const current = get(value)
+      if (resolved.validate) {
+        const result = resolved.validate(current)
+        if (typeof result === 'boolean')
+          return result ? 'Field is invalid' : undefined
+        return result
+      }
+      if (resolved.required) {
+        if (current === undefined || current === null)
+          return 'Field is required'
+        if (typeof current === 'string' && current === '')
+          return 'Field is required'
+        if (Array.isArray(current) && current.length === 0)
+          return 'Field is required'
+      }
+    }),
+    view: atom(get => {
+      const view = Field.view(field)
+      return typeof view === 'string' ? get(draft.dashboard.view(view)) : view
+    })
+  }
 }
 
-export class DashboardType {
-  constructor(
-    public dashboard: Dashboard,
-    public type: Type
-  ) {}
+export interface TypeState {
+  dashboard: Dashboard
+  type: ConfigType
+  readonly contains: ReturnType<typeof getType>['contains']
+  readonly label: ReturnType<typeof getType>['label']
+  readonly orderChildrenBy: ReturnType<typeof getType>['orderChildrenBy']
+  readonly defaultView: ReturnType<typeof ConfigType.defaultView>
+  readonly icon: ReturnType<typeof getType>['icon']
+  readonly sections: ReturnType<typeof getType>['sections']
+}
 
-  get contains() {
-    return getType(this.type).contains
-  }
-
-  get label() {
-    return getType(this.type).label
-  }
-
-  get orderChildrenBy() {
-    return getType(this.type).orderChildrenBy
-  }
-
-  get defaultView() {
-    return Type.defaultView(this.type)
-  }
-
-  get icon() {
-    return getType(this.type).icon
-  }
-
-  get sections() {
-    return getType(this.type).sections
+export function createType(
+  dashboard: Dashboard,
+  type: ConfigType
+): TypeState {
+  const settings = getType(type)
+  return {
+    dashboard,
+    type,
+    contains: settings.contains,
+    label: settings.label,
+    orderChildrenBy: settings.orderChildrenBy,
+    defaultView: ConfigType.defaultView(type),
+    icon: settings.icon,
+    sections: settings.sections
   }
 }

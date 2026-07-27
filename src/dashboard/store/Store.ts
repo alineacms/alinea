@@ -25,10 +25,14 @@ import {
   MutationQueueEvent,
   type MutationQueueEntry
 } from '../boot/MutationQueueEvent.js'
-import {DashboardType} from './Editor.js'
-import {DashboardEntry, type DashboardEntryData} from './Entry.js'
+import {createType} from './Editor.js'
 import {
-  DashboardExplorer,
+  createEntry,
+  type DashboardEntryData
+} from './Entry.js'
+import {
+  createExplorer,
+  type Explorer,
   type ExplorerLocation,
   type ExplorerOptions
 } from './Explorer.js'
@@ -36,17 +40,12 @@ import {loadEntrySidebar} from './loaders/Entry.js'
 import {createRouteLoader, type LoadedRoute} from './loaders/Route.js'
 import {createBrowserHistory, type RouteHistory} from './navigation/History.js'
 import {createNavigation, type Navigation} from './navigation/Navigation.js'
-import {DashboardRoot} from './Root.js'
+import type {Root} from './Root.js'
 import {dispense} from './StoreUtils.js'
-import {DashboardWorkspace} from './Workspace.js'
+import {createWorkspace} from './Workspace.js'
 
 export {ReactiveNode} from './ReactiveNode.js'
-export {
-  DashboardEditor,
-  DashboardField,
-  DashboardSection,
-  DashboardType
-} from './Editor.js'
+export * from './Editor.js'
 export * from './Explorer.js'
 export * from './Entry.js'
 export * from './Root.js'
@@ -154,9 +153,9 @@ export function createDashboardTreeSelection(
 
 type FocusedItem =
   | {entry: DashboardEntryData}
-  | {root: DashboardRoot}
-  | {missingEntry: string; root: DashboardRoot}
-  | {missingRoot: string; root: DashboardRoot}
+  | {root: Root}
+  | {missingEntry: string; root: Root}
+  | {missingRoot: string; root: Root}
   | null
 
 export interface DashboardMutationQueue {
@@ -186,14 +185,14 @@ export class MissingEntryError extends Error {
   }
 }
 
-const internalDashboard = atom<Dashboard | null>(null)
+const internalDashboard = atom<Store | null>(null)
 export const dashboardAtom = atom(
   get => {
     const dashboard = get(internalDashboard)
     assert(dashboard, 'Dashboard not found')
     return dashboard
   },
-  (get, set, dashboard: Dashboard) => {
+  (get, set, dashboard: Store) => {
     set(internalDashboard, dashboard)
   }
 )
@@ -204,7 +203,7 @@ interface LogoutConnection {
   logout(): Promise<void>
 }
 
-export class Dashboard {
+export class Store {
   graph
   config
   client
@@ -281,7 +280,7 @@ export class Dashboard {
     if (sequence === this.#routeLoadSequence)
       set(this.navigation.prepared, page)
   })
-  refreshPageFor = atom(null, async (get, set, explorer: DashboardExplorer) => {
+  refreshPageFor = atom(null, async (get, set, explorer: Explorer) => {
     const page = await get(this.page)
     if (page.type !== 'explorer') return
     if (page.root.explorer !== explorer) return
@@ -850,7 +849,7 @@ export class Dashboard {
 
   workspace = dispense(key => {
     assert(key, 'Workspace key cannot be empty')
-    return new DashboardWorkspace(this, key)
+    return createWorkspace(this, key)
   })
 
   workspaceMenu = atom(get => {
@@ -915,7 +914,7 @@ export class Dashboard {
       const config = get(this.config)
       const type = config.schema[key]
       assert(type, `Type "${key}" not found in config`)
-      return new DashboardType(this, type)
+      return createType(this, type)
     })
   })
 
@@ -957,11 +956,11 @@ export class Dashboard {
         set(fallbackLocation, next)
       }
     )
-    return new DashboardExplorer(this, location, options)
+    return createExplorer(this, location, options)
   }
 
   entries = dispense(id => {
-    return new DashboardEntry(this, id)
+    return createEntry(this, id)
   })
 
   versionLoader = atom(get => {
@@ -1115,6 +1114,13 @@ export class Dashboard {
     }
   )
 }
+
+export function createStore(...args: ConstructorParameters<typeof Store>) {
+  return new Store(...args)
+}
+
+/** @deprecated Use Store or createStore. */
+export {Store as Dashboard}
 
 type Result<Value> = [value: Value, error: null] | [value: null, error: Error]
 type BatchLoadFn<V> = (

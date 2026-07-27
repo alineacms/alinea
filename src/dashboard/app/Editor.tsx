@@ -26,8 +26,9 @@ import {
   Dashboard,
   DashboardEntryData,
   DashboardRoot,
-  DashboardSection,
-  ReactiveNode
+  createSection,
+  ReactiveNode,
+  type Section as StoreSection
 } from '../store/Dashboard.js'
 import type {EntryPageData} from '../store/loaders/Entry.js'
 import type {ExplorerPageData} from '../store/loaders/Explorer.js'
@@ -441,7 +442,7 @@ export function FieldsEditor() {
 }
 
 interface FormSectionProps {
-  section: DashboardSection
+  section: StoreSection
 }
 
 const FormSection = memo(function FormSection({section}: FormSectionProps) {
@@ -468,7 +469,7 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
               className={styles.EditField.slot()}
               style={{gridColumn: `span ${fieldSpan()}`}}
             >
-              <FormSection section={new DashboardSection(dashboard, value)} />
+              <FormSection section={createSection(dashboard, value)} />
             </div>
           )
         return null

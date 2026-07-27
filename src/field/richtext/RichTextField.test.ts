@@ -4,7 +4,7 @@ import {Type, type} from '#/core/Type.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
 import {
   Dashboard,
-  DashboardEditor,
+  createEditor,
   ReactiveNode
 } from '#/dashboard/store/Dashboard.js'
 import {
@@ -39,7 +39,7 @@ test('rejects eager rich text extension configuration', () => {
 test('nested editor fields inherit a read-only reactive node', () => {
   const details = richText('Details')
   const block = type('Block', {fields: {details}})
-  const editor = new DashboardEditor(
+  const editor = createEditor(
     {} as Dashboard,
     block,
     new ReactiveNode<object>({details: []}, true)

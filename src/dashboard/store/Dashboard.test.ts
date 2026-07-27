@@ -1,7 +1,7 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {expect, test} from 'bun:test'
-import {Dashboard} from './Dashboard.js'
+import {createStore} from './Dashboard.js'
 
 function createDashboard() {
   const graph = {
@@ -9,7 +9,7 @@ function createDashboard() {
       return Promise.resolve('sha')
     }
   } as unknown as WriteableGraph
-  return new Dashboard(
+  return createStore(
     graph,
     {schema: {}, workspaces: {}},
     new EventTarget(),

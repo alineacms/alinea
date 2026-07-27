@@ -18,7 +18,7 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {Dashboard} from './store/Dashboard.js'
+import {createStore, type Store} from './store/Dashboard.js'
 
 const styles = styler(css)
 
@@ -43,7 +43,7 @@ export function App({
 }: AppProps) {
   const [dashboard] = useState(
     () =>
-      new Dashboard(graph, config, events, client, views, {
+      createStore(graph, config, events, client, views, {
         alineaDev,
         local
       })
@@ -55,11 +55,11 @@ export function App({
   )
 }
 
-interface DashboardAppProps {
-  dashboard: Dashboard
+interface StoreAppProps {
+  dashboard: Store
 }
 
-function DashboardApp({dashboard}: DashboardAppProps) {
+function DashboardApp({dashboard}: StoreAppProps) {
   useAtomValue(dashboard.theme)
   const auth = useAtomValue(dashboard.auth)
   if (auth.status !== 'authenticated') {
@@ -78,7 +78,7 @@ function DashboardLoading() {
   )
 }
 
-interface DashboardBootProps extends DashboardAppProps {
+interface DashboardBootProps extends StoreAppProps {
   setReady: Dispatch<SetStateAction<boolean>>
 }
 
@@ -88,7 +88,7 @@ function DashboardBoot({dashboard, setReady}: DashboardBootProps) {
   return <AppShell dashboard={dashboard} />
 }
 
-function DashboardContent({dashboard}: DashboardAppProps) {
+function DashboardContent({dashboard}: StoreAppProps) {
   const [ready, setReady] = useState(false)
   if (ready) return <AppShell dashboard={dashboard} />
   return (

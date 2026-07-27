@@ -1,23 +1,31 @@
 import {Entry} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
-import {Root, type RootData, type RootI18n} from '#/core/Root.js'
+import {
+  Root as ConfigRoot,
+  type RootData,
+  type RootI18n
+} from '#/core/Root.js'
 import {assert} from '#/core/util/Assert.js'
 import type {Atom, Getter} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction, ComponentType} from 'react'
 import {LucideFile} from '../icons.js'
-import type {DashboardWorkspace} from './Workspace.js'
-import {DashboardExplorer, type ExplorerLocation} from './Explorer.js'
+import type {Workspace} from './Workspace.js'
+import {
+  createExplorer,
+  type Explorer,
+  type ExplorerLocation
+} from './Explorer.js'
 import {dispense} from './StoreUtils.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 
-export class DashboardRoot {
-  explorer: DashboardExplorer
+export class Root {
+  explorer: Explorer
   constructor(
-    public workspace: DashboardWorkspace,
+    public workspace: Workspace,
     public key: string
   ) {
     const selectedParent = unwrap(
@@ -36,7 +44,7 @@ export class DashboardRoot {
       }),
       previous => previous
     )
-    this.explorer = new DashboardExplorer(
+    this.explorer = createExplorer(
       workspace.dashboard,
       atom(
         get => {
@@ -146,7 +154,7 @@ export class DashboardRoot {
   icon = atom(get => get(this.#settings).icon ?? LucideFile)
   i18n = atom(get => get(this.#settings).i18n)
   mediaI18n = atom((get): RootI18n | undefined => {
-    return Root.mediaI18n(get(this.#settings))
+    return ConfigRoot.mediaI18n(get(this.#settings))
   })
   data = atom((get): RootData & {name: string} => ({
     name: this.key,
@@ -202,7 +210,7 @@ export class DashboardRoot {
 
 export async function queryTreeChildren(
   get: Getter,
-  root: DashboardRoot,
+  root: Root,
   parentId: null | string,
   orderByAtom: Atom<Order | Array<Order> | undefined>,
   locale: string | null
@@ -246,3 +254,10 @@ export async function queryTreeChildren(
   const ids = [...new Set(orderedChildren.map(child => child.id))]
   return ids
 }
+
+export function createRoot(workspace: Workspace, key: string) {
+  return new Root(workspace, key)
+}
+
+/** @deprecated Use Root or createRoot. */
+export {Root as DashboardRoot}

@@ -92,7 +92,7 @@ export interface ExplorerOptions {
   onConfirm?: (selection: Array<string>) => void
 }
 
-export class DashboardExplorer {
+export class Explorer {
   #location: WritableAtom<
     ExplorerLocation,
     [SetStateAction<ExplorerLocation>],
@@ -539,3 +539,18 @@ export class DashboardExplorer {
     prev => prev ?? []
   )
 }
+
+export function createExplorer(
+  dashboard: Dashboard,
+  location: WritableAtom<
+    ExplorerLocation,
+    [SetStateAction<ExplorerLocation>],
+    void
+  >,
+  options: ExplorerOptions
+) {
+  return new Explorer(dashboard, location, options)
+}
+
+/** @deprecated Use Explorer or createExplorer. */
+export {Explorer as DashboardExplorer}

@@ -3,7 +3,7 @@ import {FieldsEditor} from '#/dashboard/app/Editor.js'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
 import {
   Dashboard,
-  DashboardEditor,
+  createEditor,
   ReactiveNode
 } from '#/dashboard/store/Dashboard.js'
 import {richText} from './RichTextField.js'
@@ -171,7 +171,7 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
     })
     return {
       dashboard,
-      editor: new DashboardEditor(dashboard, entryType, node)
+      editor: createEditor(dashboard, entryType, node)
     }
   }, [entryType, initialBody])
   const field = state.editor.field('body')

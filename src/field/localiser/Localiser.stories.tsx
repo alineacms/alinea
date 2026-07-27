@@ -2,7 +2,7 @@ import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Type, type} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
-  Dashboard,
+  createStore,
   DashboardScopeInternal,
   ReactiveNode
 } from '#/dashboard/store.js'
@@ -41,7 +41,7 @@ const previewStyle: CSSProperties = {
   whiteSpace: 'pre-wrap'
 }
 
-const dashboard = new Dashboard(
+const dashboard = createStore(
   {} as WriteableGraph,
   config,
   new EventTarget(),

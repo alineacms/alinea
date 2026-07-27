@@ -25,10 +25,14 @@ import type {
   DashboardEntryData,
   ReactiveNode
 } from './store/Dashboard.js'
-import {dashboardAtom, DashboardEditor} from './store/Dashboard.js'
+import {
+  createEditor,
+  dashboardAtom,
+  type Editor
+} from './store/Dashboard.js'
 
 const entryContext = createContext<DashboardEntryData | null>(null)
-const editorContext = createContext<DashboardEditor | null>(null)
+const editorContext = createContext<Editor | null>(null)
 const nullEntryAtom = atom<EntryRecord<Record<string, unknown>> | null>(null)
 
 export function DashboardScopeInternal({
@@ -75,7 +79,7 @@ export function useGraph(): WriteableGraph {
 }
 
 export interface EditorScopeProps {
-  editor: DashboardEditor
+  editor: Editor
 }
 
 export function EditorScope({
@@ -137,7 +141,7 @@ export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
   const activeVersion = useAtomValue(activeVersionAtom)
   const editor = useMemo(
     () =>
-      new DashboardEditor(
+      createEditor(
         dashboard,
         type,
         node,

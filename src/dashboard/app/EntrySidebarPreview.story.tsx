@@ -2,7 +2,7 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {
-  Dashboard,
+  createStore,
   type DashboardEntryData,
   ReactiveNode
 } from '#/dashboard/store.js'
@@ -20,7 +20,7 @@ const graph = {
   }
 } satisfies PreviewGraph as unknown as WriteableGraph
 
-const dashboard = new Dashboard(
+const dashboard = createStore(
   graph,
   {schema: {}, workspaces: {}},
   new EventTarget(),

@@ -12,7 +12,7 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
+import {createEditor, Dashboard, ReactiveNode} from '#/dashboard/store.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'
@@ -258,7 +258,7 @@ const dashboard = {
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return new DashboardEditor(dashboard, pageType as TypeInstance, node)
+    return createEditor(dashboard, pageType as TypeInstance, node)
   }, [])
   const sections = Field.isField(pageType.sections) ? pageType.sections : null
   if (!sections) return null

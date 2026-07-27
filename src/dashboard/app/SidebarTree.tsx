@@ -27,7 +27,8 @@ import {
   DashboardEntryData,
   type DashboardEntryTreeStatus,
   DashboardRoot,
-  DashboardTree,
+  createTree,
+  type Tree as StoreTree,
   DashboardWorkspace,
   createDashboardTreeSelection
 } from '../store/Dashboard.js'
@@ -55,7 +56,7 @@ export interface SidebarTreeExplorerProps {
 
 interface SidebarItemProps {
   item: DashboardEntry
-  tree: DashboardTree
+  tree: StoreTree
 }
 
 interface SidebarStatusDisplay {
@@ -147,7 +148,7 @@ function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
 interface SidebarLoadedItemProps {
   item: DashboardEntry
   data: DashboardEntryData
-  tree: DashboardTree
+  tree: StoreTree
 }
 
 const SidebarLoadedItem = memo(function SidebarLoadedItem({
@@ -227,7 +228,7 @@ interface SidebarTreeBodyProps {
   onSelectionChange?: (keys: Selection) => void
   root: DashboardRoot
   selectedKeys?: Set<Key>
-  tree: DashboardTree
+  tree: StoreTree
 }
 
 interface SidebarTreeContentProps extends SidebarTreeBodyProps {
@@ -391,7 +392,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
 }: SidebarTreeExplorerProps) {
   const tree = useMemo(
     () =>
-      new DashboardTree(workspace, createDashboardTreeSelection(), {
+      createTree(workspace, createDashboardTreeSelection(), {
         syncRouteExpansion: false
       }),
     [workspace]

@@ -38,7 +38,7 @@ import {
   dashboardEntryOverviewColumnCount,
   MissingEntryError
 } from './Dashboard.js'
-import {DashboardType} from './Editor.js'
+import {type TypeState} from './Editor.js'
 import {loadEntryPage} from './loaders/Entry.js'
 import {ReactiveNode} from './ReactiveNode.js'
 import {queryTreeChildren, type DashboardRoot} from './Root.js'
@@ -173,7 +173,7 @@ export class DashboardEntry {
     let data: DashboardEntryData
     const loaded = atom(async get => {
       const initial = await get(entryData)
-      return (data ??= new DashboardEntryData(
+      return (data ??= createEntryData(
         this,
         unwrap(entryData, prev => prev ?? initial) as Atom<EntryData>
       ))
@@ -244,7 +244,7 @@ export class DashboardEntryData {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
-  type: Atom<DashboardType>
+  type: Atom<TypeState>
   overviewCells: Atom<Array<DashboardEntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
   view: WritableAtom<DashboardEntryView, [view: DashboardEntryView], void>
@@ -887,7 +887,7 @@ export class DashboardEntryData {
   )
 
   languages = dispense((locale: string | null) => {
-    return new DashboardEntryLanguage(this, locale)
+    return createEntryLanguage(this, locale)
   })
 
   routeBlock = atom<EntryRouteBlock | null>(null)
@@ -1223,4 +1223,28 @@ export class DashboardEntryLanguage {
       )
     })
   })
+}
+
+export function createEntry(dashboard: Dashboard, id: string) {
+  return new DashboardEntry(dashboard, id)
+}
+
+export function createEntryData(
+  entry: DashboardEntry,
+  entryData: Atom<EntryData>
+) {
+  return new DashboardEntryData(entry, entryData)
+}
+
+export function createEntryLanguage(
+  entry: DashboardEntryData,
+  locale: string | null
+) {
+  return new DashboardEntryLanguage(entry, locale)
+}
+
+export {
+  DashboardEntry as EntryState,
+  DashboardEntryData as EntryDataState,
+  DashboardEntryLanguage as EntryLanguage
 }

@@ -8,7 +8,7 @@ import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
+import {createEditor, createStore, ReactiveNode} from '#/dashboard/store.js'
 import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
@@ -100,7 +100,7 @@ const pickerStoryStyle: CSSProperties = {
 
 const fixtureConnection = createTestConnection(db)
 
-const dashboard = new Dashboard(
+const dashboard = createStore(
   db,
   cms.config,
   db.index,
@@ -111,7 +111,7 @@ const dashboard = new Dashboard(
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return new DashboardEditor(dashboard, pageType as TypeInstance, node)
+    return createEditor(dashboard, pageType as TypeInstance, node)
   }, [])
   const relatedLink = Field.isField(pageType.relatedLink)
     ? pageType.relatedLink

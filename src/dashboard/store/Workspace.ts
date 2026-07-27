@@ -25,7 +25,7 @@ import type {
   DashboardEntryTreeStatus,
   DashboardTreeSelection
 } from './Dashboard.js'
-import {DashboardRoot} from './Root.js'
+import {createRoot} from './Root.js'
 import {dispense} from './StoreUtils.js'
 
 const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
@@ -42,7 +42,7 @@ function dragItem(id: Key): DragItem {
   }
 }
 
-export class DashboardWorkspace {
+export class Workspace {
   constructor(
     public dashboard: Dashboard,
     public key: string
@@ -75,7 +75,7 @@ export class DashboardWorkspace {
     }
   )
 
-  tree = new DashboardTree(this, this.#treeSelection)
+  tree = createTree(this, this.#treeSelection)
 
   #settings = atom(get => {
     const config = get(this.dashboard.config)
@@ -96,7 +96,7 @@ export class DashboardWorkspace {
     })
   })
 
-  root = dispense(key => new DashboardRoot(this, key))
+  root = dispense(key => createRoot(this, key))
 
   rootMenu = atom(get => {
     const roots = get(this.roots)
@@ -108,11 +108,11 @@ export class DashboardWorkspace {
   })
 }
 
-export class DashboardTree {
+export class Tree {
   #treeSelection: DashboardTreeSelection
   #syncRouteExpansion: boolean
   constructor(
-    private workspace: DashboardWorkspace,
+    private workspace: Workspace,
     treeSelection: DashboardTreeSelection,
     options: {syncRouteExpansion?: boolean} = {}
   ) {
@@ -333,3 +333,20 @@ export class DashboardTree {
       .map(([name]) => name)
   })
 }
+
+export function createWorkspace(dashboard: Dashboard, key: string) {
+  return new Workspace(dashboard, key)
+}
+
+export function createTree(
+  workspace: Workspace,
+  treeSelection: DashboardTreeSelection,
+  options: {syncRouteExpansion?: boolean} = {}
+) {
+  return new Tree(workspace, treeSelection, options)
+}
+
+/** @deprecated Use Workspace or createWorkspace. */
+export {Workspace as DashboardWorkspace}
+/** @deprecated Use Tree or createTree. */
+export {Tree as DashboardTree}

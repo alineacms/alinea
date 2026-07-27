@@ -1,6 +1,6 @@
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {
-  Dashboard,
+  createStore,
   type DashboardEntry,
   type DashboardExplorer
 } from '#/dashboard/store.js'
@@ -27,7 +27,7 @@ const emptyStyle: CSSProperties = {
 
 const fixtureConnection = createTestConnection(db)
 
-const dashboard = new Dashboard(
+const dashboard = createStore(
   db,
   cms.config,
   db.index,
