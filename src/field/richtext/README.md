@@ -24,9 +24,9 @@ Jotai while retaining existing block `ReactiveNode` instances.
 `RichTextBlocks.ts` observes only block identity and order, so typing in a
 nested field does not rerender the document or surrounding text.
 
-The toolbar, embedded block shell and insert menu use the v2 component surface
-from `src/components.ts`. Their small layout wrappers are styled locally with
-the v2 `--alinea-*` theme tokens.
+The toolbar, embedded block shell and insert menu use the current component
+surface from `src/components.ts`. Their small layout wrappers are styled
+locally with the `--alinea-*` theme tokens.
 
 Embedded blocks deliberately reuse the same `ListRow` composition as the
 previous editor. ProseMirror handles their document-level selection and native
