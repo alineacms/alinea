@@ -1,0 +1,134 @@
+.WorkspaceOverview {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 48px 24px;
+}
+
+.WorkspaceOverview-content {
+  display: grid;
+  align-content: center;
+  min-height: 100%;
+  width: min(100%, 880px);
+  margin: 0 auto;
+}
+
+.WorkspaceOverview-list {
+  display: grid;
+  gap: 16px;
+}
+
+.WorkspaceOverview-card {
+  width: 100%;
+}
+
+.WorkspaceOverview-card-header {
+  gap: 12px;
+  min-height: 56px;
+}
+
+.WorkspaceOverview-card-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+}
+
+.WorkspaceOverview-card-title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.WorkspaceOverview-card-open {
+  margin-left: auto;
+}
+
+.WorkspaceOverview-card-content {
+  padding: 0;
+}
+
+.WorkspaceOverview-changes {
+  display: grid;
+}
+
+.WorkspaceOverview-change {
+  display: grid;
+  grid-template-columns: 196px 132px minmax(0, 1fr) 120px 40px;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 0;
+}
+
+.WorkspaceOverview-change:not(:first-child) {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.WorkspaceOverview-change-time,
+.WorkspaceOverview-change-title,
+.WorkspaceOverview-change-user,
+.WorkspaceOverview-change-locale {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.WorkspaceOverview-change-time {
+  color: var(--alinea-fg);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.WorkspaceOverview-change-status {
+  justify-self: start;
+}
+
+.WorkspaceOverview-change-title,
+.WorkspaceOverview-change-user,
+.WorkspaceOverview-change-locale {
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+}
+
+.WorkspaceOverview-empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+}
+
+@media (max-width: 680px) {
+  .WorkspaceOverview {
+    padding: 24px 12px;
+  }
+
+  .WorkspaceOverview-change {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .WorkspaceOverview-change-time {
+    grid-column: 1;
+  }
+
+  .WorkspaceOverview-change-status {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .WorkspaceOverview-change-title {
+    grid-column: 1 / -1;
+  }
+
+  .WorkspaceOverview-change-user,
+  .WorkspaceOverview-change-locale {
+    display: none;
+  }
+}

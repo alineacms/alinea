@@ -14,6 +14,7 @@ import {Rail} from './ui/Rail.js'
 import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
 import {UsersPage, UsersPageSidebar} from './UsersPage.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
+import {WorkspaceOverview} from './WorkspaceOverview.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 
 const styles = styler(css)
@@ -23,7 +24,6 @@ interface AppShellProps {
 }
 
 export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.initialContentAvailable)
   return (
     <main className={styles.AppShell()}>
       <DashboardScopeInternal dashboard={dashboard}>
@@ -34,6 +34,17 @@ export function AppShell({dashboard}: AppShellProps) {
 }
 
 function AppShellContent({dashboard}: AppShellProps) {
+  const route = useAtomValue(dashboard.route)
+
+  if (route.page === 'workspaces') {
+    return <WorkspaceOverview dashboard={dashboard} />
+  }
+
+  return <AppShellLoaded dashboard={dashboard} />
+}
+
+function AppShellLoaded({dashboard}: AppShellProps) {
+  useAtomValue(dashboard.initialContentAvailable)
   const workspaces = useAtomValue(dashboard.workspaces)
   const route = useAtomValue(dashboard.route)
   const canManageMembers = useAtomValue(dashboard.canManageMembers)

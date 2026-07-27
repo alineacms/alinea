@@ -185,6 +185,17 @@ function parse(ksuid: string) {
   return {ts, rnd: buf.buffer.slice(4)}
 }
 
+/**
+ * Returns the creation date encoded in a KSUID, or null for an invalid ID.
+ */
+export function idCreatedAt(id: string): Date | null {
+  try {
+    return parse(id).ts
+  } catch {
+    return null
+  }
+}
+
 export function validateId(id: string): boolean {
   try {
     parse(id)

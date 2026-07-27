@@ -21,7 +21,7 @@ import type {Expr} from '#/core/Expr.js'
 import {Field, type EntryAnchorTarget, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Order} from '#/core/Graph.js'
-import {createId} from '#/core/Id.js'
+import {createId, idCreatedAt} from '#/core/Id.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -36,7 +36,7 @@ import {FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
 import {Type} from '#/core/Type.js'
 import {localUser, type User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
@@ -69,6 +69,7 @@ import {nav, type DashboardRoute} from '../DashboardNav.js'
 import {LucideFile} from '../icons.js'
 
 export const dashboardEntryOverviewColumnCount = 5
+export const dashboardWorkspaceLatestChangesCount = 5
 
 export type {DashboardRoute} from '../DashboardNav.js'
 
@@ -95,6 +96,26 @@ export interface DashboardEntryOverviewCell {
   field: Field
   label: string
   value: unknown
+}
+
+export interface DashboardWorkspaceChange {
+  id: string
+  locale: string | null
+  root: string
+  status: EntryStatus
+  timestamp: number
+  title: string
+  updatedBy: string | null
+}
+
+interface DashboardWorkspaceChangeRow {
+  data: Record<string, unknown>
+  id: string
+  locale: string | null
+  root: string
+  status: EntryStatus
+  title: string
+  updatedAt: number | null
 }
 
 export interface DashboardOptions {
@@ -702,7 +723,12 @@ export class Dashboard {
         .slice(1)
         .split('/')
         .slice(1) as Array<string | undefined>
-      const page = action === 'users' ? 'users' : 'entry'
+      const page =
+        action === 'users'
+          ? 'users'
+          : action === 'entry'
+            ? 'entry'
+            : 'workspaces'
       const [root, locale] = rootPart.split(':')
       return {
         page,
@@ -715,6 +741,12 @@ export class Dashboard {
     async (get, set, update: DashboardRoute) => {
       const focused = await get(this.focused)
       const confirm = async () => {
+        if (update.page === 'workspaces') {
+          startTransition(() => {
+            set(this.#location, {hash: `#${nav.workspaces()}`})
+          })
+          return
+        }
         if (update.page === 'users') {
           startTransition(() => {
             set(this.#location, {hash: `#${nav.users()}`})
@@ -836,7 +868,8 @@ export class Dashboard {
 
   selectedWorkspace = atom(
     get => {
-      const {workspace} = get(this.route)
+      const {page, workspace} = get(this.route)
+      if (page === 'workspaces') return null
       const config = get(this.config)
       const workspaceKeys = get(this.workspaces)
       if (workspace && config.workspaces[workspace]) {
@@ -1707,6 +1740,31 @@ export class DashboardType {
   }
 }
 
+function dashboardWorkspaceChange(
+  row: DashboardWorkspaceChangeRow
+): DashboardWorkspaceChange | null {
+  const createdAt = idCreatedAt(row.id)?.getTime()
+  const timestamp =
+    row.updatedAt ?? (createdAt === undefined ? null : createdAt / 1000)
+  if (timestamp === null) return null
+  return {
+    id: row.id,
+    locale: row.locale,
+    root: row.root,
+    status: row.status,
+    timestamp,
+    title: row.title,
+    updatedBy: dashboardWorkspaceUpdatedBy(row.data)
+  }
+}
+
+function dashboardWorkspaceUpdatedBy(data: Record<string, unknown>) {
+  if (!isRecord(data.metadata)) return null
+  if (!isRecord(data.metadata.updatedBy)) return null
+  const {name} = data.metadata.updatedBy
+  return typeof name === 'string' && name.length > 0 ? name : null
+}
+
 export class DashboardWorkspace {
   constructor(
     public dashboard: Dashboard,
@@ -1752,6 +1810,47 @@ export class DashboardWorkspace {
   color = atom(get => get(this.#settings).color)
   label = atom(get => get(this.#settings).label)
   icon = atom(get => get(this.#settings).icon)
+
+  latestChanges = atom(async get => {
+    const db = get(this.dashboard.db)
+    const select = {
+      data: Entry.data,
+      id: Entry.id,
+      locale: Entry.locale,
+      root: Entry.root,
+      status: Entry.status,
+      title: Entry.title,
+      updatedAt: Entry.updatedAt
+    }
+    const [updatedRows, createdRows] = await Promise.all([
+      db.find({
+        orderBy: {desc: Entry.updatedAt},
+        select,
+        status: 'preferDraft',
+        take: dashboardWorkspaceLatestChangesCount,
+        updatedAt: {gte: 0},
+        workspace: this.key
+      }),
+      db.find({
+        orderBy: {desc: Entry.id},
+        select,
+        status: 'preferDraft',
+        take: dashboardWorkspaceLatestChangesCount,
+        workspace: this.key
+      })
+    ])
+    const rows = new Map<string, DashboardWorkspaceChangeRow>()
+    for (const row of [...updatedRows, ...createdRows]) {
+      rows.set(row.id, row)
+    }
+    return [...rows.values()]
+      .map(dashboardWorkspaceChange)
+      .filter(
+        (change): change is DashboardWorkspaceChange => change !== null
+      )
+      .sort((left, right) => right.timestamp - left.timestamp)
+      .slice(0, dashboardWorkspaceLatestChangesCount)
+  })
 
   roots = atom(get => {
     const roots = get(this.#settings).roots

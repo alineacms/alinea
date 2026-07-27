@@ -1,5 +1,5 @@
 export interface DashboardRoute {
-  page?: 'entry' | 'users'
+  page?: 'workspaces' | 'entry' | 'users'
   workspace?: string
   root?: string
   entry?: string
@@ -7,6 +7,9 @@ export interface DashboardRoute {
 }
 
 export const nav = {
+  workspaces() {
+    return '/'
+  },
   users() {
     return '/users'
   },
