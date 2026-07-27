@@ -6,6 +6,7 @@
       "name": "alinea",
       "dependencies": {
         "@alinea/iso": "^0.3.3",
+        "diff-sequences": "^29.6.3",
         "esbuild": "^0.28.0",
         "react-aria-components": "^1.17.0",
         "use-sync-external-store": "^1.6.0",
@@ -110,6 +111,9 @@
       "version": "0.0.0",
       "dependencies": {
         "alinea": "../..",
+      },
+      "devDependencies": {
+        "typescript": "7.0.2",
       },
     },
   },
@@ -1105,6 +1109,8 @@
     "detective-typescript": ["detective-typescript@9.1.1", "", { "dependencies": { "@typescript-eslint/typescript-estree": "^5.55.0", "ast-module-types": "^4.0.0", "node-source-walk": "^5.0.1", "typescript": "^4.9.5" } }, "sha512-Uc1yVutTF0RRm1YJ3g//i1Cn2vx1kwHj15cnzQP6ff5koNzQ0idc1zAC73ryaWEulA0ElRXFTq6wOqe8vUQ3MA=="],
 
     "devlop": ["devlop@1.1.0", "", { "dependencies": { "dequal": "^2.0.0" } }, "sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA=="],
+
+    "diff-sequences": ["diff-sequences@29.6.3", "", {}, "sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q=="],
 
     "dir-glob": ["dir-glob@3.0.1", "", { "dependencies": { "path-type": "^4.0.0" } }, "sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA=="],
 

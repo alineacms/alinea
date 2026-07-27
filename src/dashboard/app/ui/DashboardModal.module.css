@@ -46,6 +46,16 @@
       max-height: calc(var(--visual-viewport-height) - 32px);
     }
   }
+
+  &.is-wide {
+    width: calc(100vw - 64px);
+    max-height: calc(var(--visual-viewport-height) - 64px);
+
+    @media (max-width: 768px) {
+      width: calc(100vw - 32px);
+      max-height: calc(var(--visual-viewport-height) - 32px);
+    }
+  }
 }
 
 .DashboardModalDialog {

@@ -52,6 +52,28 @@
   background: var(--alinea-bg-muted);
 }
 
+.EntryVersionChanges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 6px 8px 6px 14px;
+}
+
+.EntryVersionChanges-description {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+}
+
+.EntryVersionChanges-modalContent {
+  box-sizing: border-box;
+  width: 100%;
+  max-height: calc(var(--visual-viewport-height) - 128px);
+  overflow: auto;
+  padding: 0 16px 16px;
+}
+
 .EntryEditor-header {
   display: flex;
   align-items: center;

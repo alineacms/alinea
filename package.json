@@ -58,7 +58,7 @@
     "lint": "oxlint --ignore-path .gitignore src/dashboard",
     "prepublishOnly": "bun run build",
     "self-hosted": "bun test/self-hosted/server.ts",
-    "stories": "bunx --bun ladle serve",
+    "stories": "bunx ladle serve",
     "tag": "bun tag.js",
     "spec": "playwright test -c .playwright/playwright.config.ts",
     "trace": "tsc --diagnostics --generateTrace private/trace && analyze-trace private/trace & speedscope private/trace/trace.json",
@@ -72,6 +72,7 @@
   },
   "dependencies": {
     "@alinea/iso": "^0.3.3",
+    "diff-sequences": "^29.6.3",
     "esbuild": "^0.28.0",
     "react-aria-components": "^1.17.0",
     "use-sync-external-store": "^1.6.0"

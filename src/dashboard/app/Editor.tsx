@@ -1,16 +1,25 @@
 import {Button, Icon, Surface} from '#/components.js'
+import type {Revision} from '#/core/Connection.js'
+import type {EntryStatus} from '#/core/Entry.js'
+import {parseRecord} from '#/core/EntryRecord.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
+import {ListField} from '#/core/field/ListField.js'
+import {RecordField} from '#/core/field/RecordField.js'
+import {RichTextField} from '#/core/field/RichTextField.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {RootData} from '#/core/Root.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {HiddenField} from '#/field/hidden.js'
+import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
   type ComponentType,
   memo,
   PropsWithChildren,
+  Suspense,
   useEffect,
   useState,
   useTransition
@@ -27,7 +36,8 @@ import {
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
-  IcRoundEdit
+  IcRoundEdit,
+  IcRoundHistory
 } from '../icons.js'
 import {
   Dashboard,
@@ -38,6 +48,12 @@ import {
 } from '../store/Dashboard.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
+import {
+  EntryDiff,
+  type EntryDiffColumnLabels,
+  type EntryDiffField,
+  fieldChangeKind
+} from './EntryDiff.js'
 import {EntryHeader} from './EntryHeader.js'
 import {EntrySidebar} from './EntrySidebar.js'
 import {EntryTranslationBanner} from './EntryTranslationBanner.js'
@@ -282,6 +298,8 @@ function EntryEditor({entry}: EntryEditorProps) {
   const View = useAtomValue(entry.customView)
   const isUntranslated = useAtomValue(entry.untranslated)
   const node = useAtomValue(entry.selectedNode)
+  const selectedVersion = useAtomValue(entry.selectedVersion)
+  const activeStatus = useAtomValue(entry.activeStatus)
   const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
   const [, startTransition] = useTransition()
@@ -297,6 +315,9 @@ function EntryEditor({entry}: EntryEditorProps) {
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
+  const showVersionChanges =
+    selectedVersion.type === 'history' ||
+    selectedVersion.status !== activeStatus
 
   const discardAndConfirm = () => {
     startTransition(() => {
@@ -333,6 +354,12 @@ function EntryEditor({entry}: EntryEditorProps) {
             </div>
           )}
 
+          {!isUntranslated && !isMediaFile && !isMediaLibrary && (
+            <Suspense fallback={null}>
+              <EntryVersionChanges entry={entry} node={node} type={type.type} />
+            </Suspense>
+          )}
+
           <NodeEditor node={node} type={type.type} />
         </RailContent>
       </RailBody>
@@ -351,7 +378,7 @@ function EntryEditor({entry}: EntryEditorProps) {
     )
   }
 
-  if (View) {
+  if (View && !showVersionChanges) {
     return (
       <EntryScope entry={entry}>
         <View type={type.type} />
@@ -411,6 +438,165 @@ function EntryEditor({entry}: EntryEditorProps) {
       </EntryScope>
     </>
   )
+}
+
+interface EntryVersionChangesProps {
+  entry: DashboardEntryData
+  node: ReactiveNode<object>
+  type: Type
+}
+
+function EntryVersionChanges({entry, node, type}: EntryVersionChangesProps) {
+  const selectedVersion = useAtomValue(entry.selectedVersion)
+  const history = useAtomValue(entry.history)
+  const selectedValue = useAtomValue(node.value)
+  const [isOpen, setOpen] = useState(false)
+  if (!history || !isRecord(selectedValue)) return null
+  const selectedRevisionIndex =
+    selectedVersion.type === 'history'
+      ? history.findIndex(
+          revision =>
+            revision.file === selectedVersion.file &&
+            revision.ref === selectedVersion.ref
+        )
+      : -1
+  if (selectedVersion.type === 'history' && selectedRevisionIndex === -1)
+    return null
+  const previousRevision =
+    selectedVersion.type === 'history'
+      ? history[selectedRevisionIndex + 1]
+      : history[0]
+  const selectedRevision =
+    selectedVersion.type === 'history'
+      ? history[selectedRevisionIndex]
+      : undefined
+  if (!previousRevision) return null
+  return (
+    <EntryVersionChangesLoaded
+      entry={entry}
+      isOpen={isOpen}
+      nodeValue={selectedValue}
+      onOpenChange={setOpen}
+      previousRevision={previousRevision}
+      selectedRevision={selectedRevision}
+      selectedVersion={selectedVersion}
+      type={type}
+    />
+  )
+}
+
+interface EntryVersionChangesLoadedProps {
+  entry: DashboardEntryData
+  isOpen: boolean
+  nodeValue: Record<string, unknown>
+  onOpenChange: (isOpen: boolean) => void
+  previousRevision: Revision
+  selectedRevision?: Revision
+  selectedVersion:
+    | {type: 'status'; status: EntryStatus}
+    | {type: 'history'; file: string; ref: string}
+  type: Type
+}
+
+function EntryVersionChangesLoaded({
+  entry,
+  isOpen,
+  nodeValue,
+  onOpenChange,
+  previousRevision,
+  selectedRevision,
+  selectedVersion,
+  type
+}: EntryVersionChangesLoadedProps) {
+  const revisionData = useAtomValue(entry.revisionData(previousRevision))
+  if (!revisionData) return null
+  const previousValue = Type.withInitialValue(
+    type,
+    parseRecord(revisionData).data
+  )
+  const fields = createEntryDiffFields(type, previousValue, nodeValue)
+  const changedCount = fields.filter(
+    field => fieldChangeKind(field) !== 'same'
+  ).length
+  const previousLabel = historyRevisionLabel(previousRevision)
+  const columnLabels: EntryDiffColumnLabels = {
+    left: previousLabel,
+    right:
+      selectedVersion.type === 'history'
+        ? selectedRevision
+          ? historyRevisionLabel(selectedRevision)
+          : 'Selected revision'
+        : `${formatVersionStatus(selectedVersion.status)} version`
+  }
+  return (
+    <>
+      <Surface depth="muted" className={styles.EntryVersionChanges()}>
+        <span className={styles.EntryVersionChanges.description()}>
+          Compared with {previousLabel.toLowerCase()}
+        </span>
+        <Button
+          appearance="plain"
+          icon={IcRoundHistory}
+          onPress={() => onOpenChange(true)}
+        >
+          View {changedCount} {changedCount === 1 ? 'change' : 'changes'}
+        </Button>
+      </Surface>
+      <DashboardModal isOpen={isOpen} size="wide" onOpenChange={onOpenChange}>
+        <DashboardModalDialog
+          label={`${changedCount} ${changedCount === 1 ? 'change' : 'changes'}`}
+          variant="explorer"
+        >
+          <div className={styles.EntryVersionChanges.modalContent()}>
+            <EntryDiff columnLabels={columnLabels} fields={fields} />
+          </div>
+        </DashboardModalDialog>
+      </DashboardModal>
+    </>
+  )
+}
+
+function createEntryDiffFields(
+  type: Type,
+  previousValue: Record<string, unknown>,
+  currentValue: Record<string, unknown>
+): Array<EntryDiffField> {
+  return Object.entries(Type.fields(type)).flatMap(([id, field]) => {
+    const options = Field.options(field)
+    if (options.hidden || field instanceof HiddenField) return []
+    return [
+      {
+        id,
+        label: Field.label(field),
+        baseValue: previousValue[id],
+        localValue: currentValue[id],
+        valueKind: entryDiffValueKind(field)
+      }
+    ]
+  })
+}
+
+function entryDiffValueKind(field: Field): EntryDiffField['valueKind'] {
+  if (field instanceof LinkField) return 'link'
+  if (field instanceof LinksField) return 'list'
+  if (field instanceof RichTextField) return 'richText'
+  if (field instanceof ListField) return 'list'
+  if (field instanceof RecordField) return 'object'
+  return 'scalar'
+}
+
+function historyRevisionLabel(revision: Revision): string {
+  const date = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(new Date(revision.createdAt))
+  return revision.user?.name
+    ? `Revision from ${date} · ${revision.user.name}`
+    : `Revision from ${date}`
+}
+
+function formatVersionStatus(status: string): string {
+  return status[0].toUpperCase() + status.slice(1)
 }
 
 interface NodeEditorProps extends PropsWithChildren {

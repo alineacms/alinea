@@ -19,7 +19,7 @@ import {RailBody, RailFooter, RailHeader} from './Rail.js'
 const styles = styler(css)
 
 export interface DashboardModalProps extends ModalOverlayProps {
-  size?: 'default' | 'explorer'
+  size?: 'default' | 'explorer' | 'wide'
 }
 
 export function DashboardModal({

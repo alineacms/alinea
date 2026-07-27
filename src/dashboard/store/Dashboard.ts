@@ -2347,6 +2347,10 @@ export class DashboardEntryData {
     })
   })
 
+  revisionData(version: {file: string; ref: string}) {
+    return this.historyData(historyDataKey(version))
+  }
+
   selectedNode = swr(
     atom(async (get): Promise<ReactiveNode<object>> => {
       const version = get(this.selectedVersion)
