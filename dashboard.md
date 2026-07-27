@@ -1,4 +1,4 @@
-# todos
+# Dashboard TODOs
 
 - design explorer views
 - readonly: make this visually clear for fields (check readOnly of node / options)
@@ -9,5 +9,6 @@
 - cleanly handle missing entries in link views
 
 ## responsive
+
 - make both sidebars collapsible and collapse them by default on mobile
-- do necessary css adjustments to make the UI work on mobile, see v1 for reference
+- do necessary CSS adjustments to make the UI work on mobile, using the current dashboard layout as the reference
