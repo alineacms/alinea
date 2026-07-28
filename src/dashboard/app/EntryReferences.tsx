@@ -17,6 +17,7 @@ import type {
   DashboardEntryReferenceSource,
   DashboardEntryReferences
 } from '../store.js'
+import {routeAtom} from '../store.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
 
@@ -34,7 +35,7 @@ export function EntryReferences({
   const type = useAtomValue(entry.type)
   const root = useAtomValue(entry.root)
   const selectedLocale = useAtomValue(root.selectedLocale)
-  const setRoute = useSetAtom(entry.dashboard.route)
+  const setRoute = useSetAtom(routeAtom)
   if (!loaded) return null
   const references = loaded.references
   const showAllLocales = type.type === MediaFile || type.type === MediaLibrary

@@ -15,8 +15,20 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
-import type {EntryDataState, EntryState} from './Entry.js'
-import type {Store} from './Store.js'
+import {
+  entryAtoms,
+  type EntryDataState,
+  type EntryState
+} from './EntryAtoms.js'
+import {configAtom, graphAtom} from './CoreAtoms.js'
+import {
+  mutationQueueAtom,
+  uploadProgressAtom
+} from './MutationAtoms.js'
+import {refreshPageForAtom} from './PageAtoms.js'
+import {policyAtom} from './PolicyAtoms.js'
+import {shaAtom} from './SyncAtoms.js'
+import {workspaceAtoms} from './WorkspaceAtoms.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 
@@ -101,7 +113,6 @@ class ExplorerModel {
   #navigationSequence = 0
   selection
   constructor(
-    public dashboard: Store,
     location: WritableAtom<
       ExplorerLocation,
       [SetStateAction<ExplorerLocation>],
@@ -198,7 +209,7 @@ class ExplorerModel {
     get => get(this.#search),
     (_get, set, search: string) => {
       set(this.#search, search)
-      void set(this.dashboard.refreshPageFor, this)
+      void set(refreshPageForAtom, this)
     }
   )
   showResults = atom(get => {
@@ -245,7 +256,7 @@ class ExplorerModel {
       const direction =
         sort.sortBy === sortBy && sort.direction === 'desc' ? 'asc' : 'desc'
       set(this.#sort, {sortBy, direction})
-      void set(this.dashboard.refreshPageFor, this)
+      void set(refreshPageForAtom, this)
     }
   )
   #filter = atom<ExplorerTypeFilters | undefined>(undefined)
@@ -255,7 +266,7 @@ class ExplorerModel {
       const filter = get(this.#filter)
       const payload = filter === filterBy ? undefined : filterBy
       set(this.#filter, payload)
-      void set(this.dashboard.refreshPageFor, this)
+      void set(refreshPageForAtom, this)
     }
   )
   location = atom(
@@ -273,7 +284,7 @@ class ExplorerModel {
       const allRoots = this.rootScope === 'workspace'
       let locale: string | null = null
       if (!allRoots && next.root) {
-        const root = this.dashboard.workspace(next.workspace).root(next.root)
+        const root = workspaceAtoms(next.workspace).root(next.root)
         locale = get(this.#selectedLocale) ?? get(root.selectedLocale)
       }
       await get(this.itemsAt(next, locale))
@@ -292,7 +303,7 @@ class ExplorerModel {
 
   canUpload = atom(get => {
     const location = get(this.location)
-    const policy = get(this.dashboard.policy)
+    const policy = get(policyAtom)
     return policy.canUpload({
       workspace: location.workspace,
       root: location.root,
@@ -302,7 +313,7 @@ class ExplorerModel {
 
   uploadsInCurrentFolder = atom(get => {
     const location = get(this.location)
-    const queue = get(this.dashboard.mutationQueue)
+    const queue = get(mutationQueueAtom)
     return queue.entries.filter(entry => {
       if (!entry.upload) return false
       if (!entry.mutations.some(mutation => mutation.op === 'uploadFile'))
@@ -317,8 +328,8 @@ class ExplorerModel {
 
   upload = atom(null, async (get, set, files: DashboardUploadFiles) => {
     const location = get(this.location)
-    const db = get(this.dashboard.db)
-    const policy = get(this.dashboard.policy)
+    const db = get(graphAtom)
+    const policy = get(policyAtom)
     policy.assert(Permission.Upload, {
       workspace: location.workspace,
       root: location.root,
@@ -326,13 +337,13 @@ class ExplorerModel {
     })
     const uploadFiles = Array.from(files)
     if (uploadFiles.length === 0) return
-    const maxUploadSize = get(this.dashboard.config).maxUploadSize
+    const maxUploadSize = get(configAtom).maxUploadSize
     const invalidUploads = uploadFiles.flatMap(file => {
       const error = uploadSizeError(file, maxUploadSize)
       return error ? [{id: createId(), file, error}] : []
     })
     if (invalidUploads.length > 0) {
-      set(this.dashboard.uploadProgress, {
+      set(uploadProgressAtom, {
         type: 'fail',
         uploads: invalidUploads,
         destination: {
@@ -354,7 +365,7 @@ class ExplorerModel {
         workspace: location.workspace,
         root: location.root,
         onProgress: progress => {
-          set(this.dashboard.uploadProgress, {
+          set(uploadProgressAtom, {
             type: 'progress',
             id: op.id,
             progress
@@ -368,7 +379,7 @@ class ExplorerModel {
       file
     }))
     const ids = uploads.map(upload => upload.id)
-    set(this.dashboard.uploadProgress, {
+    set(uploadProgressAtom, {
       type: 'start',
       uploads,
       destination: {
@@ -380,17 +391,17 @@ class ExplorerModel {
     try {
       await db.commit(...ops)
     } finally {
-      set(this.dashboard.uploadProgress, {type: 'finish', ids})
+      set(uploadProgressAtom, {type: 'finish', ids})
     }
   })
 
   workspace = atom(
     get => {
       const {workspace} = get(this.location)
-      return this.dashboard.workspace(workspace)
+      return workspaceAtoms(workspace)
     },
     (get, set, update: string) => {
-      const roots = get(this.dashboard.workspace(update).roots)
+      const roots = get(workspaceAtoms(update).roots)
       assert(roots[0], `No readable roots found for workspace "${update}"`)
       set(this.location, {workspace: update, root: roots[0]})
     }
@@ -413,7 +424,7 @@ class ExplorerModel {
     get => {
       const {parentId} = get(this.location)
       if (!parentId) return
-      return this.dashboard.entries(parentId)
+    return entryAtoms(parentId)
     },
     (get, set, parentId: string | undefined) => {
       const location = get(this.location)
@@ -452,11 +463,11 @@ class ExplorerModel {
     location: ExplorerLocation,
     selectedLocale: string | null
   ) {
-    get(this.dashboard.sha) // subscribe to content changes, todo: refine
-    const db = get(this.dashboard.db)
+    get(shaAtom) // subscribe to content changes, todo: refine
+    const db = get(graphAtom)
     const search = get(this.search)
     const root = location.root
-      ? this.dashboard.workspace(location.workspace).root(location.root)
+      ? workspaceAtoms(location.workspace).root(location.root)
       : undefined
     const isMedia = root ? get(root.isMedia) : false
     const sort = get(this.#sort) ?? {
@@ -487,7 +498,7 @@ class ExplorerModel {
         !this.#options.pickChildren &&
         this.#options.flatResults !== false) ||
       searchAll
-    const policy = get(this.dashboard.policy)
+    const policy = get(policyAtom)
     const children = await db.find({
       locale,
       search: searchStarted ? search : undefined,
@@ -510,7 +521,7 @@ class ExplorerModel {
     })
     const entries = children
       .filter(child => policy.canRead(child))
-      .map(child => this.dashboard.entries(child.id))
+      .map(child => entryAtoms(child.id))
     await Promise.all(entries.map(entry => get(entry.preload)))
     return entries
   }
@@ -519,7 +530,7 @@ class ExplorerModel {
     atom(async get => {
       const {parentId} = get(this.location)
       if (!parentId) return []
-      const parent = this.dashboard.entries(parentId)
+      const parent = entryAtoms(parentId)
       assert(parent, 'Parent entry not found')
       const {data: parentData} = get(parent.data)
       if (!parentData) return []
@@ -540,7 +551,6 @@ class ExplorerModel {
 export type Explorer = Pick<ExplorerModel, keyof ExplorerModel>
 
 export function createExplorer(
-  dashboard: Store,
   location: WritableAtom<
     ExplorerLocation,
     [SetStateAction<ExplorerLocation>],
@@ -548,5 +558,42 @@ export function createExplorer(
   >,
   options: ExplorerOptions
 ) {
-  return new ExplorerModel(dashboard, location, options)
+  return new ExplorerModel(location, options)
+}
+
+export function createExplorerAtoms(
+  initialLocation: ExplorerLocation,
+  options: ExplorerOptions = {}
+) {
+  const firstSelection = options.location
+    ? undefined
+    : options.initialSelection?.[0]
+  const selectedLocation = atom(async get => {
+    if (!firstSelection) return undefined
+    const {data} = await get(entryAtoms(firstSelection).readyState)
+    if (!data) return undefined
+    return {
+      workspace: get(data.workspaceKey),
+      root: get(data.rootKey),
+      parentId: get(data.parentId) ?? undefined
+    } satisfies ExplorerLocation
+  })
+  const fallbackLocation = atom(initialLocation)
+  const hasManualLocation = atom(false)
+  const location = atom(
+    get => {
+      if (get(hasManualLocation)) return get(fallbackLocation)
+      return (
+        get(unwrap(selectedLocation, previous => previous)) ??
+        get(fallbackLocation)
+      )
+    },
+    (get, set, update: SetStateAction<ExplorerLocation>) => {
+      const current = get(location)
+      const next = typeof update === 'function' ? update(current) : update
+      set(hasManualLocation, true)
+      set(fallbackLocation, next)
+    }
+  )
+  return createExplorer(location, options)
 }

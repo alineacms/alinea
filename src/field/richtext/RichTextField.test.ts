@@ -6,7 +6,7 @@ import {
   Dashboard,
   createEditor,
   ReactiveNode
-} from '#/dashboard/store/Dashboard.js'
+} from '#/dashboard/atoms/Dashboard.js'
 import {
   configureRichTextExtensions,
   richText
@@ -40,7 +40,6 @@ test('nested editor fields inherit a read-only reactive node', () => {
   const details = richText('Details')
   const block = type('Block', {fields: {details}})
   const editor = createEditor(
-    {} as Dashboard,
     block,
     new ReactiveNode<object>({details: []}, true)
   )

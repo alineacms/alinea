@@ -6,7 +6,7 @@ import {
   type DashboardEntryData,
   ReactiveNode
 } from '#/dashboard/store.js'
-import type {EntryPageData} from '#/dashboard/store/loaders/Entry.js'
+import type {EntryPageData} from '#/dashboard/atoms/loaders/Entry.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 

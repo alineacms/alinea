@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {createMutationQueueState} from './Mutation.js'
+import {createMutationQueueState} from './MutationAtoms.js'
 
 test('summarizes mutation queue state without a store instance', () => {
   const state = createMutationQueueState([

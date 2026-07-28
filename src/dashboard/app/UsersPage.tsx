@@ -23,7 +23,7 @@ import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../icons.js'
-import {dashboardAtom, type Dashboard} from '../store/Dashboard.js'
+import {dashboardAtoms, type Dashboard} from '../atoms/Dashboard.js'
 import {Badge} from './Badge.js'
 import {
   DashboardModal,
@@ -77,7 +77,7 @@ const usersStateAtom = atom<UsersState>({
 const usersAtom = atom(
   get => get(usersStateAtom),
   async (get, set, action: UsersAction): Promise<User | undefined> => {
-    const dashboard = get(dashboardAtom)
+    const dashboard = dashboardAtoms
     const client = get(dashboard.client)
     if (action.type === 'load') {
       const current = get(usersStateAtom)

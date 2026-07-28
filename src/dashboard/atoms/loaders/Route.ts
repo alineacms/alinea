@@ -1,8 +1,8 @@
 import type {Atom, Getter} from 'jotai'
 import type {Route} from '../../DashboardNav.js'
-import type {EntryDataState, EntryState} from '../Entry.js'
-import type {Root} from '../Root.js'
-import type {Workspace} from '../Workspace.js'
+import type {EntryDataState, EntryState} from '../EntryAtoms.js'
+import type {Root} from '../RootAtoms.js'
+import type {Workspace} from '../WorkspaceAtoms.js'
 import {loadEntryPage, type EntryPageData} from './Entry.js'
 import {loadExplorerPage, loadTree, type ExplorerPageData} from './Explorer.js'
 

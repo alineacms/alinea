@@ -18,7 +18,7 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {createStore, type Store} from './store/Dashboard.js'
+import {createStore, type Store} from './atoms/Dashboard.js'
 
 const styles = styler(css)
 

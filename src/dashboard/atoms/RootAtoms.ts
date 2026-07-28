@@ -12,13 +12,23 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction, ComponentType} from 'react'
 import {LucideFile} from '../icons.js'
-import type {Workspace} from './Workspace.js'
+import type {Workspace} from './WorkspaceAtoms.js'
 import {
   createExplorer,
   type Explorer,
   type ExplorerLocation
-} from './Explorer.js'
-import {dispense} from './StoreUtils.js'
+} from './ExplorerAtoms.js'
+import {dispense} from './AtomUtils.js'
+import {configAtom, graphAtom} from './CoreAtoms.js'
+import {entryAtoms} from './EntryAtoms.js'
+import {routeAtom} from './NavigationAtoms.js'
+import {policyAtom} from './PolicyAtoms.js'
+import {
+  selectedRootAtom,
+  selectedWorkspaceAtom
+} from './SelectionAtoms.js'
+import {shaAtom} from './SyncAtoms.js'
+import {viewAtom} from './ViewAtom.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 
@@ -30,13 +40,13 @@ class RootModel {
   ) {
     const selectedParent = unwrap(
       atom(get => {
-        const route = get(this.workspace.dashboard.route)
+        const route = get(routeAtom)
         if (
           route.workspace === workspace.key &&
           route.root === key &&
           route.entry
         ) {
-          const {data} = get(this.workspace.dashboard.entries(route.entry).data)
+          const {data} = get(entryAtoms(route.entry).data)
           if (data && get(data.view) === 'overview') return route.entry
           return keepPreviousExplorerParent
         }
@@ -45,7 +55,6 @@ class RootModel {
       previous => previous
     )
     this.explorer = createExplorer(
-      workspace.dashboard,
       atom(
         get => {
           return {
@@ -60,16 +69,16 @@ class RootModel {
               ? update(get(this.explorer.location))
               : update
           if (next.root !== key || next.workspace !== workspace.key) {
-            set(workspace.dashboard.route, {
+            set(routeAtom, {
               workspace: next.workspace,
               root: next.root
             })
           } else {
-            const route = get(workspace.dashboard.route)
-            const selectedWorkspace = get(workspace.dashboard.selectedWorkspace)
-            const selectedRoot = get(workspace.dashboard.selectedRoot)
+            const route = get(routeAtom)
+            const selectedWorkspace = get(selectedWorkspaceAtom)
+            const selectedRoot = get(selectedRootAtom)
             if (selectedWorkspace === workspace.key && selectedRoot === key)
-              set(workspace.dashboard.route, {
+              set(routeAtom, {
                 workspace: workspace.key,
                 root: key,
                 entry: next.parentId,
@@ -86,7 +95,7 @@ class RootModel {
         selectionMode: 'multiple',
         selectionBehavior: 'toggle',
         onAction: atom(null, (get, set, entry) => {
-          set(this.workspace.dashboard.route, {
+          set(routeAtom, {
             workspace: this.workspace.key,
             root: this.key,
             entry: entry.id
@@ -97,7 +106,7 @@ class RootModel {
   }
 
   #settings = atom(get => {
-    const config = get(this.workspace.dashboard.config)
+    const config = get(configAtom)
     const workspaceConfig = config.workspaces[this.workspace.key]
     assert(
       workspaceConfig,
@@ -109,17 +118,17 @@ class RootModel {
 
   selected = atom(
     get => {
-      const route = get(this.workspace.dashboard.route)
+      const route = get(routeAtom)
       if (route.page === 'users') return false
       if (
-        get(this.workspace.dashboard.selectedWorkspace) !== this.workspace.key
+        get(selectedWorkspaceAtom) !== this.workspace.key
       )
         return false
-      return get(this.workspace.dashboard.selectedRoot) === this.key
+      return get(selectedRootAtom) === this.key
     },
     (get, set, value: boolean) => {
       set(
-        this.workspace.dashboard.route,
+        routeAtom,
         value ? {workspace: this.workspace.key, root: this.key} : {}
       )
     }
@@ -128,7 +137,7 @@ class RootModel {
   #languagePreference = atom<string>()
   selectedLocale = atom(
     get => {
-      const route = get(this.workspace.dashboard.route)
+      const route = get(routeAtom)
       const i18n = get(this.i18n)
       if (route.locale && i18n?.locales.includes(route.locale))
         return route.locale
@@ -137,8 +146,8 @@ class RootModel {
       return i18n?.locales[0] ?? null
     },
     async (get, set, locale: string) => {
-      const route = get(this.workspace.dashboard.route)
-      const changed = await set(this.workspace.dashboard.route, {
+      const route = get(routeAtom)
+      const changed = await set(routeAtom, {
         workspace: this.workspace.key,
         root: this.key,
         entry: route.entry,
@@ -164,14 +173,14 @@ class RootModel {
     const view = get(this.#settings).view
     if (!view) return undefined
     if (typeof view === 'string')
-      return get(this.workspace.dashboard.view(view)) as
+      return get(viewAtom(view)) as
         | ComponentType<{root: RootData}>
         | undefined
     return view
   })
   orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
   canCreate = atom(get => {
-    const policy = get(this.workspace.dashboard.policy)
+    const policy = get(policyAtom)
     return policy.canCreate({
       workspace: this.workspace.key,
       root: this.key
@@ -186,9 +195,9 @@ class RootModel {
   isMedia = atom(get => get(this.#settings).isMediaRoot)
 
   hasChildren = atom(async get => {
-    const db = get(this.workspace.dashboard.db)
+    const db = get(graphAtom)
     const visibleTypes = get(this.workspace.tree.visibleTypes)
-    const policy = get(this.workspace.dashboard.policy)
+    const policy = get(policyAtom)
     const children = await db.find({
       workspace: this.workspace.key,
       root: this.key,
@@ -217,10 +226,10 @@ export async function queryTreeChildren(
   orderByAtom: Atom<Order | Array<Order> | undefined>,
   locale: string | null
 ) {
-  get(root.workspace.dashboard.sha) // subscribe to content changes
+  get(shaAtom) // subscribe to content changes
   const visibleTypes = get(root.workspace.tree.visibleTypes)
-  const db = get(root.workspace.dashboard.db)
-  const policy = get(root.workspace.dashboard.policy)
+  const db = get(graphAtom)
+  const policy = get(policyAtom)
   const orderBy = get(orderByAtom)
   const children = await db.find({
     select: {

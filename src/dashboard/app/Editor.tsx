@@ -11,7 +11,6 @@ import {type ComponentType, memo, PropsWithChildren, useEffect} from 'react'
 import {
   EditorScope,
   EntryScope,
-  useDashboard,
   useEditor,
   useFieldOptions,
   useFieldView,
@@ -27,12 +26,15 @@ import {
   DashboardEntryData,
   DashboardRoot,
   createSection,
+  entryAtoms,
+  entrySidebarOpenAtom,
   ReactiveNode,
+  routeAtom,
   type Section as StoreSection
-} from '../store/Dashboard.js'
-import type {EntryPageData} from '../store/loaders/Entry.js'
-import type {ExplorerPageData} from '../store/loaders/Explorer.js'
-import type {LoadedRoute, RootPageData} from '../store/loaders/Route.js'
+} from '../atoms/Dashboard.js'
+import type {EntryPageData} from '../atoms/loaders/Entry.js'
+import type {ExplorerPageData} from '../atoms/loaders/Explorer.js'
+import type {LoadedRoute, RootPageData} from '../atoms/loaders/Route.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'
@@ -172,10 +174,6 @@ function NotFoundPanel({
   )
 }
 
-interface RootEditorProps {
-  root: DashboardRoot
-}
-
 interface LoadedRootEditorProps {
   page: RootPageData
 }
@@ -215,36 +213,34 @@ function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
 
 function DefaultRootEditor({page}: ExplorerEditorProps) {
   const {root} = page
-  const route = useAtomValue(root.workspace.dashboard.route)
+  const route = useAtomValue(routeAtom)
   return (
     <Rail main>
       <Explorer
         explorer={root.explorer}
         items={page.items}
         titleControls={
-          route.entry ? <RootOverviewControls root={root} /> : undefined
+          route.entry ? <RootOverviewControls /> : undefined
         }
       />
     </Rail>
   )
 }
 
-function RootOverviewControls({root}: RootEditorProps) {
-  const entryId = useAtomValue(root.workspace.dashboard.route).entry
+function RootOverviewControls() {
+  const entryId = useAtomValue(routeAtom).entry
   if (!entryId) return null
-  return <LoadedRootOverviewControls entryId={entryId} root={root} />
+  return <LoadedRootOverviewControls entryId={entryId} />
 }
 
 interface LoadedRootOverviewControlsProps {
   entryId: string
-  root: DashboardRoot
 }
 
 function LoadedRootOverviewControls({
-  entryId,
-  root
+  entryId
 }: LoadedRootOverviewControlsProps) {
-  const entry = root.workspace.dashboard.entries(entryId)
+  const entry = entryAtoms(entryId)
   const {data} = useAtomValue(entry.data)
   if (!data) return null
   return <RootOverviewControlsButton entry={data} />
@@ -298,9 +294,7 @@ function EntryEditor({page}: EntryEditorProps) {
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const routeBlock = useAtomValue(entry.routeBlock)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(
-    entry.dashboard.entrySideBarOpen
-  )
+  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
   const defaultView = useAtomValue(entry.defaultView)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
@@ -457,7 +451,6 @@ export interface EditFieldsProps {
 }
 
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
-  const dashboard = useDashboard()
   return (
     <div className={styles.EditFields()}>
       {Object.entries(fields).map(([name, value]) => {
@@ -469,7 +462,7 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
               className={styles.EditField.slot()}
               style={{gridColumn: `span ${fieldSpan()}`}}
             >
-              <FormSection section={createSection(dashboard, value)} />
+              <FormSection section={createSection(value)} />
             </div>
           )
         return null

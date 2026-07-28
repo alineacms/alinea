@@ -3,8 +3,8 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import type {Dashboard} from '../store/Dashboard.js'
-import type {LoadedRoute} from '../store/loaders/Route.js'
+import type {Dashboard} from '../atoms/Dashboard.js'
+import type {LoadedRoute} from '../atoms/loaders/Route.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
@@ -149,7 +149,7 @@ function AppShellWorkspace({dashboard, page}: AppShellContentProps) {
         </Sidebar>
 
         <Suspense fallback={null}>
-          <DashboardMeta dashboard={dashboard} />
+          <DashboardMeta />
         </Suspense>
 
         <EditorBoundary dashboard={dashboard} page={page} />

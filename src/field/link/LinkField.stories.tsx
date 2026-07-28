@@ -111,7 +111,7 @@ const dashboard = createStore(
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return createEditor(dashboard, pageType as TypeInstance, node)
+    return createEditor(pageType as TypeInstance, node)
   }, [])
   const relatedLink = Field.isField(pageType.relatedLink)
     ? pageType.relatedLink

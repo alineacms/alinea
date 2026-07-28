@@ -1,36 +1,101 @@
-import {cleanup, render, screen} from '#test/react.js'
+import {act, cleanup, render, screen} from '#test/react.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
-import {DashboardScopeInternal, useDashboard} from './hooks.js'
-import type {Dashboard} from './store/Dashboard.js'
+import {DashboardScopeInternal} from './hooks.js'
+import {
+  configAtom,
+  createStore,
+  entryRevisionAtom
+} from './atoms/Dashboard.js'
 
 afterEach(cleanup)
 
-interface DashboardIdentityProps {
-  expected: Dashboard
-  label: string
+function DashboardWorkspace() {
+  const config = useAtomValue(configAtom)
+  return <span>{Object.keys(config.workspaces)[0]}</span>
 }
 
-function DashboardIdentity({expected, label}: DashboardIdentityProps) {
-  const dashboard = useDashboard()
-  return <span>{dashboard === expected ? label : 'wrong dashboard'}</span>
-}
-
-test('dashboard scopes isolate dashboard instances', () => {
-  const first = {id: 'first'} as unknown as Dashboard
-  const second = {id: 'second'} as unknown as Dashboard
+test('dashboard scopes isolate hydrated atom values', () => {
+  const first = createDashboard('first')
+  const second = createDashboard('second')
 
   render(
     <>
       <DashboardScopeInternal dashboard={first}>
-        <DashboardIdentity expected={first} label="first dashboard" />
+        <DashboardWorkspace />
       </DashboardScopeInternal>
       <DashboardScopeInternal dashboard={second}>
-        <DashboardIdentity expected={second} label="second dashboard" />
+        <DashboardWorkspace />
       </DashboardScopeInternal>
     </>
   )
 
-  expect(screen.getByText('first dashboard')).toBeDefined()
-  expect(screen.getByText('second dashboard')).toBeDefined()
-  expect(screen.queryByText('wrong dashboard')).toBeNull()
+  expect(screen.getByText('first')).toBeDefined()
+  expect(screen.getByText('second')).toBeDefined()
 })
+
+function DashboardRevision() {
+  const revision = useAtomValue(entryRevisionAtom('entry'))
+  return <span>revision:{revision}</span>
+}
+
+test('dashboard effects update entry revisions', () => {
+  const events = new TestEvents()
+  render(
+    <DashboardScopeInternal
+      dashboard={createDashboard(
+        'main',
+        events as unknown as EventTarget
+      )}
+    >
+      <DashboardRevision />
+    </DashboardScopeInternal>
+  )
+
+  act(() => {
+    events.emit(new IndexEvent({op: 'entry', id: 'entry'}))
+  })
+
+  expect(screen.getByText('revision:1')).toBeDefined()
+})
+
+class TestEvents {
+  listeners = new Set<EventListenerOrEventListenerObject>()
+
+  addEventListener(
+    _type: string,
+    listener: EventListenerOrEventListenerObject
+  ) {
+    this.listeners.add(listener)
+  }
+
+  removeEventListener(
+    _type: string,
+    listener: EventListenerOrEventListenerObject
+  ) {
+    this.listeners.delete(listener)
+  }
+
+  emit(event: Event) {
+    for (const listener of this.listeners) {
+      if (typeof listener === 'function') listener(event)
+      else listener.handleEvent(event)
+    }
+  }
+}
+
+function createDashboard(
+  workspace: string,
+  events = new EventTarget()
+) {
+  return createStore(
+    {} as WriteableGraph,
+    {schema: {}, workspaces: {[workspace]: {} as never}},
+    events,
+    {} as LocalConnection,
+    {}
+  )
+}

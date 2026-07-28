@@ -23,7 +23,7 @@ import type {
   Dashboard,
   DashboardRoot,
   DashboardWorkspace
-} from '../store/Dashboard.js'
+} from '../atoms/Dashboard.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'

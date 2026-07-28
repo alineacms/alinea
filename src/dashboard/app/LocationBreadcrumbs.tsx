@@ -1,6 +1,6 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
-import {Atom, useAtomValue} from 'jotai'
+import {atom, type Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
 import {
@@ -10,9 +10,18 @@ import {
   ExplorerLocation,
   useDashboard
 } from '../store.js'
+import {dashboardAtoms} from '../atoms/DashboardAtoms.js'
 import css from './LocationBreadcrumbs.module.css'
 
 const styles = styler(css)
+
+export const workspaceBreadcrumbItemsAtom = atom(get => {
+  const workspaces = get(dashboardAtoms.workspaces)
+  return workspaces.map(workspace => ({
+    id: workspace,
+    label: get(dashboardAtoms.workspace(workspace).label)
+  }))
+})
 
 interface BreadcrumbMenuProps {
   label: Atom<string>
@@ -192,7 +201,7 @@ export function LocationBreadcrumbs({
       {enableWorkspace && (
         <BreadcrumbMenu
           label={workspace.label}
-          items={dashboard.workspaceMenu}
+          items={workspaceBreadcrumbItemsAtom}
           onSelect={() => setWorkspace(location.workspace)}
           onAction={setWorkspace}
         />

@@ -25,8 +25,12 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import type {DashboardEntryData, DashboardEntrySidebarTab} from '../store.js'
-import type {EntryPageData} from '../store/loaders/Entry.js'
+import {
+  entrySidebarTabAtom,
+  type DashboardEntryData,
+  type DashboardEntrySidebarTab
+} from '../store.js'
+import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
@@ -45,7 +49,7 @@ export interface EntrySidebarProps {
 
 export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
-  const [selectedTab, setSelectedTab] = useAtom(entry.dashboard.entrySidebarTab)
+  const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const hasPreview = !isMediaFile && !isMediaLibrary

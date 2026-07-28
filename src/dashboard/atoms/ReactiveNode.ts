@@ -2,7 +2,7 @@ import {entries, fromEntries, values} from '#/core/util/Objects.js'
 import type {Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
-import {dispense} from './StoreUtils.js'
+import {dispense} from './AtomUtils.js'
 
 export type Writable<Value> = WritableAtom<
   Value,

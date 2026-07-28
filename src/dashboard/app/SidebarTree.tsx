@@ -31,7 +31,7 @@ import {
   type Tree as StoreTree,
   DashboardWorkspace,
   createDashboardTreeSelection
-} from '../store/Dashboard.js'
+} from '../atoms/Dashboard.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarBody} from './ui/Sidebar.js'

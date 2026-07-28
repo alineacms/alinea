@@ -1,7 +1,7 @@
 import '#/theme.css'
 import {atom, type WritableAtom} from 'jotai'
 import type {CSSProperties, ReactNode} from 'react'
-import type {Dashboard, DashboardAuthState} from '../store/Dashboard.js'
+import type {Dashboard, DashboardAuthState} from '../atoms/Dashboard.js'
 import {AuthView} from './AuthView.js'
 
 interface StoryAuthCheck {

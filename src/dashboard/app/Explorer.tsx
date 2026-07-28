@@ -363,7 +363,6 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
       {isMedia && uploads.length > 0 && (
         <MutationQueueStatus
           ariaLabel={uploadLabel}
-          dashboard={explorer.dashboard}
           placement="bottom"
         >
           {uploads.length}

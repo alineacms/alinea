@@ -4,9 +4,13 @@ import type {Getter} from 'jotai'
 import type {
   EntryDataState,
   DashboardEntryReferences
-} from '../Entry.js'
+} from '../EntryAtoms.js'
 import type {EntrySidebarTab} from '../Contracts.js'
 import type {ReactiveNode} from '../ReactiveNode.js'
+import {
+  entrySidebarOpenAtom,
+  entrySidebarTabAtom
+} from '../PageAtoms.js'
 
 export interface PreparedEntryPage {
   type: 'entry'
@@ -106,12 +110,12 @@ export async function loadEntryPage(
     get(entry.currentEntryFor(locale)),
     get(entry.parentNeedsTranslationFor(locale))
   ])
-  const sidebar = get(entry.dashboard.entrySideBarOpen)
+  const sidebar = get(entrySidebarOpenAtom)
     ? await loadEntrySidebar(
         get,
         entry,
         locale,
-        get(entry.dashboard.entrySidebarTab)
+        get(entrySidebarTabAtom)
       )
     : {type: 'closed' as const}
   return {

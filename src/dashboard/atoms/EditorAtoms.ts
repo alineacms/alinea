@@ -10,11 +10,12 @@ import type {Atom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
 import {ReactiveNode} from './ReactiveNode.js'
-import type {Store} from './Store.js'
-import {dispense} from './StoreUtils.js'
+import {configAtom} from './CoreAtoms.js'
+import {policyAtom} from './PolicyAtoms.js'
+import {dispense} from './AtomUtils.js'
+import {viewAtom} from './ViewAtom.js'
 
 export interface Editor {
-  deps: EditorDeps
   type: ConfigType
   node: ReactiveNode<object>
   parent?: Editor
@@ -26,14 +27,7 @@ export interface Editor {
   get(field: Field): FieldState | undefined
 }
 
-export interface EditorDeps {
-  config: Store['config']
-  policy: Store['policy']
-  view: Store['view']
-}
-
 export function createEditor(
-  deps: EditorDeps,
   type: ConfigType,
   node: ReactiveNode<object>,
   parent?: Editor,
@@ -52,7 +46,6 @@ export function createEditor(
     return parent?.get(fieldToFind)
   }
   editor = {
-    deps,
     type,
     node,
     parent,
@@ -61,9 +54,7 @@ export function createEditor(
     anchors: atom(get =>
       ConfigType.anchors(type, get(value) as Record<string, unknown>)
     ),
-    sections: getType(type).sections.map(section =>
-      createSection(deps, section)
-    ),
+    sections: getType(type).sections.map(createSection),
     field,
     get
   }
@@ -80,14 +71,13 @@ export interface Section {
 }
 
 export function createSection(
-  deps: Pick<EditorDeps, 'view'>,
   section: ConfigSection
 ): Section {
   return {
     section,
     view: atom(get => {
       const view = ConfigSection.view(section)
-      return typeof view === 'string' ? get(deps.view(view)) : view
+      return typeof view === 'string' ? get(viewAtom(view)) : view
     })
   }
 }
@@ -126,10 +116,10 @@ export function createField(
       ? {...trackedOptions, readOnly: true}
       : trackedOptions
     if (!draft.resource) return resolved
-    const config = get(draft.deps.config)
+    const config = get(configAtom)
     const fieldName = getScope(config).nameOf(field)
     if (!fieldName) return resolved
-    const policy = get(draft.deps.policy)
+    const policy = get(policyAtom)
     const fieldResource = {...draft.resource, field: fieldName}
     return {
       ...resolved,
@@ -163,7 +153,7 @@ export function createField(
     }),
     view: atom(get => {
       const view = Field.view(field)
-      return typeof view === 'string' ? get(draft.deps.view(view)) : view
+      return typeof view === 'string' ? get(viewAtom(view)) : view
     })
   }
 }
@@ -190,3 +180,12 @@ export function createType(type: ConfigType): TypeState {
     sections: settings.sections
   }
 }
+
+export const typeAtoms = dispense((key: string) =>
+  atom(get => {
+    const config = get(configAtom)
+    const type = config.schema[key]
+    assert(type, `Type "${key}" not found in config`)
+    return createType(type)
+  })
+)

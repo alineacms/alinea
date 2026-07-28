@@ -1,5 +1,4 @@
 import {Type} from '#/core/Type.js'
-import {getWorkspace} from '#/core/Internal.js'
 import {Permission} from '#/core/Role.js'
 import {assert} from '#/core/util/Assert.js'
 import type {
@@ -23,11 +22,20 @@ import type {TreeSelection} from './Contracts.js'
 import type {
   EntryState,
   DashboardEntryTreeStatus
-} from './Entry.js'
-import type {Store} from './Store.js'
-import {createRoot, type Root} from './Root.js'
+} from './EntryAtoms.js'
+import {entryAtoms} from './EntryAtoms.js'
+import {createRoot, type Root} from './RootAtoms.js'
 import type {ComponentType} from 'react'
-import {dispense} from './StoreUtils.js'
+import {dispense} from './AtomUtils.js'
+import {configAtom, graphAtom} from './CoreAtoms.js'
+import {routeAtom} from './NavigationAtoms.js'
+import {policyAtom} from './PolicyAtoms.js'
+import {
+  selectedRootAtom,
+  selectedWorkspaceAtom,
+  workspaceRootsAtom,
+  workspaceSettingsAtom
+} from './SelectionAtoms.js'
 
 const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
 
@@ -44,7 +52,6 @@ function dragItem(id: Key): DragItem {
 }
 
 export interface Workspace {
-  dashboard: Store
   key: string
   tree: Tree
   color: Atom<string>
@@ -57,10 +64,10 @@ export interface Workspace {
   >
 }
 
-export function createWorkspace(dashboard: Store, key: string): Workspace {
+export function createWorkspace(key: string): Workspace {
   const treeSelection = atom(
     get => {
-      const route = get(dashboard.route)
+      const route = get(routeAtom)
       if (route.workspace && route.workspace !== key) return new Set<Key>()
       if (route.entry) return new Set<Key>([route.entry])
       return new Set<Key>()
@@ -68,15 +75,15 @@ export function createWorkspace(dashboard: Store, key: string): Workspace {
     async (get, set, next: 'all' | Set<Key>) => {
       if (next === 'all')
         throw new Error('Selecting all items is not supported')
-      const current = get(dashboard.route)
-      const root = get(dashboard.selectedRoot)
+      const current = get(routeAtom)
+      const root = get(selectedRootAtom)
       const selectedKey = next.values().next().value
       if (!selectedKey) {
-        await set(dashboard.route, {workspace: key})
+        await set(routeAtom, {workspace: key})
         return
       }
       const selectedId = String(selectedKey)
-      await set(dashboard.route, {
+      await set(routeAtom, {
         workspace: key,
         root: root ?? undefined,
         entry: selectedId,
@@ -84,23 +91,11 @@ export function createWorkspace(dashboard: Store, key: string): Workspace {
       })
     }
   )
-  const settings = atom(get => {
-    const config = get(dashboard.config)
-    const workspaceConfig = config.workspaces[key]
-    assert(workspaceConfig, `Workspace "${key}" not found in config`)
-    return getWorkspace(workspaceConfig)
-  })
-  const roots = atom(get => {
-    const configuredRoots = get(settings).roots
-    const policy = get(dashboard.policy)
-    return Object.keys(configuredRoots).filter(root => {
-      return policy.canRead({workspace: key, root})
-    })
-  })
+  const settings = workspaceSettingsAtom(key)
+  const roots = workspaceRootsAtom(key)
   let workspace: Workspace
   const root = dispense(rootKey => createRoot(workspace, rootKey))
   workspace = {
-    dashboard,
     key,
     tree: undefined as never,
     color: atom(get => get(settings).color),
@@ -120,6 +115,30 @@ export function createWorkspace(dashboard: Store, key: string): Workspace {
   return workspace
 }
 
+export const workspaceAtoms = dispense((key: string) => {
+  assert(key, 'Workspace key cannot be empty')
+  return createWorkspace(key)
+})
+
+export const currentWorkspaceAtom = atom(get => {
+  const workspace = get(selectedWorkspaceAtom)
+  return workspace ? workspaceAtoms(workspace) : null
+})
+
+export const selectedMediaRootAtom = atom(get => {
+  const workspace = get(currentWorkspaceAtom)
+  if (!workspace) return null
+  const roots = get(workspace.roots)
+  return roots.find(root => get(workspace.root(root).isMedia)) ?? null
+})
+
+export const currentRootAtom = atom(get => {
+  const workspace = get(currentWorkspaceAtom)
+  const root = get(selectedRootAtom)
+  if (!workspace || !root) return null
+  return workspace.root(root)
+})
+
 class TreeModel {
   #treeSelection: TreeSelection
   #syncRouteExpansion: boolean
@@ -134,10 +153,10 @@ class TreeModel {
 
   #routeExpandedKeys = atom(async get => {
     if (!this.#syncRouteExpansion) return new Set<Key>()
-    const route = get(this.workspace.dashboard.route)
+    const route = get(routeAtom)
     if (!route.entry || route.workspace !== this.workspace.key)
       return new Set<Key>()
-    const entry = this.workspace.dashboard.entries(route.entry)
+    const entry = entryAtoms(route.entry)
     const {data} = get(entry.data)
     if (!data) return new Set<Key>()
     return new Set<Key>(get(data.parentIds))
@@ -172,7 +191,7 @@ class TreeModel {
       await set(this.#treeSelection, next)
       if (
         first &&
-        get(this.workspace.dashboard.route).entry === String(first)
+        get(routeAtom).entry === String(first)
       ) {
         const expandedKeys = get(this.#expandedKeys)
         if (!expandedKeys.has(first))
@@ -182,13 +201,14 @@ class TreeModel {
   )
 
   entryItems = dispense((id: string): EntryState => {
-    return this.workspace.dashboard.entries(id)
+    return entryAtoms(id)
   })
 
   items = atom(async get => {
-    const currentRoot = get(this.workspace.dashboard.currentRoot)
-    if (!currentRoot || currentRoot.workspace.key !== this.workspace.key)
-      return []
+    if (get(selectedWorkspaceAtom) !== this.workspace.key) return []
+    const root = get(selectedRootAtom)
+    if (!root) return []
+    const currentRoot = this.workspace.root(root)
     const ids = await get(currentRoot.children)
     return ids.map(id => this.entryItems(id))
   })
@@ -238,10 +258,11 @@ class TreeModel {
   })
 
   dragDisabled = atom(get => {
-    const currentRoot = get(this.workspace.dashboard.currentRoot)
-    if (!currentRoot) return true
-    const policy = get(this.workspace.dashboard.policy)
-    const resource = {workspace: this.workspace.key, root: currentRoot.key}
+    if (get(selectedWorkspaceAtom) !== this.workspace.key) return true
+    const root = get(selectedRootAtom)
+    if (!root) return true
+    const policy = get(policyAtom)
+    const resource = {workspace: this.workspace.key, root}
     return !policy.canMove(resource) && !policy.canReorder(resource)
   })
 
@@ -281,14 +302,14 @@ class TreeModel {
   )
 
   async #moveDraggedKeys(get: Getter, keys: Set<Key>, target: ItemDropTarget) {
-    const db = get(this.workspace.dashboard.db)
-    const policy = get(this.workspace.dashboard.policy)
-    const selectedRoot = get(this.workspace.dashboard.selectedRoot)
+    const db = get(graphAtom)
+    const policy = get(policyAtom)
+    const selectedRoot = get(selectedRootAtom)
     if (!selectedRoot) return
     const {moveTarget, targetType} = this.#target(target.key, selectedRoot)
     for (const key of keys) {
       const draggedId = String(key)
-      const entry = this.workspace.dashboard.entries(draggedId)
+      const entry = entryAtoms(draggedId)
       const {data} = get(entry.data)
       assert(data, `Entry "${draggedId}" is not loaded`)
       const [resource] = get(data.entryData).entries
@@ -339,7 +360,7 @@ class TreeModel {
   }
 
   visibleTypes = atom(get => {
-    const config = get(this.workspace.dashboard.config)
+    const config = get(configAtom)
     return Object.entries(config.schema)
       .filter(([, type]) => !Type.isHidden(type))
       .map(([name]) => name)

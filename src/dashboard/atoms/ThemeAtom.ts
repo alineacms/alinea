@@ -7,7 +7,7 @@ export type ThemeMode = 'system' | 'light' | 'dark'
 const storageKey = 'alinea-dashboard-theme'
 let enableTransitionsFrame: number | undefined
 
-export function createTheme() {
+export function createThemeAtom() {
   const storage = atomWithStorage<ThemeMode>(storageKey, 'system', undefined)
   return Object.assign(
     atom(

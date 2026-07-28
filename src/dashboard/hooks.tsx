@@ -12,6 +12,7 @@ import {
   useAtomValue,
   useSetAtom
 } from 'jotai'
+import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {
   createContext,
@@ -24,12 +25,24 @@ import type {
   Dashboard,
   DashboardEntryData,
   ReactiveNode
-} from './store/Dashboard.js'
+} from './atoms/Dashboard.js'
 import {
+  clientAtom,
+  configAtom,
+  createDashboardNavigation,
   createEditor,
-  dashboardAtom,
+  dashboardEffectsAtom,
+  dashboardAtoms,
+  eventsAtom,
+  graphAtom,
+  navigationAtom,
+  optionsAtom,
+  previewTokenRequestsAtom,
+  viewsAtom,
+  type DashboardInput,
   type Editor
-} from './store/Dashboard.js'
+} from './atoms/Dashboard.js'
+import {createBrowserHistory} from './atoms/navigation/History.js'
 
 const entryContext = createContext<DashboardEntryData | null>(null)
 const editorContext = createContext<Editor | null>(null)
@@ -39,19 +52,54 @@ export function DashboardScopeInternal({
   children,
   dashboard
 }: PropsWithChildren<{dashboard: Dashboard}>) {
-  const [store] = useState(() => {
-    const store = createStore()
-    store.set(dashboardAtom, dashboard)
-    return store
-  })
-  return createElement(Provider, {store}, children)
+  const [store] = useState(createStore)
+  return createElement(
+    Provider,
+    {store},
+    createElement(DashboardHydration, {dashboard}, children)
+  )
+}
+
+function DashboardHydration({
+  children,
+  dashboard
+}: PropsWithChildren<{dashboard: Dashboard}>) {
+  const {input} = dashboard
+  assert(input, 'Dashboard input not found')
+  useHydrateDashboard(input)
+  return children
+}
+
+export function useHydrateDashboard(input: DashboardInput) {
+  const navigation = useMemo(
+    () =>
+      createDashboardNavigation(
+        input.options.history ?? createBrowserHistory()
+      ),
+    [input.options.history]
+  )
+  const previewTokenRequests = useMemo(
+    () => new Map<string, Promise<string>>(),
+    []
+  )
+  useHydrateAtoms([
+    [graphAtom, input.graph],
+    [configAtom, input.config],
+    [eventsAtom, input.events],
+    [clientAtom, input.client],
+    [viewsAtom, input.views],
+    [optionsAtom, input.options],
+    [navigationAtom, navigation],
+    [previewTokenRequestsAtom, previewTokenRequests]
+  ] as const)
+  useAtomValue(dashboardEffectsAtom)
 }
 
 /**
  * Returns the active dashboard model from the nearest dashboard scope.
  */
 export function useDashboard() {
-  return useAtomValue(dashboardAtom)
+  return dashboardAtoms
 }
 
 /**
@@ -132,7 +180,6 @@ function useFieldInfo(field: Field) {
  * Creates an editor for a nested reactive node.
  */
 export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
-  const dashboard = useDashboard()
   const parent = useContext(editorContext)
   const entry = useContext(entryContext)
   const activeVersionAtom = useMemo(() => {
@@ -142,13 +189,12 @@ export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
   const editor = useMemo(
     () =>
       createEditor(
-        dashboard,
         type,
         node,
         parent ?? undefined,
         activeVersion ?? undefined
       ),
-    [activeVersion, dashboard, node, parent, type]
+    [activeVersion, node, parent, type]
   )
   return editor
 }

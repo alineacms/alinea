@@ -1,8 +1,8 @@
 import {Select, SelectItem, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {DashboardEntryData} from '../store/Dashboard.js'
-import type {EntryPageData} from '../store/loaders/Entry.js'
+import {DashboardEntryData} from '../atoms/Dashboard.js'
+import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import css from './EntryTranslationBanner.module.css'
 
 const styles = styler(css)

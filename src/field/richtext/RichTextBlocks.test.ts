@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
-import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
+import {ReactiveNode} from '#/dashboard/atoms/Dashboard.js'
 import {createStore} from 'jotai'
 import {richTextBlocksAtom, richTextStructureAtom} from './RichTextBlocks.js'
 

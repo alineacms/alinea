@@ -19,8 +19,14 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
-import type {EntryPageData} from '../store/loaders/Entry.js'
+import {
+  configAtom,
+  DashboardEntryData,
+  mutationQueueAtom,
+  ReactiveNode,
+  routeAtom
+} from '../atoms/Dashboard.js'
+import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
@@ -78,11 +84,11 @@ interface EntryHeaderBackButtonProps {
 }
 
 function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
-  const route = useAtomValue(entry.dashboard.route)
+  const route = useAtomValue(routeAtom)
   const parentId = useAtomValue(entry.parentId)
   const workspace = useAtomValue(entry.workspaceKey)
   const root = useAtomValue(entry.rootKey)
-  const setRoute = useSetAtom(entry.dashboard.route)
+  const setRoute = useSetAtom(routeAtom)
   return (
     <EditorBackButton
       label={parentId ? 'Back to parent entry' : 'Back to root'}
@@ -107,8 +113,8 @@ function EntryHeaderMoreActions({
   untranslated
 }: EntryHeaderMoreActionsProps) {
   const policy = usePolicy()
-  const config = useAtomValue(entry.dashboard.config)
-  const route = useAtomValue(entry.dashboard.route)
+  const config = useAtomValue(configAtom)
+  const route = useAtomValue(routeAtom)
   const parentId = useAtomValue(entry.parentId)
   const workspace = useAtomValue(entry.workspaceKey)
   const root = useAtomValue(entry.rootKey)
@@ -117,14 +123,14 @@ function EntryHeaderMoreActions({
   const canPublishParents = useAtomValue(entry.canPublish)
   const isParentUnpublished = useAtomValue(entry.parentUnpublished)
   const selectedVersion = useAtomValue(entry.selectedVersion)
-  const setRoute = useSetAtom(entry.dashboard.route)
+  const setRoute = useSetAtom(routeAtom)
   const discardDraft = useSetAtom(entry.discardDraft)
   const unpublish = useSetAtom(entry.unpublish)
   const archive = useSetAtom(entry.archive)
   const publishArchived = useSetAtom(entry.publishArchived)
   const deleteEntry = useSetAtom(entry.deleteEntry)
   const replaceFile = useSetAtom(entry.replaceFile)
-  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const mutationQueue = useAtomValue(mutationQueueAtom)
   const access = policy.get(activeVersion)
   const canDelete = activeVersion.seeded === null
   const isMediaFile = type.type === MediaFile
@@ -372,7 +378,7 @@ function EntryHeaderActions({
   parentNeedsTranslation
 }: EntryHeaderActionProps) {
   const policy = usePolicy()
-  const config = useAtomValue(entry.dashboard.config)
+  const config = useAtomValue(configAtom)
   const activeVersion = page.languageVersion
   const canPublishParents = useAtomValue(entry.canPublish)
   const reset = useSetAtom(node.reset)
@@ -382,7 +388,7 @@ function EntryHeaderActions({
   const saveTranslation = useSetAtom(entry.saveTranslation)
   const publishEdits = useSetAtom(entry.publishEdits)
   const publishDraft = useSetAtom(entry.publishDraft)
-  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const mutationQueue = useAtomValue(mutationQueueAtom)
   const type = useAtomValue(entry.type)
   const access = policy.get(activeVersion)
   const [isPending, setIsPending] = useState(false)

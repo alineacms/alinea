@@ -1,8 +1,8 @@
 import type {Getter} from 'jotai'
-import type {EntryState} from '../Entry.js'
-import type {ExplorerLocation} from '../Explorer.js'
-import type {Root} from '../Root.js'
-import type {Workspace} from '../Workspace.js'
+import type {EntryState} from '../EntryAtoms.js'
+import type {ExplorerLocation} from '../ExplorerAtoms.js'
+import type {Root} from '../RootAtoms.js'
+import type {Workspace} from '../WorkspaceAtoms.js'
 
 export interface PreparedExplorerPage {
   type: 'explorer'

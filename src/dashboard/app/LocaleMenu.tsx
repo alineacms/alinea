@@ -7,7 +7,7 @@ import {IcRoundUnfoldMore} from '../icons.js'
 import type {
   DashboardLocaleSelection,
   DashboardRoot
-} from '../store/Dashboard.js'
+} from '../atoms/Dashboard.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)

@@ -20,7 +20,7 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import type {Dashboard, DashboardRoot} from '../store/Dashboard.js'
+import type {Dashboard, DashboardRoot} from '../atoms/Dashboard.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
@@ -53,7 +53,7 @@ export function WorkspaceRoots({
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <MutationQueueStatus dashboard={dashboard} openOnFail />
+        <MutationQueueStatus openOnFail />
         <WorkspaceProfileMenu
           dashboard={dashboard}
           canManageMembers={canManageMembers}
@@ -94,6 +94,7 @@ function WorkspaceProfileMenu({
   const user = useAtomValue(dashboard.currentUser)
   const config = useAtomValue(dashboard.config)
   const canLogout = useAtomValue(dashboard.canLogout)
+  const isLocal = useAtomValue(dashboard.isLocal)
   const [theme, setTheme] = useAtom(dashboard.theme)
   const setUserRoles = useSetAtom(dashboard.setUserRoles)
   const setRoute = useSetAtom(dashboard.route)
@@ -176,7 +177,7 @@ function WorkspaceProfileMenu({
               />
             </div>
           </li>
-          {dashboard.isLocal && roleEntries.length > 0 && (
+          {isLocal && roleEntries.length > 0 && (
             <li className={styles.WorkspaceRoots.profile.popover.item()}>
               <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
                 Role

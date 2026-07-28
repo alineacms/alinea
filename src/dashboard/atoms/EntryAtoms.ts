@@ -35,13 +35,31 @@ import {
   type EntryView,
   MissingEntryError
 } from './Contracts.js'
-import {type TypeState} from './Editor.js'
+import {typeAtoms, type TypeState} from './EditorAtoms.js'
 import {loadEntryPage} from './loaders/Entry.js'
 import {ReactiveNode} from './ReactiveNode.js'
-import {queryTreeChildren, type Root} from './Root.js'
-import type {Store} from './Store.js'
-import {dispense} from './StoreUtils.js'
+import {queryTreeChildren, type Root} from './RootAtoms.js'
+import {dispense} from './AtomUtils.js'
 import {debounce, keepPrevious, withPending} from './Async.js'
+import {
+  clientAtom,
+  configAtom,
+  graphAtom,
+  previewTokenRequestsAtom
+} from './CoreAtoms.js'
+import {entryLoaderAtom, versionLoaderAtom} from './EntryLoaderAtoms.js'
+import {userAtom} from './AuthAtoms.js'
+import {uploadProgressAtom} from './MutationAtoms.js'
+import {reloadPageAtom} from './PageAtoms.js'
+import {policyAtom} from './PolicyAtoms.js'
+import {
+  previewSessionOriginsAtom,
+  requestPreviewSessionToken
+} from './PreviewAtoms.js'
+import {entryRevisionAtom} from './RevisionAtom.js'
+import {shaAtom} from './SyncAtoms.js'
+import {viewAtom} from './ViewAtom.js'
+import {workspaceAtoms} from './WorkspaceAtoms.js'
 
 const decoder = new TextDecoder()
 
@@ -133,12 +151,9 @@ class EntryModel {
   readyState: Atom<Promise<DashboardEntryState>>
   #selectedView = atom<EntryView | undefined>(undefined)
 
-  constructor(
-    public dashboard: Store,
-    public id: string
-  ) {
+  constructor(public id: string) {
     const entryData = atom<Promise<EntryData>>(async get => {
-      get(this.dashboard.revisions(id))
+      get(entryRevisionAtom(id))
       return get(this.preload)
     })
     let data: EntryDataModel
@@ -176,10 +191,10 @@ class EntryModel {
   }
 
   preload = atom(async get => {
-    const load = get(this.dashboard.entryLoader)
+    const load = get(entryLoaderAtom)
     const [result, error] = await load(this.id)
     if (error) {
-      if (error instanceof MissingEntryError) get(this.dashboard.sha) // subscribe to entry revisions to update when entry synced
+      if (error instanceof MissingEntryError) get(shaAtom)
       throw error
     }
     assert(result, `Entry "${this.id}" not found`)
@@ -197,7 +212,7 @@ class EntryModel {
         }
       }
       set(this.#selectedView, view)
-      await set(this.dashboard.reloadPage)
+      await set(reloadPageAtom)
     }
   )
 }
@@ -288,7 +303,7 @@ class EntryDataModel {
   customView = atom(get => {
     const type = get(this.type)
     const {view} = getType(type.type)
-    if (typeof view === 'string') return get(this.dashboard.view(view))
+    if (typeof view === 'string') return get(viewAtom(view))
     return view
   })
 
@@ -296,12 +311,11 @@ class EntryDataModel {
     public entry: EntryModel,
     public entryData: Atom<EntryData>
   ) {
-    const dashboard = entry.dashboard
     const data = this.entryData
     this.workspaceKey = atom(get => get(data).workspace)
     this.rootKey = atom(get => get(data).root)
     this.hasChildren = atom(get => get(data).hasChildren)
-    this.type = atom(get => get(this.dashboard.type(get(data).type)))
+    this.type = atom(get => get(typeAtoms(get(data).type)))
     this.defaultView = atom(get => {
       if (get(this.hasChildren)) return 'overview'
       const configured = get(this.type).defaultView
@@ -331,7 +345,7 @@ class EntryDataModel {
     this.root = atom(get => {
       const workspace = get(this.workspaceKey)
       const root = get(this.rootKey)
-      return dashboard.workspace(workspace).root(root)
+      return workspaceAtoms(workspace).root(root)
     })
     this.overviewCells = atom(get => {
       const entry = get(this.currentEntry)
@@ -348,10 +362,6 @@ class EntryDataModel {
           }
         })
     })
-  }
-
-  get dashboard() {
-    return this.entry.dashboard
   }
 
   get id() {
@@ -385,7 +395,7 @@ class EntryDataModel {
       set(this.#translationSourceLocale, locale)
       set(this.currentlyEditing, undefined)
       set(this.#selection, undefined)
-      await set(this.dashboard.reloadPage)
+      await set(reloadPageAtom)
     }
   )
 
@@ -417,13 +427,13 @@ class EntryDataModel {
         })
       )
       set(this.#selection, next)
-      await set(this.dashboard.reloadPage)
+      await set(reloadPageAtom)
     }
   )
 
   historyFor = dispense((locale: string | null) =>
     atom(async (get): Promise<Array<Revision>> => {
-      const config = get(this.dashboard.config)
+      const config = get(configAtom)
       const sourceLocale = this.#sourceLocaleFor(get, locale)
       const data = get(this.locales).get(sourceLocale)
       assert(data, `No locale data found for locale ${sourceLocale}`)
@@ -432,7 +442,7 @@ class EntryDataModel {
         root: get(this.rootKey),
         filePath: data.filePath
       })
-      const client = get(this.dashboard.client)
+      const client = get(clientAtom)
       const revisions = await client.revisions(file)
       return revisions.slice(1)
     })
@@ -441,7 +451,7 @@ class EntryDataModel {
   historyData = dispense((key: string) => {
     return atom(async get => {
       const [ref, file] = parseHistoryDataKey(key)
-      const client = get(this.dashboard.client)
+      const client = get(clientAtom)
       return client.revisionData(file, ref)
     })
   })
@@ -572,7 +582,7 @@ class EntryDataModel {
     const parentIds = get(this.parentIds)
     return Promise.all(
       parentIds.map(async id => {
-        const parent = this.dashboard.entries(id)
+        const parent = entryAtoms(id)
         assert(parent, `Parent entry not found: ${id}`)
         return parent
       })
@@ -584,9 +594,9 @@ class EntryDataModel {
   parents = unwrap(this.#parents, prev => prev ?? [])
 
   #incomingReferences = atom(async get => {
-    get(this.dashboard.revisions(this.id))
-    const db = get(this.dashboard.db)
-    const policy = get(this.dashboard.policy)
+    get(entryRevisionAtom(this.id))
+    const db = get(graphAtom)
+    const policy = get(policyAtom)
     const result = await db.referencesTo({
       targetId: this.id,
       status: 'preferDraft'
@@ -706,7 +716,7 @@ class EntryDataModel {
       const parentId = get(this.parentId)
       if (!parentId) return false
       if (!locale) return false
-      const db = get(this.dashboard.db)
+      const db = get(graphAtom)
       const parentLink = await db.first({
         select: Entry.id,
         id: parentId,
@@ -722,7 +732,7 @@ class EntryDataModel {
     if (type === MediaLibrary) return undefined
     const typePreview = Type.preview(type)
     if (typePreview !== undefined) return typePreview
-    const config = get(this.dashboard.config)
+    const config = get(configAtom)
     const workspace = config.workspaces[get(this.workspaceKey)]
     if (!workspace) return config.preview
     const root = workspace[get(this.rootKey)]
@@ -778,7 +788,7 @@ class EntryDataModel {
     const node = await get(this.selectedNode)
     const value = get(node.value)
     if (!isRecord(value)) return undefined
-    const sha = await get(this.dashboard.sha)
+    const sha = await get(shaAtom)
     if (!sha) return undefined
 
     const root = get(this.root)
@@ -800,7 +810,7 @@ class EntryDataModel {
       data: value,
       status
     }
-    const schema = get(this.dashboard.config).schema
+    const schema = get(configAtom).schema
     const baseText = decoder.decode(
       JsonLoader.format(
         schema,
@@ -824,9 +834,9 @@ class EntryDataModel {
     atom(async get => {
       if (get(this.preview) !== true) return undefined
       get(this.#previewRetry)
-      const client = get(this.dashboard.client)
+      const client = get(clientAtom)
       if (!client || typeof client.previewToken !== 'function') return undefined
-      const config = get(this.dashboard.config)
+      const config = get(configAtom)
       const sourceLocale = this.#sourceLocaleFor(get, locale)
       const activeVersion = await get(
         this.languages(sourceLocale).activeVersionResource
@@ -841,10 +851,11 @@ class EntryDataModel {
               : location.href)
         )
         const origin = base.origin
-        if (get(this.dashboard.previewSessionOrigins)[origin])
+        if (get(previewSessionOriginsAtom).has(origin))
           return new URL(activeVersion.url, origin).toString()
 
-        const previewToken = await this.dashboard.previewSessionToken(
+        const previewToken = await requestPreviewSessionToken(
+          get(previewTokenRequestsAtom),
           origin,
           client
         )
@@ -896,7 +907,7 @@ class EntryDataModel {
     locale: string | null
   ) {
     const activeVersion = await get(this.languages(locale).activeVersion)
-    get(this.dashboard.policy).assert(permission, activeVersion)
+    get(policyAtom).assert(permission, activeVersion)
     return activeVersion
   }
 
@@ -906,7 +917,7 @@ class EntryDataModel {
     type: Type,
     action: 'update' | 'publish' | 'translate'
   ) {
-    const user = await get(this.dashboard.user)
+    const user = await get(userAtom)
     const current = get(node.value) as Record<string, unknown>
     const data = Type.beforeSave(type, current, {
       action,
@@ -920,7 +931,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Update, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     const type = get(this.type).type
     const {data, changed} = await this.#beforeSave(get, node, type, 'update')
     await db.create({
@@ -939,7 +950,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     const type = get(this.type).type
     const {data, changed} = await this.#beforeSave(get, node, type, 'publish')
     await db.create({
@@ -958,7 +969,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     await db.publish({
       id: this.id,
       locale,
@@ -970,7 +981,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Update, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     await db.discard({
       id: this.id,
       locale,
@@ -982,7 +993,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     await db.unpublish({
       id: this.id,
       locale
@@ -993,7 +1004,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Archive, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     await db.archive({
       id: this.id,
       locale
@@ -1004,7 +1015,7 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     await db.publish({
       id: this.id,
       locale,
@@ -1016,23 +1027,23 @@ class EntryDataModel {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Delete, locale)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     await db.remove(this.id)
   })
 
   replaceFile = atom(null, async (get, set, file: File) => {
     const locale = get(this.sourceLocale)
     const activeVersion = await get(this.languages(locale).activeVersion)
-    const policy = get(this.dashboard.policy)
+    const policy = get(policyAtom)
     policy.assert(Permission.Update, activeVersion)
     policy.assert(Permission.Upload, activeVersion)
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     const error = uploadSizeError(
       file,
-      get(this.dashboard.config).maxUploadSize
+      get(configAtom).maxUploadSize
     )
     if (error) {
-      set(this.dashboard.uploadProgress, {
+      set(uploadProgressAtom, {
         type: 'fail',
         uploads: [{id: createId(), file, error}],
         destination: {
@@ -1065,12 +1076,12 @@ class EntryDataModel {
       `Cannot translate entry ${this.id} without a source locale`
     )
     const activeVersion = await get(this.languages(sourceLocale).activeVersion)
-    get(this.dashboard.policy).assert(Permission.Update, {
+    get(policyAtom).assert(Permission.Update, {
       ...activeVersion,
       locale
     })
     const parentId = activeVersion.parentId
-    const db = get(this.dashboard.db)
+    const db = get(graphAtom)
     if (parentId) {
       const parentLink = await db.first({
         select: Entry.id,
@@ -1080,7 +1091,7 @@ class EntryDataModel {
       })
       assert(parentLink, 'Parent not translated')
     }
-    const config = get(this.dashboard.config)
+    const config = get(configAtom)
     const type = get(this.type).type
     const {data, changed} = await this.#beforeSave(get, node, type, 'translate')
     await db.create({
@@ -1134,12 +1145,12 @@ class EntryLanguageModel {
   ) {}
 
   versionsResource = atom(async get => {
-    get(this.entry.dashboard.revisions(this.entry.id)) // subscribe to entry changes
-    const loader = get(this.entry.dashboard.versionLoader)
+    get(entryRevisionAtom(this.entry.id))
+    const loader = get(versionLoaderAtom)
     const [entries] = await loader(this.entry.id)
     if (!entries)
       throw new Error(`No versions found for entry ${this.entry.id}`)
-    const policy = get(this.entry.dashboard.policy)
+    const policy = get(policyAtom)
     const readable = entries.filter(entry => {
       return entry.locale === this.locale && policy.canRead(entry)
     })
@@ -1181,7 +1192,7 @@ class EntryLanguageModel {
       const version = versions.get(status)
       assert(version, `No version found`)
       const data = version.data
-      const policy = get(this.entry.dashboard.policy)
+      const policy = get(policyAtom)
       // Todo: fix data during indexing instead of here
       const initialValue = Type.withInitialValue(type, {
         ...Type.initialValue(type),
@@ -1200,9 +1211,11 @@ export type EntryState = EntryModel
 export type EntryDataState = EntryDataModel
 export type EntryLanguage = EntryLanguageModel
 
-export function createEntry(dashboard: Store, id: string): EntryState {
-  return new EntryModel(dashboard, id)
+export function createEntry(id: string): EntryState {
+  return new EntryModel(id)
 }
+
+export const entryAtoms = dispense((id: string) => createEntry(id))
 
 export function createEntryData(
   entry: EntryState,

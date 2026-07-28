@@ -11,7 +11,7 @@ import {
   IcRoundRefresh
 } from '../icons.js'
 import {DashboardEntryData, useDashboard} from '../store.js'
-import type {EntryPageData} from '../store/loaders/Entry.js'
+import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 

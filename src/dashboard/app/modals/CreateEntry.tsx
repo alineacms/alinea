@@ -30,7 +30,7 @@ import {useDashboard} from '../../hooks.js'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
 import {
   ReactiveNode,
-  dashboardAtom,
+  dashboardAtoms,
   type ExplorerLocation
 } from '../../store.js'
 import {NodeEditor} from '../Editor.js'
@@ -89,7 +89,7 @@ function buildTypeOptions(
 }
 
 const initialLocationAtom = atom(async get => {
-  const dashboard = get(dashboardAtom)
+  const dashboard = dashboardAtoms
   const selectedWorkspace = get(dashboard.selectedWorkspace)
   const selectedRoot = get(dashboard.selectedRoot)
   const route = get(dashboard.route)
@@ -146,7 +146,7 @@ function typeOptionsAtom(
 ) {
   return unwrap(
     atom(async get => {
-      const dashboard = get(dashboardAtom)
+      const dashboard = dashboardAtoms
       const config = get(dashboard.config)
       const db = get(dashboard.db)
       const policy = get(dashboard.policy)
@@ -194,7 +194,7 @@ function insertOrderVisibleAtom(parentId: string | undefined) {
   return unwrap(
     atom(async get => {
       if (!parentId) return true
-      const dashboard = get(dashboardAtom)
+      const dashboard = dashboardAtoms
       const config = get(dashboard.config)
       const db = get(dashboard.db)
       const parent = await db.first({
@@ -210,7 +210,7 @@ function insertOrderVisibleAtom(parentId: string | undefined) {
 }
 
 const containerTypesAtom = atom(get => {
-  const dashboard = get(dashboardAtom)
+  const dashboard = dashboardAtoms
   const config = get(dashboard.config)
   return (Object.entries(config.schema) as Array<[string, Type]>)
     .filter(([, schemaType]) => {

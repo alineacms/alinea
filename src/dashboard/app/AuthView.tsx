@@ -3,7 +3,7 @@ import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
-import type {Dashboard} from '../store/Dashboard.js'
+import type {Dashboard} from '../atoms/Dashboard.js'
 import css from './AuthView.module.css'
 
 const styles = styler(css)

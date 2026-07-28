@@ -1,11 +1,13 @@
 import {type} from '#/core/Type.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {FieldsEditor} from '#/dashboard/app/Editor.js'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
 import {
-  Dashboard,
+  createStore,
   createEditor,
   ReactiveNode
-} from '#/dashboard/store/Dashboard.js'
+} from '#/dashboard/atoms/Dashboard.js'
 import {richText} from './RichTextField.js'
 import {
   alignment,
@@ -21,7 +23,7 @@ import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
 import {select} from '#/field/select.js'
 import {text} from '#/field/text/TextField.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {views} from '../views.js'
 
@@ -171,7 +173,7 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
     })
     return {
       dashboard,
-      editor: createEditor(dashboard, entryType, node)
+      editor: createEditor(entryType, node)
     }
   }, [entryType, initialBody])
   const field = state.editor.field('body')
@@ -201,13 +203,14 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
   )
 }
 
-function createDashboard(): Dashboard {
-  const dashboard = {
-    view(key: string) {
-      return atom(() => views[key])
-    }
-  }
-  return dashboard as unknown as Dashboard
+function createDashboard() {
+  return createStore(
+    {} as WriteableGraph,
+    {schema: {}, workspaces: {}},
+    new EventTarget(),
+    {} as LocalConnection,
+    views
+  )
 }
 
 function paragraph(text: string) {
