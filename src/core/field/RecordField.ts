@@ -21,6 +21,12 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
       defaultValue() {
         return Type.initialValue(type) as Row
       },
+      withInitialValue(value) {
+        return Type.withInitialValue(
+          type,
+          (value ?? {}) as Record<string, unknown>
+        ) as Row
+      },
       applyLinks(value, loader) {
         return Type.applyLinks(type, value as Record<string, unknown>, loader)
       },
