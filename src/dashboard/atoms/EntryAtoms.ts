@@ -68,10 +68,7 @@ import type {
   DashboardFileInfoState,
   EntryRouteBlock
 } from './EntrySupport.js'
-import {
-  createEntryLanguage,
-  entryRevisionAtom
-} from './EntrySupport.js'
+import {createEntryLanguage, entryRevisionAtom} from './EntrySupport.js'
 
 const decoder = new TextDecoder()
 
@@ -1002,10 +999,7 @@ class EntryDataModel {
     policy.assert(Permission.Update, activeVersion)
     policy.assert(Permission.Upload, activeVersion)
     const db = get(graphAtom)
-    const error = uploadSizeError(
-      file,
-      get(configAtom).maxUploadSize
-    )
+    const error = uploadSizeError(file, get(configAtom).maxUploadSize)
     if (error) {
       set(uploadProgressAtom, {
         type: 'fail',

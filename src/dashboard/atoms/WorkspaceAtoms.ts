@@ -179,10 +179,7 @@ class TreeModel {
       assert(next !== 'all', 'Selecting all items is not supported')
       const [first] = next
       await set(this.#treeSelection, next)
-      if (
-        first &&
-        get(routeAtom).entry === String(first)
-      ) {
+      if (first && get(routeAtom).entry === String(first)) {
         const expandedKeys = get(this.#expandedKeys)
         if (!expandedKeys.has(first))
           set(this.#expandedKeys, new Set(expandedKeys).add(first))

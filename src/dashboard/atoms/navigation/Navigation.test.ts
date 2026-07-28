@@ -114,6 +114,22 @@ test('commits prepared page data with the route', async () => {
   unsubscribe()
 })
 
+test('does not refresh prepared data for an obsolete route', async () => {
+  const initial: Route = {page: 'entry', entry: 'before'}
+  const target: Route = {page: 'entry', entry: 'after'}
+  const navigation = createNavigation<string>({
+    history: historyFixture(initial),
+    prepare: async () => 'after'
+  })
+  const store = createStore()
+  store.set(navigation.prepared, 'before')
+
+  expect(await store.set(navigation.route, target)).toBe(true)
+  expect(store.get(navigation.prepared)).toBe('after')
+  expect(store.set(navigation.refresh, initial, 'stale')).toBe(false)
+  expect(store.get(navigation.prepared)).toBe('after')
+})
+
 test('only commits the latest navigation', async () => {
   const history = historyFixture({page: 'entry'})
   const first = deferred<void>()

@@ -79,10 +79,7 @@ export const mutationQueueAtom = Object.assign(
       const events = _get(eventsAtom)
       const listen = (event: Event) => {
         if (event instanceof MutationQueueEvent) {
-          set(
-            mutationQueueStateAtom,
-            createMutationQueueState(event.entries)
-          )
+          set(mutationQueueStateAtom, createMutationQueueState(event.entries))
         }
       }
       events.addEventListener(MutationQueueEvent.type, listen)

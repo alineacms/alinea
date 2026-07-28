@@ -1,14 +1,13 @@
 import type {Revision} from '#/core/Connection.js'
 import type {Entry as EntryRecord, EntryStatus} from '#/core/Entry.js'
-import type {Getter} from 'jotai'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {atom, type Atom, type Getter} from 'jotai'
 import type {EntryDataState} from '../EntryAtoms.js'
 import type {EntrySidebarTab} from '../Contracts.js'
+import type {TypeState} from '../EditorAtoms.js'
 import type {ReactiveNode} from '../ReactiveNode.js'
 import type {DashboardEntryReferences} from '../EntrySupport.js'
-import {
-  entrySidebarOpenAtom,
-  entrySidebarTabAtom
-} from '../PageAtoms.js'
+import {entrySidebarOpenAtom, entrySidebarTabAtom} from '../PageAtoms.js'
 
 export interface PreparedEntryPage {
   type: 'entry'
@@ -20,19 +19,25 @@ export interface PreparedEntryPage {
   parentNeedsTranslation: boolean
   languageVersion: EntryRecord<Record<string, unknown>>
   versions: Map<EntryStatus, EntryRecord<Record<string, unknown>>>
-  sidebar: EntrySidebarData
+  sidebar: Atom<Promise<EntrySidebarData>>
 }
 
 export type EntryPageData = PreparedEntryPage
 
 export type EntrySidebarData =
   | ClosedSidebarData
+  | ErrorSidebarData
   | PreviewSidebarData
   | HistorySidebarData
   | ReferencesSidebarData
 
 export interface ClosedSidebarData {
   type: 'closed'
+}
+
+export interface ErrorSidebarData {
+  type: 'error'
+  error: Error
 }
 
 export interface PreviewSidebarData {
@@ -50,6 +55,43 @@ export interface HistorySidebarData {
 export interface ReferencesSidebarData {
   type: 'references'
   references: DashboardEntryReferences
+}
+
+export function allowedEntrySidebarTabs(
+  type: TypeState
+): Array<EntrySidebarTab> {
+  if (type.type === MediaFile) return ['references']
+  if (type.type === MediaLibrary) return ['history', 'references']
+  return ['preview', 'history', 'references']
+}
+
+export function resolveEntrySidebarTab(
+  type: TypeState,
+  selected: EntrySidebarTab
+): EntrySidebarTab {
+  const allowed = allowedEntrySidebarTabs(type)
+  return allowed.includes(selected) ? selected : allowed[0]
+}
+
+export function createEntrySidebarResource(
+  entry: EntryDataState,
+  locale: string | null
+): Atom<Promise<EntrySidebarData>> {
+  return atom(async get => {
+    if (!get(entrySidebarOpenAtom)) return {type: 'closed' as const}
+    const tab = resolveEntrySidebarTab(
+      get(entry.type),
+      get(entrySidebarTabAtom)
+    )
+    try {
+      return await loadEntrySidebar(get, entry, locale, tab)
+    } catch (cause) {
+      return {
+        type: 'error' as const,
+        error: cause instanceof Error ? cause : new Error(String(cause))
+      }
+    }
+  })
 }
 
 export async function loadEntrySidebar(
@@ -108,14 +150,7 @@ export async function loadEntryPage(
     get(entry.currentEntryFor(locale)),
     get(entry.parentNeedsTranslationFor(locale))
   ])
-  const sidebar = get(entrySidebarOpenAtom)
-    ? await loadEntrySidebar(
-        get,
-        entry,
-        locale,
-        get(entrySidebarTabAtom)
-      )
-    : {type: 'closed' as const}
+  const sidebar = createEntrySidebarResource(entry, locale)
   return {
     type: 'entry',
     entry,

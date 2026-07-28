@@ -5,11 +5,8 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
 import {DashboardScopeInternal} from './hooks.js'
-import {
-  configAtom,
-  createStore,
-  entryRevisionAtom
-} from './atoms/Dashboard.js'
+import {configAtom, createStore, entryRevisionAtom} from './atoms/Dashboard.js'
+import {useDashboard} from './hooks.js'
 
 afterEach(cleanup)
 
@@ -37,6 +34,28 @@ test('dashboard scopes isolate hydrated atom values', () => {
   expect(screen.getByText('second')).toBeDefined()
 })
 
+function DashboardIdentity({
+  expected
+}: {
+  expected: ReturnType<typeof createDashboard>
+}) {
+  return (
+    <span>{useDashboard() === expected ? 'same dashboard' : 'different'}</span>
+  )
+}
+
+test('useDashboard returns the dashboard from the nearest scope', () => {
+  const dashboard = createDashboard('main')
+
+  render(
+    <DashboardScopeInternal dashboard={dashboard}>
+      <DashboardIdentity expected={dashboard} />
+    </DashboardScopeInternal>
+  )
+
+  expect(screen.getByText('same dashboard')).toBeDefined()
+})
+
 function DashboardRevision() {
   const revision = useAtomValue(entryRevisionAtom('entry'))
   return <span>revision:{revision}</span>
@@ -46,10 +65,7 @@ test('dashboard effects update entry revisions', () => {
   const events = new TestEvents()
   render(
     <DashboardScopeInternal
-      dashboard={createDashboard(
-        'main',
-        events as unknown as EventTarget
-      )}
+      dashboard={createDashboard('main', events as unknown as EventTarget)}
     >
       <DashboardRevision />
     </DashboardScopeInternal>
@@ -87,10 +103,7 @@ class TestEvents {
   }
 }
 
-function createDashboard(
-  workspace: string,
-  events = new EventTarget()
-) {
+function createDashboard(workspace: string, events = new EventTarget()) {
   return createStore(
     {} as WriteableGraph,
     {schema: {}, workspaces: {[workspace]: {} as never}},

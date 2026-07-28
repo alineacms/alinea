@@ -361,10 +361,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   return (
     <div className={styles.Explorer.toolbar.tools()}>
       {isMedia && uploads.length > 0 && (
-        <MutationQueueStatus
-          ariaLabel={uploadLabel}
-          placement="bottom"
-        >
+        <MutationQueueStatus ariaLabel={uploadLabel} placement="bottom">
           {uploads.length}
         </MutationQueueStatus>
       )}

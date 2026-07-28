@@ -9,6 +9,33 @@ import type {
 import {createRouteLoader, type RouteLoaderOptions} from './Route.js'
 import type {EntryPageData} from './Entry.js'
 
+test('only loads the users page for member managers', async () => {
+  const store = createStore()
+  function loader(canManageMembers: boolean) {
+    return createRouteLoader({
+      policy: atom(Promise.resolve({})),
+      canManageMembers: atom(Promise.resolve(canManageMembers)),
+      workspaces: atom([]),
+      workspace() {
+        throw new Error('Unexpected workspace load')
+      },
+      entry() {
+        throw new Error('Unexpected entry load')
+      }
+    })
+  }
+  const signal = new AbortController().signal
+
+  expect(await loader(true)(store.get, {page: 'users'}, signal)).toEqual({
+    type: 'users',
+    canManageMembers: true
+  })
+  expect(await loader(false)(store.get, {page: 'users'}, signal)).toEqual({
+    type: 'empty',
+    canManageMembers: false
+  })
+})
+
 test('loads entry page data before returning it to navigation', async () => {
   const store = createStore()
   const expected = {type: 'entry'} as EntryPageData

@@ -1,11 +1,7 @@
 import {Entry} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
-import {
-  Root as ConfigRoot,
-  type RootData,
-  type RootI18n
-} from '#/core/Root.js'
+import {Root as ConfigRoot, type RootData, type RootI18n} from '#/core/Root.js'
 import {assert} from '#/core/util/Assert.js'
 import type {Atom, Getter} from 'jotai'
 import {atom} from 'jotai'
@@ -23,10 +19,7 @@ import {configAtom, graphAtom, viewAtom} from './CoreAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
 import {routeAtom} from './NavigationAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
-import {
-  selectedRootAtom,
-  selectedWorkspaceAtom
-} from './SelectionAtoms.js'
+import {selectedRootAtom, selectedWorkspaceAtom} from './SelectionAtoms.js'
 import {shaAtom} from './SyncAtoms.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
@@ -119,10 +112,7 @@ class RootModel {
     get => {
       const route = get(routeAtom)
       if (route.page === 'users') return false
-      if (
-        get(selectedWorkspaceAtom) !== this.workspace.key
-      )
-        return false
+      if (get(selectedWorkspaceAtom) !== this.workspace.key) return false
       return get(selectedRootAtom) === this.key
     },
     (get, set, value: boolean) => {
@@ -172,9 +162,7 @@ class RootModel {
     const view = get(this.#settings).view
     if (!view) return undefined
     if (typeof view === 'string')
-      return get(viewAtom(view)) as
-        | ComponentType<{root: RootData}>
-        | undefined
+      return get(viewAtom(view)) as ComponentType<{root: RootData}> | undefined
     return view
   })
   orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)

@@ -11,7 +11,7 @@ import {
   IcRoundRefresh
 } from '../icons.js'
 import {DashboardEntryData, useDashboard} from '../store.js'
-import type {EntryPageData} from '../atoms/loaders/Entry.js'
+import type {EntrySidebarData} from '../atoms/loaders/Entry.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 
@@ -19,10 +19,13 @@ const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
   entry: DashboardEntryData
-  page: EntryPageData
+  sidebar: EntrySidebarData
 }
 
-export function EntrySidebarPreview({entry, page}: EntrySidebarPreviewProps) {
+export function EntrySidebarPreview({
+  entry,
+  sidebar
+}: EntrySidebarPreviewProps) {
   const preview = useAtomValue(entry.preview)
   if (!preview)
     return (
@@ -33,10 +36,10 @@ export function EntrySidebarPreview({entry, page}: EntrySidebarPreviewProps) {
   if (preview === true)
     return (
       <Suspense fallback={<EntrySidebarBrowserPreviewFallback />}>
-        <EntrySidebarBrowserPreview entry={entry} page={page} />
+        <EntrySidebarBrowserPreview entry={entry} sidebar={sidebar} />
       </Suspense>
     )
-  return <EntrySidebarComponentPreview preview={preview} page={page} />
+  return <EntrySidebarComponentPreview preview={preview} sidebar={sidebar} />
 }
 
 interface EntrySidebarPreviewMessageProps {
@@ -55,15 +58,14 @@ function EntrySidebarPreviewMessage({
 
 interface EntrySidebarComponentPreviewProps {
   preview: Exclude<Preview, boolean>
-  page: EntryPageData
+  sidebar: EntrySidebarData
 }
 
 function EntrySidebarComponentPreview({
   preview,
-  page
+  sidebar
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry =
-    page.sidebar.type === 'preview' ? page.sidebar.entry : null
+  const previewEntry = sidebar.type === 'preview' ? sidebar.entry : null
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage>
@@ -82,7 +84,7 @@ function EntrySidebarComponentPreview({
 
 interface EntrySidebarBrowserPreviewProps {
   entry: DashboardEntryData
-  page: EntryPageData
+  sidebar: EntrySidebarData
 }
 
 interface EntrySidebarBrowserPreviewHeaderProps {
@@ -156,10 +158,9 @@ function EntrySidebarBrowserPreviewFallback() {
 
 function EntrySidebarBrowserPreview({
   entry,
-  page
+  sidebar
 }: EntrySidebarBrowserPreviewProps) {
-  const previewUrl =
-    page.sidebar.type === 'preview' ? page.sidebar.url : undefined
+  const previewUrl = sidebar.type === 'preview' ? sidebar.url : undefined
   const previewPayloadSignal = useAtomValue(entry.previewPayloadSignal)
   const updatePreviewPayload = useSetAtom(entry.updatePreviewPayload)
   const retryPreviewUrl = useSetAtom(entry.retryPreviewUrl)

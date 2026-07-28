@@ -59,7 +59,7 @@ type AsyncAtomKeys<Value> = Value extends unknown
 type AssertNoAsyncAtoms<Value extends never> = Value
 
 export type PreparedRouteAsyncFields = AssertNoAsyncAtoms<
-  AsyncAtomKeys<PreparedRoute>
+  Exclude<AsyncAtomKeys<PreparedRoute>, 'sidebar'>
 >
 
 export interface RouteLoaderOptions {
@@ -86,7 +86,8 @@ export function createRouteLoader(options: RouteLoaderOptions) {
       get(options.canManageMembers)
     ])
     signal.throwIfAborted()
-    if (route.page === 'users') return {type: 'users', canManageMembers}
+    if (route.page === 'users' && canManageMembers)
+      return {type: 'users', canManageMembers}
 
     const workspaceKeys = get(options.workspaces)
     const workspaceKey =

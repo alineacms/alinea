@@ -11,8 +11,7 @@ export const dashboardEffectsAtom = Object.assign(
     (get, set) => {
       const events = get(eventsAtom)
       const listen = (event: Event) => {
-        if (!(event instanceof IndexEvent) || event.data.op !== 'entry')
-          return
+        if (!(event instanceof IndexEvent) || event.data.op !== 'entry') return
         const id = event.data.id
         set(entryRevisionAtom(id), current => current + 1)
         if (get(routeAtom).entry === id) void set(reloadPageAtom)

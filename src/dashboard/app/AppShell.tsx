@@ -43,7 +43,7 @@ interface AppShellContentProps extends AppShellProps {
 function AppShellContent({dashboard, page}: AppShellContentProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
 
-  if (page.type === 'users') {
+  if (page.type === 'users' && page.canManageMembers) {
     return (
       <div className={styles.AppShellWorkspace()}>
         <UsersPageSidebar dashboard={dashboard} />

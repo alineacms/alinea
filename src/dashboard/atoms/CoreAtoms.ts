@@ -24,12 +24,10 @@ export interface DashboardInput {
 export const graphAtom = requiredAtom<WriteableGraph>('dashboard.graph')
 export const configAtom = requiredAtom<Config>('dashboard.config')
 export const eventsAtom = requiredAtom<EventTarget>('dashboard.events')
-export const clientAtom =
-  requiredAtom<LocalConnection>('dashboard.client')
+export const clientAtom = requiredAtom<LocalConnection>('dashboard.client')
 export const viewsAtom =
   requiredAtom<Record<string, ComponentType>>('dashboard.views')
-export const optionsAtom =
-  requiredAtom<DashboardOptions>('dashboard.options')
+export const optionsAtom = requiredAtom<DashboardOptions>('dashboard.options')
 export const previewTokenRequestsAtom = requiredAtom<
   Map<string, Promise<string>>
 >('dashboard.previewTokenRequests')

@@ -81,9 +81,7 @@ export const createEntryAtom = atom(
       parentId: request.parentId,
       locale: request.locale,
       status:
-        type === MediaLibrary || !config.enableDrafts
-          ? 'published'
-          : 'draft',
+        type === MediaLibrary || !config.enableDrafts ? 'published' : 'draft',
       insertOrder:
         parentInsertOrder && parentInsertOrder !== 'free'
           ? parentInsertOrder

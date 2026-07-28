@@ -12,6 +12,7 @@ import {
   type ComponentType,
   memo,
   PropsWithChildren,
+  Suspense,
   useEffect,
   useMemo
 } from 'react'
@@ -409,7 +410,13 @@ function EntryEditor({page}: EntryEditorProps) {
       </DashboardModal>
       {mainEditor}
       {hasSidebar && isSidebarOpen && (
-        <EntrySidebar entry={entry} page={page} onOpenChange={setSidebarOpen} />
+        <Suspense fallback={null}>
+          <EntrySidebar
+            entry={entry}
+            page={page}
+            onOpenChange={setSidebarOpen}
+          />
+        </Suspense>
       )}
     </>
   )

@@ -1,19 +1,10 @@
-import {
-  entries,
-  fromEntries,
-  isRecord,
-  values
-} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
 import type {Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
 import {dispense} from './AtomUtils.js'
 
-export type Writable<Value> = WritableAtom<
-  Value,
-  [SetStateAction<Value>],
-  void
->
+export type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
 export type Peek<Value> = WritableAtom<null, [], Value>
 
 function isArray<Value = unknown>(input: unknown): input is Array<Value> {
@@ -117,10 +108,7 @@ export class ReactiveNode<Value = unknown> {
         }
       }
       if (changed) set(this.nodes, nextStructure)
-    } else if (
-      isRecord(next) &&
-      isRecord(current)
-    ) {
+    } else if (isRecord(next) && isRecord(current)) {
       let changed = false
       const nextStructure = {...current} as Record<string, ReactiveNode>
       for (const key of Object.keys(current)) {
@@ -162,9 +150,7 @@ export class ReactiveNode<Value = unknown> {
         const field = isRecord(structure)
           ? (structure[key] as ReactiveNode | undefined)
           : undefined
-        return field
-          ? get(field.value)
-          : undefined
+        return field ? get(field.value) : undefined
       },
       (get, set, update) => {
         if (this.readOnly) return

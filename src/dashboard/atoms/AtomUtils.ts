@@ -40,9 +40,7 @@ export function keepPrevious<Value>(asyncAtom: Atom<Promise<Value>>) {
   return atom(get => get(withPrevious) ?? get(asyncAtom))
 }
 
-export function withPending<Value>(
-  asyncAtom: Atom<Promise<Value> | Value>
-) {
+export function withPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {
   const wrapped = atom(async get => {
     const data = await get(asyncAtom)
     return [false, data] as const

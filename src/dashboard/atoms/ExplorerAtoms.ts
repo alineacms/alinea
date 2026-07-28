@@ -13,24 +13,14 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
-import {
-  entryAtoms,
-  type EntryDataState,
-  type EntryState
-} from './EntryAtoms.js'
+import {entryAtoms, type EntryDataState, type EntryState} from './EntryAtoms.js'
 import {configAtom, graphAtom} from './CoreAtoms.js'
-import {
-  mutationQueueAtom,
-  uploadProgressAtom
-} from './MutationAtoms.js'
+import {mutationQueueAtom, uploadProgressAtom} from './MutationAtoms.js'
 import {refreshPageForAtom} from './PageAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
 import {shaAtom} from './SyncAtoms.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
-import {
-  dashboardEntryDragItem,
-  uploadSizeError
-} from './AtomUtils.js'
+import {dashboardEntryDragItem, uploadSizeError} from './AtomUtils.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 
@@ -405,7 +395,7 @@ class ExplorerModel {
     get => {
       const {parentId} = get(this.location)
       if (!parentId) return
-    return entryAtoms(parentId)
+      return entryAtoms(parentId)
     },
     (get, set, parentId: string | undefined) => {
       const location = get(this.location)

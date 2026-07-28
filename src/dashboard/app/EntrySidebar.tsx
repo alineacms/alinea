@@ -30,7 +30,11 @@ import {
   type DashboardEntryData,
   type DashboardEntrySidebarTab
 } from '../store.js'
-import type {EntryPageData} from '../atoms/loaders/Entry.js'
+import {
+  allowedEntrySidebarTabs,
+  type EntryPageData,
+  type EntrySidebarData
+} from '../atoms/loaders/Entry.js'
 import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
@@ -49,15 +53,12 @@ export interface EntrySidebarProps {
 
 export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
+  const sidebar = useAtomValue(page.sidebar)
   const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const hasPreview = !isMediaFile && !isMediaLibrary
-  const allowedTabs: Array<DashboardEntrySidebarTab> = isMediaFile
-    ? ['references']
-    : hasPreview
-      ? ['preview', 'history', 'references']
-      : ['history', 'references']
+  const allowedTabs = allowedEntrySidebarTabs(type)
   const selectedKey = allowedTabs.includes(selectedTab)
     ? selectedTab
     : allowedTabs[0]
@@ -93,20 +94,29 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
         </RailHeader>
 
         <SidebarBody className={styles.EntrySidebar.body()}>
+          {sidebar.type === 'error' && (
+            <p className={styles.EntrySidebar.empty()}>
+              {sidebar.error.message}
+            </p>
+          )}
           {!isMediaFile && (
             <>
               <TabPanel
                 id="history"
                 className={styles.EntrySidebar.historyPanel()}
               >
-                <EntrySidebarHistory entry={entry} page={page} />
+                <EntrySidebarHistory
+                  entry={entry}
+                  page={page}
+                  sidebar={sidebar}
+                />
               </TabPanel>
               {hasPreview && (
                 <TabPanel
                   id="preview"
                   className={styles.EntrySidebar.previewPanel()}
                 >
-                  <EntrySidebarPreview entry={entry} page={page} />
+                  <EntrySidebarPreview entry={entry} sidebar={sidebar} />
                 </TabPanel>
               )}
             </>
@@ -118,9 +128,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
             <EntryReferences
               entry={entry}
               references={
-                page.sidebar.type === 'references'
-                  ? page.sidebar.references
-                  : undefined
+                sidebar.type === 'references' ? sidebar.references : undefined
               }
             />
           </TabPanel>
@@ -133,10 +141,11 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
 interface EntrySidebarHistoryProps {
   entry: DashboardEntryData
   page: EntryPageData
+  sidebar: EntrySidebarData
 }
 
-function EntrySidebarHistory({entry, page}: EntrySidebarHistoryProps) {
-  const statuses = page.sidebar.type === 'history' ? page.sidebar.statuses : []
+function EntrySidebarHistory({entry, page, sidebar}: EntrySidebarHistoryProps) {
+  const statuses = sidebar.type === 'history' ? sidebar.statuses : []
   const [previousVersionsOpen, setPreviousVersionsOpen] = useState(false)
   return (
     <div className={styles.EntrySidebar.history()}>
@@ -162,7 +171,7 @@ function EntrySidebarHistory({entry, page}: EntrySidebarHistoryProps) {
           <DisclosureHeader>Previous versions</DisclosureHeader>
           <DisclosurePanel className={styles.EntrySidebar.disclosurePanel()}>
             {previousVersionsOpen && (
-              <EntrySidebarPreviousVersions entry={entry} page={page} />
+              <EntrySidebarPreviousVersions entry={entry} sidebar={sidebar} />
             )}
           </DisclosurePanel>
         </Disclosure>
@@ -171,8 +180,11 @@ function EntrySidebarHistory({entry, page}: EntrySidebarHistoryProps) {
   )
 }
 
-function EntrySidebarPreviousVersions({entry, page}: EntrySidebarHistoryProps) {
-  const history = page.sidebar.type === 'history' ? page.sidebar.history : []
+function EntrySidebarPreviousVersions({
+  entry,
+  sidebar
+}: Omit<EntrySidebarHistoryProps, 'page'>) {
+  const history = sidebar.type === 'history' ? sidebar.history : []
   if (history.length === 0)
     return (
       <p className={styles.EntrySidebar.empty()}>No previous versions yet</p>

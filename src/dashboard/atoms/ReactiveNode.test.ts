@@ -56,10 +56,7 @@ test('a reactive document commits and resets nested edits as one fixture', () =>
 test('a read-only reactive document rejects nested and structural writes', () => {
   const store = createStore()
   const article = articleNode(true)
-  const fields = store.get(article.nodes) as Record<
-    keyof Article,
-    ReactiveNode
-  >
+  const fields = store.get(article.nodes) as Record<keyof Article, ReactiveNode>
 
   store.set(article.field('title'), 'Changed')
   store.set(fields.metadata.field('description'), 'Added')

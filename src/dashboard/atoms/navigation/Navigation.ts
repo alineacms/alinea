@@ -11,6 +11,7 @@ export interface PendingNavigation {
 export interface Navigation<Prepared = void> {
   route: WritableAtom<Route, [update: RouteUpdate], Promise<boolean>>
   prepared: WritableAtom<Prepared | undefined, [prepared: Prepared], void>
+  refresh: WritableAtom<null, [route: Route, prepared: Prepared], boolean>
   pending: Atom<PendingNavigation | undefined>
   error: Atom<Error | undefined>
 }
@@ -127,7 +128,17 @@ export function createNavigation<Prepared = void>(
     }
   )
 
-  return {route, prepared, pending, error}
+  const refresh = atom(
+    null,
+    (get, set, route: Route, prepared: Prepared): boolean => {
+      const currentNavigation = get(current)
+      if (currentNavigation.route !== route) return false
+      set(current, {...currentNavigation, prepared})
+      return true
+    }
+  )
+
+  return {route, prepared, refresh, pending, error}
 }
 
 function routeFromUpdate(update: RouteUpdate): Route {

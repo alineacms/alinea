@@ -4,14 +4,19 @@ import {assert} from '#/core/util/Assert.js'
 import {createStore, Provider, useAtomValue} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {PropsWithChildren} from 'react'
-import {createElement, useMemo, useState} from 'react'
+import {
+  createContext,
+  createElement,
+  useContext,
+  useMemo,
+  useState
+} from 'react'
 import type {Dashboard} from './atoms/Dashboard.js'
 import {
   clientAtom,
   configAtom,
   createDashboardNavigation,
   currentEntryAtom,
-  dashboardAtoms,
   dashboardEffectsAtom,
   eventsAtom,
   graphAtom,
@@ -26,6 +31,8 @@ import {createBrowserHistory} from './atoms/navigation/History.js'
 export * from './editor/EditorScope.js'
 export * from './editor/FieldHooks.js'
 
+const dashboardContext = createContext<Dashboard | null>(null)
+
 export function DashboardScopeInternal({
   children,
   dashboard
@@ -34,7 +41,11 @@ export function DashboardScopeInternal({
   return createElement(
     Provider,
     {store},
-    createElement(DashboardHydration, {dashboard}, children)
+    createElement(
+      dashboardContext.Provider,
+      {value: dashboard},
+      createElement(DashboardHydration, {dashboard}, children)
+    )
   )
 }
 
@@ -74,19 +85,24 @@ export function useHydrateDashboard(input: DashboardInput) {
 }
 
 export function useDashboard() {
-  return dashboardAtoms
+  const dashboard = useContext(dashboardContext)
+  assert(dashboard, 'Dashboard not found in context')
+  return dashboard
 }
 
 export function usePolicy() {
-  return useAtomValue(dashboardAtoms.policy)
+  const dashboard = useDashboard()
+  return useAtomValue(dashboard.policy)
 }
 
 export function useUser(): User | null {
-  return useAtomValue(dashboardAtoms.user) ?? null
+  const dashboard = useDashboard()
+  return useAtomValue(dashboard.user) ?? null
 }
 
 export function useGraph(): WriteableGraph {
-  return useAtomValue(dashboardAtoms.db)
+  const dashboard = useDashboard()
+  return useAtomValue(dashboard.db)
 }
 
 /**

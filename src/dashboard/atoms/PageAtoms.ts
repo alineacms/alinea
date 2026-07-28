@@ -4,7 +4,6 @@ import {atom} from 'jotai'
 import type {EntrySidebarTab} from './Contracts.js'
 import {entryAtoms} from './EntryAtoms.js'
 import type {Explorer} from './ExplorerAtoms.js'
-import {loadEntrySidebar} from './loaders/Entry.js'
 import {createRouteLoader, type PreparedRoute} from './loaders/Route.js'
 import {navigationAtoms, routeAtom} from './NavigationAtoms.js'
 import type {RouteHistory} from './navigation/History.js'
@@ -54,10 +53,11 @@ export const reloadPageAtom = atom(null, async (get, set) => {
   get(routeLoadControllerAtom)?.abort()
   const controller = new AbortController()
   set(routeLoadControllerAtom, controller)
+  const route = get(routeAtom)
   try {
-    const page = await loadRoute(get, get(routeAtom), controller.signal)
+    const page = await loadRoute(get, route, controller.signal)
     if (sequence === get(routeLoadSequenceAtom))
-      set(navigationAtoms.prepared, page)
+      set(navigationAtoms.refresh, route, page)
   } catch (error) {
     if (!controller.signal.aborted) throw error
   } finally {
@@ -80,12 +80,7 @@ const entrySidebarTabStateAtom = atom<EntrySidebarTab>('preview')
 
 export const entrySidebarTabAtom = atom(
   get => get(entrySidebarTabStateAtom),
-  async (get, set, tab: EntrySidebarTab) => {
-    const page = get(pageAtom)
-    if (page.type === 'entry') {
-      const sidebar = await loadEntrySidebar(get, page.entry, page.locale, tab)
-      set(navigationAtoms.prepared, {...page, sidebar})
-    }
+  (_get, set, tab: EntrySidebarTab) => {
     set(entrySidebarTabStateAtom, tab)
   }
 )
@@ -94,24 +89,7 @@ const entrySidebarOpenStateAtom = atom(true)
 
 export const entrySidebarOpenAtom = atom(
   get => get(entrySidebarOpenStateAtom),
-  async (get, set, open: boolean) => {
-    const page = get(pageAtom)
-    if (open) {
-      if (page.type === 'entry') {
-        const sidebar = await loadEntrySidebar(
-          get,
-          page.entry,
-          page.locale,
-          get(entrySidebarTabAtom)
-        )
-        set(navigationAtoms.prepared, {...page, sidebar})
-      }
-    } else if (page.type === 'entry') {
-      set(navigationAtoms.prepared, {
-        ...page,
-        sidebar: {type: 'closed'}
-      })
-    }
+  (_get, set, open: boolean) => {
     set(entrySidebarOpenStateAtom, open)
   }
 )

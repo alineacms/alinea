@@ -2,13 +2,9 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
 import {atom} from 'jotai'
 
-export const previewMetadataAtom = atom<PreviewMetadata | undefined>(
-  undefined
-)
+export const previewMetadataAtom = atom<PreviewMetadata | undefined>(undefined)
 
-const readyPreviewOriginsAtom = atom<ReadonlySet<string>>(
-  new Set<string>()
-)
+const readyPreviewOriginsAtom = atom<ReadonlySet<string>>(new Set<string>())
 
 export const previewSessionOriginsAtom = atom(get =>
   get(readyPreviewOriginsAtom)

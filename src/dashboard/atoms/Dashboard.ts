@@ -21,12 +21,7 @@ export {
 export * from './PolicyAtoms.js'
 export * from './PreviewAtoms.js'
 export * from './ReactiveNode.js'
-export {
-  debounce,
-  keepPrevious,
-  requiredAtom,
-  withPending
-} from './AtomUtils.js'
+export {debounce, keepPrevious, requiredAtom, withPending} from './AtomUtils.js'
 export type {RequiredAtom} from './AtomUtils.js'
 export {entryRevisionAtom} from './EntrySupport.js'
 export * from './SelectionAtoms.js'
