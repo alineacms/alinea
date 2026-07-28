@@ -27,6 +27,11 @@ export interface Editor {
   get(field: Field): FieldState | undefined
 }
 
+export function rootEditor(editor: Editor): Editor {
+  while (editor.parent) editor = editor.parent
+  return editor
+}
+
 export function createEditor(
   type: ConfigType,
   node: ReactiveNode<object>,
@@ -70,9 +75,7 @@ export interface Section {
   >
 }
 
-export function createSection(
-  section: ConfigSection
-): Section {
+export function createSection(section: ConfigSection): Section {
   return {
     section,
     view: atom(get => {

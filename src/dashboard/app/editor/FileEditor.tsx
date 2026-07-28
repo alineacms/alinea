@@ -5,12 +5,9 @@ import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
-import {
-  useDashboard,
-  useEditor,
-  useField,
-  useFieldValue
-} from '#/dashboard/store.js'
+import {useEditor} from '#/dashboard/editor/EditorScope.js'
+import {useField, useFieldValue} from '#/dashboard/editor/FieldHooks.js'
+import {useDashboard} from '#/dashboard/hooks.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'

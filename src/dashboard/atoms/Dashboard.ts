@@ -12,6 +12,7 @@ export * from './ExplorerAtoms.js'
 export * from './MutationAtoms.js'
 export * from './NavigationAtoms.js'
 export {
+  currentEntryAtom,
   entrySidebarOpenAtom,
   entrySidebarTabAtom,
   pageAtom,
@@ -42,9 +43,7 @@ export type {
   TreeSelection as DashboardTreeSelection
 } from './Contracts.js'
 export type {ThemeMode as DashboardTheme} from './ThemeAtom.js'
-export type {
-  MutationQueueState as DashboardMutationQueue
-} from './MutationAtoms.js'
+export type {MutationQueueState as DashboardMutationQueue} from './MutationAtoms.js'
 export type {
   Authenticated as DashboardAuthAuthenticated,
   AuthError as DashboardAuthError,

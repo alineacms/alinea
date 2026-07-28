@@ -1,21 +1,26 @@
 import {Button, Icon, Surface} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Section} from '#/core/Section.js'
-import {Type} from '#/core/Type.js'
+import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {type ComponentType, memo, PropsWithChildren, useEffect} from 'react'
+import {
+  type ComponentType,
+  memo,
+  PropsWithChildren,
+  useEffect,
+  useMemo
+} from 'react'
 import {
   EditorScope,
-  EntryScope,
   useEditor,
-  useFieldOptions,
-  useFieldView,
-  useNodeEditor
-} from '../hooks.js'
+  useOptionalEditor
+} from '../editor/EditorScope.js'
+import {useFieldOptions, useFieldView} from '../editor/FieldHooks.js'
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
@@ -25,6 +30,7 @@ import {
   Dashboard,
   DashboardEntryData,
   DashboardRoot,
+  createEditor,
   createSection,
   entryAtoms,
   entrySidebarOpenAtom,
@@ -50,7 +56,6 @@ import {
 import {Rail, RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
-
 export interface EditorProps {
   dashboard: Dashboard
   page: LoadedRoute
@@ -219,9 +224,7 @@ function DefaultRootEditor({page}: ExplorerEditorProps) {
       <Explorer
         explorer={root.explorer}
         items={page.items}
-        titleControls={
-          route.entry ? <RootOverviewControls /> : undefined
-        }
+        titleControls={route.entry ? <RootOverviewControls /> : undefined}
       />
     </Rail>
   )
@@ -329,7 +332,11 @@ function EntryEditor({page}: EntryEditorProps) {
             </div>
           )}
 
-          <NodeEditor node={node} type={type.type} />
+          <NodeEditor
+            node={node}
+            resource={page.activeVersion ?? undefined}
+            type={type.type}
+          />
         </RailContent>
       </RailBody>
     </>
@@ -339,7 +346,11 @@ function EntryEditor({page}: EntryEditorProps) {
     editorBody = (
       <>
         <RailBody className={styles.EntryEditor.body()}>
-          <NodeEditor node={node} type={type.type}>
+          <NodeEditor
+            node={node}
+            resource={page.activeVersion ?? undefined}
+            type={type.type}
+          >
             <FileEditor />
           </NodeEditor>
         </RailBody>
@@ -348,11 +359,7 @@ function EntryEditor({page}: EntryEditorProps) {
   }
 
   if (View) {
-    return (
-      <EntryScope entry={entry}>
-        <View type={type.type} />
-      </EntryScope>
-    )
+    return <View type={type.type} />
   }
 
   const hasSidebar = !isUntranslated
@@ -400,31 +407,39 @@ function EntryEditor({page}: EntryEditorProps) {
           </DashboardModalDialog>
         )}
       </DashboardModal>
-      <EntryScope entry={entry}>
-        {mainEditor}
-        {hasSidebar && isSidebarOpen && (
-          <EntrySidebar
-            entry={entry}
-            page={page}
-            onOpenChange={setSidebarOpen}
-          />
-        )}
-      </EntryScope>
+      {mainEditor}
+      {hasSidebar && isSidebarOpen && (
+        <EntrySidebar entry={entry} page={page} onOpenChange={setSidebarOpen} />
+      )}
     </>
   )
 }
 
 interface NodeEditorProps extends PropsWithChildren {
   node: ReactiveNode<object>
+  resource?: Resource
   type: Type
+}
+
+function useNodeEditor(
+  node: ReactiveNode<object>,
+  type: Type,
+  resource?: Resource
+) {
+  const parent = useOptionalEditor()
+  return useMemo(
+    () => createEditor(type, node, parent ?? undefined, resource),
+    [node, parent, resource, type]
+  )
 }
 
 export function NodeEditor({
   children = <FieldsEditor />,
   node,
+  resource,
   type
 }: NodeEditorProps) {
-  const editor = useNodeEditor(node, type)
+  const editor = useNodeEditor(node, type, resource)
   return <EditorScope editor={editor}>{children}</EditorScope>
 }
 

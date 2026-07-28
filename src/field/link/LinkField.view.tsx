@@ -39,7 +39,6 @@ import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useDashboard,
-  useEntry,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -58,7 +57,11 @@ import {
   type DashboardEntry,
   type DashboardEntryData,
   type ExplorerOptions,
-  ReactiveNode
+  ReactiveNode,
+  currentEntryAtom,
+  selectedMediaRootAtom,
+  selectedRootAtom,
+  selectedWorkspaceAtom
 } from '#/dashboard/store.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
@@ -499,11 +502,10 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
-  const dashboard = useDashboard()
-  const currentEntry = useEntry()
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const currentEntry = useAtomValue(currentEntryAtom)
+  const selectedMediaRoot = useAtomValue(selectedMediaRootAtom)
+  const selectedRoot = useAtomValue(selectedRootAtom)
+  const selectedWorkspace = useAtomValue(selectedWorkspaceAtom)
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -614,11 +616,10 @@ function LinkPickerDialog({
   type,
   value
 }: LinkPickerDialogProps) {
-  const dashboard = useDashboard()
-  const currentEntry = useEntry()
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const currentEntry = useAtomValue(currentEntryAtom)
+  const selectedMediaRoot = useAtomValue(selectedMediaRootAtom)
+  const selectedRoot = useAtomValue(selectedRootAtom)
+  const selectedWorkspace = useAtomValue(selectedWorkspaceAtom)
 
   function handlePick(link: LinkFieldRow) {
     onPick(link)

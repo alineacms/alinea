@@ -24,7 +24,7 @@ import {
 import {createEntryAtom} from './CreateEntryAtom.js'
 import {
   focusedAtom,
-  initialContentAvailableAtom,
+  prepareInitialContentAtom,
   themeAtom
 } from './DashboardViewAtoms.js'
 import {typeAtoms} from './EditorAtoms.js'
@@ -114,7 +114,7 @@ export const dashboardAtoms = {
   canManageMembers: canManageMembersAtom,
   policy: policyAtom,
 
-  initialContentAvailable: initialContentAvailableAtom,
+  prepareInitialContent: prepareInitialContentAtom,
   focused: focusedAtom,
 
   sha: shaAtom,

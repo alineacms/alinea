@@ -1,26 +1,15 @@
+import {assert} from '#/core/util/Assert.js'
 import type {Getter} from 'jotai'
 import {atom} from 'jotai'
 import type {EntrySidebarTab} from './Contracts.js'
 import {entryAtoms} from './EntryAtoms.js'
 import type {Explorer} from './ExplorerAtoms.js'
 import {loadEntrySidebar} from './loaders/Entry.js'
-import {
-  createRouteLoader,
-  type PreparedRoute
-} from './loaders/Route.js'
-import {
-  navigationAtoms,
-  routeAtom
-} from './NavigationAtoms.js'
+import {createRouteLoader, type PreparedRoute} from './loaders/Route.js'
+import {navigationAtoms, routeAtom} from './NavigationAtoms.js'
 import type {RouteHistory} from './navigation/History.js'
-import {
-  createNavigation,
-  type Navigation
-} from './navigation/Navigation.js'
-import {
-  canManageMembersAtom,
-  policyResourceAtom
-} from './PolicyAtoms.js'
+import {createNavigation, type Navigation} from './navigation/Navigation.js'
+import {canManageMembersAtom, policyResourceAtom} from './PolicyAtoms.js'
 import {workspacesAtom} from './SelectionAtoms.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
 
@@ -41,13 +30,20 @@ function loadRoute(
   return routeLoader(get, route, signal)
 }
 
-const initialPageAtom = atom(async get =>
+export const initialPageAtom = atom(async get =>
   loadRoute(get, get(routeAtom), new AbortController().signal)
 )
 
-export const pageAtom = atom(
-  get => get(navigationAtoms.prepared) ?? get(initialPageAtom)
-)
+export const pageAtom = atom(get => {
+  const page = get(navigationAtoms.prepared)
+  assert(page, 'Dashboard page was read before it was prepared')
+  return page
+})
+
+export const currentEntryAtom = atom(get => {
+  const page = get(pageAtom)
+  return page.type === 'entry' ? page.currentEntry : null
+})
 
 const routeLoadSequenceAtom = atom(0)
 const routeLoadControllerAtom = atom<AbortController>()
@@ -73,7 +69,7 @@ export const reloadPageAtom = atom(null, async (get, set) => {
 export const refreshPageForAtom = atom(
   null,
   async (get, set, explorer: Explorer) => {
-    const page = await get(pageAtom)
+    const page = get(pageAtom)
     if (page.type !== 'explorer') return
     if (page.root.explorer !== explorer) return
     await set(reloadPageAtom)
@@ -85,14 +81,9 @@ const entrySidebarTabStateAtom = atom<EntrySidebarTab>('preview')
 export const entrySidebarTabAtom = atom(
   get => get(entrySidebarTabStateAtom),
   async (get, set, tab: EntrySidebarTab) => {
-    const page = await get(pageAtom)
+    const page = get(pageAtom)
     if (page.type === 'entry') {
-      const sidebar = await loadEntrySidebar(
-        get,
-        page.entry,
-        page.locale,
-        tab
-      )
+      const sidebar = await loadEntrySidebar(get, page.entry, page.locale, tab)
       set(navigationAtoms.prepared, {...page, sidebar})
     }
     set(entrySidebarTabStateAtom, tab)
@@ -104,7 +95,7 @@ const entrySidebarOpenStateAtom = atom(true)
 export const entrySidebarOpenAtom = atom(
   get => get(entrySidebarOpenStateAtom),
   async (get, set, open: boolean) => {
-    const page = await get(pageAtom)
+    const page = get(pageAtom)
     if (open) {
       if (page.type === 'entry') {
         const sidebar = await loadEntrySidebar(
@@ -131,7 +122,7 @@ export function createDashboardNavigation(
   return createNavigation<PreparedRoute>({
     history,
     allow: async (_route, {get, set, signal}) => {
-      const page = await get(pageAtom)
+      const page = get(pageAtom)
       if (signal.aborted) return false
       if (page.type !== 'entry') return true
       return set(page.entry.needsBlock, signal)

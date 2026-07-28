@@ -3,10 +3,9 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {
   ComponentType,
-  Suspense,
   useEffect,
   useState,
   type Dispatch,
@@ -41,12 +40,11 @@ export function App({
   local,
   alineaDev
 }: AppProps) {
-  const [dashboard] = useState(
-    () =>
-      createStore(graph, config, events, client, views, {
-        alineaDev,
-        local
-      })
+  const [dashboard] = useState(() =>
+    createStore(graph, config, events, client, views, {
+      alineaDev,
+      local
+    })
   )
   return (
     <DashboardScopeInternal dashboard={dashboard}>
@@ -83,17 +81,21 @@ interface DashboardBootProps extends StoreAppProps {
 }
 
 function DashboardBoot({dashboard, setReady}: DashboardBootProps) {
-  useAtomValue(dashboard.initialContentAvailable)
-  useEffect(() => setReady(true), [setReady])
-  return <AppShell dashboard={dashboard} />
+  const [error, setError] = useState<Error>()
+  const prepare = useSetAtom(dashboard.prepareInitialContent)
+  useEffect(() => {
+    void prepare().then(
+      () => setReady(true),
+      cause =>
+        setError(cause instanceof Error ? cause : new Error(String(cause)))
+    )
+  }, [prepare, setReady])
+  if (error) throw error
+  return <DashboardLoading />
 }
 
 function DashboardContent({dashboard}: StoreAppProps) {
   const [ready, setReady] = useState(false)
   if (ready) return <AppShell dashboard={dashboard} />
-  return (
-    <Suspense fallback={<DashboardLoading />}>
-      <DashboardBoot dashboard={dashboard} setReady={setReady} />
-    </Suspense>
-  )
+  return <DashboardBoot dashboard={dashboard} setReady={setReady} />
 }

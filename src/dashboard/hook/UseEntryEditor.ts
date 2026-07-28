@@ -1,5 +1,6 @@
 import type {EntryStatus} from 'alinea/core/Entry'
-import {useEntry} from '../store.js'
+import {useAtomValue} from 'jotai'
+import {currentEntryAtom} from '../store.js'
 
 export interface EntryEditorVersionData {
   path: string
@@ -30,7 +31,7 @@ export interface EntryEditor {
  * subset of the v1 EntryEditor shape is supported.
  */
 export function useEntryEditor(): EntryEditor | undefined {
-  const entry = useEntry()
+  const entry = useAtomValue(currentEntryAtom)
   if (!entry) return undefined
   const version = strictObject('entry editor activeVersion', {
     data: strictObject('entry editor activeVersion.data', {
