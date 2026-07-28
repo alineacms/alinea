@@ -49,6 +49,22 @@ export class ListField<
       defaultValue() {
         return meta.options.initialValue ?? []
       },
+      withInitialValue(value) {
+        if (!Array.isArray(value)) return value
+        let next = value
+        value.forEach((row, index) => {
+          const type = schema[row[ListRow.type]]
+          if (!type) return
+          const initialized = Type.withInitialValue(
+            type,
+            row as Record<string, unknown>
+          )
+          if (initialized === row) return
+          if (next === value) next = [...value]
+          next[index] = initialized as StoredValue
+        })
+        return next
+      },
       async applyLinks(value, loader) {
         const rows = Array.isArray(value) ? value : []
         await Promise.all(

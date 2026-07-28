@@ -340,7 +340,7 @@ function EntryEditor({page}: EntryEditorProps) {
       <>
         <RailBody className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor entry={entry} />
+            <FileEditor />
           </NodeEditor>
         </RailBody>
       </>
