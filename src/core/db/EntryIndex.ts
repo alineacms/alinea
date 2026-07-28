@@ -434,7 +434,7 @@ export class EntryGraph {
     const parentDir = segments.slice(0, -1).join('/')
     const childrenDir = `${parentDir}/${path}`
     const seed = this.#seeds.get(childrenDir)
-    const data: Record<string, unknown> = {path, ...version.data, ...seed?.data}
+    const data: Record<string, unknown> = {path, ...seed?.data, ...version.data}
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
     const workspaceConfig = this.#config.workspaces[workspace]
