@@ -1,5 +1,6 @@
 import * as paths from 'alinea/core/util/Paths'
 import MiniSearch from 'minisearch'
+import pLimit from 'p-limit'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {createRecord, parseRecord} from '../EntryRecord.js'
@@ -550,6 +551,7 @@ export class EntryIndex extends EventTarget {
   #config: Config
   #seeds: Map<string, Seed>
   #singleWorkspace: string | undefined
+  #syncLimit = pLimit(1)
   constructor(config: Config) {
     super()
     this.#config = config
@@ -573,6 +575,13 @@ export class EntryIndex extends EventTarget {
   }
   findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
     return this.graph.filter({entry: filter})
+  }
+  async sync(source: Source): Promise<string> {
+    return this.#syncLimit(async () => {
+      await this.syncWith(source)
+      await this.seed(source)
+      return this.sha
+    })
   }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()

@@ -61,9 +61,7 @@ export class LocalDB extends WriteableGraph {
   }
 
   async sync() {
-    await this.index.syncWith(this.source)
-    await this.index.seed(this.source)
-    return this.sha
+    return this.index.sync(this.source)
   }
 
   syncWith(remote: SyncApi) {

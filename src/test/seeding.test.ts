@@ -2,6 +2,8 @@ import {suite} from '@alinea/suite'
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/core'
 import {LocalDB} from 'alinea/core/db/LocalDB'
+import {MemorySource} from 'alinea/core/source/MemorySource'
+import {ReadonlyTree} from 'alinea/core/source/Tree'
 
 const test = suite(import.meta)
 
@@ -40,4 +42,33 @@ test('seed multiple languages', async () => {
     path: 'page1'
   })
   test.is(page1EN._id, page1FR._id)
+})
+
+test('serializes concurrent seeding on the same index', async () => {
+  let firstApply: () => void = () => {}
+  const applied = new Promise<void>(resolve => {
+    firstApply = resolve
+  })
+  let treeReads = 0
+  const source = new (class extends MemorySource {
+    override async getTree() {
+      treeReads++
+      if (treeReads <= 2) return ReadonlyTree.EMPTY
+      await applied
+      return super.getTree()
+    }
+
+    override async applyChanges(
+      ...args: Parameters<MemorySource['applyChanges']>
+    ) {
+      await super.applyChanges(...args)
+      firstApply()
+    }
+  })()
+  const db = new LocalDB(cms.config, source)
+
+  const results = await Promise.allSettled([db.sync(), db.sync()])
+
+  test.is(results.filter(result => result.status === 'rejected').length, 0)
+  test.is(db.sha, (await source.getTree()).sha)
 })
