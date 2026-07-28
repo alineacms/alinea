@@ -1,9 +1,10 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {atom} from 'jotai'
 import type {ComponentType} from 'react'
+import {dispense, requiredAtom} from './AtomUtils.js'
 import type {RouteHistory} from './navigation/History.js'
-import {requiredAtom} from './RequiredAtom.js'
 
 export interface DashboardOptions {
   alineaDev?: boolean
@@ -32,3 +33,9 @@ export const optionsAtom =
 export const previewTokenRequestsAtom = requiredAtom<
   Map<string, Promise<string>>
 >('dashboard.previewTokenRequests')
+
+export const viewAtom = dispense(key => {
+  return atom((get): ComponentType | undefined => {
+    return get(viewsAtom)[key]
+  })
+})

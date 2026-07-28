@@ -4,7 +4,7 @@ import type {Getter} from 'jotai'
 import type {EntryDataState} from '../EntryAtoms.js'
 import type {EntrySidebarTab} from '../Contracts.js'
 import type {ReactiveNode} from '../ReactiveNode.js'
-import type {DashboardEntryReferences} from '../entry/EntryContracts.js'
+import type {DashboardEntryReferences} from '../EntrySupport.js'
 import {
   entrySidebarOpenAtom,
   entrySidebarTabAtom

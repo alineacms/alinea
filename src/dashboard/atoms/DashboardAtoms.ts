@@ -19,7 +19,8 @@ import {
   eventsAtom,
   graphAtom,
   type DashboardInput,
-  type DashboardOptions
+  type DashboardOptions,
+  viewAtom
 } from './CoreAtoms.js'
 import {createEntryAtom} from './CreateEntryAtom.js'
 import {
@@ -56,14 +57,13 @@ import {
   previewMetadataAtom,
   previewSessionOriginsAtom
 } from './PreviewAtoms.js'
-import {entryRevisionAtom} from './RevisionAtom.js'
+import {entryRevisionAtom} from './EntrySupport.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspacesAtom
 } from './SelectionAtoms.js'
 import {shaAtom, syncAtom} from './SyncAtoms.js'
-import {viewAtom} from './ViewAtom.js'
 import {
   currentRootAtom,
   currentWorkspaceAtom,

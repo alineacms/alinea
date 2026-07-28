@@ -1,9 +1,9 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {atom} from 'jotai'
 import {eventsAtom} from './CoreAtoms.js'
+import {entryRevisionAtom} from './EntrySupport.js'
 import {routeAtom} from './NavigationAtoms.js'
 import {reloadPageAtom} from './PageAtoms.js'
-import {entryRevisionAtom} from './RevisionAtom.js'
 
 export const dashboardEffectsAtom = Object.assign(
   atom(

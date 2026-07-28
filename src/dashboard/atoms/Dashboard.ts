@@ -1,5 +1,4 @@
 export * from './AuthAtoms.js'
-export * from './Async.js'
 export * from './Contracts.js'
 export * from './CoreAtoms.js'
 export * from './CreateEntryAtom.js'
@@ -22,14 +21,19 @@ export {
 export * from './PolicyAtoms.js'
 export * from './PreviewAtoms.js'
 export * from './ReactiveNode.js'
-export * from './RequiredAtom.js'
-export * from './RevisionAtom.js'
+export {
+  debounce,
+  keepPrevious,
+  requiredAtom,
+  withPending
+} from './AtomUtils.js'
+export type {RequiredAtom} from './AtomUtils.js'
+export {entryRevisionAtom} from './EntrySupport.js'
 export * from './SelectionAtoms.js'
 export * from './RootAtoms.js'
 export * from './DashboardAtoms.js'
 export * from './SyncAtoms.js'
 export * from './ThemeAtom.js'
-export * from './ViewAtom.js'
 export * from './WorkspaceAtoms.js'
 
 export {

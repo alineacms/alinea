@@ -1,7 +1,7 @@
 import {atom} from 'jotai'
+import {requiredAtom} from './AtomUtils.js'
 import type {PreparedRoute} from './loaders/Route.js'
 import type {Navigation} from './navigation/Navigation.js'
-import {requiredAtom} from './RequiredAtom.js'
 
 export const navigationAtom =
   requiredAtom<Navigation<PreparedRoute>>('dashboard.navigation')

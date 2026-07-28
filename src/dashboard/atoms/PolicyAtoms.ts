@@ -1,6 +1,6 @@
 import {Policy} from '#/core/Role.js'
 import {atom} from 'jotai'
-import {withPending} from './Async.js'
+import {withPending} from './AtomUtils.js'
 import {userAtom} from './AuthAtoms.js'
 import {clientAtom, configAtom, graphAtom} from './CoreAtoms.js'
 import {shaAtom} from './SyncAtoms.js'

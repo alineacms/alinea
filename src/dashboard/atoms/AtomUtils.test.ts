@@ -1,0 +1,61 @@
+import {expect, test} from 'bun:test'
+import {createStore} from 'jotai'
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDragItem,
+  dashboardEntryDragType,
+  dashboardEntryDragTypes,
+  requiredAtom,
+  uploadSizeError
+} from './AtomUtils.js'
+
+test('throws until a required atom is initialized', () => {
+  const valueAtom = requiredAtom<string>('test.value')
+  const store = createStore()
+
+  expect(() => store.get(valueAtom)).toThrow(
+    'Required atom "test.value" was not initialized'
+  )
+
+  store.set(valueAtom, 'ready')
+  expect(store.get(valueAtom)).toBe('ready')
+})
+
+test('required atom values remain scoped to their store', () => {
+  const valueAtom = requiredAtom<string>('test.scoped')
+  const first = createStore()
+  const second = createStore()
+
+  first.set(valueAtom, 'first')
+  second.set(valueAtom, 'second')
+
+  expect(first.get(valueAtom)).toBe('first')
+  expect(second.get(valueAtom)).toBe('second')
+})
+
+test('creates dashboard entry drag data with a plain text fallback', () => {
+  expect(dashboardEntryDragItem(42)).toEqual({
+    'text/plain': '42',
+    [dashboardEntryDragType]: '42'
+  })
+  expect(dashboardEntryDragTypes).toEqual([
+    dashboardEntryDragType,
+    'text/plain'
+  ])
+})
+
+test('accepts dashboard entry and plain text drag types', () => {
+  expect(
+    acceptsDashboardEntryDrag(new Set([dashboardEntryDragType]))
+  ).toBeTrue()
+  expect(acceptsDashboardEntryDrag(new Set(['text/plain']))).toBeTrue()
+  expect(acceptsDashboardEntryDrag(new Set(['application/json']))).toBeFalse()
+})
+
+test('reports files that exceed the configured upload limit', () => {
+  const file = new File(['oversized'], 'photo.jpg')
+
+  expect(uploadSizeError(file, file.size - 1)).toContain('photo.jpg')
+  expect(uploadSizeError(file, file.size)).toBeUndefined()
+  expect(uploadSizeError(file, undefined)).toBeUndefined()
+})

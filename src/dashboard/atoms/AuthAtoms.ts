@@ -3,7 +3,7 @@ import {Client} from '#/core/Client.js'
 import {localUser, type User} from '#/core/User.js'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {keepPrevious} from './Async.js'
+import {keepPrevious} from './AtomUtils.js'
 import {clientAtom, optionsAtom} from './CoreAtoms.js'
 
 export interface AuthLoading {

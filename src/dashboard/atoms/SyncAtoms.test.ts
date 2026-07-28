@@ -6,7 +6,7 @@ import {shaAtom, syncAtom} from './SyncAtoms.js'
 import {
   createDashboardAtomFixture,
   TestEvents
-} from './test/AtomFixture.js'
+} from '#test/DashboardAtomsFixture.js'
 
 test('reading content state never synchronizes the graph', async () => {
   const {db} = await createDashboardAtomFixture()

@@ -1,15 +1,58 @@
+import type {
+  EntryReference,
+  EntryReferenceScan
+} from '#/core/db/EntryReference.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import type {EntryAnchorTarget} from '#/core/Field.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import type {Infer} from '#/types.js'
 import {atom} from 'jotai'
-import {dispense} from '../AtomUtils.js'
-import {keepPrevious} from '../Async.js'
-import {entryRevisionAtom} from '../RevisionAtom.js'
-import {versionLoaderAtom} from '../EntryLoaderAtoms.js'
-import type {EntryDataState} from '../EntryAtoms.js'
-import {policyAtom} from '../PolicyAtoms.js'
-import {ReactiveNode} from '../ReactiveNode.js'
+import {dispense, keepPrevious} from './AtomUtils.js'
+import type {EntryDataState} from './EntryAtoms.js'
+import {versionLoaderAtom} from './EntryLoaderAtoms.js'
+import {policyAtom} from './PolicyAtoms.js'
+import {ReactiveNode} from './ReactiveNode.js'
+
+export const entryRevisionAtom = dispense((_id: string) => atom(0))
+
+export interface DashboardEntryTreeStatus {
+  status: EntryStatus | 'unpublished' | 'untranslated'
+}
+
+export interface DashboardFileInfoState {
+  pending: boolean
+  data: Infer<typeof MediaFile> | null | undefined
+}
+
+export interface DashboardEntryReferences {
+  references: Array<DashboardEntryReference>
+  total: number
+  scan: EntryReferenceScan
+}
+
+export interface DashboardEntryReference {
+  reference: EntryReference
+  source: DashboardEntryReferenceSource
+}
+
+export interface DashboardEntryReferenceSource {
+  id: string
+  title: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
+  status: EntryStatus
+  path: string
+  url: string
+}
+
+export interface EntryRouteBlock {
+  confirm(): void
+  cancel(): void
+}
 
 class EntryLanguageModel {
   constructor(

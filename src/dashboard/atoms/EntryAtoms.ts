@@ -35,13 +35,19 @@ import {typeAtoms, type TypeState} from './EditorAtoms.js'
 import {loadEntryPage} from './loaders/Entry.js'
 import {ReactiveNode} from './ReactiveNode.js'
 import {queryTreeChildren, type Root} from './RootAtoms.js'
-import {dispense} from './AtomUtils.js'
-import {debounce, keepPrevious, withPending} from './Async.js'
+import {
+  debounce,
+  dispense,
+  keepPrevious,
+  uploadSizeError,
+  withPending
+} from './AtomUtils.js'
 import {
   clientAtom,
   configAtom,
   graphAtom,
-  previewTokenRequestsAtom
+  previewTokenRequestsAtom,
+  viewAtom
 } from './CoreAtoms.js'
 import {entryLoaderAtom} from './EntryLoaderAtoms.js'
 import {userAtom} from './AuthAtoms.js'
@@ -52,9 +58,7 @@ import {
   previewSessionOriginsAtom,
   requestPreviewSessionToken
 } from './PreviewAtoms.js'
-import {entryRevisionAtom} from './RevisionAtom.js'
 import {shaAtom} from './SyncAtoms.js'
-import {viewAtom} from './ViewAtom.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
 import type {
   DashboardEntryReference,
@@ -63,9 +67,11 @@ import type {
   DashboardEntryTreeStatus,
   DashboardFileInfoState,
   EntryRouteBlock
-} from './entry/EntryContracts.js'
-import {createEntryLanguage} from './entry/EntryLanguage.js'
-import {uploadSizeError} from './shared/Upload.js'
+} from './EntrySupport.js'
+import {
+  createEntryLanguage,
+  entryRevisionAtom
+} from './EntrySupport.js'
 
 const decoder = new TextDecoder()
 
@@ -1106,7 +1112,7 @@ export type {
   DashboardFileInfoState,
   EntryRouteBlock
 }
-export type {EntryLanguage} from './entry/EntryLanguage.js'
+export type {EntryLanguage} from './EntrySupport.js'
 export {createEntryLanguage}
 
 export function createEntry(id: string): EntryState {

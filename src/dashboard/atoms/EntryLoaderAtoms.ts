@@ -9,7 +9,7 @@ import {atom, type Atom} from 'jotai'
 import {configAtom, graphAtom} from './CoreAtoms.js'
 import {MissingEntryError} from './Contracts.js'
 import {policyAtom} from './PolicyAtoms.js'
-import {batchLoader} from './shared/BatchLoader.js'
+import {batchLoader} from './AtomUtils.js'
 
 export interface EntryLoaderAtomsOptions {
   config: Atom<Config>

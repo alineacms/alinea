@@ -23,7 +23,13 @@ import type {EntryState} from './EntryAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
 import {createRoot, type Root} from './RootAtoms.js'
 import type {ComponentType} from 'react'
-import {dispense} from './AtomUtils.js'
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDragItem,
+  dashboardEntryDragType,
+  dashboardEntryDragTypes,
+  dispense
+} from './AtomUtils.js'
 import {configAtom, graphAtom} from './CoreAtoms.js'
 import {routeAtom} from './NavigationAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
@@ -33,13 +39,7 @@ import {
   workspaceRootsAtom,
   workspaceSettingsAtom
 } from './SelectionAtoms.js'
-import {
-  acceptsDashboardEntryDrag,
-  dashboardEntryDragItem,
-  dashboardEntryDragType,
-  dashboardEntryDragTypes
-} from './shared/EntryDrag.js'
-import type {DashboardEntryTreeStatus} from './entry/EntryContracts.js'
+import type {DashboardEntryTreeStatus} from './EntrySupport.js'
 
 export interface Workspace {
   key: string

@@ -19,7 +19,7 @@ import {
   type ExplorerLocation
 } from './ExplorerAtoms.js'
 import {dispense} from './AtomUtils.js'
-import {configAtom, graphAtom} from './CoreAtoms.js'
+import {configAtom, graphAtom, viewAtom} from './CoreAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
 import {routeAtom} from './NavigationAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
@@ -28,7 +28,6 @@ import {
   selectedWorkspaceAtom
 } from './SelectionAtoms.js'
 import {shaAtom} from './SyncAtoms.js'
-import {viewAtom} from './ViewAtom.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 

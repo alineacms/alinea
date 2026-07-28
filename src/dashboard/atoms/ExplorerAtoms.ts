@@ -27,8 +27,10 @@ import {refreshPageForAtom} from './PageAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
 import {shaAtom} from './SyncAtoms.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
-import {dashboardEntryDragItem} from './shared/EntryDrag.js'
-import {uploadSizeError} from './shared/Upload.js'
+import {
+  dashboardEntryDragItem,
+  uploadSizeError
+} from './AtomUtils.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 
