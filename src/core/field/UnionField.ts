@@ -21,6 +21,12 @@ export class UnionField<
       defaultValue() {
         return meta.options.initialValue ?? ({} as StoredValue)
       },
+      withInitialValue(value) {
+        if (!value) return value
+        const type = schema[value[UnionRow.type]]
+        if (!type) return value
+        return Type.withInitialValue(type, value) as StoredValue
+      },
       async applyLinks(value, loader) {
         if (!value) return
         const type = schema?.[value[UnionRow.type]]
