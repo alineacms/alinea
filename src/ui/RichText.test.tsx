@@ -78,6 +78,33 @@ test('RichText renders text marks and link attributes', () => {
   expect(container.querySelector('a > i > b')?.textContent).toBe('Marked')
 })
 
+test('RichText renders anchor marks as inline spans before text', () => {
+  const doc = [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'Section title',
+          marks: [
+            {_type: 'anchor', id: 'section-1'},
+            {_type: 'bold'},
+            {_type: 'italic'}
+          ]
+        }
+      ]
+    }
+  ] satisfies TextDoc
+
+  const {container} = render(<RichText doc={doc} />)
+
+  expect(container.querySelector('span#section-1')).not.toBeNull()
+  expect(container.textContent).toBe('Section title')
+  expect(container.querySelector('p > span#section-1 + i > b')?.textContent).toBe(
+    'Section title'
+  )
+})
+
 test('RichText renders tables with spans', () => {
   const doc = [
     {
