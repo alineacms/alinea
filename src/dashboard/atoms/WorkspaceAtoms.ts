@@ -19,10 +19,7 @@ import type {
   Key
 } from 'react-aria-components'
 import type {TreeSelection} from './Contracts.js'
-import type {
-  EntryState,
-  DashboardEntryTreeStatus
-} from './EntryAtoms.js'
+import type {EntryState} from './EntryAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
 import {createRoot, type Root} from './RootAtoms.js'
 import type {ComponentType} from 'react'
@@ -36,20 +33,13 @@ import {
   workspaceRootsAtom,
   workspaceSettingsAtom
 } from './SelectionAtoms.js'
-
-const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
-
-function acceptsDashboardEntryDrag(types: DragTypes) {
-  return types.has(DASHBOARD_ENTRY_DRAG_TYPE) || types.has('text/plain')
-}
-
-function dragItem(id: Key): DragItem {
-  const key = String(id)
-  return {
-    'text/plain': key,
-    [DASHBOARD_ENTRY_DRAG_TYPE]: key
-  }
-}
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDragItem,
+  dashboardEntryDragType,
+  dashboardEntryDragTypes
+} from './shared/EntryDrag.js'
+import type {DashboardEntryTreeStatus} from './entry/EntryContracts.js'
 
 export interface Workspace {
   key: string
@@ -251,10 +241,10 @@ class TreeModel {
   })
 
   // dnd
-  acceptedDragTypes = [DASHBOARD_ENTRY_DRAG_TYPE, 'text/plain']
+  acceptedDragTypes = [...dashboardEntryDragTypes]
 
   getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(id => dragItem(id))
+    return [...keys].map(id => dashboardEntryDragItem(id))
   })
 
   dragDisabled = atom(get => {
@@ -334,8 +324,8 @@ class TreeModel {
     for (const item of items) {
       if (item.kind !== 'text' || !item.types || !item.getText) continue
       let draggedId: string | null = null
-      if (item.types.has(DASHBOARD_ENTRY_DRAG_TYPE)) {
-        draggedId = await item.getText(DASHBOARD_ENTRY_DRAG_TYPE)
+      if (item.types.has(dashboardEntryDragType)) {
+        draggedId = await item.getText(dashboardEntryDragType)
       } else if (item.types.has('text/plain')) {
         draggedId = await item.getText('text/plain')
       }

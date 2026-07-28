@@ -1,12 +1,10 @@
 import type {Revision} from '#/core/Connection.js'
 import type {Entry as EntryRecord, EntryStatus} from '#/core/Entry.js'
 import type {Getter} from 'jotai'
-import type {
-  EntryDataState,
-  DashboardEntryReferences
-} from '../EntryAtoms.js'
+import type {EntryDataState} from '../EntryAtoms.js'
 import type {EntrySidebarTab} from '../Contracts.js'
 import type {ReactiveNode} from '../ReactiveNode.js'
+import type {DashboardEntryReferences} from '../entry/EntryContracts.js'
 import {
   entrySidebarOpenAtom,
   entrySidebarTabAtom

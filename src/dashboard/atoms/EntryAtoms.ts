@@ -2,22 +2,18 @@ import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
 import type {Revision} from '#/core/Connection.js'
 import {UploadOperation} from '#/core/db/Operation.js'
-import type {
-  EntryReference,
-  EntryReferenceScan
-} from '#/core/db/EntryReference.js'
+import type {EntryReference} from '#/core/db/EntryReference.js'
 import {
   Entry,
   type Entry as EntryRecord,
   type EntryStatus
 } from '#/core/Entry.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
-import {Field, type EntryAnchorTarget, type FieldOptions} from '#/core/Field.js'
+import {Field, type FieldOptions} from '#/core/Field.js'
 import {createId} from '#/core/Id.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission} from '#/core/Role.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type} from '#/core/Type.js'
@@ -47,7 +43,7 @@ import {
   graphAtom,
   previewTokenRequestsAtom
 } from './CoreAtoms.js'
-import {entryLoaderAtom, versionLoaderAtom} from './EntryLoaderAtoms.js'
+import {entryLoaderAtom} from './EntryLoaderAtoms.js'
 import {userAtom} from './AuthAtoms.js'
 import {uploadProgressAtom} from './MutationAtoms.js'
 import {reloadPageAtom} from './PageAtoms.js'
@@ -60,19 +56,18 @@ import {entryRevisionAtom} from './RevisionAtom.js'
 import {shaAtom} from './SyncAtoms.js'
 import {viewAtom} from './ViewAtom.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
+import type {
+  DashboardEntryReference,
+  DashboardEntryReferences,
+  DashboardEntryReferenceSource,
+  DashboardEntryTreeStatus,
+  DashboardFileInfoState,
+  EntryRouteBlock
+} from './entry/EntryContracts.js'
+import {createEntryLanguage} from './entry/EntryLanguage.js'
+import {uploadSizeError} from './shared/Upload.js'
 
 const decoder = new TextDecoder()
-
-function uploadSizeError(
-  file: File,
-  maxUploadSize: number | undefined
-): string | undefined {
-  try {
-    assertUploadSize(file.name, file.size, maxUploadSize)
-  } catch (error) {
-    return error instanceof Error ? error.message : String(error)
-  }
-}
 
 type EntryVersionData = EntryRecord<Record<string, unknown>>
 
@@ -93,52 +88,15 @@ interface EntryData {
   entries: Array<EntryVersionData>
 }
 
-export interface DashboardEntryTreeStatus {
-  status: EntryStatus | 'unpublished' | 'untranslated'
-}
-
 export interface DashboardEntryState {
   pending: boolean
   data: EntryDataModel | undefined
   error: MissingEntryError | undefined
 }
 
-export interface DashboardFileInfoState {
-  pending: boolean
-  data: Infer<typeof MediaFile> | null | undefined
-}
-
-export interface DashboardEntryReferences {
-  references: Array<DashboardEntryReference>
-  total: number
-  scan: EntryReferenceScan
-}
-
-export interface DashboardEntryReference {
-  reference: EntryReference
-  source: DashboardEntryReferenceSource
-}
-
-export interface DashboardEntryReferenceSource {
-  id: string
-  title: string
-  type: string
-  workspace: string
-  root: string
-  locale: string | null
-  status: EntryStatus
-  path: string
-  url: string
-}
-
 type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
-
-export interface EntryRouteBlock {
-  confirm(): void
-  cancel(): void
-}
 
 interface NodeSelection {
   locale: string | null
@@ -1138,78 +1096,18 @@ function entryReferenceSourceKey(
   return `${source.id}\0${source.locale ?? ''}`
 }
 
-class EntryLanguageModel {
-  constructor(
-    public entry: EntryDataModel,
-    public locale: string | null
-  ) {}
-
-  versionsResource = atom(async get => {
-    get(entryRevisionAtom(this.entry.id))
-    const loader = get(versionLoaderAtom)
-    const [entries] = await loader(this.entry.id)
-    if (!entries)
-      throw new Error(`No versions found for entry ${this.entry.id}`)
-    const policy = get(policyAtom)
-    const readable = entries.filter(entry => {
-      return entry.locale === this.locale && policy.canRead(entry)
-    })
-    // order by draft, published, archived
-    const order = ['draft', 'published', 'archived']
-    readable.sort((a, b) => {
-      return order.indexOf(a.status) - order.indexOf(b.status)
-    })
-    return new Map(readable.map(entry => [entry.status, entry] as const))
-  })
-
-  versions = keepPrevious(this.versionsResource)
-
-  activeVersionResource = atom(async get => {
-    const versions = await get(this.versionsResource)
-    const first = versions.values().next().value
-    assert(
-      first,
-      `No versions found for entry ${this.entry.id} and locale ${this.locale}`
-    )
-    return first
-  })
-
-  activeVersion = keepPrevious(this.activeVersionResource)
-
-  anchors = keepPrevious(
-    atom(async (get): Promise<Array<EntryAnchorTarget>> => {
-      const type = get(this.entry.type).type
-      const entry = await get(this.activeVersion)
-      return Type.anchors(type, entry.data)
-    })
-  )
-
-  data = dispense((status: EntryStatus) => {
-    return atom(async get => {
-      const type = get(this.entry.type).type
-      const versions = await get(this.versionsResource)
-      const activeStatus = versions.keys().next().value
-      const version = versions.get(status)
-      assert(version, `No version found`)
-      const data = version.data
-      const policy = get(policyAtom)
-      // Todo: fix data during indexing instead of here
-      const initialValue = Type.withInitialValue(type, {
-        ...Type.initialValue(type),
-        ...data
-      })
-      const isActiveVersion = status === activeStatus
-      return new ReactiveNode<object>(
-        initialValue,
-        !isActiveVersion || !policy.canUpdate(version)
-      )
-    })
-  })
-}
-
 export type EntryState = EntryModel
 export type EntryDataState = EntryDataModel
-export type EntryLanguage = EntryLanguageModel
+export type {
+  DashboardEntryReference,
+  DashboardEntryReferences,
+  DashboardEntryReferenceSource,
+  DashboardEntryTreeStatus,
+  DashboardFileInfoState,
+  EntryRouteBlock
+}
+export type {EntryLanguage} from './entry/EntryLanguage.js'
+export {createEntryLanguage}
 
 export function createEntry(id: string): EntryState {
   return new EntryModel(id)
@@ -1222,11 +1120,4 @@ export function createEntryData(
   entryData: Atom<EntryData>
 ): EntryDataState {
   return new EntryDataModel(entry, entryData)
-}
-
-export function createEntryLanguage(
-  entry: EntryDataState,
-  locale: string | null
-): EntryLanguage {
-  return new EntryLanguageModel(entry, locale)
 }

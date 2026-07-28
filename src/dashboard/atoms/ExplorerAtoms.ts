@@ -6,10 +6,8 @@ import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission} from '#/core/Role.js'
 import {assert} from '#/core/util/Assert.js'
-import type {DragItem} from '@react-types/shared'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -29,29 +27,10 @@ import {refreshPageForAtom} from './PageAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
 import {shaAtom} from './SyncAtoms.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
+import {dashboardEntryDragItem} from './shared/EntryDrag.js'
+import {uploadSizeError} from './shared/Upload.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
-
-const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
-
-function dragItem(id: Key): DragItem {
-  const key = String(id)
-  return {
-    'text/plain': key,
-    [DASHBOARD_ENTRY_DRAG_TYPE]: key
-  }
-}
-
-function uploadSizeError(
-  file: File,
-  maxUploadSize: number | undefined
-): string | undefined {
-  try {
-    assertUploadSize(file.name, file.size, maxUploadSize)
-  } catch (error) {
-    return error instanceof Error ? error.message : String(error)
-  }
-}
 
 export interface ExplorerLocation {
   workspace: string
@@ -66,7 +45,7 @@ export interface DashboardMenuItem {
 
 export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id' | 'index'
 export type ExplorerSortDirections = 'asc' | 'desc'
-export type ExplorerSort = {
+export interface ExplorerSort {
   sortBy: ExplorerSortBy
   direction: ExplorerSortDirections
 }
@@ -292,8 +271,8 @@ class ExplorerModel {
       set(this.location, next)
     }
   )
-  getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(id => dragItem(id))
+  getItems = atom(null, (get, set, keys: Set<Key>) => {
+    return [...keys].map(id => dashboardEntryDragItem(id))
   })
 
   isMedia = atom(get => {

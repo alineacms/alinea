@@ -7,13 +7,7 @@ const currentShaAtom = atom<string>()
 
 export const shaAtom = Object.assign(
   atom(
-    async get => {
-      const current = get(currentShaAtom)
-      if (current) return current
-      const db = get(graphAtom)
-      if (!isSyncableGraph(db)) return undefined
-      return db.sync()
-    },
+    async get => get(currentShaAtom),
     (get, set) => {
       const events = get(eventsAtom)
       const listen = (event: Event) => {
