@@ -21,9 +21,9 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {EntryDataState, EntryState} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/EntryAtoms.js'
 import type {
-  Explorer,
+  ExplorerAtoms,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
@@ -38,49 +38,49 @@ const styles = styler(css)
 
 export interface ExplorerProps {
   controls?: ReactNode
-  explorer: Explorer
-  items?: Array<EntryState>
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
   titleControls?: ReactNode
 }
 
 export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
-  explorer: Explorer
-  items?: Array<EntryState>
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
   titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
-  explorer: Explorer
-  items?: Array<EntryState>
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
-  explorer: Explorer
-  items?: Array<EntryState>
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
 }
 
 interface ExplorerHeaderMainProps {
-  explorer: Explorer
+  explorer: ExplorerAtoms
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
-  data: EntryDataState
-  explorer: Explorer
+  data: EntryDataAtoms
+  explorer: ExplorerAtoms
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderParentMainProps {
-  explorer: Explorer
-  parent: EntryState
+  explorer: ExplorerAtoms
+  parent: EntryAtoms
   titleControls?: ReactNode
 }
 
 interface ExplorerSearchContentProps extends ExplorerSearchProps {
-  items: Array<EntryState>
+  items: Array<EntryAtoms>
 }
 
 function ExplorerSearch(props: ExplorerSearchProps) {
@@ -111,7 +111,7 @@ function ExplorerSearchContent({
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
 
-  function selectEntry(entry: EntryState | undefined) {
+  function selectEntry(entry: EntryAtoms | undefined) {
     if (!entry) return
     setSelection(new Set<Key>([entry.id]))
   }
@@ -261,7 +261,7 @@ function ExplorerHeaderParentMain({
 }
 
 interface ExplorerToolbarProps {
-  explorer: Explorer
+  explorer: ExplorerAtoms
 }
 const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},

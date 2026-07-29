@@ -20,19 +20,19 @@ import {
   LucideFolder,
   RiFlashlightFill
 } from '../icons.js'
-import {createTreeSelection as createDashboardTreeSelection} from '../atoms/Contracts.js'
-import type {Dashboard} from '../atoms/DashboardModel.js'
+import {createTreeSelection} from '../atoms/Contracts.js'
+import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
 import type {
-  EntryDataState as DashboardEntryData,
-  EntryState as DashboardEntry
+  EntryAtoms,
+  EntryDataAtoms
 } from '../atoms/EntryAtoms.js'
 import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
 import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
-import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
+import type {RootAtoms} from '../atoms/RootAtoms.js'
 import {
   createTree,
-  type Tree as StoreTree,
-  type Workspace as DashboardWorkspace
+  type TreeAtoms,
+  type WorkspaceAtoms
 } from '../atoms/WorkspaceAtoms.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
@@ -41,7 +41,7 @@ import {SidebarBody} from './ui/Sidebar.js'
 const styles = styler(css)
 
 interface SidebarTreeProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 export interface SidebarTreeExplorerProps {
@@ -49,16 +49,16 @@ export interface SidebarTreeExplorerProps {
   disableDragAndDrop?: boolean
   onRootPress?: () => void
   onSelectionChange?: (keys: Selection) => void
-  root: DashboardRoot
+  root: RootAtoms
   rootSelected?: boolean
   selectedKeys?: Set<Key>
   selectedLocale?: DashboardLocaleSelection
-  workspace: DashboardWorkspace
+  workspace: WorkspaceAtoms
 }
 
 interface SidebarItemProps {
-  item: DashboardEntry
-  tree: StoreTree
+  item: EntryAtoms
+  tree: TreeAtoms
 }
 
 interface SidebarStatusDisplay {
@@ -117,7 +117,7 @@ const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
 })
 
 interface SidebarLoadingItemProps {
-  item: DashboardEntry
+  item: EntryAtoms
   pending: boolean
 }
 
@@ -148,9 +148,9 @@ function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
 }
 
 interface SidebarLoadedItemProps {
-  item: DashboardEntry
-  data: DashboardEntryData
-  tree: StoreTree
+  item: EntryAtoms
+  data: EntryDataAtoms
+  tree: TreeAtoms
 }
 
 const SidebarLoadedItem = memo(function SidebarLoadedItem({
@@ -228,14 +228,14 @@ interface SidebarTreeBodyProps {
   ariaLabel?: string
   disableDragAndDrop?: boolean
   onSelectionChange?: (keys: Selection) => void
-  root: DashboardRoot
+  root: RootAtoms
   selectedKeys?: Set<Key>
-  tree: StoreTree
+  tree: TreeAtoms
 }
 
 interface SidebarTreeContentProps extends SidebarTreeBodyProps {
   onRootPress?: () => void
-  root: DashboardRoot
+  root: RootAtoms
   rootSelected?: boolean
   selectedLocale?: DashboardLocaleSelection
 }
@@ -258,7 +258,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const onInsert = useSetAtom(tree.onInsert)
   const onItemDrop = useSetAtom(tree.onItemDrop)
   const onMove = useSetAtom(tree.onMove)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
+  const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
     acceptedDragTypes: tree.acceptedDragTypes,
     getItems,
     isDisabled: disableDragAndDrop || dragDisabled,
@@ -300,7 +300,7 @@ function SidebarTreeRootButton({
   selectedLocale
 }: {
   onPress?: () => void
-  root: DashboardRoot
+  root: RootAtoms
   selected: boolean
   selectedLocale?: DashboardLocaleSelection
 }) {
@@ -394,7 +394,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
 }: SidebarTreeExplorerProps) {
   const tree = useMemo(
     () =>
-      createTree(workspace, createDashboardTreeSelection(), {
+      createTree(workspace, createTreeSelection(), {
         syncRouteExpansion: false
       }),
     [workspace]

@@ -1,8 +1,8 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/DashboardModel.js'
-import type {EntryDataState} from '#/dashboard/atoms/EntryAtoms.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardAtoms.js'
+import type {EntryDataAtoms} from '#/dashboard/atoms/EntryAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
@@ -37,7 +37,7 @@ const entry = {
     return JSON.stringify({sha, data: get(node.value)})
   }),
   retryPreviewUrl: atom(null, () => {})
-} as unknown as EntryDataState
+} as unknown as EntryDataAtoms
 const sidebar = {type: 'preview', entry: null, url: '/preview-frame'} as const
 
 function PreviewTitleField() {

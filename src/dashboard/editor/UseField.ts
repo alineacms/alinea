@@ -1,7 +1,7 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import type {FieldState} from '../atoms/EditorAtoms.js'
+import type {FieldAtoms} from '../atoms/EditorAtoms.js'
 import {useEditor} from './EditorScope.js'
 
 export interface UseFieldResult<StoredValue, Mutator, Options> {
@@ -13,7 +13,7 @@ export interface UseFieldResult<StoredValue, Mutator, Options> {
   error: string | undefined
 }
 
-function useFieldInfo(field: Field | string): FieldState {
+function useFieldInfo(field: Field | string): FieldAtoms {
   const editor = useEditor()
   const info =
     typeof field === 'string' ? editor.field(field) : editor.get(field)

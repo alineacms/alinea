@@ -3,9 +3,9 @@ import {getWorkspace} from '#/core/Internal.js'
 import type {Policy} from '#/core/Role.js'
 import type {Atom, Getter} from 'jotai'
 import type {Route} from '../../DashboardNav.js'
-import type {EntryDataState, EntryState} from '../EntryAtoms.js'
-import type {Root} from '../RootAtoms.js'
-import type {Workspace} from '../WorkspaceAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '../EntryAtoms.js'
+import type {RootAtoms} from '../RootAtoms.js'
+import type {WorkspaceAtoms} from '../WorkspaceAtoms.js'
 import {loadEntryPage, type EntryPageData} from './Entry.js'
 import {loadExplorerPage, loadTree, type ExplorerPageData} from './Explorer.js'
 
@@ -19,19 +19,19 @@ export interface UsersPageData {
 
 export interface RootPageData {
   type: 'root'
-  root: Root
+  root: RootAtoms
 }
 
 export interface MissingEntryPageData {
   type: 'missing-entry'
   entryId: string
-  root: Root
+  root: RootAtoms
 }
 
 export interface MissingRootPageData {
   type: 'missing-root'
   rootKey: string
-  root: Root
+  root: RootAtoms
 }
 
 export interface RouteShellData {
@@ -67,11 +67,11 @@ export interface RouteLoaderOptions {
   config: Atom<Config>
   policy: Atom<Promise<Policy>>
   canManageMembers: Atom<Promise<boolean>>
-  workspace(key: string): Workspace
-  entry(id: string): EntryState
+  workspace(key: string): WorkspaceAtoms
+  entry(id: string): EntryAtoms
   loadEntry?(
     get: Getter,
-    entry: EntryDataState,
+    entry: EntryDataAtoms,
     locale: string | null
   ): Promise<EntryPageData>
 }

@@ -17,7 +17,7 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {createDashboard, type Dashboard} from './atoms/DashboardModel.js'
+import {createDashboard, type DashboardAtoms} from './atoms/DashboardAtoms.js'
 
 const styles = styler(css)
 
@@ -54,7 +54,7 @@ export function App({
 }
 
 interface StoreAppProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 function DashboardApp({dashboard}: StoreAppProps) {

@@ -2,7 +2,7 @@ import {assert} from '#/core/util/Assert.js'
 import type {Getter} from 'jotai'
 import {atom} from 'jotai'
 import {routeLoaderAtom} from './CoreAtoms.js'
-import type {Explorer} from './ExplorerAtoms.js'
+import type {ExplorerAtoms} from './ExplorerAtoms.js'
 import type {PreparedRoute, RouteLoader} from './loaders/Route.js'
 import {navigationAtoms, routeAtom} from './NavigationAtoms.js'
 import type {RouteHistory} from './navigation/History.js'
@@ -55,7 +55,7 @@ export const reloadPageAtom = atom(null, async (get, set) => {
 
 export const refreshPageForAtom = atom(
   null,
-  async (get, set, explorer: Explorer) => {
+  async (get, set, explorer: ExplorerAtoms) => {
     const page = get(pageAtom)
     if (page.type !== 'explorer') return
     if (page.root.explorer !== explorer) return

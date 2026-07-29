@@ -1,14 +1,14 @@
 import {Select, SelectItem, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import type {EntryDataState as DashboardEntryData} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import css from './EntryTranslationBanner.module.css'
 
 const styles = styler(css)
 
 export interface EntryTranslationBannerProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   page: EntryPageData
 }
 

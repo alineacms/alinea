@@ -1,7 +1,7 @@
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Type, type} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {createDashboard} from '#/dashboard/atoms/DashboardModel.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {localiser} from '#/field/localiser.js'

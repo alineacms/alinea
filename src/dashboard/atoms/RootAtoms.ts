@@ -8,10 +8,10 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction, ComponentType} from 'react'
 import {LucideFile} from '../icons.js'
-import type {Workspace} from './WorkspaceAtoms.js'
+import type {WorkspaceAtoms} from './WorkspaceAtoms.js'
 import {
   createExplorer,
-  type Explorer,
+  type ExplorerAtoms,
   type ExplorerLocation
 } from './ExplorerAtoms.js'
 import {dispense} from './AtomUtils.js'
@@ -24,10 +24,10 @@ import {shaAtom} from './SyncAtoms.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 
-export class RootModel {
-  explorer: Explorer
+export class RootAtoms {
+  explorer: ExplorerAtoms
   constructor(
-    public workspace: Workspace,
+    public workspace: WorkspaceAtoms,
     public key: string
   ) {
     const selectedParent = unwrap(
@@ -204,11 +204,9 @@ export class RootModel {
   })
 }
 
-export type Root = RootModel
-
 export async function queryTreeChildren(
   get: Getter,
-  root: Root,
+  root: RootAtoms,
   parentId: null | string,
   orderByAtom: Atom<Order | Array<Order> | undefined>,
   locale: string | null
@@ -253,6 +251,6 @@ export async function queryTreeChildren(
   return ids
 }
 
-export function createRoot(workspace: Workspace, key: string): Root {
-  return new RootModel(workspace, key)
+export function createRoot(workspace: WorkspaceAtoms, key: string): RootAtoms {
+  return new RootAtoms(workspace, key)
 }

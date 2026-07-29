@@ -14,19 +14,19 @@ import {configAtom, viewAtom} from './CoreAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
 import {dispense} from './AtomUtils.js'
 
-export interface Editor {
+export interface EditorAtoms {
   type: ConfigType
   node: ReactiveNode<object>
-  parent?: Editor
+  parent?: EditorAtoms
   resource?: Resource
   value: Atom<object>
   anchors: Atom<Array<EntryAnchorTarget>>
-  sections: Array<Section>
-  field(key: string): FieldState | undefined
-  get(field: Field): FieldState | undefined
+  sections: Array<SectionAtoms>
+  field(key: string): FieldAtoms | undefined
+  get(field: Field): FieldAtoms | undefined
 }
 
-export function rootEditor(editor: Editor): Editor {
+export function rootEditor(editor: EditorAtoms): EditorAtoms {
   while (editor.parent) editor = editor.parent
   return editor
 }
@@ -34,16 +34,16 @@ export function rootEditor(editor: Editor): Editor {
 export function createEditor(
   type: ConfigType,
   node: ReactiveNode<object>,
-  parent?: Editor,
+  parent?: EditorAtoms,
   resource?: Resource
-): Editor {
+): EditorAtoms {
   const value = node.value
-  let editor: Editor
+  let editor: EditorAtoms
   const field = dispense(key => {
     const configField = getType(type).allFields[key]
     return configField ? createField(editor, key, configField) : undefined
   })
-  function get(fieldToFind: Field): FieldState | undefined {
+  function get(fieldToFind: Field): FieldAtoms | undefined {
     for (const [key, candidate] of Object.entries(getType(type).allFields)) {
       if (candidate === fieldToFind) return field(key)
     }
@@ -65,7 +65,7 @@ export function createEditor(
   return editor
 }
 
-export interface Section {
+export interface SectionAtoms {
   section: ConfigSection
   view: Atom<
     | Exclude<ReturnType<typeof ConfigSection.view>, string>
@@ -74,7 +74,7 @@ export interface Section {
   >
 }
 
-export function createSection(section: ConfigSection): Section {
+export function createSection(section: ConfigSection): SectionAtoms {
   return {
     section,
     view: atom(get => {
@@ -84,8 +84,8 @@ export function createSection(section: ConfigSection): Section {
   }
 }
 
-export interface FieldState {
-  draft: Editor
+export interface FieldAtoms {
+  draft: EditorAtoms
   key: string
   field: Field
   value: WritableAtom<unknown, [unknown], void>
@@ -97,10 +97,10 @@ export interface FieldState {
 }
 
 export function createField(
-  draft: Editor,
+  draft: EditorAtoms,
   key: string,
   field: Field
-): FieldState {
+): FieldAtoms {
   const value = draft.node.field(key)
   const getter = atom(get => {
     return ((requestedField: Field) => {
@@ -160,7 +160,7 @@ export function createField(
   }
 }
 
-export interface TypeState {
+export interface TypeAtoms {
   type: ConfigType
   readonly contains: ReturnType<typeof getType>['contains']
   readonly label: ReturnType<typeof getType>['label']
@@ -170,7 +170,7 @@ export interface TypeState {
   readonly sections: ReturnType<typeof getType>['sections']
 }
 
-export function createType(type: ConfigType): TypeState {
+export function createType(type: ConfigType): TypeAtoms {
   const settings = getType(type)
   return {
     type,

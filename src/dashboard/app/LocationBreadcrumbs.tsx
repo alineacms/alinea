@@ -3,12 +3,12 @@ import styler from '@alinea/styler'
 import {atom, type Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
-import {type EntryDataState, type EntryState} from '../atoms/EntryAtoms.js'
+import {type EntryDataAtoms, type EntryAtoms} from '../atoms/EntryAtoms.js'
 import type {
   DashboardMenuItem,
   ExplorerLocation
 } from '../atoms/ExplorerAtoms.js'
-import {dashboardAtoms} from '../atoms/DashboardModel.js'
+import {dashboardAtoms} from '../atoms/DashboardAtoms.js'
 import {useDashboard} from '../hooks.js'
 import css from './LocationBreadcrumbs.module.css'
 
@@ -82,7 +82,7 @@ function BreadcrumbSeparator() {
 }
 
 interface EntryBreadcrumbProps {
-  entry: EntryState
+  entry: EntryAtoms
   onAction: (id: string) => void
 }
 
@@ -93,7 +93,7 @@ function EntryBreadcrumb({entry, onAction}: EntryBreadcrumbProps) {
 }
 
 interface LoadedEntryBreadcrumbProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   onAction: (id: string) => void
 }
 
@@ -136,8 +136,8 @@ function ParentBreadcrumbs({
 }
 
 interface LoadedParentBreadcrumbsProps {
-  entry: EntryState
-  data: EntryDataState
+  entry: EntryAtoms
+  data: EntryDataAtoms
   showLeadingSeparator: boolean
   setParentId: (id: string) => void
 }

@@ -20,7 +20,7 @@ import {
   IcRoundVisibilityOff
 } from '../icons.js'
 import {configAtom} from '../atoms/CoreAtoms.js'
-import type {EntryDataState as DashboardEntryData} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {mutationQueueAtom} from '../atoms/MutationAtoms.js'
 import {routeAtom} from '../atoms/NavigationAtoms.js'
 import {ReactiveNode} from '../atoms/ReactiveNode.js'
@@ -41,7 +41,7 @@ const styles = styler(css)
 
 export interface EntryHeaderProps {
   controls?: ReactNode
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   page: EntryPageData
   isSidebarOpen?: boolean
   node: ReactiveNode<object>
@@ -49,7 +49,7 @@ export interface EntryHeaderProps {
 }
 
 interface EntryHeaderActionProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   page: EntryPageData
   node: ReactiveNode<object>
   activeStatus: 'draft' | 'published' | 'archived'
@@ -62,7 +62,7 @@ interface EntryHeaderActionProps {
 }
 
 interface EntryHeaderMoreActionsProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   page: EntryPageData
   activeStatus: 'draft' | 'published' | 'archived'
   isDirty: boolean
@@ -78,7 +78,7 @@ interface EntryHeaderMenuItem {
 }
 
 interface EntryHeaderBackButtonProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {

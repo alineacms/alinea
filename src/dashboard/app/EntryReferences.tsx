@@ -16,7 +16,7 @@ import type {
   DashboardEntryReferenceSource,
   DashboardEntryReferences
 } from '../atoms/EntrySupport.js'
-import type {EntryDataState} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {routeAtom} from '../atoms/NavigationAtoms.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
@@ -24,7 +24,7 @@ import css from './EntryReferences.module.css'
 const styles = styler(css)
 
 export interface EntryReferencesProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   references?: DashboardEntryReferences
 }
 

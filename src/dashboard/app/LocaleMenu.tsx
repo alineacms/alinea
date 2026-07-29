@@ -5,13 +5,13 @@ import {useState} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
 import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
-import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
+import type {RootAtoms} from '../atoms/RootAtoms.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)
 
 interface LocaleMenuProps {
-  root: DashboardRoot
+  root: RootAtoms
   selectedLocale?: DashboardLocaleSelection
 }
 

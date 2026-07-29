@@ -28,7 +28,7 @@ import {
 } from 'react'
 import {useDashboard} from '../../hooks.js'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {dashboardAtoms} from '../../atoms/DashboardModel.js'
+import {dashboardAtoms} from '../../atoms/DashboardAtoms.js'
 import type {ExplorerLocation} from '../../atoms/ExplorerAtoms.js'
 import {ReactiveNode} from '../../atoms/ReactiveNode.js'
 import {NodeEditor} from '../Editor.js'

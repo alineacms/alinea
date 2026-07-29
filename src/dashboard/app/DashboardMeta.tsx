@@ -4,7 +4,7 @@ import type {ComponentType} from 'react'
 import {useMemo} from 'react'
 import {renderToString} from 'react-dom/server'
 import {keepPrevious} from '../atoms/AtomUtils.js'
-import {dashboardAtoms} from '../atoms/DashboardModel.js'
+import {dashboardAtoms} from '../atoms/DashboardAtoms.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {LogoShape} from './LogoShape.js'
 

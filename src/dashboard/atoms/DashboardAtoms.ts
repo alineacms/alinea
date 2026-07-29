@@ -150,7 +150,7 @@ export const dashboardAtoms = {
   createEntry: createEntryAtom
 }
 
-export type Dashboard = typeof dashboardAtoms & {
+export type DashboardAtoms = typeof dashboardAtoms & {
   input: DashboardInput
 }
 
@@ -163,7 +163,7 @@ export function createDashboard(
   client: LocalConnection,
   views: Record<string, ComponentType>,
   options: DashboardOptions = {}
-): Dashboard {
+): DashboardAtoms {
   return {
     ...dashboardAtoms,
     input: {graph, config, events, client, views, options}

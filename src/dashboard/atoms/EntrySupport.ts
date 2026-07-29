@@ -11,8 +11,8 @@ import type {Infer} from '#/types.js'
 import {atom} from 'jotai'
 import {dispense, keepPrevious} from './AtomUtils.js'
 import type {EntrySidebarTab} from './Contracts.js'
-import type {EntryDataState} from './EntryAtoms.js'
-import type {TypeState} from './EditorAtoms.js'
+import type {EntryDataAtoms} from './EntryAtoms.js'
+import type {TypeAtoms} from './EditorAtoms.js'
 import {versionLoaderAtom} from './EntryLoaderAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
 import {ReactiveNode} from './ReactiveNode.js'
@@ -38,7 +38,7 @@ export const entrySidebarOpenAtom = atom(
 )
 
 export function allowedEntrySidebarTabs(
-  type: TypeState
+  type: TypeAtoms
 ): Array<EntrySidebarTab> {
   if (type.type === MediaFile) return ['references']
   if (type.type === MediaLibrary) return ['history', 'references']
@@ -46,7 +46,7 @@ export function allowedEntrySidebarTabs(
 }
 
 export function resolveEntrySidebarTab(
-  type: TypeState,
+  type: TypeAtoms,
   selected: EntrySidebarTab
 ): EntrySidebarTab {
   const allowed = allowedEntrySidebarTabs(type)
@@ -90,9 +90,9 @@ export interface EntryRouteBlock {
   cancel(): void
 }
 
-export class EntryLanguageModel {
+export class EntryLanguageAtoms {
   constructor(
-    public entry: EntryDataState,
+    public entry: EntryDataAtoms,
     public locale: string | null
   ) {}
 
@@ -157,11 +157,9 @@ export class EntryLanguageModel {
   })
 }
 
-export type EntryLanguage = EntryLanguageModel
-
 export function createEntryLanguage(
-  entry: EntryDataState,
+  entry: EntryDataAtoms,
   locale: string | null
-): EntryLanguage {
-  return new EntryLanguageModel(entry, locale)
+): EntryLanguageAtoms {
+  return new EntryLanguageAtoms(entry, locale)
 }

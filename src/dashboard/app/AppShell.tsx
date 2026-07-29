@@ -3,7 +3,7 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import type {Dashboard} from '../atoms/DashboardModel.js'
+import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
 import type {PreparedRoute} from '../atoms/loaders/Route.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
@@ -19,7 +19,7 @@ import {WorkspaceRoots} from './WorkspaceRoots.js'
 const styles = styler(css)
 
 interface AppShellProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 export function AppShell({dashboard}: AppShellProps) {
@@ -68,7 +68,7 @@ function AppShellContent({dashboard, page}: AppShellContentProps) {
 
 interface NoWorkspaceAccessProps {
   canManageMembers: boolean
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 function NoWorkspaceAccess({

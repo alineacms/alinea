@@ -23,7 +23,7 @@ import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../icons.js'
-import {dashboardAtoms, type Dashboard} from '../atoms/DashboardModel.js'
+import {dashboardAtoms, type DashboardAtoms} from '../atoms/DashboardAtoms.js'
 import {Badge} from './Badge.js'
 import {
   DashboardModal,
@@ -38,7 +38,7 @@ import css from './UsersPage.module.css'
 const styles = styler(css)
 
 interface UsersPageProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 interface RoleItem {
@@ -216,7 +216,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
 }
 
 export interface UsersPageSidebarProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 export function UsersPageSidebar({dashboard}: UsersPageSidebarProps) {
@@ -464,7 +464,7 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
 }
 
 interface UserModalProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
   user?: User
 }
 

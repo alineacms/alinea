@@ -1,7 +1,7 @@
 import type {Revision} from '#/core/Connection.js'
 import type {Entry as EntryRecord, EntryStatus} from '#/core/Entry.js'
 import {atom, type Atom, type Getter} from 'jotai'
-import type {EntryDataState} from '../EntryAtoms.js'
+import type {EntryDataAtoms} from '../EntryAtoms.js'
 import type {EntrySidebarTab} from '../Contracts.js'
 import type {ReactiveNode} from '../ReactiveNode.js'
 import {
@@ -13,7 +13,7 @@ import {
 
 export interface PreparedEntryPage {
   type: 'entry'
-  entry: EntryDataState
+  entry: EntryDataAtoms
   locale: string | null
   node: ReactiveNode<object>
   activeVersion: EntryRecord<Record<string, unknown>> | null
@@ -60,7 +60,7 @@ export interface ReferencesSidebarData {
 }
 
 export function createEntrySidebarResource(
-  entry: EntryDataState,
+  entry: EntryDataAtoms,
   locale: string | null,
   loadSidebar = loadEntrySidebar
 ): Atom<Promise<EntrySidebarData>> {
@@ -83,7 +83,7 @@ export function createEntrySidebarResource(
 
 export async function loadEntrySidebar(
   get: Getter,
-  entry: EntryDataState,
+  entry: EntryDataAtoms,
   locale: string | null,
   tab: EntrySidebarTab
 ): Promise<EntrySidebarData> {
@@ -117,7 +117,7 @@ export async function loadEntrySidebar(
 
 export async function loadEntryPage(
   get: Getter,
-  entry: EntryDataState,
+  entry: EntryDataAtoms,
   locale: string | null,
   sidebarResource = createEntrySidebarResource(entry, locale)
 ): Promise<EntryPageData> {

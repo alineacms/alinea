@@ -26,7 +26,7 @@ import {
   IcRoundVisibilityOff
 } from '../icons.js'
 import type {EntrySidebarTab} from '../atoms/Contracts.js'
-import type {EntryDataState} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {entrySidebarTabAtom} from '../atoms/EntrySupport.js'
 import {
   type EntryPageData,
@@ -44,7 +44,7 @@ import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 const styles = styler(css)
 
 export interface EntrySidebarProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   page: EntryPageData
   onOpenChange?: (isOpen: boolean) => void
 }
@@ -137,7 +137,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
 }
 
 interface EntrySidebarHistoryProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   page: EntryPageData
   sidebar: EntrySidebarData
 }
@@ -225,7 +225,7 @@ function EntrySidebarTimelineElement(revision: Revision) {
 }
 
 interface EntrySidebarStatusItemProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   page: EntryPageData
   status: EntryStatus
 }
@@ -265,7 +265,7 @@ function EntrySidebarStatusItem({
 }
 
 interface EntrySidebarRevisionItemProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   revision: Revision
   isLatest: boolean
 }

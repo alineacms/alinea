@@ -8,7 +8,7 @@ import {useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
 import {DashboardScopeInternal} from './hooks.js'
 import {configAtom} from './atoms/CoreAtoms.js'
-import {createDashboard as createDashboardModel} from './atoms/DashboardModel.js'
+import {createDashboard} from './atoms/DashboardAtoms.js'
 import {entryRevisionAtom} from './atoms/EntrySupport.js'
 import {useDashboard} from './hooks.js'
 
@@ -20,8 +20,8 @@ function DashboardWorkspace() {
 }
 
 test('dashboard scopes isolate hydrated atom values', () => {
-  const first = createDashboard('first')
-  const second = createDashboard('second')
+  const first = createTestDashboard('first')
+  const second = createTestDashboard('second')
 
   render(
     <>
@@ -49,7 +49,7 @@ function DashboardIdentity({
 }
 
 test('useDashboard returns the dashboard from the nearest scope', () => {
-  const dashboard = createDashboard('main')
+  const dashboard = createTestDashboard('main')
 
   render(
     <DashboardScopeInternal dashboard={dashboard}>
@@ -68,7 +68,7 @@ function DashboardRevision() {
 test('dashboard effects update entry revisions', () => {
   const events = new TestEvents()
   render(
-    <DashboardScopeInternal dashboard={createDashboard('main', events)}>
+    <DashboardScopeInternal dashboard={createTestDashboard('main', events)}>
       <DashboardRevision />
     </DashboardScopeInternal>
   )
@@ -80,7 +80,7 @@ test('dashboard effects update entry revisions', () => {
   expect(screen.getByText('revision:1')).toBeDefined()
 })
 
-function createDashboard(workspace: string, events = new EventTarget()) {
+function createTestDashboard(workspace: string, events = new EventTarget()) {
   const config = Config.create({
     schema: {},
     workspaces: {
@@ -88,5 +88,5 @@ function createDashboard(workspace: string, events = new EventTarget()) {
     }
   })
   const db = new LocalDB(config)
-  return createDashboardModel(db, config, events, createTestConnection(db), {})
+  return createDashboard(db, config, events, createTestConnection(db), {})
 }

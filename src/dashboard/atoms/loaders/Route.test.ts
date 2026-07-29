@@ -2,7 +2,7 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import {Config} from '#/index.js'
 import {
   createDashboardAtomFixture,
-  createDashboardModelStore,
+  createDashboardStore,
   DashboardTestPage
 } from '#test/DashboardAtomsFixture.js'
 import {expect, test} from 'bun:test'
@@ -96,7 +96,7 @@ test('does not load explorer data for a custom root page', async () => {
   })
   const db = new LocalDB(config)
   await db.sync()
-  const store = createDashboardModelStore(config, db, 'custom')
+  const store = createDashboardStore(config, db, 'custom')
 
   const page = await routeLoader()(
     store.get,

@@ -31,10 +31,10 @@ import {
   type EntryView,
   MissingEntryError
 } from './Contracts.js'
-import {typeAtoms, type TypeState} from './EditorAtoms.js'
+import {typeAtoms, type TypeAtoms} from './EditorAtoms.js'
 import {loadEntryPage} from './loaders/Entry.js'
 import {ReactiveNode} from './ReactiveNode.js'
-import {queryTreeChildren, type Root} from './RootAtoms.js'
+import {queryTreeChildren, type RootAtoms} from './RootAtoms.js'
 import {
   debounce,
   dispense,
@@ -93,7 +93,7 @@ interface EntryData {
 
 export interface DashboardEntryState {
   pending: boolean
-  data: EntryDataModel | undefined
+  data: EntryDataAtoms | undefined
   error: MissingEntryError | undefined
 }
 
@@ -107,7 +107,7 @@ interface NodeSelection {
   version: SelectedVersion
 }
 
-export class EntryModel {
+export class EntryAtoms {
   data: Atom<DashboardEntryState>
   readyState: Atom<Promise<DashboardEntryState>>
   #selectedView = atom<EntryView | undefined>(undefined)
@@ -117,7 +117,7 @@ export class EntryModel {
       get(entryRevisionAtom(id))
       return get(this.preload)
     })
-    let data: EntryDataModel
+    let data: EntryDataAtoms
     const loaded = atom(async get => {
       const initial = await get(entryData)
       return (data ??= createEntryData(
@@ -187,18 +187,18 @@ function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
   })
 }
 
-export class EntryDataModel {
+export class EntryDataAtoms {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
-  type: Atom<TypeState>
+  type: Atom<TypeAtoms>
   overviewCells: Atom<Array<EntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
   view: WritableAtom<EntryView, [view: EntryView], void>
   locales: Atom<Map<string | null, EntryVersionData>>
   parentId: Atom<string | null>
   parentIds: Atom<Array<string>>
-  root: Atom<Root>
+  root: Atom<RootAtoms>
   #translationSourceLocale = atom<string | null | undefined>(undefined)
   #nodes = new Map<string, Atom<Promise<ReactiveNode<object>>>>()
 
@@ -269,7 +269,7 @@ export class EntryDataModel {
   })
 
   constructor(
-    public entry: EntryModel,
+    public entry: EntryAtoms,
     public entryData: Atom<EntryData>
   ) {
     const data = this.entryData
@@ -1096,8 +1096,6 @@ function entryReferenceSourceKey(
   return `${source.id}\0${source.locale ?? ''}`
 }
 
-export type EntryState = EntryModel
-export type EntryDataState = EntryDataModel
 export type {
   DashboardEntryReference,
   DashboardEntryReferences,
@@ -1106,18 +1104,18 @@ export type {
   DashboardFileInfoState,
   EntryRouteBlock
 }
-export type {EntryLanguage} from './EntrySupport.js'
+export type {EntryLanguageAtoms} from './EntrySupport.js'
 export {createEntryLanguage}
 
-export function createEntry(id: string): EntryState {
-  return new EntryModel(id)
+export function createEntry(id: string): EntryAtoms {
+  return new EntryAtoms(id)
 }
 
 export const entryAtoms = dispense((id: string) => createEntry(id))
 
 export function createEntryData(
-  entry: EntryState,
+  entry: EntryAtoms,
   entryData: Atom<EntryData>
-): EntryDataState {
-  return new EntryDataModel(entry, entryData)
+): EntryDataAtoms {
+  return new EntryDataAtoms(entry, entryData)
 }

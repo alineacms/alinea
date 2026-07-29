@@ -1,14 +1,14 @@
 import {cleanup, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
-import type {Editor} from '../atoms/EditorAtoms.js'
+import type {EditorAtoms} from '../atoms/EditorAtoms.js'
 import {EditorScope, useEditor} from './EditorScope.js'
 
 afterEach(cleanup)
 
-const labels = new WeakMap<Editor, string>()
+const labels = new WeakMap<EditorAtoms, string>()
 
-function createEditor(label: string): Editor {
-  const editor = {} as Editor
+function createEditor(label: string): EditorAtoms {
+  const editor = {} as EditorAtoms
   labels.set(editor, label)
   return editor
 }

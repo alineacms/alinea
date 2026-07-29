@@ -30,17 +30,14 @@ import {
 import {
   createEditor,
   createSection,
-  type Section as StoreSection
+  type SectionAtoms
 } from '../atoms/EditorAtoms.js'
-import {
-  entryAtoms,
-  type EntryDataState as DashboardEntryData
-} from '../atoms/EntryAtoms.js'
+import {entryAtoms, type EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {entrySidebarOpenAtom} from '../atoms/EntrySupport.js'
-import type {Dashboard} from '../atoms/DashboardModel.js'
+import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
 import {routeAtom} from '../atoms/NavigationAtoms.js'
 import {ReactiveNode} from '../atoms/ReactiveNode.js'
-import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
+import type {RootAtoms} from '../atoms/RootAtoms.js'
 import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import type {ExplorerPageData} from '../atoms/loaders/Explorer.js'
 import type {PreparedRoute, RootPageData} from '../atoms/loaders/Route.js'
@@ -60,7 +57,7 @@ import {Rail, RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
 export interface EditorProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
   page: PreparedRoute
 }
 
@@ -88,9 +85,9 @@ export function Editor({dashboard, page}: EditorProps) {
 }
 
 interface MissingEntryProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
   entryId: string
-  root: DashboardRoot
+  root: RootAtoms
 }
 
 function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
@@ -116,9 +113,9 @@ function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
 }
 
 interface MissingRootProps {
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
   rootKey: string
-  root: DashboardRoot
+  root: RootAtoms
 }
 
 function MissingRoot({dashboard, rootKey, root}: MissingRootProps) {
@@ -204,7 +201,7 @@ function ExplorerEditor({page}: ExplorerEditorProps) {
 }
 
 interface CustomRootEditorProps {
-  root: DashboardRoot
+  root: RootAtoms
   view: ComponentType<{root: RootData}>
 }
 
@@ -253,7 +250,7 @@ function LoadedRootOverviewControls({
 }
 
 interface RootOverviewControlsButtonProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function RootOverviewControlsButton({entry}: RootOverviewControlsButtonProps) {
@@ -269,7 +266,7 @@ interface EntryEditorProps {
 }
 
 interface EntryViewToggleProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function EntryViewToggle({entry}: EntryViewToggleProps) {
@@ -460,7 +457,7 @@ export function FieldsEditor() {
 }
 
 interface FormSectionProps {
-  section: StoreSection
+  section: SectionAtoms
 }
 
 const FormSection = memo(function FormSection({section}: FormSectionProps) {

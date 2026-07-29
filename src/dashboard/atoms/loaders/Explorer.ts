@@ -1,24 +1,24 @@
 import type {Getter} from 'jotai'
-import type {EntryState} from '../EntryAtoms.js'
+import type {EntryAtoms} from '../EntryAtoms.js'
 import type {ExplorerLocation} from '../ExplorerAtoms.js'
-import type {Root} from '../RootAtoms.js'
-import type {Workspace} from '../WorkspaceAtoms.js'
+import type {RootAtoms} from '../RootAtoms.js'
+import type {WorkspaceAtoms} from '../WorkspaceAtoms.js'
 
 export interface PreparedExplorerPage {
   type: 'explorer'
-  root: Root
-  items: Array<EntryState>
+  root: RootAtoms
+  items: Array<EntryAtoms>
 }
 
 export type ExplorerPageData = PreparedExplorerPage
 
 export interface EntryLookup {
-  entry(id: string): EntryState
+  entry(id: string): EntryAtoms
 }
 
 export async function loadEntries(
   get: Getter,
-  entries: Array<EntryState>,
+  entries: Array<EntryAtoms>,
   signal: AbortSignal
 ) {
   await Promise.all(entries.map(entry => get(entry.readyState)))
@@ -28,7 +28,7 @@ export async function loadEntries(
 export async function loadTree(
   get: Getter,
   lookup: EntryLookup,
-  workspace: Workspace,
+  workspace: WorkspaceAtoms,
   rootIds: Array<string>,
   locale: string | null,
   forcedExpanded: Array<string>,
@@ -56,7 +56,7 @@ export async function loadTree(
 
 export async function loadExplorerPage(
   get: Getter,
-  root: Root,
+  root: RootAtoms,
   location: ExplorerLocation,
   locale: string | null,
   signal: AbortSignal

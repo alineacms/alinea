@@ -19,9 +19,9 @@ import {
   MaterialSymbolsEditSquareOutlineRounded
 } from '../icons.js'
 import {useDashboard} from '../hooks.js'
-import type {Dashboard} from '../atoms/DashboardModel.js'
-import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
-import type {Workspace as DashboardWorkspace} from '../atoms/WorkspaceAtoms.js'
+import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
+import type {RootAtoms} from '../atoms/RootAtoms.js'
+import type {WorkspaceAtoms} from '../atoms/WorkspaceAtoms.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
@@ -39,7 +39,7 @@ const styles = styler(css)
 
 interface WorkspaceMenuProps {
   canManageMembers: boolean
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
 }
 
 interface WorkspaceAvatarProps {
@@ -50,7 +50,7 @@ interface WorkspaceAvatarProps {
 
 interface WorkspaceSelectorMenuProps {
   ariaLabel: string
-  dashboard: Dashboard
+  dashboard: DashboardAtoms
   includeUsersLink?: boolean
   label: ReactNode
   popoverProps?: Omit<PopoverProps, 'children'>
@@ -252,7 +252,7 @@ export function WorkspaceMenu({
 }
 
 interface WorkspaceCreateEntryButtonProps {
-  root: DashboardRoot
+  root: RootAtoms
 }
 
 function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
@@ -273,7 +273,7 @@ function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
 }
 
 interface WorkspaceItemProps {
-  workspace: DashboardWorkspace
+  workspace: WorkspaceAtoms
 }
 
 function WorkspaceItem({workspace}: WorkspaceItemProps) {

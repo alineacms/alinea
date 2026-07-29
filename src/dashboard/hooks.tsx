@@ -23,7 +23,7 @@ import {
   type DashboardInput
 } from './atoms/CoreAtoms.js'
 import {dashboardEffectsAtom} from './atoms/DashboardEffectsAtom.js'
-import {dashboardRouteLoader, type Dashboard} from './atoms/DashboardModel.js'
+import {dashboardRouteLoader, type DashboardAtoms} from './atoms/DashboardAtoms.js'
 import {navigationAtom} from './atoms/NavigationAtoms.js'
 import {createDashboardNavigation, currentEntryAtom} from './atoms/PageAtoms.js'
 import {createBrowserHistory} from './atoms/navigation/History.js'
@@ -31,12 +31,12 @@ import {createBrowserHistory} from './atoms/navigation/History.js'
 export * from './editor/EditorScope.js'
 export * from './editor/FieldHooks.js'
 
-const dashboardContext = createContext<Dashboard | null>(null)
+const dashboardContext = createContext<DashboardAtoms | null>(null)
 
 export function DashboardScopeInternal({
   children,
   dashboard
-}: PropsWithChildren<{dashboard: Dashboard}>) {
+}: PropsWithChildren<{dashboard: DashboardAtoms}>) {
   const [store] = useState(createStore)
   return createElement(
     Provider,
@@ -52,7 +52,7 @@ export function DashboardScopeInternal({
 function DashboardHydration({
   children,
   dashboard
-}: PropsWithChildren<{dashboard: Dashboard}>) {
+}: PropsWithChildren<{dashboard: DashboardAtoms}>) {
   useHydrateDashboard(dashboard.input)
   return children
 }

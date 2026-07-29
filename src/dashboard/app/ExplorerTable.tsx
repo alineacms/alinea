@@ -18,8 +18,8 @@ import {
 } from 'react-aria-components'
 import type {TableLayoutProps} from 'react-stately/useVirtualizerState'
 import {LucideFile, LucideFolder} from '../icons.js'
-import type {EntryDataState, EntryState} from '../atoms/EntryAtoms.js'
-import type {Explorer} from '../atoms/ExplorerAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/EntryAtoms.js'
+import type {ExplorerAtoms} from '../atoms/ExplorerAtoms.js'
 import {
   entryOverviewColumnCount,
   type EntryOverviewCell
@@ -42,25 +42,25 @@ interface ExplorerTableColumn {
 interface ExplorerTableRowProps {
   columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
-  entry: EntryState
+  entry: EntryAtoms
   breadcrumbs: boolean
 }
 
 interface ExplorerTableDisplayRowProps {
   columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
-  entry: EntryState
+  entry: EntryAtoms
   label: string
   icon: ComponentType
   cells: Array<EntryOverviewCell>
   status?: DashboardEntryTreeStatus['status']
   breadcrumbs?: boolean | undefined
-  parents: Array<EntryState>
+  parents: Array<EntryAtoms>
   rootLabel?: string
 }
 
 interface ExplorerTableBreadcrumbsProps {
-  entries: Array<EntryState>
+  entries: Array<EntryAtoms>
   rootLabel?: string
 }
 
@@ -85,7 +85,7 @@ function ExplorerTableBreadcrumbs({
 }
 
 interface ExplorerTableBreadcrumbProps {
-  entry: EntryState
+  entry: EntryAtoms
   index: number
 }
 
@@ -96,7 +96,7 @@ function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
 }
 
 interface ExplorerTableLoadedBreadcrumbProps {
-  data: EntryDataState
+  data: EntryDataAtoms
   index: number
 }
 
@@ -241,7 +241,7 @@ function ExplorerTableLoadingRow({
 }
 
 interface ExplorerTableLoadedRowProps extends ExplorerTableRowProps {
-  data: EntryDataState
+  data: EntryDataAtoms
 }
 
 function ExplorerTableLoadedRow({
@@ -284,9 +284,9 @@ function ExplorerTableRow(props: ExplorerTableRowProps) {
 }
 
 export interface ExplorerTableProps {
-  dragAndDropHooks: DragAndDropHooks<EntryState>
-  explorer: Explorer
-  items: Array<EntryState>
+  dragAndDropHooks: DragAndDropHooks<EntryAtoms>
+  explorer: ExplorerAtoms
+  items: Array<EntryAtoms>
   renderEmptyState: () => ReactNode
 }
 

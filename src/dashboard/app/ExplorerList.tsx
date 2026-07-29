@@ -6,9 +6,9 @@ import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
-import type {EntryState} from '../atoms/EntryAtoms.js'
-import type {Explorer} from '../atoms/ExplorerAtoms.js'
-import type {Root} from '../atoms/RootAtoms.js'
+import type {EntryAtoms} from '../atoms/EntryAtoms.js'
+import type {ExplorerAtoms} from '../atoms/ExplorerAtoms.js'
+import type {RootAtoms} from '../atoms/RootAtoms.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -18,7 +18,7 @@ const styles = styler(css)
 const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
-  root?: Root
+  root?: RootAtoms
 }
 
 function EmptyResults({root}: EmptyResultsProps) {
@@ -53,12 +53,12 @@ function SearchIdleState() {
 }
 
 export interface ExplorerListProps {
-  explorer: Explorer
-  items?: Array<EntryState>
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
 }
 
 interface ExplorerListContentProps extends ExplorerListProps {
-  items: Array<EntryState>
+  items: Array<EntryAtoms>
 }
 
 export function ExplorerList(props: ExplorerListProps) {
@@ -79,7 +79,7 @@ function ExplorerListContent({explorer, items}: ExplorerListContentProps) {
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
-  const {dragAndDropHooks} = useDragAndDrop<EntryState>({
+  const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
     getItems,
     getDropOperation(target, _types, allowedOperations) {

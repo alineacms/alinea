@@ -32,7 +32,7 @@ export const dashboardTestConfig = Config.create({
   workspaces: {main}
 })
 
-export function createDashboardModelStore(
+export function createDashboardStore(
   config: ConfigDefinition,
   db: LocalDB,
   root = 'pages'
@@ -113,6 +113,6 @@ export async function createDashboardAtomFixture() {
     overwrite: true,
     set: {title: 'Parent draft'}
   })
-  const store = createDashboardModelStore(dashboardTestConfig, db)
+  const store = createDashboardStore(dashboardTestConfig, db)
   return {config: dashboardTestConfig, db, parent, child, store}
 }

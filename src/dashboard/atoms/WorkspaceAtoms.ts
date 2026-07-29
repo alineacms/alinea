@@ -19,9 +19,9 @@ import type {
   Key
 } from 'react-aria-components'
 import type {TreeSelection} from './Contracts.js'
-import type {EntryState} from './EntryAtoms.js'
+import type {EntryAtoms} from './EntryAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
-import {createRoot, type Root} from './RootAtoms.js'
+import {createRoot, type RootAtoms} from './RootAtoms.js'
 import type {ComponentType} from 'react'
 import {
   acceptsDashboardEntryDrag,
@@ -41,27 +41,27 @@ import {
 } from './SelectionAtoms.js'
 import type {DashboardEntryTreeStatus} from './EntrySupport.js'
 
-export interface Workspace {
+export interface WorkspaceAtoms {
   key: string
-  tree: Tree
+  tree: TreeAtoms
   color: Atom<string>
   label: Atom<string>
   icon: Atom<ComponentType | undefined>
   roots: Atom<Array<string>>
-  root(key: string): Root
+  root(key: string): RootAtoms
   rootMenu: Atom<
     Array<{id: string; label: string; icon: ComponentType | undefined}>
   >
 }
 
-class WorkspaceModel implements Workspace {
-  tree: Tree
+class WorkspaceAtomsImpl implements WorkspaceAtoms {
+  tree: TreeAtoms
   color: Atom<string>
   label: Atom<string>
   icon: Atom<ComponentType | undefined>
   roots: Atom<Array<string>>
-  root: (key: string) => Root
-  rootMenu: Workspace['rootMenu']
+  root: (key: string) => RootAtoms
+  rootMenu: WorkspaceAtoms['rootMenu']
 
   constructor(public key: string) {
     const treeSelection = atom(
@@ -106,8 +106,8 @@ class WorkspaceModel implements Workspace {
   }
 }
 
-export function createWorkspace(key: string): Workspace {
-  return new WorkspaceModel(key)
+export function createWorkspace(key: string): WorkspaceAtoms {
+  return new WorkspaceAtomsImpl(key)
 }
 
 export const workspaceAtoms = dispense((key: string) => {
@@ -134,11 +134,11 @@ export const currentRootAtom = atom(get => {
   return workspace.root(root)
 })
 
-class TreeModel {
+class TreeAtomsImpl {
   #treeSelection: TreeSelection
   #syncRouteExpansion: boolean
   constructor(
-    private workspace: Workspace,
+    private workspace: WorkspaceAtoms,
     treeSelection: TreeSelection,
     options: {syncRouteExpansion?: boolean} = {}
   ) {
@@ -192,7 +192,7 @@ class TreeModel {
     }
   )
 
-  entryItems = dispense((id: string): EntryState => {
+  entryItems = dispense((id: string): EntryAtoms => {
     return entryAtoms(id)
   })
 
@@ -205,11 +205,11 @@ class TreeModel {
     return ids.map(id => this.entryItems(id))
   })
 
-  isExpanded = dispense((entry: EntryState) => {
+  isExpanded = dispense((entry: EntryAtoms) => {
     return atom(get => get(this.expandedKeys).has(entry.id))
   })
 
-  visibleChildren = dispense((entry: EntryState) => {
+  visibleChildren = dispense((entry: EntryAtoms) => {
     return atom(get => {
       const {data} = get(entry.data)
       if (!data) return undefined
@@ -219,7 +219,7 @@ class TreeModel {
     })
   })
 
-  selectedAncestorStatus = dispense((entry: EntryState) => {
+  selectedAncestorStatus = dispense((entry: EntryAtoms) => {
     return atom(async (get): Promise<DashboardEntryTreeStatus | undefined> => {
       const {data} = get(entry.data)
       if (!data) return undefined
@@ -235,7 +235,7 @@ class TreeModel {
     })
   })
 
-  children = dispense((entry: EntryState) => {
+  children = dispense((entry: EntryAtoms) => {
     return atom(get => {
       if (!get(this.isExpanded(entry))) return undefined
       return get(this.visibleChildren(entry))
@@ -359,12 +359,12 @@ class TreeModel {
   })
 }
 
-export type Tree = Pick<TreeModel, keyof TreeModel>
+export type TreeAtoms = Pick<TreeAtomsImpl, keyof TreeAtomsImpl>
 
 export function createTree(
-  workspace: Workspace,
+  workspace: WorkspaceAtoms,
   treeSelection: TreeSelection,
   options: {syncRouteExpansion?: boolean} = {}
-): Tree {
-  return new TreeModel(workspace, treeSelection, options)
+): TreeAtoms {
+  return new TreeAtomsImpl(workspace, treeSelection, options)
 }

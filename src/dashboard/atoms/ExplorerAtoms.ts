@@ -13,7 +13,7 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
-import {entryAtoms, type EntryDataState, type EntryState} from './EntryAtoms.js'
+import {entryAtoms, type EntryAtoms, type EntryDataAtoms} from './EntryAtoms.js'
 import {configAtom, graphAtom} from './CoreAtoms.js'
 import {mutationQueueAtom, uploadProgressAtom} from './MutationAtoms.js'
 import {refreshPageForAtom} from './PageAtoms.js'
@@ -68,11 +68,11 @@ export interface ExplorerOptions {
   searchDepth?: 'current' | 'all'
   breadcrumbs?: boolean
   // initialSort?: ExplorerSort
-  onAction?: WritableAtom<void, [entry: EntryState], void>
+  onAction?: WritableAtom<void, [entry: EntryAtoms], void>
   onConfirm?: (selection: Array<string>) => void
 }
 
-class ExplorerModel {
+class ExplorerAtomsImpl {
   #location: WritableAtom<
     ExplorerLocation,
     [SetStateAction<ExplorerLocation>],
@@ -80,7 +80,7 @@ class ExplorerModel {
   >
   #options: ExplorerOptions
   #selectedLocale: DashboardLocaleSelection
-  #items = new Map<string, Atom<Promise<Array<EntryState>>>>()
+  #items = new Map<string, Atom<Promise<Array<EntryAtoms>>>>()
   #navigationSequence = 0
   selection
   constructor(
@@ -157,7 +157,7 @@ class ExplorerModel {
     return this.#options.breadcrumbs ?? false
   }
 
-  onAction = atom(null, (get, set, entry: EntryState) => {
+  onAction = atom(null, (get, set, entry: EntryAtoms) => {
     if (this.#options.onAction) {
       set(this.#options.onAction, entry)
       return
@@ -406,7 +406,7 @@ class ExplorerModel {
   itemsAt(
     location: ExplorerLocation,
     locale: string | null
-  ): Atom<Promise<Array<EntryState>>> {
+  ): Atom<Promise<Array<EntryAtoms>>> {
     const key = JSON.stringify([
       location.workspace,
       location.root ?? null,
@@ -510,7 +510,7 @@ class ExplorerModel {
       return [
         ...parents
           .map(entry => get(entry.data).data)
-          .filter((entry): entry is EntryDataState => entry !== undefined)
+          .filter((entry): entry is EntryDataAtoms => entry !== undefined)
           .map(entry => ({id: entry.id, label: get(entry.label)})),
         {id: parent.id, label}
       ]
@@ -519,7 +519,7 @@ class ExplorerModel {
   )
 }
 
-export type Explorer = Pick<ExplorerModel, keyof ExplorerModel>
+export type ExplorerAtoms = Pick<ExplorerAtomsImpl, keyof ExplorerAtomsImpl>
 
 export function createExplorer(
   location: WritableAtom<
@@ -528,14 +528,14 @@ export function createExplorer(
     void
   >,
   options: ExplorerOptions
-): Explorer {
-  return new ExplorerModel(location, options)
+): ExplorerAtoms {
+  return new ExplorerAtomsImpl(location, options)
 }
 
 export function createExplorerAtoms(
   initialLocation: ExplorerLocation,
   options: ExplorerOptions = {}
-): Explorer {
+): ExplorerAtoms {
   const firstSelection = options.location
     ? undefined
     : options.initialSelection?.[0]

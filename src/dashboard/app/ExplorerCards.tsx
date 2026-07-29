@@ -20,8 +20,8 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
-import type {EntryDataState, EntryState} from '../atoms/EntryAtoms.js'
-import type {Explorer} from '../atoms/ExplorerAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/EntryAtoms.js'
+import type {ExplorerAtoms} from '../atoms/ExplorerAtoms.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 
@@ -36,7 +36,7 @@ const cardLayoutOptions: GridLayoutOptions = {
 }
 
 interface ExplorerCardItemProps {
-  entry: EntryState
+  entry: EntryAtoms
   showSelectionControls: boolean
 }
 
@@ -62,7 +62,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 })
 
 interface ExplorerCardLoadingItemProps {
-  entry: EntryState
+  entry: EntryAtoms
   showSelectionControls: boolean
 }
 
@@ -103,8 +103,8 @@ function ExplorerCardLoadingItem({
 }
 
 interface ExplorerCardLoadedItemProps {
-  entry: EntryState
-  data: EntryDataState
+  entry: EntryAtoms
+  data: EntryDataAtoms
   showSelectionControls: boolean
 }
 
@@ -200,7 +200,7 @@ function ExplorerEntryCard({
 interface ExplorerCardParentsProps {
   loading: boolean
   parentIds: Array<string>
-  parents: Array<EntryState>
+  parents: Array<EntryAtoms>
 }
 
 function ExplorerCardParents({
@@ -251,7 +251,7 @@ function ExplorerCardParentsLoading() {
 }
 
 interface ExplorerCardParentProps {
-  parent: EntryState
+  parent: EntryAtoms
 }
 
 function ExplorerCardParent({parent}: ExplorerCardParentProps) {
@@ -261,7 +261,7 @@ function ExplorerCardParent({parent}: ExplorerCardParentProps) {
 }
 
 interface ExplorerCardLoadedParentProps {
-  parent: EntryDataState
+  parent: EntryDataAtoms
 }
 
 function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
@@ -270,9 +270,9 @@ function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
 }
 
 export interface ExplorerCardsProps {
-  dragAndDropHooks: DragAndDropHooks<EntryState>
-  explorer: Explorer
-  items: Array<EntryState>
+  dragAndDropHooks: DragAndDropHooks<EntryAtoms>
+  explorer: ExplorerAtoms
+  items: Array<EntryAtoms>
   renderEmptyState: () => ReactNode
 }
 

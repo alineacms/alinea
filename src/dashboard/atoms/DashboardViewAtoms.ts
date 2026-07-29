@@ -1,19 +1,19 @@
 import {atom} from 'jotai'
 import {MissingEntryError} from './Contracts.js'
-import {type EntryDataState, entryAtoms} from './EntryAtoms.js'
+import {type EntryDataAtoms, entryAtoms} from './EntryAtoms.js'
 import type {PreparedRoute} from './loaders/Route.js'
 import {navigationAtoms, routeAtom} from './NavigationAtoms.js'
 import {initialPageAtom, pageAtom} from './PageAtoms.js'
 import {selectedRootAtom, selectedWorkspaceAtom} from './SelectionAtoms.js'
 import {createThemeAtom} from './ThemeAtom.js'
 import {currentWorkspaceAtom, workspaceAtoms} from './WorkspaceAtoms.js'
-import type {Root} from './RootAtoms.js'
+import type {RootAtoms} from './RootAtoms.js'
 
 export type FocusedItem =
-  | {entry: EntryDataState}
-  | {root: Root}
-  | {missingEntry: string; root: Root}
-  | {missingRoot: string; root: Root}
+  | {entry: EntryDataAtoms}
+  | {root: RootAtoms}
+  | {missingEntry: string; root: RootAtoms}
+  | {missingRoot: string; root: RootAtoms}
   | null
 
 const initialContentLoadedAtom = atom(false)
@@ -56,7 +56,7 @@ export const focusedAtom = atom((get): FocusedItem | Promise<FocusedItem> => {
     }
     throw new Error(`Entry "${entry}" not found`)
   }
-  const focusedEntry = (data: EntryDataState): FocusedItem => {
+  const focusedEntry = (data: EntryDataAtoms): FocusedItem => {
     return get(data.view) === 'edit' ? {entry: data} : focusedRoot()
   }
   if (workspace && routeRoot && routeRoot !== root) {

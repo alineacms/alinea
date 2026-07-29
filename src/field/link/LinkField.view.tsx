@@ -53,7 +53,7 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import type {EntryDataState, EntryState} from '#/dashboard/atoms/EntryAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '#/dashboard/atoms/EntryAtoms.js'
 import type {ExplorerOptions} from '#/dashboard/atoms/ExplorerAtoms.js'
 import {currentEntryAtom} from '#/dashboard/atoms/PageAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -274,7 +274,7 @@ function EntryLoadingRow({
 }
 
 interface LoadedEntryRowProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   hasFields?: boolean
   image?: boolean
   textOnly?: boolean
@@ -311,7 +311,7 @@ function LoadedEntryRow({
 }
 
 interface EntryRowImageProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
   hasFields?: boolean
 }
 
@@ -356,7 +356,7 @@ function UrlRow({node, textOnly}: RowLayerProps) {
 
 interface EntryParentsProps {
   loading: boolean
-  parents: Array<EntryState>
+  parents: Array<EntryAtoms>
 }
 
 function EntryParents({loading, parents}: EntryParentsProps) {
@@ -388,7 +388,7 @@ function EntryParentsLoading() {
 }
 
 interface EntryParentLabelProps {
-  parent: EntryState
+  parent: EntryAtoms
   suffix: string
 }
 
@@ -399,7 +399,7 @@ function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
 }
 
 interface LoadedEntryParentLabelProps {
-  parent: EntryDataState
+  parent: EntryDataAtoms
   suffix: string
 }
 
@@ -1088,7 +1088,7 @@ function EntryLinkMetaLabel({
 interface LoadedEntryLinkMetaLabelProps {
   className: string
   customLabel?: string
-  data: EntryDataState
+  data: EntryDataAtoms
 }
 
 function LoadedEntryLinkMetaLabel({
@@ -1163,7 +1163,7 @@ function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
 }
 
 interface LoadedEntryLinkImagePreviewProps {
-  entry: EntryDataState
+  entry: EntryDataAtoms
 }
 
 function LoadedEntryLinkImagePreview({
@@ -1209,7 +1209,7 @@ function EntryLinkTypeBadge({
 }
 
 interface LoadedEntryTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
-  entry: EntryDataState
+  entry: EntryDataAtoms
 }
 
 function LoadedEntryTypeBadge({
@@ -1266,7 +1266,7 @@ function EntryLinkLabelField({
 
 interface LoadedEntryLinkLabelFieldProps {
   customLabel?: string
-  data: EntryDataState
+  data: EntryDataAtoms
   isDisabled?: boolean
   onChange: (value: string | undefined) => void
 }
@@ -1377,7 +1377,7 @@ function EntryLinkRowActions({
 
 interface LoadedEntryLinkRowActionsProps {
   closeActions: () => void
-  entry: EntryDataState
+  entry: EntryDataAtoms
   locale?: string
 }
 

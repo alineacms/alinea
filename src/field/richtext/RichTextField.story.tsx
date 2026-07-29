@@ -3,7 +3,7 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {FieldsEditor} from '#/dashboard/app/Editor.js'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {createDashboard as createDashboardModel} from '#/dashboard/atoms/DashboardModel.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardAtoms.js'
 import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {richText} from './RichTextField.js'
@@ -165,7 +165,7 @@ interface RichTextFixtureProps {
 
 function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
   const state = useMemo(() => {
-    const dashboard = createDashboard()
+    const dashboard = createStoryDashboard()
     const node = new ReactiveNode<object>({
       body: structuredClone(initialBody)
     })
@@ -201,8 +201,8 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
   )
 }
 
-function createDashboard() {
-  return createDashboardModel(
+function createStoryDashboard() {
+  return createDashboard(
     {} as WriteableGraph,
     {schema: {}, workspaces: {}},
     new EventTarget(),
