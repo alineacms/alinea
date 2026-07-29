@@ -1,5 +1,6 @@
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {Key, Selection} from 'react-aria-components'
+import type {EntryAtoms} from '../atoms/entry.js'
 import type {ExplorerAtoms, ExplorerOptions} from '../atoms/explorer.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
@@ -7,12 +8,14 @@ import {SidebarTreeExplorer} from './SidebarTree.js'
 
 export interface ExplorerPickerContentProps {
   explorer: ExplorerAtoms
+  items: Array<EntryAtoms>
   navigationLabel: string
   options: ExplorerOptions
 }
 
 export function ExplorerPickerContent({
   explorer,
+  items,
   navigationLabel,
   options
 }: ExplorerPickerContentProps) {
@@ -55,7 +58,7 @@ export function ExplorerPickerContent({
           />
         </ExplorerModalNavigation>
       )}
-      <ExplorerBody explorer={explorer} />
+      <ExplorerBody explorer={explorer} items={items} />
     </ExplorerModalContent>
   )
 }

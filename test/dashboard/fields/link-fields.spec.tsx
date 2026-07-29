@@ -135,6 +135,20 @@ test('navigates into folders without showing a suspense loader', async ({
 test('keeps the root list explorer flat', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
+  await app.page.evaluate(() => {
+    document.documentElement.dataset.rootExplorerLoaderSeen = 'false'
+    const observer = new MutationObserver(() => {
+      if (
+        document.querySelector(
+          '[role="treegrid"][aria-label="Explorer entries"] ' +
+            '[aria-label="Loading entry"]'
+        )
+      ) {
+        document.documentElement.dataset.rootExplorerLoaderSeen = 'true'
+      }
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
   await app.page.getByRole('button', {name: 'Back to root'}).click()
 
   const entries = app.page.getByRole('treegrid', {name: 'Explorer entries'})
@@ -143,6 +157,56 @@ test('keeps the root list explorer flat', async ({dashboard, mount}) => {
     0
   )
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.rootExplorerLoaderSeen
+      )
+    )
+    .toBe('false')
+})
+
+test('preloads entries before card sidebar navigation commits', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Browse page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await picker
+    .getByRole('radiogroup', {name: 'Explorer view'})
+    .getByRole('radio')
+    .first()
+    .click()
+
+  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
+  await expect(folders).toBeVisible()
+
+  await app.page.evaluate(() => {
+    document.documentElement.dataset.cardNavigationLoaderSeen = 'false'
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[aria-label="Loading entry"]'))
+        document.documentElement.dataset.cardNavigationLoaderSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
+
+  await folders.getByRole('row', {name: /Folder/}).click()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Child'})
+  ).toBeVisible()
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.cardNavigationLoaderSeen
+      )
+    )
+    .toBe('false')
 })
 
 test('disables non-matching rows in a navigable link picker', async ({

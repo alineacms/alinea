@@ -53,6 +53,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
       searchDepth: 'all'
     })
   )
+  const snapshot = useAtomValue(explorer.snapshot)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -62,15 +63,18 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     modal.close()
   }
 
+  if (!snapshot) return null
   return (
     <DashboardModalDialog aria-label={label} variant="explorer">
       <ExplorerModal>
         <ExplorerHeader
           controls={<DashboardModalCloseButton />}
           explorer={explorer}
+          items={snapshot.items}
         />
         <ExplorerPickerContent
           explorer={explorer}
+          items={snapshot.items}
           navigationLabel="Media folders"
           options={options}
         />

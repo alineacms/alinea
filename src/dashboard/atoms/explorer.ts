@@ -83,11 +83,24 @@ export interface ExplorerOptions {
   onConfirm?: (selection: Array<string>) => void
 }
 
+export interface ExplorerSnapshot {
+  items: Array<EntryAtoms>
+  locale: string | null
+  location: ExplorerLocation
+}
+
 export class ExplorerAtoms {
   #options: ExplorerOptions
   #conditionChecker: ReturnType<typeof filterChecker> | undefined
   #selectedLocale: DashboardLocaleSelection
-  #items = new Map<string, Atom<Promise<Array<EntryAtoms>>>>()
+  #items = new Map<
+    string,
+    Atom<Array<EntryAtoms> | Promise<Array<EntryAtoms>>>
+  >()
+  #snapshots = new Map<
+    string,
+    Atom<ExplorerSnapshot | Promise<ExplorerSnapshot>>
+  >()
   #navigationSequence = 0
   selection
   #expandedKeys = atom(new Set<Key>())
@@ -234,7 +247,7 @@ export class ExplorerAtoms {
         const entries = children
           .filter(child => policy.canRead(child))
           .map(child => entryAtoms(child.id))
-        await loadEntries(get, entries)
+        await loadEntries(get, entries, locale)
         return entries
       })
     )
@@ -335,7 +348,7 @@ export class ExplorerAtoms {
         const root = workspaceAtoms(next.workspace).root(next.root)
         locale = get(this.#selectedLocale) ?? get(root.selectedLocale)
       }
-      await get(this.itemsAt(next, locale))
+      await this.prepare(get, next, locale)
       if (sequence !== this.#navigationSequence) return
       set(this.location, next)
     }
@@ -483,27 +496,71 @@ export class ExplorerAtoms {
   itemsAt(
     location: ExplorerLocation,
     locale: string | null
-  ): Atom<Promise<Array<EntryAtoms>>> {
-    const key = JSON.stringify([
-      location.workspace,
-      location.root ?? null,
-      location.parentId ?? null,
-      locale
-    ])
+  ): Atom<Array<EntryAtoms> | Promise<Array<EntryAtoms>>> {
+    const key = this.#snapshotKey(location, locale)
     const cached = this.#items.get(key)
     if (cached) return cached
-    const items = atom(async get => {
-      return this.#queryItems(get, location, locale)
+    const items = atom(get => {
+      const snapshot = get(this.snapshotAt(location, locale))
+      if (snapshot instanceof Promise)
+        return snapshot.then(prepared => prepared.items)
+      return snapshot.items
     })
     this.#items.set(key, items)
     return items
   }
 
-  items = atom(async get => {
+  snapshotAt(
+    location: ExplorerLocation,
+    locale: string | null
+  ): Atom<ExplorerSnapshot | Promise<ExplorerSnapshot>> {
+    const key = this.#snapshotKey(location, locale)
+    const cached = this.#snapshots.get(key)
+    if (cached) return cached
+    const snapshot = swr(
+      atom(async get => {
+        const items = await this.#queryItems(get, location, locale)
+        await loadEntries(get, items, locale)
+        return {items, locale, location} satisfies ExplorerSnapshot
+      })
+    )
+    this.#snapshots.set(key, snapshot)
+    return snapshot
+  }
+
+  async prepare(
+    get: Getter,
+    location: ExplorerLocation,
+    locale: string | null,
+    signal?: AbortSignal
+  ): Promise<ExplorerSnapshot> {
+    const snapshot = await get(this.snapshotAt(location, locale))
+    signal?.throwIfAborted()
+    return snapshot
+  }
+
+  #snapshotKey(location: ExplorerLocation, locale: string | null) {
+    return JSON.stringify([
+      location.workspace,
+      location.root ?? null,
+      location.parentId ?? null,
+      locale
+    ])
+  }
+
+  #snapshotResource = atom(get => {
     const location = get(this.location)
     const allRoots = this.rootScope === 'workspace'
     const locale = allRoots ? null : get(this.selectedLocale)
-    return get(this.itemsAt(location, locale))
+    return get(this.snapshotAt(location, locale))
+  })
+  snapshot = unwrap(this.#snapshotResource)
+
+  items = atom(get => {
+    const snapshot = get(this.#snapshotResource)
+    if (snapshot instanceof Promise)
+      return snapshot.then(prepared => prepared.items)
+    return snapshot.items
   })
 
   async #queryItems(
@@ -553,7 +610,6 @@ export class ExplorerAtoms {
     const entries = children
       .filter(child => policy.canRead(child))
       .map(child => entryAtoms(child.id))
-    await Promise.all(entries.map(entry => get(entry.preload)))
     return entries
   }
 
@@ -635,6 +691,7 @@ export function createExplorerAtoms(
 export interface PreparedExplorerPage {
   type: 'explorer'
   root: RootAtoms
+  snapshot: ExplorerSnapshot
 }
 
 export type ExplorerPageData = PreparedExplorerPage
@@ -643,16 +700,25 @@ export interface EntryLookup {
   entry(id: string): EntryAtoms
 }
 
+export async function loadEntryData(get: Getter, entry: EntryAtoms) {
+  // Prime the synchronous state atom before awaiting its async source. Reading
+  // readyState alone loads the data but leaves the UI-facing unwrap pending.
+  get(entry.data)
+  const ready = await get(entry.readyState)
+  return get(entry.data).data ?? ready.data
+}
+
 export async function loadEntries(
   get: Getter,
   entries: Array<EntryAtoms>,
+  locale: string | null,
   signal?: AbortSignal
 ) {
   await Promise.all(
     entries.map(async entry => {
-      const {data} = await get(entry.readyState)
+      const data = await loadEntryData(get, entry)
       if (!data) return
-      const currentEntry = get(data.currentEntry)
+      const currentEntry = get(data.currentEntryFor(locale))
       if (currentEntry instanceof Promise) await currentEntry
     })
   )
@@ -677,10 +743,10 @@ export async function loadTree(
         if (loaded.has(id)) return
         loaded.add(id)
         const entry = lookup.entry(id)
-        const ready = await get(entry.readyState)
+        const data = await loadEntryData(get, entry)
         signal.throwIfAborted()
-        if (!ready.data || !expanded.has(id)) return
-        const childIds = await get(ready.data.childrenFor(locale))
+        if (!data || !expanded.has(id)) return
+        const childIds = await get(data.childrenFor(locale))
         await load(childIds)
       })
     )
@@ -695,7 +761,6 @@ export async function loadExplorerPage(
   locale: string | null,
   signal: AbortSignal
 ): Promise<ExplorerPageData> {
-  const items = await get(root.explorer.itemsAt(location, locale))
-  await loadEntries(get, items, signal)
-  return {type: 'explorer', root}
+  const snapshot = await root.explorer.prepare(get, location, locale, signal)
+  return {type: 'explorer', root, snapshot}
 }

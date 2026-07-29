@@ -31,7 +31,8 @@ import {
   dashboardEntryDragType,
   dashboardEntryDragTypes,
   dispense,
-  requiredAtom
+  requiredAtom,
+  swr
 } from './utils.js'
 import {entryAtoms} from './entry.js'
 import {graphAtom, shaAtom} from './graph.js'
@@ -472,13 +473,15 @@ export class RootAtoms {
     })
   })
   childrenFor = dispense((locale: string | null) => {
-    return atom(get =>
-      queryTreeChildren(
-        get,
-        this,
-        null,
-        get(this.settings).orderChildrenBy,
-        locale
+    return swr(
+      atom(get =>
+        queryTreeChildren(
+          get,
+          this,
+          null,
+          get(this.settings).orderChildrenBy,
+          locale
+        )
       )
     )
   })

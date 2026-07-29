@@ -198,6 +198,7 @@ function DefaultRootEditor({page}: ExplorerEditorProps) {
     <Rail main>
       <Explorer
         explorer={root.explorer}
+        items={page.snapshot.items}
         titleControls={route.entry ? <RootOverviewControls /> : undefined}
       />
     </Rail>

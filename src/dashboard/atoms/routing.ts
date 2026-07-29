@@ -13,6 +13,7 @@ import {
 import {
   type ExplorerAtoms,
   type ExplorerPageData,
+  loadEntryData,
   loadExplorerPage,
   loadTree
 } from './explorer.js'
@@ -350,9 +351,9 @@ export function createRouteLoader(options: RouteLoaderOptions) {
       }
 
     const entry = options.entry(route.entry)
-    const ready = await get(entry.readyState)
+    const entryData = await loadEntryData(get, entry)
     signal.throwIfAborted()
-    if (!ready.data)
+    if (!entryData)
       return {
         type: 'missing-entry',
         entryId: route.entry,
@@ -360,7 +361,7 @@ export function createRouteLoader(options: RouteLoaderOptions) {
         canManageMembers
       }
 
-    const parentIds = get(ready.data.entryData).parents.map(parent => parent.id)
+    const parentIds = get(entryData.entryData).parents.map(parent => parent.id)
     await loadTree(
       get,
       options,
@@ -370,17 +371,13 @@ export function createRouteLoader(options: RouteLoaderOptions) {
       [...parentIds, route.entry],
       signal
     )
-    if (get(ready.data.view) === 'edit')
+    if (get(entryData.view) === 'edit')
       return {
-        ...(await (options.loadEntry ?? loadEntryPage)(
-          get,
-          ready.data,
-          locale
-        )),
+        ...(await (options.loadEntry ?? loadEntryPage)(get, entryData, locale)),
         canManageMembers
       }
 
-    await get(ready.data.childrenFor(locale))
+    await get(entryData.childrenFor(locale))
     return {
       ...(await loadExplorerPage(
         get,

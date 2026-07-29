@@ -26,7 +26,10 @@ import {
   type EntryDataAtoms
 } from '../atoms/entry.js'
 import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
-import type {DashboardLocaleSelection} from '../atoms/explorer.js'
+import {
+  type DashboardLocaleSelection,
+  loadEntryData
+} from '../atoms/explorer.js'
 import {
   currentRootAtom,
   currentWorkspaceAtom,
@@ -99,10 +102,12 @@ const sidebarTreeAtoms = dispense((tree: TreeAtoms) => {
       const opening = [...next].filter(key => !current.has(key))
       await Promise.all(
         opening.map(async key => {
-          const {data} = await get(entryAtoms(String(key)).readyState)
+          const data = await loadEntryData(get, entryAtoms(String(key)))
           if (!data) return
           const childIds = await get(data.children)
-          await Promise.all(childIds.map(id => get(entryAtoms(id).readyState)))
+          await Promise.all(
+            childIds.map(id => loadEntryData(get, entryAtoms(id)))
+          )
         })
       )
       set(tree.expandedKeys, next)

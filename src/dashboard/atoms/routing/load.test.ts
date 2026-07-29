@@ -9,7 +9,7 @@ import {
 } from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
-import {entryAtoms} from '../entry.js'
+import {type EntryAtoms, entryAtoms} from '../entry.js'
 import {eventsAtom} from '../graph.js'
 import {policyResourceAtom} from '../user.js'
 import {configAtom, workspaceAtoms} from '../config.js'
@@ -75,8 +75,38 @@ test('loads real explorer entries before returning it to navigation', async () =
 
   expect(page.type).toBe('explorer')
   if (page.type !== 'explorer') return
-  const items = await store.get(page.root.explorer.items)
+  const {items} = page.snapshot
   expect(items.map(item => item.id)).toEqual([parent._id])
+  const parentData = store.get(items[0].data).data
+  expect(parentData).toBeDefined()
+  if (!parentData) return
+  expect(store.get(parentData.currentEntryFor(null))).not.toBeInstanceOf(
+    Promise
+  )
+})
+
+test('loads overview children before returning their explorer route', async () => {
+  const {child, parent, store} = await createDashboardAtomFixture()
+
+  const page = await routeLoader()(
+    store.get,
+    {
+      page: 'entry',
+      workspace: 'main',
+      root: 'pages',
+      entry: parent._id
+    },
+    new AbortController().signal
+  )
+
+  expect(page.type).toBe('explorer')
+  if (page.type !== 'explorer') return
+  const {items} = page.snapshot
+  expect(items.map(item => item.id)).toEqual([child._id])
+  const childData = store.get(items[0].data).data
+  expect(childData).toBeDefined()
+  if (!childData) return
+  expect(store.get(childData.currentEntryFor(null))).not.toBeInstanceOf(Promise)
 })
 
 test('keeps a prepared explorer page subscribed to index changes', async () => {
@@ -101,9 +131,21 @@ test('keeps a prepared explorer page subscribed to index changes', async () => {
     type: DashboardTestPage,
     set: {title: 'Added later'}
   })
+  const updated = new Promise<Array<EntryAtoms>>(resolve => {
+    const stop = store.sub(itemsAtom, () => {
+      const next = store.get(itemsAtom)
+      if (
+        !(next instanceof Promise) &&
+        next.some(item => item.id === added._id)
+      ) {
+        stop()
+        resolve(next)
+      }
+    })
+  })
   events.emit(new IndexEvent({op: 'index', sha: db.sha}))
 
-  const items = await store.get(itemsAtom)
+  const items = await updated
   unsubscribe()
   expect(items.map(item => item.id).sort()).toEqual(
     [added._id, parent._id].sort()

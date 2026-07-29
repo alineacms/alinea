@@ -206,40 +206,41 @@ export class EntryDataAtoms {
   }
 
   currentEntryFor = dispense((locale: string | null) =>
-    atom(async (get): Promise<Entry | null> => {
-      const selected = this.#selectedVersionFor(get, locale)
-      const sourceLocale = this.sourceLocaleFor(get, locale)
-      const language = this.languages(sourceLocale)
-      const versions = await get(language.versionsResource)
-      const fallback = versions.values().next().value ?? null
-      if (selected.type === 'status') {
-        return versions.get(selected.status) ?? fallback
-      }
-      const activeVersion = await get(language.activeVersionResource)
-      const data = await get(this.historyData(historyDataKey(selected)))
-      if (!data) return activeVersion
-      const parsedData = parseRecord(data).data
-      return {
-        ...activeVersion,
-        title:
-          typeof parsedData.title === 'string'
-            ? parsedData.title
-            : activeVersion.title,
-        path:
-          typeof parsedData.path === 'string'
-            ? parsedData.path
-            : activeVersion.path,
-        data: parsedData
-      }
-    })
+    swr(
+      atom(async (get): Promise<Entry | null> => {
+        const sourceLocale = this.sourceLocaleFor(get, locale)
+        const selected = get(this.#selection)
+        if (!selected) return get(this.locales).get(sourceLocale) ?? null
+        const language = this.languages(sourceLocale)
+        const versions = await get(language.versionsResource)
+        const fallback = versions.values().next().value ?? null
+        if (selected.type === 'status') {
+          return versions.get(selected.status) ?? fallback
+        }
+        const activeVersion = await get(language.activeVersionResource)
+        const data = await get(this.historyData(historyDataKey(selected)))
+        if (!data) return activeVersion
+        const parsedData = parseRecord(data).data
+        return {
+          ...activeVersion,
+          title:
+            typeof parsedData.title === 'string'
+              ? parsedData.title
+              : activeVersion.title,
+          path:
+            typeof parsedData.path === 'string'
+              ? parsedData.path
+              : activeVersion.path,
+          data: parsedData
+        }
+      })
+    )
   )
 
-  currentEntry = swr(
-    atom(async get => {
-      const root = get(this.root)
-      return get(this.currentEntryFor(get(root.selectedLocale)))
-    })
-  )
+  currentEntry = atom(get => {
+    const root = get(this.root)
+    return get(this.currentEntryFor(get(root.selectedLocale)))
+  })
 
   customView = atom(get => {
     const type = get(this.type)
