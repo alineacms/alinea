@@ -1,12 +1,11 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState} from 'react'
+import {createExplorerAtoms, type ExplorerOptions} from '../atoms/explorer.js'
 import {
-  createExplorerAtoms,
   selectedRootAtom,
-  selectedWorkspaceAtom,
-  type ExplorerOptions
-} from '../atoms/index.js'
+  selectedWorkspaceAtom
+} from '../atoms/routing/index.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,

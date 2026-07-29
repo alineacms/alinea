@@ -25,14 +25,13 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import type {EntrySidebarTab} from '../atoms/Contracts.js'
-import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
-import {entrySidebarTabAtom} from '../atoms/EntrySupport.js'
+import type {EntryDataAtoms} from '../atoms/entry/index.js'
 import {
-  type EntryPageData,
-  type EntrySidebarData
-} from '../atoms/loaders/Entry.js'
-import {allowedEntrySidebarTabs} from '../atoms/EntrySupport.js'
+  allowedEntrySidebarTabs,
+  entrySidebarTabAtom,
+  type EntrySidebarTab
+} from '../atoms/entry/load.js'
+import {type EntryPageData, type EntrySidebarData} from '../atoms/entry/load.js'
 import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'

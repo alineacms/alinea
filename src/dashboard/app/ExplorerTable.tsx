@@ -18,13 +18,14 @@ import {
 } from 'react-aria-components'
 import type {TableLayoutProps} from 'react-stately/useVirtualizerState'
 import {LucideFile, LucideFolder} from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/EntryAtoms.js'
-import type {ExplorerAtoms} from '../atoms/ExplorerAtoms.js'
-import {
-  entryOverviewColumnCount,
-  type EntryOverviewCell
-} from '../atoms/Contracts.js'
-import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
+import type {
+  EntryDataAtoms,
+  EntryAtoms,
+  EntryOverviewCell
+} from '../atoms/entry/index.js'
+import {entryOverviewColumnCount} from '../atoms/entry/index.js'
+import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
+import type {ExplorerAtoms} from '../atoms/explorer.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
 import {StatusBadge} from './StatusBadge.js'

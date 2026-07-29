@@ -17,15 +17,20 @@ import {
   IcOutlineViewList,
   IcRoundEdit
 } from '../icons.js'
-import {createSection, type SectionAtoms} from '../atoms/EditorAtoms.js'
-import {entryAtoms, type EntryDataAtoms} from '../atoms/EntryAtoms.js'
-import {entrySidebarOpenAtom} from '../atoms/EntrySupport.js'
-import {routeAtom} from '../atoms/RoutingAtoms.js'
-import {ReactiveNode} from '../atoms/ReactiveNode.js'
-import type {RootAtoms} from '../atoms/RootAtoms.js'
-import type {EntryPageData} from '../atoms/loaders/Entry.js'
-import type {ExplorerPageData} from '../atoms/loaders/Explorer.js'
-import type {PreparedRoute, RootPageData} from '../atoms/loaders/Route.js'
+import {
+  createSection,
+  ReactiveNode,
+  type SectionAtoms
+} from '../atoms/entry/editor.js'
+import {entryAtoms, type EntryDataAtoms} from '../atoms/entry/index.js'
+import {entrySidebarOpenAtom, type EntryPageData} from '../atoms/entry/load.js'
+import type {ExplorerPageData} from '../atoms/explorer.js'
+import {
+  routeAtom,
+  type PreparedRoute,
+  type RootPageData
+} from '../atoms/routing/index.js'
+import type {RootAtoms} from '../atoms/workspace.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'

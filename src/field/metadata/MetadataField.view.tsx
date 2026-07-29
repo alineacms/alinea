@@ -1,7 +1,7 @@
 import {Button, Label, Surface, SurfaceContent} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {previewMetadataAtom} from '#/dashboard/atoms/index.js'
+import {previewMetadataAtom} from '#/dashboard/atoms/entry/preview.js'
 import {
   useFieldError,
   useFieldNode,

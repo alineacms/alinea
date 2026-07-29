@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {routeFromHash, routeHash} from './History.js'
+import {routeFromHash, routeHash} from './history.js'
 
 test('parses entry routes from hashes', () => {
   expect(routeFromHash('#/entry/main/content:fr/entry-id')).toEqual({

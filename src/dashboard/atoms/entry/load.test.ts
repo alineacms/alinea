@@ -4,11 +4,11 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Policy} from '#/core/Role.js'
 import {atom, createStore} from 'jotai'
-import {MissingEntryError} from './Contracts.js'
 import {
   createEntryLoaderAtom,
-  createVersionLoaderAtom
-} from './EntryLoaderAtoms.js'
+  createVersionLoaderAtom,
+  MissingEntryError
+} from './load.js'
 import {
   createDashboardAtomFixture,
   dashboardTestConfig

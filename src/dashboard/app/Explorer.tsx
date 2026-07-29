@@ -21,13 +21,13 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry/index.js'
 import type {
   ExplorerAtoms,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
-} from '../atoms/ExplorerAtoms.js'
+} from '../atoms/explorer.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'

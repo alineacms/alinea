@@ -4,20 +4,19 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
-import {entryAtoms} from './EntryAtoms.js'
-import {entryRevisionAtom} from './EntrySupport.js'
-import {eventsAtom} from './GraphAtoms.js'
-import {createRouteLoader} from './loaders/Route.js'
-import {reloadPageAtom, routeAtom} from './RoutingAtoms.js'
+import {entryAtoms} from './entry/index.js'
+import {entryRevisionAtom} from './entry/load.js'
+import {eventsAtom} from './graph/index.js'
+import {createRouteLoader, reloadPageAtom, routeAtom} from './routing/index.js'
 import {
   canManageMembersAtom,
   type DashboardOptions,
   policyResourceAtom
-} from './UserAtoms.js'
-import {configAtom, workspaceAtoms} from './WorkspaceAtoms.js'
+} from './user.js'
+import {configAtom, workspaceAtoms} from './workspace.js'
 
 export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
-export {createDashboardNavigation} from './RoutingAtoms.js'
+export {createDashboardNavigation} from './routing/index.js'
 
 export interface Dashboard {
   graph: WriteableGraph

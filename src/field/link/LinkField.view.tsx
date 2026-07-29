@@ -52,20 +52,20 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {
   entryAtoms,
-  routeAtom,
   type EntryDataAtoms,
   type EntryAtoms
-} from '#/dashboard/atoms/index.js'
-import type {ExplorerOptions} from '#/dashboard/atoms/ExplorerAtoms.js'
-import {currentEntryAtom} from '#/dashboard/atoms/RoutingAtoms.js'
-import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+} from '#/dashboard/atoms/entry/index.js'
+import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
 import {
+  currentEntryAtom,
+  routeAtom,
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '#/dashboard/atoms/RoutingAtoms.js'
-import {selectedMediaRootAtom} from '#/dashboard/atoms/WorkspaceAtoms.js'
+} from '#/dashboard/atoms/routing/index.js'
+import {selectedMediaRootAtom} from '#/dashboard/atoms/workspace.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'

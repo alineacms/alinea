@@ -2,16 +2,23 @@ import {expect, test} from 'bun:test'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
-import {configAtom} from './WorkspaceAtoms.js'
-import {createType} from './EditorAtoms.js'
-import {entryAtoms} from './EntryAtoms.js'
-import {resolveEntrySidebarTab} from './EntrySupport.js'
-import {createEntrySidebarResource, loadEntryPage} from './loaders/Entry.js'
-import {createRouteLoader, type PreparedRoute} from './loaders/Route.js'
-import {currentEntryAtom, navigationAtom, pageAtom} from './RoutingAtoms.js'
-import {createNavigation} from './navigation/Navigation.js'
-import {policyResourceAtom} from './UserAtoms.js'
-import {workspaceAtoms} from './WorkspaceAtoms.js'
+import {createType} from '../entry/editor.js'
+import {entryAtoms} from '../entry/index.js'
+import {
+  createEntrySidebarResource,
+  loadEntryPage,
+  resolveEntrySidebarTab
+} from '../entry/load.js'
+import {policyResourceAtom} from '../user.js'
+import {configAtom, workspaceAtoms} from '../workspace.js'
+import {
+  createRouteLoader,
+  currentEntryAtom,
+  navigationAtom,
+  pageAtom,
+  type PreparedRoute
+} from './index.js'
+import {createNavigation} from './navigation.js'
 
 test('page atoms require navigation to commit prepared data', () => {
   const navigation = createNavigation<PreparedRoute>({

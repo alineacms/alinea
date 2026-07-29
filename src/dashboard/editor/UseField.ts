@@ -1,7 +1,7 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import type {FieldAtoms} from '../atoms/EditorAtoms.js'
+import type {FieldAtoms} from '../atoms/entry/editor.js'
 import {useEditor} from './EditorScope.js'
 
 export interface UseFieldResult<StoredValue, Mutator, Options> {

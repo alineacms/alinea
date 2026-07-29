@@ -1,7 +1,7 @@
 import type {Atom, Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {Route, RouteUpdate} from '../../DashboardNav.js'
-import type {RouteHistory} from './History.js'
+import type {RouteHistory} from './history.js'
 
 export interface PendingNavigation {
   id: number

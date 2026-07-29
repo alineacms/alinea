@@ -7,9 +7,9 @@ import {
   navigationAtoms,
   pageAtom,
   workspacesAtom
-} from '../atoms/RoutingAtoms.js'
-import {currentWorkspaceAtom} from '../atoms/WorkspaceAtoms.js'
-import type {PreparedRoute} from '../atoms/loaders/Route.js'
+} from '../atoms/routing/index.js'
+import type {PreparedRoute} from '../atoms/routing/index.js'
+import {currentWorkspaceAtom} from '../atoms/workspace.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'

@@ -14,9 +14,8 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {createDashboard} from '#/dashboard/atoms/Dashboard.js'
-import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
-import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {createDashboard} from '#/dashboard/atoms/dashboard.js'
+import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'

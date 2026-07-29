@@ -13,9 +13,9 @@ import {
   useDashboard,
   useEntry
 } from './hooks.js'
-import {configAtom} from './atoms/WorkspaceAtoms.js'
-import {createDashboard} from './atoms/Dashboard.js'
-import {entryRevisionAtom} from './atoms/EntrySupport.js'
+import {createDashboard} from './atoms/dashboard.js'
+import {entryRevisionAtom} from './atoms/entry/load.js'
+import {configAtom} from './atoms/workspace.js'
 
 afterEach(cleanup)
 

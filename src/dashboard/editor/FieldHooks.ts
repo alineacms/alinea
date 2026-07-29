@@ -2,7 +2,7 @@ import {Field} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {Dispatch, SetStateAction} from 'react'
-import type {ReactiveNode} from '../atoms/ReactiveNode.js'
+import type {ReactiveNode} from '../atoms/entry/editor.js'
 import {useEditor} from './EditorScope.js'
 
 function useFieldInfo(field: Field) {

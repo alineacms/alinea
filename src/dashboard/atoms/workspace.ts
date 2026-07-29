@@ -1,5 +1,9 @@
 import type {Config} from '#/core/Config.js'
+import {Entry} from '#/core/Entry.js'
+import type {Order} from '#/core/Graph.js'
+import {getRoot} from '#/core/Internal.js'
 import {Permission} from '#/core/Role.js'
+import {Root as ConfigRoot, type RootData, type RootI18n} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import type {
@@ -10,15 +14,17 @@ import type {
   DropTarget,
   ItemDropTarget
 } from '@react-types/shared'
-import type {Atom, Getter} from 'jotai'
+import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
-import type {ComponentType} from 'react'
+import {unwrap} from 'jotai/utils'
+import type {ComponentType, SetStateAction} from 'react'
 import type {
   DroppableCollectionInsertDropEvent,
   DroppableCollectionOnItemDropEvent,
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
+import {LucideFile} from '../icons.js'
 import {
   acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
@@ -26,19 +32,28 @@ import {
   dashboardEntryDragTypes,
   dispense,
   requiredAtom
-} from './AtomUtils.js'
-import type {TreeSelection} from './Contracts.js'
-import {entryAtoms} from './EntryAtoms.js'
-import {graphAtom} from './GraphAtoms.js'
-import {routeAtom} from './RoutingAtoms.js'
-import {policyAtom} from './UserAtoms.js'
-import {createRoot, type RootAtoms} from './RootAtoms.js'
+} from './utils.js'
+import {entryAtoms} from './entry/index.js'
+import {graphAtom, shaAtom} from './graph/index.js'
+import {routeAtom} from './routing/index.js'
+import {policyAtom} from './user.js'
+import {
+  createExplorer,
+  type ExplorerAtoms,
+  type ExplorerLocation
+} from './explorer.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspaceRootsAtom,
   workspaceSettingsAtom
-} from './RoutingAtoms.js'
+} from './routing/index.js'
+
+export type TreeSelection = WritableAtom<
+  Set<Key>,
+  [next: 'all' | Set<Key>],
+  Promise<void>
+>
 
 export const configAtom = requiredAtom<Config>('dashboard.config')
 export const viewsAtom =
@@ -335,4 +350,235 @@ export function createTree(
   options: {syncRouteExpansion?: boolean} = {}
 ): TreeAtoms {
   return new TreeAtomsImpl(workspace, treeSelection, options)
+}
+
+const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
+
+export class RootAtoms {
+  explorer: ExplorerAtoms
+  constructor(
+    public workspace: WorkspaceAtoms,
+    public key: string
+  ) {
+    const selectedParent = unwrap(
+      atom(get => {
+        const route = get(routeAtom)
+        if (
+          route.workspace === workspace.key &&
+          route.root === key &&
+          route.entry
+        ) {
+          const {data} = get(entryAtoms(route.entry).data)
+          if (data && get(data.view) === 'overview') return route.entry
+          return keepPreviousExplorerParent
+        }
+        return undefined
+      }),
+      previous => previous
+    )
+    this.explorer = createExplorer(
+      atom(
+        get => {
+          return {
+            workspace: workspace.key,
+            root: key,
+            parentId: get(selectedParent)
+          }
+        },
+        (get, set, update: SetStateAction<ExplorerLocation>) => {
+          const next =
+            typeof update === 'function'
+              ? update(get(this.explorer.location))
+              : update
+          if (next.root !== key || next.workspace !== workspace.key) {
+            set(routeAtom, {
+              workspace: next.workspace,
+              root: next.root
+            })
+          } else {
+            const route = get(routeAtom)
+            const selectedWorkspace = get(selectedWorkspaceAtom)
+            const selectedRoot = get(selectedRootAtom)
+            if (selectedWorkspace === workspace.key && selectedRoot === key)
+              set(routeAtom, {
+                workspace: workspace.key,
+                root: key,
+                entry: next.parentId,
+                locale: route.locale
+              })
+            set(
+              workspace.tree.expandedKeys,
+              new Set(next.parentId ? [next.parentId] : [])
+            )
+          }
+        }
+      ),
+      {
+        selectionMode: 'multiple',
+        selectionBehavior: 'toggle',
+        onAction: atom(null, (get, set, entry) => {
+          set(routeAtom, {
+            workspace: this.workspace.key,
+            root: this.key,
+            entry: entry.id
+          })
+        })
+      }
+    )
+  }
+
+  #settings = atom(get => {
+    const config = get(configAtom)
+    const workspaceConfig = config.workspaces[this.workspace.key]
+    assert(
+      workspaceConfig,
+      `Workspace "${this.workspace.key}" not found in config`
+    )
+    const rootConfig = workspaceConfig[this.key]
+    return getRoot(rootConfig)
+  })
+
+  selected = atom(
+    get => {
+      const route = get(routeAtom)
+      if (route.page === 'users') return false
+      if (get(selectedWorkspaceAtom) !== this.workspace.key) return false
+      return get(selectedRootAtom) === this.key
+    },
+    (get, set, value: boolean) => {
+      set(
+        routeAtom,
+        value ? {workspace: this.workspace.key, root: this.key} : {}
+      )
+    }
+  )
+
+  #languagePreference = atom<string>()
+  selectedLocale = atom(
+    get => {
+      const route = get(routeAtom)
+      const i18n = get(this.i18n)
+      if (route.locale && i18n?.locales.includes(route.locale))
+        return route.locale
+      const preference = get(this.#languagePreference)
+      if (preference) return preference
+      return i18n?.locales[0] ?? null
+    },
+    async (get, set, locale: string) => {
+      const route = get(routeAtom)
+      const changed = await set(routeAtom, {
+        workspace: this.workspace.key,
+        root: this.key,
+        entry: route.entry,
+        locale
+      })
+      if (changed) set(this.#languagePreference, locale)
+    }
+  )
+
+  label = atom(get => get(this.#settings).label)
+  icon = atom(get => get(this.#settings).icon ?? LucideFile)
+  i18n = atom(get => get(this.#settings).i18n)
+  mediaI18n = atom((get): RootI18n | undefined => {
+    return ConfigRoot.mediaI18n(get(this.#settings))
+  })
+  data = atom((get): RootData & {name: string} => ({
+    name: this.key,
+    ...get(this.#settings)
+  }))
+  view = atom((get): ComponentType<{root: RootData}> | undefined => {
+    const view = get(this.#settings).view
+    if (!view) return undefined
+    if (typeof view === 'string')
+      return get(viewAtom(view)) as ComponentType<{root: RootData}> | undefined
+    return view
+  })
+  orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
+  canCreate = atom(get => {
+    const policy = get(policyAtom)
+    return policy.canCreate({
+      workspace: this.workspace.key,
+      root: this.key
+    })
+  })
+  childrenFor = dispense((locale: string | null) => {
+    return atom(get =>
+      queryTreeChildren(get, this, null, this.orderChildrenBy, locale)
+    )
+  })
+  children = atom(get => get(this.childrenFor(get(this.selectedLocale))))
+  isMedia = atom(get => get(this.#settings).isMediaRoot)
+
+  hasChildren = atom(async get => {
+    const db = get(graphAtom)
+    const visibleTypes = get(this.workspace.tree.visibleTypes)
+    const policy = get(policyAtom)
+    const children = await db.find({
+      workspace: this.workspace.key,
+      root: this.key,
+      parentId: null,
+      filter: {_type: {in: visibleTypes}},
+      select: {
+        id: Entry.id,
+        type: Entry.type,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        parents: Entry.parents,
+        locale: Entry.locale
+      },
+      status: 'preferDraft'
+    })
+    return children.some(child => policy.canRead(child))
+  })
+}
+
+export async function queryTreeChildren(
+  get: Getter,
+  root: RootAtoms,
+  parentId: null | string,
+  orderByAtom: Atom<Order | Array<Order> | undefined>,
+  locale: string | null
+) {
+  get(shaAtom)
+  const visibleTypes = get(root.workspace.tree.visibleTypes)
+  const db = get(graphAtom)
+  const policy = get(policyAtom)
+  const orderBy = get(orderByAtom)
+  const children = await db.find({
+    select: {
+      id: Entry.id,
+      type: Entry.type,
+      workspace: Entry.workspace,
+      root: Entry.root,
+      parents: Entry.parents,
+      locale: Entry.locale
+    },
+    orderBy,
+    workspace: root.workspace.key,
+    root: root.key,
+    parentId,
+    filter: {
+      _type: {in: visibleTypes}
+    },
+    status: 'preferDraft'
+  })
+  const readableChildren = children.filter(child => policy.canRead(child))
+  const translatedChildren = new Set(
+    readableChildren
+      .filter(child => child.locale === locale)
+      .map(child => child.id)
+  )
+  const untranslated = new Set()
+  const orderedChildren = readableChildren.filter(child => {
+    if (translatedChildren.has(child.id)) return child.locale === locale
+    if (untranslated.has(child.id)) return false
+    untranslated.add(child.id)
+    return true
+  })
+  const ids = [...new Set(orderedChildren.map(child => child.id))]
+  return ids
+}
+
+export function createRoot(workspace: WorkspaceAtoms, key: string): RootAtoms {
+  return new RootAtoms(workspace, key)
 }

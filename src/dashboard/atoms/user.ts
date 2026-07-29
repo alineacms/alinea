@@ -6,10 +6,10 @@ import {localUser, type User} from '#/core/User.js'
 import {atom} from 'jotai'
 import {atomWithStorage, unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
-import {keepPrevious, requiredAtom, withPending} from './AtomUtils.js'
-import {graphAtom, shaAtom} from './GraphAtoms.js'
-import type {RouteHistory} from './navigation/History.js'
-import {configAtom} from './WorkspaceAtoms.js'
+import {graphAtom, shaAtom} from './graph/index.js'
+import type {RouteHistory} from './routing/history.js'
+import {keepPrevious, requiredAtom, withPending} from './utils.js'
+import {configAtom} from './workspace.js'
 
 export interface DashboardOptions {
   alineaDev?: boolean

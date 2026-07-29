@@ -1,8 +1,8 @@
 import {expect, test} from 'bun:test'
 import {createStore} from 'jotai'
 import type {Route} from '../../DashboardNav.js'
-import type {RouteHistory} from './History.js'
-import {createNavigation} from './Navigation.js'
+import type {RouteHistory} from './history.js'
+import {createNavigation} from './navigation.js'
 
 interface Deferred<Value> {
   promise: Promise<Value>

@@ -3,9 +3,8 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {FieldsEditor} from '#/dashboard/app/Editor.js'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/Dashboard.js'
-import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
-import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {createDashboard} from '#/dashboard/atoms/dashboard.js'
+import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {richText} from './RichTextField.js'
 import {
   alignment,

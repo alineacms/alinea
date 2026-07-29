@@ -7,13 +7,10 @@ import {
   entryAtoms,
   type EntryDataAtoms,
   type EntryAtoms
-} from '../atoms/EntryAtoms.js'
-import type {
-  DashboardMenuItem,
-  ExplorerLocation
-} from '../atoms/ExplorerAtoms.js'
-import {workspacesAtom} from '../atoms/RoutingAtoms.js'
-import {workspaceAtoms} from '../atoms/WorkspaceAtoms.js'
+} from '../atoms/entry/index.js'
+import type {DashboardMenuItem, ExplorerLocation} from '../atoms/explorer.js'
+import {workspacesAtom} from '../atoms/routing/index.js'
+import {workspaceAtoms} from '../atoms/workspace.js'
 import css from './LocationBreadcrumbs.module.css'
 
 const styles = styler(css)

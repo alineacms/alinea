@@ -19,12 +19,12 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {configAtom} from '../atoms/WorkspaceAtoms.js'
-import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
-import {mutationQueueAtom} from '../atoms/GraphAtoms.js'
-import {routeAtom} from '../atoms/RoutingAtoms.js'
-import {ReactiveNode} from '../atoms/ReactiveNode.js'
-import type {EntryPageData} from '../atoms/loaders/Entry.js'
+import {ReactiveNode} from '../atoms/entry/editor.js'
+import type {EntryDataAtoms} from '../atoms/entry/index.js'
+import type {EntryPageData} from '../atoms/entry/load.js'
+import {mutationQueueAtom} from '../atoms/graph/queue.js'
+import {routeAtom} from '../atoms/routing/index.js'
+import {configAtom} from '../atoms/workspace.js'
 import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'

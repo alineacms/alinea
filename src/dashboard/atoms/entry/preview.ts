@@ -10,11 +10,11 @@ import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {atom} from 'jotai'
-import {debounce, dispense, requiredAtom} from './AtomUtils.js'
-import type {EntryDataAtoms} from './EntryAtoms.js'
-import {shaAtom} from './GraphAtoms.js'
-import {clientAtom} from './UserAtoms.js'
-import {configAtom} from './WorkspaceAtoms.js'
+import {shaAtom} from '../graph/index.js'
+import {clientAtom} from '../user.js'
+import {debounce, dispense, requiredAtom} from '../utils.js'
+import {configAtom} from '../workspace.js'
+import type {EntryDataAtoms} from './index.js'
 
 const decoder = new TextDecoder()
 

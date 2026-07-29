@@ -20,24 +20,24 @@ import {
   LucideFolder,
   RiFlashlightFill
 } from '../icons.js'
-import type {TreeSelection} from '../atoms/Contracts.js'
 import {
   entryAtoms,
   type EntryAtoms,
   type EntryDataAtoms
-} from '../atoms/EntryAtoms.js'
-import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
-import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
-import type {RootAtoms} from '../atoms/RootAtoms.js'
+} from '../atoms/entry/index.js'
+import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
+import type {DashboardLocaleSelection} from '../atoms/explorer.js'
 import {
   createTree,
   currentRootAtom,
   currentWorkspaceAtom,
   type TreeAtoms,
-  type WorkspaceAtoms
-} from '../atoms/WorkspaceAtoms.js'
-import {routeAtom} from '../atoms/RoutingAtoms.js'
-import {dispense} from '../atoms/AtomUtils.js'
+  type WorkspaceAtoms,
+  type RootAtoms,
+  type TreeSelection
+} from '../atoms/workspace.js'
+import {routeAtom} from '../atoms/routing/index.js'
+import {dispense} from '../atoms/utils.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarBody} from './ui/Sidebar.js'

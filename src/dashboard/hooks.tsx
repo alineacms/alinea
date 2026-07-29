@@ -16,22 +16,17 @@ import {
   dashboardEffectsAtom,
   dashboardRouteLoader,
   type Dashboard
-} from './atoms/Dashboard.js'
-import {previewTokenRequestsAtom} from './atoms/EntryPreviewAtoms.js'
-import {eventsAtom, graphAtom} from './atoms/GraphAtoms.js'
+} from './atoms/dashboard.js'
+import {previewTokenRequestsAtom} from './atoms/entry/preview.js'
+import {eventsAtom, graphAtom} from './atoms/graph/index.js'
 import {
   createDashboardNavigation,
   navigationAtom,
   routeLoaderAtom
-} from './atoms/RoutingAtoms.js'
-import {
-  clientAtom,
-  optionsAtom,
-  policyAtom,
-  userAtom
-} from './atoms/UserAtoms.js'
-import {configAtom, viewsAtom} from './atoms/WorkspaceAtoms.js'
-import {createBrowserHistory} from './atoms/navigation/History.js'
+} from './atoms/routing/index.js'
+import {clientAtom, optionsAtom, policyAtom, userAtom} from './atoms/user.js'
+import {configAtom, viewsAtom} from './atoms/workspace.js'
+import {createBrowserHistory} from './atoms/routing/history.js'
 
 export * from './editor/EditorScope.js'
 export * from './editor/FieldHooks.js'
@@ -41,7 +36,7 @@ export * from './editor/FieldHooks.js'
 // hooks in favor of direct atom access; dashboard atoms are implementation
 // details and are not part of the consumer API.
 
-export type {Dashboard} from './atoms/Dashboard.js'
+export type {Dashboard} from './atoms/dashboard.js'
 
 const dashboardContext = createContext<Dashboard | null>(null)
 const entryContext = createContext<EntryRecord<Record<string, unknown>> | null>(

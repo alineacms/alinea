@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 import {createStore} from 'jotai'
-import {ReactiveNode} from './ReactiveNode.js'
+import {ReactiveNode} from './editor.js'
 
 interface Article {
   title: string

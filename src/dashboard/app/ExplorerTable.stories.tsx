@@ -1,8 +1,10 @@
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/Dashboard.js'
-import {createExplorerAtoms} from '#/dashboard/atoms/index.js'
-import type {EntryAtoms} from '#/dashboard/atoms/EntryAtoms.js'
-import type {ExplorerAtoms} from '#/dashboard/atoms/ExplorerAtoms.js'
+import {createDashboard} from '#/dashboard/atoms/dashboard.js'
+import type {EntryAtoms} from '#/dashboard/atoms/entry/index.js'
+import {
+  createExplorerAtoms,
+  type ExplorerAtoms
+} from '#/dashboard/atoms/explorer.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {views} from '#/field/views.js'
 import {createTestConnection} from '#test/CreateConnection.js'

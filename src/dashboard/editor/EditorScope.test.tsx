@@ -1,6 +1,6 @@
 import {cleanup, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
-import type {EditorAtoms} from '../atoms/EditorAtoms.js'
+import type {EditorAtoms} from '../atoms/entry/editor.js'
 import {EditorScope, useEditor} from './EditorScope.js'
 
 afterEach(cleanup)

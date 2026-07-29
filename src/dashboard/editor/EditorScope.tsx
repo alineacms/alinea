@@ -9,8 +9,8 @@ import {
   createEditor,
   rootEditor,
   type EditorAtoms
-} from '../atoms/EditorAtoms.js'
-import type {ReactiveNode} from '../atoms/ReactiveNode.js'
+} from '../atoms/entry/editor.js'
+import type {ReactiveNode} from '../atoms/entry/editor.js'
 
 const editorContext = createContext<EditorAtoms | null>(null)
 

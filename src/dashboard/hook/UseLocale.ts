@@ -1,9 +1,6 @@
 import {atom, useAtomValue} from 'jotai'
-import {currentRootAtom} from '../atoms/index.js'
+import {currentRootAtom} from '../atoms/workspace.js'
 
-/**
- * @deprecated Compatibility hook for legacy dashboard extensions.
- */
 export function useLocale(): string | null {
   const root = useAtomValue(currentRootAtom)
   return useAtomValue(root?.selectedLocale ?? nullLocaleAtom)

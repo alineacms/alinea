@@ -1,6 +1,6 @@
 import {Icon} from '#/components.js'
 import {IcRoundWarning} from '#/dashboard/icons.js'
-import {routeAtom} from '../../atoms/index.js'
+import {routeAtom} from '../../atoms/routing/index.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {useEffect, type PropsWithChildren} from 'react'

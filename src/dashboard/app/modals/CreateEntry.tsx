@@ -30,20 +30,18 @@ import {
   type SetStateAction
 } from 'react'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {userAtom} from '../../atoms/UserAtoms.js'
-import {graphAtom} from '../../atoms/GraphAtoms.js'
-import type {DashboardCreateEntryRequest} from '../../atoms/Dashboard.js'
-import {entryAtoms} from '../../atoms/EntryAtoms.js'
-import type {ExplorerLocation} from '../../atoms/ExplorerAtoms.js'
-import {routeAtom} from '../../atoms/RoutingAtoms.js'
-import {policyAtom} from '../../atoms/UserAtoms.js'
-import {ReactiveNode} from '../../atoms/ReactiveNode.js'
+import type {DashboardCreateEntryRequest} from '../../atoms/dashboard.js'
+import {ReactiveNode} from '../../atoms/entry/editor.js'
+import {entryAtoms} from '../../atoms/entry/index.js'
+import type {ExplorerLocation} from '../../atoms/explorer.js'
+import {graphAtom} from '../../atoms/graph/index.js'
+import {routeAtom} from '../../atoms/routing/index.js'
+import {policyAtom, userAtom} from '../../atoms/user.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '../../atoms/RoutingAtoms.js'
-import {workspaceAtoms} from '../../atoms/WorkspaceAtoms.js'
-import {configAtom} from '../../atoms/WorkspaceAtoms.js'
+} from '../../atoms/routing/index.js'
+import {configAtom, workspaceAtoms} from '../../atoms/workspace.js'
 import {NodeEditor} from '../Editor.js'
 import {
   DashboardModalContent,

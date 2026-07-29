@@ -4,6 +4,8 @@ import {atom, type Atom, type WritableAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {Key} from 'react-aria-components'
 
+// Shared atom primitives and dashboard drag/upload helpers.
+
 const missing = Symbol('required atom missing')
 
 export type RequiredAtom<Value> = WritableAtom<Value, [Value], void>

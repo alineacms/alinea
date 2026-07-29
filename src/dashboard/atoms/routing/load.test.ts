@@ -7,11 +7,10 @@ import {
 } from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
-import {configAtom} from '../WorkspaceAtoms.js'
-import {entryAtoms} from '../EntryAtoms.js'
-import {policyResourceAtom} from '../UserAtoms.js'
-import {workspaceAtoms} from '../WorkspaceAtoms.js'
-import {createRouteLoader} from './Route.js'
+import {entryAtoms} from '../entry/index.js'
+import {policyResourceAtom} from '../user.js'
+import {configAtom, workspaceAtoms} from '../workspace.js'
+import {createRouteLoader} from './index.js'
 
 function routeLoader(canManageMembers = false) {
   return createRouteLoader({

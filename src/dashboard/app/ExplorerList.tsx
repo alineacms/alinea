@@ -6,9 +6,9 @@ import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
-import type {EntryAtoms} from '../atoms/EntryAtoms.js'
-import type {ExplorerAtoms} from '../atoms/ExplorerAtoms.js'
-import type {RootAtoms} from '../atoms/RootAtoms.js'
+import type {EntryAtoms} from '../atoms/entry/index.js'
+import type {ExplorerAtoms} from '../atoms/explorer.js'
+import type {RootAtoms} from '../atoms/workspace.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'

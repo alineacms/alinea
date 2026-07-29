@@ -5,7 +5,7 @@ import {
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {ObjectField} from '#/field/object.js'
 import {styler} from '@alinea/styler'
 import css from './ObjectFieldView.module.css'

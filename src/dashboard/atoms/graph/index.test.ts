@@ -1,13 +1,8 @@
 import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore} from 'jotai'
-import {
-  createMutationQueueState,
-  eventsAtom,
-  graphAtom,
-  shaAtom,
-  syncAtom
-} from './GraphAtoms.js'
+import {eventsAtom, graphAtom, shaAtom, syncAtom} from './index.js'
+import {createMutationQueueState} from './queue.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reading content state never synchronizes the graph', async () => {

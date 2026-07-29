@@ -20,8 +20,8 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/EntryAtoms.js'
-import type {ExplorerAtoms} from '../atoms/ExplorerAtoms.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry/index.js'
+import type {ExplorerAtoms} from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 

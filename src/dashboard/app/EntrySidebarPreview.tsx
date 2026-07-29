@@ -10,12 +10,12 @@ import {
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
+import type {EntryDataAtoms} from '../atoms/entry/index.js'
 import {
   markPreviewSessionReadyAtom,
   previewMetadataAtom
-} from '../atoms/index.js'
-import type {EntrySidebarData} from '../atoms/loaders/Entry.js'
+} from '../atoms/entry/preview.js'
+import type {EntrySidebarData} from '../atoms/entry/load.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 

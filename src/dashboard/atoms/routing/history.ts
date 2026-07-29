@@ -1,5 +1,7 @@
 import {nav, type Route} from '../../DashboardNav.js'
 
+// Browser hash integration for dashboard routes.
+
 export interface RouteHistory {
   read(): Route
   push(route: Route): void

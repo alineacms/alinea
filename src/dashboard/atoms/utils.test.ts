@@ -8,7 +8,7 @@ import {
   dispense,
   requiredAtom,
   uploadSizeError
-} from './AtomUtils.js'
+} from './utils.js'
 
 test('throws until a required atom is initialized', () => {
   const valueAtom = requiredAtom<string>('test.value')

@@ -1,6 +1,6 @@
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {Key, Selection} from 'react-aria-components'
-import type {ExplorerAtoms, ExplorerOptions} from '../atoms/ExplorerAtoms.js'
+import type {ExplorerAtoms, ExplorerOptions} from '../atoms/explorer.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'

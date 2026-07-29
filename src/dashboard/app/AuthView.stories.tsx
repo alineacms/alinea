@@ -4,7 +4,7 @@ import type {CSSProperties, ReactNode} from 'react'
 import type {
   AuthAction,
   AuthState as DashboardAuthState
-} from '../atoms/UserAtoms.js'
+} from '../atoms/user.js'
 import {AuthView, type AuthViewProps} from './AuthView.js'
 
 const storyStyle: CSSProperties = {

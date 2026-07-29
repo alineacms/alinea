@@ -1,12 +1,11 @@
 import {Config, Field} from '#/index.js'
 import type {Config as ConfigDefinition} from '#/core/Config.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
-import {eventsAtom, graphAtom} from '#/dashboard/atoms/GraphAtoms.js'
-import {navigationAtom} from '#/dashboard/atoms/RoutingAtoms.js'
-import {optionsAtom} from '#/dashboard/atoms/UserAtoms.js'
-import {configAtom, viewsAtom} from '#/dashboard/atoms/WorkspaceAtoms.js'
-import type {PreparedRoute} from '#/dashboard/atoms/loaders/Route.js'
-import {createNavigation} from '#/dashboard/atoms/navigation/Navigation.js'
+import {eventsAtom, graphAtom} from '#/dashboard/atoms/graph/index.js'
+import {navigationAtom, type PreparedRoute} from '#/dashboard/atoms/routing/index.js'
+import {createNavigation} from '#/dashboard/atoms/routing/navigation.js'
+import {optionsAtom} from '#/dashboard/atoms/user.js'
+import {configAtom, viewsAtom} from '#/dashboard/atoms/workspace.js'
 import {createStore} from 'jotai'
 
 export const DashboardTestPage = Config.document('Page', {

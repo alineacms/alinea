@@ -17,9 +17,9 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {authAtom} from './atoms/UserAtoms.js'
-import {createDashboard} from './atoms/Dashboard.js'
-import {prepareInitialContentAtom, themeAtom} from './atoms/RoutingAtoms.js'
+import {createDashboard} from './atoms/dashboard.js'
+import {prepareInitialContentAtom} from './atoms/routing/index.js'
+import {authAtom, themeAtom} from './atoms/user.js'
 
 const styles = styler(css)
 

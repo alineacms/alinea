@@ -4,8 +4,8 @@ import {useAtomValue, useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
-import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
-import type {RootAtoms} from '../atoms/RootAtoms.js'
+import type {DashboardLocaleSelection} from '../atoms/explorer.js'
+import type {RootAtoms} from '../atoms/workspace.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)

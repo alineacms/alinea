@@ -18,19 +18,19 @@ import {
   IcRoundUnfoldMore,
   MaterialSymbolsEditSquareOutlineRounded
 } from '../icons.js'
-import {createExplorerAtoms} from '../atoms/ExplorerAtoms.js'
-import {routeAtom} from '../atoms/RoutingAtoms.js'
-import type {RootAtoms} from '../atoms/RootAtoms.js'
+import {createExplorerAtoms} from '../atoms/explorer.js'
+import type {RootAtoms} from '../atoms/workspace.js'
 import {
+  routeAtom,
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspacesAtom
-} from '../atoms/RoutingAtoms.js'
+} from '../atoms/routing/index.js'
 import {
   currentRootAtom,
   workspaceAtoms,
   type WorkspaceAtoms
-} from '../atoms/WorkspaceAtoms.js'
+} from '../atoms/workspace.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'

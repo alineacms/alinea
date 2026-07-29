@@ -57,8 +57,7 @@ import {
   IcRoundLastPage,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
-import {rootEditor} from '#/dashboard/atoms/EditorAtoms.js'
-import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {ReactiveNode, rootEditor} from '#/dashboard/atoms/entry/editor.js'
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'

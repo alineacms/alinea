@@ -21,30 +21,17 @@ import type {Infer} from '#/types.js'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {
-  entryOverviewColumnCount,
-  type EntryOverviewCell,
-  type EntryView,
-  MissingEntryError
-} from './Contracts.js'
-import {typeAtoms, type TypeAtoms} from './EditorAtoms.js'
-import {loadEntryPage} from './loaders/Entry.js'
-import {ReactiveNode} from './ReactiveNode.js'
-import {queryTreeChildren, type RootAtoms} from './RootAtoms.js'
-import {
-  dispense,
-  keepPrevious,
-  uploadSizeError,
-  withPending
-} from './AtomUtils.js'
-import {graphAtom} from './GraphAtoms.js'
-import {entryLoaderAtom} from './EntryLoaderAtoms.js'
-import {clientAtom, userAtom} from './UserAtoms.js'
-import {shaAtom, uploadProgressAtom} from './GraphAtoms.js'
-import {reloadPageAtom} from './RoutingAtoms.js'
-import {policyAtom} from './UserAtoms.js'
-import {workspaceAtoms} from './WorkspaceAtoms.js'
-import {configAtom, viewAtom} from './WorkspaceAtoms.js'
+import {MissingEntryError} from './load.js'
+import {ReactiveNode, typeAtoms, type TypeAtoms} from './editor.js'
+import {loadEntryPage} from './load.js'
+import {queryTreeChildren, type RootAtoms} from '../workspace.js'
+import {dispense, keepPrevious, uploadSizeError, withPending} from '../utils.js'
+import {graphAtom, shaAtom} from '../graph/index.js'
+import {uploadProgressAtom} from '../graph/queue.js'
+import {reloadPageAtom} from '../routing/index.js'
+import {clientAtom, policyAtom, userAtom} from '../user.js'
+import {configAtom, viewAtom, workspaceAtoms} from '../workspace.js'
+import {entryLoaderAtom} from './load.js'
 import type {
   DashboardEntryReference,
   DashboardEntryReferences,
@@ -52,9 +39,20 @@ import type {
   DashboardEntryTreeStatus,
   DashboardFileInfoState,
   EntryRouteBlock
-} from './EntrySupport.js'
-import {createEntryLanguage, entryRevisionAtom} from './EntrySupport.js'
-import {createEntryPreviewAtoms} from './EntryPreviewAtoms.js'
+} from './load.js'
+import {createEntryLanguage, entryRevisionAtom} from './load.js'
+import {createEntryPreviewAtoms} from './preview.js'
+
+export const entryOverviewColumnCount = 5
+
+export type EntryView = 'edit' | 'overview'
+
+export interface EntryOverviewCell {
+  id: string
+  field: Field
+  label: string
+  value: unknown
+}
 
 type EntryVersionData = EntryRecord<Record<string, unknown>>
 
@@ -956,7 +954,7 @@ export type {
   DashboardFileInfoState,
   EntryRouteBlock
 }
-export type {EntryLanguageAtoms} from './EntrySupport.js'
+export type {EntryLanguageAtoms} from './load.js'
 export {createEntryLanguage}
 
 export function createEntry(id: string): EntryAtoms {
