@@ -105,8 +105,7 @@ const dashboard = {
   config: cms.config,
   events: db.index,
   client: fixtureConnection,
-  views,
-  options: {}
+  views
 }
 
 export function Example() {

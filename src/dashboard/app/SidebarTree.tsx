@@ -28,10 +28,9 @@ import {
 import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
 import type {DashboardLocaleSelection} from '../atoms/explorer.js'
 import {
-  createTree,
   currentRootAtom,
   currentWorkspaceAtom,
-  type TreeAtoms,
+  TreeAtoms,
   type WorkspaceAtoms,
   type RootAtoms,
   type TreeSelection
@@ -48,7 +47,7 @@ function createTreeSelection(initialSelection = new Set<Key>()): TreeSelection {
   const base = atom(initialSelection)
   return atom(
     get => get(base),
-    async (_get, set, next: 'all' | Set<Key>) => {
+    async (get, set, next: 'all' | Set<Key>) => {
       if (next === 'all')
         throw new Error('Selecting all items is not supported')
       set(base, next)
@@ -63,7 +62,7 @@ const sidebarTreeAtoms = dispense((tree: TreeAtoms) => {
   const visibleChildren = dispense((entry: EntryAtoms) => {
     return atom(get => {
       const {data} = get(entry.data)
-      if (!data || !get(data.hasChildren)) return undefined
+      if (!data || !get(data.entryData).hasChildren) return undefined
       const children = get(unwrap(data.children))
       return children?.map(entryAtoms)
     })
@@ -77,7 +76,10 @@ const sidebarTreeAtoms = dispense((tree: TreeAtoms) => {
         if (!selectedKey) return undefined
         const selectedId = String(selectedKey)
         if (selectedId === entry.id) return undefined
-        if (!get(data.parentIds).includes(selectedId)) return undefined
+        if (
+          !get(data.entryData).parents.some(parent => parent.id === selectedId)
+        )
+          return undefined
         const {data: selectedData} = get(entryAtoms(selectedId).data)
         return selectedData ? get(selectedData.treeStatus) : undefined
       }
@@ -232,7 +234,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   )
   const childItems = useAtomValue(treeAtoms.children(item))
   let icon = useAtomValue(data.icon)
-  const hasChildren = useAtomValue(data.hasChildren)
+  const hasChildren = useAtomValue(data.entryData).hasChildren
   if (!icon) icon = hasChildren ? LucideFolder : LucideFile
   const isLoadingChildren =
     hasChildren && isExpanded && childItems === undefined
@@ -457,7 +459,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
 }: SidebarTreeExplorerProps) {
   const tree = useMemo(
     () =>
-      createTree(workspace, createTreeSelection(), {
+      new TreeAtoms(workspace, createTreeSelection(), {
         syncRouteExpansion: false
       }),
     [workspace]

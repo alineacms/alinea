@@ -49,23 +49,11 @@ export type TreeSelection = WritableAtom<
 export const configAtom = requiredAtom<Config>('dashboard.config')
 export const viewsAtom = atom<Record<string, ComponentType>>({})
 
-const workspaceSettingsAtom = dispense((key: string) =>
-  atom(get => {
-    const workspace = get(configAtom).workspaces[key]
-    assert(workspace, `Workspace "${key}" not found in config`)
-    return getWorkspace(workspace)
-  })
-)
-
-export const workspaceRootsAtom = dispense((key: string) =>
-  atom(get => {
-    const configuredRoots = get(workspaceSettingsAtom(key)).roots
-    const policy = get(policyAtom)
-    return Object.keys(configuredRoots).filter(root =>
-      policy.canRead({workspace: key, root})
-    )
-  })
-)
+function readWorkspace(get: Getter, key: string) {
+  const workspace = get(configAtom).workspaces[key]
+  assert(workspace, `Workspace "${key}" not found in config`)
+  return getWorkspace(workspace)
+}
 
 export const workspacesAtom = atom(get => {
   const config = get(configAtom)
@@ -77,7 +65,7 @@ export const workspacesAtom = atom(get => {
 
 export class WorkspaceAtoms {
   tree: TreeAtoms
-  settings: ReturnType<typeof workspaceSettingsAtom>
+  settings: Atom<ReturnType<typeof getWorkspace>>
   roots: Atom<Array<string>>
   root: (key: string) => RootAtoms
   rootMenu: Atom<
@@ -110,8 +98,14 @@ export class WorkspaceAtoms {
         })
       }
     )
-    this.settings = workspaceSettingsAtom(key)
-    this.roots = workspaceRootsAtom(key)
+    this.settings = atom(get => readWorkspace(get, key))
+    this.roots = atom(get => {
+      const configuredRoots = readWorkspace(get, key).roots
+      const policy = get(policyAtom)
+      return Object.keys(configuredRoots).filter(root =>
+        policy.canRead({workspace: key, root})
+      )
+    })
     this.root = dispense(rootKey => new RootAtoms(this, rootKey))
     this.rootMenu = atom(get => {
       return get(this.roots).map(rootKey => ({
@@ -120,7 +114,7 @@ export class WorkspaceAtoms {
         icon: get(this.root(rootKey).icon)
       }))
     })
-    this.tree = createTree(this, treeSelection)
+    this.tree = new TreeAtoms(this, treeSelection)
   }
 }
 
@@ -170,7 +164,7 @@ export class TreeAtoms {
     const entry = entryAtoms(route.entry)
     const {data} = get(entry.data)
     if (!data) return new Set<Key>()
-    return new Set<Key>(get(data.parentIds))
+    return new Set<Key>(get(data.entryData).parents.map(parent => parent.id))
   })
 
   expandedKeys = Object.assign(
@@ -329,14 +323,6 @@ export class TreeAtoms {
       .filter(([, type]) => !Type.isHidden(type))
       .map(([name]) => name)
   })
-}
-
-export function createTree(
-  workspace: WorkspaceAtoms,
-  treeSelection: TreeSelection,
-  options: {syncRouteExpansion?: boolean} = {}
-): TreeAtoms {
-  return new TreeAtoms(workspace, treeSelection, options)
 }
 
 const pendingExplorerParent = new Promise<string | undefined>(() => {})

@@ -21,9 +21,7 @@ const dashboard = {
   graph,
   config: {schema: {}, workspaces: {}},
   events: new EventTarget(),
-  client: {} as LocalConnection,
-  views: {},
-  options: {}
+  client: {} as LocalConnection
 }
 
 const node = new ReactiveNode({title: 'Original title'})

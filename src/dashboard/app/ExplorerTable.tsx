@@ -256,7 +256,7 @@ function ExplorerTableLoadedRow({
   const rootLabel = useAtomValue(root.settings).label
   const label = useAtomValue(data.label)
   const configuredIcon = useAtomValue(data.icon)
-  const hasChildren = useAtomValue(data.hasChildren)
+  const hasChildren = useAtomValue(data.entryData).hasChildren
   const cells = useAtomValue(data.overviewCells)
   const treeStatus = useAtomValue(data.treeStatus)
   const status = treeStatus.status

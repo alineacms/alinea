@@ -16,8 +16,8 @@ export interface Dashboard {
   config: Config
   events: EventTarget
   client: LocalConnection
-  views: Record<string, ComponentType>
-  options: DashboardOptions
+  views?: Record<string, ComponentType>
+  options?: DashboardOptions
 }
 
 export interface DashboardCreateEntryRequest {
@@ -33,7 +33,7 @@ export interface DashboardCreateEntryRequest {
 
 export const setUserRolesAtom = atom(
   null,
-  async (_get, set, roles: Array<string>) => {
+  async (get, set, roles: Array<string>) => {
     await set(updateUserRolesAtom, roles)
     await set(reloadPageAtom)
   }

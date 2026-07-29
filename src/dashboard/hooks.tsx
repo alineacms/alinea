@@ -25,6 +25,8 @@ const dashboardContext = createContext<Dashboard | null>(null)
 const entryContext = createContext<EntryRecord<Record<string, unknown>> | null>(
   null
 )
+const defaultViews = {}
+const defaultOptions = {}
 
 export function DashboardScopeInternal({
   children,
@@ -51,8 +53,8 @@ function DashboardState({
     [configAtom, dashboard.config],
     [eventsAtom, dashboard.events],
     [clientAtom, dashboard.client],
-    [viewsAtom, dashboard.views],
-    [optionsAtom, dashboard.options]
+    [viewsAtom, dashboard.views ?? defaultViews],
+    [optionsAtom, dashboard.options ?? defaultOptions]
   ] as const)
   useAtomValue(dashboardEffectsAtom)
   return children

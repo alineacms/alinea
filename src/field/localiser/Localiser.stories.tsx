@@ -43,8 +43,7 @@ const dashboard = {
   config,
   events: new EventTarget(),
   client: undefined!,
-  views,
-  options: {}
+  views
 }
 const node = new ReactiveNode(Type.initialValue(pageType) as object)
 

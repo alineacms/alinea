@@ -251,8 +251,7 @@ const dashboard = {
   config: {schema: {}, workspaces: {}},
   events: new EventTarget(),
   client: {} as LocalConnection,
-  views,
-  options: {}
+  views
 }
 
 export function Example() {

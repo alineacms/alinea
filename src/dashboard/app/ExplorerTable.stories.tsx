@@ -32,8 +32,7 @@ const dashboard = {
   config: cms.config,
   events: db.index,
   client: fixtureConnection,
-  views,
-  options: {}
+  views
 }
 
 interface ExplorerTableStoryProps {

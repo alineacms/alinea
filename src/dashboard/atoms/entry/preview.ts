@@ -43,23 +43,23 @@ export function createEntryPreviewAtoms(entry: EntryDataAtoms) {
     const typePreview = Type.preview(type)
     if (typePreview !== undefined) return typePreview
     const config = get(configAtom)
-    const workspace = config.workspaces[get(entry.workspaceKey)]
+    const {workspace: workspaceKey, root: rootKey} = get(entry.entryData)
+    const workspace = config.workspaces[workspaceKey]
     if (!workspace) return config.preview
-    const root = workspace[get(entry.rootKey)]
+    const root = workspace[rootKey]
     return (
       (root ? getRoot(root).preview : undefined) ??
       getWorkspace(workspace).preview ??
       config.preview
     )
   })
-  const hasPreview = atom(get => Boolean(get(preview)))
   const previewRetry = atom(0)
-  const retryPreviewUrl = atom(null, (_get, set) => {
+  const retryPreviewUrl = atom(null, (get, set) => {
     set(previewRetry, current => current + 1)
   })
   const previewEntryFor = dispense((locale: string | null) =>
     atom(async get => {
-      if (!get(hasPreview)) return null
+      if (!get(preview)) return null
       const sourceLocale = entry.sourceLocaleFor(get, locale)
       const language = entry.languages(sourceLocale)
       const activeVersion = await get(language.activeVersionResource)
@@ -160,7 +160,6 @@ export function createEntryPreviewAtoms(entry: EntryDataAtoms) {
   )
 
   return {
-    hasPreview,
     preview,
     previewEntryFor,
     previewPayloadSignal,

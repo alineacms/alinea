@@ -140,8 +140,6 @@ function createTestDashboard(workspace: string, events = new EventTarget()) {
     graph: db,
     config,
     events,
-    client: createTestConnection(db),
-    views: {},
-    options: {}
+    client: createTestConnection(db)
   }
 }

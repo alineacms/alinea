@@ -75,8 +75,8 @@ export const mutationQueueAtom = Object.assign(
       if (uploads.length === 0) return queue
       return createMutationQueueState([...uploads, ...queue.entries])
     },
-    (_get, set) => {
-      const events = _get(eventsAtom)
+    (get, set) => {
+      const events = get(eventsAtom)
       const listen = (event: Event) => {
         if (event instanceof MutationQueueEvent) {
           set(mutationQueueStateAtom, createMutationQueueState(event.entries))
@@ -106,7 +106,7 @@ export const discardMutationQueueAtom = atom(null, async (get, set) => {
 
 export const uploadProgressAtom = atom(
   null,
-  (_get, set, update: UploadProgressUpdate) => {
+  (get, set, update: UploadProgressUpdate) => {
     if (update.type === 'start') {
       set(uploadQueueAtom, current => [
         ...update.uploads.map(

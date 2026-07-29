@@ -19,7 +19,7 @@ export function requiredAtom<Value>(name: string): RequiredAtom<Value> {
         throw new Error(`Required atom "${name}" was not initialized`)
       return value
     },
-    (_get, set, value: Value) => {
+    (get, set, value: Value) => {
       set(valueAtom, {value})
     }
   )

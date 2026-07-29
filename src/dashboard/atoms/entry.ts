@@ -177,16 +177,11 @@ function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
 }
 
 export class EntryDataAtoms {
-  workspaceKey: Atom<string>
-  rootKey: Atom<string>
-  hasChildren: Atom<boolean>
   type: Atom<Type>
   overviewCells: Atom<Array<EntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
   view: WritableAtom<EntryView, [view: EntryView], void>
   locales: Atom<Map<string | null, EntryVersionData>>
-  parentId: Atom<string | null>
-  parentIds: Atom<Array<string>>
   root: Atom<RootAtoms>
   #translationSourceLocale = atom<string | null | undefined>(undefined)
   #nodes = new Map<string, Atom<Promise<ReactiveNode<object>>>>()
@@ -258,9 +253,6 @@ export class EntryDataAtoms {
     public entryData: Atom<EntryData>
   ) {
     const data = this.entryData
-    this.workspaceKey = atom(get => get(data).workspace)
-    this.rootKey = atom(get => get(data).root)
-    this.hasChildren = atom(get => get(data).hasChildren)
     this.type = atom(get => {
       const key = get(data).type
       const type = get(configAtom).schema[key]
@@ -268,7 +260,7 @@ export class EntryDataAtoms {
       return type
     })
     this.defaultView = atom(get => {
-      if (get(this.hasChildren)) return 'overview'
+      if (get(data).hasChildren) return 'overview'
       const configured = Type.defaultView(get(this.type))
       if (configured) return configured
       return 'edit'
@@ -283,8 +275,6 @@ export class EntryDataAtoms {
         return set(this.entry.view, view)
       }
     )
-    this.parentId = atom(get => get(data).parentId)
-    this.parentIds = atom(get => get(data).parents.map(parent => parent.id))
     this.locales = atom(
       get =>
         new Map(
@@ -294,8 +284,7 @@ export class EntryDataAtoms {
         )
     )
     this.root = atom(get => {
-      const workspace = get(this.workspaceKey)
-      const root = get(this.rootKey)
+      const {workspace, root} = get(data)
       return workspaceAtoms(workspace).root(root)
     })
     this.overviewCells = atom(get => {
@@ -389,8 +378,8 @@ export class EntryDataAtoms {
       const data = get(this.locales).get(sourceLocale)
       assert(data, `No locale data found for locale ${sourceLocale}`)
       const file = dashboardEntryFile(config, {
-        workspace: get(this.workspaceKey),
-        root: get(this.rootKey),
+        workspace: get(this.entryData).workspace,
+        root: get(this.entryData).root,
         filePath: data.filePath
       })
       const client = get(clientAtom)
@@ -530,7 +519,7 @@ export class EntryDataAtoms {
   })
 
   #parents = atom(async get => {
-    const parentIds = get(this.parentIds)
+    const parentIds = get(this.entryData).parents.map(parent => parent.id)
     return Promise.all(
       parentIds.map(async id => {
         const parent = entryAtoms(id)
@@ -591,15 +580,13 @@ export class EntryDataAtoms {
     } satisfies DashboardEntryReferences
   })
   canPublish = atom(get => {
-    return get(this.parentInfo).every(parent => parent.status === 'published')
+    return get(this.entryData).parents.every(
+      parent => parent.status === 'published'
+    )
   })
 
   parentUnpublished = atom(get => {
-    return get(this.parentInfo).some(parent => parent.status === 'draft')
-  })
-
-  parentInfo = atom(get => {
-    return get(this.entryData).parents
+    return get(this.entryData).parents.some(parent => parent.status === 'draft')
   })
 
   icon = atom(get => getType(get(this.type)).icon)
@@ -662,7 +649,7 @@ export class EntryDataAtoms {
   parentNeedsTranslationFor = dispense((locale: string | null) =>
     atom(async get => {
       if (!this.#untranslatedFor(get, locale)) return false
-      const parentId = get(this.parentId)
+      const parentId = get(this.entryData).parentId
       if (!parentId) return false
       if (!locale) return false
       const db = get(graphAtom)
@@ -678,7 +665,6 @@ export class EntryDataAtoms {
 
   #previewAtoms = createEntryPreviewAtoms(this)
   preview = this.#previewAtoms.preview
-  hasPreview = this.#previewAtoms.hasPreview
   retryPreviewUrl = this.#previewAtoms.retryPreviewUrl
   previewEntryFor = this.#previewAtoms.previewEntryFor
   previewPayloadSignal = this.#previewAtoms.previewPayloadSignal
@@ -782,7 +768,7 @@ export class EntryDataAtoms {
     set(node.commit)
   })
 
-  publishDraft = atom(null, async (get, _set) => {
+  publishDraft = atom(null, async get => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
@@ -794,7 +780,7 @@ export class EntryDataAtoms {
     })
   })
 
-  discardDraft = atom(null, async (get, _set) => {
+  discardDraft = atom(null, async get => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Update, locale)
@@ -806,7 +792,7 @@ export class EntryDataAtoms {
     })
   })
 
-  unpublish = atom(null, async (get, _set) => {
+  unpublish = atom(null, async get => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
@@ -817,7 +803,7 @@ export class EntryDataAtoms {
     })
   })
 
-  archive = atom(null, async (get, _set) => {
+  archive = atom(null, async get => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Archive, locale)
@@ -828,7 +814,7 @@ export class EntryDataAtoms {
     })
   })
 
-  publishArchived = atom(null, async (get, _set) => {
+  publishArchived = atom(null, async get => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)

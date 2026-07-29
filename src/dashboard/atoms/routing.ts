@@ -23,7 +23,6 @@ import {
   type RootAtoms,
   type WorkspaceAtoms,
   workspaceAtoms,
-  workspaceRootsAtom,
   workspacesAtom
 } from './config.js'
 import {createBrowserHistory} from './routing/history.js'
@@ -137,12 +136,12 @@ export const selectedWorkspaceAtom = atom(
       return workspace
     return workspaceKeys[0] ?? null
   },
-  (_get, set, workspace: string) => set(routeAtom, {workspace})
+  (get, set, workspace: string) => set(routeAtom, {workspace})
 )
 
 export const selectedRootAtom = atom<string | null>(get => {
   const workspace = get(selectedWorkspaceAtom)
-  const roots = workspace ? get(workspaceRootsAtom(workspace)) : []
+  const roots = workspace ? get(workspaceAtoms(workspace).roots) : []
   const {root} = get(routeAtom)
   if (root && roots.includes(root)) return root
   return roots[0] ?? null
@@ -361,7 +360,7 @@ export function createRouteLoader(options: RouteLoaderOptions) {
         canManageMembers
       }
 
-    const parentIds = get(ready.data.parentIds)
+    const parentIds = get(ready.data.entryData).parents.map(parent => parent.id)
     await loadTree(
       get,
       options,

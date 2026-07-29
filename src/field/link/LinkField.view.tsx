@@ -291,7 +291,7 @@ function LoadedEntryRow({
   textOnly
 }: LoadedEntryRowProps) {
   const label = useAtomValue(entry.label)
-  const parentIds = useAtomValue(entry.parentIds)
+  const configuredParents = useAtomValue(entry.entryData).parents
   const [parentsPending, parents] = useAtomValue(entry.parentsState)
   return (
     <span className={styles.LinkFieldView.label()}>
@@ -300,7 +300,9 @@ function LoadedEntryRow({
       )}
       <span className={styles.LinkFieldView.labelText()}>
         <span className={styles.LinkFieldView.title()}>{label}</span>
-        {(parentsPending && parents === undefined && parentIds.length > 0) ||
+        {(parentsPending &&
+          parents === undefined &&
+          configuredParents.length > 0) ||
         (parents && parents.length > 0) ? (
           <span className={styles.LinkFieldView.meta()}>
             <EntryParents
@@ -1385,8 +1387,7 @@ function LoadedEntryLinkRowActions({
   entry,
   locale
 }: LoadedEntryLinkRowActionsProps) {
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
+  const {workspace, root} = useAtomValue(entry.entryData)
   const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
   return (
     <Button

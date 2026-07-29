@@ -155,13 +155,13 @@ export class ExplorerAtoms {
       return
     }
     const {data} = get(entry.data)
-    if (data && get(data.hasChildren)) {
+    if (data && get(data.entryData).hasChildren) {
       const location = get(this.location)
       set(this.location, {...location, parentId: entry.id})
     }
   })
 
-  onConfirm = atom(null, (get, _set) => {
+  onConfirm = atom(null, get => {
     const selection = get(this.selection)
     if (this.#options.onConfirm)
       this.#options.onConfirm([...selection].map(String))
@@ -170,7 +170,7 @@ export class ExplorerAtoms {
   #search = atom('')
   search = atom(
     get => get(this.#search),
-    (_get, set, search: string) => {
+    (get, set, search: string) => {
       set(this.#search, search)
       void set(refreshPageForAtom, this)
     }
@@ -187,7 +187,7 @@ export class ExplorerAtoms {
       if (locale) return locale
       return get(root.selectedLocale)
     },
-    (_get, set, locale: string) => {
+    (get, set, locale: string) => {
       set(this.#selectedLocale, locale)
     }
   )
@@ -517,9 +517,9 @@ export function createExplorerAtoms(
     const {data} = await get(entryAtoms(firstSelection).readyState)
     if (!data) return undefined
     return {
-      workspace: get(data.workspaceKey),
-      root: get(data.rootKey),
-      parentId: get(data.parentId) ?? undefined
+      workspace: get(data.entryData).workspace,
+      root: get(data.entryData).root,
+      parentId: get(data.entryData).parentId ?? undefined
     } satisfies ExplorerLocation
   })
   const fallbackLocation = atom(initialLocation)

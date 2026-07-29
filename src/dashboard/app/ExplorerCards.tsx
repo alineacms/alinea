@@ -118,7 +118,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const typeSettings = getType(type)
-  const hasChildren = useAtomValue(data.hasChildren)
+  const hasChildren = useAtomValue(data.entryData).hasChildren
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )

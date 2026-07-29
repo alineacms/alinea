@@ -205,8 +205,7 @@ function createStoryDashboard() {
     config: {schema: {}, workspaces: {}},
     events: new EventTarget(),
     client: {} as LocalConnection,
-    views,
-    options: {}
+    views
   }
 }
 

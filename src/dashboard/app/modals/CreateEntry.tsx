@@ -194,7 +194,7 @@ const initialLocationAtom = atom(async get => {
     }
   }
   const type = get(data.type)
-  const parentId = get(data.parentId) ?? undefined
+  const parentId = get(data.entryData).parentId ?? undefined
 
   return {
     workspace: selectedWorkspace,

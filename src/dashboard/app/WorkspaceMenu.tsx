@@ -160,8 +160,8 @@ function SearchPopup() {
           const {data} = get(entry.data)
           if (!data) return
           set(routeAtom, {
-            workspace: get(data.workspaceKey),
-            root: get(data.rootKey),
+            workspace: get(data.entryData).workspace,
+            root: get(data.entryData).root,
             entry: entry.id,
             locale: get(data.sourceLocale) ?? undefined
           })

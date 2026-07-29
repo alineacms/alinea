@@ -84,9 +84,7 @@ interface EntryHeaderBackButtonProps {
 
 function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
   const route = useAtomValue(routeAtom)
-  const parentId = useAtomValue(entry.parentId)
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
+  const {parentId, workspace, root} = useAtomValue(entry.entryData)
   const setRoute = useSetAtom(routeAtom)
   return (
     <EditorBackButton
@@ -114,9 +112,7 @@ function EntryHeaderMoreActions({
   const policy = usePolicy()
   const config = useAtomValue(configAtom)
   const route = useAtomValue(routeAtom)
-  const parentId = useAtomValue(entry.parentId)
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
+  const {parentId, workspace, root} = useAtomValue(entry.entryData)
   const activeVersion = page.languageVersion
   const type = useAtomValue(entry.type)
   const canPublishParents = useAtomValue(entry.canPublish)
