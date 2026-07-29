@@ -387,9 +387,15 @@ export async function loadEntryPage(
     get(entry.currentEntryFor(locale)),
     get(entry.parentNeedsTranslationFor(locale))
   ])
-  const initialSidebar = get(entrySidebarOpenAtom)
-    ? await get(sidebarResource)
-    : undefined
+  const sidebarOpen = get(entrySidebarOpenAtom)
+  const sidebarTab = resolveEntrySidebarTab(
+    get(entry.type),
+    get(entrySidebarTabAtom)
+  )
+  const initialSidebar =
+    sidebarOpen && sidebarTab !== 'preview'
+      ? await get(sidebarResource)
+      : undefined
   const sidebarState = withPending(sidebarResource)
   const sidebar = atom((get): EntrySidebarState => {
     const [pending, data] = get(sidebarState)

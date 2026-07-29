@@ -37,6 +37,14 @@
   overflow: hidden;
 }
 
+.EntrySidebarPreview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
 .EntrySidebarPreview-iframe {
   width: 100%;
   height: 100%;

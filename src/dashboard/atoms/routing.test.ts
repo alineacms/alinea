@@ -5,6 +5,7 @@ import {atom, createStore} from 'jotai'
 import {entryAtoms} from './entry.js'
 import {
   createEntrySidebarResource,
+  entrySidebarTabAtom,
   loadEntryPage,
   resolveEntrySidebarTab
 } from './entry/load.js'
@@ -66,6 +67,7 @@ test('entry sidebar defaults match the entry type', () => {
 
 test('open entry sidebar is prepared with the page', async () => {
   const {child, store} = await createDashboardAtomFixture()
+  store.set(entrySidebarTabAtom, 'references')
   let sidebarLoads = 0
   const loadRoute = createRouteLoader({
     config: configAtom,
@@ -104,4 +106,44 @@ test('open entry sidebar is prepared with the page', async () => {
   expect(sidebar.data?.type === 'error' && sidebar.data.error.message).toBe(
     'References unavailable'
   )
+})
+
+test('preview sidebar loading does not delay the entry page', async () => {
+  const {child, store} = await createDashboardAtomFixture()
+  let sidebarLoads = 0
+  const loadRoute = createRouteLoader({
+    config: configAtom,
+    policy: policyResourceAtom,
+    canManageMembers: atom(Promise.resolve(false)),
+    workspace: workspaceAtoms,
+    entry: entryAtoms,
+    loadEntry(get, entry, locale) {
+      return loadEntryPage(
+        get,
+        entry,
+        locale,
+        createEntrySidebarResource(entry, locale, async () => {
+          sidebarLoads++
+          return new Promise(() => {})
+        })
+      )
+    }
+  })
+
+  const page = await loadRoute(
+    store.get,
+    {
+      page: 'entry',
+      workspace: 'main',
+      root: 'pages',
+      entry: child._id
+    },
+    new AbortController().signal
+  )
+
+  expect(page.type).toBe('entry')
+  if (page.type !== 'entry') return
+  expect(sidebarLoads).toBe(0)
+  expect(store.get(page.sidebar)).toEqual({pending: true, data: undefined})
+  expect(sidebarLoads).toBe(1)
 })

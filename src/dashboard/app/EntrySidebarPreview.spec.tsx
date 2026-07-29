@@ -1,6 +1,22 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {EntrySidebarPreviewStory} from './EntrySidebarPreview.story.js'
 
+test('keeps the surrounding view available while the preview loads', async ({
+  mount,
+  page
+}) => {
+  await mount(<EntrySidebarPreviewStory pending />)
+
+  await expect(page.getByRole('textbox', {name: 'Title'})).toBeVisible()
+  await expect(
+    page.getByRole('button', {name: 'Go back in preview'})
+  ).toBeVisible()
+  await expect(
+    page.getByRole('progressbar', {name: 'Loading preview'})
+  ).toBeVisible()
+  await expect(page.locator('iframe')).toHaveCount(0)
+})
+
 test('sends edited field values to the preview iframe', async ({
   mount,
   page

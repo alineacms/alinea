@@ -62,7 +62,11 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
     : allowedTabs[0]
 
   return (
-    <Sidebar aria-busy={sidebarState.pending}>
+    <Sidebar
+      aria-busy={
+        sidebarState.pending && selectedKey !== 'preview' ? true : undefined
+      }
+    >
       <Tabs
         className={styles.EntrySidebar.tabs()}
         selectedKey={selectedKey}
@@ -114,7 +118,11 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
                   id="preview"
                   className={styles.EntrySidebar.previewPanel()}
                 >
-                  <EntrySidebarPreview entry={entry} sidebar={sidebar} />
+                  <EntrySidebarPreview
+                    entry={entry}
+                    sidebar={sidebar}
+                    pending={sidebarState.pending}
+                  />
                 </TabPanel>
               )}
             </>
