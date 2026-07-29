@@ -3,7 +3,11 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {FieldsEditor} from '#/dashboard/app/Editor.js'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
+import {
+  createEditor,
+  type EditorAtoms,
+  ReactiveNode
+} from '#/dashboard/atoms/entry/editor.js'
 import {richText} from './RichTextField.js'
 import {
   alignment,
@@ -172,30 +176,40 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
       editor: createEditor(entryType, node)
     }
   }, [entryType, initialBody])
-  const field = state.editor.field('body')
-  if (!field) throw new Error('Body field not found')
-  const value = useAtomValue(field.value)
-  const dirty = useAtomValue(state.editor.node.isDirty)
-  const reset = useSetAtom(state.editor.node.reset)
-  const replace = useSetAtom(field.value)
   return (
     <DashboardScopeInternal dashboard={state.dashboard}>
-      <EditorScope editor={state.editor}>
-        <div id="alinea-toolbar" />
-        <button type="button" onClick={() => reset()}>
-          Reset body
-        </button>
-        <button
-          type="button"
-          onClick={() => replace([paragraph('Externally replaced.')])}
-        >
-          Replace body
-        </button>
-        <FieldsEditor />
-        <pre data-testid="value">{JSON.stringify(value)}</pre>
-        <output data-testid="dirty">{String(dirty)}</output>
-      </EditorScope>
+      <RichTextFixtureContent editor={state.editor} />
     </DashboardScopeInternal>
+  )
+}
+
+interface RichTextFixtureContentProps {
+  editor: EditorAtoms
+}
+
+function RichTextFixtureContent({editor}: RichTextFixtureContentProps) {
+  const field = editor.field('body')
+  if (!field) throw new Error('Body field not found')
+  const value = useAtomValue(field.value)
+  const dirty = useAtomValue(editor.node.isDirty)
+  const reset = useSetAtom(editor.node.reset)
+  const replace = useSetAtom(field.value)
+  return (
+    <EditorScope editor={editor}>
+      <div id="alinea-toolbar" />
+      <button type="button" onClick={() => reset()}>
+        Reset body
+      </button>
+      <button
+        type="button"
+        onClick={() => replace([paragraph('Externally replaced.')])}
+      >
+        Replace body
+      </button>
+      <FieldsEditor />
+      <pre data-testid="value">{JSON.stringify(value)}</pre>
+      <output data-testid="dirty">{String(dirty)}</output>
+    </EditorScope>
   )
 }
 

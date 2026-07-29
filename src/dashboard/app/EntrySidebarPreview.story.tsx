@@ -7,15 +7,9 @@ import {shaAtom} from '#/dashboard/atoms/graph.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 
-interface PreviewGraph {
-  sync(): Promise<string>
-}
-
 const graph = {
-  sync() {
-    return Promise.resolve('preview-content-sha')
-  }
-} satisfies PreviewGraph as unknown as WriteableGraph
+  sha: 'preview-content-sha'
+} as unknown as WriteableGraph
 
 const dashboard = {
   graph,

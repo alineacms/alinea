@@ -145,8 +145,9 @@ test('creates, edits and exits a list', async ({mount, page}) => {
   await mount(<RichTextPlainStory />)
 
   const editor = page.locator('.ProseMirror').first()
-  await editor.getByText('Press Enter', {exact: false}).click()
+  await placeCaret(editor.getByText('Press Enter', {exact: false}), 'end')
   await page.getByRole('button', {name: 'Bullet list'}).click()
+  await expect(editor.locator('li')).toHaveCount(1)
   await page.keyboard.press('End')
   await page.keyboard.press('Enter')
   await page.keyboard.type('Second list item')
