@@ -8,6 +8,7 @@ import {atomWithStorage, unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import {graphAtom, shaAtom} from './graph/index.js'
 import type {RouteHistory} from './routing/history.js'
+import {reloadPageAtom} from './routing/index.js'
 import {keepPrevious, requiredAtom, withPending} from './utils.js'
 import {configAtom} from './workspace.js'
 
@@ -196,6 +197,7 @@ export const setUserRolesAtom = atom(
     const user = await get(userAtom)
     if (!user) return
     set(userOverrideAtom, {...user, roles})
+    await set(reloadPageAtom)
   }
 )
 

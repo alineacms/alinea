@@ -16,9 +16,11 @@ import {
   currentEntryAtom,
   navigationAtom,
   pageAtom,
+  routeLoaderAtom,
   type PreparedRoute
 } from './index.js'
 import {createNavigation} from './navigation.js'
+import {setUserRolesAtom} from '../user.js'
 
 test('page atoms require navigation to commit prepared data', () => {
   const navigation = createNavigation<PreparedRoute>({
@@ -42,6 +44,28 @@ test('page atoms require navigation to commit prepared data', () => {
 
   expect(store.get(pageAtom)).toBe(page)
   expect(store.get(currentEntryAtom)).toBeNull()
+})
+
+test('changing user roles re-prepares the current route', async () => {
+  const {store} = await createDashboardAtomFixture()
+  const navigation = store.get(navigationAtom)
+  store.set(navigation.prepared, {
+    type: 'empty',
+    canManageMembers: false
+  })
+  let loads = 0
+  store.set(routeLoaderAtom, async () => {
+    loads++
+    return {type: 'empty', canManageMembers: true}
+  })
+
+  await store.set(setUserRolesAtom, ['editor'])
+
+  expect(loads).toBe(1)
+  expect(store.get(pageAtom)).toEqual({
+    type: 'empty',
+    canManageMembers: true
+  })
 })
 
 test('entry sidebar defaults match the entry type', () => {

@@ -5,14 +5,21 @@ import {eventsAtom, graphAtom, shaAtom, syncAtom} from './index.js'
 import {createMutationQueueState} from './queue.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
-test('reading content state never synchronizes the graph', async () => {
+test('reads the indexed content hash without synchronizing the graph', async () => {
   const {db} = await createDashboardAtomFixture()
   const store = createStore()
   const events = new TestEvents()
+  let syncs = 0
+  const sync = db.sync.bind(db)
+  db.sync = async () => {
+    syncs++
+    return sync()
+  }
   store.set(graphAtom, db)
   store.set(eventsAtom, events)
 
-  expect(await store.get(shaAtom)).toBeUndefined()
+  expect(await store.get(shaAtom)).toBe(db.sha)
+  expect(syncs).toBe(0)
 
   const unsubscribe = store.sub(shaAtom, () => {})
   events.emit(new IndexEvent({op: 'index', sha: 'external-sha'}))
@@ -22,6 +29,7 @@ test('reading content state never synchronizes the graph', async () => {
   const sha = await store.set(syncAtom)
   unsubscribe()
 
+  expect(syncs).toBe(1)
   expect(sha).toBeString()
   expect(await store.get(shaAtom)).toBe(sha)
 })

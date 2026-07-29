@@ -10,7 +10,11 @@ const currentShaAtom = atom<string>()
 
 export const shaAtom = Object.assign(
   atom(
-    async get => get(currentShaAtom),
+    async get => {
+      const current = get(currentShaAtom)
+      if (current) return current
+      return readGraphSha(get(graphAtom))
+    },
     (get, set) => {
       const events = get(eventsAtom)
       const listen = (event: Event) => {
@@ -37,6 +41,15 @@ export const syncAtom = atom(null, async (get, set) => {
 
 interface SyncableGraph {
   sync: () => Promise<string>
+}
+
+interface GraphWithSha {
+  sha: string | Promise<string>
+}
+
+function readGraphSha(graph: WriteableGraph): string | Promise<string> | void {
+  const sha = (graph as Partial<GraphWithSha>).sha
+  if (sha !== undefined) return sha
 }
 
 function isSyncableGraph(

@@ -580,7 +580,6 @@ export function createExplorerAtoms(
 export interface PreparedExplorerPage {
   type: 'explorer'
   root: RootAtoms
-  items: Array<EntryAtoms>
 }
 
 export type ExplorerPageData = PreparedExplorerPage
@@ -636,5 +635,5 @@ export async function loadExplorerPage(
 ): Promise<ExplorerPageData> {
   const items = await get(root.explorer.itemsAt(location, locale))
   await loadEntries(get, items, signal)
-  return {type: 'explorer', root, items}
+  return {type: 'explorer', root}
 }

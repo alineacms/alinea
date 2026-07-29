@@ -47,6 +47,10 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.sync()
   }
 
+  get sha(): Promise<string> {
+    return this.#worker.sha()
+  }
+
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
     return this.#worker.referencesTo(query)
   }
