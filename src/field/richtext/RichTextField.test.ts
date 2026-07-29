@@ -2,7 +2,6 @@ import {suite} from '@alinea/suite'
 import {Field} from '#/core/Field.js'
 import {Type, type} from '#/core/Type.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
-import type {DashboardAtoms} from '#/dashboard/atoms/DashboardAtoms.js'
 import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {

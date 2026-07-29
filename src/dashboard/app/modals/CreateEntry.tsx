@@ -26,11 +26,19 @@ import {
   type FormEvent,
   type SetStateAction
 } from 'react'
-import {useDashboard} from '../../hooks.js'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {dashboardAtoms} from '../../atoms/DashboardAtoms.js'
+import {configAtom, graphAtom} from '../../atoms/CoreAtoms.js'
+import {createEntryAtom} from '../../atoms/CreateEntryAtom.js'
+import {entryAtoms} from '../../atoms/EntryAtoms.js'
 import type {ExplorerLocation} from '../../atoms/ExplorerAtoms.js'
+import {routeAtom} from '../../atoms/NavigationAtoms.js'
+import {policyAtom} from '../../atoms/PolicyAtoms.js'
 import {ReactiveNode} from '../../atoms/ReactiveNode.js'
+import {
+  selectedRootAtom,
+  selectedWorkspaceAtom
+} from '../../atoms/SelectionAtoms.js'
+import {workspaceAtoms} from '../../atoms/WorkspaceAtoms.js'
 import {NodeEditor} from '../Editor.js'
 import {
   DashboardModalContent,
@@ -87,10 +95,9 @@ function buildTypeOptions(
 }
 
 const initialLocationAtom = atom(async get => {
-  const dashboard = dashboardAtoms
-  const selectedWorkspace = get(dashboard.selectedWorkspace)
-  const selectedRoot = get(dashboard.selectedRoot)
-  const route = get(dashboard.route)
+  const selectedWorkspace = get(selectedWorkspaceAtom)
+  const selectedRoot = get(selectedRootAtom)
+  const route = get(routeAtom)
 
   if (!route.entry) {
     return {
@@ -99,7 +106,7 @@ const initialLocationAtom = atom(async get => {
     }
   }
 
-  const entry = dashboard.entries(route.entry)
+  const entry = entryAtoms(route.entry)
   const {data} = get(entry.data)
   if (!data) {
     return {
@@ -144,10 +151,9 @@ function typeOptionsAtom(
 ) {
   return unwrap(
     atom(async get => {
-      const dashboard = dashboardAtoms
-      const config = get(dashboard.config)
-      const db = get(dashboard.db)
-      const policy = get(dashboard.policy)
+      const config = get(configAtom)
+      const db = get(graphAtom)
+      const policy = get(policyAtom)
       const rootKey = location.root
       let allowed = [] as Array<string>
       let parentIds = [] as Array<string>
@@ -192,9 +198,8 @@ function insertOrderVisibleAtom(parentId: string | undefined) {
   return unwrap(
     atom(async get => {
       if (!parentId) return true
-      const dashboard = dashboardAtoms
-      const config = get(dashboard.config)
-      const db = get(dashboard.db)
+      const config = get(configAtom)
+      const db = get(graphAtom)
       const parent = await db.first({
         select: {type: Entry.type},
         id: parentId,
@@ -208,8 +213,7 @@ function insertOrderVisibleAtom(parentId: string | undefined) {
 }
 
 const containerTypesAtom = atom(get => {
-  const dashboard = dashboardAtoms
-  const config = get(dashboard.config)
+  const config = get(configAtom)
   return (Object.entries(config.schema) as Array<[string, Type]>)
     .filter(([, schemaType]) => {
       return Type.isContainer(schemaType) && !Type.isHidden(schemaType)
@@ -229,14 +233,13 @@ function CreateEntryLoading() {
 
 function CreateEntryForm() {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const createEntry = useSetAtom(dashboard.createEntry)
+  const createEntry = useSetAtom(createEntryAtom)
   const initial = useAtomValue(initialLocationAtom)
   const [title, setTitle] = useState('')
   const [selectedTypeOverride, setSelectedType] = useState<string | null>(null)
   const [insertOrder, setInsertOrder] = useState<'first' | 'last'>('last')
   const [isCreating, setIsCreating] = useState(false)
-  const workspace = dashboard.workspace(initial.workspace)
+  const workspace = workspaceAtoms(initial.workspace)
   const roots = useAtomValue(workspace.roots)
   const rootKey = initial.root ?? roots[0]
   assert(rootKey, 'No root selected')

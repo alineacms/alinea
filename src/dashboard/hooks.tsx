@@ -1,16 +1,9 @@
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {User} from '#/core/User.js'
-import {assert} from '#/core/util/Assert.js'
-import {createStore, Provider, useAtomValue} from 'jotai'
+import {createStore, Provider, useAtomValue, useStore} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {PropsWithChildren} from 'react'
-import {
-  createContext,
-  createElement,
-  useContext,
-  useMemo,
-  useState
-} from 'react'
+import {createElement, useMemo, useState} from 'react'
 import {
   clientAtom,
   configAtom,
@@ -22,38 +15,38 @@ import {
   viewsAtom,
   type DashboardInput
 } from './atoms/CoreAtoms.js'
+import {userAtom} from './atoms/AuthAtoms.js'
+import {dashboardRouteLoader} from './atoms/Dashboard.js'
 import {dashboardEffectsAtom} from './atoms/DashboardEffectsAtom.js'
-import {dashboardRouteLoader, type DashboardAtoms} from './atoms/DashboardAtoms.js'
 import {navigationAtom} from './atoms/NavigationAtoms.js'
 import {createDashboardNavigation, currentEntryAtom} from './atoms/PageAtoms.js'
+import {policyAtom} from './atoms/PolicyAtoms.js'
 import {createBrowserHistory} from './atoms/navigation/History.js'
 
 export * from './editor/EditorScope.js'
 export * from './editor/FieldHooks.js'
 
-const dashboardContext = createContext<DashboardAtoms | null>(null)
-
 export function DashboardScopeInternal({
   children,
-  dashboard
-}: PropsWithChildren<{dashboard: DashboardAtoms}>) {
+  dashboard,
+  store: providedStore
+}: PropsWithChildren<{
+  dashboard: DashboardInput
+  store?: ReturnType<typeof createStore>
+}>) {
   const [store] = useState(createStore)
   return createElement(
     Provider,
-    {store},
-    createElement(
-      dashboardContext.Provider,
-      {value: dashboard},
-      createElement(DashboardHydration, {dashboard}, children)
-    )
+    {store: providedStore ?? store},
+    createElement(DashboardHydration, {input: dashboard}, children)
   )
 }
 
 function DashboardHydration({
   children,
-  dashboard
-}: PropsWithChildren<{dashboard: DashboardAtoms}>) {
-  useHydrateDashboard(dashboard.input)
+  input
+}: PropsWithChildren<{input: DashboardInput}>) {
+  useHydrateDashboard(input)
   return children
 }
 
@@ -84,24 +77,19 @@ export function useHydrateDashboard(input: DashboardInput) {
 }
 
 export function useDashboard() {
-  const dashboard = useContext(dashboardContext)
-  assert(dashboard, 'Dashboard not found in context')
-  return dashboard
+  return useStore()
 }
 
 export function usePolicy() {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.policy)
+  return useAtomValue(policyAtom)
 }
 
 export function useUser(): User | null {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.user) ?? null
+  return useAtomValue(userAtom) ?? null
 }
 
 export function useGraph(): WriteableGraph {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.db)
+  return useAtomValue(graphAtom)
 }
 
 /**

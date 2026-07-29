@@ -3,12 +3,12 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {Config} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
-import {TestEvents} from '#test/DashboardAtomsFixture.js'
-import {useAtomValue} from 'jotai'
+import {TestEvents} from '#test/DashboardFixture.js'
+import {createStore, useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
 import {DashboardScopeInternal} from './hooks.js'
 import {configAtom} from './atoms/CoreAtoms.js'
-import {createDashboard} from './atoms/DashboardAtoms.js'
+import {createDashboard} from './atoms/Dashboard.js'
 import {entryRevisionAtom} from './atoms/EntrySupport.js'
 import {useDashboard} from './hooks.js'
 
@@ -41,19 +41,20 @@ test('dashboard scopes isolate hydrated atom values', () => {
 function DashboardIdentity({
   expected
 }: {
-  expected: ReturnType<typeof createDashboard>
+  expected: ReturnType<typeof createStore>
 }) {
   return (
     <span>{useDashboard() === expected ? 'same dashboard' : 'different'}</span>
   )
 }
 
-test('useDashboard returns the dashboard from the nearest scope', () => {
+test('useDashboard returns the nearest dashboard store', () => {
   const dashboard = createTestDashboard('main')
+  const store = createStore()
 
   render(
-    <DashboardScopeInternal dashboard={dashboard}>
-      <DashboardIdentity expected={dashboard} />
+    <DashboardScopeInternal dashboard={dashboard} store={store}>
+      <DashboardIdentity expected={store} />
     </DashboardScopeInternal>
   )
 

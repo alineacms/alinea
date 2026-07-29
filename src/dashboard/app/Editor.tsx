@@ -12,7 +12,6 @@ import {
   type ComponentType,
   memo,
   PropsWithChildren,
-  Suspense,
   useEffect,
   useMemo
 } from 'react'
@@ -34,7 +33,6 @@ import {
 } from '../atoms/EditorAtoms.js'
 import {entryAtoms, type EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {entrySidebarOpenAtom} from '../atoms/EntrySupport.js'
-import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
 import {routeAtom} from '../atoms/NavigationAtoms.js'
 import {ReactiveNode} from '../atoms/ReactiveNode.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
@@ -57,43 +55,29 @@ import {Rail, RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
 export interface EditorProps {
-  dashboard: DashboardAtoms
   page: PreparedRoute
 }
 
-export function Editor({dashboard, page}: EditorProps) {
+export function Editor({page}: EditorProps) {
   if (page.type === 'entry') return <EntryEditor page={page} />
   if (page.type === 'missing-entry')
-    return (
-      <MissingEntry
-        dashboard={dashboard}
-        entryId={page.entryId}
-        root={page.root}
-      />
-    )
+    return <MissingEntry entryId={page.entryId} root={page.root} />
   if (page.type === 'missing-root')
-    return (
-      <MissingRoot
-        dashboard={dashboard}
-        rootKey={page.rootKey}
-        root={page.root}
-      />
-    )
+    return <MissingRoot rootKey={page.rootKey} root={page.root} />
   if (page.type === 'root') return <RootEditor page={page} />
   if (page.type === 'explorer') return <ExplorerEditor page={page} />
   return <Rail main />
 }
 
 interface MissingEntryProps {
-  dashboard: DashboardAtoms
   entryId: string
   root: RootAtoms
 }
 
-function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
+function MissingEntry({entryId, root}: MissingEntryProps) {
   const rootLabel = useAtomValue(root.label)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
+  const route = useAtomValue(routeAtom)
+  const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
       title="Entry not found"
@@ -113,15 +97,14 @@ function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
 }
 
 interface MissingRootProps {
-  dashboard: DashboardAtoms
   rootKey: string
   root: RootAtoms
 }
 
-function MissingRoot({dashboard, rootKey, root}: MissingRootProps) {
+function MissingRoot({rootKey, root}: MissingRootProps) {
   const rootLabel = useAtomValue(root.label)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
+  const route = useAtomValue(routeAtom)
+  const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
       title="Root not found"
@@ -409,13 +392,7 @@ function EntryEditor({page}: EntryEditorProps) {
       </DashboardModal>
       {mainEditor}
       {hasSidebar && isSidebarOpen && (
-        <Suspense fallback={null}>
-          <EntrySidebar
-            entry={entry}
-            page={page}
-            onOpenChange={setSidebarOpen}
-          />
-        </Suspense>
+        <EntrySidebar entry={entry} page={page} onOpenChange={setSidebarOpen} />
       )}
     </>
   )

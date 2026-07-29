@@ -1,4 +1,3 @@
-import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
 import type {Revision} from '#/core/Connection.js'
 import {UploadOperation} from '#/core/db/Operation.js'
@@ -8,19 +7,16 @@ import {
   type Entry as EntryRecord,
   type EntryStatus
 } from '#/core/Entry.js'
-import {createRecord, parseRecord} from '#/core/EntryRecord.js'
+import {parseRecord} from '#/core/EntryRecord.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {createId} from '#/core/Id.js'
-import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
+import {getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
-import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
-import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import type {Infer} from '#/types.js'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
@@ -36,28 +32,17 @@ import {loadEntryPage} from './loaders/Entry.js'
 import {ReactiveNode} from './ReactiveNode.js'
 import {queryTreeChildren, type RootAtoms} from './RootAtoms.js'
 import {
-  debounce,
   dispense,
   keepPrevious,
   uploadSizeError,
   withPending
 } from './AtomUtils.js'
-import {
-  clientAtom,
-  configAtom,
-  graphAtom,
-  previewTokenRequestsAtom,
-  viewAtom
-} from './CoreAtoms.js'
+import {clientAtom, configAtom, graphAtom, viewAtom} from './CoreAtoms.js'
 import {entryLoaderAtom} from './EntryLoaderAtoms.js'
 import {userAtom} from './AuthAtoms.js'
 import {uploadProgressAtom} from './MutationAtoms.js'
 import {reloadPageAtom} from './PageAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
-import {
-  previewSessionOriginsAtom,
-  requestPreviewSessionToken
-} from './PreviewAtoms.js'
 import {shaAtom} from './SyncAtoms.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
 import type {
@@ -69,8 +54,7 @@ import type {
   EntryRouteBlock
 } from './EntrySupport.js'
 import {createEntryLanguage, entryRevisionAtom} from './EntrySupport.js'
-
-const decoder = new TextDecoder()
+import {createEntryPreviewAtoms} from './EntryPreviewAtoms.js'
 
 type EntryVersionData = EntryRecord<Record<string, unknown>>
 
@@ -688,146 +672,14 @@ export class EntryDataAtoms {
     })
   )
 
-  preview = atom(get => {
-    const type = get(this.type).type
-    if (type === MediaLibrary) return undefined
-    const typePreview = Type.preview(type)
-    if (typePreview !== undefined) return typePreview
-    const config = get(configAtom)
-    const workspace = config.workspaces[get(this.workspaceKey)]
-    if (!workspace) return config.preview
-    const root = workspace[get(this.rootKey)]
-    return (
-      (root ? getRoot(root).preview : undefined) ??
-      getWorkspace(workspace).preview ??
-      config.preview
-    )
-  })
-
-  hasPreview = atom(get => Boolean(get(this.preview)))
-
-  #previewRetry = atom(0)
-
-  retryPreviewUrl = atom(null, (get, set) => {
-    set(this.#previewRetry, current => current + 1)
-  })
-
-  previewEntryFor = dispense((locale: string | null) =>
-    atom(async get => {
-      if (!get(this.hasPreview)) return null
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
-      const language = this.languages(sourceLocale)
-      const activeVersion = await get(language.activeVersionResource)
-      const node = await get(this.selectedNodeFor(locale))
-      const value = get(node.value)
-      if (!isRecord(value)) return activeVersion
-      const title =
-        typeof value.title === 'string' ? value.title : activeVersion.title
-      const path =
-        typeof value.path === 'string' ? value.path : activeVersion.path
-      return {
-        ...activeVersion,
-        title,
-        path,
-        data: value
-      }
-    })
-  )
-
-  #previewPayloadSignal = atom(get => {
-    if (get(this.preview) !== true) return undefined
-    const selected = get(this.selectedVersion)
-    const currentNode = get(this.currentlyEditing)
-    const selectedKey =
-      selected.type === 'status' ? selected.status : selected.ref
-    return [selected.type, selectedKey, currentNode && get(currentNode.value)]
-  })
-  previewPayloadSignal = debounce(this.#previewPayloadSignal, 250)
-
-  updatePreviewPayload = atom(null, async get => {
-    if (get(this.preview) !== true) return undefined
-    const node = await get(this.selectedNode)
-    const value = get(node.value)
-    if (!isRecord(value)) return undefined
-    const sha = await get(shaAtom)
-    if (!sha) return undefined
-
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    const activeVersion = await get(this.languages(locale).activeVersion)
-    if (!activeVersion) return undefined
-    const selected = get(this.selectedVersion)
-    const status =
-      selected.type === 'status' ? selected.status : activeVersion.status
-
-    const nextTitle =
-      typeof value.title === 'string' ? value.title : activeVersion.title
-    const nextPath =
-      typeof value.path === 'string' ? value.path : activeVersion.path
-    const nextVersion = {
-      ...activeVersion,
-      title: nextTitle,
-      path: nextPath,
-      data: value,
-      status
-    }
-    const schema = get(configAtom).schema
-    const baseText = decoder.decode(
-      JsonLoader.format(
-        schema,
-        createRecord(activeVersion, activeVersion.status)
-      )
-    )
-    const nextText = decoder.decode(
-      JsonLoader.format(schema, createRecord(nextVersion, status))
-    )
-    const patch = await createFilePatch(baseText, nextText)
-    return encodePreviewPayload({
-      locale: activeVersion.locale,
-      entryId: activeVersion.id,
-      contentHash: sha,
-      status,
-      patch
-    })
-  })
-
-  previewUrlFor = dispense((locale: string | null) =>
-    atom(async get => {
-      if (get(this.preview) !== true) return undefined
-      get(this.#previewRetry)
-      const client = get(clientAtom)
-      if (!client || typeof client.previewToken !== 'function') return undefined
-      const config = get(configAtom)
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
-      const activeVersion = await get(
-        this.languages(sourceLocale).activeVersionResource
-      )
-      if (!activeVersion) return undefined
-      try {
-        const base = new URL(
-          config.handlerUrl ?? '',
-          Config.baseUrl(config) ??
-            (typeof location === 'undefined'
-              ? 'http://localhost'
-              : location.href)
-        )
-        const origin = base.origin
-        if (get(previewSessionOriginsAtom).has(origin))
-          return new URL(activeVersion.url, origin).toString()
-
-        const previewToken = await requestPreviewSessionToken(
-          get(previewTokenRequestsAtom),
-          origin,
-          client
-        )
-        base.searchParams.set('preview', previewToken)
-        base.searchParams.set('returnTo', activeVersion.url)
-        return base.toString()
-      } catch {
-        return undefined
-      }
-    })
-  )
+  #previewAtoms = createEntryPreviewAtoms(this)
+  preview = this.#previewAtoms.preview
+  hasPreview = this.#previewAtoms.hasPreview
+  retryPreviewUrl = this.#previewAtoms.retryPreviewUrl
+  previewEntryFor = this.#previewAtoms.previewEntryFor
+  previewPayloadSignal = this.#previewAtoms.previewPayloadSignal
+  updatePreviewPayload = this.#previewAtoms.updatePreviewPayload
+  previewUrlFor = this.#previewAtoms.previewUrlFor
 
   languages = dispense((locale: string | null) => {
     return createEntryLanguage(this, locale)

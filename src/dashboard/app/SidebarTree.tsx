@@ -21,28 +21,23 @@ import {
   RiFlashlightFill
 } from '../icons.js'
 import {createTreeSelection} from '../atoms/Contracts.js'
-import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
-import type {
-  EntryAtoms,
-  EntryDataAtoms
-} from '../atoms/EntryAtoms.js'
+import type {EntryAtoms, EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
 import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
 import {
   createTree,
+  currentRootAtom,
+  currentWorkspaceAtom,
   type TreeAtoms,
   type WorkspaceAtoms
 } from '../atoms/WorkspaceAtoms.js'
+import {routeAtom} from '../atoms/NavigationAtoms.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
-
-interface SidebarTreeProps {
-  dashboard: DashboardAtoms
-}
 
 export interface SidebarTreeExplorerProps {
   ariaLabel?: string
@@ -350,15 +345,13 @@ function SidebarTreeContent({
   )
 }
 
-export const SidebarTree = memo(function SidebarTree({
-  dashboard
-}: SidebarTreeProps) {
-  const workspace = useAtomValue(dashboard.currentWorkspace)
+export const SidebarTree = memo(function SidebarTree() {
+  const workspace = useAtomValue(currentWorkspaceAtom)
   assert(workspace, 'No workspace selected')
   const selectedWorkspace = workspace
-  const currentRoot = useAtomValue(dashboard.currentRoot)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
+  const currentRoot = useAtomValue(currentRootAtom)
+  const route = useAtomValue(routeAtom)
+  const setRoute = useSetAtom(routeAtom)
   function onRootPress() {
     if (!currentRoot) return
     setRoute({

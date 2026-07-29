@@ -3,22 +3,26 @@ import styler from '@alinea/styler'
 import {atom, type Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
-import {type EntryDataAtoms, type EntryAtoms} from '../atoms/EntryAtoms.js'
+import {
+  entryAtoms,
+  type EntryDataAtoms,
+  type EntryAtoms
+} from '../atoms/EntryAtoms.js'
 import type {
   DashboardMenuItem,
   ExplorerLocation
 } from '../atoms/ExplorerAtoms.js'
-import {dashboardAtoms} from '../atoms/DashboardAtoms.js'
-import {useDashboard} from '../hooks.js'
+import {workspacesAtom} from '../atoms/SelectionAtoms.js'
+import {workspaceAtoms} from '../atoms/WorkspaceAtoms.js'
 import css from './LocationBreadcrumbs.module.css'
 
 const styles = styler(css)
 
 export const workspaceBreadcrumbItemsAtom = atom(get => {
-  const workspaces = get(dashboardAtoms.workspaces)
+  const workspaces = get(workspacesAtom)
   return workspaces.map(workspace => ({
     id: workspace,
-    label: get(dashboardAtoms.workspace(workspace).label)
+    label: get(workspaceAtoms(workspace).label)
   }))
 })
 
@@ -121,8 +125,7 @@ function ParentBreadcrumbs({
   showLeadingSeparator,
   setParentId
 }: ParentBreadcrumbsProps) {
-  const dashboard = useDashboard()
-  const entry = dashboard.entries(parentId)
+  const entry = entryAtoms(parentId)
   const {data} = useAtomValue(entry.data)
   if (!data) return null
   return (
@@ -172,8 +175,7 @@ export function LocationBreadcrumbs({
   enableWorkspace = false,
   enableRoot = false
 }: LocationBreadcrumbsProps) {
-  const dashboard = useDashboard()
-  const workspace = dashboard.workspace(location.workspace)
+  const workspace = workspaceAtoms(location.workspace)
   const roots = useAtomValue(workspace.roots)
   const root = workspace.root(location.root ?? roots[0])
   const setWorkspace = (workspace: string) => {

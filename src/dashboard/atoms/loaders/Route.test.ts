@@ -4,7 +4,7 @@ import {
   createDashboardAtomFixture,
   createDashboardStore,
   DashboardTestPage
-} from '#test/DashboardAtomsFixture.js'
+} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
 import {configAtom} from '../CoreAtoms.js'

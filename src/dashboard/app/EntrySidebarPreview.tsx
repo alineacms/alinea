@@ -11,7 +11,10 @@ import {
   IcRoundRefresh
 } from '../icons.js'
 import type {EntryDataAtoms} from '../atoms/EntryAtoms.js'
-import {useDashboard} from '../hooks.js'
+import {
+  markPreviewSessionReadyAtom,
+  previewMetadataAtom
+} from '../atoms/index.js'
 import type {EntrySidebarData} from '../atoms/loaders/Entry.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
@@ -169,9 +172,8 @@ function EntrySidebarBrowserPreview({
   const previewPayload = useRef<string | undefined>(undefined)
   const [frameVersion, setFrameVersion] = useState(0)
   const hasPreviewListener = useRef(false)
-  const dashboard = useDashboard()
-  const setMetadata = useSetAtom(dashboard.previewMetadata)
-  const markPreviewSessionReady = useSetAtom(dashboard.markPreviewSessionReady)
+  const setMetadata = useSetAtom(previewMetadataAtom)
+  const markPreviewSessionReady = useSetAtom(markPreviewSessionReadyAtom)
 
   const targetOrigin = useMemo(() => {
     if (!previewUrl) return undefined

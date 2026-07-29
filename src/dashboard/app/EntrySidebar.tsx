@@ -51,7 +51,8 @@ export interface EntrySidebarProps {
 
 export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
-  const sidebar = useAtomValue(page.sidebarResource)
+  const sidebarState = useAtomValue(page.sidebar)
+  const sidebar = sidebarState.data ?? {type: 'closed'}
   const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
@@ -62,7 +63,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
     : allowedTabs[0]
 
   return (
-    <Sidebar>
+    <Sidebar aria-busy={sidebarState.pending}>
       <Tabs
         className={styles.EntrySidebar.tabs()}
         selectedKey={selectedKey}

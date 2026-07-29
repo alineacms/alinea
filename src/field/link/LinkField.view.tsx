@@ -38,7 +38,6 @@ import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
-  useDashboard,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -53,7 +52,12 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '#/dashboard/atoms/EntryAtoms.js'
+import {
+  entryAtoms,
+  routeAtom,
+  type EntryDataAtoms,
+  type EntryAtoms
+} from '#/dashboard/atoms/index.js'
 import type {ExplorerOptions} from '#/dashboard/atoms/ExplorerAtoms.js'
 import {currentEntryAtom} from '#/dashboard/atoms/PageAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -168,8 +172,7 @@ interface EntryRowProps {
 }
 
 function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
-  const dashboard = useDashboard()
-  const entry = dashboard.entries(entryId)
+  const entry = entryAtoms(entryId)
   const {pending, data, error} = useAtomValue(entry.data)
   if (data)
     return (
@@ -986,9 +989,8 @@ function EntryAnchorFieldInner({
   anchor,
   onChange
 }: EntryAnchorFieldInnerProps) {
-  const dashboard = useDashboard()
   const entryAnchorsAtom = useMemo(() => {
-    const entry = dashboard.entries(entryId)
+    const entry = entryAtoms(entryId)
     return unwrap(
       atom(async get => {
         const {data} = await get(entry.readyState)
@@ -997,7 +999,7 @@ function EntryAnchorFieldInner({
       }),
       previous => previous ?? []
     )
-  }, [dashboard, entryId])
+  }, [entryId])
   const entryAnchors = useAtomValue(entryAnchorsAtom)
   const anchors = useMemo(() => {
     return entryAnchors.map(anchor => ({
@@ -1071,8 +1073,7 @@ function EntryLinkMetaLabel({
   customLabel,
   entryId
 }: EntryLinkMetaLabelProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data) {
     return <ResolvedLinkMetaLabel className={className} label={customLabel} />
   }
@@ -1155,8 +1156,7 @@ interface EntryLinkImagePreviewProps {
 }
 
 function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data)
     return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
   return <LoadedEntryLinkImagePreview entry={data} />
@@ -1196,8 +1196,7 @@ function EntryLinkTypeBadge({
   fallbackLabel,
   ...props
 }: EntryLinkTypeBadgeProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data) {
     return (
       <Badge {...props} icon={fallbackIcon} size="small">
@@ -1243,8 +1242,7 @@ function EntryLinkLabelField({
   isDisabled,
   onChange
 }: EntryLinkLabelFieldProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (data) {
     return (
       <LoadedEntryLinkLabelField
@@ -1350,9 +1348,8 @@ function EntryLinkRowActions({
   entryId,
   type
 }: EntryLinkRowActionsProps) {
-  const dashboard = useDashboard()
-  const route = useAtomValue(dashboard.route)
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const route = useAtomValue(routeAtom)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data) {
     return (
       <Button

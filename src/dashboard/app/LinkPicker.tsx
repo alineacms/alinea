@@ -1,8 +1,12 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState} from 'react'
-import type {ExplorerOptions} from '../atoms/ExplorerAtoms.js'
-import {useDashboard} from '../hooks.js'
+import {
+  createExplorerAtoms,
+  selectedRootAtom,
+  selectedWorkspaceAtom,
+  type ExplorerOptions
+} from '../atoms/index.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -43,15 +47,14 @@ interface ExplorerModalProps {
 
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const root = useAtomValue(dashboard.selectedRoot)
+  const workspace = useAtomValue(selectedWorkspaceAtom)
+  const root = useAtomValue(selectedRootAtom)
   const location = options.location ?? {
     workspace,
     root: root ?? undefined
   }
   const [explorer] = useState(() =>
-    dashboard.explore(location, {
+    createExplorerAtoms(location, {
       ...options,
       searchDepth: 'all'
     })

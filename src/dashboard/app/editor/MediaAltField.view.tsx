@@ -5,12 +5,8 @@ import type {
   MediaAltValue
 } from '#/core/media/MediaAltField.js'
 import {assert} from '#/core/util/Assert.js'
-import {
-  useDashboard,
-  useField,
-  useFieldError,
-  useFieldOptions
-} from '#/dashboard/hooks.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
+import {routeAtom, workspaceAtoms} from '../../atoms/index.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {LocalisedFieldTabs} from '#/field/localiser/LocalisedFieldTabs.js'
 import {useAtomValue} from 'jotai'
@@ -21,12 +17,11 @@ export interface MediaAltFieldViewProps {
 }
 
 export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
-  const dashboard = useDashboard()
-  const route = useAtomValue(dashboard.route)
+  const route = useAtomValue(routeAtom)
   assert(route.workspace, 'Media alt field requires an active workspace')
   assert(route.root, 'Media alt field requires an active root')
   const i18n = useAtomValue(
-    dashboard.workspace(route.workspace).root(route.root).mediaI18n
+    workspaceAtoms(route.workspace).root(route.root).mediaI18n
   )
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field)

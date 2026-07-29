@@ -4,17 +4,19 @@ import type {ComponentType} from 'react'
 import {useMemo} from 'react'
 import {renderToString} from 'react-dom/server'
 import {keepPrevious} from '../atoms/AtomUtils.js'
-import {dashboardAtoms} from '../atoms/DashboardAtoms.js'
+import {focusedAtom} from '../atoms/DashboardViewAtoms.js'
+import {routeAtom} from '../atoms/NavigationAtoms.js'
+import {currentWorkspaceAtom} from '../atoms/WorkspaceAtoms.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {LogoShape} from './LogoShape.js'
 
 export const dashboardTitleAtom = keepPrevious(
   atom(async get => {
-    const route = get(dashboardAtoms.route)
+    const route = get(routeAtom)
     if (route.page === 'users') return 'Users'
-    const workspace = get(dashboardAtoms.currentWorkspace)
+    const workspace = get(currentWorkspaceAtom)
     const workspaceLabel = workspace ? get(workspace.label) : 'Alinea'
-    const focused = await get(dashboardAtoms.focused)
+    const focused = await get(focusedAtom)
     let viewLabel = workspaceLabel
     if (focused) {
       if ('entry' in focused) viewLabel = get(focused.entry.label)
@@ -29,7 +31,7 @@ export const dashboardTitleAtom = keepPrevious(
 )
 
 export const dashboardFaviconAtom = atom(get => {
-  const workspace = get(dashboardAtoms.currentWorkspace)
+  const workspace = get(currentWorkspaceAtom)
   if (!workspace) return {color: '#7c3aed'}
   return {
     color: get(workspace.color),

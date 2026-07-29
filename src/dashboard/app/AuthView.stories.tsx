@@ -19,24 +19,21 @@ interface AuthViewStoryProps {
 
 function createDashboard(
   state: DashboardAuthState
-): AuthViewProps['dashboard'] {
+): NonNullable<AuthViewProps['auth']> {
   const authState = atom<DashboardAuthState>(state)
-  return {
-    auth: atom(
-      get => get(authState),
-      (get, set, action: AuthAction = {type: 'check'}) => {
-        if (action.type === 'setupCloud')
-          set(authState, {status: 'redirecting'})
-      }
-    )
-  }
+  return atom(
+    get => get(authState),
+    (get, set, action: AuthAction = {type: 'check'}) => {
+      if (action.type === 'setupCloud') set(authState, {status: 'redirecting'})
+    }
+  )
 }
 
 function AuthViewStory({state, children}: AuthViewStoryProps) {
   const dashboard = createDashboard(state)
   return (
     <div style={storyStyle}>
-      <AuthView dashboard={dashboard} />
+      <AuthView auth={dashboard} />
       {children}
     </div>
   )

@@ -7,7 +7,7 @@ import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
 import {useEditor} from '#/dashboard/editor/EditorScope.js'
 import {useField, useFieldValue} from '#/dashboard/editor/FieldHooks.js'
-import {useDashboard} from '#/dashboard/hooks.js'
+import {configAtom} from '../../atoms/index.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
@@ -29,8 +29,7 @@ const metadataFields = type('Metadata', {
 })
 
 export function FileEditor() {
-  const dashboard = useDashboard()
-  const config = useAtomValue(dashboard.config)
+  const config = useAtomValue(configAtom)
   const location = useFieldValue(MediaFile.location)
   const extension = useFieldValue(MediaFile.extension)
   const isImage = isImageExtension(extension)

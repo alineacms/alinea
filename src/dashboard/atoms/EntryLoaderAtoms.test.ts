@@ -12,7 +12,7 @@ import {
 import {
   createDashboardAtomFixture,
   dashboardTestConfig
-} from '#test/DashboardAtomsFixture.js'
+} from '#test/DashboardFixture.js'
 
 function loaderAtoms(db: LocalDB, policy: Policy) {
   const graph = atom<WriteableGraph>(db)

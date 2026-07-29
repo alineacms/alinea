@@ -17,7 +17,12 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {createDashboard, type DashboardAtoms} from './atoms/DashboardAtoms.js'
+import {authAtom} from './atoms/AuthAtoms.js'
+import {createDashboard} from './atoms/Dashboard.js'
+import {
+  prepareInitialContentAtom,
+  themeAtom
+} from './atoms/DashboardViewAtoms.js'
 
 const styles = styler(css)
 
@@ -48,22 +53,18 @@ export function App({
   )
   return (
     <DashboardScopeInternal dashboard={dashboard}>
-      <DashboardApp dashboard={dashboard} />
+      <DashboardApp />
     </DashboardScopeInternal>
   )
 }
 
-interface StoreAppProps {
-  dashboard: DashboardAtoms
-}
-
-function DashboardApp({dashboard}: StoreAppProps) {
-  useAtomValue(dashboard.theme)
-  const auth = useAtomValue(dashboard.auth)
+function DashboardApp() {
+  useAtomValue(themeAtom)
+  const auth = useAtomValue(authAtom)
   if (auth.status !== 'authenticated') {
-    return <AuthView dashboard={dashboard} />
+    return <AuthView />
   }
-  return <DashboardContent dashboard={dashboard} />
+  return <DashboardContent />
 }
 
 function DashboardLoading() {
@@ -76,13 +77,13 @@ function DashboardLoading() {
   )
 }
 
-interface DashboardBootProps extends StoreAppProps {
+interface DashboardBootProps {
   setReady: Dispatch<SetStateAction<boolean>>
 }
 
-function DashboardBoot({dashboard, setReady}: DashboardBootProps) {
+function DashboardBoot({setReady}: DashboardBootProps) {
   const [error, setError] = useState<Error>()
-  const prepare = useSetAtom(dashboard.prepareInitialContent)
+  const prepare = useSetAtom(prepareInitialContentAtom)
   useEffect(() => {
     void prepare().then(
       () => setReady(true),
@@ -94,8 +95,8 @@ function DashboardBoot({dashboard, setReady}: DashboardBootProps) {
   return <DashboardLoading />
 }
 
-function DashboardContent({dashboard}: StoreAppProps) {
+function DashboardContent() {
   const [ready, setReady] = useState(false)
-  if (ready) return <AppShell dashboard={dashboard} />
-  return <DashboardBoot dashboard={dashboard} setReady={setReady} />
+  if (ready) return <AppShell />
+  return <DashboardBoot setReady={setReady} />
 }

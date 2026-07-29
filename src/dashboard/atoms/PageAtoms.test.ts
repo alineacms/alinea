@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {createDashboardAtomFixture} from '#test/DashboardAtomsFixture.js'
+import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import {configAtom} from './CoreAtoms.js'
 import {createType} from './EditorAtoms.js'
@@ -45,7 +45,7 @@ test('entry sidebar defaults match the entry type', () => {
   expect(resolveEntrySidebarTab(mediaLibraryType, 'preview')).toBe('history')
 })
 
-test('entry page loading does not await sidebar data', async () => {
+test('open entry sidebar is prepared with the page', async () => {
   const {child, store} = await createDashboardAtomFixture()
   let sidebarLoads = 0
   const loadRoute = createRouteLoader({
@@ -79,11 +79,10 @@ test('entry page loading does not await sidebar data', async () => {
 
   expect(page.type).toBe('entry')
   if (page.type !== 'entry') return
-  expect(sidebarLoads).toBe(0)
-  const sidebar = await store.get(page.sidebarResource)
-  expect(sidebar.type).toBe('error')
   expect(sidebarLoads).toBe(1)
-  expect(sidebar.type === 'error' && sidebar.error.message).toBe(
+  const sidebar = store.get(page.sidebar)
+  expect(sidebar.data?.type).toBe('error')
+  expect(sidebar.data?.type === 'error' && sidebar.data.error.message).toBe(
     'References unavailable'
   )
 })

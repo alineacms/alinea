@@ -1,5 +1,6 @@
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/DashboardAtoms.js'
+import {createDashboard} from '#/dashboard/atoms/Dashboard.js'
+import {createExplorerAtoms} from '#/dashboard/atoms/index.js'
 import type {EntryAtoms} from '#/dashboard/atoms/EntryAtoms.js'
 import type {ExplorerAtoms} from '#/dashboard/atoms/ExplorerAtoms.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
@@ -53,7 +54,7 @@ function ExplorerTableStory({explorer}: ExplorerTableStoryProps) {
 export function Rows() {
   const explorer = useMemo(
     () =>
-      dashboard.explore({
+      createExplorerAtoms({
         workspace: 'simple',
         root: 'pages'
       }),

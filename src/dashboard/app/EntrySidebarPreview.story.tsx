@@ -1,7 +1,8 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/DashboardAtoms.js'
+import {createDashboard} from '#/dashboard/atoms/Dashboard.js'
+import {shaAtom} from '#/dashboard/atoms/index.js'
 import type {EntryDataAtoms} from '#/dashboard/atoms/EntryAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
@@ -32,7 +33,7 @@ const entry = {
   previewUrl: atom('/preview-frame'),
   previewPayloadSignal,
   updatePreviewPayload: atom(null, async get => {
-    const sha = await get(dashboard.sha)
+    const sha = await get(shaAtom)
     if (!sha) return undefined
     return JSON.stringify({sha, data: get(node.value)})
   }),

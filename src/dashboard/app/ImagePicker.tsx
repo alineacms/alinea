@@ -2,8 +2,12 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ReactNode} from 'react'
-import type {ExplorerOptions} from '../atoms/ExplorerAtoms.js'
-import {useDashboard} from '../hooks.js'
+import {
+  createExplorerAtoms,
+  selectedMediaRootAtom,
+  selectedWorkspaceAtom,
+  type ExplorerOptions
+} from '../atoms/index.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -50,15 +54,14 @@ interface ExplorerModalProps {
 
 function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const mediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const workspace = useAtomValue(selectedWorkspaceAtom)
+  const mediaRoot = useAtomValue(selectedMediaRootAtom)
   const location = options.location ?? {
     workspace,
     root: mediaRoot ?? undefined
   }
   const [explorer] = useState(() =>
-    dashboard.explore(location, {
+    createExplorerAtoms(location, {
       ...options,
       flatResults: false,
       searchDepth: 'all'

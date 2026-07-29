@@ -20,8 +20,19 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
+import {
+  canLogoutAtom,
+  currentUserAtom,
+  isLocalAtom,
+  logoutAtom,
+  setUserRolesAtom
+} from '../atoms/AuthAtoms.js'
+import {configAtom} from '../atoms/CoreAtoms.js'
+import {routeAtom} from '../atoms/NavigationAtoms.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
+import {selectedWorkspaceAtom} from '../atoms/SelectionAtoms.js'
+import {themeAtom} from '../atoms/DashboardViewAtoms.js'
+import {workspaceAtoms} from '../atoms/WorkspaceAtoms.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
@@ -30,23 +41,16 @@ const styles = styler(css)
 
 interface WorkspaceRootsProps {
   canManageMembers: boolean
-  dashboard: DashboardAtoms
 }
 
-export function WorkspaceRoots({
-  canManageMembers,
-  dashboard
-}: WorkspaceRootsProps) {
-  const selected = useAtomValue(dashboard.selectedWorkspace)
-  const workspace = dashboard.workspace(selected)
+export function WorkspaceRoots({canManageMembers}: WorkspaceRootsProps) {
+  const selected = useAtomValue(selectedWorkspaceAtom)
+  const workspace = workspaceAtoms(selected)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatarMenu
-          dashboard={dashboard}
-          canManageMembers={canManageMembers}
-        />
+        <WorkspaceAvatarMenu canManageMembers={canManageMembers} />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
@@ -55,10 +59,7 @@ export function WorkspaceRoots({
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
         <MutationQueueStatus openOnFail />
-        <WorkspaceProfileMenu
-          dashboard={dashboard}
-          canManageMembers={canManageMembers}
-        />
+        <WorkspaceProfileMenu canManageMembers={canManageMembers} />
       </div>
     </aside>
   )
@@ -88,18 +89,15 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   )
 }
 
-function WorkspaceProfileMenu({
-  canManageMembers,
-  dashboard
-}: WorkspaceRootsProps) {
-  const user = useAtomValue(dashboard.currentUser)
-  const config = useAtomValue(dashboard.config)
-  const canLogout = useAtomValue(dashboard.canLogout)
-  const isLocal = useAtomValue(dashboard.isLocal)
-  const [theme, setTheme] = useAtom(dashboard.theme)
-  const setUserRoles = useSetAtom(dashboard.setUserRoles)
-  const setRoute = useSetAtom(dashboard.route)
-  const logout = useSetAtom(dashboard.logout)
+function WorkspaceProfileMenu({canManageMembers}: WorkspaceRootsProps) {
+  const user = useAtomValue(currentUserAtom)
+  const config = useAtomValue(configAtom)
+  const canLogout = useAtomValue(canLogoutAtom)
+  const isLocal = useAtomValue(isLocalAtom)
+  const [theme, setTheme] = useAtom(themeAtom)
+  const setUserRoles = useSetAtom(setUserRolesAtom)
+  const setRoute = useSetAtom(routeAtom)
+  const logout = useSetAtom(logoutAtom)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set<Key>(user.roles)

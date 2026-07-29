@@ -59,8 +59,8 @@ type AsyncAtomKeys<Value> = Value extends unknown
 
 type AssertNoAsyncAtoms<Value extends never> = Value
 
-export type PreparedRouteBlockingAsyncFields = AssertNoAsyncAtoms<
-  Exclude<AsyncAtomKeys<PreparedRoute>, 'sidebarResource'>
+export type PreparedRouteAsyncFields = AssertNoAsyncAtoms<
+  AsyncAtomKeys<PreparedRoute>
 >
 
 export interface RouteLoaderOptions {

@@ -1,6 +1,6 @@
 import {Workspace, type WorkspaceInternal} from '#/core/Workspace.js'
 import {useAtomValue} from 'jotai'
-import {useDashboard} from '../hooks.js'
+import {configAtom, selectedWorkspaceAtom} from '../atoms/index.js'
 
 export interface DashboardWorkspace extends WorkspaceInternal {
   name: string
@@ -10,9 +10,8 @@ export interface DashboardWorkspace extends WorkspaceInternal {
  * @deprecated Compatibility hook for legacy dashboard extensions.
  */
 export function useWorkspace(): DashboardWorkspace {
-  const dashboard = useDashboard()
-  const config = useAtomValue(dashboard.config)
-  const workspaceName = useAtomValue(dashboard.selectedWorkspace)
+  const config = useAtomValue(configAtom)
+  const workspaceName = useAtomValue(selectedWorkspaceAtom)
   if (!workspaceName) throw new Error('No workspace selected')
   const workspace = config.workspaces[workspaceName]
   if (!workspace) throw new Error('No workspace found')

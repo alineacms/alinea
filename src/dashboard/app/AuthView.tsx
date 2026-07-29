@@ -3,7 +3,7 @@ import styler from '@alinea/styler'
 import {type WritableAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
-import type {AuthAction, AuthState} from '../atoms/AuthAtoms.js'
+import {authAtom, type AuthAction, type AuthState} from '../atoms/AuthAtoms.js'
 import css from './AuthView.module.css'
 
 const styles = styler(css)
@@ -13,12 +13,12 @@ interface AuthViewDashboard {
 }
 
 export interface AuthViewProps {
-  dashboard: AuthViewDashboard
+  auth?: AuthViewDashboard['auth']
 }
 
-export function AuthView({dashboard}: AuthViewProps) {
-  const auth = useAtomValue(dashboard.auth)
-  const setAuth = useSetAtom(dashboard.auth)
+export function AuthView({auth: target = authAtom}: AuthViewProps) {
+  const auth = useAtomValue(target)
+  const setAuth = useSetAtom(target)
 
   if (auth.status === 'loading' || auth.status === 'redirecting') {
     return <AuthViewLoader />

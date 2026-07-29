@@ -3,7 +3,10 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import type {DashboardAtoms} from '../atoms/DashboardAtoms.js'
+import {navigationAtoms} from '../atoms/NavigationAtoms.js'
+import {pageAtom} from '../atoms/PageAtoms.js'
+import {workspacesAtom} from '../atoms/SelectionAtoms.js'
+import {currentWorkspaceAtom} from '../atoms/WorkspaceAtoms.js'
 import type {PreparedRoute} from '../atoms/loaders/Route.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
@@ -18,64 +21,51 @@ import {WorkspaceRoots} from './WorkspaceRoots.js'
 
 const styles = styler(css)
 
-interface AppShellProps {
-  dashboard: DashboardAtoms
-}
-
-export function AppShell({dashboard}: AppShellProps) {
-  const page = useAtomValue(dashboard.page)
-  const navigationPending = useAtomValue(dashboard.navigation.pending)
+export function AppShell() {
+  const page = useAtomValue(pageAtom)
+  const navigationPending = useAtomValue(navigationAtoms.pending)
   return (
     <main
       aria-busy={navigationPending !== undefined}
       className={styles.AppShell()}
       data-navigation-pending={navigationPending ? '' : undefined}
     >
-      <AppShellContent dashboard={dashboard} page={page} />
+      <AppShellContent page={page} />
     </main>
   )
 }
 
-interface AppShellContentProps extends AppShellProps {
+interface AppShellContentProps {
   page: PreparedRoute
 }
 
-function AppShellContent({dashboard, page}: AppShellContentProps) {
-  const workspaces = useAtomValue(dashboard.workspaces)
+function AppShellContent({page}: AppShellContentProps) {
+  const workspaces = useAtomValue(workspacesAtom)
 
   if (page.type === 'users' && page.canManageMembers) {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <UsersPageSidebar dashboard={dashboard} />
+        <UsersPageSidebar />
         <div className={styles.AppShellContent()}>
-          <UsersPage dashboard={dashboard} />
+          <UsersPage />
         </div>
       </div>
     )
   }
 
   if (workspaces.length === 0) {
-    return (
-      <NoWorkspaceAccess
-        canManageMembers={page.canManageMembers}
-        dashboard={dashboard}
-      />
-    )
+    return <NoWorkspaceAccess canManageMembers={page.canManageMembers} />
   }
 
-  return <AppShellWorkspace dashboard={dashboard} page={page} />
+  return <AppShellWorkspace page={page} />
 }
 
 interface NoWorkspaceAccessProps {
   canManageMembers: boolean
-  dashboard: DashboardAtoms
 }
 
-function NoWorkspaceAccess({
-  canManageMembers,
-  dashboard
-}: NoWorkspaceAccessProps) {
-  const setRoute = useSetAtom(dashboard.route)
+function NoWorkspaceAccess({canManageMembers}: NoWorkspaceAccessProps) {
+  const setRoute = useSetAtom(navigationAtoms.route)
 
   return (
     <div className={styles.AppShellContent()}>
@@ -102,18 +92,15 @@ function NoWorkspaceAccess({
   )
 }
 
-function AppShellWorkspace({dashboard, page}: AppShellContentProps) {
-  const currentWorkspace = useAtomValue(dashboard.currentWorkspace)
+function AppShellWorkspace({page}: AppShellContentProps) {
+  const currentWorkspace = useAtomValue(currentWorkspaceAtom)
   assert(currentWorkspace, 'No workspace selected')
   const roots = useAtomValue(currentWorkspace.roots)
 
   if (roots.length === 0) {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <WorkspaceRoots
-          dashboard={dashboard}
-          canManageMembers={page.canManageMembers}
-        />
+        <WorkspaceRoots canManageMembers={page.canManageMembers} />
         <div className={styles.AppShellContent()}>
           <Sidebar />
           <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -132,36 +119,30 @@ function AppShellWorkspace({dashboard, page}: AppShellContentProps) {
 
   return (
     <div className={styles.AppShellWorkspace()}>
-      <WorkspaceRoots
-        dashboard={dashboard}
-        canManageMembers={page.canManageMembers}
-      />
+      <WorkspaceRoots canManageMembers={page.canManageMembers} />
       <div className={styles.AppShellContent()}>
         <Sidebar>
           <SidebarHeader>
-            <WorkspaceMenu
-              dashboard={dashboard}
-              canManageMembers={page.canManageMembers}
-            />
+            <WorkspaceMenu canManageMembers={page.canManageMembers} />
           </SidebarHeader>
 
-          <SidebarTree dashboard={dashboard} />
+          <SidebarTree />
         </Sidebar>
 
         <Suspense fallback={null}>
           <DashboardMeta />
         </Suspense>
 
-        <EditorBoundary dashboard={dashboard} page={page} />
+        <EditorBoundary page={page} />
       </div>
     </div>
   )
 }
 
-function EditorBoundary({dashboard, page}: AppShellContentProps) {
+function EditorBoundary({page}: AppShellContentProps) {
   return (
     <ErrorBoundary>
-      <Editor dashboard={dashboard} page={page} />
+      <Editor page={page} />
     </ErrorBoundary>
   )
 }

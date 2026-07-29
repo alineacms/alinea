@@ -1,7 +1,7 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {useDashboard} from '#/dashboard/hooks.js'
+import {viewAtom} from '../atoms/index.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
@@ -18,12 +18,8 @@ export interface CompactFieldProps {
 
 export function CompactField({field, value}: CompactFieldProps) {
   const customView = Field.compactView(field)
-  const dashboard = useDashboard()
   const customViewKey = typeof customView === 'string' ? customView : ''
-  const customViewAtom = useMemo(
-    () => dashboard.view(customViewKey),
-    [customViewKey, dashboard]
-  )
+  const customViewAtom = useMemo(() => viewAtom(customViewKey), [customViewKey])
   const ResolvedView = useAtomValue(customViewAtom) as
     | ComponentType<CompactFieldProps>
     | undefined

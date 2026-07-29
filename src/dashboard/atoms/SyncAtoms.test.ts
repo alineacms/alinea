@@ -3,10 +3,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore} from 'jotai'
 import {eventsAtom, graphAtom} from './CoreAtoms.js'
 import {shaAtom, syncAtom} from './SyncAtoms.js'
-import {
-  createDashboardAtomFixture,
-  TestEvents
-} from '#test/DashboardAtomsFixture.js'
+import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reading content state never synchronizes the graph', async () => {
   const {db} = await createDashboardAtomFixture()

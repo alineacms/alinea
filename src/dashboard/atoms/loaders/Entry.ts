@@ -4,6 +4,7 @@ import {atom, type Atom, type Getter} from 'jotai'
 import type {EntryDataAtoms} from '../EntryAtoms.js'
 import type {EntrySidebarTab} from '../Contracts.js'
 import type {ReactiveNode} from '../ReactiveNode.js'
+import {withPending} from '../AtomUtils.js'
 import {
   entrySidebarOpenAtom,
   entrySidebarTabAtom,
@@ -21,7 +22,7 @@ export interface PreparedEntryPage {
   parentNeedsTranslation: boolean
   languageVersion: EntryRecord<Record<string, unknown>>
   versions: Map<EntryStatus, EntryRecord<Record<string, unknown>>>
-  sidebarResource: Atom<Promise<EntrySidebarData>>
+  sidebar: Atom<EntrySidebarState>
 }
 
 export type EntryPageData = PreparedEntryPage
@@ -32,6 +33,11 @@ export type EntrySidebarData =
   | PreviewSidebarData
   | HistorySidebarData
   | ReferencesSidebarData
+
+export interface EntrySidebarState {
+  data: EntrySidebarData | undefined
+  pending: boolean
+}
 
 export interface ClosedSidebarData {
   type: 'closed'
@@ -138,6 +144,14 @@ export async function loadEntryPage(
     get(entry.currentEntryFor(locale)),
     get(entry.parentNeedsTranslationFor(locale))
   ])
+  const initialSidebar = get(entrySidebarOpenAtom)
+    ? await get(sidebarResource)
+    : undefined
+  const sidebarState = withPending(sidebarResource)
+  const sidebar = atom((get): EntrySidebarState => {
+    const [pending, data] = get(sidebarState)
+    return {pending, data: data ?? initialSidebar}
+  })
   return {
     type: 'entry',
     entry,
@@ -148,6 +162,6 @@ export async function loadEntryPage(
     parentNeedsTranslation,
     languageVersion,
     versions,
-    sidebarResource
+    sidebar
   }
 }
