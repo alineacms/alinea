@@ -255,7 +255,6 @@ function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
       <DashboardModal>
         <CreateEntry />
       </DashboardModal>
-      <Button size="icon" icon={IcRoundAdd} aria-label="Create entry" />
     </DialogTrigger>
   )
 }
