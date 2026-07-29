@@ -19,7 +19,7 @@ import {configAtom, workspaceAtoms} from './WorkspaceAtoms.js'
 export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
 export {createDashboardNavigation} from './RoutingAtoms.js'
 
-export interface DashboardInput {
+export interface Dashboard {
   graph: WriteableGraph
   config: Config
   events: EventTarget
@@ -27,6 +27,8 @@ export interface DashboardInput {
   views: Record<string, ComponentType>
   options: DashboardOptions
 }
+
+export type DashboardInput = Dashboard
 
 export interface DashboardCreateEntryRequest {
   workspace: string
@@ -54,7 +56,7 @@ export function createDashboard(
   client: LocalConnection,
   views: Record<string, ComponentType>,
   options: DashboardOptions = {}
-): DashboardInput {
+): Dashboard {
   return {graph, config, events, client, views, options}
 }
 

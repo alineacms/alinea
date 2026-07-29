@@ -1,5 +1,9 @@
 export * from './UserAtoms.js'
-export type {DashboardCreateEntryRequest, DashboardInput} from './Dashboard.js'
+export type {
+  Dashboard,
+  DashboardCreateEntryRequest,
+  DashboardInput
+} from './Dashboard.js'
 export * from './EditorAtoms.js'
 export * from './EntryAtoms.js'
 export * from './EntryPreviewAtoms.js'

@@ -1,4 +1,5 @@
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {createStore, Provider, useAtomValue} from 'jotai'
@@ -14,13 +15,12 @@ import {
 import {
   dashboardEffectsAtom,
   dashboardRouteLoader,
-  type DashboardInput
+  type Dashboard
 } from './atoms/Dashboard.js'
 import {previewTokenRequestsAtom} from './atoms/EntryPreviewAtoms.js'
 import {eventsAtom, graphAtom} from './atoms/GraphAtoms.js'
 import {
   createDashboardNavigation,
-  currentEntryAtom,
   navigationAtom,
   routeLoaderAtom
 } from './atoms/RoutingAtoms.js'
@@ -41,20 +41,21 @@ export * from './editor/FieldHooks.js'
 // hooks in favor of direct atom access; dashboard atoms are implementation
 // details and are not part of the consumer API.
 
-const dashboardContext = createContext<DashboardInput | null>(null)
+export type {Dashboard} from './atoms/Dashboard.js'
+
+const dashboardContext = createContext<Dashboard | null>(null)
+const entryContext = createContext<EntryRecord<Record<string, unknown>> | null>(
+  null
+)
 
 export function DashboardScopeInternal({
   children,
-  dashboard,
-  store: providedStore
-}: PropsWithChildren<{
-  dashboard: DashboardInput
-  store?: ReturnType<typeof createStore>
-}>) {
+  dashboard
+}: PropsWithChildren<{dashboard: Dashboard}>) {
   const [store] = useState(createStore)
   return createElement(
     Provider,
-    {store: providedStore ?? store},
+    {store},
     createElement(
       dashboardContext.Provider,
       {value: dashboard},
@@ -66,7 +67,7 @@ export function DashboardScopeInternal({
 function DashboardState({
   children,
   dashboard
-}: PropsWithChildren<{dashboard: DashboardInput}>) {
+}: PropsWithChildren<{dashboard: Dashboard}>) {
   const navigation = useMemo(
     () =>
       createDashboardNavigation(
@@ -96,27 +97,50 @@ function DashboardState({
 /**
  * Returns the active dashboard from the nearest dashboard scope.
  */
-export function useDashboard(): DashboardInput {
+export function useDashboard(): Dashboard {
   const dashboard = useContext(dashboardContext)
   assert(dashboard, 'Dashboard not found in context')
   return dashboard
 }
 
+/**
+ * Returns the active dashboard policy.
+ */
 export function usePolicy() {
   return useAtomValue(policyAtom)
 }
 
+/**
+ * Returns the authenticated dashboard user, or null when no user is active.
+ */
 export function useUser(): User | null {
   return useAtomValue(userAtom) ?? null
 }
 
+/**
+ * Returns the dashboard graph database for direct read queries.
+ */
 export function useGraph(): WriteableGraph {
   return useAtomValue(graphAtom)
 }
 
+export interface EntryScopeProps {
+  entry: EntryRecord<Record<string, unknown>> | null
+}
+
+export function EntryScope({
+  children,
+  entry
+}: PropsWithChildren<EntryScopeProps>) {
+  return createElement(entryContext.Provider, {value: entry}, children)
+}
+
 /**
- * Returns the entry currently selected in the dashboard.
+ * Returns the selected entry version as a plain Entry object.
+ *
+ * Returns null outside an entry scope. The returned value follows the
+ * dashboard's locale and version selection and does not expose internal atoms.
  */
-export function useEntry() {
-  return useAtomValue(currentEntryAtom)
+export function useEntry(): EntryRecord<Record<string, unknown>> | null {
+  return useContext(entryContext)
 }

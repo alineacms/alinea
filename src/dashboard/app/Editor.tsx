@@ -8,29 +8,16 @@ import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {
-  type ComponentType,
-  memo,
-  PropsWithChildren,
-  useEffect,
-  useMemo
-} from 'react'
-import {
-  EditorScope,
-  useEditor,
-  useOptionalEditor
-} from '../editor/EditorScope.js'
+import {type ComponentType, memo, PropsWithChildren, useEffect} from 'react'
+import {EditorScope, useEditor, useNodeEditor} from '../editor/EditorScope.js'
 import {useFieldOptions, useFieldView} from '../editor/FieldHooks.js'
+import {EntryScope} from '../hooks.js'
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
   IcRoundEdit
 } from '../icons.js'
-import {
-  createEditor,
-  createSection,
-  type SectionAtoms
-} from '../atoms/EditorAtoms.js'
+import {createSection, type SectionAtoms} from '../atoms/EditorAtoms.js'
 import {entryAtoms, type EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {entrySidebarOpenAtom} from '../atoms/EntrySupport.js'
 import {routeAtom} from '../atoms/RoutingAtoms.js'
@@ -270,6 +257,14 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
 }
 
 function EntryEditor({page}: EntryEditorProps) {
+  return (
+    <EntryScope entry={page.currentEntry}>
+      <EntryEditorContent page={page} />
+    </EntryScope>
+  )
+}
+
+function EntryEditorContent({page}: EntryEditorProps) {
   const {entry, node} = page
   const View = useAtomValue(entry.customView)
   const isUntranslated = useAtomValue(entry.untranslated)
@@ -402,18 +397,6 @@ interface NodeEditorProps extends PropsWithChildren {
   node: ReactiveNode<object>
   resource?: Resource
   type: Type
-}
-
-function useNodeEditor(
-  node: ReactiveNode<object>,
-  type: Type,
-  resource?: Resource
-) {
-  const parent = useOptionalEditor()
-  return useMemo(
-    () => createEditor(type, node, parent ?? undefined, resource),
-    [node, parent, resource, type]
-  )
 }
 
 export function NodeEditor({

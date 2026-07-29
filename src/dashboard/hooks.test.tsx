@@ -1,4 +1,5 @@
 import {act, cleanup, render, screen} from '#test/react.js'
+import type {Entry} from '#/core/Entry.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {Config} from '#/index.js'
@@ -6,11 +7,15 @@ import {createTestConnection} from '#test/CreateConnection.js'
 import {TestEvents} from '#test/DashboardFixture.js'
 import {useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
-import {DashboardScopeInternal} from './hooks.js'
+import {
+  DashboardScopeInternal,
+  EntryScope,
+  useDashboard,
+  useEntry
+} from './hooks.js'
 import {configAtom} from './atoms/WorkspaceAtoms.js'
 import {createDashboard} from './atoms/Dashboard.js'
 import {entryRevisionAtom} from './atoms/EntrySupport.js'
-import {useDashboard} from './hooks.js'
 
 afterEach(cleanup)
 
@@ -48,7 +53,7 @@ function DashboardIdentity({
   )
 }
 
-test('useDashboard returns the nearest dashboard input', () => {
+test('useDashboard returns the nearest dashboard model', () => {
   const dashboard = createTestDashboard('main')
 
   render(
@@ -58,6 +63,50 @@ test('useDashboard returns the nearest dashboard input', () => {
   )
 
   expect(screen.getByText('same dashboard')).toBeDefined()
+})
+
+function EntryTitle() {
+  return <span>{useEntry()?.title ?? 'no entry'}</span>
+}
+
+test('useEntry returns the plain entry from the nearest entry scope', () => {
+  const entry: Entry = {
+    active: true,
+    childrenDir: '',
+    data: {},
+    fileHash: '',
+    filePath: '',
+    id: 'entry',
+    index: '0',
+    level: 0,
+    locale: null,
+    main: true,
+    parentDir: '',
+    parentId: null,
+    parents: [],
+    path: 'entry',
+    root: 'pages',
+    rowHash: '',
+    searchableText: '',
+    seeded: null,
+    status: 'published',
+    title: 'Scoped entry',
+    type: 'Page',
+    url: '/entry',
+    workspace: 'main'
+  }
+
+  render(
+    <>
+      <EntryTitle />
+      <EntryScope entry={entry}>
+        <EntryTitle />
+      </EntryScope>
+    </>
+  )
+
+  expect(screen.getByText('no entry')).toBeDefined()
+  expect(screen.getByText('Scoped entry')).toBeDefined()
 })
 
 function DashboardRevision() {

@@ -1,7 +1,16 @@
+import type {EntryAnchorTarget} from '#/core/Field.js'
+import type {Resource} from '#/core/Role.js'
+import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import {useAtomValue} from 'jotai'
 import type {PropsWithChildren} from 'react'
-import {createContext, createElement, useContext} from 'react'
-import type {EditorAtoms} from '../atoms/EditorAtoms.js'
+import {createContext, createElement, useContext, useMemo} from 'react'
+import {
+  createEditor,
+  rootEditor,
+  type EditorAtoms
+} from '../atoms/EditorAtoms.js'
+import type {ReactiveNode} from '../atoms/ReactiveNode.js'
 
 const editorContext = createContext<EditorAtoms | null>(null)
 
@@ -24,4 +33,26 @@ export function useEditor(): EditorAtoms {
   const editor = useOptionalEditor()
   assert(editor, 'Editor scope not found')
   return editor
+}
+
+/**
+ * Creates an editor for a nested reactive node.
+ */
+export function useNodeEditor(
+  node: ReactiveNode<object>,
+  type: Type,
+  resource?: Resource
+): EditorAtoms {
+  const parent = useOptionalEditor()
+  return useMemo(
+    () => createEditor(type, node, parent ?? undefined, resource),
+    [node, parent, resource, type]
+  )
+}
+
+/**
+ * Returns all anchors in the entry currently being edited.
+ */
+export function useEntryAnchors(): Array<EntryAnchorTarget> {
+  return useAtomValue(rootEditor(useEditor()).anchors)
 }
