@@ -5,6 +5,7 @@ import {
   dashboardEntryDragItem,
   dashboardEntryDragType,
   dashboardEntryDragTypes,
+  dispense,
   requiredAtom,
   uploadSizeError
 } from './AtomUtils.js'
@@ -42,6 +43,15 @@ test('required atoms store functions without evaluating them', () => {
 
   expect(store.get(callbackAtom)).toBe(callback)
   expect(store.get(callbackAtom)('value')).toBe('received value')
+})
+
+test('dispense weakly caches values by object identity', () => {
+  const family = dispense((_key: object) => requiredAtom<number>('test'))
+  const first = {}
+  const second = {}
+
+  expect(family(first)).toBe(family(first))
+  expect(family(first)).not.toBe(family(second))
 })
 
 test('creates dashboard entry drag data with a plain text fallback', () => {

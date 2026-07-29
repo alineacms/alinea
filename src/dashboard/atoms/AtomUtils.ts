@@ -27,9 +27,24 @@ export function requiredAtom<Value>(name: string): RequiredAtom<Value> {
 
 export function dispense<Key = string, Value = unknown>(
   fn: (key: Key) => Value
+): (key: Key) => Value
+export function dispense<Key extends object, Value>(
+  fn: (key: Key) => Value
+): (key: Key) => Value
+export function dispense<Key = string, Value = unknown>(
+  fn: (key: Key) => Value
 ): (key: Key) => Value {
   const values = new Map<Key, Value>()
+  const weakValues = new WeakMap<object, Value>()
   return function dispenseValue(key: Key) {
+    if (
+      (typeof key === 'object' && key !== null) ||
+      typeof key === 'function'
+    ) {
+      const objectKey = key as object
+      if (!weakValues.has(objectKey)) weakValues.set(objectKey, fn(key))
+      return weakValues.get(objectKey)!
+    }
     if (!values.has(key)) values.set(key, fn(key))
     return values.get(key)!
   }

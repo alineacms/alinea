@@ -1,5 +1,5 @@
-import {Type} from '#/core/Type.js'
 import {Permission} from '#/core/Role.js'
+import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import type {
   DragItem,
@@ -11,18 +11,13 @@ import type {
 } from '@react-types/shared'
 import type {Atom, Getter} from 'jotai'
 import {atom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import type {ComponentType} from 'react'
 import type {
   DroppableCollectionInsertDropEvent,
   DroppableCollectionOnItemDropEvent,
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
-import type {TreeSelection} from './Contracts.js'
-import type {EntryAtoms} from './EntryAtoms.js'
-import {entryAtoms} from './EntryAtoms.js'
-import {createRoot, type RootAtoms} from './RootAtoms.js'
-import type {ComponentType} from 'react'
 import {
   acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
@@ -30,16 +25,18 @@ import {
   dashboardEntryDragTypes,
   dispense
 } from './AtomUtils.js'
+import type {TreeSelection} from './Contracts.js'
 import {configAtom, graphAtom} from './CoreAtoms.js'
+import {entryAtoms} from './EntryAtoms.js'
 import {routeAtom} from './NavigationAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
+import {createRoot, type RootAtoms} from './RootAtoms.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspaceRootsAtom,
   workspaceSettingsAtom
 } from './SelectionAtoms.js'
-import type {DashboardEntryTreeStatus} from './EntrySupport.js'
 
 export interface WorkspaceAtoms {
   key: string
@@ -192,54 +189,13 @@ class TreeAtomsImpl {
     }
   )
 
-  entryItems = dispense((id: string): EntryAtoms => {
-    return entryAtoms(id)
-  })
-
   items = atom(async get => {
     if (get(selectedWorkspaceAtom) !== this.workspace.key) return []
     const root = get(selectedRootAtom)
     if (!root) return []
     const currentRoot = this.workspace.root(root)
     const ids = await get(currentRoot.children)
-    return ids.map(id => this.entryItems(id))
-  })
-
-  isExpanded = dispense((entry: EntryAtoms) => {
-    return atom(get => get(this.expandedKeys).has(entry.id))
-  })
-
-  visibleChildren = dispense((entry: EntryAtoms) => {
-    return atom(get => {
-      const {data} = get(entry.data)
-      if (!data) return undefined
-      if (!get(data.hasChildren)) return undefined
-      const children = get(unwrap(data.children))
-      return children?.map(childId => this.entryItems(childId))
-    })
-  })
-
-  selectedAncestorStatus = dispense((entry: EntryAtoms) => {
-    return atom(async (get): Promise<DashboardEntryTreeStatus | undefined> => {
-      const {data} = get(entry.data)
-      if (!data) return undefined
-      const selectedKey = get(this.selectedKeys).values().next().value
-      if (!selectedKey) return undefined
-      const selectedId = String(selectedKey)
-      if (selectedId === entry.id) return undefined
-      if (!get(data.parentIds).includes(selectedId)) return undefined
-      const selected = this.entryItems(selectedId)
-      const {data: selectedData} = get(selected.data)
-      if (!selectedData) return undefined
-      return get(selectedData.treeStatus)
-    })
-  })
-
-  children = dispense((entry: EntryAtoms) => {
-    return atom(get => {
-      if (!get(this.isExpanded(entry))) return undefined
-      return get(this.visibleChildren(entry))
-    })
+    return ids.map(entryAtoms)
   })
 
   // dnd

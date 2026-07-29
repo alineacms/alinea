@@ -1,7 +1,7 @@
 import {Button, Icon, Tree, TreeItem} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {type ComponentType, memo, useMemo} from 'react'
 import {
@@ -21,7 +21,11 @@ import {
   RiFlashlightFill
 } from '../icons.js'
 import {createTreeSelection} from '../atoms/Contracts.js'
-import type {EntryAtoms, EntryDataAtoms} from '../atoms/EntryAtoms.js'
+import {
+  entryAtoms,
+  type EntryAtoms,
+  type EntryDataAtoms
+} from '../atoms/EntryAtoms.js'
 import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
 import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
@@ -33,11 +37,65 @@ import {
   type WorkspaceAtoms
 } from '../atoms/WorkspaceAtoms.js'
 import {routeAtom} from '../atoms/NavigationAtoms.js'
+import {dispense} from '../atoms/AtomUtils.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
+
+const sidebarTreeAtoms = dispense((tree: TreeAtoms) => {
+  const isExpanded = dispense((entry: EntryAtoms) => {
+    return atom(get => get(tree.expandedKeys).has(entry.id))
+  })
+  const visibleChildren = dispense((entry: EntryAtoms) => {
+    return atom(get => {
+      const {data} = get(entry.data)
+      if (!data || !get(data.hasChildren)) return undefined
+      const children = get(unwrap(data.children))
+      return children?.map(entryAtoms)
+    })
+  })
+  const selectedAncestorStatus = dispense((entry: EntryAtoms) => {
+    const status = atom(
+      async (get): Promise<DashboardEntryTreeStatus | undefined> => {
+        const {data} = get(entry.data)
+        if (!data) return undefined
+        const selectedKey = get(tree.selectedKeys).values().next().value
+        if (!selectedKey) return undefined
+        const selectedId = String(selectedKey)
+        if (selectedId === entry.id) return undefined
+        if (!get(data.parentIds).includes(selectedId)) return undefined
+        const {data: selectedData} = get(entryAtoms(selectedId).data)
+        return selectedData ? get(selectedData.treeStatus) : undefined
+      }
+    )
+    return unwrap(status)
+  })
+  const children = dispense((entry: EntryAtoms) => {
+    return atom(get => {
+      if (!get(isExpanded(entry))) return undefined
+      return get(visibleChildren(entry))
+    })
+  })
+  const setExpandedKeys = atom(
+    null,
+    async (get, set, next: Set<Key>): Promise<void> => {
+      const current = get(tree.expandedKeys)
+      const opening = [...next].filter(key => !current.has(key))
+      await Promise.all(
+        opening.map(async key => {
+          const {data} = await get(entryAtoms(String(key)).readyState)
+          if (!data) return
+          const childIds = await get(data.children)
+          await Promise.all(childIds.map(id => get(entryAtoms(id).readyState)))
+        })
+      )
+      set(tree.expandedKeys, next)
+    }
+  )
+  return {children, isExpanded, selectedAncestorStatus, setExpandedKeys}
+})
 
 export interface SidebarTreeExplorerProps {
   ariaLabel?: string
@@ -153,14 +211,14 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   data,
   tree
 }: SidebarLoadedItemProps) {
+  const treeAtoms = sidebarTreeAtoms(tree)
   const label = useAtomValue(data.label)
-  const isExpanded = useAtomValue(tree.isExpanded(item))
+  const isExpanded = useAtomValue(treeAtoms.isExpanded(item))
   const status = useAtomValue(data.treeStatus)
   const selectedAncestorStatus = useAtomValue(
-    useMemo(() => unwrap(tree.selectedAncestorStatus(item)), [item, tree])
+    treeAtoms.selectedAncestorStatus(item)
   )
-  const childItemsAtom = useMemo(() => tree.children(item), [item, tree])
-  const childItems = useAtomValue(childItemsAtom)
+  const childItems = useAtomValue(treeAtoms.children(item))
   let icon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)
   if (!icon) icon = hasChildren ? LucideFolder : LucideFile
@@ -244,9 +302,10 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   tree
 }: SidebarTreeBodyProps) {
   const [treeSelectedKeys, setTreeSelectedKeys] = useAtom(tree.selectedKeys)
-  const [expandedKeys, setExpandedKeys] = useAtom(tree.expandedKeys)
+  const expandedKeys = useAtomValue(tree.expandedKeys)
+  const setExpandedKeys = useSetAtom(sidebarTreeAtoms(tree).setExpandedKeys)
   const rootChildren = useAtomValue(root.children)
-  const items = rootChildren.map(id => tree.entryItems(id))
+  const items = rootChildren.map(entryAtoms)
   const dragDisabled = useAtomValue(tree.dragDisabled)
   const getItems = useSetAtom(tree.getItems)
   const getDropOperation = useSetAtom(tree.getDropOperation)
