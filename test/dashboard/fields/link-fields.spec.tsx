@@ -129,7 +129,7 @@ test('keeps the root list explorer flat', async ({dashboard, mount}) => {
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 })
 
-test('marks non-matching rows in a navigable link picker', async ({
+test('disables non-matching rows in a navigable link picker', async ({
   dashboard,
   mount
 }) => {
@@ -147,7 +147,6 @@ test('marks non-matching rows in a navigable link picker', async ({
 
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
-  await expect(folder).toContainText('Not selectable')
   await expect(
     folder.getByRole('checkbox', {name: 'Select Folder'})
   ).toBeDisabled()

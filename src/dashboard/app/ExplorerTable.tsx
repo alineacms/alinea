@@ -53,7 +53,6 @@ interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
   label: string
   parents: Array<EntryAtoms>
   rootLabel?: string
-  showSelectionHint: boolean
   status?: DashboardEntryTreeStatus['status']
 }
 
@@ -140,7 +139,6 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
     level,
     parents,
     rootLabel,
-    showSelectionHint,
     status
   } = props
   if (column.kind === 'selection') {
@@ -198,14 +196,7 @@ function ExplorerTableCell(props: ExplorerTableCellProps) {
               />
             </span>
           )}
-          <span className={styles.ExplorerTable.field.value()}>
-            {label}
-            {!isSelectable && showSelectionHint && (
-              <span className={styles.ExplorerTable.selectionHint()}>
-                Not selectable
-              </span>
-            )}
-          </span>
+          <span className={styles.ExplorerTable.field.value()}>{label}</span>
         </span>
       </div>
     )
@@ -396,7 +387,6 @@ function ExplorerTableLoadingRow({
       isSelectable={false}
       label="Loading entry"
       parents={[]}
-      showSelectionHint={false}
     />
   )
 }
@@ -441,7 +431,6 @@ function ExplorerTableLoadedRow({
       label={label}
       parents={parents}
       rootLabel={rootLabel}
-      showSelectionHint
       status={status}
     />
   )

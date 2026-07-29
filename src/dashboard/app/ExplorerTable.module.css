@@ -268,18 +268,6 @@
   white-space: nowrap;
 }
 
-.ExplorerTable-selectionHint {
-  display: inline-flex;
-  margin-left: 8px;
-  padding: 1px 6px;
-  flex: 0 0 auto;
-  color: var(--alinea-fg-muted);
-  border: 1px solid var(--alinea-border);
-  border-radius: 999px;
-  font-size: 10px;
-  line-height: 1.4;
-}
-
 .ExplorerTable-chevron {
   display: inline-flex;
   width: 16px;
