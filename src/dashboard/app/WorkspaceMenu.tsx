@@ -9,7 +9,6 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {IcRoundAdd} from 'alinea/dashboard/icons'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
@@ -251,7 +250,6 @@ function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
   if (!canCreate) return null
   return (
     <DialogTrigger>
-      <Button size="icon" icon={IcRoundAdd} aria-label="Create entry" />
       <DashboardModal>
         <CreateEntry />
       </DashboardModal>
