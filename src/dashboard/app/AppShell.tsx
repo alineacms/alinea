@@ -1,15 +1,23 @@
-import {Button} from '#/components.js'
+import {Button, DialogTrigger} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
 import {navigationAtoms, pageAtom} from '../atoms/routing.js'
 import type {PreparedRoute} from '../atoms/routing.js'
-import {currentWorkspaceAtom, workspacesAtom} from '../atoms/config.js'
+import {
+  currentRootAtom,
+  currentWorkspaceAtom,
+  type RootAtoms,
+  workspacesAtom
+} from '../atoms/config.js'
+import {IcRoundAdd} from '../icons.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
+import {CreateEntry} from './modals/CreateEntry.js'
 import {SidebarTree} from './SidebarTree.js'
+import {DashboardModal} from './ui/DashboardModal.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
 import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
@@ -93,6 +101,7 @@ function NoWorkspaceAccess({canManageMembers}: NoWorkspaceAccessProps) {
 function AppShellWorkspace({page}: AppShellContentProps) {
   const currentWorkspace = useAtomValue(currentWorkspaceAtom)
   assert(currentWorkspace, 'No workspace selected')
+  const currentRoot = useAtomValue(currentRootAtom)
   const roots = useAtomValue(currentWorkspace.roots)
 
   if (roots.length === 0) {
@@ -123,8 +132,8 @@ function AppShellWorkspace({page}: AppShellContentProps) {
           <SidebarHeader>
             <WorkspaceMenu canManageMembers={page.canManageMembers} />
           </SidebarHeader>
-
           <SidebarTree />
+          {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
         </Sidebar>
 
         <Suspense fallback={null}>
@@ -134,6 +143,29 @@ function AppShellWorkspace({page}: AppShellContentProps) {
         <EditorBoundary page={page} />
       </div>
     </div>
+  )
+}
+
+interface SidebarCreateEntryButtonProps {
+  root: RootAtoms
+}
+
+function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
+  const canCreate = useAtomValue(root.canCreate)
+  if (!canCreate) return null
+  return (
+    <DialogTrigger>
+      <Button
+        className={styles.AppShellWorkspace.create()}
+        icon={IcRoundAdd}
+        intent="secondary"
+      >
+        Create new
+      </Button>
+      <DashboardModal>
+        <CreateEntry />
+      </DashboardModal>
+    </DialogTrigger>
   )
 }
 

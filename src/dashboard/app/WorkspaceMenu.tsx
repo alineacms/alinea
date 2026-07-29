@@ -12,21 +12,14 @@ import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
-import {
-  IcOutlineSettings,
-  IcRoundSearch,
-  IcRoundUnfoldMore,
-  MaterialSymbolsEditSquareOutlineRounded
-} from '../icons.js'
+import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {createExplorerAtoms} from '../atoms/explorer.js'
-import type {RootAtoms} from '../atoms/config.js'
 import {
   routeAtom,
   selectedRootAtom,
   selectedWorkspaceAtom
 } from '../atoms/routing.js'
 import {
-  currentRootAtom,
   workspaceAtoms,
   workspacesAtom,
   type WorkspaceAtoms
@@ -35,7 +28,6 @@ import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
-import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -193,7 +185,6 @@ export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
   const selected = useAtomValue(selectedWorkspaceAtom)
   const workspace = workspaceAtoms(selected)
   const label = useAtomValue(workspace.settings).label
-  const currentRoot = useAtomValue(currentRootAtom)
   const menu =
     workspaces.length > 1 ? (
       <WorkspaceSelectorMenu
@@ -238,29 +229,7 @@ export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
           </Suspense>
         </DashboardModal>
       </DialogTrigger>
-      {currentRoot && <WorkspaceCreateEntryButton root={currentRoot} />}
     </div>
-  )
-}
-
-interface WorkspaceCreateEntryButtonProps {
-  root: RootAtoms
-}
-
-function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
-  const canCreate = useAtomValue(root.canCreate)
-  if (!canCreate) return null
-  return (
-    <DialogTrigger>
-      <Button
-        size="icon"
-        icon={MaterialSymbolsEditSquareOutlineRounded}
-        aria-label="Create entry"
-      />
-      <DashboardModal>
-        <CreateEntry />
-      </DashboardModal>
-    </DialogTrigger>
   )
 }
 
