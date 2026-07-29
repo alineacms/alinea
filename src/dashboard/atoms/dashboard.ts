@@ -20,17 +20,6 @@ export interface Dashboard {
   options?: DashboardOptions
 }
 
-export interface DashboardCreateEntryRequest {
-  workspace: string
-  root: string
-  locale: string | null
-  type: string
-  title: string
-  parentId?: string
-  copyFrom?: string
-  insertOrder?: 'first' | 'last'
-}
-
 export const setUserRolesAtom = atom(
   null,
   async (get, set, roles: Array<string>) => {
