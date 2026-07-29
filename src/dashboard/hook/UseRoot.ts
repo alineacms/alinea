@@ -1,19 +1,16 @@
 import {Root, type RootData} from '#/core/Root.js'
 import {useAtomValue} from 'jotai'
-import {useDashboard} from '../store.js'
+import {selectedRootAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
+import {configAtom} from '../atoms/config.js'
 
 export interface DashboardRoot extends RootData {
   name: string
 }
 
-/**
- * @deprecated Compatibility hook for legacy dashboard extensions.
- */
 export function useRoot(): DashboardRoot {
-  const dashboard = useDashboard()
-  const config = useAtomValue(dashboard.config)
-  const workspaceName = useAtomValue(dashboard.selectedWorkspace)
-  const rootName = useAtomValue(dashboard.selectedRoot)
+  const config = useAtomValue(configAtom)
+  const workspaceName = useAtomValue(selectedWorkspaceAtom)
+  const rootName = useAtomValue(selectedRootAtom)
   if (!workspaceName) throw new Error('No workspace selected')
   if (!rootName) throw new Error('No root selected')
   const root = config.workspaces[workspaceName]?.[rootName]

@@ -21,13 +21,13 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {DashboardEntry, DashboardEntryData} from '../store.js'
-import {
-  DashboardExplorer,
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
+import type {
+  ExplorerAtoms,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
-} from '../store.js'
+} from '../atoms/explorer.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -38,50 +38,72 @@ const styles = styler(css)
 
 export interface ExplorerProps {
   controls?: ReactNode
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
   titleControls?: ReactNode
 }
 
 export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
   titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
 }
 
 interface ExplorerHeaderMainProps {
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
-  data: DashboardEntryData
-  explorer: DashboardExplorer
+  data: EntryDataAtoms
+  explorer: ExplorerAtoms
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderParentMainProps {
-  explorer: DashboardExplorer
-  parent: DashboardEntry
+  explorer: ExplorerAtoms
+  parent: EntryAtoms
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
+interface ExplorerSearchContentProps extends ExplorerSearchProps {
+  items: Array<EntryAtoms>
+}
+
+function ExplorerSearch(props: ExplorerSearchProps) {
+  if (props.items)
+    return <ExplorerSearchContent {...props} items={props.items} />
+  return <ExplorerSearchResource {...props} />
+}
+
+function ExplorerSearchResource(props: ExplorerSearchProps) {
   const items = useAtomValue(
     useMemo(
-      () => unwrap(explorer.items, previous => previous ?? []),
-      [explorer]
+      () => unwrap(props.explorer.items, previous => previous ?? []),
+      [props.explorer]
     )
   )
+  return <ExplorerSearchContent {...props} items={items} />
+}
+
+function ExplorerSearchContent({
+  autoFocus,
+  explorer,
+  items
+}: ExplorerSearchContentProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -89,27 +111,35 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
 
-  function selectEntry(entry: DashboardEntry | undefined) {
+  function selectEntry(entry: EntryAtoms | undefined) {
     if (!entry) return
     setSelection(new Set<Key>([entry.id]))
   }
 
-  function selectedEntry() {
-    if (selection === 'all') return undefined
-    const [selected] = selection
-    if (selected === undefined) return undefined
-    return items.find(item => item.id === String(selected))
-  }
+  const selectedKey =
+    selection === 'all' ? undefined : selection.values().next().value
+  const selectedEntry =
+    selectedKey === undefined
+      ? undefined
+      : items.find(item => item.id === String(selectedKey))
+  const {autoSelectFirstItem, hasSelection} = explorer
 
   useEffect(() => {
-    if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
+    if (!autoSelectFirstItem || !hasSelection) return
     if (items.length === 0) {
       if (selection !== 'all' && selection.size > 0)
         setSelection(new Set<Key>())
       return
     }
-    if (!selectedEntry()) selectEntry(items[0])
-  }, [explorer, items, selection, setSelection])
+    if (!selectedEntry) setSelection(new Set<Key>([items[0].id]))
+  }, [
+    autoSelectFirstItem,
+    hasSelection,
+    items,
+    selectedEntry,
+    selection,
+    setSelection
+  ])
 
   function onSearchChange(value: string) {
     setInputValue(value)
@@ -120,9 +150,8 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
   }
 
   function selectedIndex() {
-    const entry = selectedEntry()
-    if (!entry) return -1
-    return items.findIndex(item => item.id === entry.id)
+    if (!selectedEntry) return -1
+    return items.findIndex(item => item.id === selectedEntry.id)
   }
 
   function moveSelection(direction: 1 | -1) {
@@ -146,7 +175,7 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
       moveSelection(-1)
     } else if (event.key === 'Enter') {
       const entry =
-        selectedEntry() ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
+        selectedEntry ?? (autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
       performAction(entry)
@@ -232,7 +261,7 @@ function ExplorerHeaderParentMain({
 }
 
 interface ExplorerToolbarProps {
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
 }
 const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
@@ -339,11 +368,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   return (
     <div className={styles.Explorer.toolbar.tools()}>
       {isMedia && uploads.length > 0 && (
-        <MutationQueueStatus
-          ariaLabel={uploadLabel}
-          dashboard={explorer.dashboard}
-          placement="bottom"
-        >
+        <MutationQueueStatus ariaLabel={uploadLabel} placement="bottom">
           {uploads.length}
         </MutationQueueStatus>
       )}
@@ -377,6 +402,7 @@ export function ExplorerHeader({
   autoFocusSearch,
   controls,
   explorer,
+  items,
   titleControls
 }: ExplorerHeaderProps) {
   return (
@@ -384,7 +410,11 @@ export function ExplorerHeader({
       <div className={styles.ExplorerHeader.content()}>
         <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
         <div className={styles.Explorer.searchSlot()}>
-          <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
+          <ExplorerSearch
+            autoFocus={autoFocusSearch}
+            explorer={explorer}
+            items={items}
+          />
         </div>
         <div className={styles.Explorer.toolbar()}>
           <ExplorerToolbar explorer={explorer} />
@@ -395,25 +425,31 @@ export function ExplorerHeader({
   )
 }
 
-export function ExplorerBody({explorer}: ExplorerBodyProps) {
+export function ExplorerBody({explorer, items}: ExplorerBodyProps) {
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} />
+        <ExplorerList explorer={explorer} items={items} />
       </div>
     </RailBody>
   )
 }
 
-export function Explorer({controls, explorer, titleControls}: ExplorerProps) {
+export function Explorer({
+  controls,
+  explorer,
+  items,
+  titleControls
+}: ExplorerProps) {
   return (
     <>
       <ExplorerHeader
         controls={controls}
         explorer={explorer}
+        items={items}
         titleControls={titleControls}
       />
-      <ExplorerBody explorer={explorer} />
+      <ExplorerBody explorer={explorer} items={items} />
     </>
   )
 }

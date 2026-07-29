@@ -1,6 +1,6 @@
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {isRecord} from '#/core/util/Objects.js'
-import type {ReactiveNode} from '#/dashboard/store/Dashboard.js'
+import type {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {atom} from 'jotai'
 
 /** Reconciles a complete ProseMirror document while retaining block nodes. */

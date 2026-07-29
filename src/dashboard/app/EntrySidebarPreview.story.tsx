@@ -1,31 +1,22 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {
-  Dashboard,
-  type DashboardEntryData,
-  ReactiveNode
-} from '#/dashboard/store.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
+import type {EntryDataAtoms} from '#/dashboard/atoms/entry.js'
+import {shaAtom} from '#/dashboard/atoms/graph.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 
-interface PreviewGraph {
-  sync(): Promise<string>
-}
-
 const graph = {
-  sync() {
-    return Promise.resolve('preview-content-sha')
-  }
-} satisfies PreviewGraph as unknown as WriteableGraph
+  sha: 'preview-content-sha'
+} as unknown as WriteableGraph
 
-const dashboard = new Dashboard(
+const dashboard = {
   graph,
-  {schema: {}, workspaces: {}},
-  new EventTarget(),
-  {} as LocalConnection,
-  {}
-)
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection
+}
 
 const node = new ReactiveNode({title: 'Original title'})
 const previewPayloadSignal = atom(get => get(node.value))
@@ -34,12 +25,13 @@ const entry = {
   previewUrl: atom('/preview-frame'),
   previewPayloadSignal,
   updatePreviewPayload: atom(null, async get => {
-    const sha = await get(dashboard.sha)
+    const sha = await get(shaAtom)
     if (!sha) return undefined
     return JSON.stringify({sha, data: get(node.value)})
   }),
   retryPreviewUrl: atom(null, () => {})
-} as unknown as DashboardEntryData
+} as unknown as EntryDataAtoms
+const sidebar = {type: 'preview', entry: null, url: '/preview-frame'} as const
 
 function PreviewTitleField() {
   const titleField = node.field('title')
@@ -57,11 +49,17 @@ function PreviewTitleField() {
   )
 }
 
-export function EntrySidebarPreviewStory() {
+interface EntrySidebarPreviewStoryProps {
+  pending?: boolean
+}
+
+export function EntrySidebarPreviewStory({
+  pending = false
+}: EntrySidebarPreviewStoryProps) {
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <PreviewTitleField />
-      <EntrySidebarPreview entry={entry} />
+      <EntrySidebarPreview entry={entry} pending={pending} sidebar={sidebar} />
     </DashboardScopeInternal>
   )
 }

@@ -1,17 +1,16 @@
 import {cleanup, render, screen} from '#test/react.js'
 import {Field} from '#/core/Field.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {Dashboard} from '#/dashboard/store.js'
 import {json} from '#/field/json.js'
 import {list} from '#/field/list.js'
 import {object} from '#/field/object.js'
 import {richText} from '#/field/richtext.js'
 import {select} from '#/field/select.js'
 import {text} from '#/field/text.js'
-import {atom, type Atom} from 'jotai'
-import type {ComponentType} from 'react'
 import {afterEach, expect, test} from 'bun:test'
 import {
   CompactField,
@@ -19,15 +18,12 @@ import {
   compactFieldText
 } from './CompactField.js'
 
-interface TestDashboard {
-  view(key: string): Atom<ComponentType | undefined>
-}
-
 const dashboard = {
-  view() {
-    return atom(() => undefined)
-  }
-} satisfies TestDashboard as unknown as Dashboard
+  graph: {} as WriteableGraph,
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection
+}
 
 afterEach(cleanup)
 

@@ -1,4 +1,6 @@
 import {Field} from '#/core/Field.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {createId} from '#/core/Id.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
@@ -12,7 +14,7 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
+import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'
@@ -20,8 +22,7 @@ import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
-import {atom, type Atom} from 'jotai'
-import type {ComponentType, CSSProperties} from 'react'
+import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import {views} from '../views.js'
 import {ListFieldView} from './ListField.view.js'
@@ -245,20 +246,18 @@ const storyStyle: CSSProperties = {
   padding: 24
 }
 
-interface StoryDashboard {
-  view(key: string): Atom<ComponentType | undefined>
-}
-
 const dashboard = {
-  view(key) {
-    return atom(() => views[key])
-  }
-} satisfies StoryDashboard as unknown as Dashboard
+  graph: {} as WriteableGraph,
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection,
+  views
+}
 
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return new DashboardEditor(dashboard, pageType as TypeInstance, node)
+    return createEditor(pageType as TypeInstance, node)
   }, [])
   const sections = Field.isField(pageType.sections) ? pageType.sections : null
   if (!sections) return null

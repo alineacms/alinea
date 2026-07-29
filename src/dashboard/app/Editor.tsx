@@ -1,41 +1,36 @@
 import {Button, Icon, Surface} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Section} from '#/core/Section.js'
-import {Type} from '#/core/Type.js'
+import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {
-  type ComponentType,
-  memo,
-  PropsWithChildren,
-  useEffect,
-  useState,
-  useTransition
-} from 'react'
-import {
-  EditorScope,
-  EntryScope,
-  useDashboard,
-  useEditor,
-  useFieldOptions,
-  useFieldView,
-  useNodeEditor
-} from '../hooks.js'
+import {type ComponentType, memo, PropsWithChildren, useEffect} from 'react'
+import {EditorScope, useEditor, useNodeEditor} from '../editor/EditorScope.js'
+import {useFieldOptions, useFieldView} from '../editor/FieldHooks.js'
+import {EntryScope} from '../hooks.js'
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
   IcRoundEdit
 } from '../icons.js'
 import {
-  Dashboard,
-  DashboardEntryData,
-  DashboardRoot,
-  DashboardSection,
-  ReactiveNode
-} from '../store/Dashboard.js'
+  createSection,
+  ReactiveNode,
+  type SectionAtoms
+} from '../atoms/entry/editor.js'
+import {entryAtoms, type EntryDataAtoms} from '../atoms/entry.js'
+import {entrySidebarOpenAtom, type EntryPageData} from '../atoms/entry/load.js'
+import type {ExplorerPageData} from '../atoms/explorer.js'
+import {
+  routeAtom,
+  type PreparedRoute,
+  type RootPageData
+} from '../atoms/routing.js'
+import type {RootAtoms} from '../atoms/config.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'
@@ -51,44 +46,30 @@ import {
 import {Rail, RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
-
 export interface EditorProps {
-  dashboard: Dashboard
+  page: PreparedRoute
 }
 
-export function Editor({dashboard}: EditorProps) {
-  const focused = useAtomValue(dashboard.focused)
-  if (!focused) return <Rail main />
-  if ('entry' in focused) return <EntryEditor entry={focused.entry} />
-  if ('missingEntry' in focused)
-    return (
-      <MissingEntry
-        dashboard={dashboard}
-        entryId={focused.missingEntry}
-        root={focused.root}
-      />
-    )
-  if ('missingRoot' in focused)
-    return (
-      <MissingRoot
-        dashboard={dashboard}
-        rootKey={focused.missingRoot}
-        root={focused.root}
-      />
-    )
-  return <RootEditor root={focused.root} />
+export function Editor({page}: EditorProps) {
+  if (page.type === 'entry') return <EntryEditor page={page} />
+  if (page.type === 'missing-entry')
+    return <MissingEntry entryId={page.entryId} root={page.root} />
+  if (page.type === 'missing-root')
+    return <MissingRoot rootKey={page.rootKey} root={page.root} />
+  if (page.type === 'root') return <RootEditor page={page} />
+  if (page.type === 'explorer') return <ExplorerEditor page={page} />
+  return <Rail main />
 }
 
 interface MissingEntryProps {
-  dashboard: Dashboard
   entryId: string
-  root: DashboardRoot
+  root: RootAtoms
 }
 
-function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
-  const rootLabel = useAtomValue(root.label)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
+function MissingEntry({entryId, root}: MissingEntryProps) {
+  const rootLabel = useAtomValue(root.settings).label
+  const route = useAtomValue(routeAtom)
+  const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
       title="Entry not found"
@@ -108,15 +89,14 @@ function MissingEntry({dashboard, entryId, root}: MissingEntryProps) {
 }
 
 interface MissingRootProps {
-  dashboard: Dashboard
   rootKey: string
-  root: DashboardRoot
+  root: RootAtoms
 }
 
-function MissingRoot({dashboard, rootKey, root}: MissingRootProps) {
-  const rootLabel = useAtomValue(root.label)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
+function MissingRoot({rootKey, root}: MissingRootProps) {
+  const rootLabel = useAtomValue(root.settings).label
+  const route = useAtomValue(routeAtom)
+  const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
       title="Root not found"
@@ -174,18 +154,29 @@ function NotFoundPanel({
   )
 }
 
-interface RootEditorProps {
-  root: DashboardRoot
+interface LoadedRootEditorProps {
+  page: RootPageData
 }
 
-function RootEditor({root}: RootEditorProps) {
+function RootEditor({page}: LoadedRootEditorProps) {
+  const View = useAtomValue(page.root.view)
+  if (!View) return <Rail main />
+  return <CustomRootEditor root={page.root} view={View} />
+}
+
+interface ExplorerEditorProps {
+  page: ExplorerPageData
+}
+
+function ExplorerEditor({page}: ExplorerEditorProps) {
+  const {root} = page
   const View = useAtomValue(root.view)
   if (View) return <CustomRootEditor root={root} view={View} />
-  return <DefaultRootEditor root={root} />
+  return <DefaultRootEditor page={page} />
 }
 
 interface CustomRootEditorProps {
-  root: DashboardRoot
+  root: RootAtoms
   view: ComponentType<{root: RootData}>
 }
 
@@ -200,43 +191,41 @@ function CustomRootEditor({root, view: View}: CustomRootEditorProps) {
   )
 }
 
-function DefaultRootEditor({root}: RootEditorProps) {
-  const route = useAtomValue(root.workspace.dashboard.route)
+function DefaultRootEditor({page}: ExplorerEditorProps) {
+  const {root} = page
+  const route = useAtomValue(routeAtom)
   return (
     <Rail main>
       <Explorer
         explorer={root.explorer}
-        titleControls={
-          route.entry ? <RootOverviewControls root={root} /> : undefined
-        }
+        items={page.snapshot.items}
+        titleControls={route.entry ? <RootOverviewControls /> : undefined}
       />
     </Rail>
   )
 }
 
-function RootOverviewControls({root}: RootEditorProps) {
-  const entryId = useAtomValue(root.workspace.dashboard.route).entry
+function RootOverviewControls() {
+  const entryId = useAtomValue(routeAtom).entry
   if (!entryId) return null
-  return <LoadedRootOverviewControls entryId={entryId} root={root} />
+  return <LoadedRootOverviewControls entryId={entryId} />
 }
 
 interface LoadedRootOverviewControlsProps {
   entryId: string
-  root: DashboardRoot
 }
 
 function LoadedRootOverviewControls({
-  entryId,
-  root
+  entryId
 }: LoadedRootOverviewControlsProps) {
-  const entry = root.workspace.dashboard.entries(entryId)
+  const entry = entryAtoms(entryId)
   const {data} = useAtomValue(entry.data)
   if (!data) return null
   return <RootOverviewControlsButton entry={data} />
 }
 
 interface RootOverviewControlsButtonProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function RootOverviewControlsButton({entry}: RootOverviewControlsButtonProps) {
@@ -248,17 +237,16 @@ function RootOverviewControlsButton({entry}: RootOverviewControlsButtonProps) {
 }
 
 interface EntryEditorProps {
-  entry: DashboardEntryData
+  page: EntryPageData
 }
 
 interface EntryViewToggleProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function EntryViewToggle({entry}: EntryViewToggleProps) {
   const view = useAtomValue(entry.view)
   const setView = useSetAtom(entry.view)
-  const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
@@ -267,55 +255,49 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       aria-label={label}
       appearance="plain"
       icon={ViewIcon}
-      isDisabled={isPending}
       size="icon"
-      onPress={() => {
-        startTransition(() => {
-          setView(nextView)
-        })
-      }}
+      onPress={() => setView(nextView)}
     />
   )
 }
 
-function EntryEditor({entry}: EntryEditorProps) {
+function EntryEditor({page}: EntryEditorProps) {
+  return (
+    <EntryScope entry={page.currentEntry}>
+      <EntryEditorContent page={page} />
+    </EntryScope>
+  )
+}
+
+function EntryEditorContent({page}: EntryEditorProps) {
+  const {entry, node} = page
   const View = useAtomValue(entry.customView)
   const isUntranslated = useAtomValue(entry.untranslated)
-  const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
   const type = useAtomValue(entry.type)
-  const [, startTransition] = useTransition()
   const saveDraft = useSetAtom(entry.saveDraft)
   const publishEdits = useSetAtom(entry.publishEdits)
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
-  const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(
-    entry.dashboard.entrySideBarOpen
-  )
+  const routeBlock = useAtomValue(entry.routeBlock)
+  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
   const defaultView = useAtomValue(entry.defaultView)
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   const discardAndConfirm = () => {
-    startTransition(() => {
-      reset()
-      routeBlock?.confirm()
-    })
+    reset()
+    routeBlock?.confirm()
   }
 
-  const saveAndConfirm = () => {
-    startTransition(async () => {
-      if (mediaDraftsDisabled) {
-        await publishEdits(node)
-      } else {
-        await saveDraft(node)
-      }
-      startTransition(() => {
-        routeBlock?.confirm()
-      })
-    })
+  const saveAndConfirm = async () => {
+    if (mediaDraftsDisabled) {
+      await publishEdits(node)
+    } else {
+      await saveDraft(node)
+    }
+    routeBlock?.confirm()
   }
 
   useEffect(() => {
@@ -329,11 +311,15 @@ function EntryEditor({entry}: EntryEditorProps) {
         <RailContent>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
-              <EntryTranslationBanner entry={entry} />
+              <EntryTranslationBanner entry={entry} page={page} />
             </div>
           )}
 
-          <NodeEditor node={node} type={type.type} />
+          <NodeEditor
+            node={node}
+            resource={page.activeVersion ?? undefined}
+            type={type}
+          />
         </RailContent>
       </RailBody>
     </>
@@ -343,7 +329,11 @@ function EntryEditor({entry}: EntryEditorProps) {
     editorBody = (
       <>
         <RailBody className={styles.EntryEditor.body()}>
-          <NodeEditor node={node} type={type.type}>
+          <NodeEditor
+            node={node}
+            resource={page.activeVersion ?? undefined}
+            type={type}
+          >
             <FileEditor />
           </NodeEditor>
         </RailBody>
@@ -352,11 +342,7 @@ function EntryEditor({entry}: EntryEditorProps) {
   }
 
   if (View) {
-    return (
-      <EntryScope entry={entry}>
-        <View type={type.type} />
-      </EntryScope>
-    )
+    return <View type={type} />
   }
 
   const hasSidebar = !isUntranslated
@@ -370,6 +356,7 @@ function EntryEditor({entry}: EntryEditorProps) {
           ) : undefined
         }
         entry={entry}
+        page={page}
         isSidebarOpen={isSidebarOpen}
         node={node}
         onSidebarOpenChange={hasSidebar ? setSidebarOpen : undefined}
@@ -385,7 +372,7 @@ function EntryEditor({entry}: EntryEditorProps) {
     <>
       <DashboardModal
         isOpen={Boolean(routeBlock)}
-        onOpenChange={open => !open && setRouteBlock(null)}
+        onOpenChange={open => !open && routeBlock?.cancel()}
       >
         {routeBlock && (
           <DashboardModalDialog label="Confirm navigation">
@@ -403,27 +390,27 @@ function EntryEditor({entry}: EntryEditorProps) {
           </DashboardModalDialog>
         )}
       </DashboardModal>
-      <EntryScope entry={entry}>
-        {mainEditor}
-        {hasSidebar && isSidebarOpen && (
-          <EntrySidebar entry={entry} onOpenChange={setSidebarOpen} />
-        )}
-      </EntryScope>
+      {mainEditor}
+      {hasSidebar && isSidebarOpen && (
+        <EntrySidebar entry={entry} page={page} onOpenChange={setSidebarOpen} />
+      )}
     </>
   )
 }
 
 interface NodeEditorProps extends PropsWithChildren {
   node: ReactiveNode<object>
+  resource?: Resource
   type: Type
 }
 
 export function NodeEditor({
   children = <FieldsEditor />,
   node,
+  resource,
   type
 }: NodeEditorProps) {
-  const editor = useNodeEditor(node, type)
+  const editor = useNodeEditor(node, type, resource)
   return <EditorScope editor={editor}>{children}</EditorScope>
 }
 
@@ -435,7 +422,7 @@ export function FieldsEditor() {
 }
 
 interface FormSectionProps {
-  section: DashboardSection
+  section: SectionAtoms
 }
 
 const FormSection = memo(function FormSection({section}: FormSectionProps) {
@@ -450,7 +437,6 @@ export interface EditFieldsProps {
 }
 
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
-  const dashboard = useDashboard()
   return (
     <div className={styles.EditFields()}>
       {Object.entries(fields).map(([name, value]) => {
@@ -462,7 +448,7 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
               className={styles.EditField.slot()}
               style={{gridColumn: `span ${fieldSpan()}`}}
             >
-              <FormSection section={new DashboardSection(dashboard, value)} />
+              <FormSection section={createSection(value)} />
             </div>
           )
         return null

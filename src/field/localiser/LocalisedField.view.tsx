@@ -1,6 +1,7 @@
 import {createType} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {ReactiveNode, useFieldNode} from '#/dashboard/store.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
+import {useFieldNode} from '#/dashboard/hooks.js'
 import {type LocalisedField} from '#/field/localiser.js'
 import {atom, useAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'

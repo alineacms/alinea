@@ -6,8 +6,9 @@ import {defaultClientConditions} from 'vite'
 const rootDir = resolve(fileURLToPath(new URL('..', import.meta.url)))
 
 export default defineConfig({
-  testDir: resolve(rootDir, 'src'),
-  testMatch: '**/*.spec.tsx',
+  testDir: rootDir,
+  testMatch: ['src/**/*.spec.tsx', 'test/**/*.spec.tsx'],
+  workers: 3,
   use: {
     ctTemplateDir: '.',
     ctViteConfig: {

@@ -10,14 +10,17 @@ import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef, useState, type ReactNode} from 'react'
 import {IcRoundCheck, IcRoundWarning} from '../icons.js'
-import type {Dashboard} from '../store/Dashboard.js'
+import {
+  discardMutationQueueAtom,
+  mutationQueueAtom,
+  retryMutationQueueAtom
+} from '../atoms/graph/queue.js'
 import css from './MutationQueueStatus.module.css'
 
 const styles = styler(css)
 
 export interface MutationQueueStatusProps {
   ariaLabel?: string
-  dashboard: Dashboard
   children?: ReactNode
   openOnFail?: boolean
   placement?: PopoverProps['placement']
@@ -25,14 +28,13 @@ export interface MutationQueueStatusProps {
 
 export function MutationQueueStatus({
   ariaLabel,
-  dashboard,
   children,
   openOnFail = false,
   placement = 'right'
 }: MutationQueueStatusProps) {
-  const queue = useAtomValue(dashboard.mutationQueue)
-  const retry = useSetAtom(dashboard.retryMutationQueue)
-  const discard = useSetAtom(dashboard.discardMutationQueue)
+  const queue = useAtomValue(mutationQueueAtom)
+  const retry = useSetAtom(retryMutationQueueAtom)
+  const discard = useSetAtom(discardMutationQueueAtom)
   const [isOpen, setIsOpen] = useState(false)
   const wasFailed = useRef(false)
   const isFailed = queue.failed > 0

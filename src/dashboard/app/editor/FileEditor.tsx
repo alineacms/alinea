@@ -5,12 +5,9 @@ import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
-import {
-  useDashboard,
-  useEditor,
-  useField,
-  useFieldValue
-} from '#/dashboard/store.js'
+import {useEditor} from '#/dashboard/editor/EditorScope.js'
+import {useField, useFieldValue} from '#/dashboard/editor/FieldHooks.js'
+import {configAtom} from '../../atoms/config.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
@@ -32,8 +29,7 @@ const metadataFields = type('Metadata', {
 })
 
 export function FileEditor() {
-  const dashboard = useDashboard()
-  const config = useAtomValue(dashboard.config)
+  const config = useAtomValue(configAtom)
   const location = useFieldValue(MediaFile.location)
   const extension = useFieldValue(MediaFile.extension)
   const isImage = isImageExtension(extension)

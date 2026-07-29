@@ -24,6 +24,8 @@ import {
   TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
+import type {Filter} from '#/core/Filter.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
@@ -38,8 +40,6 @@ import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
-  useDashboard,
-  useEntry,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -54,15 +54,24 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {
-  type DashboardEntry,
-  type DashboardEntryData,
-  type ExplorerOptions,
-  ReactiveNode
-} from '#/dashboard/store.js'
+  entryAtoms,
+  type EntryDataAtoms,
+  type EntryAtoms
+} from '#/dashboard/atoms/entry.js'
+import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
+import {
+  currentEntryAtom,
+  routeAtom,
+  selectedRootAtom,
+  selectedWorkspaceAtom
+} from '#/dashboard/atoms/routing.js'
+import {graphAtom} from '#/dashboard/atoms/graph.js'
+import {selectedMediaRootAtom} from '#/dashboard/atoms/config.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
-import type {EntryPickerOptions} from '#/picker/entry.js'
+import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -166,8 +175,7 @@ interface EntryRowProps {
 }
 
 function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
-  const dashboard = useDashboard()
-  const entry = dashboard.entries(entryId)
+  const entry = entryAtoms(entryId)
   const {pending, data, error} = useAtomValue(entry.data)
   if (data)
     return (
@@ -272,7 +280,7 @@ function EntryLoadingRow({
 }
 
 interface LoadedEntryRowProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   hasFields?: boolean
   image?: boolean
   textOnly?: boolean
@@ -285,7 +293,7 @@ function LoadedEntryRow({
   textOnly
 }: LoadedEntryRowProps) {
   const label = useAtomValue(entry.label)
-  const parentIds = useAtomValue(entry.parentIds)
+  const configuredParents = useAtomValue(entry.entryData).parents
   const [parentsPending, parents] = useAtomValue(entry.parentsState)
   return (
     <span className={styles.LinkFieldView.label()}>
@@ -294,7 +302,9 @@ function LoadedEntryRow({
       )}
       <span className={styles.LinkFieldView.labelText()}>
         <span className={styles.LinkFieldView.title()}>{label}</span>
-        {(parentsPending && parents === undefined && parentIds.length > 0) ||
+        {(parentsPending &&
+          parents === undefined &&
+          configuredParents.length > 0) ||
         (parents && parents.length > 0) ? (
           <span className={styles.LinkFieldView.meta()}>
             <EntryParents
@@ -309,7 +319,7 @@ function LoadedEntryRow({
 }
 
 interface EntryRowImageProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   hasFields?: boolean
 }
 
@@ -354,7 +364,7 @@ function UrlRow({node, textOnly}: RowLayerProps) {
 
 interface EntryParentsProps {
   loading: boolean
-  parents: Array<DashboardEntry>
+  parents: Array<EntryAtoms>
 }
 
 function EntryParents({loading, parents}: EntryParentsProps) {
@@ -386,7 +396,7 @@ function EntryParentsLoading() {
 }
 
 interface EntryParentLabelProps {
-  parent: DashboardEntry
+  parent: EntryAtoms
   suffix: string
 }
 
@@ -397,7 +407,7 @@ function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
 }
 
 interface LoadedEntryParentLabelProps {
-  parent: DashboardEntryData
+  parent: EntryDataAtoms
   suffix: string
 }
 
@@ -499,11 +509,9 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
-  const dashboard = useDashboard()
-  const currentEntry = useEntry()
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition = useEntryPickerCondition(options, type)
+  const {location, pickingChildren} = useEntryPickerLocation(options, type)
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -526,34 +534,15 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
-  const childLocation =
-    options.pickChildren && currentEntry
-      ? {
-          workspace: currentEntry.workspace,
-          root: currentEntry.root,
-          parentId: currentEntry.id
-        }
-      : undefined
-  const pickingChildren = Boolean(childLocation)
-  const fallbackRoot =
-    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
-  const fallbackLocation =
-    selectedWorkspace && fallbackRoot
-      ? {workspace: selectedWorkspace, root: fallbackRoot}
-      : undefined
-  const location = childLocation
-    ? childLocation
-    : typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: ExplorerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -582,6 +571,7 @@ function LinkPickerAction({
         </Button>
         <ImagePicker
           {...pickerProps}
+          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -599,7 +589,10 @@ function LinkPickerAction({
       >
         {children}
       </Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker
+        {...pickerProps}
+        key={entryPickerOptionsKey(location, condition)}
+      />
     </DialogTrigger>
   )
 }
@@ -614,11 +607,9 @@ function LinkPickerDialog({
   type,
   value
 }: LinkPickerDialogProps) {
-  const dashboard = useDashboard()
-  const currentEntry = useEntry()
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition = useEntryPickerCondition(options, type)
+  const {location, pickingChildren} = useEntryPickerLocation(options, type)
 
   function handlePick(link: LinkFieldRow) {
     onPick(link)
@@ -638,34 +629,15 @@ function LinkPickerDialog({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
-  const childLocation =
-    options.pickChildren && currentEntry
-      ? {
-          workspace: currentEntry.workspace,
-          root: currentEntry.root,
-          parentId: currentEntry.id
-        }
-      : undefined
-  const pickingChildren = Boolean(childLocation)
-  const fallbackRoot =
-    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
-  const fallbackLocation =
-    selectedWorkspace && fallbackRoot
-      ? {workspace: selectedWorkspace, root: fallbackRoot}
-      : undefined
-  const location = childLocation
-    ? childLocation
-    : typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: ExplorerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -689,6 +661,7 @@ function LinkPickerDialog({
         <Button style={{display: 'none'}}>Edit link</Button>
         <ImagePicker
           {...pickerProps}
+          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -697,9 +670,104 @@ function LinkPickerDialog({
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Edit link</Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker
+        {...pickerProps}
+        key={entryPickerOptionsKey(location, condition)}
+      />
     </DialogTrigger>
   )
+}
+
+interface EntryPickerLocation {
+  location: EditorLocation | undefined
+  pickingChildren: boolean
+}
+
+function useEntryPickerLocation(
+  options: Partial<EntryPickerOptions>,
+  type: PickerType
+): EntryPickerLocation {
+  const pickerLocationAtom = useMemo(() => {
+    if (type === 'url')
+      return atom<EntryPickerLocation>({
+        location: undefined,
+        pickingChildren: false
+      })
+    const resolveLocation = options.location
+    const configuredLocationAtom =
+      typeof resolveLocation === 'function'
+        ? unwrap(
+            atom(async get => {
+              const entry = get(currentEntryAtom)
+              if (!entry) return undefined
+              try {
+                return await resolveLocation({entry, graph: get(graphAtom)})
+              } catch (error) {
+                console.error('Failed to resolve entry picker location', error)
+                return undefined
+              }
+            }),
+            previous => previous
+          )
+        : atom(resolveLocation)
+    return atom(get => {
+      const entry = get(currentEntryAtom)
+      if (options.pickChildren && entry)
+        return {
+          location: {
+            workspace: entry.workspace,
+            root: entry.root,
+            parentId: entry.id
+          },
+          pickingChildren: true
+        }
+      const configuredLocation = get(configuredLocationAtom)
+      if (configuredLocation)
+        return {location: configuredLocation, pickingChildren: false}
+      const workspace = get(selectedWorkspaceAtom)
+      const root =
+        type === 'file' || type === 'image'
+          ? get(selectedMediaRootAtom)
+          : get(selectedRootAtom)
+      return {
+        location: workspace && root ? {workspace, root} : undefined,
+        pickingChildren: false
+      }
+    })
+  }, [options.location, options.pickChildren, type])
+  return useAtomValue(pickerLocationAtom)
+}
+
+function useEntryPickerCondition(
+  options: Partial<EntryPickerOptions>,
+  type: PickerType
+): Filter | undefined {
+  const conditionAtom = useMemo(() => {
+    if (type === 'url') return atom<Filter | undefined>(undefined)
+    const resolveCondition = options.condition
+    if (typeof resolveCondition !== 'function') return atom(resolveCondition)
+    return unwrap(
+      atom(async get => {
+        const entry = get(currentEntryAtom)
+        if (!entry) return undefined
+        try {
+          return await resolveCondition({entry, graph: get(graphAtom)})
+        } catch (error) {
+          console.error('Failed to resolve entry picker condition', error)
+          return undefined
+        }
+      }),
+      previous => previous
+    )
+  }, [options.condition, type])
+  return useAtomValue(conditionAtom)
+}
+
+function entryPickerOptionsKey(
+  location: EditorLocation | undefined,
+  condition: Filter | undefined
+): string {
+  return JSON.stringify([location ?? null, condition ?? null])
 }
 
 function externalLinkValue(
@@ -986,9 +1054,8 @@ function EntryAnchorFieldInner({
   anchor,
   onChange
 }: EntryAnchorFieldInnerProps) {
-  const dashboard = useDashboard()
   const entryAnchorsAtom = useMemo(() => {
-    const entry = dashboard.entries(entryId)
+    const entry = entryAtoms(entryId)
     return unwrap(
       atom(async get => {
         const {data} = await get(entry.readyState)
@@ -997,7 +1064,7 @@ function EntryAnchorFieldInner({
       }),
       previous => previous ?? []
     )
-  }, [dashboard, entryId])
+  }, [entryId])
   const entryAnchors = useAtomValue(entryAnchorsAtom)
   const anchors = useMemo(() => {
     return entryAnchors.map(anchor => ({
@@ -1071,8 +1138,7 @@ function EntryLinkMetaLabel({
   customLabel,
   entryId
 }: EntryLinkMetaLabelProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data) {
     return <ResolvedLinkMetaLabel className={className} label={customLabel} />
   }
@@ -1088,7 +1154,7 @@ function EntryLinkMetaLabel({
 interface LoadedEntryLinkMetaLabelProps {
   className: string
   customLabel?: string
-  data: DashboardEntryData
+  data: EntryDataAtoms
 }
 
 function LoadedEntryLinkMetaLabel({
@@ -1155,15 +1221,14 @@ interface EntryLinkImagePreviewProps {
 }
 
 function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data)
     return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
   return <LoadedEntryLinkImagePreview entry={data} />
 }
 
 interface LoadedEntryLinkImagePreviewProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function LoadedEntryLinkImagePreview({
@@ -1196,8 +1261,7 @@ function EntryLinkTypeBadge({
   fallbackLabel,
   ...props
 }: EntryLinkTypeBadgeProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data) {
     return (
       <Badge {...props} icon={fallbackIcon} size="small">
@@ -1209,7 +1273,7 @@ function EntryLinkTypeBadge({
 }
 
 interface LoadedEntryTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function LoadedEntryTypeBadge({
@@ -1218,14 +1282,15 @@ function LoadedEntryTypeBadge({
   ...props
 }: LoadedEntryTypeBadgeProps) {
   const type = useAtomValue(entry.type)
+  const typeSettings = getType(type)
   return (
     <Badge
       {...props}
       className={styles.LinkFieldView.type(styler.merge({className}))}
-      icon={type.icon || IcRoundLink}
+      icon={typeSettings.icon || IcRoundLink}
       size="small"
     >
-      {type.label}
+      {typeSettings.label}
     </Badge>
   )
 }
@@ -1243,8 +1308,7 @@ function EntryLinkLabelField({
   isDisabled,
   onChange
 }: EntryLinkLabelFieldProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (data) {
     return (
       <LoadedEntryLinkLabelField
@@ -1266,7 +1330,7 @@ function EntryLinkLabelField({
 
 interface LoadedEntryLinkLabelFieldProps {
   customLabel?: string
-  data: DashboardEntryData
+  data: EntryDataAtoms
   isDisabled?: boolean
   onChange: (value: string | undefined) => void
 }
@@ -1350,9 +1414,8 @@ function EntryLinkRowActions({
   entryId,
   type
 }: EntryLinkRowActionsProps) {
-  const dashboard = useDashboard()
-  const route = useAtomValue(dashboard.route)
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
+  const route = useAtomValue(routeAtom)
+  const {data} = useAtomValue(entryAtoms(entryId).data)
   if (!data) {
     return (
       <Button
@@ -1377,7 +1440,7 @@ function EntryLinkRowActions({
 
 interface LoadedEntryLinkRowActionsProps {
   closeActions: () => void
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   locale?: string
 }
 
@@ -1386,8 +1449,7 @@ function LoadedEntryLinkRowActions({
   entry,
   locale
 }: LoadedEntryLinkRowActionsProps) {
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
+  const {workspace, root} = useAtomValue(entry.entryData)
   const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
   return (
     <Button

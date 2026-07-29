@@ -1,5 +1,5 @@
 import type {EntryStatus} from 'alinea/core/Entry'
-import {useEntry} from '../store.js'
+import {useEntry} from '../hooks.js'
 
 export interface EntryEditorVersionData {
   path: string
@@ -26,8 +26,8 @@ export interface EntryEditor {
 }
 
 /**
- * @deprecated Compatibility hook for legacy dashboard extensions. Only a small
- * subset of the v1 EntryEditor shape is supported.
+ * Returns the consumer-facing entry editor shape. Only the fields declared by
+ * EntryEditor are supported; dashboard atoms remain an internal detail.
  */
 export function useEntryEditor(): EntryEditor | undefined {
   const entry = useEntry()

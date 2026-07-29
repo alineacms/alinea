@@ -2,15 +2,15 @@ import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {useMemo} from 'react'
 import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
-import type {
-  DashboardEntry,
-  DashboardExplorer,
-  DashboardRoot
-} from '../store.js'
+import type {EntryAtoms} from '../atoms/entry.js'
+import type {ExplorerAtoms} from '../atoms/explorer.js'
+import type {RootAtoms} from '../atoms/config.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -20,7 +20,7 @@ const styles = styler(css)
 const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
-  root?: DashboardRoot
+  root?: RootAtoms
 }
 
 function EmptyResults({root}: EmptyResultsProps) {
@@ -55,21 +55,39 @@ function SearchIdleState() {
 }
 
 export interface ExplorerListProps {
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
+  items?: Array<EntryAtoms>
 }
 
-export function ExplorerList({explorer}: ExplorerListProps) {
-  const items = useAtomValue(explorer.items)
+interface ExplorerListContentProps extends ExplorerListProps {
+  items: Array<EntryAtoms>
+}
+
+export function ExplorerList(props: ExplorerListProps) {
+  if (props.items) return <ExplorerListContent {...props} items={props.items} />
+  return <ExplorerListResource {...props} />
+}
+
+function ExplorerListResource(props: ExplorerListProps) {
+  const items = useAtomValue(
+    useMemo(
+      () => unwrap(props.explorer.items, previous => previous ?? []),
+      [props.explorer]
+    )
+  )
+  return <ExplorerListContent {...props} items={items} />
+}
+
+function ExplorerListContent({explorer, items}: ExplorerListContentProps) {
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
-  const getItems = useSetAtom(explorer.getItems)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
+  const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
-    getItems,
+    getItems: explorer.getItems,
     getDropOperation(target, _types, allowedOperations) {
       if (!isMedia || !canUpload) return 'cancel'
       if (target.type !== 'root') return 'cancel'

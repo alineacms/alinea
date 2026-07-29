@@ -1,33 +1,40 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
-import {Atom, useAtomValue} from 'jotai'
+import {atom, type Atom, useAtomValue} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
 import {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardMenuItem,
-  ExplorerLocation,
-  useDashboard
-} from '../store.js'
+  entryAtoms,
+  type EntryDataAtoms,
+  type EntryAtoms
+} from '../atoms/entry.js'
+import type {DashboardMenuItem, ExplorerLocation} from '../atoms/explorer.js'
+import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
 import css from './LocationBreadcrumbs.module.css'
 
 const styles = styler(css)
 
+export const workspaceBreadcrumbItemsAtom = atom(get => {
+  const workspaces = get(workspacesAtom)
+  return workspaces.map(workspace => ({
+    id: workspace,
+    label: get(workspaceAtoms(workspace).settings).label
+  }))
+})
+
 interface BreadcrumbMenuProps {
-  label: Atom<string>
+  label: string
   items: Atom<Array<DashboardMenuItem>>
   onSelect: () => void
   onAction: (id: string) => void
 }
 
 function BreadcrumbMenu({
-  label: labelAtom,
+  label,
   items: itemsAtom,
   onSelect,
   onAction
 }: BreadcrumbMenuProps) {
-  const label = useAtomValue(labelAtom)
   const items = useAtomValue(itemsAtom)
   return (
     <span className={styles.LocationBreadcrumbs.item()}>
@@ -74,7 +81,7 @@ function BreadcrumbSeparator() {
 }
 
 interface EntryBreadcrumbProps {
-  entry: DashboardEntry
+  entry: EntryAtoms
   onAction: (id: string) => void
 }
 
@@ -85,7 +92,7 @@ function EntryBreadcrumb({entry, onAction}: EntryBreadcrumbProps) {
 }
 
 interface LoadedEntryBreadcrumbProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
   onAction: (id: string) => void
 }
 
@@ -113,8 +120,7 @@ function ParentBreadcrumbs({
   showLeadingSeparator,
   setParentId
 }: ParentBreadcrumbsProps) {
-  const dashboard = useDashboard()
-  const entry = dashboard.entries(parentId)
+  const entry = entryAtoms(parentId)
   const {data} = useAtomValue(entry.data)
   if (!data) return null
   return (
@@ -128,8 +134,8 @@ function ParentBreadcrumbs({
 }
 
 interface LoadedParentBreadcrumbsProps {
-  entry: DashboardEntry
-  data: DashboardEntryData
+  entry: EntryAtoms
+  data: EntryDataAtoms
   showLeadingSeparator: boolean
   setParentId: (id: string) => void
 }
@@ -164,10 +170,11 @@ export function LocationBreadcrumbs({
   enableWorkspace = false,
   enableRoot = false
 }: LocationBreadcrumbsProps) {
-  const dashboard = useDashboard()
-  const workspace = dashboard.workspace(location.workspace)
+  const workspace = workspaceAtoms(location.workspace)
   const roots = useAtomValue(workspace.roots)
   const root = workspace.root(location.root ?? roots[0])
+  const workspaceLabel = useAtomValue(workspace.settings).label
+  const rootLabel = useAtomValue(root.settings).label
   const setWorkspace = (workspace: string) => {
     setLocation({workspace})
   }
@@ -191,8 +198,8 @@ export function LocationBreadcrumbs({
     <div className={styles.LocationBreadcrumbs()}>
       {enableWorkspace && (
         <BreadcrumbMenu
-          label={workspace.label}
-          items={dashboard.workspaceMenu}
+          label={workspaceLabel}
+          items={workspaceBreadcrumbItemsAtom}
           onSelect={() => setWorkspace(location.workspace)}
           onAction={setWorkspace}
         />
@@ -201,7 +208,7 @@ export function LocationBreadcrumbs({
         <>
           {enableWorkspace && <BreadcrumbSeparator />}
           <BreadcrumbMenu
-            label={root.label}
+            label={rootLabel}
             items={workspace.rootMenu}
             onSelect={selectRoot}
             onAction={setRoot}

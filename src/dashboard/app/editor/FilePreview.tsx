@@ -1,7 +1,7 @@
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import type {PointerEvent} from 'react'
-import {useField} from '#/dashboard/store.js'
+import {useField} from '#/dashboard/hooks.js'
 import {useEffect, useRef, useState} from 'react'
 import css from './FilePreview.module.css'
 

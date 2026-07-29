@@ -1,8 +1,9 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {type} from '#/core/Type.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {Dashboard} from '#/dashboard/store.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
@@ -17,21 +18,18 @@ import {select} from '#/field/select.js'
 import {text} from '#/field/text.js'
 import {time} from '#/field/time.js'
 import '#/theme.css'
-import {atom, type Atom} from 'jotai'
-import type {ComponentType, CSSProperties, ReactNode} from 'react'
+import type {CSSProperties, ReactNode} from 'react'
 import {views} from '../../field/views.js'
 import {Badge} from './Badge.js'
 import {CompactField, CompactRecordFields} from './CompactField.js'
 
-interface StoryDashboard {
-  view(key: string): Atom<ComponentType | undefined>
-}
-
 const dashboard = {
-  view(key) {
-    return atom(() => views[key])
-  }
-} satisfies StoryDashboard as unknown as Dashboard
+  graph: {} as WriteableGraph,
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection,
+  views
+}
 
 const featureType = type('Feature', {
   fields: {

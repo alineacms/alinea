@@ -1,18 +1,23 @@
 import {Select, SelectItem, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import {DashboardEntryData} from '../store/Dashboard.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
+import type {EntryPageData} from '../atoms/entry/load.js'
 import css from './EntryTranslationBanner.module.css'
 
 const styles = styler(css)
 
 export interface EntryTranslationBannerProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  page: EntryPageData
 }
 
-export function EntryTranslationBanner({entry}: EntryTranslationBannerProps) {
+export function EntryTranslationBanner({
+  entry,
+  page
+}: EntryTranslationBannerProps) {
   const untranslated = useAtomValue(entry.untranslated)
-  const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
+  const parentNeedsTranslation = page.parentNeedsTranslation
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
   const [sourceLocale, setSourceLocale] = useAtom(entry.translationSourceLocale)
 

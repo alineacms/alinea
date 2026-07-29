@@ -1,0 +1,51 @@
+import {cleanup, render, screen} from '#test/react.js'
+import {afterEach, expect, test} from 'bun:test'
+import type {EditorAtoms} from '../atoms/entry/editor.js'
+import {EditorScope, useEditor} from './EditorScope.js'
+
+afterEach(cleanup)
+
+const labels = new WeakMap<EditorAtoms, string>()
+
+function createEditor(label: string): EditorAtoms {
+  const editor = {} as EditorAtoms
+  labels.set(editor, label)
+  return editor
+}
+
+function Label() {
+  return <span>{labels.get(useEditor())}</span>
+}
+
+test('sibling editor scopes remain isolated', () => {
+  render(
+    <>
+      <EditorScope editor={createEditor('first')}>
+        <Label />
+      </EditorScope>
+      <EditorScope editor={createEditor('second')}>
+        <Label />
+      </EditorScope>
+    </>
+  )
+
+  expect(screen.getByText('first')).toBeDefined()
+  expect(screen.getByText('second')).toBeDefined()
+})
+
+test('changing the editor updates the nearest scope', () => {
+  const {rerender} = render(
+    <EditorScope editor={createEditor('first')}>
+      <Label />
+    </EditorScope>
+  )
+
+  rerender(
+    <EditorScope editor={createEditor('second')}>
+      <Label />
+    </EditorScope>
+  )
+
+  expect(screen.queryByText('first')).toBeNull()
+  expect(screen.getByText('second')).toBeDefined()
+})

@@ -1,11 +1,17 @@
-import {Button, DialogTrigger, ProgressCircle} from '#/components.js'
+import {Button, DialogTrigger} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {IcRoundAdd} from 'alinea/dashboard/icons'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import {DashboardScopeInternal} from '../store.js'
-import type {Dashboard} from '../store/Dashboard.js'
+import {navigationAtoms, pageAtom} from '../atoms/routing.js'
+import type {PreparedRoute} from '../atoms/routing.js'
+import {
+  currentRootAtom,
+  currentWorkspaceAtom,
+  type RootAtoms,
+  workspacesAtom
+} from '../atoms/config.js'
+import {IcRoundAdd} from '../icons.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
@@ -21,59 +27,51 @@ import {WorkspaceRoots} from './WorkspaceRoots.js'
 
 const styles = styler(css)
 
-interface AppShellProps {
-  dashboard: Dashboard
-}
-
-export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.initialContentAvailable)
+export function AppShell() {
+  const page = useAtomValue(pageAtom)
+  const navigationPending = useAtomValue(navigationAtoms.pending)
   return (
-    <main className={styles.AppShell()}>
-      <DashboardScopeInternal dashboard={dashboard}>
-        <AppShellContent dashboard={dashboard} />
-      </DashboardScopeInternal>
+    <main
+      aria-busy={navigationPending !== undefined}
+      className={styles.AppShell()}
+      data-navigation-pending={navigationPending ? '' : undefined}
+    >
+      <AppShellContent page={page} />
     </main>
   )
 }
 
-function AppShellContent({dashboard}: AppShellProps) {
-  const workspaces = useAtomValue(dashboard.workspaces)
-  const route = useAtomValue(dashboard.route)
-  const canManageMembers = useAtomValue(dashboard.canManageMembers)
+interface AppShellContentProps {
+  page: PreparedRoute
+}
 
-  if (route.page === 'users' && canManageMembers) {
+function AppShellContent({page}: AppShellContentProps) {
+  const workspaces = useAtomValue(workspacesAtom)
+
+  if (page.type === 'users' && page.canManageMembers) {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <UsersPageSidebar dashboard={dashboard} />
+        <UsersPageSidebar />
         <div className={styles.AppShellContent()}>
-          <UsersPage dashboard={dashboard} />
+          <UsersPage />
         </div>
       </div>
     )
   }
 
   if (workspaces.length === 0) {
-    return (
-      <NoWorkspaceAccess
-        canManageMembers={canManageMembers}
-        dashboard={dashboard}
-      />
-    )
+    return <NoWorkspaceAccess canManageMembers={page.canManageMembers} />
   }
 
-  return <AppShellWorkspace dashboard={dashboard} />
+  return <AppShellWorkspace page={page} />
 }
 
 interface NoWorkspaceAccessProps {
   canManageMembers: boolean
-  dashboard: Dashboard
 }
 
-function NoWorkspaceAccess({
-  canManageMembers,
-  dashboard
-}: NoWorkspaceAccessProps) {
-  const setRoute = useSetAtom(dashboard.route)
+function NoWorkspaceAccess({canManageMembers}: NoWorkspaceAccessProps) {
+  const setRoute = useSetAtom(navigationAtoms.route)
 
   return (
     <div className={styles.AppShellContent()}>
@@ -100,16 +98,16 @@ function NoWorkspaceAccess({
   )
 }
 
-function AppShellWorkspace({dashboard}: AppShellProps) {
-  const currentWorkspace = useAtomValue(dashboard.currentWorkspace)
+function AppShellWorkspace({page}: AppShellContentProps) {
+  const currentWorkspace = useAtomValue(currentWorkspaceAtom)
   assert(currentWorkspace, 'No workspace selected')
-  const currentRoot = useAtomValue(dashboard.currentRoot)
+  const currentRoot = useAtomValue(currentRootAtom)
   const roots = useAtomValue(currentWorkspace.roots)
 
   if (roots.length === 0) {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <WorkspaceRoots dashboard={dashboard} />
+        <WorkspaceRoots canManageMembers={page.canManageMembers} />
         <div className={styles.AppShellContent()}>
           <Sidebar />
           <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -128,27 +126,31 @@ function AppShellWorkspace({dashboard}: AppShellProps) {
 
   return (
     <div className={styles.AppShellWorkspace()}>
-      <WorkspaceRoots dashboard={dashboard} />
+      <WorkspaceRoots canManageMembers={page.canManageMembers} />
       <div className={styles.AppShellContent()}>
         <Sidebar>
           <SidebarHeader>
-            <WorkspaceMenu dashboard={dashboard} />
+            <WorkspaceMenu canManageMembers={page.canManageMembers} />
           </SidebarHeader>
-          <SidebarTree dashboard={dashboard} />
+          <SidebarTree />
           {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
         </Sidebar>
 
         <Suspense fallback={null}>
-          <DashboardMeta dashboard={dashboard} />
+          <DashboardMeta />
         </Suspense>
 
-        <EditorBoundary dashboard={dashboard} />
+        <EditorBoundary page={page} />
       </div>
     </div>
   )
 }
 
-function SidebarCreateEntryButton({root}: any) {
+interface SidebarCreateEntryButtonProps {
+  root: RootAtoms
+}
+
+function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
   const canCreate = useAtomValue(root.canCreate)
   if (!canCreate) return null
   return (
@@ -167,20 +169,10 @@ function SidebarCreateEntryButton({root}: any) {
   )
 }
 
-function EditorBoundary({dashboard}: AppShellProps) {
+function EditorBoundary({page}: AppShellContentProps) {
   return (
     <ErrorBoundary>
-      <Suspense fallback={<EditorLoading />}>
-        <Editor dashboard={dashboard} />
-      </Suspense>
+      <Editor page={page} />
     </ErrorBoundary>
-  )
-}
-
-function EditorLoading() {
-  return (
-    <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-      <ProgressCircle isIndeterminate aria-label="Loading editor" />
-    </Rail>
   )
 }

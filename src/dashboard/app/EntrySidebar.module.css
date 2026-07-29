@@ -278,12 +278,6 @@
   font-size: 14px;
 }
 
-.EntrySidebar-loading {
-  min-height: 120px;
-  display: grid;
-  place-items: center;
-}
-
 .EntrySidebar-previewPanel {
   margin: 0;
   padding: 0;

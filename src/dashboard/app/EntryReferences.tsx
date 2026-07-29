@@ -1,9 +1,8 @@
-import {Button, Icon, ProgressCircle} from '#/components.js'
+import {Button, Icon} from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense} from 'react'
 import {
   IcRoundArchive,
   IcRoundCheck,
@@ -13,38 +12,33 @@ import {
   IcRoundLink
 } from '../icons.js'
 import type {
-  DashboardEntryData,
   DashboardEntryReference,
   DashboardEntryReferenceSource,
-  DashboardEntryReferencesState
-} from '../store.js'
+  DashboardEntryReferences
+} from '../atoms/entry/load.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
+import {routeAtom} from '../atoms/routing.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
 
 const styles = styler(css)
 
 export interface EntryReferencesProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  references?: DashboardEntryReferences
 }
 
-export function EntryReferences({entry}: EntryReferencesProps) {
-  return (
-    <Suspense fallback={<EntryReferencesLoading />}>
-      <EntryReferencesContent entry={entry} />
-    </Suspense>
-  )
-}
-
-function EntryReferencesContent({entry}: EntryReferencesProps) {
-  const state = useAtomValue(entry.incomingReferencesState)
+export function EntryReferences({
+  entry,
+  references: loaded
+}: EntryReferencesProps) {
   const type = useAtomValue(entry.type)
   const root = useAtomValue(entry.root)
   const selectedLocale = useAtomValue(root.selectedLocale)
-  const setRoute = useSetAtom(entry.dashboard.route)
-  if (state.pending && state.data === undefined)
-    return <EntryReferencesInitialLoad entry={entry} />
-  const references = state.data?.references ?? []
-  const showAllLocales = type.type === MediaFile || type.type === MediaLibrary
+  const setRoute = useSetAtom(routeAtom)
+  if (!loaded) return null
+  const references = loaded.references
+  const showAllLocales = type === MediaFile || type === MediaLibrary
   const currentReferences = showAllLocales
     ? references
     : references.filter(item => matchesLocale(item, selectedLocale))
@@ -58,9 +52,7 @@ function EntryReferencesContent({entry}: EntryReferencesProps) {
     return (
       <div className={styles.EntryReferences()}>
         <p className={styles.EntryReferences.empty()}>
-          {state.pending
-            ? formatScan(state.scan)
-            : formatEmpty(selectedLocale, otherSummary)}
+          {formatEmpty(selectedLocale, otherSummary)}
         </p>
         {otherSummary && (
           <p className={styles.EntryReferences.other()}>
@@ -72,14 +64,6 @@ function EntryReferencesContent({entry}: EntryReferencesProps) {
   }
   return (
     <div className={styles.EntryReferences()}>
-      {state.pending && (
-        <div className={styles.EntryReferences.pending()}>
-          <ProgressCircle isIndeterminate aria-label="Scanning references" />
-          <span className={styles.EntryReferences.pendingText()}>
-            {formatScan(state.scan)}
-          </span>
-        </div>
-      )}
       <ul className={styles.EntryReferences.list()}>
         {groups.map(item => (
           <EntryReferenceItem
@@ -101,22 +85,6 @@ function EntryReferencesContent({entry}: EntryReferencesProps) {
           {formatOtherSummary(otherSummary)}
         </p>
       )}
-    </div>
-  )
-}
-
-function EntryReferencesInitialLoad({entry}: EntryReferencesProps) {
-  useAtomValue(entry.incomingReferences)
-  return <EntryReferencesLoading />
-}
-
-function EntryReferencesLoading() {
-  return (
-    <div className={styles.EntryReferences.loading()}>
-      <ProgressCircle isIndeterminate aria-label="Loading references" />
-      <span className={styles.EntryReferences.loadingText()}>
-        Loading references
-      </span>
     </div>
   )
 }
@@ -250,12 +218,6 @@ function referenceIcon(
     default:
       return IcRoundLink
   }
-}
-
-function formatScan(scan: DashboardEntryReferencesState['scan']): string {
-  if (!scan) return 'Scanning references'
-  if (scan.complete) return `Scanned ${scan.scanned} entries`
-  return `Scanning references ${scan.scanned} of ${scan.total}`
 }
 
 function statusLabel(status: EntryStatus): string {

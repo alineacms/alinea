@@ -20,7 +20,16 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import type {Dashboard, DashboardRoot} from '../store/Dashboard.js'
+import {
+  canLogoutAtom,
+  currentUserAtom,
+  isLocalAtom,
+  logoutAtom
+} from '../atoms/user.js'
+import {setUserRolesAtom} from '../atoms/dashboard.js'
+import {themeAtom} from '../atoms/user.js'
+import {routeAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
+import {configAtom, type RootAtoms, workspaceAtoms} from '../atoms/config.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
@@ -28,17 +37,17 @@ import css from './WorkspaceRoots.module.css'
 const styles = styler(css)
 
 interface WorkspaceRootsProps {
-  dashboard: Dashboard
+  canManageMembers: boolean
 }
 
-export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
-  const selected = useAtomValue(dashboard.selectedWorkspace)
-  const workspace = dashboard.workspace(selected)
+export function WorkspaceRoots({canManageMembers}: WorkspaceRootsProps) {
+  const selected = useAtomValue(selectedWorkspaceAtom)
+  const workspace = workspaceAtoms(selected)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatarMenu dashboard={dashboard} />
+        <WorkspaceAvatarMenu canManageMembers={canManageMembers} />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
@@ -46,20 +55,20 @@ export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <MutationQueueStatus dashboard={dashboard} openOnFail />
-        <WorkspaceProfileMenu dashboard={dashboard} />
+        <MutationQueueStatus openOnFail />
+        <WorkspaceProfileMenu canManageMembers={canManageMembers} />
       </div>
     </aside>
   )
 }
 
 interface WorkspaceRootButtonProps {
-  root: DashboardRoot
+  root: RootAtoms
 }
 
 function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   const icon = useAtomValue(root.icon)
-  const label = useAtomValue(root.label)
+  const label = useAtomValue(root.settings).label
   const [selected, setSelected] = useAtom(root.selected)
   return (
     <Tooltip placement="right" delay={100} tooltip={label}>
@@ -77,15 +86,15 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   )
 }
 
-function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
-  const user = useAtomValue(dashboard.currentUser)
-  const canManageMembers = useAtomValue(dashboard.canManageMembers)
-  const config = useAtomValue(dashboard.config)
-  const canLogout = useAtomValue(dashboard.canLogout)
-  const [theme, setTheme] = useAtom(dashboard.theme)
-  const setUserRoles = useSetAtom(dashboard.setUserRoles)
-  const setRoute = useSetAtom(dashboard.route)
-  const logout = useSetAtom(dashboard.logout)
+function WorkspaceProfileMenu({canManageMembers}: WorkspaceRootsProps) {
+  const user = useAtomValue(currentUserAtom)
+  const config = useAtomValue(configAtom)
+  const canLogout = useAtomValue(canLogoutAtom)
+  const isLocal = useAtomValue(isLocalAtom)
+  const [theme, setTheme] = useAtom(themeAtom)
+  const setUserRoles = useSetAtom(setUserRolesAtom)
+  const setRoute = useSetAtom(routeAtom)
+  const logout = useSetAtom(logoutAtom)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set<Key>(user.roles)
@@ -164,7 +173,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
               />
             </div>
           </li>
-          {dashboard.isLocal && roleEntries.length > 0 && (
+          {isLocal && roleEntries.length > 0 && (
             <li className={styles.WorkspaceRoots.profile.popover.item()}>
               <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
                 Role

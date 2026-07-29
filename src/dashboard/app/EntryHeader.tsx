@@ -3,11 +3,12 @@ import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
+import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {ComponentType, type ReactNode, useState, useTransition} from 'react'
+import {ComponentType, type ReactNode, useState} from 'react'
 import {usePolicy} from '../hooks.js'
 import {
   IcRoundArchive,
@@ -19,7 +20,12 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {DashboardEntryData, ReactiveNode} from '../store/Dashboard.js'
+import {ReactiveNode} from '../atoms/entry/editor.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
+import type {EntryPageData} from '../atoms/entry/load.js'
+import {mutationQueueAtom} from '../atoms/graph/queue.js'
+import {routeAtom} from '../atoms/routing.js'
+import {configAtom} from '../atoms/config.js'
 import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
@@ -36,14 +42,16 @@ const styles = styler(css)
 
 export interface EntryHeaderProps {
   controls?: ReactNode
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  page: EntryPageData
   isSidebarOpen?: boolean
   node: ReactiveNode<object>
   onSidebarOpenChange?: (isOpen: boolean) => void
 }
 
 interface EntryHeaderActionProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  page: EntryPageData
   node: ReactiveNode<object>
   activeStatus: 'draft' | 'published' | 'archived'
   isDirty: boolean
@@ -55,7 +63,8 @@ interface EntryHeaderActionProps {
 }
 
 interface EntryHeaderMoreActionsProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  page: EntryPageData
   activeStatus: 'draft' | 'published' | 'archived'
   isDirty: boolean
   isUnpublished: boolean
@@ -70,15 +79,13 @@ interface EntryHeaderMenuItem {
 }
 
 interface EntryHeaderBackButtonProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
 }
 
 function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
-  const route = useAtomValue(entry.dashboard.route)
-  const parentId = useAtomValue(entry.parentId)
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
-  const setRoute = useSetAtom(entry.dashboard.route)
+  const route = useAtomValue(routeAtom)
+  const {parentId, workspace, root} = useAtomValue(entry.entryData)
+  const setRoute = useSetAtom(routeAtom)
   return (
     <EditorBackButton
       label={parentId ? 'Back to parent entry' : 'Back to root'}
@@ -96,58 +103,58 @@ function EntryHeaderBackButton({entry}: EntryHeaderBackButtonProps) {
 
 function EntryHeaderMoreActions({
   entry,
+  page,
   activeStatus,
   isDirty,
   isUnpublished,
   untranslated
 }: EntryHeaderMoreActionsProps) {
   const policy = usePolicy()
-  const config = useAtomValue(entry.dashboard.config)
-  const route = useAtomValue(entry.dashboard.route)
-  const parentId = useAtomValue(entry.parentId)
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
-  const sourceLocale = useAtomValue(entry.sourceLocale)
-  const activeVersion = useAtomValue(
-    entry.languages(sourceLocale).activeVersion
-  )
+  const config = useAtomValue(configAtom)
+  const route = useAtomValue(routeAtom)
+  const {parentId, workspace, root} = useAtomValue(entry.entryData)
+  const activeVersion = page.languageVersion
   const type = useAtomValue(entry.type)
   const canPublishParents = useAtomValue(entry.canPublish)
   const isParentUnpublished = useAtomValue(entry.parentUnpublished)
   const selectedVersion = useAtomValue(entry.selectedVersion)
-  const setRoute = useSetAtom(entry.dashboard.route)
+  const setRoute = useSetAtom(routeAtom)
   const discardDraft = useSetAtom(entry.discardDraft)
   const unpublish = useSetAtom(entry.unpublish)
   const archive = useSetAtom(entry.archive)
   const publishArchived = useSetAtom(entry.publishArchived)
   const deleteEntry = useSetAtom(entry.deleteEntry)
   const replaceFile = useSetAtom(entry.replaceFile)
-  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const mutationQueue = useAtomValue(mutationQueueAtom)
   const access = policy.get(activeVersion)
   const canDelete = activeVersion.seeded === null
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
-  const [isPending, startTransition] = useTransition()
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
+  const [isPending, setIsPending] = useState(false)
+  const [actionError, setActionError] = useState<Error>()
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
   const menuItems: Array<EntryHeaderMenuItem> = []
 
-  function runAction(action: () => void | Promise<void>) {
+  async function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
-    startTransition(async () => {
-      try {
-        await action()
-      } catch (error) {
-        const conflict = entryUrlConflictInfo(error)
-        if (conflict) {
-          setUrlConflict(conflict)
-          return
-        }
-        throw error
+    setIsPending(true)
+    try {
+      await action()
+    } catch (cause) {
+      const conflict = entryUrlConflictInfo(cause)
+      if (conflict) {
+        setUrlConflict(conflict)
+        return
       }
-    })
+      setActionError(cause instanceof Error ? cause : new Error(String(cause)))
+    } finally {
+      setIsPending(false)
+    }
   }
+
+  if (actionError) throw actionError
 
   async function deleteAndNavigate() {
     await deleteEntry()
@@ -356,6 +363,7 @@ function entryUrlConflictInfo(
 
 function EntryHeaderActions({
   entry,
+  page,
   node,
   activeStatus,
   isDirty,
@@ -365,11 +373,8 @@ function EntryHeaderActions({
   parentNeedsTranslation
 }: EntryHeaderActionProps) {
   const policy = usePolicy()
-  const config = useAtomValue(entry.dashboard.config)
-  const sourceLocale = useAtomValue(entry.sourceLocale)
-  const activeVersion = useAtomValue(
-    entry.languages(sourceLocale).activeVersion
-  )
+  const config = useAtomValue(configAtom)
+  const activeVersion = page.languageVersion
   const canPublishParents = useAtomValue(entry.canPublish)
   const reset = useSetAtom(node.reset)
   const selectedVersion = useAtomValue(entry.selectedVersion)
@@ -378,32 +383,36 @@ function EntryHeaderActions({
   const saveTranslation = useSetAtom(entry.saveTranslation)
   const publishEdits = useSetAtom(entry.publishEdits)
   const publishDraft = useSetAtom(entry.publishDraft)
-  const mutationQueue = useAtomValue(entry.dashboard.mutationQueue)
+  const mutationQueue = useAtomValue(mutationQueueAtom)
   const type = useAtomValue(entry.type)
   const access = policy.get(activeVersion)
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
+  const [actionError, setActionError] = useState<Error>()
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
-  function runAction(action: () => void | Promise<void>) {
+  async function runAction(action: () => void | Promise<void>) {
     if (mutationQueue.failed > 0) return
-    startTransition(async () => {
-      try {
-        await action()
-      } catch (error) {
-        const conflict = entryUrlConflictInfo(error)
-        if (conflict) {
-          setUrlConflict(conflict)
-          return
-        }
-        throw error
+    setIsPending(true)
+    try {
+      await action()
+    } catch (cause) {
+      const conflict = entryUrlConflictInfo(cause)
+      if (conflict) {
+        setUrlConflict(conflict)
+        return
       }
-    })
+      setActionError(cause instanceof Error ? cause : new Error(String(cause)))
+    } finally {
+      setIsPending(false)
+    }
   }
+
+  if (actionError) throw actionError
 
   async function createDraftFromRevision() {
     await saveDraft(node)
@@ -501,19 +510,21 @@ function EntryHeaderActions({
 export function EntryHeader({
   controls,
   entry,
+  page,
   isSidebarOpen,
   node,
   onSidebarOpenChange
 }: EntryHeaderProps) {
   const title = useAtomValue(entry.label)
   const activeStatus = useAtomValue(entry.activeStatus)
-  const activeVersion = useAtomValue(entry.activeVersion)
+  const activeVersion = page.activeVersion
   const selectedVersion = useAtomValue(entry.selectedVersion)
-  const viewedEntry = useAtomValue(entry.currentEntry)
+  const viewedEntry = page.currentEntry
   const untranslated = useAtomValue(entry.untranslated)
-  const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
+  const parentNeedsTranslation = page.parentNeedsTranslation
   const isDirty = useAtomValue(node.isDirty)
   const type = useAtomValue(entry.type)
+  const typeSettings = getType(type)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   const viewedStatus = viewedEntry?.status ?? activeStatus
   const viewedIsUnpublished = Boolean(
@@ -528,7 +539,7 @@ export function EntryHeader({
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
           {controls}
-          <Badge icon={type.icon}>{type.label}</Badge>
+          <Badge icon={typeSettings.icon}>{typeSettings.label}</Badge>
           {isRevision ? (
             <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
           ) : (
@@ -536,6 +547,7 @@ export function EntryHeader({
           )}
           <EntryHeaderMoreActions
             entry={entry}
+            page={page}
             activeStatus={activeStatus}
             isDirty={isDirty}
             isUnpublished={isUnpublished}
@@ -544,6 +556,7 @@ export function EntryHeader({
         </div>
         <EntryHeaderActions
           entry={entry}
+          page={page}
           node={node}
           activeStatus={activeStatus}
           isDirty={isDirty}

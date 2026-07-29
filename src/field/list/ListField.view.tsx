@@ -41,11 +41,11 @@ import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
 import {
   useFieldError,
-  useEntryAnchors,
   useFieldNode,
   useFieldOptions,
   useNodes
 } from '#/dashboard/hooks.js'
+import {useEditor} from '#/dashboard/editor/EditorScope.js'
 import {
   IcBaselineContentCopy,
   IcBaselineContentPasteGo,
@@ -57,7 +57,7 @@ import {
   IcRoundLastPage,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
+import {ReactiveNode, rootEditor} from '#/dashboard/atoms/entry/editor.js'
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
@@ -562,7 +562,7 @@ function ListFieldRow({
     | undefined
   const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
   const customLabel = customLabelValue ?? ''
-  const entryAnchors = useEntryAnchors()
+  const entryAnchors = useAtomValue(rootEditor(useEditor()).anchors)
   const value = useAtomValue(row.value) as Record<string, unknown>
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))

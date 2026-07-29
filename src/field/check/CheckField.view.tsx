@@ -1,5 +1,5 @@
 import {Checkbox, Label, SharedLabelBadge} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {CheckField} from '#/field/check.js'
 import styler from '@alinea/styler'
 import css from './CheckField.module.css'

@@ -1,9 +1,9 @@
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
+import type {EntryAtoms} from '#/dashboard/atoms/entry.js'
 import {
-  Dashboard,
-  type DashboardEntry,
-  type DashboardExplorer
-} from '#/dashboard/store.js'
+  createExplorerAtoms,
+  type ExplorerAtoms
+} from '#/dashboard/atoms/explorer.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {views} from '#/field/views.js'
 import {createTestConnection} from '#test/CreateConnection.js'
@@ -27,21 +27,21 @@ const emptyStyle: CSSProperties = {
 
 const fixtureConnection = createTestConnection(db)
 
-const dashboard = new Dashboard(
-  db,
-  cms.config,
-  db.index,
-  fixtureConnection,
+const dashboard = {
+  graph: db,
+  config: cms.config,
+  events: db.index,
+  client: fixtureConnection,
   views
-)
+}
 
 interface ExplorerTableStoryProps {
-  explorer: DashboardExplorer
+  explorer: ExplorerAtoms
 }
 
 function ExplorerTableStory({explorer}: ExplorerTableStoryProps) {
   const items = useAtomValue(explorer.items)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({})
+  const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({})
   return (
     <ExplorerTable
       dragAndDropHooks={dragAndDropHooks}
@@ -55,7 +55,7 @@ function ExplorerTableStory({explorer}: ExplorerTableStoryProps) {
 export function Rows() {
   const explorer = useMemo(
     () =>
-      dashboard.explore({
+      createExplorerAtoms({
         workspace: 'simple',
         root: 'pages'
       }),

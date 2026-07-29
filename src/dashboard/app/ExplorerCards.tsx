@@ -1,4 +1,5 @@
 import {Checkbox, Icon, Surface} from '#/components.js'
+import {getType} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -20,11 +21,8 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardExplorer
-} from '../store.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
+import type {ExplorerAtoms} from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 
@@ -39,7 +37,7 @@ const cardLayoutOptions: GridLayoutOptions = {
 }
 
 interface ExplorerCardItemProps {
-  entry: DashboardEntry
+  entry: EntryAtoms
   showSelectionControls: boolean
 }
 
@@ -65,7 +63,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 })
 
 interface ExplorerCardLoadingItemProps {
-  entry: DashboardEntry
+  entry: EntryAtoms
   showSelectionControls: boolean
 }
 
@@ -106,8 +104,8 @@ function ExplorerCardLoadingItem({
 }
 
 interface ExplorerCardLoadedItemProps {
-  entry: DashboardEntry
-  data: DashboardEntryData
+  entry: EntryAtoms
+  data: EntryDataAtoms
   showSelectionControls: boolean
 }
 
@@ -119,7 +117,8 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
-  const hasChildren = useAtomValue(data.hasChildren)
+  const typeSettings = getType(type)
+  const hasChildren = useAtomValue(data.entryData).hasChildren
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -148,7 +147,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
-            typeLabel={type.label}
+            typeLabel={typeSettings.label}
           />
         )}
       </Surface>
@@ -203,7 +202,7 @@ function ExplorerEntryCard({
 interface ExplorerCardParentsProps {
   loading: boolean
   parentIds: Array<string>
-  parents: Array<DashboardEntry>
+  parents: Array<EntryAtoms>
 }
 
 function ExplorerCardParents({
@@ -254,7 +253,7 @@ function ExplorerCardParentsLoading() {
 }
 
 interface ExplorerCardParentProps {
-  parent: DashboardEntry
+  parent: EntryAtoms
 }
 
 function ExplorerCardParent({parent}: ExplorerCardParentProps) {
@@ -264,7 +263,7 @@ function ExplorerCardParent({parent}: ExplorerCardParentProps) {
 }
 
 interface ExplorerCardLoadedParentProps {
-  parent: DashboardEntryData
+  parent: EntryDataAtoms
 }
 
 function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
@@ -273,9 +272,9 @@ function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
 }
 
 export interface ExplorerCardsProps {
-  dragAndDropHooks: DragAndDropHooks<DashboardEntry>
-  explorer: DashboardExplorer
-  items: Array<DashboardEntry>
+  dragAndDropHooks: DragAndDropHooks<EntryAtoms>
+  explorer: ExplorerAtoms
+  items: Array<EntryAtoms>
   renderEmptyState: () => ReactNode
 }
 

@@ -2,11 +2,7 @@ import {suite} from '@alinea/suite'
 import {Field} from '#/core/Field.js'
 import {Type, type} from '#/core/Type.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
-import {
-  Dashboard,
-  DashboardEditor,
-  ReactiveNode
-} from '#/dashboard/store/Dashboard.js'
+import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {
   configureRichTextExtensions,
   richText
@@ -39,8 +35,7 @@ test('rejects eager rich text extension configuration', () => {
 test('nested editor fields inherit a read-only reactive node', () => {
   const details = richText('Details')
   const block = type('Block', {fields: {details}})
-  const editor = new DashboardEditor(
-    {} as Dashboard,
+  const editor = createEditor(
     block,
     new ReactiveNode<object>({details: []}, true)
   )

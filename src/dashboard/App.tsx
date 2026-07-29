@@ -3,14 +3,23 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
-import {ComponentType, Suspense, useState} from 'react'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {
+  ComponentType,
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction
+} from 'react'
 import css from './App.module.css'
 import {AppShell} from './app/AppShell.js'
 import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
-import {Dashboard} from './store/Dashboard.js'
+import {DashboardScopeInternal} from './hooks.js'
+import type {Dashboard} from './atoms/dashboard.js'
+import {prepareInitialContentAtom} from './atoms/routing.js'
+import {authAtom, themeAtom} from './atoms/user.js'
 
 const styles = styler(css)
 
@@ -35,37 +44,61 @@ export function App({
 }: AppProps) {
   const [dashboard] = useState(
     () =>
-      new Dashboard(graph, config, events, client, views, {
-        alineaDev,
-        local
-      })
+      ({
+        graph,
+        config,
+        events,
+        client,
+        views,
+        options: {alineaDev, local}
+      }) satisfies Dashboard
   )
-  useAtomValue(dashboard.theme)
   return (
-    <Suspense
-      fallback={
-        <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
-          <div className={styles.AppLoading.progress()}>
-            <ProgressCircle isIndeterminate aria-label="loading" />
-          </div>
-        </Rail>
-      }
-    >
-      <AppRoot dashboard={dashboard} />
-    </Suspense>
+    <DashboardScopeInternal dashboard={dashboard}>
+      <DashboardApp />
+    </DashboardScopeInternal>
   )
 }
 
-interface AppRootProps {
-  dashboard: Dashboard
+function DashboardApp() {
+  useAtomValue(themeAtom)
+  const auth = useAtomValue(authAtom)
+  if (auth.status !== 'authenticated') {
+    return <AuthView />
+  }
+  return <DashboardContent />
 }
 
-function AppRoot({dashboard}: AppRootProps) {
-  const auth = useAtomValue(dashboard.auth)
+function DashboardLoading() {
+  return (
+    <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
+      <div className={styles.AppLoading.progress()}>
+        <ProgressCircle isIndeterminate aria-label="loading" />
+      </div>
+    </Rail>
+  )
+}
 
-  if (auth.status !== 'authenticated') {
-    return <AuthView dashboard={dashboard} />
-  }
+interface DashboardBootProps {
+  setReady: Dispatch<SetStateAction<boolean>>
+}
 
-  return <AppShell dashboard={dashboard} />
+function DashboardBoot({setReady}: DashboardBootProps) {
+  const [error, setError] = useState<Error>()
+  const prepare = useSetAtom(prepareInitialContentAtom)
+  useEffect(() => {
+    void prepare().then(
+      () => setReady(true),
+      cause =>
+        setError(cause instanceof Error ? cause : new Error(String(cause)))
+    )
+  }, [prepare, setReady])
+  if (error) throw error
+  return <DashboardLoading />
+}
+
+function DashboardContent() {
+  const [ready, setReady] = useState(false)
+  if (ready) return <AppShell />
+  return <DashboardBoot setReady={setReady} />
 }

@@ -76,6 +76,10 @@ export class DashboardWorker extends EventTarget {
     return db.sha
   }
 
+  async sha() {
+    return (await this.db).sha
+  }
+
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     return this.#local(async () => {
       const db = await this.db

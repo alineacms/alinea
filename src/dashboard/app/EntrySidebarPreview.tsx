@@ -3,24 +3,35 @@ import type {Preview} from '#/core/Preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useEffect, useMemo, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   IcRoundArrowBack,
   IcRoundArrowForward,
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import {DashboardEntryData, useDashboard} from '../store.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
+import {
+  markPreviewSessionReadyAtom,
+  previewMetadataAtom
+} from '../atoms/entry/preview.js'
+import type {EntrySidebarData} from '../atoms/entry/load.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  pending?: boolean
+  sidebar: EntrySidebarData
 }
 
-export function EntrySidebarPreview({entry}: EntrySidebarPreviewProps) {
+export function EntrySidebarPreview({
+  entry,
+  pending = false,
+  sidebar
+}: EntrySidebarPreviewProps) {
   const preview = useAtomValue(entry.preview)
   if (!preview)
     return (
@@ -30,11 +41,19 @@ export function EntrySidebarPreview({entry}: EntrySidebarPreviewProps) {
     )
   if (preview === true)
     return (
-      <Suspense fallback={<EntrySidebarBrowserPreviewFallback />}>
-        <EntrySidebarBrowserPreview entry={entry} />
-      </Suspense>
+      <EntrySidebarBrowserPreview
+        entry={entry}
+        pending={pending}
+        sidebar={sidebar}
+      />
     )
-  return <EntrySidebarComponentPreview entry={entry} preview={preview} />
+  return (
+    <EntrySidebarComponentPreview
+      pending={pending}
+      preview={preview}
+      sidebar={sidebar}
+    />
+  )
 }
 
 interface EntrySidebarPreviewMessageProps {
@@ -52,15 +71,23 @@ function EntrySidebarPreviewMessage({
 }
 
 interface EntrySidebarComponentPreviewProps {
-  entry: DashboardEntryData
+  pending: boolean
   preview: Exclude<Preview, boolean>
+  sidebar: EntrySidebarData
 }
 
 function EntrySidebarComponentPreview({
-  entry,
-  preview
+  pending,
+  preview,
+  sidebar
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry = useAtomValue(entry.previewEntry)
+  const previewEntry = sidebar.type === 'preview' ? sidebar.entry : null
+  if (pending)
+    return (
+      <div className={styles.EntrySidebarPreview()}>
+        <EntrySidebarPreviewLoading />
+      </div>
+    )
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage>
@@ -78,7 +105,9 @@ function EntrySidebarComponentPreview({
 }
 
 interface EntrySidebarBrowserPreviewProps {
-  entry: DashboardEntryData
+  entry: EntryDataAtoms
+  pending: boolean
+  sidebar: EntrySidebarData
 }
 
 interface EntrySidebarBrowserPreviewHeaderProps {
@@ -138,35 +167,29 @@ function EntrySidebarBrowserPreviewHeader({
   )
 }
 
-function EntrySidebarBrowserPreviewFallback() {
+function EntrySidebarPreviewLoading() {
   return (
-    <div className={styles.EntrySidebarPreview()}>
-      <EntrySidebarBrowserPreviewHeader
-        canOpenPreview={false}
-        reloadLabel="Reload preview"
-      />
-      <div className={styles.EntrySidebarPreview.browser()}>
-        <div className={styles.EntrySidebarPreview.loading()}>
-          <ProgressCircle isIndeterminate aria-label="Loading preview" />
-        </div>
-      </div>
+    <div className={styles.EntrySidebarPreview.loading()}>
+      <ProgressCircle isIndeterminate aria-label="Loading preview" />
     </div>
   )
 }
 
-function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
-  const previewUrl = useAtomValue(entry.previewUrl)
+function EntrySidebarBrowserPreview({
+  entry,
+  pending,
+  sidebar
+}: EntrySidebarBrowserPreviewProps) {
+  const previewUrl = sidebar.type === 'preview' ? sidebar.url : undefined
   const previewPayloadSignal = useAtomValue(entry.previewPayloadSignal)
   const updatePreviewPayload = useSetAtom(entry.updatePreviewPayload)
   const retryPreviewUrl = useSetAtom(entry.retryPreviewUrl)
   const iframe = useRef<HTMLIFrameElement>(null)
   const previewPayload = useRef<string | undefined>(undefined)
   const [frameVersion, setFrameVersion] = useState(0)
-  const [loading, setLoading] = useState(true)
   const hasPreviewListener = useRef(false)
-  const dashboard = useDashboard()
-  const setMetadata = useSetAtom(dashboard.previewMetadata)
-  const markPreviewSessionReady = useSetAtom(dashboard.markPreviewSessionReady)
+  const setMetadata = useSetAtom(previewMetadataAtom)
+  const markPreviewSessionReady = useSetAtom(markPreviewSessionReadyAtom)
 
   const targetOrigin = useMemo(() => {
     if (!previewUrl) return undefined
@@ -176,7 +199,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
   }, [previewUrl])
 
   useEffect(() => {
-    setLoading(true)
     setFrameVersion(0)
     hasPreviewListener.current = false
   }, [previewUrl, targetOrigin])
@@ -252,7 +274,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
       retryPreviewUrl()
       return
     }
-    setLoading(true)
     if (hasPreviewListener.current) post(PreviewAction.Reload)
     else setFrameVersion(version => version + 1)
   }
@@ -267,13 +288,13 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
         onReload={reloadPreview}
         onOpen={openInNewTab}
       />
-      <div className={styles.EntrySidebarPreview.browser()}>
-        {previewUrl && loading && (
-          <div className={styles.EntrySidebarPreview.loading()}>
-            <ProgressCircle isIndeterminate aria-label="Loading preview" />
-          </div>
-        )}
-        {previewUrl ? (
+      <div
+        className={styles.EntrySidebarPreview.browser()}
+        aria-busy={pending || undefined}
+      >
+        {pending ? (
+          <EntrySidebarPreviewLoading />
+        ) : previewUrl ? (
           <iframe
             key={`${previewUrl}:${frameVersion}`}
             ref={iframe}
@@ -281,7 +302,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
             allow="accelerometer; ambient-light-sensor; camera; encrypted-media; geolocation; gyroscope; hid; microphone; midi; payment; usb; vr; xr-spatial-tracking"
             sandbox="allow-top-navigation allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts allow-downloads allow-pointer-lock"
             src={previewUrl}
-            onLoad={() => setLoading(false)}
           />
         ) : (
           <p className={styles.EntrySidebarPreview.browserMessage()}>

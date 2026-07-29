@@ -1,11 +1,8 @@
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Type, type} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {
-  Dashboard,
-  DashboardScopeInternal,
-  ReactiveNode
-} from '#/dashboard/store.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
+import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {localiser} from '#/field/localiser.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
@@ -41,13 +38,13 @@ const previewStyle: CSSProperties = {
   whiteSpace: 'pre-wrap'
 }
 
-const dashboard = new Dashboard(
-  {} as WriteableGraph,
+const dashboard = {
+  graph: {} as WriteableGraph,
   config,
-  new EventTarget(),
-  undefined!,
+  events: new EventTarget(),
+  client: undefined!,
   views
-)
+}
 const node = new ReactiveNode(Type.initialValue(pageType) as object)
 
 export function Example() {
