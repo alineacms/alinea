@@ -24,6 +24,7 @@ import {
   TextField
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
+import {getType} from '#/core/Internal.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
@@ -1217,14 +1218,15 @@ function LoadedEntryTypeBadge({
   ...props
 }: LoadedEntryTypeBadgeProps) {
   const type = useAtomValue(entry.type)
+  const typeSettings = getType(type)
   return (
     <Badge
       {...props}
       className={styles.LinkFieldView.type(styler.merge({className}))}
-      icon={type.icon || IcRoundLink}
+      icon={typeSettings.icon || IcRoundLink}
       size="small"
     >
-      {type.label}
+      {typeSettings.label}
     </Badge>
   )
 }

@@ -53,8 +53,8 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
   const sidebarState = useAtomValue(page.sidebar)
   const sidebar = sidebarState.data ?? {type: 'closed'}
   const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs = allowedEntrySidebarTabs(type)
   const selectedKey = allowedTabs.includes(selectedTab)
@@ -246,7 +246,7 @@ function EntrySidebarStatusItem({
     selectedVersion.type === 'status' && selectedVersion.status === status
   const rowStatus = getStatusItemVersionStatus(status, activeVersion?.main)
   const version = versions.get(status)
-  const hasMetadata = Type.field(type.type, 'metadata') instanceof MetadataField
+  const hasMetadata = Type.field(type, 'metadata') instanceof MetadataField
   const meta = hasMetadata ? formatMetadata(version?.data.metadata) : undefined
   return (
     <li className={styles.EntrySidebar.historyItem()}>

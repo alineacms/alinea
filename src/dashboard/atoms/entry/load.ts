@@ -23,7 +23,6 @@ import {graphAtom} from '../graph.js'
 import {policyAtom, policyResourceAtom} from '../user.js'
 import {batchLoader, dispense, swr, withPending} from '../utils.js'
 import {configAtom} from '../config.js'
-import type {TypeAtoms} from '../config/type.js'
 import {ReactiveNode} from './editor.js'
 import type {EntryDataAtoms} from '../entry.js'
 
@@ -139,16 +138,14 @@ export const entryRevisionAtom = dispense((_id: string) => atom(0))
 export const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
 export const entrySidebarOpenAtom = atom(true)
 
-export function allowedEntrySidebarTabs(
-  type: TypeAtoms
-): Array<EntrySidebarTab> {
-  if (type.type === MediaFile) return ['references']
-  if (type.type === MediaLibrary) return ['history', 'references']
+export function allowedEntrySidebarTabs(type: Type): Array<EntrySidebarTab> {
+  if (type === MediaFile) return ['references']
+  if (type === MediaLibrary) return ['history', 'references']
   return ['preview', 'history', 'references']
 }
 
 export function resolveEntrySidebarTab(
-  type: TypeAtoms,
+  type: Type,
   selected: EntrySidebarTab
 ): EntrySidebarTab {
   const allowed = allowedEntrySidebarTabs(type)
@@ -231,7 +228,7 @@ export class EntryLanguageAtoms {
 
   anchors = swr(
     atom(async (get): Promise<Array<EntryAnchorTarget>> => {
-      const type = get(this.entry.type).type
+      const type = get(this.entry.type)
       const entry = await get(this.activeVersion)
       return Type.anchors(type, entry.data)
     })
@@ -239,7 +236,7 @@ export class EntryLanguageAtoms {
 
   data = dispense((status: EntryStatus) => {
     return atom(async get => {
-      const type = get(this.entry.type).type
+      const type = get(this.entry.type)
       const versions = await get(this.versionsResource)
       const activeStatus = versions.keys().next().value
       const version = versions.get(status)
@@ -256,13 +253,6 @@ export class EntryLanguageAtoms {
       )
     })
   })
-}
-
-export function createEntryLanguage(
-  entry: EntryDataAtoms,
-  locale: string | null
-): EntryLanguageAtoms {
-  return new EntryLanguageAtoms(entry, locale)
 }
 
 export interface PreparedEntryPage {

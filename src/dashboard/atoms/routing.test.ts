@@ -2,7 +2,6 @@ import {expect, test} from 'bun:test'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
-import {createType} from './config/type.js'
 import {entryAtoms} from './entry.js'
 import {
   createEntrySidebarResource,
@@ -61,10 +60,8 @@ test('changing user roles re-prepares the current route', async () => {
 })
 
 test('entry sidebar defaults match the entry type', () => {
-  const mediaFileType = createType(MediaFile)
-  const mediaLibraryType = createType(MediaLibrary)
-  expect(resolveEntrySidebarTab(mediaFileType, 'preview')).toBe('references')
-  expect(resolveEntrySidebarTab(mediaLibraryType, 'preview')).toBe('history')
+  expect(resolveEntrySidebarTab(MediaFile, 'preview')).toBe('references')
+  expect(resolveEntrySidebarTab(MediaLibrary, 'preview')).toBe('history')
 })
 
 test('open entry sidebar is prepared with the page', async () => {

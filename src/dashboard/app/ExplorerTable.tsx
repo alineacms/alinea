@@ -107,7 +107,7 @@ function ExplorerTableLoadedBreadcrumb({
 }: ExplorerTableLoadedBreadcrumbProps) {
   const label = useAtomValue(data.label)
   const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.label)
+  const rootLabel = useAtomValue(root.settings).label
   return (
     <>
       {index === 0 && (
@@ -253,7 +253,7 @@ function ExplorerTableLoadedRow({
   breadcrumbs
 }: ExplorerTableLoadedRowProps) {
   const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.label)
+  const rootLabel = useAtomValue(root.settings).label
   const label = useAtomValue(data.label)
   const configuredIcon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.hasChildren)

@@ -25,10 +25,9 @@ import {
   configAtom,
   queryTreeChildren,
   type RootAtoms,
-  viewAtom,
+  viewsAtom,
   workspaceAtoms
 } from './config.js'
-import {type TypeAtoms, typeAtoms} from './config/type.js'
 import {ReactiveNode} from './entry/editor.js'
 import {
   entryLoaderAtom,
@@ -48,7 +47,7 @@ import type {
   DashboardFileInfoState,
   EntryRouteBlock
 } from './entry/load.js'
-import {createEntryLanguage, entryRevisionAtom} from './entry/load.js'
+import {EntryLanguageAtoms, entryRevisionAtom} from './entry/load.js'
 import {createEntryPreviewAtoms} from './entry/preview.js'
 
 export const entryOverviewColumnCount = 5
@@ -110,7 +109,7 @@ export class EntryAtoms {
     let data: EntryDataAtoms
     const loaded = atom(async get => {
       const initial = await get(entryData)
-      return (data ??= createEntryData(
+      return (data ??= new EntryDataAtoms(
         this,
         unwrap(entryData, prev => prev ?? initial) as Atom<EntryData>
       ))
@@ -181,7 +180,7 @@ export class EntryDataAtoms {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>
-  type: Atom<TypeAtoms>
+  type: Atom<Type>
   overviewCells: Atom<Array<EntryOverviewCell>>
   defaultView: Atom<'edit' | 'overview'>
   view: WritableAtom<EntryView, [view: EntryView], void>
@@ -196,20 +195,16 @@ export class EntryDataAtoms {
     return !get(this.locales).has(locale)
   }
 
-  #sourceLocaleFor(get: Getter, locale: string | null) {
+  sourceLocaleFor(get: Getter, locale: string | null) {
     if (this.#untranslatedFor(get, locale))
       return get(this.translationSourceLocale)
     return locale
   }
 
-  sourceLocaleFor(get: Getter, locale: string | null) {
-    return this.#sourceLocaleFor(get, locale)
-  }
-
   #selectedVersionFor(get: Getter, locale: string | null): SelectedVersion {
     const selected = get(this.#selection)
     if (selected) return selected
-    const sourceLocale = this.#sourceLocaleFor(get, locale)
+    const sourceLocale = this.sourceLocaleFor(get, locale)
     const entry = get(this.locales).get(sourceLocale)
     assert(entry, `Entry ${this.id} has no data for locale ${sourceLocale}`)
     return {type: 'status', status: entry.status}
@@ -218,7 +213,7 @@ export class EntryDataAtoms {
   currentEntryFor = dispense((locale: string | null) =>
     atom(async (get): Promise<Entry | null> => {
       const selected = this.#selectedVersionFor(get, locale)
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const sourceLocale = this.sourceLocaleFor(get, locale)
       const language = this.languages(sourceLocale)
       const versions = await get(language.versionsResource)
       const fallback = versions.values().next().value ?? null
@@ -253,8 +248,8 @@ export class EntryDataAtoms {
 
   customView = atom(get => {
     const type = get(this.type)
-    const {view} = getType(type.type)
-    if (typeof view === 'string') return get(viewAtom(view))
+    const {view} = getType(type)
+    if (typeof view === 'string') return get(viewsAtom)[view]
     return view
   })
 
@@ -266,10 +261,15 @@ export class EntryDataAtoms {
     this.workspaceKey = atom(get => get(data).workspace)
     this.rootKey = atom(get => get(data).root)
     this.hasChildren = atom(get => get(data).hasChildren)
-    this.type = atom(get => get(typeAtoms(get(data).type)))
+    this.type = atom(get => {
+      const key = get(data).type
+      const type = get(configAtom).schema[key]
+      assert(type, `Type "${key}" not found in config`)
+      return type
+    })
     this.defaultView = atom(get => {
       if (get(this.hasChildren)) return 'overview'
-      const configured = get(this.type).defaultView
+      const configured = Type.defaultView(get(this.type))
       if (configured) return configured
       return 'edit'
     })
@@ -301,7 +301,7 @@ export class EntryDataAtoms {
     this.overviewCells = atom(get => {
       const entry = get(this.currentEntry)
       if (!entry || entry instanceof Promise) return []
-      const type = get(this.type).type
+      const type = get(this.type)
       return dashboardEntryOverviewFields(type)
         .slice(0, entryOverviewColumnCount)
         .map(([key, field]) => {
@@ -352,7 +352,7 @@ export class EntryDataAtoms {
 
   sourceLocale = atom(get => {
     const root = get(this.root)
-    return this.#sourceLocaleFor(get, get(root.selectedLocale))
+    return this.sourceLocaleFor(get, get(root.selectedLocale))
   })
 
   activeStatus = atom(get => {
@@ -385,7 +385,7 @@ export class EntryDataAtoms {
   historyFor = dispense((locale: string | null) =>
     atom(async (get): Promise<Array<Revision>> => {
       const config = get(configAtom)
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const sourceLocale = this.sourceLocaleFor(get, locale)
       const data = get(this.locales).get(sourceLocale)
       assert(data, `No locale data found for locale ${sourceLocale}`)
       const file = dashboardEntryFile(config, {
@@ -438,7 +438,7 @@ export class EntryDataAtoms {
       const language = this.languages(locale)
       const activeVersion = await get(language.activeVersionResource)
       const data = await get(this.historyData(historyDataKey(version)))
-      const type = get(this.type).type
+      const type = get(this.type)
       const historyData = data ? parseRecord(data).data : activeVersion.data
       return new ReactiveNode<object>(
         Type.withInitialValue(type, {
@@ -463,7 +463,7 @@ export class EntryDataAtoms {
   selectedNodeFor = dispense((locale: string | null) =>
     atom(async get => {
       const version = this.#selectedVersionFor(get, locale)
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const sourceLocale = this.sourceLocaleFor(get, locale)
       if (version.type === 'status') {
         const editing = get(this.currentlyEditing)
         const active = get(this.locales).get(sourceLocale)
@@ -516,7 +516,7 @@ export class EntryDataAtoms {
 
   fileInfo = swr(
     atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
-      if (get(this.type).type !== MediaFile) return null
+      if (get(this.type) !== MediaFile) return null
       const lang = this.languages(null)
       const data = await get(lang.activeVersion)
       return data.data as Infer<typeof MediaFile>
@@ -544,7 +544,7 @@ export class EntryDataAtoms {
 
   parents = unwrap(this.#parents, prev => prev ?? [])
 
-  #incomingReferences = atom(async get => {
+  incomingReferencesResource = atom(async get => {
     get(entryRevisionAtom(this.id))
     const db = get(graphAtom)
     const policy = get(policyAtom)
@@ -590,8 +590,6 @@ export class EntryDataAtoms {
       scan: result.scan
     } satisfies DashboardEntryReferences
   })
-  incomingReferencesResource = this.#incomingReferences
-
   canPublish = atom(get => {
     return get(this.parentInfo).every(parent => parent.status === 'published')
   })
@@ -604,13 +602,13 @@ export class EntryDataAtoms {
     return get(this.entryData).parents
   })
 
-  icon = atom(get => get(this.type).icon)
+  icon = atom(get => getType(get(this.type)).icon)
 
   childrenFor = dispense((locale: string | null) => {
     return swr(
       atom(async get => {
         const root = get(this.root)
-        const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
+        const orderChildrenBy = getType(get(this.type)).orderChildrenBy
         return queryTreeChildren(get, root, this.id, orderChildrenBy, locale)
       })
     )
@@ -628,7 +626,7 @@ export class EntryDataAtoms {
 
   availableStatusesFor = dispense((locale: string | null) =>
     atom(async get => {
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const sourceLocale = this.sourceLocaleFor(get, locale)
       const versions = await get(this.languages(sourceLocale).versionsResource)
       return [...versions.keys()]
     })
@@ -637,7 +635,7 @@ export class EntryDataAtoms {
   activeVersionFor = dispense((locale: string | null) =>
     atom(async get => {
       const locales = get(this.locales)
-      const sourceLocale = this.#sourceLocaleFor(get, locale)
+      const sourceLocale = this.sourceLocaleFor(get, locale)
       const entry = locales.get(sourceLocale)
       if (entry) return entry
       for (const fallback of locales.values()) {
@@ -688,7 +686,7 @@ export class EntryDataAtoms {
   previewUrlFor = this.#previewAtoms.previewUrlFor
 
   languages = dispense((locale: string | null) => {
-    return createEntryLanguage(this, locale)
+    return new EntryLanguageAtoms(this, locale)
   })
 
   routeBlock = atom<EntryRouteBlock | null>(null)
@@ -751,7 +749,7 @@ export class EntryDataAtoms {
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Update, locale)
     const db = get(graphAtom)
-    const type = get(this.type).type
+    const type = get(this.type)
     const {data, changed} = await this.#beforeSave(get, node, type, 'update')
     await db.create({
       type,
@@ -770,7 +768,7 @@ export class EntryDataAtoms {
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
     const db = get(graphAtom)
-    const type = get(this.type).type
+    const type = get(this.type)
     const {data, changed} = await this.#beforeSave(get, node, type, 'publish')
     await db.create({
       type,
@@ -908,7 +906,7 @@ export class EntryDataAtoms {
       assert(parentLink, 'Parent not translated')
     }
     const config = get(configAtom)
-    const type = get(this.type).type
+    const type = get(this.type)
     const {data, changed} = await this.#beforeSave(get, node, type, 'translate')
     await db.create({
       type,
@@ -963,17 +961,4 @@ export type {
   EntryRouteBlock
 }
 export type {EntryLanguageAtoms} from './entry/load.js'
-export {createEntryLanguage}
-
-export function createEntry(id: string): EntryAtoms {
-  return new EntryAtoms(id)
-}
-
-export const entryAtoms = dispense((id: string) => createEntry(id))
-
-export function createEntryData(
-  entry: EntryAtoms,
-  entryData: Atom<EntryData>
-): EntryDataAtoms {
-  return new EntryDataAtoms(entry, entryData)
-}
+export const entryAtoms = dispense((id: string) => new EntryAtoms(id))

@@ -62,7 +62,7 @@ export function LocaleMenu({
   root,
   selectedLocale: selectedLocaleAtom = root.selectedLocale
 }: LocaleMenuProps) {
-  const i18n = useAtomValue(root.i18n)
+  const i18n = useAtomValue(root.settings).i18n
   const selectedLocale = useAtomValue(selectedLocaleAtom)
   const setSelectedLocale = useSetAtom(selectedLocaleAtom)
   const [isPending, setIsPending] = useState(false)

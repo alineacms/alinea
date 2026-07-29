@@ -319,16 +319,14 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const rootChildren = useAtomValue(root.children)
   const items = rootChildren.map(entryAtoms)
   const dragDisabled = useAtomValue(tree.dragDisabled)
-  const getItems = useSetAtom(tree.getItems)
-  const getDropOperation = useSetAtom(tree.getDropOperation)
   const onInsert = useSetAtom(tree.onInsert)
   const onItemDrop = useSetAtom(tree.onItemDrop)
   const onMove = useSetAtom(tree.onMove)
   const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
     acceptedDragTypes: tree.acceptedDragTypes,
-    getItems,
+    getItems: tree.getItems,
     isDisabled: disableDragAndDrop || dragDisabled,
-    getDropOperation,
+    getDropOperation: tree.getDropOperation,
     onInsert,
     onItemDrop,
     onMove
@@ -370,9 +368,10 @@ function SidebarTreeRootButton({
   selected: boolean
   selectedLocale?: DashboardLocaleSelection
 }) {
-  const label = useAtomValue(root.label)
+  const settings = useAtomValue(root.settings)
+  const label = settings.label
   const icon = useAtomValue(root.icon)
-  const i18n = useAtomValue(root.i18n)
+  const i18n = settings.i18n
   return (
     <div className={styles.SidebarTree.rootButton({selected})}>
       <Button

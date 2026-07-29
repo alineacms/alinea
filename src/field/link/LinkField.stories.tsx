@@ -8,7 +8,6 @@ import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/dashboard.js'
 import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
@@ -101,13 +100,14 @@ const pickerStoryStyle: CSSProperties = {
 
 const fixtureConnection = createTestConnection(db)
 
-const dashboard = createDashboard(
-  db,
-  cms.config,
-  db.index,
-  fixtureConnection,
-  views
-)
+const dashboard = {
+  graph: db,
+  config: cms.config,
+  events: db.index,
+  client: fixtureConnection,
+  views,
+  options: {}
+}
 
 export function Example() {
   const editor = useMemo(() => {

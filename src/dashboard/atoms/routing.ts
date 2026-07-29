@@ -16,19 +16,15 @@ import {
   loadExplorerPage,
   loadTree
 } from './explorer.js'
-import {
-  canManageMembersAtom,
-  optionsAtom,
-  policyAtom,
-  policyResourceAtom
-} from './user.js'
-import {dispense} from './utils.js'
+import {canManageMembersAtom, optionsAtom, policyResourceAtom} from './user.js'
 import {
   configAtom,
   currentWorkspaceAtom,
   type RootAtoms,
   type WorkspaceAtoms,
-  workspaceAtoms
+  workspaceAtoms,
+  workspaceRootsAtom,
+  workspacesAtom
 } from './config.js'
 import {createBrowserHistory} from './routing/history.js'
 import {createNavigation, type Navigation} from './routing/navigation.js'
@@ -81,7 +77,7 @@ function loadRoute(
   })(get, route, signal)
 }
 
-export const initialPageAtom = atom(async get =>
+const initialPageAtom = atom(async get =>
   loadRoute(get, get(routeAtom), new AbortController().signal)
 )
 
@@ -127,32 +123,6 @@ export const refreshPageForAtom = atom(
     await set(reloadPageAtom)
   }
 )
-
-export const workspaceSettingsAtom = dispense((key: string) =>
-  atom(get => {
-    const workspace = get(configAtom).workspaces[key]
-    assert(workspace, `Workspace "${key}" not found in config`)
-    return getWorkspace(workspace)
-  })
-)
-
-export const workspaceRootsAtom = dispense((key: string) =>
-  atom(get => {
-    const configuredRoots = get(workspaceSettingsAtom(key)).roots
-    const policy = get(policyAtom)
-    return Object.keys(configuredRoots).filter(root =>
-      policy.canRead({workspace: key, root})
-    )
-  })
-)
-
-export const workspacesAtom = atom(get => {
-  const config = get(configAtom)
-  const policy = get(policyAtom)
-  return Object.keys(config.workspaces).filter(workspace =>
-    policy.canRead({workspace})
-  )
-})
 
 export const selectedWorkspaceAtom = atom(
   get => {
@@ -352,7 +322,7 @@ export function createRouteLoader(options: RouteLoaderOptions) {
     if (!rootKey) return {type: 'empty', canManageMembers}
 
     const root = workspace.root(rootKey)
-    const i18n = get(root.i18n)
+    const i18n = get(root.settings).i18n
     const locale =
       route.locale && i18n?.locales.includes(route.locale)
         ? route.locale

@@ -9,8 +9,7 @@ import {
   type EntryAtoms
 } from '../atoms/entry.js'
 import type {DashboardMenuItem, ExplorerLocation} from '../atoms/explorer.js'
-import {workspacesAtom} from '../atoms/routing.js'
-import {workspaceAtoms} from '../atoms/config.js'
+import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
 import css from './LocationBreadcrumbs.module.css'
 
 const styles = styler(css)
@@ -19,24 +18,23 @@ export const workspaceBreadcrumbItemsAtom = atom(get => {
   const workspaces = get(workspacesAtom)
   return workspaces.map(workspace => ({
     id: workspace,
-    label: get(workspaceAtoms(workspace).label)
+    label: get(workspaceAtoms(workspace).settings).label
   }))
 })
 
 interface BreadcrumbMenuProps {
-  label: Atom<string>
+  label: string
   items: Atom<Array<DashboardMenuItem>>
   onSelect: () => void
   onAction: (id: string) => void
 }
 
 function BreadcrumbMenu({
-  label: labelAtom,
+  label,
   items: itemsAtom,
   onSelect,
   onAction
 }: BreadcrumbMenuProps) {
-  const label = useAtomValue(labelAtom)
   const items = useAtomValue(itemsAtom)
   return (
     <span className={styles.LocationBreadcrumbs.item()}>
@@ -175,6 +173,8 @@ export function LocationBreadcrumbs({
   const workspace = workspaceAtoms(location.workspace)
   const roots = useAtomValue(workspace.roots)
   const root = workspace.root(location.root ?? roots[0])
+  const workspaceLabel = useAtomValue(workspace.settings).label
+  const rootLabel = useAtomValue(root.settings).label
   const setWorkspace = (workspace: string) => {
     setLocation({workspace})
   }
@@ -198,7 +198,7 @@ export function LocationBreadcrumbs({
     <div className={styles.LocationBreadcrumbs()}>
       {enableWorkspace && (
         <BreadcrumbMenu
-          label={workspace.label}
+          label={workspaceLabel}
           items={workspaceBreadcrumbItemsAtom}
           onSelect={() => setWorkspace(location.workspace)}
           onAction={setWorkspace}
@@ -208,7 +208,7 @@ export function LocationBreadcrumbs({
         <>
           {enableWorkspace && <BreadcrumbSeparator />}
           <BreadcrumbMenu
-            label={root.label}
+            label={rootLabel}
             items={workspace.rootMenu}
             onSelect={selectRoot}
             onAction={setRoot}

@@ -5,7 +5,6 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {type} from '#/core/Type.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/dashboard.js'
 import {json} from '#/field/json.js'
 import {list} from '#/field/list.js'
 import {object} from '#/field/object.js'
@@ -19,13 +18,14 @@ import {
   compactFieldText
 } from './CompactField.js'
 
-const dashboard = createDashboard(
-  {} as WriteableGraph,
-  {schema: {}, workspaces: {}},
-  new EventTarget(),
-  {} as LocalConnection,
-  {}
-)
+const dashboard = {
+  graph: {} as WriteableGraph,
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection,
+  views: {},
+  options: {}
+}
 
 afterEach(cleanup)
 

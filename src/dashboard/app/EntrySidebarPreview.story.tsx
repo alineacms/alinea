@@ -1,7 +1,6 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/dashboard.js'
 import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import type {EntryDataAtoms} from '#/dashboard/atoms/entry.js'
 import {shaAtom} from '#/dashboard/atoms/graph.js'
@@ -18,13 +17,14 @@ const graph = {
   }
 } satisfies PreviewGraph as unknown as WriteableGraph
 
-const dashboard = createDashboard(
+const dashboard = {
   graph,
-  {schema: {}, workspaces: {}},
-  new EventTarget(),
-  {} as LocalConnection,
-  {}
-)
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection,
+  views: {},
+  options: {}
+}
 
 const node = new ReactiveNode({title: 'Original title'})
 const previewPayloadSignal = atom(get => get(node.value))

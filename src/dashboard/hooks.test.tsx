@@ -13,7 +13,6 @@ import {
   useDashboard,
   useEntry
 } from './hooks.js'
-import {createDashboard} from './atoms/dashboard.js'
 import {entryRevisionAtom} from './atoms/entry/load.js'
 import {configAtom} from './atoms/config.js'
 
@@ -137,5 +136,12 @@ function createTestDashboard(workspace: string, events = new EventTarget()) {
     }
   })
   const db = new LocalDB(config)
-  return createDashboard(db, config, events, createTestConnection(db), {})
+  return {
+    graph: db,
+    config,
+    events,
+    client: createTestConnection(db),
+    views: {},
+    options: {}
+  }
 }

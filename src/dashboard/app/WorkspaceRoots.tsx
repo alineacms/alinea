@@ -68,7 +68,7 @@ interface WorkspaceRootButtonProps {
 
 function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   const icon = useAtomValue(root.icon)
-  const label = useAtomValue(root.label)
+  const label = useAtomValue(root.settings).label
   const [selected, setSelected] = useAtom(root.selected)
   return (
     <Tooltip placement="right" delay={100} tooltip={label}>

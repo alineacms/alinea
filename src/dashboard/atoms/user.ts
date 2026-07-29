@@ -18,7 +18,7 @@ export interface DashboardOptions {
 }
 
 export const clientAtom = requiredAtom<LocalConnection>('dashboard.client')
-export const optionsAtom = requiredAtom<DashboardOptions>('dashboard.options')
+export const optionsAtom = atom<DashboardOptions>({})
 
 export interface AuthLoading {
   status: 'loading'
@@ -80,7 +80,7 @@ export function appendReturnUrl(url: string): string {
 const userOverrideAtom = atom<User | null | undefined>()
 const authStateAtom = atom<AuthState>({status: 'loading'})
 
-export const authRequiredAtom = atom((get): boolean => {
+const authRequiredAtom = atom((get): boolean => {
   const forceAuth =
     typeof process !== 'undefined' && process.env.ALINEA_FORCE_AUTH
   if (forceAuth) return true
@@ -199,24 +199,6 @@ export const updateUserRolesAtom = atom(
   }
 )
 
-export const authenticateAtom = atom(null, (get, set, user: User) => {
-  const client = get(clientAtom)
-  if (client instanceof Client) {
-    set(
-      clientAtom,
-      client.authenticate(
-        options => options,
-        () => {
-          set(userOverrideAtom, null)
-          set(authStateAtom, {status: 'loading'})
-          set(authAtom, {type: 'check'})
-        }
-      )
-    )
-  }
-  set(userOverrideAtom, user)
-})
-
 export const logoutAtom = atom(null, async (get, set) => {
   const client = get(clientAtom)
   const logout = (client as Partial<LogoutConnection>).logout
@@ -231,7 +213,7 @@ export const canLogoutAtom = atom(get => {
   return typeof (client as Partial<LogoutConnection>).logout === 'function'
 })
 
-export const backendCapabilitiesResourceAtom = atom(async get => {
+const backendCapabilitiesResourceAtom = atom(async get => {
   const client = get(clientAtom)
   if (!client.capabilities)
     throw new Error('Backend capabilities are not available')
@@ -249,11 +231,6 @@ export const policyResourceAtom = atom(async get => {
 
 const policyStateAtom = withPending(policyResourceAtom)
 
-export const policyReadyAtom = atom(get => {
-  const [pending] = get(policyStateAtom)
-  return !pending
-})
-
 export const policyAtom = atom(get => {
   const [, policy] = get(policyStateAtom)
   return policy ?? Policy.ALLOW_NONE
@@ -269,27 +246,29 @@ export const canManageMembersAtom = atom(async get => {
 export type ThemeMode = 'system' | 'light' | 'dark'
 
 const storageKey = 'alinea-dashboard-theme'
+const themeStorageAtom = atomWithStorage<ThemeMode>(
+  storageKey,
+  'system',
+  undefined
+)
 let enableTransitionsFrame: number | undefined
 
-export function createThemeAtom() {
-  const storage = atomWithStorage<ThemeMode>(storageKey, 'system', undefined)
-  return Object.assign(
-    atom(
-      get => get(storage),
-      (get, set, next: SetStateAction<ThemeMode>) => {
-        const current = get(storage)
-        const theme = typeof next === 'function' ? next(current) : next
-        set(storage, theme)
-        applyTheme(theme)
-      }
-    ),
-    {
-      onMount(setTheme: (update: SetStateAction<ThemeMode>) => void) {
-        setTheme(current => current)
-      }
+export const themeAtom = Object.assign(
+  atom(
+    get => get(themeStorageAtom),
+    (get, set, next: SetStateAction<ThemeMode>) => {
+      const current = get(themeStorageAtom)
+      const theme = typeof next === 'function' ? next(current) : next
+      set(themeStorageAtom, theme)
+      applyTheme(theme)
     }
-  )
-}
+  ),
+  {
+    onMount(setTheme: (update: SetStateAction<ThemeMode>) => void) {
+      setTheme(current => current)
+    }
+  }
+)
 
 function applyTheme(theme: ThemeMode) {
   if (typeof document === 'undefined') return
@@ -313,5 +292,3 @@ function suspendTransitions() {
     })
   })
 }
-
-export const themeAtom = createThemeAtom()

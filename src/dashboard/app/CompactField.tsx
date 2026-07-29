@@ -1,11 +1,10 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {viewAtom} from '../atoms/config.js'
+import {viewsAtom} from '../atoms/config.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {useMemo} from 'react'
 import {Badge} from './Badge.js'
 import css from './CompactField.module.css'
 
@@ -18,11 +17,10 @@ export interface CompactFieldProps {
 
 export function CompactField({field, value}: CompactFieldProps) {
   const customView = Field.compactView(field)
-  const customViewKey = typeof customView === 'string' ? customView : ''
-  const customViewAtom = useMemo(() => viewAtom(customViewKey), [customViewKey])
-  const ResolvedView = useAtomValue(customViewAtom) as
-    | ComponentType<CompactFieldProps>
-    | undefined
+  const views = useAtomValue(viewsAtom)
+  const ResolvedView = (
+    typeof customView === 'string' ? views[customView] : undefined
+  ) as ComponentType<CompactFieldProps> | undefined
   if (typeof customView === 'function') return customView({field, value})
   if (ResolvedView) return <ResolvedView field={field} value={value} />
   return <CompactFieldFallback field={field} value={value} />

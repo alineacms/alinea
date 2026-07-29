@@ -67,7 +67,7 @@ interface MissingEntryProps {
 }
 
 function MissingEntry({entryId, root}: MissingEntryProps) {
-  const rootLabel = useAtomValue(root.label)
+  const rootLabel = useAtomValue(root.settings).label
   const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
   return (
@@ -94,7 +94,7 @@ interface MissingRootProps {
 }
 
 function MissingRoot({rootKey, root}: MissingRootProps) {
-  const rootLabel = useAtomValue(root.label)
+  const rootLabel = useAtomValue(root.settings).label
   const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
   return (
@@ -281,8 +281,8 @@ function EntryEditorContent({page}: EntryEditorProps) {
   const routeBlock = useAtomValue(entry.routeBlock)
   const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
   const defaultView = useAtomValue(entry.defaultView)
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   const discardAndConfirm = () => {
@@ -317,7 +317,7 @@ function EntryEditorContent({page}: EntryEditorProps) {
           <NodeEditor
             node={node}
             resource={page.activeVersion ?? undefined}
-            type={type.type}
+            type={type}
           />
         </RailContent>
       </RailBody>
@@ -331,7 +331,7 @@ function EntryEditorContent({page}: EntryEditorProps) {
           <NodeEditor
             node={node}
             resource={page.activeVersion ?? undefined}
-            type={type.type}
+            type={type}
           >
             <FileEditor />
           </NodeEditor>
@@ -341,7 +341,7 @@ function EntryEditorContent({page}: EntryEditorProps) {
   }
 
   if (View) {
-    return <View type={type.type} />
+    return <View type={type} />
   }
 
   const hasSidebar = !isUntranslated

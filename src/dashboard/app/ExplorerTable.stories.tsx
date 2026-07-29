@@ -1,5 +1,4 @@
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createDashboard} from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms} from '#/dashboard/atoms/entry.js'
 import {
   createExplorerAtoms,
@@ -28,13 +27,14 @@ const emptyStyle: CSSProperties = {
 
 const fixtureConnection = createTestConnection(db)
 
-const dashboard = createDashboard(
-  db,
-  cms.config,
-  db.index,
-  fixtureConnection,
-  views
-)
+const dashboard = {
+  graph: db,
+  config: cms.config,
+  events: db.index,
+  client: fixtureConnection,
+  views,
+  options: {}
+}
 
 interface ExplorerTableStoryProps {
   explorer: ExplorerAtoms

@@ -17,7 +17,7 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {createDashboard} from './atoms/dashboard.js'
+import type {Dashboard} from './atoms/dashboard.js'
 import {prepareInitialContentAtom} from './atoms/routing.js'
 import {authAtom, themeAtom} from './atoms/user.js'
 
@@ -42,11 +42,16 @@ export function App({
   local,
   alineaDev
 }: AppProps) {
-  const [dashboard] = useState(() =>
-    createDashboard(graph, config, events, client, views, {
-      alineaDev,
-      local
-    })
+  const [dashboard] = useState(
+    () =>
+      ({
+        graph,
+        config,
+        events,
+        client,
+        views,
+        options: {alineaDev, local}
+      }) satisfies Dashboard
   )
   return (
     <DashboardScopeInternal dashboard={dashboard}>

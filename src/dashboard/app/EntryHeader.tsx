@@ -3,6 +3,7 @@ import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
+import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {styler} from '@alinea/styler'
@@ -131,8 +132,8 @@ function EntryHeaderMoreActions({
   const mutationQueue = useAtomValue(mutationQueueAtom)
   const access = policy.get(activeVersion)
   const canDelete = activeVersion.seeded === null
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const [isPending, setIsPending] = useState(false)
   const [actionError, setActionError] = useState<Error>()
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
@@ -394,8 +395,8 @@ function EntryHeaderActions({
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
   const isActionDisabled = isPending || mutationQueue.failed > 0
   const isRevision = selectedVersion.type === 'history'
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   async function runAction(action: () => void | Promise<void>) {
@@ -527,6 +528,7 @@ export function EntryHeader({
   const parentNeedsTranslation = page.parentNeedsTranslation
   const isDirty = useAtomValue(node.isDirty)
   const type = useAtomValue(entry.type)
+  const typeSettings = getType(type)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   const viewedStatus = viewedEntry?.status ?? activeStatus
   const viewedIsUnpublished = Boolean(
@@ -541,7 +543,7 @@ export function EntryHeader({
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
           {controls}
-          <Badge icon={type.icon}>{type.label}</Badge>
+          <Badge icon={typeSettings.icon}>{typeSettings.label}</Badge>
           {isRevision ? (
             <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
           ) : (

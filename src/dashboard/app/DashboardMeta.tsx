@@ -14,14 +14,14 @@ export const dashboardTitleAtom = swr(
     const route = get(routeAtom)
     if (route.page === 'users') return 'Users'
     const workspace = get(currentWorkspaceAtom)
-    const workspaceLabel = workspace ? get(workspace.label) : 'Alinea'
+    const workspaceLabel = workspace ? get(workspace.settings).label : 'Alinea'
     const focused = await get(focusedAtom)
     let viewLabel = workspaceLabel
     if (focused) {
       if ('entry' in focused) viewLabel = get(focused.entry.label)
       else if ('missingEntry' in focused) viewLabel = 'Entry not found'
       else if ('missingRoot' in focused) viewLabel = 'Root not found'
-      else viewLabel = get(focused.root.label)
+      else viewLabel = get(focused.root.settings).label
     }
     return viewLabel === workspaceLabel
       ? workspaceLabel
@@ -32,9 +32,10 @@ export const dashboardTitleAtom = swr(
 export const dashboardFaviconAtom = atom(get => {
   const workspace = get(currentWorkspaceAtom)
   if (!workspace) return {color: '#7c3aed'}
+  const {color, icon} = get(workspace.settings)
   return {
-    color: get(workspace.color),
-    icon: get(workspace.icon)
+    color,
+    icon
   }
 })
 

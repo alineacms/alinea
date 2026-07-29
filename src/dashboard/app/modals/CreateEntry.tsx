@@ -193,7 +193,7 @@ const initialLocationAtom = atom(async get => {
       root: selectedRoot
     }
   }
-  const type = get(data.type).type
+  const type = get(data.type)
   const parentId = get(data.parentId) ?? undefined
 
   return {

@@ -75,13 +75,12 @@ function ExplorerListContent({explorer, items}: ExplorerListContentProps) {
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
-  const getItems = useSetAtom(explorer.getItems)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
-    getItems,
+    getItems: explorer.getItems,
     getDropOperation(target, _types, allowedOperations) {
       if (!isMedia || !canUpload) return 'cancel'
       if (target.type !== 'root') return 'cancel'

@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {createStore} from 'jotai'
+import {atom, createStore} from 'jotai'
 import {
   acceptsDashboardEntryDrag,
   dashboardEntryDragItem,
@@ -7,6 +7,7 @@ import {
   dashboardEntryDragTypes,
   dispense,
   requiredAtom,
+  swr,
   uploadSizeError
 } from './utils.js'
 
@@ -46,12 +47,28 @@ test('required atoms store functions without evaluating them', () => {
 })
 
 test('dispense weakly caches values by object identity', () => {
-  const family = dispense((_key: object) => requiredAtom<number>('test'))
+  const cached = dispense((_key: object) => requiredAtom<number>('test'))
   const first = {}
   const second = {}
 
-  expect(family(first)).toBe(family(first))
-  expect(family(first)).not.toBe(family(second))
+  expect(cached(first)).toBe(cached(first))
+  expect(cached(first)).not.toBe(cached(second))
+})
+
+test('swr preserves resolved nullish values', async () => {
+  const store = createStore()
+  const nullValue = swr(atom(Promise.resolve<null>(null)))
+  const undefinedValue = swr(atom(Promise.resolve<undefined>(undefined)))
+  const unsubscribeNull = store.sub(nullValue, () => {})
+  const unsubscribeUndefined = store.sub(undefinedValue, () => {})
+
+  expect(await store.get(nullValue)).toBeNull()
+  expect(await store.get(undefinedValue)).toBeUndefined()
+  await Promise.resolve()
+  expect(store.get(nullValue)).toBeNull()
+  expect(store.get(undefinedValue)).toBeUndefined()
+  unsubscribeNull()
+  unsubscribeUndefined()
 })
 
 test('creates dashboard entry drag data with a plain text fallback', () => {

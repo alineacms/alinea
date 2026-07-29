@@ -12,10 +12,9 @@ import {atom} from 'jotai'
 import type {ComponentType, SetStateAction} from 'react'
 import {policyAtom} from '../user.js'
 import {dispense} from '../utils.js'
-import {configAtom, viewAtom} from '../config.js'
+import {configAtom, viewsAtom} from '../config.js'
 
 export type Writable<Value> = WritableAtom<Value, [SetStateAction<Value>], void>
-export type Peek<Value> = WritableAtom<null, [], Value>
 
 function isArray<Value = unknown>(input: unknown): input is Array<Value> {
   return Array.isArray(input)
@@ -26,25 +25,26 @@ type ReactiveObject = Record<string, ReactiveNode>
 export class ReactiveNode<Value = unknown> {
   #initialValue: Value
   readonly readOnly: boolean
-  nodes: WritableAtom<unknown, [unknown], void>
+  #nodes: WritableAtom<unknown, [unknown], void>
+  nodes: Atom<unknown>
   #inner = atom(get => {
-    const nodes = get(this.nodes)
+    const nodes = get(this.#nodes)
     if (isArray<ReactiveNode>(nodes)) return nodes
     if (isRecord(nodes)) return values(nodes) as Array<ReactiveNode>
     return []
   })
   value: Writable<Value>
-  peek: Peek<Value> = atom(null, get => get(this.value))
 
   constructor(initialValue: Value, readOnly = false) {
     this.#initialValue = initialValue
     this.readOnly = readOnly
-    this.nodes = atom(this.#wrap(initialValue))
+    this.#nodes = atom(this.#wrap(initialValue))
+    this.nodes = this.#nodes
     this.value = atom(this.#read, this.#write)
   }
 
   #read = (get: Getter) => {
-    return this.#unwrap(get, get(this.nodes)) as Value
+    return this.#unwrap(get, get(this.#nodes)) as Value
   }
 
   #write = (get: Getter, set: Setter, update: SetStateAction<Value>) => {
@@ -102,7 +102,7 @@ export class ReactiveNode<Value = unknown> {
   }
 
   #reconcile(get: Getter, set: Setter, next: unknown) {
-    const current = get(this.nodes)
+    const current = get(this.#nodes)
 
     if (isArray(next) && isArray(current)) {
       let changed = current.length !== next.length
@@ -117,7 +117,7 @@ export class ReactiveNode<Value = unknown> {
           nextStructure.push(new ReactiveNode(value, this.readOnly))
         }
       }
-      if (changed) set(this.nodes, nextStructure)
+      if (changed) set(this.#nodes, nextStructure)
     } else if (isRecord(next) && isRecord(current)) {
       let changed = false
       const nextStructure = {...current} as Record<string, ReactiveNode>
@@ -135,9 +135,9 @@ export class ReactiveNode<Value = unknown> {
           nextStructure[key] = new ReactiveNode(next[key], this.readOnly)
         }
       }
-      if (changed) set(this.nodes, nextStructure)
+      if (changed) set(this.#nodes, nextStructure)
     } else if (current !== next) {
-      set(this.nodes, this.#wrap(next))
+      set(this.#nodes, this.#wrap(next))
     }
   }
 
@@ -156,7 +156,7 @@ export class ReactiveNode<Value = unknown> {
   field = dispense((key: string): Writable<unknown> => {
     return atom(
       get => {
-        const structure = get(this.nodes)
+        const structure = get(this.#nodes)
         const field = isRecord(structure)
           ? (structure[key] as ReactiveNode | undefined)
           : undefined
@@ -164,19 +164,19 @@ export class ReactiveNode<Value = unknown> {
       },
       (get, set, update) => {
         if (this.readOnly) return
-        const structure = get(this.nodes)
+        const structure = get(this.#nodes)
         if (isRecord(structure)) {
           const fields = structure as ReactiveObject
           if (fields[key]) set(fields[key].value, update)
           else {
-            set(this.nodes, {
+            set(this.#nodes, {
               ...fields,
               [key]: new ReactiveNode(update, this.readOnly)
             })
             set(this.#dirty, true)
           }
         } else {
-          set(this.nodes, {
+          set(this.#nodes, {
             [key]: new ReactiveNode(update, this.readOnly)
           })
           set(this.#dirty, true)
@@ -187,29 +187,29 @@ export class ReactiveNode<Value = unknown> {
 
   push = atom(null, (get, set, value: unknown) => {
     if (this.readOnly) return
-    const structure = get(this.nodes)
+    const structure = get(this.#nodes)
     if (!isArray(structure)) return
-    set(this.nodes, [...structure, new ReactiveNode(value, this.readOnly)])
+    set(this.#nodes, [...structure, new ReactiveNode(value, this.readOnly)])
     set(this.#dirty, true)
   })
 
   insert = atom(null, (get, set, index: number, value: unknown) => {
     if (this.readOnly) return
-    const structure = get(this.nodes)
+    const structure = get(this.#nodes)
     if (!isArray(structure)) return
     const next = [...structure]
     const insertAt = Math.max(0, Math.min(index, next.length))
     next.splice(insertAt, 0, new ReactiveNode(value, this.readOnly))
-    set(this.nodes, next)
+    set(this.#nodes, next)
     set(this.#dirty, true)
   })
 
   remove = atom(null, (get, set, index: number) => {
     if (this.readOnly) return
-    const structure = get(this.nodes)
+    const structure = get(this.#nodes)
     if (!isArray(structure)) return
     set(
-      this.nodes,
+      this.#nodes,
       structure.filter((_, currentIndex) => currentIndex !== index)
     )
     set(this.#dirty, true)
@@ -217,11 +217,11 @@ export class ReactiveNode<Value = unknown> {
 
   move = atom(null, (get, set, from: number, to: number) => {
     if (this.readOnly) return
-    const structure = get(this.nodes)
+    const structure = get(this.#nodes)
     if (!isArray(structure)) return
     const next = [...structure]
     next.splice(to, 0, next.splice(from, 1)[0])
-    set(this.nodes, next)
+    set(this.#nodes, next)
     set(this.#dirty, true)
   })
 }
@@ -231,7 +231,6 @@ export interface EditorAtoms {
   node: ReactiveNode<object>
   parent?: EditorAtoms
   resource?: Resource
-  value: Atom<object>
   anchors: Atom<Array<EntryAnchorTarget>>
   sections: Array<SectionAtoms>
   field(key: string): FieldAtoms | undefined
@@ -249,7 +248,6 @@ export function createEditor(
   parent?: EditorAtoms,
   resource?: Resource
 ): EditorAtoms {
-  const value = node.value
   let editor: EditorAtoms
   const field = dispense(key => {
     const configField = getType(type).allFields[key]
@@ -266,9 +264,8 @@ export function createEditor(
     node,
     parent,
     resource: resource ?? parent?.resource,
-    value,
     anchors: atom(get =>
-      ConfigType.anchors(type, get(value) as Record<string, unknown>)
+      ConfigType.anchors(type, get(node.value) as Record<string, unknown>)
     ),
     sections: getType(type).sections.map(createSection),
     field,
@@ -291,13 +288,13 @@ export function createSection(section: ConfigSection): SectionAtoms {
     section,
     view: atom(get => {
       const view = ConfigSection.view(section)
-      return typeof view === 'string' ? get(viewAtom(view)) : view
+      return typeof view === 'string' ? get(viewsAtom)[view] : view
     })
   }
 }
 
 export interface FieldAtoms {
-  draft: EditorAtoms
+  editor: EditorAtoms
   key: string
   field: Field
   value: WritableAtom<unknown, [unknown], void>
@@ -309,14 +306,14 @@ export interface FieldAtoms {
 }
 
 export function createField(
-  draft: EditorAtoms,
+  editor: EditorAtoms,
   key: string,
   field: Field
 ): FieldAtoms {
-  const value = draft.node.field(key)
+  const value = editor.node.field(key)
   const getter = atom(get => {
     return ((requestedField: Field) => {
-      const info = draft.get(requestedField)
+      const info = editor.get(requestedField)
       assert(info, `Field not found: ${Field.label(requestedField)}`)
       return get(info.value)
     }) as FieldGetter
@@ -326,15 +323,15 @@ export function createField(
     const tracker = optionTrackerOf(field)
     const update = tracker ? tracker(get(getter)) : undefined
     const trackedOptions = {...defaultOptions, ...update}
-    const resolved = draft.node.readOnly
+    const resolved = editor.node.readOnly
       ? {...trackedOptions, readOnly: true}
       : trackedOptions
-    if (!draft.resource) return resolved
+    if (!editor.resource) return resolved
     const config = get(configAtom)
     const fieldName = getScope(config).nameOf(field)
     if (!fieldName) return resolved
     const policy = get(policyAtom)
-    const fieldResource = {...draft.resource, field: fieldName}
+    const fieldResource = {...editor.resource, field: fieldName}
     return {
       ...resolved,
       hidden: resolved.hidden || !policy.canRead(fieldResource),
@@ -342,7 +339,7 @@ export function createField(
     }
   })
   return {
-    draft,
+    editor,
     key,
     field,
     value,
@@ -367,7 +364,7 @@ export function createField(
     }),
     view: atom(get => {
       const view = Field.view(field)
-      return typeof view === 'string' ? get(viewAtom(view)) : view
+      return typeof view === 'string' ? get(viewsAtom)[view] : view
     })
   }
 }

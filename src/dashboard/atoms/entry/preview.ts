@@ -25,24 +25,20 @@ export const previewTokenAtom = atom(async get => {
 
 export const previewMetadataAtom = atom<PreviewMetadata | undefined>(undefined)
 
-const readyPreviewOriginsAtom = atom<ReadonlySet<string>>(new Set<string>())
-
-export const previewSessionOriginsAtom = atom(get =>
-  get(readyPreviewOriginsAtom)
-)
+const previewSessionOriginsAtom = atom<ReadonlySet<string>>(new Set<string>())
 
 export const markPreviewSessionReadyAtom = atom(
   null,
   (get, set, origin: string) => {
-    const current = get(readyPreviewOriginsAtom)
+    const current = get(previewSessionOriginsAtom)
     if (current.has(origin)) return
-    set(readyPreviewOriginsAtom, new Set(current).add(origin))
+    set(previewSessionOriginsAtom, new Set(current).add(origin))
   }
 )
 
 export function createEntryPreviewAtoms(entry: EntryDataAtoms) {
   const preview = atom(get => {
-    const type = get(entry.type).type
+    const type = get(entry.type)
     if (type === MediaLibrary) return undefined
     const typePreview = Type.preview(type)
     if (typePreview !== undefined) return typePreview

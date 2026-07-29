@@ -13,7 +13,7 @@ function useFieldInfo(field: Field) {
 
 export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
   const info = useFieldInfo(field)
-  const nodes = useAtomValue(info.draft.node.nodes) as Record<
+  const nodes = useAtomValue(info.editor.node.nodes) as Record<
     string,
     ReactiveNode
   >

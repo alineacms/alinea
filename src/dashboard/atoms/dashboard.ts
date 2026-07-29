@@ -20,8 +20,6 @@ export interface Dashboard {
   options: DashboardOptions
 }
 
-export type DashboardInput = Dashboard
-
 export interface DashboardCreateEntryRequest {
   workspace: string
   root: string
@@ -31,17 +29,6 @@ export interface DashboardCreateEntryRequest {
   parentId?: string
   copyFrom?: string
   insertOrder?: 'first' | 'last'
-}
-
-export function createDashboard(
-  graph: WriteableGraph,
-  config: Config,
-  events: EventTarget,
-  client: LocalConnection,
-  views: Record<string, ComponentType>,
-  options: DashboardOptions = {}
-): Dashboard {
-  return {graph, config, events, client, views, options}
 }
 
 export const setUserRolesAtom = atom(

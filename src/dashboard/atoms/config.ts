@@ -1,7 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
-import {getRoot} from '#/core/Internal.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {Permission} from '#/core/Role.js'
 import {Root as ConfigRoot, type RootData, type RootI18n} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
@@ -37,17 +37,8 @@ import {entryAtoms} from './entry.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {routeAtom} from './routing.js'
 import {policyAtom} from './user.js'
-import {
-  createExplorer,
-  type ExplorerAtoms,
-  type ExplorerLocation
-} from './explorer.js'
-import {
-  selectedRootAtom,
-  selectedWorkspaceAtom,
-  workspaceRootsAtom,
-  workspaceSettingsAtom
-} from './routing.js'
+import {ExplorerAtoms, type ExplorerLocation} from './explorer.js'
+import {selectedRootAtom, selectedWorkspaceAtom} from './routing.js'
 
 export type TreeSelection = WritableAtom<
   Set<Key>,
@@ -56,36 +47,42 @@ export type TreeSelection = WritableAtom<
 >
 
 export const configAtom = requiredAtom<Config>('dashboard.config')
-export const viewsAtom =
-  requiredAtom<Record<string, ComponentType>>('dashboard.views')
+export const viewsAtom = atom<Record<string, ComponentType>>({})
 
-export const viewAtom = dispense(key => {
-  return atom((get): ComponentType | undefined => {
-    return get(viewsAtom)[key]
+const workspaceSettingsAtom = dispense((key: string) =>
+  atom(get => {
+    const workspace = get(configAtom).workspaces[key]
+    assert(workspace, `Workspace "${key}" not found in config`)
+    return getWorkspace(workspace)
   })
+)
+
+export const workspaceRootsAtom = dispense((key: string) =>
+  atom(get => {
+    const configuredRoots = get(workspaceSettingsAtom(key)).roots
+    const policy = get(policyAtom)
+    return Object.keys(configuredRoots).filter(root =>
+      policy.canRead({workspace: key, root})
+    )
+  })
+)
+
+export const workspacesAtom = atom(get => {
+  const config = get(configAtom)
+  const policy = get(policyAtom)
+  return Object.keys(config.workspaces).filter(workspace =>
+    policy.canRead({workspace})
+  )
 })
 
-export interface WorkspaceAtoms {
-  key: string
+export class WorkspaceAtoms {
   tree: TreeAtoms
-  color: Atom<string>
-  label: Atom<string>
-  icon: Atom<ComponentType | undefined>
+  settings: ReturnType<typeof workspaceSettingsAtom>
   roots: Atom<Array<string>>
-  root(key: string): RootAtoms
+  root: (key: string) => RootAtoms
   rootMenu: Atom<
     Array<{id: string; label: string; icon: ComponentType | undefined}>
   >
-}
-
-class WorkspaceAtomsImpl implements WorkspaceAtoms {
-  tree: TreeAtoms
-  color: Atom<string>
-  label: Atom<string>
-  icon: Atom<ComponentType | undefined>
-  roots: Atom<Array<string>>
-  root: (key: string) => RootAtoms
-  rootMenu: WorkspaceAtoms['rootMenu']
 
   constructor(public key: string) {
     const treeSelection = atom(
@@ -113,16 +110,13 @@ class WorkspaceAtomsImpl implements WorkspaceAtoms {
         })
       }
     )
-    const settings = workspaceSettingsAtom(key)
+    this.settings = workspaceSettingsAtom(key)
     this.roots = workspaceRootsAtom(key)
-    this.root = dispense(rootKey => createRoot(this, rootKey))
-    this.color = atom(get => get(settings).color)
-    this.label = atom(get => get(settings).label)
-    this.icon = atom(get => get(settings).icon)
+    this.root = dispense(rootKey => new RootAtoms(this, rootKey))
     this.rootMenu = atom(get => {
       return get(this.roots).map(rootKey => ({
         id: rootKey,
-        label: get(this.root(rootKey).label),
+        label: get(this.root(rootKey).settings).label,
         icon: get(this.root(rootKey).icon)
       }))
     })
@@ -130,13 +124,9 @@ class WorkspaceAtomsImpl implements WorkspaceAtoms {
   }
 }
 
-export function createWorkspace(key: string): WorkspaceAtoms {
-  return new WorkspaceAtomsImpl(key)
-}
-
 export const workspaceAtoms = dispense((key: string) => {
   assert(key, 'Workspace key cannot be empty')
-  return createWorkspace(key)
+  return new WorkspaceAtoms(key)
 })
 
 export const currentWorkspaceAtom = atom(get => {
@@ -148,7 +138,9 @@ export const selectedMediaRootAtom = atom(get => {
   const workspace = get(currentWorkspaceAtom)
   if (!workspace) return null
   const roots = get(workspace.roots)
-  return roots.find(root => get(workspace.root(root).isMedia)) ?? null
+  return (
+    roots.find(root => get(workspace.root(root).settings).isMediaRoot) ?? null
+  )
 })
 
 export const currentRootAtom = atom(get => {
@@ -158,7 +150,7 @@ export const currentRootAtom = atom(get => {
   return workspace.root(root)
 })
 
-class TreeAtomsImpl {
+export class TreeAtoms {
   #treeSelection: TreeSelection
   #syncRouteExpansion: boolean
   constructor(
@@ -186,7 +178,9 @@ class TreeAtomsImpl {
       get => get(this.#expandedKeys),
       (get, set, next: 'init' | Set<Key>) => {
         if (next === 'init') {
+          const route = get(routeAtom)
           get(this.#routeExpandedKeys).then(routeKeys => {
+            if (get(routeAtom) !== route) return
             if (routeKeys.size === 0) return
             const current = get(this.#expandedKeys)
             const merged = new Set(current)
@@ -228,9 +222,9 @@ class TreeAtomsImpl {
   // dnd
   acceptedDragTypes = [...dashboardEntryDragTypes]
 
-  getItems = atom(null, (get, set, keys: Set<Key>): Array<DragItem> => {
+  getItems(keys: Set<Key>): Array<DragItem> {
     return [...keys].map(id => dashboardEntryDragItem(id))
-  })
+  }
 
   dragDisabled = atom(get => {
     if (get(selectedWorkspaceAtom) !== this.workspace.key) return true
@@ -241,19 +235,14 @@ class TreeAtomsImpl {
     return !policy.canMove(resource) && !policy.canReorder(resource)
   })
 
-  getDropOperation = atom(
-    null,
-    (
-      get,
-      set,
-      _target: DropTarget,
-      types: DragTypes,
-      allowedOperations: Array<DropOperation>
-    ) => {
-      if (!acceptsDashboardEntryDrag(types)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    }
-  )
+  getDropOperation(
+    _target: DropTarget,
+    types: DragTypes,
+    allowedOperations: Array<DropOperation>
+  ): DropOperation {
+    if (!acceptsDashboardEntryDrag(types)) return 'cancel'
+    return allowedOperations.includes('move') ? 'move' : 'cancel'
+  }
 
   onMove = atom(
     null,
@@ -342,14 +331,12 @@ class TreeAtomsImpl {
   })
 }
 
-export type TreeAtoms = Pick<TreeAtomsImpl, keyof TreeAtomsImpl>
-
 export function createTree(
   workspace: WorkspaceAtoms,
   treeSelection: TreeSelection,
   options: {syncRouteExpansion?: boolean} = {}
 ): TreeAtoms {
-  return new TreeAtomsImpl(workspace, treeSelection, options)
+  return new TreeAtoms(workspace, treeSelection, options)
 }
 
 const pendingExplorerParent = new Promise<string | undefined>(() => {})
@@ -376,7 +363,7 @@ export class RootAtoms {
       }),
       previous => previous
     )
-    this.explorer = createExplorer(
+    this.explorer = new ExplorerAtoms(
       atom(
         get => {
           return {
@@ -427,7 +414,7 @@ export class RootAtoms {
     )
   }
 
-  #settings = atom(get => {
+  settings = atom(get => {
     const config = get(configAtom)
     const workspaceConfig = config.workspaces[this.workspace.key]
     assert(
@@ -457,7 +444,7 @@ export class RootAtoms {
   selectedLocale = atom(
     get => {
       const route = get(routeAtom)
-      const i18n = get(this.i18n)
+      const i18n = get(this.settings).i18n
       if (route.locale && i18n?.locales.includes(route.locale))
         return route.locale
       const preference = get(this.#languagePreference)
@@ -476,24 +463,21 @@ export class RootAtoms {
     }
   )
 
-  label = atom(get => get(this.#settings).label)
-  icon = atom(get => get(this.#settings).icon ?? LucideFile)
-  i18n = atom(get => get(this.#settings).i18n)
+  icon = atom(get => get(this.settings).icon ?? LucideFile)
   mediaI18n = atom((get): RootI18n | undefined => {
-    return ConfigRoot.mediaI18n(get(this.#settings))
+    return ConfigRoot.mediaI18n(get(this.settings))
   })
   data = atom((get): RootData & {name: string} => ({
     name: this.key,
-    ...get(this.#settings)
+    ...get(this.settings)
   }))
   view = atom((get): ComponentType<{root: RootData}> | undefined => {
-    const view = get(this.#settings).view
+    const view = get(this.settings).view
     if (!view) return undefined
     if (typeof view === 'string')
-      return get(viewAtom(view)) as ComponentType<{root: RootData}> | undefined
+      return get(viewsAtom)[view] as ComponentType<{root: RootData}> | undefined
     return view
   })
-  orderChildrenBy = atom(get => get(this.#settings).orderChildrenBy)
   canCreate = atom(get => {
     const policy = get(policyAtom)
     return policy.canCreate({
@@ -503,11 +487,16 @@ export class RootAtoms {
   })
   childrenFor = dispense((locale: string | null) => {
     return atom(get =>
-      queryTreeChildren(get, this, null, this.orderChildrenBy, locale)
+      queryTreeChildren(
+        get,
+        this,
+        null,
+        get(this.settings).orderChildrenBy,
+        locale
+      )
     )
   })
   children = atom(get => get(this.childrenFor(get(this.selectedLocale))))
-  isMedia = atom(get => get(this.#settings).isMediaRoot)
 
   hasChildren = atom(async get => {
     const db = get(graphAtom)
@@ -536,14 +525,13 @@ export async function queryTreeChildren(
   get: Getter,
   root: RootAtoms,
   parentId: null | string,
-  orderByAtom: Atom<Order | Array<Order> | undefined>,
+  orderBy: Order | Array<Order> | undefined,
   locale: string | null
 ) {
   get(shaAtom)
   const visibleTypes = get(root.workspace.tree.visibleTypes)
   const db = get(graphAtom)
   const policy = get(policyAtom)
-  const orderBy = get(orderByAtom)
   const children = await db.find({
     select: {
       id: Entry.id,
@@ -577,8 +565,4 @@ export async function queryTreeChildren(
   })
   const ids = [...new Set(orderedChildren.map(child => child.id))]
   return ids
-}
-
-export function createRoot(workspace: WorkspaceAtoms, key: string): RootAtoms {
-  return new RootAtoms(workspace, key)
 }

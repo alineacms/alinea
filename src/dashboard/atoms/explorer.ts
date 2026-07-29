@@ -76,34 +76,22 @@ export interface ExplorerOptions {
   onConfirm?: (selection: Array<string>) => void
 }
 
-class ExplorerAtomsImpl {
-  #location: WritableAtom<
-    ExplorerLocation,
-    [SetStateAction<ExplorerLocation>],
-    void
-  >
+export class ExplorerAtoms {
   #options: ExplorerOptions
   #selectedLocale: DashboardLocaleSelection
   #items = new Map<string, Atom<Promise<Array<EntryAtoms>>>>()
   #navigationSequence = 0
   selection
   constructor(
-    location: WritableAtom<
+    public location: WritableAtom<
       ExplorerLocation,
       [SetStateAction<ExplorerLocation>],
       void
     >,
     options: ExplorerOptions
   ) {
-    this.#location = location
     this.#options = options
-    const selectedLocale = atom(options.selectedLocale ?? null)
-    this.#selectedLocale = atom(
-      get => get(selectedLocale),
-      (_get, set, locale: string) => {
-        set(selectedLocale, locale)
-      }
-    )
+    this.#selectedLocale = atom(options.selectedLocale ?? null)
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
@@ -244,12 +232,6 @@ class ExplorerAtomsImpl {
       void set(refreshPageForAtom, this)
     }
   )
-  location = atom(
-    get => get(this.#location),
-    (get, set, update: SetStateAction<ExplorerLocation>) => {
-      set(this.#location, update)
-    }
-  )
   navigate = atom(
     null,
     async (get, set, update: SetStateAction<ExplorerLocation>) => {
@@ -267,13 +249,13 @@ class ExplorerAtomsImpl {
       set(this.location, next)
     }
   )
-  getItems = atom(null, (get, set, keys: Set<Key>) => {
+  getItems(keys: Set<Key>) {
     return [...keys].map(id => dashboardEntryDragItem(id))
-  })
+  }
 
   isMedia = atom(get => {
     const root = get(this.root)
-    return root ? get(root.isMedia) : false
+    return root ? get(root.settings).isMediaRoot : false
   })
 
   canUpload = atom(get => {
@@ -444,7 +426,7 @@ class ExplorerAtomsImpl {
     const root = location.root
       ? workspaceAtoms(location.workspace).root(location.root)
       : undefined
-    const isMedia = root ? get(root.isMedia) : false
+    const isMedia = root ? get(root.settings).isMediaRoot : false
     const sort = get(this.#sort) ?? {
       sortBy: isMedia ? 'title' : 'index',
       direction: 'asc'
@@ -523,19 +505,6 @@ class ExplorerAtomsImpl {
   )
 }
 
-export type ExplorerAtoms = Pick<ExplorerAtomsImpl, keyof ExplorerAtomsImpl>
-
-export function createExplorer(
-  location: WritableAtom<
-    ExplorerLocation,
-    [SetStateAction<ExplorerLocation>],
-    void
-  >,
-  options: ExplorerOptions
-): ExplorerAtoms {
-  return new ExplorerAtomsImpl(location, options)
-}
-
 export function createExplorerAtoms(
   initialLocation: ExplorerLocation,
   options: ExplorerOptions = {}
@@ -570,7 +539,7 @@ export function createExplorerAtoms(
       set(fallbackLocation, next)
     }
   )
-  return createExplorer(location, options)
+  return new ExplorerAtoms(location, options)
 }
 
 export interface PreparedExplorerPage {

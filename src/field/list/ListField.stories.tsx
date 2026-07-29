@@ -14,7 +14,6 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {createDashboard} from '#/dashboard/atoms/dashboard.js'
 import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
@@ -247,13 +246,14 @@ const storyStyle: CSSProperties = {
   padding: 24
 }
 
-const dashboard = createDashboard(
-  {} as WriteableGraph,
-  {schema: {}, workspaces: {}},
-  new EventTarget(),
-  {} as LocalConnection,
-  views
-)
+const dashboard = {
+  graph: {} as WriteableGraph,
+  config: {schema: {}, workspaces: {}},
+  events: new EventTarget(),
+  client: {} as LocalConnection,
+  views,
+  options: {}
+}
 
 export function Example() {
   const editor = useMemo(() => {

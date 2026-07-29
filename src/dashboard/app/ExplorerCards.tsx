@@ -1,4 +1,5 @@
 import {Checkbox, Icon, Surface} from '#/components.js'
+import {getType} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -116,6 +117,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
+  const typeSettings = getType(type)
   const hasChildren = useAtomValue(data.hasChildren)
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
@@ -145,7 +147,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
-            typeLabel={type.label}
+            typeLabel={typeSettings.label}
           />
         )}
       </Surface>

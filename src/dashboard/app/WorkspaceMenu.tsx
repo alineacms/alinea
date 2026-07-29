@@ -23,12 +23,12 @@ import type {RootAtoms} from '../atoms/config.js'
 import {
   routeAtom,
   selectedRootAtom,
-  selectedWorkspaceAtom,
-  workspacesAtom
+  selectedWorkspaceAtom
 } from '../atoms/routing.js'
 import {
   currentRootAtom,
   workspaceAtoms,
+  workspacesAtom,
   type WorkspaceAtoms
 } from '../atoms/config.js'
 import {AlineaLogo} from './AlineaLogo.js'
@@ -127,9 +127,7 @@ function WorkspaceSelectorMenu({
 export function WorkspaceAvatarMenu({canManageMembers}: WorkspaceMenuProps) {
   const selected = useAtomValue(selectedWorkspaceAtom)
   const workspace = workspaceAtoms(selected)
-  const color = useAtomValue(workspace.color)
-  const icon = useAtomValue(workspace.icon)
-  const label = useAtomValue(workspace.label)
+  const {color, icon, label} = useAtomValue(workspace.settings)
   return (
     <WorkspaceSelectorMenu
       ariaLabel="Workspace"
@@ -194,7 +192,7 @@ export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(workspacesAtom)
   const selected = useAtomValue(selectedWorkspaceAtom)
   const workspace = workspaceAtoms(selected)
-  const label = useAtomValue(workspace.label)
+  const label = useAtomValue(workspace.settings).label
   const currentRoot = useAtomValue(currentRootAtom)
   const menu =
     workspaces.length > 1 ? (
@@ -272,7 +270,7 @@ interface WorkspaceItemProps {
 
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const id = workspace.key
-  const label = useAtomValue(workspace.label)
+  const label = useAtomValue(workspace.settings).label
   return (
     <MenuItem key={id} id={id} textValue={label}>
       {label}

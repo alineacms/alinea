@@ -38,7 +38,7 @@ export function EntryReferences({
   const setRoute = useSetAtom(routeAtom)
   if (!loaded) return null
   const references = loaded.references
-  const showAllLocales = type.type === MediaFile || type.type === MediaLibrary
+  const showAllLocales = type === MediaFile || type === MediaLibrary
   const currentReferences = showAllLocales
     ? references
     : references.filter(item => matchesLocale(item, selectedLocale))
