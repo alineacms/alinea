@@ -1,10 +1,10 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useState, useTransition} from 'react'
@@ -13,8 +13,8 @@ import {
   IcRoundArchive,
   IcRoundCheck,
   IcRoundDelete,
-  IcRoundPublishedWithChanges,
   IcRoundMoreHoriz,
+  IcRoundPublishedWithChanges,
   IcRoundSave,
   IcRoundSync,
   IcRoundVisibilityOff
@@ -513,6 +513,7 @@ export function EntryHeader({
   const untranslated = useAtomValue(entry.untranslated)
   const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
   const isDirty = useAtomValue(node.isDirty)
+  const type = useAtomValue(entry.type)
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
   const viewedStatus = viewedEntry?.status ?? activeStatus
   const viewedIsUnpublished = Boolean(
@@ -526,12 +527,13 @@ export function EntryHeader({
         <div className={styles.EntryHeader.main()}>
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
+          {controls}
+          <Badge icon={type.icon}>{type.label}</Badge>
           {isRevision ? (
             <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
           ) : (
             <StatusBadge status={status} />
           )}
-          {controls}
           <EntryHeaderMoreActions
             entry={entry}
             activeStatus={activeStatus}

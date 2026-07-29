@@ -1,6 +1,7 @@
-import {Button, ProgressCircle} from '#/components.js'
+import {Button, DialogTrigger, ProgressCircle} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
+import {IcRoundAdd} from 'alinea/dashboard/icons'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
 import {DashboardScopeInternal} from '../store.js'
@@ -8,7 +9,9 @@ import type {Dashboard} from '../store/Dashboard.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
+import {CreateEntry} from './modals/CreateEntry.js'
 import {SidebarTree} from './SidebarTree.js'
+import {DashboardModal} from './ui/DashboardModal.js'
 import {ErrorBoundary} from './ui/ErrorBoundary.js'
 import {Rail} from './ui/Rail.js'
 import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
@@ -100,6 +103,7 @@ function NoWorkspaceAccess({
 function AppShellWorkspace({dashboard}: AppShellProps) {
   const currentWorkspace = useAtomValue(dashboard.currentWorkspace)
   assert(currentWorkspace, 'No workspace selected')
+  const currentRoot = useAtomValue(dashboard.currentRoot)
   const roots = useAtomValue(currentWorkspace.roots)
 
   if (roots.length === 0) {
@@ -130,8 +134,8 @@ function AppShellWorkspace({dashboard}: AppShellProps) {
           <SidebarHeader>
             <WorkspaceMenu dashboard={dashboard} />
           </SidebarHeader>
-
           <SidebarTree dashboard={dashboard} />
+          {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
         </Sidebar>
 
         <Suspense fallback={null}>
@@ -141,6 +145,25 @@ function AppShellWorkspace({dashboard}: AppShellProps) {
         <EditorBoundary dashboard={dashboard} />
       </div>
     </div>
+  )
+}
+
+function SidebarCreateEntryButton({root}: any) {
+  const canCreate = useAtomValue(root.canCreate)
+  if (!canCreate) return null
+  return (
+    <DialogTrigger>
+      <Button
+        className={styles.AppShellWorkspace.create()}
+        icon={IcRoundAdd}
+        intent="secondary"
+      >
+        Create new
+      </Button>
+      <DashboardModal>
+        <CreateEntry />
+      </DashboardModal>
+    </DialogTrigger>
   )
 }
 

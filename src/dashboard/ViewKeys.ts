@@ -10,6 +10,8 @@ export const viewKeys = {
   SingleLinkInput: 'alinea/field/link/LinkField.view#SingleLinkFieldView',
   MultipleLinksInput: 'alinea/field/link/LinkField.view#MultipleLinksFieldView',
   ListInput: 'alinea/field/list/ListField.view#ListFieldView',
+  MediaAltInput:
+    'alinea/dashboard/app/editor/MediaAltField.view#MediaAltFieldView',
   MetadataTimestampInput:
     'alinea/field/metadata/MetadataField.view#MetadataTimestampFieldView',
   MetadataUserInput:

@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
-import {list, richText, text} from '#/field.js'
+import {list, richText, select, text} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
@@ -106,6 +106,38 @@ test('Anchors', () => {
         fieldLabel: 'Rich'
       }
     ]
+  )
+})
+
+test('initializes missing fields in legacy list rows', () => {
+  const Row = type('Row', {
+    fields: {
+      variant: select('Variant', {
+        options: {primary: 'Primary', secondary: 'Secondary'},
+        initialValue: 'primary'
+      })
+    }
+  })
+  const Document = type('Document', {
+    fields: {
+      rows: list('Rows', {schema: {Row}})
+    }
+  })
+
+  test.equal(
+    Type.withInitialValue(Document, {
+      rows: [{_type: 'Row', _id: 'legacy', _index: 'a0'}]
+    }),
+    {
+      rows: [
+        {
+          _type: 'Row',
+          _id: 'legacy',
+          _index: 'a0',
+          variant: 'primary'
+        }
+      ]
+    }
   )
 })
 

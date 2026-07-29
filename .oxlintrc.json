@@ -16,6 +16,5 @@
     "react-you-might-not-need-an-effect/no-external-store-subscription": "warn",
     "react-you-might-not-need-an-effect/no-initialize-state": "warn",
     "react/rules-of-hooks": "error"
-  },
-  "ignorePatterns": ["v1"]
+  }
 }

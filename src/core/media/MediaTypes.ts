@@ -5,6 +5,7 @@ import {object} from '#/field/object/ObjectField.js'
 import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
 import {type Type, type} from '../Type.js'
+import {mediaAlt} from './MediaAltField.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
@@ -30,12 +31,23 @@ export const MediaFile = type('Media file', {
     }),
     location: hidden<string>('Location'),
     previewUrl: hidden<string>('Preview URL'),
-    extension: hidden<string>('Extension'),
-    size: hidden<number>('File size'),
+    extension: hidden<string>('Extension', {
+      overview: true
+    }),
+    size: hidden<number>('File size', {
+      overview: true
+    }),
     hash: hidden<string>('Hash'),
-    alt: hidden<object>('Alt text'),
-    width: hidden<number>('Image width'),
-    height: hidden<number>('Image height'),
+    alt: mediaAlt('Alt text', {
+      multiline: true,
+      help: 'Describe the image for screen readers and SEO'
+    }),
+    width: hidden<number>('Image width', {
+      overview: true
+    }),
+    height: hidden<number>('Image height', {
+      overview: true
+    }),
     preview: hidden<string>('Preview'),
     averageColor: hidden<string>('Average color'),
     focus: hidden<{x: number; y: number}>('Focus'),

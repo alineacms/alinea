@@ -6,13 +6,11 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
 import {
-  DashboardEntryData,
   useDashboard,
   useEditor,
   useField,
   useFieldValue
 } from '#/dashboard/store.js'
-import {localiser, text} from '#/field.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
@@ -24,16 +22,16 @@ import {FilePreview, type FocusPoint} from './FilePreview.js'
 
 const styles = styler(css)
 
-interface FileEditorProps {
-  entry: DashboardEntryData
-}
-
-const alt = text('Alt text', {
-  multiline: true,
-  help: 'Describe the image for screen readers and SEO'
+const metadataFields = type('Metadata', {
+  fields: {
+    title: MediaFile.title,
+    path: MediaFile.path,
+    alt: MediaFile.alt,
+    metadata: MediaFile.metadata
+  }
 })
 
-export function FileEditor({entry}: FileEditorProps) {
+export function FileEditor() {
   const dashboard = useDashboard()
   const config = useAtomValue(dashboard.config)
   const location = useFieldValue(MediaFile.location)
@@ -54,20 +52,6 @@ export function FileEditor({entry}: FileEditorProps) {
     () => new URL(location, Config.baseUrl(config) ?? window.location.href)
   )
   const displayedFocusPoint = hoverPoint ?? focusPoint
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
-  const i18n = useAtomValue(dashboard.workspace(workspace).root(root).mediaI18n)
-  const metadataFields = useMemo(() => {
-    const altField = i18n ? localiser(i18n)(alt) : alt
-    return type('Metadata', {
-      fields: {
-        title: MediaFile.title,
-        path: MediaFile.path,
-        alt: altField,
-        metadata: MediaFile.metadata
-      }
-    })
-  }, [i18n])
   const node = useEditor().node
   return (
     <Surface className={styles.FileEditor.surface()}>

@@ -151,3 +151,8 @@
   color: var(--alinea-fg-muted);
   font-size: 12px;
 }
+
+.AppShellWorkspace-create {
+  margin: 8px;
+  justify-content: center;
+}

@@ -459,7 +459,10 @@ test('localised rich text blocks receive newly added field defaults', () => {
       body: localise(Field.richText('Body', {schema: {Block}}))
     }
   })
-  const block = {[Node.type]: 'Block', [BlockNode.id]: 'legacy'}
+  const block = {
+    [Node.type]: 'Block',
+    [BlockNode.id]: 'legacy'
+  }
 
   const value = Type.withInitialValue(Page, {
     body: {

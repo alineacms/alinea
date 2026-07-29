@@ -10,16 +10,15 @@ import {HttpError} from '#/core/HttpError.js'
 import type {CommitChange, CommitRequest} from '#/core/db/CommitRequest.js'
 import {
   GithubSource,
-  type GithubSourceOptions
+  type GithubSourceOptions,
+  normalizeGithubSourceOptions
 } from '#/core/source/GithubSource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {join} from '#/core/util/Paths.js'
 
-export interface GithubOptions extends GithubSourceOptions {
-  author?: {name: string; email: string}
-}
+export interface GithubOptions extends GithubSourceOptions {}
 
 export class GithubApi
   extends GithubSource
@@ -28,8 +27,9 @@ export class GithubApi
   #options: GithubOptions
 
   constructor(options: GithubOptions) {
-    super(options)
-    this.#options = options
+    const normalized = normalizeGithubSourceOptions(options)
+    super(normalized)
+    this.#options = normalized
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
@@ -39,11 +39,11 @@ export class GithubApi
     if (currentSha !== request.fromSha)
       throw new ShaMismatchError(currentSha, request.fromSha)
 
-    const {author} = this.#options
+    const {user} = request
 
     let commitMessage = request.description
-    if (author) {
-      commitMessage += `\n\nCo-authored-by: ${author.name} <${author.email}>`
+    if (user?.name && user.email) {
+      commitMessage += `\n\nCo-authored-by: ${user.name} <${user.email}>`
     }
     const newCommit = await this.#applyChangesToRepo(
       currentCommit,
