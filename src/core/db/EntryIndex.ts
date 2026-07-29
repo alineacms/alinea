@@ -1,5 +1,6 @@
 import * as paths from '#/core/util/Paths.js'
 import MiniSearch from 'minisearch'
+import pLimit from 'p-limit'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {createRecord, parseRecord} from '../EntryRecord.js'
@@ -606,6 +607,7 @@ export class EntryIndex extends EventTarget {
   #singleWorkspace: string | undefined
   #references: EntryReferenceIndex | undefined
   #referencesBuild: Promise<EntryReferenceIndex> | undefined
+  #syncLimit = pLimit(1)
   constructor(config: Config) {
     super()
     this.#config = config
@@ -651,6 +653,13 @@ export class EntryIndex extends EventTarget {
       return references
     })
     return this.#referencesBuild
+  }
+  async sync(source: Source): Promise<string> {
+    return this.#syncLimit(async () => {
+      await this.syncWith(source)
+      await this.seed(source)
+      return this.sha
+    })
   }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
