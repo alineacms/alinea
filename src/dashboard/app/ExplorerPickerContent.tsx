@@ -19,6 +19,7 @@ export function ExplorerPickerContent({
   const workspace = useAtomValue(explorer.workspace)
   const root = useAtomValue(explorer.root)
   const location = useAtomValue(explorer.location)
+  const view = useAtomValue(explorer.view)
   const navigate = useSetAtom(explorer.navigate)
   const enableNavigation = options.enableNavigation ?? true
   const selectedKeys = location.parentId
@@ -40,7 +41,7 @@ export function ExplorerPickerContent({
 
   return (
     <ExplorerModalContent>
-      {enableNavigation && root && (
+      {enableNavigation && view === 'card' && root && (
         <ExplorerModalNavigation>
           <SidebarTreeExplorer
             ariaLabel={navigationLabel}

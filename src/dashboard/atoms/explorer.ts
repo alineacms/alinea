@@ -66,9 +66,9 @@ export interface ExplorerOptions {
   enableNavigation?: boolean
   flatResults?: boolean
   hideResultsUntilSearch?: boolean
-  inlineExpansion?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
+  nestedNavigation?: boolean
   pickChildren?: boolean
   selectedLocale?: string | null
   rootScope?: 'current' | 'workspace'
@@ -166,7 +166,7 @@ export class ExplorerAtoms {
   }
 
   get supportsInlineExpansion() {
-    return this.#options.inlineExpansion ?? false
+    return this.#options.nestedNavigation ?? false
   }
 
   get breadcrumbs() {
@@ -198,8 +198,9 @@ export class ExplorerAtoms {
         const root = get(data.root)
         const db = get(graphAtom)
         const policy = get(policyAtom)
+        const locale = get(root.selectedLocale)
         const children = await db.find({
-          locale: get(root.selectedLocale),
+          locale,
           workspace: entryData.workspace,
           root: entryData.root,
           parentId: entry.id,
@@ -219,7 +220,7 @@ export class ExplorerAtoms {
         const entries = children
           .filter(child => policy.canRead(child))
           .map(child => entryAtoms(child.id))
-        await Promise.all(entries.map(child => get(child.preload)))
+        await loadEntries(get, entries)
         return entries
       })
     )
@@ -631,10 +632,17 @@ export interface EntryLookup {
 export async function loadEntries(
   get: Getter,
   entries: Array<EntryAtoms>,
-  signal: AbortSignal
+  signal?: AbortSignal
 ) {
-  await Promise.all(entries.map(entry => get(entry.readyState)))
-  signal.throwIfAborted()
+  await Promise.all(
+    entries.map(async entry => {
+      const {data} = await get(entry.readyState)
+      if (!data) return
+      const currentEntry = get(data.currentEntry)
+      if (currentEntry instanceof Promise) await currentEntry
+    })
+  )
+  signal?.throwIfAborted()
 }
 
 export async function loadTree(

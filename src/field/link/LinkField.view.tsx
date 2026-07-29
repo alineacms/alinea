@@ -536,13 +536,13 @@ function LinkPickerAction({
   }
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const inlineExpansion = options.enableNavigation === true && !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation,
-    flatResults: !inlineExpansion,
-    inlineExpansion: inlineExpansion && Boolean(condition),
+    flatResults: !nestedResults,
     location,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -631,13 +631,13 @@ function LinkPickerDialog({
   }
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const inlineExpansion = options.enableNavigation === true && !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation,
-    flatResults: !inlineExpansion,
-    inlineExpansion: inlineExpansion && Boolean(condition),
+    flatResults: !nestedResults,
     location,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',

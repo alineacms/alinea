@@ -20,6 +20,7 @@ const ScenarioPage = Config.document('Page', {
   contains: ['Page'],
   fields: {
     title: Field.text('Title'),
+    summary: Field.text('Summary', {overview: true}),
     relatedPage: Field.entry('Related page', {
       async location({entry, graph}) {
         const folder = await graph.get({
@@ -173,7 +174,7 @@ function createPage(
     workspace,
     root,
     parentId,
-    set: {title}
+    set: {summary: `Summary for ${title}`, title}
   })
 }
 

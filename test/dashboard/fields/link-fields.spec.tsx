@@ -70,23 +70,36 @@ test('navigates into folders without showing a suspense loader', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
+  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
+  const folder = entries.getByRole('row', {name: /Folder/})
+  await expect(folder).toBeVisible()
   await expect(
-    folders.getByRole('row', {name: 'Folder', exact: true})
-  ).toBeVisible()
+    picker.getByRole('treegrid', {name: 'Link folders'})
+  ).toHaveCount(0)
   await expect(picker.getByRole('progressbar')).toHaveCount(0)
 
   await app.page.evaluate(() => {
     document.documentElement.dataset.suspenseLoaderSeen = 'false'
+    document.documentElement.dataset.incompleteExplorerRowSeen = 'false'
     const observer = new MutationObserver(() => {
       if (document.querySelector('[role="progressbar"]'))
         document.documentElement.dataset.suspenseLoaderSeen = 'true'
+      const childRow = Array.from(
+        document.querySelectorAll(
+          '[role="treegrid"][aria-label="Explorer entries"] [role="row"]'
+        )
+      ).find(row => row.textContent?.includes('Child'))
+      if (childRow && !childRow.textContent?.includes('Summary for Child')) {
+        document.documentElement.dataset.incompleteExplorerRowSeen = 'true'
+      }
     })
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await folders.getByRole('row', {name: 'Folder', exact: true}).click()
-  await expect(picker.getByRole('row', {name: 'Child'})).toBeVisible()
+  await folder.getByRole('button', {name: 'Expand Folder'}).click()
+  await expect(entries.getByRole('row', {name: /Child/})).toContainText(
+    'Summary for Child'
+  )
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -94,21 +107,33 @@ test('navigates into folders without showing a suspense loader', async ({
       )
     )
     .toBe('false')
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.incompleteExplorerRowSeen
+      )
+    )
+    .toBe('false')
 })
 
-test('expands hierarchy in navigable link pickers and marks non-matching rows', async ({
+test('keeps the root list explorer flat', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+
+  const entries = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  const folder = entries.getByRole('row', {name: /Folder/})
+  await expect(folder.getByRole('button', {name: 'Expand Folder'})).toHaveCount(
+    0
+  )
+  await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
+})
+
+test('marks non-matching rows in a navigable link picker', async ({
   dashboard,
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-
-  // Entry overview rows keep their existing drill-in behavior. Inline expansion
-  // is reserved for link pickers that need to traverse non-selectable parents.
-  await expect(
-    app.page
-      .getByRole('treegrid', {name: 'Explorer entries'})
-      .getByRole('button', {name: 'Expand Folder'})
-  ).toHaveCount(0)
 
   await app.page
     .getByRole('list', {name: 'Navigable page'})
@@ -118,7 +143,7 @@ test('expands hierarchy in navigable link pickers and marks non-matching rows', 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
   await expect(
     picker.getByRole('treegrid', {name: 'Link folders'})
-  ).toBeVisible()
+  ).toHaveCount(0)
 
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
