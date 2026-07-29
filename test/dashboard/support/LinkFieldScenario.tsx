@@ -45,6 +45,9 @@ const ScenarioPage = Config.document('Page', {
       }
     }),
     childPage: Field.entry('Child page', {pickChildren: true}),
+    browsePage: Field.entry('Browse page', {
+      location: {workspace: 'main', root: 'pages'}
+    }),
     image: Field.image('Featured image'),
     file: Field.file('Download')
   }

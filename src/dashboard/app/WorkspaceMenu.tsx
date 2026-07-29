@@ -10,7 +10,7 @@ import {
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
+import {useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {createExplorerAtoms} from '../atoms/explorer.js'
@@ -26,7 +26,7 @@ import {
 } from '../atoms/config.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
-import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
+import {ExplorerModal} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
 import {
   DashboardModal,
@@ -166,16 +166,14 @@ function SearchPopup() {
 
   return (
     <DashboardModalDialog aria-label="Search entries" variant="explorer">
-      <ExplorerModalSuspense>
-        <ExplorerModal>
-          <ExplorerHeader
-            autoFocusSearch
-            controls={<DashboardModalCloseButton />}
-            explorer={explorer}
-          />
-          <ExplorerBody explorer={explorer} />
-        </ExplorerModal>
-      </ExplorerModalSuspense>
+      <ExplorerModal>
+        <ExplorerHeader
+          autoFocusSearch
+          controls={<DashboardModalCloseButton />}
+          explorer={explorer}
+        />
+        <ExplorerBody explorer={explorer} />
+      </ExplorerModal>
     </DashboardModalDialog>
   )
 }
@@ -216,17 +214,7 @@ export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
         <DashboardModal size="explorer">
-          <Suspense
-            fallback={
-              <DashboardModalDialog
-                aria-label="Search entries"
-                variant="explorer"
-                isLoading
-              />
-            }
-          >
-            <SearchPopup />
-          </Suspense>
+          <SearchPopup />
         </DashboardModal>
       </DialogTrigger>
     </div>

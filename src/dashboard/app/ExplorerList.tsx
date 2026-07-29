@@ -2,6 +2,8 @@ import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {useMemo} from 'react'
 import {
   isFileDropItem,
   useDragAndDrop
@@ -67,7 +69,12 @@ export function ExplorerList(props: ExplorerListProps) {
 }
 
 function ExplorerListResource(props: ExplorerListProps) {
-  const items = useAtomValue(props.explorer.items)
+  const items = useAtomValue(
+    useMemo(
+      () => unwrap(props.explorer.items, previous => previous ?? []),
+      [props.explorer]
+    )
+  )
   return <ExplorerListContent {...props} items={items} />
 }
 

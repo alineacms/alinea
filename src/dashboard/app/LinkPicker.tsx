@@ -1,6 +1,6 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useState} from 'react'
+import {useState} from 'react'
 import {createExplorerAtoms, type ExplorerOptions} from '../atoms/explorer.js'
 import {selectedRootAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
 import {ExplorerHeader} from './Explorer.js'
@@ -8,8 +8,7 @@ import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection,
-  ExplorerModalSuspense
+  ExplorerModalSelection
 } from './ExplorerModal.js'
 import {ExplorerPickerContent} from './ExplorerPickerContent.js'
 import {
@@ -22,17 +21,7 @@ import {
 export function LinkPicker(options: ExplorerOptions) {
   return (
     <DashboardModal size="explorer">
-      <Suspense
-        fallback={
-          <DashboardModalDialog
-            aria-label="Pick a link"
-            variant="explorer"
-            isLoading
-          />
-        }
-      >
-        <LinkPickerModalContent options={options} />
-      </Suspense>
+      <LinkPickerModalContent options={options} />
     </DashboardModal>
   )
 }
@@ -64,30 +53,28 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
   }
   return (
     <DashboardModalDialog aria-label="Pick a link" variant="explorer">
-      <ExplorerModalSuspense>
-        <ExplorerModal>
-          <ExplorerHeader
-            controls={<DashboardModalCloseButton />}
-            explorer={explorer}
-          />
-          <ExplorerPickerContent
-            explorer={explorer}
-            navigationLabel="Link folders"
-            options={options}
-          />
-          <ExplorerModalFooter>
-            <ExplorerModalSelection>
-              {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
-            <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
-                Select
-              </Button>
-            </ExplorerModalActions>
-          </ExplorerModalFooter>
-        </ExplorerModal>
-      </ExplorerModalSuspense>
+      <ExplorerModal>
+        <ExplorerHeader
+          controls={<DashboardModalCloseButton />}
+          explorer={explorer}
+        />
+        <ExplorerPickerContent
+          explorer={explorer}
+          navigationLabel="Link folders"
+          options={options}
+        />
+        <ExplorerModalFooter>
+          <ExplorerModalSelection>
+            {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+          </ExplorerModalSelection>
+          <ExplorerModalActions>
+            <Button onPress={modal.close}>Cancel</Button>
+            <Button intent="primary" onPress={onSubmit}>
+              Select
+            </Button>
+          </ExplorerModalActions>
+        </ExplorerModalFooter>
+      </ExplorerModal>
     </DashboardModalDialog>
   )
 }

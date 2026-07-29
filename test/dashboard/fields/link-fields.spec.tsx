@@ -58,6 +58,44 @@ test('opens pickChildren at the children of the edited entry', async ({
   await expect(picker.getByRole('row', {name: 'Beta'})).toHaveCount(0)
 })
 
+test('navigates into folders without showing a suspense loader', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Browse page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
+  await expect(
+    folders.getByRole('row', {name: 'Folder', exact: true})
+  ).toBeVisible()
+  await expect(picker.getByRole('progressbar')).toHaveCount(0)
+
+  await app.page.evaluate(() => {
+    document.documentElement.dataset.suspenseLoaderSeen = 'false'
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[role="progressbar"]'))
+        document.documentElement.dataset.suspenseLoaderSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
+
+  await folders.getByRole('row', {name: 'Folder', exact: true}).click()
+  await expect(picker.getByRole('row', {name: 'Child'})).toBeVisible()
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.suspenseLoaderSeen
+      )
+    )
+    .toBe('false')
+})
+
 test('selects existing images and files', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
   const imageField = app.page.getByRole('list', {name: 'Featured image'})

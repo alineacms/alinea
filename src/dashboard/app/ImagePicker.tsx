@@ -1,7 +1,7 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useState, type ReactNode} from 'react'
+import {useState, type ReactNode} from 'react'
 import {createExplorerAtoms, type ExplorerOptions} from '../atoms/explorer.js'
 import {selectedWorkspaceAtom} from '../atoms/routing.js'
 import {selectedMediaRootAtom} from '../atoms/config.js'
@@ -10,8 +10,7 @@ import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection,
-  ExplorerModalSuspense
+  ExplorerModalSelection
 } from './ExplorerModal.js'
 import {ExplorerPickerContent} from './ExplorerPickerContent.js'
 import {
@@ -29,17 +28,7 @@ export function ImagePicker(options: ImagePickerOptions) {
   const label = String(options.label ?? 'Pick media')
   return (
     <DashboardModal size="explorer">
-      <Suspense
-        fallback={
-          <DashboardModalDialog
-            aria-label={label}
-            variant="explorer"
-            isLoading
-          />
-        }
-      >
-        <ImagePickerModalContent options={options} label={label} />
-      </Suspense>
+      <ImagePickerModalContent options={options} label={label} />
     </DashboardModal>
   )
 }
@@ -75,30 +64,28 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
 
   return (
     <DashboardModalDialog aria-label={label} variant="explorer">
-      <ExplorerModalSuspense>
-        <ExplorerModal>
-          <ExplorerHeader
-            controls={<DashboardModalCloseButton />}
-            explorer={explorer}
-          />
-          <ExplorerPickerContent
-            explorer={explorer}
-            navigationLabel="Media folders"
-            options={options}
-          />
-          <ExplorerModalFooter>
-            <ExplorerModalSelection>
-              {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
-            <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
-                Select
-              </Button>
-            </ExplorerModalActions>
-          </ExplorerModalFooter>
-        </ExplorerModal>
-      </ExplorerModalSuspense>
+      <ExplorerModal>
+        <ExplorerHeader
+          controls={<DashboardModalCloseButton />}
+          explorer={explorer}
+        />
+        <ExplorerPickerContent
+          explorer={explorer}
+          navigationLabel="Media folders"
+          options={options}
+        />
+        <ExplorerModalFooter>
+          <ExplorerModalSelection>
+            {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+          </ExplorerModalSelection>
+          <ExplorerModalActions>
+            <Button onPress={modal.close}>Cancel</Button>
+            <Button intent="primary" onPress={onSubmit}>
+              Select
+            </Button>
+          </ExplorerModalActions>
+        </ExplorerModalFooter>
+      </ExplorerModal>
     </DashboardModalDialog>
   )
 }
