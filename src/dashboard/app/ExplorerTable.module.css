@@ -298,33 +298,3 @@
     box-shadow: inset 0 0 0 2px var(--alinea-ring);
   }
 }
-
-.ExplorerTable-row.is-loading {
-  cursor: default;
-  color: var(--alinea-fg-muted);
-  opacity: 0;
-  animation: ExplorerTable-loadingReveal 1ms linear 120ms forwards;
-}
-
-@keyframes ExplorerTable-loadingReveal {
-  to {
-    opacity: 1;
-  }
-}
-
-.ExplorerTable-loadingIcon {
-  display: inline-block;
-  width: 1em;
-  height: 1em;
-  flex: 0 0 auto;
-  border-radius: 4px;
-  background: var(--alinea-bg-muted);
-}
-
-.ExplorerTable-loadingText {
-  display: inline-block;
-  width: 120px;
-  height: 12px;
-  border-radius: 999px;
-  background: var(--alinea-bg-muted);
-}

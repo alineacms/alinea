@@ -22,8 +22,8 @@ import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
   dispense,
-  uploadSizeError,
-  withPending
+  swr,
+  uploadSizeError
 } from './utils.js'
 import {
   configAtom,
@@ -90,7 +90,21 @@ export class ExplorerAtoms {
   #items = new Map<string, Atom<Promise<Array<EntryAtoms>>>>()
   #navigationSequence = 0
   selection
-  expandedKeys = atom(new Set<Key>())
+  #expandedKeys = atom(new Set<Key>())
+  expandedKeys = atom(
+    get => get(this.#expandedKeys),
+    async (get, set, next: Set<Key>) => {
+      const current = get(this.#expandedKeys)
+      const added = [...next].filter(key => !current.has(key))
+      await Promise.all(
+        added.map(async key => {
+          const children = get(this.children(entryAtoms(String(key))))
+          if (children instanceof Promise) await children
+        })
+      )
+      set(this.#expandedKeys, next)
+    }
+  )
   constructor(
     public location: WritableAtom<
       ExplorerLocation,
@@ -188,8 +202,8 @@ export class ExplorerAtoms {
     atom(get => get(this.expandedKeys).has(entry.id))
   )
 
-  childrenState = dispense((entry: EntryAtoms) =>
-    withPending(
+  children = dispense((entry: EntryAtoms) =>
+    swr(
       atom(async get => {
         get(shaAtom)
         const {data} = get(entry.data)

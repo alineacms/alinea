@@ -178,41 +178,13 @@ function affectedStatus(
 }
 
 const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
-  const {pending, data} = useAtomValue(item.data)
-  if (!data) return <SidebarLoadingItem item={item} pending={pending} />
+  const {data} = useAtomValue(item.data)
+  // Expansion preloads entries before exposing them. If an entry is refreshed
+  // through another path, keep it out of the collection until it is complete
+  // instead of replacing the navigation item with a loading placeholder.
+  if (!data) return null
   return <SidebarLoadedItem item={item} data={data} tree={tree} />
 })
-
-interface SidebarLoadingItemProps {
-  item: EntryAtoms
-  pending: boolean
-}
-
-function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
-  return (
-    <TreeItem
-      id={item.id}
-      textValue="Loading entry"
-      title="Loading entry"
-      icon={LucideFile}
-      label={
-        <span
-          className={styles.SidebarTree.itemSkeleton.label()}
-          aria-hidden="true"
-        />
-      }
-      className={styles.SidebarTree.item({loading: true})}
-      suffix={
-        pending ? (
-          <span
-            className={styles.SidebarTree.itemLoading()}
-            aria-hidden="true"
-          />
-        ) : undefined
-      }
-    />
-  )
-}
 
 interface SidebarLoadedItemProps {
   item: EntryAtoms
@@ -236,8 +208,6 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
   let icon = useAtomValue(data.icon)
   const hasChildren = useAtomValue(data.entryData).hasChildren
   if (!icon) icon = hasChildren ? LucideFolder : LucideFile
-  const isLoadingChildren =
-    hasChildren && isExpanded && childItems === undefined
   const displayStatus = sidebarStatus(status)
   const rowStatus = affectedStatus(status, selectedAncestorStatus)
   const isArchived = rowStatus.status === 'archived'
@@ -257,12 +227,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
         parentSelected: selectedAncestorStatus !== undefined
       })}
       suffix={
-        isLoadingChildren ? (
-          <span
-            className={styles.SidebarTree.itemLoading()}
-            aria-hidden="true"
-          />
-        ) : displayStatus ? (
+        displayStatus ? (
           <span
             className={styles.SidebarTree.status({
               [displayStatus.status]: true

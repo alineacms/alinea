@@ -306,52 +306,10 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
 
 function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
   const {entry, explorer} = props
-  const [pending, children] = useAtomValue(
-    useMemo(() => explorer.childrenState(entry), [explorer, entry])
+  const children = useAtomValue(
+    useMemo(() => explorer.children(entry), [explorer, entry])
   )
-  if (pending && !children) {
-    const loadingId = `${entry.id}:loading`
-    const titleColumnIndex = props.columns.findIndex(
-      column => column.kind === 'title'
-    )
-    return (
-      <Collection items={[{id: loadingId}]}>
-        {item => (
-          <TreeItem
-            id={item.id}
-            textValue="Loading entries"
-            isDisabled
-            className={styles.ExplorerTable.row({loading: true})}
-          >
-            <TreeItemContent>
-              {({level}) => (
-                <div
-                  className={styles.ExplorerTable.row.grid()}
-                  role="presentation"
-                  style={{gridTemplateColumns: props.gridTemplateColumns}}
-                >
-                  <div
-                    className={styles.ExplorerTable.cell.title()}
-                    role="gridcell"
-                    aria-colindex={titleColumnIndex + 1}
-                    style={{
-                      gridColumn: titleColumnIndex + 1,
-                      paddingLeft: 10 + Math.max(0, level - 1) * 20
-                    }}
-                  >
-                    <span className={styles.ExplorerTable.chevron()} />
-                    <span className={styles.ExplorerTable.loadingIcon()} />
-                    <span className={styles.ExplorerTable.loadingText()} />
-                  </div>
-                </div>
-              )}
-            </TreeItemContent>
-          </TreeItem>
-        )}
-      </Collection>
-    )
-  }
-  if (!children || children.length === 0) return null
+  if (children instanceof Promise || children.length === 0) return null
   return (
     <Collection items={children}>
       {child => (

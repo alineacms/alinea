@@ -81,9 +81,18 @@ test('navigates into folders without showing a suspense loader', async ({
   await app.page.evaluate(() => {
     document.documentElement.dataset.suspenseLoaderSeen = 'false'
     document.documentElement.dataset.incompleteExplorerRowSeen = 'false'
+    document.documentElement.dataset.placeholderExplorerRowSeen = 'false'
     const observer = new MutationObserver(() => {
       if (document.querySelector('[role="progressbar"]'))
         document.documentElement.dataset.suspenseLoaderSeen = 'true'
+      if (
+        document.querySelector(
+          '[role="treegrid"][aria-label="Explorer entries"] ' +
+            '[role="row"][aria-label="Loading entries"]'
+        )
+      ) {
+        document.documentElement.dataset.placeholderExplorerRowSeen = 'true'
+      }
       const childRow = Array.from(
         document.querySelectorAll(
           '[role="treegrid"][aria-label="Explorer entries"] [role="row"]'
@@ -111,6 +120,13 @@ test('navigates into folders without showing a suspense loader', async ({
     .poll(() =>
       app.page.evaluate(
         () => document.documentElement.dataset.incompleteExplorerRowSeen
+      )
+    )
+    .toBe('false')
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.placeholderExplorerRowSeen
       )
     )
     .toBe('false')
@@ -166,11 +182,27 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   const imageField = app.page.getByRole('list', {name: 'Featured image'})
   const fileField = app.page.getByRole('list', {name: 'Download'})
 
+  await app.page.evaluate(() => {
+    document.documentElement.dataset.sidebarLoaderSeen = 'false'
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[title="Loading entry"]'))
+        document.documentElement.dataset.sidebarLoaderSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
+
   await imageField.getByRole('button', {name: 'Image'}).click()
   const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
   await expect(
     imagePicker.getByRole('treegrid', {name: 'Media folders'})
   ).toBeVisible()
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.sidebarLoaderSeen
+      )
+    )
+    .toBe('false')
   await imagePicker
     .getByRole('checkbox', {name: 'Select Existing image'})
     .locator('xpath=ancestor::label')
