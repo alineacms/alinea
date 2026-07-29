@@ -3,7 +3,7 @@ import styler from '@alinea/styler'
 import {type WritableAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
-import {authAtom, type AuthAction, type AuthState} from '../atoms/AuthAtoms.js'
+import {authAtom, type AuthAction, type AuthState} from '../atoms/UserAtoms.js'
 import css from './AuthView.module.css'
 
 const styles = styler(css)

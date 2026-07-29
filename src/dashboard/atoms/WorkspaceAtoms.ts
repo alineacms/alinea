@@ -1,3 +1,4 @@
+import type {Config} from '#/core/Config.js'
 import {Permission} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
@@ -23,20 +24,31 @@ import {
   dashboardEntryDragItem,
   dashboardEntryDragType,
   dashboardEntryDragTypes,
-  dispense
+  dispense,
+  requiredAtom
 } from './AtomUtils.js'
 import type {TreeSelection} from './Contracts.js'
-import {configAtom, graphAtom} from './CoreAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
-import {routeAtom} from './NavigationAtoms.js'
-import {policyAtom} from './PolicyAtoms.js'
+import {graphAtom} from './GraphAtoms.js'
+import {routeAtom} from './RoutingAtoms.js'
+import {policyAtom} from './UserAtoms.js'
 import {createRoot, type RootAtoms} from './RootAtoms.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspaceRootsAtom,
   workspaceSettingsAtom
-} from './SelectionAtoms.js'
+} from './RoutingAtoms.js'
+
+export const configAtom = requiredAtom<Config>('dashboard.config')
+export const viewsAtom =
+  requiredAtom<Record<string, ComponentType>>('dashboard.views')
+
+export const viewAtom = dispense(key => {
+  return atom((get): ComponentType | undefined => {
+    return get(viewsAtom)[key]
+  })
+})
 
 export interface WorkspaceAtoms {
   key: string

@@ -23,12 +23,10 @@ import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../icons.js'
-import {clientAtom, configAtom} from '../atoms/CoreAtoms.js'
-import {routeAtom} from '../atoms/NavigationAtoms.js'
-import {
-  selectedRootAtom,
-  selectedWorkspaceAtom
-} from '../atoms/SelectionAtoms.js'
+import {clientAtom} from '../atoms/UserAtoms.js'
+import {configAtom} from '../atoms/WorkspaceAtoms.js'
+import {routeAtom} from '../atoms/RoutingAtoms.js'
+import {selectedRootAtom, selectedWorkspaceAtom} from '../atoms/RoutingAtoms.js'
 import {Badge} from './Badge.js'
 import {
   DashboardModal,

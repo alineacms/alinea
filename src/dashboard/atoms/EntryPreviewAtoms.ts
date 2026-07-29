@@ -1,23 +1,57 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
+import type {LocalConnection} from '#/core/Connection.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {PreviewMetadata} from '#/core/Preview.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {atom} from 'jotai'
-import {debounce, dispense} from './AtomUtils.js'
-import {clientAtom, configAtom, previewTokenRequestsAtom} from './CoreAtoms.js'
+import {debounce, dispense, requiredAtom} from './AtomUtils.js'
 import type {EntryDataAtoms} from './EntryAtoms.js'
-import {
-  previewSessionOriginsAtom,
-  requestPreviewSessionToken
-} from './PreviewAtoms.js'
-import {shaAtom} from './SyncAtoms.js'
+import {shaAtom} from './GraphAtoms.js'
+import {clientAtom} from './UserAtoms.js'
+import {configAtom} from './WorkspaceAtoms.js'
 
 const decoder = new TextDecoder()
+
+export const previewTokenRequestsAtom = requiredAtom<
+  Map<string, Promise<string>>
+>('dashboard.previewTokenRequests')
+
+export const previewMetadataAtom = atom<PreviewMetadata | undefined>(undefined)
+
+const readyPreviewOriginsAtom = atom<ReadonlySet<string>>(new Set<string>())
+
+export const previewSessionOriginsAtom = atom(get =>
+  get(readyPreviewOriginsAtom)
+)
+
+export const markPreviewSessionReadyAtom = atom(
+  null,
+  (get, set, origin: string) => {
+    const current = get(readyPreviewOriginsAtom)
+    if (current.has(origin)) return
+    set(readyPreviewOriginsAtom, new Set(current).add(origin))
+  }
+)
+
+export function requestPreviewSessionToken(
+  requests: Map<string, Promise<string>>,
+  origin: string,
+  client: Pick<LocalConnection, 'previewToken'>
+) {
+  const current = requests.get(origin)
+  if (current) return current
+  const request = client.previewToken().finally(() => {
+    if (requests.get(origin) === request) requests.delete(origin)
+  })
+  requests.set(origin, request)
+  return request
+}
 
 export function createEntryPreviewAtoms(entry: EntryDataAtoms) {
   const preview = atom(get => {

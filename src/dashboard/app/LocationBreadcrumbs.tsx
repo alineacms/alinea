@@ -12,7 +12,7 @@ import type {
   DashboardMenuItem,
   ExplorerLocation
 } from '../atoms/ExplorerAtoms.js'
-import {workspacesAtom} from '../atoms/SelectionAtoms.js'
+import {workspacesAtom} from '../atoms/RoutingAtoms.js'
 import {workspaceAtoms} from '../atoms/WorkspaceAtoms.js'
 import css from './LocationBreadcrumbs.module.css'
 

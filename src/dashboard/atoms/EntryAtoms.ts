@@ -37,14 +37,14 @@ import {
   uploadSizeError,
   withPending
 } from './AtomUtils.js'
-import {clientAtom, configAtom, graphAtom, viewAtom} from './CoreAtoms.js'
+import {graphAtom} from './GraphAtoms.js'
 import {entryLoaderAtom} from './EntryLoaderAtoms.js'
-import {userAtom} from './AuthAtoms.js'
-import {uploadProgressAtom} from './MutationAtoms.js'
-import {reloadPageAtom} from './PageAtoms.js'
-import {policyAtom} from './PolicyAtoms.js'
-import {shaAtom} from './SyncAtoms.js'
+import {clientAtom, userAtom} from './UserAtoms.js'
+import {shaAtom, uploadProgressAtom} from './GraphAtoms.js'
+import {reloadPageAtom} from './RoutingAtoms.js'
+import {policyAtom} from './UserAtoms.js'
 import {workspaceAtoms} from './WorkspaceAtoms.js'
+import {configAtom, viewAtom} from './WorkspaceAtoms.js'
 import type {
   DashboardEntryReference,
   DashboardEntryReferences,

@@ -11,7 +11,6 @@ export {
   useFieldValue,
   useFieldView,
   useGraph,
-  useHydrateDashboard,
   useNodes,
   useOptionalEditor,
   usePolicy,

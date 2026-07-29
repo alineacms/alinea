@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {requestPreviewSessionToken} from './PreviewAtoms.js'
+import {requestPreviewSessionToken} from './EntryPreviewAtoms.js'
 
 test('shares concurrent preview token requests for an origin', async () => {
   const tokenRequests = new Map<string, Promise<string>>()

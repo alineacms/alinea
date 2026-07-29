@@ -7,9 +7,9 @@ import {
 } from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {atom} from 'jotai'
-import {configAtom} from '../CoreAtoms.js'
+import {configAtom} from '../WorkspaceAtoms.js'
 import {entryAtoms} from '../EntryAtoms.js'
-import {policyResourceAtom} from '../PolicyAtoms.js'
+import {policyResourceAtom} from '../UserAtoms.js'
 import {workspaceAtoms} from '../WorkspaceAtoms.js'
 import {createRouteLoader} from './Route.js'
 

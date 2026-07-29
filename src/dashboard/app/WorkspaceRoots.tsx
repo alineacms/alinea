@@ -26,12 +26,11 @@ import {
   isLocalAtom,
   logoutAtom,
   setUserRolesAtom
-} from '../atoms/AuthAtoms.js'
-import {configAtom} from '../atoms/CoreAtoms.js'
-import {routeAtom} from '../atoms/NavigationAtoms.js'
+} from '../atoms/UserAtoms.js'
+import {configAtom} from '../atoms/WorkspaceAtoms.js'
+import {routeAtom} from '../atoms/RoutingAtoms.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
-import {selectedWorkspaceAtom} from '../atoms/SelectionAtoms.js'
-import {themeAtom} from '../atoms/DashboardViewAtoms.js'
+import {selectedWorkspaceAtom, themeAtom} from '../atoms/RoutingAtoms.js'
 import {workspaceAtoms} from '../atoms/WorkspaceAtoms.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'

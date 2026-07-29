@@ -14,7 +14,7 @@ import type {EntrySidebarTab} from './Contracts.js'
 import type {EntryDataAtoms} from './EntryAtoms.js'
 import type {TypeAtoms} from './EditorAtoms.js'
 import {versionLoaderAtom} from './EntryLoaderAtoms.js'
-import {policyAtom} from './PolicyAtoms.js'
+import {policyAtom} from './UserAtoms.js'
 import {ReactiveNode} from './ReactiveNode.js'
 
 export const entryRevisionAtom = dispense((_id: string) => atom(0))

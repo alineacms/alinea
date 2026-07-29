@@ -1,8 +1,13 @@
 import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore} from 'jotai'
-import {eventsAtom, graphAtom} from './CoreAtoms.js'
-import {shaAtom, syncAtom} from './SyncAtoms.js'
+import {
+  createMutationQueueState,
+  eventsAtom,
+  graphAtom,
+  shaAtom,
+  syncAtom
+} from './GraphAtoms.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reading content state never synchronizes the graph', async () => {
@@ -24,4 +29,19 @@ test('reading content state never synchronizes the graph', async () => {
 
   expect(sha).toBeString()
   expect(await store.get(shaAtom)).toBe(sha)
+})
+
+test('summarizes mutation queue state without a store instance', () => {
+  const state = createMutationQueueState([
+    {status: 'pending'},
+    {status: 'syncing'},
+    {status: 'failed', error: 'Broken'},
+    {status: 'blocked'}
+  ] as Parameters<typeof createMutationQueueState>[0])
+
+  expect(state.pending).toBe(1)
+  expect(state.syncing).toBe(1)
+  expect(state.failed).toBe(1)
+  expect(state.blocked).toBe(1)
+  expect(state.error).toBe('Broken')
 })

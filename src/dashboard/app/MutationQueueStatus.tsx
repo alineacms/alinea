@@ -14,7 +14,7 @@ import {
   discardMutationQueueAtom,
   mutationQueueAtom,
   retryMutationQueueAtom
-} from '../atoms/MutationAtoms.js'
+} from '../atoms/GraphAtoms.js'
 import css from './MutationQueueStatus.module.css'
 
 const styles = styler(css)

@@ -6,9 +6,10 @@ import {Type} from '#/core/Type.js'
 import {entries} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
 import {atom, type Atom} from 'jotai'
-import {configAtom, graphAtom} from './CoreAtoms.js'
+import {graphAtom} from './GraphAtoms.js'
 import {MissingEntryError} from './Contracts.js'
-import {policyResourceAtom} from './PolicyAtoms.js'
+import {policyResourceAtom} from './UserAtoms.js'
+import {configAtom} from './WorkspaceAtoms.js'
 import {batchLoader} from './AtomUtils.js'
 
 export interface EntryLoaderAtomsOptions {

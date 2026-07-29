@@ -15,12 +15,13 @@ import {
   type ExplorerLocation
 } from './ExplorerAtoms.js'
 import {dispense} from './AtomUtils.js'
-import {configAtom, graphAtom, viewAtom} from './CoreAtoms.js'
+import {graphAtom} from './GraphAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
-import {routeAtom} from './NavigationAtoms.js'
-import {policyAtom} from './PolicyAtoms.js'
-import {selectedRootAtom, selectedWorkspaceAtom} from './SelectionAtoms.js'
-import {shaAtom} from './SyncAtoms.js'
+import {routeAtom} from './RoutingAtoms.js'
+import {policyAtom} from './UserAtoms.js'
+import {selectedRootAtom, selectedWorkspaceAtom} from './RoutingAtoms.js'
+import {shaAtom} from './GraphAtoms.js'
+import {configAtom, viewAtom} from './WorkspaceAtoms.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 

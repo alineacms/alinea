@@ -20,7 +20,7 @@ import {
   LucideFolder,
   RiFlashlightFill
 } from '../icons.js'
-import {createTreeSelection} from '../atoms/Contracts.js'
+import type {TreeSelection} from '../atoms/Contracts.js'
 import {
   entryAtoms,
   type EntryAtoms,
@@ -36,13 +36,25 @@ import {
   type TreeAtoms,
   type WorkspaceAtoms
 } from '../atoms/WorkspaceAtoms.js'
-import {routeAtom} from '../atoms/NavigationAtoms.js'
+import {routeAtom} from '../atoms/RoutingAtoms.js'
 import {dispense} from '../atoms/AtomUtils.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
+
+function createTreeSelection(initialSelection = new Set<Key>()): TreeSelection {
+  const base = atom(initialSelection)
+  return atom(
+    get => get(base),
+    async (_get, set, next: 'all' | Set<Key>) => {
+      if (next === 'all')
+        throw new Error('Selecting all items is not supported')
+      set(base, next)
+    }
+  )
+}
 
 const sidebarTreeAtoms = dispense((tree: TreeAtoms) => {
   const isExpanded = dispense((entry: EntryAtoms) => {

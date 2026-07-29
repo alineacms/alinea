@@ -3,9 +3,11 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import {navigationAtoms} from '../atoms/NavigationAtoms.js'
-import {pageAtom} from '../atoms/PageAtoms.js'
-import {workspacesAtom} from '../atoms/SelectionAtoms.js'
+import {
+  navigationAtoms,
+  pageAtom,
+  workspacesAtom
+} from '../atoms/RoutingAtoms.js'
 import {currentWorkspaceAtom} from '../atoms/WorkspaceAtoms.js'
 import type {PreparedRoute} from '../atoms/loaders/Route.js'
 import css from './AppShell.module.css'

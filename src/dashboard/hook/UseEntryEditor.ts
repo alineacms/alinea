@@ -1,6 +1,6 @@
 import type {EntryStatus} from 'alinea/core/Entry'
 import {useAtomValue} from 'jotai'
-import {currentEntryAtom} from '../atoms/PageAtoms.js'
+import {currentEntryAtom} from '../atoms/RoutingAtoms.js'
 
 export interface EntryEditorVersionData {
   path: string

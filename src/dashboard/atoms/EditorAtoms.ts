@@ -10,9 +10,9 @@ import type {Atom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
 import {ReactiveNode} from './ReactiveNode.js'
-import {configAtom, viewAtom} from './CoreAtoms.js'
-import {policyAtom} from './PolicyAtoms.js'
+import {policyAtom} from './UserAtoms.js'
 import {dispense} from './AtomUtils.js'
+import {configAtom, viewAtom} from './WorkspaceAtoms.js'
 
 export interface EditorAtoms {
   type: ConfigType

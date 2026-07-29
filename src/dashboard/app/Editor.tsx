@@ -33,7 +33,7 @@ import {
 } from '../atoms/EditorAtoms.js'
 import {entryAtoms, type EntryDataAtoms} from '../atoms/EntryAtoms.js'
 import {entrySidebarOpenAtom} from '../atoms/EntrySupport.js'
-import {routeAtom} from '../atoms/NavigationAtoms.js'
+import {routeAtom} from '../atoms/RoutingAtoms.js'
 import {ReactiveNode} from '../atoms/ReactiveNode.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
 import type {EntryPageData} from '../atoms/loaders/Entry.js'

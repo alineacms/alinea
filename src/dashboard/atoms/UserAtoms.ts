@@ -1,10 +1,24 @@
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import {Policy} from '#/core/Role.js'
 import {localUser, type User} from '#/core/User.js'
 import {atom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {keepPrevious} from './AtomUtils.js'
-import {clientAtom, optionsAtom} from './CoreAtoms.js'
+import {atomWithStorage, unwrap} from 'jotai/utils'
+import type {SetStateAction} from 'react'
+import {keepPrevious, requiredAtom, withPending} from './AtomUtils.js'
+import {graphAtom, shaAtom} from './GraphAtoms.js'
+import type {RouteHistory} from './navigation/History.js'
+import {configAtom} from './WorkspaceAtoms.js'
+
+export interface DashboardOptions {
+  alineaDev?: boolean
+  history?: RouteHistory
+  local?: boolean
+}
+
+export const clientAtom = requiredAtom<LocalConnection>('dashboard.client')
+export const optionsAtom = requiredAtom<DashboardOptions>('dashboard.options')
 
 export interface AuthLoading {
   status: 'loading'
@@ -216,3 +230,88 @@ export const canLogoutAtom = atom(get => {
   const client = get(clientAtom)
   return typeof (client as Partial<LogoutConnection>).logout === 'function'
 })
+
+export const backendCapabilitiesResourceAtom = atom(async get => {
+  const client = get(clientAtom)
+  if (!client.capabilities)
+    throw new Error('Backend capabilities are not available')
+  return client.capabilities()
+})
+
+export const policyResourceAtom = atom(async get => {
+  const user = await get(userAtom)
+  if (!user?.roles) return Policy.ALLOW_NONE
+  const db = get(graphAtom)
+  get(shaAtom)
+  const roles = get(configAtom).roles ?? {}
+  return db.createPolicy(user.roles.filter(role => role in roles))
+})
+
+const policyStateAtom = withPending(policyResourceAtom)
+
+export const policyReadyAtom = atom(get => {
+  const [pending] = get(policyStateAtom)
+  return !pending
+})
+
+export const policyAtom = atom(get => {
+  const [, policy] = get(policyStateAtom)
+  return policy ?? Policy.ALLOW_NONE
+})
+
+export const canManageMembersAtom = atom(async get => {
+  const capabilities = await get(backendCapabilitiesResourceAtom)
+  if (!capabilities.users) return false
+  const policy = await get(policyResourceAtom)
+  return policy.canManageMembers()
+})
+
+export type ThemeMode = 'system' | 'light' | 'dark'
+
+const storageKey = 'alinea-dashboard-theme'
+let enableTransitionsFrame: number | undefined
+
+export function createThemeAtom() {
+  const storage = atomWithStorage<ThemeMode>(storageKey, 'system', undefined)
+  return Object.assign(
+    atom(
+      get => get(storage),
+      (get, set, next: SetStateAction<ThemeMode>) => {
+        const current = get(storage)
+        const theme = typeof next === 'function' ? next(current) : next
+        set(storage, theme)
+        applyTheme(theme)
+      }
+    ),
+    {
+      onMount(setTheme: (update: SetStateAction<ThemeMode>) => void) {
+        setTheme(current => current)
+      }
+    }
+  )
+}
+
+function applyTheme(theme: ThemeMode) {
+  if (typeof document === 'undefined') return
+  suspendTransitions()
+  const root = document.documentElement
+  if (theme === 'system') root.removeAttribute('data-theme')
+  else root.dataset.theme = theme
+}
+
+function suspendTransitions() {
+  if (typeof document === 'undefined') return
+  const {body} = document
+  if (!body) return
+  body.dataset.disableTransition = 'true'
+  void body.offsetWidth
+  if (enableTransitionsFrame) cancelAnimationFrame(enableTransitionsFrame)
+  enableTransitionsFrame = requestAnimationFrame(() => {
+    enableTransitionsFrame = requestAnimationFrame(() => {
+      body.removeAttribute('data-disable-transition')
+      enableTransitionsFrame = undefined
+    })
+  })
+}
+
+export const themeAtom = createThemeAtom()

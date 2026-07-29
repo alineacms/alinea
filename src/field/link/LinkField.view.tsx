@@ -59,12 +59,12 @@ import {
   type EntryAtoms
 } from '#/dashboard/atoms/index.js'
 import type {ExplorerOptions} from '#/dashboard/atoms/ExplorerAtoms.js'
-import {currentEntryAtom} from '#/dashboard/atoms/PageAtoms.js'
+import {currentEntryAtom} from '#/dashboard/atoms/RoutingAtoms.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '#/dashboard/atoms/SelectionAtoms.js'
+} from '#/dashboard/atoms/RoutingAtoms.js'
 import {selectedMediaRootAtom} from '#/dashboard/atoms/WorkspaceAtoms.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'

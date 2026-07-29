@@ -19,13 +19,13 @@ import {
   MaterialSymbolsEditSquareOutlineRounded
 } from '../icons.js'
 import {createExplorerAtoms} from '../atoms/ExplorerAtoms.js'
-import {routeAtom} from '../atoms/NavigationAtoms.js'
+import {routeAtom} from '../atoms/RoutingAtoms.js'
 import type {RootAtoms} from '../atoms/RootAtoms.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspacesAtom
-} from '../atoms/SelectionAtoms.js'
+} from '../atoms/RoutingAtoms.js'
 import {
   currentRootAtom,
   workspaceAtoms,

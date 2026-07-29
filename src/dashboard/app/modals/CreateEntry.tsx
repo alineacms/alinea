@@ -9,10 +9,13 @@ import {
 } from '#/components.js'
 import {Entry} from '#/core/Entry.js'
 import {getRoot, getType} from '#/core/Internal.js'
+import {MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Reference} from '#/core/Reference.js'
+import {Permission} from '#/core/Role.js'
 import {Schema} from '#/core/Schema.js'
 import {Type, type as createType} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
@@ -27,18 +30,20 @@ import {
   type SetStateAction
 } from 'react'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {configAtom, graphAtom} from '../../atoms/CoreAtoms.js'
-import {createEntryAtom} from '../../atoms/CreateEntryAtom.js'
+import {userAtom} from '../../atoms/UserAtoms.js'
+import {graphAtom} from '../../atoms/GraphAtoms.js'
+import type {DashboardCreateEntryRequest} from '../../atoms/Dashboard.js'
 import {entryAtoms} from '../../atoms/EntryAtoms.js'
 import type {ExplorerLocation} from '../../atoms/ExplorerAtoms.js'
-import {routeAtom} from '../../atoms/NavigationAtoms.js'
-import {policyAtom} from '../../atoms/PolicyAtoms.js'
+import {routeAtom} from '../../atoms/RoutingAtoms.js'
+import {policyAtom} from '../../atoms/UserAtoms.js'
 import {ReactiveNode} from '../../atoms/ReactiveNode.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '../../atoms/SelectionAtoms.js'
+} from '../../atoms/RoutingAtoms.js'
 import {workspaceAtoms} from '../../atoms/WorkspaceAtoms.js'
+import {configAtom} from '../../atoms/WorkspaceAtoms.js'
 import {NodeEditor} from '../Editor.js'
 import {
   DashboardModalContent,
@@ -49,6 +54,85 @@ import {
 import css from './CreateEntry.module.css'
 
 const styles = styler(css)
+
+const createEntryAtom = atom(
+  null,
+  async (get, set, request: DashboardCreateEntryRequest) => {
+    const config = get(configAtom)
+    const db = get(graphAtom)
+    const policy = get(policyAtom)
+    const type = config.schema[request.type]
+    assert(type, `Type "${request.type}" not found in config`)
+
+    const title = request.title.trim()
+    assert(title, 'Title is required')
+
+    const copiedData = request.copyFrom
+      ? await db.first({
+          select: Entry.data,
+          id: request.copyFrom,
+          locale: request.locale,
+          status: 'preferPublished'
+        })
+      : undefined
+
+    const parent = request.parentId
+      ? await db.first({
+          select: {type: Entry.type, parents: Entry.parents},
+          id: request.parentId,
+          status: 'preferDraft'
+        })
+      : undefined
+    const parentType = parent ? config.schema[parent.type] : undefined
+    const parentInsertOrder = parentType && Type.insertOrder(parentType)
+    policy.assert(Permission.Create, {
+      workspace: request.workspace,
+      root: request.root,
+      locale: request.locale,
+      type: request.type,
+      parents: request.parentId
+        ? [request.parentId, ...(parent?.parents ?? [])]
+        : []
+    })
+
+    const user = await get(userAtom)
+    const initialData = Type.withInitialValue(type, {
+      ...Type.initialValue(type),
+      ...copiedData,
+      title,
+      path: slugify(title)
+    })
+    const data = Type.beforeSave(type, initialData, {
+      action: 'create',
+      user,
+      now: new Date()
+    })
+
+    const created = await db.create({
+      type,
+      workspace: request.workspace,
+      root: request.root,
+      parentId: request.parentId,
+      locale: request.locale,
+      status:
+        type === MediaLibrary || !config.enableDrafts ? 'published' : 'draft',
+      insertOrder:
+        parentInsertOrder && parentInsertOrder !== 'free'
+          ? parentInsertOrder
+          : request.insertOrder,
+      set: data
+    })
+
+    set(routeAtom, {
+      workspace: request.workspace,
+      root: request.root,
+      entry: created._id,
+      locale: request.locale ?? undefined
+    })
+
+    return created
+  }
+)
 
 type LinkFieldValueAtom = WritableAtom<
   EntryReference | null,
