@@ -48,6 +48,11 @@ const ScenarioPage = Config.document('Page', {
     browsePage: Field.entry('Browse page', {
       location: {workspace: 'main', root: 'pages'}
     }),
+    navigablePage: Field.entry('Navigable page', {
+      condition: {_id: dashboardScenarioIds.child},
+      enableNavigation: true,
+      location: {workspace: 'main', root: 'pages'}
+    }),
     image: Field.image('Featured image'),
     file: Field.file('Download')
   }

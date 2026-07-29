@@ -1,5 +1,6 @@
 import {UploadOperation} from '#/core/db/Operation.js'
-import {Entry} from '#/core/Entry.js'
+import {filterChecker} from '#/core/db/EntryResolver.js'
+import {Entry, type Entry as EntryRecord} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import type {Filter} from '#/core/Filter.js'
@@ -18,7 +19,12 @@ import {graphAtom, shaAtom} from './graph.js'
 import {mutationQueueAtom, uploadProgressAtom} from './graph/queue.js'
 import {refreshPageForAtom} from './routing.js'
 import {policyAtom} from './user.js'
-import {dashboardEntryDragItem, uploadSizeError} from './utils.js'
+import {
+  dashboardEntryDragItem,
+  dispense,
+  uploadSizeError,
+  withPending
+} from './utils.js'
 import {
   configAtom,
   type RootAtoms,
@@ -60,6 +66,7 @@ export interface ExplorerOptions {
   enableNavigation?: boolean
   flatResults?: boolean
   hideResultsUntilSearch?: boolean
+  inlineExpansion?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
   pickChildren?: boolean
@@ -78,10 +85,12 @@ export interface ExplorerOptions {
 
 export class ExplorerAtoms {
   #options: ExplorerOptions
+  #conditionChecker: ReturnType<typeof filterChecker> | undefined
   #selectedLocale: DashboardLocaleSelection
   #items = new Map<string, Atom<Promise<Array<EntryAtoms>>>>()
   #navigationSequence = 0
   selection
+  expandedKeys = atom(new Set<Key>())
   constructor(
     public location: WritableAtom<
       ExplorerLocation,
@@ -91,6 +100,17 @@ export class ExplorerAtoms {
     options: ExplorerOptions
   ) {
     this.#options = options
+    this.#conditionChecker = options.condition
+      ? filterChecker(
+          options.condition,
+          (record: EntryRecord, name: string) => {
+            if (name.startsWith('_')) {
+              return record[name.slice(1) as keyof EntryRecord]
+            }
+            return record.data[name]
+          }
+        )
+      : undefined
     this.#selectedLocale = atom(options.selectedLocale ?? null)
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
@@ -145,9 +165,65 @@ export class ExplorerAtoms {
     return Boolean(this.#options.onAction)
   }
 
+  get supportsInlineExpansion() {
+    return this.#options.inlineExpansion ?? false
+  }
+
   get breadcrumbs() {
     return this.#options.breadcrumbs ?? false
   }
+
+  isSelectable = dispense((entry: EntryAtoms) =>
+    atom(get => {
+      if (!this.#conditionChecker) return true
+      const {data} = get(entry.data)
+      if (!data) return false
+      const currentEntry = get(data.currentEntry)
+      if (!currentEntry || currentEntry instanceof Promise) return false
+      return this.#conditionChecker(currentEntry)
+    })
+  )
+
+  isExpanded = dispense((entry: EntryAtoms) =>
+    atom(get => get(this.expandedKeys).has(entry.id))
+  )
+
+  childrenState = dispense((entry: EntryAtoms) =>
+    withPending(
+      atom(async get => {
+        get(shaAtom)
+        const {data} = get(entry.data)
+        if (!data || !get(data.entryData).hasChildren) return []
+        const entryData = get(data.entryData)
+        const root = get(data.root)
+        const db = get(graphAtom)
+        const policy = get(policyAtom)
+        const children = await db.find({
+          locale: get(root.selectedLocale),
+          workspace: entryData.workspace,
+          root: entryData.root,
+          parentId: entry.id,
+          select: {
+            id: Entry.id,
+            type: Entry.type,
+            workspace: Entry.workspace,
+            root: Entry.root,
+            parents: Entry.parents,
+            locale: Entry.locale
+          },
+          orderBy: this.#orderBy(get),
+          status: 'preferDraft',
+          type: get(this.filter),
+          groupBy: Entry.id
+        })
+        const entries = children
+          .filter(child => policy.canRead(child))
+          .map(child => entryAtoms(child.id))
+        await Promise.all(entries.map(child => get(child.preload)))
+        return entries
+      })
+    )
+  )
 
   onAction = atom(null, (get, set, entry: EntryAtoms) => {
     if (this.#options.onAction) {
@@ -426,25 +502,8 @@ export class ExplorerAtoms {
     const root = location.root
       ? workspaceAtoms(location.workspace).root(location.root)
       : undefined
-    const isMedia = root ? get(root.settings).isMediaRoot : false
-    const sort = get(this.#sort) ?? {
-      sortBy: isMedia ? 'title' : 'index',
-      direction: 'asc'
-    }
     const filter = get(this.filter)
     const searchStarted = Boolean(search.trim())
-    const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
-      title: Entry.title,
-      path: Entry.path,
-      size: MediaFile.size,
-      id: Entry.id,
-      index: Entry.index
-    }
-    const fieldToSort = fieldMap[sort.sortBy]
-    const orderBy = {
-      [sort.direction]: fieldToSort,
-      caseSensitive: fieldToSort !== Entry.id
-    }
     if (this.hideResultsUntilSearch && !searchStarted) return []
     const allRoots = this.rootScope === 'workspace'
     if (!root && !allRoots) return []
@@ -462,7 +521,7 @@ export class ExplorerAtoms {
       workspace: location.workspace,
       root: allRoots ? undefined : location.root,
       parentId: flatList ? undefined : (location.parentId ?? null),
-      filter: this.#options.condition,
+      filter: flatList ? this.#options.condition : undefined,
       select: {
         id: Entry.id,
         type: Entry.type,
@@ -471,7 +530,7 @@ export class ExplorerAtoms {
         parents: Entry.parents,
         locale: Entry.locale
       },
-      orderBy,
+      orderBy: this.#orderBy(get),
       status: 'preferDraft',
       type: filter,
       groupBy: Entry.id
@@ -481,6 +540,22 @@ export class ExplorerAtoms {
       .map(child => entryAtoms(child.id))
     await Promise.all(entries.map(entry => get(entry.preload)))
     return entries
+  }
+
+  #orderBy(get: Getter) {
+    const sort = get(this.sort)
+    const fieldMap: Record<ExplorerSortBy, Expr<string | number>> = {
+      title: Entry.title,
+      path: Entry.path,
+      size: MediaFile.size,
+      id: Entry.id,
+      index: Entry.index
+    }
+    const field = fieldMap[sort.sortBy]
+    return {
+      [sort.direction]: field,
+      caseSensitive: field !== Entry.id
+    }
   }
 
   parentsMenu = unwrap(

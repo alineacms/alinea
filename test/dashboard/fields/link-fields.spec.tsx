@@ -96,6 +96,47 @@ test('navigates into folders without showing a suspense loader', async ({
     .toBe('false')
 })
 
+test('expands hierarchy in navigable link pickers and marks non-matching rows', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  // Entry overview rows keep their existing drill-in behavior. Inline expansion
+  // is reserved for link pickers that need to traverse non-selectable parents.
+  await expect(
+    app.page
+      .getByRole('treegrid', {name: 'Explorer entries'})
+      .getByRole('button', {name: 'Expand Folder'})
+  ).toHaveCount(0)
+
+  await app.page
+    .getByRole('list', {name: 'Navigable page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await expect(
+    picker.getByRole('treegrid', {name: 'Link folders'})
+  ).toBeVisible()
+
+  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
+  const folder = entries.getByRole('row', {name: /Folder/})
+  await expect(folder).toContainText('Not selectable')
+  await expect(
+    folder.getByRole('checkbox', {name: 'Select Folder'})
+  ).toBeDisabled()
+  await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
+
+  await folder.getByRole('button', {name: 'Expand Folder'}).click()
+
+  const child = entries.getByRole('row', {name: /Child/})
+  await expect(child).toBeVisible()
+  await expect(
+    child.getByRole('checkbox', {name: 'Select Child'})
+  ).toBeEnabled()
+})
+
 test('selects existing images and files', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
   const imageField = app.page.getByRole('list', {name: 'Featured image'})
@@ -103,6 +144,9 @@ test('selects existing images and files', async ({dashboard, mount}) => {
 
   await imageField.getByRole('button', {name: 'Image'}).click()
   const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  await expect(
+    imagePicker.getByRole('treegrid', {name: 'Media folders'})
+  ).toBeVisible()
   await imagePicker
     .getByRole('checkbox', {name: 'Select Existing image'})
     .locator('xpath=ancestor::label')
