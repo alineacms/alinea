@@ -1,190 +1,114 @@
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {Config} from '#/index.js'
+import {
+  createDashboardAtomFixture,
+  createDashboardModelStore,
+  DashboardTestPage
+} from '#test/DashboardAtomsFixture.js'
 import {expect, test} from 'bun:test'
-import {atom, createStore, type Getter} from 'jotai'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardRoot,
-  DashboardWorkspace
-} from '../Dashboard.js'
-import {createRouteLoader, type RouteLoaderOptions} from './Route.js'
-import type {EntryPageData} from './Entry.js'
+import {atom} from 'jotai'
+import {configAtom} from '../CoreAtoms.js'
+import {entryAtoms} from '../EntryAtoms.js'
+import {policyResourceAtom} from '../PolicyAtoms.js'
+import {workspaceAtoms} from '../WorkspaceAtoms.js'
+import {createRouteLoader} from './Route.js'
+
+function routeLoader(canManageMembers = false) {
+  return createRouteLoader({
+    config: configAtom,
+    policy: policyResourceAtom,
+    canManageMembers: atom(Promise.resolve(canManageMembers)),
+    workspace: workspaceAtoms,
+    entry: entryAtoms
+  })
+}
 
 test('only loads the users page for member managers', async () => {
-  const store = createStore()
-  function loader(canManageMembers: boolean) {
-    return createRouteLoader({
-      policy: atom(Promise.resolve({})),
-      canManageMembers: atom(Promise.resolve(canManageMembers)),
-      workspaces: atom([]),
-      workspace() {
-        throw new Error('Unexpected workspace load')
-      },
-      entry() {
-        throw new Error('Unexpected entry load')
-      }
-    })
-  }
+  const {store} = await createDashboardAtomFixture()
   const signal = new AbortController().signal
 
-  expect(await loader(true)(store.get, {page: 'users'}, signal)).toEqual({
+  expect(await routeLoader(true)(store.get, {page: 'users'}, signal)).toEqual({
     type: 'users',
     canManageMembers: true
   })
-  expect(await loader(false)(store.get, {page: 'users'}, signal)).toEqual({
-    type: 'empty',
-    canManageMembers: false
-  })
+
+  const denied = await routeLoader(false)(store.get, {page: 'users'}, signal)
+  expect(denied.type).toBe('explorer')
+  expect(denied.canManageMembers).toBe(false)
 })
 
-test('loads entry page data before returning it to navigation', async () => {
-  const store = createStore()
-  const expected = {type: 'entry'} as EntryPageData
-  const loadedLocales: Array<string | null> = []
-  let childLoads = 0
-  const entryData = {
-    parentIds: atom<Array<string>>([]),
-    view: atom('edit'),
-    childrenFor: () => atom(Promise.resolve(['child']))
-  } as unknown as DashboardEntryData
-  function loadEntry(_get: Getter, locale: string | null) {
-    loadedLocales.push(locale)
-    return Promise.resolve(expected)
-  }
-  const entry = {
-    readyState: atom(
-      Promise.resolve({pending: false, data: entryData, error: undefined})
-    )
-  } as unknown as DashboardEntry
-  const child = {
-    readyState: atom(
-      Promise.resolve().then(() => {
-        childLoads++
-        return {pending: false, data: entryData, error: undefined}
-      })
-    )
-  } as unknown as DashboardEntry
-  const root = {
-    i18n: atom({locales: ['en', 'nl']}),
-    childrenFor: () => atom(Promise.resolve(['welcome'])),
-    explorer: {
-      itemsAt: () => atom(Promise.resolve([]))
-    }
-  } as unknown as DashboardRoot
-  const workspace = {
-    roots: atom(['content']),
-    tree: {expandedKeys: atom(new Set())},
-    root: () => root
-  } as unknown as DashboardWorkspace
-  const options = {
-    policy: atom(Promise.resolve({})),
-    canManageMembers: atom(Promise.resolve(false)),
-    workspaces: atom(['main']),
-    workspace: () => workspace,
-    entry: id => (id === 'child' ? child : entry),
-    loadEntry: (_get, _entry, locale) => loadEntry(_get, locale)
-  } satisfies RouteLoaderOptions
+test('loads a real entry page before returning it to navigation', async () => {
+  const {child, store} = await createDashboardAtomFixture()
 
-  const load = createRouteLoader(options)
-  const page = await load(
+  const page = await routeLoader()(
     store.get,
     {
       page: 'entry',
       workspace: 'main',
-      root: 'content',
-      entry: 'welcome',
-      locale: 'nl'
+      root: 'pages',
+      entry: child._id
     },
     new AbortController().signal
   )
 
-  expect(page).toMatchObject(expected)
-  expect(page.canManageMembers).toBe(false)
-  expect(loadedLocales).toEqual(['nl'])
-  expect(childLoads).toBe(1)
+  expect(page.type).toBe('entry')
+  if (page.type !== 'entry') return
+  expect(page.entry.id).toBe(child._id)
+  expect(page.currentEntry?.id).toBe(child._id)
+  expect(page.locale).toBeNull()
 })
 
-test('loads explorer page data before returning it to navigation', async () => {
-  const store = createStore()
-  let explorerLoads = 0
-  const root = {
-    i18n: atom(undefined),
-    view: atom(undefined),
-    childrenFor: () => atom(Promise.resolve([])),
-    explorer: {
-      itemsAt: () =>
-        atom(
-          Promise.resolve().then(() => {
-            explorerLoads++
-            return []
-          })
-        )
-    }
-  } as unknown as DashboardRoot
-  const workspace = {
-    roots: atom(['content']),
-    tree: {expandedKeys: atom(new Set())},
-    root: () => root
-  } as unknown as DashboardWorkspace
-  const load = createRouteLoader({
-    policy: atom(Promise.resolve({})),
-    canManageMembers: atom(Promise.resolve(false)),
-    workspaces: atom(['main']),
-    workspace: () => workspace,
-    entry() {
-      throw new Error('Unexpected entry load')
-    }
-  })
+test('loads real explorer entries before returning it to navigation', async () => {
+  const {parent, store} = await createDashboardAtomFixture()
 
-  const page = await load(
+  const page = await routeLoader()(
     store.get,
-    {page: 'entry', workspace: 'main', root: 'content'},
+    {
+      page: 'entry',
+      workspace: 'main',
+      root: 'pages'
+    },
     new AbortController().signal
   )
 
-  expect(page).toEqual({
-    type: 'explorer',
-    root,
-    items: [],
-    canManageMembers: false
-  })
-  expect(explorerLoads).toBe(1)
+  expect(page.type).toBe('explorer')
+  if (page.type !== 'explorer') return
+  expect(page.items.map(item => item.id)).toEqual([parent._id])
 })
 
 test('does not load explorer data for a custom root page', async () => {
-  const store = createStore()
   function CustomRoot() {
     return null
   }
-  const root = {
-    i18n: atom(undefined),
-    view: atom(() => CustomRoot),
-    childrenFor: () => atom(Promise.resolve([])),
-    explorer: {
-      itemsAt() {
-        throw new Error('Unexpected explorer load')
-      }
-    }
-  } as unknown as DashboardRoot
-  const workspace = {
-    roots: atom(['content']),
-    tree: {expandedKeys: atom(new Set())},
-    root: () => root
-  } as unknown as DashboardWorkspace
-  const load = createRouteLoader({
-    policy: atom(Promise.resolve({})),
-    canManageMembers: atom(Promise.resolve(false)),
-    workspaces: atom(['main']),
-    workspace: () => workspace,
-    entry() {
-      throw new Error('Unexpected entry load')
+  const config = Config.create({
+    schema: {Page: DashboardTestPage},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {
+          custom: Config.root('Custom', {
+            contains: ['Page'],
+            view: CustomRoot
+          })
+        }
+      })
     }
   })
+  const db = new LocalDB(config)
+  await db.sync()
+  const store = createDashboardModelStore(config, db, 'custom')
 
-  const page = await load(
+  const page = await routeLoader()(
     store.get,
-    {page: 'entry', workspace: 'main', root: 'content'},
+    {
+      page: 'entry',
+      workspace: 'main',
+      root: 'custom'
+    },
     new AbortController().signal
   )
 
-  expect(page).toEqual({type: 'root', root, canManageMembers: false})
+  expect(page.type).toBe('root')
+  if (page.type !== 'root') return
+  expect(store.get(page.root.view)).toBe(CustomRoot)
 })

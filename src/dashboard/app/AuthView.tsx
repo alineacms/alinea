@@ -1,15 +1,19 @@
 import {Button, Link, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {type WritableAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
-import type {Dashboard} from '../atoms/Dashboard.js'
+import type {AuthAction, AuthState} from '../atoms/AuthAtoms.js'
 import css from './AuthView.module.css'
 
 const styles = styler(css)
 
+interface AuthViewDashboard {
+  auth: WritableAtom<AuthState, [action?: AuthAction], void | Promise<void>>
+}
+
 export interface AuthViewProps {
-  dashboard: Dashboard
+  dashboard: AuthViewDashboard
 }
 
 export function AuthView({dashboard}: AuthViewProps) {

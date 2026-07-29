@@ -33,6 +33,17 @@ test('required atom values remain scoped to their store', () => {
   expect(second.get(valueAtom)).toBe('second')
 })
 
+test('required atoms store functions without evaluating them', () => {
+  const callbackAtom = requiredAtom<(value: string) => string>('test.callback')
+  const callback = (value: string) => `received ${value}`
+  const store = createStore()
+
+  store.set(callbackAtom, callback)
+
+  expect(store.get(callbackAtom)).toBe(callback)
+  expect(store.get(callbackAtom)('value')).toBe('received value')
+})
+
 test('creates dashboard entry drag data with a plain text fallback', () => {
   expect(dashboardEntryDragItem(42)).toEqual({
     'text/plain': '42',

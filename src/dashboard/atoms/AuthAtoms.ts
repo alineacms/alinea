@@ -40,15 +40,15 @@ export type AuthState =
   | AuthError
   | Authenticated
 
-interface AuthCheck {
+export interface AuthCheck {
   type: 'check'
 }
 
-interface AuthSetupCloud {
+export interface AuthSetupCloud {
   type: 'setupCloud'
 }
 
-type AuthAction = AuthCheck | AuthSetupCloud
+export type AuthAction = AuthCheck | AuthSetupCloud
 
 interface LogoutConnection {
   logout(): Promise<void>

@@ -1,5 +1,5 @@
 import {Label} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {CodeField} from '#/field/code.js'
 import {styler} from '@alinea/styler'
 import lolight from 'lolight'

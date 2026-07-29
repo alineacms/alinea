@@ -20,11 +20,8 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardExplorer
-} from '../store.js'
+import type {EntryDataState, EntryState} from '../atoms/EntryAtoms.js'
+import type {Explorer} from '../atoms/ExplorerAtoms.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 
@@ -39,7 +36,7 @@ const cardLayoutOptions: GridLayoutOptions = {
 }
 
 interface ExplorerCardItemProps {
-  entry: DashboardEntry
+  entry: EntryState
   showSelectionControls: boolean
 }
 
@@ -65,7 +62,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 })
 
 interface ExplorerCardLoadingItemProps {
-  entry: DashboardEntry
+  entry: EntryState
   showSelectionControls: boolean
 }
 
@@ -106,8 +103,8 @@ function ExplorerCardLoadingItem({
 }
 
 interface ExplorerCardLoadedItemProps {
-  entry: DashboardEntry
-  data: DashboardEntryData
+  entry: EntryState
+  data: EntryDataState
   showSelectionControls: boolean
 }
 
@@ -203,7 +200,7 @@ function ExplorerEntryCard({
 interface ExplorerCardParentsProps {
   loading: boolean
   parentIds: Array<string>
-  parents: Array<DashboardEntry>
+  parents: Array<EntryState>
 }
 
 function ExplorerCardParents({
@@ -254,7 +251,7 @@ function ExplorerCardParentsLoading() {
 }
 
 interface ExplorerCardParentProps {
-  parent: DashboardEntry
+  parent: EntryState
 }
 
 function ExplorerCardParent({parent}: ExplorerCardParentProps) {
@@ -264,7 +261,7 @@ function ExplorerCardParent({parent}: ExplorerCardParentProps) {
 }
 
 interface ExplorerCardLoadedParentProps {
-  parent: DashboardEntryData
+  parent: EntryDataState
 }
 
 function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
@@ -273,9 +270,9 @@ function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
 }
 
 export interface ExplorerCardsProps {
-  dragAndDropHooks: DragAndDropHooks<DashboardEntry>
-  explorer: DashboardExplorer
-  items: Array<DashboardEntry>
+  dragAndDropHooks: DragAndDropHooks<EntryState>
+  explorer: Explorer
+  items: Array<EntryState>
   renderEmptyState: () => ReactNode
 }
 

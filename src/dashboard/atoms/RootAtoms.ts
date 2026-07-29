@@ -24,7 +24,7 @@ import {shaAtom} from './SyncAtoms.js'
 
 const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
 
-class RootModel {
+export class RootModel {
   explorer: Explorer
   constructor(
     public workspace: Workspace,
@@ -253,6 +253,6 @@ export async function queryTreeChildren(
   return ids
 }
 
-export function createRoot(workspace: Workspace, key: string) {
+export function createRoot(workspace: Workspace, key: string): Root {
   return new RootModel(workspace, key)
 }

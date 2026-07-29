@@ -20,18 +20,20 @@ import {
   LucideFolder,
   RiFlashlightFill
 } from '../icons.js'
+import {createTreeSelection as createDashboardTreeSelection} from '../atoms/Contracts.js'
+import type {Dashboard} from '../atoms/DashboardModel.js'
+import type {
+  EntryDataState as DashboardEntryData,
+  EntryState as DashboardEntry
+} from '../atoms/EntryAtoms.js'
+import type {DashboardLocaleSelection} from '../atoms/ExplorerAtoms.js'
+import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
+import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
 import {
-  Dashboard,
-  type DashboardLocaleSelection,
-  DashboardEntry,
-  DashboardEntryData,
-  type DashboardEntryTreeStatus,
-  DashboardRoot,
   createTree,
   type Tree as StoreTree,
-  DashboardWorkspace,
-  createDashboardTreeSelection
-} from '../atoms/Dashboard.js'
+  type Workspace as DashboardWorkspace
+} from '../atoms/WorkspaceAtoms.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
 import {SidebarBody} from './ui/Sidebar.js'

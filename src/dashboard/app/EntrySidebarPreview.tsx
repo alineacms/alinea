@@ -10,7 +10,8 @@ import {
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import {DashboardEntryData, useDashboard} from '../store.js'
+import type {EntryDataState} from '../atoms/EntryAtoms.js'
+import {useDashboard} from '../hooks.js'
 import type {EntrySidebarData} from '../atoms/loaders/Entry.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
@@ -18,7 +19,7 @@ import {RailHeader} from './ui/Rail.js'
 const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   sidebar: EntrySidebarData
 }
 
@@ -83,7 +84,7 @@ function EntrySidebarComponentPreview({
 }
 
 interface EntrySidebarBrowserPreviewProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   sidebar: EntrySidebarData
 }
 

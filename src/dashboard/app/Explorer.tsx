@@ -21,13 +21,13 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {DashboardEntry, DashboardEntryData} from '../store.js'
-import {
-  DashboardExplorer,
+import type {EntryDataState, EntryState} from '../atoms/EntryAtoms.js'
+import type {
+  Explorer,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
-} from '../store.js'
+} from '../atoms/ExplorerAtoms.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -38,49 +38,49 @@ const styles = styler(css)
 
 export interface ExplorerProps {
   controls?: ReactNode
-  explorer: DashboardExplorer
-  items?: Array<DashboardEntry>
+  explorer: Explorer
+  items?: Array<EntryState>
   titleControls?: ReactNode
 }
 
 export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
-  explorer: DashboardExplorer
-  items?: Array<DashboardEntry>
+  explorer: Explorer
+  items?: Array<EntryState>
   titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
-  explorer: DashboardExplorer
-  items?: Array<DashboardEntry>
+  explorer: Explorer
+  items?: Array<EntryState>
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
-  explorer: DashboardExplorer
-  items?: Array<DashboardEntry>
+  explorer: Explorer
+  items?: Array<EntryState>
 }
 
 interface ExplorerHeaderMainProps {
-  explorer: DashboardExplorer
+  explorer: Explorer
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
-  data: DashboardEntryData
-  explorer: DashboardExplorer
+  data: EntryDataState
+  explorer: Explorer
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderParentMainProps {
-  explorer: DashboardExplorer
-  parent: DashboardEntry
+  explorer: Explorer
+  parent: EntryState
   titleControls?: ReactNode
 }
 
 interface ExplorerSearchContentProps extends ExplorerSearchProps {
-  items: Array<DashboardEntry>
+  items: Array<EntryState>
 }
 
 function ExplorerSearch(props: ExplorerSearchProps) {
@@ -111,27 +111,35 @@ function ExplorerSearchContent({
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
 
-  function selectEntry(entry: DashboardEntry | undefined) {
+  function selectEntry(entry: EntryState | undefined) {
     if (!entry) return
     setSelection(new Set<Key>([entry.id]))
   }
 
-  function selectedEntry() {
-    if (selection === 'all') return undefined
-    const [selected] = selection
-    if (selected === undefined) return undefined
-    return items.find(item => item.id === String(selected))
-  }
+  const selectedKey =
+    selection === 'all' ? undefined : selection.values().next().value
+  const selectedEntry =
+    selectedKey === undefined
+      ? undefined
+      : items.find(item => item.id === String(selectedKey))
+  const {autoSelectFirstItem, hasSelection} = explorer
 
   useEffect(() => {
-    if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
+    if (!autoSelectFirstItem || !hasSelection) return
     if (items.length === 0) {
       if (selection !== 'all' && selection.size > 0)
         setSelection(new Set<Key>())
       return
     }
-    if (!selectedEntry()) selectEntry(items[0])
-  }, [explorer, items, selection, setSelection])
+    if (!selectedEntry) setSelection(new Set<Key>([items[0].id]))
+  }, [
+    autoSelectFirstItem,
+    hasSelection,
+    items,
+    selectedEntry,
+    selection,
+    setSelection
+  ])
 
   function onSearchChange(value: string) {
     setInputValue(value)
@@ -142,9 +150,8 @@ function ExplorerSearchContent({
   }
 
   function selectedIndex() {
-    const entry = selectedEntry()
-    if (!entry) return -1
-    return items.findIndex(item => item.id === entry.id)
+    if (!selectedEntry) return -1
+    return items.findIndex(item => item.id === selectedEntry.id)
   }
 
   function moveSelection(direction: 1 | -1) {
@@ -168,7 +175,7 @@ function ExplorerSearchContent({
       moveSelection(-1)
     } else if (event.key === 'Enter') {
       const entry =
-        selectedEntry() ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
+        selectedEntry ?? (autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
       performAction(entry)
@@ -254,7 +261,7 @@ function ExplorerHeaderParentMain({
 }
 
 interface ExplorerToolbarProps {
-  explorer: DashboardExplorer
+  explorer: Explorer
 }
 const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},

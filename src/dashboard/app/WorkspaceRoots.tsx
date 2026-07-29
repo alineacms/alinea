@@ -20,7 +20,8 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import type {Dashboard, DashboardRoot} from '../atoms/Dashboard.js'
+import type {Dashboard} from '../atoms/DashboardModel.js'
+import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'

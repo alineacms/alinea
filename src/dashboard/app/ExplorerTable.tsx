@@ -18,14 +18,13 @@ import {
 } from 'react-aria-components'
 import type {TableLayoutProps} from 'react-stately/useVirtualizerState'
 import {LucideFile, LucideFolder} from '../icons.js'
-import type {
-  DashboardEntry,
-  DashboardEntryData,
-  DashboardEntryOverviewCell,
-  DashboardEntryTreeStatus,
-  DashboardExplorer
-} from '../store.js'
-import {dashboardEntryOverviewColumnCount} from '../store.js'
+import type {EntryDataState, EntryState} from '../atoms/EntryAtoms.js'
+import type {Explorer} from '../atoms/ExplorerAtoms.js'
+import {
+  entryOverviewColumnCount,
+  type EntryOverviewCell
+} from '../atoms/Contracts.js'
+import type {DashboardEntryTreeStatus} from '../atoms/EntrySupport.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
 import {StatusBadge} from './StatusBadge.js'
@@ -43,25 +42,25 @@ interface ExplorerTableColumn {
 interface ExplorerTableRowProps {
   columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
-  entry: DashboardEntry
+  entry: EntryState
   breadcrumbs: boolean
 }
 
 interface ExplorerTableDisplayRowProps {
   columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
-  entry: DashboardEntry
+  entry: EntryState
   label: string
   icon: ComponentType
-  cells: Array<DashboardEntryOverviewCell>
+  cells: Array<EntryOverviewCell>
   status?: DashboardEntryTreeStatus['status']
   breadcrumbs?: boolean | undefined
-  parents: Array<DashboardEntry>
+  parents: Array<EntryState>
   rootLabel?: string
 }
 
 interface ExplorerTableBreadcrumbsProps {
-  entries: Array<DashboardEntry>
+  entries: Array<EntryState>
   rootLabel?: string
 }
 
@@ -86,7 +85,7 @@ function ExplorerTableBreadcrumbs({
 }
 
 interface ExplorerTableBreadcrumbProps {
-  entry: DashboardEntry
+  entry: EntryState
   index: number
 }
 
@@ -97,7 +96,7 @@ function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
 }
 
 interface ExplorerTableLoadedBreadcrumbProps {
-  data: DashboardEntryData
+  data: EntryDataState
   index: number
 }
 
@@ -242,7 +241,7 @@ function ExplorerTableLoadingRow({
 }
 
 interface ExplorerTableLoadedRowProps extends ExplorerTableRowProps {
-  data: DashboardEntryData
+  data: EntryDataState
 }
 
 function ExplorerTableLoadedRow({
@@ -285,9 +284,9 @@ function ExplorerTableRow(props: ExplorerTableRowProps) {
 }
 
 export interface ExplorerTableProps {
-  dragAndDropHooks: DragAndDropHooks<DashboardEntry>
-  explorer: DashboardExplorer
-  items: Array<DashboardEntry>
+  dragAndDropHooks: DragAndDropHooks<EntryState>
+  explorer: Explorer
+  items: Array<EntryState>
   renderEmptyState: () => ReactNode
 }
 
@@ -315,16 +314,13 @@ export function ExplorerTable({
         : []),
       {id: 'title', kind: 'title', width: 220},
       {id: 'status', kind: 'status', width: 150},
-      ...Array.from(
-        {length: dashboardEntryOverviewColumnCount},
-        (_, index) => ({
-          id: `overview-${index}`,
-          index,
-          kind: 'overview' as const,
-          minWidth: 120,
-          width: '1fr' as const
-        })
-      )
+      ...Array.from({length: entryOverviewColumnCount}, (_, index) => ({
+        id: `overview-${index}`,
+        index,
+        kind: 'overview' as const,
+        minWidth: 120,
+        width: '1fr' as const
+      }))
     ],
     [showSelectionControls]
   )

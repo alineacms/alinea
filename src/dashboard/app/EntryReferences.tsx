@@ -12,19 +12,19 @@ import {
   IcRoundLink
 } from '../icons.js'
 import type {
-  DashboardEntryData,
   DashboardEntryReference,
   DashboardEntryReferenceSource,
   DashboardEntryReferences
-} from '../store.js'
-import {routeAtom} from '../store.js'
+} from '../atoms/EntrySupport.js'
+import type {EntryDataState} from '../atoms/EntryAtoms.js'
+import {routeAtom} from '../atoms/NavigationAtoms.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
 
 const styles = styler(css)
 
 export interface EntryReferencesProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   references?: DashboardEntryReferences
 }
 

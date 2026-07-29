@@ -528,14 +528,14 @@ export function createExplorer(
     void
   >,
   options: ExplorerOptions
-) {
+): Explorer {
   return new ExplorerModel(location, options)
 }
 
 export function createExplorerAtoms(
   initialLocation: ExplorerLocation,
   options: ExplorerOptions = {}
-) {
+): Explorer {
   const firstSelection = options.location
     ? undefined
     : options.initialSelection?.[0]

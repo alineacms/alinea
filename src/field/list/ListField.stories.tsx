@@ -14,7 +14,9 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {createEditor, createStore, ReactiveNode} from '#/dashboard/store.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardModel.js'
+import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'
@@ -246,7 +248,7 @@ const storyStyle: CSSProperties = {
   padding: 24
 }
 
-const dashboard = createStore(
+const dashboard = createDashboard(
   {} as WriteableGraph,
   {schema: {}, workspaces: {}},
   new EventTarget(),

@@ -24,7 +24,7 @@ import {
   IcRoundClose,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/atoms/Dashboard.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {memo, useMemo, useState} from 'react'

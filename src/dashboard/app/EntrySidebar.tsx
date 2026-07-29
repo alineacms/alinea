@@ -25,16 +25,14 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
+import type {EntrySidebarTab} from '../atoms/Contracts.js'
+import type {EntryDataState} from '../atoms/EntryAtoms.js'
+import {entrySidebarTabAtom} from '../atoms/EntrySupport.js'
 import {
-  entrySidebarTabAtom,
-  type DashboardEntryData,
-  type DashboardEntrySidebarTab
-} from '../store.js'
-import {
-  allowedEntrySidebarTabs,
   type EntryPageData,
   type EntrySidebarData
 } from '../atoms/loaders/Entry.js'
+import {allowedEntrySidebarTabs} from '../atoms/EntrySupport.js'
 import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
@@ -46,14 +44,14 @@ import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 const styles = styler(css)
 
 export interface EntrySidebarProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   page: EntryPageData
   onOpenChange?: (isOpen: boolean) => void
 }
 
 export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
-  const sidebar = useAtomValue(page.sidebar)
+  const sidebar = useAtomValue(page.sidebarResource)
   const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
@@ -70,7 +68,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
         selectedKey={selectedKey}
         onSelectionChange={key => {
           if (isMediaFile) return
-          const next = key as DashboardEntrySidebarTab
+          const next = key as EntrySidebarTab
           if (allowedTabs.includes(next)) {
             setSelectedTab(next)
           }
@@ -139,7 +137,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
 }
 
 interface EntrySidebarHistoryProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   page: EntryPageData
   sidebar: EntrySidebarData
 }
@@ -227,7 +225,7 @@ function EntrySidebarTimelineElement(revision: Revision) {
 }
 
 interface EntrySidebarStatusItemProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   page: EntryPageData
   status: EntryStatus
 }
@@ -267,7 +265,7 @@ function EntrySidebarStatusItem({
 }
 
 interface EntrySidebarRevisionItemProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   revision: Revision
   isLatest: boolean
 }

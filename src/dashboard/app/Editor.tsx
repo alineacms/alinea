@@ -28,20 +28,22 @@ import {
   IcRoundEdit
 } from '../icons.js'
 import {
-  Dashboard,
-  DashboardEntryData,
-  DashboardRoot,
   createEditor,
   createSection,
-  entryAtoms,
-  entrySidebarOpenAtom,
-  ReactiveNode,
-  routeAtom,
   type Section as StoreSection
-} from '../atoms/Dashboard.js'
+} from '../atoms/EditorAtoms.js'
+import {
+  entryAtoms,
+  type EntryDataState as DashboardEntryData
+} from '../atoms/EntryAtoms.js'
+import {entrySidebarOpenAtom} from '../atoms/EntrySupport.js'
+import type {Dashboard} from '../atoms/DashboardModel.js'
+import {routeAtom} from '../atoms/NavigationAtoms.js'
+import {ReactiveNode} from '../atoms/ReactiveNode.js'
+import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
 import type {EntryPageData} from '../atoms/loaders/Entry.js'
 import type {ExplorerPageData} from '../atoms/loaders/Explorer.js'
-import type {LoadedRoute, RootPageData} from '../atoms/loaders/Route.js'
+import type {PreparedRoute, RootPageData} from '../atoms/loaders/Route.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'
@@ -59,7 +61,7 @@ import {Rail, RailBody, RailContent} from './ui/Rail.js'
 const styles = styler(css)
 export interface EditorProps {
   dashboard: Dashboard
-  page: LoadedRoute
+  page: PreparedRoute
 }
 
 export function Editor({dashboard, page}: EditorProps) {

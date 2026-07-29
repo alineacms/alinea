@@ -107,7 +107,7 @@ interface NodeSelection {
   version: SelectedVersion
 }
 
-class EntryModel {
+export class EntryModel {
   data: Atom<DashboardEntryState>
   readyState: Atom<Promise<DashboardEntryState>>
   #selectedView = atom<EntryView | undefined>(undefined)
@@ -152,7 +152,7 @@ class EntryModel {
   }
 
   preload = atom(async get => {
-    const load = get(entryLoaderAtom)
+    const load = await get(entryLoaderAtom)
     const [result, error] = await load(this.id)
     if (error) {
       if (error instanceof MissingEntryError) get(shaAtom)
@@ -187,7 +187,7 @@ function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
   })
 }
 
-class EntryDataModel {
+export class EntryDataModel {
   workspaceKey: Atom<string>
   rootKey: Atom<string>
   hasChildren: Atom<boolean>

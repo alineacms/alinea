@@ -3,11 +3,9 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {FieldsEditor} from '#/dashboard/app/Editor.js'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {
-  createStore,
-  createEditor,
-  ReactiveNode
-} from '#/dashboard/atoms/Dashboard.js'
+import {createDashboard as createDashboardModel} from '#/dashboard/atoms/DashboardModel.js'
+import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {richText} from './RichTextField.js'
 import {
   alignment,
@@ -204,7 +202,7 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
 }
 
 function createDashboard() {
-  return createStore(
+  return createDashboardModel(
     {} as WriteableGraph,
     {schema: {}, workspaces: {}},
     new EventTarget(),

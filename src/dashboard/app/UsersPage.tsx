@@ -23,7 +23,7 @@ import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../icons.js'
-import {dashboardAtoms, type Dashboard} from '../atoms/Dashboard.js'
+import {dashboardAtoms, type Dashboard} from '../atoms/DashboardModel.js'
 import {Badge} from './Badge.js'
 import {
   DashboardModal,

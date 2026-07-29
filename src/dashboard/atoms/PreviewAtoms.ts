@@ -22,7 +22,7 @@ export const markPreviewSessionReadyAtom = atom(
 export function requestPreviewSessionToken(
   requests: Map<string, Promise<string>>,
   origin: string,
-  client: LocalConnection
+  client: Pick<LocalConnection, 'previewToken'>
 ) {
   const current = requests.get(origin)
   if (current) return current

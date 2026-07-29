@@ -32,6 +32,7 @@ import {typeAtoms} from './EditorAtoms.js'
 import {entryAtoms} from './EntryAtoms.js'
 import {entryLoaderAtom, versionLoaderAtom} from './EntryLoaderAtoms.js'
 import {createExplorerAtoms} from './ExplorerAtoms.js'
+import {createRouteLoader} from './loaders/Route.js'
 import {
   discardMutationQueueAtom,
   mutationQueueAtom,
@@ -41,8 +42,6 @@ import {
 import {navigationAtoms, routeAtom} from './NavigationAtoms.js'
 import {
   createDashboardNavigation,
-  entrySidebarOpenAtom,
-  entrySidebarTabAtom,
   pageAtom,
   refreshPageForAtom,
   reloadPageAtom
@@ -50,14 +49,19 @@ import {
 import {
   canManageMembersAtom,
   policyAtom,
-  policyReadyAtom
+  policyReadyAtom,
+  policyResourceAtom
 } from './PolicyAtoms.js'
 import {
   markPreviewSessionReadyAtom,
   previewMetadataAtom,
   previewSessionOriginsAtom
 } from './PreviewAtoms.js'
-import {entryRevisionAtom} from './EntrySupport.js'
+import {
+  entryRevisionAtom,
+  entrySidebarOpenAtom,
+  entrySidebarTabAtom
+} from './EntrySupport.js'
 import {
   selectedRootAtom,
   selectedWorkspaceAtom,
@@ -74,6 +78,14 @@ import {
 export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
 export type {DashboardCreateEntryRequest} from './CreateEntryAtom.js'
 
+export const dashboardRouteLoader = createRouteLoader({
+  config: configAtom,
+  policy: policyResourceAtom,
+  canManageMembers: canManageMembersAtom,
+  workspace: workspaceAtoms,
+  entry: entryAtoms
+})
+
 export const dashboardAtoms = {
   graph: graphAtom,
   config: configAtom,
@@ -82,7 +94,7 @@ export const dashboardAtoms = {
   db: graphAtom,
 
   entrySidebarTab: entrySidebarTabAtom,
-  entrySideBarOpen: entrySidebarOpenAtom,
+  entrySidebarOpen: entrySidebarOpenAtom,
   navigation: navigationAtoms,
   route: routeAtom,
   page: pageAtom,
@@ -139,14 +151,12 @@ export const dashboardAtoms = {
 }
 
 export type Dashboard = typeof dashboardAtoms & {
-  input?: DashboardInput
+  input: DashboardInput
 }
-
-export type Store = Dashboard
 
 export {createDashboardNavigation}
 
-export function createStore(
+export function createDashboard(
   graph: WriteableGraph,
   config: Config,
   events: EventTarget,
@@ -154,7 +164,8 @@ export function createStore(
   views: Record<string, ComponentType>,
   options: DashboardOptions = {}
 ): Dashboard {
-  return Object.assign(Object.create(dashboardAtoms) as Dashboard, {
+  return {
+    ...dashboardAtoms,
     input: {graph, config, events, client, views, options}
-  })
+  }
 }

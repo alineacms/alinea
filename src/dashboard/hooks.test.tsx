@@ -1,11 +1,15 @@
 import {act, cleanup, render, screen} from '#test/react.js'
-import type {LocalConnection} from '#/core/Connection.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {Config} from '#/index.js'
+import {createTestConnection} from '#test/CreateConnection.js'
+import {TestEvents} from '#test/DashboardAtomsFixture.js'
 import {useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
 import {DashboardScopeInternal} from './hooks.js'
-import {configAtom, createStore, entryRevisionAtom} from './atoms/Dashboard.js'
+import {configAtom} from './atoms/CoreAtoms.js'
+import {createDashboard as createDashboardModel} from './atoms/DashboardModel.js'
+import {entryRevisionAtom} from './atoms/EntrySupport.js'
 import {useDashboard} from './hooks.js'
 
 afterEach(cleanup)
@@ -64,9 +68,7 @@ function DashboardRevision() {
 test('dashboard effects update entry revisions', () => {
   const events = new TestEvents()
   render(
-    <DashboardScopeInternal
-      dashboard={createDashboard('main', events as unknown as EventTarget)}
-    >
+    <DashboardScopeInternal dashboard={createDashboard('main', events)}>
       <DashboardRevision />
     </DashboardScopeInternal>
   )
@@ -78,37 +80,13 @@ test('dashboard effects update entry revisions', () => {
   expect(screen.getByText('revision:1')).toBeDefined()
 })
 
-class TestEvents {
-  listeners = new Set<EventListenerOrEventListenerObject>()
-
-  addEventListener(
-    _type: string,
-    listener: EventListenerOrEventListenerObject
-  ) {
-    this.listeners.add(listener)
-  }
-
-  removeEventListener(
-    _type: string,
-    listener: EventListenerOrEventListenerObject
-  ) {
-    this.listeners.delete(listener)
-  }
-
-  emit(event: Event) {
-    for (const listener of this.listeners) {
-      if (typeof listener === 'function') listener(event)
-      else listener.handleEvent(event)
-    }
-  }
-}
-
 function createDashboard(workspace: string, events = new EventTarget()) {
-  return createStore(
-    {} as WriteableGraph,
-    {schema: {}, workspaces: {[workspace]: {} as never}},
-    events,
-    {} as LocalConnection,
-    {}
-  )
+  const config = Config.create({
+    schema: {},
+    workspaces: {
+      [workspace]: Config.workspace(workspace, {source: '.', roots: {}})
+    }
+  })
+  const db = new LocalDB(config)
+  return createDashboardModel(db, config, events, createTestConnection(db), {})
 }

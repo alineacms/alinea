@@ -1,6 +1,5 @@
-import type {LocalConnection} from '#/core/Connection.js'
 import {expect, test} from 'bun:test'
-import {requestPreviewSessionToken} from './Dashboard.js'
+import {requestPreviewSessionToken} from './PreviewAtoms.js'
 
 test('shares concurrent preview token requests for an origin', async () => {
   const tokenRequests = new Map<string, Promise<string>>()
@@ -10,7 +9,7 @@ test('shares concurrent preview token requests for an origin', async () => {
       requests++
       return Promise.resolve('session-token')
     }
-  } as unknown as LocalConnection
+  }
 
   const first = requestPreviewSessionToken(
     tokenRequests,

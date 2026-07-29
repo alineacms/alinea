@@ -53,16 +53,15 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
+import type {EntryDataState, EntryState} from '#/dashboard/atoms/EntryAtoms.js'
+import type {ExplorerOptions} from '#/dashboard/atoms/ExplorerAtoms.js'
+import {currentEntryAtom} from '#/dashboard/atoms/PageAtoms.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
-  type DashboardEntry,
-  type DashboardEntryData,
-  type ExplorerOptions,
-  ReactiveNode,
-  currentEntryAtom,
-  selectedMediaRootAtom,
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '#/dashboard/store.js'
+} from '#/dashboard/atoms/SelectionAtoms.js'
+import {selectedMediaRootAtom} from '#/dashboard/atoms/WorkspaceAtoms.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'
@@ -275,7 +274,7 @@ function EntryLoadingRow({
 }
 
 interface LoadedEntryRowProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   hasFields?: boolean
   image?: boolean
   textOnly?: boolean
@@ -312,7 +311,7 @@ function LoadedEntryRow({
 }
 
 interface EntryRowImageProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
   hasFields?: boolean
 }
 
@@ -357,7 +356,7 @@ function UrlRow({node, textOnly}: RowLayerProps) {
 
 interface EntryParentsProps {
   loading: boolean
-  parents: Array<DashboardEntry>
+  parents: Array<EntryState>
 }
 
 function EntryParents({loading, parents}: EntryParentsProps) {
@@ -389,7 +388,7 @@ function EntryParentsLoading() {
 }
 
 interface EntryParentLabelProps {
-  parent: DashboardEntry
+  parent: EntryState
   suffix: string
 }
 
@@ -400,7 +399,7 @@ function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
 }
 
 interface LoadedEntryParentLabelProps {
-  parent: DashboardEntryData
+  parent: EntryDataState
   suffix: string
 }
 
@@ -1089,7 +1088,7 @@ function EntryLinkMetaLabel({
 interface LoadedEntryLinkMetaLabelProps {
   className: string
   customLabel?: string
-  data: DashboardEntryData
+  data: EntryDataState
 }
 
 function LoadedEntryLinkMetaLabel({
@@ -1164,7 +1163,7 @@ function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
 }
 
 interface LoadedEntryLinkImagePreviewProps {
-  entry: DashboardEntryData
+  entry: EntryDataState
 }
 
 function LoadedEntryLinkImagePreview({
@@ -1210,7 +1209,7 @@ function EntryLinkTypeBadge({
 }
 
 interface LoadedEntryTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
-  entry: DashboardEntryData
+  entry: EntryDataState
 }
 
 function LoadedEntryTypeBadge({
@@ -1267,7 +1266,7 @@ function EntryLinkLabelField({
 
 interface LoadedEntryLinkLabelFieldProps {
   customLabel?: string
-  data: DashboardEntryData
+  data: EntryDataState
   isDisabled?: boolean
   onChange: (value: string | undefined) => void
 }
@@ -1378,7 +1377,7 @@ function EntryLinkRowActions({
 
 interface LoadedEntryLinkRowActionsProps {
   closeActions: () => void
-  entry: DashboardEntryData
+  entry: EntryDataState
   locale?: string
 }
 

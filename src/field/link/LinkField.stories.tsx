@@ -8,7 +8,9 @@ import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {createEditor, createStore, ReactiveNode} from '#/dashboard/store.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardModel.js'
+import {createEditor} from '#/dashboard/atoms/EditorAtoms.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
@@ -100,7 +102,7 @@ const pickerStoryStyle: CSSProperties = {
 
 const fixtureConnection = createTestConnection(db)
 
-const dashboard = createStore(
+const dashboard = createDashboard(
   db,
   cms.config,
   db.index,

@@ -4,6 +4,7 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
 import {dispense, requiredAtom} from './AtomUtils.js'
+import type {RouteLoader} from './loaders/Route.js'
 import type {RouteHistory} from './navigation/History.js'
 
 export interface DashboardOptions {
@@ -31,6 +32,9 @@ export const optionsAtom = requiredAtom<DashboardOptions>('dashboard.options')
 export const previewTokenRequestsAtom = requiredAtom<
   Map<string, Promise<string>>
 >('dashboard.previewTokenRequests')
+export const routeLoaderAtom = requiredAtom<RouteLoader>(
+  'dashboard.routeLoader'
+)
 
 export const viewAtom = dispense(key => {
   return atom((get): ComponentType | undefined => {

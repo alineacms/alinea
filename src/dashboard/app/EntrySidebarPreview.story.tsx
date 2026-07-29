@@ -1,11 +1,9 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {
-  createStore,
-  type DashboardEntryData,
-  ReactiveNode
-} from '#/dashboard/store.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardModel.js'
+import type {EntryDataState} from '#/dashboard/atoms/EntryAtoms.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 
@@ -19,7 +17,7 @@ const graph = {
   }
 } satisfies PreviewGraph as unknown as WriteableGraph
 
-const dashboard = createStore(
+const dashboard = createDashboard(
   graph,
   {schema: {}, workspaces: {}},
   new EventTarget(),
@@ -39,7 +37,7 @@ const entry = {
     return JSON.stringify({sha, data: get(node.value)})
   }),
   retryPreviewUrl: atom(null, () => {})
-} as unknown as DashboardEntryData
+} as unknown as EntryDataState
 const sidebar = {type: 'preview', entry: null, url: '/preview-frame'} as const
 
 function PreviewTitleField() {

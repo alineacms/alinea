@@ -1,6 +1,6 @@
 import {Workspace, type WorkspaceInternal} from '#/core/Workspace.js'
 import {useAtomValue} from 'jotai'
-import {useDashboard} from '../store.js'
+import {useDashboard} from '../hooks.js'
 
 export interface DashboardWorkspace extends WorkspaceInternal {
   name: string

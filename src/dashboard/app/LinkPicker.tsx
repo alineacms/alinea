@@ -1,7 +1,8 @@
 import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState} from 'react'
-import {ExplorerOptions, useDashboard} from '../store.js'
+import type {ExplorerOptions} from '../atoms/ExplorerAtoms.js'
+import {useDashboard} from '../hooks.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,

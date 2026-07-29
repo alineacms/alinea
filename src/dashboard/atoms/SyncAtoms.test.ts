@@ -13,7 +13,7 @@ test('reading content state never synchronizes the graph', async () => {
   const store = createStore()
   const events = new TestEvents()
   store.set(graphAtom, db)
-  store.set(eventsAtom, events as unknown as EventTarget)
+  store.set(eventsAtom, events)
 
   expect(await store.get(shaAtom)).toBeUndefined()
 

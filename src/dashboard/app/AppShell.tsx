@@ -3,8 +3,8 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import type {Dashboard} from '../atoms/Dashboard.js'
-import type {LoadedRoute} from '../atoms/loaders/Route.js'
+import type {Dashboard} from '../atoms/DashboardModel.js'
+import type {PreparedRoute} from '../atoms/loaders/Route.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'
@@ -37,7 +37,7 @@ export function AppShell({dashboard}: AppShellProps) {
 }
 
 interface AppShellContentProps extends AppShellProps {
-  page: LoadedRoute
+  page: PreparedRoute
 }
 
 function AppShellContent({dashboard, page}: AppShellContentProps) {

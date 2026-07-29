@@ -1,5 +1,5 @@
 import {atom, useAtomValue} from 'jotai'
-import {useDashboard} from '../store.js'
+import {useDashboard} from '../hooks.js'
 
 /**
  * @deprecated Compatibility hook for legacy dashboard extensions.

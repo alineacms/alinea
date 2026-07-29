@@ -1,32 +1,19 @@
 import {assert} from '#/core/util/Assert.js'
 import type {Getter} from 'jotai'
 import {atom} from 'jotai'
-import type {EntrySidebarTab} from './Contracts.js'
-import {entryAtoms} from './EntryAtoms.js'
+import {routeLoaderAtom} from './CoreAtoms.js'
 import type {Explorer} from './ExplorerAtoms.js'
-import {createRouteLoader, type PreparedRoute} from './loaders/Route.js'
+import type {PreparedRoute, RouteLoader} from './loaders/Route.js'
 import {navigationAtoms, routeAtom} from './NavigationAtoms.js'
 import type {RouteHistory} from './navigation/History.js'
 import {createNavigation, type Navigation} from './navigation/Navigation.js'
-import {canManageMembersAtom, policyResourceAtom} from './PolicyAtoms.js'
-import {workspacesAtom} from './SelectionAtoms.js'
-import {workspaceAtoms} from './WorkspaceAtoms.js'
-
-let routeLoader: ReturnType<typeof createRouteLoader> | undefined
 
 function loadRoute(
   get: Getter,
-  route: Parameters<ReturnType<typeof createRouteLoader>>[1],
+  route: Parameters<RouteLoader>[1],
   signal: AbortSignal
 ) {
-  routeLoader ??= createRouteLoader({
-    policy: policyResourceAtom,
-    canManageMembers: canManageMembersAtom,
-    workspaces: workspacesAtom,
-    workspace: workspaceAtoms,
-    entry: entryAtoms
-  })
-  return routeLoader(get, route, signal)
+  return get(routeLoaderAtom)(get, route, signal)
 }
 
 export const initialPageAtom = atom(async get =>
@@ -73,24 +60,6 @@ export const refreshPageForAtom = atom(
     if (page.type !== 'explorer') return
     if (page.root.explorer !== explorer) return
     await set(reloadPageAtom)
-  }
-)
-
-const entrySidebarTabStateAtom = atom<EntrySidebarTab>('preview')
-
-export const entrySidebarTabAtom = atom(
-  get => get(entrySidebarTabStateAtom),
-  (_get, set, tab: EntrySidebarTab) => {
-    set(entrySidebarTabStateAtom, tab)
-  }
-)
-
-const entrySidebarOpenStateAtom = atom(true)
-
-export const entrySidebarOpenAtom = atom(
-  get => get(entrySidebarOpenStateAtom),
-  (_get, set, open: boolean) => {
-    set(entrySidebarOpenStateAtom, open)
   }
 )
 

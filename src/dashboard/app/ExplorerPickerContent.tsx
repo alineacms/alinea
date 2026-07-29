@@ -1,12 +1,12 @@
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {Key, Selection} from 'react-aria-components'
-import type {DashboardExplorer, ExplorerOptions} from '../store.js'
+import type {Explorer, ExplorerOptions} from '../atoms/ExplorerAtoms.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
 
 export interface ExplorerPickerContentProps {
-  explorer: DashboardExplorer
+  explorer: Explorer
   navigationLabel: string
   options: ExplorerOptions
 }

@@ -54,55 +54,60 @@ export interface Workspace {
   >
 }
 
-export function createWorkspace(key: string): Workspace {
-  const treeSelection = atom(
-    get => {
-      const route = get(routeAtom)
-      if (route.workspace && route.workspace !== key) return new Set<Key>()
-      if (route.entry) return new Set<Key>([route.entry])
-      return new Set<Key>()
-    },
-    async (get, set, next: 'all' | Set<Key>) => {
-      if (next === 'all')
-        throw new Error('Selecting all items is not supported')
-      const current = get(routeAtom)
-      const root = get(selectedRootAtom)
-      const selectedKey = next.values().next().value
-      if (!selectedKey) {
-        await set(routeAtom, {workspace: key})
-        return
+class WorkspaceModel implements Workspace {
+  tree: Tree
+  color: Atom<string>
+  label: Atom<string>
+  icon: Atom<ComponentType | undefined>
+  roots: Atom<Array<string>>
+  root: (key: string) => Root
+  rootMenu: Workspace['rootMenu']
+
+  constructor(public key: string) {
+    const treeSelection = atom(
+      get => {
+        const route = get(routeAtom)
+        if (route.workspace && route.workspace !== key) return new Set<Key>()
+        if (route.entry) return new Set<Key>([route.entry])
+        return new Set<Key>()
+      },
+      async (get, set, next: 'all' | Set<Key>) => {
+        if (next === 'all')
+          throw new Error('Selecting all items is not supported')
+        const current = get(routeAtom)
+        const root = get(selectedRootAtom)
+        const selectedKey = next.values().next().value
+        if (!selectedKey) {
+          await set(routeAtom, {workspace: key})
+          return
+        }
+        await set(routeAtom, {
+          workspace: key,
+          root: root ?? undefined,
+          entry: String(selectedKey),
+          locale: current.locale
+        })
       }
-      const selectedId = String(selectedKey)
-      await set(routeAtom, {
-        workspace: key,
-        root: root ?? undefined,
-        entry: selectedId,
-        locale: current.locale
-      })
-    }
-  )
-  const settings = workspaceSettingsAtom(key)
-  const roots = workspaceRootsAtom(key)
-  let workspace: Workspace
-  const root = dispense(rootKey => createRoot(workspace, rootKey))
-  workspace = {
-    key,
-    tree: undefined as never,
-    color: atom(get => get(settings).color),
-    label: atom(get => get(settings).label),
-    icon: atom(get => get(settings).icon),
-    roots,
-    root,
-    rootMenu: atom(get => {
-      return get(roots).map(rootKey => ({
+    )
+    const settings = workspaceSettingsAtom(key)
+    this.roots = workspaceRootsAtom(key)
+    this.root = dispense(rootKey => createRoot(this, rootKey))
+    this.color = atom(get => get(settings).color)
+    this.label = atom(get => get(settings).label)
+    this.icon = atom(get => get(settings).icon)
+    this.rootMenu = atom(get => {
+      return get(this.roots).map(rootKey => ({
         id: rootKey,
-        label: get(root(rootKey).label),
-        icon: get(root(rootKey).icon)
+        label: get(this.root(rootKey).label),
+        icon: get(this.root(rootKey).icon)
       }))
     })
+    this.tree = createTree(this, treeSelection)
   }
-  workspace.tree = createTree(workspace, treeSelection)
-  return workspace
+}
+
+export function createWorkspace(key: string): Workspace {
+  return new WorkspaceModel(key)
 }
 
 export const workspaceAtoms = dispense((key: string) => {
@@ -360,6 +365,6 @@ export function createTree(
   workspace: Workspace,
   treeSelection: TreeSelection,
   options: {syncRouteExpansion?: boolean} = {}
-) {
+): Tree {
   return new TreeModel(workspace, treeSelection, options)
 }

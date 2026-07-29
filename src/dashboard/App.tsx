@@ -17,7 +17,7 @@ import {AuthView} from './app/AuthView.js'
 import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
-import {createStore, type Store} from './atoms/Dashboard.js'
+import {createDashboard, type Dashboard} from './atoms/DashboardModel.js'
 
 const styles = styler(css)
 
@@ -41,7 +41,7 @@ export function App({
   alineaDev
 }: AppProps) {
   const [dashboard] = useState(() =>
-    createStore(graph, config, events, client, views, {
+    createDashboard(graph, config, events, client, views, {
       alineaDev,
       local
     })
@@ -54,7 +54,7 @@ export function App({
 }
 
 interface StoreAppProps {
-  dashboard: Store
+  dashboard: Dashboard
 }
 
 function DashboardApp({dashboard}: StoreAppProps) {

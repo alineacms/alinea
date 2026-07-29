@@ -18,12 +18,10 @@ import {
   IcRoundUnfoldMore,
   MaterialSymbolsEditSquareOutlineRounded
 } from '../icons.js'
-import {useDashboard} from '../store.js'
-import type {
-  Dashboard,
-  DashboardRoot,
-  DashboardWorkspace
-} from '../atoms/Dashboard.js'
+import {useDashboard} from '../hooks.js'
+import type {Dashboard} from '../atoms/DashboardModel.js'
+import type {Root as DashboardRoot} from '../atoms/RootAtoms.js'
+import type {Workspace as DashboardWorkspace} from '../atoms/WorkspaceAtoms.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'

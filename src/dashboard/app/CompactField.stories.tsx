@@ -4,7 +4,7 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {type} from '#/core/Type.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {createStore} from '#/dashboard/store.js'
+import {createDashboard} from '#/dashboard/atoms/DashboardModel.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
@@ -24,7 +24,7 @@ import {views} from '../../field/views.js'
 import {Badge} from './Badge.js'
 import {CompactField, CompactRecordFields} from './CompactField.js'
 
-const dashboard = createStore(
+const dashboard = createDashboard(
   {} as WriteableGraph,
   {schema: {}, workspaces: {}},
   new EventTarget(),

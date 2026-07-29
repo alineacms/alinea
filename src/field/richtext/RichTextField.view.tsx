@@ -10,7 +10,7 @@ import {
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import {rootEditor} from '#/dashboard/atoms/Dashboard.js'
+import {rootEditor} from '#/dashboard/atoms/EditorAtoms.js'
 import {useEditor as useDashboardEditor} from '#/dashboard/editor/EditorScope.js'
 import {
   configureRichTextExtensions,

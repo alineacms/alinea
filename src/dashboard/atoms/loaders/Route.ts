@@ -1,3 +1,6 @@
+import type {Config} from '#/core/Config.js'
+import {getWorkspace} from '#/core/Internal.js'
+import type {Policy} from '#/core/Role.js'
 import type {Atom, Getter} from 'jotai'
 import type {Route} from '../../DashboardNav.js'
 import type {EntryDataState, EntryState} from '../EntryAtoms.js'
@@ -46,8 +49,6 @@ export type PreparedRoute = RouteShellData &
     | MissingRootPageData
   )
 
-export type LoadedRoute = PreparedRoute
-
 type AsyncAtomKeys<Value> = Value extends unknown
   ? {
       [Key in keyof Value]: Value[Key] extends Atom<Promise<unknown>>
@@ -58,14 +59,14 @@ type AsyncAtomKeys<Value> = Value extends unknown
 
 type AssertNoAsyncAtoms<Value extends never> = Value
 
-export type PreparedRouteAsyncFields = AssertNoAsyncAtoms<
-  Exclude<AsyncAtomKeys<PreparedRoute>, 'sidebar'>
+export type PreparedRouteBlockingAsyncFields = AssertNoAsyncAtoms<
+  Exclude<AsyncAtomKeys<PreparedRoute>, 'sidebarResource'>
 >
 
 export interface RouteLoaderOptions {
-  policy: Atom<Promise<unknown>>
+  config: Atom<Config>
+  policy: Atom<Promise<Policy>>
   canManageMembers: Atom<Promise<boolean>>
-  workspaces: Atom<Array<string>>
   workspace(key: string): Workspace
   entry(id: string): EntryState
   loadEntry?(
@@ -75,13 +76,15 @@ export interface RouteLoaderOptions {
   ): Promise<EntryPageData>
 }
 
+export type RouteLoader = ReturnType<typeof createRouteLoader>
+
 export function createRouteLoader(options: RouteLoaderOptions) {
   return async function loadRoute(
     get: Getter,
     route: Route,
     signal: AbortSignal
   ): Promise<PreparedRoute> {
-    const [, canManageMembers] = await Promise.all([
+    const [policy, canManageMembers] = await Promise.all([
       get(options.policy),
       get(options.canManageMembers)
     ])
@@ -89,7 +92,10 @@ export function createRouteLoader(options: RouteLoaderOptions) {
     if (route.page === 'users' && canManageMembers)
       return {type: 'users', canManageMembers}
 
-    const workspaceKeys = get(options.workspaces)
+    const config = get(options.config)
+    const workspaceKeys = Object.keys(config.workspaces).filter(workspace =>
+      policy.canRead({workspace})
+    )
     const workspaceKey =
       route.workspace && workspaceKeys.includes(route.workspace)
         ? route.workspace
@@ -97,7 +103,10 @@ export function createRouteLoader(options: RouteLoaderOptions) {
     if (!workspaceKey) return {type: 'empty', canManageMembers}
 
     const workspace = options.workspace(workspaceKey)
-    const rootKeys = get(workspace.roots)
+    const settings = getWorkspace(config.workspaces[workspaceKey])
+    const rootKeys = Object.keys(settings.roots).filter(root =>
+      policy.canRead({workspace: workspaceKey, root})
+    )
     const rootKey =
       route.root && rootKeys.includes(route.root) ? route.root : rootKeys[0]
     if (!rootKey) return {type: 'empty', canManageMembers}
@@ -108,9 +117,6 @@ export function createRouteLoader(options: RouteLoaderOptions) {
       route.locale && i18n?.locales.includes(route.locale)
         ? route.locale
         : (i18n?.locales[0] ?? null)
-    const rootIds = await get(root.childrenFor(locale))
-    await loadTree(get, options, workspace, rootIds, locale, [], signal)
-    signal.throwIfAborted()
 
     if (route.root && route.root !== rootKey)
       return {
@@ -120,9 +126,16 @@ export function createRouteLoader(options: RouteLoaderOptions) {
         canManageMembers
       }
 
-    const location = {workspace: workspaceKey, root: rootKey}
     if (!route.entry) {
       if (get(root.view)) return {type: 'root', root, canManageMembers}
+    }
+
+    const rootIds = await get(root.childrenFor(locale))
+    await loadTree(get, options, workspace, rootIds, locale, [], signal)
+    signal.throwIfAborted()
+
+    const location = {workspace: workspaceKey, root: rootKey}
+    if (!route.entry) {
       return {
         ...(await loadExplorerPage(get, root, location, locale, signal)),
         canManageMembers

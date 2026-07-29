@@ -4,18 +4,54 @@ import type {
 } from '#/core/db/EntryReference.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import type {EntryAnchorTarget} from '#/core/Field.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import type {Infer} from '#/types.js'
 import {atom} from 'jotai'
 import {dispense, keepPrevious} from './AtomUtils.js'
+import type {EntrySidebarTab} from './Contracts.js'
 import type {EntryDataState} from './EntryAtoms.js'
+import type {TypeState} from './EditorAtoms.js'
 import {versionLoaderAtom} from './EntryLoaderAtoms.js'
 import {policyAtom} from './PolicyAtoms.js'
 import {ReactiveNode} from './ReactiveNode.js'
 
 export const entryRevisionAtom = dispense((_id: string) => atom(0))
+
+const entrySidebarTabStateAtom = atom<EntrySidebarTab>('preview')
+
+export const entrySidebarTabAtom = atom(
+  get => get(entrySidebarTabStateAtom),
+  (_get, set, tab: EntrySidebarTab) => {
+    set(entrySidebarTabStateAtom, tab)
+  }
+)
+
+const entrySidebarOpenStateAtom = atom(true)
+
+export const entrySidebarOpenAtom = atom(
+  get => get(entrySidebarOpenStateAtom),
+  (_get, set, open: boolean) => {
+    set(entrySidebarOpenStateAtom, open)
+  }
+)
+
+export function allowedEntrySidebarTabs(
+  type: TypeState
+): Array<EntrySidebarTab> {
+  if (type.type === MediaFile) return ['references']
+  if (type.type === MediaLibrary) return ['history', 'references']
+  return ['preview', 'history', 'references']
+}
+
+export function resolveEntrySidebarTab(
+  type: TypeState,
+  selected: EntrySidebarTab
+): EntrySidebarTab {
+  const allowed = allowedEntrySidebarTabs(type)
+  return allowed.includes(selected) ? selected : allowed[0]
+}
 
 export interface DashboardEntryTreeStatus {
   status: EntryStatus | 'unpublished' | 'untranslated'
@@ -54,7 +90,7 @@ export interface EntryRouteBlock {
   cancel(): void
 }
 
-class EntryLanguageModel {
+export class EntryLanguageModel {
   constructor(
     public entry: EntryDataState,
     public locale: string | null

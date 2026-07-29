@@ -8,7 +8,7 @@ import {parents, translations} from '#/query.js'
 import {atom, type Atom} from 'jotai'
 import {configAtom, graphAtom} from './CoreAtoms.js'
 import {MissingEntryError} from './Contracts.js'
-import {policyAtom} from './PolicyAtoms.js'
+import {policyResourceAtom} from './PolicyAtoms.js'
 import {batchLoader} from './AtomUtils.js'
 
 export interface EntryLoaderAtomsOptions {
@@ -42,66 +42,69 @@ export function createEntryLoaderAtom(options: EntryLoaderAtomsOptions) {
     const config = get(options.config)
     const db = get(options.graph)
     const policy = get(options.policy)
-    const visibleTypes = entries(config.schema)
-      .filter(([, type]) => !Type.isHidden(type))
-      .map(([name]) => name)
-    return batchLoader(async ids => {
-      const rows = await db.find({
-        groupBy: Entry.id,
-        select: {
-          id: Entry.id,
-          type: Entry.type,
-          parentId: Entry.parentId,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          parents: parents({
-            select: {
-              id: Entry.id,
-              path: Entry.path,
-              type: Entry.type,
-              status: Entry.status,
-              main: Entry.main
-            }
-          }),
-          entries: translations({select: Entry, includeSelf: true})
+    return createEntryLoader(config, db, policy)
+  })
+}
+
+function createEntryLoader(config: Config, db: WriteableGraph, policy: Policy) {
+  const visibleTypes = entries(config.schema)
+    .filter(([, type]) => !Type.isHidden(type))
+    .map(([name]) => name)
+  return batchLoader(async ids => {
+    const rows = await db.find({
+      groupBy: Entry.id,
+      select: {
+        id: Entry.id,
+        type: Entry.type,
+        parentId: Entry.parentId,
+        workspace: Entry.workspace,
+        root: Entry.root,
+        parents: parents({
+          select: {
+            id: Entry.id,
+            path: Entry.path,
+            type: Entry.type,
+            status: Entry.status,
+            main: Entry.main
+          }
+        }),
+        entries: translations({select: Entry, includeSelf: true})
+      },
+      id: {in: ids},
+      status: 'preferDraft'
+    })
+    const parentIds = await db.find({
+      select: Entry.parentId,
+      parentId: {in: ids},
+      filter: {_type: {in: visibleTypes}},
+      groupBy: Entry.parentId,
+      status: 'preferDraft'
+    })
+    const parentIdSet = new Set(parentIds)
+    const byId = new Map(rows.map(row => [row.id, row] as const))
+    return ids.map(id => {
+      const row = byId.get(id)
+      if (!row) return [null, new MissingEntryError(id)] as const
+      const readableEntries = row.entries.filter(entry => policy.canRead(entry))
+      if (readableEntries.length === 0)
+        return [null, new MissingEntryError(id)] as const
+      return [
+        {
+          ...row,
+          entries: readableEntries,
+          hasChildren: parentIdSet.has(id)
         },
-        id: {in: ids},
-        status: 'preferDraft'
-      })
-      const parentIds = await db.find({
-        select: Entry.parentId,
-        parentId: {in: ids},
-        filter: {_type: {in: visibleTypes}},
-        groupBy: Entry.parentId,
-        status: 'preferDraft'
-      })
-      const parentIdSet = new Set(parentIds)
-      const byId = new Map(rows.map(row => [row.id, row] as const))
-      return ids.map(id => {
-        const row = byId.get(id)
-        if (!row) return [null, new MissingEntryError(id)] as const
-        const readableEntries = row.entries.filter(entry =>
-          policy.canRead(entry)
-        )
-        if (readableEntries.length === 0)
-          return [null, new MissingEntryError(id)] as const
-        return [
-          {
-            ...row,
-            entries: readableEntries,
-            hasChildren: parentIdSet.has(id)
-          },
-          null
-        ] as const
-      })
+        null
+      ] as const
     })
   })
 }
 
 export const versionLoaderAtom = createVersionLoaderAtom(graphAtom)
 
-export const entryLoaderAtom = createEntryLoaderAtom({
-  config: configAtom,
-  graph: graphAtom,
-  policy: policyAtom
+export const entryLoaderAtom = atom(async get => {
+  const config = get(configAtom)
+  const db = get(graphAtom)
+  const policy = await get(policyResourceAtom)
+  return createEntryLoader(config, db, policy)
 })

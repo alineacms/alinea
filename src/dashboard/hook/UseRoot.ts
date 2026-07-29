@@ -1,6 +1,6 @@
 import {Root, type RootData} from '#/core/Root.js'
 import {useAtomValue} from 'jotai'
-import {useDashboard} from '../store.js'
+import {useDashboard} from '../hooks.js'
 
 export interface DashboardRoot extends RootData {
   name: string

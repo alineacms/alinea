@@ -1,5 +1,17 @@
 import {Config, Field} from '#/index.js'
+import type {Config as ConfigDefinition} from '#/core/Config.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import {
+  configAtom,
+  eventsAtom,
+  graphAtom,
+  optionsAtom,
+  viewsAtom
+} from '#/dashboard/atoms/CoreAtoms.js'
+import {navigationAtom} from '#/dashboard/atoms/NavigationAtoms.js'
+import type {PreparedRoute} from '#/dashboard/atoms/loaders/Route.js'
+import {createNavigation} from '#/dashboard/atoms/navigation/Navigation.js'
+import {createStore} from 'jotai'
 
 export const DashboardTestPage = Config.document('Page', {
   contains: ['Page'],
@@ -20,28 +32,65 @@ export const dashboardTestConfig = Config.create({
   workspaces: {main}
 })
 
-export class TestEvents {
-  listeners = new Set<EventListenerOrEventListenerObject>()
+export function createDashboardModelStore(
+  config: ConfigDefinition,
+  db: LocalDB,
+  root = 'pages'
+) {
+  const store = createStore()
+  store.set(configAtom, config)
+  store.set(graphAtom, db)
+  store.set(eventsAtom, new EventTarget())
+  store.set(optionsAtom, {local: true})
+  store.set(viewsAtom, {})
+  store.set(
+    navigationAtom,
+    createNavigation<PreparedRoute>({
+      history: {
+        read: () => ({page: 'entry', workspace: 'main', root}),
+        push() {},
+        replace() {},
+        subscribe: () => () => {}
+      },
+      prepare: async () => ({type: 'empty', canManageMembers: false})
+    })
+  )
+  return store
+}
+
+export class TestEvents implements EventTarget {
+  readonly #listeners = new Map<
+    string,
+    Set<EventListenerOrEventListenerObject>
+  >()
 
   addEventListener(
-    _type: string,
-    listener: EventListenerOrEventListenerObject
+    type: string,
+    callback: EventListenerOrEventListenerObject | null
   ) {
-    this.listeners.add(listener)
+    if (!callback) return
+    const listeners = this.#listeners.get(type)
+    if (listeners) listeners.add(callback)
+    else this.#listeners.set(type, new Set([callback]))
   }
 
   removeEventListener(
-    _type: string,
-    listener: EventListenerOrEventListenerObject
+    type: string,
+    callback: EventListenerOrEventListenerObject | null
   ) {
-    this.listeners.delete(listener)
+    if (callback) this.#listeners.get(type)?.delete(callback)
   }
 
-  emit(event: Event) {
-    for (const listener of this.listeners) {
+  dispatchEvent(event: Event): boolean {
+    for (const listener of this.#listeners.get(event.type) ?? []) {
       if (typeof listener === 'function') listener(event)
       else listener.handleEvent(event)
     }
+    return !event.defaultPrevented
+  }
+
+  emit(event: Event): boolean {
+    return this.dispatchEvent(event)
   }
 }
 
@@ -64,5 +113,6 @@ export async function createDashboardAtomFixture() {
     overwrite: true,
     set: {title: 'Parent draft'}
   })
-  return {config: dashboardTestConfig, db, parent, child}
+  const store = createDashboardModelStore(dashboardTestConfig, db)
+  return {config: dashboardTestConfig, db, parent, child, store}
 }

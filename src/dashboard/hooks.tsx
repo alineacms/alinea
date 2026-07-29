@@ -11,21 +11,21 @@ import {
   useMemo,
   useState
 } from 'react'
-import type {Dashboard} from './atoms/Dashboard.js'
 import {
   clientAtom,
   configAtom,
-  createDashboardNavigation,
-  currentEntryAtom,
-  dashboardEffectsAtom,
   eventsAtom,
   graphAtom,
-  navigationAtom,
   optionsAtom,
   previewTokenRequestsAtom,
+  routeLoaderAtom,
   viewsAtom,
   type DashboardInput
-} from './atoms/Dashboard.js'
+} from './atoms/CoreAtoms.js'
+import {dashboardEffectsAtom} from './atoms/DashboardEffectsAtom.js'
+import {dashboardRouteLoader, type Dashboard} from './atoms/DashboardModel.js'
+import {navigationAtom} from './atoms/NavigationAtoms.js'
+import {createDashboardNavigation, currentEntryAtom} from './atoms/PageAtoms.js'
 import {createBrowserHistory} from './atoms/navigation/History.js'
 
 export * from './editor/EditorScope.js'
@@ -53,9 +53,7 @@ function DashboardHydration({
   children,
   dashboard
 }: PropsWithChildren<{dashboard: Dashboard}>) {
-  const {input} = dashboard
-  assert(input, 'Dashboard input not found')
-  useHydrateDashboard(input)
+  useHydrateDashboard(dashboard.input)
   return children
 }
 
@@ -79,7 +77,8 @@ export function useHydrateDashboard(input: DashboardInput) {
     [viewsAtom, input.views],
     [optionsAtom, input.options],
     [navigationAtom, navigation],
-    [previewTokenRequestsAtom, previewTokenRequests]
+    [previewTokenRequestsAtom, previewTokenRequests],
+    [routeLoaderAtom, dashboardRouteLoader]
   ] as const)
   useAtomValue(dashboardEffectsAtom)
 }
