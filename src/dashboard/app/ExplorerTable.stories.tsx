@@ -1,6 +1,6 @@
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {createDashboard} from '#/dashboard/atoms/dashboard.js'
-import type {EntryAtoms} from '#/dashboard/atoms/entry/index.js'
+import type {EntryAtoms} from '#/dashboard/atoms/entry.js'
 import {
   createExplorerAtoms,
   type ExplorerAtoms

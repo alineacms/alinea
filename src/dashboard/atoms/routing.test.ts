@@ -2,38 +2,34 @@ import {expect, test} from 'bun:test'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
-import {createType} from '../entry/editor.js'
-import {entryAtoms} from '../entry/index.js'
+import {createType} from './config/type.js'
+import {entryAtoms} from './entry.js'
 import {
   createEntrySidebarResource,
   loadEntryPage,
   resolveEntrySidebarTab
-} from '../entry/load.js'
-import {policyResourceAtom} from '../user.js'
-import {configAtom, workspaceAtoms} from '../workspace.js'
+} from './entry/load.js'
+import {optionsAtom, policyResourceAtom} from './user.js'
+import {setUserRolesAtom} from './dashboard.js'
+import {configAtom, workspaceAtoms} from './config.js'
 import {
   createRouteLoader,
   currentEntryAtom,
   navigationAtom,
-  pageAtom,
-  routeLoaderAtom,
-  type PreparedRoute
-} from './index.js'
-import {createNavigation} from './navigation.js'
-import {setUserRolesAtom} from '../user.js'
+  pageAtom
+} from './routing.js'
 
 test('page atoms require navigation to commit prepared data', () => {
-  const navigation = createNavigation<PreparedRoute>({
+  const store = createStore()
+  store.set(optionsAtom, {
     history: {
       read: () => ({page: 'entry'}),
       push() {},
       replace() {},
       subscribe: () => () => {}
-    },
-    prepare: async () => ({type: 'empty', canManageMembers: false}) as const
+    }
   })
-  const store = createStore()
-  store.set(navigationAtom, navigation)
+  const navigation = store.get(navigationAtom)
 
   expect(() => store.get(pageAtom)).toThrow(
     'Dashboard page was read before it was prepared'
@@ -49,22 +45,18 @@ test('page atoms require navigation to commit prepared data', () => {
 test('changing user roles re-prepares the current route', async () => {
   const {store} = await createDashboardAtomFixture()
   const navigation = store.get(navigationAtom)
-  store.set(navigation.prepared, {
+  const previous = {
     type: 'empty',
     canManageMembers: false
-  })
-  let loads = 0
-  store.set(routeLoaderAtom, async () => {
-    loads++
-    return {type: 'empty', canManageMembers: true}
-  })
+  } as const
+  store.set(navigation.prepared, previous)
 
   await store.set(setUserRolesAtom, ['editor'])
 
-  expect(loads).toBe(1)
+  expect(store.get(pageAtom)).not.toBe(previous)
   expect(store.get(pageAtom)).toEqual({
     type: 'empty',
-    canManageMembers: true
+    canManageMembers: false
   })
 })
 

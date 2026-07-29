@@ -16,8 +16,8 @@ import type {
   DashboardEntryReferenceSource,
   DashboardEntryReferences
 } from '../atoms/entry/load.js'
-import type {EntryDataAtoms} from '../atoms/entry/index.js'
-import {routeAtom} from '../atoms/routing/index.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
+import {routeAtom} from '../atoms/routing.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
 

@@ -4,7 +4,7 @@ import {
   MutationQueueEvent,
   type MutationQueueEntry
 } from '../../boot/MutationQueueEvent.js'
-import {eventsAtom, graphAtom} from './index.js'
+import {eventsAtom, graphAtom} from '../graph.js'
 
 export interface MutationQueueState {
   entries: Array<MutationQueueEntry>

@@ -1,11 +1,10 @@
 import {Config, Field} from '#/index.js'
 import type {Config as ConfigDefinition} from '#/core/Config.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
-import {eventsAtom, graphAtom} from '#/dashboard/atoms/graph/index.js'
-import {navigationAtom, type PreparedRoute} from '#/dashboard/atoms/routing/index.js'
-import {createNavigation} from '#/dashboard/atoms/routing/navigation.js'
-import {optionsAtom} from '#/dashboard/atoms/user.js'
-import {configAtom, viewsAtom} from '#/dashboard/atoms/workspace.js'
+import {eventsAtom, graphAtom} from '#/dashboard/atoms/graph.js'
+import {clientAtom, optionsAtom} from '#/dashboard/atoms/user.js'
+import {configAtom, viewsAtom} from '#/dashboard/atoms/config.js'
+import {createTestConnection} from './CreateConnection.js'
 import {createStore} from 'jotai'
 
 export const DashboardTestPage = Config.document('Page', {
@@ -36,20 +35,17 @@ export function createDashboardStore(
   store.set(configAtom, config)
   store.set(graphAtom, db)
   store.set(eventsAtom, new EventTarget())
-  store.set(optionsAtom, {local: true})
+  store.set(clientAtom, createTestConnection(db))
+  store.set(optionsAtom, {
+    local: true,
+    history: {
+      read: () => ({page: 'entry', workspace: 'main', root}),
+      push() {},
+      replace() {},
+      subscribe: () => () => {}
+    }
+  })
   store.set(viewsAtom, {})
-  store.set(
-    navigationAtom,
-    createNavigation<PreparedRoute>({
-      history: {
-        read: () => ({page: 'entry', workspace: 'main', root}),
-        push() {},
-        replace() {},
-        subscribe: () => () => {}
-      },
-      prepare: async () => ({type: 'empty', canManageMembers: false})
-    })
-  )
   return store
 }
 

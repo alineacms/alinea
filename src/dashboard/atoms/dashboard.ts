@@ -4,19 +4,12 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
-import {entryAtoms} from './entry/index.js'
 import {entryRevisionAtom} from './entry/load.js'
-import {eventsAtom} from './graph/index.js'
-import {createRouteLoader, reloadPageAtom, routeAtom} from './routing/index.js'
-import {
-  canManageMembersAtom,
-  type DashboardOptions,
-  policyResourceAtom
-} from './user.js'
-import {configAtom, workspaceAtoms} from './workspace.js'
+import {eventsAtom} from './graph.js'
+import {reloadPageAtom, routeAtom} from './routing.js'
+import {type DashboardOptions, updateUserRolesAtom} from './user.js'
 
 export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
-export {createDashboardNavigation} from './routing/index.js'
 
 export interface Dashboard {
   graph: WriteableGraph
@@ -40,14 +33,6 @@ export interface DashboardCreateEntryRequest {
   insertOrder?: 'first' | 'last'
 }
 
-export const dashboardRouteLoader = createRouteLoader({
-  config: configAtom,
-  policy: policyResourceAtom,
-  canManageMembers: canManageMembersAtom,
-  workspace: workspaceAtoms,
-  entry: entryAtoms
-})
-
 export function createDashboard(
   graph: WriteableGraph,
   config: Config,
@@ -58,6 +43,14 @@ export function createDashboard(
 ): Dashboard {
   return {graph, config, events, client, views, options}
 }
+
+export const setUserRolesAtom = atom(
+  null,
+  async (_get, set, roles: Array<string>) => {
+    await set(updateUserRolesAtom, roles)
+    await set(reloadPageAtom)
+  }
+)
 
 export const dashboardEffectsAtom = Object.assign(
   atom(

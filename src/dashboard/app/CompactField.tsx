@@ -1,7 +1,7 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {viewAtom} from '../atoms/workspace.js'
+import {viewAtom} from '../atoms/config.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'

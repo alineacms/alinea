@@ -21,17 +21,25 @@ import type {Infer} from '#/types.js'
 import type {Atom, Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {MissingEntryError} from './load.js'
-import {ReactiveNode, typeAtoms, type TypeAtoms} from './editor.js'
-import {loadEntryPage} from './load.js'
-import {queryTreeChildren, type RootAtoms} from '../workspace.js'
-import {dispense, keepPrevious, uploadSizeError, withPending} from '../utils.js'
-import {graphAtom, shaAtom} from '../graph/index.js'
-import {uploadProgressAtom} from '../graph/queue.js'
-import {reloadPageAtom} from '../routing/index.js'
-import {clientAtom, policyAtom, userAtom} from '../user.js'
-import {configAtom, viewAtom, workspaceAtoms} from '../workspace.js'
-import {entryLoaderAtom} from './load.js'
+import {
+  configAtom,
+  queryTreeChildren,
+  type RootAtoms,
+  viewAtom,
+  workspaceAtoms
+} from './config.js'
+import {type TypeAtoms, typeAtoms} from './config/type.js'
+import {ReactiveNode} from './entry/editor.js'
+import {
+  entryLoaderAtom,
+  loadEntryPage,
+  MissingEntryError
+} from './entry/load.js'
+import {graphAtom, shaAtom} from './graph.js'
+import {uploadProgressAtom} from './graph/queue.js'
+import {reloadPageAtom} from './routing.js'
+import {clientAtom, policyAtom, userAtom} from './user.js'
+import {dispense, swr, uploadSizeError, withPending} from './utils.js'
 import type {
   DashboardEntryReference,
   DashboardEntryReferences,
@@ -39,9 +47,9 @@ import type {
   DashboardEntryTreeStatus,
   DashboardFileInfoState,
   EntryRouteBlock
-} from './load.js'
-import {createEntryLanguage, entryRevisionAtom} from './load.js'
-import {createEntryPreviewAtoms} from './preview.js'
+} from './entry/load.js'
+import {createEntryLanguage, entryRevisionAtom} from './entry/load.js'
+import {createEntryPreviewAtoms} from './entry/preview.js'
 
 export const entryOverviewColumnCount = 5
 
@@ -236,7 +244,7 @@ export class EntryDataAtoms {
     })
   )
 
-  currentEntry = keepPrevious(
+  currentEntry = swr(
     atom(async get => {
       const root = get(this.root)
       return get(this.currentEntryFor(get(root.selectedLocale)))
@@ -472,7 +480,7 @@ export class EntryDataAtoms {
     })
   )
 
-  selectedNode = keepPrevious(
+  selectedNode = swr(
     atom(async get => {
       const root = get(this.root)
       return get(this.selectedNodeFor(get(root.selectedLocale)))
@@ -506,7 +514,7 @@ export class EntryDataAtoms {
     }
   })
 
-  fileInfo = keepPrevious(
+  fileInfo = swr(
     atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
       if (get(this.type).type !== MediaFile) return null
       const lang = this.languages(null)
@@ -599,7 +607,7 @@ export class EntryDataAtoms {
   icon = atom(get => get(this.type).icon)
 
   childrenFor = dispense((locale: string | null) => {
-    return keepPrevious(
+    return swr(
       atom(async get => {
         const root = get(this.root)
         const orderChildrenBy = atom(get => get(this.type).orderChildrenBy)
@@ -639,14 +647,14 @@ export class EntryDataAtoms {
     })
   )
 
-  activeVersion = keepPrevious(
+  activeVersion = swr(
     atom(async get => {
       const root = get(this.root)
       return get(this.activeVersionFor(get(root.selectedLocale)))
     })
   )
 
-  anchors = keepPrevious(
+  anchors = swr(
     atom(async get => {
       const locale = get(this.sourceLocale)
       return get(this.languages(locale).anchors)
@@ -954,7 +962,7 @@ export type {
   DashboardFileInfoState,
   EntryRouteBlock
 }
-export type {EntryLanguageAtoms} from './load.js'
+export type {EntryLanguageAtoms} from './entry/load.js'
 export {createEntryLanguage}
 
 export function createEntry(id: string): EntryAtoms {

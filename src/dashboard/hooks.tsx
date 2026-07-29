@@ -5,28 +5,11 @@ import {assert} from '#/core/util/Assert.js'
 import {createStore, Provider, useAtomValue} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {PropsWithChildren} from 'react'
-import {
-  createContext,
-  createElement,
-  useContext,
-  useMemo,
-  useState
-} from 'react'
-import {
-  dashboardEffectsAtom,
-  dashboardRouteLoader,
-  type Dashboard
-} from './atoms/dashboard.js'
-import {previewTokenRequestsAtom} from './atoms/entry/preview.js'
-import {eventsAtom, graphAtom} from './atoms/graph/index.js'
-import {
-  createDashboardNavigation,
-  navigationAtom,
-  routeLoaderAtom
-} from './atoms/routing/index.js'
+import {createContext, createElement, useContext, useState} from 'react'
+import {dashboardEffectsAtom, type Dashboard} from './atoms/dashboard.js'
+import {eventsAtom, graphAtom} from './atoms/graph.js'
 import {clientAtom, optionsAtom, policyAtom, userAtom} from './atoms/user.js'
-import {configAtom, viewsAtom} from './atoms/workspace.js'
-import {createBrowserHistory} from './atoms/routing/history.js'
+import {configAtom, viewsAtom} from './atoms/config.js'
 
 export * from './editor/EditorScope.js'
 export * from './editor/FieldHooks.js'
@@ -63,27 +46,13 @@ function DashboardState({
   children,
   dashboard
 }: PropsWithChildren<{dashboard: Dashboard}>) {
-  const navigation = useMemo(
-    () =>
-      createDashboardNavigation(
-        dashboard.options.history ?? createBrowserHistory()
-      ),
-    [dashboard.options.history]
-  )
-  const previewTokenRequests = useMemo(
-    () => new Map<string, Promise<string>>(),
-    []
-  )
   useHydrateAtoms([
     [graphAtom, dashboard.graph],
     [configAtom, dashboard.config],
     [eventsAtom, dashboard.events],
     [clientAtom, dashboard.client],
     [viewsAtom, dashboard.views],
-    [optionsAtom, dashboard.options],
-    [navigationAtom, navigation],
-    [previewTokenRequestsAtom, previewTokenRequests],
-    [routeLoaderAtom, dashboardRouteLoader]
+    [optionsAtom, dashboard.options]
   ] as const)
   useAtomValue(dashboardEffectsAtom)
   return children

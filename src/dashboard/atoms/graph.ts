@@ -1,7 +1,7 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
-import {requiredAtom} from '../utils.js'
+import {requiredAtom} from './utils.js'
 
 export const graphAtom = requiredAtom<WriteableGraph>('dashboard.graph')
 export const eventsAtom = requiredAtom<EventTarget>('dashboard.events')

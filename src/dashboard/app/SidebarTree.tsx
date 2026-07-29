@@ -24,7 +24,7 @@ import {
   entryAtoms,
   type EntryAtoms,
   type EntryDataAtoms
-} from '../atoms/entry/index.js'
+} from '../atoms/entry.js'
 import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
 import type {DashboardLocaleSelection} from '../atoms/explorer.js'
 import {
@@ -35,8 +35,8 @@ import {
   type WorkspaceAtoms,
   type RootAtoms,
   type TreeSelection
-} from '../atoms/workspace.js'
-import {routeAtom} from '../atoms/routing/index.js'
+} from '../atoms/config.js'
+import {routeAtom} from '../atoms/routing.js'
 import {dispense} from '../atoms/utils.js'
 import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'

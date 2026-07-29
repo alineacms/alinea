@@ -3,13 +3,9 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import {
-  navigationAtoms,
-  pageAtom,
-  workspacesAtom
-} from '../atoms/routing/index.js'
-import type {PreparedRoute} from '../atoms/routing/index.js'
-import {currentWorkspaceAtom} from '../atoms/workspace.js'
+import {navigationAtoms, pageAtom, workspacesAtom} from '../atoms/routing.js'
+import type {PreparedRoute} from '../atoms/routing.js'
+import {currentWorkspaceAtom} from '../atoms/config.js'
 import css from './AppShell.module.css'
 import {DashboardMeta} from './DashboardMeta.js'
 import {Editor} from './Editor.js'

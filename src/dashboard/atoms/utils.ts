@@ -52,7 +52,7 @@ export function dispense<Key = string, Value = unknown>(
   }
 }
 
-export function keepPrevious<Value>(asyncAtom: Atom<Promise<Value>>) {
+export function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
   const withPrevious = unwrap(asyncAtom, previous => previous)
   return atom(get => get(withPrevious) ?? get(asyncAtom))
 }

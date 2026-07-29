@@ -19,12 +19,13 @@ import {entries} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
 import type {Infer} from '#/types.js'
 import {atom, type Atom, type Getter} from 'jotai'
-import {graphAtom} from '../graph/index.js'
+import {graphAtom} from '../graph.js'
 import {policyAtom, policyResourceAtom} from '../user.js'
-import {batchLoader, dispense, keepPrevious, withPending} from '../utils.js'
-import {configAtom} from '../workspace.js'
-import {ReactiveNode, type TypeAtoms} from './editor.js'
-import type {EntryDataAtoms} from './index.js'
+import {batchLoader, dispense, swr, withPending} from '../utils.js'
+import {configAtom} from '../config.js'
+import type {TypeAtoms} from '../config/type.js'
+import {ReactiveNode} from './editor.js'
+import type {EntryDataAtoms} from '../entry.js'
 
 export type EntrySidebarTab = 'history' | 'preview' | 'references'
 
@@ -135,23 +136,8 @@ export const entryLoaderAtom = atom(async get => {
 
 export const entryRevisionAtom = dispense((_id: string) => atom(0))
 
-const entrySidebarTabStateAtom = atom<EntrySidebarTab>('preview')
-
-export const entrySidebarTabAtom = atom(
-  get => get(entrySidebarTabStateAtom),
-  (_get, set, tab: EntrySidebarTab) => {
-    set(entrySidebarTabStateAtom, tab)
-  }
-)
-
-const entrySidebarOpenStateAtom = atom(true)
-
-export const entrySidebarOpenAtom = atom(
-  get => get(entrySidebarOpenStateAtom),
-  (_get, set, open: boolean) => {
-    set(entrySidebarOpenStateAtom, open)
-  }
-)
+export const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
+export const entrySidebarOpenAtom = atom(true)
 
 export function allowedEntrySidebarTabs(
   type: TypeAtoms
@@ -229,7 +215,7 @@ export class EntryLanguageAtoms {
     return new Map(readable.map(entry => [entry.status, entry] as const))
   })
 
-  versions = keepPrevious(this.versionsResource)
+  versions = swr(this.versionsResource)
 
   activeVersionResource = atom(async get => {
     const versions = await get(this.versionsResource)
@@ -241,9 +227,9 @@ export class EntryLanguageAtoms {
     return first
   })
 
-  activeVersion = keepPrevious(this.activeVersionResource)
+  activeVersion = swr(this.activeVersionResource)
 
-  anchors = keepPrevious(
+  anchors = swr(
     atom(async (get): Promise<Array<EntryAnchorTarget>> => {
       const type = get(this.entry.type).type
       const entry = await get(this.activeVersion)

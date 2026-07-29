@@ -27,9 +27,9 @@ import {
   routeAtom,
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '../atoms/routing/index.js'
+} from '../atoms/routing.js'
 import {clientAtom} from '../atoms/user.js'
-import {configAtom} from '../atoms/workspace.js'
+import {configAtom} from '../atoms/config.js'
 import {Badge} from './Badge.js'
 import {
   DashboardModal,

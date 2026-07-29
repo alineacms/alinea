@@ -22,15 +22,15 @@ import {
   ReactiveNode,
   type SectionAtoms
 } from '../atoms/entry/editor.js'
-import {entryAtoms, type EntryDataAtoms} from '../atoms/entry/index.js'
+import {entryAtoms, type EntryDataAtoms} from '../atoms/entry.js'
 import {entrySidebarOpenAtom, type EntryPageData} from '../atoms/entry/load.js'
 import type {ExplorerPageData} from '../atoms/explorer.js'
 import {
   routeAtom,
   type PreparedRoute,
   type RootPageData
-} from '../atoms/routing/index.js'
-import type {RootAtoms} from '../atoms/workspace.js'
+} from '../atoms/routing.js'
+import type {RootAtoms} from '../atoms/config.js'
 import css from './Editor.module.css'
 import {FileEditor} from './editor/FileEditor.js'
 import {EntryHeader} from './EntryHeader.js'

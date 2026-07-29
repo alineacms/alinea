@@ -22,8 +22,8 @@ import type {
   EntryDataAtoms,
   EntryAtoms,
   EntryOverviewCell
-} from '../atoms/entry/index.js'
-import {entryOverviewColumnCount} from '../atoms/entry/index.js'
+} from '../atoms/entry.js'
+import {entryOverviewColumnCount} from '../atoms/entry.js'
 import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
 import type {ExplorerAtoms} from '../atoms/explorer.js'
 import {CompactField, compactFieldText} from './CompactField.js'

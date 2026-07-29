@@ -24,12 +24,12 @@ import {
   canLogoutAtom,
   currentUserAtom,
   isLocalAtom,
-  logoutAtom,
-  setUserRolesAtom
+  logoutAtom
 } from '../atoms/user.js'
+import {setUserRolesAtom} from '../atoms/dashboard.js'
 import {themeAtom} from '../atoms/user.js'
-import {routeAtom, selectedWorkspaceAtom} from '../atoms/routing/index.js'
-import {configAtom, type RootAtoms, workspaceAtoms} from '../atoms/workspace.js'
+import {routeAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
+import {configAtom, type RootAtoms, workspaceAtoms} from '../atoms/config.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'

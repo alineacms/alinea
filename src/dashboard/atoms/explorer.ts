@@ -13,14 +13,10 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
-import {
-  entryAtoms,
-  type EntryAtoms,
-  type EntryDataAtoms
-} from './entry/index.js'
-import {graphAtom, shaAtom} from './graph/index.js'
+import {entryAtoms, type EntryAtoms, type EntryDataAtoms} from './entry.js'
+import {graphAtom, shaAtom} from './graph.js'
 import {mutationQueueAtom, uploadProgressAtom} from './graph/queue.js'
-import {refreshPageForAtom} from './routing/index.js'
+import {refreshPageForAtom} from './routing.js'
 import {policyAtom} from './user.js'
 import {dashboardEntryDragItem, uploadSizeError} from './utils.js'
 import {
@@ -28,7 +24,7 @@ import {
   type RootAtoms,
   type WorkspaceAtoms,
   workspaceAtoms
-} from './workspace.js'
+} from './config.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 

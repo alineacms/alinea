@@ -33,9 +33,9 @@ import {
   dispense,
   requiredAtom
 } from './utils.js'
-import {entryAtoms} from './entry/index.js'
-import {graphAtom, shaAtom} from './graph/index.js'
-import {routeAtom} from './routing/index.js'
+import {entryAtoms} from './entry.js'
+import {graphAtom, shaAtom} from './graph.js'
+import {routeAtom} from './routing.js'
 import {policyAtom} from './user.js'
 import {
   createExplorer,
@@ -47,7 +47,7 @@ import {
   selectedWorkspaceAtom,
   workspaceRootsAtom,
   workspaceSettingsAtom
-} from './routing/index.js'
+} from './routing.js'
 
 export type TreeSelection = WritableAtom<
   Set<Key>,
@@ -352,7 +352,7 @@ export function createTree(
   return new TreeAtomsImpl(workspace, treeSelection, options)
 }
 
-const keepPreviousExplorerParent = new Promise<string | undefined>(() => {})
+const pendingExplorerParent = new Promise<string | undefined>(() => {})
 
 export class RootAtoms {
   explorer: ExplorerAtoms
@@ -370,7 +370,7 @@ export class RootAtoms {
         ) {
           const {data} = get(entryAtoms(route.entry).data)
           if (data && get(data.view) === 'overview') return route.entry
-          return keepPreviousExplorerParent
+          return pendingExplorerParent
         }
         return undefined
       }),

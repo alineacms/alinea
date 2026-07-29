@@ -21,7 +21,7 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry/index.js'
+import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
 import type {
   ExplorerAtoms,
   ExplorerSort,

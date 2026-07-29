@@ -19,18 +19,18 @@ import {
   MaterialSymbolsEditSquareOutlineRounded
 } from '../icons.js'
 import {createExplorerAtoms} from '../atoms/explorer.js'
-import type {RootAtoms} from '../atoms/workspace.js'
+import type {RootAtoms} from '../atoms/config.js'
 import {
   routeAtom,
   selectedRootAtom,
   selectedWorkspaceAtom,
   workspacesAtom
-} from '../atoms/routing/index.js'
+} from '../atoms/routing.js'
 import {
   currentRootAtom,
   workspaceAtoms,
   type WorkspaceAtoms
-} from '../atoms/workspace.js'
+} from '../atoms/config.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'

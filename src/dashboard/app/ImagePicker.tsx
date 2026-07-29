@@ -3,8 +3,8 @@ import {Button} from '#/components.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ReactNode} from 'react'
 import {createExplorerAtoms, type ExplorerOptions} from '../atoms/explorer.js'
-import {selectedWorkspaceAtom} from '../atoms/routing/index.js'
-import {selectedMediaRootAtom} from '../atoms/workspace.js'
+import {selectedWorkspaceAtom} from '../atoms/routing.js'
+import {selectedMediaRootAtom} from '../atoms/config.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,

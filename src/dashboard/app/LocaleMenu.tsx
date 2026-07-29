@@ -5,7 +5,7 @@ import {useState} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
 import type {DashboardLocaleSelection} from '../atoms/explorer.js'
-import type {RootAtoms} from '../atoms/workspace.js'
+import type {RootAtoms} from '../atoms/config.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)

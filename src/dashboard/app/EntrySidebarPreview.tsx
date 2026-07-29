@@ -10,7 +10,7 @@ import {
   IcRoundOpenInNew,
   IcRoundRefresh
 } from '../icons.js'
-import type {EntryDataAtoms} from '../atoms/entry/index.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
 import {
   markPreviewSessionReadyAtom,
   previewMetadataAtom

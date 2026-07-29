@@ -18,7 +18,7 @@ import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
 import {createDashboard} from './atoms/dashboard.js'
-import {prepareInitialContentAtom} from './atoms/routing/index.js'
+import {prepareInitialContentAtom} from './atoms/routing.js'
 import {authAtom, themeAtom} from './atoms/user.js'
 
 const styles = styler(css)

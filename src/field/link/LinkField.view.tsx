@@ -57,15 +57,15 @@ import {
   entryAtoms,
   type EntryDataAtoms,
   type EntryAtoms
-} from '#/dashboard/atoms/entry/index.js'
+} from '#/dashboard/atoms/entry.js'
 import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
 import {
   currentEntryAtom,
   routeAtom,
   selectedRootAtom,
   selectedWorkspaceAtom
-} from '#/dashboard/atoms/routing/index.js'
-import {selectedMediaRootAtom} from '#/dashboard/atoms/workspace.js'
+} from '#/dashboard/atoms/routing.js'
+import {selectedMediaRootAtom} from '#/dashboard/atoms/config.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EntryPickerOptions} from '#/picker/entry.js'

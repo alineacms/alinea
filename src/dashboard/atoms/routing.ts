@@ -3,42 +3,51 @@ import {getWorkspace} from '#/core/Internal.js'
 import type {Policy} from '#/core/Role.js'
 import {assert} from '#/core/util/Assert.js'
 import {atom, type Atom, type Getter} from 'jotai'
-import type {Route} from '../../DashboardNav.js'
-import {
-  type EntryDataAtoms,
-  type EntryAtoms,
-  entryAtoms
-} from '../entry/index.js'
+import type {Route} from '../DashboardNav.js'
+import {type EntryDataAtoms, type EntryAtoms, entryAtoms} from './entry.js'
 import {
   loadEntryPage,
   type EntryPageData,
   MissingEntryError
-} from '../entry/load.js'
+} from './entry/load.js'
 import {
   type ExplorerAtoms,
   type ExplorerPageData,
   loadExplorerPage,
   loadTree
-} from '../explorer.js'
-import {policyAtom} from '../user.js'
-import {dispense, requiredAtom} from '../utils.js'
+} from './explorer.js'
+import {
+  canManageMembersAtom,
+  optionsAtom,
+  policyAtom,
+  policyResourceAtom
+} from './user.js'
+import {dispense} from './utils.js'
 import {
   configAtom,
   currentWorkspaceAtom,
   type RootAtoms,
   type WorkspaceAtoms,
   workspaceAtoms
-} from '../workspace.js'
-import type {RouteHistory} from './history.js'
-import {createNavigation, type Navigation} from './navigation.js'
+} from './config.js'
+import {createBrowserHistory} from './routing/history.js'
+import {createNavigation, type Navigation} from './routing/navigation.js'
 
-export const routeLoaderAtom = requiredAtom<RouteLoader>(
-  'dashboard.routeLoader'
-)
-
-export const navigationAtom = requiredAtom<Navigation<PreparedRoute>>(
-  'dashboard.navigation'
-)
+export const navigationAtom = atom(get => {
+  const history = get(optionsAtom).history ?? createBrowserHistory()
+  return createNavigation<PreparedRoute>({
+    history,
+    allow: async (_route, {get, set, signal}) => {
+      const page = get(pageAtom)
+      if (signal.aborted) return false
+      if (page.type !== 'entry') return true
+      return set(page.entry.needsBlock, signal)
+    },
+    prepare: async (route, {get, signal}) => {
+      return loadRoute(get, route, signal)
+    }
+  })
+})
 
 export const navigationAtoms: Navigation<PreparedRoute> = {
   route: atom(
@@ -63,7 +72,13 @@ function loadRoute(
   route: Parameters<RouteLoader>[1],
   signal: AbortSignal
 ) {
-  return get(routeLoaderAtom)(get, route, signal)
+  return createRouteLoader({
+    config: configAtom,
+    policy: policyResourceAtom,
+    canManageMembers: canManageMembersAtom,
+    workspace: workspaceAtoms,
+    entry: entryAtoms
+  })(get, route, signal)
 }
 
 export const initialPageAtom = atom(async get =>
@@ -112,23 +127,6 @@ export const refreshPageForAtom = atom(
     await set(reloadPageAtom)
   }
 )
-
-export function createDashboardNavigation(
-  history: RouteHistory
-): Navigation<PreparedRoute> {
-  return createNavigation<PreparedRoute>({
-    history,
-    allow: async (_route, {get, set, signal}) => {
-      const page = get(pageAtom)
-      if (signal.aborted) return false
-      if (page.type !== 'entry') return true
-      return set(page.entry.needsBlock, signal)
-    },
-    prepare: async (route, {get, signal}) => {
-      return loadRoute(get, route, signal)
-    }
-  })
-}
 
 export const workspaceSettingsAtom = dispense((key: string) =>
   atom(get => {
@@ -249,7 +247,7 @@ export const focusedAtom = atom((get): FocusedItem | Promise<FocusedItem> => {
   return focusedRoot()
 })
 
-export {themeAtom} from '../user.js'
+export {themeAtom} from './user.js'
 
 export interface EmptyPageData {
   type: 'empty'

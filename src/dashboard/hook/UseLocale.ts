@@ -1,5 +1,5 @@
 import {atom, useAtomValue} from 'jotai'
-import {currentRootAtom} from '../atoms/workspace.js'
+import {currentRootAtom} from '../atoms/config.js'
 
 export function useLocale(): string | null {
   const root = useAtomValue(currentRootAtom)

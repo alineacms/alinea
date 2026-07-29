@@ -32,16 +32,13 @@ import {
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
 import type {DashboardCreateEntryRequest} from '../../atoms/dashboard.js'
 import {ReactiveNode} from '../../atoms/entry/editor.js'
-import {entryAtoms} from '../../atoms/entry/index.js'
+import {entryAtoms} from '../../atoms/entry.js'
 import type {ExplorerLocation} from '../../atoms/explorer.js'
-import {graphAtom} from '../../atoms/graph/index.js'
-import {routeAtom} from '../../atoms/routing/index.js'
+import {graphAtom} from '../../atoms/graph.js'
+import {routeAtom} from '../../atoms/routing.js'
 import {policyAtom, userAtom} from '../../atoms/user.js'
-import {
-  selectedRootAtom,
-  selectedWorkspaceAtom
-} from '../../atoms/routing/index.js'
-import {configAtom, workspaceAtoms} from '../../atoms/workspace.js'
+import {selectedRootAtom, selectedWorkspaceAtom} from '../../atoms/routing.js'
+import {configAtom, workspaceAtoms} from '../../atoms/config.js'
 import {NodeEditor} from '../Editor.js'
 import {
   DashboardModalContent,

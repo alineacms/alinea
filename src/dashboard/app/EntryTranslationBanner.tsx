@@ -1,7 +1,7 @@
 import {Select, SelectItem, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue} from 'jotai'
-import type {EntryDataAtoms} from '../atoms/entry/index.js'
+import type {EntryDataAtoms} from '../atoms/entry.js'
 import type {EntryPageData} from '../atoms/entry/load.js'
 import css from './EntryTranslationBanner.module.css'
 

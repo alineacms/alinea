@@ -15,7 +15,7 @@ import {
 } from './hooks.js'
 import {createDashboard} from './atoms/dashboard.js'
 import {entryRevisionAtom} from './atoms/entry/load.js'
-import {configAtom} from './atoms/workspace.js'
+import {configAtom} from './atoms/config.js'
 
 afterEach(cleanup)
 

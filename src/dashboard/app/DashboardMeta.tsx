@@ -3,13 +3,13 @@ import {atom, useAtomValue} from 'jotai'
 import type {ComponentType} from 'react'
 import {useMemo} from 'react'
 import {renderToString} from 'react-dom/server'
-import {focusedAtom, routeAtom} from '../atoms/routing/index.js'
-import {keepPrevious} from '../atoms/utils.js'
-import {currentWorkspaceAtom} from '../atoms/workspace.js'
+import {focusedAtom, routeAtom} from '../atoms/routing.js'
+import {swr} from '../atoms/utils.js'
+import {currentWorkspaceAtom} from '../atoms/config.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {LogoShape} from './LogoShape.js'
 
-export const dashboardTitleAtom = keepPrevious(
+export const dashboardTitleAtom = swr(
   atom(async get => {
     const route = get(routeAtom)
     if (route.page === 'users') return 'Users'

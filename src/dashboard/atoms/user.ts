@@ -6,11 +6,10 @@ import {localUser, type User} from '#/core/User.js'
 import {atom} from 'jotai'
 import {atomWithStorage, unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
-import {graphAtom, shaAtom} from './graph/index.js'
+import {graphAtom, shaAtom} from './graph.js'
 import type {RouteHistory} from './routing/history.js'
-import {reloadPageAtom} from './routing/index.js'
-import {keepPrevious, requiredAtom, withPending} from './utils.js'
-import {configAtom} from './workspace.js'
+import {swr, requiredAtom, withPending} from './utils.js'
+import {configAtom} from './config.js'
 
 export interface DashboardOptions {
   alineaDev?: boolean
@@ -174,7 +173,7 @@ export const authAtom = Object.assign(
   }
 )
 
-export const userAtom = keepPrevious(
+export const userAtom = swr(
   atom(async get => {
     const override = get(userOverrideAtom)
     if (override !== undefined) return override
@@ -191,13 +190,12 @@ export const userAtom = keepPrevious(
 
 export const currentUserAtom = unwrap(userAtom)
 
-export const setUserRolesAtom = atom(
+export const updateUserRolesAtom = atom(
   null,
   async (get, set, roles: Array<string>) => {
     const user = await get(userAtom)
     if (!user) return
     set(userOverrideAtom, {...user, roles})
-    await set(reloadPageAtom)
   }
 )
 

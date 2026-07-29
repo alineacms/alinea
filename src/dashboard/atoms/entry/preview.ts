@@ -1,6 +1,5 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
-import type {LocalConnection} from '#/core/Connection.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -10,17 +9,19 @@ import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {atom} from 'jotai'
-import {shaAtom} from '../graph/index.js'
+import {shaAtom} from '../graph.js'
 import {clientAtom} from '../user.js'
-import {debounce, dispense, requiredAtom} from '../utils.js'
-import {configAtom} from '../workspace.js'
-import type {EntryDataAtoms} from './index.js'
+import {debounce, dispense} from '../utils.js'
+import {configAtom} from '../config.js'
+import type {EntryDataAtoms} from '../entry.js'
 
 const decoder = new TextDecoder()
 
-export const previewTokenRequestsAtom = requiredAtom<
-  Map<string, Promise<string>>
->('dashboard.previewTokenRequests')
+export const previewTokenAtom = atom(async get => {
+  const client = get(clientAtom)
+  if (typeof client.previewToken !== 'function') return undefined
+  return client.previewToken()
+})
 
 export const previewMetadataAtom = atom<PreviewMetadata | undefined>(undefined)
 
@@ -38,20 +39,6 @@ export const markPreviewSessionReadyAtom = atom(
     set(readyPreviewOriginsAtom, new Set(current).add(origin))
   }
 )
-
-export function requestPreviewSessionToken(
-  requests: Map<string, Promise<string>>,
-  origin: string,
-  client: Pick<LocalConnection, 'previewToken'>
-) {
-  const current = requests.get(origin)
-  if (current) return current
-  const request = client.previewToken().finally(() => {
-    if (requests.get(origin) === request) requests.delete(origin)
-  })
-  requests.set(origin, request)
-  return request
-}
 
 export function createEntryPreviewAtoms(entry: EntryDataAtoms) {
   const preview = atom(get => {
@@ -165,11 +152,8 @@ export function createEntryPreviewAtoms(entry: EntryDataAtoms) {
         if (get(previewSessionOriginsAtom).has(origin))
           return new URL(activeVersion.url, origin).toString()
 
-        const previewToken = await requestPreviewSessionToken(
-          get(previewTokenRequestsAtom),
-          origin,
-          client
-        )
+        const previewToken = await get(previewTokenAtom)
+        if (!previewToken) return undefined
         base.searchParams.set('preview', previewToken)
         base.searchParams.set('returnTo', activeVersion.url)
         return base.toString()

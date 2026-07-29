@@ -1,8 +1,8 @@
 import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore} from 'jotai'
-import {eventsAtom, graphAtom, shaAtom, syncAtom} from './index.js'
-import {createMutationQueueState} from './queue.js'
+import {eventsAtom, graphAtom, shaAtom, syncAtom} from './graph.js'
+import {createMutationQueueState} from './graph/queue.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reads the indexed content hash without synchronizing the graph', async () => {
