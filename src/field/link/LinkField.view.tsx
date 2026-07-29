@@ -66,10 +66,11 @@ import {
   selectedRootAtom,
   selectedWorkspaceAtom
 } from '#/dashboard/atoms/routing.js'
+import {graphAtom} from '#/dashboard/atoms/graph.js'
 import {selectedMediaRootAtom} from '#/dashboard/atoms/config.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
-import type {EntryPickerOptions} from '#/picker/entry.js'
+import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -507,10 +508,10 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
-  const currentEntry = useAtomValue(currentEntryAtom)
-  const selectedMediaRoot = useAtomValue(selectedMediaRootAtom)
-  const selectedRoot = useAtomValue(selectedRootAtom)
-  const selectedWorkspace = useAtomValue(selectedWorkspaceAtom)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition =
+    typeof options.condition === 'function' ? undefined : options.condition
+  const {location, pickingChildren} = useEntryPickerLocation(options, type)
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -533,29 +534,6 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
-  const childLocation =
-    options.pickChildren && currentEntry
-      ? {
-          workspace: currentEntry.workspace,
-          root: currentEntry.root,
-          parentId: currentEntry.id
-        }
-      : undefined
-  const pickingChildren = Boolean(childLocation)
-  const fallbackRoot =
-    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
-  const fallbackLocation =
-    selectedWorkspace && fallbackRoot
-      ? {workspace: selectedWorkspace, root: fallbackRoot}
-      : undefined
-  const location = childLocation
-    ? childLocation
-    : typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
@@ -589,6 +567,7 @@ function LinkPickerAction({
         </Button>
         <ImagePicker
           {...pickerProps}
+          key={entryPickerLocationKey(location)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -606,7 +585,7 @@ function LinkPickerAction({
       >
         {children}
       </Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker {...pickerProps} key={entryPickerLocationKey(location)} />
     </DialogTrigger>
   )
 }
@@ -621,10 +600,10 @@ function LinkPickerDialog({
   type,
   value
 }: LinkPickerDialogProps) {
-  const currentEntry = useAtomValue(currentEntryAtom)
-  const selectedMediaRoot = useAtomValue(selectedMediaRootAtom)
-  const selectedRoot = useAtomValue(selectedRootAtom)
-  const selectedWorkspace = useAtomValue(selectedWorkspaceAtom)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const condition =
+    typeof options.condition === 'function' ? undefined : options.condition
+  const {location, pickingChildren} = useEntryPickerLocation(options, type)
 
   function handlePick(link: LinkFieldRow) {
     onPick(link)
@@ -644,29 +623,6 @@ function LinkPickerDialog({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
-  const childLocation =
-    options.pickChildren && currentEntry
-      ? {
-          workspace: currentEntry.workspace,
-          root: currentEntry.root,
-          parentId: currentEntry.id
-        }
-      : undefined
-  const pickingChildren = Boolean(childLocation)
-  const fallbackRoot =
-    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
-  const fallbackLocation =
-    selectedWorkspace && fallbackRoot
-      ? {workspace: selectedWorkspace, root: fallbackRoot}
-      : undefined
-  const location = childLocation
-    ? childLocation
-    : typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: ExplorerOptions = {
     condition,
@@ -695,6 +651,7 @@ function LinkPickerDialog({
         <Button style={{display: 'none'}}>Edit link</Button>
         <ImagePicker
           {...pickerProps}
+          key={entryPickerLocationKey(location)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -703,9 +660,73 @@ function LinkPickerDialog({
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Edit link</Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker {...pickerProps} key={entryPickerLocationKey(location)} />
     </DialogTrigger>
   )
+}
+
+interface EntryPickerLocation {
+  location: EditorLocation | undefined
+  pickingChildren: boolean
+}
+
+function useEntryPickerLocation(
+  options: Partial<EntryPickerOptions>,
+  type: PickerType
+): EntryPickerLocation {
+  const pickerLocationAtom = useMemo(() => {
+    if (type === 'url')
+      return atom<EntryPickerLocation>({
+        location: undefined,
+        pickingChildren: false
+      })
+    const resolveLocation = options.location
+    const configuredLocationAtom =
+      typeof resolveLocation === 'function'
+        ? unwrap(
+            atom(async get => {
+              const entry = get(currentEntryAtom)
+              if (!entry) return undefined
+              try {
+                return await resolveLocation({entry, graph: get(graphAtom)})
+              } catch (error) {
+                console.error('Failed to resolve entry picker location', error)
+                return undefined
+              }
+            }),
+            previous => previous
+          )
+        : atom(resolveLocation)
+    return atom(get => {
+      const entry = get(currentEntryAtom)
+      if (options.pickChildren && entry)
+        return {
+          location: {
+            workspace: entry.workspace,
+            root: entry.root,
+            parentId: entry.id
+          },
+          pickingChildren: true
+        }
+      const configuredLocation = get(configuredLocationAtom)
+      if (configuredLocation)
+        return {location: configuredLocation, pickingChildren: false}
+      const workspace = get(selectedWorkspaceAtom)
+      const root =
+        type === 'file' || type === 'image'
+          ? get(selectedMediaRootAtom)
+          : get(selectedRootAtom)
+      return {
+        location: workspace && root ? {workspace, root} : undefined,
+        pickingChildren: false
+      }
+    })
+  }, [options.location, options.pickChildren, type])
+  return useAtomValue(pickerLocationAtom)
+}
+
+function entryPickerLocationKey(location: EditorLocation | undefined): string {
+  return `${location?.workspace}:${location?.root}:${location?.parentId}`
 }
 
 function externalLinkValue(

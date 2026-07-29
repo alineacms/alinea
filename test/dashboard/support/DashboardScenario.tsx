@@ -3,24 +3,53 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
-import {Config} from '#/index.js'
-import {DashboardTestPage} from '#test/DashboardFixture.js'
+import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {views} from '#/field/views.js'
 import {use, useState} from 'react'
-import {dashboardScenarioIds} from './DashboardScenarioData.js'
+import {
+  dashboardLinkScenarioIds,
+  dashboardScenarioIds
+} from './DashboardScenarioData.js'
+
+const ScenarioPage = Config.document('Page', {
+  contains: ['Page'],
+  fields: {
+    title: Field.text('Title'),
+    relatedPage: Field.entry('Related page', {
+      async location({entry, graph}) {
+        const folder = await graph.get({
+          id: dashboardLinkScenarioIds.referenceFolder,
+          workspace: entry.workspace === 'main' ? 'references' : 'main'
+        })
+        return {
+          workspace: folder._workspace,
+          root: folder._root,
+          parentId: folder._id
+        }
+      }
+    })
+  }
+})
 
 const main = Config.workspace('Main', {
-  source: '.',
+  source: 'main',
   roots: {
     pages: Config.root('Pages', {contains: ['Page']})
   }
 })
 
+const references = Config.workspace('References', {
+  source: 'references',
+  roots: {
+    library: Config.root('Reference library', {contains: ['Page']})
+  }
+})
+
 const config = Config.create({
   enableDrafts: true,
-  schema: {Page: DashboardTestPage},
-  workspaces: {main}
+  schema: {Page: ScenarioPage},
+  workspaces: {main, references}
 })
 
 interface DashboardScenarioState {
@@ -48,24 +77,47 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
   await db.sync()
   await db.create({
     id: dashboardScenarioIds.alpha,
-    type: DashboardTestPage,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
     set: {title: 'Alpha'}
   })
   await db.create({
     id: dashboardScenarioIds.beta,
-    type: DashboardTestPage,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
     set: {title: 'Beta'}
   })
   await db.create({
     id: dashboardScenarioIds.folder,
-    type: DashboardTestPage,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
     set: {title: 'Folder'}
   })
   await db.create({
     id: dashboardScenarioIds.child,
-    type: DashboardTestPage,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
     parentId: dashboardScenarioIds.folder,
     set: {title: 'Child'}
+  })
+  await db.create({
+    id: dashboardLinkScenarioIds.referenceFolder,
+    type: ScenarioPage,
+    workspace: 'references',
+    root: 'library',
+    set: {title: 'Reference folder'}
+  })
+  await db.create({
+    id: dashboardLinkScenarioIds.referenceTarget,
+    type: ScenarioPage,
+    workspace: 'references',
+    root: 'library',
+    parentId: dashboardLinkScenarioIds.referenceFolder,
+    set: {title: 'Reference target'}
   })
   const baseClient = createTestConnection(db, {users})
   const client: LocalConnection = {
