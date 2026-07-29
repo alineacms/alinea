@@ -25,6 +25,7 @@ import {
 } from '#/components.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
+import type {Filter} from '#/core/Filter.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
@@ -509,8 +510,7 @@ function LinkPickerAction({
   value
 }: LinkPickerActionProps) {
   const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
+  const condition = useEntryPickerCondition(options, type)
   const {location, pickingChildren} = useEntryPickerLocation(options, type)
   if (type === 'url') {
     return (
@@ -567,7 +567,7 @@ function LinkPickerAction({
         </Button>
         <ImagePicker
           {...pickerProps}
-          key={entryPickerLocationKey(location)}
+          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -585,7 +585,10 @@ function LinkPickerAction({
       >
         {children}
       </Button>
-      <LinkPicker {...pickerProps} key={entryPickerLocationKey(location)} />
+      <LinkPicker
+        {...pickerProps}
+        key={entryPickerOptionsKey(location, condition)}
+      />
     </DialogTrigger>
   )
 }
@@ -601,8 +604,7 @@ function LinkPickerDialog({
   value
 }: LinkPickerDialogProps) {
   const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
+  const condition = useEntryPickerCondition(options, type)
   const {location, pickingChildren} = useEntryPickerLocation(options, type)
 
   function handlePick(link: LinkFieldRow) {
@@ -651,7 +653,7 @@ function LinkPickerDialog({
         <Button style={{display: 'none'}}>Edit link</Button>
         <ImagePicker
           {...pickerProps}
-          key={entryPickerLocationKey(location)}
+          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -660,7 +662,10 @@ function LinkPickerDialog({
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Edit link</Button>
-      <LinkPicker {...pickerProps} key={entryPickerLocationKey(location)} />
+      <LinkPicker
+        {...pickerProps}
+        key={entryPickerOptionsKey(location, condition)}
+      />
     </DialogTrigger>
   )
 }
@@ -725,8 +730,36 @@ function useEntryPickerLocation(
   return useAtomValue(pickerLocationAtom)
 }
 
-function entryPickerLocationKey(location: EditorLocation | undefined): string {
-  return `${location?.workspace}:${location?.root}:${location?.parentId}`
+function useEntryPickerCondition(
+  options: Partial<EntryPickerOptions>,
+  type: PickerType
+): Filter | undefined {
+  const conditionAtom = useMemo(() => {
+    if (type === 'url') return atom<Filter | undefined>(undefined)
+    const resolveCondition = options.condition
+    if (typeof resolveCondition !== 'function') return atom(resolveCondition)
+    return unwrap(
+      atom(async get => {
+        const entry = get(currentEntryAtom)
+        if (!entry) return undefined
+        try {
+          return await resolveCondition({entry, graph: get(graphAtom)})
+        } catch (error) {
+          console.error('Failed to resolve entry picker condition', error)
+          return undefined
+        }
+      }),
+      previous => previous
+    )
+  }, [options.condition, type])
+  return useAtomValue(conditionAtom)
+}
+
+function entryPickerOptionsKey(
+  location: EditorLocation | undefined,
+  condition: Filter | undefined
+): string {
+  return JSON.stringify([location ?? null, condition ?? null])
 }
 
 function externalLinkValue(
