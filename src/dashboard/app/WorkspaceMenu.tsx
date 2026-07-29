@@ -9,15 +9,11 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
+import {IcRoundAdd} from 'alinea/dashboard/icons'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
-import {
-  IcOutlineSettings,
-  IcRoundSearch,
-  IcRoundUnfoldMore,
-  MaterialSymbolsEditSquareOutlineRounded
-} from '../icons.js'
+import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {useDashboard} from '../store.js'
 import type {
   Dashboard,
@@ -255,11 +251,7 @@ function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
   if (!canCreate) return null
   return (
     <DialogTrigger>
-      <Button
-        size="icon"
-        icon={MaterialSymbolsEditSquareOutlineRounded}
-        aria-label="Create entry"
-      />
+      <Button size="icon" icon={IcRoundAdd} aria-label="Create entry" />
       <DashboardModal>
         <CreateEntry />
       </DashboardModal>
