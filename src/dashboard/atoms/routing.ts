@@ -2,7 +2,7 @@ import type {Config} from '#/core/Config.js'
 import {getWorkspace} from '#/core/Internal.js'
 import type {Policy} from '#/core/Role.js'
 import {assert} from '#/core/util/Assert.js'
-import {atom, type Atom, type Getter} from 'jotai'
+import {atom, type Atom, type Getter, type Setter} from 'jotai'
 import type {Route} from '../DashboardNav.js'
 import {type EntryDataAtoms, type EntryAtoms, entryAtoms} from './entry.js'
 import {
@@ -14,13 +14,11 @@ import {
   type ExplorerAtoms,
   type ExplorerPageData,
   loadEntryData,
-  loadExplorerPage,
-  loadTree
+  loadExplorerPage
 } from './explorer.js'
 import {canManageMembersAtom, optionsAtom, policyResourceAtom} from './user.js'
 import {
   configAtom,
-  currentWorkspaceAtom,
   type RootAtoms,
   type WorkspaceAtoms,
   workspaceAtoms,
@@ -39,32 +37,8 @@ export const navigationAtom = atom(get => {
       if (page.type !== 'entry') return true
       return set(page.entry.needsBlock, signal)
     },
-    prepare: async (route, {get, set, signal}) => {
-      const prepared = await loadRoute(get, route, signal)
-      signal.throwIfAborted()
-      let treeRoot = 'root' in prepared ? prepared.root : undefined
-      if (route.entry) {
-        const {data} = get(entryAtoms(route.entry).data)
-        if (data) {
-          const entryData = get(data.entryData)
-          const tree = workspaceAtoms(entryData.workspace).tree
-          treeRoot = get(data.root)
-          const expanded = new Set(get(tree.expandedKeys))
-          for (const parent of entryData.parents) expanded.add(parent.id)
-          set(tree.expandedKeys, expanded)
-        }
-      }
-      if (treeRoot) {
-        await treeRoot.workspace.tree.prepareSnapshot(
-          get,
-          set,
-          treeRoot,
-          routeLocale(get, treeRoot, route.locale)
-        )
-        signal.throwIfAborted()
-      }
-      return prepared
-    }
+    prepare: (route, {get, set, signal}) =>
+      prepareDashboardRoute(get, set, route, signal)
   })
 })
 
@@ -78,9 +52,7 @@ export const navigationAtoms: Navigation<PreparedRoute> = {
     get => get(get(navigationAtom).prepared),
     (get, set, prepared) => set(get(navigationAtom).prepared, prepared)
   ),
-  refresh: atom(null, (get, set, route, prepared) =>
-    set(get(navigationAtom).refresh, route, prepared)
-  ),
+  refresh: atom(null, (get, set) => set(get(navigationAtom).refresh)),
   pending: atom(get => get(get(navigationAtom).pending)),
   error: atom(get => get(get(navigationAtom).error))
 }
@@ -98,11 +70,7 @@ function routeLocale(
   return i18n?.locales[0] ?? null
 }
 
-function loadRoute(
-  get: Getter,
-  route: Parameters<RouteLoader>[1],
-  signal: AbortSignal
-) {
+function loadRoute(get: Getter, route: Route, signal: AbortSignal) {
   return createRouteLoader({
     config: configAtom,
     policy: policyResourceAtom,
@@ -112,9 +80,36 @@ function loadRoute(
   })(get, route, signal)
 }
 
-const initialPageAtom = atom(async get =>
-  loadRoute(get, get(routeAtom), new AbortController().signal)
-)
+async function prepareDashboardRoute(
+  get: Getter,
+  set: Setter,
+  route: Route,
+  signal: AbortSignal
+): Promise<PreparedRoute> {
+  const page = await loadRoute(get, route, signal)
+  signal.throwIfAborted()
+  let treeRoot = 'root' in page ? page.root : undefined
+  let reveal: Array<string> = []
+  if (route.entry) {
+    const {data} = get(entryAtoms(route.entry).data)
+    if (data) {
+      const entryData = get(data.entryData)
+      treeRoot = get(data.root)
+      reveal = entryData.parents.map(parent => parent.id)
+    }
+  }
+  if (treeRoot) {
+    await treeRoot.workspace.tree.prepare(
+      get,
+      set,
+      treeRoot,
+      routeLocale(get, treeRoot, route.locale),
+      reveal
+    )
+    signal.throwIfAborted()
+  }
+  return page
+}
 
 export const pageAtom = atom(get => {
   const page = get(navigationAtoms.prepared)
@@ -127,47 +122,7 @@ export const currentEntryAtom = atom(get => {
   return page.type === 'entry' ? page.currentEntry : null
 })
 
-const routeLoadSequenceAtom = atom(0)
-const routeLoadControllerAtom = atom<AbortController>()
-
-export const reloadPageAtom = atom(null, async (get, set) => {
-  const sequence = get(routeLoadSequenceAtom) + 1
-  set(routeLoadSequenceAtom, sequence)
-  get(routeLoadControllerAtom)?.abort()
-  const controller = new AbortController()
-  set(routeLoadControllerAtom, controller)
-  const route = get(routeAtom)
-  try {
-    const page = await loadRoute(get, route, controller.signal)
-    let treeRoot = 'root' in page ? page.root : undefined
-    if (route.entry) {
-      const {data} = get(entryAtoms(route.entry).data)
-      if (data) {
-        const entryData = get(data.entryData)
-        const tree = workspaceAtoms(entryData.workspace).tree
-        treeRoot = get(data.root)
-        const expanded = new Set(get(tree.expandedKeys))
-        for (const parent of entryData.parents) expanded.add(parent.id)
-        set(tree.expandedKeys, expanded)
-      }
-    }
-    if (treeRoot)
-      await treeRoot.workspace.tree.prepareSnapshot(
-        get,
-        set,
-        treeRoot,
-        routeLocale(get, treeRoot, route.locale)
-      )
-    controller.signal.throwIfAborted()
-    if (sequence === get(routeLoadSequenceAtom))
-      set(navigationAtoms.refresh, route, page)
-  } catch (error) {
-    if (!controller.signal.aborted) throw error
-  } finally {
-    if (get(routeLoadControllerAtom) === controller)
-      set(routeLoadControllerAtom, undefined)
-  }
-})
+export const refreshCurrentRouteAtom = navigationAtoms.refresh
 
 export const refreshPageForAtom = atom(
   null,
@@ -175,7 +130,7 @@ export const refreshPageForAtom = atom(
     const page = get(pageAtom)
     if (page.type !== 'explorer') return
     if (page.root.explorer !== explorer) return
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   }
 )
 
@@ -210,43 +165,23 @@ export type FocusedItem =
   | {missingRoot: string; root: RootAtoms}
   | null
 
-const initialContentLoadedAtom = atom(false)
-
-const initialContentResourceAtom = atom<Promise<PreparedRoute>>(async get => {
-  if (get(initialContentLoadedAtom)) return get(pageAtom)
-  const page = await get(initialPageAtom)
-  const workspace = get(currentWorkspaceAtom)
-  if (!workspace) return page
-  const roots = get(workspace.roots)
-  if (roots.length === 0) return page
-  await get(workspace.tree.items)
-  return page
-})
+const initialContentResourceAtom = atom<Promise<PreparedRoute>>()
 
 export const prepareInitialContentAtom = atom(null, async (get, set) => {
-  const page = await get(initialContentResourceAtom)
+  if (get(navigationAtoms.prepared)) return
   const route = get(routeAtom)
-  let treeRoot = 'root' in page ? page.root : undefined
-  if (route.entry) {
-    const {data} = get(entryAtoms(route.entry).data)
-    if (data) {
-      const entryData = get(data.entryData)
-      const tree = workspaceAtoms(entryData.workspace).tree
-      treeRoot = get(data.root)
-      const expanded = new Set(get(tree.expandedKeys))
-      for (const parent of entryData.parents) expanded.add(parent.id)
-      set(tree.expandedKeys, expanded)
-    }
-  }
-  if (treeRoot)
-    await treeRoot.workspace.tree.prepareSnapshot(
+  let resource = get(initialContentResourceAtom)
+  if (!resource) {
+    resource = prepareDashboardRoute(
       get,
       set,
-      treeRoot,
-      routeLocale(get, treeRoot, route.locale)
+      route,
+      new AbortController().signal
     )
+    set(initialContentResourceAtom, resource)
+  }
+  const page = await resource
   set(navigationAtoms.prepared, page)
-  set(initialContentLoadedAtom, true)
 })
 
 export const focusedAtom = atom((get): FocusedItem | Promise<FocusedItem> => {
@@ -414,8 +349,7 @@ export function createRouteLoader(options: RouteLoaderOptions) {
     if (!route.entry && get(root.view))
       return {type: 'root', root, canManageMembers}
 
-    const rootIds = await get(root.childrenFor(locale))
-    await loadTree(get, options, workspace, rootIds, locale, [], signal)
+    await get(root.childrenFor(locale))
     signal.throwIfAborted()
 
     const location = {workspace: workspaceKey, root: rootKey}
@@ -436,16 +370,6 @@ export function createRouteLoader(options: RouteLoaderOptions) {
         canManageMembers
       }
 
-    const parentIds = get(entryData.entryData).parents.map(parent => parent.id)
-    await loadTree(
-      get,
-      options,
-      workspace,
-      rootIds,
-      locale,
-      [...parentIds, route.entry],
-      signal
-    )
     if (get(entryData.view) === 'edit')
       return {
         ...(await (options.loadEntry ?? loadEntryPage)(get, entryData, locale)),

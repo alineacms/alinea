@@ -30,9 +30,9 @@ import {
   currentRootAtom,
   currentWorkspaceAtom,
   TreeAtoms,
-  type WorkspaceAtoms,
   type RootAtoms,
-  type TreeSnapshot
+  type TreeSnapshot,
+  type WorkspaceAtoms
 } from '../atoms/config.js'
 import {navigationAtoms, routeAtom} from '../atoms/routing.js'
 import css from './SidebarTree.module.css'
@@ -55,6 +55,7 @@ export interface SidebarTreeExplorerProps {
 
 interface SidebarItemProps {
   item: EntryAtoms
+  root: RootAtoms
   selectedKey: Key | undefined
   snapshot: TreeSnapshot
   tree: TreeAtoms
@@ -111,19 +112,18 @@ function affectedStatus(
 
 const SidebarItem = memo(function SidebarItem({
   item,
+  root,
   selectedKey,
   snapshot,
   tree
 }: SidebarItemProps) {
   const {data, pending} = useAtomValue(item.data)
-  // The snapshot loads entries before publishing them. If an entry is
-  // refreshed through another path, keep it out of the collection until it is
-  // complete instead of replacing the navigation item with a placeholder.
   if (pending || !data) return null
   return (
     <SidebarLoadedItem
       item={item}
       data={data}
+      root={root}
       selectedKey={selectedKey}
       snapshot={snapshot}
       tree={tree}
@@ -131,24 +131,21 @@ const SidebarItem = memo(function SidebarItem({
   )
 })
 
-interface SidebarLoadedItemProps {
-  item: EntryAtoms
+interface SidebarLoadedItemProps extends SidebarItemProps {
   data: EntryDataAtoms
-  selectedKey: Key | undefined
-  snapshot: TreeSnapshot
-  tree: TreeAtoms
 }
 
 const SidebarLoadedItem = memo(function SidebarLoadedItem({
   item,
   data,
+  root,
   selectedKey,
   snapshot,
   tree
 }: SidebarLoadedItemProps) {
   const label = useAtomValue(data.label)
   const status = useAtomValue(data.treeStatus)
-  const expand = useSetAtom(tree.expand)
+  const expand = useSetAtom(tree.expand(root))
   const selectedAncestorStatusAtom = useMemo(
     () =>
       atom((get): DashboardEntryTreeStatus | undefined => {
@@ -208,6 +205,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
           {child => (
             <SidebarItem
               item={child}
+              root={root}
               selectedKey={selectedKey}
               snapshot={snapshot}
               tree={tree}
@@ -253,7 +251,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
     new Set()
   )
   const expandedKeys = useAtomValue(tree.expandedKeys)
-  const setExpandedKeys = useSetAtom(tree.setExpandedKeys)
+  const setExpandedKeys = useSetAtom(tree.setExpandedKeys(root))
   const snapshot = useAtomValue(tree.snapshot(root))
   const dragDisabled = useAtomValue(tree.dragDisabled)
   const onInsert = useSetAtom(tree.onInsert)
@@ -298,6 +296,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
           {item => (
             <SidebarItem
               item={item}
+              root={root}
               selectedKey={selectedKey}
               snapshot={snapshot}
               tree={tree}

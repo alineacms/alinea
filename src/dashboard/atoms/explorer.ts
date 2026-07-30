@@ -25,12 +25,7 @@ import {
   swr,
   uploadSizeError
 } from './utils.js'
-import {
-  configAtom,
-  type RootAtoms,
-  type WorkspaceAtoms,
-  workspaceAtoms
-} from './config.js'
+import {configAtom, type RootAtoms, workspaceAtoms} from './config.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 
@@ -696,10 +691,6 @@ export interface PreparedExplorerPage {
 
 export type ExplorerPageData = PreparedExplorerPage
 
-export interface EntryLookup {
-  entry(id: string): EntryAtoms
-}
-
 export async function loadEntryData(get: Getter, entry: EntryAtoms) {
   // Prime the synchronous state atom before awaiting its async source. Reading
   // readyState alone loads the data but leaves the UI-facing unwrap pending.
@@ -723,35 +714,6 @@ export async function loadEntries(
     })
   )
   signal?.throwIfAborted()
-}
-
-export async function loadTree(
-  get: Getter,
-  lookup: EntryLookup,
-  workspace: WorkspaceAtoms,
-  rootIds: Array<string>,
-  locale: string | null,
-  forcedExpanded: Array<string>,
-  signal: AbortSignal
-) {
-  const expanded = new Set(get(workspace.tree.expandedKeys))
-  for (const id of forcedExpanded) expanded.add(id)
-  const loaded = new Set<string>()
-  async function load(ids: Array<string>): Promise<void> {
-    await Promise.all(
-      ids.map(async id => {
-        if (loaded.has(id)) return
-        loaded.add(id)
-        const entry = lookup.entry(id)
-        const data = await loadEntryData(get, entry)
-        signal.throwIfAborted()
-        if (!data || !expanded.has(id)) return
-        const childIds = await get(data.childrenFor(locale))
-        await load(childIds)
-      })
-    )
-  }
-  await load(rootIds)
 }
 
 export async function loadExplorerPage(

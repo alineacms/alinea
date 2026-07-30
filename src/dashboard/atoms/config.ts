@@ -137,31 +137,22 @@ export class TreeAtoms {
   constructor(private workspace: WorkspaceAtoms) {}
 
   expandedKeys = atom(new Set<Key>())
-  setExpandedKeys = atom(
-    null,
-    async (get, set, next: Set<Key>): Promise<void> => {
-      const current = get(this.expandedKeys)
-      const opening = [...next].filter(key => !current.has(key))
-      await Promise.all(
-        opening.map(async key => {
-          const data = await loadEntryData(get, entryAtoms(String(key)))
-          if (!data) return
-          const childIds = await get(data.children)
-          await Promise.all(
-            childIds.map(id => loadEntryData(get, entryAtoms(id)))
-          )
-        })
-      )
+  setExpandedKeys = dispense((root: RootAtoms) =>
+    atom(null, async (get, set, next: Set<Key>): Promise<void> => {
+      await this.#preloadEntryData(get, root, get(root.selectedLocale), next)
       set(this.expandedKeys, next)
-    }
+      await this.#prepareSnapshot(get, set, root, get(root.selectedLocale))
+    })
   )
-  expand = atom(null, async (get, set, key: Key): Promise<void> => {
-    const expanded = get(this.expandedKeys)
-    if (expanded.has(key)) return
-    const next = new Set(expanded)
-    next.add(key)
-    await set(this.setExpandedKeys, next)
-  })
+  expand = dispense((root: RootAtoms) =>
+    atom(null, async (get, set, key: Key): Promise<void> => {
+      const expanded = get(this.expandedKeys)
+      if (expanded.has(key)) return
+      const next = new Set(expanded)
+      next.add(key)
+      await set(this.setExpandedKeys(root), next)
+    })
+  )
   #snapshotResource = dispense((root: RootAtoms) =>
     dispense((locale: string | null) =>
       atom(async get => {
@@ -218,7 +209,44 @@ export class TreeAtoms {
     atom(get => get(this.#snapshotValue(root)(get(root.selectedLocale))))
   )
 
-  async prepareSnapshot(
+  async prepare(
+    get: Getter,
+    set: Setter,
+    root: RootAtoms,
+    locale: string | null,
+    reveal: Iterable<Key> = []
+  ): Promise<void> {
+    const currentExpanded = get(this.expandedKeys)
+    const expanded = new Set(currentExpanded)
+    for (const key of reveal) expanded.add(key)
+    await this.#preloadEntryData(get, root, locale, expanded)
+    if (expanded.size !== currentExpanded.size) set(this.expandedKeys, expanded)
+    await this.#prepareSnapshot(get, set, root, locale)
+  }
+
+  async #preloadEntryData(
+    get: Getter,
+    root: RootAtoms,
+    locale: string | null,
+    expanded: Set<Key>
+  ): Promise<void> {
+    const rootIds = await get(root.childrenFor(locale))
+    const loaded = new Set<string>()
+    async function load(ids: Array<string>): Promise<void> {
+      await Promise.all(
+        ids.map(async id => {
+          if (loaded.has(id)) return
+          loaded.add(id)
+          const data = await loadEntryData(get, entryAtoms(id))
+          if (!data || !expanded.has(id)) return
+          await load(await get(data.childrenFor(locale)))
+        })
+      )
+    }
+    await load(rootIds)
+  }
+
+  async #prepareSnapshot(
     get: Getter,
     set: Setter,
     root: RootAtoms,
@@ -228,15 +256,6 @@ export class TreeAtoms {
     const snapshot = await resource
     set(this.#preparedSnapshot(root)(locale), {resource, snapshot})
   }
-
-  items = atom(async get => {
-    if (get(selectedWorkspaceAtom) !== this.workspace.key) return []
-    const root = get(selectedRootAtom)
-    if (!root) return []
-    const currentRoot = this.workspace.root(root)
-    const ids = await get(currentRoot.children)
-    return ids.map(entryAtoms)
-  })
 
   // dnd
   acceptedDragTypes = [...dashboardEntryDragTypes]

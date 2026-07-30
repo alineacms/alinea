@@ -36,7 +36,7 @@ import {
 } from './entry/load.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {uploadProgressAtom} from './graph/queue.js'
-import {reloadPageAtom, routeAtom} from './routing.js'
+import {refreshCurrentRouteAtom, routeAtom} from './routing.js'
 import {clientAtom, policyAtom, userAtom} from './user.js'
 import {dispense, swr, uploadSizeError, withPending} from './utils.js'
 import type {
@@ -166,7 +166,7 @@ export class EntryAtoms {
         }
       }
       set(this.#selectedView, view)
-      await set(reloadPageAtom)
+      await set(refreshCurrentRouteAtom)
     }
   )
 }
@@ -340,7 +340,7 @@ export class EntryDataAtoms {
       set(this.#translationSourceLocale, locale)
       set(this.currentlyEditing, undefined)
       set(this.#selection, undefined)
-      await set(reloadPageAtom)
+      await set(refreshCurrentRouteAtom)
     }
   )
 
@@ -372,7 +372,7 @@ export class EntryDataAtoms {
         })
       )
       set(this.#selection, next)
-      await set(reloadPageAtom)
+      await set(refreshCurrentRouteAtom)
     }
   )
 
@@ -758,7 +758,7 @@ export class EntryDataAtoms {
     })
     if (changed) set(node.value, data)
     set(node.commit)
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
@@ -778,7 +778,7 @@ export class EntryDataAtoms {
     })
     if (changed) set(node.value, data)
     set(node.commit)
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   publishDraft = atom(null, async (get, set) => {
@@ -791,7 +791,7 @@ export class EntryDataAtoms {
       locale,
       status: 'draft'
     })
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   discardDraft = atom(null, async (get, set) => {
@@ -804,7 +804,7 @@ export class EntryDataAtoms {
       locale,
       status: 'draft'
     })
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   unpublish = atom(null, async (get, set) => {
@@ -816,7 +816,7 @@ export class EntryDataAtoms {
       id: this.id,
       locale
     })
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   archive = atom(null, async (get, set) => {
@@ -828,7 +828,7 @@ export class EntryDataAtoms {
       id: this.id,
       locale
     })
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   publishArchived = atom(null, async (get, set) => {
@@ -841,7 +841,7 @@ export class EntryDataAtoms {
       locale,
       status: 'archived'
     })
-    await set(reloadPageAtom)
+    await set(refreshCurrentRouteAtom)
   })
 
   deleteEntry = atom(null, async (get, set) => {

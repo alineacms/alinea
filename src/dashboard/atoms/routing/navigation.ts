@@ -12,7 +12,7 @@ export interface Navigation<Prepared = void> {
   route: WritableAtom<Route, [update: RouteUpdate], Promise<boolean>>
   requestedRoute: Atom<Route>
   prepared: WritableAtom<Prepared | undefined, [prepared: Prepared], void>
-  refresh: WritableAtom<null, [route: Route, prepared: Prepared], boolean>
+  refresh: WritableAtom<null, [], Promise<boolean>>
   pending: Atom<PendingNavigation | undefined>
   error: Atom<Error | undefined>
 }
@@ -58,15 +58,19 @@ export function createNavigation<Prepared = void>(
   const error = atom<Error>()
   let sequence = 0
   let active: AbortController | undefined
+  function start() {
+    const id = ++sequence
+    active?.abort()
+    const controller = new AbortController()
+    active = controller
+    return {id, controller}
+  }
 
   const request = Object.assign(
     atom(
       get => get(current).route,
       async (get, set, navigation: NavigationRequest): Promise<boolean> => {
-        const id = ++sequence
-        active?.abort()
-        const controller = new AbortController()
-        active = controller
+        const {id, controller} = start()
         const route =
           navigation.type === 'pop'
             ? navigation.route
@@ -108,6 +112,8 @@ export function createNavigation<Prepared = void>(
           set(requested, undefined)
           set(pending, undefined)
           return false
+        } finally {
+          if (active === controller) active = undefined
         }
       }
     ),
@@ -137,15 +143,33 @@ export function createNavigation<Prepared = void>(
     }
   )
 
-  const refresh = atom(
-    null,
-    (get, set, route: Route, prepared: Prepared): boolean => {
+  const refresh = atom(null, async (get, set): Promise<boolean> => {
+    const {id, controller} = start()
+    const route = get(current).route
+    set(requested, undefined)
+    set(pending, undefined)
+    set(error, undefined)
+    try {
+      const prepared = await options.prepare(route, {
+        get,
+        set,
+        signal: controller.signal
+      })
+      if (controller.signal.aborted || id !== sequence) return false
       const currentNavigation = get(current)
       if (currentNavigation.route !== route) return false
       set(current, {...currentNavigation, prepared})
       return true
+    } catch (cause) {
+      if (controller.signal.aborted || id !== sequence) return false
+      const refreshError =
+        cause instanceof Error ? cause : new Error(String(cause))
+      set(error, refreshError)
+      throw refreshError
+    } finally {
+      if (active === controller) active = undefined
     }
-  )
+  })
 
   return {route, requestedRoute, prepared, refresh, pending, error}
 }

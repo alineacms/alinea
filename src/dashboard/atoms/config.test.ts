@@ -104,19 +104,8 @@ test('tree snapshot exposes children of expanded entries', async () => {
   const tree = workspace.tree
   const root = workspace.root('pages')
 
-  store.set(tree.expandedKeys, new Set([parent._id]))
-  const snapshotAtom = tree.snapshot(root)
-  const snapshot = await new Promise<TreeSnapshot>(resolve => {
-    let unsubscribe = () => {}
-    function readSnapshot() {
-      const current = store.get(snapshotAtom)
-      if (!current.children.has(parent._id)) return
-      unsubscribe()
-      resolve(current)
-    }
-    unsubscribe = store.sub(snapshotAtom, readSnapshot)
-    readSnapshot()
-  })
+  await store.set(tree.setExpandedKeys(root), new Set([parent._id]))
+  const snapshot: TreeSnapshot = store.get(tree.snapshot(root))
 
   expect(snapshot.children.get(parent._id)?.map(entry => entry.id)).toEqual([
     child._id
