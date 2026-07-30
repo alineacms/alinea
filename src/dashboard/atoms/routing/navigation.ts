@@ -10,6 +10,7 @@ export interface PendingNavigation {
 
 export interface Navigation<Prepared = void> {
   route: WritableAtom<Route, [update: RouteUpdate], Promise<boolean>>
+  requestedRoute: Atom<Route>
   prepared: WritableAtom<Prepared | undefined, [prepared: Prepared], void>
   refresh: WritableAtom<null, [route: Route, prepared: Prepared], boolean>
   pending: Atom<PendingNavigation | undefined>
@@ -52,6 +53,7 @@ export function createNavigation<Prepared = void>(
     route: options.history.read(),
     prepared: undefined
   })
+  const requested = atom<PendingNavigation>()
   const pending = atom<PendingNavigation>()
   const error = atom<Error>()
   let sequence = 0
@@ -75,6 +77,7 @@ export function createNavigation<Prepared = void>(
           signal: controller.signal
         } satisfies NavigationContext
 
+        set(requested, {id, route})
         set(pending, undefined)
         set(error, undefined)
         try {
@@ -83,6 +86,7 @@ export function createNavigation<Prepared = void>(
           if (!allowed) {
             if (navigation.type === 'pop')
               options.history.replace(get(current).route)
+            set(requested, undefined)
             return false
           }
 
@@ -91,6 +95,7 @@ export function createNavigation<Prepared = void>(
           if (controller.signal.aborted || id !== sequence) return false
           if (navigation.type === 'push') options.history.push(route)
           set(current, {route, prepared})
+          set(requested, undefined)
           set(pending, undefined)
           return true
         } catch (cause) {
@@ -100,6 +105,7 @@ export function createNavigation<Prepared = void>(
           if (navigation.type === 'pop')
             options.history.replace(get(current).route)
           set(error, navigationError)
+          set(requested, undefined)
           set(pending, undefined)
           return false
         }
@@ -120,6 +126,9 @@ export function createNavigation<Prepared = void>(
       return set(request, {type: 'push', update})
     }
   )
+  const requestedRoute = atom(
+    get => get(requested)?.route ?? get(current).route
+  )
 
   const prepared = atom(
     get => get(current).prepared,
@@ -138,7 +147,7 @@ export function createNavigation<Prepared = void>(
     }
   )
 
-  return {route, prepared, refresh, pending, error}
+  return {route, requestedRoute, prepared, refresh, pending, error}
 }
 
 function routeFromUpdate(update: RouteUpdate): Route {

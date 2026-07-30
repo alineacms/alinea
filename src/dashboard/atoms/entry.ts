@@ -591,13 +591,19 @@ export class EntryDataAtoms {
   })
 
   icon = atom(get => getType(get(this.type)).icon)
+  orderChildrenBy = atom(get => getType(get(this.type)).orderChildrenBy)
 
   childrenFor = dispense((locale: string | null) => {
     return swr(
       atom(async get => {
         const root = get(this.root)
-        const orderChildrenBy = getType(get(this.type)).orderChildrenBy
-        return queryTreeChildren(get, root, this.id, orderChildrenBy, locale)
+        return queryTreeChildren(
+          get,
+          root,
+          this.id,
+          get(this.orderChildrenBy),
+          locale
+        )
       })
     )
   })

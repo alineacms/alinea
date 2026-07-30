@@ -63,18 +63,21 @@ test('keeps the current route until preparation completes', async () => {
   const target: Route = {page: 'entry', entry: 'after'}
 
   const result = store.set(navigation.route, target)
-  await Promise.resolve()
 
+  expect(store.get(navigation.requestedRoute)).toEqual(target)
   expect(store.get(navigation.route)).toEqual({
     page: 'entry',
     entry: 'before'
   })
+  expect(store.get(navigation.pending)).toBeUndefined()
+  await Promise.resolve()
   expect(store.get(navigation.pending)?.route).toEqual(target)
   expect(history.pushed).toEqual([])
 
   preparation.resolve()
   expect(await result).toBe(true)
   expect(store.get(navigation.route)).toEqual(target)
+  expect(store.get(navigation.requestedRoute)).toEqual(target)
   expect(store.get(navigation.pending)).toBeUndefined()
   expect(history.pushed).toEqual([target])
 })
@@ -194,10 +197,15 @@ test('does not prepare a blocked navigation', async () => {
   })
   const store = createStore()
 
-  expect(
-    await store.set(navigation.route, {page: 'entry', entry: 'blocked'})
-  ).toBe(false)
+  const result = store.set(navigation.route, {
+    page: 'entry',
+    entry: 'blocked'
+  })
+  expect(store.get(navigation.requestedRoute).entry).toBe('blocked')
+  expect(store.get(navigation.pending)).toBeUndefined()
+  expect(await result).toBe(false)
   expect(preparations).toBe(0)
+  expect(store.get(navigation.requestedRoute).entry).toBeUndefined()
   expect(store.get(navigation.pending)).toBeUndefined()
 })
 

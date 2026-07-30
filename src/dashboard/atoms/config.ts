@@ -14,7 +14,7 @@ import type {
   DropTarget,
   ItemDropTarget
 } from '@react-types/shared'
-import type {Atom, Getter, WritableAtom} from 'jotai'
+import type {Atom, Getter} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
@@ -34,18 +34,16 @@ import {
   requiredAtom,
   swr
 } from './utils.js'
-import {entryAtoms} from './entry.js'
+import {entryAtoms, type EntryAtoms} from './entry.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {routeAtom} from './routing.js'
 import {policyAtom} from './user.js'
-import {ExplorerAtoms, type ExplorerLocation} from './explorer.js'
+import {
+  ExplorerAtoms,
+  type ExplorerLocation,
+  loadEntryData
+} from './explorer.js'
 import {selectedRootAtom, selectedWorkspaceAtom} from './routing.js'
-
-export type TreeSelection = WritableAtom<
-  Set<Key>,
-  [next: 'all' | Set<Key>],
-  Promise<void>
->
 
 export const configAtom = requiredAtom<Config>('dashboard.config')
 export const viewsAtom = atom<Record<string, ComponentType>>({})
@@ -74,31 +72,6 @@ export class WorkspaceAtoms {
   >
 
   constructor(public key: string) {
-    const treeSelection = atom(
-      get => {
-        const route = get(routeAtom)
-        if (route.workspace && route.workspace !== key) return new Set<Key>()
-        if (route.entry) return new Set<Key>([route.entry])
-        return new Set<Key>()
-      },
-      async (get, set, next: 'all' | Set<Key>) => {
-        if (next === 'all')
-          throw new Error('Selecting all items is not supported')
-        const current = get(routeAtom)
-        const root = get(selectedRootAtom)
-        const selectedKey = next.values().next().value
-        if (!selectedKey) {
-          await set(routeAtom, {workspace: key})
-          return
-        }
-        await set(routeAtom, {
-          workspace: key,
-          root: root ?? undefined,
-          entry: String(selectedKey),
-          locale: current.locale
-        })
-      }
-    )
     this.settings = atom(get => readWorkspace(get, key))
     this.roots = atom(get => {
       const configuredRoots = readWorkspace(get, key).roots
@@ -115,7 +88,7 @@ export class WorkspaceAtoms {
         icon: get(this.root(rootKey).icon)
       }))
     })
-    this.tree = new TreeAtoms(this, treeSelection)
+    this.tree = new TreeAtoms(this)
   }
 }
 
@@ -145,66 +118,76 @@ export const currentRootAtom = atom(get => {
   return workspace.root(root)
 })
 
+export interface TreeSnapshot {
+  items: Array<EntryAtoms>
+  children: ReadonlyMap<string, Array<EntryAtoms>>
+}
+
 export class TreeAtoms {
-  #treeSelection: TreeSelection
-  #syncRouteExpansion: boolean
-  constructor(
-    private workspace: WorkspaceAtoms,
-    treeSelection: TreeSelection,
-    options: {syncRouteExpansion?: boolean} = {}
-  ) {
-    this.#treeSelection = treeSelection
-    this.#syncRouteExpansion = options.syncRouteExpansion ?? true
-  }
+  constructor(private workspace: WorkspaceAtoms) {}
 
-  #routeExpandedKeys = atom(get => {
-    if (!this.#syncRouteExpansion) return new Set<Key>()
-    const route = get(routeAtom)
-    if (!route.entry || route.workspace !== this.workspace.key)
-      return new Set<Key>()
-    const entry = entryAtoms(route.entry)
-    const {data} = get(entry.data)
-    if (!data) return new Set<Key>()
-    return new Set<Key>(get(data.entryData).parents.map(parent => parent.id))
-  })
-
-  expandedKeys = atom(
-    get => {
-      const expandedKeys = get(this.#expandedKeys)
-      const routeExpandedKeys = get(this.#routeExpandedKeys)
-      if (routeExpandedKeys.size === 0) return expandedKeys
-      const merged = new Set(expandedKeys)
-      for (const key of routeExpandedKeys) merged.add(key)
-      return merged
-    },
-    (get, set, next: Set<Key>) => {
-      const current = get(this.#expandedKeys)
-      const routeExpandedKeys = get(this.#routeExpandedKeys)
-      if (routeExpandedKeys.size === 0) {
-        set(this.#expandedKeys, next)
-        return
-      }
-      const manual = new Set<Key>()
-      for (const key of next) {
-        if (!routeExpandedKeys.has(key) || current.has(key)) manual.add(key)
-      }
-      set(this.#expandedKeys, manual)
+  expandedKeys = atom(new Set<Key>())
+  setExpandedKeys = atom(
+    null,
+    async (get, set, next: Set<Key>): Promise<void> => {
+      const current = get(this.expandedKeys)
+      const opening = [...next].filter(key => !current.has(key))
+      await Promise.all(
+        opening.map(async key => {
+          const data = await loadEntryData(get, entryAtoms(String(key)))
+          if (!data) return
+          const childIds = await get(data.children)
+          await Promise.all(
+            childIds.map(id => loadEntryData(get, entryAtoms(id)))
+          )
+        })
+      )
+      set(this.expandedKeys, next)
     }
   )
-  #expandedKeys = atom(new Set<Key>())
-
-  selectedKeys = atom(
-    get => get(this.#treeSelection),
-    async (get, set, next: 'all' | Set<Key>) => {
-      assert(next !== 'all', 'Selecting all items is not supported')
-      const [first] = next
-      await set(this.#treeSelection, next)
-      if (first && get(routeAtom).entry === String(first)) {
-        const expandedKeys = get(this.#expandedKeys)
-        if (!expandedKeys.has(first))
-          set(this.#expandedKeys, new Set(expandedKeys).add(first))
-      }
-    }
+  expand = atom(null, async (get, set, key: Key): Promise<void> => {
+    const expanded = get(this.expandedKeys)
+    if (expanded.has(key)) return
+    const next = new Set(expanded)
+    next.add(key)
+    await set(this.setExpandedKeys, next)
+  })
+  snapshot = dispense((root: RootAtoms) =>
+    swr(
+      atom(async get => {
+        const locale = get(root.selectedLocale)
+        const expanded = get(this.expandedKeys)
+        const rootIds = await queryTreeChildren(
+          get,
+          root,
+          null,
+          get(root.settings).orderChildrenBy,
+          locale
+        )
+        const items = rootIds.map(entryAtoms)
+        const children = new Map<string, Array<EntryAtoms>>()
+        async function loadVisible(entries: Array<EntryAtoms>): Promise<void> {
+          await Promise.all(
+            entries.map(async entry => {
+              const {data} = await get(entry.readyState)
+              if (!data || !get(data.entryData).hasChildren) return
+              const childIds = await queryTreeChildren(
+                get,
+                root,
+                entry.id,
+                get(data.orderChildrenBy),
+                locale
+              )
+              const childEntries = childIds.map(entryAtoms)
+              children.set(entry.id, childEntries)
+              if (expanded.has(entry.id)) await loadVisible(childEntries)
+            })
+          )
+        }
+        await loadVisible(items)
+        return {items, children} satisfies TreeSnapshot
+      })
+    )
   )
 
   items = atom(async get => {
@@ -243,21 +226,21 @@ export class TreeAtoms {
 
   onMove = atom(
     null,
-    async (get, set, event: DroppableCollectionReorderEvent) => {
+    async (get, _set, event: DroppableCollectionReorderEvent) => {
       await this.#moveDraggedKeys(get, event.keys, event.target)
     }
   )
 
   onInsert = atom(
     null,
-    async (get, set, event: DroppableCollectionInsertDropEvent) => {
+    async (get, _set, event: DroppableCollectionInsertDropEvent) => {
       await this.#moveDropItems(get, event.items, event.target)
     }
   )
 
   onItemDrop = atom(
     null,
-    async (get, set, event: DroppableCollectionOnItemDropEvent) => {
+    async (get, _set, event: DroppableCollectionOnItemDropEvent) => {
       await this.#moveDropItems(get, event.items, event.target)
     }
   )
@@ -382,10 +365,11 @@ export class RootAtoms {
                 entry: next.parentId,
                 locale: route.locale
               })
-            set(
-              workspace.tree.expandedKeys,
-              new Set(next.parentId ? [next.parentId] : [])
-            )
+            if (next.parentId) {
+              const expanded = new Set(get(workspace.tree.expandedKeys))
+              expanded.add(next.parentId)
+              set(workspace.tree.expandedKeys, expanded)
+            }
           }
         }
       ),

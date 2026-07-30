@@ -15,6 +15,34 @@ test('navigates between entries and through browser history', async ({
   await expect(app.field('Title')).toHaveValue('Alpha')
 })
 
+test('expands an entry with children when its row is clicked', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+  const folder = tree.getByRole('row', {name: 'Folder', exact: true})
+
+  await folder.click()
+  await expect(
+    tree.getByRole('button', {name: 'Collapse Folder'})
+  ).toBeVisible()
+  await expect(
+    tree.getByRole('row', {name: 'Child', exact: true})
+  ).toBeVisible()
+
+  await tree.getByRole('button', {name: 'Collapse Folder'}).click()
+  await expect(tree.getByRole('button', {name: 'Expand Folder'})).toBeVisible()
+
+  await folder.click()
+  await expect(
+    tree.getByRole('button', {name: 'Collapse Folder'})
+  ).toBeVisible()
+  await expect(
+    tree.getByRole('row', {name: 'Child', exact: true})
+  ).toBeVisible()
+})
+
 test('blocks navigation until unsaved changes are resolved', async ({
   dashboard,
   mount

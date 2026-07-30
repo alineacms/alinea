@@ -39,8 +39,20 @@ export const navigationAtom = atom(get => {
       if (page.type !== 'entry') return true
       return set(page.entry.needsBlock, signal)
     },
-    prepare: async (route, {get, signal}) => {
-      return loadRoute(get, route, signal)
+    prepare: async (route, {get, set, signal}) => {
+      const prepared = await loadRoute(get, route, signal)
+      signal.throwIfAborted()
+      if (route.entry) {
+        const {data} = get(entryAtoms(route.entry).data)
+        if (data) {
+          const entryData = get(data.entryData)
+          const tree = workspaceAtoms(entryData.workspace).tree
+          const expanded = new Set(get(tree.expandedKeys))
+          for (const parent of entryData.parents) expanded.add(parent.id)
+          set(tree.expandedKeys, expanded)
+        }
+      }
+      return prepared
     }
   })
 })
@@ -50,6 +62,7 @@ export const navigationAtoms: Navigation<PreparedRoute> = {
     get => get(get(navigationAtom).route),
     (get, set, update) => set(get(navigationAtom).route, update)
   ),
+  requestedRoute: atom(get => get(get(navigationAtom).requestedRoute)),
   prepared: atom(
     get => get(get(navigationAtom).prepared),
     (get, set, prepared) => set(get(navigationAtom).prepared, prepared)
@@ -170,6 +183,17 @@ const initialContentResourceAtom = atom<Promise<PreparedRoute>>(async get => {
 
 export const prepareInitialContentAtom = atom(null, async (get, set) => {
   const page = await get(initialContentResourceAtom)
+  const route = get(routeAtom)
+  if (route.entry) {
+    const {data} = get(entryAtoms(route.entry).data)
+    if (data) {
+      const entryData = get(data.entryData)
+      const tree = workspaceAtoms(entryData.workspace).tree
+      const expanded = new Set(get(tree.expandedKeys))
+      for (const parent of entryData.parents) expanded.add(parent.id)
+      set(tree.expandedKeys, expanded)
+    }
+  }
   set(navigationAtoms.prepared, page)
   set(initialContentLoadedAtom, true)
 })
