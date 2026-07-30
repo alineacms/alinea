@@ -2,7 +2,7 @@ import {Button, DialogTrigger} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense} from 'react'
+import {Suspense, useEffect, useState} from 'react'
 import {navigationAtoms, pageAtom} from '../atoms/routing.js'
 import type {PreparedRoute} from '../atoms/routing.js'
 import {
@@ -99,10 +99,24 @@ function NoWorkspaceAccess({canManageMembers}: NoWorkspaceAccessProps) {
 }
 
 function AppShellWorkspace({page}: AppShellContentProps) {
+  const [navigationPage, setNavigationPage] = useState<PreparedRoute>()
+  const isNavigationOpen = navigationPage === page
   const currentWorkspace = useAtomValue(currentWorkspaceAtom)
   assert(currentWorkspace, 'No workspace selected')
   const currentRoot = useAtomValue(currentRootAtom)
   const roots = useAtomValue(currentWorkspace.roots)
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setNavigationPage(undefined)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
+
+  function setNavigationOpen(isOpen: boolean) {
+    setNavigationPage(isOpen ? page : undefined)
+  }
 
   if (roots.length === 0) {
     return (
@@ -126,15 +140,32 @@ function AppShellWorkspace({page}: AppShellContentProps) {
 
   return (
     <div className={styles.AppShellWorkspace()}>
-      <WorkspaceRoots canManageMembers={page.canManageMembers} />
+      <WorkspaceRoots
+        canManageMembers={page.canManageMembers}
+        isNavigationOpen={isNavigationOpen}
+        onNavigationOpenChange={setNavigationOpen}
+      />
       <div className={styles.AppShellContent()}>
-        <Sidebar>
-          <SidebarHeader>
-            <WorkspaceMenu canManageMembers={page.canManageMembers} />
-          </SidebarHeader>
-          <SidebarTree />
-          {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
-        </Sidebar>
+        {isNavigationOpen && (
+          <>
+            <button
+              aria-hidden
+              className={styles.AppShellWorkspace.navigationBackdrop()}
+              onClick={() => setNavigationOpen(false)}
+              tabIndex={-1}
+              type="button"
+            />
+            <div className={styles.AppShellWorkspace.navigation()}>
+              <Sidebar className={styles.AppShellWorkspace.navigationSidebar()}>
+                <SidebarHeader>
+                  <WorkspaceMenu canManageMembers={page.canManageMembers} />
+                </SidebarHeader>
+                <SidebarTree />
+                {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
+              </Sidebar>
+            </div>
+          </>
+        )}
 
         <Suspense fallback={null}>
           <DashboardMeta />

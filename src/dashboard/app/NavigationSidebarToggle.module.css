@@ -1,0 +1,8 @@
+.NavigationSidebarToggle-icon {
+  transition: var(--alinea-transition);
+  transition-property: transform;
+}
+
+.NavigationSidebarToggle-icon.is-open {
+  transform: scaleX(-1);
+}

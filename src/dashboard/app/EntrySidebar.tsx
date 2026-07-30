@@ -63,6 +63,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
 
   return (
     <Sidebar
+      className={styles.EntrySidebar()}
       aria-busy={
         sidebarState.pending && selectedKey !== 'preview' ? true : undefined
       }

@@ -305,6 +305,22 @@ function EntryEditorContent({page}: EntryEditorProps) {
     setEditing(isUntranslated || isDirty ? node : undefined)
   }, [isDirty, isUntranslated, node, setEditing])
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setSidebarOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [setSidebarOpen])
+
+  useEffect(() => {
+    if (
+      'matchMedia' in window &&
+      window.matchMedia('(max-width: 1024px)').matches
+    )
+      setSidebarOpen(false)
+  }, [page.currentEntry, setSidebarOpen])
+
   let editorBody = (
     <>
       <RailBody className={styles.EntryEditor.body()}>
@@ -392,7 +408,20 @@ function EntryEditorContent({page}: EntryEditorProps) {
       </DashboardModal>
       {mainEditor}
       {hasSidebar && isSidebarOpen && (
-        <EntrySidebar entry={entry} page={page} onOpenChange={setSidebarOpen} />
+        <>
+          <button
+            aria-hidden
+            className={styles.EntryEditor.sidebarBackdrop()}
+            onClick={() => setSidebarOpen(false)}
+            tabIndex={-1}
+            type="button"
+          />
+          <EntrySidebar
+            entry={entry}
+            page={page}
+            onOpenChange={setSidebarOpen}
+          />
+        </>
       )}
     </>
   )

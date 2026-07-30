@@ -5,6 +5,7 @@ import {atom, createStore} from 'jotai'
 import {entryAtoms} from './entry.js'
 import {
   createEntrySidebarResource,
+  entrySidebarOpenAtom,
   entrySidebarTabAtom,
   loadEntryPage,
   resolveEntrySidebarTab
@@ -61,12 +62,14 @@ test('changing user roles re-prepares the current route', async () => {
 })
 
 test('entry sidebar defaults match the entry type', () => {
+  expect(createStore().get(entrySidebarOpenAtom)).toBe(false)
   expect(resolveEntrySidebarTab(MediaFile, 'preview')).toBe('references')
   expect(resolveEntrySidebarTab(MediaLibrary, 'preview')).toBe('history')
 })
 
 test('open entry sidebar is prepared with the page', async () => {
   const {child, store} = await createDashboardAtomFixture()
+  store.set(entrySidebarOpenAtom, true)
   store.set(entrySidebarTabAtom, 'references')
   let sidebarLoads = 0
   const loadRoute = createRouteLoader({
@@ -110,6 +113,7 @@ test('open entry sidebar is prepared with the page', async () => {
 
 test('preview sidebar loading does not delay the entry page', async () => {
   const {child, store} = await createDashboardAtomFixture()
+  store.set(entrySidebarOpenAtom, true)
   let sidebarLoads = 0
   const loadRoute = createRouteLoader({
     config: configAtom,

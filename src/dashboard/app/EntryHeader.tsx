@@ -56,8 +56,6 @@ interface EntryHeaderActionProps {
   activeStatus: 'draft' | 'published' | 'archived'
   isDirty: boolean
   isUnpublished: boolean
-  isSidebarOpen?: boolean
-  onSidebarOpenChange?: (isOpen: boolean) => void
   untranslated: boolean
   parentNeedsTranslation: boolean
 }
@@ -367,8 +365,6 @@ function EntryHeaderActions({
   node,
   activeStatus,
   isDirty,
-  isSidebarOpen,
-  onSidebarOpenChange,
   untranslated,
   parentNeedsTranslation
 }: EntryHeaderActionProps) {
@@ -424,6 +420,7 @@ function EntryHeaderActions({
   const actionButtons =
     isRevision && saveDraftVisible ? (
       <Button
+        className={styles.EntryHeader.actionButton()}
         icon={IcRoundSave}
         intent="primary"
         isDisabled={isActionDisabled}
@@ -436,6 +433,7 @@ function EntryHeaderActions({
       !parentNeedsTranslation &&
       access.update ? (
       <Button
+        className={styles.EntryHeader.actionButton()}
         icon={IcRoundSave}
         intent="primary"
         isDisabled={isActionDisabled}
@@ -448,6 +446,7 @@ function EntryHeaderActions({
       <>
         <Button
           appearance="plain"
+          className={styles.EntryHeader.actionButton()}
           isDisabled={isPending}
           onPress={() => reset()}
         >
@@ -455,6 +454,7 @@ function EntryHeaderActions({
         </Button>
         {access.publish && (
           <Button
+            className={styles.EntryHeader.actionButton()}
             icon={IcRoundCheck}
             intent={saveDraftVisible ? 'secondary' : 'primary'}
             isDisabled={isActionDisabled}
@@ -466,6 +466,7 @@ function EntryHeaderActions({
         )}
         {saveDraftVisible && (
           <Button
+            className={styles.EntryHeader.actionButton()}
             icon={IcRoundSave}
             intent="primary"
             isDisabled={isActionDisabled}
@@ -478,6 +479,7 @@ function EntryHeaderActions({
       </>
     ) : activeStatus === 'draft' && canPublishParents && access.publish ? (
       <Button
+        className={styles.EntryHeader.actionButton()}
         icon={IcRoundCheck}
         intent="primary"
         isDisabled={isActionDisabled}
@@ -490,15 +492,7 @@ function EntryHeaderActions({
 
   return (
     <>
-      <div className={styles.EntryHeader.actions()}>
-        {actionButtons}
-        {onSidebarOpenChange && !isSidebarOpen && (
-          <EntrySidebarToggle
-            isOpen={false}
-            onOpenChange={onSidebarOpenChange}
-          />
-        )}
-      </div>
+      <div className={styles.EntryHeader.actions()}>{actionButtons}</div>
       <UrlConflictModal
         conflict={urlConflict}
         onClose={() => setUrlConflict(undefined)}
@@ -539,20 +533,33 @@ export function EntryHeader({
           <EntryHeaderBackButton entry={entry} />
           <h1 className={styles.EntryHeader.title()}>{title}</h1>
           {controls}
-          <Badge icon={typeSettings.icon}>{typeSettings.label}</Badge>
-          {isRevision ? (
-            <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
-          ) : (
-            <StatusBadge status={status} />
-          )}
-          <EntryHeaderMoreActions
-            entry={entry}
-            page={page}
-            activeStatus={activeStatus}
-            isDirty={isDirty}
-            isUnpublished={isUnpublished}
-            untranslated={untranslated}
-          />
+          <div className={styles.EntryHeader.meta()}>
+            <Badge
+              className={styles.EntryHeader.typeBadge()}
+              icon={typeSettings.icon}
+            >
+              {typeSettings.label}
+            </Badge>
+            {isRevision ? (
+              <Badge icon={IcRoundPublishedWithChanges}>Revision</Badge>
+            ) : (
+              <StatusBadge status={status} />
+            )}
+            <EntryHeaderMoreActions
+              entry={entry}
+              page={page}
+              activeStatus={activeStatus}
+              isDirty={isDirty}
+              isUnpublished={isUnpublished}
+              untranslated={untranslated}
+            />
+            {onSidebarOpenChange && !isSidebarOpen && (
+              <EntrySidebarToggle
+                isOpen={false}
+                onOpenChange={onSidebarOpenChange}
+              />
+            )}
+          </div>
         </div>
         <EntryHeaderActions
           entry={entry}
@@ -561,8 +568,6 @@ export function EntryHeader({
           activeStatus={activeStatus}
           isDirty={isDirty}
           isUnpublished={isUnpublished}
-          isSidebarOpen={isSidebarOpen}
-          onSidebarOpenChange={onSidebarOpenChange}
           untranslated={untranslated}
           parentNeedsTranslation={parentNeedsTranslation}
         />

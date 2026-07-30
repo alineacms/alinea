@@ -26,11 +26,18 @@
 .EntryHeader-title {
   font-size: 13px;
   font-weight: 600;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.EntryHeader-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .EntryHeader-actions {
@@ -38,4 +45,44 @@
   align-items: center;
   gap: 8px;
   margin-left: auto;
+
+  &:empty {
+    display: none;
+  }
+}
+
+.EntryHeader-actionButton {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .EntryHeader {
+    height: auto;
+    min-height: 48px;
+    padding: 8px 12px;
+    overflow: visible;
+  }
+
+  .EntryHeader-content {
+    align-content: center;
+    height: auto;
+    min-height: 31px;
+  }
+
+  .EntryHeader-main {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
+  .EntryHeader-typeBadge {
+    display: none;
+  }
+
+  .EntryHeader-actions {
+    gap: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
 }

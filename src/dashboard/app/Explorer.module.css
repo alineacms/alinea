@@ -118,3 +118,30 @@
     margin-top: 2px;
   }
 }
+
+@media (max-width: 768px) {
+  .ExplorerHeader {
+    height: auto;
+    min-height: 48px;
+    padding: 8px 12px;
+    overflow: visible;
+  }
+
+  .ExplorerHeader-content {
+    height: auto;
+  }
+
+  .ExplorerHeader-main {
+    flex: 1 1 100%;
+  }
+
+  .Explorer-searchSlot {
+    flex-basis: 180px;
+  }
+
+  .Explorer-toolbar {
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+}

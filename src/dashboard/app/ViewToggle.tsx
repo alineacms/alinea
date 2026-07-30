@@ -20,10 +20,10 @@ export function ViewToggle({setView, view}: ViewToggleProps) {
         setView(keys.has('card') ? 'card' : 'row')
       }}
     >
-      <ToggleButton id="card">
+      <ToggleButton id="card" aria-label="Card view">
         <IcOutlineGridView data-slot="icon" />
       </ToggleButton>
-      <ToggleButton id="row">
+      <ToggleButton id="row" aria-label="List view">
         <IcOutlineList data-slot="icon" />
       </ToggleButton>
     </ToggleButtonGroup>

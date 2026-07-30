@@ -31,6 +31,7 @@ import {themeAtom} from '../atoms/user.js'
 import {routeAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
 import {configAtom, type RootAtoms, workspaceAtoms} from '../atoms/config.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
+import {NavigationSidebarToggle} from './NavigationSidebarToggle.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
 
@@ -38,9 +39,15 @@ const styles = styler(css)
 
 interface WorkspaceRootsProps {
   canManageMembers: boolean
+  isNavigationOpen?: boolean
+  onNavigationOpenChange?: (isOpen: boolean) => void
 }
 
-export function WorkspaceRoots({canManageMembers}: WorkspaceRootsProps) {
+export function WorkspaceRoots({
+  canManageMembers,
+  isNavigationOpen,
+  onNavigationOpenChange
+}: WorkspaceRootsProps) {
   const selected = useAtomValue(selectedWorkspaceAtom)
   const workspace = workspaceAtoms(selected)
   const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
@@ -49,6 +56,12 @@ export function WorkspaceRoots({canManageMembers}: WorkspaceRootsProps) {
       <div className={styles.WorkspaceRoots.workspace()}>
         <WorkspaceAvatarMenu canManageMembers={canManageMembers} />
       </div>
+      {onNavigationOpenChange && (
+        <NavigationSidebarToggle
+          isOpen={Boolean(isNavigationOpen)}
+          onOpenChange={onNavigationOpenChange}
+        />
+      )}
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
           <WorkspaceRootButton key={root.key} root={root} />

@@ -136,7 +136,7 @@ export const entryLoaderAtom = atom(async get => {
 export const entryRevisionAtom = dispense((_id: string) => atom(0))
 
 export const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
-export const entrySidebarOpenAtom = atom(true)
+export const entrySidebarOpenAtom = atom(false)
 
 export function allowedEntrySidebarTabs(type: Type): Array<EntrySidebarTab> {
   if (type === MediaFile) return ['references']
