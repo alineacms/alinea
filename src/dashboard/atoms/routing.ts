@@ -1,17 +1,16 @@
 import type {Config} from '#/core/Config.js'
 import {getWorkspace} from '#/core/Internal.js'
 import type {Policy} from '#/core/Role.js'
-import {assert} from '#/core/util/Assert.js'
-import {atom, type Atom, type Getter, type Setter} from 'jotai'
+import {atom, type Atom, type Getter} from 'jotai'
 import type {Route} from '../DashboardNav.js'
 import {type EntryDataAtoms, type EntryAtoms, entryAtoms} from './entry.js'
 import {
+  entryRevisionAtom,
   loadEntryPage,
   type EntryPageData,
   MissingEntryError
 } from './entry/load.js'
 import {
-  type ExplorerAtoms,
   type ExplorerPageData,
   loadEntryData,
   loadExplorerPage
@@ -19,6 +18,7 @@ import {
 import {canManageMembersAtom, optionsAtom, policyResourceAtom} from './user.js'
 import {
   configAtom,
+  type PreparedTree,
   type RootAtoms,
   type WorkspaceAtoms,
   workspaceAtoms,
@@ -26,33 +26,41 @@ import {
 } from './config.js'
 import {createBrowserHistory} from './routing/history.js'
 import {createNavigation, type Navigation} from './routing/navigation.js'
+import {swr} from './utils.js'
 
 export const navigationAtom = atom(get => {
   const history = get(optionsAtom).history ?? createBrowserHistory()
-  return createNavigation<PreparedRoute>({
+  return createNavigation({
     history,
-    allow: async (_route, {get, set, signal}) => {
-      const page = get(pageAtom)
+    allow: (_route, {currentRoute, get, set, signal}) => {
       if (signal.aborted) return false
-      if (page.type !== 'entry') return true
-      return set(page.entry.needsBlock, signal)
+      if (!currentRoute.entry) return true
+      const {data} = get(entryAtoms(currentRoute.entry).data)
+      if (!data || get(data.view) !== 'edit') return true
+      return set(data.needsBlock, signal)
     },
-    prepare: (route, {get, set, signal}) =>
-      prepareDashboardRoute(get, set, route, signal)
+    prepare: async (_route, {get, set, signal}) => {
+      const currentPage = await get(pageResourceAtom)
+      const currentTree = currentPage.sidebar
+      if (currentTree) {
+        const expandedKeys = currentTree.root.workspace.tree.expandedKeys
+        const current = get(expandedKeys)
+        const combined = new Set(current)
+        for (const key of currentTree.expandedKeys) combined.add(key)
+        if (combined.size !== current.size) set(expandedKeys, combined)
+      }
+      await get(pageResourceAtom)
+      signal.throwIfAborted()
+    }
   })
 })
 
-export const navigationAtoms: Navigation<PreparedRoute> = {
+export const navigationAtoms: Navigation = {
   route: atom(
     get => get(get(navigationAtom).route),
     (get, set, update) => set(get(navigationAtom).route, update)
   ),
   requestedRoute: atom(get => get(get(navigationAtom).requestedRoute)),
-  prepared: atom(
-    get => get(get(navigationAtom).prepared),
-    (get, set, prepared) => set(get(navigationAtom).prepared, prepared)
-  ),
-  refresh: atom(null, (get, set) => set(get(navigationAtom).refresh)),
   pending: atom(get => get(get(navigationAtom).pending)),
   error: atom(get => get(get(navigationAtom).error))
 }
@@ -70,25 +78,16 @@ function routeLocale(
   return i18n?.locales[0] ?? null
 }
 
-function loadRoute(get: Getter, route: Route, signal: AbortSignal) {
-  return createRouteLoader({
+export const pageResourceAtom = atom(async (get, {signal}) => {
+  const route = get(navigationAtoms.requestedRoute)
+  const content = await createRouteLoader({
     config: configAtom,
     policy: policyResourceAtom,
     canManageMembers: canManageMembersAtom,
     workspace: workspaceAtoms,
     entry: entryAtoms
   })(get, route, signal)
-}
-
-async function prepareDashboardRoute(
-  get: Getter,
-  set: Setter,
-  route: Route,
-  signal: AbortSignal
-): Promise<PreparedRoute> {
-  const page = await loadRoute(get, route, signal)
-  signal.throwIfAborted()
-  let treeRoot = 'root' in page ? page.root : undefined
+  let treeRoot = 'root' in content ? content.root : undefined
   let reveal: Array<string> = []
   if (route.entry) {
     const {data} = get(entryAtoms(route.entry).data)
@@ -98,41 +97,37 @@ async function prepareDashboardRoute(
       reveal = entryData.parents.map(parent => parent.id)
     }
   }
+  let sidebar: PreparedSidebar | undefined
   if (treeRoot) {
-    await treeRoot.workspace.tree.prepare(
+    const tree = await treeRoot.workspace.tree.prepare(
       get,
-      set,
       treeRoot,
       routeLocale(get, treeRoot, route.locale),
-      reveal
+      reveal,
+      signal
     )
-    signal.throwIfAborted()
+    sidebar = {root: treeRoot, ...tree}
   }
-  return page
-}
-
-export const pageAtom = atom(get => {
-  const page = get(navigationAtoms.prepared)
-  assert(page, 'Dashboard page was read before it was prepared')
-  return page
+  return {route, sidebar, content} satisfies PreparedPage
 })
+
+export const pageAtom = swr(pageResourceAtom)
 
 export const currentEntryAtom = atom(get => {
-  const page = get(pageAtom)
-  return page.type === 'entry' ? page.currentEntry : null
+  const {entry: entryId} = get(routeAtom)
+  if (!entryId) return null
+  const {data} = get(entryAtoms(entryId).data)
+  if (!data || get(data.view) !== 'edit') return null
+  const root = get(data.root)
+  const current = get(data.currentEntryFor(get(root.selectedLocale)))
+  return current instanceof Promise ? null : current
 })
 
-export const refreshCurrentRouteAtom = navigationAtoms.refresh
-
-export const refreshPageForAtom = atom(
-  null,
-  async (get, set, explorer: ExplorerAtoms) => {
-    const page = get(pageAtom)
-    if (page.type !== 'explorer') return
-    if (page.root.explorer !== explorer) return
-    await set(refreshCurrentRouteAtom)
-  }
-)
+export const refreshCurrentRouteAtom = atom(null, async (get, set) => {
+  const route = get(routeAtom)
+  if (route.entry) set(entryRevisionAtom(route.entry), revision => revision + 1)
+  await get(pageResourceAtom)
+})
 
 export const selectedWorkspaceAtom = atom(
   get => {
@@ -164,25 +159,6 @@ export type FocusedItem =
   | {missingEntry: string; root: RootAtoms}
   | {missingRoot: string; root: RootAtoms}
   | null
-
-const initialContentResourceAtom = atom<Promise<PreparedRoute>>()
-
-export const prepareInitialContentAtom = atom(null, async (get, set) => {
-  if (get(navigationAtoms.prepared)) return
-  const route = get(routeAtom)
-  let resource = get(initialContentResourceAtom)
-  if (!resource) {
-    resource = prepareDashboardRoute(
-      get,
-      set,
-      route,
-      new AbortController().signal
-    )
-    set(initialContentResourceAtom, resource)
-  }
-  const page = await resource
-  set(navigationAtoms.prepared, page)
-})
 
 export const focusedAtom = atom((get): FocusedItem | Promise<FocusedItem> => {
   const {page} = get(routeAtom)
@@ -258,7 +234,17 @@ export interface RouteShellData {
   canManageMembers: boolean
 }
 
-export type PreparedRoute = RouteShellData &
+export interface PreparedPage {
+  route: Route
+  sidebar: PreparedSidebar | undefined
+  content: LoadedRoute
+}
+
+export interface PreparedSidebar extends PreparedTree {
+  root: RootAtoms
+}
+
+export type LoadedRoute = RouteShellData &
   (
     | EmptyPageData
     | UsersPageData
@@ -279,8 +265,8 @@ type AsyncAtomKeys<Value> = Value extends unknown
 
 type AssertNoAsyncAtoms<Value extends never> = Value
 
-export type PreparedRouteAsyncFields = AssertNoAsyncAtoms<
-  AsyncAtomKeys<PreparedRoute>
+export type PreparedPageAsyncFields = AssertNoAsyncAtoms<
+  AsyncAtomKeys<PreparedPage> | AsyncAtomKeys<LoadedRoute>
 >
 
 export interface RouteLoaderOptions {
@@ -303,12 +289,11 @@ export function createRouteLoader(options: RouteLoaderOptions) {
     get: Getter,
     route: Route,
     signal: AbortSignal
-  ): Promise<PreparedRoute> {
+  ): Promise<LoadedRoute> {
     const [policy, canManageMembers] = await Promise.all([
       get(options.policy),
       get(options.canManageMembers)
     ])
-    signal.throwIfAborted()
     if (route.page === 'users' && canManageMembers)
       return {type: 'users', canManageMembers}
 
@@ -350,7 +335,6 @@ export function createRouteLoader(options: RouteLoaderOptions) {
       return {type: 'root', root, canManageMembers}
 
     await get(root.childrenFor(locale))
-    signal.throwIfAborted()
 
     const location = {workspace: workspaceKey, root: rootKey}
     if (!route.entry)
@@ -361,7 +345,6 @@ export function createRouteLoader(options: RouteLoaderOptions) {
 
     const entry = options.entry(route.entry)
     const entryData = await loadEntryData(get, entry)
-    signal.throwIfAborted()
     if (!entryData)
       return {
         type: 'missing-entry',

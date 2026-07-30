@@ -29,11 +29,7 @@ import {
   workspaceAtoms
 } from './config.js'
 import {ReactiveNode} from './entry/editor.js'
-import {
-  entryLoaderAtom,
-  loadEntryPage,
-  MissingEntryError
-} from './entry/load.js'
+import {entryLoaderAtom, MissingEntryError} from './entry/load.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {uploadProgressAtom} from './graph/queue.js'
 import {refreshCurrentRouteAtom, routeAtom} from './routing.js'
@@ -157,16 +153,8 @@ export class EntryAtoms {
 
   view = atom(
     get => get(this.#selectedView),
-    async (get, set, view: EntryView | undefined) => {
-      if (view === 'edit') {
-        const ready = await get(this.readyState)
-        if (ready.data) {
-          const root = get(ready.data.root)
-          await loadEntryPage(get, ready.data, get(root.selectedLocale))
-        }
-      }
+    (_get, set, view: EntryView | undefined) => {
       set(this.#selectedView, view)
-      await set(refreshCurrentRouteAtom)
     }
   )
 }
@@ -326,21 +314,13 @@ export class EntryDataAtoms {
       if (locale && available.includes(locale)) return locale
       return available[0] ?? null
     },
-    async (get, set, locale: string) => {
+    (get, set, locale: string) => {
       if (get(this.#translationSourceLocale) === locale) return
       const localized = get(this.locales).get(locale)
       assert(localized, `Entry ${this.id} has no data for locale ${locale}`)
-      await get(
-        this.#node({
-          locale,
-          untranslated: get(this.untranslated),
-          version: {type: 'status', status: localized.status}
-        })
-      )
       set(this.#translationSourceLocale, locale)
       set(this.currentlyEditing, undefined)
       set(this.#selection, undefined)
-      await set(refreshCurrentRouteAtom)
     }
   )
 
@@ -363,16 +343,8 @@ export class EntryDataAtoms {
       const root = get(this.root)
       return this.#selectedVersionFor(get, get(root.selectedLocale))
     },
-    async (get, set, next: SelectedVersion) => {
-      await get(
-        this.#node({
-          locale: get(this.sourceLocale),
-          untranslated: get(this.untranslated),
-          version: next
-        })
-      )
+    (_get, set, next: SelectedVersion) => {
       set(this.#selection, next)
-      await set(refreshCurrentRouteAtom)
     }
   )
 

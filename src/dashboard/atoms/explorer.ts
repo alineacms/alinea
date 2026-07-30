@@ -9,7 +9,7 @@ import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {assert} from '#/core/util/Assert.js'
-import type {Atom, Getter, WritableAtom} from 'jotai'
+import type {Getter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
@@ -17,7 +17,6 @@ import type {Key} from 'react-aria-components'
 import {entryAtoms, type EntryAtoms, type EntryDataAtoms} from './entry.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {mutationQueueAtom, uploadProgressAtom} from './graph/queue.js'
-import {refreshPageForAtom} from './routing.js'
 import {policyAtom} from './user.js'
 import {
   dashboardEntryDragItem,
@@ -56,6 +55,7 @@ export type DashboardLocaleSelection = WritableAtom<
 >
 
 export interface ExplorerOptions {
+  actionOnPress?: boolean
   autoSelectFirstItem?: boolean
   condition?: Filter<EntryFields>
   enableNavigation?: boolean
@@ -88,14 +88,6 @@ export class ExplorerAtoms {
   #options: ExplorerOptions
   #conditionChecker: ReturnType<typeof filterChecker> | undefined
   #selectedLocale: DashboardLocaleSelection
-  #items = new Map<
-    string,
-    Atom<Array<EntryAtoms> | Promise<Array<EntryAtoms>>>
-  >()
-  #snapshots = new Map<
-    string,
-    Atom<ExplorerSnapshot | Promise<ExplorerSnapshot>>
-  >()
   #navigationSequence = 0
   selection
   #expandedKeys = atom(new Set<Key>())
@@ -187,6 +179,10 @@ export class ExplorerAtoms {
     return Boolean(this.#options.onAction)
   }
 
+  get actionOnPress() {
+    return this.#options.actionOnPress ?? false
+  }
+
   get supportsInlineExpansion() {
     return this.#options.nestedNavigation ?? false
   }
@@ -271,7 +267,6 @@ export class ExplorerAtoms {
     get => get(this.#search),
     (get, set, search: string) => {
       set(this.#search, search)
-      void set(refreshPageForAtom, this)
     }
   )
   showResults = atom(get => {
@@ -318,7 +313,6 @@ export class ExplorerAtoms {
       const direction =
         sort.sortBy === sortBy && sort.direction === 'desc' ? 'asc' : 'desc'
       set(this.#sort, {sortBy, direction})
-      void set(refreshPageForAtom, this)
     }
   )
   #filter = atom<ExplorerTypeFilters | undefined>(undefined)
@@ -328,7 +322,6 @@ export class ExplorerAtoms {
       const filter = get(this.#filter)
       const payload = filter === filterBy ? undefined : filterBy
       set(this.#filter, payload)
-      void set(refreshPageForAtom, this)
     }
   )
   navigate = atom(
@@ -488,75 +481,31 @@ export class ExplorerAtoms {
     }
   )
 
-  itemsAt(
-    location: ExplorerLocation,
-    locale: string | null
-  ): Atom<Array<EntryAtoms> | Promise<Array<EntryAtoms>>> {
-    const key = this.#snapshotKey(location, locale)
-    const cached = this.#items.get(key)
-    if (cached) return cached
-    const items = atom(get => {
-      const snapshot = get(this.snapshotAt(location, locale))
-      if (snapshot instanceof Promise)
-        return snapshot.then(prepared => prepared.items)
-      return snapshot.items
-    })
-    this.#items.set(key, items)
-    return items
-  }
-
-  snapshotAt(
-    location: ExplorerLocation,
-    locale: string | null
-  ): Atom<ExplorerSnapshot | Promise<ExplorerSnapshot>> {
-    const key = this.#snapshotKey(location, locale)
-    const cached = this.#snapshots.get(key)
-    if (cached) return cached
-    const snapshot = swr(
-      atom(async get => {
-        const items = await this.#queryItems(get, location, locale)
-        await loadEntries(get, items, locale)
-        return {items, locale, location} satisfies ExplorerSnapshot
-      })
-    )
-    this.#snapshots.set(key, snapshot)
-    return snapshot
-  }
-
   async prepare(
     get: Getter,
     location: ExplorerLocation,
     locale: string | null,
-    signal?: AbortSignal
+    _signal?: AbortSignal
   ): Promise<ExplorerSnapshot> {
-    const snapshot = await get(this.snapshotAt(location, locale))
-    signal?.throwIfAborted()
-    return snapshot
+    const items = await this.#queryItems(get, location, locale)
+    await loadEntries(get, items, locale)
+    return {items, locale, location}
   }
 
-  #snapshotKey(location: ExplorerLocation, locale: string | null) {
-    return JSON.stringify([
-      location.workspace,
-      location.root ?? null,
-      location.parentId ?? null,
-      locale
-    ])
-  }
-
-  #snapshotResource = atom(get => {
+  #snapshotResource = atom(async get => {
     const location = get(this.location)
     const allRoots = this.rootScope === 'workspace'
     const locale = allRoots ? null : get(this.selectedLocale)
-    return get(this.snapshotAt(location, locale))
+    return this.prepare(get, location, locale)
   })
-  snapshot = unwrap(this.#snapshotResource)
+  snapshot = swr(this.#snapshotResource)
 
-  items = atom(get => {
-    const snapshot = get(this.#snapshotResource)
-    if (snapshot instanceof Promise)
-      return snapshot.then(prepared => prepared.items)
-    return snapshot.items
-  })
+  items = swr(
+    atom(async get => {
+      const snapshot = await get(this.snapshot)
+      return snapshot.items
+    })
+  )
 
   async #queryItems(
     get: Getter,
@@ -702,8 +651,7 @@ export async function loadEntryData(get: Getter, entry: EntryAtoms) {
 export async function loadEntries(
   get: Getter,
   entries: Array<EntryAtoms>,
-  locale: string | null,
-  signal?: AbortSignal
+  locale: string | null
 ) {
   await Promise.all(
     entries.map(async entry => {
@@ -713,7 +661,6 @@ export async function loadEntries(
       if (currentEntry instanceof Promise) await currentEntry
     })
   )
-  signal?.throwIfAborted()
 }
 
 export async function loadExplorerPage(

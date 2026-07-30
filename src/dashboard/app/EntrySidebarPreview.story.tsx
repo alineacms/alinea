@@ -49,17 +49,11 @@ function PreviewTitleField() {
   )
 }
 
-interface EntrySidebarPreviewStoryProps {
-  pending?: boolean
-}
-
-export function EntrySidebarPreviewStory({
-  pending = false
-}: EntrySidebarPreviewStoryProps) {
+export function EntrySidebarPreviewStory() {
   return (
     <DashboardScopeInternal dashboard={dashboard}>
       <PreviewTitleField />
-      <EntrySidebarPreview entry={entry} pending={pending} sidebar={sidebar} />
+      <EntrySidebarPreview entry={entry} sidebar={sidebar} />
     </DashboardScopeInternal>
   )
 }

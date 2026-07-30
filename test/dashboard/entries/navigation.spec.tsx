@@ -64,13 +64,10 @@ test('blocks navigation until unsaved changes are resolved', async ({
 })
 
 test('renders a missing entry route', async ({dashboard, mount}) => {
-  const app = await dashboard.mount(
-    () => mount(<DashboardScenarioMount />),
-    {
-      routeEntry: 'missing-entry',
-      title: 'Entry not found'
-    }
-  )
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    routeEntry: 'missing-entry',
+    title: 'Entry not found'
+  })
 
   await expect(app.page.getByText('Requested id:')).toContainText(
     'missing-entry'
@@ -78,4 +75,30 @@ test('renders a missing entry route', async ({dashboard, mount}) => {
   await expect(
     app.page.getByRole('button', {name: 'Go to Pages'})
   ).toBeVisible()
+})
+
+test('searches entries and navigates with enter or click', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.page.getByRole('button', {name: 'Search entries'}).click()
+  const enterSearch = app.page.getByRole('dialog', {name: 'Search entries'})
+  const enterSearchbox = enterSearch.getByRole('searchbox', {name: 'Search'})
+  await enterSearchbox.fill('Beta')
+  const betaResult = enterSearch.getByRole('row', {name: /Beta/})
+  await expect(betaResult).toBeVisible()
+  await enterSearchbox.press('ArrowDown')
+  await expect(betaResult).toHaveAttribute('aria-selected', 'true')
+  await enterSearchbox.press('Enter')
+  await expect(app.title).toHaveText('Beta')
+  await expect(enterSearch).not.toBeVisible()
+
+  await app.page.getByRole('button', {name: 'Search entries'}).click()
+  const clickSearch = app.page.getByRole('dialog', {name: 'Search entries'})
+  await clickSearch.getByRole('searchbox', {name: 'Search'}).fill('Alpha')
+  await clickSearch.getByRole('row', {name: /Alpha/}).click()
+  await expect(app.title).toHaveText('Alpha')
+  await expect(clickSearch).not.toBeVisible()
 })

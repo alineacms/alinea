@@ -14,7 +14,7 @@ import type {
   DropTarget,
   ItemDropTarget
 } from '@react-types/shared'
-import type {Atom, Getter, Setter} from 'jotai'
+import type {Atom, Getter} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
@@ -123,13 +123,8 @@ export interface TreeSnapshot {
   children: ReadonlyMap<string, Array<EntryAtoms>>
 }
 
-const emptyTreeSnapshot: TreeSnapshot = {
-  items: [],
-  children: new Map()
-}
-
-interface PreparedTreeSnapshot {
-  resource: Promise<TreeSnapshot>
+export interface PreparedTree {
+  expandedKeys: Set<Key>
   snapshot: TreeSnapshot
 }
 
@@ -137,124 +132,74 @@ export class TreeAtoms {
   constructor(private workspace: WorkspaceAtoms) {}
 
   expandedKeys = atom(new Set<Key>())
-  setExpandedKeys = dispense((root: RootAtoms) =>
-    atom(null, async (get, set, next: Set<Key>): Promise<void> => {
-      await this.#preloadEntryData(get, root, get(root.selectedLocale), next)
-      set(this.expandedKeys, next)
-      await this.#prepareSnapshot(get, set, root, get(root.selectedLocale))
-    })
-  )
-  expand = dispense((root: RootAtoms) =>
-    atom(null, async (get, set, key: Key): Promise<void> => {
-      const expanded = get(this.expandedKeys)
-      if (expanded.has(key)) return
-      const next = new Set(expanded)
-      next.add(key)
-      await set(this.setExpandedKeys(root), next)
-    })
-  )
-  #snapshotResource = dispense((root: RootAtoms) =>
-    dispense((locale: string | null) =>
+  expand = atom(null, (get, set, key: Key) => {
+    const expanded = get(this.expandedKeys)
+    if (expanded.has(key)) return
+    const next = new Set(expanded)
+    next.add(key)
+    set(this.expandedKeys, next)
+  })
+  snapshot = dispense((root: RootAtoms) =>
+    swr(
       atom(async get => {
-        const expanded = get(this.expandedKeys)
-        const rootIds = await queryTreeChildren(
-          get,
-          root,
-          null,
-          get(root.settings).orderChildrenBy,
-          locale
-        )
-        const items = rootIds.map(entryAtoms)
-        const children = new Map<string, Array<EntryAtoms>>()
-        async function loadVisible(entries: Array<EntryAtoms>): Promise<void> {
-          await Promise.all(
-            entries.map(async entry => {
-              const {data} = await get(entry.readyState)
-              if (!data || !get(data.entryData).hasChildren) return
-              const childIds = await queryTreeChildren(
-                get,
-                root,
-                entry.id,
-                get(data.orderChildrenBy),
-                locale
-              )
-              const childEntries = childIds.map(entryAtoms)
-              children.set(entry.id, childEntries)
-              if (expanded.has(entry.id)) await loadVisible(childEntries)
-            })
-          )
-        }
-        await loadVisible(items)
-        return {items, children} satisfies TreeSnapshot
+        const prepared = await this.prepare(get, root, get(root.selectedLocale))
+        return prepared.snapshot
       })
     )
-  )
-  #preparedSnapshot = dispense((_root: RootAtoms) =>
-    dispense((_locale: string | null) => atom<PreparedTreeSnapshot>())
-  )
-  #snapshotValue = dispense((root: RootAtoms) =>
-    dispense((locale: string | null) => {
-      const resourceAtom = this.#snapshotResource(root)(locale)
-      const preparedAtom = this.#preparedSnapshot(root)(locale)
-      const liveSnapshot = unwrap(resourceAtom, previous => previous)
-      return atom(get => {
-        const resource = get(resourceAtom)
-        const prepared = get(preparedAtom)
-        if (prepared?.resource === resource) return prepared.snapshot
-        return get(liveSnapshot) ?? emptyTreeSnapshot
-      })
-    })
-  )
-  snapshot = dispense((root: RootAtoms) =>
-    atom(get => get(this.#snapshotValue(root)(get(root.selectedLocale))))
   )
 
   async prepare(
     get: Getter,
-    set: Setter,
     root: RootAtoms,
     locale: string | null,
-    reveal: Iterable<Key> = []
-  ): Promise<void> {
-    const currentExpanded = get(this.expandedKeys)
-    const expanded = new Set(currentExpanded)
+    reveal: Iterable<Key> = [],
+    _signal?: AbortSignal
+  ): Promise<PreparedTree> {
+    const expanded = new Set(get(this.expandedKeys))
     for (const key of reveal) expanded.add(key)
-    await this.#preloadEntryData(get, root, locale, expanded)
-    if (expanded.size !== currentExpanded.size) set(this.expandedKeys, expanded)
-    await this.#prepareSnapshot(get, set, root, locale)
+    const snapshot = await this.#loadSnapshot(get, root, locale, expanded)
+    return {expandedKeys: expanded, snapshot}
   }
 
-  async #preloadEntryData(
+  async #loadSnapshot(
     get: Getter,
     root: RootAtoms,
     locale: string | null,
     expanded: Set<Key>
-  ): Promise<void> {
-    const rootIds = await get(root.childrenFor(locale))
-    const loaded = new Set<string>()
-    async function load(ids: Array<string>): Promise<void> {
-      await Promise.all(
-        ids.map(async id => {
-          if (loaded.has(id)) return
-          loaded.add(id)
-          const data = await loadEntryData(get, entryAtoms(id))
-          if (!data || !expanded.has(id)) return
-          await load(await get(data.childrenFor(locale)))
+  ): Promise<TreeSnapshot> {
+    const rootIds = await queryTreeChildren(
+      get,
+      root,
+      null,
+      get(root.settings).orderChildrenBy,
+      locale
+    )
+    const children = new Map<string, Array<EntryAtoms>>()
+    async function loadVisible(
+      entries: Array<EntryAtoms>
+    ): Promise<Array<EntryAtoms>> {
+      const loaded = await Promise.all(
+        entries.map(async entry => {
+          const data = await loadEntryData(get, entry)
+          if (!data) return null
+          if (!get(data.entryData).hasChildren || !expanded.has(entry.id))
+            return entry
+          const childIds = await queryTreeChildren(
+            get,
+            root,
+            entry.id,
+            get(data.orderChildrenBy),
+            locale
+          )
+          const childEntries = childIds.map(entryAtoms)
+          children.set(entry.id, await loadVisible(childEntries))
+          return entry
         })
       )
+      return loaded.filter((entry): entry is EntryAtoms => entry !== null)
     }
-    await load(rootIds)
-  }
-
-  async #prepareSnapshot(
-    get: Getter,
-    set: Setter,
-    root: RootAtoms,
-    locale: string | null
-  ): Promise<void> {
-    const resource = get(this.#snapshotResource(root)(locale))
-    const snapshot = await resource
-    set(this.#preparedSnapshot(root)(locale), {resource, snapshot})
+    const items = await loadVisible(rootIds.map(entryAtoms))
+    return {items, children}
   }
 
   // dnd

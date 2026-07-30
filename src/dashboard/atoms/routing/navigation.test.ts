@@ -64,7 +64,10 @@ test('keeps the current route until preparation completes', async () => {
 
   const result = store.set(navigation.route, target)
 
-  expect(store.get(navigation.requestedRoute)).toEqual(target)
+  expect(store.get(navigation.requestedRoute)).toEqual({
+    page: 'entry',
+    entry: 'before'
+  })
   expect(store.get(navigation.route)).toEqual({
     page: 'entry',
     entry: 'before'
@@ -80,81 +83,6 @@ test('keeps the current route until preparation completes', async () => {
   expect(store.get(navigation.requestedRoute)).toEqual(target)
   expect(store.get(navigation.pending)).toBeUndefined()
   expect(history.pushed).toEqual([target])
-})
-
-test('commits prepared page data with the route', async () => {
-  const store = createStore()
-  const history = historyFixture({
-    page: 'entry',
-    workspace: 'main',
-    root: 'content',
-    entry: 'before'
-  })
-  const preparation = deferred<string>()
-  const navigation = createNavigation({
-    history,
-    prepare: () => preparation.promise
-  })
-  const observed: Array<[string | undefined, string]> = []
-  const unsubscribe = store.sub(navigation.route, () => {
-    observed.push([
-      store.get(navigation.route).entry,
-      store.get(navigation.prepared) ?? 'before'
-    ])
-  })
-
-  const result = store.set(navigation.route, {
-    page: 'entry',
-    workspace: 'main',
-    root: 'content',
-    entry: 'after'
-  })
-  expect(store.get(navigation.prepared)).toBeUndefined()
-
-  preparation.resolve('after')
-  expect(await result).toBe(true)
-  expect(observed).toEqual([['after', 'after']])
-  unsubscribe()
-})
-
-test('refreshes prepared data without changing the current route', async () => {
-  const initial: Route = {page: 'entry', entry: 'before'}
-  let version = 1
-  const navigation = createNavigation<string>({
-    history: historyFixture(initial),
-    prepare: async route => `${route.entry}-${version}`
-  })
-  const store = createStore()
-  store.set(navigation.prepared, 'before-0')
-
-  version = 2
-  expect(await store.set(navigation.refresh)).toBe(true)
-  expect(store.get(navigation.route)).toBe(initial)
-  expect(store.get(navigation.prepared)).toBe('before-2')
-})
-
-test('navigation supersedes an in-flight refresh', async () => {
-  const initial: Route = {page: 'entry', entry: 'before'}
-  const refresh = deferred<string>()
-  const navigation = createNavigation<string>({
-    history: historyFixture(initial),
-    prepare: route =>
-      route.entry === 'before' ? refresh.promise : Promise.resolve('after')
-  })
-  const store = createStore()
-  store.set(navigation.prepared, 'before')
-
-  const refreshResult = store.set(navigation.refresh)
-  const navigationResult = store.set(navigation.route, {
-    page: 'entry',
-    entry: 'after'
-  })
-
-  expect(await navigationResult).toBe(true)
-  refresh.resolve('refreshed-before')
-  expect(await refreshResult).toBe(false)
-  expect(store.get(navigation.route).entry).toBe('after')
-  expect(store.get(navigation.prepared)).toBe('after')
 })
 
 test('only commits the latest navigation', async () => {
@@ -225,7 +153,7 @@ test('does not prepare a blocked navigation', async () => {
     page: 'entry',
     entry: 'blocked'
   })
-  expect(store.get(navigation.requestedRoute).entry).toBe('blocked')
+  expect(store.get(navigation.requestedRoute).entry).toBeUndefined()
   expect(store.get(navigation.pending)).toBeUndefined()
   expect(await result).toBe(false)
   expect(preparations).toBe(0)

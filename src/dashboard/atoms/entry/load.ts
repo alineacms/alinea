@@ -21,7 +21,7 @@ import type {Infer} from '#/types.js'
 import {atom, type Atom, type Getter} from 'jotai'
 import {graphAtom} from '../graph.js'
 import {policyAtom, policyResourceAtom} from '../user.js'
-import {batchLoader, dispense, swr, withPending} from '../utils.js'
+import {batchLoader, dispense, swr} from '../utils.js'
 import {configAtom} from '../config.js'
 import {ReactiveNode} from './editor.js'
 import type {EntryDataAtoms} from '../entry.js'
@@ -266,7 +266,7 @@ export interface PreparedEntryPage {
   parentNeedsTranslation: boolean
   languageVersion: EntryRecord<Record<string, unknown>>
   versions: Map<EntryStatus, EntryRecord<Record<string, unknown>>>
-  sidebar: Atom<EntrySidebarState>
+  sidebar: PreparedEntrySidebar
 }
 
 export type EntryPageData = PreparedEntryPage
@@ -278,9 +278,10 @@ export type EntrySidebarData =
   | HistorySidebarData
   | ReferencesSidebarData
 
-export interface EntrySidebarState {
-  data: EntrySidebarData | undefined
-  pending: boolean
+export interface PreparedEntrySidebar {
+  data: EntrySidebarData
+  open: boolean
+  tab: EntrySidebarTab
 }
 
 export interface ClosedSidebarData {
@@ -307,28 +308,6 @@ export interface HistorySidebarData {
 export interface ReferencesSidebarData {
   type: 'references'
   references: DashboardEntryReferences
-}
-
-export function createEntrySidebarResource(
-  entry: EntryDataAtoms,
-  locale: string | null,
-  loadSidebar = loadEntrySidebar
-): Atom<Promise<EntrySidebarData>> {
-  return atom(async get => {
-    if (!get(entrySidebarOpenAtom)) return {type: 'closed' as const}
-    const tab = resolveEntrySidebarTab(
-      get(entry.type),
-      get(entrySidebarTabAtom)
-    )
-    try {
-      return await loadSidebar(get, entry, locale, tab)
-    } catch (cause) {
-      return {
-        type: 'error' as const,
-        error: cause instanceof Error ? cause : new Error(String(cause))
-      }
-    }
-  })
 }
 
 export async function loadEntrySidebar(
@@ -369,7 +348,7 @@ export async function loadEntryPage(
   get: Getter,
   entry: EntryDataAtoms,
   locale: string | null,
-  sidebarResource = createEntrySidebarResource(entry, locale)
+  loadSidebar = loadEntrySidebar
 ): Promise<EntryPageData> {
   const sourceLocale = entry.sourceLocaleFor(get, locale)
   const language = entry.languages(sourceLocale)
@@ -393,15 +372,17 @@ export async function loadEntryPage(
     get(entry.type),
     get(entrySidebarTabAtom)
   )
-  const initialSidebar =
-    sidebarOpen && sidebarTab !== 'preview'
-      ? await get(sidebarResource)
-      : undefined
-  const sidebarState = withPending(sidebarResource)
-  const sidebar = atom((get): EntrySidebarState => {
-    const [pending, data] = get(sidebarState)
-    return {pending, data: data ?? initialSidebar}
-  })
+  let sidebar: EntrySidebarData = {type: 'closed'}
+  if (sidebarOpen) {
+    try {
+      sidebar = await loadSidebar(get, entry, locale, sidebarTab)
+    } catch (cause) {
+      sidebar = {
+        type: 'error',
+        error: cause instanceof Error ? cause : new Error(String(cause))
+      }
+    }
+  }
   return {
     type: 'entry',
     entry,
@@ -412,6 +393,6 @@ export async function loadEntryPage(
     parentNeedsTranslation,
     languageVersion,
     versions,
-    sidebar
+    sidebar: {data: sidebar, open: sidebarOpen, tab: sidebarTab}
   }
 }

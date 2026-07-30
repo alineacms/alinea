@@ -147,6 +147,7 @@ function SearchPopup() {
     createExplorerAtoms(
       {workspace, root: root ?? undefined},
       {
+        actionOnPress: true,
         mode: 'search',
         onAction: atom(null, (get, set, entry) => {
           const {data} = get(entry.data)

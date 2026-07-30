@@ -266,6 +266,9 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     useMemo(() => explorer.isExpanded(entry), [explorer, entry])
   )
   const onAction = useSetAtom(explorer.onAction)
+  const performAction = explorer.hasRowAction
+    ? () => onAction(entry)
+    : undefined
   const textValue = useMemo(
     () =>
       [label, ...cells.map(cell => compactFieldText(cell.field, cell.value))]
@@ -279,7 +282,8 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       textValue={textValue}
       hasChildItems={isExpandable}
       isDisabled={!isSelectable}
-      onAction={explorer.hasRowAction ? () => onAction(entry) : undefined}
+      onAction={explorer.actionOnPress ? undefined : performAction}
+      onPress={explorer.actionOnPress ? performAction : undefined}
       className={styles.ExplorerTable.row({notSelectable: !isSelectable})}
     >
       <TreeItemContent>

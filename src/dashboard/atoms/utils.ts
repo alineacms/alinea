@@ -52,13 +52,13 @@ export function dispense<Key = string, Value = unknown>(
   }
 }
 
-export function swr<Value>(asyncAtom: Atom<Promise<Value>>) {
+export function swr<Value>(asyncAtom: Atom<Promise<Value>>): Atom<Value> {
   const wrapped = atom(async get => ({value: await get(asyncAtom)}))
   const withPrevious = unwrap(wrapped, previous => previous)
   return atom(get => {
     const result = get(withPrevious)
     return result ? result.value : get(asyncAtom)
-  })
+  }) as Atom<Value>
 }
 
 export function withPending<Value>(asyncAtom: Atom<Promise<Value> | Value>) {

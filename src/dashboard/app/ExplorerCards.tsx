@@ -38,11 +38,13 @@ const cardLayoutOptions: GridLayoutOptions = {
 
 interface ExplorerCardItemProps {
   entry: EntryAtoms
+  onPress?: () => void
   showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
   entry,
+  onPress,
   showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
@@ -50,6 +52,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
     return (
       <ExplorerCardLoadingItem
         entry={entry}
+        onPress={onPress}
         showSelectionControls={showSelectionControls}
       />
     )
@@ -57,6 +60,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
     <ExplorerCardLoadedItem
       entry={entry}
       data={data}
+      onPress={onPress}
       showSelectionControls={showSelectionControls}
     />
   )
@@ -64,11 +68,13 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 
 interface ExplorerCardLoadingItemProps {
   entry: EntryAtoms
+  onPress?: () => void
   showSelectionControls: boolean
 }
 
 function ExplorerCardLoadingItem({
   entry,
+  onPress,
   showSelectionControls
 }: ExplorerCardLoadingItemProps) {
   return (
@@ -77,6 +83,7 @@ function ExplorerCardLoadingItem({
       textValue="Loading entry"
       className={styles.ExplorerCards.item({loading: true})}
       aria-label="Loading entry"
+      onPress={onPress}
     >
       {showSelectionControls && <ExplorerCardCheckbox label="Loading entry" />}
       <Surface className={styles.ExplorerCards.item.card()}>
@@ -106,12 +113,14 @@ function ExplorerCardLoadingItem({
 interface ExplorerCardLoadedItemProps {
   entry: EntryAtoms
   data: EntryDataAtoms
+  onPress?: () => void
   showSelectionControls: boolean
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   entry,
   data,
+  onPress,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
@@ -128,6 +137,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     <GridListItem
       id={entry.id}
       textValue={label}
+      onPress={onPress}
       className={styles.ExplorerCards.item()}
     >
       {showSelectionControls && <ExplorerCardCheckbox label={label} />}
@@ -293,7 +303,8 @@ export function ExplorerCards({
     const entry = items.find(item => item.id === String(key))
     if (entry) performAction(entry)
   }
-  const onAction = explorer.hasRowAction ? onItemAction : undefined
+  const onAction =
+    explorer.hasRowAction && !explorer.actionOnPress ? onItemAction : undefined
   return (
     <div className={styles.ExplorerCards.viewport()}>
       <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
@@ -314,6 +325,9 @@ export function ExplorerCards({
           {item => (
             <ExplorerCardItem
               entry={item}
+              onPress={
+                explorer.actionOnPress ? () => performAction(item) : undefined
+              }
               showSelectionControls={showSelectionControls}
             />
           )}

@@ -7,7 +7,7 @@ import {Section} from '#/core/Section.js'
 import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {type ComponentType, memo, PropsWithChildren, useEffect} from 'react'
 import {EditorScope, useEditor, useNodeEditor} from '../editor/EditorScope.js'
 import {useFieldOptions, useFieldView} from '../editor/FieldHooks.js'
@@ -26,8 +26,8 @@ import {entryAtoms, type EntryDataAtoms} from '../atoms/entry.js'
 import {entrySidebarOpenAtom, type EntryPageData} from '../atoms/entry/load.js'
 import type {ExplorerPageData} from '../atoms/explorer.js'
 import {
+  type LoadedRoute,
   routeAtom,
-  type PreparedRoute,
   type RootPageData
 } from '../atoms/routing.js'
 import type {RootAtoms} from '../atoms/config.js'
@@ -47,7 +47,7 @@ import {Rail, RailBody, RailContent} from './ui/Rail.js'
 
 const styles = styler(css)
 export interface EditorProps {
-  page: PreparedRoute
+  page: LoadedRoute
 }
 
 export function Editor({page}: EditorProps) {
@@ -277,10 +277,10 @@ function EntryEditorContent({page}: EntryEditorProps) {
   const type = useAtomValue(entry.type)
   const saveDraft = useSetAtom(entry.saveDraft)
   const publishEdits = useSetAtom(entry.publishEdits)
-  const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const routeBlock = useAtomValue(entry.routeBlock)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
+  const isSidebarOpen = page.sidebar.open
+  const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
   const defaultView = useAtomValue(entry.defaultView)
   const isMediaFile = type === MediaFile
   const isMediaLibrary = type === MediaLibrary
@@ -301,9 +301,8 @@ function EntryEditorContent({page}: EntryEditorProps) {
   }
 
   useEffect(() => {
-    if (node.readOnly && !isUntranslated) return
-    setEditing(isUntranslated || isDirty ? node : undefined)
-  }, [isDirty, isUntranslated, node, setEditing])
+    setEditing(node.readOnly && !isUntranslated ? undefined : node)
+  }, [isUntranslated, node, setEditing])
 
   let editorBody = (
     <>

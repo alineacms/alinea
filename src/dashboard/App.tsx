@@ -3,14 +3,9 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {
-  ComponentType,
-  useEffect,
-  useState,
-  type Dispatch,
-  type SetStateAction
-} from 'react'
+import {useAtomValue} from 'jotai'
+import {loadable} from 'jotai/utils'
+import {ComponentType, useState} from 'react'
 import css from './App.module.css'
 import {AppShell} from './app/AppShell.js'
 import {AuthView} from './app/AuthView.js'
@@ -18,10 +13,11 @@ import {Rail} from './app/ui/Rail.js'
 import './global.css'
 import {DashboardScopeInternal} from './hooks.js'
 import type {Dashboard} from './atoms/dashboard.js'
-import {prepareInitialContentAtom} from './atoms/routing.js'
+import {pageAtom} from './atoms/routing.js'
 import {authAtom, themeAtom} from './atoms/user.js'
 
 const styles = styler(css)
+const loadablePageAtom = loadable(pageAtom)
 
 export interface AppProps {
   graph: WriteableGraph
@@ -79,26 +75,9 @@ function DashboardLoading() {
   )
 }
 
-interface DashboardBootProps {
-  setReady: Dispatch<SetStateAction<boolean>>
-}
-
-function DashboardBoot({setReady}: DashboardBootProps) {
-  const [error, setError] = useState<Error>()
-  const prepare = useSetAtom(prepareInitialContentAtom)
-  useEffect(() => {
-    void prepare().then(
-      () => setReady(true),
-      cause =>
-        setError(cause instanceof Error ? cause : new Error(String(cause)))
-    )
-  }, [prepare, setReady])
-  if (error) throw error
-  return <DashboardLoading />
-}
-
 function DashboardContent() {
-  const [ready, setReady] = useState(false)
-  if (ready) return <AppShell />
-  return <DashboardBoot setReady={setReady} />
+  const page = useAtomValue(loadablePageAtom)
+  if (page.state === 'loading') return <DashboardLoading />
+  if (page.state === 'hasError') throw page.error
+  return <AppShell page={page.data} />
 }

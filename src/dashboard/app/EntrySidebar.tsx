@@ -50,23 +50,18 @@ export interface EntrySidebarProps {
 
 export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
   const type = useAtomValue(entry.type)
-  const sidebarState = useAtomValue(page.sidebar)
-  const sidebar = sidebarState.data ?? {type: 'closed'}
-  const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
+  const sidebar = page.sidebar.data
+  const [, setSelectedTab] = useAtom(entrySidebarTabAtom)
   const isMediaFile = type === MediaFile
   const isMediaLibrary = type === MediaLibrary
   const hasPreview = !isMediaFile && !isMediaLibrary
   const allowedTabs = allowedEntrySidebarTabs(type)
-  const selectedKey = allowedTabs.includes(selectedTab)
-    ? selectedTab
+  const selectedKey = allowedTabs.includes(page.sidebar.tab)
+    ? page.sidebar.tab
     : allowedTabs[0]
 
   return (
-    <Sidebar
-      aria-busy={
-        sidebarState.pending && selectedKey !== 'preview' ? true : undefined
-      }
-    >
+    <Sidebar>
       <Tabs
         className={styles.EntrySidebar.tabs()}
         selectedKey={selectedKey}
@@ -118,11 +113,7 @@ export function EntrySidebar({entry, page, onOpenChange}: EntrySidebarProps) {
                   id="preview"
                   className={styles.EntrySidebar.previewPanel()}
                 >
-                  <EntrySidebarPreview
-                    entry={entry}
-                    sidebar={sidebar}
-                    pending={sidebarState.pending}
-                  />
+                  <EntrySidebarPreview entry={entry} sidebar={sidebar} />
                 </TabPanel>
               )}
             </>

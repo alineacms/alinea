@@ -29,6 +29,7 @@ import {type DashboardLocaleSelection} from '../atoms/explorer.js'
 import {
   currentRootAtom,
   currentWorkspaceAtom,
+  type PreparedTree,
   TreeAtoms,
   type RootAtoms,
   type TreeSnapshot,
@@ -145,7 +146,7 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
 }: SidebarLoadedItemProps) {
   const label = useAtomValue(data.label)
   const status = useAtomValue(data.treeStatus)
-  const expand = useSetAtom(tree.expand(root))
+  const expand = useSetAtom(tree.expand)
   const selectedAncestorStatusAtom = useMemo(
     () =>
       atom((get): DashboardEntryTreeStatus | undefined => {
@@ -229,6 +230,7 @@ interface SidebarTreeBodyProps {
   onSelectionChange?: (keys: Selection) => void
   root: RootAtoms
   selectedKeys?: Set<Key>
+  prepared?: PreparedTree
   tree: TreeAtoms
 }
 
@@ -243,6 +245,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   ariaLabel = 'Content tree',
   disableDragAndDrop = false,
   onSelectionChange,
+  prepared,
   root,
   selectedKeys,
   tree
@@ -250,9 +253,14 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
   const [localSelectedKeys, setLocalSelectedKeys] = useState<Selection>(
     new Set()
   )
-  const expandedKeys = useAtomValue(tree.expandedKeys)
-  const setExpandedKeys = useSetAtom(tree.setExpandedKeys(root))
-  const snapshot = useAtomValue(tree.snapshot(root))
+  const storedExpandedKeys = useAtomValue(tree.expandedKeys)
+  const expandedKeys = prepared?.expandedKeys ?? storedExpandedKeys
+  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const snapshotAtom = useMemo(
+    () => (prepared ? atom(prepared.snapshot) : tree.snapshot(root)),
+    [prepared, root, tree]
+  )
+  const snapshot = useAtomValue(snapshotAtom)
   const dragDisabled = useAtomValue(tree.dragDisabled)
   const onInsert = useSetAtom(tree.onInsert)
   const onItemDrop = useSetAtom(tree.onItemDrop)
@@ -366,7 +374,11 @@ function SidebarTreeContent({
   )
 }
 
-export const SidebarTree = memo(function SidebarTree() {
+export const SidebarTree = memo(function SidebarTree({
+  prepared
+}: {
+  prepared?: PreparedTree
+}) {
   const workspace = useAtomValue(currentWorkspaceAtom)
   assert(workspace, 'No workspace selected')
   const selectedWorkspace = workspace
@@ -406,6 +418,7 @@ export const SidebarTree = memo(function SidebarTree() {
           root={currentRoot}
           rootSelected={!requestedRoute.entry}
           selectedKeys={selectedKeys}
+          prepared={prepared}
           tree={selectedWorkspace.tree}
           onRootPress={onRootPress}
           onSelectionChange={onSelectionChange}

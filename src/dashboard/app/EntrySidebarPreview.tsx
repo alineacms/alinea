@@ -1,4 +1,4 @@
-import {Button, ProgressCircle} from '#/components.js'
+import {Button} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
@@ -23,13 +23,11 @@ const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
   entry: EntryDataAtoms
-  pending?: boolean
   sidebar: EntrySidebarData
 }
 
 export function EntrySidebarPreview({
   entry,
-  pending = false,
   sidebar
 }: EntrySidebarPreviewProps) {
   const preview = useAtomValue(entry.preview)
@@ -40,20 +38,8 @@ export function EntrySidebarPreview({
       </EntrySidebarPreviewMessage>
     )
   if (preview === true)
-    return (
-      <EntrySidebarBrowserPreview
-        entry={entry}
-        pending={pending}
-        sidebar={sidebar}
-      />
-    )
-  return (
-    <EntrySidebarComponentPreview
-      pending={pending}
-      preview={preview}
-      sidebar={sidebar}
-    />
-  )
+    return <EntrySidebarBrowserPreview entry={entry} sidebar={sidebar} />
+  return <EntrySidebarComponentPreview preview={preview} sidebar={sidebar} />
 }
 
 interface EntrySidebarPreviewMessageProps {
@@ -71,23 +57,15 @@ function EntrySidebarPreviewMessage({
 }
 
 interface EntrySidebarComponentPreviewProps {
-  pending: boolean
   preview: Exclude<Preview, boolean>
   sidebar: EntrySidebarData
 }
 
 function EntrySidebarComponentPreview({
-  pending,
   preview,
   sidebar
 }: EntrySidebarComponentPreviewProps) {
   const previewEntry = sidebar.type === 'preview' ? sidebar.entry : null
-  if (pending)
-    return (
-      <div className={styles.EntrySidebarPreview()}>
-        <EntrySidebarPreviewLoading />
-      </div>
-    )
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage>
@@ -106,7 +84,6 @@ function EntrySidebarComponentPreview({
 
 interface EntrySidebarBrowserPreviewProps {
   entry: EntryDataAtoms
-  pending: boolean
   sidebar: EntrySidebarData
 }
 
@@ -167,17 +144,8 @@ function EntrySidebarBrowserPreviewHeader({
   )
 }
 
-function EntrySidebarPreviewLoading() {
-  return (
-    <div className={styles.EntrySidebarPreview.loading()}>
-      <ProgressCircle isIndeterminate aria-label="Loading preview" />
-    </div>
-  )
-}
-
 function EntrySidebarBrowserPreview({
   entry,
-  pending,
   sidebar
 }: EntrySidebarBrowserPreviewProps) {
   const previewUrl = sidebar.type === 'preview' ? sidebar.url : undefined
@@ -288,13 +256,8 @@ function EntrySidebarBrowserPreview({
         onReload={reloadPreview}
         onOpen={openInNewTab}
       />
-      <div
-        className={styles.EntrySidebarPreview.browser()}
-        aria-busy={pending || undefined}
-      >
-        {pending ? (
-          <EntrySidebarPreviewLoading />
-        ) : previewUrl ? (
+      <div className={styles.EntrySidebarPreview.browser()}>
+        {previewUrl ? (
           <iframe
             key={`${previewUrl}:${frameVersion}`}
             ref={iframe}

@@ -1,63 +1,44 @@
 import {expect, test} from 'bun:test'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
-import {atom, createStore} from 'jotai'
+import {atom} from 'jotai'
 import {entryAtoms} from './entry.js'
 import {
-  createEntrySidebarResource,
   entrySidebarTabAtom,
   loadEntryPage,
   resolveEntrySidebarTab
 } from './entry/load.js'
-import {optionsAtom, policyResourceAtom} from './user.js'
+import {policyResourceAtom} from './user.js'
 import {setUserRolesAtom} from './dashboard.js'
 import {configAtom, workspaceAtoms} from './config.js'
 import {
   createRouteLoader,
   currentEntryAtom,
-  navigationAtom,
-  pageAtom
+  pageAtom,
+  pageResourceAtom
 } from './routing.js'
 
-test('page atoms require navigation to commit prepared data', () => {
-  const store = createStore()
-  store.set(optionsAtom, {
-    history: {
-      read: () => ({page: 'entry'}),
-      push() {},
-      replace() {},
-      subscribe: () => () => {}
-    }
-  })
-  const navigation = store.get(navigationAtom)
-
-  expect(() => store.get(pageAtom)).toThrow(
-    'Dashboard page was read before it was prepared'
-  )
-
-  const page = {type: 'empty', canManageMembers: false} as const
-  store.set(navigation.prepared, page)
-
-  expect(store.get(pageAtom)).toBe(page)
+test('the page resource prepares the initial screen', async () => {
+  const {store} = await createDashboardAtomFixture()
+  const resource = store.get(pageResourceAtom)
+  expect(resource).toBeInstanceOf(Promise)
+  const page = await resource
+  const prepared = await store.get(pageAtom)
+  expect(prepared.route).toEqual(page.route)
+  expect(prepared.content.type).toBe(page.content.type)
+  expect(page.sidebar).toBeDefined()
   expect(store.get(currentEntryAtom)).toBeNull()
 })
 
 test('changing user roles re-prepares the current route', async () => {
   const {store} = await createDashboardAtomFixture()
-  const navigation = store.get(navigationAtom)
-  const previous = {
-    type: 'empty',
-    canManageMembers: false
-  } as const
-  store.set(navigation.prepared, previous)
+  const previous = await store.get(pageResourceAtom)
 
   await store.set(setUserRolesAtom, ['editor'])
 
-  expect(store.get(pageAtom)).not.toBe(previous)
-  expect(store.get(pageAtom)).toEqual({
-    type: 'empty',
-    canManageMembers: false
-  })
+  const page = await store.get(pageAtom)
+  expect(page).not.toBe(previous)
+  expect(page.content.canManageMembers).toBe(false)
 })
 
 test('entry sidebar defaults match the entry type', () => {
@@ -76,15 +57,10 @@ test('open entry sidebar is prepared with the page', async () => {
     workspace: workspaceAtoms,
     entry: entryAtoms,
     loadEntry(get, entry, locale) {
-      return loadEntryPage(
-        get,
-        entry,
-        locale,
-        createEntrySidebarResource(entry, locale, async () => {
-          sidebarLoads++
-          throw new Error('References unavailable')
-        })
-      )
+      return loadEntryPage(get, entry, locale, async () => {
+        sidebarLoads++
+        throw new Error('References unavailable')
+      })
     }
   })
   const page = await loadRoute(
@@ -101,14 +77,14 @@ test('open entry sidebar is prepared with the page', async () => {
   expect(page.type).toBe('entry')
   if (page.type !== 'entry') return
   expect(sidebarLoads).toBe(1)
-  const sidebar = store.get(page.sidebar)
-  expect(sidebar.data?.type).toBe('error')
-  expect(sidebar.data?.type === 'error' && sidebar.data.error.message).toBe(
+  const sidebar = page.sidebar
+  expect(sidebar.data.type).toBe('error')
+  expect(sidebar.data.type === 'error' && sidebar.data.error.message).toBe(
     'References unavailable'
   )
 })
 
-test('preview sidebar loading does not delay the entry page', async () => {
+test('the selected preview is prepared with the entry page', async () => {
   const {child, store} = await createDashboardAtomFixture()
   let sidebarLoads = 0
   const loadRoute = createRouteLoader({
@@ -118,15 +94,10 @@ test('preview sidebar loading does not delay the entry page', async () => {
     workspace: workspaceAtoms,
     entry: entryAtoms,
     loadEntry(get, entry, locale) {
-      return loadEntryPage(
-        get,
-        entry,
-        locale,
-        createEntrySidebarResource(entry, locale, async () => {
-          sidebarLoads++
-          return new Promise(() => {})
-        })
-      )
+      return loadEntryPage(get, entry, locale, async () => {
+        sidebarLoads++
+        return {type: 'preview', entry: null, url: undefined}
+      })
     }
   })
 
@@ -143,7 +114,10 @@ test('preview sidebar loading does not delay the entry page', async () => {
 
   expect(page.type).toBe('entry')
   if (page.type !== 'entry') return
-  expect(sidebarLoads).toBe(0)
-  expect(store.get(page.sidebar)).toEqual({pending: true, data: undefined})
   expect(sidebarLoads).toBe(1)
+  expect(page.sidebar).toEqual({
+    tab: 'preview',
+    open: true,
+    data: {type: 'preview', entry: null, url: undefined}
+  })
 })

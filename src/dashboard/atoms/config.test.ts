@@ -1,9 +1,13 @@
 import {expect, test} from 'bun:test'
-import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
+import {
+  createDashboardAtomFixture,
+  DashboardTestPage
+} from '#test/DashboardFixture.js'
 import {optionsAtom} from './user.js'
 import {
   navigationAtom,
-  prepareInitialContentAtom,
+  pageAtom,
+  pageResourceAtom,
   routeAtom
 } from './routing.js'
 import {type TreeSnapshot, workspaceAtoms} from './config.js'
@@ -29,38 +33,28 @@ test('initial navigation expands the routed entry parent chain', async () => {
     }
   })
 
-  await store.set(prepareInitialContentAtom)
+  const page = await store.get(pageResourceAtom)
 
-  const workspace = workspaceAtoms('main')
-  expect(store.get(workspace.tree.expandedKeys)).toEqual(new Set([parent._id]))
   expect(
-    store
-      .get(workspace.tree.snapshot(workspace.root('pages')))
-      .children.get(parent._id)
-      ?.map(entry => entry.id)
+    page.sidebar?.snapshot.children.get(parent._id)?.map(entry => entry.id)
   ).toEqual([child._id])
+  expect(page.sidebar?.expandedKeys).toEqual(new Set([parent._id]))
 })
 
 test('navigation commits with its tree snapshot prepared', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
   const navigation = store.get(navigationAtom)
-  store.set(navigation.prepared, {
-    type: 'empty',
-    canManageMembers: false
-  })
-  const workspace = workspaceAtoms('main')
+  await store.get(pageResourceAtom)
 
   await store.set(routeAtom, {
     workspace: 'main',
     root: 'pages',
     entry: child._id
   })
+  const page = await store.get(pageAtom)
 
   expect(
-    store
-      .get(workspace.tree.snapshot(workspace.root('pages')))
-      .children.get(parent._id)
-      ?.map(entry => entry.id)
+    page.sidebar?.snapshot.children.get(parent._id)?.map(entry => entry.id)
   ).toEqual([child._id])
   expect(store.get(navigation.pending)).toBeUndefined()
   expect(store.get(navigation.route).entry).toBe(child._id)
@@ -68,11 +62,7 @@ test('navigation commits with its tree snapshot prepared', async () => {
 
 test('tree expansion retains previously expanded entries on navigation', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
-  const navigation = store.get(navigationAtom)
-  store.set(navigation.prepared, {
-    type: 'empty',
-    canManageMembers: false
-  })
+  await store.get(pageResourceAtom)
   const tree = workspaceAtoms('main').tree
 
   expect(store.get(tree.expandedKeys)).toEqual(new Set())
@@ -82,8 +72,9 @@ test('tree expansion retains previously expanded entries on navigation', async (
     root: 'pages',
     entry: child._id
   })
+  const page = await store.get(pageAtom)
 
-  expect(store.get(tree.expandedKeys)).toEqual(new Set([parent._id]))
+  expect(page.sidebar?.expandedKeys).toEqual(new Set([parent._id]))
 
   store.set(tree.expandedKeys, new Set([parent._id, 'manual-entry']))
   await store.set(routeAtom, {
@@ -99,13 +90,14 @@ test('tree expansion retains previously expanded entries on navigation', async (
 
 test('tree snapshot exposes children of expanded entries', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
-  await store.set(prepareInitialContentAtom)
+  await store.get(pageResourceAtom)
   const workspace = workspaceAtoms('main')
   const tree = workspace.tree
   const root = workspace.root('pages')
 
-  await store.set(tree.setExpandedKeys(root), new Set([parent._id]))
-  const snapshot: TreeSnapshot = store.get(tree.snapshot(root))
+  store.set(tree.expandedKeys, new Set([parent._id]))
+  await tree.prepare(store.get, root, null)
+  const snapshot: TreeSnapshot = await store.get(tree.snapshot(root))
 
   expect(snapshot.children.get(parent._id)?.map(entry => entry.id)).toEqual([
     child._id
@@ -123,19 +115,46 @@ test('entry loading reports a removed entry instead of retained UI data', async 
   expect(await loadEntryData(store.get, entry)).toBeUndefined()
 })
 
-test('requested route follows tree navigation synchronously', async () => {
+test('requested route changes after navigation is allowed', async () => {
   const {child, store} = await createDashboardAtomFixture()
   const navigation = store.get(navigationAtom)
-  store.set(navigation.prepared, {
-    type: 'empty',
-    canManageMembers: false
-  })
+  await store.get(pageResourceAtom)
   const result = store.set(routeAtom, {
     workspace: 'main',
     root: 'pages',
     entry: child._id
   })
-  expect(store.get(navigation.requestedRoute).entry).toBe(child._id)
+  expect(store.get(navigation.requestedRoute).entry).toBeUndefined()
   expect(store.get(navigation.pending)).toBeUndefined()
+  await Promise.resolve()
+  expect(store.get(navigation.requestedRoute).entry).toBe(child._id)
   await result
+})
+
+test('navigation prepares a sibling entry from an entry page', async () => {
+  const {child, db, store} = await createDashboardAtomFixture()
+  const sibling = await db.create({
+    type: DashboardTestPage,
+    set: {title: 'Sibling'}
+  })
+  await store.get(pageResourceAtom)
+
+  expect(
+    await store.set(routeAtom, {
+      workspace: 'main',
+      root: 'pages',
+      entry: child._id
+    })
+  ).toBe(true)
+  expect(
+    await store.set(routeAtom, {
+      workspace: 'main',
+      root: 'pages',
+      entry: sibling._id
+    })
+  ).toBe(true)
+  const page = await store.get(pageResourceAtom)
+  expect(page.content.type).toBe('entry')
+  if (page.content.type !== 'entry') return
+  expect(page.content.entry.id).toBe(sibling._id)
 })

@@ -6,7 +6,7 @@ import {atom} from 'jotai'
 import type {ComponentType} from 'react'
 import {entryRevisionAtom, locallyDeletingEntryAtom} from './entry/load.js'
 import {eventsAtom} from './graph.js'
-import {refreshCurrentRouteAtom, routeAtom} from './routing.js'
+import {refreshCurrentRouteAtom} from './routing.js'
 import {type DashboardOptions, updateUserRolesAtom} from './user.js'
 
 export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
@@ -38,7 +38,6 @@ export const dashboardEffectsAtom = Object.assign(
         const id = event.data.id
         if (get(locallyDeletingEntryAtom) === id) return
         set(entryRevisionAtom(id), current => current + 1)
-        if (get(routeAtom).entry === id) void set(refreshCurrentRouteAtom)
       }
       events.addEventListener(IndexEvent.type, listen)
       return () => {

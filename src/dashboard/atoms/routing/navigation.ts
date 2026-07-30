@@ -8,30 +8,24 @@ export interface PendingNavigation {
   route: Route
 }
 
-export interface Navigation<Prepared = void> {
+export interface Navigation {
   route: WritableAtom<Route, [update: RouteUpdate], Promise<boolean>>
   requestedRoute: Atom<Route>
-  prepared: WritableAtom<Prepared | undefined, [prepared: Prepared], void>
-  refresh: WritableAtom<null, [], Promise<boolean>>
   pending: Atom<PendingNavigation | undefined>
   error: Atom<Error | undefined>
 }
 
 export interface NavigationContext {
+  currentRoute: Route
   get: Getter
   set: Setter
   signal: AbortSignal
 }
 
-export interface NavigationOptions<Prepared> {
+export interface NavigationOptions {
   history: RouteHistory
   allow?(route: Route, context: NavigationContext): boolean | Promise<boolean>
-  prepare(route: Route, context: NavigationContext): Promise<Prepared>
-}
-
-interface CurrentNavigation<Prepared> {
-  route: Route
-  prepared: Prepared | undefined
+  prepare(route: Route, context: NavigationContext): Promise<void>
 }
 
 interface PushRequest {
@@ -46,13 +40,8 @@ interface PopRequest {
 
 type NavigationRequest = PushRequest | PopRequest
 
-export function createNavigation<Prepared = void>(
-  options: NavigationOptions<Prepared>
-): Navigation<Prepared> {
-  const current = atom<CurrentNavigation<Prepared>>({
-    route: options.history.read(),
-    prepared: undefined
-  })
+export function createNavigation(options: NavigationOptions): Navigation {
+  const current = atom(options.history.read())
   const requested = atom<PendingNavigation>()
   const pending = atom<PendingNavigation>()
   const error = atom<Error>()
@@ -68,7 +57,7 @@ export function createNavigation<Prepared = void>(
 
   const request = Object.assign(
     atom(
-      get => get(current).route,
+      get => get(current),
       async (get, set, navigation: NavigationRequest): Promise<boolean> => {
         const {id, controller} = start()
         const route =
@@ -76,29 +65,30 @@ export function createNavigation<Prepared = void>(
             ? navigation.route
             : routeFromUpdate(navigation.update)
         const context = {
+          currentRoute: get(current),
           get,
           set,
           signal: controller.signal
         } satisfies NavigationContext
 
-        set(requested, {id, route})
+        set(requested, undefined)
         set(pending, undefined)
         set(error, undefined)
         try {
           const allowed = (await options.allow?.(route, context)) ?? true
           if (controller.signal.aborted || id !== sequence) return false
           if (!allowed) {
-            if (navigation.type === 'pop')
-              options.history.replace(get(current).route)
+            if (navigation.type === 'pop') options.history.replace(get(current))
             set(requested, undefined)
             return false
           }
 
+          set(requested, {id, route})
           set(pending, {id, route})
-          const prepared = await options.prepare(route, context)
+          await options.prepare(route, context)
           if (controller.signal.aborted || id !== sequence) return false
           if (navigation.type === 'push') options.history.push(route)
-          set(current, {route, prepared})
+          set(current, route)
           set(requested, undefined)
           set(pending, undefined)
           return true
@@ -106,8 +96,7 @@ export function createNavigation<Prepared = void>(
           if (controller.signal.aborted || id !== sequence) return false
           const navigationError =
             cause instanceof Error ? cause : new Error(String(cause))
-          if (navigation.type === 'pop')
-            options.history.replace(get(current).route)
+          if (navigation.type === 'pop') options.history.replace(get(current))
           set(error, navigationError)
           set(requested, undefined)
           set(pending, undefined)
@@ -132,46 +121,8 @@ export function createNavigation<Prepared = void>(
       return set(request, {type: 'push', update})
     }
   )
-  const requestedRoute = atom(
-    get => get(requested)?.route ?? get(current).route
-  )
-
-  const prepared = atom(
-    get => get(current).prepared,
-    (get, set, prepared: Prepared) => {
-      set(current, {...get(current), prepared})
-    }
-  )
-
-  const refresh = atom(null, async (get, set): Promise<boolean> => {
-    const {id, controller} = start()
-    const route = get(current).route
-    set(requested, undefined)
-    set(pending, undefined)
-    set(error, undefined)
-    try {
-      const prepared = await options.prepare(route, {
-        get,
-        set,
-        signal: controller.signal
-      })
-      if (controller.signal.aborted || id !== sequence) return false
-      const currentNavigation = get(current)
-      if (currentNavigation.route !== route) return false
-      set(current, {...currentNavigation, prepared})
-      return true
-    } catch (cause) {
-      if (controller.signal.aborted || id !== sequence) return false
-      const refreshError =
-        cause instanceof Error ? cause : new Error(String(cause))
-      set(error, refreshError)
-      throw refreshError
-    } finally {
-      if (active === controller) active = undefined
-    }
-  })
-
-  return {route, requestedRoute, prepared, refresh, pending, error}
+  const requestedRoute = atom(get => get(requested)?.route ?? get(current))
+  return {route, requestedRoute, pending, error}
 }
 
 function routeFromUpdate(update: RouteUpdate): Route {

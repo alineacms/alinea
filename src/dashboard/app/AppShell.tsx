@@ -3,8 +3,8 @@ import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense} from 'react'
-import {navigationAtoms, pageAtom} from '../atoms/routing.js'
-import type {PreparedRoute} from '../atoms/routing.js'
+import {navigationAtoms} from '../atoms/routing.js'
+import type {PreparedPage} from '../atoms/routing.js'
 import {
   currentRootAtom,
   currentWorkspaceAtom,
@@ -27,8 +27,7 @@ import {WorkspaceRoots} from './WorkspaceRoots.js'
 
 const styles = styler(css)
 
-export function AppShell() {
-  const page = useAtomValue(pageAtom)
+export function AppShell({page}: {page: PreparedPage}) {
   const navigationPending = useAtomValue(navigationAtoms.pending)
   return (
     <main
@@ -42,13 +41,14 @@ export function AppShell() {
 }
 
 interface AppShellContentProps {
-  page: PreparedRoute
+  page: PreparedPage
 }
 
 function AppShellContent({page}: AppShellContentProps) {
   const workspaces = useAtomValue(workspacesAtom)
+  const {content} = page
 
-  if (page.type === 'users' && page.canManageMembers) {
+  if (content.type === 'users' && content.canManageMembers) {
     return (
       <div className={styles.AppShellWorkspace()}>
         <UsersPageSidebar />
@@ -60,7 +60,7 @@ function AppShellContent({page}: AppShellContentProps) {
   }
 
   if (workspaces.length === 0) {
-    return <NoWorkspaceAccess canManageMembers={page.canManageMembers} />
+    return <NoWorkspaceAccess canManageMembers={content.canManageMembers} />
   }
 
   return <AppShellWorkspace page={page} />
@@ -99,6 +99,7 @@ function NoWorkspaceAccess({canManageMembers}: NoWorkspaceAccessProps) {
 }
 
 function AppShellWorkspace({page}: AppShellContentProps) {
+  const {content} = page
   const currentWorkspace = useAtomValue(currentWorkspaceAtom)
   assert(currentWorkspace, 'No workspace selected')
   const currentRoot = useAtomValue(currentRootAtom)
@@ -107,7 +108,7 @@ function AppShellWorkspace({page}: AppShellContentProps) {
   if (roots.length === 0) {
     return (
       <div className={styles.AppShellWorkspace()}>
-        <WorkspaceRoots canManageMembers={page.canManageMembers} />
+        <WorkspaceRoots canManageMembers={content.canManageMembers} />
         <div className={styles.AppShellContent()}>
           <Sidebar />
           <Rail main style={{alignItems: 'center', justifyContent: 'center'}}>
@@ -126,13 +127,13 @@ function AppShellWorkspace({page}: AppShellContentProps) {
 
   return (
     <div className={styles.AppShellWorkspace()}>
-      <WorkspaceRoots canManageMembers={page.canManageMembers} />
+      <WorkspaceRoots canManageMembers={content.canManageMembers} />
       <div className={styles.AppShellContent()}>
         <Sidebar>
           <SidebarHeader>
-            <WorkspaceMenu canManageMembers={page.canManageMembers} />
+            <WorkspaceMenu canManageMembers={content.canManageMembers} />
           </SidebarHeader>
-          <SidebarTree />
+          <SidebarTree prepared={page.sidebar} />
           {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
         </Sidebar>
 
@@ -140,7 +141,7 @@ function AppShellWorkspace({page}: AppShellContentProps) {
           <DashboardMeta />
         </Suspense>
 
-        <EditorBoundary page={page} />
+        <EditorBoundary page={content} />
       </div>
     </div>
   )
@@ -169,7 +170,7 @@ function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
   )
 }
 
-function EditorBoundary({page}: AppShellContentProps) {
+function EditorBoundary({page}: {page: PreparedPage['content']}) {
   return (
     <ErrorBoundary>
       <Editor page={page} />
