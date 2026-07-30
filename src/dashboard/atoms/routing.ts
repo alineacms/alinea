@@ -42,15 +42,26 @@ export const navigationAtom = atom(get => {
     prepare: async (route, {get, set, signal}) => {
       const prepared = await loadRoute(get, route, signal)
       signal.throwIfAborted()
+      let treeRoot = 'root' in prepared ? prepared.root : undefined
       if (route.entry) {
         const {data} = get(entryAtoms(route.entry).data)
         if (data) {
           const entryData = get(data.entryData)
           const tree = workspaceAtoms(entryData.workspace).tree
+          treeRoot = get(data.root)
           const expanded = new Set(get(tree.expandedKeys))
           for (const parent of entryData.parents) expanded.add(parent.id)
           set(tree.expandedKeys, expanded)
         }
+      }
+      if (treeRoot) {
+        await treeRoot.workspace.tree.prepareSnapshot(
+          get,
+          set,
+          treeRoot,
+          routeLocale(get, treeRoot, route.locale)
+        )
+        signal.throwIfAborted()
       }
       return prepared
     }
@@ -75,6 +86,17 @@ export const navigationAtoms: Navigation<PreparedRoute> = {
 }
 
 export const routeAtom = navigationAtoms.route
+
+function routeLocale(
+  get: Getter,
+  root: RootAtoms,
+  requestedLocale: string | undefined
+) {
+  const i18n = get(root.settings).i18n
+  if (requestedLocale && i18n?.locales.includes(requestedLocale))
+    return requestedLocale
+  return i18n?.locales[0] ?? null
+}
 
 function loadRoute(
   get: Getter,
@@ -117,6 +139,26 @@ export const reloadPageAtom = atom(null, async (get, set) => {
   const route = get(routeAtom)
   try {
     const page = await loadRoute(get, route, controller.signal)
+    let treeRoot = 'root' in page ? page.root : undefined
+    if (route.entry) {
+      const {data} = get(entryAtoms(route.entry).data)
+      if (data) {
+        const entryData = get(data.entryData)
+        const tree = workspaceAtoms(entryData.workspace).tree
+        treeRoot = get(data.root)
+        const expanded = new Set(get(tree.expandedKeys))
+        for (const parent of entryData.parents) expanded.add(parent.id)
+        set(tree.expandedKeys, expanded)
+      }
+    }
+    if (treeRoot)
+      await treeRoot.workspace.tree.prepareSnapshot(
+        get,
+        set,
+        treeRoot,
+        routeLocale(get, treeRoot, route.locale)
+      )
+    controller.signal.throwIfAborted()
     if (sequence === get(routeLoadSequenceAtom))
       set(navigationAtoms.refresh, route, page)
   } catch (error) {
@@ -184,16 +226,25 @@ const initialContentResourceAtom = atom<Promise<PreparedRoute>>(async get => {
 export const prepareInitialContentAtom = atom(null, async (get, set) => {
   const page = await get(initialContentResourceAtom)
   const route = get(routeAtom)
+  let treeRoot = 'root' in page ? page.root : undefined
   if (route.entry) {
     const {data} = get(entryAtoms(route.entry).data)
     if (data) {
       const entryData = get(data.entryData)
       const tree = workspaceAtoms(entryData.workspace).tree
+      treeRoot = get(data.root)
       const expanded = new Set(get(tree.expandedKeys))
       for (const parent of entryData.parents) expanded.add(parent.id)
       set(tree.expandedKeys, expanded)
     }
   }
+  if (treeRoot)
+    await treeRoot.workspace.tree.prepareSnapshot(
+      get,
+      set,
+      treeRoot,
+      routeLocale(get, treeRoot, route.locale)
+    )
   set(navigationAtoms.prepared, page)
   set(initialContentLoadedAtom, true)
 })

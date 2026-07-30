@@ -6,7 +6,7 @@ import {
   prepareInitialContentAtom,
   routeAtom
 } from './routing.js'
-import {workspaceAtoms} from './config.js'
+import {type TreeSnapshot, workspaceAtoms} from './config.js'
 
 test('initial navigation expands the routed entry parent chain', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
@@ -28,9 +28,39 @@ test('initial navigation expands the routed entry parent chain', async () => {
 
   await store.set(prepareInitialContentAtom)
 
-  expect(store.get(workspaceAtoms('main').tree.expandedKeys)).toEqual(
-    new Set([parent._id])
-  )
+  const workspace = workspaceAtoms('main')
+  expect(store.get(workspace.tree.expandedKeys)).toEqual(new Set([parent._id]))
+  expect(
+    store
+      .get(workspace.tree.snapshot(workspace.root('pages')))
+      .children.get(parent._id)
+      ?.map(entry => entry.id)
+  ).toEqual([child._id])
+})
+
+test('navigation commits with its tree snapshot prepared', async () => {
+  const {child, parent, store} = await createDashboardAtomFixture()
+  const navigation = store.get(navigationAtom)
+  store.set(navigation.prepared, {
+    type: 'empty',
+    canManageMembers: false
+  })
+  const workspace = workspaceAtoms('main')
+
+  await store.set(routeAtom, {
+    workspace: 'main',
+    root: 'pages',
+    entry: child._id
+  })
+
+  expect(
+    store
+      .get(workspace.tree.snapshot(workspace.root('pages')))
+      .children.get(parent._id)
+      ?.map(entry => entry.id)
+  ).toEqual([child._id])
+  expect(store.get(navigation.pending)).toBeUndefined()
+  expect(store.get(navigation.route).entry).toBe(child._id)
 })
 
 test('tree expansion retains previously expanded entries on navigation', async () => {
@@ -72,7 +102,18 @@ test('tree snapshot exposes children of expanded entries', async () => {
   const root = workspace.root('pages')
 
   store.set(tree.expandedKeys, new Set([parent._id]))
-  const snapshot = await store.get(tree.snapshot(root))
+  const snapshotAtom = tree.snapshot(root)
+  const snapshot = await new Promise<TreeSnapshot>(resolve => {
+    let unsubscribe = () => {}
+    function readSnapshot() {
+      const current = store.get(snapshotAtom)
+      if (!current.children.has(parent._id)) return
+      unsubscribe()
+      resolve(current)
+    }
+    unsubscribe = store.sub(snapshotAtom, readSnapshot)
+    readSnapshot()
+  })
 
   expect(snapshot.children.get(parent._id)?.map(entry => entry.id)).toEqual([
     child._id

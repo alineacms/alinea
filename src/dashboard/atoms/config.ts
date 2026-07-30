@@ -14,7 +14,7 @@ import type {
   DropTarget,
   ItemDropTarget
 } from '@react-types/shared'
-import type {Atom, Getter} from 'jotai'
+import type {Atom, Getter, Setter} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
@@ -123,6 +123,16 @@ export interface TreeSnapshot {
   children: ReadonlyMap<string, Array<EntryAtoms>>
 }
 
+const emptyTreeSnapshot: TreeSnapshot = {
+  items: [],
+  children: new Map()
+}
+
+interface PreparedTreeSnapshot {
+  resource: Promise<TreeSnapshot>
+  snapshot: TreeSnapshot
+}
+
 export class TreeAtoms {
   constructor(private workspace: WorkspaceAtoms) {}
 
@@ -152,10 +162,9 @@ export class TreeAtoms {
     next.add(key)
     await set(this.setExpandedKeys, next)
   })
-  snapshot = dispense((root: RootAtoms) =>
-    swr(
+  #snapshotResource = dispense((root: RootAtoms) =>
+    dispense((locale: string | null) =>
       atom(async get => {
-        const locale = get(root.selectedLocale)
         const expanded = get(this.expandedKeys)
         const rootIds = await queryTreeChildren(
           get,
@@ -189,6 +198,36 @@ export class TreeAtoms {
       })
     )
   )
+  #preparedSnapshot = dispense((_root: RootAtoms) =>
+    dispense((_locale: string | null) => atom<PreparedTreeSnapshot>())
+  )
+  #snapshotValue = dispense((root: RootAtoms) =>
+    dispense((locale: string | null) => {
+      const resourceAtom = this.#snapshotResource(root)(locale)
+      const preparedAtom = this.#preparedSnapshot(root)(locale)
+      const liveSnapshot = unwrap(resourceAtom, previous => previous)
+      return atom(get => {
+        const resource = get(resourceAtom)
+        const prepared = get(preparedAtom)
+        if (prepared?.resource === resource) return prepared.snapshot
+        return get(liveSnapshot) ?? emptyTreeSnapshot
+      })
+    })
+  )
+  snapshot = dispense((root: RootAtoms) =>
+    atom(get => get(this.#snapshotValue(root)(get(root.selectedLocale))))
+  )
+
+  async prepareSnapshot(
+    get: Getter,
+    set: Setter,
+    root: RootAtoms,
+    locale: string | null
+  ): Promise<void> {
+    const resource = get(this.#snapshotResource(root)(locale))
+    const snapshot = await resource
+    set(this.#preparedSnapshot(root)(locale), {resource, snapshot})
+  }
 
   items = atom(async get => {
     if (get(selectedWorkspaceAtom) !== this.workspace.key) return []
