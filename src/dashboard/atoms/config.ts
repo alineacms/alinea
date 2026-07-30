@@ -157,7 +157,7 @@ export class TreeAtoms {
     this.#syncRouteExpansion = options.syncRouteExpansion ?? true
   }
 
-  #routeExpandedKeys = atom(async get => {
+  #routeExpandedKeys = atom(get => {
     if (!this.#syncRouteExpansion) return new Set<Key>()
     const route = get(routeAtom)
     if (!route.entry || route.workspace !== this.workspace.key)
@@ -168,26 +168,28 @@ export class TreeAtoms {
     return new Set<Key>(get(data.entryData).parents.map(parent => parent.id))
   })
 
-  expandedKeys = Object.assign(
-    atom(
-      get => get(this.#expandedKeys),
-      (get, set, next: 'init' | Set<Key>) => {
-        if (next === 'init') {
-          const route = get(routeAtom)
-          get(this.#routeExpandedKeys).then(routeKeys => {
-            if (get(routeAtom) !== route) return
-            if (routeKeys.size === 0) return
-            const current = get(this.#expandedKeys)
-            const merged = new Set(current)
-            for (const key of routeKeys) merged.add(key)
-            set(this.#expandedKeys, merged)
-          })
-        } else {
-          set(this.#expandedKeys, next)
-        }
+  expandedKeys = atom(
+    get => {
+      const expandedKeys = get(this.#expandedKeys)
+      const routeExpandedKeys = get(this.#routeExpandedKeys)
+      if (routeExpandedKeys.size === 0) return expandedKeys
+      const merged = new Set(expandedKeys)
+      for (const key of routeExpandedKeys) merged.add(key)
+      return merged
+    },
+    (get, set, next: Set<Key>) => {
+      const current = get(this.#expandedKeys)
+      const routeExpandedKeys = get(this.#routeExpandedKeys)
+      if (routeExpandedKeys.size === 0) {
+        set(this.#expandedKeys, next)
+        return
       }
-    ),
-    {onMount: (setSelf: (value: 'init') => void) => setSelf('init')}
+      const manual = new Set<Key>()
+      for (const key of next) {
+        if (!routeExpandedKeys.has(key) || current.has(key)) manual.add(key)
+      }
+      set(this.#expandedKeys, manual)
+    }
   )
   #expandedKeys = atom(new Set<Key>())
 
