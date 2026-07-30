@@ -6,7 +6,7 @@ import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {Fragment, memo} from 'react'
+import {memo} from 'react'
 import {
   Button as AriaButton,
   type DragAndDropHooks,
@@ -17,11 +17,7 @@ import {
   type Key,
   Virtualizer
 } from 'react-aria-components'
-import {
-  IcRoundKeyboardArrowRight,
-  IcTwotoneDescription,
-  IcTwotoneFolder
-} from '../icons.js'
+import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
 import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
 import type {ExplorerAtoms} from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
@@ -209,78 +205,6 @@ function ExplorerEntryCard({
       </div>
     </div>
   )
-}
-
-interface ExplorerCardParentsProps {
-  loading: boolean
-  parentIds: Array<string>
-  parents: Array<EntryAtoms>
-}
-
-function ExplorerCardParents({
-  loading,
-  parentIds,
-  parents
-}: ExplorerCardParentsProps) {
-  if (loading && parentIds.length > 0) return <ExplorerCardParentsLoading />
-  if (parents.length === 0) return null
-  return (
-    <div className={styles.ExplorerCards.parents()}>
-      {parents
-        .map<ReactNode>(parent => (
-          <ExplorerCardParent key={parent.id} parent={parent} />
-        ))
-        .reduce((prev, curr, index) => [
-          prev,
-          <IcRoundKeyboardArrowRight
-            aria-hidden
-            className={styles.ExplorerCards.parents.separator()}
-            key={`separator-${index}`}
-          />,
-          curr
-        ])}
-    </div>
-  )
-}
-
-function ExplorerCardParentsLoading() {
-  return (
-    <div className={styles.ExplorerCards.parents()}>
-      <span
-        className={styles.ExplorerCards.parents.skeleton({
-          wide: true
-        })}
-        aria-hidden="true"
-      />
-      <IcRoundKeyboardArrowRight
-        aria-hidden
-        className={styles.ExplorerCards.parents.separator()}
-      />
-      <span
-        className={styles.ExplorerCards.parents.skeleton()}
-        aria-hidden="true"
-      />
-    </div>
-  )
-}
-
-interface ExplorerCardParentProps {
-  parent: EntryAtoms
-}
-
-function ExplorerCardParent({parent}: ExplorerCardParentProps) {
-  const {data} = useAtomValue(parent.data)
-  if (!data) return null
-  return <ExplorerCardLoadedParent parent={data} />
-}
-
-interface ExplorerCardLoadedParentProps {
-  parent: EntryDataAtoms
-}
-
-function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
-  const label = useAtomValue(parent.label)
-  return <Fragment>{label}</Fragment>
 }
 
 export interface ExplorerCardsProps {

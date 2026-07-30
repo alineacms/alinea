@@ -1,5 +1,5 @@
 import {Button, Checkbox, Label, TextField} from '#/components.js'
-import {useEffect, useState, type FormEvent} from 'react'
+import {useState, type FormEvent} from 'react'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -50,17 +50,13 @@ function ExternalLinkPickerDialog({
   onConfirm
 }: ExternalLinkPickerProps) {
   const modal = useDashboardModal()
-  const [url, setUrl] = useState(initialValue?.url ?? '')
-  const [title, setTitle] = useState(initialValue?.title ?? '')
+  const initialUrl = initialValue?.url ?? ''
+  const initialTitle = initialValue?.title ?? ''
+  const [url, setUrl] = useState(initialUrl)
+  const [title, setTitle] = useState(initialTitle)
   const [openInNewTab, setOpenInNewTab] = useState(
     initialValue?.target !== '_self'
   )
-
-  useEffect(() => {
-    setUrl(initialValue?.url ?? '')
-    setTitle(initialValue?.title ?? '')
-    setOpenInNewTab(initialValue?.target !== '_self')
-  }, [initialValue?.target, initialValue?.title, initialValue?.url])
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

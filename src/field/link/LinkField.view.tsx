@@ -526,6 +526,7 @@ function LinkPickerAction({
           {children}
         </Button>
         <ExternalLinkPicker
+          key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
           selectionMode="single"
           submitLabel={value ? 'Save link' : undefined}
@@ -621,6 +622,7 @@ function LinkPickerDialog({
       <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
         <Button style={{display: 'none'}}>Edit link</Button>
         <ExternalLinkPicker
+          key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
           selectionMode="single"
           submitLabel={value ? 'Save link' : undefined}

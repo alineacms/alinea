@@ -167,11 +167,20 @@ function EntrySidebarBrowserPreview({
     return new URL(previewUrl, baseHref).origin
   }, [previewUrl])
 
+  // The iframe listener is stateful outside React; reset it when the preview
+  // endpoint changes so reload falls back to remounting until the new frame pings.
+  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   useEffect(() => {
     setFrameVersion(0)
     hasPreviewListener.current = false
+    previewPayload.current = undefined
   }, [previewUrl, targetOrigin])
+  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
 
+  // Preview payload generation is driven by an atom signal and delivered to the
+  // currently mounted iframe with postMessage, so this effect is the integration
+  // boundary between React state and the browser frame.
+  // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
     if (!targetOrigin) return
     function handleMessage(event: MessageEvent<PreviewMessage>) {
@@ -217,13 +226,7 @@ function EntrySidebarBrowserPreview({
       cancelled = true
     }
   }, [previewPayloadSignal, targetOrigin, updatePreviewPayload])
-
-  useEffect(() => {
-    if (!previewUrl) {
-      previewPayload.current = undefined
-      return
-    }
-  }, [previewUrl])
+  // eslint-enable react-you-might-not-need-an-effect/no-event-handler
 
   function post(
     action: PreviewAction.Previous | PreviewAction.Next | PreviewAction.Reload

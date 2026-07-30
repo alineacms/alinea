@@ -100,6 +100,9 @@ function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
       : items.find(item => item.id === String(selectedKey))
   const {autoSelectFirstItem, hasSelection} = explorer
 
+  // Keep keyboard navigation selection synchronized with the current filtered
+  // item list so Enter can act on the first result when configured.
+  // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
     if (!autoSelectFirstItem || !hasSelection) return
     if (items.length === 0) {
@@ -116,6 +119,7 @@ function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
     selection,
     setSelection
   ])
+  // eslint-enable react-you-might-not-need-an-effect/no-event-handler
 
   function onSearchChange(value: string) {
     setInputValue(value)
