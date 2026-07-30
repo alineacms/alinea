@@ -36,7 +36,7 @@ import {
 } from './entry/load.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {uploadProgressAtom} from './graph/queue.js'
-import {reloadPageAtom} from './routing.js'
+import {reloadPageAtom, routeAtom} from './routing.js'
 import {clientAtom, policyAtom, userAtom} from './user.js'
 import {dispense, swr, uploadSizeError, withPending} from './utils.js'
 import type {
@@ -47,7 +47,11 @@ import type {
   DashboardFileInfoState,
   EntryRouteBlock
 } from './entry/load.js'
-import {EntryLanguageAtoms, entryRevisionAtom} from './entry/load.js'
+import {
+  EntryLanguageAtoms,
+  entryRevisionAtom,
+  locallyDeletingEntryAtom
+} from './entry/load.js'
 import {createEntryPreviewAtoms} from './entry/preview.js'
 
 export const entryOverviewColumnCount = 5
@@ -754,6 +758,7 @@ export class EntryDataAtoms {
     })
     if (changed) set(node.value, data)
     set(node.commit)
+    await set(reloadPageAtom)
   })
 
   publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
@@ -773,9 +778,10 @@ export class EntryDataAtoms {
     })
     if (changed) set(node.value, data)
     set(node.commit)
+    await set(reloadPageAtom)
   })
 
-  publishDraft = atom(null, async get => {
+  publishDraft = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
@@ -785,9 +791,10 @@ export class EntryDataAtoms {
       locale,
       status: 'draft'
     })
+    await set(reloadPageAtom)
   })
 
-  discardDraft = atom(null, async get => {
+  discardDraft = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Update, locale)
@@ -797,9 +804,10 @@ export class EntryDataAtoms {
       locale,
       status: 'draft'
     })
+    await set(reloadPageAtom)
   })
 
-  unpublish = atom(null, async get => {
+  unpublish = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
@@ -808,9 +816,10 @@ export class EntryDataAtoms {
       id: this.id,
       locale
     })
+    await set(reloadPageAtom)
   })
 
-  archive = atom(null, async get => {
+  archive = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Archive, locale)
@@ -819,9 +828,10 @@ export class EntryDataAtoms {
       id: this.id,
       locale
     })
+    await set(reloadPageAtom)
   })
 
-  publishArchived = atom(null, async get => {
+  publishArchived = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Publish, locale)
@@ -831,14 +841,29 @@ export class EntryDataAtoms {
       locale,
       status: 'archived'
     })
+    await set(reloadPageAtom)
   })
 
-  deleteEntry = atom(null, async get => {
+  deleteEntry = atom(null, async (get, set) => {
     const root = get(this.root)
     const locale = get(root.selectedLocale)
     await this.#assertPermission(get, Permission.Delete, locale)
     const db = get(graphAtom)
-    await db.remove(this.id)
+    const entry = get(this.entryData)
+    set(locallyDeletingEntryAtom, this.id)
+    try {
+      const navigated = await set(routeAtom, {
+        workspace: entry.workspace,
+        root: entry.root,
+        entry: entry.parentId ?? undefined,
+        locale: get(routeAtom).locale
+      })
+      if (!navigated) throw new Error('Could not navigate away before deletion')
+      await db.remove(this.id)
+    } finally {
+      if (get(locallyDeletingEntryAtom) === this.id)
+        set(locallyDeletingEntryAtom, undefined)
+    }
   })
 
   replaceFile = atom(null, async (get, set, file: File) => {

@@ -115,11 +115,11 @@ const SidebarItem = memo(function SidebarItem({
   snapshot,
   tree
 }: SidebarItemProps) {
-  const {data} = useAtomValue(item.data)
+  const {data, pending} = useAtomValue(item.data)
   // The snapshot loads entries before publishing them. If an entry is
   // refreshed through another path, keep it out of the collection until it is
   // complete instead of replacing the navigation item with a placeholder.
-  if (!data) return null
+  if (pending || !data) return null
   return (
     <SidebarLoadedItem
       item={item}

@@ -62,3 +62,20 @@ test('blocks navigation until unsaved changes are resolved', async ({
   await confirmation.getByRole('button', {name: 'Discard my changes'}).click()
   await expect(app.title).toHaveText('Beta')
 })
+
+test('renders a missing entry route', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(
+    () => mount(<DashboardScenarioMount />),
+    {
+      routeEntry: 'missing-entry',
+      title: 'Entry not found'
+    }
+  )
+
+  await expect(app.page.getByText('Requested id:')).toContainText(
+    'missing-entry'
+  )
+  await expect(
+    app.page.getByRole('button', {name: 'Go to Pages'})
+  ).toBeVisible()
+})

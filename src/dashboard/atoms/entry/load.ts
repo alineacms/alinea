@@ -134,6 +134,7 @@ export const entryLoaderAtom = atom(async get => {
 })
 
 export const entryRevisionAtom = dispense((_id: string) => atom(0))
+export const locallyDeletingEntryAtom = atom<string>()
 
 export const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
 export const entrySidebarOpenAtom = atom(true)

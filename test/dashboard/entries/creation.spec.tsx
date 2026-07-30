@@ -50,6 +50,10 @@ test('creates a draft entry and opens it for editing', async ({
 
   await app.page.getByRole('button', {name: 'Back to parent entry'}).click()
   await expect(app.title).toHaveText('Alpha')
-  await app.page.getByRole('button', {name: 'Expand Alpha'}).click()
+  const expandAlpha = app.page.getByRole('button', {name: 'Expand Alpha'})
+  if (await expandAlpha.isVisible()) await expandAlpha.click()
+  await expect(
+    app.page.getByRole('button', {name: 'Collapse Alpha'})
+  ).toBeVisible()
   await app.openEntry('New page')
 })

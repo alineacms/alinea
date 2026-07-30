@@ -4,7 +4,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import type {ComponentType} from 'react'
-import {entryRevisionAtom} from './entry/load.js'
+import {entryRevisionAtom, locallyDeletingEntryAtom} from './entry/load.js'
 import {eventsAtom} from './graph.js'
 import {reloadPageAtom, routeAtom} from './routing.js'
 import {type DashboardOptions, updateUserRolesAtom} from './user.js'
@@ -36,6 +36,7 @@ export const dashboardEffectsAtom = Object.assign(
       const listen = (event: Event) => {
         if (!(event instanceof IndexEvent) || event.data.op !== 'entry') return
         const id = event.data.id
+        if (get(locallyDeletingEntryAtom) === id) return
         set(entryRevisionAtom(id), current => current + 1)
         if (get(routeAtom).entry === id) void set(reloadPageAtom)
       }

@@ -705,7 +705,7 @@ export async function loadEntryData(get: Getter, entry: EntryAtoms) {
   // readyState alone loads the data but leaves the UI-facing unwrap pending.
   get(entry.data)
   const ready = await get(entry.readyState)
-  return get(entry.data).data ?? ready.data
+  return ready.data
 }
 
 export async function loadEntries(

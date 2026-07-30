@@ -111,14 +111,11 @@ function EntryHeaderMoreActions({
 }: EntryHeaderMoreActionsProps) {
   const policy = usePolicy()
   const config = useAtomValue(configAtom)
-  const route = useAtomValue(routeAtom)
-  const {parentId, workspace, root} = useAtomValue(entry.entryData)
   const activeVersion = page.languageVersion
   const type = useAtomValue(entry.type)
   const canPublishParents = useAtomValue(entry.canPublish)
   const isParentUnpublished = useAtomValue(entry.parentUnpublished)
   const selectedVersion = useAtomValue(entry.selectedVersion)
-  const setRoute = useSetAtom(routeAtom)
   const discardDraft = useSetAtom(entry.discardDraft)
   const unpublish = useSetAtom(entry.unpublish)
   const archive = useSetAtom(entry.archive)
@@ -158,12 +155,6 @@ function EntryHeaderMoreActions({
 
   async function deleteAndNavigate() {
     await deleteEntry()
-    setRoute({
-      workspace,
-      root,
-      entry: parentId ?? undefined,
-      locale: route.locale
-    })
   }
 
   function replaceMediaFile() {
@@ -525,13 +516,15 @@ export function EntryHeader({
   const isDirty = useAtomValue(node.isDirty)
   const type = useAtomValue(entry.type)
   const typeSettings = getType(type)
+  const isRevision = selectedVersion.type === 'history'
   const isUnpublished = Boolean(activeVersion?.main && activeStatus === 'draft')
-  const viewedStatus = viewedEntry?.status ?? activeStatus
+  const viewedStatus = isRevision
+    ? (viewedEntry?.status ?? activeStatus)
+    : activeStatus
   const viewedIsUnpublished = Boolean(
-    viewedEntry?.main && viewedStatus === 'draft'
+    isRevision ? viewedEntry?.main && viewedStatus === 'draft' : isUnpublished
   )
   const status = viewedIsUnpublished ? 'unpublished' : viewedStatus
-  const isRevision = selectedVersion.type === 'history'
   return (
     <header className={styles.EntryHeader()}>
       <div className={styles.EntryHeader.content()}>

@@ -10,6 +10,8 @@ type DashboardScenarioName = keyof typeof dashboardScenarioIds
 
 interface MountDashboardOptions {
   entry?: DashboardScenarioName
+  routeEntry?: string
+  title?: string
 }
 
 interface DashboardFixture {
@@ -70,7 +72,7 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
     await use({
       async mount(render, options = {}) {
         const entry = options.entry ?? 'alpha'
-        const id = dashboardScenarioIds[entry]
+        const id = options.routeEntry ?? dashboardScenarioIds[entry]
         await page.evaluate(() => {
           localStorage.removeItem('alinea-dashboard-theme')
           document.documentElement.removeAttribute('data-theme')
@@ -80,7 +82,8 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
         }, `#/entry/main/pages/${id}`)
         const component = await render()
         const driver = new DashboardDriver(page, component)
-        const expectedTitle = entry[0].toUpperCase() + entry.slice(1)
+        const expectedTitle =
+          options.title ?? entry[0].toUpperCase() + entry.slice(1)
         await expect(driver.title).toHaveText(expectedTitle)
         return driver
       }

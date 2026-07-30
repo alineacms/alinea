@@ -19,10 +19,11 @@ test('publishes field edits and keeps them after navigation', async ({
 
 test('unpublishes and republishes an entry', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const header = app.page.locator('header')
 
   await app.runEntryAction('Unpublish')
-  await expect(app.page.getByText('Unpublished', {exact: true})).toBeVisible()
+  await expect(header.getByText('Unpublished', {exact: true})).toBeVisible()
 
   await app.page.getByRole('button', {name: 'Publish'}).click()
-  await expect(app.page.getByText('Published', {exact: true})).toBeVisible()
+  await expect(header.getByText('Published', {exact: true})).toBeVisible()
 })

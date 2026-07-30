@@ -7,6 +7,9 @@ import {
   routeAtom
 } from './routing.js'
 import {type TreeSnapshot, workspaceAtoms} from './config.js'
+import {entryAtoms} from './entry.js'
+import {entryRevisionAtom} from './entry/load.js'
+import {loadEntryData} from './explorer.js'
 
 test('initial navigation expands the routed entry parent chain', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
@@ -118,6 +121,17 @@ test('tree snapshot exposes children of expanded entries', async () => {
   expect(snapshot.children.get(parent._id)?.map(entry => entry.id)).toEqual([
     child._id
   ])
+})
+
+test('entry loading reports a removed entry instead of retained UI data', async () => {
+  const {child, db, store} = await createDashboardAtomFixture()
+  const entry = entryAtoms(child._id)
+
+  expect((await loadEntryData(store.get, entry))?.id).toBe(child._id)
+  await db.remove(child._id)
+  store.set(entryRevisionAtom(child._id), revision => revision + 1)
+
+  expect(await loadEntryData(store.get, entry)).toBeUndefined()
 })
 
 test('requested route follows tree navigation synchronously', async () => {
