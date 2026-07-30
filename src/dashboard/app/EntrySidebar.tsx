@@ -1,3 +1,4 @@
+import {useAtom, useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   Disclosure,
@@ -15,7 +16,6 @@ import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
 import {useState, type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,

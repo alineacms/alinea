@@ -1,13 +1,13 @@
+import {useAtom, useAtomValue} from '../AtomHooks.js'
+import {AtomSnapshot} from '../AtomSnapshot.js'
 import {Button, Popover, SearchField} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {useSetAtom} from 'jotai'
 import {
   useEffect,
-  useMemo,
   useState,
   useTransition,
   type KeyboardEvent,
@@ -39,7 +39,7 @@ const styles = styler(css)
 export interface ExplorerProps {
   controls?: ReactNode
   explorer: ExplorerAtoms
-  items?: Array<EntryAtoms>
+  items: Array<EntryAtoms>
   titleControls?: ReactNode
 }
 
@@ -47,19 +47,19 @@ export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
   explorer: ExplorerAtoms
-  items?: Array<EntryAtoms>
+  items: Array<EntryAtoms>
   titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
   explorer: ExplorerAtoms
-  items?: Array<EntryAtoms>
+  items: Array<EntryAtoms>
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: ExplorerAtoms
-  items?: Array<EntryAtoms>
+  items: Array<EntryAtoms>
 }
 
 interface ExplorerHeaderMainProps {
@@ -79,31 +79,7 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-interface ExplorerSearchContentProps extends ExplorerSearchProps {
-  items: Array<EntryAtoms>
-}
-
-function ExplorerSearch(props: ExplorerSearchProps) {
-  if (props.items)
-    return <ExplorerSearchContent {...props} items={props.items} />
-  return <ExplorerSearchResource {...props} />
-}
-
-function ExplorerSearchResource(props: ExplorerSearchProps) {
-  const items = useAtomValue(
-    useMemo(
-      () => unwrap(props.explorer.items, previous => previous ?? []),
-      [props.explorer]
-    )
-  )
-  return <ExplorerSearchContent {...props} items={items} />
-}
-
-function ExplorerSearchContent({
-  autoFocus,
-  explorer,
-  items
-}: ExplorerSearchContentProps) {
+function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -194,6 +170,19 @@ function ExplorerSearchContent({
       onChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
     />
+  )
+}
+
+export interface ExplorerSnapshotProps {
+  children(items: Array<EntryAtoms>): ReactNode
+  explorer: ExplorerAtoms
+}
+
+export function ExplorerSnapshot({children, explorer}: ExplorerSnapshotProps) {
+  return (
+    <AtomSnapshot atom={explorer.snapshot}>
+      {snapshot => children(snapshot.items)}
+    </AtomSnapshot>
   )
 }
 

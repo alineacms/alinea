@@ -1,6 +1,7 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Field} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {type Atom, useSetAtom} from 'jotai'
 import type {Dispatch, SetStateAction} from 'react'
 import type {ReactiveNode} from '../atoms/entry/editor.js'
 import {useEditor} from './EditorScope.js'
@@ -74,7 +75,11 @@ export function useSiblingFieldValue(key: string) {
 }
 
 export function useValue<Value>(node: ReactiveNode<Value>) {
-  return useAtom(node.value)
+  // ReactiveNode values are synchronous by construction, but TypeScript cannot
+  // prove that an unconstrained generic Value excludes PromiseLike values.
+  const value = useAtomValue(node.value as Atom<unknown>) as Value
+  const setValue = useSetAtom(node.value)
+  return [value, setValue] as const
 }
 
 export function useNodes<Value>(

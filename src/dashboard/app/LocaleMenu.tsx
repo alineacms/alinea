@@ -1,6 +1,7 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {useState} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'

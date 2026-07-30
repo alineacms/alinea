@@ -1,6 +1,7 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button, Link, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {type WritableAtom, useAtomValue, useSetAtom} from 'jotai'
+import {type WritableAtom, useSetAtom} from 'jotai'
 import type {ReactNode} from 'react'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
 import {authAtom, type AuthAction, type AuthState} from '../atoms/user.js'

@@ -1,5 +1,5 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Workspace, type WorkspaceInternal} from '#/core/Workspace.js'
-import {useAtomValue} from 'jotai'
 import {selectedWorkspaceAtom} from '../atoms/routing.js'
 import {configAtom} from '../atoms/config.js'
 

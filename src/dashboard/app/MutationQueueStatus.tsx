@@ -1,3 +1,4 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   DialogTrigger,
@@ -7,7 +8,7 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {useEffect, useRef, useState, type ReactNode} from 'react'
 import {IcRoundCheck, IcRoundWarning} from '../icons.js'
 import {

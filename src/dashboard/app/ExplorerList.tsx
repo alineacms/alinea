@@ -1,9 +1,8 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {useMemo} from 'react'
+import {atom, useSetAtom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
@@ -56,29 +55,10 @@ function SearchIdleState() {
 
 export interface ExplorerListProps {
   explorer: ExplorerAtoms
-  items?: Array<EntryAtoms>
-}
-
-interface ExplorerListContentProps extends ExplorerListProps {
   items: Array<EntryAtoms>
 }
 
-export function ExplorerList(props: ExplorerListProps) {
-  if (props.items) return <ExplorerListContent {...props} items={props.items} />
-  return <ExplorerListResource {...props} />
-}
-
-function ExplorerListResource(props: ExplorerListProps) {
-  const items = useAtomValue(
-    useMemo(
-      () => unwrap(props.explorer.items, previous => previous ?? []),
-      [props.explorer]
-    )
-  )
-  return <ExplorerListContent {...props} items={items} />
-}
-
-function ExplorerListContent({explorer, items}: ExplorerListContentProps) {
+export function ExplorerList({explorer, items}: ExplorerListProps) {
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)

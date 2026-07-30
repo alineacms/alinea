@@ -1,3 +1,4 @@
+import {AtomSnapshot} from '../AtomSnapshot.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import type {EntryAtoms} from '#/dashboard/atoms/entry.js'
 import {
@@ -10,7 +11,6 @@ import {createTestConnection} from '#test/CreateConnection.js'
 import '#/theme.css'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
-import {useAtomValue} from 'jotai'
 import {useDragAndDrop} from 'react-aria-components/useDragAndDrop'
 import {ExplorerTable} from './ExplorerTable.js'
 
@@ -40,15 +40,20 @@ interface ExplorerTableStoryProps {
 }
 
 function ExplorerTableStory({explorer}: ExplorerTableStoryProps) {
-  const items = useAtomValue(explorer.items)
   const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({})
   return (
-    <ExplorerTable
-      dragAndDropHooks={dragAndDropHooks}
-      explorer={explorer}
-      items={items}
-      renderEmptyState={() => <div style={emptyStyle}>No results found</div>}
-    />
+    <AtomSnapshot atom={explorer.items}>
+      {items => (
+        <ExplorerTable
+          dragAndDropHooks={dragAndDropHooks}
+          explorer={explorer}
+          items={items}
+          renderEmptyState={() => (
+            <div style={emptyStyle}>No results found</div>
+          )}
+        />
+      )}
+    </AtomSnapshot>
   )
 }
 

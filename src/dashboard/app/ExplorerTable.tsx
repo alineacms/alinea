@@ -1,6 +1,8 @@
+import {useAtom, useAtomValue} from '../AtomHooks.js'
+import {AtomSnapshot} from '../AtomSnapshot.js'
 import {Checkbox, FoldIcon, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
 import {
@@ -313,22 +315,24 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
 
 function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
   const {entry, explorer} = props
-  const children = useAtomValue(
-    useMemo(() => explorer.children(entry), [explorer, entry])
-  )
-  if (children instanceof Promise || children.length === 0) return null
   return (
-    <Collection items={children}>
-      {child => (
-        <ExplorerTableRow
-          breadcrumbs={props.breadcrumbs}
-          columns={props.columns}
-          entry={child}
-          explorer={explorer}
-          gridTemplateColumns={props.gridTemplateColumns}
-        />
-      )}
-    </Collection>
+    <AtomSnapshot atom={explorer.children(entry)}>
+      {children =>
+        children.length === 0 ? null : (
+          <Collection items={children}>
+            {child => (
+              <ExplorerTableRow
+                breadcrumbs={props.breadcrumbs}
+                columns={props.columns}
+                entry={child}
+                explorer={explorer}
+                gridTemplateColumns={props.gridTemplateColumns}
+              />
+            )}
+          </Collection>
+        )
+      }
+    </AtomSnapshot>
   )
 }
 

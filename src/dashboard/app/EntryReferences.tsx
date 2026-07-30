@@ -1,8 +1,9 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button, Icon} from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {
   IcRoundArchive,
   IcRoundCheck,

@@ -1,8 +1,9 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   IcRoundArrowBack,

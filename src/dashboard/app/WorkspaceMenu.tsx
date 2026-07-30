@@ -1,3 +1,4 @@
+import {useAtom, useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   DialogTrigger,
@@ -9,7 +10,7 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useSetAtom} from 'jotai'
 import {useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
@@ -25,7 +26,7 @@ import {
   type WorkspaceAtoms
 } from '../atoms/config.js'
 import {AlineaLogo} from './AlineaLogo.js'
-import {ExplorerBody, ExplorerHeader} from './Explorer.js'
+import {ExplorerBody, ExplorerHeader, ExplorerSnapshot} from './Explorer.js'
 import {ExplorerModal} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
 import {
@@ -167,14 +168,19 @@ function SearchPopup() {
 
   return (
     <DashboardModalDialog aria-label="Search entries" variant="explorer">
-      <ExplorerModal>
-        <ExplorerHeader
-          autoFocusSearch
-          controls={<DashboardModalCloseButton />}
-          explorer={explorer}
-        />
-        <ExplorerBody explorer={explorer} />
-      </ExplorerModal>
+      <ExplorerSnapshot explorer={explorer}>
+        {items => (
+          <ExplorerModal>
+            <ExplorerHeader
+              autoFocusSearch
+              controls={<DashboardModalCloseButton />}
+              explorer={explorer}
+              items={items}
+            />
+            <ExplorerBody explorer={explorer} items={items} />
+          </ExplorerModal>
+        )}
+      </ExplorerSnapshot>
     </DashboardModalDialog>
   )
 }

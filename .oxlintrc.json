@@ -16,5 +16,25 @@
     "react-you-might-not-need-an-effect/no-external-store-subscription": "warn",
     "react-you-might-not-need-an-effect/no-initialize-state": "warn",
     "react/rules-of-hooks": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/dashboard/**/*.{ts,tsx}"],
+      "excludeFiles": ["src/dashboard/AtomHooks.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "jotai",
+                "importNames": ["useAtom", "useAtomValue"],
+                "message": "Import dashboard atom hooks from AtomHooks.js so async reads are explicit."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

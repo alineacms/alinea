@@ -1,8 +1,9 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button, Icon, Tree, TreeItem} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {type ComponentType, memo, useMemo, useState} from 'react'
+import {atom, useSetAtom} from 'jotai'
+import {type ComponentType, memo, useEffect, useMemo, useState} from 'react'
 import {
   Collection,
   type Key,
@@ -32,8 +33,7 @@ import {
   type PreparedTree,
   TreeAtoms,
   type RootAtoms,
-  type TreeSnapshot,
-  type WorkspaceAtoms
+  type TreeSnapshot
 } from '../atoms/config.js'
 import {navigationAtoms, routeAtom} from '../atoms/routing.js'
 import css from './SidebarTree.module.css'
@@ -47,11 +47,12 @@ export interface SidebarTreeExplorerProps {
   disableDragAndDrop?: boolean
   onRootPress?: () => void
   onSelectionChange?: (keys: Selection) => void
+  prepared: PreparedTree
   root: RootAtoms
   rootSelected?: boolean
   selectedKeys?: Set<Key>
   selectedLocale?: DashboardLocaleSelection
-  workspace: WorkspaceAtoms
+  tree: TreeAtoms
 }
 
 interface SidebarItemProps {
@@ -230,7 +231,7 @@ interface SidebarTreeBodyProps {
   onSelectionChange?: (keys: Selection) => void
   root: RootAtoms
   selectedKeys?: Set<Key>
-  prepared?: PreparedTree
+  prepared: PreparedTree
   tree: TreeAtoms
 }
 
@@ -242,25 +243,44 @@ interface SidebarTreeContentProps extends SidebarTreeBodyProps {
 }
 
 const SidebarTreeBody = memo(function SidebarTreeBody({
-  ariaLabel = 'Content tree',
-  disableDragAndDrop = false,
-  onSelectionChange,
   prepared,
   root,
-  selectedKeys,
-  tree
+  tree,
+  ...props
 }: SidebarTreeBodyProps) {
+  return (
+    <SidebarTreeBodyLoaded
+      {...props}
+      expandedKeys={prepared.expandedKeys}
+      root={root}
+      snapshot={prepared.snapshot}
+      tree={tree}
+    />
+  )
+})
+
+interface SidebarTreeBodyLoadedProps extends Omit<
+  SidebarTreeBodyProps,
+  'prepared'
+> {
+  expandedKeys: Set<Key>
+  snapshot: TreeSnapshot
+}
+
+function SidebarTreeBodyLoaded({
+  ariaLabel = 'Content tree',
+  disableDragAndDrop = false,
+  expandedKeys,
+  onSelectionChange,
+  root,
+  selectedKeys,
+  snapshot,
+  tree
+}: SidebarTreeBodyLoadedProps) {
   const [localSelectedKeys, setLocalSelectedKeys] = useState<Selection>(
     new Set()
   )
-  const storedExpandedKeys = useAtomValue(tree.expandedKeys)
-  const expandedKeys = prepared?.expandedKeys ?? storedExpandedKeys
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
-  const snapshotAtom = useMemo(
-    () => (prepared ? atom(prepared.snapshot) : tree.snapshot(root)),
-    [prepared, root, tree]
-  )
-  const snapshot = useAtomValue(snapshotAtom)
   const dragDisabled = useAtomValue(tree.dragDisabled)
   const onInsert = useSetAtom(tree.onInsert)
   const onItemDrop = useSetAtom(tree.onItemDrop)
@@ -314,7 +334,7 @@ const SidebarTreeBody = memo(function SidebarTreeBody({
       </Virtualizer>
     </div>
   )
-})
+}
 
 function SidebarTreeRootButton({
   onPress,
@@ -379,6 +399,7 @@ export const SidebarTree = memo(function SidebarTree({
 }: {
   prepared?: PreparedTree
 }) {
+  assert(prepared, 'Sidebar tree not prepared')
   const workspace = useAtomValue(currentWorkspaceAtom)
   assert(workspace, 'No workspace selected')
   const selectedWorkspace = workspace
@@ -394,8 +415,22 @@ export const SidebarTree = memo(function SidebarTree({
       locale: route.locale
     })
   }
+  const routeSelectedKeys = useMemo(
+    () =>
+      requestedRoute.entry &&
+      (!requestedRoute.workspace ||
+        requestedRoute.workspace === selectedWorkspace.key)
+        ? new Set<Key>([requestedRoute.entry])
+        : new Set<Key>(),
+    [requestedRoute.entry, requestedRoute.workspace, selectedWorkspace.key]
+  )
+  const [selectedKeys, setSelectedKeys] = useState<Set<Key>>(routeSelectedKeys)
+  useEffect(() => {
+    setSelectedKeys(routeSelectedKeys)
+  }, [routeSelectedKeys])
   function onSelectionChange(keys: Selection) {
     if (keys === 'all') return
+    setSelectedKeys(keys)
     const [entry] = keys
     if (!entry || !currentRoot) return
     void setRoute({
@@ -403,14 +438,10 @@ export const SidebarTree = memo(function SidebarTree({
       root: currentRoot.key,
       entry: String(entry),
       locale: route.locale
+    }).then(changed => {
+      if (!changed) setSelectedKeys(routeSelectedKeys)
     })
   }
-  const selectedKeys =
-    requestedRoute.entry &&
-    (!requestedRoute.workspace ||
-      requestedRoute.workspace === selectedWorkspace.key)
-      ? new Set<Key>([requestedRoute.entry])
-      : new Set<Key>()
   return (
     <>
       {currentRoot && (
@@ -433,19 +464,20 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   disableDragAndDrop = true,
   onRootPress,
   onSelectionChange,
+  prepared,
   root,
   rootSelected = false,
   selectedKeys,
   selectedLocale,
-  workspace
+  tree
 }: SidebarTreeExplorerProps) {
-  const tree = useMemo(() => new TreeAtoms(workspace), [workspace])
   return (
     <SidebarTreeContent
       ariaLabel={ariaLabel}
       disableDragAndDrop={disableDragAndDrop}
       onRootPress={onRootPress}
       onSelectionChange={onSelectionChange}
+      prepared={prepared}
       root={root}
       rootSelected={rootSelected}
       selectedKeys={selectedKeys}

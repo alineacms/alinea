@@ -69,6 +69,11 @@ export class DashboardDriver {
 
 export const test = base.extend<{dashboard: DashboardFixture}>({
   dashboard: async ({page}, use) => {
+    const pageErrors: Array<Error> = []
+    function onPageError(error: Error) {
+      pageErrors.push(error)
+    }
+    page.on('pageerror', onPageError)
     await use({
       async mount(render, options = {}) {
         const entry = options.entry ?? 'alpha'
@@ -88,6 +93,11 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
         return driver
       }
     })
+    page.off('pageerror', onPageError)
+    expect(
+      pageErrors.map(error => error.stack ?? error.message),
+      'Dashboard emitted an uncaught page error'
+    ).toEqual([])
   }
 })
 

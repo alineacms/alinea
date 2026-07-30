@@ -1,3 +1,4 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
 import {
   EntryUrlConflictError,
@@ -7,7 +8,7 @@ import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useState} from 'react'
 import {usePolicy} from '../hooks.js'
 import {

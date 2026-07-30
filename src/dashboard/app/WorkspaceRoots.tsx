@@ -1,3 +1,4 @@
+import {useAtom, useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   DialogTrigger,
@@ -9,7 +10,7 @@ import {
 } from '#/components.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useSetAtom} from 'jotai'
 import {
   IcBaselineAccountCircle,
   IcOutlineSettings,

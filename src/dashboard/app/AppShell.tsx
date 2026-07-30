@@ -1,8 +1,8 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button, DialogTrigger} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense} from 'react'
+import {useSetAtom} from 'jotai'
 import {navigationAtoms} from '../atoms/routing.js'
 import type {PreparedPage} from '../atoms/routing.js'
 import {
@@ -35,6 +35,7 @@ export function AppShell({page}: {page: PreparedPage}) {
       className={styles.AppShell()}
       data-navigation-pending={navigationPending ? '' : undefined}
     >
+      <DashboardMeta {...page.meta} />
       <AppShellContent page={page} />
     </main>
   )
@@ -136,10 +137,6 @@ function AppShellWorkspace({page}: AppShellContentProps) {
           <SidebarTree prepared={page.sidebar} />
           {currentRoot && <SidebarCreateEntryButton root={currentRoot} />}
         </Sidebar>
-
-        <Suspense fallback={null}>
-          <DashboardMeta />
-        </Suspense>
 
         <EditorBoundary page={content} />
       </div>

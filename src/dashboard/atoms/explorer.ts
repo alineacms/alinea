@@ -657,8 +657,7 @@ export async function loadEntries(
     entries.map(async entry => {
       const data = await loadEntryData(get, entry)
       if (!data) return
-      const currentEntry = get(data.currentEntryFor(locale))
-      if (currentEntry instanceof Promise) await currentEntry
+      await Promise.all([get(data.currentEntryFor(locale)), get(data.fileInfo)])
     })
   )
 }

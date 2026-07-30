@@ -1,3 +1,4 @@
+import {useAtomValue} from '../../AtomHooks.js'
 import {
   Button,
   Label,
@@ -20,13 +21,7 @@ import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
 import styler from '@alinea/styler'
-import {
-  atom,
-  useAtomValue,
-  useSetAtom,
-  type Getter,
-  type WritableAtom
-} from 'jotai'
+import {atom, useSetAtom, type Getter, type WritableAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type SetStateAction} from 'react'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
 import {ReactiveNode} from '../../atoms/entry/editor.js'

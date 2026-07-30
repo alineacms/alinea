@@ -1,11 +1,12 @@
+import {useAtom, useAtomValue} from '../AtomHooks.js'
+import {AtomSnapshot} from '../AtomSnapshot.js'
 import {Checkbox, Icon, Surface} from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {Fragment, memo, useMemo} from 'react'
+import {Fragment, memo} from 'react'
 import {
   Button as AriaButton,
   type DragAndDropHooks,
@@ -128,9 +129,6 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const type = useAtomValue(data.type)
   const typeSettings = getType(type)
   const hasChildren = useAtomValue(data.entryData).hasChildren
-  const info = useAtomValue(
-    useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
-  )
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
 
   return (
@@ -146,21 +144,25 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         aria-label={`Drag ${label}`}
         className={styles.ExplorerCards.item.drag.handle()}
       />
-      <Surface
-        className={styles.ExplorerCards.item.card({
-          file: Boolean(info)
-        })}
-      >
-        {info ? (
-          <ExplorerFileCard file={info} label={label} layout="card" />
-        ) : (
-          <ExplorerEntryCard
-            icon={icon ?? fallbackIcon}
-            label={label}
-            typeLabel={typeSettings.label}
-          />
+      <AtomSnapshot atom={data.fileInfo}>
+        {info => (
+          <Surface
+            className={styles.ExplorerCards.item.card({
+              file: Boolean(info)
+            })}
+          >
+            {info ? (
+              <ExplorerFileCard file={info} label={label} layout="card" />
+            ) : (
+              <ExplorerEntryCard
+                icon={icon ?? fallbackIcon}
+                label={label}
+                typeLabel={typeSettings.label}
+              />
+            )}
+          </Surface>
         )}
-      </Surface>
+      </AtomSnapshot>
     </GridListItem>
   )
 })

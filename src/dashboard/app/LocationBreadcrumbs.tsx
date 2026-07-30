@@ -1,6 +1,7 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
 import styler from '@alinea/styler'
-import {atom, type Atom, useAtomValue} from 'jotai'
+import {atom, type Atom} from 'jotai'
 import {Dispatch, SetStateAction} from 'react'
 import {IcRoundChevronRight, IcRoundUnfoldMore} from '../icons.js'
 import {

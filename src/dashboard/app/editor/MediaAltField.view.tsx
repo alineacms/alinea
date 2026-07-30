@@ -1,3 +1,4 @@
+import {useAtomValue} from '../../AtomHooks.js'
 import {TextField} from '#/components.js'
 import type {
   MediaAltField,
@@ -10,7 +11,6 @@ import {routeAtom} from '../../atoms/routing.js'
 import {workspaceAtoms} from '../../atoms/config.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {LocalisedFieldTabs} from '#/field/localiser/LocalisedFieldTabs.js'
-import {useAtomValue} from 'jotai'
 import {useState} from 'react'
 
 export interface MediaAltFieldViewProps {

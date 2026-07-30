@@ -1,14 +1,20 @@
+import {useAtomValue} from './AtomHooks.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {createStore, Provider, useAtomValue} from 'jotai'
+import {createStore, Provider} from 'jotai'
 import {useHydrateAtoms} from 'jotai/utils'
 import type {PropsWithChildren} from 'react'
 import {createContext, createElement, useContext, useState} from 'react'
 import {dashboardEffectsAtom, type Dashboard} from './atoms/dashboard.js'
 import {eventsAtom, graphAtom} from './atoms/graph.js'
-import {clientAtom, optionsAtom, policyAtom, userAtom} from './atoms/user.js'
+import {
+  clientAtom,
+  currentUserAtom,
+  optionsAtom,
+  policyAtom
+} from './atoms/user.js'
 import {configAtom, viewsAtom} from './atoms/config.js'
 
 export * from './editor/EditorScope.js'
@@ -80,7 +86,7 @@ export function usePolicy() {
  * Returns the authenticated dashboard user, or null when no user is active.
  */
 export function useUser(): User | null {
-  return useAtomValue(userAtom) ?? null
+  return useAtomValue(currentUserAtom) ?? null
 }
 
 /**

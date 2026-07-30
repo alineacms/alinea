@@ -2,6 +2,7 @@ import type {Config} from '#/core/Config.js'
 import {getWorkspace} from '#/core/Internal.js'
 import type {Policy} from '#/core/Role.js'
 import {atom, type Atom, type Getter} from 'jotai'
+import type {ComponentType} from 'react'
 import type {Route} from '../DashboardNav.js'
 import {type EntryDataAtoms, type EntryAtoms, entryAtoms} from './entry.js'
 import {
@@ -108,7 +109,8 @@ export const pageResourceAtom = atom(async (get, {signal}) => {
     )
     sidebar = {root: treeRoot, ...tree}
   }
-  return {route, sidebar, content} satisfies PreparedPage
+  const meta = preparePageMeta(get, route, content)
+  return {route, sidebar, content, meta} satisfies PreparedPage
 })
 
 export const pageAtom = swr(pageResourceAtom)
@@ -238,6 +240,15 @@ export interface PreparedPage {
   route: Route
   sidebar: PreparedSidebar | undefined
   content: LoadedRoute
+  meta: PreparedPageMeta
+}
+
+export interface PreparedPageMeta {
+  title: string
+  favicon: {
+    color: string
+    icon?: ComponentType
+  }
 }
 
 export interface PreparedSidebar extends PreparedTree {
@@ -255,10 +266,59 @@ export type LoadedRoute = RouteShellData &
     | MissingRootPageData
   )
 
+function preparePageMeta(
+  get: Getter,
+  route: Route,
+  content: LoadedRoute
+): PreparedPageMeta {
+  const root =
+    content.type === 'entry'
+      ? get(content.entry.root)
+      : 'root' in content
+        ? content.root
+        : undefined
+  const workspaceKeys = get(workspacesAtom)
+  const workspaceKey =
+    root?.workspace.key ??
+    (route.workspace && workspaceKeys.includes(route.workspace)
+      ? route.workspace
+      : workspaceKeys[0])
+  const workspace = workspaceKey ? workspaceAtoms(workspaceKey) : undefined
+  const workspaceSettings = workspace ? get(workspace.settings) : undefined
+  const workspaceLabel = workspaceSettings?.label ?? 'Alinea'
+  let viewLabel = workspaceLabel
+  if (content.type === 'users') {
+    viewLabel = 'Users'
+  } else if (content.type === 'entry') {
+    viewLabel = get(content.entry.label)
+  } else if (content.type === 'missing-entry') {
+    viewLabel = 'Entry not found'
+  } else if (content.type === 'missing-root') {
+    viewLabel = 'Root not found'
+  } else if (content.type === 'explorer' && route.entry) {
+    const {data} = get(entryAtoms(route.entry).data)
+    if (data) viewLabel = get(data.label)
+  } else if (root) {
+    viewLabel = get(root.settings).label
+  }
+  return {
+    title:
+      viewLabel === workspaceLabel
+        ? workspaceLabel
+        : `${workspaceLabel}: ${viewLabel}`,
+    favicon: {
+      color: workspaceSettings?.color ?? '#7c3aed',
+      icon: workspaceSettings?.icon
+    }
+  }
+}
+
 type AsyncAtomKeys<Value> = Value extends unknown
   ? {
-      [Key in keyof Value]: Value[Key] extends Atom<Promise<unknown>>
-        ? Key
+      [Key in keyof Value]: Value[Key] extends Atom<infer AtomValue>
+        ? Extract<AtomValue, PromiseLike<unknown>> extends never
+          ? never
+          : Key
         : never
     }[keyof Value]
   : never

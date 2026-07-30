@@ -1,10 +1,11 @@
+import {useAtomValue} from '../AtomHooks.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {DashboardScopeInternal} from '#/dashboard/hooks.js'
 import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import type {EntryDataAtoms} from '#/dashboard/atoms/entry.js'
 import {shaAtom} from '#/dashboard/atoms/graph.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useSetAtom} from 'jotai'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
 
 const graph = {

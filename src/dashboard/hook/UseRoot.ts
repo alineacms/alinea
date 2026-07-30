@@ -1,5 +1,5 @@
+import {useAtomValue} from '../AtomHooks.js'
 import {Root, type RootData} from '#/core/Root.js'
-import {useAtomValue} from 'jotai'
 import {selectedRootAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
 import {configAtom} from '../atoms/config.js'
 

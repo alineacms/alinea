@@ -1,3 +1,4 @@
+import {useAtomValue} from './AtomHooks.js'
 import {act, cleanup, render, screen} from '#test/react.js'
 import type {Entry} from '#/core/Entry.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
@@ -5,7 +6,6 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import {Config} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {TestEvents} from '#test/DashboardFixture.js'
-import {useAtomValue} from 'jotai'
 import {afterEach, expect, test} from 'bun:test'
 import {
   DashboardScopeInternal,

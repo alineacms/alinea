@@ -1,7 +1,11 @@
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue} from '../AtomHooks.js'
+import {atom, useSetAtom} from 'jotai'
+import {useMemo} from 'react'
 import type {Key, Selection} from 'react-aria-components'
 import type {EntryAtoms} from '../atoms/entry.js'
 import type {ExplorerAtoms, ExplorerOptions} from '../atoms/explorer.js'
+import {type PreparedTree, TreeAtoms, workspaceAtoms} from '../atoms/config.js'
+import {swr} from '../atoms/utils.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
@@ -11,23 +15,28 @@ export interface ExplorerPickerContentProps {
   items: Array<EntryAtoms>
   navigationLabel: string
   options: ExplorerOptions
+  preparedTree: PreparedTree | undefined
+  tree: TreeAtoms
 }
 
 export function ExplorerPickerContent({
   explorer,
   items,
   navigationLabel,
-  options
+  options,
+  preparedTree,
+  tree
 }: ExplorerPickerContentProps) {
-  const workspace = useAtomValue(explorer.workspace)
   const root = useAtomValue(explorer.root)
   const location = useAtomValue(explorer.location)
   const view = useAtomValue(explorer.view)
   const navigate = useSetAtom(explorer.navigate)
   const enableNavigation = options.enableNavigation ?? true
-  const selectedKeys = location.parentId
-    ? new Set<Key>([location.parentId])
-    : new Set<Key>()
+  const selectedKeys = useMemo(
+    () =>
+      location.parentId ? new Set<Key>([location.parentId]) : new Set<Key>(),
+    [location.parentId]
+  )
 
   function onRootPress() {
     void navigate(current => ({...current, parentId: undefined}))
@@ -44,7 +53,7 @@ export function ExplorerPickerContent({
 
   return (
     <ExplorerModalContent>
-      {enableNavigation && view === 'card' && root && (
+      {enableNavigation && view === 'card' && root && preparedTree && (
         <ExplorerModalNavigation>
           <SidebarTreeExplorer
             ariaLabel={navigationLabel}
@@ -52,7 +61,8 @@ export function ExplorerPickerContent({
             rootSelected={!location.parentId}
             selectedKeys={selectedKeys}
             selectedLocale={explorer.selectedLocale}
-            workspace={workspace}
+            prepared={preparedTree}
+            tree={tree}
             onRootPress={onRootPress}
             onSelectionChange={onSelectionChange}
           />
@@ -61,4 +71,25 @@ export function ExplorerPickerContent({
       <ExplorerBody explorer={explorer} items={items} />
     </ExplorerModalContent>
   )
+}
+
+export function createExplorerPickerSnapshot(
+  explorer: ExplorerAtoms,
+  workspace: string
+) {
+  const tree = new TreeAtoms(workspaceAtoms(workspace))
+  const snapshot = swr(
+    atom(async get => {
+      const explorerSnapshot = await get(explorer.snapshot)
+      const root = get(explorer.root)
+      const preparedTree = root
+        ? await tree.prepare(get, root, get(explorer.selectedLocale))
+        : undefined
+      return {
+        items: explorerSnapshot.items,
+        preparedTree
+      }
+    })
+  )
+  return {snapshot, tree}
 }

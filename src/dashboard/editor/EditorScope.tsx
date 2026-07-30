@@ -1,8 +1,8 @@
+import {useAtomValue} from '../AtomHooks.js'
 import type {EntryAnchorTarget} from '#/core/Field.js'
 import type {Resource} from '#/core/Role.js'
 import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {useAtomValue} from 'jotai'
 import type {PropsWithChildren} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
 import {
