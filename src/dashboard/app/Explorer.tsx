@@ -1,5 +1,3 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
-import {AtomSnapshot} from '../AtomSnapshot.js'
 import {Button, Popover, SearchField} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
@@ -14,6 +12,15 @@ import {
   type ReactNode
 } from 'react'
 import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
+import {useAtom, useAtomValue} from '../AtomHooks.js'
+import type {EntryAtoms, EntryDataAtoms} from '../atoms/entry.js'
+import type {
+  ExplorerAtoms,
+  ExplorerSort,
+  ExplorerSortBy,
+  ExplorerTypeFilters
+} from '../atoms/explorer.js'
+import {AtomSnapshot} from '../AtomSnapshot.js'
 import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
@@ -21,13 +28,6 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
-import type {
-  ExplorerAtoms,
-  ExplorerSort,
-  ExplorerSortBy,
-  ExplorerTypeFilters
-} from '../atoms/explorer.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -79,7 +79,11 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
+function ExplorerSearch({
+  autoFocus = true,
+  explorer,
+  items
+}: ExplorerSearchProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
