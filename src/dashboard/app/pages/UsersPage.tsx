@@ -22,24 +22,22 @@ import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
-import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../icons.js'
-import {dashboardAtom, type Dashboard} from '../store/Dashboard.js'
-import {Badge} from './Badge.js'
+import {clientAtom, configAtom} from '../../atoms/core.js'
+import {Page, page, routeAtom} from '../../atoms/nav.js'
+import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../../icons.js'
+import {AppShell} from '../AppShell.js'
+import {Badge} from '../Badge.js'
 import {
   DashboardModal,
   DashboardModalContent,
   DashboardModalDialog,
   DashboardModalFooter,
   useDashboardModal
-} from './ui/DashboardModal.js'
-import {SidebarHeader} from './ui/Sidebar.js'
+} from '../ui/DashboardModal.js'
+import {SidebarHeader} from '../ui/Sidebar.js'
 import css from './UsersPage.module.css'
 
 const styles = styler(css)
-
-interface UsersPageProps {
-  dashboard: Dashboard
-}
 
 interface RoleItem {
   id: string
@@ -77,8 +75,7 @@ const usersStateAtom = atom<UsersState>({
 const usersAtom = atom(
   get => get(usersStateAtom),
   async (get, set, action: UsersAction): Promise<User | undefined> => {
-    const dashboard = get(dashboardAtom)
-    const client = get(dashboard.client)
+    const client = get(clientAtom)
     if (action.type === 'load') {
       const current = get(usersStateAtom)
       set(usersStateAtom, {...current, error: undefined, status: 'loading'})
@@ -137,8 +134,19 @@ function removeUser(users: Array<User>, email: string): Array<User> {
   return users.filter(user => user.email?.toLowerCase() !== normalized)
 }
 
-export function UsersPage({dashboard}: UsersPageProps) {
-  const config = useAtomValue(dashboard.config)
+export const usersPage = page(async page => {
+  return (
+    <AppShell>
+      <UsersPageSidebar page={page} />
+      <div className={styles.AppShellContent()}>
+        <UsersPage />
+      </div>
+    </AppShell>
+  )
+})
+
+export function UsersPage() {
+  const config = useAtomValue(configAtom)
   const [usersState] = useAtom(usersAtom)
   const [query, setQuery] = useState('')
   const [editingUser, setEditingUser] = useState<User>()
@@ -177,7 +185,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
             Create user
           </Button>
           <DashboardModal>
-            <UserModal dashboard={dashboard} />
+            <UserModal />
           </DashboardModal>
         </DialogTrigger>
       </SidebarHeader>
@@ -201,7 +209,7 @@ export function UsersPage({dashboard}: UsersPageProps) {
           if (!isOpen) setEditingUser(undefined)
         }}
       >
-        {editingUser && <UserModal dashboard={dashboard} user={editingUser} />}
+        {editingUser && <UserModal user={editingUser} />}
       </DashboardModal>
       <DashboardModal
         isOpen={deletingUser !== undefined}
@@ -216,19 +224,17 @@ export function UsersPage({dashboard}: UsersPageProps) {
 }
 
 export interface UsersPageSidebarProps {
-  dashboard: Dashboard
+  page: Page
 }
 
-export function UsersPageSidebar({dashboard}: UsersPageSidebarProps) {
-  const setRoute = useSetAtom(dashboard.route)
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
+export function UsersPageSidebar({page}: UsersPageSidebarProps) {
+  const setRoute = useSetAtom(routeAtom)
 
   function handleBack() {
     void setRoute({
       page: 'entry',
-      workspace: selectedWorkspace ?? undefined,
-      root: selectedRoot ?? undefined
+      workspace: page.workspace ?? undefined,
+      root: page.root ?? undefined
     })
   }
 
@@ -464,12 +470,11 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
 }
 
 interface UserModalProps {
-  dashboard: Dashboard
   user?: User
 }
 
-function UserModal({dashboard, user}: UserModalProps) {
-  const config = useAtomValue(dashboard.config)
+function UserModal({user}: UserModalProps) {
+  const config = useAtomValue(configAtom)
   const saveUser = useSetAtom(usersAtom)
   const modal = useDashboardModal()
   const isEditing = user !== undefined

@@ -1,37 +1,46 @@
-import {Button, ProgressCircle} from '#/components.js'
-import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense} from 'react'
-import {DashboardScopeInternal} from '../store.js'
-import type {Dashboard} from '../store/Dashboard.js'
+import {HTMLProps} from 'react'
 import css from './AppShell.module.css'
-import {DashboardMeta} from './DashboardMeta.js'
-import {Editor} from './Editor.js'
-import {SidebarTree} from './SidebarTree.js'
-import {ErrorBoundary} from './ui/ErrorBoundary.js'
-import {Rail} from './ui/Rail.js'
-import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
-import {UsersPage, UsersPageSidebar} from './UsersPage.js'
-import {WorkspaceMenu} from './WorkspaceMenu.js'
-import {WorkspaceRoots} from './WorkspaceRoots.js'
 
 const styles = styler(css)
 
+export function AppShell(props: HTMLProps<HTMLElement>) {
+  return <main className={styles.AppShell()} {...props} />
+}
+
+export function AppShellInner(props: HTMLProps<HTMLDivElement>) {
+  return <div className={styles.AppShellWorkspace()} {...props} />
+}
+
+export function AppShellContent(props: HTMLProps<HTMLDivElement>) {
+  return <div className={styles.AppShellContent()} {...props} />
+}
+
+/*
 interface AppShellProps {
   dashboard: Dashboard
 }
 
-export function AppShell({dashboard}: AppShellProps) {
-  useAtomValue(dashboard.initialContentAvailable)
-  return (
-    <main className={styles.AppShell()}>
-      <DashboardScopeInternal dashboard={dashboard}>
-        <AppShellContent dashboard={dashboard} />
-      </DashboardScopeInternal>
-    </main>
-  )
-}
+export const appShellAtom = atom(async get => {
+  await get(policyReady)
+
+  const workspaces = get(workspacesAtom)
+  const route = get(routeAtom)
+  const policy = get(policyAtom)
+
+  if (route.page === 'users' && policy.canManageMembers()) {
+    return (
+      <div className={styles.AppShellWorkspace()}>
+        <UsersPageSidebar />
+        <div className={styles.AppShellContent()}>
+          <UsersPage />
+        </div>
+      </div>
+    )
+  }
+
+  return <main className={styles.AppShell()}>{workspaces.map(String)}</main>
+})
 
 function AppShellContent({dashboard}: AppShellProps) {
   const workspaces = useAtomValue(dashboard.workspaces)
@@ -161,3 +170,4 @@ function EditorLoading() {
     </Rail>
   )
 }
+*/

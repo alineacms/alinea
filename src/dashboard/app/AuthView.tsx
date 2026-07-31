@@ -1,20 +1,15 @@
 import {Button, Link, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtom} from 'jotai'
 import type {ReactNode} from 'react'
+import {authAtom} from '../atoms/auth.js'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
-import type {Dashboard} from '../store/Dashboard.js'
 import css from './AuthView.module.css'
 
 const styles = styler(css)
 
-export interface AuthViewProps {
-  dashboard: Dashboard
-}
-
-export function AuthView({dashboard}: AuthViewProps) {
-  const auth = useAtomValue(dashboard.auth)
-  const setAuth = useSetAtom(dashboard.auth)
+export function AuthView() {
+  const [auth, setAuth] = useAtom(authAtom)
 
   if (auth.status === 'loading' || auth.status === 'redirecting') {
     return <AuthViewLoader />
