@@ -399,9 +399,10 @@ export class EntryGraph {
       }
       const results = this.#search
         .search(search, {
+          combineWith: 'AND',
           prefix: true,
           fuzzy: 0.1,
-          boost: {title: 2},
+          boost: {title: 10},
           filter: result => found.has(result.entry)
         })
         .map(result => result.entry)

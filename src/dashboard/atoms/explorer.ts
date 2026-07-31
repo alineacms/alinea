@@ -546,7 +546,7 @@ export class ExplorerAtoms {
         parents: Entry.parents,
         locale: Entry.locale
       },
-      orderBy: this.#orderBy(get),
+      orderBy: searchStarted ? undefined : this.#orderBy(get),
       status: 'preferDraft',
       type: filter,
       groupBy: Entry.id

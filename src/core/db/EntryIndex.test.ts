@@ -260,6 +260,92 @@ test('search handles punctuation and diacritics', async () => {
   test.is(found[0].id, 'recipe-cafe')
 })
 
+test('search requires every word in a multi-word query', async () => {
+  const {index} = await createEntryIndex(cms.config, [
+    {
+      id: 'wireless-breakthrough',
+      type: 'DemoRecipe',
+      index: 'a1',
+      path: 'wireless-breakthrough',
+      data: {
+        title: 'Nanoelectronics team unveils an efficient 77 GHz transmitter'
+      }
+    },
+    {
+      id: 'efficient-circuits',
+      type: 'DemoRecipe',
+      index: 'a2',
+      path: 'efficient-circuits',
+      data: {title: 'Efficient circuits for wireless systems'}
+    },
+    {
+      id: 'nanotech-overview',
+      type: 'DemoRecipe',
+      index: 'a3',
+      path: 'nanotech-overview',
+      data: {title: 'Nanoelectronics research overview'}
+    }
+  ])
+
+  const found = Array.from(
+    index.filter({search: 'nanoelectronics unveils efficient 77 GHz'})
+  )
+
+  test.equal(
+    found.map(entry => entry.id),
+    ['wireless-breakthrough']
+  )
+})
+
+test('search prioritizes title matches over body matches', async () => {
+  const Page = Config.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      body: Field.richText('Body', {searchable: true})
+    }
+  })
+  const searchCms = createCMS({
+    schema: {Page},
+    workspaces: {
+      demo: Config.workspace('Demo', {
+        source: 'content/demo',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  })
+  const {index} = await createEntryIndex(searchCms.config, [
+    {
+      id: 'title-match',
+      type: 'Page',
+      index: 'a1',
+      path: 'title-match',
+      data: {title: 'Rich text editing guide'}
+    },
+    {
+      id: 'body-match',
+      type: 'Page',
+      index: 'a2',
+      path: 'body-match',
+      data: {
+        title: 'Getting started',
+        body: [
+          {
+            _type: 'paragraph',
+            content: [{_type: 'text', text: 'Learn rich text editing here.'}]
+          }
+        ]
+      }
+    }
+  ])
+
+  const found = Array.from(index.filter({search: 'rich text'}))
+
+  test.equal(
+    found.map(entry => entry.id),
+    ['title-match', 'body-match']
+  )
+})
+
 test('syncWith and indexChanges dispatch entry/index events', async () => {
   const {index, source} = await createEntryIndex(cms.config, fixtureEntries)
   const emitted = Array<{op: string; value: string}>()

@@ -16,6 +16,7 @@ const ScenarioPage = Config.document('Page', {
   contains: ['Page'],
   fields: {
     title: Field.text('Title'),
+    body: Field.richText('Body', {searchable: true}),
     relatedPage: Field.entry('Related page', {
       async location({entry, graph}) {
         const folder = await graph.get({
@@ -103,6 +104,33 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     root: 'pages',
     parentId: dashboardScenarioIds.folder,
     set: {title: 'Child'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.searchTitle,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Wireless receiver at 77 GHz'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.searchBody,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {
+      title: 'Archive',
+      body: [
+        {
+          _type: 'paragraph',
+          content: [
+            {
+              _type: 'text',
+              text: 'A wireless receiver at 77 GHz is described here.'
+            }
+          ]
+        }
+      ]
+    }
   })
   await db.create({
     id: dashboardLinkScenarioIds.referenceFolder,

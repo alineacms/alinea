@@ -102,3 +102,21 @@ test('searches entries and navigates with enter or click', async ({
   await expect(app.title).toHaveText('Alpha')
   await expect(clickSearch).not.toBeVisible()
 })
+
+test('search ranks title matches before rich-text matches', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.page.getByRole('button', {name: 'Search entries'}).click()
+  const search = app.page.getByRole('dialog', {name: 'Search entries'})
+  await search
+    .getByRole('searchbox', {name: 'Search'})
+    .fill('wireless receiver 77 GHz')
+
+  const results = search.getByRole('row')
+  await expect(results).toHaveCount(2)
+  await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')
+  await expect(results.nth(1)).toContainText('Archive')
+})
