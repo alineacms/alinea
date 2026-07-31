@@ -1,4 +1,4 @@
-import {Button, Popover, SearchField} from '#/components.js'
+import {Button, Menu, Popover, SearchField} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
@@ -11,7 +11,12 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
+import {
+  DialogTrigger,
+  FileTrigger,
+  MenuItem,
+  type Key
+} from 'react-aria-components'
 import {useAtom, useAtomValue} from '../AtomHooks.js'
 import type {EntryAtoms, EntryDataAtoms} from '../atoms/entry.js'
 import type {
@@ -33,6 +38,8 @@ import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
+import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
+import {WorkspaceItem} from './WorkspaceMenu.js'
 
 const styles = styler(css)
 
@@ -167,17 +174,60 @@ function ExplorerSearch({
   }
 
   return (
-    <SearchField
-      aria-label="Search"
-      autoFocus={autoFocus}
-      className={styles.Explorer.search()}
-      hasIcon
-      isPending={isPending}
-      placeholder="Search..."
-      value={inputValue}
-      onChange={onSearchChange}
-      onKeyDown={onSearchKeyDown}
-    />
+    <>
+      <WorkspaceMenu explorer={explorer} />
+      <RootMenu explorer={explorer} />
+      <SearchField
+        aria-label="Search"
+        autoFocus={autoFocus}
+        className={styles.Explorer.search()}
+        hasIcon
+        isPending={isPending}
+        placeholder="Search..."
+        value={inputValue}
+        onChange={onSearchChange}
+        onKeyDown={onSearchKeyDown}
+      />
+    </>
+  )
+}
+
+function WorkspaceMenu({explorer}: {explorer: ExplorerAtoms}) {
+  const [currentWorkspace, setWorkspace] = useAtom(explorer.workspace)
+  const workspaces = useAtomValue(workspacesAtom)
+
+  return (
+    <Menu
+      label={currentWorkspace.key}
+      onAction={key => {
+        setWorkspace(String(key))
+      }}
+    >
+      {workspaces.map(workspace => (
+        <WorkspaceItem key={workspace} workspace={workspaceAtoms(workspace)} />
+      ))}
+    </Menu>
+  )
+}
+
+function RootMenu({explorer}: {explorer: ExplorerAtoms}) {
+  const [currentRoot, setRoot] = useAtom(explorer.root)
+  const workspace = useAtomValue(explorer.workspace)
+  const roots = useAtomValue(workspace.roots)
+
+  return (
+    <Menu
+      label={currentRoot ? currentRoot.key : 'Missing root label'}
+      onAction={key => {
+        setRoot(String(key))
+      }}
+    >
+      {roots.map(root => (
+        <MenuItem key={root} id={root} textValue={root}>
+          {root}
+        </MenuItem>
+      ))}
+    </Menu>
   )
 }
 

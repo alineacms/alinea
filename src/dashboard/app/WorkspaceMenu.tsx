@@ -41,6 +41,7 @@ const styles = styler(css)
 
 interface WorkspaceMenuProps {
   canManageMembers: boolean
+  withSearch?: boolean
 }
 
 interface WorkspaceAvatarProps {
@@ -185,7 +186,10 @@ function SearchPopup() {
   )
 }
 
-export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
+export function WorkspaceMenu({
+  canManageMembers,
+  withSearch = true
+}: WorkspaceMenuProps) {
   const workspaces = useAtomValue(workspacesAtom)
   const selected = useAtomValue(selectedWorkspaceAtom)
   const workspace = workspaceAtoms(selected)
@@ -211,19 +215,21 @@ export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
     <div className={styles.WorkspaceMenu.parent()}>
       {menu}
 
-      <DialogTrigger>
-        <Button
-          size="icon"
-          appearance="plain"
-          className={styles.WorkspaceMenu.search()}
-          aria-label="Search entries"
-        >
-          <IconComp icon={IcRoundSearch} data-slot="icon" />
-        </Button>
-        <DashboardModal size="explorer">
-          <SearchPopup />
-        </DashboardModal>
-      </DialogTrigger>
+      {withSearch && (
+        <DialogTrigger>
+          <Button
+            size="icon"
+            appearance="plain"
+            className={styles.WorkspaceMenu.search()}
+            aria-label="Search entries"
+          >
+            <IconComp icon={IcRoundSearch} data-slot="icon" />
+          </Button>
+          <DashboardModal size="explorer">
+            <SearchPopup />
+          </DashboardModal>
+        </DialogTrigger>
+      )}
     </div>
   )
 }
@@ -232,7 +238,7 @@ interface WorkspaceItemProps {
   workspace: WorkspaceAtoms
 }
 
-function WorkspaceItem({workspace}: WorkspaceItemProps) {
+export function WorkspaceItem({workspace}: WorkspaceItemProps) {
   const id = workspace.key
   const label = useAtomValue(workspace.settings).label
   return (
