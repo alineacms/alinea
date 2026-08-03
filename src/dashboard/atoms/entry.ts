@@ -1,14 +1,15 @@
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import {parseRecord} from '#/core/EntryRecord.js'
+import {Permission} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
-import {Atom, atom, PrimitiveAtom} from 'jotai'
+import {Atom, atom, Getter, PrimitiveAtom} from 'jotai'
 import {ReactiveNode} from '../store.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
-import {policyAtom} from './user.js'
+import {policyAtom, userAtom} from './user.js'
 import {dispense, loader} from './utils.js'
 
 export interface EntryAtoms {
@@ -48,6 +49,22 @@ const selection = {
 export type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
+
+async function prepareData(
+  get: Getter,
+  node: ReactiveNode<object>,
+  type: Type,
+  action: 'update' | 'create'
+) {
+  const user = get(userAtom)
+  const current = get(node.value) as Record<string, unknown>
+  const data = Type.beforeSave(type, current, {
+    action,
+    user,
+    now: new Date()
+  })
+  return {data, changed: data !== current}
+}
 
 export const entryAtoms = dispense(entryId => {
   const dataAtom = atom(async get => {
@@ -118,11 +135,39 @@ export const entryAtoms = dispense(entryId => {
         readOnly
       )
     })
+    const saveDraft = atom(
+      null,
+      async (get, set, node: ReactiveNode<object>) => {
+        const {id, type} = await get(dataAtom)
+        const policy = get(policyAtom)
+        const config = get(configAtom)
+        const typeConfig = config.schema[type]
+        const graph = get(graphAtom)
+        const {data, changed} = await prepareData(
+          get,
+          node,
+          typeConfig,
+          'update'
+        )
+        policy.assert(Permission.Update, data)
+        await graph.create({
+          type: typeConfig,
+          id,
+          locale,
+          status: 'draft',
+          set: data,
+          overwrite: true
+        })
+        if (changed) set(node.value, data)
+        set(node.commit)
+      }
+    )
     return {
       currentlyEditing,
       selectedVersion,
       selectedEntry,
-      selectedNode
+      selectedNode,
+      saveDraft
     }
   })
 

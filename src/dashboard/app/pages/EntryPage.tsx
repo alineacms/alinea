@@ -1,11 +1,17 @@
 import {Button, Icon, Surface} from '#/components.js'
+import type {Entry} from '#/core/Entry.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
-import {entryAtoms, EntryAtoms} from '#/dashboard/atoms/entry.js'
+import {
+  entryAtoms,
+  type EntryAtoms,
+  type EntryLocaleAtoms,
+  MissingEntryError
+} from '#/dashboard/atoms/entry.js'
 import {Page, page, routeAtom} from '#/dashboard/atoms/nav.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
@@ -60,9 +66,21 @@ export const entryPage = page(async (page, get) => {
   try {
     const entry = await get(entryAtoms(page.entry))
     const localeData = entry.locales(page.locale ?? null)
-    const node = await get(localeData.selectedNode)
-    return <EntryEditor page={page} entry={entry} node={node} />
+    const [selectedEntry, node] = await Promise.all([
+      get(localeData.selectedEntry),
+      get(localeData.selectedNode)
+    ])
+    return (
+      <EntryEditor
+        entry={entry}
+        localeData={localeData}
+        node={node}
+        page={page}
+        selectedEntry={selectedEntry}
+      />
+    )
   } catch (error) {
+    if (!(error instanceof MissingEntryError)) throw error
     return <MissingEntry page={page} />
   }
 })
@@ -87,7 +105,7 @@ function MissingEntry({page}: MissingEntryProps) {
         setRoute({
           workspace: page.workspace,
           root: page.root,
-          locale: page.locale
+          locale: page.locale ?? undefined
         })
       }
     />
@@ -163,15 +181,23 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
 interface EntryEditorProps {
   page: Page
   entry: EntryAtoms
+  localeData: EntryLocaleAtoms
+  selectedEntry: Entry
   node: ReactiveNode<object>
 }
 
-function EntryEditor({page, entry, node}: EntryEditorProps) {
+function EntryEditor({
+  page,
+  entry,
+  localeData,
+  selectedEntry,
+  node
+}: EntryEditorProps) {
   const type = useAtomValue(typeAtoms(entry.type))
   const View = type.customView
-  const isUntranslated = entry.locales.has(page.locale ?? null)
-  const setEditing = useSetAtom(entry.currentlyEditing)
-  const [, startTransition] = useTransition()
+  const locale = page.locale ?? null
+  const isUntranslated = selectedEntry.locale !== locale
+  const setEditing = useSetAtom(localeData.currentlyEditing)
   const saveDraft = useSetAtom(entry.saveDraft)
   const publishEdits = useSetAtom(entry.publishEdits)
   const isDirty = useAtomValue(node.isDirty)
@@ -184,23 +210,17 @@ function EntryEditor({page, entry, node}: EntryEditorProps) {
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
 
   const discardAndConfirm = () => {
-    startTransition(() => {
-      reset()
-      routeBlock?.confirm()
-    })
+    reset()
+    routeBlock?.confirm()
   }
 
-  const saveAndConfirm = () => {
-    startTransition(async () => {
-      if (mediaDraftsDisabled) {
-        await publishEdits(node)
-      } else {
-        await saveDraft(node)
-      }
-      startTransition(() => {
-        routeBlock?.confirm()
-      })
-    })
+  const saveAndConfirm = async () => {
+    if (mediaDraftsDisabled) {
+      await publishEdits(node)
+    } else {
+      await saveDraft(node)
+    }
+    routeBlock?.confirm()
   }
 
   useEffect(() => {
