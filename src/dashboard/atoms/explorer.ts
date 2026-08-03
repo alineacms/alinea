@@ -131,6 +131,10 @@ export class ExplorerAtoms {
     )
   }
 
+  get enableNavigation() {
+    return this.#options.enableNavigation
+  }
+
   get selectionMode() {
     return this.#options.selectionMode ?? 'single'
   }
@@ -587,7 +591,10 @@ export class ExplorerAtoms {
         ...parents
           .map(entry => get(entry.data).data)
           .filter((entry): entry is EntryDataAtoms => entry !== undefined)
-          .map(entry => ({id: entry.id, label: get(entry.label)})),
+          .map(entry => ({
+            id: entry.id,
+            label: get(entry.label)
+          })),
         {id: parent.id, label}
       ]
     }),

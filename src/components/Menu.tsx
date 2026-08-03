@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {type ReactNode, useContext} from 'react'
+import {type ComponentType, type ReactNode, useContext} from 'react'
 import {
   MenuContext,
   type MenuItemProps,
@@ -12,7 +12,7 @@ import {
   SubmenuTrigger
 } from 'react-aria-components'
 import {IcRoundCheck, IcRoundKeyboardArrowRight} from '../dashboard/icons.js'
-import {Button} from './Button.js'
+import {Button, type ButtonProps} from './Button.js'
 import {Icon} from './Icon.js'
 import css from './Menu.module.css'
 import {Popover, type PopoverProps} from './Popover.js'
@@ -62,9 +62,13 @@ export interface MenuProps<T> extends MenuPrimitiveProps<T> {
   label: ReactNode
   children: ReactNode
   popoverProps?: Omit<PopoverProps, 'children'>
+  appearance?: ButtonProps['appearance']
+  icon?: ComponentType
 }
 
 export function Menu<T extends object>({
+  appearance,
+  icon,
   label,
   children,
   popoverProps,
@@ -74,7 +78,14 @@ export function Menu<T extends object>({
   const Trigger = isInMenu ? SubmenuTrigger : MenuTrigger
   return (
     <Trigger>
-      {typeof label === 'string' ? <Button>{label}</Button> : <>{label}</>}
+      {typeof label === 'string' ? (
+        <Button appearance={appearance}>
+          {label}
+          {icon && <Icon icon={icon} data-slot="icon" />}
+        </Button>
+      ) : (
+        <>{label}</>
+      )}
       <Popover {...popoverProps}>
         <PrimitiveMenu {...props} className={styles.Menu()}>
           {children}

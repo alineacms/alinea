@@ -1,9 +1,9 @@
-import {Button, Menu, Popover, SearchField} from '#/components.js'
+import {Button, Menu, MenuItem, Popover, SearchField} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
-import {useSetAtom} from 'jotai'
+import {atom, useSetAtom} from 'jotai'
 import {
   useEffect,
   useState,
@@ -11,12 +11,7 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {
-  DialogTrigger,
-  FileTrigger,
-  MenuItem,
-  type Key
-} from 'react-aria-components'
+import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
 import {useAtom, useAtomValue} from '../AtomHooks.js'
 import type {EntryAtoms, EntryDataAtoms} from '../atoms/entry.js'
 import type {
@@ -31,6 +26,7 @@ import {
   IcRoundArrowUpward,
   IcRoundClose,
   IcRoundFilterList,
+  IcRoundUnfoldMore,
   IcRoundUploadFile
 } from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
@@ -40,6 +36,7 @@ import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
 import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
 import {WorkspaceItem} from './WorkspaceMenu.js'
+import {LocaleMenu} from './LocaleMenu.js'
 
 const styles = styler(css)
 
@@ -47,6 +44,7 @@ export interface ExplorerProps {
   controls?: ReactNode
   explorer: ExplorerAtoms
   items: Array<EntryAtoms>
+  navigate?: boolean
   titleControls?: ReactNode
 }
 
@@ -55,6 +53,7 @@ export interface ExplorerHeaderProps {
   controls?: ReactNode
   explorer: ExplorerAtoms
   items: Array<EntryAtoms>
+  navigate?: boolean
   titleControls?: ReactNode
 }
 
@@ -67,6 +66,7 @@ interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: ExplorerAtoms
   items: Array<EntryAtoms>
+  navigate?: boolean
 }
 
 interface ExplorerHeaderMainProps {
@@ -89,7 +89,8 @@ interface ExplorerHeaderParentMainProps {
 function ExplorerSearch({
   autoFocus = true,
   explorer,
-  items
+  items,
+  navigate = false
 }: ExplorerSearchProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
@@ -97,6 +98,9 @@ function ExplorerSearch({
   const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
+  const root = useAtomValue(explorer.root)
+  const enableNavigation = explorer.enableNavigation
+  navigate = enableNavigation ?? navigate
 
   function selectEntry(entry: EntryAtoms | undefined) {
     if (!entry) return
@@ -174,9 +178,16 @@ function ExplorerSearch({
   }
 
   return (
-    <>
-      <WorkspaceMenu explorer={explorer} />
-      <RootMenu explorer={explorer} />
+    <div className={styles.Explorer.searchContainer()}>
+      {navigate && (
+        <div className={styles.Explorer.searchMenu()}>
+          <WorkspaceMenu explorer={explorer} />
+          <RootMenu explorer={explorer} />
+          {root && (
+            <LocaleMenu root={root} selectedLocale={explorer.selectedLocale} />
+          )}
+        </div>
+      )}
       <SearchField
         aria-label="Search"
         autoFocus={autoFocus}
@@ -188,7 +199,7 @@ function ExplorerSearch({
         onChange={onSearchChange}
         onKeyDown={onSearchKeyDown}
       />
-    </>
+    </div>
   )
 }
 
@@ -202,6 +213,8 @@ function WorkspaceMenu({explorer}: {explorer: ExplorerAtoms}) {
       onAction={key => {
         setWorkspace(String(key))
       }}
+      appearance="plain"
+      icon={IcRoundUnfoldMore}
     >
       {workspaces.map(workspace => (
         <WorkspaceItem key={workspace} workspace={workspaceAtoms(workspace)} />
@@ -213,18 +226,24 @@ function WorkspaceMenu({explorer}: {explorer: ExplorerAtoms}) {
 function RootMenu({explorer}: {explorer: ExplorerAtoms}) {
   const [currentRoot, setRoot] = useAtom(explorer.root)
   const workspace = useAtomValue(explorer.workspace)
-  const roots = useAtomValue(workspace.roots)
+  const roots = useAtomValue(workspace.rootMenu)
+  const settings = useAtomValue(
+    currentRoot?.settings ?? atom({label: 'Missing root label'})
+  )
+  const label = settings.label
 
   return (
     <Menu
-      label={currentRoot ? currentRoot.key : 'Missing root label'}
+      label={label}
       onAction={key => {
         setRoot(String(key))
       }}
+      appearance="plain"
+      icon={IcRoundUnfoldMore}
     >
       {roots.map(root => (
-        <MenuItem key={root} id={root} textValue={root}>
-          {root}
+        <MenuItem key={root.id} id={root.id} textValue={root.label}>
+          {root.label}
         </MenuItem>
       ))}
     </Menu>
@@ -450,6 +469,7 @@ export function ExplorerHeader({
   controls,
   explorer,
   items,
+  navigate,
   titleControls
 }: ExplorerHeaderProps) {
   return (
@@ -461,6 +481,7 @@ export function ExplorerHeader({
             autoFocus={autoFocusSearch}
             explorer={explorer}
             items={items}
+            navigate={navigate}
           />
         </div>
         <div className={styles.Explorer.toolbar()}>
@@ -486,6 +507,7 @@ export function Explorer({
   controls,
   explorer,
   items,
+  navigate,
   titleControls
 }: ExplorerProps) {
   return (
@@ -494,6 +516,7 @@ export function Explorer({
         controls={controls}
         explorer={explorer}
         items={items}
+        navigate={navigate}
         titleControls={titleControls}
       />
       <ExplorerBody explorer={explorer} items={items} />
