@@ -139,7 +139,7 @@ function ExplorerSearch({
   function onSearchChange(value: string) {
     setInputValue(value)
     startTransition(() => {
-      if (explorer.hasSelection) setSelection(new Set<Key>())
+      // if (explorer.hasSelection) setSelection(new Set<Key>())
       setSearch(value)
     })
   }
