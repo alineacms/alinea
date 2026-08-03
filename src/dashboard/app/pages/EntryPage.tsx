@@ -59,7 +59,9 @@ export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
     const entry = await get(entryAtoms(page.entry))
-    return <EntryEditor page={page} entry={entry} />
+    const localeData = entry.locales(page.locale ?? null)
+    const node = await get(localeData.selectedNode)
+    return <EntryEditor page={page} entry={entry} node={node} />
   } catch (error) {
     return <MissingEntry page={page} />
   }
@@ -161,13 +163,13 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
 interface EntryEditorProps {
   page: Page
   entry: EntryAtoms
+  node: ReactiveNode<object>
 }
 
-function EntryEditor({page, entry}: EntryEditorProps) {
+function EntryEditor({page, entry, node}: EntryEditorProps) {
   const type = useAtomValue(typeAtoms(entry.type))
   const View = type.customView
   const isUntranslated = entry.locales.has(page.locale ?? null)
-  const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
   const [, startTransition] = useTransition()
   const saveDraft = useSetAtom(entry.saveDraft)

@@ -1,11 +1,12 @@
 import {Entry, EntryStatus} from '#/core/Entry.js'
-import {Infer} from '#/core/Infer.js'
+import {parseRecord} from '#/core/EntryRecord.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
-import {atom} from 'jotai'
-import {configAtom, graphAtom} from './core.js'
+import {Atom, atom, PrimitiveAtom} from 'jotai'
+import {ReactiveNode} from '../store.js'
+import {clientAtom, configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import {policyAtom} from './user.js'
 import {dispense, loader} from './utils.js'
@@ -16,7 +17,14 @@ export interface EntryAtoms {
   parentId: string | null
   workspace: string
   root: string
-  locales: Map<string | null, Entry>
+  locales: (locale: string | null) => EntryLocaleAtoms
+}
+
+export interface EntryLocaleAtoms extends Entry {
+  currentlyEditing: PrimitiveAtom<ReactiveNode<object> | undefined>
+  selectedVersion: PrimitiveAtom<SelectedVersion | null>
+  selectedEntry: Atom<Promise<Entry>>
+  selectedNode: Atom<Promise<ReactiveNode<object>>>
 }
 
 const selection = {
@@ -37,47 +45,13 @@ const selection = {
   entries: translations({select: Entry, includeSelf: true})
 }
 
-type Selection = Infer<typeof selection>
-
-/*class EntryState {
-  #selection: Selection
-  locales: Map<string | null, Entry>
-  constructor(selection: Selection) {
-    this.#selection = selection
-    this.locales = new Map(
-      selection.entries.map(entry => {
-        return [entry.locale, entry]
-      })
-    )
-  }
-  get type() {
-    return this.#selection.type
-  }
-  get id() {
-    return this.#selection.id
-  }
-  get parentId() {
-    return this.#selection.parentId
-  }
-  get workspace() {
-    return this.#selection.workspace
-  }
-  get root() {
-    return this.#selection.root
-  }
-}*/
-
-type SelectedVersion =
+export type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
 
 export const entryAtoms = dispense(entryId => {
-  const localeAtoms = dispense((locale: string | null) => {
-    return {
-      selectedVersion: atom<SelectedVersion | null>(null)
-    }
-  })
-  return atom(async get => {
+  const dataAtom = atom(async get => {
+    get(shaAtom)
     const load = get(entryLoader)
     const [result, error] = await load(entryId)
     if (error) {
@@ -86,21 +60,87 @@ export const entryAtoms = dispense(entryId => {
       throw error
     }
     assert(result, `Entry "${entryId}" not found`)
-    const versions = new Map(
-      result.entries.map(entry => {
-        return [entry.locale, entry]
-      })
+    return result
+  })
+
+  const localeAtoms = dispense((locale: string | null) => {
+    const currentlyEditing = atom<ReactiveNode<object>>()
+    const selectedVersion = atom<SelectedVersion | null>(null)
+    const selectedEntry = atom(async (get): Promise<Entry> => {
+      const data = await get(dataAtom)
+      const localeEntries = data.entries.filter(
+        entry => entry.locale === locale
+      )
+      assert(localeEntries.length > 0, `No entry for locale "${locale}"`)
+      const version = get(selectedVersion)
+      if (!version) return localeEntries[0]
+      if (version.type === 'status')
+        return (
+          localeEntries.find(entry => entry.status === version.status) ??
+          localeEntries[0]
+        )
+      const client = get(clientAtom)
+      const revision = await client.revisionData(version.file, version.ref)
+      const activeEntry = localeEntries[0]
+      if (!revision) return activeEntry
+      const historyData = parseRecord(revision).data
+      return {
+        ...activeEntry,
+        title:
+          typeof historyData.title === 'string'
+            ? historyData.title
+            : activeEntry.title,
+        path:
+          typeof historyData.path === 'string'
+            ? historyData.path
+            : activeEntry.path,
+        data: historyData
+      }
+    })
+    const selectedNode = atom(async get => {
+      const version = get(selectedVersion)
+      const entry = await get(selectedEntry)
+      if (!version || (version.type === 'status' && entry.active)) {
+        const editing = get(currentlyEditing)
+        if (editing) return editing
+      }
+      const config = get(configAtom)
+      const type = config.schema[entry.type]
+      assert(type, `Type "${entry.type}" not found in config`)
+      const policy = get(policyAtom)
+      const readOnly =
+        version?.type === 'history' || !entry.active || !policy.canUpdate(entry)
+      return new ReactiveNode<object>(
+        Type.withInitialValue(type, {
+          ...Type.initialValue(type),
+          ...entry.data
+        }),
+        readOnly
+      )
+    })
+    return {
+      currentlyEditing,
+      selectedVersion,
+      selectedEntry,
+      selectedNode
+    }
+  })
+
+  return atom(async get => {
+    const data = await get(dataAtom)
+    const entries = new Map(
+      data.entries.map(entry => [entry.locale, entry] as const)
     )
-    const locales = dispense((locale: string | null): Entry => {
-      const entry = versions.get(locale)
+    const locales = dispense((locale: string | null): EntryLocaleAtoms => {
+      const entry = entries.get(locale)
       if (!entry) {
-        const fallbackLocale = result.entries[0].locale
+        const fallbackLocale = data.entries[0].locale
         return locales(fallbackLocale)
       }
       return {...entry, ...localeAtoms(locale)}
     })
     return {
-      ...result,
+      ...data,
       locales
     }
   })
