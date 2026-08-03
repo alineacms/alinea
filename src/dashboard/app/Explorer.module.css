@@ -59,7 +59,7 @@
 
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   justify-content: end;
 }
 
@@ -81,7 +81,7 @@
   align-items: center;
 }
 
-.Explorer-searchSlot .LocaleMenu-trigger {
+.Explorer-searchMenu .LocaleMenu-trigger {
   background-color: transparent;
   border: 1px solid transparent;
   padding: 3px 8px;
@@ -96,12 +96,12 @@
   color: var(--alinea-fg);
 }
 
-.Explorer-searchSlot .LocaleMenu-trigger[data-hovered],
-.Explorer-searchSlot .LocaleMenu-trigger[data-pressed] {
+.Explorer-searchMenu .LocaleMenu-trigger[data-hovered],
+.Explorer-searchMenu .LocaleMenu-trigger[data-pressed] {
   background-color: var(--alinea-muted);
 }
 
-.Explorer-searchSlot .LocaleMenu-trigger-icon {
+.Explorer-searchMenu .LocaleMenu-trigger-icon {
   font-size: 16px;
 }
 

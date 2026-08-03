@@ -1,5 +1,5 @@
-import {useAtomValue} from '../AtomHooks.js'
-import {Icon} from '#/components.js'
+import {useAtom, useAtomValue} from '../AtomHooks.js'
+import {Button, Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
 import {atom, useSetAtom} from 'jotai'
@@ -20,10 +20,13 @@ const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
   root?: RootAtoms
+  explorer: ExplorerAtoms
 }
 
-function EmptyResults({root}: EmptyResultsProps) {
+function EmptyResults({root, explorer}: EmptyResultsProps) {
   const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
+  const [global, setGlobal] = useAtom(explorer.global)
+
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
@@ -34,6 +37,15 @@ function EmptyResults({root}: EmptyResultsProps) {
         <div className={styles.ExplorerList.empty.text()}>
           Try a different title, path, or field value.
         </div>
+        {!global && (
+          <Button
+            appearance="plain"
+            className={styles.ExplorerList.empty.button()}
+            onPress={() => setGlobal(!global)}
+          >
+            Or search across workspaces and roots
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -65,6 +77,7 @@ export function ExplorerList({explorer, items}: ExplorerListProps) {
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
+  const scope = useAtomValue(explorer.scope)
   const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
     getItems: explorer.getItems,
@@ -95,10 +108,7 @@ export function ExplorerList({explorer, items}: ExplorerListProps) {
         <SearchIdleState />
       </div>
     )
-  assert(
-    root || explorer.rootScope === 'workspace',
-    'ExplorerList requires a root'
-  )
+  assert(root || scope === 'workspace', 'ExplorerList requires a root')
   return (
     <div className={styles.ExplorerList()}>
       {view === 'card' ? (
@@ -106,14 +116,18 @@ export function ExplorerList({explorer, items}: ExplorerListProps) {
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
-          renderEmptyState={() => <EmptyResults root={root} />}
+          renderEmptyState={() => (
+            <EmptyResults explorer={explorer} root={root} />
+          )}
         />
       ) : (
         <ExplorerTable
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
-          renderEmptyState={() => <EmptyResults root={root} />}
+          renderEmptyState={() => (
+            <EmptyResults explorer={explorer} root={root} />
+          )}
         />
       )}
     </div>

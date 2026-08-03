@@ -27,7 +27,8 @@ import {
   IcRoundClose,
   IcRoundFilterList,
   IcRoundUnfoldMore,
-  IcRoundUploadFile
+  IcRoundUploadFile,
+  IcRoundPublic
 } from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
@@ -66,7 +67,6 @@ interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: ExplorerAtoms
   items: Array<EntryAtoms>
-  navigate?: boolean
 }
 
 interface ExplorerHeaderMainProps {
@@ -89,8 +89,7 @@ interface ExplorerHeaderParentMainProps {
 function ExplorerSearch({
   autoFocus = true,
   explorer,
-  items,
-  navigate = false
+  items
 }: ExplorerSearchProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
@@ -98,9 +97,6 @@ function ExplorerSearch({
   const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
-  const root = useAtomValue(explorer.root)
-  const enableNavigation = explorer.enableNavigation
-  navigate = enableNavigation ?? navigate
 
   function selectEntry(entry: EntryAtoms | undefined) {
     if (!entry) return
@@ -178,28 +174,17 @@ function ExplorerSearch({
   }
 
   return (
-    <div className={styles.Explorer.searchContainer()}>
-      {navigate && (
-        <div className={styles.Explorer.searchMenu()}>
-          <WorkspaceMenu explorer={explorer} />
-          <RootMenu explorer={explorer} />
-          {root && (
-            <LocaleMenu root={root} selectedLocale={explorer.selectedLocale} />
-          )}
-        </div>
-      )}
-      <SearchField
-        aria-label="Search"
-        autoFocus={autoFocus}
-        className={styles.Explorer.search()}
-        hasIcon
-        isPending={isPending}
-        placeholder="Search..."
-        value={inputValue}
-        onChange={onSearchChange}
-        onKeyDown={onSearchKeyDown}
-      />
-    </div>
+    <SearchField
+      aria-label="Search"
+      autoFocus={autoFocus}
+      className={styles.Explorer.search()}
+      hasIcon
+      isPending={isPending}
+      placeholder="Search..."
+      value={inputValue}
+      onChange={onSearchChange}
+      onKeyDown={onSearchKeyDown}
+    />
   )
 }
 
@@ -422,6 +407,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [view, setView] = useAtom(explorer.view)
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
+  const [global, setGlobal] = useAtom(explorer.global)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
@@ -438,6 +424,11 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
           {uploads.length}
         </MutationQueueStatus>
       )}
+      <Button
+        appearance={global ? 'active' : 'outline'}
+        icon={IcRoundPublic}
+        onPress={() => setGlobal(!global)}
+      />
       <ExplorerControlsButton
         isMedia={isMedia}
         sort={sort}
@@ -472,16 +463,29 @@ export function ExplorerHeader({
   navigate,
   titleControls
 }: ExplorerHeaderProps) {
+  const root = useAtomValue(explorer.root)
+  const global = useAtomValue(explorer.global)
   return (
     <RailHeader className={styles.ExplorerHeader()}>
       <div className={styles.ExplorerHeader.content()}>
         <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
+        {navigate && !global && (
+          <div className={styles.Explorer.searchMenu()}>
+            <WorkspaceMenu explorer={explorer} />
+            <RootMenu explorer={explorer} />
+            {root && (
+              <LocaleMenu
+                root={root}
+                selectedLocale={explorer.selectedLocale}
+              />
+            )}
+          </div>
+        )}
         <div className={styles.Explorer.searchSlot()}>
           <ExplorerSearch
             autoFocus={autoFocusSearch}
             explorer={explorer}
             items={items}
-            navigate={navigate}
           />
         </div>
         <div className={styles.Explorer.toolbar()}>

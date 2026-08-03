@@ -9,7 +9,7 @@ import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {assert} from '#/core/util/Assert.js'
-import type {Getter, WritableAtom} from 'jotai'
+import type {Getter, PrimitiveAtom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
@@ -41,6 +41,7 @@ export interface DashboardMenuItem {
 
 export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id' | 'index'
 export type ExplorerSortDirections = 'asc' | 'desc'
+export type ExplorerScope = 'current' | 'workspace' | 'global'
 export interface ExplorerSort {
   sortBy: ExplorerSortBy
   direction: ExplorerSortDirections
@@ -66,12 +67,12 @@ export interface ExplorerOptions {
   nestedNavigation?: boolean
   pickChildren?: boolean
   selectedLocale?: string | null
-  rootScope?: 'current' | 'workspace'
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
+  scope?: 'current' | 'workspace' | 'global'
   breadcrumbs?: boolean
   // initialSort?: ExplorerSort
   onAction?: WritableAtom<void, [entry: EntryAtoms], void>
@@ -86,10 +87,14 @@ export interface ExplorerSnapshot {
 
 export class ExplorerAtoms {
   #options: ExplorerOptions
+  #initialScope: ExplorerScope
+  #initialSearchDepth: 'current' | 'all'
   #conditionChecker: ReturnType<typeof filterChecker> | undefined
   #selectedLocale: DashboardLocaleSelection
   #navigationSequence = 0
   selection
+  searchDepth: PrimitiveAtom<'current' | 'all'>
+  scope: PrimitiveAtom<ExplorerScope>
   #expandedKeys = atom(new Set<Key>())
   expandedKeys = atom(
     get => get(this.#expandedKeys),
@@ -129,6 +134,12 @@ export class ExplorerAtoms {
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
+    this.#initialSearchDepth =
+      options.searchDepth ?? (options.mode === 'search' ? 'all' : 'current')
+    this.#initialScope =
+      options.scope ?? (options.mode === 'search' ? 'workspace' : 'current')
+    this.searchDepth = atom(this.#initialSearchDepth)
+    this.scope = atom(this.#initialScope)
   }
 
   get enableNavigation() {
@@ -163,16 +174,6 @@ export class ExplorerAtoms {
     return this.#options.mode ?? 'browse'
   }
 
-  get searchDepth() {
-    if (this.#options.searchDepth) return this.#options.searchDepth
-    return this.mode === 'search' ? 'all' : 'current'
-  }
-
-  get rootScope() {
-    if (this.#options.rootScope) return this.#options.rootScope
-    return this.mode === 'search' ? 'workspace' : 'current'
-  }
-
   get showSelectionControls() {
     if (this.#options.showSelectionControls !== undefined)
       return this.#options.showSelectionControls
@@ -194,6 +195,16 @@ export class ExplorerAtoms {
   get breadcrumbs() {
     return this.#options.breadcrumbs ?? false
   }
+
+  global = atom(
+    get => {
+      return get(this.searchDepth) === 'all' && get(this.scope) === 'global'
+    },
+    (_, set, next) => {
+      set(this.searchDepth, next ? 'all' : this.#initialSearchDepth)
+      set(this.scope, next ? 'global' : this.#initialScope)
+    }
+  )
 
   isSelectable = dispense((entry: EntryAtoms) =>
     atom(get => {
@@ -334,7 +345,7 @@ export class ExplorerAtoms {
       const sequence = ++this.#navigationSequence
       const current = get(this.location)
       const next = typeof update === 'function' ? update(current) : update
-      const allRoots = this.rootScope === 'workspace'
+      const allRoots = get(this.scope) !== 'current'
       let locale: string | null = null
       if (!allRoots && next.root) {
         const root = workspaceAtoms(next.workspace).root(next.root)
@@ -498,7 +509,7 @@ export class ExplorerAtoms {
 
   #snapshotResource = atom(async get => {
     const location = get(this.location)
-    const allRoots = this.rootScope === 'workspace'
+    const allRoots = get(this.scope) !== 'current'
     const locale = allRoots ? null : get(this.selectedLocale)
     return this.prepare(get, location, locale)
   })
@@ -525,10 +536,10 @@ export class ExplorerAtoms {
     const filter = get(this.filter)
     const searchStarted = Boolean(search.trim())
     if (this.hideResultsUntilSearch && !searchStarted) return []
-    const allRoots = this.rootScope === 'workspace'
+    const allRoots = get(this.scope) !== 'current'
     if (!root && !allRoots) return []
     const locale = allRoots ? undefined : selectedLocale
-    const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
+    const searchAll = Boolean(searchStarted && get(this.searchDepth) === 'all')
     const flatList =
       (Boolean(this.#options.condition) &&
         !this.#options.pickChildren &&
@@ -538,7 +549,7 @@ export class ExplorerAtoms {
     const children = await db.find({
       locale,
       search: searchStarted ? search : undefined,
-      workspace: location.workspace,
+      workspace: get(this.scope) === 'global' ? undefined : location.workspace,
       root: allRoots ? undefined : location.root,
       parentId: flatList ? undefined : (location.parentId ?? null),
       filter: flatList ? this.#options.condition : undefined,
