@@ -1,4 +1,5 @@
-import {Entry} from '#/core/Entry.js'
+import {Entry, EntryStatus} from '#/core/Entry.js'
+import {Infer} from '#/core/Infer.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
@@ -9,7 +10,73 @@ import {shaAtom} from './graph.js'
 import {policyAtom} from './user.js'
 import {dispense, loader} from './utils.js'
 
+export interface EntryAtoms {
+  id: string
+  type: string
+  parentId: string | null
+  workspace: string
+  root: string
+  locales: Map<string | null, Entry>
+}
+
+const selection = {
+  id: Entry.id,
+  type: Entry.type,
+  parentId: Entry.parentId,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  parents: parents({
+    select: {
+      id: Entry.id,
+      path: Entry.path,
+      type: Entry.type,
+      status: Entry.status,
+      main: Entry.main
+    }
+  }),
+  entries: translations({select: Entry, includeSelf: true})
+}
+
+type Selection = Infer<typeof selection>
+
+/*class EntryState {
+  #selection: Selection
+  locales: Map<string | null, Entry>
+  constructor(selection: Selection) {
+    this.#selection = selection
+    this.locales = new Map(
+      selection.entries.map(entry => {
+        return [entry.locale, entry]
+      })
+    )
+  }
+  get type() {
+    return this.#selection.type
+  }
+  get id() {
+    return this.#selection.id
+  }
+  get parentId() {
+    return this.#selection.parentId
+  }
+  get workspace() {
+    return this.#selection.workspace
+  }
+  get root() {
+    return this.#selection.root
+  }
+}*/
+
+type SelectedVersion =
+  | {type: 'status'; status: EntryStatus}
+  | {type: 'history'; file: string; ref: string}
+
 export const entryAtoms = dispense(entryId => {
+  const localeAtoms = dispense((locale: string | null) => {
+    return {
+      selectedVersion: atom<SelectedVersion | null>(null)
+    }
+  })
   return atom(async get => {
     const load = get(entryLoader)
     const [result, error] = await load(entryId)
@@ -19,7 +86,23 @@ export const entryAtoms = dispense(entryId => {
       throw error
     }
     assert(result, `Entry "${entryId}" not found`)
-    return result
+    const versions = new Map(
+      result.entries.map(entry => {
+        return [entry.locale, entry]
+      })
+    )
+    const locales = dispense((locale: string | null): Entry => {
+      const entry = versions.get(locale)
+      if (!entry) {
+        const fallbackLocale = result.entries[0].locale
+        return locales(fallbackLocale)
+      }
+      return {...entry, ...localeAtoms(locale)}
+    })
+    return {
+      ...result,
+      locales
+    }
   })
 })
 
@@ -33,23 +116,7 @@ const entryLoader = atom(get => {
   return loader(async ids => {
     const rows = await graph.find({
       groupBy: Entry.id,
-      select: {
-        id: Entry.id,
-        type: Entry.type,
-        parentId: Entry.parentId,
-        workspace: Entry.workspace,
-        root: Entry.root,
-        parents: parents({
-          select: {
-            id: Entry.id,
-            path: Entry.path,
-            type: Entry.type,
-            status: Entry.status,
-            main: Entry.main
-          }
-        }),
-        entries: translations({select: Entry, includeSelf: true})
-      },
+      select: selection,
       id: {in: ids},
       status: 'preferDraft'
     })

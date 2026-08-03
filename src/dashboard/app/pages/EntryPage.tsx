@@ -4,9 +4,9 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {workspaceAtoms} from '#/dashboard/atoms/config.js'
-import {entryAtoms} from '#/dashboard/atoms/entry.js'
-import {Page, page} from '#/dashboard/atoms/nav.js'
+import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {entryAtoms, EntryAtoms} from '#/dashboard/atoms/entry.js'
+import {Page, page, routeAtom} from '#/dashboard/atoms/nav.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -33,7 +33,6 @@ import {
 } from '../../icons.js'
 import {
   Dashboard,
-  DashboardEntryData,
   DashboardSection,
   ReactiveNode
 } from '../../store/Dashboard.js'
@@ -60,7 +59,7 @@ export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
     const entry = await get(entryAtoms(page.entry))
-    return <div>{entry.id}</div>
+    return <EntryEditor page={page} entry={entry} />
   } catch (error) {
     return <MissingEntry page={page} />
   }
@@ -71,24 +70,22 @@ interface MissingEntryProps {
 }
 
 function MissingEntry({page}: MissingEntryProps) {
-  const workspace = useAtomValue(workspaceAtoms(page.workspace!))
-  return <div>missing</div>
-  //const root =
-  const rootLabel = useAtomValue(root.label)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
+  assert(page.workspace && page.root && page.entry)
+  const {rootsAtom} = workspaceAtoms(page.workspace)
+  const root = useAtomValue(rootsAtom(page.root))
+  const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
       title="Entry not found"
       message="The requested entry could not be found. It may have been deleted, moved, or is no longer available."
       requestedLabel="Requested id"
-      requestedValue={entryId}
-      actionLabel={`Go to ${rootLabel}`}
+      requestedValue={page.entry}
+      actionLabel={`Go to ${root.label}`}
       onAction={() =>
         setRoute({
-          workspace: root.workspace.key,
-          root: root.key,
-          locale: route.locale
+          workspace: page.workspace,
+          root: page.root,
+          locale: page.locale
         })
       }
     />
@@ -134,12 +131,8 @@ function NotFoundPanel({
   )
 }
 
-interface EntryEditorProps {
-  entry: DashboardEntryData
-}
-
 interface EntryViewToggleProps {
-  entry: DashboardEntryData
+  entry: EntryAtoms
 }
 
 function EntryViewToggle({entry}: EntryViewToggleProps) {
@@ -165,12 +158,17 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
   )
 }
 
-function EntryEditor({entry}: EntryEditorProps) {
-  const View = useAtomValue(entry.customView)
-  const isUntranslated = useAtomValue(entry.untranslated)
+interface EntryEditorProps {
+  page: Page
+  entry: EntryAtoms
+}
+
+function EntryEditor({page, entry}: EntryEditorProps) {
+  const type = useAtomValue(typeAtoms(entry.type))
+  const View = type.customView
+  const isUntranslated = entry.locales.has(page.locale ?? null)
   const node = useAtomValue(entry.selectedNode)
   const setEditing = useSetAtom(entry.currentlyEditing)
-  const type = useAtomValue(entry.type)
   const [, startTransition] = useTransition()
   const saveDraft = useSetAtom(entry.saveDraft)
   const publishEdits = useSetAtom(entry.publishEdits)

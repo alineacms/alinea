@@ -69,24 +69,36 @@ export const routeAtom = atom(
 )
 
 const pageTypeAtom = selectAtom(routeAtom, route => route.page)
-const entryAtom = selectAtom(routeAtom, route => route.entry ?? null)
-const localeAtom = selectAtom(routeAtom, route => route.locale ?? null)
+const entryAtom = selectAtom(routeAtom, route => route.entry)
 
-const workspaceAtom = atom((get): string | null => {
+const localeAtom = atom(get => {
+  const route = get(routeAtom)
+  const workspace = get(workspaceAtom)
+  if (!workspace) return null
+  const root = get(rootAtom)
+  if (!root) return null
+  const {i18n, languagePreferenceAtom} = get(
+    workspaceAtoms(workspace).rootsAtom(root)
+  )
+  if (route.locale && i18n?.locales.includes(route.locale)) return route.locale
+  const preference = get(languagePreferenceAtom)
+  if (preference) return preference
+  return i18n?.locales[0] ?? null
+})
+
+const workspaceAtom = atom((get): string | undefined => {
   const route = get(routeAtom)
   const {workspace} = route
   const workspaces = get(workspacesAtom)
-  return workspace && workspaces.includes(workspace)
-    ? workspace
-    : (workspaces[0] ?? null)
+  return workspace && workspaces.includes(workspace) ? workspace : workspaces[0]
 })
 
 const rootAtom = atom(get => {
   const route = get(routeAtom)
   const {root} = route
   const workspace = get(workspaceAtom)
-  if (!workspace) return null
-  const workspaceConfig = get(workspaceAtoms(workspace))
+  if (!workspace) return undefined
+  const workspaceConfig = get(workspaceAtoms(workspace).settingsAtom)
   if (root && root in workspaceConfig.roots) {
     return root
   } else {
@@ -96,10 +108,10 @@ const rootAtom = atom(get => {
 
 export interface Page {
   type: 'users' | 'entry'
-  workspace: string | null
-  root: string | null
-  entry: string | null
-  locale: string | null
+  workspace: string | undefined
+  root: string | undefined
+  entry: string | undefined
+  locale: string | null | undefined
 }
 
 /** @internal */
