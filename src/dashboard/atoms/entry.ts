@@ -1,11 +1,12 @@
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import {parseRecord} from '#/core/EntryRecord.js'
+import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {Permission} from '#/core/Role.js'
-import {Type} from '#/core/Type.js'
+import {Type, type EntryDefaultView} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {parents, translations} from '#/query.js'
-import {Atom, atom, Getter, PrimitiveAtom} from 'jotai'
+import {Atom, atom, Getter, PrimitiveAtom, WritableAtom} from 'jotai'
 import {ReactiveNode} from '../store.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
@@ -18,6 +19,8 @@ export interface EntryAtoms {
   parentId: string | null
   workspace: string
   root: string
+  hasChildren: boolean
+  view: WritableAtom<EntryDefaultView, [EntryDefaultView], void>
   locales: (locale: string | null) => EntryLocaleAtoms
 }
 
@@ -26,6 +29,8 @@ export interface EntryLocaleAtoms extends Entry {
   selectedVersion: PrimitiveAtom<SelectedVersion | null>
   selectedEntry: Atom<Promise<Entry>>
   selectedNode: Atom<Promise<ReactiveNode<object>>>
+  saveDraft: WritableAtom<null, [node: ReactiveNode<object>], Promise<void>>
+  publishEdits: WritableAtom<null, [node: ReactiveNode<object>], Promise<void>>
 }
 
 const selection = {
@@ -54,7 +59,7 @@ async function prepareData(
   get: Getter,
   node: ReactiveNode<object>,
   type: Type,
-  action: 'update' | 'create'
+  action: FieldBeforeSaveAction
 ) {
   const user = get(userAtom)
   const current = get(node.value) as Record<string, unknown>
@@ -67,6 +72,9 @@ async function prepareData(
 }
 
 export const entryAtoms = dispense(entryId => {
+  // Should UI show overview or editor?
+  const selectedView = atom<EntryDefaultView>()
+
   const dataAtom = atom(async get => {
     get(shaAtom)
     const load = get(entryLoader)
@@ -114,6 +122,7 @@ export const entryAtoms = dispense(entryId => {
         data: historyData
       }
     })
+
     const selectedNode = atom(async get => {
       const version = get(selectedVersion)
       const entry = await get(selectedEntry)
@@ -135,13 +144,20 @@ export const entryAtoms = dispense(entryId => {
         readOnly
       )
     })
+
     const saveDraft = atom(
       null,
       async (get, set, node: ReactiveNode<object>) => {
-        const {id, type} = await get(dataAtom)
+        const dataState = await get(dataAtom)
+        const {id, type} = dataState
         const policy = get(policyAtom)
         const config = get(configAtom)
         const typeConfig = config.schema[type]
+        assert(typeConfig, `Type "${type}" not found in config`)
+        const activeEntry = dataState.entries.find(entry => {
+          return entry.locale === locale && entry.active
+        })
+        assert(activeEntry, `No active entry for locale "${locale}"`)
         const graph = get(graphAtom)
         const {data, changed} = await prepareData(
           get,
@@ -149,7 +165,7 @@ export const entryAtoms = dispense(entryId => {
           typeConfig,
           'update'
         )
-        policy.assert(Permission.Update, data)
+        policy.assert(Permission.Update, activeEntry)
         await graph.create({
           type: typeConfig,
           id,
@@ -162,12 +178,48 @@ export const entryAtoms = dispense(entryId => {
         set(node.commit)
       }
     )
+
+    const publishEdits = atom(
+      null,
+      async (get, set, node: ReactiveNode<object>) => {
+        const dataState = await get(dataAtom)
+        const {id, type} = dataState
+        const policy = get(policyAtom)
+        const config = get(configAtom)
+        const typeConfig = config.schema[type]
+        assert(typeConfig, `Type "${type}" not found in config`)
+        const activeEntry = dataState.entries.find(entry => {
+          return entry.locale === locale && entry.active
+        })
+        assert(activeEntry, `No active entry for locale "${locale}"`)
+        const graph = get(graphAtom)
+        const {data, changed} = await prepareData(
+          get,
+          node,
+          typeConfig,
+          'publish'
+        )
+        policy.assert(Permission.Publish, activeEntry)
+        await graph.create({
+          type: typeConfig,
+          id,
+          locale,
+          status: 'published',
+          set: data,
+          overwrite: true
+        })
+        if (changed) set(node.value, data)
+        set(node.commit)
+      }
+    )
+
     return {
       currentlyEditing,
       selectedVersion,
       selectedEntry,
       selectedNode,
-      saveDraft
+      saveDraft,
+      publishEdits
     }
   })
 
@@ -184,8 +236,20 @@ export const entryAtoms = dispense(entryId => {
       }
       return {...entry, ...localeAtoms(locale)}
     })
+    const typeConfig = get(configAtom).schema[data.type]
+    assert(typeConfig, `Type "${data.type}" not found in config`)
+    const defaultView = data.hasChildren
+      ? 'overview'
+      : (Type.defaultView(typeConfig) ?? 'edit')
+    const view = atom(
+      get => get(selectedView) ?? defaultView,
+      (get, set, next: EntryDefaultView) => {
+        set(selectedView, next)
+      }
+    )
     return {
       ...data,
+      view,
       locales
     }
   })

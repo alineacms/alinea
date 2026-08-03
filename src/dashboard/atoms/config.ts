@@ -47,14 +47,15 @@ export const viewAtoms = dispense(key => {
 export const typeAtoms = dispense(typeName => {
   return atom(get => {
     const config = get(configAtom)
-    const typeConfig = getType(config.schema[typeName])
-    assert(typeConfig, `Type "${typeName}" not found in config`)
+    const type = config.schema[typeName]
+    assert(type, `Type "${typeName}" not found in config`)
+    const typeConfig = getType(type)
 
     const customView =
       typeof typeConfig.view === 'string'
         ? get(viewAtoms(typeConfig.view))
         : typeConfig.view
 
-    return {...typeConfig, customView}
+    return {...typeConfig, type, customView}
   })
 })

@@ -1,10 +1,17 @@
-import {atom, Getter} from 'jotai'
+import {Atom, atom, Getter} from 'jotai'
 import {atomWithLocation} from 'jotai-location'
 import {selectAtom} from 'jotai/utils'
 import {ReactNode} from 'react'
 import {workspaceAtoms, workspacesAtom} from './config.js'
 
 const location = atomWithLocation()
+
+export interface RouteBlock {
+  confirm: () => void | Promise<void>
+}
+
+export const routeGuardAtom = atom<Atom<boolean> | null>(null)
+export const routeBlockAtom = atom<RouteBlock | null>(null)
 
 export interface DashboardRoute {
   page?: 'entry' | 'users'
@@ -48,22 +55,26 @@ export const routeAtom = atom(
     }
   },
   async (get, set, update: DashboardRoute) => {
-    //const focused = await get(this.focused)
     const confirm = async () => {
-      /*if (update.page === 'users') {
-            set(location, {hash: `#${nav.users()}`})
-          return
-        }*/
+      if (update.page === 'users') {
+        set(location, {hash: `#${nav.users()}`})
+        return
+      }
       const {workspace, root, entry, locale} = update
-      /*if (entry) await get(this.entries(entry).routeReady)*/
       set(location, {
         hash: `#${nav.entry(workspace, root, entry, locale)}`
       })
     }
-    /*if (focused && 'entry' in focused) {
-        const blockNavigation = set(focused.entry.needsBlock, confirm)
-        if (blockNavigation) return
-      }*/
+    const guard = get(routeGuardAtom)
+    if (guard && get(guard)) {
+      set(routeBlockAtom, {
+        async confirm() {
+          set(routeBlockAtom, null)
+          await confirm()
+        }
+      })
+      return
+    }
     await confirm()
   }
 )

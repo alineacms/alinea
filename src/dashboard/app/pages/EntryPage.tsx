@@ -8,21 +8,21 @@ import {assert} from '#/core/util/Assert.js'
 import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
 import {
   entryAtoms,
+  MissingEntryError,
   type EntryAtoms,
-  type EntryLocaleAtoms,
-  MissingEntryError
+  type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
-import {Page, page, routeAtom} from '#/dashboard/atoms/nav.js'
+import {
+  Page,
+  page,
+  routeAtom,
+  routeBlockAtom,
+  routeGuardAtom
+} from '#/dashboard/atoms/nav.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {
-  memo,
-  PropsWithChildren,
-  useEffect,
-  useState,
-  useTransition
-} from 'react'
+import {memo, PropsWithChildren, useEffect, useState} from 'react'
 import {
   EditorScope,
   EntryScope,
@@ -66,17 +66,15 @@ export const entryPage = page(async (page, get) => {
   try {
     const entry = await get(entryAtoms(page.entry))
     const localeData = entry.locales(page.locale ?? null)
-    const [selectedEntry, node] = await Promise.all([
-      get(localeData.selectedEntry),
-      get(localeData.selectedNode)
-    ])
+    const selectedEntry = await get(localeData.selectedEntry)
+    const selectedNode = await get(localeData.selectedNode)
     return (
       <EntryEditor
         entry={entry}
         localeData={localeData}
-        node={node}
-        page={page}
+        node={selectedNode}
         selectedEntry={selectedEntry}
+        page={page}
       />
     )
   } catch (error) {
@@ -156,9 +154,7 @@ interface EntryViewToggleProps {
 }
 
 function EntryViewToggle({entry}: EntryViewToggleProps) {
-  const view = useAtomValue(entry.view)
-  const setView = useSetAtom(entry.view)
-  const [isPending, startTransition] = useTransition()
+  const [view, setView] = useAtom(entry.view)
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
@@ -167,13 +163,8 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       aria-label={label}
       appearance="plain"
       icon={ViewIcon}
-      isDisabled={isPending}
       size="icon"
-      onPress={() => {
-        startTransition(() => {
-          setView(nextView)
-        })
-      }}
+      onPress={() => setView(nextView)}
     />
   )
 }
@@ -198,16 +189,17 @@ function EntryEditor({
   const locale = page.locale ?? null
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
-  const saveDraft = useSetAtom(entry.saveDraft)
-  const publishEdits = useSetAtom(entry.publishEdits)
+  const saveDraft = useSetAtom(localeData.saveDraft)
+  const publishEdits = useSetAtom(localeData.publishEdits)
   const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
-  const [routeBlock, setRouteBlock] = useAtom(entry.routeBlock)
+  const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
+  const setRouteGuard = useSetAtom(routeGuardAtom)
   const [isSidebarOpen, setSidebarOpen] = useState(true)
-  const defaultView = useAtomValue(entry.defaultView)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
+  const [selectedView, setSelectedView] = useAtom(entry.view)
 
   const discardAndConfirm = () => {
     reset()
@@ -227,6 +219,13 @@ function EntryEditor({
     if (node.readOnly && !isUntranslated) return
     setEditing(isUntranslated || isDirty ? node : undefined)
   }, [isDirty, isUntranslated, node, setEditing])
+
+  useEffect(() => {
+    setRouteGuard(node.isDirty)
+    return () => {
+      setRouteGuard(current => (current === node.isDirty ? null : current))
+    }
+  }, [node, setRouteGuard])
 
   let editorBody = (
     <>
@@ -270,9 +269,7 @@ function EntryEditor({
     <Rail main>
       <EntryHeader
         controls={
-          defaultView === 'overview' ? (
-            <EntryViewToggle entry={entry} />
-          ) : undefined
+          entry.hasChildren ? <EntryViewToggle entry={entry} /> : undefined
         }
         entry={entry}
         isSidebarOpen={isSidebarOpen}
