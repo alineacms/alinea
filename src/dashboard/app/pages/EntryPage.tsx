@@ -1,54 +1,54 @@
-import { Button, Icon, Surface } from '#/components.js';
-import { Field, type FieldOptions } from '#/core/Field.js';
-import { MediaFile, MediaLibrary } from '#/core/media/MediaTypes.js';
-import { Section } from '#/core/Section.js';
-import { Type } from '#/core/Type.js';
-import { assert } from '#/core/util/Assert.js';
-import { workspaceAtoms } from '#/dashboard/atoms/config.js';
-import { entryAtoms } from '#/dashboard/atoms/entry.js';
-import { Page, page } from '#/dashboard/atoms/nav.js';
-import { HiddenField } from '#/field/hidden.js';
-import { styler } from '@alinea/styler';
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import {Button, Icon, Surface} from '#/components.js'
+import {Field, type FieldOptions} from '#/core/Field.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {Section} from '#/core/Section.js'
+import {Type} from '#/core/Type.js'
+import {assert} from '#/core/util/Assert.js'
+import {workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {entryAtoms} from '#/dashboard/atoms/entry.js'
+import {Page, page} from '#/dashboard/atoms/nav.js'
+import {HiddenField} from '#/field/hidden.js'
+import {styler} from '@alinea/styler'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
-    memo,
-    PropsWithChildren,
-    useEffect,
-    useState,
-    useTransition
-} from 'react';
+  memo,
+  PropsWithChildren,
+  useEffect,
+  useState,
+  useTransition
+} from 'react'
 import {
-    EditorScope,
-    EntryScope,
-    useDashboard,
-    useEditor,
-    useFieldOptions,
-    useFieldView,
-    useNodeEditor
-} from '../hooks.js';
+  EditorScope,
+  EntryScope,
+  useDashboard,
+  useEditor,
+  useFieldOptions,
+  useFieldView,
+  useNodeEditor
+} from '../../hooks.js'
 import {
-    IcBaselineErrorOutline,
-    IcOutlineViewList,
-    IcRoundEdit
-} from '../icons.js';
+  IcBaselineErrorOutline,
+  IcOutlineViewList,
+  IcRoundEdit
+} from '../../icons.js'
 import {
-    Dashboard,
-    DashboardEntryData,
-    DashboardSection,
-    ReactiveNode
-} from '../store/Dashboard.js';
-import css from './Editor.module.css';
-import { FileEditor } from './editor/FileEditor.js';
-import { EntryHeader } from './EntryHeader.js';
-import { EntrySidebar } from './EntrySidebar.js';
-import { EntryTranslationBanner } from './EntryTranslationBanner.js';
+  Dashboard,
+  DashboardEntryData,
+  DashboardSection,
+  ReactiveNode
+} from '../../store/Dashboard.js'
+import {FileEditor} from './../editor/FileEditor.js'
+import {EntryHeader} from './../EntryHeader.js'
+import {EntrySidebar} from './../EntrySidebar.js'
+import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
 import {
-    DashboardModal,
-    DashboardModalContent,
-    DashboardModalDialog,
-    DashboardModalFooter
-} from './ui/DashboardModal.js';
-import { Rail, RailBody, RailContent } from './ui/Rail.js';
+  DashboardModal,
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from './../ui/DashboardModal.js'
+import {Rail, RailBody, RailContent} from './../ui/Rail.js'
+import css from './EntryPage.module.css'
 
 const styles = styler(css)
 
@@ -59,7 +59,8 @@ export interface EditorProps {
 export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
-  const entry = await get(entryAtoms(page.entry))
+    const entry = await get(entryAtoms(page.entry))
+    return <div>{entry.id}</div>
   } catch (error) {
     return <MissingEntry page={page} />
   }
@@ -71,7 +72,8 @@ interface MissingEntryProps {
 
 function MissingEntry({page}: MissingEntryProps) {
   const workspace = useAtomValue(workspaceAtoms(page.workspace!))
-  const root = 
+  return <div>missing</div>
+  //const root =
   const rootLabel = useAtomValue(root.label)
   const route = useAtomValue(dashboard.route)
   const setRoute = useSetAtom(dashboard.route)
@@ -92,7 +94,6 @@ function MissingEntry({page}: MissingEntryProps) {
     />
   )
 }
-
 
 interface NotFoundPanelProps {
   title: string
@@ -132,7 +133,6 @@ function NotFoundPanel({
     </Rail>
   )
 }
-
 
 interface EntryEditorProps {
   entry: DashboardEntryData
