@@ -206,6 +206,7 @@ export const SidebarTree = memo(function SidebarTree({
           >
             <Button
               appearance="plain"
+              aria-current={!page.entry ? 'page' : undefined}
               className={styles.SidebarTree.rootButton.action()}
               icon={icon}
               onPress={() =>
@@ -235,7 +236,7 @@ export const SidebarTree = memo(function SidebarTree({
               dragAndDropHooks={dragAndDropHooks}
               selectionMode="single"
               selectionBehavior="replace"
-              disallowEmptySelection
+              disallowEmptySelection={false}
               expandedKeys={expandedKeys}
               onExpandedChange={keys =>
                 setExpandedIds(new Set([...keys].map(String)))

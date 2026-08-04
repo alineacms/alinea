@@ -15,6 +15,22 @@ test('navigates between entries and through browser history', async ({
   await expect(app.field('Title')).toHaveValue('Alpha')
 })
 
+test('selects the sidebar root when navigating back to it', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+
+  await expect(tree.getByRole('row', {selected: true})).toHaveText(/Alpha$/)
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+
+  await expect(
+    app.page.locator('button[aria-current="page"]', {hasText: 'Pages'})
+  ).toBeVisible()
+  await expect(tree.getByRole('row', {selected: true})).toHaveCount(0)
+})
+
 test('expands and collapses an entry with the sidebar chevron', async ({
   dashboard,
   mount
