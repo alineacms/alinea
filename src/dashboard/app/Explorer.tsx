@@ -21,13 +21,14 @@ import {
   IcRoundFilterList,
   IcRoundUploadFile
 } from '../icons.js'
-import type {DashboardEntry, DashboardEntryData} from '../store.js'
 import {
-  DashboardExplorer,
-  ExplorerSort,
-  ExplorerSortBy,
-  ExplorerTypeFilters
-} from '../store.js'
+  type DashboardEntry,
+  type DashboardEntryData,
+  type DashboardExplorer,
+  type ExplorerSort,
+  type ExplorerSortBy,
+  type ExplorerTypeFilters
+} from '../atoms/explorer.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -341,7 +342,6 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
       {isMedia && uploads.length > 0 && (
         <MutationQueueStatus
           ariaLabel={uploadLabel}
-          dashboard={explorer.dashboard}
           placement="bottom"
         >
           {uploads.length}

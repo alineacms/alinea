@@ -3,7 +3,7 @@ import {assert} from '#/core/util/Assert.js'
 import {atom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import {authAtom} from './auth.js'
-import {configAtom, graphAtom} from './core.js'
+import {clientAtom, configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 
 export const userAtom = atom(get => {
@@ -34,4 +34,9 @@ export const policyAtom = atom(get => {
   const policy = get(stablePolicyAtom)
   assert(policy, 'Policy is not ready')
   return policy
+})
+
+export const canManageMembersAtom = atom(async get => {
+  const capabilities = await get(clientAtom).capabilities()
+  return capabilities.users && get(policyAtom).canManageMembers()
 })

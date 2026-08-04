@@ -1,7 +1,7 @@
 import {Config} from '#/core/Config.js'
 import {LocalConnection} from '#/core/Connection.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import {useStore} from 'jotai'
+import {atom, useStore} from 'jotai'
 import {ComponentType} from 'react'
 import {AppProps} from '../App.js'
 import {requiredAtom} from './utils.js'
@@ -10,7 +10,7 @@ export const graphAtom = requiredAtom<WriteableGraph>('graph')
 export const eventsAtom = requiredAtom<EventTarget>('events')
 export const configAtom = requiredAtom<Config>('config')
 export const clientAtom = requiredAtom<LocalConnection>('client')
-export const viewsAtom = requiredAtom<Record<string, ComponentType>>('views')
+export const viewsAtom = atom<Record<string, ComponentType>>({})
 export const localAtom = requiredAtom<boolean>('local')
 export const alineaDevAtom = requiredAtom<boolean>('alineaDev')
 

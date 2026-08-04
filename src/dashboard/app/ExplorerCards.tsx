@@ -24,7 +24,7 @@ import type {
   DashboardEntry,
   DashboardEntryData,
   DashboardExplorer
-} from '../store.js'
+} from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 

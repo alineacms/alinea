@@ -1,7 +1,12 @@
 import {Button} from '#/components.js'
+import {
+  createExplorerAtoms,
+  type ExplorerOptions
+} from '#/dashboard/atoms/explorer.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState} from 'react'
-import {ExplorerOptions, useDashboard} from '../store.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -42,17 +47,24 @@ interface ExplorerModalProps {
 
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const root = useAtomValue(dashboard.selectedRoot)
+  const {root} = useDashboardContext()
   const location = options.location ?? {
-    workspace,
-    root: root ?? undefined
+    workspace: root.workspace,
+    root: root.key
   }
+  const pickerRoot = rootAtoms(
+    location.workspace,
+    location.root ?? root.key,
+    options.selectedLocale ?? root.locale
+  )
+  const selectedLocale = useAtomValue(pickerRoot.selectedLocale)
   const [explorer] = useState(() =>
-    dashboard.explore(location, {
+    createExplorerAtoms(location, {
       ...options,
-      searchDepth: 'all'
+      rootData: pickerRoot.data,
+      searchDepth: 'all',
+      selectedLocale,
+      treeItems: pickerRoot.treeItems
     })
   )
   const onConfirm = useSetAtom(explorer.onConfirm)

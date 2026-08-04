@@ -1,9 +1,6 @@
 import {Button, Icon, Surface} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
-import {Field, type FieldOptions} from '#/core/Field.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {Section} from '#/core/Section.js'
-import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
 import {
@@ -12,6 +9,7 @@ import {
   type EntryAtoms,
   type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
+import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   Page,
   page,
@@ -19,30 +17,19 @@ import {
   routeBlockAtom,
   routeGuardAtom
 } from '#/dashboard/atoms/nav.js'
-import {HiddenField} from '#/field/hidden.js'
+import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, PropsWithChildren, useEffect, useState} from 'react'
-import {
-  EditorScope,
-  EntryScope,
-  useDashboard,
-  useEditor,
-  useFieldOptions,
-  useFieldView,
-  useNodeEditor
-} from '../../hooks.js'
+import {useEffect, useState} from 'react'
+import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
   IcRoundEdit
 } from '../../icons.js'
-import {
-  Dashboard,
-  DashboardSection,
-  ReactiveNode
-} from '../../store/Dashboard.js'
 import {FileEditor} from './../editor/FileEditor.js'
+import {Explorer} from './../Explorer.js'
+import {NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {EntrySidebar} from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
@@ -57,24 +44,53 @@ import css from './EntryPage.module.css'
 
 const styles = styler(css)
 
-export interface EditorProps {
-  dashboard: Dashboard
-}
-
 export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
     const entry = await get(entryAtoms(page.entry))
     const localeData = entry.locales(page.locale ?? null)
-    const selectedEntry = await get(localeData.selectedEntry)
-    const selectedNode = await get(localeData.selectedNode)
+    const [selectedEntry, selectedNode, parentNeedsTranslation, sourceLocale] =
+      await Promise.all([
+        get(localeData.selectedEntry),
+        get(localeData.selectedNode),
+        get(localeData.parentNeedsTranslation),
+        get(localeData.translationSourceLocale),
+        get(entry.type),
+        get(entry.parentId),
+        get(entry.workspace),
+        get(entry.root),
+        get(entry.hasChildren),
+        get(entry.canPublishParents),
+        get(entry.parentUnpublished),
+        get(entry.mediaI18n),
+        get(entry.preview),
+        get(entry.translationSourceLocales),
+        get(entry.view),
+        get(localeData.untranslated),
+        get(localeData.versions),
+        get(localeData.availableStatuses),
+        get(localeData.history),
+        get(localeData.previewEntry),
+        get(localeData.previewUrl),
+        get(entry.incomingReferences)
+      ])
+    const root = rootAtoms(
+      get(entry.workspace),
+      get(entry.root),
+      page.locale ?? null
+    )
+    await get(root.treeReady)
+    if (get(entry.view) === 'overview') await get(root.children(entry.id).items)
     return (
       <EntryEditor
         entry={entry}
         localeData={localeData}
         node={selectedNode}
-        selectedEntry={selectedEntry}
         page={page}
+        parentNeedsTranslation={parentNeedsTranslation}
+        selectedEntry={selectedEntry}
+        sourceLocale={sourceLocale}
+        root={root}
       />
     )
   } catch (error) {
@@ -173,7 +189,10 @@ interface EntryEditorProps {
   page: Page
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  parentNeedsTranslation: boolean
   selectedEntry: Entry
+  sourceLocale: string | null
+  root: RootAtoms
   node: ReactiveNode<object>
 }
 
@@ -181,14 +200,62 @@ function EntryEditor({
   page,
   entry,
   localeData,
+  parentNeedsTranslation,
   selectedEntry,
+  sourceLocale,
+  root,
   node
 }: EntryEditorProps) {
-  const type = useAtomValue(typeAtoms(entry.type))
+  const view = useAtomValue(entry.view)
+  if (view === 'overview') return <EntryOverview entry={entry} root={root} />
+  return (
+    <EntryEditorContent
+      entry={entry}
+      localeData={localeData}
+      node={node}
+      page={page}
+      parentNeedsTranslation={parentNeedsTranslation}
+      root={root}
+      selectedEntry={selectedEntry}
+      sourceLocale={sourceLocale}
+    />
+  )
+}
+
+interface EntryOverviewProps {
+  entry: EntryAtoms
+  root: RootAtoms
+}
+
+function EntryOverview({entry, root}: EntryOverviewProps) {
+  return (
+    <Rail main>
+      <Explorer
+        explorer={root.children(entry.id)}
+        titleControls={<EntryViewToggle entry={entry} />}
+      />
+    </Rail>
+  )
+}
+
+function EntryEditorContent({
+  page,
+  entry,
+  localeData,
+  parentNeedsTranslation,
+  selectedEntry,
+  sourceLocale,
+  node
+}: EntryEditorProps) {
+  const typeName = useAtomValue(entry.type)
+  const type = useAtomValue(typeAtoms(typeName))
+  const hasChildren = useAtomValue(entry.hasChildren)
+  const sourceLocales = useAtomValue(entry.translationSourceLocales)
   const View = type.customView
   const locale = page.locale ?? null
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
+  const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
   const saveDraft = useSetAtom(localeData.saveDraft)
   const publishEdits = useSetAtom(localeData.publishEdits)
   const isDirty = useAtomValue(node.isDirty)
@@ -199,7 +266,6 @@ function EntryEditor({
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
-  const [selectedView, setSelectedView] = useAtom(entry.view)
 
   const discardAndConfirm = () => {
     reset()
@@ -207,11 +273,8 @@ function EntryEditor({
   }
 
   const saveAndConfirm = async () => {
-    if (mediaDraftsDisabled) {
-      await publishEdits(node)
-    } else {
-      await saveDraft(node)
-    }
+    if (mediaDraftsDisabled) await publishEdits(node)
+    else await saveDraft(node)
     routeBlock?.confirm()
   }
 
@@ -233,7 +296,12 @@ function EntryEditor({
         <RailContent>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
-              <EntryTranslationBanner entry={entry} />
+              <EntryTranslationBanner
+                parentNeedsTranslation={parentNeedsTranslation}
+                sourceLocale={sourceLocale}
+                sourceLocales={sourceLocales}
+                onSourceLocaleChange={setSourceLocale}
+              />
             </div>
           )}
 
@@ -257,7 +325,7 @@ function EntryEditor({
 
   if (View) {
     return (
-      <EntryScope entry={entry}>
+      <EntryScope entry={entry} localeData={localeData}>
         <View type={type.type} />
       </EntryScope>
     )
@@ -268,11 +336,10 @@ function EntryEditor({
   const mainEditor = (
     <Rail main>
       <EntryHeader
-        controls={
-          entry.hasChildren ? <EntryViewToggle entry={entry} /> : undefined
-        }
+        controls={hasChildren ? <EntryViewToggle entry={entry} /> : undefined}
         entry={entry}
         isSidebarOpen={isSidebarOpen}
+        localeData={localeData}
         node={node}
         onSidebarOpenChange={hasSidebar ? setSidebarOpen : undefined}
       />
@@ -305,99 +372,16 @@ function EntryEditor({
           </DashboardModalDialog>
         )}
       </DashboardModal>
-      <EntryScope entry={entry}>
+      <EntryScope entry={entry} localeData={localeData}>
         {mainEditor}
         {hasSidebar && isSidebarOpen && (
-          <EntrySidebar entry={entry} onOpenChange={setSidebarOpen} />
+          <EntrySidebar
+            entry={entry}
+            localeData={localeData}
+            onOpenChange={setSidebarOpen}
+          />
         )}
       </EntryScope>
     </>
   )
-}
-
-interface NodeEditorProps extends PropsWithChildren {
-  node: ReactiveNode<object>
-  type: Type
-}
-
-export function NodeEditor({
-  children = <FieldsEditor />,
-  node,
-  type
-}: NodeEditorProps) {
-  const editor = useNodeEditor(node, type)
-  return <EditorScope editor={editor}>{children}</EditorScope>
-}
-
-export function FieldsEditor() {
-  const editor = useEditor()
-  return editor.sections.map((section, index) => {
-    return <FormSection key={index} section={section} />
-  })
-}
-
-interface FormSectionProps {
-  section: DashboardSection
-}
-
-const FormSection = memo(function FormSection({section}: FormSectionProps) {
-  const View = useAtomValue(section.view)
-  const props = {section: section.section}
-  if (View) return <View {...props} />
-  return <EditFields fields={Section.definition(section.section)} />
-})
-
-export interface EditFieldsProps {
-  fields: Record<string, Field | Section>
-}
-
-export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
-  const dashboard = useDashboard()
-  return (
-    <div className={styles.EditFields()}>
-      {Object.entries(fields).map(([name, value]) => {
-        if (Field.isField(value)) return <EditField key={name} field={value} />
-        if (Section.isSection(value))
-          return (
-            <div
-              key={name}
-              className={styles.EditField.slot()}
-              style={{gridColumn: `span ${fieldSpan()}`}}
-            >
-              <FormSection section={new DashboardSection(dashboard, value)} />
-            </div>
-          )
-        return null
-      })}
-    </div>
-  )
-})
-
-interface EditFieldProps {
-  field: Field
-}
-
-interface FieldLayoutOptions extends FieldOptions<unknown> {
-  width?: number
-}
-
-export const EditField = memo(function EditField({field}: EditFieldProps) {
-  const options = useFieldOptions(field) as FieldLayoutOptions
-  const View = useFieldView(field)
-  if (options.hidden) return null
-  if (field instanceof HiddenField) return null
-  if (!View) return <div>Missing view for field: {Field.label(field)}</div>
-  return (
-    <div
-      className={styles.EditField.slot()}
-      style={{gridColumn: `span ${fieldSpan(options.width)}`}}
-    >
-      <View field={field} />
-    </div>
-  )
-})
-
-function fieldSpan(width = 1): number {
-  const columns = 12
-  return Math.max(1, Math.min(columns, Math.round(width * columns)))
 }

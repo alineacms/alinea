@@ -1,7 +1,8 @@
+import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {startTransition} from 'react'
 import type {Key, Selection} from 'react-aria-components'
-import type {DashboardExplorer, ExplorerOptions} from '../store.js'
+import type {DashboardExplorer, ExplorerOptions} from '../atoms/explorer.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
@@ -17,10 +18,12 @@ export function ExplorerPickerContent({
   navigationLabel,
   options
 }: ExplorerPickerContentProps) {
-  const workspace = useAtomValue(explorer.workspace)
-  const root = useAtomValue(explorer.root)
   const location = useAtomValue(explorer.location)
+  const selectedLocale = useAtomValue(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
+  const root = location.root
+    ? rootAtoms(location.workspace, location.root, selectedLocale)
+    : undefined
   const enableNavigation = options.enableNavigation ?? true
   const selectedKeys = location.parentId
     ? new Set<Key>([location.parentId])
@@ -46,20 +49,52 @@ export function ExplorerPickerContent({
   return (
     <ExplorerModalContent>
       {enableNavigation && root && (
-        <ExplorerModalNavigation>
-          <SidebarTreeExplorer
-            ariaLabel={navigationLabel}
-            root={root}
-            rootSelected={!location.parentId}
-            selectedKeys={selectedKeys}
-            selectedLocale={explorer.selectedLocale}
-            workspace={workspace}
-            onRootPress={onRootPress}
-            onSelectionChange={onSelectionChange}
-          />
-        </ExplorerModalNavigation>
+        <ExplorerPickerNavigation
+          explorer={explorer}
+          navigationLabel={navigationLabel}
+          root={root}
+          rootSelected={!location.parentId}
+          selectedKeys={selectedKeys}
+          onRootPress={onRootPress}
+          onSelectionChange={onSelectionChange}
+        />
       )}
       <ExplorerBody explorer={explorer} />
     </ExplorerModalContent>
+  )
+}
+
+interface ExplorerPickerNavigationProps {
+  explorer: DashboardExplorer
+  navigationLabel: string
+  onRootPress: () => void
+  onSelectionChange: (keys: Selection) => void
+  root: ReturnType<typeof rootAtoms>
+  rootSelected: boolean
+  selectedKeys: Set<Key>
+}
+
+function ExplorerPickerNavigation({
+  explorer,
+  navigationLabel,
+  onRootPress,
+  onSelectionChange,
+  root,
+  rootSelected,
+  selectedKeys
+}: ExplorerPickerNavigationProps) {
+  useAtomValue(root.treeReady)
+  return (
+    <ExplorerModalNavigation>
+      <SidebarTreeExplorer
+        ariaLabel={navigationLabel}
+        root={root}
+        rootSelected={rootSelected}
+        selectedKeys={selectedKeys}
+        selectedLocale={explorer.selectedLocale}
+        onRootPress={onRootPress}
+        onSelectionChange={onSelectionChange}
+      />
+    </ExplorerModalNavigation>
   )
 }

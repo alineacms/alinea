@@ -1,23 +1,23 @@
 import {Select, SelectItem, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
-import {DashboardEntryData} from '../store/Dashboard.js'
+import {memo} from 'react'
 import css from './EntryTranslationBanner.module.css'
 
 const styles = styler(css)
 
 export interface EntryTranslationBannerProps {
-  entry: DashboardEntryData
+  parentNeedsTranslation: boolean
+  sourceLocale: string | null
+  sourceLocales: ReadonlyArray<string>
+  onSourceLocaleChange: (locale: string) => void
 }
 
-export function EntryTranslationBanner({entry}: EntryTranslationBannerProps) {
-  const untranslated = useAtomValue(entry.untranslated)
-  const parentNeedsTranslation = useAtomValue(entry.parentNeedsTranslation)
-  const sourceLocales = useAtomValue(entry.translationSourceLocales)
-  const [sourceLocale, setSourceLocale] = useAtom(entry.translationSourceLocale)
-
-  if (!untranslated) return null
-
+export const EntryTranslationBanner = memo(function EntryTranslationBanner({
+  parentNeedsTranslation,
+  sourceLocale,
+  sourceLocales,
+  onSourceLocaleChange
+}: EntryTranslationBannerProps) {
   return (
     <Surface className={styles.EntryTranslationBanner()}>
       <div className={styles.EntryTranslationBanner.body()}>
@@ -40,7 +40,7 @@ export function EntryTranslationBanner({entry}: EntryTranslationBannerProps) {
             className={styles.EntryTranslationBanner.select()}
             selectedKey={sourceLocale}
             onSelectionChange={key => {
-              if (key) setSourceLocale(String(key))
+              if (key) onSourceLocaleChange(String(key))
             }}
           >
             {sourceLocales.map(locale => (
@@ -53,4 +53,4 @@ export function EntryTranslationBanner({entry}: EntryTranslationBannerProps) {
       )}
     </Surface>
   )
-}
+})

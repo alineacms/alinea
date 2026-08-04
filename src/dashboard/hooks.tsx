@@ -1,65 +1,68 @@
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
+import type {PreviewMetadata} from '#/core/Preview.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
+import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {Type} from '#/index.js'
 import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useHydrateAtoms} from 'jotai/utils'
 import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
-import type {
-  Dashboard,
-  DashboardEntryData,
-  ReactiveNode
-} from './store/Dashboard.js'
-import {dashboardAtom, DashboardEditor} from './store/Dashboard.js'
+import {graphAtom} from './atoms/core.js'
+import {type EditorModel, type EditorNode, EntryEditor} from './atoms/editor.js'
+import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
+import type {Page} from './atoms/nav.js'
+import type {RootAtoms} from './atoms/root.js'
+import {policyAtom, userAtom} from './atoms/user.js'
+import type {ReactiveNode} from './atoms/ReactiveNode.js'
+import {previewMetadataAtom} from './atoms/preview.js'
 
-const entryContext = createContext<DashboardEntryData | null>(null)
-const editorContext = createContext<DashboardEditor | null>(null)
+interface EntryContextValue {
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
+}
+
+export interface DashboardContextValue {
+  page: Page
+  workspace: WorkspaceInternal & {name: string}
+  root: RootAtoms
+}
+
+const entryContext = createContext<EntryContextValue | null>(null)
+const dashboardContext = createContext<DashboardContextValue | null>(null)
+const editorContext = createContext<EditorModel | null>(null)
 const nullEntryAtom = atom<EntryRecord<Record<string, unknown>> | null>(null)
-
-export function DashboardScopeInternal({
-  children,
-  dashboard
-}: PropsWithChildren<{dashboard: Dashboard}>) {
-  useHydrateAtoms([[dashboardAtom, dashboard]])
-  return children
-}
-
-/**
- * Returns the active dashboard model from the nearest dashboard scope.
- */
-export function useDashboard() {
-  return useAtomValue(dashboardAtom)
-}
-
 /**
  * Returns the active dashboard policy.
  */
 export function usePolicy() {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.policy)
+  return useAtomValue(policyAtom)
 }
 
 /**
  * Returns the authenticated dashboard user, or null when no user is active.
  */
 export function useUser(): User | null {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.user) ?? null
+  return useAtomValue(userAtom) ?? null
 }
 
 /**
  * Returns the dashboard graph database for direct read queries.
  */
 export function useGraph(): WriteableGraph {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.db)
+  return useAtomValue(graphAtom)
+}
+
+/**
+ * Returns metadata reported by the active browser preview, when available.
+ */
+export function usePreviewMetadata(): PreviewMetadata | undefined {
+  return useAtomValue(previewMetadataAtom)
 }
 
 export interface EditorScopeProps {
-  editor: DashboardEditor
+  editor: EditorModel
 }
 
 export function EditorScope({
@@ -69,15 +72,45 @@ export function EditorScope({
   return createElement(editorContext.Provider, {value: editor}, children)
 }
 
+export interface DashboardScopeProps {
+  value: DashboardContextValue
+}
+
+export function DashboardScope({
+  children,
+  value
+}: PropsWithChildren<DashboardScopeProps>) {
+  return createElement(dashboardContext.Provider, {value}, children)
+}
+
+export function useDashboardContext(): DashboardContextValue {
+  const value = useContext(dashboardContext)
+  assert(value, 'DashboardScope not found in context')
+  return value
+}
+
 export interface EntryScopeProps {
-  entry: DashboardEntryData
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
 }
 
 export function EntryScope({
   children,
-  entry
+  entry,
+  localeData
 }: PropsWithChildren<EntryScopeProps>) {
-  return createElement(entryContext.Provider, {value: entry}, children)
+  const value = useMemo(() => ({entry, localeData}), [entry, localeData])
+  return createElement(entryContext.Provider, {value}, children)
+}
+
+export function useEntryAtoms(): EntryContextValue {
+  const value = useContext(entryContext)
+  assert(value, 'EntryScope not found in context')
+  return value
+}
+
+export function useOptionalEntryAtoms(): EntryContextValue | null {
+  return useContext(entryContext)
 }
 
 /**
@@ -85,7 +118,7 @@ export function EntryScope({
  */
 export function useEditor() {
   const editor = useContext(editorContext)
-  assert(editor, 'DashboardEditor not found in context')
+  assert(editor, 'EntryEditor not found in context')
   return editor
 }
 
@@ -102,25 +135,19 @@ function useFieldInfo(field: Field) {
 /**
  * Creates an editor for a nested reactive node.
  */
-export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
-  const dashboard = useDashboard()
+export function useNodeEditor(node: EditorNode, type: Type) {
   const parent = useContext(editorContext)
-  const entry = useContext(entryContext)
-  const activeVersionAtom = useMemo(() => {
-    return entry?.activeVersion ?? atom(null)
-  }, [entry])
+  const scope = useContext(entryContext)
+  const activeVersionAtom = scope?.localeData.selectedEntry ?? nullEntryAtom
   const activeVersion = useAtomValue(activeVersionAtom)
-  const editor = useMemo(
-    () =>
-      new DashboardEditor(
-        dashboard,
-        type,
-        node,
-        parent ?? undefined,
-        activeVersion ?? undefined
-      ),
-    [activeVersion, dashboard, node, parent, type]
-  )
+  const editor = useMemo(() => {
+    return new EntryEditor(
+      type,
+      node,
+      parent instanceof EntryEditor ? parent : undefined,
+      activeVersion ?? undefined
+    )
+  }, [activeVersion, node, parent, type])
   return editor
 }
 
@@ -244,8 +271,9 @@ function useEntryModel() {
  * expose internal atoms.
  */
 export function useEntry(): EntryRecord<Record<string, unknown>> | null {
-  const entry = useEntryModel()
-  return useAtomValue(entry?.currentEntry ?? nullEntryAtom)
+  const scope = useEntryModel()
+  const selectedEntryAtom = scope?.localeData.selectedEntry ?? nullEntryAtom
+  return useAtomValue(selectedEntryAtom)
 }
 
 /**

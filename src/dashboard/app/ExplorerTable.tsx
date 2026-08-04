@@ -23,8 +23,8 @@ import type {
   DashboardEntryData,
   DashboardEntryOverviewCell,
   DashboardExplorer
-} from '../store.js'
-import {dashboardEntryOverviewColumnCount} from '../store.js'
+} from '../atoms/explorer.js'
+import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
 

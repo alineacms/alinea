@@ -13,20 +13,21 @@ import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
+import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {typeAtoms} from '#/dashboard/atoms/config.js'
+import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
+import {atom, useAtom, useAtomValue} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
   IcRoundEdit,
-  IcRoundPublishedWithChanges,
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import type {DashboardEntryData, DashboardEntrySidebarTab} from '../store.js'
 import {Badge} from './Badge.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
@@ -38,17 +39,26 @@ import {Sidebar, SidebarBody} from './ui/Sidebar.js'
 const styles = styler(css)
 
 export interface EntrySidebarProps {
-  entry: DashboardEntryData
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
   onOpenChange?: (isOpen: boolean) => void
 }
 
-export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
-  const type = useAtomValue(entry.type)
-  const [selectedTab, setSelectedTab] = useAtom(entry.dashboard.entrySidebarTab)
-  const isMediaFile = type.type === MediaFile
-  const isMediaLibrary = type.type === MediaLibrary
+type EntrySidebarTab = 'preview' | 'history' | 'references'
+const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
+
+export function EntrySidebar({
+  entry,
+  localeData,
+  onOpenChange
+}: EntrySidebarProps) {
+  const typeName = useAtomValue(entry.type)
+  const type = useAtomValue(typeAtoms(typeName)).type
+  const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
   const hasPreview = !isMediaFile && !isMediaLibrary
-  const allowedTabs: Array<DashboardEntrySidebarTab> = isMediaFile
+  const allowedTabs: Array<EntrySidebarTab> = isMediaFile
     ? ['references']
     : hasPreview
       ? ['preview', 'history', 'references']
@@ -56,63 +66,54 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
   const selectedKey = allowedTabs.includes(selectedTab)
     ? selectedTab
     : allowedTabs[0]
-
   return (
     <Sidebar>
       <Tabs
         className={styles.EntrySidebar.tabs()}
         selectedKey={selectedKey}
         onSelectionChange={key => {
-          if (isMediaFile) return
-          const next = key as DashboardEntrySidebarTab
-          if (allowedTabs.includes(next)) {
-            setSelectedTab(next)
-          }
+          const next = key as EntrySidebarTab
+          if (allowedTabs.includes(next)) setSelectedTab(next)
         }}
       >
         <RailHeader className={styles.EntrySidebar.header()}>
           <TabList aria-label="Entry sidebar">
-            {hasPreview ? (
-              <>
-                <Tab id="preview">Preview</Tab>
-                <Tab id="history">History</Tab>
-              </>
-            ) : !isMediaFile ? (
-              <Tab id="history">History</Tab>
-            ) : null}
+            {hasPreview && <Tab id="preview">Preview</Tab>}
+            {!isMediaFile && <Tab id="history">History</Tab>}
             <Tab id="references">References</Tab>
           </TabList>
           {onOpenChange && (
             <EntrySidebarToggle isOpen={true} onOpenChange={onOpenChange} />
           )}
         </RailHeader>
-
         <SidebarBody className={styles.EntrySidebar.body()}>
+          {hasPreview && (
+            <TabPanel
+              id="preview"
+              className={styles.EntrySidebar.previewPanel()}
+            >
+              <Suspense fallback={<EntrySidebarHistoryLoading />}>
+                <EntrySidebarPreview entry={entry} localeData={localeData} />
+              </Suspense>
+            </TabPanel>
+          )}
           {!isMediaFile && (
-            <>
-              <TabPanel
-                id="history"
-                className={styles.EntrySidebar.historyPanel()}
-              >
-                <Suspense fallback={<EntrySidebarHistoryLoading />}>
-                  <EntrySidebarHistory entry={entry} />
-                </Suspense>
-              </TabPanel>
-              {hasPreview && (
-                <TabPanel
-                  id="preview"
-                  className={styles.EntrySidebar.previewPanel()}
-                >
-                  <EntrySidebarPreview entry={entry} />
-                </TabPanel>
-              )}
-            </>
+            <TabPanel
+              id="history"
+              className={styles.EntrySidebar.historyPanel()}
+            >
+              <Suspense fallback={<EntrySidebarHistoryLoading />}>
+                <EntrySidebarHistory entry={entry} localeData={localeData} />
+              </Suspense>
+            </TabPanel>
           )}
           <TabPanel
             id="references"
             className={styles.EntrySidebar.referencesPanel()}
           >
-            <EntryReferences entry={entry} />
+            <Suspense fallback={<EntrySidebarHistoryLoading />}>
+              <EntryReferences entry={entry} localeData={localeData} />
+            </Suspense>
           </TabPanel>
         </SidebarBody>
       </Tabs>
@@ -120,12 +121,9 @@ export function EntrySidebar({entry, onOpenChange}: EntrySidebarProps) {
   )
 }
 
-interface EntrySidebarHistoryProps {
-  entry: DashboardEntryData
-}
-
-function EntrySidebarHistory({entry}: EntrySidebarHistoryProps) {
-  const statuses = useAtomValue(entry.availableStatuses)
+function EntrySidebarHistory({entry, localeData}: EntrySidebarProps) {
+  const statuses = useAtomValue(localeData.availableStatuses)
+  const history = useAtomValue(localeData.history)
   const [previousVersionsOpen, setPreviousVersionsOpen] = useState(false)
   return (
     <div className={styles.EntrySidebar.history()}>
@@ -134,8 +132,9 @@ function EntrySidebarHistory({entry}: EntrySidebarHistoryProps) {
         <ul className={styles.EntrySidebar.historyList()}>
           {statuses.map(status => (
             <EntrySidebarStatusItem
-              key={status}
               entry={entry}
+              key={status}
+              localeData={localeData}
               status={status}
             />
           ))}
@@ -149,9 +148,29 @@ function EntrySidebarHistory({entry}: EntrySidebarHistoryProps) {
         >
           <DisclosureHeader>Previous versions</DisclosureHeader>
           <DisclosurePanel className={styles.EntrySidebar.disclosurePanel()}>
-            {previousVersionsOpen && (
-              <EntrySidebarPreviousVersions entry={entry} />
-            )}
+            {previousVersionsOpen &&
+              (history.length === 0 ? (
+                <p className={styles.EntrySidebar.empty()}>
+                  No previous versions yet
+                </p>
+              ) : (
+                <section className={styles.EntrySidebar.Versions()}>
+                  <ul className={styles.EntrySidebar.Versions.Timeline()}>
+                    {history.map(revision =>
+                      EntrySidebarTimelineElement(revision)
+                    )}
+                  </ul>
+                  <ul className={styles.EntrySidebar.historyList()}>
+                    {history.map(revision => (
+                      <EntrySidebarRevisionItem
+                        key={`${revision.file}:${revision.ref}`}
+                        localeData={localeData}
+                        revision={revision}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
           </DisclosurePanel>
         </Disclosure>
       </section>
@@ -159,69 +178,35 @@ function EntrySidebarHistory({entry}: EntrySidebarHistoryProps) {
   )
 }
 
-function EntrySidebarPreviousVersions({entry}: EntrySidebarHistoryProps) {
-  const history = useAtomValue(entry.history)
-  if (!history) return <EntrySidebarHistoryLoading />
-  if (history.length === 0)
-    return (
-      <p className={styles.EntrySidebar.empty()}>No previous versions yet</p>
-    )
-  return (
-    <section className={styles.EntrySidebar.Versions()}>
-      <ul className={styles.EntrySidebar.Versions.Timeline()}>
-        {history.map(revision => EntrySidebarTimelineElement(revision))}
-      </ul>
-      <ul className={styles.EntrySidebar.historyList()}>
-        {history.map(revision => (
-          <EntrySidebarRevisionItem
-            key={`${revision.file}:${revision.ref}`}
-            entry={entry}
-            revision={revision}
-            isLatest={false}
-          />
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-function EntrySidebarTimelineElement(revision: Revision) {
-  const status = getRevisionKind(revision).status
-  return (
-    <li
-      key={`${revision.file}:${revision.ref}-line`}
-      className={styles.Timeline.element()}
-    >
-      <span className={styles.Timeline.element.outerCircle()}>
-        <span
-          className={styles.Timeline.element.innerCircle()}
-          data-status={status}
-        />
-      </span>
-      <span className={styles.Timeline.element.trail()} />
-    </li>
-  )
-}
-
 interface EntrySidebarStatusItemProps {
-  entry: DashboardEntryData
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
   status: EntryStatus
 }
 
-function EntrySidebarStatusItem({entry, status}: EntrySidebarStatusItemProps) {
-  const type = useAtomValue(entry.type)
-  const sourceLocale = useAtomValue(entry.sourceLocale)
-  const versions = useAtomValue(entry.languages(sourceLocale).versions)
-  const activeStatus = useAtomValue(entry.activeStatus)
-  const activeVersion = useAtomValue(entry.activeVersion)
-  const currentlyEditing = useAtomValue(entry.currentlyEditing)
-  const [selectedVersion, setSelectedVersion] = useAtom(entry.selectedVersion)
-  const isEditing = activeStatus === status && currentlyEditing !== undefined
+function EntrySidebarStatusItem({
+  entry,
+  localeData,
+  status
+}: EntrySidebarStatusItemProps) {
+  const typeName = useAtomValue(entry.type)
+  const type = useAtomValue(typeAtoms(typeName)).type
+  const versions = useAtomValue(localeData.versions)
+  const currentlyEditing = useAtomValue(localeData.currentlyEditing)
+  const [selectedVersion, setSelectedVersion] = useAtom(
+    localeData.selectedVersion
+  )
+  const activeVersion = Array.from(versions.values()).find(
+    version => version.active
+  )
+  assert(activeVersion, `Entry "${entry.id}" has no active version`)
+  const isEditing = activeVersion.status === status && Boolean(currentlyEditing)
   const selected =
-    selectedVersion.type === 'status' && selectedVersion.status === status
-  const rowStatus = getStatusItemVersionStatus(status, activeVersion?.main)
+    (selectedVersion === null && activeVersion.status === status) ||
+    (selectedVersion?.type === 'status' && selectedVersion.status === status)
+  const rowStatus = getStatusItemVersionStatus(status, activeVersion.main)
   const version = versions.get(status)
-  const hasMetadata = Type.field(type.type, 'metadata') instanceof MetadataField
+  const hasMetadata = Type.field(type, 'metadata') instanceof MetadataField
   const meta = hasMetadata ? formatMetadata(version?.data.metadata) : undefined
   return (
     <li className={styles.EntrySidebar.historyItem()}>
@@ -240,19 +225,19 @@ function EntrySidebarStatusItem({entry, status}: EntrySidebarStatusItemProps) {
 }
 
 interface EntrySidebarRevisionItemProps {
-  entry: DashboardEntryData
+  localeData: EntryLocaleAtoms
   revision: Revision
-  isLatest: boolean
 }
 
 function EntrySidebarRevisionItem({
-  entry,
-  revision,
-  isLatest
+  localeData,
+  revision
 }: EntrySidebarRevisionItemProps) {
-  const [selectedVersion, setSelectedVersion] = useAtom(entry.selectedVersion)
+  const [selectedVersion, setSelectedVersion] = useAtom(
+    localeData.selectedVersion
+  )
   const selected =
-    selectedVersion.type === 'history' &&
+    selectedVersion?.type === 'history' &&
     selectedVersion.ref === revision.ref &&
     selectedVersion.file === revision.file
   const revisionKind = getRevisionKind(revision)
@@ -261,11 +246,9 @@ function EntrySidebarRevisionItem({
       <EntrySidebarVersionRow
         selected={selected}
         status={revisionKind.status}
-        icon={isLatest ? IcRoundPublishedWithChanges : revisionKind.icon}
-        // title={revision.description ?? 'Page published'}
-        // meta={formatMeta(revision)}
+        icon={revisionKind.icon}
         title={formatTime(revision.createdAt)}
-        meta={revision?.user?.name}
+        meta={revision.user?.name}
         onPress={() =>
           setSelectedVersion({
             type: 'history',
@@ -274,6 +257,24 @@ function EntrySidebarRevisionItem({
           })
         }
       />
+    </li>
+  )
+}
+
+function EntrySidebarTimelineElement(revision: Revision) {
+  const status = getRevisionKind(revision).status
+  return (
+    <li
+      key={`${revision.file}:${revision.ref}-line`}
+      className={styles.Timeline.element()}
+    >
+      <span className={styles.Timeline.element.outerCircle()}>
+        <span
+          className={styles.Timeline.element.innerCircle()}
+          data-status={status}
+        />
+      </span>
+      <span className={styles.Timeline.element.trail()} />
     </li>
   )
 }

@@ -1,5 +1,5 @@
 import {Entry} from '#/core/Entry.js'
-import type {EntryLocation} from '#/dashboard/DashboardNav.js'
+import type {EntryLocation} from './DashboardNav.js'
 import {dbAtom} from '#/dashboard/atoms/DbAtoms.js'
 import {locationAtom, useNavigate} from '#/dashboard/atoms/LocationAtoms.js'
 import {useNav} from '#/dashboard/hook/UseNav.js'

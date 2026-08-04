@@ -1,0 +1,19 @@
+.EntryFields {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.EntryField-slot {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .EntryFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .EntryField-slot {
+    grid-column: 1 / -1 !important;
+  }
+}

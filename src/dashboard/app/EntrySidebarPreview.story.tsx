@@ -1,45 +1,13 @@
-import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {
-  Dashboard,
-  type DashboardEntryData,
-  ReactiveNode
-} from '#/dashboard/store.js'
+import type {EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {EntrySidebarPreview} from './EntrySidebarPreview.js'
-
-interface PreviewGraph {
-  sync(): Promise<string>
-}
-
-const graph = {
-  sync() {
-    return Promise.resolve('preview-content-sha')
-  }
-} satisfies PreviewGraph as unknown as WriteableGraph
-
-const dashboard = new Dashboard(
-  graph,
-  {schema: {}, workspaces: {}},
-  new EventTarget(),
-  {} as LocalConnection,
-  {}
-)
+import {EntrySidebarBrowserPreview} from './EntrySidebarPreview.js'
 
 const node = new ReactiveNode({title: 'Original title'})
-const previewPayloadSignal = atom(get => get(node.value))
-const entry = {
-  preview: atom(true),
-  previewUrl: atom('/preview-frame'),
-  previewPayloadSignal,
-  updatePreviewPayload: atom(null, async get => {
-    const sha = await get(dashboard.sha)
-    if (!sha) return undefined
-    return JSON.stringify({sha, data: get(node.value)})
-  }),
+const localeData = {
+  previewUrl: atom(Promise.resolve('/preview-frame')),
   retryPreviewUrl: atom(null, () => {})
-} as unknown as DashboardEntryData
+} satisfies Pick<EntryLocaleAtoms, 'previewUrl' | 'retryPreviewUrl'>
 
 function PreviewTitleField() {
   const titleField = node.field('title')
@@ -59,9 +27,9 @@ function PreviewTitleField() {
 
 export function EntrySidebarPreviewStory() {
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <>
       <PreviewTitleField />
-      <EntrySidebarPreview entry={entry} />
-    </DashboardScopeInternal>
+      <EntrySidebarBrowserPreview localeData={localeData} />
+    </>
   )
 }

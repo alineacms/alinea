@@ -1,8 +1,15 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {Button} from '#/components.js'
+import {getRoot} from '#/core/Internal.js'
+import {
+  createExplorerAtoms,
+  type ExplorerOptions
+} from '#/dashboard/atoms/explorer.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState, type ReactNode} from 'react'
-import {ExplorerOptions, useDashboard} from '../store.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -49,17 +56,30 @@ interface ExplorerModalProps {
 
 function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const mediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const {root, workspace} = useDashboardContext()
+  const policy = useAtomValue(policyAtom)
+  const mediaRoot = Object.entries(workspace.roots).find(
+    ([key, value]) =>
+      policy.canRead({workspace: root.workspace, root: key}) &&
+      Boolean(getRoot(value).isMediaRoot)
+  )?.[0]
   const location = options.location ?? {
-    workspace,
-    root: mediaRoot ?? undefined
+    workspace: root.workspace,
+    root: mediaRoot ?? root.key
   }
+  const pickerRoot = rootAtoms(
+    location.workspace,
+    location.root ?? root.key,
+    options.selectedLocale ?? root.locale
+  )
+  const selectedLocale = useAtomValue(pickerRoot.selectedLocale)
   const [explorer] = useState(() =>
-    dashboard.explore(location, {
+    createExplorerAtoms(location, {
       ...options,
-      searchDepth: 'all'
+      rootData: pickerRoot.data,
+      searchDepth: 'all',
+      selectedLocale,
+      treeItems: pickerRoot.treeItems
     })
   )
   const onConfirm = useSetAtom(explorer.onConfirm)

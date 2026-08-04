@@ -33,7 +33,8 @@ import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   useFieldError,
   useFieldNode,
@@ -51,7 +52,6 @@ import {
   IcRoundLastPage,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'

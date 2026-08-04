@@ -1,5 +1,5 @@
 import type {EntryStatus} from 'alinea/core/Entry'
-import {useEntry} from '../store.js'
+import {useEntry} from '../hooks.js'
 
 export interface EntryEditorVersionData {
   path: string

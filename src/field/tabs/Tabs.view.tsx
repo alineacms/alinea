@@ -11,7 +11,7 @@ import {
 import {getType} from '#/core/Internal.js'
 import {Section} from '#/core/Section.js'
 import {Type} from '#/core/Type.js'
-import {EditFields} from '#/dashboard/app/Editor.js'
+import {EditFields} from '#/dashboard/app/EntryFields.js'
 import {TabsSection} from '#/field/tabs.js'
 
 interface TabsViewProps {

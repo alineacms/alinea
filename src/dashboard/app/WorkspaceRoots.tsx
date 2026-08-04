@@ -7,6 +7,14 @@ import {
   Popover,
   Tooltip
 } from '#/components.js'
+import type {Page} from '#/dashboard/atoms/nav.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
+import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
+import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {policyAtom, userAtom} from '#/dashboard/atoms/user.js'
+import {workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {setUserRolesAtom} from '#/dashboard/atoms/auth.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -20,55 +28,64 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import type {Dashboard, DashboardRoot} from '../store/Dashboard.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
 
 const styles = styler(css)
 
-interface WorkspaceRootsProps {
-  dashboard: Dashboard
+export interface WorkspaceRootsProps {
+  canManageMembers: boolean
+  page: Page
 }
 
-export function WorkspaceRoots({dashboard}: WorkspaceRootsProps) {
-  const selected = useAtomValue(dashboard.selectedWorkspace)
-  const workspace = dashboard.workspace(selected)
-  const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
+export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
+  const policy = useAtomValue(policyAtom)
+  const workspace = page.workspace!
+  const settings = useAtomValue(workspaceAtoms(workspace).settingsAtom)
+  const roots = Object.keys(settings.roots)
+    .filter(key => policy.canRead({workspace, root: key}))
+    .map(key => rootAtoms(workspace, key, page.locale ?? null))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatarMenu dashboard={dashboard} />
+        <WorkspaceAvatarMenu page={page} />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
-          <WorkspaceRootButton key={root.key} root={root} />
+          <WorkspaceRootButton key={root.key} page={page} root={root} />
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <MutationQueueStatus dashboard={dashboard} openOnFail />
-        <WorkspaceProfileMenu dashboard={dashboard} />
+        <MutationQueueStatus openOnFail />
+        <WorkspaceProfileMenu canManageMembers={canManageMembers} page={page} />
       </div>
     </aside>
   )
 }
 
 interface WorkspaceRootButtonProps {
-  root: DashboardRoot
+  page: Page
+  root: ReturnType<typeof rootAtoms>
 }
 
-function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
+function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
   const icon = useAtomValue(root.icon)
   const label = useAtomValue(root.label)
-  const [selected, setSelected] = useAtom(root.selected)
+  const setRoute = useSetAtom(routeAtom)
+  const selected = page.root === root.key
   return (
     <Tooltip placement="right" delay={100} tooltip={label}>
       <Button
         size="icon-nav"
-        //appearance={selected ? 'active' : 'plain'}
         className={styles.WorkspaceRoots.rootButton()}
         aria-label={label}
-        onPress={() => setSelected(true)}
+        onPress={() =>
+          setRoute({
+            workspace: root.workspace,
+            root: root.key
+          })
+        }
         data-selected={selected ? '' : undefined}
       >
         {icon && <Icon icon={icon} data-slot="icon" />}
@@ -77,15 +94,17 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   )
 }
 
-function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
-  const user = useAtomValue(dashboard.currentUser)
-  const canManageMembers = useAtomValue(dashboard.canManageMembers)
-  const config = useAtomValue(dashboard.config)
-  const canLogout = useAtomValue(dashboard.canLogout)
-  const [theme, setTheme] = useAtom(dashboard.theme)
-  const setUserRoles = useSetAtom(dashboard.setUserRoles)
-  const setRoute = useSetAtom(dashboard.route)
-  const logout = useSetAtom(dashboard.logout)
+interface WorkspaceProfileMenuProps extends WorkspaceRootsProps {}
+
+function WorkspaceProfileMenu({canManageMembers}: WorkspaceProfileMenuProps) {
+  const user = useAtomValue(userAtom)
+  const config = useAtomValue(configAtom)
+  const isLocal = useAtomValue(localAtom)
+  const canLogout = useAtomValue(dashboardAtoms.canLogout)
+  const [theme, setTheme] = useAtom(dashboardAtoms.theme)
+  const setUserRoles = useSetAtom(setUserRolesAtom)
+  const setRoute = useSetAtom(routeAtom)
+  const logout = useSetAtom(dashboardAtoms.logout)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set<Key>(user.roles)
@@ -97,8 +116,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
   const userName = user.name ?? user.sub
 
   function handleRoleSelectionChange(keys: 'all' | Set<Key>) {
-    if (keys === 'all') return
-    setUserRoles([...keys].map(String))
+    if (keys !== 'all') setUserRoles([...keys].map(String))
   }
 
   return (
@@ -117,10 +135,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
         className={styles.WorkspaceRoots.profile.popover.surface()}
         placement="right bottom"
         offset={16}
-        style={{
-          padding: '0',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
-        }}
+        style={{padding: '0', boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'}}
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
           <li className={styles.WorkspaceRoots.profile.popover.user()}>
@@ -164,7 +179,7 @@ function WorkspaceProfileMenu({dashboard}: WorkspaceRootsProps) {
               />
             </div>
           </li>
-          {dashboard.isLocal && roleEntries.length > 0 && (
+          {isLocal && roleEntries.length > 0 && (
             <li className={styles.WorkspaceRoots.profile.popover.item()}>
               <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
                 Role

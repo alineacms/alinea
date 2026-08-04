@@ -1,11 +1,9 @@
 import {type} from '#/core/Type.js'
-import {FieldsEditor} from '#/dashboard/app/Editor.js'
-import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {
-  Dashboard,
-  DashboardEditor,
-  ReactiveNode
-} from '#/dashboard/store/Dashboard.js'
+import {FieldsEditor} from '#/dashboard/app/EntryFields.js'
+import {EntryEditor} from '#/dashboard/atoms/editor.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {EditorScope} from '#/dashboard/hooks.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {richText} from './RichTextField.js'
 import {extensions} from './Extensions.js'
 import {
@@ -22,7 +20,7 @@ import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
 import {select} from '#/field/select.js'
 import {text} from '#/field/text/TextField.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {views} from '../views.js'
 
@@ -166,23 +164,22 @@ interface RichTextFixtureProps {
 
 function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
   const state = useMemo(() => {
-    const dashboard = createDashboard()
     const node = new ReactiveNode<object>({
       body: structuredClone(initialBody)
     })
     return {
-      dashboard,
-      editor: new DashboardEditor(dashboard, entryType, node)
+      node,
+      editor: new EntryEditor(entryType, node)
     }
   }, [entryType, initialBody])
   const field = state.editor.field('body')
   if (!field) throw new Error('Body field not found')
   const value = useAtomValue(field.value)
-  const dirty = useAtomValue(state.editor.node.isDirty)
-  const reset = useSetAtom(state.editor.node.reset)
+  const dirty = useAtomValue(state.node.isDirty)
+  const reset = useSetAtom(state.node.reset)
   const replace = useSetAtom(field.value)
   return (
-    <DashboardScopeInternal dashboard={state.dashboard}>
+    <StoryProvider views={views}>
       <EditorScope editor={state.editor}>
         <div id="alinea-toolbar" />
         <button type="button" onClick={() => reset()}>
@@ -198,17 +195,8 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
         <pre data-testid="value">{JSON.stringify(value)}</pre>
         <output data-testid="dirty">{String(dirty)}</output>
       </EditorScope>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
-}
-
-function createDashboard(): Dashboard {
-  const dashboard = {
-    view(key: string) {
-      return atom(() => views[key])
-    }
-  }
-  return dashboard as unknown as Dashboard
 }
 
 function paragraph(text: string) {

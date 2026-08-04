@@ -1,7 +1,7 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
-import {eventsAtom, graphAtom} from './core'
+import {eventsAtom, graphAtom} from './core.js'
 
 const contentShaAtom = atom<string>()
 const shaResource = Object.assign(

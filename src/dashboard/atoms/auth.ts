@@ -4,7 +4,7 @@ import {localUser, User} from '#/core/User.js'
 import {atom} from 'jotai'
 import {alineaDevAtom, clientAtom, localAtom} from './core.js'
 
-const authRequired = atom(get => {
+export const authRequiredAtom = atom(get => {
   const forceAuth =
     typeof process !== 'undefined' && process.env.ALINEA_FORCE_AUTH
   if (forceAuth) return true
@@ -54,14 +54,20 @@ interface DashboardAuthSetupCloud {
   type: 'setupCloud'
 }
 
-type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
+export type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
 
 const authState = atom<DashboardAuthState>({status: 'loading'})
+
+export const setUserRolesAtom = atom(null, (get, set, roles: Array<string>) => {
+  const state = get(authAtom)
+  if (state.status === 'authenticated')
+    set(authState, {...state, user: {...state.user, roles}})
+})
 
 export const authAtom = Object.assign(
   atom(
     (get): DashboardAuthState => {
-      if (!get(authRequired)) {
+      if (!get(authRequiredAtom)) {
         const userData =
           typeof process !== 'undefined' &&
           (process.env.ALINEA_USER as string | undefined)

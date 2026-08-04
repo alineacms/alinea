@@ -1,9 +1,9 @@
 import {Field} from '#/core/Field.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {useDashboard} from '#/dashboard/hooks.js'
+import {viewsAtom} from '#/dashboard/atoms/core.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {atom, useAtomValue} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
 import {Badge} from './Badge.js'
@@ -18,15 +18,18 @@ export interface CompactFieldProps {
 
 export function CompactField({field, value}: CompactFieldProps) {
   const customView = Field.compactView(field)
-  const dashboard = useDashboard()
-  const customViewKey = typeof customView === 'string' ? customView : ''
-  const customViewAtom = useMemo(
-    () => dashboard.view(customViewKey),
-    [customViewKey, dashboard]
+  const resolvedViewAtom = useMemo(
+    () =>
+      atom(get =>
+        typeof customView === 'string'
+          ? (get(viewsAtom)[customView] as
+              | ComponentType<CompactFieldProps>
+              | undefined)
+          : undefined
+      ),
+    [customView]
   )
-  const ResolvedView = useAtomValue(customViewAtom) as
-    | ComponentType<CompactFieldProps>
-    | undefined
+  const ResolvedView = useAtomValue(resolvedViewAtom)
   if (typeof customView === 'function') return customView({field, value})
   if (ResolvedView) return <ResolvedView field={field} value={value} />
   return <CompactFieldFallback field={field} value={value} />

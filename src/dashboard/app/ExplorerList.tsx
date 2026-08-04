@@ -10,7 +10,7 @@ import type {
   DashboardEntry,
   DashboardExplorer,
   DashboardRoot
-} from '../store.js'
+} from '../atoms/explorer.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'

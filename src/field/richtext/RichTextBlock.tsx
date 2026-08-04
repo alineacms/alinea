@@ -18,13 +18,13 @@ import {
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/dashboard/app/Badge.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
 import styler from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {memo, useMemo, useState} from 'react'

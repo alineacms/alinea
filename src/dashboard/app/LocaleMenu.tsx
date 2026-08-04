@@ -1,20 +1,17 @@
 import {Icon, Menu, MenuItem} from '#/components.js'
+import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtom, useAtomValue, type WritableAtom} from 'jotai'
 import {useTransition} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
-import type {
-  DashboardLocaleSelection,
-  DashboardRoot
-} from '../store/Dashboard.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)
 
 interface LocaleMenuProps {
-  root: DashboardRoot
-  selectedLocale?: DashboardLocaleSelection
+  root: RootAtoms
+  selectedLocale?: WritableAtom<string | null, [string], unknown>
 }
 
 interface LocaleDisplay {
@@ -38,9 +35,8 @@ function localeDisplay(locale: string): LocaleDisplay {
   const language = languages.of(parsed.language)
   const code = locale.toUpperCase()
   if (!language) return {code: null, name: locale, textValue: locale}
-  if (!parsed.region) {
+  if (!parsed.region)
     return {code, name: language, textValue: `${code} ${language}`}
-  }
   const regions = new Intl.DisplayNames(undefined, {type: 'region'})
   const region = regions.of(parsed.region)
   const name = region ? `${language} (${region})` : language
@@ -49,9 +45,8 @@ function localeDisplay(locale: string): LocaleDisplay {
 
 function LocaleLabel({locale}: LocaleLabelProps) {
   const display = localeDisplay(locale)
-  if (!display.code) {
+  if (!display.code)
     return <span className={styles.LocaleMenu.label()}>{display.name}</span>
-  }
   return (
     <span className={styles.LocaleMenu.label()}>
       <span className={styles.LocaleMenu.label.code()}>{display.code}</span>
@@ -91,14 +86,15 @@ export function LocaleMenu({
         })
       }}
     >
-      {i18n.locales.map(locale => {
-        const label = localeDisplay(locale).textValue
-        return (
-          <MenuItem key={locale} id={locale} textValue={label}>
-            <LocaleLabel locale={locale} />
-          </MenuItem>
-        )
-      })}
+      {i18n.locales.map(locale => (
+        <MenuItem
+          key={locale}
+          id={locale}
+          textValue={localeDisplay(locale).textValue}
+        >
+          <LocaleLabel locale={locale} />
+        </MenuItem>
+      ))}
     </Menu>
   )
 }

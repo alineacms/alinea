@@ -114,10 +114,18 @@ export namespace Type {
     type: Type,
     value: Record<string, unknown>
   ): Record<string, unknown> {
-    return mergeInitialValue(value, initialValue(type)) as Record<
+    let next = mergeInitialValue(value, initialValue(type)) as Record<
       string,
       unknown
     >
+    for (const [key, field] of entries(fields(type))) {
+      const current = next[key]
+      const initialized = Field.withInitialValue(field, current)
+      if (initialized === current) continue
+      if (next === value) next = {...next}
+      next[key] = initialized
+    }
+    return next
   }
 
   export function beforeSave(

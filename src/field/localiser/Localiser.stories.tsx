@@ -1,15 +1,10 @@
-import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Type, type} from '#/core/Type.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {
-  Dashboard,
-  DashboardScopeInternal,
-  ReactiveNode
-} from '#/dashboard/store.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {localiser} from '#/field/localiser.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
-import {config} from '#test/example.js'
 import {useAtomValue} from 'jotai'
 import type {CSSProperties} from 'react'
 import {views} from '../views'
@@ -41,23 +36,16 @@ const previewStyle: CSSProperties = {
   whiteSpace: 'pre-wrap'
 }
 
-const dashboard = new Dashboard(
-  {} as WriteableGraph,
-  config,
-  new EventTarget(),
-  undefined!,
-  views
-)
 const node = new ReactiveNode(Type.initialValue(pageType) as object)
 
 export function Example() {
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider views={views}>
       <div style={storyStyle}>
         <NodeEditor node={node} type={pageType} />
         <ValuePreview node={node} />
       </div>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 

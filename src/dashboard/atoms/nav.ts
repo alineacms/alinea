@@ -3,6 +3,7 @@ import {atomWithLocation} from 'jotai-location'
 import {selectAtom} from 'jotai/utils'
 import {ReactNode} from 'react'
 import {workspaceAtoms, workspacesAtom} from './config.js'
+import {policyAtom} from './user.js'
 
 const location = atomWithLocation()
 
@@ -110,10 +111,14 @@ const rootAtom = atom(get => {
   const workspace = get(workspaceAtom)
   if (!workspace) return undefined
   const workspaceConfig = get(workspaceAtoms(workspace).settingsAtom)
-  if (root && root in workspaceConfig.roots) {
+  const policy = get(policyAtom)
+  const roots = Object.keys(workspaceConfig.roots).filter(candidate =>
+    policy.canRead({workspace, root: candidate})
+  )
+  if (root && roots.includes(root)) {
     return root
   } else {
-    return Object.keys(workspaceConfig.roots)[0]
+    return roots[0]
   }
 })
 

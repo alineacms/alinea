@@ -1,4 +1,4 @@
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {JsonField} from '#/field/json.js'
 import {useEffect, useState} from 'react'
 import {CodeEditorInput} from '../code/CodeField.view.js'
