@@ -126,6 +126,20 @@ export const LinkFields = Config.document('Link fields', {
     entryWithStaticLocation: Field.entry('With static location', {
       location: {workspace: 'primary', root: 'fields'}
     }),
+    entryWithLimitedLocation: Field.entry('With limited location', {
+      enableNavigation: true,
+      limitLocations: [{workspace: 'primary', root: 'fields'}]
+    }),
+    entryWithMultipleLimitedLocations: Field.entry(
+      'With multiple limited locations',
+      {
+        enableNavigation: true,
+        limitLocations: [
+          {workspace: 'primary', root: 'fields'},
+          {workspace: 'primary', root: 'custom'}
+        ]
+      }
+    ),
     entryMultiple: Field.entry.multiple('Internal link (multiple)'),
     entryMultipleWithCondition: Field.entry.multiple(
       'Internal link (multiple, with condition)',
@@ -153,6 +167,10 @@ export const LinkFields = Config.document('Link fields', {
     fileInline: Field.file('File link (inline)', {
       inline: true
     }),
+    fileWithLimitedLocation: Field.file('File link (limited location)', {
+      enableNavigation: true,
+      limitLocations: [{workspace: 'primary', root: 'media'}]
+    }),
     fileWithFields: Field.file('File link (with extra fields)', {
       fields: {
         caption: Field.text('Caption', {width: 0.5}),
@@ -176,6 +194,10 @@ export const LinkFields = Config.document('Link fields', {
     // Field.image variants
     imageInline: Field.image('Image link (inline)', {
       inline: true
+    }),
+    imageWithLimitedLocation: Field.image('Image link (limited location)', {
+      enableNavigation: true,
+      limitLocations: [{workspace: 'primary', root: 'media'}]
     }),
     imageWithFields: Field.image('Image link (with extra fields)', {
       fields: {
@@ -206,6 +228,13 @@ export const LinkFields = Config.document('Link fields', {
     }),
     linkWithLocation: Field.link('Mixed link (with location)', {
       location: {workspace: 'primary', root: 'fields'}
+    }),
+    linkWithLimitedLocations: Field.link('Mixed link (limited locations)', {
+      enableNavigation: true,
+      limitLocations: [
+        {workspace: 'primary', root: 'fields'},
+        {workspace: 'primary', root: 'custom'}
+      ]
     }),
     linkWithEnableNavigation: Field.link('Mixed link (enable navigation)', {
       enableNavigation: true

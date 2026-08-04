@@ -1,5 +1,5 @@
-import {UploadOperation} from '#/core/db/Operation.js'
 import {filterChecker} from '#/core/db/EntryResolver.js'
+import {UploadOperation} from '#/core/db/Operation.js'
 import {Entry, type Entry as EntryRecord} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
@@ -14,6 +14,7 @@ import {atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
+import {configAtom, type RootAtoms, workspaceAtoms} from './config.js'
 import {entryAtoms, type EntryAtoms, type EntryDataAtoms} from './entry.js'
 import {graphAtom, shaAtom} from './graph.js'
 import {mutationQueueAtom, uploadProgressAtom} from './graph/queue.js'
@@ -24,7 +25,6 @@ import {
   swr,
   uploadSizeError
 } from './utils.js'
-import {configAtom, type RootAtoms, workspaceAtoms} from './config.js'
 
 type DashboardUploadFiles = Iterable<File> | ArrayLike<File>
 
@@ -54,6 +54,11 @@ export type DashboardLocaleSelection = WritableAtom<
   void
 >
 
+export interface ExplorerLimitLocation {
+  workspace: string
+  root: string
+}
+
 export interface ExplorerOptions {
   actionOnPress?: boolean
   autoSelectFirstItem?: boolean
@@ -72,10 +77,40 @@ export interface ExplorerOptions {
   showSelectionControls?: boolean
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
+  limitLocations?: Array<ExplorerLimitLocation>
   breadcrumbs?: boolean
   // initialSort?: ExplorerSort
   onAction?: WritableAtom<void, [entry: EntryAtoms], void>
   onConfirm?: (selection: Array<string>) => void
+}
+
+function constrainLocation(
+  location: ExplorerLocation,
+  limits?: Array<ExplorerLimitLocation>
+): ExplorerLocation {
+  if (!limits?.length) return location
+
+  const exactMatch = limits.some(
+    limit =>
+      limit.workspace === location.workspace && limit.root === location.root
+  )
+  if (exactMatch) return location
+
+  const sameWorkspace = limits.find(
+    limit => limit.workspace === location.workspace
+  )
+  if (sameWorkspace) {
+    return {
+      workspace: sameWorkspace.workspace,
+      root: sameWorkspace.root
+    }
+  }
+
+  const fallback = limits[0]
+  return {
+    workspace: fallback.workspace,
+    root: fallback.root
+  }
 }
 
 export interface ExplorerSnapshot {
@@ -105,6 +140,7 @@ export class ExplorerAtoms {
       set(this.#expandedKeys, next)
     }
   )
+
   constructor(
     public location: WritableAtom<
       ExplorerLocation,
@@ -129,6 +165,10 @@ export class ExplorerAtoms {
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
+  }
+
+  #constrain(location: ExplorerLocation): ExplorerLocation {
+    return constrainLocation(location, this.limitLocations)
   }
 
   get selectionMode() {
@@ -167,6 +207,10 @@ export class ExplorerAtoms {
   get rootScope() {
     if (this.#options.rootScope) return this.#options.rootScope
     return this.mode === 'search' ? 'workspace' : 'current'
+  }
+
+  get limitLocations() {
+    return this.#options.limitLocations
   }
 
   get showSelectionControls() {
@@ -329,9 +373,13 @@ export class ExplorerAtoms {
     async (get, set, update: SetStateAction<ExplorerLocation>) => {
       const sequence = ++this.#navigationSequence
       const current = get(this.location)
-      const next = typeof update === 'function' ? update(current) : update
+
+      const requested = typeof update === 'function' ? update(current) : update
+      const next = this.#constrain(requested)
+
       const allRoots = this.rootScope === 'workspace'
       let locale: string | null = null
+
       if (!allRoots && next.root) {
         const root = workspaceAtoms(next.workspace).root(next.root)
         locale = get(this.#selectedLocale) ?? get(root.selectedLocale)
@@ -452,7 +500,13 @@ export class ExplorerAtoms {
     (get, set, update: string) => {
       const roots = get(workspaceAtoms(update).roots)
       assert(roots[0], `No readable roots found for workspace "${update}"`)
-      set(this.location, {workspace: update, root: roots[0]})
+      set(
+        this.location,
+        this.#constrain({
+          workspace: update,
+          root: roots[0]
+        })
+      )
     }
   )
 
@@ -465,7 +519,13 @@ export class ExplorerAtoms {
     },
     (get, set, update: string) => {
       const workspace = get(this.workspace)
-      set(this.location, {workspace: workspace.key, root: update})
+      set(
+        this.location,
+        this.#constrain({
+          workspace: workspace.key,
+          root: update
+        })
+      )
     }
   )
 
@@ -477,7 +537,13 @@ export class ExplorerAtoms {
     },
     (get, set, parentId: string | undefined) => {
       const location = get(this.location)
-      set(this.location, {...location, parentId})
+      set(
+        this.location,
+        this.#constrain({
+          ...location,
+          parentId
+        })
+      )
     }
   )
 
@@ -551,7 +617,18 @@ export class ExplorerAtoms {
       type: filter,
       groupBy: Entry.id
     })
-    const entries = children
+    const limits = this.limitLocations
+
+    const visibleChildren = limits?.length
+      ? children.filter(child =>
+          limits.some(
+            limit =>
+              limit.workspace === child.workspace && limit.root === child.root
+          )
+        )
+      : children
+
+    const entries = visibleChildren
       .filter(child => policy.canRead(child))
       .map(child => entryAtoms(child.id))
     return entries
@@ -606,13 +683,18 @@ export function createExplorerAtoms(
     if (!firstSelection) return undefined
     const {data} = await get(entryAtoms(firstSelection).readyState)
     if (!data) return undefined
-    return {
-      workspace: get(data.entryData).workspace,
-      root: get(data.entryData).root,
-      parentId: get(data.entryData).parentId ?? undefined
-    } satisfies ExplorerLocation
+    return constrainLocation(
+      {
+        workspace: get(data.entryData).workspace,
+        root: get(data.entryData).root,
+        parentId: get(data.entryData).parentId ?? undefined
+      },
+      options.limitLocations
+    )
   })
-  const fallbackLocation = atom(initialLocation)
+  const fallbackLocation = atom(
+    constrainLocation(initialLocation, options.limitLocations)
+  )
   const hasManualLocation = atom(false)
   const location = atom(
     get => {
@@ -624,9 +706,12 @@ export function createExplorerAtoms(
     },
     (get, set, update: SetStateAction<ExplorerLocation>) => {
       const current = get(location)
-      const next = typeof update === 'function' ? update(current) : update
+      const requested = typeof update === 'function' ? update(current) : update
       set(hasManualLocation, true)
-      set(fallbackLocation, next)
+      set(
+        fallbackLocation,
+        constrainLocation(requested, options.limitLocations)
+      )
     }
   )
   return new ExplorerAtoms(location, options)

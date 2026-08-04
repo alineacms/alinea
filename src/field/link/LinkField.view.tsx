@@ -23,9 +23,9 @@ import {
   SelectItem,
   TextField
 } from '#/components.js'
+import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
-import type {Filter} from '#/core/Filter.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Type} from '#/core/Type.js'
@@ -38,6 +38,21 @@ import {
 } from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
+import {selectedMediaRootAtom} from '#/dashboard/atoms/config.js'
+import {
+  entryAtoms,
+  type EntryAtoms,
+  type EntryDataAtoms
+} from '#/dashboard/atoms/entry.js'
+import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
+import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
+import {graphAtom} from '#/dashboard/atoms/graph.js'
+import {
+  currentEntryAtom,
+  routeAtom,
+  selectedRootAtom,
+  selectedWorkspaceAtom
+} from '#/dashboard/atoms/routing.js'
 import {nav} from '#/dashboard/DashboardNav.js'
 import {
   useField,
@@ -54,21 +69,6 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
-import {
-  entryAtoms,
-  type EntryDataAtoms,
-  type EntryAtoms
-} from '#/dashboard/atoms/entry.js'
-import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
-import {
-  currentEntryAtom,
-  routeAtom,
-  selectedRootAtom,
-  selectedWorkspaceAtom
-} from '#/dashboard/atoms/routing.js'
-import {graphAtom} from '#/dashboard/atoms/graph.js'
-import {selectedMediaRootAtom} from '#/dashboard/atoms/config.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
@@ -545,6 +545,7 @@ function LinkPickerAction({
     location,
     nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
+    limitLocations: options.limitLocations,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -641,6 +642,7 @@ function LinkPickerDialog({
     location,
     nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
+    limitLocations: options.limitLocations,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),

@@ -43,6 +43,8 @@ export interface EntryPickerConditions {
   location?: DynamicOption<EditorLocation>
   /** Filter entries by a condition, this results in a flat list of options */
   condition?: DynamicOption<Filter<EntryFields>>
+  /** Limit the entry picker to an array of location */
+  limitLocations?: Array<EditorLocation>
   /** @internal Enable entry picker navigation */
   enableNavigation?: boolean
 }
