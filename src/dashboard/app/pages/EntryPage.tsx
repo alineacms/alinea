@@ -3,6 +3,7 @@ import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import {
   entryAtoms,
   MissingEntryError,
@@ -20,7 +21,7 @@ import {
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useState} from 'react'
+import {useEffect} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -47,7 +48,7 @@ const styles = styler(css)
 export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
-    const entry = await get(entryAtoms(page.entry))
+    const entry = await get(entryAtoms(page, page.entry))
     const localeData = entry.locales(page.locale ?? null)
     const [selectedEntry, selectedNode, parentNeedsTranslation, sourceLocale] =
       await Promise.all([
@@ -75,6 +76,7 @@ export const entryPage = page(async (page, get) => {
         get(entry.incomingReferences)
       ])
     const root = rootAtoms(
+      page,
       get(entry.workspace),
       get(entry.root),
       page.locale ?? null
@@ -262,7 +264,9 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const [isSidebarOpen, setSidebarOpen] = useState(true)
+  const [isSidebarOpen, setSidebarOpen] = useAtom(
+    dashboardAtoms.entrySidebarOpen
+  )
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary

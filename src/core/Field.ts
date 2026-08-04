@@ -27,6 +27,17 @@ export interface FieldOptions<StoredValue> {
   validate?(value: StoredValue): boolean | string | undefined
 }
 
+export interface EntryAnchorTarget {
+  id: string
+  fieldPath: string
+  fieldLabel?: string
+  label?: string
+}
+
+export interface FieldAnchorContext {
+  anchors: Set<string>
+}
+
 export type WithoutLabel<Options extends FieldOptions<any>> = Omit<
   Options,
   'label'
@@ -46,6 +57,14 @@ export interface FieldMeta<StoredValue, QueryValue, Mutator, Options> {
     value: StoredValue,
     context: FieldReferenceContext
   ) => Array<EntryReferenceTarget>
+  anchors?: (
+    value: StoredValue,
+    context: FieldReferenceContext
+  ) => Array<EntryAnchorTarget>
+  normalizeAnchors?: (
+    value: StoredValue,
+    context: FieldAnchorContext
+  ) => StoredValue
   beforeSave?: (context: FieldBeforeSaveContext<StoredValue>) => StoredValue
 }
 
@@ -116,7 +135,7 @@ export namespace Field {
   }
 
   export function withInitialValue<StoredValue>(
-    field: Field<StoredValue>,
+    field: HasField,
     value: StoredValue
   ): StoredValue {
     return getField(field).withInitialValue?.(value) ?? value
@@ -214,6 +233,23 @@ export namespace Field {
   ): Array<EntryReferenceTarget> {
     const data = getField(field)
     return data.references?.(value, context) ?? []
+  }
+
+  export function anchors<StoredValue, QueryValue, Mutator, Options>(
+    field: Field<StoredValue, QueryValue, Mutator, Options>,
+    value: StoredValue,
+    context: FieldReferenceContext
+  ): Array<EntryAnchorTarget> {
+    const data = getField(field)
+    return data.anchors?.(value, context) ?? []
+  }
+
+  export function normalizeAnchors<StoredValue>(
+    field: HasField,
+    value: StoredValue,
+    context: FieldAnchorContext
+  ): StoredValue {
+    return getField(field).normalizeAnchors?.(value, context) ?? value
   }
 
   export function isField(value: any): value is Field {

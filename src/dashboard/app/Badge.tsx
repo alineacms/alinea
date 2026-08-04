@@ -12,7 +12,7 @@ const styles = styler(css)
 interface BadgeProps extends ComponentPropsWithoutRef<'span'> {
   icon?: ComponentType | ReactElement
   size?: 'default' | 'small'
-  status?: 'published' | 'draft' | 'unpublished' | 'archived'
+  status?: 'published' | 'draft' | 'unpublished' | 'archived' | 'untranslated'
 }
 
 export function Badge({

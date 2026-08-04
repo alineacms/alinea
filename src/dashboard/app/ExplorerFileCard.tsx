@@ -1,6 +1,6 @@
 import {Icon} from '#/components.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
 import {isImage} from '#/core/media/IsImage.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {type Infer} from '#/types.js'
 import styler from '@alinea/styler'
 import prettyBytes from 'pretty-bytes'
@@ -29,7 +29,11 @@ export function ExplorerFileCard({
   const details = formatFileDetails(file)
 
   return (
-    <div className={styles.ExplorerFileCard(layout, {image: Boolean(preview)})}>
+    <div
+      className={styles.ExplorerFileCard(layout, {
+        image: Boolean(preview)
+      })}
+    >
       <div className={styles.ExplorerFileCard.top()}>
         <div
           className={styles.ExplorerFileCard.preview()}

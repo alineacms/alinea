@@ -1,5 +1,8 @@
+import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import type {DragItem, DragTypes} from '@react-types/shared'
 import {Atom, atom, type WritableAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
+import type {Key} from 'react-aria-components'
 
 type RequiredAtom<Value> = WritableAtom<Value, [Value], void>
 
@@ -70,5 +73,35 @@ export function loader<Value>(fn: BatchLoadFn<Value>) {
         })
       }
     })
+  }
+}
+
+export const dashboardEntryDragType = 'application/x-alinea-entry-id'
+
+export const dashboardEntryDragTypes = [
+  dashboardEntryDragType,
+  'text/plain'
+] as const
+
+export function acceptsDashboardEntryDrag(types: DragTypes): boolean {
+  return dashboardEntryDragTypes.some(type => types.has(type))
+}
+
+export function dashboardEntryDragItem(id: Key): DragItem {
+  const key = String(id)
+  return {
+    'text/plain': key,
+    [dashboardEntryDragType]: key
+  }
+}
+
+export function uploadSizeError(
+  file: File,
+  maxUploadSize: number | undefined
+): string | undefined {
+  try {
+    assertUploadSize(file.name, file.size, maxUploadSize)
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
   }
 }

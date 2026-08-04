@@ -17,7 +17,7 @@ const styles = styler(css)
 export const rootPage = page(async (page, get) => {
   assert(page.workspace, 'Workspace expected')
   assert(page.root, 'Root expected')
-  const root = rootAtoms(page.workspace, page.root, page.locale ?? null)
+  const root = rootAtoms(page, page.workspace, page.root, page.locale ?? null)
   const data = get(root.data)
   const view = get(root.view)
   if (!view) await get(root.explorer.items)

@@ -1,18 +1,19 @@
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {assert} from '#/core/util/Assert.js'
+import type {Policy} from '#/core/Role.js'
 import {atom} from 'jotai'
 import {ComponentType} from 'react'
 import {configAtom, viewsAtom} from './core.js'
-import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
 
-export const workspacesAtom = atom(get => {
-  const config = get(configAtom)
-  const policy = get(policyAtom)
-  return Object.keys(config.workspaces).filter(workspace => {
-    return policy.canRead({workspace})
+export const workspacesAtom = dispense((policy: Policy) =>
+  atom(get => {
+    const config = get(configAtom)
+    return Object.keys(config.workspaces).filter(workspace => {
+      return policy.canRead({workspace})
+    })
   })
-})
+)
 
 export const workspaceAtoms = dispense(workspaceKey => {
   assert(workspaceKey, 'Workspace key cannot be empty')

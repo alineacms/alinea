@@ -14,7 +14,6 @@ import {type EditorModel, type EditorNode, EntryEditor} from './atoms/editor.js'
 import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
 import type {Page} from './atoms/nav.js'
 import type {RootAtoms} from './atoms/root.js'
-import {policyAtom, userAtom} from './atoms/user.js'
 import type {ReactiveNode} from './atoms/ReactiveNode.js'
 import {previewMetadataAtom} from './atoms/preview.js'
 
@@ -37,14 +36,14 @@ const nullEntryAtom = atom<EntryRecord<Record<string, unknown>> | null>(null)
  * Returns the active dashboard policy.
  */
 export function usePolicy() {
-  return useAtomValue(policyAtom)
+  return useDashboardContext().page.auth.policy
 }
 
 /**
  * Returns the authenticated dashboard user, or null when no user is active.
  */
 export function useUser(): User | null {
-  return useAtomValue(userAtom) ?? null
+  return useDashboardContext().page.auth.user
 }
 
 /**
@@ -138,6 +137,7 @@ function useFieldInfo(field: Field) {
 export function useNodeEditor(node: EditorNode, type: Type) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
+  const policy = scope?.entry.policy
   const activeVersionAtom = scope?.localeData.selectedEntry ?? nullEntryAtom
   const activeVersion = useAtomValue(activeVersionAtom)
   const editor = useMemo(() => {
@@ -145,9 +145,10 @@ export function useNodeEditor(node: EditorNode, type: Type) {
       type,
       node,
       parent instanceof EntryEditor ? parent : undefined,
-      activeVersion ?? undefined
+      activeVersion ?? undefined,
+      policy
     )
-  }, [activeVersion, node, parent, type])
+  }, [activeVersion, node, parent, policy, type])
   return editor
 }
 

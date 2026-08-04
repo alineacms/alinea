@@ -1,5 +1,6 @@
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import {Permission} from '#/core/Role.js'
+import type {Policy} from '#/core/Role.js'
 import type {RootData, RootI18n} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import type {
@@ -27,9 +28,14 @@ import {LucideFile} from '../icons.js'
 import {workspaceAtoms, viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
-import {policyAtom} from './user.js'
 import {routeAtom} from './nav.js'
-import {dispense} from './utils.js'
+import type {Page} from './nav.js'
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDragItem,
+  dashboardEntryDragTypes,
+  dispense
+} from './utils.js'
 
 export interface RootViewProps {
   root: RootData
@@ -47,20 +53,6 @@ export interface RootTreeItem {
   hasChildren: boolean
 }
 
-const DASHBOARD_ENTRY_DRAG_TYPE = 'application/x-alinea-entry-id'
-
-function acceptsDashboardEntryDrag(types: DragTypes) {
-  return types.has(DASHBOARD_ENTRY_DRAG_TYPE) || types.has('text/plain')
-}
-
-function dragItem(id: Key): DragItem {
-  const key = String(id)
-  return {
-    'text/plain': key,
-    [DASHBOARD_ENTRY_DRAG_TYPE]: key
-  }
-}
-
 const treeExpandedKeysAtoms = dispense((_workspace: string) =>
   dispense((_root: string) => atom(new Set<string>()))
 )
@@ -72,7 +64,8 @@ export class RootAtoms {
     public readonly workspace: string,
     public readonly key: string,
     public readonly locale: string | null,
-    public readonly data: Atom<RootData>
+    public readonly data: Atom<RootData>,
+    public readonly policy: Policy
   ) {
     this.explorer = this.children(null)
   }
@@ -86,6 +79,7 @@ export class RootAtoms {
       },
       {
         enableNavigation: true,
+        policy: this.policy,
         rootData: this.data,
         treeItems: this.treeItems,
         selectedLocale: this.locale,
@@ -116,8 +110,8 @@ export class RootAtoms {
     }
   )
   isMedia = atom(get => Boolean(get(this.data).isMediaRoot))
-  canCreate = atom(get => {
-    return get(policyAtom).canCreate({
+  canCreate = atom(_get => {
+    return this.policy.canCreate({
       workspace: this.workspace,
       root: this.key
     })
@@ -134,7 +128,7 @@ export class RootAtoms {
     const data = get(this.data)
     const config = get(configAtom)
     const graph = get(graphAtom)
-    const policy = get(policyAtom)
+    const policy = this.policy
     const selectedLocale = get(this.selectedLocale)
     const visibleTypes = Object.entries(config.schema)
       .filter(([, type]) => !Type.isHidden(type))
@@ -185,12 +179,12 @@ export class RootAtoms {
     }
   )
 
-  acceptedDragTypes = [DASHBOARD_ENTRY_DRAG_TYPE, 'text/plain']
+  acceptedDragTypes = [...dashboardEntryDragTypes]
   getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
-    return [...keys].map(dragItem)
+    return [...keys].map(dashboardEntryDragItem)
   })
-  dragDisabled = atom(get => {
-    const policy = get(policyAtom)
+  dragDisabled = atom(_get => {
+    const policy = this.policy
     const resource = {workspace: this.workspace, root: this.key}
     return !policy.canMove(resource) && !policy.canReorder(resource)
   })
@@ -232,7 +226,7 @@ export class RootAtoms {
     target: ItemDropTarget
   ) {
     const graph = get(graphAtom)
-    const policy = get(policyAtom)
+    const policy = this.policy
     const treeItems = get(this.treeItems)
     const moveTarget = target.key ? String(target.key) : this.key
     const targetType = target.key ? 'entry' : 'root'
@@ -269,8 +263,8 @@ export class RootAtoms {
     for (const item of items) {
       if (item.kind !== 'text' || !item.types || !item.getText) continue
       let id: string | null = null
-      if (item.types.has(DASHBOARD_ENTRY_DRAG_TYPE))
-        id = await item.getText(DASHBOARD_ENTRY_DRAG_TYPE)
+      if (item.types.has(dashboardEntryDragTypes[0]))
+        id = await item.getText(dashboardEntryDragTypes[0])
       else if (item.types.has('text/plain'))
         id = await item.getText('text/plain')
       if (id) keys.add(id)
@@ -279,19 +273,22 @@ export class RootAtoms {
   }
 }
 
-const rootLocaleAtoms = dispense((workspace: string) =>
-  dispense((root: string) =>
-    dispense((locale: string | null) => {
-      const data = workspaceAtoms(workspace).rootsAtom(root)
-      return new RootAtoms(workspace, root, locale, data)
-    })
+const rootPolicyAtoms = dispense((policy: Policy) =>
+  dispense((workspace: string) =>
+    dispense((root: string) =>
+      dispense((locale: string | null) => {
+        const data = workspaceAtoms(workspace).rootsAtom(root)
+        return new RootAtoms(workspace, root, locale, data, policy)
+      })
+    )
   )
 )
 
 export function rootAtoms(
+  page: Page,
   workspace: string,
   root: string,
   locale: string | null
 ) {
-  return rootLocaleAtoms(workspace)(root)(locale)
+  return rootPolicyAtoms(page.auth.policy)(workspace)(root)(locale)
 }

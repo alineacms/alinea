@@ -14,7 +14,6 @@ import {Type, type as createType} from '#/core/Type.js'
 import {createEntryAtom} from '#/dashboard/atoms/create.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
@@ -113,9 +112,9 @@ function CreateEntryLoading() {
 function CreateEntryForm() {
   const modal = useDashboardModal()
   const {page, root} = useDashboardContext()
-  const createEntry = useSetAtom(createEntryAtom)
+  const createEntry = useSetAtom(createEntryAtom(page.auth))
   const config = useAtomValue(configAtom).schema
-  const policy = useAtomValue(policyAtom)
+  const policy = page.auth.policy
   const treeItems = useAtomValue(root.treeItems)
   const rootData = useAtomValue(root.data)
   const initialParentId = useMemo(() => {

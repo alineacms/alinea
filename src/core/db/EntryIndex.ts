@@ -1,5 +1,6 @@
 import * as paths from '#/core/util/Paths.js'
 import MiniSearch from 'minisearch'
+import pLimit from 'p-limit'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {createRecord, parseRecord} from '../EntryRecord.js'
@@ -398,9 +399,10 @@ export class EntryGraph {
       }
       const results = this.#search
         .search(search, {
+          combineWith: 'AND',
           prefix: true,
           fuzzy: 0.1,
-          boost: {title: 2},
+          boost: {title: 10},
           filter: result => found.has(result.entry)
         })
         .map(result => result.entry)
@@ -434,7 +436,7 @@ export class EntryGraph {
     const parentDir = segments.slice(0, -1).join('/')
     const childrenDir = `${parentDir}/${path}`
     const seed = this.#seeds.get(childrenDir)
-    const data: Record<string, unknown> = {path, ...version.data, ...seed?.data}
+    const data: Record<string, unknown> = {path, ...seed?.data, ...version.data}
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
     const workspaceConfig = this.#config.workspaces[workspace]
@@ -606,6 +608,7 @@ export class EntryIndex extends EventTarget {
   #singleWorkspace: string | undefined
   #references: EntryReferenceIndex | undefined
   #referencesBuild: Promise<EntryReferenceIndex> | undefined
+  #syncLimit = pLimit(1)
   constructor(config: Config) {
     super()
     this.#config = config
@@ -651,6 +654,13 @@ export class EntryIndex extends EventTarget {
       return references
     })
     return this.#referencesBuild
+  }
+  async sync(source: Source): Promise<string> {
+    return this.#syncLimit(async () => {
+      await this.syncWith(source)
+      await this.seed(source)
+      return this.sha
+    })
   }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()

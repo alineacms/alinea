@@ -1,4 +1,5 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {getType} from '#/core/Internal.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {
@@ -11,7 +12,6 @@ import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useState, useTransition} from 'react'
@@ -148,7 +148,7 @@ export function EntryHeader({
   onSidebarOpenChange
 }: EntryHeaderProps) {
   const config = useAtomValue(configAtom)
-  const policy = useAtomValue(policyAtom)
+  const policy = entry.policy
   const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
   const selectedEntry = useAtomValue(localeData.selectedEntry)
@@ -188,6 +188,7 @@ export function EntryHeader({
   const isMediaFile = type === MediaFile
   const isMediaLibrary = type === MediaLibrary
   const isMedia = isMediaFile || isMediaLibrary
+  const typeData = getType(type)
   const isRevision = selectedVersion?.type === 'history'
   const isUnpublished = activeStatus === 'draft' && activeVersion.main
   const viewedStatus = selectedEntry.status
@@ -407,6 +408,7 @@ export function EntryHeader({
           >
             {isRevision ? 'Revision' : variantDescription[status]}
           </Badge>
+          <Badge icon={typeData.icon}>{typeData.label}</Badge>
           {controls}
           {menuItems.length > 0 && (
             <Menu

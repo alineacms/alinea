@@ -346,11 +346,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
               onSelectionChange={onSelectionChange}
             >
               {item => (
-                <SidebarTreeItem
-                  item={item}
-                  items={items}
-                  locale={locale}
-                />
+                <SidebarTreeItem item={item} items={items} locale={locale} />
               )}
             </Tree>
           </Virtualizer>

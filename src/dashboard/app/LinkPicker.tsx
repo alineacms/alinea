@@ -47,12 +47,13 @@ interface ExplorerModalProps {
 
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const {root} = useDashboardContext()
+  const {page, root} = useDashboardContext()
   const location = options.location ?? {
     workspace: root.workspace,
     root: root.key
   }
   const pickerRoot = rootAtoms(
+    page,
     location.workspace,
     location.root ?? root.key,
     options.selectedLocale ?? root.locale
@@ -61,6 +62,7 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
   const [explorer] = useState(() =>
     createExplorerAtoms(location, {
       ...options,
+      policy: page.auth.policy,
       rootData: pickerRoot.data,
       searchDepth: 'all',
       selectedLocale,

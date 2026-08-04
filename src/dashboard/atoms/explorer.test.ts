@@ -1,4 +1,5 @@
 import {expect, test} from 'bun:test'
+import {Policy} from '#/core/Role.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {
@@ -16,7 +17,7 @@ function folderEntry(value: ExplorerItemData) {
 test('picker rows select instead of navigating the dashboard', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},
-    {enableNavigation: true, onConfirm() {}}
+    {enableNavigation: true, onConfirm() {}, policy: Policy.ALLOW_ALL}
   )
   const folder = folderEntry({
     id: 'folder',
@@ -42,7 +43,7 @@ test('picker rows select instead of navigating the dashboard', () => {
 test('page explorers keep their row navigation action', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},
-    {enableNavigation: true}
+    {enableNavigation: true, policy: Policy.ALLOW_ALL}
   )
 
   expect(explorer.hasRowAction).toBe(true)

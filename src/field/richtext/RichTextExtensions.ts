@@ -2,6 +2,8 @@ import type {Schema} from '#/core/Schema.js'
 import {createId} from '#/core/Id.js'
 import {BlockNode} from '#/core/TextDoc.js'
 import {entries} from '#/core/util/Objects.js'
+import {createUniqueAnchor, isGeneratedAnchor} from '#/core/util/Anchors.js'
+import {slugify} from '#/core/util/Slugs.js'
 import styler from '@alinea/styler'
 import {
   Extension,
@@ -10,9 +12,9 @@ import {
   type AnyExtension
 } from '@tiptap/core'
 import {Fragment, type Node as ProseMirrorNode, Slice} from '@tiptap/pm/model'
+import {Plugin, type Transaction} from '@tiptap/pm/state'
 import {dropPoint} from '@tiptap/pm/transform'
 import type {EditorView} from '@tiptap/pm/view'
-import {Plugin} from '@tiptap/pm/state'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
 import Document from '@tiptap/extension-document'
@@ -37,26 +39,200 @@ import {
   encodeBlockValue,
   richTextBlockValueAttribute
 } from './RichTextBlockValue.js'
+import Anchor from './extensions/Anchor.js'
 import {Link} from './extensions/Link.js'
 import Small from './extensions/Small.js'
 import css from './RichTextExtensions.module.css'
 
 const styles = styler(css)
 
-const HeadingWithClasses = Heading.extend({
-  renderHTML({node, HTMLAttributes}) {
-    const level = this.options.levels.includes(node.attrs.level)
-      ? node.attrs.level
-      : this.options.levels[0]
-    return [
-      `h${level}`,
-      mergeAttributes(HTMLAttributes, {
-        class: styles.RichTextExtensions.heading(`level${level}`)
-      }),
-      0
-    ]
+function headingExtension(getEntryAnchors?: () => Iterable<string>) {
+  return Heading.extend({
+    addAttributes() {
+      return {
+        ...(this.parent?.() ?? {}),
+        _anchor: {
+          default: null,
+          parseHTML: element =>
+            element.getAttribute('data-anchor') || element.id || null
+        }
+      }
+    },
+    renderHTML({node, HTMLAttributes}) {
+      const level = this.options.levels.includes(node.attrs.level)
+        ? node.attrs.level
+        : this.options.levels[0]
+      const {_anchor, ...attributes} = HTMLAttributes
+      return [
+        `h${level}`,
+        mergeAttributes(
+          attributes,
+          typeof _anchor === 'string'
+            ? {id: _anchor, 'data-anchor': _anchor}
+            : {},
+          {class: styles.RichTextExtensions.heading(`level${level}`)}
+        ),
+        0
+      ]
+    },
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          appendTransaction(transactions, oldState, newState) {
+            const tr = newState.tr
+            let modified = false
+            const anchors = entryAnchorsOutsideDocument(
+              getEntryAnchors?.() ?? [],
+              oldState.doc
+            )
+            for (const anchor of inlineAnchors(newState.doc))
+              anchors.add(anchor)
+            const headings: Array<{
+              node: ProseMirrorNode
+              pos: number
+              custom: boolean
+            }> = []
+            newState.doc.descendants((node, pos) => {
+              if (node.type.name !== 'heading') return
+              const previous = previousHeading(transactions, oldState.doc, pos)
+              headings.push({
+                node,
+                pos,
+                custom: isCustomHeadingAnchor(node, previous)
+              })
+            })
+            const customAnchors = new Map<number, string | undefined>()
+            for (const {node, pos, custom} of headings) {
+              if (!custom) continue
+              customAnchors.set(
+                pos,
+                createUniqueAnchor(
+                  typeof node.attrs._anchor === 'string'
+                    ? node.attrs._anchor
+                    : undefined,
+                  anchors
+                )
+              )
+            }
+            for (const {node, pos, custom} of headings) {
+              const anchor = custom
+                ? customAnchors.get(pos)
+                : createUniqueAnchor(slugify(node.textContent), anchors)
+              const slug = anchor ?? null
+              if (node.attrs._anchor === slug && !headingHasAnchorMark(node))
+                continue
+              if (node.attrs._anchor !== slug)
+                tr.setNodeMarkup(pos, undefined, {...node.attrs, _anchor: slug})
+              node.descendants((child, childPos) => {
+                if (!child.isText || !child.text) return true
+                const from = pos + childPos + 1
+                const to = from + child.text.length
+                tr.removeMark(from, to, newState.schema.marks.anchor)
+                return false
+              })
+              modified = true
+            }
+            return modified ? tr : null
+          }
+        })
+      ]
+    }
+  })
+}
+
+function previousHeading(
+  transactions: ReadonlyArray<Transaction>,
+  oldDocument: ProseMirrorNode,
+  position: number
+): ProseMirrorNode | undefined {
+  let oldPosition = position
+  for (let index = transactions.length - 1; index >= 0; index--) {
+    const mapped = transactions[index].mapping.invert().mapResult(oldPosition)
+    if (mapped.deleted) return
+    oldPosition = mapped.pos
   }
-})
+  const previous = oldDocument.nodeAt(oldPosition)
+  return previous?.type.name === 'heading' ? previous : undefined
+}
+
+function entryAnchorsOutsideDocument(
+  entryAnchors: Iterable<string>,
+  document: ProseMirrorNode
+): Set<string> {
+  const counts = new Map<string, number>()
+  for (const anchor of entryAnchors)
+    counts.set(anchor, (counts.get(anchor) ?? 0) + 1)
+  for (const anchor of documentAnchors(document)) {
+    const count = counts.get(anchor) ?? 0
+    if (count <= 1) counts.delete(anchor)
+    else counts.set(anchor, count - 1)
+  }
+  return new Set(counts.keys())
+}
+
+function documentAnchors(document: ProseMirrorNode): Set<string> {
+  const result = inlineAnchors(document)
+  document.descendants(node => {
+    const anchor = node.attrs._anchor
+    if (node.type.name === 'heading' && typeof anchor === 'string')
+      result.add(anchor)
+  })
+  return result
+}
+
+function inlineAnchors(document: ProseMirrorNode): Set<string> {
+  const result = new Set<string>()
+  function visit(node: ProseMirrorNode, headingAnchor?: string) {
+    const anchor = node.attrs._anchor
+    const nextHeading =
+      node.type.name === 'heading' && typeof anchor === 'string'
+        ? anchor
+        : headingAnchor
+    if (node.isText)
+      for (const mark of node.marks) {
+        const id = mark.attrs.id
+        if (
+          mark.type.name === 'anchor' &&
+          typeof id === 'string' &&
+          id !== nextHeading
+        )
+          result.add(id)
+      }
+    node.forEach(child => visit(child, nextHeading))
+  }
+  visit(document)
+  return result
+}
+
+function headingHasAnchorMark(heading: ProseMirrorNode): boolean {
+  let found = false
+  heading.descendants(node => {
+    if (!node.isText) return !found
+    if (node.marks.some(mark => mark.type.name === 'anchor')) found = true
+    return !found
+  })
+  return found
+}
+
+function isCustomHeadingAnchor(
+  heading: ProseMirrorNode,
+  previous: ProseMirrorNode | undefined
+): boolean {
+  const anchor = heading.attrs._anchor
+  const generated = slugify(heading.textContent)
+  if (!previous)
+    return typeof anchor === 'string' && !isGeneratedAnchor(anchor, generated)
+  const previousAnchor = previous.attrs._anchor
+  if (heading.textContent === previous.textContent && anchor !== previousAnchor)
+    return (
+      anchor == null ||
+      (typeof anchor === 'string' && !isGeneratedAnchor(anchor, generated))
+    )
+  return (
+    typeof previousAnchor === 'string' &&
+    !isGeneratedAnchor(previousAnchor, slugify(previous.textContent))
+  )
+}
 
 export function richTextDocumentExtension(hasEmbeddedBlocks: boolean) {
   return Document.extend({
@@ -113,8 +289,16 @@ export const richTextBlockClipboard = Extension.create({
 
 export const extensions = createExtensions()
 
-export function defaultExtensions(): Array<AnyExtension> {
-  return Object.values(createExtensions())
+export function defaultExtensionConfig(
+  getEntryAnchors?: () => Iterable<string>
+) {
+  return createExtensions(getEntryAnchors)
+}
+
+export function defaultExtensions(
+  getEntryAnchors?: () => Iterable<string>
+): Array<AnyExtension> {
+  return Object.values(defaultExtensionConfig(getEntryAnchors))
 }
 
 export function richTextBlockExtensions(
@@ -166,12 +350,15 @@ export function richTextBlockExtensions(
   )
 }
 
-function createExtensions() {
+function createExtensions(getEntryAnchors?: () => Iterable<string>) {
   return {
     Document,
     Text,
     Paragraph: Paragraph.configure({
       HTMLAttributes: {class: styles.RichTextExtensions.paragraph()}
+    }),
+    Anchor: Anchor.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.anchor()}
     }),
     Small: Small.configure({
       HTMLAttributes: {class: styles.RichTextExtensions.small()}
@@ -201,7 +388,7 @@ function createExtensions() {
       HTMLAttributes: {class: styles.RichTextExtensions.blockquote()}
     }),
     HardBreak,
-    Heading: HeadingWithClasses,
+    Heading: headingExtension(getEntryAnchors),
     TextAlign: TextAlign.configure({types: ['heading', 'paragraph']}),
     Dropcursor,
     Gapcursor,

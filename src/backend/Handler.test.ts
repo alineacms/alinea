@@ -1,5 +1,5 @@
+import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {createHandler} from '#/backend/Handler.js'
-import {createRemote} from '#/backend/api/CreateBackend.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {createCMS} from '#/core.js'
 import type {
@@ -52,7 +52,7 @@ test('requires member management capability for user management', async () => {
     cms,
     db,
     remote(context) {
-      return createRemote({
+      return composeBackend({
         async verify(): Promise<AuthedContext> {
           return {
             ...context,
@@ -95,7 +95,7 @@ test('reports missing user api capability without listUsers', async () => {
     cms,
     db,
     remote() {
-      return createRemote({})
+      return composeBackend({})
     }
   })
 
@@ -116,7 +116,7 @@ test('reports user api capability when listUsers exists', async () => {
     cms,
     db,
     remote() {
-      return createRemote({
+      return composeBackend({
         async listUsers(): Promise<Array<User>> {
           return []
         }
@@ -141,7 +141,7 @@ test('enriches authenticated user in auth status response', async () => {
     cms,
     db,
     remote() {
-      return createRemote({
+      return composeBackend({
         async authenticate(
           _request: Request,
           options?: AuthOptions
@@ -174,6 +174,109 @@ test('enriches authenticated user in auth status response', async () => {
       sub: 'ada@example.com'
     }
   })
+})
+
+test('adds enriched user to commit requests', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  let commitUser: User | undefined
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {
+              email: 'ada@example.com',
+              roles: ['admin'],
+              sub: 'ada@example.com'
+            }
+          }
+        },
+        async enrichUser(user: User): Promise<User> {
+          return {...user, name: 'Ada Lovelace'}
+        },
+        async getTreeIfDifferent() {
+          return undefined
+        },
+        async *getBlobs() {},
+        async write(request) {
+          commitUser = request.user
+          return {sha: request.intoSha}
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?action=mutate', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify([])
+    }),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.equal(commitUser, {
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    roles: ['admin'],
+    sub: 'ada@example.com'
+  })
+})
+
+test('rejects oversized uploads before preparing a remote upload', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    maxUploadSize: 3
+  })
+  const db = new LocalDB(cms.config)
+  let prepareCalls = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async prepareUpload() {
+          prepareCalls += 1
+          throw new Error('Should not prepare an oversized upload')
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?action=upload', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({filename: 'large.jpg', size: 4})
+    }),
+    requestContext()
+  )
+
+  test.is(response.status, 413)
+  test.is(prepareCalls, 0)
 })
 
 function userRequest(operation: string): Request {

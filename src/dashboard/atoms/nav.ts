@@ -1,9 +1,11 @@
 import {Atom, atom, Getter} from 'jotai'
+import type {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import {atomWithLocation} from 'jotai-location'
 import {selectAtom} from 'jotai/utils'
 import {ReactNode} from 'react'
-import {workspaceAtoms, workspacesAtom} from './config.js'
-import {policyAtom} from './user.js'
+import {workspaceAtoms} from './config.js'
+import {configAtom} from './core.js'
 
 const location = atomWithLocation()
 
@@ -83,11 +85,13 @@ export const routeAtom = atom(
 const pageTypeAtom = selectAtom(routeAtom, route => route.page)
 const entryAtom = selectAtom(routeAtom, route => route.entry)
 
-const localeAtom = atom(get => {
-  const route = get(routeAtom)
-  const workspace = get(workspaceAtom)
+function resolveLocale(
+  get: Getter,
+  route: DashboardRoute,
+  workspace: string | undefined,
+  root: string | undefined
+) {
   if (!workspace) return null
-  const root = get(rootAtom)
   if (!root) return null
   const {i18n, languagePreferenceAtom} = get(
     workspaceAtoms(workspace).rootsAtom(root)
@@ -96,22 +100,29 @@ const localeAtom = atom(get => {
   const preference = get(languagePreferenceAtom)
   if (preference) return preference
   return i18n?.locales[0] ?? null
-})
+}
 
-const workspaceAtom = atom((get): string | undefined => {
-  const route = get(routeAtom)
+function resolveWorkspace(
+  get: Getter,
+  route: DashboardRoute,
+  policy: Policy
+): string | undefined {
   const {workspace} = route
-  const workspaces = get(workspacesAtom)
+  const workspaces = Object.keys(get(configAtom).workspaces).filter(candidate =>
+    policy.canRead({workspace: candidate})
+  )
   return workspace && workspaces.includes(workspace) ? workspace : workspaces[0]
-})
+}
 
-const rootAtom = atom(get => {
-  const route = get(routeAtom)
+function resolveRoot(
+  get: Getter,
+  route: DashboardRoute,
+  workspace: string | undefined,
+  policy: Policy
+) {
   const {root} = route
-  const workspace = get(workspaceAtom)
   if (!workspace) return undefined
   const workspaceConfig = get(workspaceAtoms(workspace).settingsAtom)
-  const policy = get(policyAtom)
   const roots = Object.keys(workspaceConfig.roots).filter(candidate =>
     policy.canRead({workspace, root: candidate})
   )
@@ -120,7 +131,7 @@ const rootAtom = atom(get => {
   } else {
     return roots[0]
   }
-})
+}
 
 export interface Page {
   type: 'users' | 'entry'
@@ -128,18 +139,28 @@ export interface Page {
   root: string | undefined
   entry: string | undefined
   locale: string | null | undefined
+  auth: PageAuth
 }
 
-/** @internal */
-export const pageAtom = atom((get): Page => {
+export interface PageAuth {
+  user: User
+  policy: Policy
+}
+
+export function resolvePage(get: Getter, auth: PageAuth): Page {
+  const route = get(routeAtom)
+  const {policy} = auth
+  const workspace = resolveWorkspace(get, route, policy)
+  const root = resolveRoot(get, route, workspace, policy)
   return {
     type: get(pageTypeAtom),
-    workspace: get(workspaceAtom),
-    root: get(rootAtom),
+    workspace,
+    root,
     entry: get(entryAtom),
-    locale: get(localeAtom)
+    locale: resolveLocale(get, route, workspace, root),
+    auth
   }
-})
+}
 
 export function page(
   render: (page: Page, get: Getter) => ReactNode | Promise<ReactNode>

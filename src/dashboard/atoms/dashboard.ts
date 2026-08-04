@@ -26,7 +26,7 @@ interface MutationQueueRetry {
 }
 
 interface MutationQueueDiscard {
-  discardMutationQueue(): void
+  discardMutationQueue(): Promise<void>
 }
 
 interface LogoutConnection {
@@ -42,6 +42,7 @@ export class DashboardAtoms {
     'system',
     undefined
   )
+  entrySidebarOpen = atom(true)
 
   mutationQueue = Object.assign(
     atom(
@@ -66,10 +67,10 @@ export class DashboardAtoms {
     if (graph.retryMutationQueue) await graph.retryMutationQueue()
   })
 
-  discardMutationQueue = atom(null, get => {
+  discardMutationQueue = atom(null, async get => {
     const graph = get(graphAtom) as WriteableGraph &
       Partial<MutationQueueDiscard>
-    graph.discardMutationQueue?.()
+    if (graph.discardMutationQueue) await graph.discardMutationQueue()
   })
 
   theme = Object.assign(
@@ -106,7 +107,7 @@ export class DashboardAtoms {
 
 export const dashboardAtoms = new DashboardAtoms()
 
-function mutationQueueState(
+export function mutationQueueState(
   entries: Array<MutationQueueEntry>
 ): DashboardMutationQueue {
   return {

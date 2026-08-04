@@ -12,7 +12,6 @@ import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
-import {policyAtom, userAtom} from '#/dashboard/atoms/user.js'
 import {workspaceAtoms} from '#/dashboard/atoms/config.js'
 import {setUserRolesAtom} from '#/dashboard/atoms/auth.js'
 import styler from '@alinea/styler'
@@ -40,12 +39,12 @@ export interface WorkspaceRootsProps {
 }
 
 export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
-  const policy = useAtomValue(policyAtom)
+  const policy = page.auth.policy
   const workspace = page.workspace!
   const settings = useAtomValue(workspaceAtoms(workspace).settingsAtom)
   const roots = Object.keys(settings.roots)
     .filter(key => policy.canRead({workspace, root: key}))
-    .map(key => rootAtoms(workspace, key, page.locale ?? null))
+    .map(key => rootAtoms(page, workspace, key, page.locale ?? null))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
@@ -96,8 +95,11 @@ function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
 
 interface WorkspaceProfileMenuProps extends WorkspaceRootsProps {}
 
-function WorkspaceProfileMenu({canManageMembers}: WorkspaceProfileMenuProps) {
-  const user = useAtomValue(userAtom)
+function WorkspaceProfileMenu({
+  canManageMembers,
+  page
+}: WorkspaceProfileMenuProps) {
+  const {user} = page.auth
   const config = useAtomValue(configAtom)
   const isLocal = useAtomValue(localAtom)
   const canLogout = useAtomValue(dashboardAtoms.canLogout)

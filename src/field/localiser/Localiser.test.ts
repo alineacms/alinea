@@ -447,3 +447,36 @@ test('localised object defaults do not share nested references', () => {
   value.en.title = 'English'
   test.is(value.de.title, '')
 })
+
+test('localised rich text blocks receive newly added field defaults', () => {
+  const Block = Config.type('Block', {
+    fields: {
+      title: Field.text('Title')
+    }
+  })
+  const Page = Config.type('Page', {
+    fields: {
+      body: localise(Field.richText('Body', {schema: {Block}}))
+    }
+  })
+  const block = {
+    [Node.type]: 'Block',
+    [BlockNode.id]: 'legacy'
+  }
+
+  const value = Type.withInitialValue(Page, {
+    body: {
+      en: [block],
+      de: [block],
+      fr: [block]
+    }
+  })
+
+  test.equal(value, {
+    body: {
+      en: [{...block, title: ''}],
+      de: [{...block, title: ''}],
+      fr: [{...block, title: ''}]
+    }
+  })
+})

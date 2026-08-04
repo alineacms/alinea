@@ -76,6 +76,10 @@ export class DashboardWorker extends EventTarget {
     return db.sha
   }
 
+  async sha() {
+    return (await this.db).sha
+  }
+
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     return this.#local(async () => {
       const db = await this.db
@@ -139,11 +143,17 @@ export class DashboardWorker extends EventTarget {
     for (const item of this.#queue) this.#flush(item)
   }
 
-  discardQueue(): void {
-    this.#blocked = false
-    for (const item of this.#queue) item.attempt += 1
-    this.#queue = []
-    this.#emitQueue()
+  async discardQueue(): Promise<void> {
+    await this.#local(async () => {
+      if (this.#queue.length === 0) return
+      const db = await this.db
+      const client = await this.#client
+      for (const item of this.#queue) item.attempt += 1
+      await db.syncWith(client)
+      this.#blocked = false
+      this.#queue = []
+      this.#emitQueue()
+    })
   }
 
   #flush(item: MutationQueueItem) {

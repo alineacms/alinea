@@ -1,4 +1,5 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {startTransition} from 'react'
 import type {Key, Selection} from 'react-aria-components'
@@ -19,10 +20,11 @@ export function ExplorerPickerContent({
   options
 }: ExplorerPickerContentProps) {
   const location = useAtomValue(explorer.location)
+  const {page} = useDashboardContext()
   const selectedLocale = useAtomValue(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
   const root = location.root
-    ? rootAtoms(location.workspace, location.root, selectedLocale)
+    ? rootAtoms(page, location.workspace, location.root, selectedLocale)
     : undefined
   const enableNavigation = options.enableNavigation ?? true
   const selectedKeys = location.parentId

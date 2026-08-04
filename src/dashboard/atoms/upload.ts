@@ -1,9 +1,10 @@
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission} from '#/core/Role.js'
+import type {Policy} from '#/core/Role.js'
 import {atom} from 'jotai'
 import {configAtom, graphAtom} from './core.js'
-import {policyAtom} from './user.js'
+import {dispense} from './utils.js'
 
 export interface UploadFilesRequest {
   files: Iterable<File> | ArrayLike<File>
@@ -12,14 +13,13 @@ export interface UploadFilesRequest {
   parentId?: string
 }
 
-export const uploadFilesAtom = atom(
-  null,
-  async (get, _set, request: UploadFilesRequest) => {
+export const uploadFilesAtom = dispense((policy: Policy) =>
+  atom(null, async (get, _set, request: UploadFilesRequest) => {
     const files = Array.from(request.files)
     if (files.length === 0) return
     const config = get(configAtom)
     const graph = get(graphAtom)
-    get(policyAtom).assert(Permission.Upload, {
+    policy.assert(Permission.Upload, {
       workspace: request.workspace,
       root: request.root,
       id: request.parentId
@@ -37,5 +37,5 @@ export const uploadFilesAtom = atom(
         })
       )
     )
-  }
+  })
 )

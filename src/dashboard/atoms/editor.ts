@@ -1,5 +1,6 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Resource} from '#/core/Role.js'
+import type {Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {Section} from '#/core/Section.js'
 import {type FieldGetter, optionTrackerOf} from '#/core/Tracker.js'
@@ -9,7 +10,6 @@ import type {Atom, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {configAtom, viewsAtom} from './core.js'
-import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
 
 export interface EditorNode {
@@ -57,9 +57,11 @@ export class EntryEditor implements EditorModel {
     public type: Type,
     public node: EditorNode,
     public parent?: EntryEditor,
-    public resource?: Resource
+    public resource?: Resource,
+    public policy?: Policy
   ) {
     this.resource ??= parent?.resource
+    this.policy ??= parent?.policy
     this.value = node.value
     this.sections = Type.sections(type).map(
       section => new EntryEditorSection(section)
@@ -124,7 +126,8 @@ class EntryEditorField implements EditorField {
     if (!resource) return options
     const fieldName = getScope(get(configAtom)).nameOf(this.field)
     if (!fieldName) return options
-    const policy = get(policyAtom)
+    const policy = this.editor.policy
+    if (!policy) return options
     const fieldResource = {...resource, field: fieldName}
     return {
       ...options,

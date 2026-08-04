@@ -1,5 +1,9 @@
 import type {Config} from '#/core/Config.js'
-import type {Connection, UploadResponse} from '#/core/Connection.js'
+import type {
+  Connection,
+  UploadMetadata,
+  UploadResponse
+} from '#/core/Connection.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
 import {getScope} from '#/core/Scope.js'
@@ -43,6 +47,10 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.sync()
   }
 
+  get sha(): Promise<string> {
+    return this.#worker.sha()
+  }
+
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
     return this.#worker.referencesTo(query)
   }
@@ -51,11 +59,14 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.retryQueue()
   }
 
-  discardMutationQueue(): void {
-    this.#worker.discardQueue()
+  discardMutationQueue(): Promise<void> {
+    return this.#worker.discardQueue()
   }
 
-  prepareUpload(file: string): Promise<UploadResponse> {
-    return this.#client.prepareUpload(file)
+  prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
+    return this.#client.prepareUpload(file, metadata)
   }
 }

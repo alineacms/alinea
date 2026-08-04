@@ -45,9 +45,7 @@ function SidebarTreeFixture() {
         expandedKeys={expandedKeys}
         onExpandedChange={setExpandedKeys}
       >
-        {item => (
-          <SidebarTreeItem item={item} items={items} locale={null} />
-        )}
+        {item => <SidebarTreeItem item={item} items={items} locale={null} />}
       </Tree>
     </StoryProvider>
   )
@@ -55,9 +53,7 @@ function SidebarTreeFixture() {
 
 test('sidebar chevron opens loaded children', async () => {
   const {container} = render(<SidebarTreeFixture />)
-  const chevron = container.querySelector<HTMLButtonElement>(
-    '[slot="chevron"]'
-  )
+  const chevron = container.querySelector<HTMLButtonElement>('[slot="chevron"]')
 
   expect(chevron).not.toBeNull()
   expect(screen.queryByText('Child')).toBeNull()

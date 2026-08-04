@@ -31,7 +31,7 @@ export async function boot(gen: ConfigGenerator) {
     let worker: DashboardWorker
     try {
       ;[events, worker] = createSharedWorker()
-    } catch (error) {
+    } catch {
       console.warn('Shared worker not supported, falling back to local worker.')
       const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
       events = worker = new DashboardWorker(source)

@@ -7,7 +7,8 @@ import {slugify} from '#/core/util/Slugs.js'
 import {atom} from 'jotai'
 import {configAtom, graphAtom} from './core.js'
 import {routeAtom} from './nav.js'
-import {policyAtom, userAtom} from './user.js'
+import type {PageAuth} from './nav.js'
+import {dispense} from './utils.js'
 
 export interface CreateEntryRequest {
   workspace: string
@@ -20,12 +21,11 @@ export interface CreateEntryRequest {
   insertOrder?: 'first' | 'last'
 }
 
-export const createEntryAtom = atom(
-  null,
-  async (get, set, request: CreateEntryRequest) => {
+export const createEntryAtom = dispense((auth: PageAuth) =>
+  atom(null, async (get, set, request: CreateEntryRequest) => {
+    const {policy, user} = auth
     const config = get(configAtom)
     const graph = get(graphAtom)
-    const policy = get(policyAtom)
     const type = config.schema[request.type]
     assert(type, `Type "${request.type}" not found in config`)
     const title = request.title.trim()
@@ -64,7 +64,7 @@ export const createEntryAtom = atom(
     })
     const data = Type.beforeSave(type, initialData, {
       action: 'create',
-      user: get(userAtom),
+      user,
       now: new Date()
     })
     const created = await graph.create({
@@ -88,5 +88,5 @@ export const createEntryAtom = atom(
       locale: request.locale ?? undefined
     })
     return created
-  }
+  })
 )

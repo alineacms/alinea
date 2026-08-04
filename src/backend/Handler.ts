@@ -11,7 +11,7 @@ import type {
 import type {LocalDB} from '#/core/db/LocalDB.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
-import {HttpError} from '#/core/HttpError.js'
+import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -19,7 +19,7 @@ import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {array, object, string} from 'cito'
+import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
@@ -27,7 +27,8 @@ import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
 
 const PrepareBody = object({
-  filename: string
+  filename: string,
+  size: optional(number)
 })
 
 export interface Handler {
@@ -230,7 +231,10 @@ export function createHandler({
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
-          const request = await local.request(mutations, policy)
+          const request = {
+            ...(await local.request(mutations, policy)),
+            user: user.claims
+          }
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {
@@ -308,8 +312,27 @@ export function createHandler({
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           expectJson()
+          const prepare = PrepareBody(await body)
+          if (
+            prepare.size !== undefined &&
+            (!Number.isSafeInteger(prepare.size) || prepare.size < 0)
+          ) {
+            throw new HttpError(ErrorCode.BadRequest, 'Invalid upload size')
+          }
+          assertUploadSize(
+            prepare.filename,
+            prepare.size,
+            cms.config.maxUploadSize
+          )
           return Response.json(
-            await cnx.prepareUpload(PrepareBody(await body).filename)
+            await cnx.prepareUpload(
+              prepare.filename,
+              prepare.size === undefined
+                ? undefined
+                : {
+                    size: prepare.size
+                  }
+            )
           )
         }
         const isPost = request.method === 'POST'

@@ -6,7 +6,6 @@ import {
   type ExplorerOptions
 } from '#/dashboard/atoms/explorer.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState, type ReactNode} from 'react'
@@ -56,8 +55,8 @@ interface ExplorerModalProps {
 
 function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const {root, workspace} = useDashboardContext()
-  const policy = useAtomValue(policyAtom)
+  const {page, root, workspace} = useDashboardContext()
+  const policy = page.auth.policy
   const mediaRoot = Object.entries(workspace.roots).find(
     ([key, value]) =>
       policy.canRead({workspace: root.workspace, root: key}) &&
@@ -68,6 +67,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     root: mediaRoot ?? root.key
   }
   const pickerRoot = rootAtoms(
+    page,
     location.workspace,
     location.root ?? root.key,
     options.selectedLocale ?? root.locale
@@ -76,6 +76,8 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const [explorer] = useState(() =>
     createExplorerAtoms(location, {
       ...options,
+      policy: page.auth.policy,
+      flatResults: false,
       rootData: pickerRoot.data,
       searchDepth: 'all',
       selectedLocale,

@@ -10,7 +10,11 @@ import {
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import type {RichTextOptions} from './RichTextField.js'
+import {useEntryAtoms} from '#/dashboard/hooks.js'
+import {
+  configureRichTextExtensions,
+  type RichTextOptions
+} from './RichTextField.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import styler from '@alinea/styler'
 import type {AnyExtension, Editor} from '@tiptap/core'
@@ -37,7 +41,7 @@ import {
 } from './RichTextBlockHost.js'
 import {editorContent, editorNodes} from './RichTextDocument.js'
 import {
-  defaultExtensions,
+  defaultExtensionConfig,
   richTextBlockClipboard,
   richTextBlockExtensions,
   richTextDocumentExtension
@@ -52,6 +56,7 @@ import css from './RichTextField.module.css'
 import {RichTextInsertMenu} from './RichTextInsertMenu.js'
 import {documentUpdateAtom} from './RichTextState.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
+import {PickTextAnchor, usePickTextAnchor} from './PickTextAnchor.js'
 
 const styles = styler(css)
 
@@ -91,11 +96,24 @@ export function RichTextFieldView<Blocks extends Schema>({
   const root = useRef<HTMLDivElement>(null)
   const ownerId = useId()
   const picker = usePickTextLink()
+  const anchorPicker = usePickTextAnchor()
+  const {localeData} = useEntryAtoms()
+  const entryAnchors = useAtomValue(localeData.anchors)
+  const entryAnchorIds = useMemo(
+    () => entryAnchors.map(anchor => anchor.id),
+    [entryAnchors]
+  )
+  const entryAnchorIdsRef = useRef(entryAnchorIds)
+  entryAnchorIdsRef.current = entryAnchorIds
+  const getEntryAnchors = useCallback(() => entryAnchorIdsRef.current, [])
   const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
   const extensions = useMemo<Array<AnyExtension>>(() => {
-    const configured = options.extensions
-      ? Object.values(options.extensions)
-      : defaultExtensions()
+    const configured = Object.values(
+      configureRichTextExtensions(
+        options.extensions,
+        defaultExtensionConfig(getEntryAnchors)
+      )
+    )
     const blocks = richTextBlockExtensions(options.schema, hosts)
     return [
       richTextDocumentExtension(blocks.length > 0),
@@ -103,7 +121,7 @@ export function RichTextFieldView<Blocks extends Schema>({
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
-  }, [hosts, options.extensions, options.schema])
+  }, [getEntryAnchors, hosts, options.extensions, options.schema])
   const content = useMemo(
     () => editorContent(store.get(fieldNode.value)),
     [fieldNode, store]
@@ -238,6 +256,7 @@ export function RichTextFieldView<Blocks extends Schema>({
   return (
     <>
       <PickTextLink picker={picker} />
+      <PickTextAnchor picker={anchorPicker} />
       <Label
         description={options.help}
         errorMessage={error}
@@ -293,6 +312,8 @@ export function RichTextFieldView<Blocks extends Schema>({
               enableTables={options.enableTables}
               ownerId={ownerId}
               pickLink={picker.pickLink}
+              pickAnchor={anchorPicker.pickAnchor}
+              entryAnchors={entryAnchorIds}
               toolbar={options.toolbar}
               onFocusChange={(next, nextTarget) => {
                 if (next) setFocused(true)
@@ -307,6 +328,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 }
 
 function setEditorReadOnly(editor: Editor, readOnly: boolean) {
+  if (editor.isDestroyed) return
   editor.setEditable(!readOnly, false)
   editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
 }

@@ -5,7 +5,6 @@ import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {EditorScope} from '#/dashboard/hooks.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {richText} from './RichTextField.js'
-import {extensions} from './Extensions.js'
 import {
   alignment,
   formatting,
@@ -66,10 +65,10 @@ const plainBody = richText('Body', {enableTables: true})
 const plainEntry = type('Plain entry', {fields: {body: plainBody}})
 const customBody = richText('Body', {
   enableTables: true,
-  extensions: {
+  extensions: extensions => ({
     ...extensions,
     Table: extensions.Table.configure({resizable: true})
-  },
+  }),
   toolbar: {
     headings,
     tables: {

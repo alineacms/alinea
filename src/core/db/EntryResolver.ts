@@ -659,7 +659,7 @@ function localeChecker(locale: string | null, preferred: boolean): Check {
   }
 }
 
-function filterChecker(
+export function filterChecker(
   filter: Filter,
   getField = (input: any, name: string) => input[name]
 ): Check {

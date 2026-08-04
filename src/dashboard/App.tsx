@@ -11,9 +11,9 @@ import {usersPage} from './app/pages/UsersPage.js'
 import {authAtom} from './atoms/auth.js'
 import {workspaceAtoms} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
-import {pageAtom} from './atoms/nav.js'
+import {resolvePage} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
-import {policyAtom, policyReady} from './atoms/user.js'
+import {authReady} from './atoms/user.js'
 import './global.css'
 
 export interface AppProps {
@@ -28,18 +28,13 @@ export interface AppProps {
 
 const appAtom = atom(get => {
   const auth = get(authAtom)
-  switch (auth.status) {
-    case 'authenticated':
-      return get(authenticatedAtom)
-    default:
-      return <AuthView />
-  }
+  return auth.status === 'authenticated' ? get(authenticatedAtom) : <AuthView />
 })
 
 const authenticatedAtom = atom(async get => {
-  await get(policyReady)
-  const policy = get(policyAtom)
-  const page = get(pageAtom)
+  const auth = await get(authReady)
+  const {policy} = auth
+  const page = resolvePage(get, auth)
 
   if (page.type === 'users' && policy.canManageMembers()) {
     return usersPage(page, get)
@@ -50,7 +45,7 @@ const authenticatedAtom = atom(async get => {
   if (entry) {
     const content = await entryPage(page, get)
     if (!workspace || !root) return content
-    const rootData = rootAtoms(workspace, root, page.locale ?? null)
+    const rootData = rootAtoms(page, workspace, root, page.locale ?? null)
     const workspaceData = get(workspaceAtoms(workspace).settingsAtom)
     await get(rootData.treeReady)
     return (
@@ -66,7 +61,7 @@ const authenticatedAtom = atom(async get => {
   }
 
   if (workspace && root) {
-    const rootData = rootAtoms(workspace, root, page.locale ?? null)
+    const rootData = rootAtoms(page, workspace, root, page.locale ?? null)
     const [content] = await Promise.all([
       rootPage(page, get),
       get(rootData.treeReady)

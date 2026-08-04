@@ -43,6 +43,7 @@ interface ExplorerTableRowProps {
   columns: Array<ExplorerTableColumn>
   entry: DashboardEntry
   breadcrumbs: boolean
+  onPress?: () => void
 }
 
 interface ExplorerTableDisplayRowProps {
@@ -54,6 +55,7 @@ interface ExplorerTableDisplayRowProps {
   cells: Array<DashboardEntryOverviewCell>
   breadcrumbs?: boolean | undefined
   parents: Array<DashboardEntry>
+  onPress?: () => void
   rootLabel?: string
 }
 
@@ -128,7 +130,8 @@ function ExplorerTableDisplayRow({
   cells,
   breadcrumbs,
   parents,
-  rootLabel
+  rootLabel,
+  onPress
 }: ExplorerTableDisplayRowProps) {
   function renderCell(columnOrId: ExplorerTableColumn | Key) {
     const column =
@@ -204,6 +207,7 @@ function ExplorerTableDisplayRow({
       columns={columns}
       dependencies={[columns, label, icon, cells, breadcrumbs, parents]}
       style={{width: '100%', minWidth: '100%', height: 'inherit'}}
+      onPress={onPress}
     >
       {renderCell}
     </Row>
@@ -214,7 +218,8 @@ function ExplorerTableLoadingRow({
   columnById,
   columns,
   entry,
-  breadcrumbs
+  breadcrumbs,
+  onPress
 }: ExplorerTableRowProps) {
   return (
     <ExplorerTableDisplayRow
@@ -226,6 +231,7 @@ function ExplorerTableLoadingRow({
       cells={[]}
       breadcrumbs={breadcrumbs}
       parents={[]}
+      onPress={onPress}
     />
   )
 }
@@ -239,7 +245,8 @@ function ExplorerTableLoadedRow({
   columns,
   data,
   entry,
-  breadcrumbs
+  breadcrumbs,
+  onPress
 }: ExplorerTableLoadedRowProps) {
   const root = useAtomValue(data.root)
   const rootLabel = useAtomValue(root.label)
@@ -260,6 +267,7 @@ function ExplorerTableLoadedRow({
       breadcrumbs={breadcrumbs}
       parents={parents}
       rootLabel={rootLabel}
+      onPress={onPress}
     />
   )
 }
@@ -376,6 +384,11 @@ export function ExplorerTable({
                   columnById={columnById}
                   columns={columns}
                   entry={item}
+                  onPress={
+                    explorer.mode === 'search'
+                      ? () => onItemAction(item.id)
+                      : undefined
+                  }
                 />
               )}
             </TableBody>

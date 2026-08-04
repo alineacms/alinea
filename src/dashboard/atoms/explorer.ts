@@ -5,6 +5,7 @@ import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {RootData} from '#/core/Root.js'
+import type {Policy} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import type {Infer} from '#/types.js'
 import {parents} from '#/query.js'
@@ -17,7 +18,6 @@ import {configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
 import {uploadFilesAtom} from './upload.js'
-import {policyAtom} from './user.js'
 
 export const dashboardEntryOverviewColumnCount = 5
 
@@ -41,6 +41,7 @@ export interface ExplorerOptions {
   breadcrumbs?: boolean
   condition?: Filter<EntryFields>
   enableNavigation?: boolean
+  flatResults?: boolean
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
@@ -55,6 +56,7 @@ export interface ExplorerOptions {
   searchDepth?: 'current' | 'all'
   onAction?: (entry: ExplorerEntry) => void
   onConfirm?: (selection: Array<string>) => void
+  policy: Policy
 }
 
 export interface ExplorerTreeItem {
@@ -360,7 +362,7 @@ export class ExplorerAtoms {
   )
   canUpload = atom(get => {
     const location = get(this.location)
-    return get(policyAtom).canUpload({
+    return this.options.policy.canUpload({
       workspace: location.workspace,
       root: location.root,
       id: location.parentId
@@ -380,7 +382,7 @@ export class ExplorerAtoms {
   upload = atom(null, (get, set, files: Iterable<File> | ArrayLike<File>) => {
     const location = get(this.location)
     if (!location.root) return
-    set(uploadFilesAtom, {
+    set(uploadFilesAtom(this.options.policy), {
       files,
       workspace: location.workspace,
       root: location.root,
@@ -419,12 +421,16 @@ export class ExplorerAtoms {
     if (!location.root && this.rootScope === 'current') return []
     if (this.hideResultsUntilSearch && !search) return []
     const graph = get(graphAtom)
-    const policy = get(policyAtom)
+    const policy = this.options.policy
     const sort = get(this.sort)
     const filter = get(this.filter)
     const flatList =
       Boolean(search && this.searchDepth === 'all') ||
-      Boolean(this.options.condition && !this.options.pickChildren)
+      Boolean(
+        this.options.condition &&
+        !this.options.pickChildren &&
+        this.options.flatResults !== false
+      )
     const orderField =
       sort.sortBy === 'title'
         ? Entry.title

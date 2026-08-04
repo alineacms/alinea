@@ -86,7 +86,7 @@ function WorkspaceSelectorMenu({
   popoverProps
 }: WorkspaceSelectorMenuProps) {
   const setRoute = useSetAtom(routeAtom)
-  const workspaces = useAtomValue(workspacesAtom)
+  const workspaces = useAtomValue(workspacesAtom(page.auth.policy))
   if (workspaces.length <= 1 && !includeUsersLink) return label
   return (
     <Menu
@@ -164,6 +164,7 @@ function SearchPopup({page, root}: SearchPopupProps) {
     createExplorerAtoms(
       {workspace: root.workspace, root: root.key},
       {
+        policy: page.auth.policy,
         autoSelectFirstItem: true,
         breadcrumbs: true,
         enableNavigation: true,
@@ -207,7 +208,7 @@ export function WorkspaceMenu({
   root,
   workspace
 }: WorkspaceMenuProps) {
-  const workspaces = useAtomValue(workspacesAtom)
+  const workspaces = useAtomValue(workspacesAtom(page.auth.policy))
   const menu =
     workspaces.length > 1 ? (
       <WorkspaceSelectorMenu
