@@ -40,13 +40,21 @@ const styles = styler(css)
 export interface ExplorerProps {
   controls?: ReactNode
   explorer: DashboardExplorer
+  headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
+}
+
+export interface ExplorerHeaderEntry {
+  backLabel: string
+  title: string
+  onBack(): void
 }
 
 export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
   explorer: DashboardExplorer
+  headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
 }
 
@@ -61,6 +69,7 @@ interface ExplorerSearchProps {
 
 interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
+  headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
 }
 
@@ -197,10 +206,23 @@ function ExplorerHeaderLoadedParentMain({
 
 function ExplorerHeaderMain({
   explorer,
+  headerEntry,
   titleControls
 }: ExplorerHeaderMainProps) {
   const root = useAtomValue(explorer.root)
   const parent = useAtomValue(explorer.parent)
+  if (headerEntry) {
+    return (
+      <div className={styles.ExplorerHeader.main()}>
+        <EditorBackButton
+          label={headerEntry.backLabel}
+          onPress={headerEntry.onBack}
+        />
+        <h1 className={styles.ExplorerHeader.title()}>{headerEntry.title}</h1>
+        {titleControls}
+      </div>
+    )
+  }
   if (parent) {
     return (
       <ExplorerHeaderParentMain
@@ -374,12 +396,17 @@ export function ExplorerHeader({
   autoFocusSearch,
   controls,
   explorer,
+  headerEntry,
   titleControls
 }: ExplorerHeaderProps) {
   return (
     <RailHeader className={styles.ExplorerHeader()}>
       <div className={styles.ExplorerHeader.content()}>
-        <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
+        <ExplorerHeaderMain
+          explorer={explorer}
+          headerEntry={headerEntry}
+          titleControls={titleControls}
+        />
         <div className={styles.Explorer.searchSlot()}>
           <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
         </div>
@@ -402,12 +429,18 @@ export function ExplorerBody({explorer}: ExplorerBodyProps) {
   )
 }
 
-export function Explorer({controls, explorer, titleControls}: ExplorerProps) {
+export function Explorer({
+  controls,
+  explorer,
+  headerEntry,
+  titleControls
+}: ExplorerProps) {
   return (
     <>
       <ExplorerHeader
         controls={controls}
         explorer={explorer}
+        headerEntry={headerEntry}
         titleControls={titleControls}
       />
       <ExplorerBody explorer={explorer} />

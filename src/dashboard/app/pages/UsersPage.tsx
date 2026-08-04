@@ -25,7 +25,7 @@ import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../../icons.js'
-import {AppShell} from '../AppShell.js'
+import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
 import {Badge} from '../Badge.js'
 import {
   DashboardModal,
@@ -137,10 +137,12 @@ function removeUser(users: Array<User>, email: string): Array<User> {
 export const usersPage = page(async page => {
   return (
     <AppShell>
-      <UsersPageSidebar page={page} />
-      <div className={styles.AppShellContent()}>
-        <UsersPage />
-      </div>
+      <AppShellInner>
+        <UsersPageSidebar page={page} />
+        <AppShellContent>
+          <UsersPage />
+        </AppShellContent>
+      </AppShellInner>
     </AppShell>
   )
 })

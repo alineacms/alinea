@@ -209,7 +209,15 @@ function EntryEditor({
   node
 }: EntryEditorProps) {
   const view = useAtomValue(entry.view)
-  if (view === 'overview') return <EntryOverview entry={entry} root={root} />
+  if (view === 'overview')
+    return (
+      <EntryOverview
+        entry={entry}
+        page={page}
+        root={root}
+        selectedEntry={selectedEntry}
+      />
+    )
   return (
     <EntryEditorContent
       entry={entry}
@@ -226,14 +234,30 @@ function EntryEditor({
 
 interface EntryOverviewProps {
   entry: EntryAtoms
+  page: Page
   root: RootAtoms
+  selectedEntry: Entry
 }
 
-function EntryOverview({entry, root}: EntryOverviewProps) {
+function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
+  const setRoute = useSetAtom(routeAtom)
+  const parentId = selectedEntry.parentId
   return (
     <Rail main>
       <Explorer
         explorer={root.children(entry.id)}
+        headerEntry={{
+          backLabel: parentId ? 'Back to parent entry' : 'Back to root',
+          title: selectedEntry.title,
+          onBack() {
+            setRoute({
+              workspace: selectedEntry.workspace,
+              root: selectedEntry.root,
+              entry: parentId ?? undefined,
+              locale: page.locale ?? undefined
+            })
+          }
+        }}
         titleControls={<EntryViewToggle entry={entry} />}
       />
     </Rail>

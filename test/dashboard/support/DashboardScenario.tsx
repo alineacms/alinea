@@ -33,10 +33,17 @@ const ScenarioPage = Config.document('Page', {
   }
 })
 
+const HiddenFolder = Config.document('Hidden folder', {
+  contains: ['HiddenFolder'],
+  defaultView: 'overview',
+  fields: {},
+  hidden: true
+})
+
 const main = Config.workspace('Main', {
   source: 'main',
   roots: {
-    pages: Config.root('Pages', {contains: ['Page']})
+    pages: Config.root('Pages', {contains: ['Page', 'HiddenFolder']})
   }
 })
 
@@ -49,7 +56,7 @@ const references = Config.workspace('References', {
 
 const config = Config.create({
   enableDrafts: true,
-  schema: {Page: ScenarioPage},
+  schema: {HiddenFolder, Page: ScenarioPage},
   workspaces: {main, references}
 })
 
@@ -104,6 +111,21 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     root: 'pages',
     parentId: dashboardScenarioIds.folder,
     set: {title: 'Child'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.hiddenFolder,
+    type: HiddenFolder,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Hidden folder'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.hiddenChild,
+    type: HiddenFolder,
+    workspace: 'main',
+    root: 'pages',
+    parentId: dashboardScenarioIds.hiddenFolder,
+    set: {title: 'Hidden child'}
   })
   await db.create({
     id: dashboardScenarioIds.searchTitle,

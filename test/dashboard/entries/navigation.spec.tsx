@@ -31,6 +31,22 @@ test('selects the sidebar root when navigating back to it', async ({
   await expect(tree.getByRole('row', {selected: true})).toHaveCount(0)
 })
 
+test('shows the loaded entry title on an overview outside the sidebar tree', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'hiddenFolder',
+    title: 'Hidden folder'
+  })
+
+  await expect(app.title).toHaveText('Hidden folder')
+  await expect(
+    app.page.getByRole('button', {name: 'Back to root'})
+  ).toBeVisible()
+  await expect(app.page.getByRole('button', {name: 'Edit entry'})).toBeVisible()
+})
+
 test('expands and collapses an entry with the sidebar chevron', async ({
   dashboard,
   mount

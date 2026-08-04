@@ -232,7 +232,11 @@ export class EntryLocaleAtoms {
     }
   })
   history = atom(async get => {
-    const entry = await get(this.selectedEntry)
+    const versions = get(this.versions)
+    const entry =
+      Array.from(versions.values()).find(version => version.active) ??
+      versions.values().next().value
+    assert(entry, `No readable entry for "${this.entry.id}"`)
     const config = get(configAtom)
     const client = get(clientAtom)
     const file = join(Config.contentDir(config), entry.filePath)
