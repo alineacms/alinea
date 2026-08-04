@@ -196,7 +196,7 @@ export class ExplorerAtoms {
       if (!this.#conditionChecker) return true
       const {data} = get(entry.data)
       if (!data) return false
-      const currentEntry = get(data.currentEntry)
+      const currentEntry = get(data.currentEntryFor(get(this.selectedLocale)))
       if (!currentEntry || currentEntry instanceof Promise) return false
       return this.#conditionChecker(currentEntry)
     })
@@ -213,10 +213,9 @@ export class ExplorerAtoms {
         const {data} = get(entry.data)
         if (!data || !get(data.entryData).hasChildren) return []
         const entryData = get(data.entryData)
-        const root = get(data.root)
         const db = get(graphAtom)
         const policy = get(policyAtom)
-        const locale = get(root.selectedLocale)
+        const locale = get(this.selectedLocale)
         const children = await db.find({
           locale,
           workspace: entryData.workspace,

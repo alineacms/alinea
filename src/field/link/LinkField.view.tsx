@@ -543,6 +543,7 @@ function LinkPickerAction({
     enableNavigation,
     flatResults: !nestedResults,
     location,
+    selectedLocale: location?.locale ?? null,
     nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -639,6 +640,7 @@ function LinkPickerDialog({
     enableNavigation,
     flatResults: !nestedResults,
     location,
+    selectedLocale: location?.locale ?? null,
     nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -719,7 +721,8 @@ function useEntryPickerLocation(
           location: {
             workspace: entry.workspace,
             root: entry.root,
-            parentId: entry.id
+            parentId: entry.id,
+            locale: entry.locale ?? undefined
           },
           pickingChildren: true
         }

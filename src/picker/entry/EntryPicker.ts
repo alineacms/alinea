@@ -32,6 +32,7 @@ export interface EditorLocation {
   parentId?: string
   workspace: string
   root: string
+  locale?: string
 }
 
 type DynamicOption<T> = T | ((info: EditorInfo) => T | Promise<T>)
