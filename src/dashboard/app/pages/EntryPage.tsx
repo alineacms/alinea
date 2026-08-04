@@ -21,7 +21,7 @@ import {
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect} from 'react'
+import {useEffect, useTransition} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -50,41 +50,44 @@ export const entryPage = page(async (page, get) => {
   try {
     const entry = await get(entryAtoms(page, page.entry))
     const localeData = entry.locales(page.locale ?? null)
-    const [selectedEntry, selectedNode, parentNeedsTranslation, sourceLocale] =
-      await Promise.all([
-        get(localeData.selectedEntry),
-        get(localeData.selectedNode),
-        get(localeData.parentNeedsTranslation),
-        get(localeData.translationSourceLocale),
-        get(entry.type),
-        get(entry.parentId),
+    const type = get(typeAtoms(get(entry.type)))
+    const view = get(entry.view)
+    const selectedEntry = await get(localeData.selectedEntry)
+    if (view === 'overview') {
+      const root = rootAtoms(
+        page,
         get(entry.workspace),
         get(entry.root),
-        get(entry.hasChildren),
-        get(entry.canPublishParents),
-        get(entry.parentUnpublished),
-        get(entry.mediaI18n),
-        get(entry.preview),
-        get(entry.translationSourceLocales),
-        get(entry.view),
-        get(localeData.untranslated),
-        get(localeData.versions),
-        get(localeData.availableStatuses),
-        get(localeData.history),
-        get(localeData.previewEntry),
-        get(localeData.previewUrlReady),
+        page.locale ?? null
+      )
+      await get(root.children(entry.id).items)
+      return (
+        <EntryOverview
+          entry={entry}
+          page={page}
+          root={root}
+          selectedEntry={selectedEntry}
+        />
+      )
+    }
+    const selectedNode = await get(localeData.selectedNode)
+    const parentNeedsTranslation = type.customView
+      ? false
+      : await get(localeData.parentNeedsTranslation)
+    const sourceLocale = get(localeData.translationSourceLocale)
+    const hasSidebar = !type.customView && !get(localeData.untranslated)
+    if (hasSidebar) {
+      const sidebarLoads: Array<Promise<unknown>> = [
         get(entry.incomingReferences)
-      ])
-    const root = rootAtoms(
-      page,
-      get(entry.workspace),
-      get(entry.root),
-      page.locale ?? null
-    )
-    await get(root.treeReady)
-    if (get(entry.view) === 'overview') await get(root.children(entry.id).items)
+      ]
+      if (type.type !== MediaFile) sidebarLoads.push(get(localeData.history))
+      const preview = get(entry.preview)
+      if (preview === true) sidebarLoads.push(get(localeData.previewUrlReady))
+      else if (preview) sidebarLoads.push(get(localeData.previewEntry))
+      await Promise.all(sidebarLoads)
+    }
     return (
-      <EntryEditor
+      <EntryEditorContent
         entry={entry}
         localeData={localeData}
         node={selectedNode}
@@ -92,7 +95,6 @@ export const entryPage = page(async (page, get) => {
         parentNeedsTranslation={parentNeedsTranslation}
         selectedEntry={selectedEntry}
         sourceLocale={sourceLocale}
-        root={root}
       />
     )
   } catch (error) {
@@ -173,6 +175,7 @@ interface EntryViewToggleProps {
 
 function EntryViewToggle({entry}: EntryViewToggleProps) {
   const [view, setView] = useAtom(entry.view)
+  const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
@@ -181,55 +184,21 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       aria-label={label}
       appearance="plain"
       icon={ViewIcon}
+      isDisabled={isPending}
       size="icon"
-      onPress={() => setView(nextView)}
+      onPress={() => startTransition(() => setView(nextView))}
     />
   )
 }
 
-interface EntryEditorProps {
+interface EntryEditorContentProps {
   page: Page
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
   selectedEntry: Entry
   sourceLocale: string | null
-  root: RootAtoms
   node: ReactiveNode<object>
-}
-
-function EntryEditor({
-  page,
-  entry,
-  localeData,
-  parentNeedsTranslation,
-  selectedEntry,
-  sourceLocale,
-  root,
-  node
-}: EntryEditorProps) {
-  const view = useAtomValue(entry.view)
-  if (view === 'overview')
-    return (
-      <EntryOverview
-        entry={entry}
-        page={page}
-        root={root}
-        selectedEntry={selectedEntry}
-      />
-    )
-  return (
-    <EntryEditorContent
-      entry={entry}
-      localeData={localeData}
-      node={node}
-      page={page}
-      parentNeedsTranslation={parentNeedsTranslation}
-      root={root}
-      selectedEntry={selectedEntry}
-      sourceLocale={sourceLocale}
-    />
-  )
 }
 
 interface EntryOverviewProps {
@@ -272,7 +241,7 @@ function EntryEditorContent({
   selectedEntry,
   sourceLocale,
   node
-}: EntryEditorProps) {
+}: EntryEditorContentProps) {
   const typeName = useAtomValue(entry.type)
   const type = useAtomValue(typeAtoms(typeName))
   const hasChildren = useAtomValue(entry.hasChildren)

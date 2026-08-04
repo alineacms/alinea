@@ -43,11 +43,13 @@ const authenticatedAtom = atom(async get => {
   const {entry, workspace, root} = page
 
   if (entry) {
-    const content = await entryPage(page, get)
-    if (!workspace || !root) return content
+    if (!workspace || !root) return entryPage(page, get)
     const rootData = rootAtoms(page, workspace, root, page.locale ?? null)
+    const [content] = await Promise.all([
+      entryPage(page, get),
+      get(rootData.treeReady)
+    ])
     const workspaceData = get(workspaceAtoms(workspace).settingsAtom)
-    await get(rootData.treeReady)
     return (
       <DashboardLayout
         canManageMembers={policy.canManageMembers()}

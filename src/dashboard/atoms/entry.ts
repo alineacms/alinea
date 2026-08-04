@@ -109,7 +109,7 @@ function restoreUndefined(value: unknown): unknown {
   return result
 }
 
-async function prepareData(
+function prepareData(
   get: Getter,
   node: ReactiveNode<object>,
   type: Type,
@@ -201,7 +201,7 @@ export class EntryLocaleAtoms {
     )
     const sourceLocale = translated
       ? this.requestedLocale
-      : await get(this.translationSourceLocale)
+      : get(this.translationSourceLocale)
     const localeEntries = data.entries.filter(
       entry => entry.locale === sourceLocale
     )
@@ -246,7 +246,7 @@ export class EntryLocaleAtoms {
   selectedNode = atom(async get => {
     const version = get(this.selectedVersion)
     const entry = await get(this.selectedEntry)
-    const isUntranslated = await get(this.untranslated)
+    const isUntranslated = get(this.untranslated)
     if (!version || (version.type === 'status' && entry.active)) {
       const editing = get(this.currentlyEditing)
       if (editing) return editing
@@ -323,7 +323,7 @@ export class EntryLocaleAtoms {
   updatePreviewPayload = atom(null, async get => {
     const node = await get(this.selectedNode)
     const value = get(node.value) as Record<string, unknown>
-    const activeEntry = Array.from((await get(this.versions)).values()).find(
+    const activeEntry = Array.from(get(this.versions).values()).find(
       version => version.active
     )
     if (!activeEntry) return undefined
@@ -368,7 +368,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {data, changed} = await prepareData(
+    const {data, changed} = prepareData(
       get,
       node,
       typeConfig,
@@ -400,7 +400,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {data, changed} = await prepareData(
+    const {data, changed} = prepareData(
       get,
       node,
       typeConfig,
@@ -445,7 +445,7 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const type = config.schema[dataState.type]
     assert(type, `Type "${dataState.type}" not found in config`)
-    const {data, changed} = await prepareData(
+    const {data, changed} = prepareData(
       get,
       node,
       type,

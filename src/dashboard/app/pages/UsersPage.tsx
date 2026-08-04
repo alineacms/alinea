@@ -134,7 +134,7 @@ function removeUser(users: Array<User>, email: string): Array<User> {
   return users.filter(user => user.email?.toLowerCase() !== normalized)
 }
 
-export const usersPage = page(async page => {
+export const usersPage = page(page => {
   return (
     <AppShell>
       <AppShellInner>
