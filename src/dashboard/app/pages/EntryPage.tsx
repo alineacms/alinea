@@ -72,7 +72,7 @@ export const entryPage = page(async (page, get) => {
         get(localeData.availableStatuses),
         get(localeData.history),
         get(localeData.previewEntry),
-        get(localeData.previewUrl),
+        get(localeData.previewUrlReady),
         get(entry.incomingReferences)
       ])
     const root = rootAtoms(

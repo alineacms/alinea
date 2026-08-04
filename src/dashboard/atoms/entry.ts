@@ -287,9 +287,17 @@ export class EntryLocaleAtoms {
       data: value
     }
   })
-  previewUrl = atom(async get => {
+  #previewTargetUrl = atom(get => {
+    const versions = get(this.versions)
+    const entry =
+      Array.from(versions.values()).find(version => version.active) ??
+      versions.values().next().value
+    return entry?.url
+  })
+  previewUrlReady = atom(async get => {
     get(this.#previewRetry)
-    const entry = await get(this.selectedEntry)
+    const targetUrl = get(this.#previewTargetUrl)
+    if (!targetUrl) return undefined
     const config = get(configAtom)
     const client = get(clientAtom)
     if (typeof client.previewToken !== 'function') return undefined
@@ -300,12 +308,13 @@ export class EntryLocaleAtoms {
           (typeof location === 'undefined' ? 'http://localhost' : location.href)
       )
       base.searchParams.set('preview', await client.previewToken())
-      base.searchParams.set('returnTo', entry.url)
+      base.searchParams.set('returnTo', targetUrl)
       return base.toString()
     } catch {
       return undefined
     }
   })
+  previewUrl = unwrap(this.previewUrlReady, previous => previous)
   previewPayloadSignal = atom(get => {
     const version = get(this.selectedVersion)
     const editing = get(this.currentlyEditing)
