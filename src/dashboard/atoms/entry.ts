@@ -231,7 +231,7 @@ export class EntryLocaleAtoms {
       data: historyData
     }
   })
-  history = atom(async get => {
+  historyReady = atom(async get => {
     const versions = get(this.versions)
     const entry =
       Array.from(versions.values()).find(version => version.active) ??
@@ -242,6 +242,7 @@ export class EntryLocaleAtoms {
     const file = join(Config.contentDir(config), entry.filePath)
     return (await client.revisions(file)).slice(1)
   })
+  history = unwrap(this.historyReady, previous => previous ?? [])
 
   selectedNode = atom(async get => {
     const version = get(this.selectedVersion)
@@ -276,7 +277,7 @@ export class EntryLocaleAtoms {
   retryPreviewUrl = atom(null, (get, set) => {
     set(this.#previewRetry, current => current + 1)
   })
-  previewEntry = atom(async get => {
+  previewEntryReady = atom(async get => {
     const activeEntry = await get(this.selectedEntry)
     const node = await get(this.selectedNode)
     const value = get(node.value) as Record<string, unknown>
@@ -287,6 +288,7 @@ export class EntryLocaleAtoms {
       data: value
     }
   })
+  previewEntry = unwrap(this.previewEntryReady, previous => previous)
   #previewTargetUrl = atom(get => {
     const versions = get(this.versions)
     const entry =
@@ -552,7 +554,7 @@ export class EntryAtoms {
   // Should UI show overview or editor?
   #selectedView = atom<EntryDefaultView>()
 
-  incomingReferences = atom(async get => {
+  incomingReferencesReady = atom(async get => {
     get(shaAtom)
     const graph = get(graphAtom)
     const policy = this.policy
@@ -594,6 +596,10 @@ export class EntryAtoms {
     })
     return {references, total: result.total, scan: result.scan}
   })
+  incomingReferences = unwrap(
+    this.incomingReferencesReady,
+    previous => previous
+  )
 
   #settings = atom(get => {
     const data = get(this.data)

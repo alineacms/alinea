@@ -3,7 +3,6 @@ import {
   Disclosure,
   DisclosureHeader,
   DisclosurePanel,
-  ProgressCircle,
   Tab,
   TabList,
   TabPanel,
@@ -19,8 +18,8 @@ import {typeAtoms} from '#/dashboard/atoms/config.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
-import {atom, useAtom, useAtomValue} from 'jotai'
-import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
+import {atom, type Getter, useAtom, useAtomValue} from 'jotai'
+import {useState, type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
@@ -42,6 +41,23 @@ export interface EntrySidebarProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
   onOpenChange?: (isOpen: boolean) => void
+}
+
+export async function entrySidebar(
+  get: Getter,
+  entry: EntryAtoms,
+  localeData: EntryLocaleAtoms
+): Promise<EntrySidebarProps | undefined> {
+  const typeName = get(entry.type)
+  const type = get(typeAtoms(typeName))
+  if (type.customView || get(localeData.untranslated)) return undefined
+  const loads: Array<Promise<unknown>> = [get(entry.incomingReferencesReady)]
+  if (type.type !== MediaFile) loads.push(get(localeData.historyReady))
+  const preview = get(entry.preview)
+  if (preview === true) loads.push(get(localeData.previewUrlReady))
+  else if (preview) loads.push(get(localeData.previewEntryReady))
+  await Promise.all(loads)
+  return {entry, localeData}
 }
 
 type EntrySidebarTab = 'preview' | 'history' | 'references'
@@ -92,9 +108,7 @@ export function EntrySidebar({
               id="preview"
               className={styles.EntrySidebar.previewPanel()}
             >
-              <Suspense fallback={<EntrySidebarHistoryLoading />}>
-                <EntrySidebarPreview entry={entry} localeData={localeData} />
-              </Suspense>
+              <EntrySidebarPreview entry={entry} localeData={localeData} />
             </TabPanel>
           )}
           {!isMediaFile && (
@@ -102,18 +116,14 @@ export function EntrySidebar({
               id="history"
               className={styles.EntrySidebar.historyPanel()}
             >
-              <Suspense fallback={<EntrySidebarHistoryLoading />}>
-                <EntrySidebarHistory entry={entry} localeData={localeData} />
-              </Suspense>
+              <EntrySidebarHistory entry={entry} localeData={localeData} />
             </TabPanel>
           )}
           <TabPanel
             id="references"
             className={styles.EntrySidebar.referencesPanel()}
           >
-            <Suspense fallback={<EntrySidebarHistoryLoading />}>
-              <EntryReferences entry={entry} localeData={localeData} />
-            </Suspense>
+            <EntryReferences entry={entry} localeData={localeData} />
           </TabPanel>
         </SidebarBody>
       </Tabs>
@@ -357,14 +367,6 @@ function getRevisionKind(revision: Revision): EntrySidebarRevisionKind {
     return {icon: getVersionStatusIcon('published'), status: 'published'}
   }
   return {icon: IcOutlineDrafts, status: 'none'}
-}
-
-function EntrySidebarHistoryLoading() {
-  return (
-    <div className={styles.EntrySidebar.loading()}>
-      <ProgressCircle isIndeterminate aria-label="Loading history" />
-    </div>
-  )
 }
 
 function formatStatus(status: EntryStatus) {

@@ -32,7 +32,11 @@ import {FileEditor} from './../editor/FileEditor.js'
 import {Explorer} from './../Explorer.js'
 import {NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
-import {EntrySidebar} from './../EntrySidebar.js'
+import {
+  EntrySidebar,
+  entrySidebar,
+  type EntrySidebarProps
+} from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
 import {
   DashboardModal,
@@ -75,17 +79,7 @@ export const entryPage = page(async (page, get) => {
       ? false
       : await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
-    const hasSidebar = !type.customView && !get(localeData.untranslated)
-    if (hasSidebar) {
-      const sidebarLoads: Array<Promise<unknown>> = [
-        get(entry.incomingReferences)
-      ]
-      if (type.type !== MediaFile) sidebarLoads.push(get(localeData.history))
-      const preview = get(entry.preview)
-      if (preview === true) sidebarLoads.push(get(localeData.previewUrlReady))
-      else if (preview) sidebarLoads.push(get(localeData.previewEntry))
-      await Promise.all(sidebarLoads)
-    }
+    const sidebar = await entrySidebar(get, entry, localeData)
     return (
       <EntryEditorContent
         entry={entry}
@@ -94,6 +88,7 @@ export const entryPage = page(async (page, get) => {
         page={page}
         parentNeedsTranslation={parentNeedsTranslation}
         selectedEntry={selectedEntry}
+        sidebar={sidebar}
         sourceLocale={sourceLocale}
       />
     )
@@ -197,6 +192,7 @@ interface EntryEditorContentProps {
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
   selectedEntry: Entry
+  sidebar: EntrySidebarProps | undefined
   sourceLocale: string | null
   node: ReactiveNode<object>
 }
@@ -239,6 +235,7 @@ function EntryEditorContent({
   localeData,
   parentNeedsTranslation,
   selectedEntry,
+  sidebar,
   sourceLocale,
   node
 }: EntryEditorContentProps) {
@@ -328,8 +325,6 @@ function EntryEditorContent({
     )
   }
 
-  const hasSidebar = !isUntranslated
-
   const mainEditor = (
     <Rail main>
       <EntryHeader
@@ -338,7 +333,7 @@ function EntryEditorContent({
         isSidebarOpen={isSidebarOpen}
         localeData={localeData}
         node={node}
-        onSidebarOpenChange={hasSidebar ? setSidebarOpen : undefined}
+        onSidebarOpenChange={sidebar ? setSidebarOpen : undefined}
       />
 
       {editorBody}
@@ -371,12 +366,8 @@ function EntryEditorContent({
       </DashboardModal>
       <EntryScope entry={entry} localeData={localeData}>
         {mainEditor}
-        {hasSidebar && isSidebarOpen && (
-          <EntrySidebar
-            entry={entry}
-            localeData={localeData}
-            onOpenChange={setSidebarOpen}
-          />
+        {sidebar && isSidebarOpen && (
+          <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
         )}
       </EntryScope>
     </>

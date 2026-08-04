@@ -34,6 +34,7 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
   const config = useAtomValue(configAtom)
   const typeName = useAtomValue(entry.type)
   const setRoute = useSetAtom(routeAtom)
+  if (!data) return null
   const type = config.schema[typeName]
   const showAllLocales = type === MediaFile || type === MediaLibrary
   const selectedLocale = localeData.requestedLocale
