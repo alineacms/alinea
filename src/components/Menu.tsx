@@ -64,11 +64,13 @@ export interface MenuProps<T> extends MenuPrimitiveProps<T> {
   popoverProps?: Omit<PopoverProps, 'children'>
   appearance?: ButtonProps['appearance']
   icon?: ComponentType
+  isDisabled?: boolean
 }
 
 export function Menu<T extends object>({
   appearance,
   icon,
+  isDisabled,
   label,
   children,
   popoverProps,
@@ -79,7 +81,7 @@ export function Menu<T extends object>({
   return (
     <Trigger>
       {typeof label === 'string' ? (
-        <Button appearance={appearance}>
+        <Button appearance={appearance} isDisabled={isDisabled}>
           {label}
           {icon && <Icon icon={icon} data-slot="icon" />}
         </Button>

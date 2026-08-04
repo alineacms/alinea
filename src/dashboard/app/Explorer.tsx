@@ -13,6 +13,7 @@ import {
 } from 'react'
 import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
 import {useAtom, useAtomValue} from '../AtomHooks.js'
+import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
 import type {EntryAtoms, EntryDataAtoms} from '../atoms/entry.js'
 import type {
   ExplorerAtoms,
@@ -26,18 +27,17 @@ import {
   IcRoundArrowUpward,
   IcRoundClose,
   IcRoundFilterList,
+  IcRoundPublic,
   IcRoundUnfoldMore,
-  IcRoundUploadFile,
-  IcRoundPublic
+  IcRoundUploadFile
 } from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
+import {LocaleMenu} from './LocaleMenu.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
-import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
 import {WorkspaceItem} from './WorkspaceMenu.js'
-import {LocaleMenu} from './LocaleMenu.js'
 
 const styles = styler(css)
 
@@ -191,17 +191,24 @@ function ExplorerSearch({
 function WorkspaceMenu({explorer}: {explorer: ExplorerAtoms}) {
   const [currentWorkspace, setWorkspace] = useAtom(explorer.workspace)
   const workspaces = useAtomValue(workspacesAtom)
+  const limits = explorer.limitLocations
+  const visibleWorkspaces = limits?.length
+    ? workspaces.filter(workspace =>
+        limits.some(limit => limit.workspace === workspace)
+      )
+    : workspaces
 
   return (
     <Menu
       label={currentWorkspace.key}
+      isDisabled={visibleWorkspaces.length <= 1}
       onAction={key => {
         setWorkspace(String(key))
       }}
       appearance="plain"
-      icon={IcRoundUnfoldMore}
+      icon={visibleWorkspaces.length >= 2 ? IcRoundUnfoldMore : undefined}
     >
-      {workspaces.map(workspace => (
+      {visibleWorkspaces.map(workspace => (
         <WorkspaceItem key={workspace} workspace={workspaceAtoms(workspace)} />
       ))}
     </Menu>
@@ -216,17 +223,26 @@ function RootMenu({explorer}: {explorer: ExplorerAtoms}) {
     currentRoot?.settings ?? atom({label: 'Missing root label'})
   )
   const label = settings.label
+  const limits = explorer.limitLocations
+  const visibleRoots = limits?.length
+    ? roots.filter(root =>
+        limits.some(
+          limit => limit.workspace === workspace.key && limit.root === root.id
+        )
+      )
+    : roots
 
   return (
     <Menu
       label={label}
+      isDisabled={visibleRoots.length <= 1}
       onAction={key => {
         setRoot(String(key))
       }}
       appearance="plain"
-      icon={IcRoundUnfoldMore}
+      icon={visibleRoots.length >= 2 ? IcRoundUnfoldMore : undefined}
     >
-      {roots.map(root => (
+      {visibleRoots.map(root => (
         <MenuItem key={root.id} id={root.id} textValue={root.label}>
           {root.label}
         </MenuItem>
