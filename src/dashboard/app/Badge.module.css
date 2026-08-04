@@ -21,7 +21,15 @@
   font-weight: var(--alinea-badge-font-weight);
   min-width: 0;
 
+  & > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   [data-slot='icon'] {
+    flex-shrink: 0;
     font-size: 14px;
   }
 

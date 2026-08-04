@@ -59,7 +59,7 @@
 
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   justify-content: end;
 }
 
@@ -79,6 +79,30 @@
   display: flex;
   flex: 1;
   align-items: center;
+}
+
+.Explorer-searchMenu .LocaleMenu-trigger {
+  background-color: transparent;
+  border: 1px solid transparent;
+  padding: 3px 8px;
+  border-radius: 0.5rem;
+  min-height: 30px;
+  min-width: 0;
+  max-width: none;
+  gap: 6px;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--alinea-fg);
+}
+
+.Explorer-searchMenu .LocaleMenu-trigger[data-hovered],
+.Explorer-searchMenu .LocaleMenu-trigger[data-pressed] {
+  background-color: var(--alinea-muted);
+}
+
+.Explorer-searchMenu .LocaleMenu-trigger-icon {
+  font-size: 16px;
 }
 
 .Explorer-search {
@@ -117,4 +141,16 @@
   & + & {
     margin-top: 2px;
   }
+}
+
+.Explorer-searchMenu {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.Explorer-searchContainer {
+  width: 100%;
+  display: flex;
+  gap: 8px;
 }

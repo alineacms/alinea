@@ -69,6 +69,7 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
               controls={<DashboardModalCloseButton />}
               explorer={explorer}
               items={prepared.items}
+              navigate={true}
             />
             <ExplorerPickerContent
               explorer={explorer}

@@ -1,11 +1,9 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
-import {AtomSnapshot} from '../AtomSnapshot.js'
-import {Button, Popover, SearchField} from '#/components.js'
+import {Button, Menu, MenuItem, Popover, SearchField} from '#/components.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
-import {useSetAtom} from 'jotai'
+import {atom, useSetAtom} from 'jotai'
 import {
   useEffect,
   useState,
@@ -14,25 +12,32 @@ import {
   type ReactNode
 } from 'react'
 import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
-import {
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
-  IcRoundClose,
-  IcRoundFilterList,
-  IcRoundUploadFile
-} from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
+import {useAtom, useAtomValue} from '../AtomHooks.js'
+import type {EntryAtoms, EntryDataAtoms} from '../atoms/entry.js'
 import type {
   ExplorerAtoms,
   ExplorerSort,
   ExplorerSortBy,
   ExplorerTypeFilters
 } from '../atoms/explorer.js'
+import {AtomSnapshot} from '../AtomSnapshot.js'
+import {
+  IcRoundArrowDownward,
+  IcRoundArrowUpward,
+  IcRoundClose,
+  IcRoundFilterList,
+  IcRoundUnfoldMore,
+  IcRoundUploadFile,
+  IcRoundPublic
+} from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
+import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
+import {WorkspaceItem} from './WorkspaceMenu.js'
+import {LocaleMenu} from './LocaleMenu.js'
 
 const styles = styler(css)
 
@@ -40,6 +45,7 @@ export interface ExplorerProps {
   controls?: ReactNode
   explorer: ExplorerAtoms
   items: Array<EntryAtoms>
+  navigate?: boolean
   titleControls?: ReactNode
 }
 
@@ -48,6 +54,7 @@ export interface ExplorerHeaderProps {
   controls?: ReactNode
   explorer: ExplorerAtoms
   items: Array<EntryAtoms>
+  navigate?: boolean
   titleControls?: ReactNode
 }
 
@@ -79,7 +86,11 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
+function ExplorerSearch({
+  autoFocus = true,
+  explorer,
+  items
+}: ExplorerSearchProps) {
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -124,7 +135,7 @@ function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
   function onSearchChange(value: string) {
     setInputValue(value)
     startTransition(() => {
-      if (explorer.hasSelection) setSelection(new Set<Key>())
+      // if (explorer.hasSelection) setSelection(new Set<Key>())
       setSearch(value)
     })
   }
@@ -174,6 +185,53 @@ function ExplorerSearch({autoFocus, explorer, items}: ExplorerSearchProps) {
       onChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
     />
+  )
+}
+
+function WorkspaceMenu({explorer}: {explorer: ExplorerAtoms}) {
+  const [currentWorkspace, setWorkspace] = useAtom(explorer.workspace)
+  const workspaces = useAtomValue(workspacesAtom)
+
+  return (
+    <Menu
+      label={currentWorkspace.key}
+      onAction={key => {
+        setWorkspace(String(key))
+      }}
+      appearance="plain"
+      icon={IcRoundUnfoldMore}
+    >
+      {workspaces.map(workspace => (
+        <WorkspaceItem key={workspace} workspace={workspaceAtoms(workspace)} />
+      ))}
+    </Menu>
+  )
+}
+
+function RootMenu({explorer}: {explorer: ExplorerAtoms}) {
+  const [currentRoot, setRoot] = useAtom(explorer.root)
+  const workspace = useAtomValue(explorer.workspace)
+  const roots = useAtomValue(workspace.rootMenu)
+  const settings = useAtomValue(
+    currentRoot?.settings ?? atom({label: 'Missing root label'})
+  )
+  const label = settings.label
+
+  return (
+    <Menu
+      label={label}
+      onAction={key => {
+        setRoot(String(key))
+      }}
+      appearance="plain"
+      icon={IcRoundUnfoldMore}
+    >
+      {roots.map(root => (
+        <MenuItem key={root.id} id={root.id} textValue={root.label}>
+          {root.label}
+        </MenuItem>
+      ))}
+    </Menu>
   )
 }
 
@@ -349,6 +407,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [view, setView] = useAtom(explorer.view)
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
+  const [global, setGlobal] = useAtom(explorer.global)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
@@ -365,6 +424,11 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
           {uploads.length}
         </MutationQueueStatus>
       )}
+      <Button
+        appearance={global ? 'active' : 'outline'}
+        icon={IcRoundPublic}
+        onPress={() => setGlobal(!global)}
+      />
       <ExplorerControlsButton
         isMedia={isMedia}
         sort={sort}
@@ -396,12 +460,27 @@ export function ExplorerHeader({
   controls,
   explorer,
   items,
+  navigate,
   titleControls
 }: ExplorerHeaderProps) {
+  const root = useAtomValue(explorer.root)
+  const global = useAtomValue(explorer.global)
   return (
     <RailHeader className={styles.ExplorerHeader()}>
       <div className={styles.ExplorerHeader.content()}>
         <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
+        {navigate && !global && (
+          <div className={styles.Explorer.searchMenu()}>
+            <WorkspaceMenu explorer={explorer} />
+            <RootMenu explorer={explorer} />
+            {root && (
+              <LocaleMenu
+                root={root}
+                selectedLocale={explorer.selectedLocale}
+              />
+            )}
+          </div>
+        )}
         <div className={styles.Explorer.searchSlot()}>
           <ExplorerSearch
             autoFocus={autoFocusSearch}
@@ -432,6 +511,7 @@ export function Explorer({
   controls,
   explorer,
   items,
+  navigate,
   titleControls
 }: ExplorerProps) {
   return (
@@ -440,6 +520,7 @@ export function Explorer({
         controls={controls}
         explorer={explorer}
         items={items}
+        navigate={navigate}
         titleControls={titleControls}
       />
       <ExplorerBody explorer={explorer} items={items} />
