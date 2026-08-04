@@ -80,7 +80,7 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
             />
             <ExplorerModalFooter>
               <ExplorerModalSelection>
-                {selectedItems} {selectedItems === 1 ? 'item' : 'items'}{' '}
+                {selectedItems} {selectedItems === 1 ? 'item' : 'items'}
                 selected
               </ExplorerModalSelection>
               <ExplorerModalActions>

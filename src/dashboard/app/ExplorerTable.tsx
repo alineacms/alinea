@@ -56,6 +56,7 @@ interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
   parents: Array<EntryAtoms>
   rootLabel?: string
   status?: DashboardEntryTreeStatus['status']
+  isLinked: boolean
 }
 
 interface ExplorerTableCellProps extends ExplorerTableDisplayRowProps {
@@ -262,6 +263,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     gridTemplateColumns,
     isExpandable,
     isSelectable,
+    isLinked,
     label
   } = props
   const isExpanded = useAtomValue(
@@ -286,7 +288,10 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       isDisabled={!isSelectable}
       onAction={explorer.actionOnPress ? undefined : performAction}
       onPress={explorer.actionOnPress ? performAction : undefined}
-      className={styles.ExplorerTable.row({notSelectable: !isSelectable})}
+      className={styles.ExplorerTable.row(
+        {notSelectable: !isSelectable},
+        {linked: isLinked}
+      )}
     >
       <TreeItemContent>
         {({isExpanded: renderExpanded, level}) => (
@@ -354,6 +359,7 @@ function ExplorerTableLoadingRow({
       icon={LucideFile}
       isExpandable={false}
       isSelectable={false}
+      isLinked={false}
       label="Loading entry"
       parents={[]}
     />
@@ -383,6 +389,7 @@ function ExplorerTableLoadedRow({
   const parents = useAtomValue(data.parents)
   const icon = configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)
   const isExpandable = explorer.supportsInlineExpansion && hasChildren
+  const isLinked = explorer.linkedKeys.has(entry.id)
   const isSelectable = useAtomValue(
     useMemo(() => explorer.isSelectable(entry), [explorer, entry])
   )
@@ -401,6 +408,7 @@ function ExplorerTableLoadedRow({
       parents={parents}
       rootLabel={rootLabel}
       status={status}
+      isLinked={isLinked}
     />
   )
 }

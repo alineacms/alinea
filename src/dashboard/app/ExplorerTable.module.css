@@ -89,6 +89,10 @@
     cursor: default;
     background: color-mix(in srgb, var(--alinea-bg-muted) 45%, var(--alinea-bg));
   }
+
+  &.is-linked {
+    background: color-mix(in srgb, var(--alinea-blue-50) 60%, var(--alinea-bg));
+  }
 }
 
 .ExplorerTable-row-grid {

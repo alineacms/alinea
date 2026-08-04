@@ -76,6 +76,7 @@ export interface ExplorerOptions {
   // initialSort?: ExplorerSort
   onAction?: WritableAtom<void, [entry: EntryAtoms], void>
   onConfirm?: (selection: Array<string>) => void
+  preselect?: boolean
 }
 
 export interface ExplorerSnapshot {
@@ -127,8 +128,16 @@ export class ExplorerAtoms {
       : undefined
     this.#selectedLocale = atom(options.selectedLocale ?? null)
     this.selection = atom<'all' | Set<Key>>(
-      new Set<Key>(options.initialSelection)
+      new Set<Key>(this.preselect ? options.initialSelection : [])
     )
+  }
+
+  get preselect() {
+    return this.#options.preselect ?? true
+  }
+
+  get linkedKeys() {
+    return new Set(this.#options.initialSelection ?? [])
   }
 
   get selectionMode() {

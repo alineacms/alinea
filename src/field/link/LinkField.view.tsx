@@ -539,6 +539,7 @@ function LinkPickerAction({
   const enableNavigation = options.enableNavigation ?? !pickingChildren
   const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: ExplorerOptions = {
+    preselect: false,
     condition,
     enableNavigation,
     flatResults: !nestedResults,
@@ -635,6 +636,7 @@ function LinkPickerDialog({
   const enableNavigation = options.enableNavigation ?? !pickingChildren
   const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: ExplorerOptions = {
+    preselect: false,
     condition,
     enableNavigation,
     flatResults: !nestedResults,
@@ -875,16 +877,9 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           onPick={link => {
             setValue(links => [...(links ?? []), link])
           }}
-          onPickMany={picked => {
-            if (picker.handlesMultiple) {
-              setValue(links => [
-                ...(links ?? []).filter(link => link._type !== type),
-                ...picked
-              ])
-            } else {
-              setValue(links => [...(links ?? []), ...picked])
-            }
-          }}
+          onPickMany={picked =>
+            setValue(links => [...(links ?? []), ...picked])
+          }
           picker={picker as Picker<LinkFieldRow>}
           selection={links.filter(row => row._type === type)}
           type={type as PickerType}
