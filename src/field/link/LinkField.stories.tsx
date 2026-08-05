@@ -15,7 +15,6 @@ import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
-import {createTestConnection} from '#test/CreateConnection.js'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import {views} from '../views.js'
@@ -100,8 +99,6 @@ const pickerStoryStyle: CSSProperties = {
   padding: 24
 }
 
-const fixtureConnection = createTestConnection(db)
-
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
@@ -119,7 +116,7 @@ export function Example() {
   if (!relatedLink || !heroImage || !resources) return null
   return (
     <StoryProvider
-      client={fixtureConnection}
+      client={db}
       config={cms.config}
       events={db.index}
       graph={db}
@@ -179,7 +176,7 @@ function ExplorerPickerStory({
       : {workspace: 'simple', root: 'media'}
   return (
     <StoryProvider
-      client={fixtureConnection}
+      client={db}
       config={cms.config}
       events={db.index}
       graph={db}

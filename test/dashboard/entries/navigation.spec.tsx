@@ -93,6 +93,46 @@ test('blocks navigation until unsaved changes are resolved', async ({
   await expect(app.title).toHaveText('Beta')
 })
 
+test('blocks browser history until unsaved changes are resolved', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  await app.openEntry('Beta')
+
+  await app.field('Title').fill('Unsaved beta')
+  await app.page.goBack({waitUntil: 'commit'})
+
+  const confirmation = app.page.getByRole('dialog')
+  await expect(
+    confirmation.getByRole('heading', {name: 'Confirm navigation'})
+  ).toBeVisible()
+  await expect(app.title).toHaveText('Beta')
+  await expect(app.page).toHaveURL(/workflow-beta$/)
+
+  await confirmation.getByRole('button', {name: 'Discard my changes'}).click()
+  await expect(app.title).toHaveText('Alpha')
+  await expect(app.field('Title')).toHaveValue('Alpha')
+})
+
+test('updates document metadata with dashboard navigation', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await expect(app.page).toHaveTitle('Main: Alpha')
+  await app.openEntry('Beta')
+  await expect(app.page).toHaveTitle('Main: Beta')
+
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await expect(app.page).toHaveTitle('Main: Pages')
+  await expect(app.page.locator('link[rel="icon"]')).toHaveAttribute(
+    'href',
+    /^data:image\/svg\+xml;base64,/
+  )
+})
+
 test('renders a missing entry route', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
     routeEntry: 'missing-entry',
@@ -101,6 +141,23 @@ test('renders a missing entry route', async ({dashboard, mount}) => {
 
   await expect(app.page.getByText('Requested id:')).toContainText(
     'missing-entry'
+  )
+  await expect(
+    app.page.getByRole('button', {name: 'Go to Pages'})
+  ).toBeVisible()
+})
+
+test('renders a missing root route without falling through to an entry', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    routeRoot: 'missing-root',
+    title: 'Root not found'
+  })
+
+  await expect(app.page.getByText('Requested root:')).toContainText(
+    'missing-root'
   )
   await expect(
     app.page.getByRole('button', {name: 'Go to Pages'})

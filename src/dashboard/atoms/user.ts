@@ -3,7 +3,7 @@ import {assert} from '#/core/util/Assert.js'
 import {atom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import {authAtom} from './auth.js'
-import {configAtom, graphAtom} from './core.js'
+import {clientAtom, configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import type {PageAuth} from './nav.js'
 
@@ -40,4 +40,11 @@ export const authReady = atom(async (get): Promise<PageAuth> => {
     user: get(userAtom),
     policy
   }
+})
+
+export const canManageMembersAtom = atom(async get => {
+  const capabilities = await get(clientAtom).capabilities()
+  if (!capabilities.users) return false
+  const policy = await get(policyResult)
+  return policy.canManageMembers()
 })

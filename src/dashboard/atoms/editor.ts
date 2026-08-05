@@ -1,4 +1,4 @@
-import {Field, type FieldOptions} from '#/core/Field.js'
+import {Field, type EntryAnchorTarget, type FieldOptions} from '#/core/Field.js'
 import type {Resource} from '#/core/Role.js'
 import type {Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -20,8 +20,11 @@ export interface EditorNode {
 }
 
 export interface EditorModel {
+  anchors: Atom<Array<EntryAnchorTarget>>
   node: EditorNode
+  parent?: EditorModel
   sections: Array<EditorSection>
+  type: Type
   field(key: string): EditorField | undefined
   get(field: Field): EditorField | undefined
 }
@@ -50,6 +53,7 @@ export interface EditorField {
 }
 
 export class EntryEditor implements EditorModel {
+  anchors: Atom<Array<EntryAnchorTarget>>
   value: Atom<object>
   sections: Array<EntryEditorSection>
 
@@ -63,6 +67,9 @@ export class EntryEditor implements EditorModel {
     this.resource ??= parent?.resource
     this.policy ??= parent?.policy
     this.value = node.value
+    this.anchors = atom(get =>
+      Type.anchors(type, get(node.value) as Record<string, unknown>)
+    )
     this.sections = Type.sections(type).map(
       section => new EntryEditorSection(section)
     )
@@ -80,6 +87,11 @@ export class EntryEditor implements EditorModel {
     }
     return this.parent?.get(field)
   }
+}
+
+export function rootEditor(editor: EditorModel): EditorModel {
+  while (editor.parent) editor = editor.parent
+  return editor
 }
 
 export class EntryEditorSection implements EditorSection {

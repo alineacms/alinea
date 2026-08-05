@@ -4,7 +4,7 @@ import {
   type ExplorerOptions
 } from '#/dashboard/atoms/explorer.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {useDashboardContext} from '#/dashboard/hooks.js'
+import {useDashboardContext, usePolicy} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState} from 'react'
 import {ExplorerHeader} from './Explorer.js'
@@ -23,7 +23,9 @@ import {
   useDashboardModal
 } from './ui/DashboardModal.js'
 
-export function LinkPicker(options: ExplorerOptions) {
+export interface LinkPickerOptions extends Omit<ExplorerOptions, 'policy'> {}
+
+export function LinkPicker(options: LinkPickerOptions) {
   return (
     <DashboardModal size="explorer">
       <Suspense
@@ -42,12 +44,13 @@ export function LinkPicker(options: ExplorerOptions) {
 }
 
 interface ExplorerModalProps {
-  options: ExplorerOptions
+  options: LinkPickerOptions
 }
 
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
   const {page, root} = useDashboardContext()
+  const policy = usePolicy()
   const location = options.location ?? {
     workspace: root.workspace,
     root: root.key
@@ -62,7 +65,7 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
   const [explorer] = useState(() =>
     createExplorerAtoms(location, {
       ...options,
-      policy: page.auth.policy,
+      policy,
       rootData: pickerRoot.data,
       searchDepth: 'all',
       selectedLocale,

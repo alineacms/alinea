@@ -36,14 +36,13 @@ import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
-import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
 import {linkEntryAtoms, type LinkEntrySummary} from '#/dashboard/atoms/link.js'
 import {
   ExternalLinkPicker,
   type ExternalLinkValue
 } from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
-import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
+import {LinkPicker, type LinkPickerOptions} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/atoms/nav.js'
 import {
   useEntry,
@@ -437,7 +436,6 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
-  const {page} = useDashboardContext()
   const currentEntry = useEntry()
   const config = useAtomValue(configAtom)
   const selectedWorkspace = currentEntry?.workspace
@@ -486,12 +484,11 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const pickerProps: ExplorerOptions = {
+  const pickerProps: LinkPickerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
     flatResults: options.enableNavigation !== true,
     location,
-    policy: page.auth.policy,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -556,7 +553,6 @@ function LinkPickerDialog({
   type,
   value
 }: LinkPickerDialogProps) {
-  const {page} = useDashboardContext()
   const currentEntry = useEntry()
   const config = useAtomValue(configAtom)
   const selectedWorkspace = currentEntry?.workspace
@@ -602,12 +598,11 @@ function LinkPickerDialog({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const pickerProps: ExplorerOptions = {
+  const pickerProps: LinkPickerOptions = {
     condition,
     enableNavigation: options.enableNavigation ?? !pickingChildren,
     flatResults: options.enableNavigation !== true,
     location,
-    policy: page.auth.policy,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',

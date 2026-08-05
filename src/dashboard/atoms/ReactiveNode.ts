@@ -1,4 +1,4 @@
-import {entries, fromEntries, values} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
 import type {Getter, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
@@ -11,10 +11,6 @@ function isArray<Value>(input: unknown): input is Array<Value> {
   return Array.isArray(input)
 }
 
-function isObject<Value extends object>(input: unknown): input is Value {
-  return input !== null && typeof input === 'object' && !Array.isArray(input)
-}
-
 type ReactiveObject = Record<string, ReactiveNode>
 
 export class ReactiveNode<Value = unknown> {
@@ -24,7 +20,7 @@ export class ReactiveNode<Value = unknown> {
   #inner = atom(get => {
     const nodes = get(this.nodes)
     if (isArray<ReactiveNode>(nodes)) return nodes
-    if (isObject<ReactiveObject>(nodes)) return values(nodes)
+    if (isRecord(nodes)) return values(nodes) as Array<ReactiveNode>
     return []
   })
   value: Writable<Value>
@@ -63,7 +59,7 @@ export class ReactiveNode<Value = unknown> {
   #wrap(value: unknown): unknown {
     if (isArray(value))
       return value.map(item => new ReactiveNode(item, this.readOnly))
-    if (isObject<Record<string, unknown>>(value))
+    if (isRecord(value))
       return fromEntries(
         entries(value).map(([key, item]) => [
           key,
@@ -75,9 +71,12 @@ export class ReactiveNode<Value = unknown> {
 
   #unwrap(get: Getter, nodes: unknown): unknown {
     if (isArray<ReactiveNode>(nodes)) return nodes.map(node => get(node.value))
-    if (isObject<ReactiveObject>(nodes))
+    if (isRecord(nodes))
       return fromEntries(
-        entries(nodes).map(([key, node]) => [key, get(node.value)])
+        entries(nodes as ReactiveObject).map(([key, node]) => [
+          key,
+          get(node.value)
+        ])
       )
     return nodes
   }
@@ -100,22 +99,20 @@ export class ReactiveNode<Value = unknown> {
       if (changed) set(this.nodes, nextStructure)
       return
     }
-    if (
-      isObject<Record<string, unknown>>(next) &&
-      isObject<ReactiveObject>(current)
-    ) {
+    if (isRecord(next) && isRecord(current)) {
       let changed = false
-      const nextStructure = {...current}
+      const fields = current as ReactiveObject
+      const nextStructure = {...fields}
       for (const key of Object.keys(current)) {
         if (!(key in next)) {
           delete nextStructure[key]
           changed = true
         } else {
-          set(current[key].value, next[key])
+          set(fields[key].value, next[key])
         }
       }
       for (const key of Object.keys(next)) {
-        if (!current[key]) {
+        if (!fields[key]) {
           nextStructure[key] = new ReactiveNode(next[key], this.readOnly)
           changed = true
         }
@@ -143,17 +140,20 @@ export class ReactiveNode<Value = unknown> {
       atom(
         get => {
           const structure = get(this.nodes)
-          return isObject<ReactiveObject>(structure) && structure[key]
-            ? get(structure[key].value)
+          const fields = isRecord(structure)
+            ? (structure as ReactiveObject)
             : undefined
+          return fields?.[key] ? get(fields[key].value) : undefined
         },
         (get, set, update) => {
+          if (this.readOnly) return
           const structure = get(this.nodes)
-          if (isObject<ReactiveObject>(structure)) {
-            if (structure[key]) set(structure[key].value, update)
+          if (isRecord(structure)) {
+            const fields = structure as ReactiveObject
+            if (fields[key]) set(fields[key].value, update)
             else {
               set(this.nodes, {
-                ...structure,
+                ...fields,
                 [key]: new ReactiveNode(update, this.readOnly)
               })
               set(this.#dirty, true)

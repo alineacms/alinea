@@ -79,14 +79,14 @@ export const authAtom = Object.assign(
       return get(authState)
     },
     async (get, set, action: DashboardAuthAction = {type: 'check'}) => {
-      set(authState, {status: 'loading'})
-
       if (action.type === 'setupCloud') {
         const state = get(authState)
         if (state.status !== 'missingApiKey') return
         window.location.href = appendFrom(state.setupUrl)
         return
       }
+
+      if (!get(authRequiredAtom)) return
 
       const client = get(clientAtom)
       if (!(client instanceof Client)) {

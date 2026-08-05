@@ -125,7 +125,7 @@ function MissingEntry({page}: MissingEntryProps) {
   )
 }
 
-interface NotFoundPanelProps {
+export interface NotFoundPanelProps {
   title: string
   message: string
   requestedLabel: string
@@ -134,7 +134,7 @@ interface NotFoundPanelProps {
   onAction?: () => void
 }
 
-function NotFoundPanel({
+export function NotFoundPanel({
   title,
   message,
   requestedLabel,
@@ -272,10 +272,15 @@ function EntryEditorContent({
     routeBlock?.confirm()
   }
 
+  // Keep preview state in sync with edits made through this editor instance.
+  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
+  // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
     if (node.readOnly && !isUntranslated) return
     setEditing(isUntranslated || isDirty ? node : undefined)
   }, [isDirty, isUntranslated, node, setEditing])
+  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
+  // eslint-enable react-you-might-not-need-an-effect/no-event-handler
 
   useEffect(() => {
     setRouteGuard(node.isDirty)

@@ -55,14 +55,14 @@ export interface EditFieldsProps {
 
 export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
   return (
-    <div className={styles.EntryFields()}>
+    <div className={styles.EditFields()}>
       {Object.entries(fields).map(([name, value]) => {
         if (Field.isField(value)) return <EditField key={name} field={value} />
         if (!Section.isSection(value)) return null
         return (
           <div
             key={name}
-            className={styles.EntryField.slot()}
+            className={styles.EditField.slot()}
             style={{gridColumn: `span ${fieldSpan()}`}}
           >
             <FormSection section={new EntryEditorSection(value)} />
@@ -88,7 +88,7 @@ export const EditField = memo(function EditField({field}: EditFieldProps) {
   if (!View) return <div>Missing view for field: {Field.label(field)}</div>
   return (
     <div
-      className={styles.EntryField.slot()}
+      className={styles.EditField.slot()}
       style={{gridColumn: `span ${fieldSpan(options.width)}`}}
     >
       <View field={field} />

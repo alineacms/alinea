@@ -104,13 +104,17 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
     setSelection(new Set<Key>([entry.id]))
   }
 
-  function selectedEntry() {
+  const selectedEntry = useMemo(() => {
     if (selection === 'all') return undefined
     const [selected] = selection
     if (selected === undefined) return undefined
     return items.find(item => item.id === String(selected))
-  }
+  }, [items, selection])
 
+  // Search results resolve asynchronously, so selection must be reconciled
+  // after the result set changes.
+  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
+  // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
     if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
     if (items.length === 0) {
@@ -118,8 +122,17 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
         setSelection(new Set<Key>())
       return
     }
-    if (!selectedEntry()) selectEntry(items[0])
-  }, [explorer, items, selection, setSelection])
+    if (!selectedEntry) setSelection(new Set<Key>([items[0].id]))
+  }, [
+    explorer.autoSelectFirstItem,
+    explorer.hasSelection,
+    items,
+    selectedEntry,
+    selection,
+    setSelection
+  ])
+  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
+  // eslint-enable react-you-might-not-need-an-effect/no-event-handler
 
   function onSearchChange(value: string) {
     setInputValue(value)
@@ -130,9 +143,8 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
   }
 
   function selectedIndex() {
-    const entry = selectedEntry()
-    if (!entry) return -1
-    return items.findIndex(item => item.id === entry.id)
+    if (!selectedEntry) return -1
+    return items.findIndex(item => item.id === selectedEntry.id)
   }
 
   function moveSelection(direction: 1 | -1) {
@@ -156,7 +168,7 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
       moveSelection(-1)
     } else if (event.key === 'Enter') {
       const entry =
-        selectedEntry() ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
+        selectedEntry ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
       performAction(entry)

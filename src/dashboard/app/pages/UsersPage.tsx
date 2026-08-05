@@ -233,7 +233,7 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
   const setRoute = useSetAtom(routeAtom)
 
   function handleBack() {
-    void setRoute({
+    setRoute({
       page: 'entry',
       workspace: page.workspace ?? undefined,
       root: page.root ?? undefined

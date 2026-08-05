@@ -1,0 +1,29 @@
+.AccessDenied {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
+}
+
+.AccessDenied-card {
+  display: flex;
+  max-width: 420px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  text-align: center;
+}
+
+.AccessDenied-title {
+  margin: 0;
+  font-size: 20px;
+}
+
+.AccessDenied-message {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+}

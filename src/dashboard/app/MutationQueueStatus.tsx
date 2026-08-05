@@ -41,10 +41,16 @@ export function MutationQueueStatus({
       ? 'Syncing changes'
       : 'Content is up to date'
 
+  // Opening on a failed queue transition is an integration response to the
+  // external mutation queue, rather than derived rendering state.
+  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
+  // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
     if (openOnFail && isFailed && !wasFailed.current) setIsOpen(true)
     wasFailed.current = isFailed
   }, [isFailed, openOnFail])
+  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
+  // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
       <Tooltip placement={placement} delay={300} tooltip={label}>

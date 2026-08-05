@@ -3,7 +3,7 @@ import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {startTransition} from 'react'
 import type {Key, Selection} from 'react-aria-components'
-import type {DashboardExplorer, ExplorerOptions} from '../atoms/explorer.js'
+import type {DashboardExplorer} from '../atoms/explorer.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
@@ -11,7 +11,7 @@ import {SidebarTreeExplorer} from './SidebarTree.js'
 export interface ExplorerPickerContentProps {
   explorer: DashboardExplorer
   navigationLabel: string
-  options: ExplorerOptions
+  options: {enableNavigation?: boolean}
 }
 
 export function ExplorerPickerContent({

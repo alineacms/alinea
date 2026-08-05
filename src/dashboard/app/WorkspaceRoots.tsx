@@ -234,7 +234,7 @@ function WorkspaceProfileMenu({
                 appearance="plain"
                 aria-label="Manage users"
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onPress={() => void setRoute({page: 'users'})}
+                onPress={() => setRoute({page: 'users'})}
               >
                 <Icon icon={IcOutlineSettings} />
                 <span

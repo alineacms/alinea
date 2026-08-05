@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Field} from '#/core/Field.js'
 import {type, Type} from '#/core/Type.js'
-import {EntryEditor} from '#/dashboard/atoms/editor.js'
+import {EntryEditor, rootEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {richText} from '#/field/richtext/RichTextField.js'
 import {select} from '#/field/select.js'
@@ -34,6 +34,37 @@ test('nested editor fields inherit a read-only reactive node', () => {
 
   const options = createStore().get(field.options)
   test.is(options.readOnly, true)
+})
+
+test('nested editors resolve anchors from the root document', () => {
+  const details = richText('Details')
+  const block = type('Block', {fields: {details}})
+  const body = richText('Body')
+  const entry = type('Entry', {fields: {body}})
+  const parent = new EntryEditor(
+    entry,
+    new ReactiveNode<object>({
+      body: [
+        {
+          _type: 'heading',
+          _anchor: 'article-heading',
+          level: 2,
+          content: [{_type: 'text', text: 'Article heading'}]
+        }
+      ]
+    })
+  )
+  const nested = new EntryEditor(
+    block,
+    new ReactiveNode<object>({details: []}),
+    parent
+  )
+
+  const anchors = createStore().get(rootEditor(nested).anchors)
+  test.equal(
+    anchors.map(anchor => anchor.id),
+    ['article-heading']
+  )
 })
 
 test('existing rich text blocks receive newly added field defaults', () => {

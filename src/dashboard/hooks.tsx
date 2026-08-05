@@ -1,3 +1,5 @@
+import type {Config} from '#/core/Config.js'
+import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
@@ -6,10 +8,30 @@ import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {Type} from '#/index.js'
-import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
+import {
+  atom,
+  createStore,
+  Provider,
+  useAtom,
+  useAtomValue,
+  useSetAtom
+} from 'jotai'
+import type {
+  ComponentType,
+  Dispatch,
+  PropsWithChildren,
+  SetStateAction
+} from 'react'
 import {createContext, createElement, useContext, useMemo} from 'react'
-import {graphAtom} from './atoms/core.js'
+import {
+  alineaDevAtom,
+  clientAtom,
+  configAtom,
+  eventsAtom,
+  graphAtom,
+  localAtom,
+  viewsAtom
+} from './atoms/core.js'
 import {type EditorModel, type EditorNode, EntryEditor} from './atoms/editor.js'
 import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
 import type {Page} from './atoms/nav.js'
@@ -22,6 +44,20 @@ interface EntryContextValue {
   localeData: EntryLocaleAtoms
 }
 
+export interface DashboardOptions {
+  alineaDev?: boolean
+  local?: boolean
+}
+
+export interface Dashboard {
+  graph: WriteableGraph
+  config: Config
+  events: EventTarget
+  client: LocalConnection
+  views?: Record<string, ComponentType>
+  options?: DashboardOptions
+}
+
 export interface DashboardContextValue {
   page: Page
   workspace: WorkspaceInternal & {name: string}
@@ -30,8 +66,62 @@ export interface DashboardContextValue {
 
 const entryContext = createContext<EntryContextValue | null>(null)
 const dashboardContext = createContext<DashboardContextValue | null>(null)
+const dashboardModelContext = createContext<Dashboard | null>(null)
 const editorContext = createContext<EditorModel | null>(null)
 const nullEntryAtom = atom<EntryRecord<Record<string, unknown>> | null>(null)
+
+interface DashboardModelScopeProps {
+  dashboard: Dashboard
+}
+
+export function DashboardModelScope({
+  children,
+  dashboard
+}: PropsWithChildren<DashboardModelScopeProps>) {
+  return createElement(
+    dashboardModelContext.Provider,
+    {value: dashboard},
+    children
+  )
+}
+
+export interface DashboardScopeInternalProps {
+  dashboard: Dashboard
+}
+
+/**
+ * Provides an isolated dashboard model for custom views and story fixtures.
+ */
+export function DashboardScopeInternal({
+  children,
+  dashboard
+}: PropsWithChildren<DashboardScopeInternalProps>) {
+  const store = useMemo(() => {
+    const next = createStore()
+    next.set(graphAtom, dashboard.graph)
+    next.set(configAtom, dashboard.config)
+    next.set(eventsAtom, dashboard.events)
+    next.set(clientAtom, dashboard.client)
+    next.set(viewsAtom, dashboard.views ?? {})
+    next.set(localAtom, Boolean(dashboard.options?.local))
+    next.set(alineaDevAtom, Boolean(dashboard.options?.alineaDev))
+    return next
+  }, [dashboard])
+  return createElement(
+    Provider,
+    {store},
+    createElement(DashboardModelScope, {dashboard}, children)
+  )
+}
+
+/**
+ * Returns the active dashboard from the nearest dashboard model scope.
+ */
+export function useDashboard(): Dashboard {
+  const dashboard = useContext(dashboardModelContext)
+  assert(dashboard, 'Dashboard not found in context')
+  return dashboard
+}
 /**
  * Returns the active dashboard policy.
  */
@@ -180,14 +270,10 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): [StoredValue, Dispatch<SetStateAction<StoredValue>>] {
   const info = useFieldInfo(field)
-  const node = useFieldNode<StoredValue>(field)
-  const value = useAtomValue(node.value)
-  const setNodeValue = useSetAtom(node.value)
-  const setFieldValue = useSetAtom(info.value)
-  function setValue(update: SetStateAction<StoredValue>) {
-    setFieldValue(update)
-    setNodeValue(update)
-  }
+  const value = useAtomValue(info.value) as StoredValue
+  const setValue = useSetAtom(info.value) as Dispatch<
+    SetStateAction<StoredValue>
+  >
   return [value, setValue]
 }
 
@@ -198,13 +284,7 @@ export function useFieldSetter<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): Dispatch<SetStateAction<StoredValue>> {
   const info = useFieldInfo(field)
-  const node = useFieldNode<StoredValue>(field)
-  const setNodeValue = useSetAtom(node.value)
-  const setFieldValue = useSetAtom(info.value)
-  return function setValue(update: SetStateAction<StoredValue>) {
-    setFieldValue(update)
-    setNodeValue(update)
-  }
+  return useSetAtom(info.value) as Dispatch<SetStateAction<StoredValue>>
 }
 
 /**
@@ -293,6 +373,6 @@ export function useNodes<Value>(
 export function useNodes<Value extends object>(
   node: ReactiveNode<Value>
 ): Record<string, ReactiveNode>
-export function useNodes(node: ReactiveNode<any>) {
+export function useNodes<Value>(node: ReactiveNode<Value>): unknown {
   return useAtomValue(node.nodes)
 }

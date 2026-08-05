@@ -5,12 +5,13 @@ import type {Schema} from '#/core/Schema.js'
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {rootEditor} from '#/dashboard/atoms/editor.js'
 import {
+  useEditor as useDashboardEditor,
   useFieldError,
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import {useEntryAtoms} from '#/dashboard/hooks.js'
 import {
   configureRichTextExtensions,
   type RichTextOptions
@@ -97,8 +98,8 @@ export function RichTextFieldView<Blocks extends Schema>({
   const ownerId = useId()
   const picker = usePickTextLink()
   const anchorPicker = usePickTextAnchor()
-  const {localeData} = useEntryAtoms()
-  const entryAnchors = useAtomValue(localeData.anchors)
+  const dashboardEditor = useDashboardEditor()
+  const entryAnchors = useAtomValue(rootEditor(dashboardEditor).anchors)
   const entryAnchorIds = useMemo(
     () => entryAnchors.map(anchor => anchor.id),
     [entryAnchors]

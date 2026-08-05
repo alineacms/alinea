@@ -1,13 +1,10 @@
 import {Atom, atom, Getter} from 'jotai'
 import type {Policy} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
-import {atomWithLocation} from 'jotai-location'
 import {selectAtom} from 'jotai/utils'
 import {ReactNode} from 'react'
 import {workspaceAtoms} from './config.js'
 import {configAtom} from './core.js'
-
-const location = atomWithLocation()
 
 export interface RouteBlock {
   confirm: () => void | Promise<void>
@@ -24,6 +21,22 @@ export interface DashboardRoute {
   locale?: string
 }
 
+interface ResolvedDashboardRoute extends DashboardRoute {
+  page: 'entry' | 'users'
+}
+
+interface PushNavigation {
+  type: 'push'
+  route: ResolvedDashboardRoute
+}
+
+interface PopNavigation {
+  type: 'pop'
+  route: ResolvedDashboardRoute
+}
+
+type NavigationRequest = PushNavigation | PopNavigation
+
 export const nav = {
   users() {
     return '/users'
@@ -39,47 +52,95 @@ export const nav = {
   }
 }
 
-/** @internal */
-export const routeAtom = atom(
-  get => {
-    const {hash = '/'} = get(location)
-    const [action, workspace, rootPart = '', entry] = hash
-      .slice(1)
-      .split('/')
-      .slice(1) as Array<string | undefined>
-    const page: 'users' | 'entry' = action === 'users' ? 'users' : 'entry'
-    const [root, locale] = rootPart.split(':')
-    return {
-      page,
-      workspace: page === 'entry' ? workspace : undefined,
-      root: page === 'entry' ? root : undefined,
-      entry: page === 'entry' ? entry : undefined,
-      locale: page === 'entry' ? locale : undefined
-    }
-  },
-  async (get, set, update: DashboardRoute) => {
-    const confirm = async () => {
-      if (update.page === 'users') {
-        set(location, {hash: `#${nav.users()}`})
+function routeFromHash(hash: string): ResolvedDashboardRoute {
+  const [action, workspace, rootPart = '', entry] = hash
+    .slice(1)
+    .split('/')
+    .slice(1) as Array<string | undefined>
+  const page = action === 'users' ? 'users' : 'entry'
+  const [root, locale] = rootPart.split(':')
+  return {
+    page,
+    workspace: page === 'entry' ? workspace : undefined,
+    root: page === 'entry' ? root : undefined,
+    entry: page === 'entry' ? entry : undefined,
+    locale: page === 'entry' ? locale : undefined
+  }
+}
+
+function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
+  if (update.page === 'users') return {page: 'users'}
+  return {
+    page: 'entry',
+    workspace: update.workspace,
+    root: update.root,
+    entry: update.entry,
+    locale: update.locale
+  }
+}
+
+function readBrowserRoute(): ResolvedDashboardRoute {
+  return routeFromHash(
+    typeof window === 'undefined' ? '' : window.location.hash
+  )
+}
+
+function applyBrowserRoute(route: ResolvedDashboardRoute, replace: boolean) {
+  if (typeof window === 'undefined') return
+  const hash =
+    route.page === 'users'
+      ? `#${nav.users()}`
+      : `#${nav.entry(route.workspace, route.root, route.entry, route.locale)}`
+  const url = new URL(window.location.href)
+  url.hash = hash
+  if (replace) window.history.replaceState(window.history.state, '', url)
+  else window.history.pushState(null, '', url)
+}
+
+const currentRouteAtom = atom<ResolvedDashboardRoute>(readBrowserRoute())
+
+const navigationAtom = Object.assign(
+  atom(
+    get => get(currentRouteAtom),
+    (get, set, request: NavigationRequest) => {
+      const previous = get(currentRouteAtom)
+      const commit = () => {
+        if (request.type === 'push') applyBrowserRoute(request.route, false)
+        set(currentRouteAtom, request.route)
+      }
+      const guard = get(routeGuardAtom)
+      if (guard && get(guard)) {
+        if (request.type === 'pop') applyBrowserRoute(previous, true)
+        set(routeBlockAtom, {
+          confirm() {
+            set(routeBlockAtom, null)
+            if (request.type === 'pop') applyBrowserRoute(request.route, true)
+            commit()
+          }
+        })
         return
       }
-      const {workspace, root, entry, locale} = update
-      set(location, {
-        hash: `#${nav.entry(workspace, root, entry, locale)}`
-      })
+      commit()
     }
-    const guard = get(routeGuardAtom)
-    if (guard && get(guard)) {
-      set(routeBlockAtom, {
-        async confirm() {
-          set(routeBlockAtom, null)
-          await confirm()
-        }
-      })
-      return
+  ),
+  {
+    onMount(navigate: (request: NavigationRequest) => void) {
+      if (typeof window === 'undefined') return
+      const onPopState = () => {
+        navigate({type: 'pop', route: readBrowserRoute()})
+      }
+      window.addEventListener('popstate', onPopState)
+      onPopState()
+      return () => window.removeEventListener('popstate', onPopState)
     }
-    await confirm()
   }
+)
+
+/** @internal */
+export const routeAtom = atom(
+  get => get(navigationAtom),
+  (_get, set, update: DashboardRoute) =>
+    set(navigationAtom, {type: 'push', route: routeFromUpdate(update)})
 )
 
 const pageTypeAtom = selectAtom(routeAtom, route => route.page)
@@ -137,6 +198,7 @@ export interface Page {
   type: 'users' | 'entry'
   workspace: string | undefined
   root: string | undefined
+  requestedRoot?: string
   entry: string | undefined
   locale: string | null | undefined
   auth: PageAuth
@@ -156,6 +218,7 @@ export function resolvePage(get: Getter, auth: PageAuth): Page {
     type: get(pageTypeAtom),
     workspace,
     root,
+    requestedRoot: route.root,
     entry: get(entryAtom),
     locale: resolveLocale(get, route, workspace, root),
     auth

@@ -96,13 +96,11 @@ function WorkspaceSelectorMenu({
       selectedKeys={[page.type === 'users' ? 'users' : page.workspace!]}
       onAction={key => {
         if (key === 'users') {
-          void setRoute({page: 'users'})
+          setRoute({page: 'users'})
           return
         }
         const workspace = String(key)
-        const settings = workspaceAtoms(workspace).settingsAtom
-        void setRoute({workspace, root: undefined})
-        void settings
+        setRoute({workspace, root: undefined})
       }}
       popoverProps={popoverProps}
     >

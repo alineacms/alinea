@@ -171,30 +171,41 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
       editor: new EntryEditor(entryType, node)
     }
   }, [entryType, initialBody])
-  const field = state.editor.field('body')
-  if (!field) throw new Error('Body field not found')
-  const value = useAtomValue(field.value)
-  const dirty = useAtomValue(state.node.isDirty)
-  const reset = useSetAtom(state.node.reset)
-  const replace = useSetAtom(field.value)
   return (
     <StoryProvider views={views}>
-      <EditorScope editor={state.editor}>
-        <div id="alinea-toolbar" />
-        <button type="button" onClick={() => reset()}>
-          Reset body
-        </button>
-        <button
-          type="button"
-          onClick={() => replace([paragraph('Externally replaced.')])}
-        >
-          Replace body
-        </button>
-        <FieldsEditor />
-        <pre data-testid="value">{JSON.stringify(value)}</pre>
-        <output data-testid="dirty">{String(dirty)}</output>
-      </EditorScope>
+      <RichTextFixtureContent editor={state.editor} node={state.node} />
     </StoryProvider>
+  )
+}
+
+interface RichTextFixtureContentProps {
+  editor: EntryEditor
+  node: ReactiveNode<object>
+}
+
+function RichTextFixtureContent({editor, node}: RichTextFixtureContentProps) {
+  const field = editor.field('body')
+  if (!field) throw new Error('Body field not found')
+  const value = useAtomValue(field.value)
+  const dirty = useAtomValue(node.isDirty)
+  const reset = useSetAtom(node.reset)
+  const replace = useSetAtom(field.value)
+  return (
+    <EditorScope editor={editor}>
+      <div id="alinea-toolbar" />
+      <button type="button" onClick={() => reset()}>
+        Reset body
+      </button>
+      <button
+        type="button"
+        onClick={() => replace([paragraph('Externally replaced.')])}
+      >
+        Replace body
+      </button>
+      <FieldsEditor />
+      <pre data-testid="value">{JSON.stringify(value)}</pre>
+      <output data-testid="dirty">{String(dirty)}</output>
+    </EditorScope>
   )
 }
 
