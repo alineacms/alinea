@@ -47,9 +47,12 @@ export interface EntryPickerConditions {
   enableNavigation?: boolean
 }
 
+export type LinkPickerPresentation = 'full' | 'inline'
+
 export interface EntryPickerOptions<
   Definition = {}
 > extends EntryPickerConditions {
+  presentation?: LinkPickerPresentation
   selection: Projection
   defaultView?: 'row' | 'thumb'
   showMedia?: boolean

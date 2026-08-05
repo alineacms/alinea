@@ -6,6 +6,13 @@
   "externalLink": null,
   "entry": null,
   "entryWithCondition": null,
+  "inlineExample": {
+    "_id": "3HV1We5ziG08NsLSr5pgnCXNDOx",
+    "_type": "entry",
+    "_index": "",
+    "_entry": "2yu3RIjXrBqVI1NGH2hZNcL0gzU"
+  },
+  "inlineMultiselectExample": [],
   "entryWithLocation": null,
   "linkMultiple": [
     {
@@ -110,7 +117,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1784104272,
+    "updatedAt": 1785938455,
     "updatedBy": {
       "name": "vctrth",
       "email": "thysvic@gmail.com"

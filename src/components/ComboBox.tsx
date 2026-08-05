@@ -72,7 +72,7 @@ function ComboBoxTrigger<T extends object>({
             className={styles.ComboBoxTrigger.button.arrow()}
           />
         </Button>
-        {hasClear && <ComboBoxClear />}
+        {hasClear && <ComboBoxClear onClear={() => props.onChange?.(null)} />}
       </div>
     </div>
   )
@@ -88,7 +88,6 @@ function ComboBoxPopover<T extends object>(props: ComboBoxProps<T>) {
       data-clear={hasClear || undefined}
     >
       <ListBox
-        items={props.items}
         className={styles.ComboBoxPopover.listbox()}
         selectionMode={props.selectionMode}
       >
@@ -98,13 +97,16 @@ function ComboBoxPopover<T extends object>(props: ComboBoxProps<T>) {
   )
 }
 
-function ComboBoxClear() {
+function ComboBoxClear({onClear}: {onClear: () => void}) {
   const state = useContext(ComboBoxStateContext)
   if (!state?.inputValue) return null
   return (
     <Button
       slot={null}
-      onPress={() => state?.setInputValue('')}
+      onPress={() => {
+        onClear()
+        state?.setInputValue('')
+      }}
       className={styles.ComboBoxClear()}
     >
       <IcRoundClose />
