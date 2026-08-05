@@ -10,6 +10,7 @@ import {Type} from '#/core/Type.js'
 import type {Infer} from '#/types.js'
 import {parents} from '#/query.js'
 import {atom, type Atom, type Getter, type PrimitiveAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {ComponentType} from 'react'
 import type {Key} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
@@ -219,7 +220,8 @@ export class ExplorerAtoms {
   selectedLocale: PrimitiveAtom<string | null>
   root: Atom<ExplorerRootData>
   parent: Atom<ExplorerEntry | undefined>
-  items: Atom<Promise<Array<ExplorerEntry>>>
+  itemsReady: Atom<Promise<Array<ExplorerEntry>>>
+  items: Atom<Array<ExplorerEntry>>
 
   constructor(
     public readonly location: PrimitiveAtom<ExplorerLocation>,
@@ -293,7 +295,7 @@ export class ExplorerAtoms {
       if (data) data.parents = atom(ancestors)
       return parent
     })
-    this.items = atom(async get => {
+    this.itemsReady = atom(async get => {
       const values = await get(this.itemData)
       return values.map(value => {
         const parentEntries = value.parentEntries ?? []
@@ -322,6 +324,7 @@ export class ExplorerAtoms {
         )
       })
     })
+    this.items = unwrap(this.itemsReady, previous => previous ?? [])
   }
 
   showResults = atom(get => {

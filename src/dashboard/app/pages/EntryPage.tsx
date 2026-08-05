@@ -64,7 +64,7 @@ export const entryPage = page(async (page, get) => {
         get(entry.root),
         page.locale ?? null
       )
-      await get(root.children(entry.id).items)
+      await get(root.children(entry.id).itemsReady)
       return (
         <EntryOverview
           entry={entry}
@@ -324,7 +324,11 @@ function EntryEditorContent({
 
   if (View) {
     return (
-      <EntryScope entry={entry} localeData={localeData}>
+      <EntryScope
+        entry={entry}
+        localeData={localeData}
+        selectedEntry={selectedEntry}
+      >
         <View type={type.type} />
       </EntryScope>
     )
@@ -339,6 +343,8 @@ function EntryEditorContent({
         localeData={localeData}
         node={node}
         onSidebarOpenChange={sidebar ? setSidebarOpen : undefined}
+        parentNeedsTranslation={parentNeedsTranslation}
+        selectedEntry={selectedEntry}
       />
 
       {editorBody}
@@ -369,7 +375,11 @@ function EntryEditorContent({
           </DashboardModalDialog>
         )}
       </DashboardModal>
-      <EntryScope entry={entry} localeData={localeData}>
+      <EntryScope
+        entry={entry}
+        localeData={localeData}
+        selectedEntry={selectedEntry}
+      >
         {mainEditor}
         {sidebar && isSidebarOpen && (
           <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />

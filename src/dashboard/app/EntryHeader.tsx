@@ -7,6 +7,7 @@ import {
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {Entry} from '#/core/Entry.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
@@ -137,6 +138,8 @@ export interface EntryHeaderProps {
   isSidebarOpen?: boolean
   node: ReactiveNode<object>
   onSidebarOpenChange?: (isOpen: boolean) => void
+  parentNeedsTranslation: boolean
+  selectedEntry: Entry
 }
 
 export function EntryHeader({
@@ -145,16 +148,16 @@ export function EntryHeader({
   localeData,
   isSidebarOpen,
   node,
-  onSidebarOpenChange
+  onSidebarOpenChange,
+  parentNeedsTranslation,
+  selectedEntry
 }: EntryHeaderProps) {
   const config = useAtomValue(configAtom)
   const policy = entry.policy
   const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
-  const selectedEntry = useAtomValue(localeData.selectedEntry)
   const versions = useAtomValue(localeData.versions)
   const untranslated = useAtomValue(localeData.untranslated)
-  const parentNeedsTranslation = useAtomValue(localeData.parentNeedsTranslation)
   const typeName = useAtomValue(entry.type)
   const parentId = useAtomValue(entry.parentId)
   const workspace = useAtomValue(entry.workspace)

@@ -168,8 +168,9 @@ export function App(props: AppProps) {
   )
 }
 
-function DashboardApp(props: AppProps) {
+function DashboardApp(props: AppProps): ReactNode {
   useInitAtoms(props)
+  // @ts-expect-error This is the intentional top-level async JSX boundary.
   return useAtomValue(appAtom)
 }
 

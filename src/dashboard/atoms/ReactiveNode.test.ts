@@ -66,3 +66,18 @@ test('rejects field and structural writes to a read-only document', () => {
   })
   expect(store.get(article.isDirty)).toBeFalse()
 })
+
+test('keeps committed reset values isolated between stores', () => {
+  const article = articleNode()
+  const first = createStore()
+  const second = createStore()
+
+  first.set(article.field('title'), 'First store')
+  first.set(article.commit)
+
+  second.set(article.field('title'), 'Second store')
+  second.set(article.reset)
+
+  expect(first.get(article.value).title).toBe('First store')
+  expect(second.get(article.value).title).toBe('First title')
+})

@@ -45,7 +45,7 @@ test('required atoms store functions without evaluating them', () => {
   expect(store.get(callbackAtom)('value')).toBe('received value')
 })
 
-test('dispense weakly caches values by object identity', () => {
+test('dispense caches values by key identity', () => {
   const cached = dispense((_key: object) => requiredAtom<number>('test'))
   const first = {}
   const second = {}

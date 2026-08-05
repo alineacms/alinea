@@ -8,14 +8,7 @@ import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {Type} from '#/index.js'
-import {
-  atom,
-  createStore,
-  Provider,
-  useAtom,
-  useAtomValue,
-  useSetAtom
-} from 'jotai'
+import {createStore, Provider, useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {
   ComponentType,
   Dispatch,
@@ -42,6 +35,7 @@ import {previewMetadataAtom} from './atoms/preview.js'
 interface EntryContextValue {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  selectedEntry: EntryRecord<Record<string, unknown>>
 }
 
 export interface DashboardOptions {
@@ -68,7 +62,6 @@ const entryContext = createContext<EntryContextValue | null>(null)
 const dashboardContext = createContext<DashboardContextValue | null>(null)
 const dashboardModelContext = createContext<Dashboard | null>(null)
 const editorContext = createContext<EditorModel | null>(null)
-const nullEntryAtom = atom<EntryRecord<Record<string, unknown>> | null>(null)
 
 interface DashboardModelScopeProps {
   dashboard: Dashboard
@@ -181,14 +174,19 @@ export function useDashboardContext(): DashboardContextValue {
 export interface EntryScopeProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  selectedEntry: EntryRecord<Record<string, unknown>>
 }
 
 export function EntryScope({
   children,
   entry,
-  localeData
+  localeData,
+  selectedEntry
 }: PropsWithChildren<EntryScopeProps>) {
-  const value = useMemo(() => ({entry, localeData}), [entry, localeData])
+  const value = useMemo(
+    () => ({entry, localeData, selectedEntry}),
+    [entry, localeData, selectedEntry]
+  )
   return createElement(entryContext.Provider, {value}, children)
 }
 
@@ -228,8 +226,7 @@ export function useNodeEditor(node: EditorNode, type: Type) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
   const policy = scope?.entry.policy
-  const activeVersionAtom = scope?.localeData.selectedEntry ?? nullEntryAtom
-  const activeVersion = useAtomValue(activeVersionAtom)
+  const activeVersion = scope?.selectedEntry
   const editor = useMemo(() => {
     return new EntryEditor(
       type,
@@ -260,7 +257,7 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): StoredValue {
   const node = useFieldNode<StoredValue>(field)
-  return useAtomValue(node.value)
+  return useAtomValue(node.value) as StoredValue
 }
 
 /**
@@ -353,8 +350,7 @@ function useEntryModel() {
  */
 export function useEntry(): EntryRecord<Record<string, unknown>> | null {
   const scope = useEntryModel()
-  const selectedEntryAtom = scope?.localeData.selectedEntry ?? nullEntryAtom
-  return useAtomValue(selectedEntryAtom)
+  return scope?.selectedEntry ?? null
 }
 
 /**

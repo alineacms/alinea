@@ -1,5 +1,5 @@
 import {entries, fromEntries, isRecord, values} from '#/core/util/Objects.js'
-import type {Getter, Setter, WritableAtom} from 'jotai'
+import type {Getter, PrimitiveAtom, Setter, WritableAtom} from 'jotai'
 import {atom} from 'jotai'
 import type {SetStateAction} from 'react'
 import {dispense} from './utils.js'
@@ -14,7 +14,7 @@ function isArray<Value>(input: unknown): input is Array<Value> {
 type ReactiveObject = Record<string, ReactiveNode>
 
 export class ReactiveNode<Value = unknown> {
-  #initialValue: Value
+  #initialValue: PrimitiveAtom<Value>
   readonly readOnly: boolean
   nodes: WritableAtom<unknown, [unknown], void>
   #inner = atom(get => {
@@ -27,7 +27,7 @@ export class ReactiveNode<Value = unknown> {
   peek: Peek<Value> = atom(null, get => get(this.value))
 
   constructor(initialValue: Value, readOnly = false) {
-    this.#initialValue = initialValue
+    this.#initialValue = atom(initialValue)
     this.readOnly = readOnly
     this.nodes = atom(this.#wrap(initialValue))
     this.value = atom(this.#read, this.#write)
@@ -42,7 +42,7 @@ export class ReactiveNode<Value = unknown> {
         ? (update as (value: Value) => Value)(get(this.value))
         : update
     this.#reconcile(get, set, next)
-    set(this.#dirty, next !== this.#initialValue)
+    set(this.#dirty, next !== get(this.#initialValue))
   }
 
   isEmpty = atom(get => get(this.value) === undefined)
@@ -124,15 +124,16 @@ export class ReactiveNode<Value = unknown> {
   }
 
   reset = atom(null, (get, set) => {
-    set(this.value, this.#initialValue)
+    set(this.value, get(this.#initialValue))
     set(this.isDirty, false)
   })
 
   commit = atom(null, (get, set): Value => {
     for (const node of get(this.#inner)) set(node.commit)
-    this.#initialValue = get(this.value)
+    const value = get(this.value)
+    set(this.#initialValue, value)
     set(this.#dirty, false)
-    return this.#initialValue
+    return value
   })
 
   field = dispense(

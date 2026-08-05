@@ -22,7 +22,7 @@ export const rootPage = page(async (page, get) => {
   const root = rootAtoms(page, page.workspace, page.root, page.locale ?? null)
   const data = get(root.data)
   const view = get(root.view)
-  if (!view) await get(root.explorer.items)
+  if (!view) await get(root.explorer.itemsReady)
   return <RootEditor data={data} root={root} view={view} />
 })
 
