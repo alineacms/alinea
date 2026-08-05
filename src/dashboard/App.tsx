@@ -1,8 +1,12 @@
+import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {styler} from '@alinea/styler'
 import {atom, createStore, Provider, useAtomValue} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import {useMemo, useState, type ComponentType, type ReactNode} from 'react'
+import css from './App.module.css'
 import {AccessDenied} from './app/AccessDenied.js'
 import {AuthView} from './app/AuthView.js'
 import {DashboardLayout} from './app/DashboardLayout.js'
@@ -11,6 +15,7 @@ import {DashboardErrorBoundary} from './app/DashboardErrorBoundary.js'
 import {entryPage} from './app/pages/EntryPage.js'
 import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
+import {Rail} from './app/ui/Rail.js'
 import {authAtom} from './atoms/auth.js'
 import {workspaceAtoms} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
@@ -20,6 +25,8 @@ import {rootAtoms} from './atoms/root.js'
 import {authReady, canManageMembersAtom} from './atoms/user.js'
 import {DashboardModelScope, type Dashboard} from './hooks.js'
 import './global.css'
+
+const styles = styler(css)
 
 export interface AppProps {
   graph: WriteableGraph
@@ -31,10 +38,13 @@ export interface AppProps {
   alineaDev?: boolean
 }
 
-const appAtom = atom(get => {
+const appAtom = atom(async get => {
   const auth = get(authAtom)
-  return auth.status === 'authenticated' ? get(authenticatedAtom) : <AuthView />
+  if (auth.status === 'authenticated') return get(authenticatedAtom)
+  return <AuthView />
 })
+
+const appValueAtom = unwrap(appAtom, previous => previous)
 
 const authenticatedAtom = atom(async get => {
   const [auth, canManageMembers] = await Promise.all([
@@ -55,10 +65,11 @@ const authenticatedAtom = atom(async get => {
   )
 
   if (page.type === 'users' && canManageMembers) {
+    const content = await usersPage(page, get)
     return (
       <>
         {meta('Users')}
-        {usersPage(page, get)}
+        {content}
       </>
     )
   }
@@ -170,8 +181,18 @@ export function App(props: AppProps) {
 
 function DashboardApp(props: AppProps): ReactNode {
   useInitAtoms(props)
-  // @ts-expect-error This is the intentional top-level async JSX boundary.
-  return useAtomValue(appAtom)
+  const app = useAtomValue(appValueAtom)
+  return app ?? <AppLoading />
+}
+
+function AppLoading() {
+  return (
+    <Rail main className={styles.AppLoading()}>
+      <div className={styles.AppLoading.progress()}>
+        <ProgressCircle isIndeterminate aria-label="Loading dashboard" />
+      </div>
+    </Rail>
+  )
 }
 
 async function entryTitle(
