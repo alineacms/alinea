@@ -76,6 +76,10 @@
     "react-aria-components": "^1.17.0",
     "use-sync-external-store": "^1.6.0"
   },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
+  },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",
     "@alinea/suite": "^0.6.3",
