@@ -52,7 +52,7 @@ function FileEditorContent({config, i18n}: FileEditorContentProps) {
   const thumbHash = useFieldValue(MediaFile.thumbHash)
   const thumbBackground = useMemo(() => {
     if (!thumbHash) return undefined
-    return `url(${thumbHashToDataURL(base64.parse(thumbHash))}`
+    return `url(${thumbHashToDataURL(base64.parse(thumbHash))})`
   }, [thumbHash])
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)

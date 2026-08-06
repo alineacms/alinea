@@ -55,7 +55,7 @@
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
     "format": "oxfmt --write src",
     "format:check": "oxfmt --check src",
-    "lint": "oxlint --ignore-path .gitignore src/dashboard",
+    "lint": "oxlint --ignore-path .gitignore .",
     "prepublishOnly": "bun run build",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",

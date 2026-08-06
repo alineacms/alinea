@@ -494,7 +494,7 @@ export class EntryLocaleAtoms {
     this.entry.policy.assert(Permission.Delete, entry)
     await get(graphAtom).remove(this.entry.id)
   })
-  replaceFile = atom(null, async (get, _set, file: File) => {
+  replaceFile = atom(null, async (get, set, file: File) => {
     const entry = this.#activeEntry(get)
     const policy = this.entry.policy
     policy.assert(Permission.Update, entry)
@@ -507,6 +507,7 @@ export class EntryLocaleAtoms {
       workspace: entry.workspace,
       root: entry.root
     })
+    set(this.currentlyEditing, undefined)
   })
 }
 

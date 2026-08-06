@@ -10,6 +10,9 @@ export const dashboardScenarioIds = {
 } as const
 
 export const dashboardLinkScenarioIds = {
+  existingFile: 'workflow-existing-file',
+  existingImage: 'workflow-existing-image',
   referenceFolder: 'workflow-reference-folder',
+  referenceOther: 'workflow-reference-other',
   referenceTarget: 'workflow-reference-target'
 } as const
