@@ -31,6 +31,7 @@ import type {Page} from './atoms/nav.js'
 import type {RootAtoms} from './atoms/root.js'
 import type {ReactiveNode} from './atoms/ReactiveNode.js'
 import {previewMetadataAtom} from './atoms/preview.js'
+import {dashboardAtoms} from './atoms/dashboard.js'
 
 interface EntryContextValue {
   entry: EntryAtoms
@@ -371,4 +372,17 @@ export function useNodes<Value extends object>(
 ): Record<string, ReactiveNode>
 export function useNodes<Value>(node: ReactiveNode<Value>): unknown {
   return useAtomValue(node.nodes)
+}
+
+/**
+ * Returns all the atom's related to toasts
+ */
+export function useToast() {
+  const toasts = useAtomValue(dashboardAtoms.toasts)
+  const toast = useSetAtom(dashboardAtoms.pushToast)
+  const dismiss = useSetAtom(dashboardAtoms.dismissToast)
+  const clear = () => {
+    for (const entry of toasts) dismiss(entry.id)
+  }
+  return {toasts, toast, dismiss, clear}
 }

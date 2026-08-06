@@ -1,4 +1,5 @@
 import type {LocalConnection} from '#/core/Connection.js'
+import {createId} from '#/core/Id.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -21,6 +22,23 @@ export interface DashboardMutationQueue {
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
 
+export type DashboardToastType = 'error' | 'warning' | 'info' | 'success'
+
+export interface DashboardToastAction {
+  label: string
+  onPress: () => void | Promise<void>
+}
+
+export interface DashboardToast {
+  id: string
+  type: DashboardToastType
+  message: string
+  actions?: Array<DashboardToastAction>
+  blocking: boolean
+}
+
+export type DashboardToastInput = Omit<DashboardToast, 'id'>
+
 interface MutationQueueRetry {
   retryMutationQueue(): Promise<void>
 }
@@ -37,6 +55,7 @@ const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 
 export class DashboardAtoms {
   #mutationQueue = atom<DashboardMutationQueue>(mutationQueueState([]))
+  #toasts = atom<Array<DashboardToast>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -71,6 +90,16 @@ export class DashboardAtoms {
     const graph = get(graphAtom) as WriteableGraph &
       Partial<MutationQueueDiscard>
     if (graph.discardMutationQueue) await graph.discardMutationQueue()
+  })
+
+  toasts = atom(get => get(this.#toasts))
+
+  pushToast = atom(null, (_get, set, input: DashboardToastInput) => {
+    set(this.#toasts, current => [...current, {id: createId(), ...input}])
+  })
+
+  dismissToast = atom(null, (_get, set, id: string) => {
+    set(this.#toasts, current => current.filter(toast => toast.id !== id))
   })
 
   theme = Object.assign(
