@@ -42,6 +42,7 @@ export interface DashboardModalDialogProps
     Omit<ComponentProps<typeof Dialog>, 'children' | 'className'> {
   isLoading?: boolean
   label?: ReactNode
+  closeButton?: boolean
   controls?: ReactNode
   variant?: 'default' | 'explorer'
 }
@@ -49,6 +50,7 @@ export interface DashboardModalDialogProps
 export function DashboardModalDialog({
   isLoading = false,
   label,
+  closeButton = true,
   controls,
   children,
   variant = 'default',
@@ -76,7 +78,7 @@ export function DashboardModalDialog({
           {label !== undefined && (
             <header className={styles.DashboardModalDialog.header()}>
               <DashboardModalTitle>{label}</DashboardModalTitle>
-              <DashboardModalCloseButton />
+              {closeButton && <DashboardModalCloseButton />}
             </header>
           )}
           {controls && (

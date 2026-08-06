@@ -15,7 +15,7 @@ import {
   createExplorerAtoms,
   type ExplorerAtoms
 } from '#/dashboard/atoms/explorer.js'
-import {type Atom, type Getter, atom} from 'jotai'
+import {type Atom, type Getter, type Setter, atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType} from 'react'
 import type {
@@ -27,6 +27,7 @@ import type {
 import {LucideFile} from '../icons.js'
 import {workspaceAtoms, viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
+import {dashboardAtoms} from './dashboard.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
 import type {Page} from './nav.js'
@@ -53,12 +54,20 @@ export interface RootTreeItem {
   hasChildren: boolean
 }
 
+interface PendingParentMove {
+  keys: Set<Key>
+  target: ItemDropTarget
+}
+
 const treeExpandedKeysAtoms = dispense((_workspace: string) =>
   dispense((_root: string) => atom(new Set<string>()))
 )
 
 export class RootAtoms {
   explorer: ExplorerAtoms
+  #pendingParentMove = atom<PendingParentMove | null>(null)
+
+  pendingParentMove = atom(get => get(this.#pendingParentMove))
 
   constructor(
     public readonly workspace: string,
@@ -203,33 +212,65 @@ export class RootAtoms {
   )
   onMove = atom(
     null,
-    async (get, _set, event: DroppableCollectionReorderEvent) => {
-      await this.moveDraggedKeys(get, event.keys, event.target)
+    async (get, set, event: DroppableCollectionReorderEvent) => {
+      await this.moveDraggedKeys(get, set, event.keys, event.target)
     }
   )
   onInsert = atom(
     null,
-    async (get, _set, event: DroppableCollectionInsertDropEvent) => {
-      await this.moveDropItems(get, event.items, event.target)
+    async (get, set, event: DroppableCollectionInsertDropEvent) => {
+      await this.moveDropItems(get, set, event.items, event.target)
     }
   )
   onItemDrop = atom(
     null,
-    async (get, _set, event: DroppableCollectionOnItemDropEvent) => {
-      await this.moveDropItems(get, event.items, event.target)
+    async (get, set, event: DroppableCollectionOnItemDropEvent) => {
+      await this.moveDropItems(get, set, event.items, event.target)
+    }
+  )
+
+  cancelParentMove = atom(null, (_get, set) => {
+    set(this.#pendingParentMove, null)
+  })
+
+  confirmParentMove = atom(
+    null,
+    async (get, set, skipConfirmation: boolean) => {
+      const pending = get(this.#pendingParentMove)
+      if (!pending) return
+      set(this.#pendingParentMove, null)
+      if (skipConfirmation) set(dashboardAtoms.skipParentMoveConfirmation, true)
+      await this.moveDraggedKeys(get, set, pending.keys, pending.target, true)
     }
   )
 
   private async moveDraggedKeys(
     get: Getter,
+    set: Setter,
     keys: Set<Key>,
-    target: ItemDropTarget
+    target: ItemDropTarget,
+    confirmed = false
   ) {
     const graph = get(graphAtom)
     const policy = this.policy
     const treeItems = get(this.treeItems)
     const moveTarget = target.key ? String(target.key) : this.key
     const targetType = target.key ? 'entry' : 'root'
+    const movesToNewParent =
+      target.dropPosition === 'on' &&
+      target.key !== null &&
+      [...keys].some(key => {
+        const item = treeItems.find(candidate => candidate.id === String(key))
+        return item?.parentId !== String(target.key)
+      })
+    if (
+      movesToNewParent &&
+      !confirmed &&
+      !get(dashboardAtoms.skipParentMoveConfirmation)
+    ) {
+      set(this.#pendingParentMove, {keys, target})
+      return
+    }
     for (const key of keys) {
       const id = String(key)
       const item = treeItems.find(candidate => candidate.id === id)
@@ -256,6 +297,7 @@ export class RootAtoms {
 
   private async moveDropItems(
     get: Getter,
+    set: Setter,
     items: Array<DropItem>,
     target: ItemDropTarget
   ) {
@@ -269,7 +311,7 @@ export class RootAtoms {
         id = await item.getText('text/plain')
       if (id) keys.add(id)
     }
-    await this.moveDraggedKeys(get, keys, target)
+    await this.moveDraggedKeys(get, set, keys, target)
   }
 }
 

@@ -56,6 +56,7 @@ const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 export class DashboardAtoms {
   #mutationQueue = atom<DashboardMutationQueue>(mutationQueueState([]))
   #toasts = atom<Array<DashboardToast>>([])
+  #skipParentMoveConfirmation = atom(false)
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -101,6 +102,11 @@ export class DashboardAtoms {
   dismissToast = atom(null, (_get, set, id: string) => {
     set(this.#toasts, current => current.filter(toast => toast.id !== id))
   })
+
+  skipParentMoveConfirmation = atom(
+    get => get(this.#skipParentMoveConfirmation),
+    (_get, set, skip: boolean) => set(this.#skipParentMoveConfirmation, skip)
+  )
 
   theme = Object.assign(
     atom(
