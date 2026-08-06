@@ -250,7 +250,6 @@ function EntryEditorContent({
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
   const saveDraft = useSetAtom(localeData.saveDraft)
   const publishEdits = useSetAtom(localeData.publishEdits)
-  const isDirty = useAtomValue(node.isDirty)
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
@@ -272,15 +271,9 @@ function EntryEditorContent({
     routeBlock?.confirm()
   }
 
-  // Keep preview state in sync with edits made through this editor instance.
-  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
-  // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
-    if (node.readOnly && !isUntranslated) return
-    setEditing(isUntranslated || isDirty ? node : undefined)
-  }, [isDirty, isUntranslated, node, setEditing])
-  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
-  // eslint-enable react-you-might-not-need-an-effect/no-event-handler
+    setEditing(node.readOnly && !isUntranslated ? undefined : node)
+  }, [isUntranslated, node, setEditing])
 
   useEffect(() => {
     setRouteGuard(node.isDirty)

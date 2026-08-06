@@ -13,7 +13,7 @@ import {Root} from '#/core/Root.js'
 import {Permission, type Policy} from '#/core/Role.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {entries, isRecord} from '#/core/util/Objects.js'
+import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
@@ -88,27 +88,6 @@ export type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
 
-const undefinedEditorValue = '__alinea_undefined_editor_value__'
-
-function serializeEditorNode(value: object, readOnly: boolean): string {
-  return JSON.stringify({value, readOnly}, (_key, item) =>
-    item === undefined ? {[undefinedEditorValue]: true} : item
-  )
-}
-
-function restoreUndefined(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(restoreUndefined)
-  if (!isRecord(value)) return value
-  const result: Record<string, unknown> = {}
-  for (const [key, item] of Object.entries(value)) {
-    result[key] =
-      isRecord(item) && item[undefinedEditorValue] === true
-        ? undefined
-        : restoreUndefined(item)
-  }
-  return result
-}
-
 function prepareData(
   get: Getter,
   node: ReactiveNode<object>,
@@ -132,15 +111,6 @@ export class EntryLocaleAtoms {
   ) {}
 
   currentlyEditing = atom<ReactiveNode<object>>()
-  #nodes = dispense((serialized: string) => {
-    const encoded = JSON.parse(serialized) as {
-      value: unknown
-      readOnly: boolean
-    }
-    const value = restoreUndefined(encoded.value)
-    assert(isRecord(value), 'Serialized editor value must be an object')
-    return atom(new ReactiveNode<object>(value, encoded.readOnly))
-  })
   untranslated = atom(get => {
     const data = get(this.entry.data)
     return !data.entries.some(entry => entry.locale === this.requestedLocale)
@@ -264,7 +234,7 @@ export class EntryLocaleAtoms {
       ...entry.data,
       ...(isUntranslated ? {path: undefined} : undefined)
     })
-    return get(this.#nodes(serializeEditorNode(value, readOnly)))
+    return new ReactiveNode<object>(value, readOnly)
   })
   anchors = atom(async get => {
     const entry = await get(this.selectedEntry)
