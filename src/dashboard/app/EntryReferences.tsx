@@ -1,9 +1,16 @@
-import {useAtomValue} from '../AtomHooks.js'
 import {Button, Icon} from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
+import type {
+  EntryAtoms,
+  EntryLocaleAtoms,
+  EntryReferenceSource,
+  EntryReferenceWithSource
+} from '#/dashboard/atoms/entry.js'
+import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
-import {useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {
   IcRoundArchive,
   IcRoundCheck,
@@ -12,43 +19,33 @@ import {
   IcRoundInsertDriveFile,
   IcRoundLink
 } from '../icons.js'
-import type {
-  DashboardEntryReference,
-  DashboardEntryReferenceSource,
-  DashboardEntryReferences
-} from '../atoms/entry/load.js'
-import type {EntryDataAtoms} from '../atoms/entry.js'
-import {routeAtom} from '../atoms/routing.js'
 import {Badge} from './Badge.js'
 import css from './EntryReferences.module.css'
 
 const styles = styler(css)
 
 export interface EntryReferencesProps {
-  entry: EntryDataAtoms
-  references?: DashboardEntryReferences
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
 }
 
-export function EntryReferences({
-  entry,
-  references: loaded
-}: EntryReferencesProps) {
-  const type = useAtomValue(entry.type)
-  const root = useAtomValue(entry.root)
-  const selectedLocale = useAtomValue(root.selectedLocale)
+export function EntryReferences({entry, localeData}: EntryReferencesProps) {
+  const data = useAtomValue(entry.incomingReferences)
+  const config = useAtomValue(configAtom)
+  const typeName = useAtomValue(entry.type)
   const setRoute = useSetAtom(routeAtom)
-  if (!loaded) return null
-  const references = loaded.references
+  if (!data) return null
+  const type = config.schema[typeName]
   const showAllLocales = type === MediaFile || type === MediaLibrary
+  const selectedLocale = localeData.requestedLocale
   const currentReferences = showAllLocales
-    ? references
-    : references.filter(item => matchesLocale(item, selectedLocale))
+    ? data.references
+    : data.references.filter(item => matchesLocale(item, selectedLocale))
   const otherReferences = showAllLocales
     ? []
-    : references.filter(item => !matchesLocale(item, selectedLocale))
+    : data.references.filter(item => !matchesLocale(item, selectedLocale))
   const groups = groupReferences(currentReferences)
-  const otherGroups = groupReferences(otherReferences)
-  const otherSummary = formatOtherLocales(otherGroups)
+  const otherSummary = formatOtherLocales(groupReferences(otherReferences))
   if (groups.length === 0) {
     return (
       <div className={styles.EntryReferences()}>
@@ -139,15 +136,15 @@ function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
 
 interface EntryReferenceGroup {
   key: string
-  source: DashboardEntryReferenceSource
+  source: EntryReferenceSource
   locale: string | null
   fields: Array<string>
   statuses: Array<EntryStatus>
-  linkType: DashboardEntryReference['reference']['linkType']
+  linkType: EntryReferenceWithSource['reference']['linkType']
 }
 
 function groupReferences(
-  references: Array<DashboardEntryReference>
+  references: Array<EntryReferenceWithSource>
 ): Array<EntryReferenceGroup> {
   const groups = new Map<string, EntryReferenceGroup>()
   for (const item of references) {
@@ -188,7 +185,7 @@ interface OtherLocaleCount {
 }
 
 function matchesLocale(
-  item: DashboardEntryReference,
+  item: EntryReferenceWithSource,
   selectedLocale: string | null
 ): boolean {
   return item.reference.sourceLocale === selectedLocale
@@ -209,7 +206,7 @@ function formatOtherLocales(
 }
 
 function referenceIcon(
-  linkType: DashboardEntryReference['reference']['linkType']
+  linkType: EntryReferenceWithSource['reference']['linkType']
 ) {
   switch (linkType) {
     case 'image':

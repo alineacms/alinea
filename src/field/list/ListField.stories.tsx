@@ -1,11 +1,12 @@
 import {Field} from '#/core/Field.js'
-import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {createId} from '#/core/Id.js'
 import type {ListRow} from '#/core/ListRow.js'
-import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
+import {Type, type} from '#/core/Type.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
-import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
+import {EntryEditor} from '#/dashboard/atoms/editor.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {EditorScope} from '#/dashboard/hooks.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {
   IcOutlineGridView,
   IcRoundCode,
@@ -14,7 +15,6 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'
@@ -246,29 +246,21 @@ const storyStyle: CSSProperties = {
   padding: 24
 }
 
-const dashboard = {
-  graph: {} as WriteableGraph,
-  config: {schema: {}, workspaces: {}},
-  events: new EventTarget(),
-  client: {} as LocalConnection,
-  views
-}
-
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return createEditor(pageType as TypeInstance, node)
+    return new EntryEditor(pageType, node)
   }, [])
   const sections = Field.isField(pageType.sections) ? pageType.sections : null
   if (!sections) return null
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider views={views}>
       <EditorScope editor={editor}>
         <div style={storyStyle}>
           <ListFieldView field={sections} />
         </div>
       </EditorScope>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 

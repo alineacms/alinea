@@ -1,12 +1,16 @@
+import {Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {createType} from '#/core/Type.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {useFieldNode} from '#/dashboard/hooks.js'
 import {type LocalisedField} from '#/field/localiser.js'
+import styler from '@alinea/styler'
 import {atom, useAtom} from 'jotai'
 import {atomFamily} from 'jotai/utils'
 import {useMemo} from 'react'
-import {LocalisedFieldTabs} from './LocalisedFieldTabs.js'
+import css from './LocalisedField.module.css'
+
+const styles = styler(css)
 
 export interface LocalisedFieldViewProps {
   field: LocalisedField<string, unknown, unknown, unknown>
@@ -28,14 +32,27 @@ export function LocalisedFieldView({field}: LocalisedFieldViewProps) {
     )
   }, [locales, inner])
   return (
-    <LocalisedFieldTabs
-      locales={locales}
-      selectedLocale={selectedLocale}
-      onSelectedLocaleChange={setSelectedLocale}
+    <Tabs
+      selectedKey={selectedLocale}
+      onSelectionChange={key => setSelectedLocale(String(key))}
+      className={styles.LocalisedFieldView()}
     >
-      {locale => (
-        <NodeEditor node={node} type={types[locales.indexOf(locale)]} />
-      )}
-    </LocalisedFieldTabs>
+      <TabList>
+        {locales.map(locale => {
+          return (
+            <Tab id={locale} key={locale}>
+              {locale.toUpperCase()}
+            </Tab>
+          )
+        })}
+      </TabList>
+      {locales.map((locale, index) => {
+        return (
+          <TabPanel id={locale} key={locale}>
+            <NodeEditor node={node} type={types[index]} />
+          </TabPanel>
+        )
+      })}
+    </Tabs>
   )
 }

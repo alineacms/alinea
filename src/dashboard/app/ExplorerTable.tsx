@@ -1,72 +1,66 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
-import {AtomSnapshot} from '../AtomSnapshot.js'
-import {Checkbox, FoldIcon, Icon, Surface} from '#/components.js'
+import {Checkbox, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
 import {
   Button as AriaButton,
-  Collection,
-  ListLayout,
-  Tree,
-  TreeItem,
-  TreeItemContent,
+  Cell,
+  Column,
+  Row,
+  Table,
+  TableBody,
+  TableHeader,
+  TableLayout,
   Virtualizer,
-  type DragAndDropHooks
+  type DragAndDropHooks,
+  type Key
 } from 'react-aria-components'
-import type {ListLayoutOptions} from 'react-stately/useVirtualizerState'
+import type {TableLayoutProps} from 'react-stately/useVirtualizerState'
 import {LucideFile, LucideFolder} from '../icons.js'
 import type {
-  EntryDataAtoms,
-  EntryAtoms,
-  EntryOverviewCell
-} from '../atoms/entry.js'
-import {entryOverviewColumnCount} from '../atoms/entry.js'
-import type {DashboardEntryTreeStatus} from '../atoms/entry/load.js'
-import type {ExplorerAtoms} from '../atoms/explorer.js'
+  DashboardEntry,
+  DashboardEntryData,
+  DashboardEntryOverviewCell,
+  DashboardExplorer
+} from '../atoms/explorer.js'
+import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
-import {StatusBadge} from './StatusBadge.js'
 
 const styles = styler(css)
 
 interface ExplorerTableColumn {
   id: string
   index?: number
-  kind: 'selection' | 'title' | 'overview' | 'filler' | 'status'
+  kind: 'selection' | 'title' | 'overview' | 'filler'
   minWidth?: number
   width: number | '1fr'
 }
 
 interface ExplorerTableRowProps {
-  breadcrumbs: boolean
+  columnById: Map<Key, ExplorerTableColumn>
   columns: Array<ExplorerTableColumn>
-  entry: EntryAtoms
-  explorer: ExplorerAtoms
-  gridTemplateColumns: string
+  entry: DashboardEntry
+  breadcrumbs: boolean
+  onPress?: () => void
 }
 
-interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
-  cells: Array<EntryOverviewCell>
-  icon: ComponentType
-  isExpandable: boolean
-  isSelectable: boolean
+interface ExplorerTableDisplayRowProps {
+  columnById: Map<Key, ExplorerTableColumn>
+  columns: Array<ExplorerTableColumn>
+  entry: DashboardEntry
   label: string
-  parents: Array<EntryAtoms>
+  icon: ComponentType
+  cells: Array<DashboardEntryOverviewCell>
+  breadcrumbs?: boolean | undefined
+  parents: Array<DashboardEntry>
+  onPress?: () => void
   rootLabel?: string
-  status?: DashboardEntryTreeStatus['status']
-}
-
-interface ExplorerTableCellProps extends ExplorerTableDisplayRowProps {
-  column: ExplorerTableColumn
-  columnIndex: number
-  expanded: boolean
-  level: number
 }
 
 interface ExplorerTableBreadcrumbsProps {
-  entries: Array<EntryAtoms>
+  entries: Array<DashboardEntry>
   rootLabel?: string
 }
 
@@ -91,7 +85,7 @@ function ExplorerTableBreadcrumbs({
 }
 
 interface ExplorerTableBreadcrumbProps {
-  entry: EntryAtoms
+  entry: DashboardEntry
   index: number
 }
 
@@ -102,7 +96,7 @@ function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
 }
 
 interface ExplorerTableLoadedBreadcrumbProps {
-  data: EntryDataAtoms
+  data: DashboardEntryData
   index: number
 }
 
@@ -112,7 +106,7 @@ function ExplorerTableLoadedBreadcrumb({
 }: ExplorerTableLoadedBreadcrumbProps) {
   const label = useAtomValue(data.label)
   const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.settings).label
+  const rootLabel = useAtomValue(root.label)
   return (
     <>
       {index === 0 && (
@@ -127,308 +121,168 @@ function ExplorerTableLoadedBreadcrumb({
   )
 }
 
-function ExplorerTableCell(props: ExplorerTableCellProps) {
-  const {
-    breadcrumbs,
-    cells,
-    column,
-    columnIndex,
-    expanded,
-    explorer,
-    icon,
-    isExpandable,
-    isSelectable,
-    label,
-    level,
-    parents,
-    rootLabel,
-    status
-  } = props
-  if (column.kind === 'selection') {
-    return (
-      <div
-        className={styles.ExplorerTable.cell.selection()}
-        role="gridcell"
-        aria-colindex={columnIndex + 1}
-      >
-        <Checkbox
-          slot="selection"
-          className={styles.ExplorerTable.checkbox()}
-          aria-label={`Select ${label}`}
-          isDisabled={!isSelectable}
-        />
-      </div>
-    )
-  }
-  if (column.kind === 'title') {
-    return (
-      <div
-        className={styles.ExplorerTable.cell.title()}
-        role="gridcell"
-        aria-colindex={columnIndex + 1}
-        style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
-      >
-        {explorer.supportsInlineExpansion && (
-          <span className={styles.ExplorerTable.chevron()}>
-            {isExpandable && (
-              <AriaButton
-                slot="chevron"
-                className={styles.ExplorerTable.chevron.button()}
-                aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
-              >
-                <FoldIcon aria-hidden expanded={expanded} />
-              </AriaButton>
-            )}
-          </span>
-        )}
-        <AriaButton
-          slot="drag"
-          className={styles.ExplorerTable.iconDrag()}
-          aria-label={`Drag ${label}`}
-        >
-          <Icon
-            aria-hidden
-            icon={icon}
-            className={styles.ExplorerTable.icon()}
+function ExplorerTableDisplayRow({
+  columnById,
+  columns,
+  entry,
+  label,
+  icon,
+  cells,
+  breadcrumbs,
+  parents,
+  rootLabel,
+  onPress
+}: ExplorerTableDisplayRowProps) {
+  function renderCell(columnOrId: ExplorerTableColumn | Key) {
+    const column =
+      typeof columnOrId === 'object' ? columnOrId : columnById.get(columnOrId)
+    if (!column) return <Cell />
+    if (column.kind === 'selection') {
+      return (
+        <Cell className={styles.ExplorerTable.cell.selection()}>
+          <Checkbox
+            slot="selection"
+            className={styles.ExplorerTable.checkbox()}
+            aria-label={`Select ${label}`}
           />
-        </AriaButton>
-        <span className={styles.ExplorerTable.field()}>
-          {breadcrumbs && (
-            <span className={styles.ExplorerTable.field.label()}>
-              <ExplorerTableBreadcrumbs
-                entries={parents}
-                rootLabel={rootLabel}
-              />
-            </span>
-          )}
-          <span className={styles.ExplorerTable.field.value()}>{label}</span>
-        </span>
-      </div>
-    )
-  }
-  if (column.kind === 'status') {
-    return (
-      <div
-        className={styles.ExplorerTable.cell.status()}
-        role="gridcell"
-        aria-colindex={columnIndex + 1}
-      >
-        {status && status !== 'published' && <StatusBadge status={status} />}
-      </div>
-    )
-  }
-  if (column.kind === 'filler') {
-    return (
-      <div
-        className={styles.ExplorerTable.cell.filler()}
-        role="gridcell"
-        aria-colindex={columnIndex + 1}
-      />
-    )
-  }
-  const cell =
-    typeof column.index === 'number' ? cells[column.index] : undefined
-  return (
-    <div
-      className={styles.ExplorerTable.cell()}
-      role="gridcell"
-      aria-colindex={columnIndex + 1}
-      title={
-        cell
-          ? `${cell.label} ${compactFieldText(cell.field, cell.value)}`
-          : undefined
-      }
-    >
-      {cell && (
-        <span className={styles.ExplorerTable.field()}>
-          <span className={styles.ExplorerTable.field.label()}>
-            {cell.label}
-          </span>
-          <span className={styles.ExplorerTable.field.value()}>
-            <CompactField field={cell.field} value={cell.value} />
-          </span>
-        </span>
-      )}
-    </div>
-  )
-}
-
-function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
-  const {
-    cells,
-    columns,
-    entry,
-    explorer,
-    gridTemplateColumns,
-    isExpandable,
-    isSelectable,
-    label
-  } = props
-  const isExpanded = useAtomValue(
-    useMemo(() => explorer.isExpanded(entry), [explorer, entry])
-  )
-  const onAction = useSetAtom(explorer.onAction)
-  const performAction = explorer.hasRowAction
-    ? () => onAction(entry)
-    : undefined
-  const textValue = useMemo(
-    () =>
-      [label, ...cells.map(cell => compactFieldText(cell.field, cell.value))]
-        .filter(Boolean)
-        .join(' '),
-    [label, cells]
-  )
-  return (
-    <TreeItem
-      id={entry.id}
-      textValue={textValue}
-      hasChildItems={isExpandable}
-      isDisabled={!isSelectable}
-      onAction={explorer.actionOnPress ? undefined : performAction}
-      onPress={explorer.actionOnPress ? performAction : undefined}
-      className={styles.ExplorerTable.row({notSelectable: !isSelectable})}
-    >
-      <TreeItemContent>
-        {({isExpanded: renderExpanded, level}) => (
-          <div
-            className={styles.ExplorerTable.row.grid()}
-            role="presentation"
-            style={{gridTemplateColumns}}
+        </Cell>
+      )
+    }
+    if (column.kind === 'title') {
+      return (
+        <Cell className={styles.ExplorerTable.cell.title()} textValue={label}>
+          <AriaButton
+            slot="drag"
+            className={styles.ExplorerTable.iconDrag()}
+            aria-label={`Drag ${label}`}
           >
-            {columns.map((column, i) => (
-              <ExplorerTableCell
-                {...props}
-                column={column}
-                columnIndex={i}
-                expanded={renderExpanded}
-                key={column.id}
-                level={level}
-              />
-            ))}
-          </div>
-        )}
-      </TreeItemContent>
-      {isExpandable && isExpanded && <ExplorerTableChildren {...props} />}
-    </TreeItem>
-  )
-}
-
-function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
-  const {entry, explorer} = props
-  return (
-    <AtomSnapshot atom={explorer.children(entry)}>
-      {children =>
-        children.length === 0 ? null : (
-          <Collection items={children}>
-            {child => (
-              <ExplorerTableRow
-                breadcrumbs={props.breadcrumbs}
-                columns={props.columns}
-                entry={child}
-                explorer={explorer}
-                gridTemplateColumns={props.gridTemplateColumns}
-              />
+            <Icon icon={icon} className={styles.ExplorerTable.icon()} />
+          </AriaButton>
+          <span className={styles.ExplorerTable.field()}>
+            {breadcrumbs && (
+              <span className={styles.ExplorerTable.field.label()}>
+                <ExplorerTableBreadcrumbs
+                  entries={parents}
+                  rootLabel={rootLabel}
+                />
+              </span>
             )}
-          </Collection>
-        )
-      }
-    </AtomSnapshot>
+            <span className={styles.ExplorerTable.field.value()}>{label}</span>
+          </span>
+        </Cell>
+      )
+    }
+    if (column.kind === 'filler') {
+      return <Cell className={styles.ExplorerTable.cell.filler()} />
+    }
+    const cell =
+      typeof column.index === 'number' ? cells[column.index] : undefined
+    return (
+      <Cell
+        className={styles.ExplorerTable.cell()}
+        textValue={
+          cell
+            ? `${cell.label} ${compactFieldText(cell.field, cell.value)}`
+            : undefined
+        }
+      >
+        {cell && (
+          <span className={styles.ExplorerTable.field()}>
+            <span className={styles.ExplorerTable.field.label()}>
+              {cell.label}
+            </span>
+            <span className={styles.ExplorerTable.field.value()}>
+              <CompactField field={cell.field} value={cell.value} />
+            </span>
+          </span>
+        )}
+      </Cell>
+    )
+  }
+  return (
+    <Row
+      id={entry.id}
+      textValue={label}
+      className={styles.ExplorerTable.row()}
+      columns={columns}
+      dependencies={[columns, label, icon, cells, breadcrumbs, parents]}
+      style={{width: '100%', minWidth: '100%', height: 'inherit'}}
+      onPress={onPress}
+    >
+      {renderCell}
+    </Row>
   )
 }
 
 function ExplorerTableLoadingRow({
-  breadcrumbs,
+  columnById,
   columns,
   entry,
-  explorer,
-  gridTemplateColumns
+  breadcrumbs,
+  onPress
 }: ExplorerTableRowProps) {
   return (
     <ExplorerTableDisplayRow
-      breadcrumbs={breadcrumbs}
-      cells={[]}
+      columnById={columnById}
       columns={columns}
       entry={entry}
-      explorer={explorer}
-      gridTemplateColumns={gridTemplateColumns}
-      icon={LucideFile}
-      isExpandable={false}
-      isSelectable={false}
       label="Loading entry"
+      icon={LucideFile}
+      cells={[]}
+      breadcrumbs={breadcrumbs}
       parents={[]}
+      onPress={onPress}
     />
   )
 }
 
 interface ExplorerTableLoadedRowProps extends ExplorerTableRowProps {
-  data: EntryDataAtoms
+  data: DashboardEntryData
 }
 
 function ExplorerTableLoadedRow({
-  breadcrumbs,
+  columnById,
   columns,
   data,
   entry,
-  explorer,
-  gridTemplateColumns
+  breadcrumbs,
+  onPress
 }: ExplorerTableLoadedRowProps) {
   const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.settings).label
+  const rootLabel = useAtomValue(root.label)
   const label = useAtomValue(data.label)
   const configuredIcon = useAtomValue(data.icon)
-  const hasChildren = useAtomValue(data.entryData).hasChildren
+  const hasChildren = useAtomValue(data.hasChildren)
   const cells = useAtomValue(data.overviewCells)
-  const treeStatus = useAtomValue(data.treeStatus)
-  const status = treeStatus.status
   const parents = useAtomValue(data.parents)
   const icon = configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)
-  const isExpandable = explorer.supportsInlineExpansion && hasChildren
-  const isSelectable = useAtomValue(
-    useMemo(() => explorer.isSelectable(entry), [explorer, entry])
-  )
   return (
     <ExplorerTableDisplayRow
-      breadcrumbs={breadcrumbs}
-      cells={cells}
+      columnById={columnById}
       columns={columns}
       entry={entry}
-      explorer={explorer}
-      gridTemplateColumns={gridTemplateColumns}
-      icon={icon}
-      isExpandable={isExpandable}
-      isSelectable={isSelectable}
       label={label}
+      icon={icon}
+      cells={cells}
+      breadcrumbs={breadcrumbs}
       parents={parents}
       rootLabel={rootLabel}
-      status={status}
+      onPress={onPress}
     />
   )
 }
 
 function ExplorerTableRow(props: ExplorerTableRowProps) {
-  const {data} = useAtomValue(props.entry.data)
-  if (!data) return <ExplorerTableLoadingRow {...props} />
+  const {data, pending} = useAtomValue(props.entry.data)
+  if (pending || !data) return <ExplorerTableLoadingRow {...props} />
   return <ExplorerTableLoadedRow {...props} data={data} />
 }
 
 export interface ExplorerTableProps {
-  dragAndDropHooks: DragAndDropHooks<EntryAtoms>
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  dragAndDropHooks: DragAndDropHooks<DashboardEntry>
+  explorer: DashboardExplorer
+  items: Array<DashboardEntry>
   renderEmptyState: () => ReactNode
-}
-
-// Tree items do not share table column sizing, so every nested row receives the
-// same grid definition to keep its cells aligned with the root rows.
-function explorerTableGridTemplate(columns: Array<ExplorerTableColumn>) {
-  return columns
-    .map(column => {
-      if (column.width === '1fr') {
-        return `minmax(${column.minWidth ?? 0}px, 1fr)`
-      }
-      return `${column.width}px`
-    })
-    .join(' ')
 }
 
 export function ExplorerTable({
@@ -438,35 +292,43 @@ export function ExplorerTable({
   renderEmptyState
 }: ExplorerTableProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
-  const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
+  const onAction = useSetAtom(explorer.onAction)
   const selectionMode = explorer.selectionMode
   const breadcrumbs = explorer.breadcrumbs
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
+  function onItemAction(key: Key) {
+    const entry = items.find(item => item.id === String(key))
+    if (entry) onAction(entry)
+  }
+  const onRowAction = explorer.hasRowAction ? onItemAction : undefined
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => [
       ...(showSelectionControls
         ? [{id: 'selection', kind: 'selection' as const, width: 30}]
         : []),
       {id: 'title', kind: 'title', width: 220},
-      {id: 'status', kind: 'status', width: 150},
-      ...Array.from({length: entryOverviewColumnCount}, (_, index) => ({
-        id: `overview-${index}`,
-        index,
-        kind: 'overview' as const,
-        minWidth: 120,
-        width: '1fr' as const
-      }))
+      ...Array.from(
+        {length: dashboardEntryOverviewColumnCount},
+        (_, index) => ({
+          id: `overview-${index}`,
+          index,
+          kind: 'overview' as const,
+          minWidth: 120,
+          width: '1fr' as const
+        })
+      )
     ],
     [showSelectionControls]
   )
-  const gridTemplateColumns = useMemo(
-    () => explorerTableGridTemplate(columns),
+  const columnById = useMemo(
+    () => new Map(columns.map(column => [column.id, column] as const)),
     [columns]
   )
-  const layoutOptions = useMemo<ListLayoutOptions>(
+  const layoutOptions = useMemo<TableLayoutProps>(
     () => ({
       rowHeight: 44,
+      headingHeight: 0,
       padding: 0,
       gap: 0
     }),
@@ -475,38 +337,62 @@ export function ExplorerTable({
   return (
     <div className={styles.ExplorerTable.viewport()}>
       <Surface className={styles.ExplorerTable.surface()}>
-        <Virtualizer layout={ListLayout} layoutOptions={layoutOptions}>
-          <Tree
+        <Virtualizer layout={TableLayout} layoutOptions={layoutOptions}>
+          <Table
             aria-label="Explorer entries"
             className={styles.ExplorerTable({
               noSelectionControls: !showSelectionControls
             })}
-            disabledBehavior="selection"
             dragAndDropHooks={dragAndDropHooks}
-            expandedKeys={expandedKeys}
-            items={items}
             selectedKeys={hasSelection ? selected : undefined}
             selectionBehavior={explorer.selectionBehavior}
             selectionMode={hasSelection ? selectionMode : undefined}
-            onExpandedChange={setExpandedKeys}
             onSelectionChange={hasSelection ? setSelected : undefined}
-            renderEmptyState={() => null}
-            style={{
-              display: 'block',
-              width: '100%',
-              height: '100%'
-            }}
+            onRowAction={onRowAction}
+            style={{display: 'block', width: '100%', height: '100%'}}
           >
-            {item => (
-              <ExplorerTableRow
-                breadcrumbs={breadcrumbs}
-                columns={columns}
-                entry={item}
-                explorer={explorer}
-                gridTemplateColumns={gridTemplateColumns}
-              />
-            )}
-          </Tree>
+            <TableHeader
+              className={styles.ExplorerTable.header()}
+              columns={columns}
+            >
+              {column => (
+                <Column
+                  id={column.id}
+                  isRowHeader={column.kind === 'title'}
+                  maxWidth={column.kind === 'selection' ? 30 : undefined}
+                  minWidth={column.kind === 'selection' ? 30 : column.minWidth}
+                  width={column.width}
+                  className={
+                    column.kind === 'selection'
+                      ? styles.ExplorerTable.column.selection()
+                      : column.kind === 'filler'
+                        ? styles.ExplorerTable.column.filler()
+                        : styles.ExplorerTable.column()
+                  }
+                />
+              )}
+            </TableHeader>
+            <TableBody
+              className={styles.ExplorerTable.body()}
+              dependencies={[columns]}
+              items={items}
+              renderEmptyState={() => null}
+            >
+              {item => (
+                <ExplorerTableRow
+                  breadcrumbs={breadcrumbs}
+                  columnById={columnById}
+                  columns={columns}
+                  entry={item}
+                  onPress={
+                    explorer.mode === 'search'
+                      ? () => onItemAction(item.id)
+                      : undefined
+                  }
+                />
+              )}
+            </TableBody>
+          </Table>
         </Virtualizer>
         {items.length === 0 && (
           <div className={styles.ExplorerTable.empty()}>

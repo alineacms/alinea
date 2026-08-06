@@ -1,25 +1,27 @@
-import {useAtomValue} from '../AtomHooks.js'
 import {Button, Link, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {type WritableAtom, useSetAtom} from 'jotai'
+import {useAtom, type WritableAtom} from 'jotai'
 import type {ReactNode} from 'react'
+import {
+  authAtom,
+  type DashboardAuthAction,
+  type DashboardAuthState
+} from '../atoms/auth.js'
 import {IcRoundArrowForward, IcRoundPublish} from '../icons.js'
-import {authAtom, type AuthAction, type AuthState} from '../atoms/user.js'
 import css from './AuthView.module.css'
 
 const styles = styler(css)
 
-interface AuthViewDashboard {
-  auth: WritableAtom<AuthState, [action?: AuthAction], void | Promise<void>>
-}
-
 export interface AuthViewProps {
-  auth?: AuthViewDashboard['auth']
+  auth?: WritableAtom<
+    DashboardAuthState,
+    [action?: DashboardAuthAction],
+    unknown
+  >
 }
 
-export function AuthView({auth: target = authAtom}: AuthViewProps) {
-  const auth = useAtomValue(target)
-  const setAuth = useSetAtom(target)
+export function AuthView({auth: authState = authAtom}: AuthViewProps) {
+  const [auth, setAuth] = useAtom(authState)
 
   if (auth.status === 'loading' || auth.status === 'redirecting') {
     return <AuthViewLoader />

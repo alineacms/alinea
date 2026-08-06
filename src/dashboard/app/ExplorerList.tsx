@@ -1,15 +1,16 @@
-import {useAtomValue} from '../AtomHooks.js'
 import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useSetAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
-import type {EntryAtoms} from '../atoms/entry.js'
-import type {ExplorerAtoms} from '../atoms/explorer.js'
-import type {RootAtoms} from '../atoms/config.js'
+import type {
+  DashboardEntry,
+  DashboardExplorer,
+  DashboardRoot
+} from '../atoms/explorer.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -19,7 +20,7 @@ const styles = styler(css)
 const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
-  root?: RootAtoms
+  root?: DashboardRoot
 }
 
 function EmptyResults({root}: EmptyResultsProps) {
@@ -54,20 +55,21 @@ function SearchIdleState() {
 }
 
 export interface ExplorerListProps {
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  explorer: DashboardExplorer
 }
 
-export function ExplorerList({explorer, items}: ExplorerListProps) {
+export function ExplorerList({explorer}: ExplorerListProps) {
+  const items = useAtomValue(explorer.items)
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
+  const getItems = useSetAtom(explorer.getItems)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
-  const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
+  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
-    getItems: explorer.getItems,
+    getItems,
     getDropOperation(target, _types, allowedOperations) {
       if (!isMedia || !canUpload) return 'cancel'
       if (target.type !== 'root') return 'cancel'

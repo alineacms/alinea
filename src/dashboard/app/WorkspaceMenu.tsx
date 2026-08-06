@@ -1,4 +1,3 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   DialogTrigger,
@@ -9,26 +8,27 @@ import {
   MenuSeparator,
   type PopoverProps
 } from '#/components.js'
+import type {WorkspaceInternal} from '#/core/Workspace.js'
+import {workspaceAtoms, workspacesAtom} from '#/dashboard/atoms/config.js'
+import {createExplorerAtoms} from '#/dashboard/atoms/explorer.js'
+import type {Page} from '#/dashboard/atoms/nav.js'
+import {routeAtom} from '#/dashboard/atoms/nav.js'
+import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {atom, useSetAtom} from 'jotai'
-import {useState, type ComponentType, type ReactNode} from 'react'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
-import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
-import {createExplorerAtoms} from '../atoms/explorer.js'
 import {
-  routeAtom,
-  selectedRootAtom,
-  selectedWorkspaceAtom
-} from '../atoms/routing.js'
-import {
-  workspaceAtoms,
-  workspacesAtom,
-  type WorkspaceAtoms
-} from '../atoms/config.js'
+  IcOutlineSettings,
+  IcRoundSearch,
+  IcRoundUnfoldMore,
+  MaterialSymbolsEditSquareOutlineRounded
+} from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
-import {ExplorerBody, ExplorerHeader, ExplorerSnapshot} from './Explorer.js'
-import {ExplorerModal} from './ExplorerModal.js'
+import {ExplorerBody, ExplorerHeader} from './Explorer.js'
+import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
+import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -41,6 +41,9 @@ const styles = styler(css)
 
 interface WorkspaceMenuProps {
   canManageMembers: boolean
+  page: Page
+  root: RootAtoms
+  workspace: WorkspaceInternal & {name: string}
 }
 
 interface WorkspaceAvatarProps {
@@ -53,6 +56,7 @@ interface WorkspaceSelectorMenuProps {
   ariaLabel: string
   includeUsersLink?: boolean
   label: ReactNode
+  page: Page
   popoverProps?: Omit<PopoverProps, 'children'>
 }
 
@@ -78,30 +82,30 @@ function WorkspaceSelectorMenu({
   ariaLabel,
   includeUsersLink,
   label,
+  page,
   popoverProps
 }: WorkspaceSelectorMenuProps) {
-  const [selected, setSelected] = useAtom(selectedWorkspaceAtom)
-  const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
-  const workspaces = useAtomValue(workspacesAtom)
+  const workspaces = useAtomValue(workspacesAtom(page.auth.policy))
   if (workspaces.length <= 1 && !includeUsersLink) return label
   return (
     <Menu
       label={label}
       aria-label={ariaLabel}
       selectionMode="single"
-      selectedKeys={[route.page === 'users' ? 'users' : selected]}
+      selectedKeys={[page.type === 'users' ? 'users' : page.workspace!]}
       onAction={key => {
         if (key === 'users') {
-          void setRoute({page: 'users'})
+          setRoute({page: 'users'})
           return
         }
-        setSelected(String(key))
+        const workspace = String(key)
+        setRoute({workspace, root: undefined})
       }}
       popoverProps={popoverProps}
     >
       {workspaces.map(workspace => (
-        <WorkspaceItem key={workspace} workspace={workspaceAtoms(workspace)} />
+        <WorkspaceItem key={workspace} workspace={workspace} />
       ))}
       {includeUsersLink && <MenuSeparator />}
       {includeUsersLink && (
@@ -117,100 +121,117 @@ function WorkspaceSelectorMenu({
   )
 }
 
-export function WorkspaceAvatarMenu({canManageMembers}: WorkspaceMenuProps) {
-  const selected = useAtomValue(selectedWorkspaceAtom)
-  const workspace = workspaceAtoms(selected)
-  const {color, icon, label} = useAtomValue(workspace.settings)
+interface WorkspaceAvatarMenuProps {
+  page: Page
+}
+
+export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
+  const workspace = useAtomValue(workspaceAtoms(page.workspace!).settingsAtom)
   return (
     <WorkspaceSelectorMenu
+      page={page}
       ariaLabel="Workspace"
-      includeUsersLink={canManageMembers}
       popoverProps={{placement: 'right top', offset: 16}}
       label={
         <Button
           size="icon-nav"
           appearance="plain"
           className={styles.WorkspaceMenu.avatarTrigger()}
-          aria-label={label}
+          aria-label={workspace.label}
         >
-          <WorkspaceAvatar color={color} icon={icon} size="small" />
+          <WorkspaceAvatar
+            color={workspace.color}
+            icon={workspace.icon}
+            size="small"
+          />
         </Button>
       }
     />
   )
 }
 
-function SearchPopup() {
+interface SearchPopupProps {
+  page: Page
+  root: RootAtoms
+}
+
+function SearchPopup({page, root}: SearchPopupProps) {
   const modal = useDashboardModal()
-  const workspace = useAtomValue(selectedWorkspaceAtom)
-  const root = useAtomValue(selectedRootAtom)
+  const setRoute = useSetAtom(routeAtom)
   const [explorer] = useState(() =>
     createExplorerAtoms(
-      {workspace, root: root ?? undefined},
+      {workspace: root.workspace, root: root.key},
       {
-        actionOnPress: true,
+        policy: page.auth.policy,
+        autoSelectFirstItem: true,
+        breadcrumbs: true,
+        enableNavigation: true,
+        hideResultsUntilSearch: true,
         mode: 'search',
-        onAction: atom(null, (get, set, entry) => {
-          const {data} = get(entry.data)
-          if (!data) return
-          set(routeAtom, {
-            workspace: get(data.entryData).workspace,
-            root: get(data.entryData).root,
+        rootData: root.data,
+        searchDepth: 'all',
+        selectedLocale: page.locale ?? null,
+        treeItems: root.treeItems,
+        onAction(entry) {
+          setRoute({
+            workspace: entry.workspace,
+            root: entry.root,
             entry: entry.id,
-            locale: get(data.sourceLocale) ?? undefined
+            locale: entry.locale ?? undefined
           })
           modal.close()
-        }),
-        breadcrumbs: true
+        }
       }
     )
   )
-
   return (
     <DashboardModalDialog aria-label="Search entries" variant="explorer">
-      <ExplorerSnapshot explorer={explorer}>
-        {items => (
-          <ExplorerModal>
-            <ExplorerHeader
-              autoFocusSearch
-              controls={<DashboardModalCloseButton />}
-              explorer={explorer}
-              items={items}
-            />
-            <ExplorerBody explorer={explorer} items={items} />
-          </ExplorerModal>
-        )}
-      </ExplorerSnapshot>
+      <ExplorerModalSuspense>
+        <ExplorerModal>
+          <ExplorerHeader
+            autoFocusSearch
+            controls={<DashboardModalCloseButton />}
+            explorer={explorer}
+          />
+          <ExplorerBody explorer={explorer} />
+        </ExplorerModal>
+      </ExplorerModalSuspense>
     </DashboardModalDialog>
   )
 }
 
-export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
-  const workspaces = useAtomValue(workspacesAtom)
-  const selected = useAtomValue(selectedWorkspaceAtom)
-  const workspace = workspaceAtoms(selected)
-  const label = useAtomValue(workspace.settings).label
+export function WorkspaceMenu({
+  canManageMembers,
+  page,
+  root,
+  workspace
+}: WorkspaceMenuProps) {
+  const workspaces = useAtomValue(workspacesAtom(page.auth.policy))
   const menu =
     workspaces.length > 1 ? (
       <WorkspaceSelectorMenu
+        page={page}
         ariaLabel="Workspace"
         includeUsersLink={canManageMembers}
         label={
           <AriaButton className={styles.WorkspaceMenu.trigger()}>
-            <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
+            <span className={styles.WorkspaceMenu.trigger.text()}>
+              {workspace.label}
+            </span>
             <Icon icon={IcRoundUnfoldMore} fontSize={12} />
           </AriaButton>
         }
       />
     ) : (
       <div className={styles.WorkspaceMenu.trigger()}>
-        <span className={styles.WorkspaceMenu.trigger.text()}>{label}</span>
+        <span className={styles.WorkspaceMenu.trigger.text()}>
+          {workspace.label}
+        </span>
       </div>
     )
   return (
     <div className={styles.WorkspaceMenu.parent()}>
       {menu}
-
       <DialogTrigger>
         <Button
           size="icon"
@@ -221,23 +242,54 @@ export function WorkspaceMenu({canManageMembers}: WorkspaceMenuProps) {
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
         <DashboardModal size="explorer">
-          <SearchPopup />
+          <Suspense
+            fallback={
+              <DashboardModalDialog
+                aria-label="Search entries"
+                variant="explorer"
+                isLoading
+              />
+            }
+          >
+            <SearchPopup page={page} root={root} />
+          </Suspense>
         </DashboardModal>
       </DialogTrigger>
+      <WorkspaceCreateEntryButton root={root} />
     </div>
   )
 }
 
+interface WorkspaceCreateEntryButtonProps {
+  root: RootAtoms
+}
+
+function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
+  const canCreate = useAtomValue(root.canCreate)
+  if (!canCreate) return null
+  return (
+    <DialogTrigger>
+      <Button
+        size="icon"
+        icon={MaterialSymbolsEditSquareOutlineRounded}
+        aria-label="Create entry"
+      />
+      <DashboardModal>
+        <CreateEntry />
+      </DashboardModal>
+    </DialogTrigger>
+  )
+}
+
 interface WorkspaceItemProps {
-  workspace: WorkspaceAtoms
+  workspace: string
 }
 
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
-  const id = workspace.key
-  const label = useAtomValue(workspace.settings).label
+  const data = useAtomValue(workspaceAtoms(workspace).settingsAtom)
   return (
-    <MenuItem key={id} id={id} textValue={label}>
-      {label}
+    <MenuItem key={workspace} id={workspace} textValue={data.label}>
+      {data.label}
     </MenuItem>
   )
 }

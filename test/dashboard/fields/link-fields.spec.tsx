@@ -70,12 +70,10 @@ test('navigates into folders without showing a suspense loader', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
-  const folder = entries.getByRole('row', {name: /Folder/})
+  const entries = picker.getByRole('grid', {name: 'Explorer entries'})
+  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
+  const folder = folders.getByRole('row', {name: /Folder/})
   await expect(folder).toBeVisible()
-  await expect(
-    picker.getByRole('treegrid', {name: 'Link folders'})
-  ).toHaveCount(0)
   await expect(picker.getByRole('progressbar')).toHaveCount(0)
 
   await app.page.evaluate(() => {
@@ -105,7 +103,7 @@ test('navigates into folders without showing a suspense loader', async ({
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await folder.getByRole('button', {name: 'Expand Folder'}).click()
+  await folder.click()
   await expect(entries.getByRole('row', {name: /Child/})).toContainText(
     'Summary for Child'
   )
@@ -209,7 +207,7 @@ test('preloads entries before card sidebar navigation commits', async ({
     .toBe('false')
 })
 
-test('disables non-matching rows in a navigable link picker', async ({
+test('navigates through folders to matching rows in a link picker', async ({
   dashboard,
   mount
 }) => {
@@ -221,18 +219,16 @@ test('disables non-matching rows in a navigable link picker', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
+  const entries = picker.getByRole('grid', {name: 'Explorer entries'})
+  const folder = folders.getByRole('row', {name: /Folder/})
+  await expect(folder).toBeVisible()
   await expect(
-    picker.getByRole('treegrid', {name: 'Link folders'})
+    entries.getByRole('checkbox', {name: 'Select Folder'})
   ).toHaveCount(0)
-
-  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
-  const folder = entries.getByRole('row', {name: /Folder/})
-  await expect(
-    folder.getByRole('checkbox', {name: 'Select Folder'})
-  ).toBeDisabled()
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 
-  await folder.getByRole('button', {name: 'Expand Folder'}).click()
+  await folder.click()
 
   const child = entries.getByRole('row', {name: /Child/})
   await expect(child).toBeVisible()

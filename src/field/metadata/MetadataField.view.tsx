@@ -1,12 +1,12 @@
 import {Button, Label, Surface, SurfaceContent} from '#/components.js'
 import {PreviewMetadata} from '#/core/Preview.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
-import {previewMetadataAtom} from '#/dashboard/atoms/entry/preview.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {
   useFieldError,
   useFieldNode,
   useFieldOptions,
-  useFieldValue
+  useFieldValue,
+  usePreviewMetadata
 } from '#/dashboard/hooks.js'
 import {IcRoundPublic} from '#/dashboard/icons.js'
 import {
@@ -15,7 +15,6 @@ import {
   MetadataUserField
 } from '#/field/metadata.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
 import css from './MetadataField.module.css'
 
 const styles = styler(css)
@@ -71,7 +70,7 @@ export function MetadataUserFieldView({field}: MetadataUserFieldViewProps) {
 export function MetadataFieldView({field}: MetadataFieldViewProps) {
   const options = useFieldOptions(field)
   const node = useFieldNode<object>(field)
-  const metadata = useAtomValue(previewMetadataAtom)
+  const metadata = usePreviewMetadata()
   return (
     <>
       <NodeEditor node={node} type={options.fields} />

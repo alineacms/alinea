@@ -1,13 +1,10 @@
 import {suite} from '@alinea/suite'
 import {Field} from '#/core/Field.js'
-import {Type, type} from '#/core/Type.js'
-import {BlockNode, Node} from '#/core/TextDoc.js'
-import {createEditor, ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
-import {
-  configureRichTextExtensions,
-  richText
-} from '#/field/richtext/RichTextField.js'
-import {check} from '#/field/check/CheckField.js'
+import {type, Type} from '#/core/Type.js'
+import {EntryEditor, rootEditor} from '#/dashboard/atoms/editor.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {richText} from '#/field/richtext/RichTextField.js'
+import {select} from '#/field/select.js'
 import {createStore} from 'jotai'
 
 const test = suite(import.meta)
@@ -25,17 +22,10 @@ test('Field.richText references the richtext views', () => {
   )
 })
 
-test('rejects eager rich text extension configuration', () => {
-  test.throws(
-    () => configureRichTextExtensions({} as never, {}),
-    'Rich text extensions must be configured with a function'
-  )
-})
-
 test('nested editor fields inherit a read-only reactive node', () => {
   const details = richText('Details')
   const block = type('Block', {fields: {details}})
-  const editor = createEditor(
+  const editor = new EntryEditor(
     block,
     new ReactiveNode<object>({details: []}, true)
   )
@@ -46,27 +36,59 @@ test('nested editor fields inherit a read-only reactive node', () => {
   test.is(options.readOnly, true)
 })
 
-test('legacy blocks receive initial values for newly added fields', () => {
-  const block = type('Block', {
-    fields: {
-      enabled: check('Enabled'),
-      nested: richText('Nested')
-    }
-  })
-  const body = richText('Body', {schema: {Block: block}})
-  const document = type('Document', {fields: {body}})
-  const value = Type.withInitialValue(document, {
-    body: [{[Node.type]: 'Block', [BlockNode.id]: 'legacy'}]
-  })
+test('nested editors resolve anchors from the root document', () => {
+  const details = richText('Details')
+  const block = type('Block', {fields: {details}})
+  const body = richText('Body')
+  const entry = type('Entry', {fields: {body}})
+  const parent = new EntryEditor(
+    entry,
+    new ReactiveNode<object>({
+      body: [
+        {
+          _type: 'heading',
+          _anchor: 'article-heading',
+          level: 2,
+          content: [{_type: 'text', text: 'Article heading'}]
+        }
+      ]
+    })
+  )
+  const nested = new EntryEditor(
+    block,
+    new ReactiveNode<object>({details: []}),
+    parent
+  )
 
-  test.equal(value, {
-    body: [
-      {
-        [Node.type]: 'Block',
-        [BlockNode.id]: 'legacy',
-        enabled: undefined,
-        nested: []
-      }
-    ]
+  const anchors = createStore().get(rootEditor(nested).anchors)
+  test.equal(
+    anchors.map(anchor => anchor.id),
+    ['article-heading']
+  )
+})
+
+test('existing rich text blocks receive newly added field defaults', () => {
+  const variant = select('Variant', {
+    options: {primary: 'Primary', secondary: 'Secondary'},
+    initialValue: 'primary'
   })
+  const details = richText('Details')
+  const block = type('Call to action', {fields: {variant, details}})
+  const body = richText('Body', {schema: {Cta: block}})
+  const entry = type('Entry', {fields: {body}})
+  const value = {
+    body: [{_type: 'Cta', _id: 'cta-1'}]
+  }
+
+  const initialized = Type.withInitialValue(entry, value)
+
+  test.equal(initialized.body, [
+    {
+      _type: 'Cta',
+      _id: 'cta-1',
+      variant: 'primary',
+      details: []
+    }
+  ])
+  test.is(Type.withInitialValue(entry, initialized), initialized)
 })

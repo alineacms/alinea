@@ -3,6 +3,8 @@ export const dashboardScenarioIds = {
   beta: 'workflow-beta',
   folder: 'workflow-folder',
   child: 'workflow-child',
+  hiddenFolder: 'workflow-hidden-folder',
+  hiddenChild: 'workflow-hidden-child',
   searchTitle: 'workflow-search-title',
   searchBody: 'workflow-search-body'
 } as const

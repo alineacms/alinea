@@ -15,10 +15,9 @@ test('deletes an entry and navigates to its parent', async ({
   dashboard,
   mount
 }) => {
-  const app = await dashboard.mount(
-    () => mount(<DashboardScenarioMount />),
-    {entry: 'child'}
-  )
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'child'
+  })
   const pageErrors: Array<Error> = []
   app.page.on('pageerror', error => pageErrors.push(error))
 

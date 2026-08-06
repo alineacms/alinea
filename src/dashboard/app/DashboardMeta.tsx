@@ -2,9 +2,14 @@ import {btoa} from '#/core/util/Encoding.js'
 import type {ComponentType} from 'react'
 import {useMemo} from 'react'
 import {renderToString} from 'react-dom/server'
-import type {PreparedPageMeta} from '../atoms/routing.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {LogoShape} from './LogoShape.js'
+
+export interface DashboardMetaProps {
+  color: string
+  icon?: ComponentType
+  title: string
+}
 
 function faviconHref(color: string, Icon: ComponentType): string {
   const svg = renderToString(
@@ -13,8 +18,7 @@ function faviconHref(color: string, Icon: ComponentType): string {
   return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
-export function DashboardMeta({title, favicon}: PreparedPageMeta) {
-  const {color, icon} = favicon
+export function DashboardMeta({color, icon, title}: DashboardMetaProps) {
   const href = useMemo(
     () => faviconHref(color, icon ?? AlineaLogo),
     [color, icon]

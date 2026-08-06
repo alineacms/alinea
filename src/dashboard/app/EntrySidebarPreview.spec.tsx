@@ -49,3 +49,25 @@ test('sends edited field values to the preview iframe', async ({
 
   await expect(preview).toContainText('Edited title')
 })
+
+test('keeps the preview mounted while its URL refreshes', async ({
+  mount,
+  page
+}) => {
+  await page.route('**/preview-frame', route =>
+    route.fulfill({contentType: 'text/html', body: '<body>Preview</body>'})
+  )
+  await mount(<EntrySidebarPreviewStory />)
+
+  const iframe = page.locator('iframe')
+  await expect(iframe).toHaveCount(1)
+  await page.getByRole('button', {name: 'Refresh preview URL'}).click()
+
+  await expect(
+    page.getByRole('button', {name: 'Go back in preview'})
+  ).toBeVisible()
+  await expect(iframe).toHaveCount(1)
+  await expect(page.getByRole('progressbar')).toHaveCount(0)
+  await page.waitForTimeout(600)
+  await expect(iframe).toHaveCount(1)
+})

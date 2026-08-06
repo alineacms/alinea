@@ -1,38 +1,38 @@
-import {useAtomValue} from '../AtomHooks.js'
-import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import {DashboardScopeInternal} from '#/dashboard/hooks.js'
-import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
-import type {EntryDataAtoms} from '#/dashboard/atoms/entry.js'
-import {shaAtom} from '#/dashboard/atoms/graph.js'
-import {atom, useSetAtom} from 'jotai'
-import {EntrySidebarPreview} from './EntrySidebarPreview.js'
-
-const graph = {
-  sha: 'preview-content-sha'
-} as unknown as WriteableGraph
-
-const dashboard = {
-  graph,
-  config: {schema: {}, workspaces: {}},
-  events: new EventTarget(),
-  client: {} as LocalConnection
-}
+import type {EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {EntrySidebarBrowserPreview} from './EntrySidebarPreview.js'
 
 const node = new ReactiveNode({title: 'Original title'})
-const previewPayloadSignal = atom(get => get(node.value))
-const entry = {
-  preview: atom(true),
-  previewUrl: atom('/preview-frame'),
-  previewPayloadSignal,
+const previewUrlRequest = atom<Promise<string>>(
+  Promise.resolve('/preview-frame')
+)
+const localeData = {
+  previewPayloadSignal: atom(get => [get(node.value)]),
+  previewUrl: unwrap(previewUrlRequest, previous => previous),
+  retryPreviewUrl: atom(null, () => {}),
   updatePreviewPayload: atom(null, async get => {
-    const sha = await get(shaAtom)
-    if (!sha) return undefined
-    return JSON.stringify({sha, data: get(node.value)})
-  }),
-  retryPreviewUrl: atom(null, () => {})
-} as unknown as EntryDataAtoms
-const sidebar = {type: 'preview', entry: null, url: '/preview-frame'} as const
+    return JSON.stringify({
+      ...get(node.value),
+      sha: 'preview-content-sha'
+    })
+  })
+} satisfies Pick<
+  EntryLocaleAtoms,
+  | 'previewPayloadSignal'
+  | 'previewUrl'
+  | 'retryPreviewUrl'
+  | 'updatePreviewPayload'
+>
+const refreshPreviewUrl = atom(null, (_get, set) => {
+  set(
+    previewUrlRequest,
+    new Promise(resolve => {
+      setTimeout(() => resolve('/preview-frame'), 500)
+    })
+  )
+})
 
 function PreviewTitleField() {
   const titleField = node.field('title')
@@ -50,11 +50,17 @@ function PreviewTitleField() {
   )
 }
 
+function RefreshPreviewUrlButton() {
+  const refresh = useSetAtom(refreshPreviewUrl)
+  return <button onClick={() => refresh()}>Refresh preview URL</button>
+}
+
 export function EntrySidebarPreviewStory() {
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <>
       <PreviewTitleField />
-      <EntrySidebarPreview entry={entry} sidebar={sidebar} />
-    </DashboardScopeInternal>
+      <RefreshPreviewUrlButton />
+      <EntrySidebarBrowserPreview localeData={localeData} />
+    </>
   )
 }

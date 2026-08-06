@@ -1,67 +1,30 @@
+import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
-import type {Revision} from '#/core/Connection.js'
-import {UploadOperation} from '#/core/db/Operation.js'
-import type {EntryReference} from '#/core/db/EntryReference.js'
-import {
-  Entry,
-  type Entry as EntryRecord,
-  type EntryStatus
-} from '#/core/Entry.js'
-import {parseRecord} from '#/core/EntryRecord.js'
-import {Field, type FieldOptions} from '#/core/Field.js'
-import {createId} from '#/core/Id.js'
-import {getType, getWorkspace} from '#/core/Internal.js'
-import {createPreview} from '#/core/media/CreatePreview.browser.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
-import {Permission} from '#/core/Role.js'
-import {Type} from '#/core/Type.js'
-import {assert} from '#/core/util/Assert.js'
-import {join} from '#/core/util/Paths.js'
-import type {Infer} from '#/types.js'
-import type {Atom, Getter, WritableAtom} from 'jotai'
-import {atom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {
-  configAtom,
-  queryTreeChildren,
-  type RootAtoms,
-  viewsAtom,
-  workspaceAtoms
-} from './config.js'
-import {ReactiveNode} from './entry/editor.js'
-import {entryLoaderAtom, MissingEntryError} from './entry/load.js'
-import {graphAtom, shaAtom} from './graph.js'
-import {uploadProgressAtom} from './graph/queue.js'
-import {refreshCurrentRouteAtom, routeAtom} from './routing.js'
-import {clientAtom, policyAtom, userAtom} from './user.js'
-import {dispense, swr, uploadSizeError, withPending} from './utils.js'
 import type {
-  DashboardEntryReference,
-  DashboardEntryReferences,
-  DashboardEntryReferenceSource,
-  DashboardEntryTreeStatus,
-  DashboardFileInfoState,
-  EntryRouteBlock
-} from './entry/load.js'
-import {
-  EntryLanguageAtoms,
-  entryRevisionAtom,
-  locallyDeletingEntryAtom
-} from './entry/load.js'
-import {createEntryPreviewAtoms} from './entry/preview.js'
-
-export const entryOverviewColumnCount = 5
-
-export type EntryView = 'edit' | 'overview'
-
-export interface EntryOverviewCell {
-  id: string
-  field: Field
-  label: string
-  value: unknown
-}
-
-type EntryVersionData = EntryRecord<Record<string, unknown>>
+  EntryReference,
+  EntryReferenceScan
+} from '#/core/db/EntryReference.js'
+import {Entry, EntryStatus} from '#/core/Entry.js'
+import {createRecord, parseRecord} from '#/core/EntryRecord.js'
+import type {FieldBeforeSaveAction} from '#/core/Field.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
+import {createPreview} from '#/core/media/CreatePreview.browser.js'
+import {Root} from '#/core/Root.js'
+import {Permission, type Policy} from '#/core/Role.js'
+import {Type, type EntryDefaultView} from '#/core/Type.js'
+import {assert} from '#/core/util/Assert.js'
+import {entries, isRecord} from '#/core/util/Objects.js'
+import {join} from '#/core/util/Paths.js'
+import {createFilePatch} from '#/core/source/FilePatch.js'
+import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
+import {parents, translations} from '#/query.js'
+import {Atom, atom, Getter} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {ReactiveNode} from './ReactiveNode.js'
+import {clientAtom, configAtom, graphAtom} from './core.js'
+import {shaAtom} from './graph.js'
+import {dispense, loader} from './utils.js'
+import type {Page, PageAuth} from './nav.js'
 
 interface EntryData {
   id: string
@@ -77,444 +40,525 @@ interface EntryData {
     status: EntryStatus
     main: boolean
   }>
-  entries: Array<EntryVersionData>
+  entries: Array<Entry>
 }
 
-export interface DashboardEntryState {
-  pending: boolean
-  data: EntryDataAtoms | undefined
-  error: MissingEntryError | undefined
+export interface EntryReferences {
+  references: Array<EntryReferenceWithSource>
+  total: number
+  scan: EntryReferenceScan
 }
 
-type SelectedVersion =
+export interface EntryReferenceWithSource {
+  reference: EntryReference
+  source: EntryReferenceSource
+}
+
+export interface EntryReferenceSource {
+  id: string
+  title: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
+  status: EntryStatus
+  path: string
+  url: string
+}
+
+const selection = {
+  id: Entry.id,
+  type: Entry.type,
+  parentId: Entry.parentId,
+  workspace: Entry.workspace,
+  root: Entry.root,
+  parents: parents({
+    select: {
+      id: Entry.id,
+      path: Entry.path,
+      type: Entry.type,
+      status: Entry.status,
+      main: Entry.main
+    }
+  }),
+  entries: translations({select: Entry, includeSelf: true})
+}
+
+export type SelectedVersion =
   | {type: 'status'; status: EntryStatus}
   | {type: 'history'; file: string; ref: string}
 
-interface NodeSelection {
-  locale: string | null
-  untranslated: boolean
-  version: SelectedVersion
+const undefinedEditorValue = '__alinea_undefined_editor_value__'
+
+function serializeEditorNode(value: object, readOnly: boolean): string {
+  return JSON.stringify({value, readOnly}, (_key, item) =>
+    item === undefined ? {[undefinedEditorValue]: true} : item
+  )
+}
+
+function restoreUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(restoreUndefined)
+  if (!isRecord(value)) return value
+  const result: Record<string, unknown> = {}
+  for (const [key, item] of Object.entries(value)) {
+    result[key] =
+      isRecord(item) && item[undefinedEditorValue] === true
+        ? undefined
+        : restoreUndefined(item)
+  }
+  return result
+}
+
+function prepareData(
+  get: Getter,
+  node: ReactiveNode<object>,
+  type: Type,
+  action: FieldBeforeSaveAction,
+  auth: PageAuth
+) {
+  const current = get(node.value) as Record<string, unknown>
+  const data = Type.beforeSave(type, current, {
+    action,
+    user: auth.user,
+    now: new Date()
+  })
+  return {data, changed: data !== current}
+}
+
+export class EntryLocaleAtoms {
+  constructor(
+    public readonly entry: EntryAtoms,
+    public readonly requestedLocale: string | null
+  ) {}
+
+  currentlyEditing = atom<ReactiveNode<object>>()
+  #nodes = dispense((serialized: string) => {
+    const encoded = JSON.parse(serialized) as {
+      value: unknown
+      readOnly: boolean
+    }
+    const value = restoreUndefined(encoded.value)
+    assert(isRecord(value), 'Serialized editor value must be an object')
+    return atom(new ReactiveNode<object>(value, encoded.readOnly))
+  })
+  untranslated = atom(get => {
+    const data = get(this.entry.data)
+    return !data.entries.some(entry => entry.locale === this.requestedLocale)
+  })
+  #selectedTranslationSourceLocale = atom<string>()
+  translationSourceLocale = atom(
+    get => {
+      const data = get(this.entry.data)
+      const locales = data.entries.flatMap(entry => {
+        return entry.locale === null ? [] : [entry.locale]
+      })
+      const selected = get(this.#selectedTranslationSourceLocale)
+      return selected && locales.includes(selected)
+        ? selected
+        : (locales[0] ?? null)
+    },
+    (get, set, next: string) => {
+      set(this.#selectedTranslationSourceLocale, next)
+      set(this.currentlyEditing, undefined)
+    }
+  )
+  parentNeedsTranslation = atom(async get => {
+    const data = get(this.entry.data)
+    const translated = data.entries.some(
+      entry => entry.locale === this.requestedLocale
+    )
+    if (translated || !this.requestedLocale || !data.parentId) return false
+    const graph = get(graphAtom)
+    const parent = await graph.first({
+      select: Entry.id,
+      id: data.parentId,
+      locale: this.requestedLocale,
+      status: 'preferDraft'
+    })
+    return !parent
+  })
+  selectedVersion = atom<SelectedVersion | null>(null)
+  versions = atom(get => {
+    const data = get(this.entry.data)
+    const selectedLocale = data.entries.some(
+      entry => entry.locale === this.requestedLocale
+    )
+      ? this.requestedLocale
+      : get(this.translationSourceLocale)
+    return new Map(
+      data.entries
+        .filter(entry => entry.locale === selectedLocale)
+        .map(entry => [entry.status, entry] as const)
+    )
+  })
+  availableStatuses = atom(get => {
+    return Array.from(get(this.versions).keys())
+  })
+  selectedEntry = atom(async (get): Promise<Entry> => {
+    const data = get(this.entry.data)
+    const translated = data.entries.some(
+      entry => entry.locale === this.requestedLocale
+    )
+    const sourceLocale = translated
+      ? this.requestedLocale
+      : get(this.translationSourceLocale)
+    const localeEntries = data.entries.filter(
+      entry => entry.locale === sourceLocale
+    )
+    assert(localeEntries.length > 0, `No readable entry for "${this.entry.id}"`)
+    const version = get(this.selectedVersion)
+    if (!version) return localeEntries[0]
+    if (version.type === 'status')
+      return (
+        localeEntries.find(entry => entry.status === version.status) ??
+        localeEntries[0]
+      )
+    const client = get(clientAtom)
+    const revision = await client.revisionData(version.file, version.ref)
+    const activeEntry = localeEntries[0]
+    if (!revision) return activeEntry
+    const historyData = parseRecord(revision).data
+    return {
+      ...activeEntry,
+      title:
+        typeof historyData.title === 'string'
+          ? historyData.title
+          : activeEntry.title,
+      path:
+        typeof historyData.path === 'string'
+          ? historyData.path
+          : activeEntry.path,
+      data: historyData
+    }
+  })
+  historyReady = atom(async get => {
+    const versions = get(this.versions)
+    const entry =
+      Array.from(versions.values()).find(version => version.active) ??
+      versions.values().next().value
+    assert(entry, `No readable entry for "${this.entry.id}"`)
+    const config = get(configAtom)
+    const client = get(clientAtom)
+    const file = join(Config.contentDir(config), entry.filePath)
+    return (await client.revisions(file)).slice(1)
+  })
+  history = unwrap(this.historyReady, previous => previous ?? [])
+
+  selectedNode = atom(async get => {
+    const version = get(this.selectedVersion)
+    const entry = await get(this.selectedEntry)
+    const isUntranslated = get(this.untranslated)
+    if (!version || (version.type === 'status' && entry.active)) {
+      const editing = get(this.currentlyEditing)
+      if (editing) return editing
+    }
+    const config = get(configAtom)
+    const type = config.schema[entry.type]
+    assert(type, `Type "${entry.type}" not found in config`)
+    const policy = this.entry.policy
+    const readOnly =
+      version?.type === 'history' ||
+      (!isUntranslated && (!entry.active || !policy.canUpdate(entry)))
+    const value = Type.withInitialValue(type, {
+      ...Type.initialValue(type),
+      ...entry.data,
+      ...(isUntranslated ? {path: undefined} : undefined)
+    })
+    return get(this.#nodes(serializeEditorNode(value, readOnly)))
+  })
+  anchors = atom(async get => {
+    const entry = await get(this.selectedEntry)
+    const node = await get(this.selectedNode)
+    const type = get(configAtom).schema[entry.type]
+    assert(type, `Type "${entry.type}" not found in config`)
+    return Type.anchors(type, get(node.value) as Record<string, unknown>)
+  })
+  #previewRetry = atom(0)
+  retryPreviewUrl = atom(null, (get, set) => {
+    set(this.#previewRetry, current => current + 1)
+  })
+  previewEntryReady = atom(async get => {
+    const activeEntry = await get(this.selectedEntry)
+    const node = await get(this.selectedNode)
+    const value = get(node.value) as Record<string, unknown>
+    return {
+      ...activeEntry,
+      title: typeof value.title === 'string' ? value.title : activeEntry.title,
+      path: typeof value.path === 'string' ? value.path : activeEntry.path,
+      data: value
+    }
+  })
+  previewEntry = unwrap(this.previewEntryReady, previous => previous)
+  #previewTargetUrl = atom(get => {
+    const versions = get(this.versions)
+    const entry =
+      Array.from(versions.values()).find(version => version.active) ??
+      versions.values().next().value
+    return entry?.url
+  })
+  previewUrlReady = atom(async get => {
+    get(this.#previewRetry)
+    const targetUrl = get(this.#previewTargetUrl)
+    if (!targetUrl) return undefined
+    const config = get(configAtom)
+    const client = get(clientAtom)
+    if (typeof client.previewToken !== 'function') return undefined
+    try {
+      const base = new URL(
+        config.handlerUrl ?? '',
+        Config.baseUrl(config) ??
+          (typeof location === 'undefined' ? 'http://localhost' : location.href)
+      )
+      base.searchParams.set('preview', await client.previewToken())
+      base.searchParams.set('returnTo', targetUrl)
+      return base.toString()
+    } catch {
+      return undefined
+    }
+  })
+  previewUrl = unwrap(this.previewUrlReady, previous => previous)
+  previewPayloadSignal = atom(get => {
+    const version = get(this.selectedVersion)
+    const editing = get(this.currentlyEditing)
+    return [version, editing ? get(editing.value) : undefined]
+  })
+  updatePreviewPayload = atom(null, async get => {
+    const node = await get(this.selectedNode)
+    const value = get(node.value) as Record<string, unknown>
+    const activeEntry = Array.from(get(this.versions).values()).find(
+      version => version.active
+    )
+    if (!activeEntry) return undefined
+    const contentHash = await get(shaAtom)
+    if (!contentHash) return undefined
+    const selected = get(this.selectedVersion)
+    const status =
+      selected?.type === 'status' ? selected.status : activeEntry.status
+    const nextEntry = {
+      ...activeEntry,
+      title: typeof value.title === 'string' ? value.title : activeEntry.title,
+      path: typeof value.path === 'string' ? value.path : activeEntry.path,
+      data: value,
+      status
+    }
+    const schema = get(configAtom).schema
+    const decoder = new TextDecoder()
+    const baseText = decoder.decode(
+      JsonLoader.format(schema, createRecord(activeEntry, activeEntry.status))
+    )
+    const nextText = decoder.decode(
+      JsonLoader.format(schema, createRecord(nextEntry, status))
+    )
+    return encodePreviewPayload({
+      locale: activeEntry.locale,
+      entryId: activeEntry.id,
+      contentHash,
+      status,
+      patch: await createFilePatch(baseText, nextText)
+    })
+  })
+
+  saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    const dataState = get(this.entry.data)
+    const {id, type} = dataState
+    const policy = this.entry.policy
+    const config = get(configAtom)
+    const typeConfig = config.schema[type]
+    assert(typeConfig, `Type "${type}" not found in config`)
+    const activeEntry = dataState.entries.find(entry => {
+      return entry.locale === this.requestedLocale && entry.active
+    })
+    assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
+    const graph = get(graphAtom)
+    const {data, changed} = prepareData(
+      get,
+      node,
+      typeConfig,
+      'update',
+      this.entry.auth
+    )
+    policy.assert(Permission.Update, activeEntry)
+    await graph.create({
+      type: typeConfig,
+      id,
+      locale: this.requestedLocale,
+      status: 'draft',
+      set: data,
+      overwrite: true
+    })
+    if (changed) set(node.value, data)
+    set(node.commit)
+  })
+
+  publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    const dataState = get(this.entry.data)
+    const {id, type} = dataState
+    const policy = this.entry.policy
+    const config = get(configAtom)
+    const typeConfig = config.schema[type]
+    assert(typeConfig, `Type "${type}" not found in config`)
+    const activeEntry = dataState.entries.find(entry => {
+      return entry.locale === this.requestedLocale && entry.active
+    })
+    assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
+    const graph = get(graphAtom)
+    const {data, changed} = prepareData(
+      get,
+      node,
+      typeConfig,
+      'publish',
+      this.entry.auth
+    )
+    policy.assert(Permission.Publish, activeEntry)
+    await graph.create({
+      type: typeConfig,
+      id,
+      locale: this.requestedLocale,
+      status: 'published',
+      set: data,
+      overwrite: true
+    })
+    if (changed) set(node.value, data)
+    set(node.commit)
+  })
+
+  saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    assert(
+      this.requestedLocale,
+      `Cannot translate entry "${this.entry.id}" without a locale`
+    )
+    const dataState = get(this.entry.data)
+    const sourceEntry = await get(this.selectedEntry)
+    const policy = this.entry.policy
+    policy.assert(Permission.Update, {
+      ...sourceEntry,
+      locale: this.requestedLocale
+    })
+    if (dataState.parentId) {
+      const graph = get(graphAtom)
+      const parent = await graph.first({
+        select: Entry.id,
+        id: dataState.parentId,
+        locale: this.requestedLocale,
+        status: 'preferDraft'
+      })
+      assert(parent, 'Parent entry must be translated first')
+    }
+    const config = get(configAtom)
+    const type = config.schema[dataState.type]
+    assert(type, `Type "${dataState.type}" not found in config`)
+    const {data, changed} = prepareData(
+      get,
+      node,
+      type,
+      'translate',
+      this.entry.auth
+    )
+    const graph = get(graphAtom)
+    await graph.create({
+      type,
+      id: this.entry.id,
+      parentId: dataState.parentId,
+      locale: this.requestedLocale,
+      status: config.enableDrafts ? 'draft' : 'published',
+      set: data
+    })
+    if (changed) set(node.value, data)
+    set(node.commit)
+  })
+
+  #activeEntry(get: Getter) {
+    const data = get(this.entry.data)
+    const entry = data.entries.find(candidate => {
+      return candidate.locale === this.requestedLocale && candidate.active
+    })
+    assert(entry, `No active entry for locale "${this.requestedLocale}"`)
+    return entry
+  }
+
+  publishDraft = atom(null, async get => {
+    const entry = this.#activeEntry(get)
+    this.entry.policy.assert(Permission.Publish, entry)
+    await get(graphAtom).publish({
+      id: this.entry.id,
+      locale: this.requestedLocale,
+      status: 'draft'
+    })
+  })
+  discardDraft = atom(null, async get => {
+    const entry = this.#activeEntry(get)
+    this.entry.policy.assert(Permission.Update, entry)
+    await get(graphAtom).discard({
+      id: this.entry.id,
+      locale: this.requestedLocale,
+      status: 'draft'
+    })
+  })
+  unpublish = atom(null, async get => {
+    const entry = this.#activeEntry(get)
+    this.entry.policy.assert(Permission.Publish, entry)
+    await get(graphAtom).unpublish({
+      id: this.entry.id,
+      locale: this.requestedLocale
+    })
+  })
+  archive = atom(null, async get => {
+    const entry = this.#activeEntry(get)
+    this.entry.policy.assert(Permission.Archive, entry)
+    await get(graphAtom).archive({
+      id: this.entry.id,
+      locale: this.requestedLocale
+    })
+  })
+  publishArchived = atom(null, async get => {
+    const entry = this.#activeEntry(get)
+    this.entry.policy.assert(Permission.Publish, entry)
+    await get(graphAtom).publish({
+      id: this.entry.id,
+      locale: this.requestedLocale,
+      status: 'archived'
+    })
+  })
+  deleteEntry = atom(null, async get => {
+    const entry = this.#activeEntry(get)
+    this.entry.policy.assert(Permission.Delete, entry)
+    await get(graphAtom).remove(this.entry.id)
+  })
+  replaceFile = atom(null, async (get, _set, file: File) => {
+    const entry = this.#activeEntry(get)
+    const policy = this.entry.policy
+    policy.assert(Permission.Update, entry)
+    policy.assert(Permission.Upload, entry)
+    await get(graphAtom).upload({
+      file,
+      createPreview,
+      replaceId: this.entry.id,
+      parentId: entry.parentId,
+      workspace: entry.workspace,
+      root: entry.root
+    })
+  })
 }
 
 export class EntryAtoms {
-  data: Atom<DashboardEntryState>
-  readyState: Atom<Promise<DashboardEntryState>>
-  #selectedView = atom<EntryView | undefined>(undefined)
-
-  constructor(public id: string) {
-    const entryData = atom<Promise<EntryData>>(async get => {
-      get(entryRevisionAtom(id))
-      return get(this.preload)
-    })
-    let data: EntryDataAtoms
-    const loaded = atom(async get => {
-      const initial = await get(entryData)
-      return (data ??= new EntryDataAtoms(
-        this,
-        unwrap(entryData, prev => prev ?? initial) as Atom<EntryData>
-      ))
-    })
-    const state = atom(async get => {
-      try {
-        return {
-          pending: false,
-          data: await get(loaded),
-          error: undefined
-        } satisfies DashboardEntryState
-      } catch (error) {
-        if (error instanceof MissingEntryError) {
-          return {
-            pending: false,
-            data: undefined,
-            error
-          } satisfies DashboardEntryState
-        }
-        throw error
-      }
-    })
-    this.readyState = state
-    this.data = unwrap(state, prev => ({
-      pending: true,
-      data: prev?.data,
-      error: prev?.error
-    }))
-  }
-
-  preload = atom(async get => {
-    const load = await get(entryLoaderAtom)
-    const [result, error] = await load(this.id)
-    if (error) {
-      if (error instanceof MissingEntryError) get(shaAtom)
-      throw error
-    }
-    assert(result, `Entry "${this.id}" not found`)
-    return result
-  })
-
-  view = atom(
-    get => get(this.#selectedView),
-    (_get, set, view: EntryView | undefined) => {
-      set(this.#selectedView, view)
-    }
-  )
-}
-
-function dashboardEntryOverviewFields(type: Type): Array<[string, Field]> {
-  return Object.entries(Type.fields(type)).flatMap(([key, field]) => {
-    const options = Field.options(field) as FieldOptions<unknown>
-    if (options.hidden || options.overview !== true) return []
-    if (key === 'title') return []
-    return [[key, field]]
-  })
-}
-
-export class EntryDataAtoms {
-  type: Atom<Type>
-  overviewCells: Atom<Array<EntryOverviewCell>>
-  defaultView: Atom<'edit' | 'overview'>
-  view: WritableAtom<EntryView, [view: EntryView], void>
-  locales: Atom<Map<string | null, EntryVersionData>>
-  root: Atom<RootAtoms>
-  #translationSourceLocale = atom<string | null | undefined>(undefined)
-  #nodes = new Map<string, Atom<Promise<ReactiveNode<object>>>>()
-
-  #untranslatedFor(get: Getter, locale: string | null) {
-    return !get(this.locales).has(locale)
-  }
-
-  sourceLocaleFor(get: Getter, locale: string | null) {
-    if (this.#untranslatedFor(get, locale))
-      return get(this.translationSourceLocale)
-    return locale
-  }
-
-  #selectedVersionFor(get: Getter, locale: string | null): SelectedVersion {
-    const selected = get(this.#selection)
-    if (selected) return selected
-    const sourceLocale = this.sourceLocaleFor(get, locale)
-    const entry = get(this.locales).get(sourceLocale)
-    assert(entry, `Entry ${this.id} has no data for locale ${sourceLocale}`)
-    return {type: 'status', status: entry.status}
-  }
-
-  currentEntryFor = dispense((locale: string | null) =>
-    swr(
-      atom(async (get): Promise<Entry | null> => {
-        const sourceLocale = this.sourceLocaleFor(get, locale)
-        const selected = get(this.#selection)
-        if (!selected) return get(this.locales).get(sourceLocale) ?? null
-        const language = this.languages(sourceLocale)
-        const versions = await get(language.versionsResource)
-        const fallback = versions.values().next().value ?? null
-        if (selected.type === 'status') {
-          return versions.get(selected.status) ?? fallback
-        }
-        const activeVersion = await get(language.activeVersionResource)
-        const data = await get(this.historyData(historyDataKey(selected)))
-        if (!data) return activeVersion
-        const parsedData = parseRecord(data).data
-        return {
-          ...activeVersion,
-          title:
-            typeof parsedData.title === 'string'
-              ? parsedData.title
-              : activeVersion.title,
-          path:
-            typeof parsedData.path === 'string'
-              ? parsedData.path
-              : activeVersion.path,
-          data: parsedData
-        }
-      })
-    )
-  )
-
-  currentEntry = atom(get => {
-    const root = get(this.root)
-    return get(this.currentEntryFor(get(root.selectedLocale)))
-  })
-
-  customView = atom(get => {
-    const type = get(this.type)
-    const {view} = getType(type)
-    if (typeof view === 'string') return get(viewsAtom)[view]
-    return view
-  })
-
   constructor(
-    public entry: EntryAtoms,
-    public entryData: Atom<EntryData>
-  ) {
-    const data = this.entryData
-    this.type = atom(get => {
-      const key = get(data).type
-      const type = get(configAtom).schema[key]
-      assert(type, `Type "${key}" not found in config`)
-      return type
-    })
-    this.defaultView = atom(get => {
-      if (get(data).hasChildren) return 'overview'
-      const configured = Type.defaultView(get(this.type))
-      if (configured) return configured
-      return 'edit'
-    })
-    this.view = atom(
-      get => {
-        const selected = get(this.entry.view)
-        if (selected) return selected
-        return get(this.defaultView)
-      },
-      (get, set, view: EntryView) => {
-        return set(this.entry.view, view)
-      }
-    )
-    this.locales = atom(
-      get =>
-        new Map(
-          get(data).entries.map(entry => {
-            return [entry.locale, entry] as const
-          })
-        )
-    )
-    this.root = atom(get => {
-      const {workspace, root} = get(data)
-      return workspaceAtoms(workspace).root(root)
-    })
-    this.overviewCells = atom(get => {
-      const entry = get(this.currentEntry)
-      if (!entry || entry instanceof Promise) return []
-      const type = get(this.type)
-      return dashboardEntryOverviewFields(type)
-        .slice(0, entryOverviewColumnCount)
-        .map(([key, field]) => {
-          return {
-            id: key,
-            field,
-            label: Field.label(field),
-            value: entry.data[key]
-          }
-        })
-    })
+    public readonly id: string,
+    public readonly data: Atom<EntryData>,
+    public readonly auth: PageAuth
+  ) {}
+
+  get policy() {
+    return this.auth.policy
   }
 
-  get id() {
-    return this.entry.id
-  }
+  // Should UI show overview or editor?
+  #selectedView = atom<EntryDefaultView>()
 
-  translationSourceLocales = atom(get => {
-    return Array.from(get(this.locales).keys()).filter(
-      (locale): locale is string => locale !== null
-    )
-  })
-
-  translationSourceLocale = atom(
-    get => {
-      const locale = get(this.#translationSourceLocale)
-      const available = get(this.translationSourceLocales)
-      if (locale && available.includes(locale)) return locale
-      return available[0] ?? null
-    },
-    (get, set, locale: string) => {
-      if (get(this.#translationSourceLocale) === locale) return
-      const localized = get(this.locales).get(locale)
-      assert(localized, `Entry ${this.id} has no data for locale ${locale}`)
-      set(this.#translationSourceLocale, locale)
-      set(this.currentlyEditing, undefined)
-      set(this.#selection, undefined)
-    }
-  )
-
-  sourceLocale = atom(get => {
-    const root = get(this.root)
-    return this.sourceLocaleFor(get, get(root.selectedLocale))
-  })
-
-  activeStatus = atom(get => {
-    const locales = get(this.locales)
-    const locale = get(this.sourceLocale)
-    const entry = locales.get(locale)
-    assert(entry, `Entry ${this.id} has no data for locale ${locale}`)
-    return entry.status
-  })
-
-  #selection = atom<SelectedVersion>()
-  selectedVersion = atom(
-    (get): SelectedVersion => {
-      const root = get(this.root)
-      return this.#selectedVersionFor(get, get(root.selectedLocale))
-    },
-    (_get, set, next: SelectedVersion) => {
-      set(this.#selection, next)
-    }
-  )
-
-  historyFor = dispense((locale: string | null) =>
-    atom(async (get): Promise<Array<Revision>> => {
-      const config = get(configAtom)
-      const sourceLocale = this.sourceLocaleFor(get, locale)
-      const data = get(this.locales).get(sourceLocale)
-      assert(data, `No locale data found for locale ${sourceLocale}`)
-      const file = dashboardEntryFile(config, {
-        workspace: get(this.entryData).workspace,
-        root: get(this.entryData).root,
-        filePath: data.filePath
-      })
-      const client = get(clientAtom)
-      const revisions = await client.revisions(file)
-      return revisions.slice(1)
-    })
-  )
-
-  historyData = dispense((key: string) => {
-    return atom(async get => {
-      const [ref, file] = parseHistoryDataKey(key)
-      const client = get(clientAtom)
-      return client.revisionData(file, ref)
-    })
-  })
-
-  #node(selection: NodeSelection): Atom<Promise<ReactiveNode<object>>> {
-    const key = JSON.stringify(selection)
-    const cached = this.#nodes.get(key)
-    if (cached) return cached
-    const selected = atom(async (get): Promise<ReactiveNode<object>> => {
-      const {locale, untranslated, version} = selection
-      const localized = get(this.locales).get(locale)
-      assert(localized, `Entry ${this.id} has no data for locale ${locale}`)
-      if (version.type === 'status') {
-        const language = this.languages(locale)
-        const versions = await get(language.versionsResource)
-        const status = versions.has(version.status)
-          ? version.status
-          : versions.keys().next().value
-        assert(
-          status,
-          `No versions found for entry ${this.id} and locale ${locale}`
-        )
-        if (untranslated) {
-          const sourceNode = await get(language.data(status))
-          const sourceValue = get(sourceNode.value) as Record<string, unknown>
-          return new ReactiveNode<object>({
-            ...sourceValue,
-            path: undefined
-          })
-        }
-        return get(language.data(status))
-      }
-      const language = this.languages(locale)
-      const activeVersion = await get(language.activeVersionResource)
-      const data = await get(this.historyData(historyDataKey(version)))
-      const type = get(this.type)
-      const historyData = data ? parseRecord(data).data : activeVersion.data
-      return new ReactiveNode<object>(
-        Type.withInitialValue(type, {
-          ...Type.initialValue(type),
-          ...historyData,
-          title:
-            typeof historyData.title === 'string'
-              ? historyData.title
-              : activeVersion.title,
-          path:
-            typeof historyData.path === 'string'
-              ? historyData.path
-              : activeVersion.path
-        }),
-        true
-      )
-    })
-    this.#nodes.set(key, selected)
-    return selected
-  }
-
-  selectedNodeFor = dispense((locale: string | null) =>
-    atom(async get => {
-      const version = this.#selectedVersionFor(get, locale)
-      const sourceLocale = this.sourceLocaleFor(get, locale)
-      if (version.type === 'status') {
-        const editing = get(this.currentlyEditing)
-        const active = get(this.locales).get(sourceLocale)
-        if (editing && active && version.status === active.status)
-          return editing
-      }
-      return get(
-        this.#node({
-          locale: sourceLocale,
-          untranslated: this.#untranslatedFor(get, locale),
-          version
-        })
-      )
-    })
-  )
-
-  selectedNode = swr(
-    atom(async get => {
-      const root = get(this.root)
-      return get(this.selectedNodeFor(get(root.selectedLocale)))
-    })
-  )
-
-  label = atom(get => {
-    const locale = get(this.sourceLocale)
-    const locales = get(this.locales)
-    const entry = locales.get(locale)
-    if (entry?.title) return entry.title
-    for (const fallback of locales.values()) {
-      if (fallback.title) return fallback.title
-    }
-    return ''
-  })
-
-  treeStatus = atom((get): DashboardEntryTreeStatus => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    const locales = get(this.locales)
-    const localized = locales.get(locale)
-    const fallback = locales.values().next().value
-    const entry = localized ?? fallback
-    assert(entry, `Entry ${this.id} has no versions`)
-    if (localized === undefined) return {status: 'untranslated'}
-    if (entry.status === 'draft' && entry.main === true)
-      return {status: 'unpublished'}
-    return {
-      status: entry.status
-    }
-  })
-
-  fileInfo = swr(
-    atom(async (get): Promise<Infer<typeof MediaFile> | null> => {
-      if (get(this.type) !== MediaFile) return null
-      const lang = this.languages(null)
-      const data = await get(lang.activeVersion)
-      return data.data as Infer<typeof MediaFile>
-    })
-  )
-
-  #fileInfoState = withPending(this.fileInfo)
-  fileInfoState: Atom<DashboardFileInfoState> = atom(get => {
-    const [pending, data] = get(this.#fileInfoState)
-    return {pending, data}
-  })
-
-  #parents = atom(async get => {
-    const parentIds = get(this.entryData).parents.map(parent => parent.id)
-    return Promise.all(
-      parentIds.map(async id => {
-        const parent = entryAtoms(id)
-        assert(parent, `Parent entry not found: ${id}`)
-        return parent
-      })
-    )
-  })
-
-  parentsState = withPending(this.#parents)
-
-  parents = unwrap(this.#parents, prev => prev ?? [])
-
-  incomingReferencesResource = atom(async get => {
-    get(entryRevisionAtom(this.id))
-    const db = get(graphAtom)
-    const policy = get(policyAtom)
-    const result = await db.referencesTo({
+  incomingReferencesReady = atom(async get => {
+    get(shaAtom)
+    const graph = get(graphAtom)
+    const policy = this.policy
+    const result = await graph.referencesTo({
       targetId: this.id,
       status: 'preferDraft'
     })
@@ -522,8 +566,9 @@ export class EntryDataAtoms {
       new Set(result.references.map(reference => reference.sourceId))
     )
     const sources =
-      sourceIds.length > 0
-        ? await db.find({
+      sourceIds.length === 0
+        ? []
+        : await graph.find({
             id: {in: sourceIds},
             status: 'preferDraft',
             select: {
@@ -538,417 +583,171 @@ export class EntryDataAtoms {
               url: Entry.url
             }
           })
-        : []
     const sourceByLocale = new Map(
-      sources.map(source => [entryReferenceSourceKey(source), source] as const)
+      sources.map(source => [referenceSourceKey(source), source] as const)
     )
     const sourceById = new Map(sources.map(source => [source.id, source]))
     const references = result.references.flatMap(reference => {
       const source =
-        sourceByLocale.get(entryReferenceKey(reference)) ??
+        sourceByLocale.get(referenceKey(reference)) ??
         sourceById.get(reference.sourceId)
       if (!source || !policy.canRead(source)) return []
-      return [{reference, source}]
+      return [{reference, source} satisfies EntryReferenceWithSource]
     })
-    return {
-      references,
-      total: result.total,
-      scan: result.scan
-    } satisfies DashboardEntryReferences
+    return {references, total: result.total, scan: result.scan}
   })
-  canPublish = atom(get => {
-    return get(this.entryData).parents.every(
-      parent => parent.status === 'published'
-    )
-  })
-
-  parentUnpublished = atom(get => {
-    return get(this.entryData).parents.some(parent => parent.status === 'draft')
-  })
-
-  icon = atom(get => getType(get(this.type)).icon)
-  orderChildrenBy = atom(get => getType(get(this.type)).orderChildrenBy)
-
-  childrenFor = dispense((locale: string | null) => {
-    return swr(
-      atom(async get => {
-        const root = get(this.root)
-        return queryTreeChildren(
-          get,
-          root,
-          this.id,
-          get(this.orderChildrenBy),
-          locale
-        )
-      })
-    )
-  })
-
-  children = atom(get => {
-    const root = get(this.root)
-    return get(this.childrenFor(get(root.selectedLocale)))
-  })
-
-  untranslated = atom(get => {
-    const root = get(this.root)
-    return this.#untranslatedFor(get, get(root.selectedLocale))
-  })
-
-  availableStatusesFor = dispense((locale: string | null) =>
-    atom(async get => {
-      const sourceLocale = this.sourceLocaleFor(get, locale)
-      const versions = await get(this.languages(sourceLocale).versionsResource)
-      return [...versions.keys()]
-    })
+  incomingReferences = unwrap(
+    this.incomingReferencesReady,
+    previous => previous
   )
 
-  activeVersionFor = dispense((locale: string | null) =>
-    atom(async get => {
-      const locales = get(this.locales)
-      const sourceLocale = this.sourceLocaleFor(get, locale)
-      const entry = locales.get(sourceLocale)
-      if (entry) return entry
-      for (const fallback of locales.values()) {
-        if (fallback.title) return fallback
-      }
-      return null
-    })
-  )
-
-  activeVersion = swr(
-    atom(async get => {
-      const root = get(this.root)
-      return get(this.activeVersionFor(get(root.selectedLocale)))
-    })
-  )
-
-  anchors = swr(
-    atom(async get => {
-      const locale = get(this.sourceLocale)
-      return get(this.languages(locale).anchors)
-    })
-  )
-
-  parentNeedsTranslationFor = dispense((locale: string | null) =>
-    atom(async get => {
-      if (!this.#untranslatedFor(get, locale)) return false
-      const parentId = get(this.entryData).parentId
-      if (!parentId) return false
-      if (!locale) return false
-      const db = get(graphAtom)
-      const parentLink = await db.first({
-        select: Entry.id,
-        id: parentId,
-        locale,
-        status: 'preferDraft'
-      })
-      return !parentLink
-    })
-  )
-
-  #previewAtoms = createEntryPreviewAtoms(this)
-  preview = this.#previewAtoms.preview
-  retryPreviewUrl = this.#previewAtoms.retryPreviewUrl
-  previewEntryFor = this.#previewAtoms.previewEntryFor
-  previewPayloadSignal = this.#previewAtoms.previewPayloadSignal
-  updatePreviewPayload = this.#previewAtoms.updatePreviewPayload
-  previewUrlFor = this.#previewAtoms.previewUrlFor
-
-  languages = dispense((locale: string | null) => {
-    return new EntryLanguageAtoms(this, locale)
-  })
-
-  routeBlock = atom<EntryRouteBlock | null>(null)
-
-  needsBlock = atom(
-    null,
-    (get, set, signal: AbortSignal): boolean | Promise<boolean> => {
-      if (signal.aborted) return false
-      const currentNode = get(this.currentlyEditing)
-      if (!currentNode || !get(currentNode.isDirty)) return true
-
-      get(this.routeBlock)?.cancel()
-      return new Promise(resolve => {
-        let settled = false
-        const finish = (allowed: boolean) => {
-          if (settled) return
-          settled = true
-          signal.removeEventListener('abort', cancel)
-          set(this.routeBlock, null)
-          resolve(allowed)
-        }
-        const confirm = () => finish(true)
-        const cancel = () => finish(false)
-        signal.addEventListener('abort', cancel, {once: true})
-        set(this.routeBlock, {confirm, cancel})
-      })
-    }
-  )
-
-  currentlyEditing = atom<ReactiveNode<object>>()
-
-  async #assertPermission(
-    get: Getter,
-    permission: Permission,
-    locale: string | null
-  ) {
-    const activeVersion = await get(this.languages(locale).activeVersion)
-    get(policyAtom).assert(permission, activeVersion)
-    return activeVersion
-  }
-
-  async #beforeSave(
-    get: Getter,
-    node: ReactiveNode<object>,
-    type: Type,
-    action: 'update' | 'publish' | 'translate'
-  ) {
-    const user = await get(userAtom)
-    const current = get(node.value) as Record<string, unknown>
-    const data = Type.beforeSave(type, current, {
-      action,
-      user,
-      now: new Date()
-    })
-    return {data, changed: data !== current}
-  }
-
-  saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Update, locale)
-    const db = get(graphAtom)
-    const type = get(this.type)
-    const {data, changed} = await this.#beforeSave(get, node, type, 'update')
-    await db.create({
-      type,
-      id: this.id,
-      locale: locale,
-      status: 'draft',
-      set: data,
-      overwrite: true
-    })
-    if (changed) set(node.value, data)
-    set(node.commit)
-    await set(refreshCurrentRouteAtom)
-  })
-
-  publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(graphAtom)
-    const type = get(this.type)
-    const {data, changed} = await this.#beforeSave(get, node, type, 'publish')
-    await db.create({
-      type,
-      id: this.id,
-      locale,
-      status: 'published',
-      set: data,
-      overwrite: true
-    })
-    if (changed) set(node.value, data)
-    set(node.commit)
-    await set(refreshCurrentRouteAtom)
-  })
-
-  publishDraft = atom(null, async (get, set) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(graphAtom)
-    await db.publish({
-      id: this.id,
-      locale,
-      status: 'draft'
-    })
-    await set(refreshCurrentRouteAtom)
-  })
-
-  discardDraft = atom(null, async (get, set) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Update, locale)
-    const db = get(graphAtom)
-    await db.discard({
-      id: this.id,
-      locale,
-      status: 'draft'
-    })
-    await set(refreshCurrentRouteAtom)
-  })
-
-  unpublish = atom(null, async (get, set) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(graphAtom)
-    await db.unpublish({
-      id: this.id,
-      locale
-    })
-    await set(refreshCurrentRouteAtom)
-  })
-
-  archive = atom(null, async (get, set) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Archive, locale)
-    const db = get(graphAtom)
-    await db.archive({
-      id: this.id,
-      locale
-    })
-    await set(refreshCurrentRouteAtom)
-  })
-
-  publishArchived = atom(null, async (get, set) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Publish, locale)
-    const db = get(graphAtom)
-    await db.publish({
-      id: this.id,
-      locale,
-      status: 'archived'
-    })
-    await set(refreshCurrentRouteAtom)
-  })
-
-  deleteEntry = atom(null, async (get, set) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    await this.#assertPermission(get, Permission.Delete, locale)
-    const db = get(graphAtom)
-    const entry = get(this.entryData)
-    set(locallyDeletingEntryAtom, this.id)
-    try {
-      const navigated = await set(routeAtom, {
-        workspace: entry.workspace,
-        root: entry.root,
-        entry: entry.parentId ?? undefined,
-        locale: get(routeAtom).locale
-      })
-      if (!navigated) throw new Error('Could not navigate away before deletion')
-      await db.remove(this.id)
-    } finally {
-      if (get(locallyDeletingEntryAtom) === this.id)
-        set(locallyDeletingEntryAtom, undefined)
-    }
-  })
-
-  replaceFile = atom(null, async (get, set, file: File) => {
-    const locale = get(this.sourceLocale)
-    const activeVersion = await get(this.languages(locale).activeVersion)
-    const policy = get(policyAtom)
-    policy.assert(Permission.Update, activeVersion)
-    policy.assert(Permission.Upload, activeVersion)
-    const db = get(graphAtom)
-    const error = uploadSizeError(file, get(configAtom).maxUploadSize)
-    if (error) {
-      set(uploadProgressAtom, {
-        type: 'fail',
-        uploads: [{id: createId(), file, error}],
-        destination: {
-          workspace: activeVersion.workspace,
-          root: activeVersion.root,
-          parentId: activeVersion.parentId ?? undefined
-        }
-      })
-      return
-    }
-    await db.commit(
-      new UploadOperation({
-        file,
-        createPreview,
-        replaceId: this.id,
-        parentId: activeVersion.parentId,
-        workspace: activeVersion.workspace,
-        root: activeVersion.root
-      })
-    )
-  })
-
-  saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
-    const root = get(this.root)
-    const locale = get(root.selectedLocale)
-    assert(locale, `Cannot translate entry ${this.id} without a locale`)
-    const sourceLocale = get(this.translationSourceLocale)
-    assert(
-      sourceLocale,
-      `Cannot translate entry ${this.id} without a source locale`
-    )
-    const activeVersion = await get(this.languages(sourceLocale).activeVersion)
-    get(policyAtom).assert(Permission.Update, {
-      ...activeVersion,
-      locale
-    })
-    const parentId = activeVersion.parentId
-    const db = get(graphAtom)
-    if (parentId) {
-      const parentLink = await db.first({
-        select: Entry.id,
-        id: parentId,
-        locale,
-        status: 'preferDraft'
-      })
-      assert(parentLink, 'Parent not translated')
-    }
+  #settings = atom(get => {
+    const data = get(this.data)
+    const typeConfig = get(configAtom).schema[data.type]
     const config = get(configAtom)
-    const type = get(this.type)
-    const {data, changed} = await this.#beforeSave(get, node, type, 'translate')
-    await db.create({
-      type,
-      id: this.id,
-      parentId,
-      locale,
-      status: config.enableDrafts ? 'draft' : 'published',
-      set: data
-    })
-    if (changed) set(node.value, data)
-    set(node.commit)
+    const workspace = config.workspaces[data.workspace]
+    assert(workspace, `Workspace "${data.workspace}" not found in config`)
+    const root = getWorkspace(workspace).roots[data.root]
+    assert(root, `Root "${data.root}" not found in config`)
+    assert(typeConfig, `Type "${data.type}" not found in config`)
+    const defaultView = data.hasChildren
+      ? 'overview'
+      : (Type.defaultView(typeConfig) ?? 'edit')
+    const rootData = getRoot(root)
+    const workspaceData = getWorkspace(workspace)
+    const preview =
+      Type.preview(typeConfig) ??
+      rootData.preview ??
+      workspaceData.preview ??
+      config.preview
+    return {defaultView, mediaI18n: Root.mediaI18n(rootData), preview}
   })
+
+  type = atom(get => get(this.data).type)
+  parentId = atom(get => get(this.data).parentId)
+  workspace = atom(get => get(this.data).workspace)
+  root = atom(get => get(this.data).root)
+  hasChildren = atom(get => get(this.data).hasChildren)
+  canPublishParents = atom(get =>
+    get(this.data).parents.every(parent => parent.status === 'published')
+  )
+  parentUnpublished = atom(get =>
+    get(this.data).parents.some(parent => parent.status === 'draft')
+  )
+  mediaI18n = atom(get => get(this.#settings).mediaI18n)
+  preview = atom(get => get(this.#settings).preview)
+  translationSourceLocales = atom(get => {
+    const data = get(this.data)
+    return Array.from(
+      new Set(
+        data.entries.flatMap(entry =>
+          entry.locale === null ? [] : [entry.locale]
+        )
+      )
+    )
+  })
+  view = atom(
+    get => get(this.#selectedView) ?? get(this.#settings).defaultView,
+    (get, set, next: EntryDefaultView) => {
+      set(this.#selectedView, next)
+    }
+  )
+
+  locales = dispense(
+    (locale: string | null) => new EntryLocaleAtoms(this, locale)
+  )
 }
 
-function historyDataKey(version: {file: string; ref: string}) {
-  return `${version.ref}\0${version.file}`
+const entryPolicyAtoms = dispense((policy: Policy) =>
+  dispense((user: PageAuth['user']) => {
+    const auth: PageAuth = {user, policy}
+    return dispense((entryId: string) => {
+      const data = atom(async get => {
+        get(shaAtom)
+        const load = get(entryLoader(policy))
+        const [result, error] = await load(entryId)
+        if (error) {
+          // Subscribe to revisions so a missing entry can appear after syncing.
+          if (error instanceof MissingEntryError) get(shaAtom)
+          throw error
+        }
+        assert(result, `Entry "${entryId}" not found`)
+        return result
+      })
+      let entry: EntryAtoms | undefined
+      return atom(async get => {
+        const initial = await get(data)
+        return (entry ??= new EntryAtoms(
+          entryId,
+          unwrap(data, previous => previous ?? initial) as Atom<EntryData>,
+          auth
+        ))
+      })
+    })
+  })
+)
+
+export function entryAtoms(page: Page, entryId: string) {
+  return entryPolicyAtoms(page.auth.policy)(page.auth.user)(entryId)
 }
 
-function parseHistoryDataKey(key: string): [ref: string, file: string] {
-  const index = key.indexOf('\0')
-  assert(index !== -1, 'Invalid history data key')
-  return [key.slice(0, index), key.slice(index + 1)]
-}
-
-function dashboardEntryFile(
-  config: Config,
-  entry: Pick<Entry, 'filePath' | 'root' | 'workspace'>
-) {
-  const workspace = config.workspaces[entry.workspace]
-  assert(workspace, `Workspace "${entry.workspace}" does not exist`)
-  const root = getWorkspace(workspace).roots[entry.root]
-  assert(root, `Root "${entry.root}" does not exist`)
-  return join(Config.contentDir(config), entry.filePath)
-}
-
-function entryReferenceKey(reference: EntryReference): string {
+function referenceKey(reference: {
+  sourceId: string
+  sourceLocale: string | null
+}) {
   return `${reference.sourceId}\0${reference.sourceLocale ?? ''}`
 }
 
-function entryReferenceSourceKey(
-  source: DashboardEntryReferenceSource
-): string {
+function referenceSourceKey(source: EntryReferenceSource) {
   return `${source.id}\0${source.locale ?? ''}`
 }
 
-export type {
-  DashboardEntryReference,
-  DashboardEntryReferences,
-  DashboardEntryReferenceSource,
-  DashboardEntryTreeStatus,
-  DashboardFileInfoState,
-  EntryRouteBlock
+const entryLoader = dispense((policy: Policy) =>
+  atom(get => {
+    const config = get(configAtom)
+    const graph = get(graphAtom)
+    const visibleTypes = entries(config.schema)
+      .filter(([, type]) => !Type.isHidden(type))
+      .map(([name]) => name)
+    return loader(async ids => {
+      const rows = await graph.find({
+        groupBy: Entry.id,
+        select: selection,
+        id: {in: ids},
+        status: 'preferDraft'
+      })
+      const parentIds = await graph.find({
+        select: Entry.parentId,
+        parentId: {in: ids},
+        filter: {_type: {in: visibleTypes}},
+        groupBy: Entry.parentId,
+        status: 'preferDraft'
+      })
+      const byId = new Map(rows.map(row => [row.id, row] as const))
+      return ids.map(id => {
+        const row = byId.get(id)
+        if (!row) return [null, new MissingEntryError(id)] as const
+        const readableEntries = row.entries.filter(entry =>
+          policy.canRead(entry)
+        )
+        if (readableEntries.length === 0)
+          return [null, new MissingEntryError(id)] as const
+        return [
+          {
+            ...row,
+            entries: readableEntries,
+            hasChildren: parentIds.includes(id)
+          },
+          null
+        ] as const
+      })
+    })
+  })
+)
+
+export class MissingEntryError extends Error {
+  constructor(public id: string) {
+    super(`Missing entry ${id}`)
+    this.name = 'MissingEntryError'
+  }
 }
-export type {EntryLanguageAtoms} from './entry/load.js'
-export const entryAtoms = dispense((id: string) => new EntryAtoms(id))

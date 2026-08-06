@@ -38,6 +38,17 @@
   }
 }
 
+.ExplorerTable-header {
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ExplorerTable-body {
+  box-sizing: border-box;
+  min-width: 100%;
+}
+
 .ExplorerTable-empty {
   position: absolute;
   inset: 0;
@@ -47,6 +58,14 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+}
+
+.ExplorerTable-column,
+.ExplorerTable-column-filler,
+.ExplorerTable-column-selection {
+  height: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .ExplorerTable-row {
@@ -84,18 +103,6 @@
   &[data-focus-visible] {
     box-shadow: inset 0 0 0 2px var(--alinea-ring);
   }
-
-  &.is-notSelectable {
-    cursor: default;
-    background: color-mix(in srgb, var(--alinea-bg-muted) 45%, var(--alinea-bg));
-  }
-}
-
-.ExplorerTable-row-grid {
-  display: grid;
-  width: 100%;
-  min-width: 100%;
-  height: inherit;
 }
 
 .ExplorerTable-cell {
@@ -132,12 +139,6 @@
   overflow: hidden;
   border: 0;
   white-space: nowrap;
-}
-
-.ExplorerTable-cell-status {
-  display: flex;
-  align-items: center;
-  height: 100%;
 }
 
 .ExplorerTable.is-noSelectionControls .ExplorerTable-cell-title {
@@ -189,6 +190,23 @@
 
 .ExplorerTable-checkbox {
   flex: 0 0 auto;
+}
+
+.ExplorerTable-titleAction {
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: 4px;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 44px;
+  text-align: left;
+  white-space: nowrap;
 }
 
 .ExplorerTable-breadcrumbs {
@@ -266,35 +284,4 @@
   text-overflow: ellipsis;
   color: var(--alinea-fg);
   white-space: nowrap;
-}
-
-.ExplorerTable-chevron {
-  display: inline-flex;
-  width: 16px;
-  height: 44px;
-  flex: 0 0 16px;
-  align-items: center;
-  justify-content: center;
-  color: var(--alinea-fg-muted);
-  font-size: 16px;
-}
-
-.ExplorerTable-chevron-button {
-  display: inline-flex;
-  box-sizing: border-box;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  align-items: center;
-  justify-content: center;
-  color: inherit;
-  border: 0;
-  background: transparent;
-  font-size: inherit;
-  outline: none;
-  cursor: pointer;
-
-  &[data-focus-visible] {
-    box-shadow: inset 0 0 0 2px var(--alinea-ring);
-  }
 }

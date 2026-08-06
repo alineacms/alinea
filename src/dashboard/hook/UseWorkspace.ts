@@ -1,17 +1,13 @@
-import {useAtomValue} from '../AtomHooks.js'
-import {Workspace, type WorkspaceInternal} from '#/core/Workspace.js'
-import {selectedWorkspaceAtom} from '../atoms/routing.js'
-import {configAtom} from '../atoms/config.js'
+import type {WorkspaceInternal} from '#/core/Workspace.js'
+import {useDashboardContext} from '../hooks.js'
 
 export interface DashboardWorkspace extends WorkspaceInternal {
   name: string
 }
 
+/**
+ * @deprecated Compatibility hook for legacy dashboard extensions.
+ */
 export function useWorkspace(): DashboardWorkspace {
-  const config = useAtomValue(configAtom)
-  const workspaceName = useAtomValue(selectedWorkspaceAtom)
-  if (!workspaceName) throw new Error('No workspace selected')
-  const workspace = config.workspaces[workspaceName]
-  if (!workspace) throw new Error('No workspace found')
-  return {name: workspaceName, ...Workspace.data(workspace)}
+  return useDashboardContext().workspace
 }
