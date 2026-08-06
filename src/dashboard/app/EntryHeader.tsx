@@ -217,13 +217,13 @@ export function EntryHeader({
   }
 
   async function deleteAndNavigate() {
-    await deleteEntry()
     setRoute({
       workspace,
       root,
       entry: parentId ?? undefined,
       locale: route.locale
     })
+    await deleteEntry()
   }
 
   function replaceMediaFile() {
