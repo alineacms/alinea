@@ -15,7 +15,6 @@ import {createUniqueAnchor, usedAnchors} from '#/core/util/Anchors.js'
 import {slugify} from '#/core/util/Slugs.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/core'
-import {useEditorState} from '@tiptap/react'
 import {useMemo, type ReactNode} from 'react'
 import type {PickTextLinkFunc, PickerValue} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
@@ -39,7 +38,7 @@ export interface RichTextToolbarProps {
   ownerId: string
   pickLink?: PickTextLinkFunc
   pickAnchor?: PickTextAnchorFunc
-  entryAnchors: Array<string>
+  getEntryAnchors: () => Array<string>
   toolbar?: ToolbarConfig
   onFocusChange: (focused: boolean, nextTarget?: EventTarget | null) => void
 }
@@ -50,11 +49,10 @@ export function RichTextToolbar({
   ownerId,
   pickLink,
   pickAnchor,
-  entryAnchors,
+  getEntryAnchors,
   toolbar,
   onFocusChange
 }: RichTextToolbarProps) {
-  useEditorState({editor, selector: context => context.transactionNumber})
   const config = useMemo(
     () => toolbar ?? defaultToolbar(Boolean(enableTables)),
     [enableTables, toolbar]
@@ -69,7 +67,7 @@ export function RichTextToolbar({
       pickLink: pickLink ?? emptyPicker,
       handleLink: createLinkHandler(editor, pickLink, exec),
       handleAnchor: pickAnchor
-        ? createAnchorHandler(editor, pickAnchor, entryAnchors, exec)
+        ? createAnchorHandler(editor, pickAnchor, getEntryAnchors, exec)
         : () => undefined,
       toolbar: config
     } satisfies RichTextToolbarContext
@@ -77,7 +75,7 @@ export function RichTextToolbar({
     config,
     editor,
     enableTables,
-    entryAnchors,
+    getEntryAnchors,
     onFocusChange,
     pickAnchor,
     pickLink
@@ -219,7 +217,7 @@ function createLinkHandler(
 function createAnchorHandler(
   editor: Editor,
   picker: PickTextAnchorFunc,
-  entryAnchors: Array<string>,
+  getEntryAnchors: () => Array<string>,
   exec: () => ReturnType<Editor['chain']>
 ) {
   return function handleAnchor() {
@@ -229,7 +227,7 @@ function createAnchorHandler(
       const current = currentAnchor(editor)
       const anchor = createUniqueAnchor(
         slugify(picked.id),
-        usedAnchors(entryAnchors, current)
+        usedAnchors(getEntryAnchors(), current)
       )
       if (anchor) exec().setAnchor({id: anchor}).run()
     })

@@ -99,14 +99,11 @@ export function RichTextFieldView<Blocks extends Schema>({
   const picker = usePickTextLink()
   const anchorPicker = usePickTextAnchor()
   const dashboardEditor = useDashboardEditor()
-  const entryAnchors = useAtomValue(rootEditor(dashboardEditor).anchors)
-  const entryAnchorIds = useMemo(
-    () => entryAnchors.map(anchor => anchor.id),
-    [entryAnchors]
+  const entryAnchors = rootEditor(dashboardEditor).anchors
+  const getEntryAnchors = useCallback(
+    () => store.get(entryAnchors).map(anchor => anchor.id),
+    [entryAnchors, store]
   )
-  const entryAnchorIdsRef = useRef(entryAnchorIds)
-  entryAnchorIdsRef.current = entryAnchorIds
-  const getEntryAnchors = useCallback(() => entryAnchorIdsRef.current, [])
   const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
   const extensions = useMemo<Array<AnyExtension>>(() => {
     const configured = Object.values(
@@ -314,7 +311,7 @@ export function RichTextFieldView<Blocks extends Schema>({
               ownerId={ownerId}
               pickLink={picker.pickLink}
               pickAnchor={anchorPicker.pickAnchor}
-              entryAnchors={entryAnchorIds}
+              getEntryAnchors={getEntryAnchors}
               toolbar={options.toolbar}
               onFocusChange={(next, nextTarget) => {
                 if (next) setFocused(true)
