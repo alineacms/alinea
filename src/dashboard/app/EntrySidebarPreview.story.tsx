@@ -13,8 +13,11 @@ const localeData = {
   previewUrl: unwrap(previewUrlRequest, previous => previous),
   retryPreviewUrl: atom(null, () => {}),
   updatePreviewPayload: atom(null, async get => {
+    const value = get(node.value)
+    if (value.title === 'Slow title')
+      await new Promise(resolve => setTimeout(resolve, 600))
     return JSON.stringify({
-      ...get(node.value),
+      ...value,
       sha: 'preview-content-sha'
     })
   })

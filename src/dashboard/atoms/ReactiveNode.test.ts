@@ -81,3 +81,15 @@ test('keeps committed reset values isolated between stores', () => {
   expect(first.get(article.value).title).toBe('First store')
   expect(second.get(article.value).title).toBe('First title')
 })
+
+test('applies functional updates when creating a missing field', () => {
+  const article = articleNode()
+  const store = createStore()
+  const fields = store.get(article.nodes) as Record<keyof Article, ReactiveNode>
+
+  store.set(fields.metadata.field('description'), (current: unknown) => {
+    return typeof current === 'string' ? `${current}!` : 'Added'
+  })
+
+  expect(store.get(article.value).metadata.description).toBe('Added')
+})
