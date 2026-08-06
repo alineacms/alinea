@@ -48,3 +48,34 @@ test('page explorers keep their row navigation action', () => {
 
   expect(explorer.hasRowAction).toBe(true)
 })
+
+test('limits the picker to its allowed locations', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'outside', root: 'outside'},
+    {
+      policy: Policy.ALLOW_ALL,
+      limitLocations: [
+        {workspace: 'main', root: 'pages'},
+        {workspace: 'main', root: 'media'}
+      ]
+    }
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.location)).toEqual({
+    workspace: 'main',
+    root: 'pages'
+  })
+
+  store.set(explorer.location, {workspace: 'main', root: 'media'})
+  expect(store.get(explorer.location)).toEqual({
+    workspace: 'main',
+    root: 'media'
+  })
+
+  store.set(explorer.location, {workspace: 'outside', root: 'outside'})
+  expect(store.get(explorer.location)).toEqual({
+    workspace: 'main',
+    root: 'pages'
+  })
+})

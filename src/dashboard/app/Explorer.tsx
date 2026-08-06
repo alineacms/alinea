@@ -1,4 +1,5 @@
-import {Button, Popover, SearchField} from '#/components.js'
+import {Button, Menu, MenuItem, Popover, SearchField} from '#/components.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
@@ -29,6 +30,8 @@ import {
   type ExplorerSortBy,
   type ExplorerTypeFilters
 } from '../atoms/explorer.js'
+import {configAtom} from '../atoms/core.js'
+import {usePolicy} from '../hooks.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -55,6 +58,7 @@ export interface ExplorerHeaderProps {
   controls?: ReactNode
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
+  navigate?: boolean
   titleControls?: ReactNode
 }
 
@@ -250,6 +254,69 @@ function ExplorerHeaderMain({
   return null
 }
 
+interface ExplorerLocationMenuProps {
+  explorer: DashboardExplorer
+}
+
+function ExplorerLocationMenu({explorer}: ExplorerLocationMenuProps) {
+  const config = useAtomValue(configAtom)
+  const location = useAtomValue(explorer.location)
+  const policy = usePolicy()
+  const setLocation = useSetAtom(explorer.location)
+  const configuredLocations =
+    explorer.limitLocations ??
+    Object.entries(config.workspaces).flatMap(([workspace, value]) =>
+      Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
+    )
+  const locations = configuredLocations
+    .filter(location => policy.canRead(location))
+    .map(candidate => {
+      const workspace = config.workspaces[candidate.workspace]
+      const root = workspace
+        ? getWorkspace(workspace).roots[candidate.root]
+        : undefined
+      return {
+        ...candidate,
+        label: root ? getRoot(root).label : candidate.root
+      }
+    })
+  const selected = locations.find(
+    candidate =>
+      candidate.workspace === location.workspace &&
+      candidate.root === location.root
+  )
+  const label = selected?.label ?? location.root ?? 'Select root'
+  if (locations.length <= 1) return null
+  return (
+    <Menu
+      label={label}
+      appearance="plain"
+      selectionMode="single"
+      selectedKeys={[`${location.workspace}/${location.root}`]}
+      onAction={key => {
+        const selected = locations.find(
+          candidate => `${candidate.workspace}/${candidate.root}` === key
+        )
+        if (!selected) return
+        setLocation({
+          workspace: selected.workspace,
+          root: selected.root
+        })
+      }}
+    >
+      {locations.map(location => (
+        <MenuItem
+          id={`${location.workspace}/${location.root}`}
+          key={`${location.workspace}/${location.root}`}
+          textValue={location.label}
+        >
+          {location.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  )
+}
+
 function ExplorerHeaderParentMain({
   explorer,
   parent,
@@ -409,6 +476,7 @@ export function ExplorerHeader({
   controls,
   explorer,
   headerEntry,
+  navigate,
   titleControls
 }: ExplorerHeaderProps) {
   return (
@@ -419,6 +487,11 @@ export function ExplorerHeader({
           headerEntry={headerEntry}
           titleControls={titleControls}
         />
+        {navigate && (
+          <div className={styles.Explorer.searchMenu()}>
+            <ExplorerLocationMenu explorer={explorer} />
+          </div>
+        )}
         <div className={styles.Explorer.searchSlot()}>
           <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
         </div>

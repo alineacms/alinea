@@ -77,6 +77,16 @@ export function Usages() {
           Editing
         </Badge>
       </div>
+
+      <h2 style={headingStyle}>Long labels truncate</h2>
+      <div style={{...rowStyle, maxWidth: 320, flexWrap: 'nowrap'}}>
+        <Badge icon={IcRoundPublic} size="small">
+          A very long shared label that should be truncated
+        </Badge>
+        <Badge icon={IcRoundPublic} size="small">
+          A very long shared label that should be truncated
+        </Badge>
+      </div>
     </div>
   )
 }

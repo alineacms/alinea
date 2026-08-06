@@ -88,6 +88,7 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
           <ExplorerHeader
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            navigate
           />
           <ExplorerPickerContent
             explorer={explorer}

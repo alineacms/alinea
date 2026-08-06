@@ -10,9 +10,15 @@ import type {Policy} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import type {Infer} from '#/types.js'
 import {parents} from '#/query.js'
-import {atom, type Atom, type Getter, type PrimitiveAtom} from 'jotai'
+import {
+  atom,
+  type Atom,
+  type Getter,
+  type PrimitiveAtom,
+  type WritableAtom
+} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {ComponentType} from 'react'
+import type {ComponentType, SetStateAction} from 'react'
 import type {Key} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
 import {dashboardAtoms} from './dashboard.js'
@@ -39,6 +45,34 @@ export interface ExplorerLocation {
   parentId?: string
 }
 
+export interface ExplorerLimitLocation {
+  workspace: string
+  root: string
+}
+
+function constrainLocation(
+  location: ExplorerLocation,
+  limits: Array<ExplorerLimitLocation> | undefined
+): ExplorerLocation {
+  if (!limits?.length) return location
+  if (
+    limits.some(
+      limit =>
+        limit.workspace === location.workspace && limit.root === location.root
+    )
+  )
+    return location
+  const sameWorkspace = limits.find(
+    limit => limit.workspace === location.workspace
+  )
+  if (sameWorkspace)
+    return {workspace: sameWorkspace.workspace, root: sameWorkspace.root}
+  const [fallback] = limits
+  return fallback
+    ? {workspace: fallback.workspace, root: fallback.root}
+    : location
+}
+
 export interface ExplorerOptions {
   autoSelectFirstItem?: boolean
   breadcrumbs?: boolean
@@ -47,6 +81,7 @@ export interface ExplorerOptions {
   flatResults?: boolean
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
+  limitLocations?: Array<ExplorerLimitLocation>
   mode?: 'browse' | 'search'
   nestedNavigation?: boolean
   pickChildren?: boolean
@@ -229,7 +264,11 @@ export class ExplorerAtoms {
   items: Atom<Array<ExplorerEntry>>
 
   constructor(
-    public readonly location: PrimitiveAtom<ExplorerLocation>,
+    public readonly location: WritableAtom<
+      ExplorerLocation,
+      [SetStateAction<ExplorerLocation>],
+      void
+    >,
     private readonly options: ExplorerOptions,
     initialLocation: ExplorerLocation
   ) {
@@ -369,6 +408,9 @@ export class ExplorerAtoms {
       )
     }
   )
+  get limitLocations() {
+    return this.options.limitLocations
+  }
   canUpload = atom(get => {
     const location = get(this.location)
     return this.options.policy.canUpload({
@@ -606,7 +648,17 @@ export function createExplorerAtoms(
   initialLocation: ExplorerLocation,
   options: ExplorerOptions
 ): ExplorerAtoms {
-  return new ExplorerAtoms(atom(initialLocation), options, initialLocation)
+  const initial = constrainLocation(initialLocation, options.limitLocations)
+  const locationState = atom(initial)
+  const location = atom(
+    get => get(locationState),
+    (get, set, update: SetStateAction<ExplorerLocation>) => {
+      const current = get(locationState)
+      const next = typeof update === 'function' ? update(current) : update
+      set(locationState, constrainLocation(next, options.limitLocations))
+    }
+  )
+  return new ExplorerAtoms(location, options, initial)
 }
 
 export type DashboardEntry = ExplorerEntry

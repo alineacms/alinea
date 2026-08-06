@@ -102,6 +102,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
           <ExplorerHeader
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            navigate
           />
           <ExplorerPickerContent
             explorer={explorer}
