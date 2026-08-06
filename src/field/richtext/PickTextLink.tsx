@@ -1,7 +1,8 @@
 import {Button, TextField} from '#/components.js'
 import {Reference} from '#/core/Reference.js'
 import {type as createType, Type} from '#/core/Type.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -13,7 +14,6 @@ import {
   DashboardModalTitle,
   useDashboardModal
 } from '#/dashboard/app/ui/DashboardModal.js'
-import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
 import {link as createLink, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import styler from '@alinea/styler'

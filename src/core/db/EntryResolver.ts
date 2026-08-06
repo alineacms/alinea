@@ -1,4 +1,3 @@
-import type {Type} from '#/index.js'
 import type {Config} from '#/core/Config.js'
 import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
@@ -6,28 +5,29 @@ import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
 import type {AnyCondition, Filter} from '#/core/Filter.js'
 import {
+  querySource as queryEdge,
   type AnyQueryResult,
   type Edge,
   type EdgeQuery,
   type GraphQuery,
   type Projection,
   type QuerySettings,
-  querySource as queryEdge,
   type Status
 } from '#/core/Graph.js'
 import {
   getExpr,
-  type HasExpr,
   hasExpr,
   hasField,
   hasRoot,
-  hasWorkspace
+  hasWorkspace,
+  type HasExpr
 } from '#/core/Internal.js'
 import type {Resolver} from '#/core/Resolver.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {hasExact} from '#/core/util/Checks.js'
 import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {unreachable} from '#/core/util/Types.js'
+import type {Type} from '#/index.js'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
@@ -661,7 +661,7 @@ function localeChecker(locale: string | null, preferred: boolean): Check {
 
 export function filterChecker(
   filter: Filter,
-  getField = (input: any, name: string) => input[name]
+  getField = (input: any, name: string) => input?.[name]
 ): Check {
   const isOrFilter = orFilter.check(filter)
   if (isOrFilter) {

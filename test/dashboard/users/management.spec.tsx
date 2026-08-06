@@ -9,6 +9,9 @@ test('opens user management and searches existing users', async ({
 
   await app.openUsers()
   await expect(app.page).toHaveURL(/#\/users$/)
+  await expect(
+    app.page.locator('main > div > aside[aria-label="Users"]')
+  ).toBeVisible()
   await expect(app.page.getByRole('row', {name: /Alice Editor/})).toBeVisible()
 
   await app.page.getByRole('searchbox', {name: 'Search users'}).fill('local')

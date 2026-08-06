@@ -1,17 +1,14 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
-import {requiredAtom} from './utils.js'
+import {eventsAtom, graphAtom} from './core.js'
 
-export const graphAtom = requiredAtom<WriteableGraph>('dashboard.graph')
-export const eventsAtom = requiredAtom<EventTarget>('dashboard.events')
-
-const currentShaAtom = atom<string>()
+const contentShaAtom = atom<string>()
 
 export const shaAtom = Object.assign(
   atom(
     async get => {
-      const current = get(currentShaAtom)
+      const current = get(contentShaAtom)
       if (current) return current
       return readGraphSha(get(graphAtom))
     },
@@ -19,7 +16,8 @@ export const shaAtom = Object.assign(
       const events = get(eventsAtom)
       const listen = (event: Event) => {
         if (event instanceof IndexEvent && event.data.op === 'index') {
-          set(currentShaAtom, event.data.sha)
+          const sha = event.data.sha
+          set(contentShaAtom, sha)
         }
       }
       events.addEventListener(IndexEvent.type, listen)
@@ -32,10 +30,10 @@ export const shaAtom = Object.assign(
 )
 
 export const syncAtom = atom(null, async (get, set) => {
-  const db = get(graphAtom)
-  if (!isSyncableGraph(db)) return
-  const sha = await db.sync()
-  set(currentShaAtom, sha)
+  const graph = get(graphAtom)
+  if (!isSyncableGraph(graph)) return
+  const sha = await graph.sync()
+  set(contentShaAtom, sha)
   return sha
 })
 
@@ -47,9 +45,10 @@ interface GraphWithSha {
   sha: string | Promise<string>
 }
 
-function readGraphSha(graph: WriteableGraph): string | Promise<string> | void {
-  const sha = (graph as Partial<GraphWithSha>).sha
-  if (sha !== undefined) return sha
+function readGraphSha(
+  graph: WriteableGraph
+): string | Promise<string> | undefined {
+  return (graph as Partial<GraphWithSha>).sha
 }
 
 function isSyncableGraph(

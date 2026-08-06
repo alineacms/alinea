@@ -132,7 +132,7 @@ test('navigates into folders without showing a suspense loader', async ({
     .toBe('false')
 })
 
-test('keeps the root list explorer flat', async ({dashboard, mount}) => {
+test('keeps root overview rows flat', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
   await app.page.evaluate(() => {
@@ -209,7 +209,7 @@ test('preloads entries before card sidebar navigation commits', async ({
     .toBe('false')
 })
 
-test('disables non-matching rows in a navigable link picker', async ({
+test('navigates through folders to matching rows in a link picker', async ({
   dashboard,
   mount
 }) => {
@@ -221,10 +221,6 @@ test('disables non-matching rows in a navigable link picker', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  await expect(
-    picker.getByRole('treegrid', {name: 'Link folders'})
-  ).toHaveCount(0)
-
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
   await expect(

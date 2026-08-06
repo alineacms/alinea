@@ -19,14 +19,9 @@
   font-size: var(--alinea-badge-font-size);
   line-height: var(--alinea-badge-height);
   font-weight: var(--alinea-badge-font-weight);
+  white-space: nowrap;
+  flex-shrink: 0;
   min-width: 0;
-
-  & > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 
   [data-slot='icon'] {
     flex-shrink: 0;
@@ -71,4 +66,11 @@
     --alinea-badge-color: var(--alinea-status-unpublished-fg);
     --alinea-badge-background: var(--alinea-status-unpublished-bg);
   }
+}
+
+.Badge-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

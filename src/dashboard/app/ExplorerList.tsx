@@ -1,15 +1,16 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
-import {Button, Icon} from '#/components.js'
+import {Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useSetAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
-import type {EntryAtoms} from '../atoms/entry.js'
-import type {ExplorerAtoms} from '../atoms/explorer.js'
-import type {RootAtoms} from '../atoms/config.js'
+import type {
+  DashboardEntry,
+  DashboardExplorer,
+  DashboardRoot
+} from '../atoms/explorer.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -19,14 +20,11 @@ const styles = styler(css)
 const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
-  root?: RootAtoms
-  explorer: ExplorerAtoms
+  root?: DashboardRoot
 }
 
-function EmptyResults({root, explorer}: EmptyResultsProps) {
+function EmptyResults({root}: EmptyResultsProps) {
   const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
-  const [global, setGlobal] = useAtom(explorer.global)
-
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
@@ -37,15 +35,6 @@ function EmptyResults({root, explorer}: EmptyResultsProps) {
         <div className={styles.ExplorerList.empty.text()}>
           Try a different title, path, or field value.
         </div>
-        {!global && (
-          <Button
-            appearance="plain"
-            className={styles.ExplorerList.empty.button()}
-            onPress={() => setGlobal(!global)}
-          >
-            Or search across workspaces and roots
-          </Button>
-        )}
       </div>
     </div>
   )
@@ -66,21 +55,21 @@ function SearchIdleState() {
 }
 
 export interface ExplorerListProps {
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  explorer: DashboardExplorer
 }
 
-export function ExplorerList({explorer, items}: ExplorerListProps) {
+export function ExplorerList({explorer}: ExplorerListProps) {
+  const items = useAtomValue(explorer.items)
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
+  const getItems = useSetAtom(explorer.getItems)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
-  const scope = useAtomValue(explorer.scope)
-  const {dragAndDropHooks} = useDragAndDrop<EntryAtoms>({
+  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
-    getItems: explorer.getItems,
+    getItems,
     getDropOperation(target, _types, allowedOperations) {
       if (!isMedia || !canUpload) return 'cancel'
       if (target.type !== 'root') return 'cancel'
@@ -108,7 +97,10 @@ export function ExplorerList({explorer, items}: ExplorerListProps) {
         <SearchIdleState />
       </div>
     )
-  assert(root || scope === 'workspace', 'ExplorerList requires a root')
+  assert(
+    root || explorer.rootScope === 'workspace',
+    'ExplorerList requires a root'
+  )
   return (
     <div className={styles.ExplorerList()}>
       {view === 'card' ? (
@@ -116,18 +108,14 @@ export function ExplorerList({explorer, items}: ExplorerListProps) {
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
-          renderEmptyState={() => (
-            <EmptyResults explorer={explorer} root={root} />
-          )}
+          renderEmptyState={() => <EmptyResults root={root} />}
         />
       ) : (
         <ExplorerTable
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
-          renderEmptyState={() => (
-            <EmptyResults explorer={explorer} root={root} />
-          )}
+          renderEmptyState={() => <EmptyResults root={root} />}
         />
       )}
     </div>

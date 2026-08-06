@@ -1,12 +1,10 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
-import {AtomSnapshot} from '../AtomSnapshot.js'
 import {Checkbox, Icon, Surface} from '#/components.js'
-import {getType} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
-import {memo} from 'react'
+import {Fragment, memo, useMemo} from 'react'
 import {
   Button as AriaButton,
   type DragAndDropHooks,
@@ -17,9 +15,16 @@ import {
   type Key,
   Virtualizer
 } from 'react-aria-components'
-import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
-import type {EntryDataAtoms, EntryAtoms} from '../atoms/entry.js'
-import type {ExplorerAtoms} from '../atoms/explorer.js'
+import {
+  IcRoundKeyboardArrowRight,
+  IcTwotoneDescription,
+  IcTwotoneFolder
+} from '../icons.js'
+import type {
+  DashboardEntry,
+  DashboardEntryData,
+  DashboardExplorer
+} from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 
@@ -34,14 +39,14 @@ const cardLayoutOptions: GridLayoutOptions = {
 }
 
 interface ExplorerCardItemProps {
-  entry: EntryAtoms
-  onPress?: () => void
+  breadcrumbs: boolean
+  entry: DashboardEntry
   showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
+  breadcrumbs,
   entry,
-  onPress,
   showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
@@ -49,29 +54,26 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
     return (
       <ExplorerCardLoadingItem
         entry={entry}
-        onPress={onPress}
         showSelectionControls={showSelectionControls}
       />
     )
   return (
     <ExplorerCardLoadedItem
+      breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
-      onPress={onPress}
       showSelectionControls={showSelectionControls}
     />
   )
 })
 
 interface ExplorerCardLoadingItemProps {
-  entry: EntryAtoms
-  onPress?: () => void
+  entry: DashboardEntry
   showSelectionControls: boolean
 }
 
 function ExplorerCardLoadingItem({
   entry,
-  onPress,
   showSelectionControls
 }: ExplorerCardLoadingItemProps) {
   return (
@@ -80,7 +82,6 @@ function ExplorerCardLoadingItem({
       textValue="Loading entry"
       className={styles.ExplorerCards.item({loading: true})}
       aria-label="Loading entry"
-      onPress={onPress}
     >
       {showSelectionControls && <ExplorerCardCheckbox label="Loading entry" />}
       <Surface className={styles.ExplorerCards.item.card()}>
@@ -94,9 +95,7 @@ function ExplorerCardLoadingItem({
           <div className={styles.ExplorerCards.entry.body()}>
             <div className={styles.ExplorerCards.entry.body.inner()}>
               <div
-                className={styles.ExplorerCards.entry.skeleton({
-                  wide: true
-                })}
+                className={styles.ExplorerCards.entry.skeleton({wide: true})}
               />
               <div className={styles.ExplorerCards.entry.skeleton()} />
             </div>
@@ -108,30 +107,31 @@ function ExplorerCardLoadingItem({
 }
 
 interface ExplorerCardLoadedItemProps {
-  entry: EntryAtoms
-  data: EntryDataAtoms
-  onPress?: () => void
+  breadcrumbs: boolean
+  entry: DashboardEntry
+  data: DashboardEntryData
   showSelectionControls: boolean
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
+  breadcrumbs,
   entry,
   data,
-  onPress,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
-  const typeSettings = getType(type)
-  const hasChildren = useAtomValue(data.entryData).hasChildren
+  const hasChildren = useAtomValue(data.hasChildren)
+  const parents = useAtomValue(data.parents)
+  const info = useAtomValue(
+    useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
+  )
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
-
   return (
     <GridListItem
       id={entry.id}
       textValue={label}
-      onPress={onPress}
       className={styles.ExplorerCards.item()}
     >
       {showSelectionControls && <ExplorerCardCheckbox label={label} />}
@@ -140,25 +140,22 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         aria-label={`Drag ${label}`}
         className={styles.ExplorerCards.item.drag.handle()}
       />
-      <AtomSnapshot atom={data.fileInfo}>
-        {info => (
-          <Surface
-            className={styles.ExplorerCards.item.card({
-              file: Boolean(info)
-            })}
-          >
-            {info ? (
-              <ExplorerFileCard file={info} label={label} layout="card" />
-            ) : (
-              <ExplorerEntryCard
-                icon={icon ?? fallbackIcon}
-                label={label}
-                typeLabel={typeSettings.label}
-              />
-            )}
-          </Surface>
+      <Surface
+        className={styles.ExplorerCards.item.card({file: Boolean(info)})}
+      >
+        {info ? (
+          <ExplorerFileCard file={info} label={label} layout="card" />
+        ) : (
+          <ExplorerEntryCard
+            icon={icon ?? fallbackIcon}
+            label={label}
+            parents={
+              breadcrumbs ? <ExplorerCardParents parents={parents} /> : null
+            }
+            typeLabel={type.label}
+          />
         )}
-      </AtomSnapshot>
+      </Surface>
     </GridListItem>
   )
 })
@@ -176,6 +173,7 @@ function ExplorerCardCheckbox({label}: ExplorerCardCheckboxProps) {
     />
   )
 }
+
 interface ExplorerEntryCardProps {
   icon?: ComponentType
   label: string
@@ -207,10 +205,54 @@ function ExplorerEntryCard({
   )
 }
 
+interface ExplorerCardParentsProps {
+  parents: Array<DashboardEntry>
+}
+
+function ExplorerCardParents({parents}: ExplorerCardParentsProps) {
+  if (parents.length === 0) return null
+  return (
+    <div className={styles.ExplorerCards.parents()}>
+      {parents
+        .map<ReactNode>(parent => (
+          <ExplorerCardParent key={parent.id} parent={parent} />
+        ))
+        .reduce((prev, curr, index) => [
+          prev,
+          <IcRoundKeyboardArrowRight
+            aria-hidden
+            className={styles.ExplorerCards.parents.separator()}
+            key={`separator-${index}`}
+          />,
+          curr
+        ])}
+    </div>
+  )
+}
+
+interface ExplorerCardParentProps {
+  parent: DashboardEntry
+}
+
+function ExplorerCardParent({parent}: ExplorerCardParentProps) {
+  const {data} = useAtomValue(parent.data)
+  if (!data) return null
+  return <ExplorerCardLoadedParent parent={data} />
+}
+
+interface ExplorerCardLoadedParentProps {
+  parent: DashboardEntryData
+}
+
+function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
+  const label = useAtomValue(parent.label)
+  return <Fragment>{label}</Fragment>
+}
+
 export interface ExplorerCardsProps {
-  dragAndDropHooks: DragAndDropHooks<EntryAtoms>
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  dragAndDropHooks: DragAndDropHooks<DashboardEntry>
+  explorer: DashboardExplorer
+  items: Array<DashboardEntry>
   renderEmptyState: () => ReactNode
 }
 
@@ -229,8 +271,7 @@ export function ExplorerCards({
     const entry = items.find(item => item.id === String(key))
     if (entry) performAction(entry)
   }
-  const onAction =
-    explorer.hasRowAction && !explorer.actionOnPress ? onItemAction : undefined
+  const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (
     <div className={styles.ExplorerCards.viewport()}>
       <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
@@ -250,10 +291,8 @@ export function ExplorerCards({
         >
           {item => (
             <ExplorerCardItem
+              breadcrumbs={explorer.breadcrumbs}
               entry={item}
-              onPress={
-                explorer.actionOnPress ? () => performAction(item) : undefined
-              }
               showSelectionControls={showSelectionControls}
             />
           )}

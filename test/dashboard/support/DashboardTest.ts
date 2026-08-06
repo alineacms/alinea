@@ -11,6 +11,7 @@ type DashboardScenarioName = keyof typeof dashboardScenarioIds
 interface MountDashboardOptions {
   entry?: DashboardScenarioName
   routeEntry?: string
+  routeRoot?: string
   title?: string
 }
 
@@ -68,23 +69,24 @@ export class DashboardDriver {
 }
 
 export const test = base.extend<{dashboard: DashboardFixture}>({
-  dashboard: async ({page}, use) => {
+  dashboard: async ({page}, provide) => {
     const pageErrors: Array<Error> = []
     function onPageError(error: Error) {
       pageErrors.push(error)
     }
     page.on('pageerror', onPageError)
-    await use({
+    await provide({
       async mount(render, options = {}) {
         const entry = options.entry ?? 'alpha'
         const id = options.routeEntry ?? dashboardScenarioIds[entry]
+        const root = options.routeRoot ?? 'pages'
         await page.evaluate(() => {
           localStorage.removeItem('alinea-dashboard-theme')
           document.documentElement.removeAttribute('data-theme')
         })
         await page.evaluate(hash => {
           window.history.replaceState(null, '', hash)
-        }, `#/entry/main/pages/${id}`)
+        }, `#/entry/main/${root}/${id}`)
         const component = await render()
         const driver = new DashboardDriver(page, component)
         const expectedTitle =

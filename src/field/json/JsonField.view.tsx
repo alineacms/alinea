@@ -1,6 +1,6 @@
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {JsonField} from '#/field/json.js'
-import {useEffect, useState} from 'react'
+import {useState} from 'react'
 import {CodeEditorInput} from '../code/CodeField.view.js'
 
 export interface JsonFieldViewProps<Value> {
@@ -21,19 +21,12 @@ export function JsonFieldView<Value>({field}: JsonFieldViewProps<Value>) {
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)
-  const [text, setText] = useState(() => formatJsonValue(value))
+  const [editingText, setEditingText] = useState<string>()
   const [parseError, setParseError] = useState<string | undefined>()
-  const [isFocused, setIsFocused] = useState(false)
-
-  useEffect(
-    function syncTextFromValue() {
-      if (!isFocused) setText(formatJsonValue(value))
-    },
-    [isFocused, value]
-  )
+  const text = editingText ?? formatJsonValue(value)
 
   function handleValueChange(nextText: string) {
-    setText(nextText)
+    setEditingText(nextText)
     try {
       const parsed = parseJsonValue<Value>(nextText)
       if (parsed === undefined) {
@@ -50,12 +43,11 @@ export function JsonFieldView<Value>({field}: JsonFieldViewProps<Value>) {
   }
 
   function handleFocus() {
-    setIsFocused(true)
+    setEditingText(text)
   }
 
   function handleBlur() {
-    setIsFocused(false)
-    if (!parseError) setText(formatJsonValue(value))
+    if (!parseError) setEditingText(undefined)
   }
 
   return (

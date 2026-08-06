@@ -1,11 +1,11 @@
 import '#/theme.css'
+import type {
+  DashboardAuthAction,
+  DashboardAuthState
+} from '#/dashboard/atoms/auth.js'
 import {atom} from 'jotai'
 import type {CSSProperties, ReactNode} from 'react'
-import type {
-  AuthAction,
-  AuthState as DashboardAuthState
-} from '../atoms/user.js'
-import {AuthView, type AuthViewProps} from './AuthView.js'
+import {AuthView} from './AuthView.js'
 
 const storyStyle: CSSProperties = {
   height: 520,
@@ -17,23 +17,21 @@ interface AuthViewStoryProps {
   children?: ReactNode
 }
 
-function createDashboard(
-  state: DashboardAuthState
-): NonNullable<AuthViewProps['auth']> {
-  const authState = atom<DashboardAuthState>(state)
+function createAuthAtom(state: DashboardAuthState) {
+  const authState = atom(state)
   return atom(
     get => get(authState),
-    (get, set, action: AuthAction = {type: 'check'}) => {
+    (get, set, action: DashboardAuthAction = {type: 'check'}) => {
       if (action.type === 'setupCloud') set(authState, {status: 'redirecting'})
     }
   )
 }
 
 function AuthViewStory({state, children}: AuthViewStoryProps) {
-  const dashboard = createDashboard(state)
+  const auth = createAuthAtom(state)
   return (
     <div style={storyStyle}>
-      <AuthView auth={dashboard} />
+      <AuthView auth={auth} />
       {children}
     </div>
   )

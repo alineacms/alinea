@@ -1,0 +1,19 @@
+.EditFields {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.EditField-slot {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .EditFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .EditField-slot {
+    grid-column: 1 / -1 !important;
+  }
+}

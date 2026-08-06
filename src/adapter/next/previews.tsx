@@ -4,7 +4,7 @@ import {setPreviewCookies} from '#/preview/PreviewCookies.js'
 import {usePreview} from '#/preview/react.js'
 import {registerPreviewWidget} from '#/preview/widget.js'
 import {usePathname, useRouter} from 'next/navigation.js'
-import {useEffect, useState, useTransition} from 'react'
+import {useEffect, useRef, useState, useTransition} from 'react'
 
 export interface NextPreviewsProps {
   dashboardUrl: string
@@ -38,9 +38,11 @@ export default function NextPreviews({
       refresh().then(() => setIsLoading(false))
     }
   })
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler -- Register the external preview web component when requested.
   useEffect(() => {
     if (widget) registerPreviewWidget()
   }, [widget])
+  /* oxlint-enable react-you-might-not-need-an-effect/no-event-handler */
   if (!widget) return null
   return (
     <alinea-preview
@@ -68,15 +70,12 @@ export default function NextPreviews({
 export function useRouterRefresh() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-
-  const [resolve, setResolve] = useState<((value: unknown) => void) | null>(
-    null
-  )
-  const [isTriggered, setIsTriggered] = useState(false)
+  const resolveRefresh = useRef<(() => void) | undefined>(undefined)
+  const wasPending = useRef(false)
 
   const refresh = () => {
-    return new Promise((resolve, reject) => {
-      setResolve(() => resolve)
+    return new Promise<void>(resolve => {
+      resolveRefresh.current = resolve
       startTransition(() => {
         router.refresh()
       })
@@ -84,18 +83,15 @@ export function useRouterRefresh() {
   }
 
   useEffect(() => {
-    if (isTriggered && !isPending) {
-      if (resolve) {
-        resolve(null)
-
-        setIsTriggered(false)
-        setResolve(null)
-      }
-    }
     if (isPending) {
-      setIsTriggered(true)
+      wasPending.current = true
+      return
     }
-  }, [isTriggered, isPending, resolve])
+    if (!wasPending.current) return
+    wasPending.current = false
+    resolveRefresh.current?.()
+    resolveRefresh.current = undefined
+  }, [isPending])
 
   return refresh
 }

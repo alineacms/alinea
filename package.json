@@ -55,7 +55,7 @@
     "dev:run": "bun build.ts --watch -- node dev.js --dir apps/dev -- bun run --cwd apps/dev dev",
     "format": "oxfmt --write src",
     "format:check": "oxfmt --check src",
-    "lint": "oxlint --ignore-path .gitignore src/dashboard",
+    "lint": "oxlint",
     "prepublishOnly": "bun run build",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",
@@ -75,6 +75,10 @@
     "esbuild": "^0.28.0",
     "react-aria-components": "^1.17.0",
     "use-sync-external-store": "^1.6.0"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-dom": "*"
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",

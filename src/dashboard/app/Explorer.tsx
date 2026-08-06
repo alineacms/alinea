@@ -1,96 +1,101 @@
 import {Button, Menu, MenuItem, Popover, SearchField} from '#/components.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import styler from '@alinea/styler'
-import {atom, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import {
   useEffect,
+  useMemo,
   useState,
   useTransition,
   type KeyboardEvent,
   type ReactNode
 } from 'react'
 import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
-import {useAtom, useAtomValue} from '../AtomHooks.js'
-import {workspaceAtoms, workspacesAtom} from '../atoms/config.js'
-import type {EntryAtoms, EntryDataAtoms} from '../atoms/entry.js'
-import type {
-  ExplorerAtoms,
-  ExplorerSort,
-  ExplorerSortBy,
-  ExplorerTypeFilters
-} from '../atoms/explorer.js'
-import {AtomSnapshot} from '../AtomSnapshot.js'
 import {
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundClose,
   IcRoundFilterList,
-  IcRoundPublic,
-  IcRoundUnfoldMore,
   IcRoundUploadFile
 } from '../icons.js'
+import {
+  type DashboardEntry,
+  type DashboardEntryData,
+  type DashboardExplorer,
+  type ExplorerSort,
+  type ExplorerSortBy,
+  type ExplorerTypeFilters
+} from '../atoms/explorer.js'
+import {configAtom} from '../atoms/core.js'
+import {usePolicy} from '../hooks.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
-import {LocaleMenu} from './LocaleMenu.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
-import {WorkspaceItem} from './WorkspaceMenu.js'
 
 const styles = styler(css)
 
 export interface ExplorerProps {
   controls?: ReactNode
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
-  navigate?: boolean
+  explorer: DashboardExplorer
+  headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
+}
+
+export interface ExplorerHeaderEntry {
+  backLabel: string
+  title: string
+  onBack(): void
 }
 
 export interface ExplorerHeaderProps {
   autoFocusSearch?: boolean
   controls?: ReactNode
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  explorer: DashboardExplorer
+  headerEntry?: ExplorerHeaderEntry
   navigate?: boolean
   titleControls?: ReactNode
 }
 
 export interface ExplorerBodyProps {
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  explorer: DashboardExplorer
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
-  explorer: ExplorerAtoms
-  items: Array<EntryAtoms>
+  explorer: DashboardExplorer
 }
 
 interface ExplorerHeaderMainProps {
-  explorer: ExplorerAtoms
+  explorer: DashboardExplorer
+  headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
-  data: EntryDataAtoms
-  explorer: ExplorerAtoms
+  data: DashboardEntryData
+  explorer: DashboardExplorer
   titleControls?: ReactNode
 }
 
 interface ExplorerHeaderParentMainProps {
-  explorer: ExplorerAtoms
-  parent: EntryAtoms
+  explorer: DashboardExplorer
+  parent: DashboardEntry
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({
-  autoFocus = true,
-  explorer,
-  items
-}: ExplorerSearchProps) {
+function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
+  const items = useAtomValue(
+    useMemo(
+      () => unwrap(explorer.items, previous => previous ?? []),
+      [explorer]
+    )
+  )
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -98,24 +103,24 @@ function ExplorerSearch({
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
 
-  function selectEntry(entry: EntryAtoms | undefined) {
+  function selectEntry(entry: DashboardEntry | undefined) {
     if (!entry) return
     setSelection(new Set<Key>([entry.id]))
   }
 
-  const selectedKey =
-    selection === 'all' ? undefined : selection.values().next().value
-  const selectedEntry =
-    selectedKey === undefined
-      ? undefined
-      : items.find(item => item.id === String(selectedKey))
-  const {autoSelectFirstItem, hasSelection} = explorer
+  const selectedEntry = useMemo(() => {
+    if (selection === 'all') return undefined
+    const [selected] = selection
+    if (selected === undefined) return undefined
+    return items.find(item => item.id === String(selected))
+  }, [items, selection])
 
-  // Keep keyboard navigation selection synchronized with the current filtered
-  // item list so Enter can act on the first result when configured.
+  // Search results resolve asynchronously, so selection must be reconciled
+  // after the result set changes.
+  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
-    if (!autoSelectFirstItem || !hasSelection) return
+    if (!explorer.autoSelectFirstItem || !explorer.hasSelection) return
     if (items.length === 0) {
       if (selection !== 'all' && selection.size > 0)
         setSelection(new Set<Key>())
@@ -123,19 +128,20 @@ function ExplorerSearch({
     }
     if (!selectedEntry) setSelection(new Set<Key>([items[0].id]))
   }, [
-    autoSelectFirstItem,
-    hasSelection,
+    explorer.autoSelectFirstItem,
+    explorer.hasSelection,
     items,
     selectedEntry,
     selection,
     setSelection
   ])
+  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
 
   function onSearchChange(value: string) {
     setInputValue(value)
     startTransition(() => {
-      // if (explorer.hasSelection) setSelection(new Set<Key>())
+      if (explorer.hasSelection) setSelection(new Set<Key>())
       setSearch(value)
     })
   }
@@ -166,7 +172,7 @@ function ExplorerSearch({
       moveSelection(-1)
     } else if (event.key === 'Enter') {
       const entry =
-        selectedEntry ?? (autoSelectFirstItem ? items[0] : undefined)
+        selectedEntry ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
       performAction(entry)
@@ -185,82 +191,6 @@ function ExplorerSearch({
       onChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
     />
-  )
-}
-
-function WorkspaceMenu({explorer}: {explorer: ExplorerAtoms}) {
-  const [currentWorkspace, setWorkspace] = useAtom(explorer.workspace)
-  const workspaces = useAtomValue(workspacesAtom)
-  const limits = explorer.limitLocations
-  const visibleWorkspaces = limits?.length
-    ? workspaces.filter(workspace =>
-        limits.some(limit => limit.workspace === workspace)
-      )
-    : workspaces
-
-  return (
-    <Menu
-      label={currentWorkspace.key}
-      isDisabled={visibleWorkspaces.length <= 1}
-      onAction={key => {
-        setWorkspace(String(key))
-      }}
-      appearance="plain"
-      icon={visibleWorkspaces.length >= 2 ? IcRoundUnfoldMore : undefined}
-    >
-      {visibleWorkspaces.map(workspace => (
-        <WorkspaceItem key={workspace} workspace={workspaceAtoms(workspace)} />
-      ))}
-    </Menu>
-  )
-}
-
-function RootMenu({explorer}: {explorer: ExplorerAtoms}) {
-  const [currentRoot, setRoot] = useAtom(explorer.root)
-  const workspace = useAtomValue(explorer.workspace)
-  const roots = useAtomValue(workspace.rootMenu)
-  const settings = useAtomValue(
-    currentRoot?.settings ?? atom({label: 'Missing root label'})
-  )
-  const label = settings.label
-  const limits = explorer.limitLocations
-  const visibleRoots = limits?.length
-    ? roots.filter(root =>
-        limits.some(
-          limit => limit.workspace === workspace.key && limit.root === root.id
-        )
-      )
-    : roots
-
-  return (
-    <Menu
-      label={label}
-      isDisabled={visibleRoots.length <= 1}
-      onAction={key => {
-        setRoot(String(key))
-      }}
-      appearance="plain"
-      icon={visibleRoots.length >= 2 ? IcRoundUnfoldMore : undefined}
-    >
-      {visibleRoots.map(root => (
-        <MenuItem key={root.id} id={root.id} textValue={root.label}>
-          {root.label}
-        </MenuItem>
-      ))}
-    </Menu>
-  )
-}
-
-export interface ExplorerSnapshotProps {
-  children(items: Array<EntryAtoms>): ReactNode
-  explorer: ExplorerAtoms
-}
-
-export function ExplorerSnapshot({children, explorer}: ExplorerSnapshotProps) {
-  return (
-    <AtomSnapshot atom={explorer.snapshot}>
-      {snapshot => children(snapshot.items)}
-    </AtomSnapshot>
   )
 }
 
@@ -292,10 +222,23 @@ function ExplorerHeaderLoadedParentMain({
 
 function ExplorerHeaderMain({
   explorer,
+  headerEntry,
   titleControls
 }: ExplorerHeaderMainProps) {
   const root = useAtomValue(explorer.root)
   const parent = useAtomValue(explorer.parent)
+  if (headerEntry) {
+    return (
+      <div className={styles.ExplorerHeader.main()}>
+        <EditorBackButton
+          label={headerEntry.backLabel}
+          onPress={headerEntry.onBack}
+        />
+        <h1 className={styles.ExplorerHeader.title()}>{headerEntry.title}</h1>
+        {titleControls}
+      </div>
+    )
+  }
   if (parent) {
     return (
       <ExplorerHeaderParentMain
@@ -309,6 +252,69 @@ function ExplorerHeaderMain({
     return <div className={styles.ExplorerHeader.main()}>{titleControls}</div>
   }
   return null
+}
+
+interface ExplorerLocationMenuProps {
+  explorer: DashboardExplorer
+}
+
+function ExplorerLocationMenu({explorer}: ExplorerLocationMenuProps) {
+  const config = useAtomValue(configAtom)
+  const location = useAtomValue(explorer.location)
+  const policy = usePolicy()
+  const setLocation = useSetAtom(explorer.location)
+  const configuredLocations =
+    explorer.limitLocations ??
+    Object.entries(config.workspaces).flatMap(([workspace, value]) =>
+      Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
+    )
+  const locations = configuredLocations
+    .filter(location => policy.canRead(location))
+    .map(candidate => {
+      const workspace = config.workspaces[candidate.workspace]
+      const root = workspace
+        ? getWorkspace(workspace).roots[candidate.root]
+        : undefined
+      return {
+        ...candidate,
+        label: root ? getRoot(root).label : candidate.root
+      }
+    })
+  const selected = locations.find(
+    candidate =>
+      candidate.workspace === location.workspace &&
+      candidate.root === location.root
+  )
+  const label = selected?.label ?? location.root ?? 'Select root'
+  if (locations.length <= 1) return null
+  return (
+    <Menu
+      label={label}
+      appearance="plain"
+      selectionMode="single"
+      selectedKeys={[`${location.workspace}/${location.root}`]}
+      onAction={key => {
+        const selected = locations.find(
+          candidate => `${candidate.workspace}/${candidate.root}` === key
+        )
+        if (!selected) return
+        setLocation({
+          workspace: selected.workspace,
+          root: selected.root
+        })
+      }}
+    >
+      {locations.map(location => (
+        <MenuItem
+          id={`${location.workspace}/${location.root}`}
+          key={`${location.workspace}/${location.root}`}
+          textValue={location.label}
+        >
+          {location.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  )
 }
 
 function ExplorerHeaderParentMain({
@@ -328,7 +334,7 @@ function ExplorerHeaderParentMain({
 }
 
 interface ExplorerToolbarProps {
-  explorer: ExplorerAtoms
+  explorer: DashboardExplorer
 }
 const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
@@ -423,7 +429,6 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
   const [view, setView] = useAtom(explorer.view)
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
-  const [global, setGlobal] = useAtom(explorer.global)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
@@ -440,11 +445,6 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
           {uploads.length}
         </MutationQueueStatus>
       )}
-      <Button
-        appearance={global ? 'active' : 'outline'}
-        icon={IcRoundPublic}
-        onPress={() => setGlobal(!global)}
-      />
       <ExplorerControlsButton
         isMedia={isMedia}
         sort={sort}
@@ -475,34 +475,25 @@ export function ExplorerHeader({
   autoFocusSearch,
   controls,
   explorer,
-  items,
+  headerEntry,
   navigate,
   titleControls
 }: ExplorerHeaderProps) {
-  const root = useAtomValue(explorer.root)
-  const global = useAtomValue(explorer.global)
   return (
     <RailHeader className={styles.ExplorerHeader()}>
       <div className={styles.ExplorerHeader.content()}>
-        <ExplorerHeaderMain explorer={explorer} titleControls={titleControls} />
-        {navigate && !global && (
+        <ExplorerHeaderMain
+          explorer={explorer}
+          headerEntry={headerEntry}
+          titleControls={titleControls}
+        />
+        {navigate && (
           <div className={styles.Explorer.searchMenu()}>
-            <WorkspaceMenu explorer={explorer} />
-            <RootMenu explorer={explorer} />
-            {root && (
-              <LocaleMenu
-                root={root}
-                selectedLocale={explorer.selectedLocale}
-              />
-            )}
+            <ExplorerLocationMenu explorer={explorer} />
           </div>
         )}
         <div className={styles.Explorer.searchSlot()}>
-          <ExplorerSearch
-            autoFocus={autoFocusSearch}
-            explorer={explorer}
-            items={items}
-          />
+          <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
         </div>
         <div className={styles.Explorer.toolbar()}>
           <ExplorerToolbar explorer={explorer} />
@@ -513,11 +504,11 @@ export function ExplorerHeader({
   )
 }
 
-export function ExplorerBody({explorer, items}: ExplorerBodyProps) {
+export function ExplorerBody({explorer}: ExplorerBodyProps) {
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} items={items} />
+        <ExplorerList explorer={explorer} />
       </div>
     </RailBody>
   )
@@ -526,8 +517,7 @@ export function ExplorerBody({explorer, items}: ExplorerBodyProps) {
 export function Explorer({
   controls,
   explorer,
-  items,
-  navigate,
+  headerEntry,
   titleControls
 }: ExplorerProps) {
   return (
@@ -535,11 +525,10 @@ export function Explorer({
       <ExplorerHeader
         controls={controls}
         explorer={explorer}
-        items={items}
-        navigate={navigate}
+        headerEntry={headerEntry}
         titleControls={titleControls}
       />
-      <ExplorerBody explorer={explorer} items={items} />
+      <ExplorerBody explorer={explorer} />
     </>
   )
 }

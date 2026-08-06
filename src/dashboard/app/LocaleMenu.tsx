@@ -1,19 +1,17 @@
-import {useAtomValue} from '../AtomHooks.js'
 import {Icon, Menu, MenuItem} from '#/components.js'
+import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useSetAtom} from 'jotai'
-import {useState} from 'react'
+import {useAtom, useAtomValue, type WritableAtom} from 'jotai'
+import {useTransition} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
-import type {DashboardLocaleSelection} from '../atoms/explorer.js'
-import type {RootAtoms} from '../atoms/config.js'
 import css from './LocaleMenu.module.css'
 
 const styles = styler(css)
 
 interface LocaleMenuProps {
   root: RootAtoms
-  selectedLocale?: DashboardLocaleSelection
+  selectedLocale?: WritableAtom<string | null, [string], unknown>
 }
 
 interface LocaleDisplay {
@@ -37,9 +35,8 @@ function localeDisplay(locale: string): LocaleDisplay {
   const language = languages.of(parsed.language)
   const code = locale.toUpperCase()
   if (!language) return {code: null, name: locale, textValue: locale}
-  if (!parsed.region) {
+  if (!parsed.region)
     return {code, name: language, textValue: `${code} ${language}`}
-  }
   const regions = new Intl.DisplayNames(undefined, {type: 'region'})
   const region = regions.of(parsed.region)
   const name = region ? `${language} (${region})` : language
@@ -48,9 +45,8 @@ function localeDisplay(locale: string): LocaleDisplay {
 
 function LocaleLabel({locale}: LocaleLabelProps) {
   const display = localeDisplay(locale)
-  if (!display.code) {
+  if (!display.code)
     return <span className={styles.LocaleMenu.label()}>{display.name}</span>
-  }
   return (
     <span className={styles.LocaleMenu.label()}>
       <span className={styles.LocaleMenu.label.code()}>{display.code}</span>
@@ -63,10 +59,9 @@ export function LocaleMenu({
   root,
   selectedLocale: selectedLocaleAtom = root.selectedLocale
 }: LocaleMenuProps) {
-  const i18n = useAtomValue(root.settings).i18n
-  const selectedLocale = useAtomValue(selectedLocaleAtom)
-  const setSelectedLocale = useSetAtom(selectedLocaleAtom)
-  const [isPending, setIsPending] = useState(false)
+  const i18n = useAtomValue(root.i18n)
+  const [selectedLocale, setSelectedLocale] = useAtom(selectedLocaleAtom)
+  const [isPending, startTransition] = useTransition()
   if (!i18n || i18n.locales.length === 0) return null
   const activeLocale = selectedLocale ?? i18n.locales[0]
   if (!activeLocale) return null
@@ -85,23 +80,21 @@ export function LocaleMenu({
       popoverProps={{placement: 'bottom right'}}
       selectionMode="single"
       selectedKeys={[activeLocale]}
-      onAction={async key => {
-        setIsPending(true)
-        try {
-          await setSelectedLocale(String(key))
-        } finally {
-          setIsPending(false)
-        }
+      onAction={key => {
+        startTransition(() => {
+          setSelectedLocale(String(key))
+        })
       }}
     >
-      {i18n.locales.map(locale => {
-        const label = localeDisplay(locale).textValue
-        return (
-          <MenuItem key={locale} id={locale} textValue={label}>
-            <LocaleLabel locale={locale} />
-          </MenuItem>
-        )
-      })}
+      {i18n.locales.map(locale => (
+        <MenuItem
+          key={locale}
+          id={locale}
+          textValue={localeDisplay(locale).textValue}
+        >
+          <LocaleLabel locale={locale} />
+        </MenuItem>
+      ))}
     </Menu>
   )
 }

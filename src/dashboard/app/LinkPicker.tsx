@@ -1,21 +1,21 @@
-import {useAtomValue} from '../AtomHooks.js'
-import {AtomSnapshot} from '../AtomSnapshot.js'
 import {Button} from '#/components.js'
-import {useSetAtom} from 'jotai'
-import {useState} from 'react'
-import {createExplorerAtoms, type ExplorerOptions} from '../atoms/explorer.js'
-import {selectedRootAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
+import {
+  createExplorerAtoms,
+  type ExplorerOptions
+} from '#/dashboard/atoms/explorer.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {useDashboardContext, usePolicy} from '#/dashboard/hooks.js'
+import {useAtomValue, useSetAtom} from 'jotai'
+import {Suspense, startTransition, useState} from 'react'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection
+  ExplorerModalSelection,
+  ExplorerModalSuspense
 } from './ExplorerModal.js'
-import {
-  createExplorerPickerSnapshot,
-  ExplorerPickerContent
-} from './ExplorerPickerContent.js'
+import {ExplorerPickerContent} from './ExplorerPickerContent.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -23,77 +23,91 @@ import {
   useDashboardModal
 } from './ui/DashboardModal.js'
 
-export function LinkPicker(options: ExplorerOptions) {
+export interface LinkPickerOptions extends Omit<ExplorerOptions, 'policy'> {}
+
+export function LinkPicker(options: LinkPickerOptions) {
   return (
     <DashboardModal size="explorer">
-      <LinkPickerModalContent options={options} />
+      <Suspense
+        fallback={
+          <DashboardModalDialog
+            aria-label="Pick a link"
+            variant="explorer"
+            isLoading
+          />
+        }
+      >
+        <LinkPickerModalContent options={options} />
+      </Suspense>
     </DashboardModal>
   )
 }
 
 interface ExplorerModalProps {
-  options: ExplorerOptions
+  options: LinkPickerOptions
 }
 
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const workspace = useAtomValue(selectedWorkspaceAtom)
-  const root = useAtomValue(selectedRootAtom)
+  const {page, root} = useDashboardContext()
+  const policy = usePolicy()
   const location = options.location ?? {
-    workspace,
-    root: root ?? undefined
+    workspace: root.workspace,
+    root: root.key
   }
-  const [{explorer, snapshot, tree}] = useState(() => {
-    const explorer = createExplorerAtoms(location, {
+  const pickerRoot = rootAtoms(
+    page,
+    location.workspace,
+    location.root ?? root.key,
+    options.selectedLocale ?? root.locale
+  )
+  const selectedLocale = useAtomValue(pickerRoot.selectedLocale)
+  const [explorer] = useState(() =>
+    createExplorerAtoms(location, {
       ...options,
-      searchDepth: 'all'
+      policy,
+      rootData: pickerRoot.data,
+      searchDepth: 'all',
+      selectedLocale,
+      treeItems: pickerRoot.treeItems
     })
-    return {
-      explorer,
-      ...createExplorerPickerSnapshot(explorer, location.workspace)
-    }
-  })
+  )
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
   const onSubmit = () => {
-    onConfirm()
-    modal.close()
+    startTransition(() => {
+      onConfirm()
+      modal.close()
+    })
   }
   return (
     <DashboardModalDialog aria-label="Pick a link" variant="explorer">
-      <AtomSnapshot atom={snapshot}>
-        {prepared => (
-          <ExplorerModal>
-            <ExplorerHeader
-              controls={<DashboardModalCloseButton />}
-              explorer={explorer}
-              items={prepared.items}
-              navigate={true}
-            />
-            <ExplorerPickerContent
-              explorer={explorer}
-              items={prepared.items}
-              navigationLabel="Link folders"
-              options={options}
-              preparedTree={prepared.preparedTree}
-              tree={tree}
-            />
-            <ExplorerModalFooter>
-              <ExplorerModalSelection>
-                {selectedItems} {selectedItems === 1 ? 'item' : 'items'}{' '}
-                selected
-              </ExplorerModalSelection>
-              <ExplorerModalActions>
-                <Button onPress={modal.close}>Cancel</Button>
-                <Button intent="primary" onPress={onSubmit}>
-                  Select
-                </Button>
-              </ExplorerModalActions>
-            </ExplorerModalFooter>
-          </ExplorerModal>
-        )}
-      </AtomSnapshot>
+      <ExplorerModalSuspense>
+        <ExplorerModal>
+          <ExplorerHeader
+            controls={<DashboardModalCloseButton />}
+            explorer={explorer}
+            navigate
+          />
+          <ExplorerPickerContent
+            explorer={explorer}
+            navigationLabel="Link folders"
+            options={options}
+          />
+          <ExplorerModalFooter>
+            <ExplorerModalSelection>
+              {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+            </ExplorerModalSelection>
+            <ExplorerModalActions>
+              <Button onPress={modal.close}>Cancel</Button>
+              <Button intent="primary" onPress={onSubmit}>
+                Select
+              </Button>
+            </ExplorerModalActions>
+          </ExplorerModalFooter>
+        </ExplorerModal>
+      </ExplorerModalSuspense>
     </DashboardModalDialog>
   )
 }
