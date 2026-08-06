@@ -79,6 +79,7 @@ export class RootAtoms {
       },
       {
         enableNavigation: true,
+        nestedNavigation: true,
         policy: this.policy,
         rootData: this.data,
         treeItems: this.treeItems,

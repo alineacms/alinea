@@ -484,11 +484,14 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
-    flatResults: options.enableNavigation !== true,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -598,11 +601,14 @@ function LinkPickerDialog({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
-    flatResults: options.enableNavigation !== true,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',

@@ -70,10 +70,12 @@ test('navigates into folders without showing a suspense loader', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  const entries = picker.getByRole('grid', {name: 'Explorer entries'})
-  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
-  const folder = folders.getByRole('row', {name: /Folder/})
+  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
+  const folder = entries.getByRole('row', {name: /Folder/})
   await expect(folder).toBeVisible()
+  await expect(
+    picker.getByRole('treegrid', {name: 'Link folders'})
+  ).toHaveCount(0)
   await expect(picker.getByRole('progressbar')).toHaveCount(0)
 
   await app.page.evaluate(() => {
@@ -103,7 +105,7 @@ test('navigates into folders without showing a suspense loader', async ({
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await folder.click()
+  await folder.getByRole('button', {name: 'Expand Folder'}).click()
   await expect(entries.getByRole('row', {name: /Child/})).toContainText(
     'Summary for Child'
   )
@@ -130,7 +132,7 @@ test('navigates into folders without showing a suspense loader', async ({
     .toBe('false')
 })
 
-test('keeps the root list explorer flat', async ({dashboard, mount}) => {
+test('expands root explorer rows inline', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
   await app.page.evaluate(() => {
@@ -151,10 +153,8 @@ test('keeps the root list explorer flat', async ({dashboard, mount}) => {
 
   const entries = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
-  await expect(folder.getByRole('button', {name: 'Expand Folder'})).toHaveCount(
-    0
-  )
-  await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
+  await folder.getByRole('button', {name: 'Expand Folder'}).click()
+  await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -219,16 +219,14 @@ test('navigates through folders to matching rows in a link picker', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
-  const folders = picker.getByRole('treegrid', {name: 'Link folders'})
-  const entries = picker.getByRole('grid', {name: 'Explorer entries'})
-  const folder = folders.getByRole('row', {name: /Folder/})
-  await expect(folder).toBeVisible()
+  const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
+  const folder = entries.getByRole('row', {name: /Folder/})
   await expect(
-    entries.getByRole('checkbox', {name: 'Select Folder'})
-  ).toHaveCount(0)
+    folder.getByRole('checkbox', {name: 'Select Folder'})
+  ).toBeDisabled()
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 
-  await folder.click()
+  await folder.getByRole('button', {name: 'Expand Folder'}).click()
 
   const child = entries.getByRole('row', {name: /Child/})
   await expect(child).toBeVisible()

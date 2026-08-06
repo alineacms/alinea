@@ -1,5 +1,6 @@
 import {Entry} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
+import {filterChecker} from '#/core/db/EntryResolver.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
@@ -19,6 +20,7 @@ import {configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
 import {uploadFilesAtom} from './upload.js'
+import {dispense} from './utils.js'
 
 export const dashboardEntryOverviewColumnCount = 5
 
@@ -46,6 +48,7 @@ export interface ExplorerOptions {
   hideResultsUntilSearch?: boolean
   location?: ExplorerLocation
   mode?: 'browse' | 'search'
+  nestedNavigation?: boolean
   pickChildren?: boolean
   rootData?: Atom<RootData>
   treeItems?: Atom<Array<ExplorerTreeItem>>
@@ -211,9 +214,11 @@ export class ExplorerAtoms {
   readonly hasSelection
   readonly hideResultsUntilSearch
   readonly searchDepth
+  readonly supportsInlineExpansion
 
   search = atom('')
   selection: PrimitiveAtom<'all' | Set<Key>>
+  expandedKeys = atom(new Set<Key>())
   #selectedView = atom<ExplorerView>()
   #selectedSort = atom<ExplorerSort>()
   #selectedFilter = atom<ExplorerTypeFilters>()
@@ -245,6 +250,7 @@ export class ExplorerAtoms {
       options.hideResultsUntilSearch ?? this.mode === 'search'
     this.searchDepth =
       options.searchDepth ?? (this.mode === 'search' ? 'all' : 'current')
+    this.supportsInlineExpansion = options.nestedNavigation ?? false
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
@@ -417,6 +423,103 @@ export class ExplorerAtoms {
     const selected = get(this.selection)
     if (selected !== 'all') this.options.onConfirm?.([...selected].map(String))
   })
+  isExpanded = dispense((entry: ExplorerEntry) =>
+    atom(get => get(this.expandedKeys).has(entry.id))
+  )
+  isSelectable = dispense((entry: ExplorerEntry) =>
+    atom(get => {
+      if (!this.options.condition) return true
+      const {data} = get(entry.data)
+      if (!data) return false
+      const item = get(data.item)
+      return filterChecker(this.options.condition, (candidate, name) => {
+        const value = candidate as ExplorerItemData
+        if (name === '_id') return value.id
+        if (name === '_type') return value.type
+        return value.data[name]
+      })(item as never)
+    })
+  )
+  children = dispense((entry: ExplorerEntry) => {
+    const childrenReady = atom(async get => {
+      get(shaAtom)
+      const {data} = get(entry.data)
+      if (!data || !get(data.hasChildren)) return []
+      const graph = get(graphAtom)
+      const sort = get(this.sort)
+      const filter = get(this.filter)
+      const entries = await graph.find({
+        workspace: entry.workspace,
+        root: entry.root,
+        parentId: entry.id,
+        locale: get(this.selectedLocale),
+        filter: undefined,
+        type: filter,
+        status: 'preferDraft',
+        groupBy: Entry.id,
+        orderBy: {
+          [sort.direction]:
+            sort.sortBy === 'title'
+              ? Entry.title
+              : sort.sortBy === 'path'
+                ? Entry.path
+                : sort.sortBy === 'size'
+                  ? MediaFile.size
+                  : sort.sortBy === 'id'
+                    ? Entry.id
+                    : Entry.index,
+          caseSensitive: sort.sortBy !== 'id'
+        },
+        select: {
+          id: Entry.id,
+          title: Entry.title,
+          path: Entry.path,
+          type: Entry.type,
+          workspace: Entry.workspace,
+          root: Entry.root,
+          locale: Entry.locale,
+          parentId: Entry.parentId,
+          parents: Entry.parents,
+          parentEntries: parents({
+            select: {
+              id: Entry.id,
+              title: Entry.title,
+              type: Entry.type,
+              workspace: Entry.workspace,
+              root: Entry.root,
+              locale: Entry.locale,
+              parentId: Entry.parentId
+            }
+          }),
+          index: Entry.index,
+          data: Entry.data
+        }
+      })
+      const readable = entries.filter(candidate =>
+        this.options.policy.canRead(candidate)
+      )
+      const parentIds = await graph.find({
+        workspace: entry.workspace,
+        root: entry.root,
+        parentId: {in: readable.map(candidate => candidate.id)},
+        status: 'preferDraft',
+        groupBy: Entry.parentId,
+        select: Entry.parentId
+      })
+      const currentParents = get(data.parents)
+      return readable.map(candidate => {
+        const value = {
+          ...candidate,
+          hasChildren: parentIds.includes(candidate.id)
+        }
+        return new ExplorerEntry(candidate.id, value, atom(value), this.root, [
+          ...currentParents,
+          entry
+        ])
+      })
+    })
+    return unwrap(childrenReady, previous => previous ?? [])
+  })
   itemData = atom(async get => {
     get(shaAtom)
     const location = get(this.location)
@@ -450,7 +553,7 @@ export class ExplorerAtoms {
       parentId: flatList ? undefined : (location.parentId ?? null),
       locale: get(this.selectedLocale),
       search: search || undefined,
-      filter: this.options.condition,
+      filter: flatList ? this.options.condition : undefined,
       type: filter,
       status: 'preferDraft',
       groupBy: Entry.id,

@@ -20,6 +20,7 @@ export function ExplorerPickerContent({
   options
 }: ExplorerPickerContentProps) {
   const location = useAtomValue(explorer.location)
+  const view = useAtomValue(explorer.view)
   const {page} = useDashboardContext()
   const selectedLocale = useAtomValue(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
@@ -50,7 +51,7 @@ export function ExplorerPickerContent({
 
   return (
     <ExplorerModalContent>
-      {enableNavigation && root && (
+      {enableNavigation && view === 'card' && root && (
         <ExplorerPickerNavigation
           explorer={explorer}
           navigationLabel={navigationLabel}
