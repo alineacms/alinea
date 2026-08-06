@@ -172,6 +172,7 @@ export function EntrySidebarBrowserPreview({
     setLoading(true)
     setFrameVersion(0)
     hasPreviewListener.current = false
+    previewPayload.current = undefined
   }, [previewUrl])
 
   useEffect(() => {
@@ -179,6 +180,7 @@ export function EntrySidebarBrowserPreview({
     function handleMessage(event: MessageEvent<PreviewMessage>) {
       if (event.origin !== targetOrigin) return
       if (event.source !== iframe.current?.contentWindow) return
+      if (!event.data || typeof event.data !== 'object') return
       if (event.data.action === PreviewAction.Ping) {
         hasPreviewListener.current = true
         iframe.current?.contentWindow?.postMessage(
@@ -200,8 +202,10 @@ export function EntrySidebarBrowserPreview({
 
   useEffect(() => {
     if (!localeData.updatePreviewPayload) return
+    let cancelled = false
     const timeout = setTimeout(() => {
       void updatePreviewPayload().then(payload => {
+        if (cancelled) return
         previewPayload.current = payload
         if (!payload || !targetOrigin || !hasPreviewListener.current) return
         iframe.current?.contentWindow?.postMessage(
@@ -210,7 +214,10 @@ export function EntrySidebarBrowserPreview({
         )
       })
     }, 250)
-    return () => clearTimeout(timeout)
+    return () => {
+      cancelled = true
+      clearTimeout(timeout)
+    }
   }, [
     localeData.updatePreviewPayload,
     payloadSignal,

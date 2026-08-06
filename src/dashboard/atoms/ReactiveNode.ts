@@ -13,6 +13,15 @@ function isArray<Value>(input: unknown): input is Array<Value> {
 
 type ReactiveObject = Record<string, ReactiveNode>
 
+function resolveUpdate<Value>(
+  update: SetStateAction<Value>,
+  current: Value
+): Value {
+  return typeof update === 'function'
+    ? (update as (value: Value) => Value)(current)
+    : update
+}
+
 export class ReactiveNode<Value = unknown> {
   #initialValue: PrimitiveAtom<Value>
   readonly readOnly: boolean
@@ -37,10 +46,7 @@ export class ReactiveNode<Value = unknown> {
 
   #write = (get: Getter, set: Setter, update: SetStateAction<Value>) => {
     if (this.readOnly) return
-    const next =
-      typeof update === 'function'
-        ? (update as (value: Value) => Value)(get(this.value))
-        : update
+    const next = resolveUpdate(update, get(this.value))
     this.#reconcile(get, set, next)
     set(this.#dirty, next !== get(this.#initialValue))
   }
@@ -153,15 +159,17 @@ export class ReactiveNode<Value = unknown> {
             const fields = structure as ReactiveObject
             if (fields[key]) set(fields[key].value, update)
             else {
+              const next = resolveUpdate(update, undefined)
               set(this.nodes, {
                 ...fields,
-                [key]: new ReactiveNode(update, this.readOnly)
+                [key]: new ReactiveNode(next, this.readOnly)
               })
               set(this.#dirty, true)
             }
             return
           }
-          set(this.nodes, {[key]: new ReactiveNode(update, this.readOnly)})
+          const next = resolveUpdate(update, undefined)
+          set(this.nodes, {[key]: new ReactiveNode(next, this.readOnly)})
           set(this.#dirty, true)
         }
       )

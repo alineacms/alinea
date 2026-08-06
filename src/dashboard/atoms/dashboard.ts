@@ -1,5 +1,6 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
+import type {UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -57,6 +58,7 @@ export class DashboardAtoms {
   #mutationQueue = atom<DashboardMutationQueue>(mutationQueueState([]))
   #toasts = atom<Array<DashboardToast>>([])
   #skipParentMoveConfirmation = atom(false)
+  #uploadQueue = atom<Array<MutationQueueEntry>>([])
   #themeStorage = atomWithStorage<DashboardTheme>(
     dashboardThemeStorageKey,
     'system',
@@ -66,7 +68,12 @@ export class DashboardAtoms {
 
   mutationQueue = Object.assign(
     atom(
-      get => get(this.#mutationQueue),
+      get => {
+        const uploads = get(this.#uploadQueue)
+        const queue = get(this.#mutationQueue)
+        if (uploads.length === 0) return queue
+        return mutationQueueState([...uploads, ...queue.entries])
+      },
       (_get, set) => {
         const events = _get(eventsAtom)
         const listen = (event: Event) => {
@@ -87,10 +94,11 @@ export class DashboardAtoms {
     if (graph.retryMutationQueue) await graph.retryMutationQueue()
   })
 
-  discardMutationQueue = atom(null, async get => {
+  discardMutationQueue = atom(null, async (get, set) => {
     const graph = get(graphAtom) as WriteableGraph &
       Partial<MutationQueueDiscard>
     if (graph.discardMutationQueue) await graph.discardMutationQueue()
+    set(this.#uploadQueue, [])
   })
 
   toasts = atom(get => get(this.#toasts))
@@ -106,6 +114,95 @@ export class DashboardAtoms {
   skipParentMoveConfirmation = atom(
     get => get(this.#skipParentMoveConfirmation),
     (_get, set, skip: boolean) => set(this.#skipParentMoveConfirmation, skip)
+  )
+
+  uploadProgress = atom(
+    null,
+    (
+      _get,
+      set,
+      update:
+        | {
+            type: 'start'
+            uploads: Array<{id: string; file: File}>
+            destination: MutationQueueEntry['upload']
+          }
+        | {
+            type: 'progress'
+            id: string
+            progress: UploadProgress
+          }
+        | {
+            type: 'finish'
+            ids: Array<string>
+          }
+        | {
+            type: 'fail'
+            uploads: Array<{id: string; file: File; error: string}>
+            destination: MutationQueueEntry['upload']
+          }
+    ) => {
+      if (update.type === 'start') {
+        set(this.#uploadQueue, current => [
+          ...update.uploads.map(
+            ({id, file}): MutationQueueEntry => ({
+              id,
+              status: 'syncing',
+              upload: update.destination,
+              mutations: [
+                {
+                  op: 'uploadFile',
+                  title: file.name,
+                  progress: {loaded: 0, total: file.size || undefined}
+                }
+              ]
+            })
+          ),
+          ...current
+        ])
+        return
+      }
+      if (update.type === 'progress') {
+        set(this.#uploadQueue, current =>
+          current.map(entry => {
+            if (entry.id !== update.id) return entry
+            return {
+              ...entry,
+              mutations: entry.mutations.map(mutation => ({
+                ...mutation,
+                progress: update.progress
+              }))
+            }
+          })
+        )
+        return
+      }
+      if (update.type === 'fail') {
+        const failedIds = new Set(update.uploads.map(upload => upload.id))
+        set(this.#uploadQueue, current => [
+          ...update.uploads.map(
+            ({id, file, error}): MutationQueueEntry => ({
+              id,
+              status: 'failed',
+              error,
+              upload: update.destination,
+              mutations: [
+                {
+                  op: 'uploadFile',
+                  title: file.name,
+                  progress: {loaded: 0, total: file.size || undefined}
+                }
+              ]
+            })
+          ),
+          ...current.filter(entry => !failedIds.has(entry.id))
+        ])
+        return
+      }
+      set(this.#uploadQueue, current =>
+        current.filter(entry => !update.ids.includes(entry.id))
+      )
+    }
   )
 
   theme = Object.assign(
