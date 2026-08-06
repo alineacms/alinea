@@ -8,16 +8,12 @@ import {
 } from 'react'
 import '../src/dashboard/global.css'
 
-interface StoryErrorBoundaryProps extends PropsWithChildren {
-  resetKey: string
-}
-
 interface StoryErrorBoundaryState {
   error?: Error
 }
 
 class StoryErrorBoundary extends Component<
-  StoryErrorBoundaryProps,
+  PropsWithChildren,
   StoryErrorBoundaryState
 > {
   state: StoryErrorBoundaryState = {}
@@ -28,15 +24,6 @@ class StoryErrorBoundary extends Component<
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('Story failed to render', error, info.componentStack)
-  }
-
-  componentDidUpdate(previousProps: StoryErrorBoundaryProps): void {
-    if (
-      previousProps.resetKey !== this.props.resetKey &&
-      this.state.error !== undefined
-    ) {
-      this.setState({error: undefined})
-    }
   }
 
   render(): ReactNode {
@@ -64,9 +51,7 @@ function StoryError({error}: StoryErrorProps) {
 
 export const Provider: GlobalProvider = ({children, globalState}) => {
   return (
-    <StoryErrorBoundary resetKey={globalState.story}>
-      {children}
-    </StoryErrorBoundary>
+    <StoryErrorBoundary key={globalState.story}>{children}</StoryErrorBoundary>
   )
 }
 

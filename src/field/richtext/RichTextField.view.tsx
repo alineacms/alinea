@@ -418,6 +418,7 @@ function RichTextBlockSnapshot({
 }: RichTextBlockSnapshotProps) {
   const value = useAtomValue(node.value)
 
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- Synchronize the Jotai block value to TipTap's external editor store.
   useEffect(() => {
     if (!Node.isBlock(value)) return
     const position = host.getPos()
@@ -436,6 +437,7 @@ function RichTextBlockSnapshot({
     transaction.setMeta('addToHistory', false)
     editor.view.dispatch(transaction)
   }, [editor, host, value])
+  // oxlint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent
 
   return null
 }

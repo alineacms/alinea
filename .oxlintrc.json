@@ -6,6 +6,8 @@
     "builtin": true
   },
   "rules": {
+    "no-unused-vars": "off",
+    "import/namespace": "off",
     "react-you-might-not-need-an-effect/no-derived-state": "warn",
     "react-you-might-not-need-an-effect/no-chain-state-updates": "warn",
     "react-you-might-not-need-an-effect/no-event-handler": "warn",

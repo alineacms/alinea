@@ -69,13 +69,13 @@ export class DashboardDriver {
 }
 
 export const test = base.extend<{dashboard: DashboardFixture}>({
-  dashboard: async ({page}, use) => {
+  dashboard: async ({page}, provide) => {
     const pageErrors: Array<Error> = []
     function onPageError(error: Error) {
       pageErrors.push(error)
     }
     page.on('pageerror', onPageError)
-    await use({
+    await provide({
       async mount(render, options = {}) {
         const entry = options.entry ?? 'alpha'
         const id = options.routeEntry ?? dashboardScenarioIds[entry]

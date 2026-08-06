@@ -654,11 +654,11 @@ function useResolvedEntryPickerOptions(
 ): ResolvedEntryPickerOptions {
   const entry = useEntry()
   const graph = useGraph()
+  const {condition: conditionOption, location: locationOption} = options
   const [resolved, setResolved] = useState<ResolvedEntryPickerOptions>(() => ({
     condition:
-      typeof options.condition === 'function' ? undefined : options.condition,
-    location:
-      typeof options.location === 'function' ? undefined : options.location
+      typeof conditionOption === 'function' ? undefined : conditionOption,
+    location: typeof locationOption === 'function' ? undefined : locationOption
   }))
 
   useEffect(() => {
@@ -671,13 +671,13 @@ function useResolvedEntryPickerOptions(
     }
     const info = {entry, graph}
     const condition =
-      typeof options.condition === 'function'
-        ? options.condition(info)
-        : options.condition
+      typeof conditionOption === 'function'
+        ? conditionOption(info)
+        : conditionOption
     const location =
-      typeof options.location === 'function'
-        ? options.location(info)
-        : options.location
+      typeof locationOption === 'function'
+        ? locationOption(info)
+        : locationOption
     void Promise.all([condition, location]).then(
       ([nextCondition, nextLocation]) => {
         if (active)
@@ -687,7 +687,7 @@ function useResolvedEntryPickerOptions(
     return () => {
       active = false
     }
-  }, [entry, graph, options.condition, options.location, type])
+  }, [conditionOption, entry, graph, locationOption, type])
 
   return resolved
 }
