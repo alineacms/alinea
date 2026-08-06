@@ -86,6 +86,7 @@ function createEntryLoader(config: Config, db: WriteableGraph, policy: Policy) {
         parents: parents({
           select: {
             id: Entry.id,
+            index: Entry.index,
             path: Entry.path,
             type: Entry.type,
             status: Entry.status,

@@ -72,6 +72,7 @@ interface EntryData {
   hasChildren: boolean
   parents: Array<{
     id: string
+    index: string
     path: string
     type: string
     status: EntryStatus

@@ -34,7 +34,6 @@ import {
 import {swr} from '../atoms/utils.js'
 import type {LinkPickerPresentation} from '#/picker/entry.js'
 import {unwrap} from 'jotai/utils'
-import {useAtom} from '../../../dist/dashboard/AtomHooks.js'
 
 export interface LinkPickerOptions extends ExplorerOptions {
   presentation?: LinkPickerPresentation
@@ -131,13 +130,38 @@ function LinkPickerInline({options}: ExplorerModalProps) {
     const optionsSnapshot = swr(
       atom(async get => {
         const {items} = await get(explorer.snapshot)
-        return items.map(entry => {
-          const {data} = get(entry.data)
-          return {
-            id: entry.id,
-            name: data ? get(data.label) : 'Loading entry'
-          }
-        })
+        const pickerItems = await Promise.all(
+          items.map(async entry => {
+            const {data} = get(entry.data)
+
+            if (!data) {
+              return {
+                id: entry.id,
+                name: 'Loading entry',
+                sortKey: entry.id
+              }
+            }
+
+            const entryData = get(data.entryData)
+            const currentEntry = await get(data.currentEntry)
+
+            return {
+              id: entry.id,
+              name: get(data.label),
+              depth: entryData.parents.length,
+              sortKey: [
+                ...entryData.parents.map(parent => parent.index),
+                currentEntry?.index ?? entry.id
+              ].join('\0')
+            }
+          })
+        )
+
+        return pickerItems
+          .sort((a, b) =>
+            a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0
+          )
+          .map(({sortKey: _sortKey, ...item}) => item)
       })
     )
 
@@ -178,6 +202,7 @@ function LinkPickerInline({options}: ExplorerModalProps) {
 interface LinkPickerItem {
   id: string
   name: string
+  depth: number
 }
 
 interface LinkPickerInputProps {
@@ -228,7 +253,13 @@ function LinkPickerSingle({
       onInputChange={onInputChange}
     >
       {item => (
-        <ComboBoxItem id={item.id} textValue={item.name}>
+        <ComboBoxItem
+          id={item.id}
+          textValue={item.name}
+          style={{
+            paddingInlineStart: `${item.depth * 0.6 + 0.4}rem`
+          }}
+        >
           {item.name}
         </ComboBoxItem>
       )}
@@ -258,7 +289,13 @@ function LinkPickerMultiple({
       onItemCleared={id => updateSelection(selection => selection.delete(id))}
     >
       {item => (
-        <MultipleSelectItem id={item.id} textValue={item.name}>
+        <MultipleSelectItem
+          id={item.id}
+          textValue={item.name}
+          style={{
+            paddingInlineStart: `${item.depth * 0.6 + 0.4}rem`
+          }}
+        >
           {item.name}
         </MultipleSelectItem>
       )}
