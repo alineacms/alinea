@@ -19,6 +19,8 @@
   font-size: var(--alinea-badge-font-size);
   line-height: var(--alinea-badge-height);
   font-weight: var(--alinea-badge-font-weight);
+  white-space: nowrap;
+  flex-shrink: 0;
   min-width: 0;
 
   [data-slot='icon'] {
