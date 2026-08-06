@@ -6,15 +6,10 @@ import {views} from '#/field/views.js'
 import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {use, useState} from 'react'
-import {dashboardScenarioIds} from './DashboardScenarioData.js'
-
-const linkScenarioIds = {
-  existingFile: 'workflow-existing-file',
-  existingImage: 'workflow-existing-image',
-  referenceFolder: 'workflow-reference-folder',
-  referenceOther: 'workflow-reference-other',
-  referenceTarget: 'workflow-reference-target'
-} as const
+import {
+  dashboardLinkScenarioIds as linkScenarioIds,
+  dashboardScenarioIds
+} from './DashboardScenarioData.js'
 
 const ScenarioPage = Config.document('Page', {
   contains: ['Page'],
@@ -47,6 +42,9 @@ const ScenarioPage = Config.document('Page', {
     }),
     childPage: Field.entry('Child page', {pickChildren: true}),
     browsePage: Field.entry('Browse page', {
+      location: {workspace: 'main', root: 'pages'}
+    }),
+    relatedPages: Field.entry.multiple('Repeated pages', {
       location: {workspace: 'main', root: 'pages'}
     }),
     navigablePage: Field.entry('Navigable page', {

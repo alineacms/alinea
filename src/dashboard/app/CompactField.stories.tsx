@@ -1,9 +1,7 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
-import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {type} from '#/core/Type.js'
-import {DashboardScopeInternal} from '#/dashboard/hooks.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
@@ -22,14 +20,6 @@ import type {CSSProperties, ReactNode} from 'react'
 import {views} from '../../field/views.js'
 import {Badge} from './Badge.js'
 import {CompactField, CompactRecordFields} from './CompactField.js'
-
-const dashboard = {
-  graph: {} as WriteableGraph,
-  config: {schema: {}, workspaces: {}},
-  events: new EventTarget(),
-  client: {} as LocalConnection,
-  views
-}
 
 const featureType = type('Feature', {
   fields: {
@@ -168,7 +158,7 @@ function Row({children, label}: RowProps) {
 
 export function AllFields() {
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider views={views}>
       <div style={storyStyle}>
         <div style={gridStyle}>
           {fields.map(({field, label, value}) => (
@@ -178,7 +168,7 @@ export function AllFields() {
           ))}
         </div>
       </div>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 
@@ -188,7 +178,7 @@ export function FooterLayout() {
     author: text('Author')
   }
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider views={views}>
       <div style={{...storyStyle, maxWidth: 620}}>
         <CompactRecordFields
           fields={recordFields}
@@ -200,7 +190,7 @@ export function FooterLayout() {
           }}
         />
       </div>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 
@@ -214,7 +204,7 @@ export function MultiSelectBadges() {
     }
   })
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider views={views}>
       <div style={{...storyStyle, maxWidth: 420}}>
         <Row label="Compact">
           <CompactField
@@ -223,7 +213,7 @@ export function MultiSelectBadges() {
           />
         </Row>
       </div>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 

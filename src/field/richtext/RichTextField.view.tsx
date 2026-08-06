@@ -5,13 +5,13 @@ import type {Schema} from '#/core/Schema.js'
 import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {rootEditor} from '#/dashboard/atoms/editor.js'
 import {
+  useEditor as useDashboardEditor,
   useFieldError,
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import {rootEditor} from '#/dashboard/atoms/entry/editor.js'
-import {useEditor as useDashboardEditor} from '#/dashboard/editor/EditorScope.js'
 import {
   configureRichTextExtensions,
   type RichTextOptions
@@ -98,7 +98,8 @@ export function RichTextFieldView<Blocks extends Schema>({
   const ownerId = useId()
   const picker = usePickTextLink()
   const anchorPicker = usePickTextAnchor()
-  const entryAnchors = useAtomValue(rootEditor(useDashboardEditor()).anchors)
+  const dashboardEditor = useDashboardEditor()
+  const entryAnchors = useAtomValue(rootEditor(dashboardEditor).anchors)
   const entryAnchorIds = useMemo(
     () => entryAnchors.map(anchor => anchor.id),
     [entryAnchors]
@@ -328,6 +329,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 }
 
 function setEditorReadOnly(editor: Editor, readOnly: boolean) {
+  if (editor.isDestroyed) return
   editor.setEditable(!readOnly, false)
   editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
 }
@@ -416,6 +418,7 @@ function RichTextBlockSnapshot({
 }: RichTextBlockSnapshotProps) {
   const value = useAtomValue(node.value)
 
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- Synchronize the Jotai block value to TipTap's external editor store.
   useEffect(() => {
     if (!Node.isBlock(value)) return
     const position = host.getPos()
@@ -434,6 +437,7 @@ function RichTextBlockSnapshot({
     transaction.setMeta('addToHistory', false)
     editor.view.dispatch(transaction)
   }, [editor, host, value])
+  // oxlint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent
 
   return null
 }

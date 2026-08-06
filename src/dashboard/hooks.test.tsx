@@ -1,145 +1,89 @@
-import {useAtomValue} from './AtomHooks.js'
-import {act, cleanup, render, screen} from '#test/react.js'
-import type {Entry} from '#/core/Entry.js'
-import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
-import {Config} from '#/index.js'
+import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
-import {TestEvents} from '#test/DashboardFixture.js'
 import {afterEach, expect, test} from 'bun:test'
+import {useAtomValue} from 'jotai'
+import {EntryEditor} from './atoms/editor.js'
+import {ReactiveNode} from './atoms/ReactiveNode.js'
+import {configAtom} from './atoms/core.js'
 import {
   DashboardScopeInternal,
-  EntryScope,
+  EditorScope,
   useDashboard,
-  useEntry
+  useField
 } from './hooks.js'
-import {entryRevisionAtom} from './atoms/entry/load.js'
-import {configAtom} from './atoms/config.js'
+
+const titleField = Field.text('Title')
+const Article = Config.document('Article', {
+  fields: {title: titleField}
+})
 
 afterEach(cleanup)
 
-function DashboardWorkspace() {
-  const config = useAtomValue(configAtom)
-  return <span>{Object.keys(config.workspaces)[0]}</span>
-}
-
-test('dashboard scopes isolate hydrated atom values', () => {
-  const first = createTestDashboard('first')
-  const second = createTestDashboard('second')
-
-  render(
-    <>
-      <DashboardScopeInternal dashboard={first}>
-        <DashboardWorkspace />
-      </DashboardScopeInternal>
-      <DashboardScopeInternal dashboard={second}>
-        <DashboardWorkspace />
-      </DashboardScopeInternal>
-    </>
-  )
-
-  expect(screen.getByText('first')).toBeDefined()
-  expect(screen.getByText('second')).toBeDefined()
-})
-
-function DashboardIdentity({
-  expected
-}: {
-  expected: ReturnType<typeof createTestDashboard>
-}) {
+function FunctionalFieldUpdate() {
+  const [value, setValue] = useField(titleField)
   return (
-    <span>{useDashboard() === expected ? 'same dashboard' : 'different'}</span>
+    <button onClick={() => setValue(current => `${current}!`)}>{value}</button>
   )
 }
 
-test('useDashboard returns the nearest dashboard model', () => {
-  const dashboard = createTestDashboard('main')
+test('useField applies a functional update once', () => {
+  const node = new ReactiveNode<object>({title: 'First'})
+  const editor = new EntryEditor(Article, node)
 
   render(
-    <DashboardScopeInternal dashboard={dashboard}>
-      <DashboardIdentity expected={dashboard} />
-    </DashboardScopeInternal>
+    <EditorScope editor={editor}>
+      <FunctionalFieldUpdate />
+    </EditorScope>
   )
 
-  expect(screen.getByText('same dashboard')).toBeDefined()
+  fireEvent.click(screen.getByRole('button', {name: 'First'}))
+  expect(screen.getByRole('button', {name: 'First!'})).toBeDefined()
 })
 
-function EntryTitle() {
-  return <span>{useEntry()?.title ?? 'no entry'}</span>
+function DashboardIdentity({expected}: {expected: object}) {
+  const dashboard = useDashboard()
+  const config = useAtomValue(configAtom)
+  return (
+    <span>
+      {dashboard === expected ? 'same' : 'different'}:
+      {Object.keys(config.workspaces)[0]}
+    </span>
+  )
 }
 
-test('useEntry returns the plain entry from the nearest entry scope', () => {
-  const entry: Entry = {
-    active: true,
-    childrenDir: '',
-    data: {},
-    fileHash: '',
-    filePath: '',
-    id: 'entry',
-    index: '0',
-    level: 0,
-    locale: null,
-    main: true,
-    parentDir: '',
-    parentId: null,
-    parents: [],
-    path: 'entry',
-    root: 'pages',
-    rowHash: '',
-    searchableText: '',
-    seeded: null,
-    status: 'published',
-    title: 'Scoped entry',
-    type: 'Page',
-    url: '/entry',
-    workspace: 'main'
-  }
-
-  render(
-    <>
-      <EntryTitle />
-      <EntryScope entry={entry}>
-        <EntryTitle />
-      </EntryScope>
-    </>
-  )
-
-  expect(screen.getByText('no entry')).toBeDefined()
-  expect(screen.getByText('Scoped entry')).toBeDefined()
-})
-
-function DashboardRevision() {
-  const revision = useAtomValue(entryRevisionAtom('entry'))
-  return <span>revision:{revision}</span>
-}
-
-test('dashboard effects update entry revisions', () => {
-  const events = new TestEvents()
-  render(
-    <DashboardScopeInternal dashboard={createTestDashboard('main', events)}>
-      <DashboardRevision />
-    </DashboardScopeInternal>
-  )
-
-  act(() => {
-    events.emit(new IndexEvent({op: 'entry', id: 'entry'}))
-  })
-
-  expect(screen.getByText('revision:1')).toBeDefined()
-})
-
-function createTestDashboard(workspace: string, events = new EventTarget()) {
+function testDashboard(workspace: string) {
   const config = Config.create({
     schema: {},
     workspaces: {
       [workspace]: Config.workspace(workspace, {source: '.', roots: {}})
     }
   })
-  const db = new LocalDB(config)
+  const graph = new LocalDB(config)
   return {
-    graph: db,
+    graph,
     config,
-    events,
-    client: createTestConnection(db)
+    events: new EventTarget(),
+    client: createTestConnection(graph)
   }
 }
+
+test('dashboard scopes preserve the public model and isolate atom state', () => {
+  const first = testDashboard('first')
+  const second = testDashboard('second')
+
+  render(
+    <>
+      <DashboardScopeInternal dashboard={first}>
+        <DashboardIdentity expected={first} />
+      </DashboardScopeInternal>
+      <DashboardScopeInternal dashboard={second}>
+        <DashboardIdentity expected={second} />
+      </DashboardScopeInternal>
+    </>
+  )
+
+  expect(screen.getByText('same:first')).toBeDefined()
+  expect(screen.getByText('same:second')).toBeDefined()
+})

@@ -1,4 +1,3 @@
-import {useAtom, useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   DialogTrigger,
@@ -8,9 +7,16 @@ import {
   Popover,
   Tooltip
 } from '#/components.js'
+import type {Page} from '#/dashboard/atoms/nav.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
+import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
+import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {setUserRolesAtom} from '#/dashboard/atoms/auth.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
-import {useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
   IcBaselineAccountCircle,
   IcOutlineSettings,
@@ -21,64 +27,64 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import {
-  canLogoutAtom,
-  currentUserAtom,
-  isLocalAtom,
-  logoutAtom
-} from '../atoms/user.js'
-import {setUserRolesAtom} from '../atoms/dashboard.js'
-import {themeAtom} from '../atoms/user.js'
-import {routeAtom, selectedWorkspaceAtom} from '../atoms/routing.js'
-import {configAtom, type RootAtoms, workspaceAtoms} from '../atoms/config.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
 
 const styles = styler(css)
 
-interface WorkspaceRootsProps {
+export interface WorkspaceRootsProps {
   canManageMembers: boolean
+  page: Page
 }
 
-export function WorkspaceRoots({canManageMembers}: WorkspaceRootsProps) {
-  const selected = useAtomValue(selectedWorkspaceAtom)
-  const workspace = workspaceAtoms(selected)
-  const roots = useAtomValue(workspace.roots).map(root => workspace.root(root))
+export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
+  const policy = page.auth.policy
+  const workspace = page.workspace!
+  const settings = useAtomValue(workspaceAtoms(workspace).settingsAtom)
+  const roots = Object.keys(settings.roots)
+    .filter(key => policy.canRead({workspace, root: key}))
+    .map(key => rootAtoms(page, workspace, key, page.locale ?? null))
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatarMenu canManageMembers={canManageMembers} />
+        <WorkspaceAvatarMenu page={page} />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
-          <WorkspaceRootButton key={root.key} root={root} />
+          <WorkspaceRootButton key={root.key} page={page} root={root} />
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
         <MutationQueueStatus openOnFail />
-        <WorkspaceProfileMenu canManageMembers={canManageMembers} />
+        <WorkspaceProfileMenu canManageMembers={canManageMembers} page={page} />
       </div>
     </aside>
   )
 }
 
 interface WorkspaceRootButtonProps {
-  root: RootAtoms
+  page: Page
+  root: ReturnType<typeof rootAtoms>
 }
 
-function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
+function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
   const icon = useAtomValue(root.icon)
-  const label = useAtomValue(root.settings).label
-  const [selected, setSelected] = useAtom(root.selected)
+  const label = useAtomValue(root.label)
+  const setRoute = useSetAtom(routeAtom)
+  const selected = page.root === root.key
   return (
     <Tooltip placement="right" delay={100} tooltip={label}>
       <Button
         size="icon-nav"
-        //appearance={selected ? 'active' : 'plain'}
         className={styles.WorkspaceRoots.rootButton()}
         aria-label={label}
-        onPress={() => setSelected(true)}
+        onPress={() =>
+          setRoute({
+            workspace: root.workspace,
+            root: root.key
+          })
+        }
         data-selected={selected ? '' : undefined}
       >
         {icon && <Icon icon={icon} data-slot="icon" />}
@@ -87,15 +93,20 @@ function WorkspaceRootButton({root}: WorkspaceRootButtonProps) {
   )
 }
 
-function WorkspaceProfileMenu({canManageMembers}: WorkspaceRootsProps) {
-  const user = useAtomValue(currentUserAtom)
+interface WorkspaceProfileMenuProps extends WorkspaceRootsProps {}
+
+function WorkspaceProfileMenu({
+  canManageMembers,
+  page
+}: WorkspaceProfileMenuProps) {
+  const {user} = page.auth
   const config = useAtomValue(configAtom)
-  const canLogout = useAtomValue(canLogoutAtom)
-  const isLocal = useAtomValue(isLocalAtom)
-  const [theme, setTheme] = useAtom(themeAtom)
+  const isLocal = useAtomValue(localAtom)
+  const canLogout = useAtomValue(dashboardAtoms.canLogout)
+  const [theme, setTheme] = useAtom(dashboardAtoms.theme)
   const setUserRoles = useSetAtom(setUserRolesAtom)
   const setRoute = useSetAtom(routeAtom)
-  const logout = useSetAtom(logoutAtom)
+  const logout = useSetAtom(dashboardAtoms.logout)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set<Key>(user.roles)
@@ -107,8 +118,7 @@ function WorkspaceProfileMenu({canManageMembers}: WorkspaceRootsProps) {
   const userName = user.name ?? user.sub
 
   function handleRoleSelectionChange(keys: 'all' | Set<Key>) {
-    if (keys === 'all') return
-    setUserRoles([...keys].map(String))
+    if (keys !== 'all') setUserRoles([...keys].map(String))
   }
 
   return (
@@ -127,10 +137,7 @@ function WorkspaceProfileMenu({canManageMembers}: WorkspaceRootsProps) {
         className={styles.WorkspaceRoots.profile.popover.surface()}
         placement="right bottom"
         offset={16}
-        style={{
-          padding: '0',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
-        }}
+        style={{padding: '0', boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'}}
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
           <li className={styles.WorkspaceRoots.profile.popover.user()}>
@@ -227,7 +234,7 @@ function WorkspaceProfileMenu({canManageMembers}: WorkspaceRootsProps) {
                 appearance="plain"
                 aria-label="Manage users"
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onPress={() => void setRoute({page: 'users'})}
+                onPress={() => setRoute({page: 'users'})}
               >
                 <Icon icon={IcOutlineSettings} />
                 <span

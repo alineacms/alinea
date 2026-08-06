@@ -1,7 +1,8 @@
 'use client'
 
+import {ProgressCircle} from '#/components.js'
 import styler from '@alinea/styler'
-import type {ComponentProps} from 'react'
+import {Suspense, type ComponentProps, type PropsWithChildren} from 'react'
 import css from './ExplorerModal.module.css'
 import {RailHeader} from './ui/Rail.js'
 
@@ -10,6 +11,14 @@ const styles = styler(css)
 export function ExplorerModal(props: ComponentProps<'div'>) {
   return (
     <div {...props} className={styles.ExplorerModal(styler.merge(props))} />
+  )
+}
+
+export function ExplorerModalLoading() {
+  return (
+    <div className={styles.ExplorerModalLoading()}>
+      <ProgressCircle isIndeterminate aria-label="Loading explorer" />
+    </div>
   )
 }
 
@@ -29,6 +38,10 @@ export function ExplorerModalNavigation(props: ComponentProps<'aside'>) {
       className={styles.ExplorerModalNavigation(styler.merge(props))}
     />
   )
+}
+
+export function ExplorerModalSuspense({children}: PropsWithChildren) {
+  return <Suspense fallback={<ExplorerModalLoading />}>{children}</Suspense>
 }
 
 export interface ExplorerModalFooterProps extends ComponentProps<

@@ -9,7 +9,7 @@ export function externalPlugin(cwd: string): Plugin {
       const tsConfig = getTsconfig(cwd)
       const rootDir = tsConfig && normalize(dirname(tsConfig.path))
       const pathsMatcher = tsConfig && createPathsMatcher(tsConfig)
-      build.onResolve({filter: /^[^\.].*/}, async ({path, ...args}) => {
+      build.onResolve({filter: /^[^.].*/}, async ({path, ...args}) => {
         if (path === 'alinea/next') return {path: 'alinea/core', external: true}
         if (args.kind === 'entry-point') return
         const extern = {path, external: true}

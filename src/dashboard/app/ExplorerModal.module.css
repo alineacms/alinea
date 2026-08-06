@@ -5,6 +5,14 @@
   flex-direction: column;
 }
 
+.ExplorerModalLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
 .ExplorerModalContent {
   display: flex;
   flex: 1;

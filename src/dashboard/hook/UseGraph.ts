@@ -1,6 +1,10 @@
 import type {Graph} from '#/core/Graph.js'
-import {useGraph as useDashboardGraph} from '../hooks.js'
+import {useAtomValue} from 'jotai'
+import {graphAtom} from '../atoms/core.js'
 
+/**
+ * @deprecated Compatibility hook for legacy dashboard extensions.
+ */
 export function useGraph(): Graph {
-  return useDashboardGraph()
+  return useAtomValue(graphAtom)
 }

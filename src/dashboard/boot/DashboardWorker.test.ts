@@ -48,6 +48,7 @@ test('discarding failed mutations restores the remote state', async () => {
   }
 
   const worker = new DashboardWorker(localSource)
+  worker.dispatchEvent = () => true
   await worker.load('test', cms.config, client)
   await initialSyncStarted
   const db = await worker.db

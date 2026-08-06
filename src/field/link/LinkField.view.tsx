@@ -23,27 +23,36 @@ import {
   SelectItem,
   TextField
 } from '#/components.js'
-import {createId} from '#/core/Id.js'
-import {getType} from '#/core/Internal.js'
+import type {Config} from '#/core/Config.js'
 import type {Filter} from '#/core/Filter.js'
+import {createId} from '#/core/Id.js'
+import {getType, getWorkspace} from '#/core/Internal.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
+import {Root} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
+import {linkEntryAtoms, type LinkEntrySummary} from '#/dashboard/atoms/link.js'
 import {
   ExternalLinkPicker,
   type ExternalLinkValue
 } from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
-import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
-import {nav} from '#/dashboard/DashboardNav.js'
+import {LinkPicker, type LinkPickerOptions} from '#/dashboard/app/LinkPicker.js'
+import {nav} from '#/dashboard/atoms/nav.js'
 import {
+  useEntry,
+  useDashboardContext,
   useField,
   useFieldNode,
   useFieldOptions,
-  useNodes
+  useGraph,
+  useNodes,
+  useOptionalEntryAtoms
 } from '#/dashboard/hooks.js'
 import {
   IcRoundAttachFile,
@@ -54,29 +63,13 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/atoms/entry/editor.js'
-import {
-  entryAtoms,
-  type EntryDataAtoms,
-  type EntryAtoms
-} from '#/dashboard/atoms/entry.js'
-import type {ExplorerOptions} from '#/dashboard/atoms/explorer.js'
-import {
-  currentEntryAtom,
-  routeAtom,
-  selectedRootAtom,
-  selectedWorkspaceAtom
-} from '#/dashboard/atoms/routing.js'
-import {graphAtom} from '#/dashboard/atoms/graph.js'
-import {selectedMediaRootAtom} from '#/dashboard/atoms/config.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
-import {Fragment, useMemo, useRef, useState} from 'react'
+import {Fragment, useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
@@ -175,27 +168,17 @@ interface EntryRowProps {
 }
 
 function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
-  const entry = entryAtoms(entryId)
-  const {pending, data, error} = useAtomValue(entry.data)
-  if (data)
+  const state = useLinkEntryState(entryId)
+  if (state.state === 'hasData' && state.data)
     return (
       <LoadedEntryRow
-        entry={data}
+        entry={state.data}
         hasFields={hasFields}
         image={image}
         textOnly={textOnly}
       />
     )
-  if (error)
-    return (
-      <MissingEntryRow
-        entryId={entryId}
-        hasFields={hasFields}
-        image={image}
-        textOnly={textOnly}
-      />
-    )
-  if (!pending)
+  if (state.state !== 'loading')
     return (
       <MissingEntryRow
         entryId={entryId}
@@ -208,10 +191,15 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
     <EntryLoadingRow
       hasFields={hasFields}
       image={image}
-      pending
+      pending={true}
       textOnly={textOnly}
     />
   )
+}
+
+function useLinkEntryState(entryId: string) {
+  const {page} = useDashboardContext()
+  return useAtomValue(linkEntryAtoms(page, entryId))
 }
 
 interface EntryLoadingRowProps {
@@ -280,7 +268,7 @@ function EntryLoadingRow({
 }
 
 interface LoadedEntryRowProps {
-  entry: EntryDataAtoms
+  entry: LinkEntrySummary
   hasFields?: boolean
   image?: boolean
   textOnly?: boolean
@@ -292,25 +280,16 @@ function LoadedEntryRow({
   image,
   textOnly
 }: LoadedEntryRowProps) {
-  const label = useAtomValue(entry.label)
-  const configuredParents = useAtomValue(entry.entryData).parents
-  const [parentsPending, parents] = useAtomValue(entry.parentsState)
   return (
     <span className={styles.LinkFieldView.label()}>
       {image && !textOnly && (
         <EntryRowImage entry={entry} hasFields={hasFields} />
       )}
       <span className={styles.LinkFieldView.labelText()}>
-        <span className={styles.LinkFieldView.title()}>{label}</span>
-        {(parentsPending &&
-          parents === undefined &&
-          configuredParents.length > 0) ||
-        (parents && parents.length > 0) ? (
+        <span className={styles.LinkFieldView.title()}>{entry.title}</span>
+        {entry.parents.length > 0 ? (
           <span className={styles.LinkFieldView.meta()}>
-            <EntryParents
-              loading={parentsPending && parents === undefined}
-              parents={parents ?? []}
-            />
+            <EntryParents parents={entry.parents} />
           </span>
         ) : null}
       </span>
@@ -319,28 +298,18 @@ function LoadedEntryRow({
 }
 
 interface EntryRowImageProps {
-  entry: EntryDataAtoms
+  entry: LinkEntrySummary
   hasFields?: boolean
 }
 
 function EntryRowImage({entry, hasFields}: EntryRowImageProps) {
-  const {pending, data: fileInfo} = useAtomValue(entry.fileInfoState)
-  if (fileInfo?.preview) {
+  if (entry.preview) {
     return (
       <img
         alt=""
         className={styles.LinkFieldView.image()}
         data-has-fields={hasFields ? 'true' : undefined}
-        src={fileInfo.preview}
-      />
-    )
-  }
-  if (pending) {
-    return (
-      <span
-        className={styles.LinkFieldView.imagePlaceholder()}
-        data-has-fields={hasFields ? 'true' : undefined}
-        aria-hidden="true"
+        src={entry.preview}
       />
     )
   }
@@ -363,60 +332,18 @@ function UrlRow({node, textOnly}: RowLayerProps) {
 }
 
 interface EntryParentsProps {
-  loading: boolean
-  parents: Array<EntryAtoms>
+  parents: LinkEntrySummary['parents']
 }
 
-function EntryParents({loading, parents}: EntryParentsProps) {
-  if (loading) return <EntryParentsLoading />
+function EntryParents({parents}: EntryParentsProps) {
   return (
     <>
       {parents.map((parent, index) => (
-        <EntryParentLabel
-          key={parent.id}
-          parent={parent}
-          suffix={index < parents.length - 1 ? ' / ' : ''}
-        />
+        <span key={parent.id}>
+          {parent.title}
+          {index < parents.length - 1 ? ' / ' : ''}
+        </span>
       ))}
-    </>
-  )
-}
-
-function EntryParentsLoading() {
-  return (
-    <>
-      <span
-        className={styles.LinkFieldView.skeleton({wide: true})}
-        aria-hidden="true"
-      />
-      {' / '}
-      <span className={styles.LinkFieldView.skeleton()} aria-hidden="true" />
-    </>
-  )
-}
-
-interface EntryParentLabelProps {
-  parent: EntryAtoms
-  suffix: string
-}
-
-function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
-  const {data} = useAtomValue(parent.data)
-  if (!data) return null
-  return <LoadedEntryParentLabel parent={data} suffix={suffix} />
-}
-
-interface LoadedEntryParentLabelProps {
-  parent: EntryDataAtoms
-  suffix: string
-}
-
-function LoadedEntryParentLabel({parent, suffix}: LoadedEntryParentLabelProps) {
-  const label = useAtomValue(parent.label)
-  return (
-    <>
-      {label}
-      {suffix}
     </>
   )
 }
@@ -509,9 +436,13 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
+  const currentEntry = useEntry()
+  const config = useAtomValue(configAtom)
+  const selectedWorkspace = currentEntry?.workspace
+  const selectedRoot = currentEntry?.root
+  const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
   const options = picker.options as Partial<EntryPickerOptions>
-  const condition = useEntryPickerCondition(options, type)
-  const {location, pickingChildren} = useEntryPickerLocation(options, type)
+  const resolved = useResolvedEntryPickerOptions(options, type)
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -535,17 +466,31 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
+  const childLocation =
+    options.pickChildren && currentEntry
+      ? {
+          workspace: currentEntry.workspace,
+          root: currentEntry.root,
+          parentId: currentEntry.id
+        }
+      : undefined
+  const pickingChildren = Boolean(childLocation)
+  const fallbackRoot =
+    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
+  const fallbackLocation =
+    selectedWorkspace && fallbackRoot
+      ? {workspace: selectedWorkspace, root: fallbackRoot}
+      : undefined
+  const location = childLocation ?? resolved.location ?? fallbackLocation
+  const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const nestedResults = options.enableNavigation === true && !pickingChildren
-  const pickerProps: ExplorerOptions = {
-    preselect: false,
+  const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation,
-    flatResults: !nestedResults,
+    enableNavigation: options.enableNavigation ?? !pickingChildren,
+    flatResults: options.enableNavigation !== true,
     location,
-    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
+    preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -609,9 +554,13 @@ function LinkPickerDialog({
   type,
   value
 }: LinkPickerDialogProps) {
+  const currentEntry = useEntry()
+  const config = useAtomValue(configAtom)
+  const selectedWorkspace = currentEntry?.workspace
+  const selectedRoot = currentEntry?.root
+  const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
   const options = picker.options as Partial<EntryPickerOptions>
-  const condition = useEntryPickerCondition(options, type)
-  const {location, pickingChildren} = useEntryPickerLocation(options, type)
+  const resolved = useResolvedEntryPickerOptions(options, type)
 
   function handlePick(link: LinkFieldRow) {
     onPick(link)
@@ -632,17 +581,31 @@ function LinkPickerDialog({
       </DialogTrigger>
     )
   }
+  const childLocation =
+    options.pickChildren && currentEntry
+      ? {
+          workspace: currentEntry.workspace,
+          root: currentEntry.root,
+          parentId: currentEntry.id
+        }
+      : undefined
+  const pickingChildren = Boolean(childLocation)
+  const fallbackRoot =
+    type === 'file' || type === 'image' ? selectedMediaRoot : selectedRoot
+  const fallbackLocation =
+    selectedWorkspace && fallbackRoot
+      ? {workspace: selectedWorkspace, root: fallbackRoot}
+      : undefined
+  const location = childLocation ?? resolved.location ?? fallbackLocation
+  const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const nestedResults = options.enableNavigation === true && !pickingChildren
-  const pickerProps: ExplorerOptions = {
-    preselect: false,
+  const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation,
-    flatResults: !nestedResults,
+    enableNavigation: options.enableNavigation ?? !pickingChildren,
+    flatResults: options.enableNavigation !== true,
     location,
-    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
+    preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -682,89 +645,53 @@ function LinkPickerDialog({
   )
 }
 
-interface EntryPickerLocation {
+interface ResolvedEntryPickerOptions {
+  condition: Filter | undefined
   location: EditorLocation | undefined
-  pickingChildren: boolean
 }
 
-function useEntryPickerLocation(
+function useResolvedEntryPickerOptions(
   options: Partial<EntryPickerOptions>,
   type: PickerType
-): EntryPickerLocation {
-  const pickerLocationAtom = useMemo(() => {
-    if (type === 'url')
-      return atom<EntryPickerLocation>({
-        location: undefined,
-        pickingChildren: false
-      })
-    const resolveLocation = options.location
-    const configuredLocationAtom =
-      typeof resolveLocation === 'function'
-        ? unwrap(
-            atom(async get => {
-              const entry = get(currentEntryAtom)
-              if (!entry) return undefined
-              try {
-                return await resolveLocation({entry, graph: get(graphAtom)})
-              } catch (error) {
-                console.error('Failed to resolve entry picker location', error)
-                return undefined
-              }
-            }),
-            previous => previous
-          )
-        : atom(resolveLocation)
-    return atom(get => {
-      const entry = get(currentEntryAtom)
-      if (options.pickChildren && entry)
-        return {
-          location: {
-            workspace: entry.workspace,
-            root: entry.root,
-            parentId: entry.id
-          },
-          pickingChildren: true
-        }
-      const configuredLocation = get(configuredLocationAtom)
-      if (configuredLocation)
-        return {location: configuredLocation, pickingChildren: false}
-      const workspace = get(selectedWorkspaceAtom)
-      const root =
-        type === 'file' || type === 'image'
-          ? get(selectedMediaRootAtom)
-          : get(selectedRootAtom)
-      return {
-        location: workspace && root ? {workspace, root} : undefined,
-        pickingChildren: false
+): ResolvedEntryPickerOptions {
+  const entry = useEntry()
+  const graph = useGraph()
+  const {condition: conditionOption, location: locationOption} = options
+  const [resolved, setResolved] = useState<ResolvedEntryPickerOptions>(() => ({
+    condition:
+      typeof conditionOption === 'function' ? undefined : conditionOption,
+    location: typeof locationOption === 'function' ? undefined : locationOption
+  }))
+
+  useEffect(() => {
+    let active = true
+    if (type === 'url' || !entry) {
+      setResolved({condition: undefined, location: undefined})
+      return () => {
+        active = false
       }
-    })
-  }, [options.location, options.pickChildren, type])
-  return useAtomValue(pickerLocationAtom)
-}
-
-function useEntryPickerCondition(
-  options: Partial<EntryPickerOptions>,
-  type: PickerType
-): Filter | undefined {
-  const conditionAtom = useMemo(() => {
-    if (type === 'url') return atom<Filter | undefined>(undefined)
-    const resolveCondition = options.condition
-    if (typeof resolveCondition !== 'function') return atom(resolveCondition)
-    return unwrap(
-      atom(async get => {
-        const entry = get(currentEntryAtom)
-        if (!entry) return undefined
-        try {
-          return await resolveCondition({entry, graph: get(graphAtom)})
-        } catch (error) {
-          console.error('Failed to resolve entry picker condition', error)
-          return undefined
-        }
-      }),
-      previous => previous
+    }
+    const info = {entry, graph}
+    const condition =
+      typeof conditionOption === 'function'
+        ? conditionOption(info)
+        : conditionOption
+    const location =
+      typeof locationOption === 'function'
+        ? locationOption(info)
+        : locationOption
+    void Promise.all([condition, location]).then(
+      ([nextCondition, nextLocation]) => {
+        if (active)
+          setResolved({condition: nextCondition, location: nextLocation})
+      }
     )
-  }, [options.condition, type])
-  return useAtomValue(conditionAtom)
+    return () => {
+      active = false
+    }
+  }, [conditionOption, entry, graph, locationOption, type])
+
+  return resolved
 }
 
 function entryPickerOptionsKey(
@@ -791,6 +718,15 @@ function initialSelection(
 ): Array<string> {
   if (value && '_entry' in value) return [value._entry]
   return selection.flatMap(row => ('_entry' in row ? [row._entry] : []))
+}
+
+function mediaRoot(config: Config, workspaceName?: string): string | undefined {
+  if (!workspaceName) return undefined
+  const workspace = config.workspaces[workspaceName]
+  if (!workspace) return undefined
+  return Object.entries(getWorkspace(workspace).roots).find(([, root]) =>
+    Root.isMediaRoot(root)
+  )?.[0]
 }
 
 function insertIndex(rowIndex: number, position: 'before' | 'after'): number {
@@ -1027,17 +963,11 @@ function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
   if (value[Reference.type] !== 'entry') return null
   return (
     <EntryAnchorFieldInner
-      entryId={value._entry}
       anchor={anchor}
+      entryId={value._entry}
       onChange={setAnchor}
     />
   )
-}
-
-interface EntryAnchorFieldInnerProps {
-  entryId: string
-  anchor?: string
-  onChange: (value: string | undefined) => void
 }
 
 function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
@@ -1046,30 +976,19 @@ function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
   return <Badge size="small">#{anchor}</Badge>
 }
 
+interface EntryAnchorFieldInnerProps {
+  anchor?: string
+  entryId: string
+  onChange(value: string | undefined): void
+}
+
 function EntryAnchorFieldInner({
-  entryId,
   anchor,
+  entryId,
   onChange
 }: EntryAnchorFieldInnerProps) {
-  const entryAnchorsAtom = useMemo(() => {
-    const entry = entryAtoms(entryId)
-    return unwrap(
-      atom(async get => {
-        const {data} = await get(entry.readyState)
-        if (!data) return []
-        return get(data.anchors)
-      }),
-      previous => previous ?? []
-    )
-  }, [entryId])
-  const entryAnchors = useAtomValue(entryAnchorsAtom)
-  const anchors = useMemo(() => {
-    return entryAnchors.map(anchor => ({
-      id: anchor.id,
-      label: anchor.label ?? `#${anchor.id}`,
-      location: anchor.fieldLabel ?? anchor.fieldPath
-    }))
-  }, [entryAnchors])
+  const state = useLinkEntryState(entryId)
+  const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
       items={anchors}
@@ -1078,13 +997,13 @@ function EntryAnchorFieldInner({
       value={anchor ?? null}
     >
       {item => (
-        <SelectItem id={item.id} textValue={item.label}>
+        <SelectItem id={item.id} textValue={item.label ?? `#${item.id}`}>
           <span className={styles.LinkFieldView.anchorOption()}>
             <span className={styles.LinkFieldView.anchorOption.label()}>
-              {item.label}
+              {item.label ?? `#${item.id}`}
             </span>
             <span className={styles.LinkFieldView.anchorOption.location()}>
-              {item.location}
+              {item.fieldLabel ?? item.fieldPath}
             </span>
           </span>
         </SelectItem>
@@ -1135,35 +1054,14 @@ function EntryLinkMetaLabel({
   customLabel,
   entryId
 }: EntryLinkMetaLabelProps) {
-  const {data} = useAtomValue(entryAtoms(entryId).data)
-  if (!data) {
+  const state = useLinkEntryState(entryId)
+  if (state.state !== 'hasData' || !state.data) {
     return <ResolvedLinkMetaLabel className={className} label={customLabel} />
   }
   return (
-    <LoadedEntryLinkMetaLabel
-      className={className}
-      customLabel={customLabel}
-      data={data}
-    />
-  )
-}
-
-interface LoadedEntryLinkMetaLabelProps {
-  className: string
-  customLabel?: string
-  data: EntryDataAtoms
-}
-
-function LoadedEntryLinkMetaLabel({
-  className,
-  customLabel,
-  data
-}: LoadedEntryLinkMetaLabelProps) {
-  const fallbackLabel = useAtomValue(data.label)
-  return (
     <ResolvedLinkMetaLabel
       className={className}
-      label={customLabel ?? fallbackLabel}
+      label={customLabel ?? state.data.title}
     />
   )
 }
@@ -1218,32 +1116,16 @@ interface EntryLinkImagePreviewProps {
 }
 
 function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
-  const {data} = useAtomValue(entryAtoms(entryId).data)
-  if (!data)
+  const state = useLinkEntryState(entryId)
+  if (state.state !== 'hasData' || !state.data?.preview)
     return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
-  return <LoadedEntryLinkImagePreview entry={data} />
-}
-
-interface LoadedEntryLinkImagePreviewProps {
-  entry: EntryDataAtoms
-}
-
-function LoadedEntryLinkImagePreview({
-  entry
-}: LoadedEntryLinkImagePreviewProps) {
-  const {pending, data: fileInfo} = useAtomValue(entry.fileInfoState)
-  if (fileInfo?.preview) {
-    return (
-      <img
-        alt=""
-        className={styles.LinkFieldView.previewImage()}
-        src={fileInfo.preview}
-      />
-    )
-  }
-  if (pending)
-    return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
-  return null
+  return (
+    <img
+      alt=""
+      className={styles.LinkFieldView.previewImage()}
+      src={state.data.preview}
+    />
+  )
 }
 
 interface EntryLinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
@@ -1258,36 +1140,27 @@ function EntryLinkTypeBadge({
   fallbackLabel,
   ...props
 }: EntryLinkTypeBadgeProps) {
-  const {data} = useAtomValue(entryAtoms(entryId).data)
-  if (!data) {
+  const state = useLinkEntryState(entryId)
+  const config = useAtomValue(configAtom)
+  const entry = state.state === 'hasData' ? state.data : undefined
+  const type = entry ? config.schema[entry.type] : undefined
+  if (!type) {
     return (
       <Badge {...props} icon={fallbackIcon} size="small">
         {fallbackLabel}
       </Badge>
     )
   }
-  return <LoadedEntryTypeBadge {...props} entry={data} />
-}
-
-interface LoadedEntryTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
-  entry: EntryDataAtoms
-}
-
-function LoadedEntryTypeBadge({
-  className,
-  entry,
-  ...props
-}: LoadedEntryTypeBadgeProps) {
-  const type = useAtomValue(entry.type)
-  const typeSettings = getType(type)
   return (
     <Badge
       {...props}
-      className={styles.LinkFieldView.type(styler.merge({className}))}
-      icon={typeSettings.icon || IcRoundLink}
+      className={styles.LinkFieldView.type(
+        styler.merge({className: props.className})
+      )}
+      icon={getType(type).icon || IcRoundLink}
       size="small"
     >
-      {typeSettings.label}
+      {Type.label(type)}
     </Badge>
   )
 }
@@ -1305,44 +1178,11 @@ function EntryLinkLabelField({
   isDisabled,
   onChange
 }: EntryLinkLabelFieldProps) {
-  const {data} = useAtomValue(entryAtoms(entryId).data)
-  if (data) {
-    return (
-      <LoadedEntryLinkLabelField
-        customLabel={customLabel}
-        data={data}
-        isDisabled={isDisabled}
-        onChange={onChange}
-      />
-    )
-  }
+  const state = useLinkEntryState(entryId)
   return (
     <ResolvedLinkLabelField
       customLabel={customLabel}
-      isDisabled={isDisabled}
-      onChange={onChange}
-    />
-  )
-}
-
-interface LoadedEntryLinkLabelFieldProps {
-  customLabel?: string
-  data: EntryDataAtoms
-  isDisabled?: boolean
-  onChange: (value: string | undefined) => void
-}
-
-function LoadedEntryLinkLabelField({
-  customLabel,
-  data,
-  isDisabled,
-  onChange
-}: LoadedEntryLinkLabelFieldProps) {
-  const fallbackLabel = useAtomValue(data.label)
-  return (
-    <ResolvedLinkLabelField
-      customLabel={customLabel}
-      fallbackLabel={fallbackLabel}
+      fallbackLabel={state.state === 'hasData' ? state.data?.title : undefined}
       isDisabled={isDisabled}
       onChange={onChange}
     />
@@ -1411,9 +1251,9 @@ function EntryLinkRowActions({
   entryId,
   type
 }: EntryLinkRowActionsProps) {
-  const route = useAtomValue(routeAtom)
-  const {data} = useAtomValue(entryAtoms(entryId).data)
-  if (!data) {
+  const scope = useOptionalEntryAtoms()
+  const state = useLinkEntryState(entryId)
+  if (state.state !== 'hasData' || !state.data) {
     return (
       <Button
         aria-label="Open link"
@@ -1426,28 +1266,10 @@ function EntryLinkRowActions({
       </Button>
     )
   }
-  return (
-    <LoadedEntryLinkRowActions
-      closeActions={closeActions}
-      entry={data}
-      locale={type === 'entry' ? route.locale : undefined}
-    />
-  )
-}
-
-interface LoadedEntryLinkRowActionsProps {
-  closeActions: () => void
-  entry: EntryDataAtoms
-  locale?: string
-}
-
-function LoadedEntryLinkRowActions({
-  closeActions,
-  entry,
-  locale
-}: LoadedEntryLinkRowActionsProps) {
-  const {workspace, root} = useAtomValue(entry.entryData)
-  const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
+  const entry = state.data
+  const locale =
+    type === 'entry' ? scope?.localeData.requestedLocale : undefined
+  const href = `#${nav.entry(entry.workspace, entry.root, entry.id, locale)}`
   return (
     <Button
       aria-label="Open link"

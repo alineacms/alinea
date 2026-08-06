@@ -1,13 +1,9 @@
 import {type} from '#/core/Type.js'
-import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import {FieldsEditor} from '#/dashboard/app/Editor.js'
-import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {
-  createEditor,
-  type EditorAtoms,
-  ReactiveNode
-} from '#/dashboard/atoms/entry/editor.js'
+import {FieldsEditor} from '#/dashboard/app/EntryFields.js'
+import {EntryEditor} from '#/dashboard/atoms/editor.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {EditorScope} from '#/dashboard/hooks.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {richText} from './RichTextField.js'
 import {
   alignment,
@@ -167,32 +163,32 @@ interface RichTextFixtureProps {
 
 function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
   const state = useMemo(() => {
-    const dashboard = createStoryDashboard()
     const node = new ReactiveNode<object>({
       body: structuredClone(initialBody)
     })
     return {
-      dashboard,
-      editor: createEditor(entryType, node)
+      node,
+      editor: new EntryEditor(entryType, node)
     }
   }, [entryType, initialBody])
   return (
-    <DashboardScopeInternal dashboard={state.dashboard}>
-      <RichTextFixtureContent editor={state.editor} />
-    </DashboardScopeInternal>
+    <StoryProvider views={views}>
+      <RichTextFixtureContent editor={state.editor} node={state.node} />
+    </StoryProvider>
   )
 }
 
 interface RichTextFixtureContentProps {
-  editor: EditorAtoms
+  editor: EntryEditor
+  node: ReactiveNode<object>
 }
 
-function RichTextFixtureContent({editor}: RichTextFixtureContentProps) {
+function RichTextFixtureContent({editor, node}: RichTextFixtureContentProps) {
   const field = editor.field('body')
   if (!field) throw new Error('Body field not found')
   const value = useAtomValue(field.value)
-  const dirty = useAtomValue(editor.node.isDirty)
-  const reset = useSetAtom(editor.node.reset)
+  const dirty = useAtomValue(node.isDirty)
+  const reset = useSetAtom(node.reset)
   const replace = useSetAtom(field.value)
   return (
     <EditorScope editor={editor}>
@@ -211,16 +207,6 @@ function RichTextFixtureContent({editor}: RichTextFixtureContentProps) {
       <output data-testid="dirty">{String(dirty)}</output>
     </EditorScope>
   )
-}
-
-function createStoryDashboard() {
-  return {
-    graph: {} as WriteableGraph,
-    config: {schema: {}, workspaces: {}},
-    events: new EventTarget(),
-    client: {} as LocalConnection,
-    views
-  }
 }
 
 function paragraph(text: string) {

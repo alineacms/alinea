@@ -1,53 +1,239 @@
-import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import {IndexEvent} from '#/core/db/IndexEvent.js'
+import type {UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
-import type {ComponentType} from 'react'
-import {entryRevisionAtom, locallyDeletingEntryAtom} from './entry/load.js'
-import {eventsAtom} from './graph.js'
-import {refreshCurrentRouteAtom} from './routing.js'
-import {type DashboardOptions, updateUserRolesAtom} from './user.js'
+import {atomWithStorage} from 'jotai/utils'
+import {startTransition, type SetStateAction} from 'react'
+import {
+  MutationQueueEvent,
+  type MutationQueueEntry
+} from '../boot/MutationQueueEvent.js'
+import {authAtom, authRequiredAtom} from './auth.js'
+import {clientAtom, eventsAtom, graphAtom} from './core.js'
 
-export type {DashboardRoute, Route, RouteUpdate} from '../DashboardNav.js'
-
-export interface Dashboard {
-  graph: WriteableGraph
-  config: Config
-  events: EventTarget
-  client: LocalConnection
-  views?: Record<string, ComponentType>
-  options?: DashboardOptions
+export interface DashboardMutationQueue {
+  entries: Array<MutationQueueEntry>
+  pending: number
+  syncing: number
+  failed: number
+  blocked: number
+  error?: string
 }
 
-export const setUserRolesAtom = atom(
-  null,
-  async (get, set, roles: Array<string>) => {
-    await set(updateUserRolesAtom, roles)
-    await set(refreshCurrentRouteAtom)
-  }
-)
+export type DashboardTheme = 'system' | 'light' | 'dark'
 
-export const dashboardEffectsAtom = Object.assign(
-  atom(
-    () => undefined,
-    (get, set) => {
-      const events = get(eventsAtom)
-      const listen = (event: Event) => {
-        if (!(event instanceof IndexEvent) || event.data.op !== 'entry') return
-        const id = event.data.id
-        if (get(locallyDeletingEntryAtom) === id) return
-        set(entryRevisionAtom(id), current => current + 1)
+interface MutationQueueRetry {
+  retryMutationQueue(): Promise<void>
+}
+
+interface MutationQueueDiscard {
+  discardMutationQueue(): Promise<void>
+}
+
+interface LogoutConnection {
+  logout(): Promise<void>
+}
+
+const dashboardThemeStorageKey = 'alinea-dashboard-theme'
+
+export class DashboardAtoms {
+  #mutationQueue = atom<DashboardMutationQueue>(mutationQueueState([]))
+  #uploadQueue = atom<Array<MutationQueueEntry>>([])
+  #themeStorage = atomWithStorage<DashboardTheme>(
+    dashboardThemeStorageKey,
+    'system',
+    undefined
+  )
+  entrySidebarOpen = atom(true)
+
+  mutationQueue = Object.assign(
+    atom(
+      get => {
+        const uploads = get(this.#uploadQueue)
+        const queue = get(this.#mutationQueue)
+        if (uploads.length === 0) return queue
+        return mutationQueueState([...uploads, ...queue.entries])
+      },
+      (_get, set) => {
+        const events = _get(eventsAtom)
+        const listen = (event: Event) => {
+          if (!(event instanceof MutationQueueEvent)) return
+          startTransition(() => {
+            set(this.#mutationQueue, mutationQueueState(event.entries))
+          })
+        }
+        events.addEventListener(MutationQueueEvent.type, listen)
+        return () => events.removeEventListener(MutationQueueEvent.type, listen)
       }
-      events.addEventListener(IndexEvent.type, listen)
-      return () => {
-        events.removeEventListener(IndexEvent.type, listen)
+    ),
+    {onMount: (initialize: () => void) => initialize()}
+  )
+
+  retryMutationQueue = atom(null, async get => {
+    const graph = get(graphAtom) as WriteableGraph & Partial<MutationQueueRetry>
+    if (graph.retryMutationQueue) await graph.retryMutationQueue()
+  })
+
+  discardMutationQueue = atom(null, async (get, set) => {
+    const graph = get(graphAtom) as WriteableGraph &
+      Partial<MutationQueueDiscard>
+    if (graph.discardMutationQueue) await graph.discardMutationQueue()
+    set(this.#uploadQueue, [])
+  })
+
+  uploadProgress = atom(
+    null,
+    (
+      _get,
+      set,
+      update:
+        | {
+            type: 'start'
+            uploads: Array<{id: string; file: File}>
+            destination: MutationQueueEntry['upload']
+          }
+        | {
+            type: 'progress'
+            id: string
+            progress: UploadProgress
+          }
+        | {
+            type: 'finish'
+            ids: Array<string>
+          }
+        | {
+            type: 'fail'
+            uploads: Array<{id: string; file: File; error: string}>
+            destination: MutationQueueEntry['upload']
+          }
+    ) => {
+      if (update.type === 'start') {
+        set(this.#uploadQueue, current => [
+          ...update.uploads.map(
+            ({id, file}): MutationQueueEntry => ({
+              id,
+              status: 'syncing',
+              upload: update.destination,
+              mutations: [
+                {
+                  op: 'uploadFile',
+                  title: file.name,
+                  progress: {loaded: 0, total: file.size || undefined}
+                }
+              ]
+            })
+          ),
+          ...current
+        ])
+        return
+      }
+      if (update.type === 'progress') {
+        set(this.#uploadQueue, current =>
+          current.map(entry => {
+            if (entry.id !== update.id) return entry
+            return {
+              ...entry,
+              mutations: entry.mutations.map(mutation => ({
+                ...mutation,
+                progress: update.progress
+              }))
+            }
+          })
+        )
+        return
+      }
+      if (update.type === 'fail') {
+        const failedIds = new Set(update.uploads.map(upload => upload.id))
+        set(this.#uploadQueue, current => [
+          ...update.uploads.map(
+            ({id, file, error}): MutationQueueEntry => ({
+              id,
+              status: 'failed',
+              error,
+              upload: update.destination,
+              mutations: [
+                {
+                  op: 'uploadFile',
+                  title: file.name,
+                  progress: {loaded: 0, total: file.size || undefined}
+                }
+              ]
+            })
+          ),
+          ...current.filter(entry => !failedIds.has(entry.id))
+        ])
+        return
+      }
+      set(this.#uploadQueue, current =>
+        current.filter(entry => !update.ids.includes(entry.id))
+      )
+    }
+  )
+
+  theme = Object.assign(
+    atom(
+      get => get(this.#themeStorage),
+      (get, set, update: SetStateAction<DashboardTheme>) => {
+        const current = get(this.#themeStorage)
+        const next = typeof update === 'function' ? update(current) : update
+        set(this.#themeStorage, next)
+        applyDashboardTheme(next)
+      }
+    ),
+    {
+      onMount(setTheme: (update: SetStateAction<DashboardTheme>) => void) {
+        setTheme(current => current)
       }
     }
-  ),
-  {
-    onMount(start: () => () => void) {
-      return start()
-    }
+  )
+
+  canLogout = atom(get => {
+    if (!get(authRequiredAtom)) return false
+    const client = get(clientAtom) as LocalConnection &
+      Partial<LogoutConnection>
+    return typeof client.logout === 'function'
+  })
+
+  logout = atom(null, async (get, set) => {
+    const client = get(clientAtom) as LocalConnection &
+      Partial<LogoutConnection>
+    if (client.logout) await client.logout()
+    await set(authAtom, {type: 'check'})
+  })
+}
+
+export const dashboardAtoms = new DashboardAtoms()
+
+export function mutationQueueState(
+  entries: Array<MutationQueueEntry>
+): DashboardMutationQueue {
+  return {
+    entries,
+    pending: entries.filter(entry => entry.status === 'pending').length,
+    syncing: entries.filter(entry => entry.status === 'syncing').length,
+    failed: entries.filter(entry => entry.status === 'failed').length,
+    blocked: entries.filter(entry => entry.status === 'blocked').length,
+    error: entries.find(entry => entry.status === 'failed')?.error
   }
-)
+}
+
+let enableThemeTransitionsFrame: number | undefined
+
+function applyDashboardTheme(theme: DashboardTheme) {
+  if (typeof document === 'undefined') return
+  const {body, documentElement} = document
+  if (body) {
+    body.dataset.disableTransition = 'true'
+    void body.offsetWidth
+    if (enableThemeTransitionsFrame)
+      cancelAnimationFrame(enableThemeTransitionsFrame)
+    enableThemeTransitionsFrame = requestAnimationFrame(() => {
+      enableThemeTransitionsFrame = requestAnimationFrame(() => {
+        body.removeAttribute('data-disable-transition')
+        enableThemeTransitionsFrame = undefined
+      })
+    })
+  }
+  if (theme === 'system') documentElement.removeAttribute('data-theme')
+  else documentElement.dataset.theme = theme
+}

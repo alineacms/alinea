@@ -1,9 +1,8 @@
-import {useAtomValue} from '../AtomHooks.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
-import {useSetAtom} from 'jotai'
-import type {FieldAtoms} from '../atoms/entry/editor.js'
-import {useEditor} from './EditorScope.js'
+import {useAtomValue, useSetAtom} from 'jotai'
+import type {EditorField} from '../atoms/editor.js'
+import {useEditor} from '../hooks.js'
 
 export interface UseFieldResult<StoredValue, Mutator, Options> {
   fieldKey: string
@@ -14,7 +13,7 @@ export interface UseFieldResult<StoredValue, Mutator, Options> {
   error: string | undefined
 }
 
-function useFieldInfo(field: Field | string): FieldAtoms {
+function useFieldInfo(field: Field | string): EditorField {
   const editor = useEditor()
   const info =
     typeof field === 'string' ? editor.field(field) : editor.get(field)

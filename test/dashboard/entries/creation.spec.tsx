@@ -18,7 +18,7 @@ test('opens for the current folder without showing a suspense loader', async ({
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await app.page.getByRole('button', {name: 'Create new'}).click()
+  await app.page.getByRole('button', {name: 'Create entry'}).click()
   const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
   await expect(createEntry.getByRole('textbox', {name: 'Title'})).toBeVisible()
   await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(
@@ -39,7 +39,7 @@ test('creates a draft entry and opens it for editing', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
-  await app.page.getByRole('button', {name: 'Create new'}).click()
+  await app.page.getByRole('button', {name: 'Create entry'}).click()
   const createEntry = app.page.getByRole('dialog')
   await createEntry.getByRole('textbox', {name: 'Title'}).fill('New page')
   await createEntry.getByRole('button', {name: 'Create entry'}).click()

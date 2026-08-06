@@ -1,9 +1,15 @@
 import {Config, Field} from '#/index.js'
 import type {Config as ConfigDefinition} from '#/core/Config.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
-import {eventsAtom, graphAtom} from '#/dashboard/atoms/graph.js'
-import {clientAtom, optionsAtom} from '#/dashboard/atoms/user.js'
-import {configAtom, viewsAtom} from '#/dashboard/atoms/config.js'
+import {
+  alineaDevAtom,
+  clientAtom,
+  configAtom,
+  eventsAtom,
+  graphAtom,
+  localAtom,
+  viewsAtom
+} from '#/dashboard/atoms/core.js'
 import {createTestConnection} from './CreateConnection.js'
 import {createStore} from 'jotai'
 
@@ -28,23 +34,15 @@ export const dashboardTestConfig = Config.create({
 
 export function createDashboardStore(
   config: ConfigDefinition,
-  db: LocalDB,
-  root = 'pages'
+  db: LocalDB
 ) {
   const store = createStore()
   store.set(configAtom, config)
   store.set(graphAtom, db)
   store.set(eventsAtom, new EventTarget())
   store.set(clientAtom, createTestConnection(db))
-  store.set(optionsAtom, {
-    local: true,
-    history: {
-      read: () => ({page: 'entry', workspace: 'main', root}),
-      push() {},
-      replace() {},
-      subscribe: () => () => {}
-    }
-  })
+  store.set(localAtom, true)
+  store.set(alineaDevAtom, false)
   store.set(viewsAtom, {})
   return store
 }

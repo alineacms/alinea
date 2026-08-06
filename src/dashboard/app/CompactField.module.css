@@ -50,7 +50,7 @@
   max-width: 100%;
   overflow: hidden;
   color: var(--alinea-fg-muted);
-  font-family: var(--alinea-font-mono);
+  font-family: var(--alinea-mono-font);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;

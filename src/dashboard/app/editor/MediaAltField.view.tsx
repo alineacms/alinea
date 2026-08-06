@@ -1,16 +1,18 @@
-import {useAtomValue} from '../../AtomHooks.js'
 import {TextField} from '#/components.js'
 import type {
   MediaAltField,
   MediaAltOptions,
   MediaAltValue
 } from '#/core/media/MediaAltField.js'
-import {assert} from '#/core/util/Assert.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
-import {routeAtom} from '../../atoms/routing.js'
-import {workspaceAtoms} from '../../atoms/config.js'
+import {
+  useEntryAtoms,
+  useField,
+  useFieldError,
+  useFieldOptions
+} from '#/dashboard/hooks.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {LocalisedFieldTabs} from '#/field/localiser/LocalisedFieldTabs.js'
+import {useAtomValue} from 'jotai'
 import {useState} from 'react'
 
 export interface MediaAltFieldViewProps {
@@ -18,12 +20,8 @@ export interface MediaAltFieldViewProps {
 }
 
 export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
-  const route = useAtomValue(routeAtom)
-  assert(route.workspace, 'Media alt field requires an active workspace')
-  assert(route.root, 'Media alt field requires an active root')
-  const i18n = useAtomValue(
-    workspaceAtoms(route.workspace).root(route.root).mediaI18n
-  )
+  const {entry} = useEntryAtoms()
+  const i18n = useAtomValue(entry.mediaI18n)
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)

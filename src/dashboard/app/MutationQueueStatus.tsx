@@ -1,4 +1,3 @@
-import {useAtomValue} from '../AtomHooks.js'
 import {
   Button,
   DialogTrigger,
@@ -8,14 +7,10 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef, useState, type ReactNode} from 'react'
+import {dashboardAtoms} from '../atoms/dashboard.js'
 import {IcRoundCheck, IcRoundWarning} from '../icons.js'
-import {
-  discardMutationQueueAtom,
-  mutationQueueAtom,
-  retryMutationQueueAtom
-} from '../atoms/graph/queue.js'
 import css from './MutationQueueStatus.module.css'
 
 const styles = styler(css)
@@ -33,9 +28,9 @@ export function MutationQueueStatus({
   openOnFail = false,
   placement = 'right'
 }: MutationQueueStatusProps) {
-  const queue = useAtomValue(mutationQueueAtom)
-  const retry = useSetAtom(retryMutationQueueAtom)
-  const discard = useSetAtom(discardMutationQueueAtom)
+  const queue = useAtomValue(dashboardAtoms.mutationQueue)
+  const retry = useSetAtom(dashboardAtoms.retryMutationQueue)
+  const discard = useSetAtom(dashboardAtoms.discardMutationQueue)
   const [isOpen, setIsOpen] = useState(false)
   const wasFailed = useRef(false)
   const isFailed = queue.failed > 0
