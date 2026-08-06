@@ -138,6 +138,7 @@ function LinkPickerInline({options}: ExplorerModalProps) {
               return {
                 id: entry.id,
                 name: 'Loading entry',
+                depth: 0,
                 sortKey: entry.id
               }
             }
