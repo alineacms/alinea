@@ -1,46 +1,22 @@
-import {styler} from '@alinea/styler'
-import {useState, type ComponentType} from 'react'
-import {Button, Dialog, Modal, Icon} from '#/components.js'
+import {useState} from 'react'
+import {Button} from '#/components.js'
 import {useToast} from '../hooks.js'
-import {IcRoundClose, IcRoundCheck, IcRoundWarning} from '../icons.js'
+import {IcRoundClose} from '../icons.js'
 import {slugify} from '#/core/util/Slugs.js'
-import {Badge} from './Badge.js'
 import {ToastRouter} from './ToastRouter.js'
 import type {DashboardToastType} from '../atoms/dashboard.js'
-import css from './ToastContainer.module.css'
-
-const styles = styler(css)
+import {
+  DashboardModal,
+  DashboardModalContent,
+  DashboardModalDialog,
+  DashboardModalFooter
+} from './ui/DashboardModal.js'
 
 const toastTitles: Record<DashboardToastType, string> = {
   error: 'Error',
   warning: 'Warning',
   info: 'Info',
   success: 'Success'
-}
-
-const toastIcons: Record<DashboardToastType, ComponentType> = {
-  error: IcRoundWarning,
-  warning: IcRoundWarning,
-  info: IcRoundWarning,
-  success: IcRoundCheck
-}
-
-function renderMessage(message: string) {
-  const parts = message.split(/(of type \w+)/g)
-  return parts.map((part, i) => {
-    const match = part.match(/^of type (\w+)$/)
-    if (match) {
-      return (
-        <>
-          of type{' '}
-          <Badge size="small" key={i}>
-            {match[1]}
-          </Badge>
-        </>
-      )
-    }
-    return <span key={i}>{part}</span>
-  })
 }
 
 export function ToastContainer() {
@@ -81,18 +57,23 @@ export function BlockingToast() {
   const discardAction = toast.actions?.find(a => a.label === 'Discard')
 
   return (
-    <Modal isOpen isDismissable={false} isKeyboardDismissDisabled>
-      <Dialog>
-        <div className={styles.BlockingToastHeader()}>
-          <Icon icon={toastIcons[toast.type]} data-slot="icon" />
-          <h2 className={styles.BlockingToastTitle()}>
-            {toastTitles[toast.type]}
-          </h2>
-        </div>
-        <p className={styles.BlockingToastMessage()}>
-          {renderMessage(toast.message)}
-        </p>
-        <div className={styles.BlockingToastActions()}>
+    <DashboardModal isOpen isDismissable={false} isKeyboardDismissDisabled>
+      <DashboardModalDialog label={toastTitles[toast.type]} closeButton={false}>
+        <DashboardModalContent>
+          <p>{toast.message}</p>
+        </DashboardModalContent>
+        <DashboardModalFooter>
+          {discardAction && (
+            <Button
+              appearance="outline"
+              onPress={() => {
+                discardAction.onPress()
+                dismiss(toast.id)
+              }}
+            >
+              {discardAction.label}
+            </Button>
+          )}
           {retryAction && (
             <Button
               isPending={retryState === 'pending'}
@@ -117,16 +98,6 @@ export function BlockingToast() {
               {retryState === 'failed' ? 'Failed' : 'Retry'}
             </Button>
           )}
-          {discardAction && (
-            <Button
-              onPress={() => {
-                discardAction.onPress()
-                dismiss(toast.id)
-              }}
-            >
-              {discardAction.label}
-            </Button>
-          )}
           {!retryAction &&
             !discardAction &&
             toast.actions?.map(action => (
@@ -137,8 +108,8 @@ export function BlockingToast() {
                 {action.label}
               </Button>
             ))}
-        </div>
-      </Dialog>
-    </Modal>
+        </DashboardModalFooter>
+      </DashboardModalDialog>
+    </DashboardModal>
   )
 }

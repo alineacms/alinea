@@ -29,6 +29,9 @@ export function MutationQueueStatus({
   placement = 'right'
 }: MutationQueueStatusProps) {
   const queue = useAtomValue(dashboardAtoms.mutationQueue)
+  const hasBlockingToast = useAtomValue(dashboardAtoms.toasts).some(
+    toast => toast.blocking
+  )
   const retry = useSetAtom(dashboardAtoms.retryMutationQueue)
   const discard = useSetAtom(dashboardAtoms.discardMutationQueue)
   const [isOpen, setIsOpen] = useState(false)
@@ -46,13 +49,25 @@ export function MutationQueueStatus({
   // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-disable react-you-might-not-need-an-effect/no-event-handler
   useEffect(() => {
-    if (openOnFail && isFailed && !wasFailed.current) setIsOpen(true)
+    if (hasBlockingToast) {
+      setIsOpen(false)
+      wasFailed.current = false
+    } else if (openOnFail && isFailed && !wasFailed.current) {
+      const timeout = setTimeout(() => setIsOpen(true))
+      wasFailed.current = isFailed
+      return () => clearTimeout(timeout)
+    }
     wasFailed.current = isFailed
-  }, [isFailed, openOnFail])
+  }, [hasBlockingToast, isFailed, openOnFail])
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
+    <DialogTrigger
+      isOpen={hasBlockingToast ? false : isOpen}
+      onOpenChange={next => {
+        if (!hasBlockingToast) setIsOpen(next)
+      }}
+    >
       <Tooltip placement={placement} delay={300} tooltip={label}>
         <Button
           size={children ? undefined : 'icon'}

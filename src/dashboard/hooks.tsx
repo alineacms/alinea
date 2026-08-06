@@ -379,10 +379,6 @@ export function useNodes<Value>(node: ReactiveNode<Value>): unknown {
  */
 export function useToast() {
   const toasts = useAtomValue(dashboardAtoms.toasts)
-  const toast = useSetAtom(dashboardAtoms.pushToast)
   const dismiss = useSetAtom(dashboardAtoms.dismissToast)
-  const clear = () => {
-    for (const entry of toasts) dismiss(entry.id)
-  }
-  return {toasts, toast, dismiss, clear}
+  return {toasts, dismiss}
 }

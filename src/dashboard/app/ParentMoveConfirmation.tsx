@@ -33,7 +33,7 @@ export function ParentMoveConfirmation({root}: ParentMoveConfirmationProps) {
           </Checkbox>
         </DashboardModalContent>
         <DashboardModalFooter>
-          <Button intent="secondary" onPress={cancel}>
+          <Button appearance="outline" onPress={cancel}>
             Cancel
           </Button>
           <Button

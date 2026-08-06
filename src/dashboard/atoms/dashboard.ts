@@ -104,7 +104,12 @@ export class DashboardAtoms {
   toasts = atom(get => get(this.#toasts))
 
   pushToast = atom(null, (_get, set, input: DashboardToastInput) => {
-    set(this.#toasts, current => [...current, {id: createId(), ...input}])
+    const toast = {id: createId(), ...input}
+    set(this.#toasts, current =>
+      input.blocking
+        ? [...current.filter(candidate => !candidate.blocking), toast]
+        : [...current, toast]
+    )
   })
 
   dismissToast = atom(null, (_get, set, id: string) => {
