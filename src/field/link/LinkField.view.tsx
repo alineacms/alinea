@@ -93,6 +93,17 @@ type PickerType = 'entry' | 'url' | 'file' | 'image'
 type EntryPickerType = Exclude<PickerType, 'url'>
 const LINK_FIELD_ROW_DRAG_TYPE = 'application/x-alinea-link-field-row'
 
+function pickerPresentation(picker: Picker<LinkFieldRow> | undefined) {
+  return (
+    (picker?.options as Partial<EntryPickerOptions> | undefined)
+      ?.presentation ?? 'full'
+  )
+}
+
+function isInlinePicker(picker: Picker<LinkFieldRow> | undefined) {
+  return pickerPresentation(picker) === 'inline'
+}
+
 interface LinkRowProps {
   hasFields?: boolean
   node: ReactiveNode<LinkFieldRow>
@@ -440,6 +451,7 @@ interface LinkPickerActionProps {
   children?: ReactNode
   className?: string
   isDisabled?: boolean
+  onClear?: () => void
   picker: Picker<LinkFieldRow>
   selection?: Array<LinkFieldRow>
   type: PickerType
@@ -502,6 +514,7 @@ function LinkPickerAction({
   children,
   className,
   isDisabled,
+  onClear,
   onPick,
   onPickMany,
   picker,
@@ -538,6 +551,8 @@ function LinkPickerAction({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const enableNavigation = options.enableNavigation ?? !pickingChildren
   const nestedResults = options.enableNavigation === true && !pickingChildren
+  const presentation = options.presentation ?? 'full'
+  const currentLinks = value ? [value] : (selection ?? [])
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation,
@@ -549,12 +564,17 @@ function LinkPickerAction({
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
     onConfirm(selection: Array<string>) {
-      const links = selection.map(entryId =>
-        createEntryLink(type, entryId, picker)
+      const links = selection.map(
+        entryId =>
+          currentLinks.find(
+            (link): link is LinkFieldRow & {_entry: string} =>
+              '_entry' in link && link._entry === entryId
+          ) ?? createEntryLink(type, entryId, picker)
       )
       if (onPickMany) return onPickMany(links)
       const [link] = links
       if (link) onPick(link)
+      else onClear?.()
     }
   } as const
   if (type === 'file' || type === 'image') {
@@ -578,24 +598,37 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  return (
-    <DialogTrigger>
-      <Button
-        aria-label={ariaLabel}
-        appearance={buttonAppearance}
-        className={className}
-        icon={buttonIcon}
-        isDisabled={isDisabled}
-        size={buttonSize}
-      >
-        {children}
-      </Button>
-      <LinkPicker
-        {...pickerProps}
-        key={entryPickerOptionsKey(location, condition)}
-      />
-    </DialogTrigger>
-  )
+  if (presentation === 'full') {
+    return (
+      <DialogTrigger>
+        <Button
+          aria-label={ariaLabel}
+          appearance={buttonAppearance}
+          className={className}
+          icon={buttonIcon}
+          isDisabled={isDisabled}
+          size={buttonSize}
+        >
+          {children}
+        </Button>
+        <LinkPicker
+          {...pickerProps}
+          presentation={presentation}
+          key={entryPickerOptionsKey(location, condition)}
+        />
+      </DialogTrigger>
+    )
+  } else if (presentation === 'inline') {
+    return (
+      <div className={styles.LinkFieldView.inlinePicker()}>
+        <LinkPicker
+          {...pickerProps}
+          presentation={presentation}
+          key={entryPickerOptionsKey(location, condition)}
+        />
+      </div>
+    )
+  }
 }
 
 function LinkPickerDialog({
@@ -634,6 +667,7 @@ function LinkPickerDialog({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const enableNavigation = options.enableNavigation ?? !pickingChildren
   const nestedResults = options.enableNavigation === true && !pickingChildren
+  const currentLinks = value ? [value] : (selection ?? [])
   const pickerProps: ExplorerOptions = {
     condition,
     enableNavigation,
@@ -645,8 +679,12 @@ function LinkPickerDialog({
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
     onConfirm(selection: Array<string>) {
-      const links = selection.map(entryId =>
-        createEntryLink(type, entryId, picker)
+      const links = selection.map(
+        entryId =>
+          currentLinks.find(
+            (link): link is LinkFieldRow & {_entry: string} =>
+              '_entry' in link && link._entry === entryId
+          ) ?? createEntryLink(type, entryId, picker)
       )
       if (onPickMany) {
         onPickMany(links)
@@ -842,6 +880,7 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={setValue}
+          onClear={() => setValue(undefined!)}
           picker={picker as Picker<LinkFieldRow>}
           type={type as PickerType}
           value={value?._type === type ? value : undefined}
@@ -856,9 +895,13 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
 
 interface MultipleLinkCreateActionsProps {
   field: LinksField<LinkFieldRow, unknown>
+  presentation?: 'full' | 'inline'
 }
 
-function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
+function MultipleLinkCreateActions({
+  field,
+  presentation
+}: MultipleLinkCreateActionsProps) {
   const options = useFieldOptions(field)
   const [value, setValue] = useField(field)
   const links = value ?? []
@@ -867,32 +910,39 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   if (!showCreate) return null
   return (
     <div className={styles.LinkFieldView.create()}>
-      {Object.entries(options.pickers).map(([type, picker]) => (
-        <LinkPickerAction
-          buttonSize="small"
-          className={styles.LinkFieldView.createButton()}
-          key={type}
-          onPick={link => {
-            setValue(links => [...(links ?? []), link])
-          }}
-          onPickMany={picked => {
-            if (picker.handlesMultiple) {
-              setValue(links => [
-                ...(links ?? []).filter(link => link._type !== type),
-                ...picked
-              ])
-            } else {
-              setValue(links => [...(links ?? []), ...picked])
-            }
-          }}
-          picker={picker as Picker<LinkFieldRow>}
-          selection={links.filter(row => row._type === type)}
-          type={type as PickerType}
-        >
-          <Icon aria-hidden icon={getLinkIcon(type)} />
-          {picker.label}
-        </LinkPickerAction>
-      ))}
+      {Object.entries(options.pickers)
+        .filter(([, picker]) =>
+          presentation
+            ? pickerPresentation(picker as Picker<LinkFieldRow>) ===
+              presentation
+            : true
+        )
+        .map(([type, picker]) => (
+          <LinkPickerAction
+            buttonSize="small"
+            className={styles.LinkFieldView.createButton()}
+            key={type}
+            onPick={link => {
+              setValue(links => [...(links ?? []), link])
+            }}
+            onPickMany={picked => {
+              if (picker.handlesMultiple) {
+                setValue(links => [
+                  ...(links ?? []).filter(link => link._type !== type),
+                  ...picked
+                ])
+              } else {
+                setValue(links => [...(links ?? []), ...picked])
+              }
+            }}
+            picker={picker as Picker<LinkFieldRow>}
+            selection={links.filter(row => row._type === type)}
+            type={type as PickerType}
+          >
+            <Icon aria-hidden icon={getLinkIcon(type)} />
+            {picker.label}
+          </LinkPickerAction>
+        ))}
     </div>
   )
 }
@@ -1557,6 +1607,7 @@ interface MultipleLinkRowProps {
   expanded: boolean
   field: LinksField<LinkFieldRow, unknown>
   index: number
+  isReorderable: boolean
   node: ReactiveNode<LinkFieldRow>
   onMoveRow: (rowId: string, targetIndex: number) => void
   onRowDragEnd: () => void
@@ -1585,6 +1636,7 @@ function MultipleLinkRow({
   expanded,
   field,
   index,
+  isReorderable,
   node,
   onMoveRow,
   onRowDragEnd,
@@ -1614,14 +1666,14 @@ function MultipleLinkRow({
     getAllowedDropOperations() {
       return ['move']
     },
-    isDisabled: readOnly,
+    isDisabled: readOnly || !isReorderable,
     onDragEnd: onRowDragEnd,
     onDragStart: onRowDragStart,
     preview: dragPreview
   })
   const {dropProps, isDropTarget} = useDrop({
     ref: rowRef,
-    isDisabled: readOnly || !dragging,
+    isDisabled: readOnly || !dragging || !isReorderable,
     getDropOperation(types, allowedOperations) {
       if (!types.has(LINK_FIELD_ROW_DRAG_TYPE)) return 'cancel'
       return allowedOperations.includes('move') ? 'move' : 'cancel'
@@ -1668,7 +1720,7 @@ function MultipleLinkRow({
           role="listitem"
         >
           <ListRowHeader first={index === 0} hasFold={hasFields}>
-            {!readOnly && (
+            {!readOnly && isReorderable && (
               <ListRowDragHandle
                 {...dragProps}
                 aria-label={`Drag link item ${index + 1}`}
@@ -1813,24 +1865,29 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     ? (options.pickers[getPickerType(selectedValue[Reference.type])] as
         | Picker<LinkFieldRow>
         | undefined)
-    : undefined
+    : (options.pickers.entry as Picker<LinkFieldRow> | undefined)
+  const isInline = isInlinePicker(selectedPicker)
+
   const showFold = Boolean(selectedPicker?.fields)
-  const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'} data-depth="muted">
-      {selectedValue && (
-        <SingleLinkRow
-          field={field}
-          node={node as ReactiveNode<LinkFieldRow>}
-          value={selectedValue}
-        />
-      )}
-      {isEmpty && !readOnly && (
-        <ListCreateRow empty>
-          <SingleLinkCreateActions field={field} />
-        </ListCreateRow>
-      )}
-    </List>
-  )
+  const content =
+    (hasRows || !readOnly) && isInline ? (
+      <SingleLinkCreateActions field={field} value={selectedValue} />
+    ) : (
+      <List aria-label={options.label || 'Link'} data-depth="muted">
+        {selectedValue && (
+          <SingleLinkRow
+            field={field}
+            node={node as ReactiveNode<LinkFieldRow>}
+            value={selectedValue}
+          />
+        )}
+        {isEmpty && !readOnly && (
+          <ListCreateRow empty>
+            <SingleLinkCreateActions field={field} />
+          </ListCreateRow>
+        )}
+      </List>
+    )
   return (
     <>
       <ListLabel
@@ -1861,9 +1918,25 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const links = value ?? []
   const nodes = useNodes(list) ?? []
   const readOnly = Boolean(options.readOnly)
-  const hasRows = nodes.length > 0
-  const hasFoldableRows = links.some(link => {
-    const picker = options.pickers[getPickerType(link[Reference.type])] as
+  const inlinePickerTypes = new Set(
+    Object.entries(options.pickers)
+      .filter(([, picker]) => isInlinePicker(picker as Picker<LinkFieldRow>))
+      .map(([type]) => type)
+  )
+  const detailedRows = nodes.flatMap((node, index) => {
+    const value = links[index]
+    if (!value || inlinePickerTypes.has(getPickerType(value[Reference.type])))
+      return []
+    return [{node, index, value}]
+  })
+  const hasInlinePickers = inlinePickerTypes.size > 0
+  const hasFullPickers = Object.values(options.pickers).some(
+    picker => !isInlinePicker(picker as Picker<LinkFieldRow>)
+  )
+  const hasRows = links.length > 0
+  const hasDetailedRows = detailedRows.length > 0
+  const hasFoldableRows = detailedRows.some(({value}) => {
+    const picker = options.pickers[getPickerType(value[Reference.type])] as
       | Picker<LinkFieldRow>
       | undefined
     return Boolean(picker?.fields)
@@ -1898,7 +1971,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     [list]
   )
   const moveRow = useSetAtom(moveRowAtom)
-  const allExpanded = nodes.length > 0 && foldedIds.size === 0
+  const allExpanded = hasDetailedRows && foldedIds.size === 0
 
   function toggleAll() {
     setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
@@ -1922,59 +1995,65 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
 
   const content = (hasRows || !readOnly) && (
     <>
-      <LinkFieldDropIndicator
-        active={
-          dropIndicator?.index === 0 && dropIndicator.position === 'before'
-        }
-      />
-      <List aria-label={options.label || 'Links'} data-depth="muted">
-        {nodes.length > 0 && (
-          <>
-            {nodes.map((node, index) => {
-              const value = links[index]
-              if (!value) return null
-              return (
-                <Fragment key={value._id}>
-                  {index > 0 && (
-                    <LinkFieldDropIndicator
-                      active={isBoundaryDropTarget(index)}
-                    />
-                  )}
-                  <MultipleLinkRow
-                    dragging={Boolean(draggingRowId)}
-                    expanded={!foldedIds.has(value._id)}
-                    field={field}
-                    index={index}
-                    node={node}
-                    onMoveRow={moveRow}
-                    onRowDragEnd={() => {
-                      setDraggingRowId(null)
-                      setDropIndicator(null)
-                    }}
-                    onRowDragStart={() => setDraggingRowId(value._id)}
-                    onDropIndicatorChange={position =>
-                      setDropIndicator(position ? {index, position} : null)
-                    }
-                    onToggleRow={toggleRow}
-                    value={value}
-                  />
-                </Fragment>
-              )
-            })}
-          </>
-        )}
-        <LinkFieldDropIndicator
-          active={
-            dropIndicator?.index === nodes.length - 1 &&
-            dropIndicator.position === 'after'
-          }
-        />
-        {!readOnly && (
-          <ListCreateRow empty={!hasRows}>
-            <MultipleLinkCreateActions field={field} />
-          </ListCreateRow>
-        )}
-      </List>
+      {!readOnly && hasInlinePickers && (
+        <MultipleLinkCreateActions field={field} presentation="inline" />
+      )}
+      {(hasDetailedRows || (!readOnly && hasFullPickers)) && (
+        <>
+          <LinkFieldDropIndicator
+            active={
+              dropIndicator?.index === 0 && dropIndicator.position === 'before'
+            }
+          />
+          <List aria-label={options.label || 'Links'} data-depth="muted">
+            {hasDetailedRows && (
+              <>
+                {detailedRows.map(({node, index, value}, detailedIndex) => {
+                  return (
+                    <Fragment key={value._id}>
+                      {detailedIndex > 0 && (
+                        <LinkFieldDropIndicator
+                          active={isBoundaryDropTarget(index)}
+                        />
+                      )}
+                      <MultipleLinkRow
+                        dragging={Boolean(draggingRowId)}
+                        expanded={!foldedIds.has(value._id)}
+                        field={field}
+                        index={index}
+                        isReorderable={!hasInlinePickers}
+                        node={node}
+                        onMoveRow={moveRow}
+                        onRowDragEnd={() => {
+                          setDraggingRowId(null)
+                          setDropIndicator(null)
+                        }}
+                        onRowDragStart={() => setDraggingRowId(value._id)}
+                        onDropIndicatorChange={position =>
+                          setDropIndicator(position ? {index, position} : null)
+                        }
+                        onToggleRow={toggleRow}
+                        value={value}
+                      />
+                    </Fragment>
+                  )
+                })}
+              </>
+            )}
+            <LinkFieldDropIndicator
+              active={
+                dropIndicator?.index === detailedRows.at(-1)?.index &&
+                dropIndicator?.position === 'after'
+              }
+            />
+            {!readOnly && (
+              <ListCreateRow empty={!hasRows}>
+                <MultipleLinkCreateActions field={field} presentation="full" />
+              </ListCreateRow>
+            )}
+          </List>
+        </>
+      )}
     </>
   )
 

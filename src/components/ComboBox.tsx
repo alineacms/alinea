@@ -20,6 +20,7 @@ import {
 import css from './ComboBox.module.css'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
 import {Popover} from './Popover.js'
+import {Icon} from './Icon.js'
 
 const styles = styler(css)
 
@@ -68,11 +69,12 @@ function ComboBoxTrigger<T extends object>({
       <Input className={styles.ComboBoxTrigger.input()} />
       <div className={styles.ComboBoxTrigger.actions()}>
         <Button className={styles.ComboBoxTrigger.button()}>
-          <IcRoundKeyboardArrowDown
+          <Icon
+            icon={IcRoundKeyboardArrowDown}
             className={styles.ComboBoxTrigger.button.arrow()}
           />
         </Button>
-        {hasClear && <ComboBoxClear />}
+        {hasClear && <ComboBoxClear onClear={() => props.onChange?.(null)} />}
       </div>
     </div>
   )
@@ -83,31 +85,25 @@ function ComboBoxPopover<T extends object>(props: ComboBoxProps<T>) {
   const hasClear = Boolean(state?.inputValue)
 
   return (
-    <Popover
-      className={styles.ComboBoxPopover()}
-      data-clear={hasClear || undefined}
-    >
-      <ListBox
-        items={props.items}
-        className={styles.ComboBoxPopover.listbox()}
-        selectionMode={props.selectionMode}
-      >
-        {props.children}
-      </ListBox>
+    <Popover data-clear={hasClear || undefined}>
+      <ListBox selectionMode={props.selectionMode}>{props.children}</ListBox>
     </Popover>
   )
 }
 
-function ComboBoxClear() {
+function ComboBoxClear({onClear}: {onClear: () => void}) {
   const state = useContext(ComboBoxStateContext)
   if (!state?.inputValue) return null
   return (
     <Button
       slot={null}
-      onPress={() => state?.setInputValue('')}
+      onPress={() => {
+        onClear()
+        state?.setInputValue('')
+      }}
       className={styles.ComboBoxClear()}
     >
-      <IcRoundClose />
+      <IcRoundClose className={styles.ComboBoxClear.icon()} />
     </Button>
   )
 }

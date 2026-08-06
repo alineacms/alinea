@@ -61,7 +61,8 @@
     }
 
     .ComboBoxTrigger-button-arrow {
-      font-size: 18px;
+      position: relative;
+      flex-shrink: 0;
       color: var(--alinea-fg-muted);
       transition: transform 0.3s ease-out;
 
@@ -72,47 +73,42 @@
   }
 
   .ComboBoxTrigger-button {
-    background: none;
+    display: flex;
+    cursor: pointer;
+    background-color: transparent;
+    outline: none;
     width: 24px;
+    height: 24px;
     flex-shrink: 0;
     align-self: center;
     padding: 0;
+    align-items: center;
     justify-content: center;
     border: none;
     border-radius: 100%;
     color: var(--alinea-fg-muted);
     position: relative;
+    font: inherit;
 
-    &:after {
+    &:before {
       content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       width: 24px;
       height: 24px;
       border-radius: 100%;
-      background-color: var(--alinea-muted);
-      z-index: -1;
-      transition: var(--alinea-transition);
-      opacity: 0;
-      border: 1px solid transparent;
-      outline: 3px solid transparent;
-    }
-
-    &:hover:after {
-      opacity: 1;
-    }
-
-    &:focus:after {
       background-color: transparent;
-      border-color: var(--alinea-border-accent);
-      outline-color: var(--alinea-primary-overlay);
-      opacity: 1;
+      transition: var(--alinea-transition);
+      transition-property: background-color;
+    }
+
+    &:hover:before,
+    &:focus:before {
+      background-color: var(--alinea-muted);
     }
 
     .ComboBoxTrigger-button-arrow {
-      font-size: 18px;
+      position: relative;
+      flex-shrink: 0;
       color: var(--alinea-fg-muted);
       transition: transform 0.3s ease-out;
 
@@ -159,30 +155,24 @@
   font-size: var(--alinea-font-size-base);
   outline: none;
 
-  &:after {
+  &:before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     width: 24px;
     height: 24px;
     border-radius: 100%;
-    background-color: var(--alinea-muted);
-    z-index: -1;
-    transition: var(--alinea-transition);
-    opacity: 0;
-    border: 1px solid transparent;
-    outline: 3px solid transparent;
-  }
-  &:hover:after {
-    opacity: 1;
-  }
-  &:focus:after {
     background-color: transparent;
-    border-color: var(--alinea-border-accent);
-    outline-color: var(--alinea-primary-overlay);
-    opacity: 1;
+    transition: var(--alinea-transition);
+    transition-property: background-color;
+  }
+
+  &:hover:before,
+  &:focus:before {
+    background-color: var(--alinea-muted);
+  }
+
+  .ComboBoxClear-icon {
+    position: relative;
   }
 }
 

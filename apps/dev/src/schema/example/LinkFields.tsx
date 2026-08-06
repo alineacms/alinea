@@ -8,6 +8,15 @@ export const LinkFields = Config.document('Link fields', {
       help: 'Show only entries of type BasicFields',
       condition: {_type: 'BasicFields'}
     }),
+    inlineExample: Field.entry('Singleselect inline picker', {
+      presentation: 'inline'
+    }),
+    inlineMultiselectExample: Field.entry.multiple(
+      'Multiselect inline picker',
+      {
+        presentation: 'inline'
+      }
+    ),
     entryWithLocation: Field.entry('With location', {
       async location({graph}) {
         const subFolder = await graph.get({path: 'sub-folder'})

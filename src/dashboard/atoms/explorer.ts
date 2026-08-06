@@ -526,6 +526,7 @@ export class ExplorerAtoms {
     const locale = allRoots ? undefined : selectedLocale
     const searchAll = Boolean(searchStarted && this.searchDepth === 'all')
     const flatList =
+      this.#options.flatResults === true ||
       (Boolean(this.#options.condition) &&
         !this.#options.pickChildren &&
         this.#options.flatResults !== false) ||
