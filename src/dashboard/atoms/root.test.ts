@@ -19,7 +19,7 @@ test('rootAtoms returns stable bundles per root and locale', () => {
   expect(english.children(null)).toBe(english.explorer)
   expect(english.children('parent')).toBe(english.children('parent'))
   expect(english.children('parent')).not.toBe(english.explorer)
-  expect(english.explorer.supportsInlineExpansion).toBe(true)
+  expect(english.explorer.supportsInlineExpansion).toBe(false)
 })
 
 test('root icon uses the original file fallback', () => {

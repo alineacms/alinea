@@ -132,7 +132,7 @@ test('navigates into folders without showing a suspense loader', async ({
     .toBe('false')
 })
 
-test('expands root explorer rows inline', async ({dashboard, mount}) => {
+test('keeps root overview rows flat', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
 
   await app.page.evaluate(() => {
@@ -153,8 +153,10 @@ test('expands root explorer rows inline', async ({dashboard, mount}) => {
 
   const entries = app.page.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
-  await folder.getByRole('button', {name: 'Expand Folder'}).click()
-  await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
+  await expect(folder.getByRole('button', {name: 'Expand Folder'})).toHaveCount(
+    0
+  )
+  await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
   await expect
     .poll(() =>
       app.page.evaluate(

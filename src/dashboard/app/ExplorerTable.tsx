@@ -126,6 +126,7 @@ function ExplorerTableCell({
   cells,
   column,
   expanded,
+  explorer,
   hasChildren,
   icon,
   isSelectable,
@@ -153,17 +154,19 @@ function ExplorerTableCell({
         role="gridcell"
         style={{paddingLeft: 10 + Math.max(0, level - 1) * 20}}
       >
-        <span className={styles.ExplorerTable.chevron()}>
-          {hasChildren && (
-            <AriaButton
-              slot="chevron"
-              className={styles.ExplorerTable.chevron.button()}
-              aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
-            >
-              <FoldIcon aria-hidden expanded={expanded} />
-            </AriaButton>
-          )}
-        </span>
+        {explorer.supportsInlineExpansion && (
+          <span className={styles.ExplorerTable.chevron()}>
+            {hasChildren && (
+              <AriaButton
+                slot="chevron"
+                className={styles.ExplorerTable.chevron.button()}
+                aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+              >
+                <FoldIcon aria-hidden expanded={expanded} />
+              </AriaButton>
+            )}
+          </span>
+        )}
         <AriaButton
           slot="drag"
           className={styles.ExplorerTable.iconDrag()}
