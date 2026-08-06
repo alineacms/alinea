@@ -22,7 +22,11 @@ export function ParentMoveConfirmation({root}: ParentMoveConfirmationProps) {
 
   return (
     <DashboardModal isOpen={isOpen} isDismissable={false}>
-      <DashboardModalDialog label="Move entry" closeButton={false}>
+      <DashboardModalDialog
+        label="Move entry"
+        closeButton={false}
+        variant="confirmation"
+      >
         <DashboardModalContent>
           <p>Are you sure you want to move this entry to a new parent?</p>
           <Checkbox

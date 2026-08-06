@@ -65,6 +65,24 @@
     min-height: 0;
     background: transparent;
   }
+
+  &.is-confirmation {
+    gap: 0;
+
+    .DashboardModalDialog-header {
+      border-bottom: 1px solid var(--alinea-border);
+      background: var(--alinea-bg-muted);
+    }
+
+    .DashboardModalContent {
+      padding: 16px;
+    }
+
+    .DashboardModalFooter {
+      border-top: 1px solid var(--alinea-border);
+      background: var(--alinea-bg-muted);
+    }
+  }
 }
 
 .DashboardModalDialog-controls {

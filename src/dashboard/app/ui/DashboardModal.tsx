@@ -44,7 +44,7 @@ export interface DashboardModalDialogProps
   label?: ReactNode
   closeButton?: boolean
   controls?: ReactNode
-  variant?: 'default' | 'explorer'
+  variant?: 'default' | 'explorer' | 'confirmation'
 }
 
 export function DashboardModalDialog({
