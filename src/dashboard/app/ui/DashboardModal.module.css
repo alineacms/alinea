@@ -65,24 +65,6 @@
     min-height: 0;
     background: transparent;
   }
-
-  &.is-confirmation {
-    gap: 0;
-
-    .DashboardModalDialog-header {
-      border-bottom: 1px solid var(--alinea-border);
-      background: var(--alinea-bg-muted);
-    }
-
-    .DashboardModalContent {
-      padding: 16px;
-    }
-
-    .DashboardModalFooter {
-      border-top: 1px solid var(--alinea-border);
-      background: var(--alinea-bg-muted);
-    }
-  }
 }
 
 .DashboardModalDialog-controls {
@@ -102,7 +84,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 8px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg-muted);
 }
 
 .DashboardModalCloseButton {
@@ -115,7 +99,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--alinea-border);
+  background: var(--alinea-bg-muted);
 }
 
 .DashboardModalContent {
