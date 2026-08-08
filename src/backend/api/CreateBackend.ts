@@ -4,6 +4,7 @@ import {assert} from 'alinea/core/util/Assert'
 import * as driver from 'rado/driver'
 import {BasicAuth} from './BasicAuth.js'
 import {DatabaseApi} from './DatabaseApi.js'
+import {GitSmartApi} from './GitSmartApi.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
 import {OAuth2, type OAuth2Options} from './OAuth2.js'
 
@@ -57,12 +58,16 @@ export function createBackend(
       author,
       ...options.github
     })
+    const smartApi = new GitSmartApi({
+      author,
+      ...options.github
+    })
     const dbApi = new DatabaseApi(context, {db})
     assert(options.oauth2 ?? options.auth, 'No auth method provided')
     const auth = options.oauth2
       ? new OAuth2(context, config, options.oauth2)
       : new BasicAuth(context, options.auth!)
-    return createRemote(ghApi, dbApi, auth)
+    return createRemote(ghApi, smartApi, dbApi, auth)
   }
 }
 
