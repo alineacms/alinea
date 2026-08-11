@@ -49,9 +49,7 @@ test('only invalidates revisions for changed entry ids', async () => {
   const unsubscribeFirst = store.sub(first, () => firstChanges++)
   const unsubscribeSecond = store.sub(second, () => secondChanges++)
 
-  events.emit(
-    new IndexEvent({op: 'index', sha: 'changed-sha', ids: ['first']})
-  )
+  events.emit(new IndexEvent({op: 'index', sha: 'changed-sha', ids: ['first']}))
 
   expect(store.get(first)).toBe('changed-sha')
   expect(store.get(second)).toBeUndefined()

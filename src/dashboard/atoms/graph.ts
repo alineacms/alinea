@@ -18,11 +18,13 @@ const indexStateAtom = Object.assign(
     (get, set) => {
       const events = get(eventsAtom)
       const listen = (event: Event) => {
-        if (!(event instanceof IndexEvent) || event.data.op !== 'index') return
+        if (!(event instanceof IndexEvent)) return
+        const data = event.data
+        if (data.op !== 'index') return
         set(indexStateValueAtom, current => {
           const entryRevisions = new Map(current.entryRevisions)
-          for (const id of event.data.ids) entryRevisions.set(id, event.data.sha)
-          return {sha: event.data.sha, entryRevisions}
+          for (const id of data.ids) entryRevisions.set(id, data.sha)
+          return {sha: data.sha, entryRevisions}
         })
       }
       events.addEventListener(IndexEvent.type, listen)

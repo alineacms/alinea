@@ -21,7 +21,29 @@
   use `isRecord` from `#/core/util/Objects.js` instead of defining another local record guard.
 - Imports should be relative if in same src subdir, otherwise absolute starting
   with '#/', eg '#/core/Config.js'. Include .js extension.
+- When finished run `bun format`
 
 ## Verify
 - `bun test` and `bun lint` are available
 - `bun spec` runs a playwright test suite
+
+## Atoms
+- Use Jotai atoms for dashboard state and derive state by reading dependencies
+  with `get`. Use memoized atom families for state scoped to an identity such as
+  an entry id.
+- Async page atoms are the loading boundary for navigation and view-state changes.
+  They must await exactly the data required by the UI state that is about to be
+  shown before returning the next page.
+- Keep the currently rendered page static while its replacement is loading, then
+  swap to the fully ready page. Do not initiate required data loads from newly
+  mounted view components, or show loaders and temporary empty states during the
+  swap.
+- Store view state that determines required data (for example selected tabs and
+  expanded disclosures) in atoms so the page atom can include those dependencies.
+- Separate requested state from ready state: views write requested state, the page
+  atom loads its dependencies, and the resolved page passes ready state down as
+  synchronous props or already-loaded atoms. Views render that ready state until
+  the replacement page is complete.
+- `unwrap` may preserve already-loaded atom data during recomputation, but do not
+  rely on mounting a component that reads an unwrapped atom to begin a required
+  load.
