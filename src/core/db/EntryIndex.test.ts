@@ -297,7 +297,7 @@ test('search requires every word in a multi-word query', async () => {
   )
 })
 
-test('search prioritizes title matches over body matches', async () => {
+test('search prioritizes title prefixes, then title matches, over body matches', async () => {
   const Page = Config.document('Page', {
     fields: {
       title: Field.text('Title'),
@@ -315,34 +315,43 @@ test('search prioritizes title matches over body matches', async () => {
   })
   const {index} = await createEntryIndex(searchCms.config, [
     {
-      id: 'title-match',
+      id: 'title-prefix-match',
       type: 'Page',
       index: 'a1',
+      path: 'title-prefix-match',
+      data: {
+        title: 'Unlocking the full potential of advanced semiconductor systems'
+      }
+    },
+    {
+      id: 'title-match',
+      type: 'Page',
+      index: 'a2',
       path: 'title-match',
-      data: {title: 'Rich text editing guide'}
+      data: {title: 'System technology: unlocking innovation'}
     },
     {
       id: 'body-match',
       type: 'Page',
-      index: 'a2',
+      index: 'a3',
       path: 'body-match',
       data: {
         title: 'Getting started',
         body: [
           {
             _type: 'paragraph',
-            content: [{_type: 'text', text: 'Learn rich text editing here.'}]
+            content: [{_type: 'text', text: 'Learn about unlocking here.'}]
           }
         ]
       }
     }
   ])
 
-  const found = Array.from(index.filter({search: 'rich text'}))
+  const found = Array.from(index.filter({search: 'unlocking'}))
 
   test.equal(
     found.map(entry => entry.id),
-    ['title-match', 'body-match']
+    ['title-prefix-match', 'title-match', 'body-match']
   )
 })
 

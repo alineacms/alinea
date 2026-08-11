@@ -133,7 +133,7 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     type: ScenarioPage,
     workspace: 'main',
     root: 'pages',
-    set: {title: 'Wireless receiver archive'}
+    set: {title: 'Receiver archive for wireless systems'}
   })
   // Keep the body match before the title match so index order conflicts with
   // search relevance.

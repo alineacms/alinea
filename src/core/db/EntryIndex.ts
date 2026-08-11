@@ -303,6 +303,41 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
 const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
 const DIACRITIC = /\p{Diacritic}/gu
 
+function tokenizeSearchText(text: string): Array<string> {
+  return text
+    .normalize('NFD')
+    .replace(DIACRITIC, '')
+    .split(SPACE_OR_PUNCTUATION)
+}
+
+function normalizedSearchTerms(text: string): Array<string> {
+  return tokenizeSearchText(text)
+    .filter(Boolean)
+    .map(term => term.toLowerCase())
+}
+
+interface EntrySearchDocument {
+  id: string
+  title: string
+  searchableText: string
+}
+
+function searchPriority(
+  entry: Entry,
+  match: Record<string, Array<string>>,
+  queryTerms: ReadonlyArray<string>
+): number {
+  const titleTerms = normalizedSearchTerms(entry.title)
+  const titlePrefix = queryTerms.every((term, index) =>
+    titleTerms[index]?.startsWith(term)
+  )
+  if (queryTerms.length > 0 && titlePrefix) return 2
+  const titleMatch = Object.values(match).some(fields =>
+    fields.includes('title')
+  )
+  return titleMatch ? 1 : 0
+}
+
 export class EntryGraph {
   #config: Config
   #versionData: Map<string, EntryVersionData>
@@ -312,7 +347,7 @@ export class EntryGraph {
   #childrenByParentId = new Map<string, Array<EntryNode>>()
   nodes: Array<EntryNode>
   #singleWorkspace: string | undefined
-  #search: MiniSearch
+  #search: MiniSearch<EntrySearchDocument>
   #seeds: Map<string, Seed>
 
   constructor(
@@ -326,14 +361,10 @@ export class EntryGraph {
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
-    this.#search = new MiniSearch({
+    this.#search = new MiniSearch<EntrySearchDocument>({
       fields: ['title', 'searchableText'],
-      storeFields: ['entry'],
       tokenize(text) {
-        return text
-          .normalize('NFD')
-          .replace(DIACRITIC, '')
-          .split(SPACE_OR_PUNCTUATION)
+        return tokenizeSearchText(text)
       }
     })
     for (const [file, version] of versionData) {
@@ -400,20 +431,37 @@ export class EntryGraph {
 
   *filter({search, ...filter}: EntryCondition): Generator<Entry> {
     if (search) {
-      const found = new Set(this.filter(filter))
-      for (const entry of found) {
+      const found = new Map(
+        Array.from(this.filter(filter), entry => [entry.filePath, entry])
+      )
+      for (const entry of found.values()) {
         if (!this.#search.has(entry.filePath)) this.#updateSearch(entry)
       }
+      const queryTerms = normalizedSearchTerms(search)
       const results = this.#search
         .search(search, {
           combineWith: 'AND',
           prefix: true,
           fuzzy: 0.1,
           boost: {title: 10},
-          filter: result => found.has(result.entry)
+          filter: result =>
+            typeof result.id === 'string' && found.has(result.id)
         })
-        .map(result => result.entry)
-      yield* results
+        .flatMap(result => {
+          if (typeof result.id !== 'string') return []
+          const entry = found.get(result.id)
+          if (!entry) return []
+          return [
+            {
+              entry,
+              priority: searchPriority(entry, result.match, queryTerms),
+              score: result.score
+            }
+          ]
+        })
+      results.sort((a, b) => b.priority - a.priority || b.score - a.score)
+      const entries = results.map(result => result.entry)
+      yield* entries
       return
     }
     for (const node of filter.nodes ?? this.nodes) {
@@ -426,8 +474,7 @@ export class EntryGraph {
     this.#search.add({
       id: entry.filePath,
       title: entry.title,
-      searchableText: entry.searchableText,
-      entry
+      searchableText: entry.searchableText
     })
   }
 

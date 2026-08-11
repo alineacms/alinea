@@ -190,7 +190,7 @@ test('searches entries and navigates with enter or click', async ({
   await expect(clickSearch).not.toBeVisible()
 })
 
-test('search requires every word and relevance overrides entry order', async ({
+test('search requires every word and prioritizes title prefixes', async ({
   dashboard,
   mount
 }) => {
@@ -208,6 +208,15 @@ test('search requires every word and relevance overrides entry order', async ({
   await expect(results).toHaveCount(2)
   await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')
   await expect(results.nth(1)).toContainText('Archive')
+
+  await search.getByRole('searchbox', {name: 'Search'}).fill('wireless')
+
+  await expect(results).toHaveCount(3)
+  await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')
+  await expect(results.nth(1)).toContainText(
+    'Receiver archive for wireless systems'
+  )
+  await expect(results.nth(2)).toContainText('Archive')
 })
 
 test('opens metadata for a localised file with null alt text', async ({
