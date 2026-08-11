@@ -2,6 +2,7 @@ import {expect, test} from 'bun:test'
 import type {RootData} from '#/core/Root.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
+import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import type {Page} from './nav.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
@@ -55,6 +56,22 @@ test('tree expansion survives a locale bundle change', () => {
   store.set(english.treeExpandedKeys, new Set(['parent']))
 
   expect(store.get(french.treeExpandedKeys)).toEqual(new Set(['parent']))
+})
+
+test('preloading the tree primes the synchronous tree items atom', async () => {
+  const {store} = await createDashboardAtomFixture()
+  const root = new RootAtoms(
+    'main',
+    'pages',
+    null,
+    atom<RootData>({label: 'Pages'}),
+    Policy.ALLOW_ALL
+  )
+
+  const readyItems = await store.get(root.treeReady)
+
+  expect(readyItems).not.toBeEmpty()
+  expect(store.get(root.treeItems)).toEqual(readyItems)
 })
 
 function testPage(): Page {

@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 import {Policy} from '#/core/Role.js'
+import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {
@@ -78,4 +79,17 @@ test('limits the picker to its allowed locations', () => {
     workspace: 'main',
     root: 'pages'
   })
+})
+
+test('preloading items primes the synchronous items atom', async () => {
+  const {store} = await createDashboardAtomFixture()
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {policy: Policy.ALLOW_ALL}
+  )
+
+  const readyItems = await store.get(explorer.itemsReady)
+
+  expect(readyItems).not.toBeEmpty()
+  expect(store.get(explorer.items)).toEqual(readyItems)
 })

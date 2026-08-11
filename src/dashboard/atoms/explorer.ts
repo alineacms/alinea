@@ -340,7 +340,7 @@ export class ExplorerAtoms {
       if (data) data.parents = atom(ancestors)
       return parent
     })
-    this.itemsReady = atom(async get => {
+    const itemsSource = atom(async get => {
       const values = await get(this.itemData)
       return values.map(value => {
         const parentEntries = value.parentEntries ?? []
@@ -369,7 +369,11 @@ export class ExplorerAtoms {
         )
       })
     })
-    this.items = unwrap(this.itemsReady, previous => previous ?? [])
+    this.items = unwrap(itemsSource, previous => previous ?? [])
+    this.itemsReady = atom(async get => {
+      get(this.items)
+      return get(itemsSource)
+    })
   }
 
   showResults = atom(get => {

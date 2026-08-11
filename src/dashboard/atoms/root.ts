@@ -127,7 +127,7 @@ export class RootAtoms {
       ? (get(viewAtoms(view)) as ComponentType<RootViewProps> | undefined)
       : view
   })
-  treeReady = atom(async get => {
+  private readonly treeSource = atom(async get => {
     get(shaAtom)
     const data = get(this.data)
     const config = get(configAtom)
@@ -171,7 +171,11 @@ export class RootAtoms {
       hasChildren: parentIds.has(entry.id)
     }))
   })
-  treeItems = unwrap(this.treeReady, previous => previous ?? [])
+  treeItems = unwrap(this.treeSource, previous => previous ?? [])
+  treeReady = atom(async get => {
+    get(this.treeItems)
+    return get(this.treeSource)
+  })
   treeExpandedKeys = atom(
     get => get(treeExpandedKeysAtoms(this.workspace)(this.key)),
     (
