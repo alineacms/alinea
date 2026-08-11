@@ -340,7 +340,7 @@ test('selects text in block fields without dragging the block', async ({
   )
 })
 
-test.skip('selects and edits nested rich text without dragging the block', async ({
+test('selects and edits nested rich text without dragging the block', async ({
   mount,
   page
 }) => {
