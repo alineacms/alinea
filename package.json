@@ -153,6 +153,7 @@
     "p-lazy": "^4.0.0",
     "p-limit": "^4.0.0",
     "pg": "^8.22.0",
+    "pkg-pr-new": "^0.0.87",
     "playwright": "^1.61.1",
     "pretty-bytes": "^6.0.0",
     "pretty-ms": "^8.0.0",

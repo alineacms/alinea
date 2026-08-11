@@ -33,13 +33,14 @@ jobs:
       - uses: nowsprinting/check-version-format-action@v3
         id: version
         with: {prefix: 'v'}
-      - if: steps.version.outputs.is_valid != 'true'
+      - name: Publish pkg.pr.new preview
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
         env:
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           bun bump 0.0.0-$SHA
           bun run build
-          bunx pkg-pr-new publish
+          bun run pkg-pr-new publish
       - if: steps.version.outputs.is_valid == 'true'
         run: bun bump ${GITHUB_REF#refs/tags/v}
       - if: steps.version.outputs.is_valid == 'true' && !steps.version.outputs.prerelease
