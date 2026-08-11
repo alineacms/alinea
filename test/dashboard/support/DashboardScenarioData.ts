@@ -3,6 +3,8 @@ export const dashboardScenarioIds = {
   beta: 'workflow-beta',
   folder: 'workflow-folder',
   child: 'workflow-child',
+  otherFolder: 'workflow-other-folder',
+  otherChild: 'workflow-other-child',
   hiddenFolder: 'workflow-hidden-folder',
   hiddenChild: 'workflow-hidden-child',
   mediaFile: 'workflow-media-file',

@@ -15,6 +15,29 @@ test('navigates between entries and through browser history', async ({
   await expect(app.field('Title')).toHaveValue('Alpha')
 })
 
+test('keeps the sidebar and editor mounted between entry navigations', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+  const title = app.field('Title')
+  await tree.evaluate(element => {
+    element.dataset.navigationMarker = 'preserved'
+  })
+  await title.evaluate(element => {
+    element.dataset.navigationMarker = 'preserved'
+  })
+
+  await app.openEntry('Beta')
+
+  await expect(tree).toHaveAttribute('data-navigation-marker', 'preserved')
+  await expect(app.field('Title')).toHaveAttribute(
+    'data-navigation-marker',
+    'preserved'
+  )
+})
+
 test('selects the sidebar root when navigating back to it', async ({
   dashboard,
   mount
@@ -70,6 +93,25 @@ test('expands and collapses an entry with the sidebar chevron', async ({
   ).toBeVisible()
   await expect(
     tree.getByRole('row', {name: 'Child', exact: true})
+  ).toBeVisible()
+})
+
+test('keeps a collapsed parent closed when selecting a child elsewhere', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'child',
+    title: 'Child'
+  })
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+
+  await tree.getByRole('button', {name: 'Collapse Folder'}).click()
+  await tree.getByRole('button', {name: 'Expand Other folder'}).click()
+  await app.openEntry('Other child')
+
+  await expect(
+    tree.getByRole('button', {name: 'Expand Folder'})
   ).toBeVisible()
 })
 

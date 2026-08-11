@@ -114,6 +114,21 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     set: {title: 'Child'}
   })
   await db.create({
+    id: dashboardScenarioIds.otherFolder,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Other folder'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.otherChild,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    parentId: dashboardScenarioIds.otherFolder,
+    set: {title: 'Other child'}
+  })
+  await db.create({
     id: dashboardScenarioIds.hiddenFolder,
     type: HiddenFolder,
     workspace: 'main',

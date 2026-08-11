@@ -5,7 +5,7 @@ import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms, RootTreeItem} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValue, useSetAtom, type WritableAtom} from 'jotai'
-import {memo, useEffect, useMemo, useState, type ComponentType} from 'react'
+import {memo, useMemo, useState, type ComponentType} from 'react'
 import {
   Collection,
   type Key,
@@ -158,10 +158,7 @@ export const SidebarTree = memo(function SidebarTree({
   const selectedLocale = useAtomValue(root.selectedLocale)
   const setRoute = useSetAtom(routeAtom)
   const [expandedIds, setExpandedIds] = useAtom(root.treeExpandedKeys)
-  const expandedKeys = useMemo<Set<Key>>(
-    () => new Set(expandedIds),
-    [expandedIds]
-  )
+  const [collapsedIds, setCollapsedIds] = useAtom(root.treeCollapsedKeys)
   const rootItems = items.filter(item => item.parentId === null)
   const selectedKeys = page.entry ? new Set<Key>([page.entry]) : new Set<Key>()
   const dragDisabled = useAtomValue(root.dragDisabled)
@@ -181,7 +178,7 @@ export const SidebarTree = memo(function SidebarTree({
   })
 
   const selectedParents = useMemo(() => {
-    const result = new Set<Key>()
+    const result = new Set<string>()
     let current = items.find(item => item.id === page.entry)
     while (current?.parentId) {
       result.add(current.parentId)
@@ -189,13 +186,13 @@ export const SidebarTree = memo(function SidebarTree({
     }
     return result
   }, [items, page.entry])
-
-  useEffect(() => {
-    if (selectedParents.size > 0)
-      setExpandedIds(
-        current => new Set([...current, ...selectedParents].map(String))
-      )
-  }, [selectedParents, setExpandedIds])
+  const expandedKeys = useMemo<Set<Key>>(() => {
+    const result = new Set<Key>(expandedIds)
+    for (const id of selectedParents) {
+      if (!collapsedIds.has(id)) result.add(id)
+    }
+    return result
+  }, [collapsedIds, expandedIds, selectedParents])
 
   return (
     <SidebarBody>
@@ -238,9 +235,18 @@ export const SidebarTree = memo(function SidebarTree({
               selectionBehavior="replace"
               disallowEmptySelection={false}
               expandedKeys={expandedKeys}
-              onExpandedChange={keys =>
-                setExpandedIds(new Set([...keys].map(String)))
-              }
+              onExpandedChange={keys => {
+                const next = new Set([...keys].map(String))
+                setExpandedIds(next)
+                setCollapsedIds(current => {
+                  const result = new Set(current)
+                  for (const id of next) result.delete(id)
+                  for (const id of selectedParents) {
+                    if (!next.has(id)) result.add(id)
+                  }
+                  return result
+                })
+              }}
               selectedKeys={selectedKeys}
               onSelectionChange={keys => {
                 if (keys === 'all') return

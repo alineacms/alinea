@@ -57,6 +57,10 @@ const treeExpandedKeysAtoms = dispense((_workspace: string) =>
   dispense((_root: string) => atom(new Set<string>()))
 )
 
+const treeCollapsedKeysAtoms = dispense((_workspace: string) =>
+  dispense((_root: string) => atom(new Set<string>()))
+)
+
 export class RootAtoms {
   explorer: ExplorerAtoms
 
@@ -178,7 +182,16 @@ export class RootAtoms {
       set(treeExpandedKeysAtoms(this.workspace)(this.key), next)
     }
   )
-
+  treeCollapsedKeys = atom(
+    get => get(treeCollapsedKeysAtoms(this.workspace)(this.key)),
+    (
+      _get,
+      set,
+      next: Set<string> | ((current: Set<string>) => Set<string>)
+    ) => {
+      set(treeCollapsedKeysAtoms(this.workspace)(this.key), next)
+    }
+  )
   acceptedDragTypes = [...dashboardEntryDragTypes]
   getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(dashboardEntryDragItem)
