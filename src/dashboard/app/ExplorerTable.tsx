@@ -378,7 +378,9 @@ export function ExplorerTable({
   const [selected, setSelected] = useAtom(explorer.selection)
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
   const selectionMode = explorer.selectionMode
-  const breadcrumbs = explorer.breadcrumbs
+  const search = useAtomValue(explorer.search)
+  const isSearching = Boolean(search.trim())
+  const breadcrumbs = explorer.breadcrumbs || isSearching
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   const columns = useMemo<Array<ExplorerTableColumn>>(
