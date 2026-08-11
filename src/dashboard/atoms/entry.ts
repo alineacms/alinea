@@ -22,7 +22,7 @@ import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {ReactiveNode} from './ReactiveNode.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
-import {shaAtom} from './graph.js'
+import {entryRevisionAtom, shaAtom} from './graph.js'
 import {dispense, loader} from './utils.js'
 import type {Page, PageAuth} from './nav.js'
 
@@ -526,7 +526,7 @@ export class EntryAtoms {
   #selectedView = atom<EntryDefaultView>()
 
   incomingReferencesReady = atom(async get => {
-    get(shaAtom)
+    get(entryRevisionAtom(this.id))
     const graph = get(graphAtom)
     const policy = this.policy
     const result = await graph.referencesTo({
@@ -634,12 +634,10 @@ const entryPolicyAtoms = dispense((policy: Policy) =>
     const auth: PageAuth = {user, policy}
     return dispense((entryId: string) => {
       const data = atom(async get => {
-        get(shaAtom)
+        get(entryRevisionAtom(entryId))
         const load = get(entryLoader(policy))
         const [result, error] = await load(entryId)
         if (error) {
-          // Subscribe to revisions so a missing entry can appear after syncing.
-          if (error instanceof MissingEntryError) get(shaAtom)
           throw error
         }
         assert(result, `Entry "${entryId}" not found`)

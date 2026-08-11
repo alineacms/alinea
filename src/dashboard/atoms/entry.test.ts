@@ -1,10 +1,12 @@
-import {expect, test} from 'bun:test'
+import {expect, spyOn, test} from 'bun:test'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {atom, createStore} from 'jotai'
 import type {Entry} from '#/core/Entry.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
 import {Config, Field} from '#/index.js'
-import {configAtom} from './core.js'
+import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
+import {configAtom, eventsAtom} from './core.js'
 import type {Page} from './nav.js'
 import {EntryAtoms, EntryLocaleAtoms, entryAtoms} from './entry.js'
 
@@ -24,6 +26,49 @@ test('entryAtoms returns stable entry and locale atom bundles', () => {
   expect(entry.locales('en')).toBeInstanceOf(EntryLocaleAtoms)
   expect(entry.locales('en')).toBe(entry.locales('en'))
   expect(entry.locales('fr')).not.toBe(entry.locales('en'))
+})
+
+test('entry atoms only reload for matching index event ids', async () => {
+  const {db, parent, child, store} = await createDashboardAtomFixture()
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  const resolve = spyOn(db, 'resolve')
+  const page: Page = {
+    type: 'entry',
+    workspace: 'main',
+    root: 'pages',
+    entry: parent._id,
+    locale: null,
+    auth: {user: localUser, policy: Policy.ALLOW_ALL}
+  }
+  const parentAtom = entryAtoms(page, parent._id)
+  const childAtom = entryAtoms({...page, entry: child._id}, child._id)
+  const unsubscribeParent = store.sub(parentAtom, () => {})
+  const unsubscribeChild = store.sub(childAtom, () => {})
+  await Promise.all([store.get(parentAtom), store.get(childAtom)])
+  resolve.mockClear()
+
+  events.emit(
+    new IndexEvent({op: 'index', sha: 'unrelated-sha', ids: ['unrelated']})
+  )
+  await Promise.resolve()
+  expect(resolve).not.toHaveBeenCalled()
+
+  events.emit(
+    new IndexEvent({op: 'index', sha: 'parent-sha', ids: [parent._id]})
+  )
+  await store.get(parentAtom)
+  await Promise.resolve()
+
+  expect(resolve).toHaveBeenCalledTimes(2)
+  expect(resolve.mock.calls[0][0]).toMatchObject({id: {in: [parent._id]}})
+  expect(resolve.mock.calls[1][0]).toMatchObject({
+    parentId: {in: [parent._id]}
+  })
+
+  unsubscribeParent()
+  unsubscribeChild()
+  resolve.mockRestore()
 })
 
 test('currently editing nodes preserve arbitrary JSON values', async () => {

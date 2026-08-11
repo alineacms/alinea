@@ -7,7 +7,7 @@ import {parents} from '#/query.js'
 import {atom} from 'jotai'
 import {loadable} from 'jotai/utils'
 import {configAtom, graphAtom} from './core.js'
-import {shaAtom} from './graph.js'
+import {entryRevisionAtom} from './graph.js'
 import type {Page} from './nav.js'
 import {dispense} from './utils.js'
 
@@ -25,7 +25,7 @@ export interface LinkEntrySummary {
 const linkEntryResource = dispense((policy: Policy) =>
   dispense((id: string) =>
     atom(async get => {
-      get(shaAtom)
+      get(entryRevisionAtom(id))
       const graph = get(graphAtom)
       const config = get(configAtom)
       const [entry] = await graph.find({

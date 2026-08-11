@@ -309,6 +309,7 @@ export class EntryGraph {
   #filesById = new Map<string, Array<string>>()
   #byId = new Map<string, EntryNode>()
   #byDir = new Map<string, string>()
+  #childrenByParentId = new Map<string, Array<EntryNode>>()
   nodes: Array<EntryNode>
   #singleWorkspace: string | undefined
   #search: MiniSearch
@@ -346,6 +347,12 @@ export class EntryGraph {
     this.nodes = [...this.#filesById.keys()]
       .map(file => this.#mkNode(file))
       .sort((a, b) => compareStrings(a.index, b.index))
+    for (const node of this.nodes) {
+      if (!node.parentId) continue
+      const children = this.#childrenByParentId.get(node.parentId) ?? []
+      children.push(node)
+      this.#childrenByParentId.set(node.parentId, children)
+    }
   }
 
   byId(id: string) {
@@ -495,16 +502,11 @@ export class EntryGraph {
     }
     const parent = parentId ? this.#mkNode(parentId) : null
     const type = this.#config.schema[collection.type]
-    function* children(this: EntryGraph) {
-      for (const node of this.nodes) {
-        if (node.parentId === id) yield node
-      }
-    }
     const node = new EntryNode(
       this,
       type,
       parent,
-      children.bind(this),
+      () => this.#childrenByParentId.get(id) ?? [],
       collection
     )
     this.#byId.set(id, node)
@@ -717,16 +719,11 @@ export class EntryIndex extends EventTarget {
     const sha = updatedTree.sha
     this.tree = updatedTree
     const affectedParentIds = changedParentIds(previousRelations, nextRelations)
-    const emittedEntryIds = new Set<string>()
-    const dispatchEntry = (id: string) => {
-      if (emittedEntryIds.has(id)) return
-      emittedEntryIds.add(id)
-      this.dispatchEvent(new IndexEvent({op: 'entry', id}))
-    }
+    const changedEntryIds = new Set<string>()
     const pool = Array.from(changed)
     while (pool.length > 0) {
       const node = pool.shift()!
-      dispatchEntry(node.id)
+      changedEntryIds.add(node.id)
       for (const child of node.children()) {
         if (!changed.has(child)) {
           changed.add(child)
@@ -734,9 +731,11 @@ export class EntryIndex extends EventTarget {
         }
       }
     }
-    for (const id of affectedParentIds) dispatchEntry(id)
-    for (const id of affectedReferenceIds) dispatchEntry(id)
-    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
+    for (const id of affectedParentIds) changedEntryIds.add(id)
+    for (const id of affectedReferenceIds) changedEntryIds.add(id)
+    this.dispatchEvent(
+      new IndexEvent({op: 'index', sha, ids: Array.from(changedEntryIds)})
+    )
     return sha
   }
   async seed(source: Source) {

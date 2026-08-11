@@ -346,15 +346,13 @@ test('search prioritizes title matches over body matches', async () => {
   )
 })
 
-test('syncWith and indexChanges dispatch entry/index events', async () => {
+test('syncWith and indexChanges dispatch one batched index event', async () => {
   const {index, source} = await createEntryIndex(cms.config, fixtureEntries)
-  const emitted = Array<{op: string; value: string}>()
+  const emitted = Array<{sha: string; ids: Array<string>}>()
   index.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
-    if (indexEvent.data.op === 'entry')
-      emitted.push({op: 'entry', value: indexEvent.data.id})
     if (indexEvent.data.op === 'index')
-      emitted.push({op: 'index', value: indexEvent.data.sha})
+      emitted.push({sha: indexEvent.data.sha, ids: indexEvent.data.ids})
   })
 
   const from = await source.getTree()
@@ -392,18 +390,11 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
   })
   const changedSha = await index.syncWith(source)
   test.is(index.sha, changedSha)
-  test.ok(
-    emitted.some(event => event.op === 'entry' && event.value === 'cookie-2')
-  )
-  test.ok(
-    emitted.some(event => event.op === 'entry' && event.value === 'cookie-3')
-  )
-  test.ok(
-    emitted.some(event => event.op === 'entry' && event.value === 'recipes')
-  )
-  test.ok(
-    emitted.some(event => event.op === 'index' && event.value === changedSha)
-  )
+  test.is(emitted.length, 1)
+  test.is(emitted[0].sha, changedSha)
+  test.ok(emitted[0].ids.includes('cookie-2'))
+  test.ok(emitted[0].ids.includes('cookie-3'))
+  test.ok(emitted[0].ids.includes('recipes'))
 
   const noChangeSha = await index.syncWith(source)
   test.is(noChangeSha, changedSha)
@@ -411,13 +402,14 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
     await index.indexChanges({fromSha: index.sha, changes: []}),
     index.sha
   )
+  test.is(emitted.length, 1)
   await test.throws(
     () => index.indexChanges({fromSha: 'invalid-sha', changes: []}),
     'SHA mismatch'
   )
 })
 
-test('indexChanges dispatches entry events for old and new parents on move', async () => {
+test('indexChanges reports old and new parents on move', async () => {
   const {index, source} = await createEntryIndex(cms.config, [
     ...fixtureEntries,
     {
@@ -431,7 +423,7 @@ test('indexChanges dispatches entry events for old and new parents on move', asy
   const emitted = Array<string>()
   index.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
-    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+    if (indexEvent.data.op === 'index') emitted.push(...indexEvent.data.ids)
   })
 
   const from = await source.getTree()
@@ -667,7 +659,7 @@ test('active reference index is updated by later source changes', async () => {
   const emitted = Array<string>()
   index.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
-    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+    if (indexEvent.data.op === 'index') emitted.push(...indexEvent.data.ids)
   })
 
   const sourceEntry = index.findFirst(entry => entry.id === 'source')!
