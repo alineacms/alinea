@@ -5,6 +5,7 @@ export const dashboardScenarioIds = {
   child: 'workflow-child',
   hiddenFolder: 'workflow-hidden-folder',
   hiddenChild: 'workflow-hidden-child',
+  searchPartial: 'workflow-search-partial',
   searchTitle: 'workflow-search-title',
   searchBody: 'workflow-search-body'
 } as const

@@ -190,7 +190,7 @@ test('searches entries and navigates with enter or click', async ({
   await expect(clickSearch).not.toBeVisible()
 })
 
-test('search ranks title matches before rich-text matches', async ({
+test('search requires every word and relevance overrides entry order', async ({
   dashboard,
   mount
 }) => {

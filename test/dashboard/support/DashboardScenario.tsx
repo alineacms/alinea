@@ -128,12 +128,14 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     set: {title: 'Hidden child'}
   })
   await db.create({
-    id: dashboardScenarioIds.searchTitle,
+    id: dashboardScenarioIds.searchPartial,
     type: ScenarioPage,
     workspace: 'main',
     root: 'pages',
-    set: {title: 'Wireless receiver at 77 GHz'}
+    set: {title: 'Wireless receiver archive'}
   })
+  // Keep the body match before the title match so index order conflicts with
+  // search relevance.
   await db.create({
     id: dashboardScenarioIds.searchBody,
     type: ScenarioPage,
@@ -153,6 +155,13 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
         }
       ]
     }
+  })
+  await db.create({
+    id: dashboardScenarioIds.searchTitle,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Wireless receiver at 77 GHz'}
   })
   await db.create({
     id: dashboardLinkScenarioIds.referenceFolder,

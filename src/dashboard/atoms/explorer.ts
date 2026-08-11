@@ -599,10 +599,12 @@ export class ExplorerAtoms {
       type: filter,
       status: 'preferDraft',
       groupBy: Entry.id,
-      orderBy: {
-        [sort.direction]: orderField,
-        caseSensitive: sort.sortBy !== 'id'
-      },
+      orderBy: search
+        ? undefined
+        : {
+            [sort.direction]: orderField,
+            caseSensitive: sort.sortBy !== 'id'
+          },
       select: {
         id: Entry.id,
         title: Entry.title,
