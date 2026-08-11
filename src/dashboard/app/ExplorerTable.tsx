@@ -430,6 +430,7 @@ export function ExplorerTable({
             className={styles.ExplorerTable({
               noSelectionControls: !showSelectionControls
             })}
+            dependencies={[breadcrumbs]}
             disabledBehavior="selection"
             dragAndDropHooks={dragAndDropHooks}
             expandedKeys={expandedKeys}
