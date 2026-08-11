@@ -24,10 +24,18 @@ test('indexeddb source', async () => {
   const {IndexedDBSource} = await import('./IndexedDBSource.js')
   const idbSource = new IndexedDBSource(indexedDB, 'test')
   await syncWith(idbSource, memorySource)
+  const fromSource = new Map(
+    await accumulate(idbSource.getBlobs([...blobs.keys()]))
+  )
+  test.equal(fromSource, blobs)
   for (const [sha, contents] of blobs) {
-    const [[, fromSource]] = await accumulate(idbSource.getBlobs([sha]))
-    test.equal(fromSource, contents)
+    const [[, fromSourceBlob]] = await accumulate(idbSource.getBlobs([sha]))
+    test.equal(fromSourceBlob, contents)
   }
+  await test.throws(
+    () => accumulate(idbSource.getBlobs(['missing'])),
+    'Blob not found: missing'
+  )
   const idbTree = await idbSource.getTree()
   test.ok(idbTree.equals(tree))
 })
