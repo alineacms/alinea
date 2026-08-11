@@ -41,6 +41,54 @@ test('round trips text, element attributes and mark attributes', () => {
   test.equal(editorNodes(content), [{...paragraph, textAlign: 'center'}])
 })
 
+test('wraps imported inline list-item content in paragraphs', () => {
+  const imported = [
+    {
+      [Node.type]: 'orderedList',
+      [ElementNode.content]: [
+        {
+          [Node.type]: 'listItem',
+          [ElementNode.content]: [
+            {
+              [Node.type]: 'text',
+              [TextNode.text]: 'snapshot capability',
+              [TextNode.marks]: [{[Mark.type]: 'bold'}]
+            },
+            {
+              [Node.type]: 'text',
+              [TextNode.text]: ' – without scanning'
+            }
+          ]
+        }
+      ]
+    }
+  ]
+  const normalized = [
+    {
+      [Node.type]: 'orderedList',
+      [ElementNode.content]: [
+        {
+          [Node.type]: 'listItem',
+          [ElementNode.content]: [
+            {
+              [Node.type]: 'paragraph',
+              [ElementNode.content]: imported[0].content[0].content
+            }
+          ]
+        }
+      ]
+    }
+  ]
+
+  const content = editorContent(imported)
+
+  test.equal(
+    content.content?.[0]?.content?.[0]?.content?.[0]?.type,
+    'paragraph'
+  )
+  test.equal(editorNodes(content), normalized)
+})
+
 test('stores block identity with a recovery snapshot in ProseMirror', () => {
   const content = editorContent([paragraph, block, paragraph])
   test.equal(content.content?.[1], {

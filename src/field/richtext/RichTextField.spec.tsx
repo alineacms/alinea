@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
+  RichTextImportedListStory,
   RichTextLargeStory,
   RichTextLegacyEmptyStory,
   RichTextPlainStory,
@@ -160,6 +161,25 @@ test('creates, edits and exits a list', async ({mount, page}) => {
   await expect(editor.locator('li')).toHaveCount(2)
   await expect(editor.locator('li').last()).toContainText('Second list item')
   await expect(editor).toContainText('After the list')
+})
+
+test('edits an imported list with inline list-item content', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextImportedListStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  const listItem = editor.locator('li').filter({hasText: 'snapshot capability'})
+  await expect(listItem).toBeVisible()
+  await listItem.click()
+  await page.keyboard.press('End')
+  await page.keyboard.type(' Edited')
+
+  await expect(listItem).toHaveText(/without scanning Edited$/)
+  await expect(page.getByTestId('value')).toContainText(
+    'without scanning Edited'
+  )
 })
 
 test('moves text across an embedded block with cut and paste', async ({

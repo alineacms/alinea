@@ -50,10 +50,35 @@ function nodeToContent(node: Node): JSONContent {
   }
   if (isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+    let editorContent = content
+    // Tiptap requires list items to contain paragraphs, so normalize imported
+    // inline content before passing it to the editor.
+    if (type === 'listItem' && content?.some(isText)) {
+      const normalized: TextDoc = []
+      editorContent = normalized
+      let inline: TextDoc = []
+      function flushInline() {
+        if (!inline.length) return
+        normalized.push({
+          [Node.type]: 'paragraph',
+          [ElementNode.content]: inline
+        })
+        inline = []
+      }
+      for (const child of content) {
+        if (isText(child)) {
+          inline.push(child)
+        } else {
+          flushInline()
+          normalized.push(child)
+        }
+      }
+      flushInline()
+    }
     return {
       type,
       attrs: withoutNullish(attrs),
-      content: content?.map(nodeToContent)
+      content: editorContent?.map(nodeToContent)
     }
   }
   throw new TypeError(

@@ -126,6 +126,12 @@ export function RichTextLargeStory() {
   return <RichTextFixture initialBody={largeBody} entryType={plainEntry} />
 }
 
+export function RichTextImportedListStory() {
+  return (
+    <RichTextFixture initialBody={importedListBody} entryType={plainEntry} />
+  )
+}
+
 export function RichTextCustomToolbarStory() {
   return (
     <RichTextFixture
@@ -230,3 +236,43 @@ const blocksValue = [
 const largeBody = Array.from({length: 500}, (_, index) =>
   paragraph(`Large document paragraph ${index + 1}`)
 )
+
+const importedListBody = [
+  paragraph(
+    'There are multiple hyperspectral imaging technologies. Each applies different techniques to filter the light and capture the image data. The key differentiators you need to keep an eye on are:'
+  ),
+  {
+    _type: 'orderedList',
+    content: [
+      importedListItem(
+        'acquisition speed',
+        ' – the time required to capture the hyperspectral data cube'
+      ),
+      importedListItem(
+        'snapshot capability',
+        ' – the ability to acquire a hyperspectral image, without scanning'
+      ),
+      importedListItem(
+        'spatial resolution',
+        ' – the size of the pixel array, similar to regular photography'
+      ),
+      importedListItem(
+        'spectral resolution',
+        ' – the number of frequency bands (or layers) each hyperspectral image contains.'
+      )
+    ]
+  },
+  paragraph(
+    'Selecting the required properties is a tradeoff, driven by the requirements of the application.'
+  )
+]
+
+function importedListItem(label: string, description: string) {
+  return {
+    _type: 'listItem',
+    content: [
+      {_type: 'text', text: label, marks: [{_type: 'bold'}]},
+      {_type: 'text', text: description}
+    ]
+  }
+}
