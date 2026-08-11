@@ -7,6 +7,8 @@ import {AppShell, AppShellContent, AppShellInner} from './AppShell.js'
 import {SidebarTree} from './SidebarTree.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
+import {ParentMoveConfirmation} from './ParentMoveConfirmation.js'
+import {Toast} from './ToastContainer.js'
 import {Sidebar, SidebarHeader} from './ui/Sidebar.js'
 
 export interface DashboardLayoutProps extends PropsWithChildren {
@@ -42,6 +44,8 @@ export function DashboardLayout({
             </Sidebar>
             {children}
           </AppShellContent>
+          <ParentMoveConfirmation root={root} />
+          <Toast />
         </AppShellInner>
       </AppShell>
     </DashboardScope>

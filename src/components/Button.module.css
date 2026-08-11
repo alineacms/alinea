@@ -32,11 +32,11 @@
   --alinea-button-default-color-disabled: var(--alinea-fg-disabled);
   --alinea-button-default-border: transparent;
   --alinea-button-default-border-disabled: transparent;
-  --alinea-button-default-outline-color: var(--alinea-fg);
+  --alinea-button-default-outline-color: var(--alinea-gray-500);
   --alinea-button-default-outline-color-disabled: var(--alinea-fg-disabled);
   --alinea-button-default-outline-border: var(--alinea-border);
   --alinea-button-default-outline-border-disabled: var(--alinea-border-muted);
-  --alinea-button-default-outline-background-hover: var(--alinea-input);
+  --alinea-button-default-outline-background-hover: var(--alinea-muted);
   --alinea-button-default-plain-color: var(--alinea-fg);
 
   --alinea-button-primary-color: var(--alinea-primary-fg);
@@ -466,6 +466,12 @@
     --alinea-button-border: var(--alinea-button-default-outline-border);
     --alinea-button-bg: transparent;
     --alinea-button-hovered: var(--alinea-button-default-outline-background-hover);
+
+    &[data-hovered] {
+      --alinea-button-color: var(--alinea-fg);
+      --alinea-button-border: var(--alinea-border-hover);
+      color: var(--alinea-fg);
+    }
   }
 
   &:not([data-intent])[data-appearance='outline'][data-disabled] {
