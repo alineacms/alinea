@@ -203,9 +203,9 @@ test('search ranks title matches before rich-text matches', async ({
     .fill('wireless receiver 77 GHz')
 
   const results = search
-    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('treegrid', {name: 'Explorer entries'})
     .getByRole('row')
-  await expect(results).toHaveCount(3)
-  await expect(results.nth(1)).toContainText('Wireless receiver at 77 GHz')
-  await expect(results.nth(2)).toContainText('Archive')
+  await expect(results).toHaveCount(2)
+  await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')
+  await expect(results.nth(1)).toContainText('Archive')
 })

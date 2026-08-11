@@ -250,7 +250,16 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       hasChildItems={hasChildren}
       className={styles.ExplorerTable.row()}
       isDisabled={!props.isSelectable}
-      onAction={explorer.hasRowAction ? () => onAction(entry) : undefined}
+      onAction={
+        explorer.hasRowAction && explorer.mode !== 'search'
+          ? () => onAction(entry)
+          : undefined
+      }
+      onPress={
+        explorer.hasRowAction && explorer.mode === 'search'
+          ? () => onAction(entry)
+          : undefined
+      }
     >
       <TreeItemContent>
         {({isExpanded: expanded, level}) => (
