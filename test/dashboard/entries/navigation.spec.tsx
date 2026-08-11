@@ -209,3 +209,19 @@ test('search requires every word and relevance overrides entry order', async ({
   await expect(results.nth(0)).toContainText('Wireless receiver at 77 GHz')
   await expect(results.nth(1)).toContainText('Archive')
 })
+
+test('opens metadata for a localised file with null alt text', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'mediaFile',
+    routeRoot: 'media',
+    title: 'Legacy image'
+  })
+
+  await app.page.getByRole('tab', {name: 'Metadata'}).click()
+
+  await expect(app.field('Alt text')).toBeVisible()
+  await expect(app.field('Alt text')).toHaveValue('')
+})

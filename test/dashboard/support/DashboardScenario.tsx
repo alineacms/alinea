@@ -43,7 +43,8 @@ const HiddenFolder = Config.document('Hidden folder', {
 const main = Config.workspace('Main', {
   source: 'main',
   roots: {
-    pages: Config.root('Pages', {contains: ['Page', 'HiddenFolder']})
+    pages: Config.root('Pages', {contains: ['Page', 'HiddenFolder']}),
+    media: Config.media({i18n: {locales: ['en', 'fr']}})
   }
 })
 
@@ -163,6 +164,25 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     root: 'pages',
     set: {title: 'Wireless receiver at 77 GHz'}
   })
+  await db.mutate([
+    {
+      op: 'create',
+      id: dashboardScenarioIds.mediaFile,
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {
+        title: 'Legacy image',
+        path: 'legacy-image',
+        location: 'legacy-image.jpg',
+        extension: '.jpg',
+        size: 1024,
+        hash: 'legacy-image',
+        alt: null
+      }
+    }
+  ])
   await db.create({
     id: dashboardLinkScenarioIds.referenceFolder,
     type: ScenarioPage,
