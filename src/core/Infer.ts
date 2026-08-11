@@ -15,8 +15,8 @@ type QueryList<T> = Expand<
 export type InferQueryValue<T> =
   T extends Array<Type<infer X>>
     ? InferQueryValue<X>
-    : T extends Type<infer Fields>
-      ? Type.Infer<Fields>
+    : T extends Type<infer Fields, infer Settings>
+      ? Type.Infer<Type<Fields, Settings>>
       : T extends Expr<infer QueryValue>
         ? QueryValue
         : T extends Record<string, Type>
@@ -25,7 +25,7 @@ export type InferQueryValue<T> =
 
 type StoredList<T> = Expand<
   UnionOfValues<{
-    [K in keyof T]: {_type: K} & StoredRow<T[K]>
+    [K in keyof T]: {_type: K} & StoredType<T[K]>
   }>
 >
 
@@ -35,14 +35,23 @@ export type StoredRow<Definition> = {
     : never]: Definition[K] extends Field<infer T> ? T : never
 }
 
-export type InferStoredValue<T> =
-  T extends Type<infer Fields>
-    ? StoredRow<Fields>
-    : T extends Field<infer StoredValue>
-      ? StoredValue
-      : T extends Record<string, Type>
-        ? StoredList<T>
-        : {}
+type StoredType<T> =
+  T extends Type<infer Fields, infer Settings>
+    ? Expand<
+        StoredRow<Fields> &
+          (Settings extends Record<string, Field>
+            ? {settings: StoredRow<Settings>}
+            : {})
+      >
+    : {}
+
+export type InferStoredValue<T> = T extends Type
+  ? StoredType<T>
+  : T extends Field<infer StoredValue>
+    ? StoredValue
+    : T extends Record<string, Type>
+      ? StoredList<T>
+      : {}
 
 export type Infer<T> = InferQueryValue<T>
 

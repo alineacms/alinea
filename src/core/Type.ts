@@ -31,15 +31,28 @@ export interface EntryUrlMeta {
 
 export type EntryDefaultView = 'edit' | 'overview'
 
-export type Type<Definition = object> = Definition & HasType
+declare const settingsDefinition: unique symbol
+
+export type Type<Definition = object, Settings = unknown> = Definition &
+  HasType & {
+    readonly [settingsDefinition]?: Settings
+  }
 
 type TypeRow<Definition> = Expand<{
   [K in keyof Definition as Definition[K] extends Expr<any>
     ? K
     : never]: Definition[K] extends Expr<infer T> ? T : never
 }>
+
+type TypeSettingsRow<Settings> = Settings extends FieldsDefinition
+  ? {settings: TypeRow<Settings>}
+  : {}
+
 export namespace Type {
-  export type Infer<Definition> = TypeRow<Definition>
+  export type Infer<Definition> =
+    Definition extends Type<infer Fields, infer Settings>
+      ? Expand<TypeRow<Fields> & TypeSettingsRow<Settings>>
+      : TypeRow<Definition>
 
   export function label(type: Type): Label {
     return getType(type).label
@@ -98,6 +111,10 @@ export namespace Type {
 
   export function sections(type: Type) {
     return getType(type).sections
+  }
+
+  export function settings(type: Type): Type | undefined {
+    return getType(type).settings
   }
 
   export function isContainer(type: Type) {
@@ -221,12 +238,13 @@ export namespace Type {
   }
 
   export function referencedViews(type: Type): Array<string> {
-    const {view, summaryRow, summaryThumb} = getType(type)
+    const {view, summaryRow, summaryThumb, settings} = getType(type)
     return [
       view,
       summaryRow,
       summaryThumb,
-      ...viewsOfDefinition(getType(type).fields)
+      ...viewsOfDefinition(getType(type).fields),
+      ...(settings ? referencedViews(settings) : [])
     ].filter(v => typeof v === 'string')
   }
 }
@@ -264,8 +282,10 @@ export interface FieldsDefinition {
   [key: string]: Field
 }
 
-export interface TypeConfig<Definition> {
+export interface TypeConfig<Definition, Settings = undefined> {
   fields: Definition
+  /** Fields displayed as settings when this type is used as a list block */
+  settings?: Settings
   /** Accepts entries of these types as children */
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
@@ -292,26 +312,31 @@ export interface TypeConfig<Definition> {
   preview?: Preview
 }
 
-export interface TypeInternal extends TypeConfig<FieldsDefinition> {
+export interface TypeInternal extends Omit<
+  TypeConfig<FieldsDefinition, FieldsDefinition>,
+  'settings'
+> {
   label: string
   allFields: Record<string, Field>
   sections: Array<Section>
+  settings?: Type
 }
 
 /** Create a new type */
-export function type<Fields extends FieldsDefinition>(
-  label: string,
-  config: TypeConfig<Fields>
-): Type<Fields> {
+export function type<
+  Fields extends FieldsDefinition,
+  Settings extends FieldsDefinition | undefined = undefined
+>(label: string, config: TypeConfig<Fields, Settings>): Type<Fields, Settings> {
   const instance = createType(label, config)
   Type.validate(instance)
   return instance
 }
 
-export function createType<Fields extends FieldsDefinition>(
-  label: string,
-  config: TypeConfig<Fields>
-): Type<Fields> {
+export function createType<
+  Fields extends FieldsDefinition,
+  Settings extends FieldsDefinition | undefined = undefined
+>(label: string, config: TypeConfig<Fields, Settings>): Type<Fields, Settings> {
+  const {settings: settingsFields, ...typeConfig} = config
   const sections: Array<Section> = []
   let current: Record<string, Field> = {}
   const addCurrent = () => {
@@ -336,12 +361,20 @@ export function createType<Fields extends FieldsDefinition>(
   }
   addCurrent()
   const allFields = fromEntries(fields) as Fields
+  if (settingsFields && 'settings' in allFields)
+    throw new Error(
+      `Type "${label}" cannot define both a "settings" field and block settings`
+    )
+  const settings = settingsFields
+    ? type(`${label} settings`, {fields: settingsFields})
+    : undefined
   return {
     ...allFields,
     [internalType]: {
-      ...config,
+      ...typeConfig,
       allFields,
       sections,
+      settings,
       label
     }
   }

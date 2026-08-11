@@ -315,11 +315,15 @@ export function reorderIndex(fromIndex: number, targetIndex: number): number {
 
 function createRow(typeName: string, type: Schema[string]): ListValue {
   const initialValue = Type.initialValue(type) as Record<string, unknown>
+  const settings = Type.settings(type)
   return {
     _id: createId(),
     _index: '',
     _type: typeName,
-    ...initialValue
+    ...initialValue,
+    ...(settings
+      ? {[ListRow.settings]: Type.initialValue(settings)}
+      : undefined)
   }
 }
 
@@ -557,6 +561,7 @@ function ListFieldRow({
   const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
   const customLabel = customLabelValue ?? ''
   const value = useAtomValue(row.value) as Record<string, unknown>
+  const rowNodes = useNodes(row)
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))
   const moveListRow = useSetAtom(list.move)
@@ -609,6 +614,10 @@ function ListFieldRow({
   if (!type) return null
 
   const label = Type.label(type)
+  const settingsType = Type.settings(type)
+  const settingsNode = rowNodes[ListRow.settings] as
+    | ReactiveNode<object>
+    | undefined
   const typeIcon = getType(type).icon
   const expanded = !foldedIds.has(itemId)
   function moveCurrentRow(direction: -1 | 1) {
@@ -658,6 +667,8 @@ function ListFieldRow({
             anchor={anchorValue}
             dragLabel={`Drag ${label} item ${index + 1}`}
             readOnly={readOnly}
+            settingsNode={settingsNode}
+            settingsType={settingsType}
             typeIcon={typeIcon}
             insertItems={typeItems}
             pasted={pasted && schema[pasted._type] ? pasted : undefined}
@@ -731,6 +742,8 @@ interface ListFieldRowHeaderProps {
   anchor?: string
   pasted?: ListValue
   readOnly: boolean
+  settingsNode?: ReactiveNode<object>
+  settingsType?: Type
   typeIcon?: ComponentType
   onAnchorChange: (value: string) => void
   onCustomLabelChange: (value: string) => void
@@ -758,6 +771,8 @@ function ListFieldRowHeader({
   anchor,
   pasted,
   readOnly,
+  settingsNode,
+  settingsType,
   typeIcon,
   onAnchorChange,
   onCustomLabelChange,
@@ -841,6 +856,9 @@ function ListFieldRowHeader({
                     onChange={onAnchorChange}
                     source={customLabel}
                   />
+                  {settingsNode && settingsType && (
+                    <NodeEditor node={settingsNode} type={settingsType} />
+                  )}
                 </ListRowSettings>
                 <MenuSeparator />
                 <ListRowSettings actions>
