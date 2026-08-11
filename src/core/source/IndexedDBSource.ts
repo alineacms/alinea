@@ -106,19 +106,15 @@ export class IndexedDBSource implements Source {
         request.onerror = event => reject((event.target as IDBRequest).error)
       })
     ])
-    const requested = new Set(shas)
-    const blobs = new Map<string, Uint8Array>()
+    const missing = new Set(shas)
     for (let index = 0; index < keys.length; index++) {
       const key = keys[index]
       const value = values[index]
-      if (typeof key === 'string' && value && requested.has(key))
-        blobs.set(key, value)
+      if (typeof key === 'string' && value !== undefined && missing.delete(key))
+        yield [key, value]
     }
-    for (const sha of shas) {
-      const blob = blobs.get(sha)
-      if (!blob) throw new Error(`Blob not found: ${sha}`)
-      yield [sha, blob]
-    }
+    const sha = missing.values().next().value
+    if (sha !== undefined) throw new Error(`Blob not found: ${sha}`)
   }
 
   async applyChanges(batch: ChangesBatch) {
