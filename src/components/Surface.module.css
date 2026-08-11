@@ -1,0 +1,69 @@
+.Surface {
+  --alinea-surface-bg: var(--alinea-bg);
+  background: var(--alinea-surface-bg);
+  box-shadow: var(--alinea-shadow-raised);
+  border-radius: 8px;
+  color: var(--alinea-fg);
+  cursor: default;
+  flex-shrink: 0;
+  font-size: var(--alinea-font-size-base);
+  overflow: hidden;
+  position: relative;
+}
+
+.Surface[data-depth='base'] {
+  --alinea-surface-bg: var(--alinea-bg);
+}
+
+.Surface[data-depth='muted'] {
+  --alinea-surface-bg: var(--alinea-bg-muted);
+  box-shadow: var(--alinea-shadow-muted);
+}
+
+.Surface .Surface:not([data-depth]) {
+  --alinea-surface-bg: var(--alinea-bg-muted);
+  box-shadow: var(--alinea-shadow-muted);
+}
+
+.Surface .Surface .Surface:not([data-depth]) {
+  --alinea-surface-bg: var(--alinea-bg);
+}
+
+.Surface .Surface .Surface .Surface:not([data-depth]) {
+  --alinea-surface-bg: var(--alinea-bg-muted);
+  box-shadow: var(--alinea-shadow-muted);
+}
+
+.Surface .Surface .Surface .Surface .Surface:not([data-depth]) {
+  --alinea-surface-bg: var(--alinea-bg);
+}
+
+.SurfaceHeader {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.SurfaceContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.SurfaceRow {
+  align-items: center;
+  background: inherit;
+  box-sizing: border-box;
+  display: flex;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 16px;
+}
+
+.SurfaceRow:not(:first-child) {
+  border-top: 1px solid var(--alinea-border);
+}

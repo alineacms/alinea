@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import * as path from 'alinea/core/util/Paths'
+import * as path from '#/core/util/Paths.js'
 
 const test = suite(import.meta)
 

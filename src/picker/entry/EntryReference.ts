@@ -1,12 +1,16 @@
-import type {Reference} from 'alinea/core/Reference'
+import type {Reference} from '#/core/Reference.js'
 
 export interface EntryReference extends Reference {
   _type: 'entry' | 'image' | 'file'
   _entry: string
+  _anchor?: string
+  _suffix?: string
 }
 
 export namespace EntryReference {
   export const entry = '_entry' satisfies keyof EntryReference
+  export const anchor = '_anchor' satisfies keyof EntryReference
+  export const suffix = '_suffix' satisfies keyof EntryReference
 
   export function isEntryReference(value: any): value is EntryReference {
     // type can be entry, image or file

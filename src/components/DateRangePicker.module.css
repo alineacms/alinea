@@ -1,0 +1,115 @@
+.DateRangePicker {
+  gap: 8px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--alinea-input);
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  outline: 3px solid transparent;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: 1.5;
+  transition: var(--alinea-transition);
+
+  &[data-hovered] {
+    border-color: var(--alinea-border-hover);
+    outline-color: var(--alinea-ring-subtle);
+  }
+  [data-open] &,
+  [data-focus-within] & {
+    border-color: var(--alinea-border-accent);
+    outline-color: var(--alinea-primary-overlay);
+  }
+  &[data-invalid='true'] {
+    border: 1px solid var(--alinea-border-danger);
+    outline: 3px solid var(--alinea-danger-overlay);
+  }
+  &[data-disabled] {
+    pointer-events: none;
+    background-color: var(--alinea-input-disabled);
+    color: var(--alinea-fg-disabled);
+    opacity: 0.5;
+  }
+
+  .DateRangePicker-inputs {
+    flex: 1;
+    gap: 4px;
+    display: flex;
+    align-items: center;
+  }
+
+  .DateRangePicker-input {
+    .DateRangePicker-input-segment {
+      padding-inline: 1px;
+      transition: var(--alinea-transition);
+
+      &[data-placeholder] {
+        color: var(--alinea-fg-subtle);
+      }
+
+      &[data-hovered] {
+        color: var(--alinea-fg);
+      }
+
+      &[data-focused] {
+        outline: none;
+        background-color: var(--alinea-primary-overlay);
+        border-radius: 4px;
+        color: var(--alinea-primary);
+      }
+    }
+  }
+
+  .DateRangePicker-separator {
+    padding-inline: 4px;
+  }
+
+  .DateRangePicker-trigger {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--alinea-transition);
+    color: var(--alinea-fg-subtle);
+    font-size: 16px;
+
+    &:before {
+      content: '';
+      width: 24px;
+      height: 24px;
+      position: absolute;
+      border-radius: 4px;
+      background-color: transparent;
+      transition: var(--alinea-transition);
+    }
+
+    .Icon {
+      position: relative;
+    }
+
+    &[data-hovered],
+    &[data-focused],
+    &[data-focus-within] {
+      outline: none;
+      color: var(--alinea-fg-muted);
+
+      &:before {
+        background-color: var(--alinea-muted);
+      }
+    }
+
+    [data-open] & {
+      color: var(--alinea-primary-icon);
+
+      &:before {
+        background-color: var(--alinea-primary-overlay);
+      }
+    }
+  }
+}

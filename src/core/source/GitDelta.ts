@@ -111,7 +111,10 @@ function writeVarInt(value: number, out: Array<number>) {
   }
 }
 
-function readVarInt(data: Uint8Array, start: number): [value: number, pos: number] {
+function readVarInt(
+  data: Uint8Array,
+  start: number
+): [value: number, pos: number] {
   let shift = 0
   let value = 0
   let pos = start
@@ -142,7 +145,11 @@ function flushLiterals(literals: Array<number>, out: Array<number>) {
   literals.length = 0
 }
 
-function writeCopyInstruction(offset: number, size: number, out: Array<number>) {
+function writeCopyInstruction(
+  offset: number,
+  size: number,
+  out: Array<number>
+) {
   assert(size > 0, 'Invalid copy size')
 
   let opcode = 0x80

@@ -1,7 +1,5 @@
 export type UnionToIntersection<T> = (
-  T extends any
-    ? (x: T) => any
-    : never
+  T extends any ? (x: T) => any : never
 ) extends (x: infer R) => any
   ? R
   : never
@@ -18,9 +16,8 @@ type NonCommonKeys<T extends object> = Subtract<AllKeys<T>, CommonKeys<T>>
 type PickType<T, K extends AllKeys<T>> = T extends {[k in K]?: any}
   ? T[K]
   : undefined
-type PickTypeOf<T, K extends string | number | symbol> = K extends AllKeys<T>
-  ? PickType<T, K>
-  : never
+type PickTypeOf<T, K extends string | number | symbol> =
+  K extends AllKeys<T> ? PickType<T, K> : never
 export type Merge<T extends object> = {
   [k in CommonKeys<T>]: PickTypeOf<T, k>
 } & {

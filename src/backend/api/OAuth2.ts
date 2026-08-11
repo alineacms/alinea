@@ -1,22 +1,23 @@
+import {AuthResultType} from '#/cloud/AuthResult.js'
+import {Config} from '#/core/Config.js'
+import type {
+  AuthApi,
+  AuthOptions,
+  AuthedContext,
+  RequestContext
+} from '#/core/Connection.js'
+import {HttpError} from '#/core/HttpError.js'
+import {createId} from '#/core/Id.js'
+import {outcome} from '#/core/Outcome.js'
+import type {User} from '#/core/User.js'
+import {assert} from '#/core/util/Assert.js'
+import {decode, JWTPayload, verify} from '#/core/util/JWT.js'
 import {Request, Response} from '@alinea/iso'
 import {
   generateCodeVerifier,
   OAuth2Client,
   type OAuth2Token
 } from '@badgateway/oauth2-client'
-import {AuthResultType} from 'alinea/cloud/AuthResult'
-import {Config} from 'alinea/core/Config'
-import type {
-  AuthApi,
-  AuthedContext,
-  RequestContext
-} from 'alinea/core/Connection'
-import {HttpError} from 'alinea/core/HttpError'
-import {createId} from 'alinea/core/Id'
-import {outcome} from 'alinea/core/Outcome'
-import type {User} from 'alinea/core/User'
-import {assert} from 'alinea/core/util/Assert'
-import {decode, JWTPayload, verify} from 'alinea/core/util/JWT'
 import {parse} from 'cookie-es'
 import PLazy from 'p-lazy'
 import {
@@ -125,7 +126,10 @@ export class OAuth2 implements AuthApi {
     return url
   }
 
-  async authenticate(request: Request): Promise<Response> {
+  async authenticate(
+    request: Request,
+    options?: AuthOptions
+  ): Promise<Response> {
     try {
       const url = new URL(request.url)
       const action = url.searchParams.get('auth')
@@ -135,9 +139,12 @@ export class OAuth2 implements AuthApi {
           const [ctx, err] = await outcome(this.verify(request))
           if (err instanceof Response) return err
           if (ctx) {
+            const user = options?.enrichUser
+              ? await options.enrichUser(ctx.user)
+              : ctx.user
             return Response.json({
               type: AuthResultType.Authenticated,
-              user: ctx.user
+              user
             })
           }
           const codeVerifier = await generateCodeVerifier()

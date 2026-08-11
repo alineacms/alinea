@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {isSeparator, slugify} from 'alinea/core/util/Slugs'
+import {isSeparator, slugify} from '#/core/util/Slugs.js'
 
 const test = suite(import.meta)
 
@@ -38,9 +38,7 @@ test('isSeparator is stable across calls', () => {
 test('emojis', () => {
   // sequences
   test.is(
-    slugify(
-      '👮🏿 👍🏽 🕵🏻 💃👩🏿‍🤝‍👩🏼 🐕‍🦺 👨‍👩‍👧‍👦 🏳️‍🌈 👨‍👩‍👧‍🇬🇱🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳*️⃣ 5️⃣ #️⃣ 9️⃣'
-    ),
+    slugify('👮🏿 👍🏽 🕵🏻 💃👩🏿‍🤝‍👩🏼 🐕‍🦺 👨‍👩‍👧‍👦 🏳️‍🌈 👨‍👩‍👧‍🇬🇱🏴󠁧󠁢󠁥󠁮󠁧󠁿 🏴󠁧󠁢󠁳󠁣󠁴󠁿 🏴󠁧󠁢󠁷󠁬󠁳*️⃣ 5️⃣ #️⃣ 9️⃣'),
     '👮🏿-👍🏽-🕵🏻-💃👩🏿‍🤝‍👩🏼-🐕‍🦺-👨‍👩‍👧‍👦-🏳️‍🌈-👨‍👩‍👧‍🇬🇱🏴󠁧󠁢󠁥󠁮󠁧󠁿-🏴󠁧󠁢󠁳󠁣󠁴󠁿-🏴󠁧󠁢󠁷󠁬󠁳*️⃣-5️⃣-#️⃣-9️⃣'
   )
 })

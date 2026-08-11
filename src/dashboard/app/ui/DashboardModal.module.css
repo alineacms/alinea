@@ -1,0 +1,153 @@
+.DashboardModalOverlay {
+  align-items: safe center;
+  overflow-y: auto;
+  padding: 32px;
+  scrollbar-width: thin;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+.DashboardModal {
+  width: 640px;
+  max-width: calc(100vw - 64px);
+  max-height: none;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--alinea-overlay);
+
+  &:has(.DashboardModalDialog.is-loading) {
+    width: auto;
+    max-width: none;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  &[data-entering] {
+    animation: DashboardModal-enter 180ms ease-out;
+  }
+
+  @media (max-width: 768px) {
+    max-width: calc(100vw - 32px);
+  }
+
+  &.is-explorer {
+    width: min(1280px, calc(100vw - 64px));
+    height: calc(var(--visual-viewport-height) - 64px);
+    max-height: calc(var(--visual-viewport-height) - 64px);
+
+    @media (max-width: 768px) {
+      width: calc(100vw - 32px);
+      height: calc(var(--visual-viewport-height) - 32px);
+      max-height: calc(var(--visual-viewport-height) - 32px);
+    }
+  }
+}
+
+.DashboardModalDialog {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: visible;
+  height: 100%;
+  padding: 0;
+  background: var(--alinea-bg);
+
+  &.is-loading {
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: 0;
+    min-height: 0;
+    background: transparent;
+  }
+}
+
+.DashboardModalDialog-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.DashboardModalDialog-loader {
+  color: white;
+}
+
+.DashboardModalDialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px;
+}
+
+.DashboardModalCloseButton {
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.DashboardModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.DashboardModalContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 16px;
+  font-size: var(--alinea-font-size-base);
+}
+
+.DashboardModalTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.DashboardModalSeparator {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.DashboardModalForm {
+  display: contents;
+}
+
+.DashboardModalFormHeader {
+  justify-content: space-between;
+  padding-right: 12px;
+}
+
+.DashboardModalFormBody {
+  gap: 16px;
+  padding: 22px;
+  overflow: visible;
+}
+
+.DashboardModalFormFooter {
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 12px;
+}
+
+@keyframes DashboardModal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

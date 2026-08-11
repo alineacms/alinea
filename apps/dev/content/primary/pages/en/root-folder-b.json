@@ -1,8 +1,31 @@
 {
-  "_id": "2U6ifs4lY2IKDaUlm6yawnv8Hkn",
+  "_id": "2U6ifmP32fhM3IfRt9s3r4xxTDh",
   "_type": "Folder",
   "_index": "a3",
-  "_i18nId": "2U6ifmP32fhM3IfRt9s3r4xxTDh",
-  "_root": "pages",
-  "title": "Root folder B"
+  "title": "Root folder B",
+  "childrenLink": {
+    "_id": "3EJ1f1fzPh6GaNcPUw77wBqB8o3",
+    "_type": "entry",
+    "_index": "",
+    "_entry": "2q9sXTDlsGSy9DmS84E70KNpeM8"
+  },
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1779881958,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1779881958,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
 }

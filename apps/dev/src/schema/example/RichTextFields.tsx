@@ -1,5 +1,4 @@
-import {Config, Field} from 'alinea'
-import {extensions} from 'alinea/field/richtext/Extensions'
+import { Config, Field } from 'alinea'
 import {
   alignment,
   formatting,
@@ -13,22 +12,32 @@ import {
 
 export const RichTextFields = Config.document('Rich text fields', {
   fields: {
+    richText: Field.richText('Rich text'),
     withInitial: Field.richText('With initial value', {
       searchable: true,
       required: true,
       initialValue: [
         {
+          _type: 'heading',
+          content: [
+            {
+              _type: 'text',
+              text: 'Initial heading'
+            }
+          ],
+          level: 2
+        },
+        {
           _type: 'paragraph',
           content: [
             {
               _type: 'text',
-              text: 'This is a paragraph with initial value'
+              text: 'This is a paragraph generated from the initial value.'
             }
           ]
         }
       ]
     }),
-    makeRO: Field.check('Make read-only'),
     nested: Field.richText('With nested blocks', {
       searchable: true,
       schema: {
@@ -68,12 +77,10 @@ export const RichTextFields = Config.document('Rich text fields', {
     }),
     tableCustom: Field.richText('With custom toolbar', {
       enableTables: true,
-      extensions: {
+      extensions: extensions => ({
         ...extensions,
-        Table: extensions.Table.configure({
-          resizable: true
-        })
-      },
+        Table: extensions.Table.configure({resizable: true})
+      }),
       toolbar: {
         headings,
         tables: {

@@ -1,31 +1,35 @@
-import styler from '@alinea/styler'
-import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
-import type {TimeField} from './TimeField.js'
-import css from './TimeField.module.scss'
+import {TimeField as RacTimeField} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
+import {TimeField} from '#/field/time.js'
+import {parseTime} from '@internationalized/date'
+import {useMemo} from 'react'
 
-const styles = styler(css)
-
-export interface TimeInputProps {
+export interface TimeFieldViewProps {
   field: TimeField
 }
 
-export function TimeInput({field}: TimeInputProps) {
-  const {options, value, mutator, error} = useField(field)
-  const {minValue, maxValue, readOnly, step, autoFocus} = options
+export function TimeFieldView({field}: TimeFieldViewProps) {
+  const [value = '', setValue] = useField(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const parsedValue = useMemo(() => {
+    if (!value) return null
+    return parseTime(value)
+  }, [value])
   return (
-    <InputLabel asLabel {...options} error={error} icon={IcRoundDateRange}>
-      <input
-        className={styles.root.input()}
-        type="time"
-        value={value ?? ''}
-        onChange={e => mutator(e.currentTarget.value)}
-        readOnly={readOnly}
-        min={minValue}
-        max={maxValue}
-        step={step || 60}
-      />
-    </InputLabel>
+    <RacTimeField
+      description={options.help}
+      errorMessage={error}
+      granularity={options.step && options.step < 60 ? 'second' : 'minute'}
+      hourCycle={24}
+      isDisabled={options.readOnly}
+      isRequired={options.required}
+      label={options.label}
+      shared={options.shared}
+      maxValue={options.maxValue ? parseTime(options.maxValue) : null}
+      minValue={options.minValue ? parseTime(options.minValue) : null}
+      onChange={next => setValue(next?.toString() || '')}
+      value={parsedValue}
+    />
   )
 }

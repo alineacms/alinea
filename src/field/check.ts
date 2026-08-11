@@ -1,1 +1,1 @@
-export * from 'alinea/field/check/CheckField'
+export * from '#/field/check/CheckField.js'

@@ -1,5 +1,5 @@
 // Config creation
-export {createMediaRoot as media} from 'alinea/core/media/MediaRoot'
+export {createMediaRoot as media} from '#/core/media/MediaRoot.js'
 export {createConfig as create} from './core/Config.js'
 export {document} from './core/Document.js'
 export {page} from './core/Page.js'

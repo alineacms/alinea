@@ -1,0 +1,57 @@
+.ExplorerModal {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.ExplorerModalLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.ExplorerModalContent {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.ExplorerModalNavigation {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  min-width: 0;
+  min-height: 0;
+  flex-shrink: 0;
+  border-right: 1px solid var(--alinea-border);
+  background: var(--alinea-bg);
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+.ExplorerModalFooter {
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  border-top: 1px solid var(--alinea-border);
+  border-bottom: 0;
+}
+
+.ExplorerModalSelection {
+  color: var(--alinea-fg-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.ExplorerModalActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}

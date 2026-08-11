@@ -27,10 +27,7 @@ test('entryFilepath includes root and status suffix', () => {
     status: 'draft' as const
   }
 
-  test.is(
-    entryFilepath(config, entry, ['Blog']),
-    'pages/blog/hello.draft.json'
-  )
+  test.is(entryFilepath(config, entry, ['Blog']), 'pages/blog/hello.draft.json')
 })
 
 test('entryFileName uses source plus filepath without duplicating root', () => {
@@ -87,9 +84,6 @@ test('entryFileName in multiple workspaces resolves from the selected workspace'
     status: 'published' as const
   }
 
-  test.is(
-    entryFileName(config, entry, []),
-    'content/docs/pages/guide.json'
-  )
+  test.is(entryFileName(config, entry, []), 'content/docs/pages/guide.json')
   test.is(entryFilepath(config, entry, []), 'pages/guide.json')
 })

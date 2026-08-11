@@ -12,11 +12,13 @@ export interface ImagePreviewDetails {
 }
 
 export async function createPreview(blob: Blob): Promise<ImagePreviewDetails> {
-  const {default: sharp} = await import('sharp' + '').catch(() => {
-    throw new Error(
-      `To create image previews server side you need to install the 'sharp' package`
-    )
-  })
+  const {default: sharp} = await import(/* @vite-ignore */ 'sharp' + '').catch(
+    () => {
+      throw new Error(
+        `To create image previews server side you need to install the 'sharp' package`
+      )
+    }
+  )
   const image = sharp(await blob.arrayBuffer())
   const metadata = await image.metadata()
   const width = metadata.width ?? 0

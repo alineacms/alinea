@@ -1,7 +1,7 @@
-import {CMS} from 'alinea/core/CMS'
-import type {Config} from 'alinea/core/Config'
-import type {UploadResponse} from 'alinea/core/Connection'
-import type {AnyQueryResult, GraphQuery} from 'alinea/core/Graph'
+import {CMS} from '#/core/CMS.js'
+import type {Config} from '#/core/Config.js'
+import type {UploadResponse} from '#/core/Connection.js'
+import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 
 export class CoreCMS<
   Definition extends Config = Config

@@ -1,5 +1,5 @@
-import type {ConnectionContext} from 'alinea/core/CMS'
-import {getPreviewPayloadFromCookies} from 'alinea/preview/PreviewCookies'
+import type {ConnectionContext} from '#/core/CMS.js'
+import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
 import {parse} from 'cookie-es'
 import type {CoreCMS} from './cms.js'
 import {previewStore} from './previewContext.js'

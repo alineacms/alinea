@@ -9,6 +9,12 @@ export type IndexOp =
   | {op: 'index'; sha: string}
   | {op: 'entry'; id: string}
   | {
+      op: 'references'
+      scanned: number
+      total: number
+      complete: boolean
+    }
+  | {
       op: 'mutate'
       id: string
       status: 'pending' | 'success' | 'failure'

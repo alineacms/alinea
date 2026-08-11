@@ -1,0 +1,9 @@
+.FoldIcon {
+  flex-shrink: 0;
+  rotate: 0deg;
+  transition: rotate 200ms;
+}
+
+.FoldIcon[data-expanded='true'] {
+  rotate: 90deg;
+}

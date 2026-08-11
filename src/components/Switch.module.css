@@ -1,0 +1,94 @@
+.Switch {
+  --alinea-selected-color: var(--alinea-primary);
+
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.571rem;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1;
+  color: var(--alinea-fg);
+  forced-color-adjust: none;
+
+  .Switch-track {
+    width: 2rem;
+    height: 1.143rem;
+    border: 1px solid var(--alinea-border);
+    background: var(--alinea-input);
+    border-radius: 1.143rem;
+    transition: var(--alinea-transition);
+    transition-property: background, border, box-shadow;
+
+    &::before {
+      content: '';
+      display: block;
+      margin: 2px;
+      width: 0.857rem;
+      height: 0.857rem;
+      background: var(--alinea-border-hover);
+      border-radius: 50%;
+      transition: var(--alinea-transition);
+      transition-property: background, transform;
+    }
+  }
+
+  &[data-hovered] .Switch-track {
+    border-color: var(--alinea-border-hover);
+    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+  }
+
+  &[data-focus-visible] .Switch-track {
+    outline: 2px solid var(--alinea-border);
+    outline-offset: 2px;
+  }
+
+  &[data-selected] {
+    .Switch-track {
+      background: var(--alinea-selected-color);
+      border-color: var(--alinea-selected-color);
+
+      &::before {
+        background: var(--alinea-primary-fg);
+        transform: translateX(100%);
+      }
+    }
+
+    &[data-hovered] .Switch-track {
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    }
+
+    &[data-focus-visible] .Switch-track {
+      outline-color: var(--alinea-selected-color);
+    }
+
+    &[data-pressed] .Switch-track {
+      background: var(--alinea-primary-pressed);
+      border-color: var(--alinea-primary-pressed);
+    }
+  }
+
+  &[data-pressed] .Switch-track {
+    border-color: var(--alinea-border-pressed);
+
+    &::before {
+      background: var(--alinea-border-pressed);
+    }
+  }
+
+  &[data-disabled],
+  &[data-readonly] {
+    pointer-events: none;
+    color: var(--alinea-fg-disabled);
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+  }
+
+  &[data-readonly] {
+    .Switch-track {
+      background: var(--alinea-border);
+      border-color: var(--alinea-border);
+    }
+  }
+}

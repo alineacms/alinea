@@ -1,6 +1,6 @@
-import {generatedRelease} from 'alinea/backend/store/GeneratedRelease'
-import {Config} from 'alinea/core/Config'
-import type {RequestContext} from 'alinea/core/Connection'
+import {generatedRelease} from '#/backend/store/GeneratedRelease.js'
+import {Config} from '#/core/Config.js'
+import type {RequestContext} from '#/core/Connection.js'
 
 export async function requestContext(config: Config): Promise<RequestContext> {
   const apiKey =

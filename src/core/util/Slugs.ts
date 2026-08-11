@@ -15,13 +15,11 @@ export function isSeparator(char: string): boolean {
 }
 
 export function slugify(input: string): string {
-  return (
-    input
-      .normalize('NFKD')
-      .replace(stripAccents, '$1')
-      .replace(ignore, '')
-      .replace(stripGlobal, separator)
-      .replace(trim, '')
-      .toLowerCase()
-  )
+  return input
+    .normalize('NFKD')
+    .replace(stripAccents, '$1')
+    .replace(ignore, '')
+    .replace(stripGlobal, separator)
+    .replace(trim, '')
+    .toLowerCase()
 }

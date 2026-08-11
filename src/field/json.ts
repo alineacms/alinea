@@ -1,1 +1,1 @@
-export * from 'alinea/field/json/JsonField'
+export * from '#/field/json/JsonField.js'

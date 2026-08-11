@@ -1,27 +1,32 @@
-import styler from '@alinea/styler'
-import {useField} from 'alinea/dashboard/editor/UseField'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {IcRoundDateRange} from 'alinea/ui/icons/IcRoundDateRange'
-import type {DateField} from './DateField.js'
-import css from './DateField.module.scss'
+import {DatePicker} from '#/components.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
+import {DateField} from '#/field/date.js'
+import {parseDate} from '@internationalized/date'
+import {useMemo} from 'react'
 
-const styles = styler(css)
-
-export interface DateInputProps {
+export interface DateFieldViewProps {
   field: DateField
 }
 
-export function DateInput({field}: DateInputProps) {
-  const {options, value, mutator, error} = useField(field)
+export function DateFieldView({field}: DateFieldViewProps) {
+  const [value = '', setValue] = useField(field)
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const parsedValue = useMemo(() => {
+    if (!value) return null
+    return parseDate(value)
+  }, [value])
+
   return (
-    <InputLabel asLabel {...options} error={error} icon={IcRoundDateRange}>
-      <input
-        className={styles.root.input()}
-        type="date"
-        value={value ?? ''}
-        onChange={e => mutator(e.currentTarget.value)}
-        readOnly={options.readOnly}
-      />
-    </InputLabel>
+    <DatePicker
+      description={options.help}
+      errorMessage={error}
+      isRequired={options.required}
+      isDisabled={options.readOnly}
+      label={options.label}
+      shared={options.shared}
+      onChange={next => setValue(next?.toString() || '')}
+      value={parsedValue}
+    />
   )
 }

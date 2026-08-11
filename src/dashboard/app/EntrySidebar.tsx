@@ -1,0 +1,407 @@
+import {
+  Button,
+  Disclosure,
+  DisclosureHeader,
+  DisclosurePanel,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs
+} from '#/components.js'
+import {Revision} from '#/core/Connection.js'
+import type {EntryStatus} from '#/core/Entry.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {Type} from '#/core/Type.js'
+import {assert} from '#/core/util/Assert.js'
+import {isRecord} from '#/core/util/Objects.js'
+import {typeAtoms} from '#/dashboard/atoms/config.js'
+import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
+import {MetadataField, type Metadata} from '#/field/metadata.js'
+import {styler} from '@alinea/styler'
+import {atom, type Getter, useAtom, useAtomValue} from 'jotai'
+import {useState, type ComponentType, type ReactNode} from 'react'
+import {
+  IcOutlineDrafts,
+  IcRoundArchive,
+  IcRoundEdit,
+  IcRoundVisibility,
+  IcRoundVisibilityOff
+} from '../icons.js'
+import {Badge} from './Badge.js'
+import {EntryReferences} from './EntryReferences.js'
+import css from './EntrySidebar.module.css'
+import {EntrySidebarPreview} from './EntrySidebarPreview.js'
+import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {RailHeader} from './ui/Rail.js'
+import {Sidebar, SidebarBody} from './ui/Sidebar.js'
+
+const styles = styler(css)
+
+export interface EntrySidebarProps {
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
+  onOpenChange?: (isOpen: boolean) => void
+}
+
+export async function entrySidebar(
+  get: Getter,
+  entry: EntryAtoms,
+  localeData: EntryLocaleAtoms
+): Promise<EntrySidebarProps | undefined> {
+  const typeName = get(entry.type)
+  const type = get(typeAtoms(typeName))
+  if (type.customView || get(localeData.untranslated)) return undefined
+  const loads: Array<Promise<unknown>> = [get(entry.incomingReferencesReady)]
+  if (type.type !== MediaFile) loads.push(get(localeData.historyReady))
+  const preview = get(entry.preview)
+  if (preview === true) loads.push(get(localeData.previewUrlReady))
+  else if (preview) loads.push(get(localeData.previewEntryReady))
+  await Promise.all(loads)
+  return {entry, localeData}
+}
+
+type EntrySidebarTab = 'preview' | 'history' | 'references'
+const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
+
+export function EntrySidebar({
+  entry,
+  localeData,
+  onOpenChange
+}: EntrySidebarProps) {
+  const typeName = useAtomValue(entry.type)
+  const type = useAtomValue(typeAtoms(typeName)).type
+  const [selectedTab, setSelectedTab] = useAtom(entrySidebarTabAtom)
+  const isMediaFile = type === MediaFile
+  const isMediaLibrary = type === MediaLibrary
+  const hasPreview = !isMediaFile && !isMediaLibrary
+  const allowedTabs: Array<EntrySidebarTab> = isMediaFile
+    ? ['references']
+    : hasPreview
+      ? ['preview', 'history', 'references']
+      : ['history', 'references']
+  const selectedKey = allowedTabs.includes(selectedTab)
+    ? selectedTab
+    : allowedTabs[0]
+  return (
+    <Sidebar>
+      <Tabs
+        className={styles.EntrySidebar.tabs()}
+        selectedKey={selectedKey}
+        onSelectionChange={key => {
+          const next = key as EntrySidebarTab
+          if (allowedTabs.includes(next)) setSelectedTab(next)
+        }}
+      >
+        <RailHeader className={styles.EntrySidebar.header()}>
+          <TabList aria-label="Entry sidebar">
+            {hasPreview && <Tab id="preview">Preview</Tab>}
+            {!isMediaFile && <Tab id="history">History</Tab>}
+            <Tab id="references">References</Tab>
+          </TabList>
+          {onOpenChange && (
+            <EntrySidebarToggle isOpen={true} onOpenChange={onOpenChange} />
+          )}
+        </RailHeader>
+        <SidebarBody className={styles.EntrySidebar.body()}>
+          {hasPreview && (
+            <TabPanel
+              id="preview"
+              className={styles.EntrySidebar.previewPanel()}
+            >
+              <EntrySidebarPreview entry={entry} localeData={localeData} />
+            </TabPanel>
+          )}
+          {!isMediaFile && (
+            <TabPanel
+              id="history"
+              className={styles.EntrySidebar.historyPanel()}
+            >
+              <EntrySidebarHistory entry={entry} localeData={localeData} />
+            </TabPanel>
+          )}
+          <TabPanel
+            id="references"
+            className={styles.EntrySidebar.referencesPanel()}
+          >
+            <EntryReferences entry={entry} localeData={localeData} />
+          </TabPanel>
+        </SidebarBody>
+      </Tabs>
+    </Sidebar>
+  )
+}
+
+function EntrySidebarHistory({entry, localeData}: EntrySidebarProps) {
+  const statuses = useAtomValue(localeData.availableStatuses)
+  const history = useAtomValue(localeData.history)
+  const [previousVersionsOpen, setPreviousVersionsOpen] = useState(false)
+  return (
+    <div className={styles.EntrySidebar.history()}>
+      <section className={styles.EntrySidebar.section()}>
+        <h2 className={styles.EntrySidebar.sectionTitle()}>Current versions</h2>
+        <ul className={styles.EntrySidebar.historyList()}>
+          {statuses.map(status => (
+            <EntrySidebarStatusItem
+              entry={entry}
+              key={status}
+              localeData={localeData}
+              status={status}
+            />
+          ))}
+        </ul>
+      </section>
+      <section className={styles.EntrySidebar.section()}>
+        <Disclosure
+          key={entry.id}
+          className={styles.EntrySidebar.disclosure()}
+          onExpandedChange={setPreviousVersionsOpen}
+        >
+          <DisclosureHeader>Previous versions</DisclosureHeader>
+          <DisclosurePanel className={styles.EntrySidebar.disclosurePanel()}>
+            {previousVersionsOpen &&
+              (history.length === 0 ? (
+                <p className={styles.EntrySidebar.empty()}>
+                  No previous versions yet
+                </p>
+              ) : (
+                <section className={styles.EntrySidebar.Versions()}>
+                  <ul className={styles.EntrySidebar.Versions.Timeline()}>
+                    {history.map(revision =>
+                      EntrySidebarTimelineElement(revision)
+                    )}
+                  </ul>
+                  <ul className={styles.EntrySidebar.historyList()}>
+                    {history.map(revision => (
+                      <EntrySidebarRevisionItem
+                        key={`${revision.file}:${revision.ref}`}
+                        localeData={localeData}
+                        revision={revision}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              ))}
+          </DisclosurePanel>
+        </Disclosure>
+      </section>
+    </div>
+  )
+}
+
+interface EntrySidebarStatusItemProps {
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
+  status: EntryStatus
+}
+
+function EntrySidebarStatusItem({
+  entry,
+  localeData,
+  status
+}: EntrySidebarStatusItemProps) {
+  const typeName = useAtomValue(entry.type)
+  const type = useAtomValue(typeAtoms(typeName)).type
+  const versions = useAtomValue(localeData.versions)
+  const currentlyEditing = useAtomValue(localeData.currentlyEditing)
+  const [selectedVersion, setSelectedVersion] = useAtom(
+    localeData.selectedVersion
+  )
+  const activeVersion = Array.from(versions.values()).find(
+    version => version.active
+  )
+  assert(activeVersion, `Entry "${entry.id}" has no active version`)
+  const isEditing = activeVersion.status === status && Boolean(currentlyEditing)
+  const selected =
+    (selectedVersion === null && activeVersion.status === status) ||
+    (selectedVersion?.type === 'status' && selectedVersion.status === status)
+  const rowStatus = getStatusItemVersionStatus(status, activeVersion.main)
+  const version = versions.get(status)
+  const hasMetadata = Type.field(type, 'metadata') instanceof MetadataField
+  const meta = hasMetadata ? formatMetadata(version?.data.metadata) : undefined
+  return (
+    <li className={styles.EntrySidebar.historyItem()}>
+      <EntrySidebarVersionRow
+        selected={selected}
+        status={rowStatus}
+        icon={getVersionStatusIcon(rowStatus)}
+        title={formatStatus(status)}
+        meta={meta}
+        onPress={() => setSelectedVersion({type: 'status', status})}
+      >
+        {isEditing && <Badge size="small">Editing</Badge>}
+      </EntrySidebarVersionRow>
+    </li>
+  )
+}
+
+interface EntrySidebarRevisionItemProps {
+  localeData: EntryLocaleAtoms
+  revision: Revision
+}
+
+function EntrySidebarRevisionItem({
+  localeData,
+  revision
+}: EntrySidebarRevisionItemProps) {
+  const [selectedVersion, setSelectedVersion] = useAtom(
+    localeData.selectedVersion
+  )
+  const selected =
+    selectedVersion?.type === 'history' &&
+    selectedVersion.ref === revision.ref &&
+    selectedVersion.file === revision.file
+  const revisionKind = getRevisionKind(revision)
+  return (
+    <li className={styles.EntrySidebar.historyItem()}>
+      <EntrySidebarVersionRow
+        selected={selected}
+        status={revisionKind.status}
+        icon={revisionKind.icon}
+        title={formatTime(revision.createdAt)}
+        meta={revision.user?.name}
+        onPress={() =>
+          setSelectedVersion({
+            type: 'history',
+            file: revision.file,
+            ref: revision.ref
+          })
+        }
+      />
+    </li>
+  )
+}
+
+function EntrySidebarTimelineElement(revision: Revision) {
+  const status = getRevisionKind(revision).status
+  return (
+    <li
+      key={`${revision.file}:${revision.ref}-line`}
+      className={styles.Timeline.element()}
+    >
+      <span className={styles.Timeline.element.outerCircle()}>
+        <span
+          className={styles.Timeline.element.innerCircle()}
+          data-status={status}
+        />
+      </span>
+      <span className={styles.Timeline.element.trail()} />
+    </li>
+  )
+}
+
+export type EntrySidebarVersionStatus = EntryStatus | 'unpublished' | 'none'
+
+export interface EntrySidebarVersionRowProps {
+  selected?: boolean
+  status?: EntrySidebarVersionStatus
+  icon: ComponentType
+  title: ReactNode
+  meta: ReactNode
+  children?: ReactNode
+  onPress?: () => void
+}
+
+export function EntrySidebarVersionRow({
+  selected = false,
+  status = 'none',
+  title,
+  meta,
+  children,
+  onPress
+}: EntrySidebarVersionRowProps) {
+  return (
+    <Button
+      appearance="outline"
+      className={styles.EntrySidebar.versionButton()}
+      data-selected={selected || undefined}
+      data-status={status}
+      onPress={onPress}
+    >
+      <span className={styles.EntrySidebar.versionContent()}>
+        <span className={styles.EntrySidebar.versionTitle()}>{title}</span>
+        <span className={styles.EntrySidebar.versionMeta()}>{meta}</span>
+      </span>
+      {children}
+    </Button>
+  )
+}
+
+interface EntrySidebarRevisionKind {
+  icon: ComponentType
+  status: EntrySidebarVersionStatus
+}
+
+function getStatusItemVersionStatus(
+  status: EntryStatus,
+  main?: boolean
+): EntrySidebarVersionStatus {
+  if (status === 'draft' && main === true) return 'unpublished'
+  return status
+}
+
+function getVersionStatusIcon(status: EntrySidebarVersionStatus) {
+  switch (status) {
+    case 'published':
+      return IcRoundVisibility
+    case 'unpublished':
+      return IcRoundVisibilityOff
+    case 'archived':
+      return IcRoundArchive
+    default:
+      return IcRoundEdit
+  }
+}
+
+function getRevisionKind(revision: Revision): EntrySidebarRevisionKind {
+  const description = revision.description?.toLowerCase() ?? ''
+  if (description.includes('unpublish')) {
+    return {icon: getVersionStatusIcon('unpublished'), status: 'unpublished'}
+  }
+  if (description.includes('archive')) {
+    return {icon: getVersionStatusIcon('archived'), status: 'archived'}
+  }
+  if (description.includes('draft')) {
+    return {icon: getVersionStatusIcon('draft'), status: 'draft'}
+  }
+  if (description.includes('publish')) {
+    return {icon: getVersionStatusIcon('published'), status: 'published'}
+  }
+  return {icon: IcOutlineDrafts, status: 'none'}
+}
+
+function formatStatus(status: EntryStatus) {
+  return status[0].toUpperCase() + status.slice(1)
+}
+
+function formatTime(timestamp: number) {
+  const date = new Date(timestamp)
+  if (isNaN(date.getTime())) {
+    return 'Invalid Date'
+  }
+  const ddmmyyyy = date.toLocaleDateString('nl-BE')
+  const time = date.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+  return `${ddmmyyyy} - ${time}`
+}
+
+function formatMetadata(metadata: unknown) {
+  if (!isMetadata(metadata) || typeof metadata.updatedAt !== 'number') {
+    return undefined
+  }
+  const updatedAt = formatTime(metadata.updatedAt * 1000)
+  const updatedBy = metadata.updatedBy.name
+  return updatedBy ? `${updatedBy} ${updatedAt}` : updatedAt
+}
+
+function isMetadata(value: unknown): value is Metadata {
+  if (!isRecord(value)) return false
+  const updatedBy = value.updatedBy
+  return (
+    (typeof value.updatedAt === 'number' || value.updatedAt === null) &&
+    isRecord(updatedBy) &&
+    typeof updatedBy.name === 'string' &&
+    typeof updatedBy.email === 'string'
+  )
+}

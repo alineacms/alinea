@@ -1,10 +1,9 @@
-import {JsonLoader} from 'alinea/backend/loader/JsonLoader'
-import {execGit} from 'alinea/backend/util/ExecGit'
-import type {Config} from 'alinea/core/Config'
-import type {Revision} from 'alinea/core/Connection'
-import type {HistoryApi} from 'alinea/core/Connection'
-import type {EntryRecord} from 'alinea/core/EntryRecord'
-import {fileVersions} from 'alinea/core/util/EntryFilenames'
+import {JsonLoader} from '#/backend/loader/JsonLoader.js'
+import {execGit} from '#/backend/util/ExecGit.js'
+import type {Config} from '#/core/Config.js'
+import type {HistoryApi, Revision} from '#/core/Connection.js'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {parseCoAuthoredBy} from '../util/CommitMessage.js'
 
 const encoder = new TextEncoder()
@@ -20,6 +19,8 @@ export class GitHistory implements HistoryApi {
     const results = Array<Revision>()
     for (const versioned of versions) {
       const output = await execGit(this.rootDir, [
+        '-c',
+        'core.quotePath=false',
         'log',
         '--follow',
         '--name-status',
@@ -49,12 +50,23 @@ export class GitHistory implements HistoryApi {
         })
       results.push(...revisions)
     }
-    return results
+
+    // de-duplicate revisions by ref
+    const uniqueRevisions = new Map<string, Revision>()
+    for (const revision of results) {
+      const existing = uniqueRevisions.get(revision.ref)
+      if (!existing) uniqueRevisions.set(revision.ref, revision)
+    }
+    return [...uniqueRevisions.values()].sort(
+      (a, b) => b.createdAt - a.createdAt
+    )
   }
 
   async revisionData(file: string, ref: string): Promise<EntryRecord> {
     const {config} = this
     const data = await execGit(this.rootDir, [
+      '-c',
+      'core.quotePath=false',
       'show',
       `${ref}:${file}`,
       '--format=%B'

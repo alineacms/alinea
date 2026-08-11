@@ -1,27 +1,48 @@
 import type {Request, Response} from '@alinea/iso'
-import type {PreviewInfo} from 'alinea/backend/Previews'
-import type {Draft, DraftKey} from './Draft.js'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
+import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import type {ReadonlyTree} from './source/Tree.js'
-import type {User} from './User.js'
+import type {User, UserInput} from './User.js'
 
 export interface AuthApi {
-  authenticate(request: Request): Promise<Response>
+  authenticate(request: Request, options?: AuthOptions): Promise<Response>
   verify(request: Request): Promise<AuthedContext>
 }
 
-export interface RemoteConnection extends Connection, AuthApi {}
+export interface AuthOptions {
+  enrichUser?(user: User): Promise<User>
+}
+
+export interface UserApi {
+  enrichUser(user: User): Promise<User>
+  listUsers(): Promise<Array<User>>
+  createUser(user: UserInput): Promise<User>
+  updateUser(request: UserInput): Promise<User>
+  removeUser(email: string): Promise<void>
+}
+
+export interface BackendCapabilities {
+  users: boolean
+}
+
+export interface CapabilitiesApi {
+  capabilities?(): Promise<BackendCapabilities>
+}
+
+export interface RemoteConnection
+  extends Connection, AuthApi, CapabilitiesApi {}
 
 export interface BrowserConnection extends Connection {
   logout?(): Promise<void>
 }
 
-export interface LocalConnection extends Connection {
+export interface LocalConnection extends Connection, CapabilitiesApi {
+  capabilities(): Promise<BackendCapabilities>
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
-  previewToken(request: PreviewInfo): Promise<string>
+  previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>
@@ -51,17 +72,16 @@ export interface DraftsApi {
 }
 
 export interface UploadsApi {
-  prepareUpload(file: string): Promise<UploadResponse>
+  prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse>
   handleUpload?(entryId: string, file: Blob): Promise<void>
   previewUpload?(entryId: string): Promise<Response>
 }
 
 export interface Connection
-  extends CommitApi,
-    SyncApi,
-    HistoryApi,
-    DraftsApi,
-    UploadsApi {}
+  extends CommitApi, SyncApi, HistoryApi, DraftsApi, UploadsApi, UserApi {}
 
 export interface RequestContext {
   isDev: boolean
@@ -88,6 +108,10 @@ export interface UploadDestination {
   entryId: string
   location: string
   previewUrl: string
+}
+
+export interface UploadMetadata {
+  size: number
 }
 
 export interface UploadResponse extends UploadDestination {

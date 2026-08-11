@@ -1,1 +1,1 @@
-export * from 'alinea/field/time/TimeField'
+export * from '#/field/time/TimeField.js'

@@ -1,4 +1,4 @@
-import type {User} from 'alinea/core/User'
+import type {User} from '#/core/User.js'
 
 export enum AuthResultType {
   Authenticated,

@@ -3,36 +3,56 @@
   "_type": "RichTextFields",
   "_index": "a0V",
   "title": "Rich text fields",
-  "withInitial": [
+  "richText": [
     {
       "_type": "paragraph",
       "textAlign": "left",
       "content": [
         {
           "_type": "text",
-          "text": "This is a paragraph with initial value"
-        }
-      ]
-    }
-  ],
-  "nested": [
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "Normal text | "
+        },
         {
           "_type": "text",
-          "text": "Hello world"
-        }
-      ]
-    },
-    {
-      "_type": "paragraph",
-      "textAlign": "left",
-      "content": [
+          "text": "bold",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
         {
           "_type": "text",
-          "text": "This is an "
+          "text": " | "
+        },
+        {
+          "_type": "text",
+          "text": "italic",
+          "marks": [
+            {
+              "_type": "italic"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " | "
+        },
+        {
+          "_type": "text",
+          "text": "bold italic",
+          "marks": [
+            {
+              "_type": "bold"
+            },
+            {
+              "_type": "italic"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " | "
         },
         {
           "_type": "text",
@@ -46,6 +66,171 @@
               "target": "_blank"
             }
           ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Heading 2",
+          "marks": [
+            {
+              "_type": "anchor",
+              "id": "heading-2"
+            }
+          ]
+        }
+      ],
+      "_anchor": "heading-2",
+      "level": 1
+    },
+    {
+      "_type": "heading",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Heading 3",
+          "marks": [
+            {
+              "_type": "anchor",
+              "id": "heading-3"
+            }
+          ]
+        }
+      ],
+      "_anchor": "heading-3",
+      "level": 1
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left"
+    },
+    {
+      "_type": "heading",
+      "content": [
+        {
+          "_type": "text",
+          "text": "heading met effectief tekst",
+          "marks": [
+            {
+              "_type": "anchor",
+              "id": "heading-met-effectief-tekst"
+            }
+          ]
+        }
+      ],
+      "level": 3,
+      "_anchor": "heading-met-effectief-tekst"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left"
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla magna nulla, commodo vitae pulvinar ut, mattis id arcu. Integer dapibus dui et dolor interdum ullamcorper. Nullam sed felis ac sem pretium convallis in sit amet nunc. Nam consequat quam id nisl dictum imperdiet."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Cras eleifend non dui ac faucibus. Nullam vitae lacus nec turpis gravida cursus ac id leo. Maecenas accumsan velit sit amet nisi condimentum varius. Aliquam vitae justo et odio malesuada malesuada eget sit amet sapien."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left"
+    },
+    {
+      "_type": "horizontalRule"
+    },
+    {
+      "_type": "horizontalRule"
+    },
+    {
+      "_type": "paragraph"
+    }
+  ],
+  "withInitial": [
+    {
+      "_type": "heading",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Initial heading"
+        }
+      ],
+      "level": 2
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This is a paragraph generated from the initial value."
+        }
+      ]
+    }
+  ],
+  "nested": [
+    {
+      "_type": "Inner",
+      "content": [
+        {
+          "_type": "heading",
+          "content": [
+            {
+              "_type": "text",
+              "text": "new nested heading",
+              "marks": [
+                {
+                  "_type": "anchor",
+                  "id": "new-nested-heading"
+                }
+              ]
+            }
+          ],
+          "level": 3,
+          "_anchor": "new-nested-heading"
+        }
+      ],
+      "_id": "3GX3XCNInfdChNWf7LqRKj6CyNl",
+      "title": ""
+    },
+    {
+      "_type": "Inner",
+      "_id": "3GX3Ka2SK4nAzKzPI2hqZixIXZI",
+      "title": "",
+      "content": [
+        {
+          "_type": "heading",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Nested heading",
+              "marks": [
+                {
+                  "_type": "anchor",
+                  "id": "nested-heading"
+                }
+              ]
+            }
+          ],
+          "level": 2,
+          "_anchor": "nested-heading"
         }
       ]
     }
@@ -269,6 +454,7 @@
       ]
     }
   ],
+  "tableCustom": [],
   "metadata": {
     "title": "",
     "description": "",
@@ -276,6 +462,17 @@
       "image": {},
       "title": "",
       "description": ""
-    }
+    },
+    "createdAt": 1781076632,
+    "createdBy": {
+      "name": "Stijn Van Doorslaer",
+      "email": "stijn@codeurs.be"
+    },
+    "updatedAt": 1784104132,
+    "updatedBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "aliases": []
   }
 }

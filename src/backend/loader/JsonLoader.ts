@@ -1,5 +1,5 @@
-import type {EntryRecord} from 'alinea/core/EntryRecord'
-import type {Schema} from 'alinea/core/Schema'
+import type {EntryRecord} from '#/core/EntryRecord.js'
+import type {Schema} from '#/core/Schema.js'
 import type {Loader} from '../Loader.js'
 
 const encoder = new TextEncoder()

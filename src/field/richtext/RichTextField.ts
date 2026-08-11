@@ -1,15 +1,36 @@
-import type {AnyExtension, Mark, Node} from '@tiptap/core'
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {RichTextField} from 'alinea/core/field/RichTextField'
-import type {Schema} from 'alinea/core/Schema'
-import type {TextDoc} from 'alinea/core/TextDoc'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {RichTextField} from '#/core/field/RichTextField.js'
+import type {Schema} from '#/core/Schema.js'
+import type {TextDoc} from '#/core/TextDoc.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
+import type {AnyExtension} from '@tiptap/core'
 import type {ReactNode} from 'react'
-import type {ToolbarConfig} from './RichTextToolbar.js'
+import type {ToolbarConfig} from './Toolbar.js'
+
+export interface RichTextExtensionConfig {
+  [name: string]: AnyExtension
+}
+
+export interface ConfigureRichTextExtensions {
+  (defaults: RichTextExtensionConfig): RichTextExtensionConfig
+}
+
+export function configureRichTextExtensions(
+  configure: ConfigureRichTextExtensions | undefined,
+  defaults: RichTextExtensionConfig
+): RichTextExtensionConfig {
+  if (configure === undefined) return defaults
+  if (typeof configure !== 'function')
+    throw new TypeError(
+      'Rich text extensions must be configured with a function, for example: extensions: defaults => ({...defaults})'
+    )
+  return configure(defaults)
+}
 
 /** Optional settings to configure a rich text field */
-export interface RichTextOptions<Blocks extends Schema>
-  extends FieldOptions<TextDoc<Blocks>> {
+export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
+  TextDoc<Blocks>
+> {
   /** Allow these blocks to be created between text fragments */
   schema?: Blocks
   /** Width of the field in the dashboard UI (0-1) */
@@ -25,7 +46,7 @@ export interface RichTextOptions<Blocks extends Schema>
   /** Configure the toolbar layout and items */
   toolbar?: ToolbarConfig
   /** Configure tiptap extensions */
-  extensions?: Record<string, AnyExtension>
+  extensions?: ConfigureRichTextExtensions
 }
 
 /** Create a rich text field configuration */
@@ -35,6 +56,7 @@ export function richText<Blocks extends Schema = {}>(
 ): RichTextField<Blocks, RichTextOptions<Blocks>> {
   return new RichTextField(options.schema, {
     options: {label, ...options},
-    view: viewKeys.RichTextInput
+    view: viewKeys.RichTextInput,
+    compactView: viewKeys.RichTextCompact
   })
 }

@@ -1,0 +1,12 @@
+{
+  "_id": "31Q8GfP2bK7qV1xC9zM4tLsR0ND",
+  "_type": "Page",
+  "_index": "a0",
+  "_root": "pages",
+  "title": "Getting started",
+  "summary": "Top-level child",
+  "codeSample": "bun run dev --filter @alinea/v2",
+  "wordCount": 940,
+  "publishDate": "2026-02-24",
+  "publishTime": "08:30"
+}

@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {createId} from 'alinea/core/Id'
-import {MemorySource} from 'alinea/core/source/MemorySource'
-import {exportSource} from 'alinea/core/source/SourceExport'
+import {createId} from '#/core/Id.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
+import {exportSource} from '#/core/source/SourceExport.js'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
 import type {GenerateContext} from './GenerateContext.js'
 

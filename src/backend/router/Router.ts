@@ -71,7 +71,7 @@ export namespace router {
   }
 
   function withMethod(method: string) {
-    return use((request: Request) => {
+    return new Route((request: Request) => {
       if (request.method !== method) return undefined
       return request
     })
@@ -79,7 +79,7 @@ export namespace router {
 
   function withPath(path: string, getPathname: (url: URL) => string) {
     const matcher = parse(path)
-    return use((request: Request) => {
+    return new Route((request: Request) => {
       const url = new URL(request.url)
       const match = matcher.pattern.exec(getPathname(url))
       if (match === null) return undefined

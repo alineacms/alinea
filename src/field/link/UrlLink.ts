@@ -1,14 +1,18 @@
-import type {WithoutLabel} from 'alinea/core/Field'
-import type {InferStoredValue} from 'alinea/core/Infer'
-import type {Label} from 'alinea/core/Label'
-import type {Type} from 'alinea/core/Type'
-import type {ListRow} from 'alinea/core/shape/ListShape'
+import type {WithoutLabel} from '#/core/Field.js'
+import type {InferStoredValue} from '#/core/Infer.js'
+import type {Label} from '#/core/Label.js'
+import type {Type} from '#/core/Type.js'
+import type {ListRow} from '#/core/ListRow.js'
 import {
   type LinkFieldOptions,
   createLink,
   createLinks
-} from 'alinea/field/link/LinkField'
-import {type UrlPickerOptions, type UrlReference, urlPicker} from 'alinea/picker/url'
+} from '#/field/link/LinkField.js'
+import {
+  type UrlPickerOptions,
+  type UrlReference,
+  urlPicker
+} from '#/picker/url.js'
 
 export interface UrlLink<InferredFields = undefined> extends UrlReference {
   href: string
@@ -24,7 +28,8 @@ export namespace UrlLink {
 }
 
 export interface UrlOptions<Fields>
-  extends LinkFieldOptions<UrlReference & InferStoredValue<Fields>>,
+  extends
+    LinkFieldOptions<UrlReference & InferStoredValue<Fields>>,
     UrlPickerOptions<Fields> {}
 
 export function url<Fields>(
@@ -44,7 +49,8 @@ export namespace url {
   type UrlRows<Fields> = UrlLink<Type.Infer<Fields>> & ListRow
 
   export interface UrlOptions<Fields>
-    extends LinkFieldOptions<
+    extends
+      LinkFieldOptions<
         Array<UrlReference & ListRow & InferStoredValue<Fields>>
       >,
       UrlPickerOptions<Fields> {}

@@ -1,0 +1,111 @@
+.Checkbox {
+  --alinea-selected-color: var(--alinea-primary);
+  --alinea-checkmark-color: var(--alinea-primary-fg);
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 0.571rem;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1;
+  color: var(--alinea-fg);
+  forced-color-adjust: none;
+
+  .Checkbox-box {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--alinea-input);
+    border: 1px solid var(--alinea-border);
+    border-radius: 4px;
+    transition: var(--alinea-transition);
+    transition-property: background, border, box-shadow;
+  }
+
+  .Checkbox-mark {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: var(--alinea-checkmark-color);
+    stroke-width: 3px;
+    opacity: 0;
+  }
+
+  &[data-hovered] .Checkbox-box {
+    border-color: var(--alinea-border-hover);
+    box-shadow: 0 0 0 3px var(--alinea-ring-subtle);
+  }
+
+  &[data-focus-visible] .Checkbox-box {
+    outline: 2px solid var(--alinea-border);
+    outline-offset: 2px;
+  }
+
+  &[data-selected],
+  &[data-indeterminate] {
+    .Checkbox-box {
+      background-color: var(--alinea-selected-color);
+      border-color: var(--alinea-selected-color);
+    }
+
+    &[data-hovered] .Checkbox-box {
+      box-shadow: 0 0 0 3px var(--alinea-primary-overlay);
+    }
+
+    &[data-focus-visible] .Checkbox-box {
+      outline-color: var(--alinea-selected-color);
+    }
+
+    .Checkbox-mark {
+      opacity: 1;
+    }
+  }
+
+  &[data-indeterminate] {
+    & .Checkbox-mark {
+      stroke: none;
+      fill: var(--alinea-checkmark-color);
+    }
+  }
+
+  &[data-invalid] {
+    .Checkbox-box {
+      border-color: var(--alinea-border-danger);
+    }
+
+    &[data-hovered] .Checkbox-box {
+      box-shadow: 0 0 0 3px var(--alinea-danger-overlay);
+    }
+
+    &[data-focus-visible] .Checkbox-box {
+      outline-color: var(--alinea-border-danger);
+    }
+
+    &[data-selected],
+    &[data-indeterminate] {
+      .Checkbox-box {
+        background-color: var(--alinea-border-danger);
+      }
+    }
+  }
+
+  &[data-disabled],
+  &[data-readonly] {
+    pointer-events: none;
+    color: var(--alinea-fg-disabled);
+  }
+
+  &[data-disabled] {
+    opacity: 0.5;
+  }
+
+  &[data-readonly] {
+    .Checkbox-box {
+      background-color: var(--alinea-border);
+      border-color: var(--alinea-border);
+    }
+  }
+}

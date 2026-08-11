@@ -1,181 +1,315 @@
-import {Request, Response} from '@alinea/iso'
+import {composeBackend} from '#/backend/api/CreateBackend.js'
+import {createHandler} from '#/backend/Handler.js'
+import {AuthResultType} from '#/cloud/AuthResult.js'
+import {createCMS} from '#/core.js'
+import type {
+  AuthOptions,
+  AuthedContext,
+  RequestContext
+} from '#/core/Connection.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {role} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
+import {Config} from '#/index.js'
 import {suite} from '@alinea/suite'
-import {Config} from 'alinea'
-import {createHandler} from 'alinea/backend/Handler'
-import type {RemoteConnection, RequestContext} from 'alinea/core/Connection'
-import {createCMS} from 'alinea/core'
-import {LocalDB} from 'alinea/core/db/LocalDB'
 
 const test = suite(import.meta)
 
-const uploader = Config.role('Uploader', {
-  permissions(policy) {
-    policy.set({allow: {upload: true}})
-  }
+const Page = Config.document('Page', {
+  fields: {}
 })
 
-const viewer = Config.role('Viewer', {
-  permissions() {}
-})
-
-const Page = Config.document('Page', {fields: {}})
 const main = Config.workspace('Main', {
   source: 'content',
   roots: {
-    pages: Config.root('Pages', {contains: [Page]})
+    pages: Config.root('Pages')
   }
 })
-const cms = createCMS({
-  schema: {Page},
-  workspaces: {main},
-  roles: {uploader, viewer}
-})
 
-function context(): RequestContext {
-  return {
-    isDev: true,
-    handlerUrl: new URL('http://localhost/api'),
-    apiKey: 'secret'
-  }
-}
-
-test('upload prepare requires upload permission', async () => {
-  let prepareCalls = 0
-  const remote = ((ctx: RequestContext) => {
-    return {
-      authenticate: async () => new Response('auth'),
-      verify: async (request: Request) => {
-        const bearer = request.headers.get('authorization')
-        const user =
-          bearer === 'Bearer secret'
-            ? {name: 'Uploader', roles: ['uploader']}
-            : {name: 'Viewer', roles: ['viewer']}
-        return {...ctx, user, token: 'token'}
-      },
-      prepareUpload: async () => {
-        prepareCalls++
-        return {
-          entryId: 'e1',
-          location: 'uploads/test.jpg',
-          previewUrl: 'http://localhost/api?action=upload&entryId=e1',
-          url: 'http://localhost/upload'
+test('requires member management capability for user management', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    roles: {
+      editor: role('Editor', {
+        permissions() {}
+      }),
+      owner: role('Owner', {
+        permissions(policy) {
+          policy.set({
+            allow: {
+              manageMembers: true
+            }
+          })
         }
-      }
-    } as unknown as RemoteConnection
-  }) as (context: RequestContext) => RemoteConnection
-
+      })
+    }
+  })
   const db = new LocalDB(cms.config)
-  const handler = createHandler({cms, db, remote})
+  let userRoles = ['editor']
+  let listCalls = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {
+              email: 'ada@example.com',
+              roles: userRoles,
+              sub: 'ada@example.com'
+            }
+          }
+        },
+        async enrichUser(user: User): Promise<User> {
+          return user
+        },
+        async listUsers(): Promise<Array<User>> {
+          listCalls += 1
+          return []
+        }
+      })
+    }
+  })
 
-  const denied = await handler(
+  const denied = await handle(userRequest('list'), requestContext())
+  test.is(denied.status, 401)
+  test.is(listCalls, 0)
+
+  userRoles = ['owner']
+  const allowed = await handle(userRequest('list'), requestContext())
+  test.is(allowed.status, 200)
+  test.is(listCalls, 1)
+})
+
+test('reports missing user api capability without listUsers', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend({})
+    }
+  })
+
+  const response = await handle(capabilitiesRequest(), requestContext())
+  test.is(response.status, 200)
+  test.equal(await response.json(), {
+    users: false
+  })
+})
+
+test('reports user api capability when listUsers exists', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend({
+        async listUsers(): Promise<Array<User>> {
+          return []
+        }
+      })
+    }
+  })
+
+  const response = await handle(capabilitiesRequest(), requestContext())
+  test.is(response.status, 200)
+  test.equal(await response.json(), {
+    users: true
+  })
+})
+
+test('enriches authenticated user in auth status response', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend({
+        async authenticate(
+          _request: Request,
+          options?: AuthOptions
+        ): Promise<Response> {
+          const user = {
+            email: 'ada@example.com',
+            roles: [],
+            sub: 'ada@example.com'
+          }
+          return Response.json({
+            type: AuthResultType.Authenticated,
+            user: options?.enrichUser ? await options.enrichUser(user) : user
+          })
+        },
+        async enrichUser(user: User): Promise<User> {
+          return {...user, roles: ['admin']}
+        }
+      })
+    }
+  })
+
+  const response = await handle(authStatusRequest(), requestContext())
+
+  test.is(response.status, 200)
+  test.equal(await response.json(), {
+    type: AuthResultType.Authenticated,
+    user: {
+      email: 'ada@example.com',
+      roles: ['admin'],
+      sub: 'ada@example.com'
+    }
+  })
+})
+
+test('adds enriched user to commit requests', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  let commitUser: User | undefined
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {
+              email: 'ada@example.com',
+              roles: ['admin'],
+              sub: 'ada@example.com'
+            }
+          }
+        },
+        async enrichUser(user: User): Promise<User> {
+          return {...user, name: 'Ada Lovelace'}
+        },
+        async getTreeIfDifferent() {
+          return undefined
+        },
+        async *getBlobs() {},
+        async write(request) {
+          commitUser = request.user
+          return {sha: request.intoSha}
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?action=mutate', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify([])
+    }),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.equal(commitUser, {
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    roles: ['admin'],
+    sub: 'ada@example.com'
+  })
+})
+
+test('rejects oversized uploads before preparing a remote upload', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    maxUploadSize: 3
+  })
+  const db = new LocalDB(cms.config)
+  let prepareCalls = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async prepareUpload() {
+          prepareCalls += 1
+          throw new Error('Should not prepare an oversized upload')
+        }
+      })
+    }
+  })
+
+  const response = await handle(
     new Request('http://localhost/api?action=upload', {
       method: 'POST',
       headers: {
         accept: 'application/json',
         'content-type': 'application/json'
       },
-      body: JSON.stringify({filename: 'test.jpg'})
+      body: JSON.stringify({filename: 'large.jpg', size: 4})
     }),
-    context()
+    requestContext()
   )
-  test.is(denied.status, 401)
-  test.is(prepareCalls, 0)
 
-  const allowed = await handler(
-    new Request('http://localhost/api?action=upload', {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        authorization: 'Bearer secret'
-      },
-      body: JSON.stringify({filename: 'test.jpg'})
-    }),
-    context()
-  )
-  test.is(allowed.status, 200)
-  test.is(prepareCalls, 1)
+  test.is(response.status, 413)
+  test.is(prepareCalls, 0)
 })
 
-test('upload blob requires upload permission', async () => {
-  let blobCalls = 0
-  const remote = ((ctx: RequestContext) => {
-    return {
-      authenticate: async () => new Response('auth'),
-      verify: async (request: Request) => {
-        const bearer = request.headers.get('authorization')
-        const user =
-          bearer === 'Bearer secret'
-            ? {name: 'Uploader', roles: ['uploader']}
-            : {name: 'Viewer', roles: ['viewer']}
-        return {...ctx, user, token: 'token'}
-      },
-      handleUpload: async () => {
-        blobCalls++
-      }
-    } as unknown as RemoteConnection
-  }) as (context: RequestContext) => RemoteConnection
-
-  const db = new LocalDB(cms.config)
-  const handler = createHandler({cms, db, remote})
-
-  const denied = await handler(
-    new Request('http://localhost/api?action=upload&entryId=e1', {
-      method: 'POST',
+function userRequest(operation: string): Request {
+  return new Request(
+    `http://localhost/api?action=user&operation=${operation}`,
+    {
       headers: {
         accept: 'application/json'
-      },
-      body: new Blob(['abc'])
-    }),
-    context()
-  )
-  test.is(denied.status, 401)
-  test.is(blobCalls, 0)
-
-  const allowed = await handler(
-    new Request('http://localhost/api?action=upload&entryId=e1', {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        authorization: 'Bearer secret'
-      },
-      body: new Blob(['abc'])
-    }),
-    context()
-  )
-  test.is(allowed.status, 200)
-  test.is(blobCalls, 1)
-})
-
-test('upload preview does not require auth or permissions', async () => {
-  let verifyCalls = 0
-  let previewCalls = 0
-  const remote = ((ctx: RequestContext) => {
-    return {
-      authenticate: async () => new Response('auth'),
-      verify: async () => {
-        verifyCalls++
-        return {...ctx, user: {name: 'Viewer', roles: ['viewer']}, token: 't'}
-      },
-      previewUpload: async (entryId: string) => {
-        previewCalls++
-        return new Response(`preview:${entryId}`, {status: 200})
       }
-    } as unknown as RemoteConnection
-  }) as (context: RequestContext) => RemoteConnection
-
-  const db = new LocalDB(cms.config)
-  const handler = createHandler({cms, db, remote})
-  const response = await handler(
-    new Request('http://localhost/api?action=upload&entryId=e1', {
-      method: 'GET',
-      headers: {accept: 'application/json'}
-    }),
-    context()
+    }
   )
+}
 
-  test.is(response.status, 200)
-  test.is(await response.text(), 'preview:e1')
-  test.is(previewCalls, 1)
-  test.is(verifyCalls, 0)
-})
+function authStatusRequest(): Request {
+  return new Request('http://localhost/api?auth=status', {
+    headers: {
+      accept: 'application/json'
+    }
+  })
+}
+
+function capabilitiesRequest(): Request {
+  return new Request('http://localhost/api?action=capabilities', {
+    headers: {
+      accept: 'application/json'
+    }
+  })
+}
+
+function requestContext(): RequestContext {
+  return {
+    apiKey: 'test',
+    handlerUrl: new URL('http://localhost/api'),
+    isDev: true
+  }
+}

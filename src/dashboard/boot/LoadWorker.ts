@@ -1,8 +1,9 @@
-import {IndexEvent} from 'alinea/core/db/IndexEvent'
-import {IndexedDBSource} from 'alinea/core/source/IndexedDBSource'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'
+import {MutationQueueEvent} from './MutationQueueEvent.js'
 
 export async function loadWorker(gen: ConfigGenerator) {
   const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
@@ -16,11 +17,13 @@ export async function loadWorker(gen: ConfigGenerator) {
     const listen = (event: Event) => {
       try {
         port.postMessage({...event, type: event.type})
-      } catch (error) {
+      } catch {
         worker.removeEventListener(IndexEvent.type, listen)
+        worker.removeEventListener(MutationQueueEvent.type, listen)
       }
     }
     worker.addEventListener(IndexEvent.type, listen)
+    worker.addEventListener(MutationQueueEvent.type, listen)
   })
 
   for await (const batch of gen) {

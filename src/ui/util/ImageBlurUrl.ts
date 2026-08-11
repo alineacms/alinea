@@ -1,4 +1,4 @@
-import {base64} from 'alinea/core/util/Encoding'
+import {base64} from '#/core/util/Encoding.js'
 import {thumbHashToDataURL} from 'thumbhash'
 
 interface HasThumbHash {

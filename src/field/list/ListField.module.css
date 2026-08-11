@@ -1,0 +1,127 @@
+.ListFieldCreateActions {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ListFieldCreateActions-button {
+  flex-shrink: 0;
+}
+
+.ListFieldView-rowDropTarget {
+  display: grid;
+}
+
+.ListFieldView-insertAction {
+  align-self: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.ListFieldView-dropIndicator {
+  position: relative;
+  z-index: 2;
+  height: 8px;
+  margin: -4px 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease-out;
+}
+
+.ListFieldView-dropIndicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  max-width: calc(100% - 20px);
+  height: 6px;
+  background: var(--alinea-primary);
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.ListFieldView-dropIndicator[data-active] {
+  opacity: 1;
+}
+
+.ListFieldTypePicker-empty {
+  padding: 16px;
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.ListFieldTypePicker-trigger {
+  flex-shrink: 0;
+  min-width: 2rem;
+  width: 2rem;
+}
+
+.ListFieldTypePicker-trigger.ListFieldView-insertAction {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+.ListFieldTypePicker-popover {
+  width: 280px;
+  min-width: 280px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ListFieldTypePicker-dialog {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ListFieldTypePicker-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.ListFieldTypePicker-list {
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+  outline: none;
+}
+
+.ListFieldTypePicker-item {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+  display: flex;
+  outline: none;
+  align-items: center;
+  border-radius: 4px;
+  gap: 8px;
+  position: relative;
+  color: var(--alinea-fg);
+}
+
+.ListFieldTypePicker-item[data-focus-visible] {
+  outline: none;
+}
+
+.ListFieldTypePicker-item[data-selected] {
+  font-weight: 500;
+  background: var(--alinea-selected);
+  color: var(--alinea-primary-subtle-fg);
+  position: relative;
+}
+
+.ListFieldTypePicker-item[data-focused] {
+  background: var(--alinea-primary);
+  color: var(--alinea-primary-fg);
+}
+
+.ListFieldTypePicker-item[data-disabled] {
+  pointer-events: none;
+  opacity: 0.2;
+}

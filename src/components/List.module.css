@@ -1,0 +1,266 @@
+.ListItem {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+}
+
+.ListItem-header {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.ListItem-content {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.ListItem-leading,
+.ListItem-trailing {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  position: relative;
+}
+
+.ListItem-inner {
+  flex-grow: 1;
+  padding: 10px;
+}
+
+.ListItem-header + .ListItem-inner {
+  padding-top: 4px;
+}
+
+.ListLabel {
+  color: var(--alinea-fg-muted);
+  min-height: auto;
+  padding-block: 0;
+  margin-left: -8px;
+  margin-bottom: 8px;
+  border: none;
+  align-items: flex-start;
+}
+
+.ListLabel[data-hovered],
+.ListLabel[data-pressed],
+.ListLabel[data-active] {
+  background: transparent;
+}
+
+.ListError {
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+  padding-top: 4px;
+}
+
+.ListCreateRow[data-empty] .ListCreateRow-inner {
+  border-top: 0;
+}
+
+.ListCreateRow-inner {
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  min-height: 36px;
+  border-top: 1px solid var(--alinea-border);
+}
+
+.ListRow {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+}
+
+.ListRow:not(:first-child),
+.ListRow[data-first-row='false'] {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.ListRow[data-dragging] {
+  opacity: 0.5;
+}
+
+.ListRow[data-first-row='true'] {
+  border-top: 0;
+}
+
+.ListRowDragHandle {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  z-index: 3;
+  width: 56px;
+  height: 22px;
+  cursor: grab;
+  opacity: 0;
+  outline: none;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 140ms ease-out;
+}
+
+.ListRowDragHandle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30px;
+  height: 4px;
+  background: light-dark(var(--alinea-gray-300), var(--alinea-gray-400));
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.ListRowDragHandle[data-dragging],
+.ListRowDragHandle:active {
+  cursor: grabbing;
+}
+
+.ListRowHeader {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  min-height: 36px;
+  padding: 2px 8px;
+}
+
+.ListRowHeader:hover > .ListRowDragHandle,
+.ListRowHeader:focus-within > .ListRowDragHandle,
+.ListRowDragHandle[data-dragging] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ListRowHeader:not([data-has-fold]) {
+  padding-left: 8px;
+}
+
+.ListRowDrag {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.ListRowDrag[data-dragging] {
+  cursor: grabbing;
+}
+
+.ListRowBadges {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 8px;
+}
+
+.ListRowMeta {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ListRowActions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.ListRowFoldButton {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+}
+
+.ListRowFoldButton[data-hovered],
+.ListRowFoldButton[data-pressed],
+.ListRowFoldButton[data-active] {
+  color: var(--alinea-fg);
+}
+
+.ListRowFoldButton-icon {
+  font-size: 16px;
+}
+
+.ListRowSettingsButton {
+  position: relative;
+}
+
+.ListRowBody {
+  display: grid;
+  gap: 12px;
+  align-items: normal;
+  padding: 8px 16px 16px 16px;
+}
+
+.ListRowFooter {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 8px 16px;
+}
+
+.ListRowSettings {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ListRowSettings[data-actions] {
+  padding: 0;
+  gap: 0;
+}
+
+.ListDragPreview {
+  min-width: 220px;
+  max-width: 300px;
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--alinea-border) 70%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--alinea-bg) 94%, white);
+  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+}
+
+.ListDragPreview-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-primary);
+  background: color-mix(in srgb, var(--alinea-primary) 12%, transparent);
+}
+
+.ListDragPreview-body {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.ListDragPreview-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--alinea-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

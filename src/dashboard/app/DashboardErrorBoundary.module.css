@@ -1,0 +1,39 @@
+.DashboardErrorBoundary {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
+}
+
+.DashboardErrorBoundary-card {
+  display: flex;
+  max-width: 520px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+
+.DashboardErrorBoundary-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.DashboardErrorBoundary-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.DashboardErrorBoundary-message {
+  max-height: 300px;
+  margin: 0;
+  overflow: auto;
+  color: var(--alinea-fg-muted);
+  font-family: var(--alinea-mono-font);
+  font-size: 0.9em;
+  white-space: pre-line;
+}

@@ -1,0 +1,19 @@
+.Popover {
+  width: var(--alinea-trigger-width);
+  &[data-clear] {
+    width: calc(var(--alinea-trigger-width) + 40px);
+  }
+  outline: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  min-width: 240px;
+  max-width: 320px;
+  display: block;
+  min-height: unset;
+  max-height: inherit;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--alinea-border);
+  background-color: var(--alinea-input);
+  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+}

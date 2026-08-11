@@ -1,222 +1,214 @@
-import {Config} from 'alinea/core/Config'
-import type {LocalConnection} from 'alinea/core/Connection'
-import {Root} from 'alinea/core/Root'
-import {Icon, Loader, px} from 'alinea/ui'
-import {FavIcon} from 'alinea/ui/branding/FavIcon'
-import {IcRoundCheckBox} from 'alinea/ui/icons/IcRoundCheckBox'
-import {IcRoundCheckBoxOutlineBlank} from 'alinea/ui/icons/IcRoundCheckBoxOutlineBlank'
-import {IcRoundDescription} from 'alinea/ui/icons/IcRoundDescription'
-import {MaterialSymbolsDatabase} from 'alinea/ui/icons/MaterialSymbolsDatabase'
-import {Statusbar} from 'alinea/ui/Statusbar'
-import {atom, useAtom, useAtomValue} from 'jotai'
-import {type ComponentType, useEffect} from 'react'
-import type {QueryClient} from 'react-query'
-import {sessionAtom} from './atoms/DashboardAtoms.js'
-import {dbMetaAtom, useDbUpdater} from './atoms/DbAtoms.js'
-import {errorAtom} from './atoms/ErrorAtoms.js'
-import {locationAtom, matchAtoms} from './atoms/LocationAtoms.js'
-import {usePreferredLanguage} from './atoms/NavigationAtoms.js'
-import {policyTrigger} from './atoms/PolicyAtom.js'
-import {RouterProvider, RouteView} from './atoms/RouterAtoms.js'
-import type {WorkerDB} from './boot/WorkerDB.js'
-import {navMatchers} from './DashboardNav.js'
-import {DashboardProvider} from './DashboardProvider.js'
-import {useDashboard} from './hook/UseDashboard.js'
-import {useEntryLocation} from './hook/UseEntryLocation.js'
-import {useLocale} from './hook/UseLocale.js'
-import {useNav} from './hook/UseNav.js'
-import {useRoot} from './hook/UseRoot.js'
-import {useWorkspace} from './hook/UseWorkspace.js'
-import {router} from './Routes.js'
-import {Head} from './util/Head.js'
-import {SuspenseBoundary} from './util/SuspenseBoundary.js'
-import {ErrorBoundary} from './view/ErrorBoundary.js'
-import {Modal} from './view/Modal.js'
-import {Sidebar} from './view/Sidebar.js'
-import {SidebarSettings} from './view/sidebar/SidebarSettings.js'
-import {Toolbar} from './view/Toolbar.js'
-import {Viewport} from './view/Viewport.js'
+import {ProgressCircle} from '#/components.js'
+import type {Config} from '#/core/Config.js'
+import type {LocalConnection} from '#/core/Connection.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {styler} from '@alinea/styler'
+import {atom, createStore, Provider, useAtomValue} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {useMemo, useState, type ComponentType, type ReactNode} from 'react'
+import css from './App.module.css'
+import {AccessDenied} from './app/AccessDenied.js'
+import {AuthView} from './app/AuthView.js'
+import {DashboardLayout} from './app/DashboardLayout.js'
+import {DashboardMeta} from './app/DashboardMeta.js'
+import {DashboardErrorBoundary} from './app/DashboardErrorBoundary.js'
+import {entryPage} from './app/pages/EntryPage.js'
+import {MissingRoot, rootPage} from './app/pages/RootPage.js'
+import {usersPage} from './app/pages/UsersPage.js'
+import {Rail} from './app/ui/Rail.js'
+import {authAtom} from './atoms/auth.js'
+import {workspaceAtoms} from './atoms/config.js'
+import {useInitAtoms} from './atoms/core.js'
+import {entryAtoms, MissingEntryError} from './atoms/entry.js'
+import {resolvePage} from './atoms/nav.js'
+import {rootAtoms} from './atoms/root.js'
+import {authReady, canManageMembersAtom} from './atoms/user.js'
+import {DashboardModelScope, type Dashboard} from './hooks.js'
+import './global.css'
 
-const isEntryAtom = atom(get => {
-  const location = get(locationAtom)
-  const match = get(matchAtoms({route: navMatchers.matchEntry}))
-  return Boolean(match) || location.pathname === '/'
-})
-
-function AppAuthenticated() {
-  useDbUpdater()
-  // This is a workaround to make sure we suspend right here until we have a
-  // policy available, but once we do there is no more need to suspend
-  const policy = useAtomValue(policyTrigger)
-  const {alineaDev, config} = useDashboard()
-  const {roles} = config
-  const [session, setSession] = useAtom(sessionAtom)
-  const nav = useNav()
-  const isEntry = useAtomValue(isEntryAtom)
-  const {name: workspace, color, roots} = useWorkspace()
-  const {name: currentRoot} = useRoot()
-  const entryLocation = useEntryLocation()
-  const locale = useLocale()
-  const [preferredLanguage, setPreferredLanguage] = usePreferredLanguage()
-  const [errorMessage, setErrorMessage] = useAtom(errorAtom)
-  const sha = useAtomValue(dbMetaAtom)
-  useEffect(() => {
-    setPreferredLanguage(locale)
-  }, [locale])
-  return (
-    <>
-      {errorMessage && (
-        <Modal open onClose={() => setErrorMessage(null)}>
-          <div style={{padding: px(16)}}>{errorMessage}</div>
-        </Modal>
-      )}
-      <Statusbar.Provider>
-        <Toolbar.Provider>
-          <Sidebar.Provider>
-            <Head>
-              <FavIcon color={color} />
-            </Head>
-            <div
-              style={{
-                flex: '1',
-                display: 'flex',
-                minHeight: 0,
-                position: 'relative'
-              }}
-            >
-              <Sidebar.Nav>
-                {Object.entries(roots)
-                  .filter(([key]) => {
-                    return policy.canRead({workspace, root: key})
-                  })
-                  .map(([key, root]) => {
-                    const isSelected = key === currentRoot
-                    const {id, ...location} = entryLocation
-                    const link =
-                      location.root === key
-                        ? nav.entry(location)
-                        : nav.root({
-                            workspace,
-                            root: key,
-                            locale: preferredLanguage
-                          })
-                    const {label, icon} = Root.data(root)
-                    return (
-                      <Sidebar.Nav.Item
-                        key={key}
-                        selected={isEntry && isSelected}
-                        href={link}
-                        aria-label={label}
-                      >
-                        <Icon icon={icon ?? IcRoundDescription} />
-                      </Sidebar.Nav.Item>
-                    )
-                  })}
-                {/*<DraftsButton />*/}
-                <SidebarSettings />
-              </Sidebar.Nav>
-              <ErrorBoundary>
-                <SuspenseBoundary name="main" fallback={<Loader absolute />}>
-                  <RouteView fallback={null} />
-                </SuspenseBoundary>
-              </ErrorBoundary>
-            </div>
-            {alineaDev && (
-              <Statusbar.Root>
-                {session &&
-                  Object.entries(roles ?? {}).map(([name, role]) => {
-                    const isActive = session.user.roles.includes(name)
-                    return (
-                      <Statusbar.Status
-                        icon={
-                          isActive
-                            ? IcRoundCheckBox
-                            : IcRoundCheckBoxOutlineBlank
-                        }
-                        key={name}
-                        onClick={() => {
-                          setSession({
-                            ...session,
-                            user: {
-                              ...session.user,
-                              roles: isActive
-                                ? session.user.roles.filter(r => r !== name)
-                                : [...session.user.roles, name]
-                            }
-                          })
-                        }}
-                      >
-                        <span>{role.label}</span>
-                      </Statusbar.Status>
-                    )
-                  })}
-
-                {sha ? (
-                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                    {sha.slice(0, 7)}
-                  </Statusbar.Status>
-                ) : (
-                  <Statusbar.Status icon={MaterialSymbolsDatabase}>
-                    Syncing
-                  </Statusbar.Status>
-                )}
-              </Statusbar.Root>
-            )}
-          </Sidebar.Provider>
-        </Toolbar.Provider>
-      </Statusbar.Provider>
-    </>
-  )
-}
-
-function AppRoot() {
-  const [session, setSession] = useAtom(sessionAtom)
-  const {config} = useDashboard()
-  const {color} = Config.mainWorkspace(config)
-  const Auth = config.auth
-  if (!session)
-    return (
-      <>
-        <Head>
-          <FavIcon color={color} />
-        </Head>
-        {Auth && (
-          <SuspenseBoundary name="auth" fallback={<Loader absolute />}>
-            <Auth setSession={setSession} />
-          </SuspenseBoundary>
-        )}
-      </>
-    )
-  return (
-    <ErrorBoundary>
-      <SuspenseBoundary name="router" fallback={<Loader absolute />}>
-        <RouterProvider router={router}>
-          <AppAuthenticated />
-        </RouterProvider>
-      </SuspenseBoundary>
-    </ErrorBoundary>
-  )
-}
+const styles = styler(css)
 
 export interface AppProps {
-  db: WorkerDB
+  graph: WriteableGraph
+  events: EventTarget
   config: Config
-  views: Record<string, ComponentType>
   client: LocalConnection
-  queryClient?: QueryClient
-  fullPage?: boolean
+  views: Record<string, ComponentType>
   local?: boolean
   alineaDev?: boolean
 }
 
-export function App(props: AppProps) {
-  const fullPage = props.fullPage !== false
-  const {color} = Config.mainWorkspace(props.config)
-  return (
-    <DashboardProvider {...props}>
-      <Viewport attachToBody={fullPage} contain color={color}>
-        <AppRoot />
-      </Viewport>
-    </DashboardProvider>
+const appAtom = atom(async get => {
+  const auth = get(authAtom)
+  if (auth.status === 'authenticated') return get(authenticatedAtom)
+  return <AuthView />
+})
+
+const appValueAtom = unwrap(appAtom, previous => previous)
+
+const authenticatedAtom = atom(async get => {
+  const [auth, canManageMembers] = await Promise.all([
+    get(authReady),
+    get(canManageMembersAtom)
+  ])
+  const page = resolvePage(get, auth)
+  const {entry, workspace, root} = page
+  const workspaceData = workspace
+    ? get(workspaceAtoms(workspace).settingsAtom)
+    : undefined
+  const meta = (label: string): ReactNode => (
+    <DashboardMeta
+      color={workspaceData?.color ?? '#7c3aed'}
+      icon={workspaceData?.icon}
+      title={dashboardTitle(workspaceData?.label ?? 'Alinea', label)}
+    />
   )
+
+  if (page.type === 'users' && canManageMembers) {
+    const content = await usersPage(page, get)
+    return (
+      <>
+        {meta('Users')}
+        {content}
+      </>
+    )
+  }
+
+  if (!workspace || !workspaceData) {
+    return (
+      <>
+        {meta('No workspace access')}
+        <AccessDenied canManageMembers={canManageMembers} scope="workspace" />
+      </>
+    )
+  }
+
+  if (!root) {
+    return (
+      <>
+        {meta('No root access')}
+        <AccessDenied canManageMembers={canManageMembers} scope="root" />
+      </>
+    )
+  }
+
+  const rootData = rootAtoms(page, workspace, root, page.locale ?? null)
+
+  if (page.requestedRoot && page.requestedRoot !== root) {
+    await get(rootData.treeReady)
+    return (
+      <>
+        {meta('Root not found')}
+        <DashboardLayout
+          canManageMembers={canManageMembers}
+          page={page}
+          root={rootData}
+          workspace={{...workspaceData, name: workspace}}
+        >
+          <MissingRoot
+            page={page}
+            requestedRoot={page.requestedRoot}
+            root={rootData}
+          />
+        </DashboardLayout>
+      </>
+    )
+  }
+
+  if (entry) {
+    const [content, title] = await Promise.all([
+      entryPage(page, get),
+      entryTitle(page, entry, get),
+      get(rootData.treeReady)
+    ])
+    return (
+      <>
+        {meta(title)}
+        <DashboardLayout
+          canManageMembers={canManageMembers}
+          page={page}
+          root={rootData}
+          workspace={{...workspaceData, name: workspace}}
+        >
+          {content}
+        </DashboardLayout>
+      </>
+    )
+  }
+
+  const [content] = await Promise.all([
+    rootPage(page, get),
+    get(rootData.treeReady)
+  ])
+  return (
+    <>
+      {meta(get(rootData.label))}
+      <DashboardLayout
+        canManageMembers={canManageMembers}
+        page={page}
+        root={rootData}
+        workspace={{...workspaceData, name: workspace}}
+      >
+        {content}
+      </DashboardLayout>
+    </>
+  )
+})
+
+export function App(props: AppProps) {
+  const [store] = useState(createStore)
+  const dashboard = useMemo(
+    (): Dashboard => ({
+      graph: props.graph,
+      config: props.config,
+      events: props.events,
+      client: props.client,
+      views: props.views,
+      options: {alineaDev: props.alineaDev, local: props.local}
+    }),
+    [props]
+  )
+  return (
+    <Provider store={store}>
+      <DashboardModelScope dashboard={dashboard}>
+        <DashboardErrorBoundary>
+          <DashboardApp {...props} />
+        </DashboardErrorBoundary>
+      </DashboardModelScope>
+    </Provider>
+  )
+}
+
+function DashboardApp(props: AppProps): ReactNode {
+  useInitAtoms(props)
+  const app = useAtomValue(appValueAtom)
+  return app ?? <AppLoading />
+}
+
+function AppLoading() {
+  return (
+    <Rail main className={styles.AppLoading()}>
+      <div className={styles.AppLoading.progress()}>
+        <ProgressCircle isIndeterminate aria-label="Loading dashboard" />
+      </div>
+    </Rail>
+  )
+}
+
+async function entryTitle(
+  page: ReturnType<typeof resolvePage>,
+  entryId: string,
+  get: Parameters<typeof resolvePage>[0]
+) {
+  try {
+    const entry = await get(entryAtoms(page, entryId))
+    return (await get(entry.locales(page.locale ?? null).selectedEntry)).title
+  } catch (error) {
+    if (error instanceof MissingEntryError) return 'Entry not found'
+    throw error
+  }
+}
+
+function dashboardTitle(workspace: string, view: string) {
+  return workspace === view ? workspace : `${workspace}: ${view}`
 }

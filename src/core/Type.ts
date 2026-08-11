@@ -1,19 +1,23 @@
-import type {EntryEditProps} from 'alinea/dashboard/view/EntryEdit'
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {EntryStatus} from './Entry.js'
 import type {Expr} from './Expr.js'
-import {Field} from './Field.js'
+import {
+  Field,
+  type EntryAnchorTarget,
+  type FieldAnchorContext,
+  type FieldBeforeSaveContext
+} from './Field.js'
 import {type HasType, getType, hasType, internalType} from './Internal.js'
 import type {Label} from './Label.js'
 import type {OrderBy} from './OrderBy.js'
 import type {Preview} from './Preview.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
+import type {EntryReferenceTarget} from './db/EntryReference.js'
 import type {SummaryProps} from './media/Summary.js'
-import {RecordShape} from './shape/RecordShape.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries, keys, values} from './util/Objects.js'
+import {entries, fromEntries, isRecord, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
 
 export interface EntryUrlMeta {
@@ -24,6 +28,8 @@ export interface EntryUrlMeta {
   workspace: string
   root: string
 }
+
+export type EntryDefaultView = 'edit' | 'overview'
 
 export type Type<Definition = object> = Definition & HasType
 
@@ -49,15 +55,44 @@ export namespace Type {
     return Boolean(getType(type).hidden)
   }
 
-  export function shape(type: Type): RecordShape {
-    return getType(type).shape
-  }
-
   export function searchableText(type: Type, value: any): string {
-    return shape(type).searchableText(value).trim()
+    const self: Record<string, any> = value || {}
+    let res = ''
+    for (const [key, field] of entries(fields(type))) {
+      res += Field.searchableText(field, self[key])
+    }
+    return res.trim()
   }
 
-  function fields(type: Type): Record<string, Field> {
+  export function anchors(
+    type: Type,
+    value: Record<string, unknown>,
+    path: Array<string> = []
+  ): Array<EntryAnchorTarget> {
+    const self = value || {}
+    return entries(fields(type)).flatMap(([key, field]) => {
+      return Field.anchors(field, self[key], {
+        path: [...path, key],
+        label: Field.label(field)
+      })
+    })
+  }
+
+  export function references(
+    type: Type,
+    value: Record<string, unknown>,
+    path: Array<string> = []
+  ): Array<EntryReferenceTarget> {
+    const self = value || {}
+    return entries(fields(type)).flatMap(([key, field]) => {
+      return Field.references(field, self[key], {
+        path: [...path, key],
+        label: Field.label(field)
+      })
+    })
+  }
+
+  export function fields(type: Type): Record<string, Field> {
     return getType(type).allFields
   }
 
@@ -94,11 +129,80 @@ export namespace Type {
     return res
   }
 
+  export function withInitialValue(
+    type: Type,
+    value: Record<string, unknown>
+  ): Record<string, unknown> {
+    const merged = mergeInitialValue(value, initialValue(type)) as Record<
+      string,
+      unknown
+    >
+    let next = merged
+    for (const [key, field] of entries(fields(type))) {
+      const before = merged[key]
+      const after = Field.withInitialValue(field, before)
+      if (after === before) continue
+      if (next === merged) next = {...merged}
+      next[key] = after
+    }
+    return normalizeAnchors(type, next)
+  }
+
+  export function normalizeAnchors(
+    type: Type,
+    value: Record<string, unknown>,
+    context: FieldAnchorContext = {anchors: new Set()}
+  ): Record<string, unknown> {
+    let next = value
+    for (const [key, field] of entries(fields(type))) {
+      const before = next[key]
+      const after = Field.normalizeAnchors(field, before, context)
+      if (after === before) continue
+      if (next === value) next = {...value}
+      next[key] = after
+    }
+    return next
+  }
+
+  export function beforeSave(
+    type: Type,
+    value: Record<string, unknown>,
+    context: Omit<FieldBeforeSaveContext<unknown>, 'value'>
+  ): Record<string, unknown> {
+    let next = value
+    for (const [key, field] of entries(fields(type))) {
+      const before = next[key]
+      const after = Field.beforeSave(field, before, context)
+      if (after === before) continue
+      if (next === value) next = {...value}
+      next[key] = after
+    }
+    return normalizeAnchors(type, next)
+  }
+
+  export async function applyLinks(
+    type: Type,
+    value: Record<string, unknown>,
+    loader: import('./db/LinkResolver.js').LinkResolver
+  ): Promise<void> {
+    const self = value || {}
+    await Promise.all(
+      entries(fields(type)).map(([key, field]) => {
+        return Field.applyLinks(field, self[key], loader)
+      })
+    )
+  }
+
   export function preview(type: Type): Preview | undefined {
     return getType(type).preview
   }
 
+  export function defaultView(type: Type): EntryDefaultView | undefined {
+    return getType(type).defaultView
+  }
+
   const TypeOptions = cito.object({
+    defaultView: cito.string.optional,
     view: cito.string.optional,
     summaryRow: cito.string.optional,
     summaryThumb: cito.string.optional
@@ -127,6 +231,24 @@ export namespace Type {
   }
 }
 
+function mergeInitialValue(value: unknown, initialValue: unknown): unknown {
+  if (!isRecord(initialValue)) return value
+  if (!isRecord(value)) return initialValue
+  let next = value
+  for (const [key, initialChildValue] of entries(initialValue)) {
+    const childValue = value[key]
+    const child = mergeInitialValue(childValue, initialChildValue)
+    if (child !== childValue) {
+      if (next === value) next = {...value}
+      next[key] = child
+    } else if (childValue === undefined) {
+      if (next === value) next = {...value}
+      next[key] = initialChildValue
+    }
+  }
+  return next
+}
+
 function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
   return values(definition).flatMap(value => {
     if (Field.isField(value)) return Field.referencedViews(value)
@@ -134,16 +256,6 @@ function viewsOfDefinition(definition: FieldsDefinition): Array<string> {
       return Section.referencedViews(value).concat(
         viewsOfDefinition(Section.fields(value))
       )
-    return []
-  })
-}
-
-function fieldsOfDefinition(
-  definition: FieldsDefinition
-): Array<readonly [string, Field]> {
-  return entries(definition).flatMap(([key, value]) => {
-    if (Field.isField(value)) return [[key, value]] as const
-    if (Section.isSection(value)) return entries(Section.fields(value))
     return []
   })
 }
@@ -164,7 +276,9 @@ export interface TypeConfig<Definition> {
   icon?: ComponentType
 
   /** A React component used to view an entry of this type in the dashboard */
-  view?: View<EntryEditProps & {type: Type}>
+  view?: View<{type: Type}>
+  /** The default dashboard view for entries of this type */
+  defaultView?: EntryDefaultView
   /** A React component used to view a row of this type in the dashboard */
   summaryRow?: View<SummaryProps>
   /** A React component used to view a thumbnail of this type in the dashboard */
@@ -182,11 +296,19 @@ export interface TypeInternal extends TypeConfig<FieldsDefinition> {
   label: string
   allFields: Record<string, Field>
   sections: Array<Section>
-  shape: RecordShape
 }
 
 /** Create a new type */
 export function type<Fields extends FieldsDefinition>(
+  label: string,
+  config: TypeConfig<Fields>
+): Type<Fields> {
+  const instance = createType(label, config)
+  Type.validate(instance)
+  return instance
+}
+
+export function createType<Fields extends FieldsDefinition>(
   label: string,
   config: TypeConfig<Fields>
 ): Type<Fields> {
@@ -214,23 +336,13 @@ export function type<Fields extends FieldsDefinition>(
   }
   addCurrent()
   const allFields = fromEntries(fields) as Fields
-  const instance = {
+  return {
     ...allFields,
     [internalType]: {
       ...config,
       allFields,
       sections,
-      shape: new RecordShape(
-        label,
-        fromEntries(
-          fieldsOfDefinition(config.fields).map(([key, field]) => {
-            return [key, Field.shape(field as Field)]
-          })
-        )
-      ),
       label
     }
   }
-  Type.validate(instance)
-  return instance
 }

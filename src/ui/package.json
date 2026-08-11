@@ -1,9 +1,0 @@
-{
-  "name": "@alinea/ui",
-  "type": "module",
-  "devDependencies": {
-    "color2k": "^1.2.4",
-    "regexparam": "^2.0.1",
-    "use-error-boundary": "^2.0.6"
-  }
-}

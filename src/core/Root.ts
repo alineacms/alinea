@@ -11,6 +11,7 @@ import type {View} from './View.js'
 
 export interface RootI18n {
   locales: ReadonlyArray<string>
+  fallback?: (requested: string) => ReadonlyArray<string>
 }
 
 export interface RootMeta {
@@ -18,6 +19,8 @@ export interface RootMeta {
   contains?: Array<string | Type>
   /** Order children entries in the sidebar content tree */
   orderChildrenBy?: OrderBy | Array<OrderBy>
+  /** Open this root in the sidebar content tree by default */
+  openByDefault?: boolean
   icon?: ComponentType
   i18n?: RootI18n
   /** Point to a React component used to view this root in the dashboard */
@@ -34,6 +37,10 @@ export interface RootData extends RootMeta {
   label: string
 }
 
+interface RootMediaData {
+  _media?: {i18n?: RootI18n}
+}
+
 export type Root<Children extends ChildrenDefinition = ChildrenDefinition> =
   Children & HasRoot
 
@@ -48,6 +55,10 @@ export namespace Root {
 
   export function data(root: Root): RootData {
     return getRoot(root)
+  }
+
+  export function mediaI18n(root: RootData): RootI18n | undefined {
+    return (root as RootData & RootMediaData)._media?.i18n
   }
 
   export function preview(root: Root): Preview | undefined {
@@ -72,6 +83,7 @@ export namespace Root {
       locales: cito.array(cito.string)
     }).optional,
     view: cito.string.optional,
+    openByDefault: cito.boolean.optional,
     isMediaRoot: cito.boolean.optional
   })
 

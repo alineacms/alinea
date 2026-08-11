@@ -1,0 +1,26 @@
+.AppShell {
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  background: var(--alinea-backdrop);
+  padding: 8px;
+}
+
+.AppShellInner {
+  display: flex;
+  gap: 8px;
+  height: 100%;
+  width: 100%;
+}
+
+.AppShellContent {
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  min-width: 0;
+  box-shadow:
+    lch(0 0 0 / 0.02) 0px 3px 6px -2px,
+    lch(0 0 0 / 0.04) 0px 1px 1px;
+}

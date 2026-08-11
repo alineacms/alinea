@@ -1,11 +1,12 @@
 {
   "_id": "2dgg6MP0uZIrdG8zhknFbkdF7yg",
   "_type": "LinkFields",
-  "_index": "a8",
+  "_index": "a4",
   "title": "Link fields",
-  "externalLink": {},
-  "entry": {},
-  "entryWithCondition": {},
+  "externalLink": null,
+  "entry": null,
+  "entryWithCondition": null,
+  "entryWithLocation": null,
   "linkMultiple": [
     {
       "_id": "2mBuT1TZFS5gx3z62yF4hh6X6SJ",
@@ -24,30 +25,96 @@
       "_target": "_blank"
     },
     {
-      "_id": "2mBuUMTZMHyBXwcsKDKcL35k0k0",
-      "_index": "a2",
+      "_id": "3GX3o8NK2whi7rwjn5W93vjBP2M",
+      "_index": "",
       "_type": "entry",
-      "_entry": "2dgfSWKFaEqxaimsO32A1sR9iMw"
+      "_entry": "2dgg9AopqPd4gasFaAefPYSS4tf"
     },
     {
-      "_id": "2mBuUHMu7Pln9Gx4EWQTWQP6kOq",
-      "_index": "a3",
+      "_id": "3GX3oCtTtClHyauBt8kZj8YJodX",
       "_type": "entry",
-      "_entry": "2aUFgENnh2qSfIWH1sHV5We80G3"
+      "_index": "",
+      "_entry": "2dgg7Hkjt0lksSEgm2gDjLTXL9t",
+      "_anchor": "mijn-anchor"
     }
   ],
-  "image": {},
-  "images": [],
-  "file": {},
-  "withFields": {},
+  "image": null,
+  "images": [
+    {
+      "_id": "3EGUknMFTu3GvyTBpZMOTonZ5qw",
+      "_type": "image",
+      "_index": "",
+      "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+    }
+  ],
+  "file": null,
+  "withFields": null,
   "multipleWithFields": [],
+  "entryWithMultipleConditions": null,
+  "entryWithArrayConditions": null,
+  "entryWithParentCondition": null,
+  "entryWithConditionLocation": null,
+  "entryEnableNavigation": null,
+  "entryPickChildren": null,
+  "entryPickChildrenWithCondition": null,
+  "entryAdvancedConditions": [],
+  "externalLinkHelp": null,
+  "externalLinkInline": null,
+  "externalLinkWidth": null,
+  "externalLinkWithFields": null,
+  "externalLinkMultiple": [],
+  "externalLinkMultipleWithFields": [],
+  "entryInline": null,
+  "entryWidth": null,
+  "entryDefaultViewThumb": null,
+  "entryWithStaticLocation": null,
+  "entryMultiple": [],
+  "entryMultipleWithCondition": [],
+  "entryMultipleWithMax": [],
+  "entryMultipleWithFields": [],
+  "fileInline": null,
+  "fileWithFields": null,
+  "fileMultiple": [],
+  "fileMultipleWithMax": [],
+  "fileMultipleWithFields": [],
+  "imageInline": null,
+  "imageWithFields": null,
+  "imageMultipleWithMax": [],
+  "imageMultipleWithFields": [],
+  "link": null,
+  "linkInline": null,
+  "linkWithCondition": null,
+  "linkWithLocation": null,
+  "linkWithEnableNavigation": null,
+  "linkWithFields": null,
+  "linkMultipleWithCondition": [],
+  "linkMultipleWithLocation": [],
+  "linkMultipleWithMax": [],
+  "linkMultiplePickChildren": [],
+  "linkMultipleEnableNavigation": [],
   "metadata": {
     "title": "",
     "description": "",
     "openGraph": {
-      "image": {},
+      "image": {
+        "_id": "3EGUqg71WkcHALx0afMmS1Rwtc7",
+        "_type": "image",
+        "_index": "",
+        "_entry": "2V4cZUBByx9N29qv1YybylOCQqI"
+      },
       "title": "",
       "description": ""
-    }
+    },
+    "createdAt": 1779804544,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1784104272,
+    "updatedBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "aliases": []
   }
 }

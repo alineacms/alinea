@@ -1,11 +1,11 @@
-import type {InferProjection, Projection} from 'alinea/core/Graph'
+import type {InferProjection, Projection} from '#/core/Graph.js'
 import type {EntryResolver, ResolveContext} from './EntryResolver.js'
 
 export class LinkResolver {
   constructor(
     public resolver: EntryResolver,
     private ctx: ResolveContext,
-    private locale: string | null
+    public locale: string | null
   ) {}
 
   includedAtBuild(filePath: string): boolean {

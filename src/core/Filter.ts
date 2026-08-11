@@ -26,9 +26,7 @@ type FieldOps<Fields> = {
 }
 
 export interface AnyCondition<Value>
-  extends Ops<Value>,
-    ArrayOps<Value>,
-    ObjectOps<Value> {}
+  extends Ops<Value>, ArrayOps<Value>, ObjectOps<Value> {}
 
 export type Condition<Value> = [Value] extends [Primitive]
   ? Ops<Value> | Value

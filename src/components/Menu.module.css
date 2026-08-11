@@ -1,0 +1,56 @@
+.Menu {
+  outline: none;
+}
+
+.MenuItem {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+  display: flex;
+  outline: none;
+  align-items: center;
+  border-radius: 4px;
+  gap: 8px;
+  position: relative;
+  min-height: 32px;
+
+  .MenuItem-icon {
+    font-size: 16px;
+    margin-left: auto;
+  }
+
+  &[data-focus-visible] {
+    outline: none;
+  }
+
+  &[data-selected] {
+    font-weight: 500;
+    background: var(--alinea-selected);
+    color: var(--alinea-primary-subtle-fg);
+    position: relative;
+  }
+
+  &[data-focused] {
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
+
+  &[data-disabled] {
+    pointer-events: none;
+    opacity: 0.2;
+  }
+}
+
+.MenuHeader {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--alinea-fg-muted);
+  padding: 4px 6px;
+}
+
+.MenuSeparator {
+  height: 1px;
+  margin: 4px 8px;
+  background-color: var(--alinea-border);
+  border: none;
+}

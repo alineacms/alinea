@@ -1,0 +1,34 @@
+{
+  "_id": "checkboxPositioningExample",
+  "_type": "CheckboxPositioning",
+  "_index": "a1",
+  "title": "Checkbox positioning",
+  "plain": false,
+  "required": false,
+  "shared": false,
+  "requiredShared": false,
+  "withDescription": false,
+  "withHelpAndDescription": false,
+  "withHelpNoDescription": false,
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1782303163,
+    "createdBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "updatedAt": 1782303163,
+    "updatedBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    }
+  },
+  "withHelp": false
+}

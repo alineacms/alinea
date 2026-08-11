@@ -1,1 +1,1 @@
-export * from 'alinea/field/view/View'
+export * from '#/field/view/View.js'

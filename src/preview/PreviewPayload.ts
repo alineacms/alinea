@@ -1,5 +1,5 @@
-import type {PreviewUpdate} from 'alinea/core/Preview'
-import {decode, encode} from 'alinea/core/util/BufferToBase64'
+import type {PreviewUpdate} from '#/core/Preview.js'
+import {decode, encode} from '#/core/util/BufferToBase64.js'
 import * as decoding from 'lib0/decoding.js'
 import * as encoding from 'lib0/encoding.js'
 

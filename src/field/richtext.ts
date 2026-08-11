@@ -1,1 +1,1 @@
-export * from 'alinea/field/richtext/RichTextField'
+export * from '#/field/richtext/RichTextField.js'

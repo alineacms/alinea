@@ -1,0 +1,231 @@
+.Tree {
+  overflow: auto;
+  outline: none;
+  forced-color-adjust: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--alinea-border-hover) transparent;
+  flex: 1;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-ring);
+    outline-offset: -1px;
+  }
+
+  &[data-empty] {
+    align-items: center;
+    justify-content: center;
+    font-style: italic;
+  }
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--alinea-border-hover);
+  }
+
+  &[data-drop-target] {
+    outline: 2px solid var(--alinea-primary);
+    outline-offset: -1px;
+    background: var(--alinea-primary-overlay);
+  }
+}
+
+/* ---- Tree item ---- */
+
+.TreeItem {
+  height: 34px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 12px;
+  padding-left: calc(8px + (var(--tree-item-level, 1) - 1) * 16px);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 400;
+  background: transparent;
+  color: var(--alinea-fg);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  outline: none;
+  border-radius: 8px;
+
+  /* Chevron */
+
+  [slot='chevron'] {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    visibility: hidden;
+    color: var(--alinea-fg);
+  }
+
+  &[data-has-child-items] [slot='chevron'] {
+    visibility: visible;
+  }
+
+  /* Icon slot */
+
+  [data-slot='icon'] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 12px;
+  }
+
+  /* Label text */
+
+  [data-slot='label'] {
+    margin-left: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Suffix (trailing status icons) */
+
+  [data-slot='suffix'] {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: auto;
+    font-size: 14px;
+    color: var(--alinea-fg-muted);
+  }
+
+  /* States */
+
+  &[data-hovered] {
+    background: var(--alinea-muted);
+  }
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--alinea-ring);
+    background: var(--alinea-muted);
+    outline-offset: -2px;
+  }
+
+  &[data-selected] {
+    background: var(--alinea-selected);
+    color: var(--alinea-primary-subtle-fg);
+    font-weight: 600;
+
+    [data-slot='icon'] {
+      opacity: 1;
+    }
+
+    &[data-expanded='true'] {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    &[data-focus-visible] {
+      outline-color: var(--alinea-primary-subtle-fg);
+      outline-offset: -4px;
+    }
+  }
+
+  &[data-disabled] {
+    color: var(--alinea-fg-disabled);
+    cursor: default;
+  }
+
+  &[data-href] {
+    cursor: pointer;
+  }
+
+  /* Drag & drop */
+
+  &[data-allows-dragging] {
+    padding-left: calc(4px + (var(--tree-item-level, 1) - 1) * 16px);
+  }
+
+  &[data-dragging] {
+    opacity: 0.6;
+
+    .TreeItem-dragHandle {
+      opacity: 0 !important;
+    }
+  }
+
+  &[data-drop-target] {
+    outline: 1px solid var(--alinea-primary);
+    background: var(--alinea-primary-overlay);
+  }
+
+  [slot='drag'] {
+    width: 15px;
+    text-align: center;
+
+    &[data-focus-visible] {
+      outline: 2px solid var(--alinea-ring);
+    }
+  }
+
+  user-select: none;
+  -webkit-user-drag: element;
+  touch-action: none;
+}
+
+.TreeItem-controls {
+  position: relative;
+  width: 16px;
+  height: 16px;
+
+  .TreeItem-dragHandle,
+  .TreeItem-chevron {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+}
+
+.TreeItem-foldIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.TreeItem-dragHandle {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  line-height: 1.2em;
+  padding: 4px 6px;
+  transition: background 200ms;
+
+  &[data-hovered] {
+    background: var(--alinea-muted-hover);
+  }
+
+  &[data-pressed] {
+    background: var(--alinea-muted-pressed);
+    box-shadow: none;
+  }
+
+  &[data-invisible='true'] {
+    opacity: 0 !important;
+
+    &:focus-visible {
+      opacity: 1 !important;
+
+      + .TreeItem-chevron[data-invisible='false'] {
+        opacity: 0 !important;
+      }
+    }
+  }
+}

@@ -1,2 +1,2 @@
-export {createCMS} from 'alinea/adapter/next/cms'
-export {createHandler} from 'alinea/adapter/next/handler'
+export {createCMS} from '#/adapter/next/cms.js'
+export {createHandler} from '#/adapter/next/handler.js'

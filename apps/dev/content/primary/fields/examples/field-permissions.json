@@ -1,7 +1,7 @@
 {
   "_id": "2k3Qd3j8eM4N3t5r8Ua9P0Jv1wX",
   "_type": "FieldPermissions",
-  "_index": "a2",
+  "_index": "b1",
   "title": "Field permissions",
   "editable": "You should be able to edit this as Editor",
   "readOnlyByRole": "You should see this but it should be read-only for Editor",

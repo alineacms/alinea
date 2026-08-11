@@ -1,6 +1,6 @@
 import pLimit from 'p-limit'
 import type {Config} from '../Config.js'
-import type {SyncApi, UploadResponse} from '../Connection.js'
+import type {SyncApi, UploadMetadata, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
 import type {Policy} from '../Role.js'
@@ -10,6 +10,10 @@ import type {Source} from '../source/Source.js'
 import {syncWith} from '../source/Source.js'
 import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryIndex} from './EntryIndex.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from './EntryReference.js'
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {Mutation} from './Mutation.js'
@@ -38,6 +42,10 @@ export class LocalDB extends WriteableGraph {
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     return this.#resolver.resolve(query)
+  }
+
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.index.referencesTo(query)
   }
 
   get sha() {
@@ -121,7 +129,10 @@ export class LocalDB extends WriteableGraph {
     return {sha: await this.sync()}
   }
 
-  async prepareUpload(file: string): Promise<UploadResponse> {
+  async prepareUpload(
+    file: string,
+    _metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
     throw new Error('Uploads not supported on local DB')
   }
 }

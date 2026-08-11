@@ -1,14 +1,17 @@
-import type {EntryFields} from 'alinea/core/EntryFields'
-import type {Filter} from 'alinea/core/Filter'
-import type {Graph, Projection} from 'alinea/core/Graph'
-import type {Label} from 'alinea/core/Label'
-import type {Picker} from 'alinea/core/Picker'
-import {Reference} from 'alinea/core/Reference'
-import {Type, type} from 'alinea/core/Type'
-import {ListRow} from 'alinea/core/shape/ListShape'
-import {RecordShape} from 'alinea/core/shape/RecordShape'
-import {ScalarShape} from 'alinea/core/shape/ScalarShape'
-import {assign, keys} from 'alinea/core/util/Objects'
+import type {EntryFields} from '#/core/EntryFields.js'
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
+import type {Filter} from '#/core/Filter.js'
+import type {Graph, Projection} from '#/core/Graph.js'
+import type {Label} from '#/core/Label.js'
+import type {Picker} from '#/core/Picker.js'
+import {Reference} from '#/core/Reference.js'
+import {Root, type RootI18n} from '#/core/Root.js'
+import {Type, type} from '#/core/Type.js'
+import {ListRow} from '#/core/ListRow.js'
+import {applyUrlSuffix} from '#/core/util/Anchors.js'
+import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
+import {assign, isRecord, keys} from '#/core/util/Objects.js'
+import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
 
 export const unresolvedEntryMarker = Symbol('unresolvedEntryMarker')
@@ -40,12 +43,15 @@ export interface EntryPickerConditions {
   location?: DynamicOption<EditorLocation>
   /** Filter entries by a condition, this results in a flat list of options */
   condition?: DynamicOption<Filter<EntryFields>>
+  /** Limit the entry picker to an array of location */
+  limitLocations?: Array<EditorLocation>
   /** @internal Enable entry picker navigation */
   enableNavigation?: boolean
 }
 
-export interface EntryPickerOptions<Definition = {}>
-  extends EntryPickerConditions {
+export interface EntryPickerOptions<
+  Definition = {}
+> extends EntryPickerConditions {
   selection: Projection
   defaultView?: 'row' | 'thumb'
   showMedia?: boolean
@@ -61,13 +67,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
   const fieldType = Type.isType(options.fields)
     ? options.fields
     : options.fields && type('Entry fields', {fields: options.fields as any})
-  const extra = fieldType && Type.shape(fieldType)
   return {
-    shape: new RecordShape('Entry', {
-      [Reference.id]: new ScalarShape('Id'),
-      [Reference.type]: new ScalarShape('Type'),
-      [EntryReference.entry]: new ScalarShape('Entry')
-    }).concat(extra),
     fields: fieldType,
     label: options.label || 'Page link',
     handlesMultiple: true,
@@ -77,6 +77,8 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [Reference.id]: id,
         [Reference.type]: type,
         [EntryReference.entry]: entryId,
+        [EntryReference.anchor]: anchor,
+        [EntryReference.suffix]: suffix,
         [ListRow.index]: index,
         ...fields
       } = row as EntryReference & ListRow
@@ -93,15 +95,107 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         row[unresolvedEntryMarker] = true
         return
       }
-      if (type !== 'image') return assign(row, extra)
-      const {src: location, previewUrl, filePath, ...rest} = extra
-      if (!previewUrl) return assign(row, extra, {src: location})
+      if (type === 'file') {
+        const {href, url, root, workspace, ...rest} = extra
+        const location = typeof href === 'string' ? href : url
+        assign(row, rest)
+        const publicUrl = mediaEntryUrl(loader, workspace, location)
+        if (typeof publicUrl === 'string') {
+          row.href = publicUrl
+          if (typeof url === 'string') row.url = publicUrl
+        }
+        return
+      }
+      if (type !== 'image') {
+        assign(row, extra)
+        applyUrlSuffixToRow(row, suffix, anchor)
+        return
+      }
+      const {
+        src: location,
+        previewUrl,
+        filePath,
+        alt,
+        root,
+        workspace,
+        ...rest
+      } = extra
+      const selectedAlt = selectImageAlt(alt, loader, {
+        root,
+        workspace
+      })
+      if (!previewUrl) {
+        const src = mediaEntryUrl(loader, workspace, location)
+        assign(row, rest, {src})
+        if (typeof selectedAlt === 'string') row.alt = selectedAlt
+        return
+      }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
-      const src = locationAvailable ? location : previewUrl
+      const src = locationAvailable
+        ? mediaEntryUrl(loader, workspace, location)
+        : previewUrl
       row.src = src
+      if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)
     }
   }
+}
+
+function applyUrlSuffixToRow(
+  row: Record<string, unknown>,
+  suffix: string | undefined,
+  anchor: string | undefined
+) {
+  if (typeof row.url === 'string')
+    row.url = applyUrlSuffix(row.url, suffix, anchor)
+  if (typeof row.href === 'string')
+    row.href = applyUrlSuffix(row.href, suffix, anchor)
+}
+
+function mediaEntryUrl(
+  loader: LinkResolver,
+  workspace: unknown,
+  location: unknown
+): unknown {
+  if (typeof location !== 'string') return location
+  if (typeof workspace !== 'string') return location
+  return mediaLocationUrl(loader.resolver.config, workspace, location)
+}
+
+interface LinkedEntryLocation {
+  root: unknown
+  workspace: unknown
+}
+
+function selectImageAlt(
+  alt: unknown,
+  loader: LinkResolver,
+  location: LinkedEntryLocation
+): string {
+  if (isRecord(alt)) {
+    const localisation = linkedLocalisation(loader, location)
+    return selectLocalisedValue({
+      value: alt as LocalisedValue<string, string>,
+      locale: loader.locale,
+      locales: localisation?.locales ?? keys(alt),
+      fallback: localisation?.fallback,
+      defaultValue: ''
+    })
+  }
+  if (typeof alt === 'string') return alt
+  return ''
+}
+
+function linkedLocalisation(
+  loader: LinkResolver,
+  {workspace, root}: LinkedEntryLocation
+): RootI18n | undefined {
+  if (typeof workspace !== 'string' || typeof root !== 'string') return
+  const workspaceConfig = loader.resolver.config.workspaces[workspace]
+  const rootConfig = workspaceConfig?.[root]
+  if (!rootConfig) return
+  const rootData = Root.data(rootConfig)
+  return Root.mediaI18n(rootData) ?? rootData.i18n
 }

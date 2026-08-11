@@ -1,1 +1,1 @@
-export * from 'alinea/field/metadata/MetadataField'
+export * from '#/field/metadata/MetadataField.js'

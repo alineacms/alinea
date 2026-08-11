@@ -1,7 +1,0 @@
-{
-  "name": "@alinea/adapter",
-  "type": "module",
-  "devDependencies": {
-    "cookie-es": "^1.2.2"
-  }
-}

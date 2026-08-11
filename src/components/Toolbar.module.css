@@ -1,0 +1,43 @@
+.Toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  &[data-orientation='horizontal'] {
+    flex-direction: row;
+  }
+
+  .ToolbarGroup {
+    display: flex;
+    gap: 4px;
+  }
+  &[data-orientation='vertical'] {
+    flex-direction: column;
+    align-items: start;
+  }
+
+  .ToolbarButton {
+    width: 32px;
+    padding: 5px;
+    border-radius: 5px;
+    background-color: var(--alinea-muted);
+    color: var(--alinea-fg);
+    border: 1px solid var(--alinea-border);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--alinea-muted-hover);
+    }
+
+    &[data-active='true'] {
+      background-color: var(--alinea-selected);
+    }
+  }
+}
+
+.ToolbarSeparator {
+  margin: 4px 0;
+  border: none;
+  border-right: 1px solid var(--alinea-border);
+  height: 1rem;
+}

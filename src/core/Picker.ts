@@ -3,7 +3,6 @@ import type {Label} from './Label.js'
 import type {Reference} from './Reference.js'
 import type {Type} from './Type.js'
 import type {PostProcess} from './pages/PostProcess.js'
-import type {RecordShape} from './shape/RecordShape.js'
 
 export interface PickerProps<T = any> {
   type: string
@@ -26,7 +25,6 @@ export interface Picker<
   StoredValue extends Reference,
   Options extends {} = {}
 > {
-  shape: RecordShape
   fields: Type<any> | undefined
   label: Label
   handlesMultiple: boolean

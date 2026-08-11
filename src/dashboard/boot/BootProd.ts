@@ -1,5 +1,5 @@
-import type {CMS} from 'alinea/core/CMS'
-import {Client} from 'alinea/core/Client'
+import type {CMS} from '#/core/CMS.js'
+import {Client} from '#/core/Client.js'
 import type {ComponentType} from 'react'
 import {boot} from './Boot.js'
 

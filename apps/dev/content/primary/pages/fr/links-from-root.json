@@ -1,0 +1,36 @@
+{
+  "_id": "2q9sXTDlsGSy9DmS84E70KNpeM8",
+  "_type": "LinkFields",
+  "_index": "Zy",
+  "_root": "pages",
+  "title": "Links from Root",
+  "externalLink": null,
+  "entry": null,
+  "entryWithCondition": null,
+  "entryWithLocation": null,
+  "linkMultiple": [],
+  "image": null,
+  "images": [],
+  "file": null,
+  "withFields": null,
+  "multipleWithFields": [],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1779881984,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1779881984,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

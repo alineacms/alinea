@@ -1,4 +1,4 @@
-import * as paths from 'alinea/core/util/Paths'
+import * as paths from '#/core/util/Paths.js'
 import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
 import {assert} from '../util/Assert.js'
@@ -15,13 +15,23 @@ export interface GithubSourceOptions {
   contentDir: string
 }
 
+export function normalizeGithubSourceOptions<
+  Options extends GithubSourceOptions
+>(options: Options): Options {
+  return {
+    ...options,
+    rootDir: normalizeDirectory(options.rootDir),
+    contentDir: normalizeDirectory(options.contentDir)
+  }
+}
+
 export class GithubSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #options: GithubSourceOptions
   #limit = pLimit(8)
 
   constructor(options: GithubSourceOptions) {
-    this.#options = options
+    this.#options = normalizeGithubSourceOptions(options)
   }
 
   protected get contentLocation() {
@@ -98,4 +108,10 @@ export class GithubSource implements Source {
   async applyChanges(batch: ChangesBatch) {
     throw new Error('Not implemented')
   }
+}
+
+function normalizeDirectory(directory: string): string {
+  const normalized = paths.normalize(directory)
+  if (normalized === '.' || normalized === '/') return ''
+  return normalized.replace(/^\/+|\/+$/g, '')
 }

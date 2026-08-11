@@ -1,6 +1,6 @@
-import type {FieldOptions, WithoutLabel} from 'alinea/core/Field'
-import {ScalarField} from 'alinea/core/field/ScalarField'
-import {viewKeys} from 'alinea/dashboard/editor/ViewKeys'
+import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
+import {ScalarField} from '#/core/field/ScalarField.js'
+import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {ReactNode} from 'react'
 
 /** Optional settings to configure a text field */
@@ -26,7 +26,7 @@ export function check(
   options: WithoutLabel<CheckOptions> = {}
 ): CheckField {
   return new CheckField({
-    options: {...options, label},
+    options: {overview: true, ...options, label},
     view: viewKeys.CheckInput
   })
 }

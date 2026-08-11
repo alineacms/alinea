@@ -1,13 +1,13 @@
-import path from 'node:path'
+import {init} from '#/cli/Init.js'
 import {suite} from '@alinea/suite'
-import {init} from 'alinea/cli/Init'
-import fs from 'fs-extra'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
 const testPms = false
 
 async function setup(cwd: string) {
-  await fs.remove(cwd)
-  await fs.mkdirp(cwd)
+  await fs.rm(cwd, {recursive: true}).catch(() => {})
+  await fs.mkdir(cwd, {recursive: true})
   await fs.writeFile(
     path.join(cwd, 'package.json'),
     '{"dependencies": {}, "scripts": {"dev": "next dev"}}'
@@ -57,7 +57,7 @@ if (testPms) {
   test('init', async () => {
     const cwd = path.join(process.cwd(), 'dist/.init')
     await setup(cwd)
-    await fs.mkdirp(path.join(cwd, 'src'))
+    await fs.mkdir(path.join(cwd, 'src'), {recursive: true})
     await run(cwd)
   })
 }

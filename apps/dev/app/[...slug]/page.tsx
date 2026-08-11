@@ -1,17 +1,141 @@
-import {Entry} from 'alinea/core'
-import {notFound} from 'next/navigation'
 import {cms} from '@/cms'
+import {ExampleView} from '@/ExampleView'
+import {Entry} from 'alinea/core'
+import type {Metadata} from 'next'
+import {notFound} from 'next/navigation'
+import {cache} from 'react'
 
-export default async function Example(props: {
+interface PageProps {
   params: Promise<{slug: Array<string>}>
-}) {
-  const slug = await props.params.then(({slug}) => slug)
-  const url = `/${slug.join('/')}`
-  const page = await cms.first({
+}
+
+interface MetadataImage {
+  src?: string
+  url?: string
+  width?: number
+  height?: number
+  title?: string
+}
+
+interface MetadataValue {
+  title?: string
+  description?: string
+  openGraph?: {
+    title?: string
+    description?: string
+    image?: MetadataImage
+  }
+}
+
+interface PageFields extends Record<string, unknown> {
+  _url?: string
+  metadata?: MetadataValue
+  summary?: unknown
+  title?: unknown
+}
+
+const pageByUrl = cache((url: string) => {
+  return cms.first({
     url,
     select: Entry
   })
+})
+
+const pageFieldsByUrl = cache(async (url: string) => {
+  const entry = await pageByUrl(url)
+  if (!entry) return null
+  const schema = cms.schema as Record<string, unknown>
+  const type = schema[entry.type]
+  if (!type) return null
+  return cms.first({
+    url,
+    type: type as never
+  }) as Promise<PageFields | null>
+})
+
+async function urlFromParams(params: PageProps['params']) {
+  const slug = await params.then(({slug}) => slug)
+  return `/${slug.join('/')}`
+}
+
+async function pageFromParams(params: PageProps['params']) {
+  const url = await urlFromParams(params)
+  return pageByUrl(url)
+}
+
+function text(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
+function metadataImage(image: MetadataImage | undefined) {
+  const url = text(image?.url) ?? text(image?.src)
+  if (!url) return undefined
+  return {
+    url,
+    width: image?.width,
+    height: image?.height,
+    alt: text(image?.title)
+  }
+}
+
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const url = await urlFromParams(props.params)
+  const [page, fields] = await Promise.all([
+    pageByUrl(url),
+    pageFieldsByUrl(url)
+  ])
+  if (!page) return {}
+
+  const data = page.data as Record<string, unknown>
+  const metadata = fields?.metadata ?? ((data.metadata ?? {}) as MetadataValue)
+  const title = text(metadata.title) ?? text(fields?.title) ?? text(page.title)
+  const description =
+    text(metadata.description) ?? text(fields?.summary) ?? text(data.summary)
+  const openGraphTitle = text(metadata.openGraph?.title) ?? title
+  const openGraphDescription =
+    text(metadata.openGraph?.description) ?? description
+  const image = metadataImage(metadata.openGraph?.image)
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: page.url
+    },
+    openGraph: {
+      url: fields?._url ?? page.url,
+      title: openGraphTitle,
+      description: openGraphDescription,
+      images: image ? [image] : undefined,
+      siteName: 'Alinea'
+    },
+    twitter: {
+      card: image ? 'summary_large_image' : 'summary',
+      title: openGraphTitle,
+      description: openGraphDescription,
+      images: image ? [image.url] : undefined
+    }
+  }
+}
+
+export default async function Example(props: PageProps) {
+  const url = await urlFromParams(props.params)
+  const [page, fields] = await Promise.all([
+    pageFromParams(props.params),
+    pageFieldsByUrl(url)
+  ])
   if (!page) return notFound()
-  //const entry = await cms.get({url})
-  return <div>{JSON.stringify(page)}</div>
+
+  const content = fields ?? (page.data as PageFields)
+  const title = text(content.title) ?? page.title
+  return (
+    <ExampleView
+      content={content}
+      status={page.status}
+      summary={text(content.summary)}
+      title={title}
+      type={page.type}
+      url={page.url}
+    />
+  )
 }

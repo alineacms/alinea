@@ -1,1 +1,1 @@
-export * from 'alinea/picker/entry/EntryPicker'
+export * from '#/picker/entry/EntryPicker.js'

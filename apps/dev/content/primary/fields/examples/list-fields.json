@@ -1,6 +1,66 @@
 {
   "_id": "2dgg7Hkjt0lksSEgm2gDjLTXL9t",
   "_type": "ListFields",
-  "_index": "aA",
-  "title": "List fields"
+  "_index": "a5",
+  "title": "List fields",
+  "list": [],
+  "listWithInitial": [
+    {
+      "_id": "3D4PkNFvkU0BZCumUdzBK90BYt6",
+      "_index": "a0",
+      "_type": "Text",
+      "title": "Initial item",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "This is an initial item"
+            }
+          ]
+        }
+      ],
+      "_anchor": "anchor-testing"
+    },
+    {
+      "_id": "3D4PkN2KurCf9mNusbYqSoCVcGa",
+      "_index": "a1",
+      "_type": "Text",
+      "title": "Initial item",
+      "text": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "This is an initial item"
+            }
+          ]
+        }
+      ],
+      "_label": "mijn anchor",
+      "_anchor": "anchor-testing"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1784019630,
+    "createdBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    },
+    "updatedAt": 1784119863,
+    "updatedBy": {
+      "name": "vctrth",
+      "email": "thysvic@gmail.com"
+    }
+  }
 }

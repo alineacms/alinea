@@ -15,4 +15,7 @@ node_modules
 *.tsbuildinfo
 /generated
 .next
+/.playwright/.cache
+/test-results
 llms-full.txt
+.zed

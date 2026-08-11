@@ -1,4 +1,4 @@
-import {HttpError} from 'alinea/core/HttpError'
+import {HttpError} from '#/core/HttpError.js'
 
 export enum AuthAction {
   Status = 'status',

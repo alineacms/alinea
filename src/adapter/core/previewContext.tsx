@@ -1,5 +1,5 @@
 import type {AsyncLocalStorage} from 'node:async_hooks'
-import type {ConnectionContext} from 'alinea/core/CMS'
+import type {ConnectionContext} from '#/core/CMS.js'
 import type {CoreCMS} from './cms.js'
 
 export const previewStore = new WeakMap<

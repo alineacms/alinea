@@ -1,308 +1,490 @@
-import styler from '@alinea/styler'
+import {Label} from '#/components.js'
+import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
+import {createId} from '#/core/Id.js'
+import type {Schema} from '#/core/Schema.js'
+import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
+import {Type} from '#/core/Type.js'
+import {isRecord} from '#/core/util/Objects.js'
+import {rootEditor} from '#/dashboard/atoms/editor.js'
 import {
-  Extension,
-  type JSONContent,
-  mergeAttributes,
-  Node as TipTapNode
-} from '@tiptap/core'
-import {Collaboration} from '@tiptap/extension-collaboration'
+  useEditor as useDashboardEditor,
+  useFieldError,
+  useFieldNode,
+  useFieldOptions
+} from '#/dashboard/hooks.js'
 import {
-  Editor,
-  EditorContent,
-  FloatingMenu,
-  NodeViewWrapper,
-  ReactNodeViewRenderer
-} from '@tiptap/react'
-import type {Field} from 'alinea/core/Field'
-import type {RichTextField} from 'alinea/core/field/RichTextField'
-import {createId} from 'alinea/core/Id'
-import {getType} from 'alinea/core/Internal'
-import type {Schema} from 'alinea/core/Schema'
-import {BlockNode, ElementNode, Mark, Node, TextNode} from 'alinea/core/TextDoc'
-import {Type} from 'alinea/core/Type'
-import {entries, values} from 'alinea/core/util/Objects'
-import {FormRow} from 'alinea/dashboard/atoms/FormAtoms'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {useField, useFieldOptions} from 'alinea/dashboard/editor/UseField'
-import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {IconButton} from 'alinea/dashboard/view/IconButton'
-import {InputLabel} from 'alinea/dashboard/view/InputLabel'
-import {HStack, Icon, px, TextLabel} from 'alinea/ui'
-import {DropdownMenu} from 'alinea/ui/DropdownMenu'
-import {useForceUpdate} from 'alinea/ui/hook/UseForceUpdate'
-import {useNonInitialEffect} from 'alinea/ui/hook/UseNonInitialEffect'
-import IcRoundAddCircle from 'alinea/ui/icons/IcRoundAddCircle'
-import {IcRoundClose} from 'alinea/ui/icons/IcRoundClose'
-import {IcRoundDragHandle} from 'alinea/ui/icons/IcRoundDragHandle'
-import {IcRoundNotes} from 'alinea/ui/icons/IcRoundNotes'
-import {Sink} from 'alinea/ui/Sink'
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {extensions as baseExtensions} from './Extensions.js'
+  configureRichTextExtensions,
+  type RichTextOptions
+} from './RichTextField.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
-import type {RichTextOptions} from './RichTextField.js'
-import css from './RichTextField.module.scss'
+import styler from '@alinea/styler'
+import type {AnyExtension, Editor} from '@tiptap/core'
+import {EditorContent, useEditor} from '@tiptap/react'
+import {useAtomValue, useSetAtom, useStore} from 'jotai'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
+import {createPortal} from 'react-dom'
+import {RichTextBlock} from './RichTextBlock.js'
+import {
+  type ReactiveRichTextBlock,
+  richTextStructureAtom
+} from './RichTextBlocks.js'
+import {
+  type RichTextBlockHost,
+  RichTextBlockHosts
+} from './RichTextBlockHost.js'
+import {editorContent, editorNodes} from './RichTextDocument.js'
+import {
+  defaultExtensionConfig,
+  richTextBlockClipboard,
+  richTextBlockExtensions,
+  richTextDocumentExtension
+} from './RichTextExtensions.js'
+import {
+  blockAttributes,
+  decodeBlockValue,
+  encodeBlockValue,
+  richTextBlockValueAttribute
+} from './RichTextBlockValue.js'
+import css from './RichTextField.module.css'
+import {RichTextInsertMenu} from './RichTextInsertMenu.js'
+import {documentUpdateAtom} from './RichTextState.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
+import {PickTextAnchor, usePickTextAnchor} from './PickTextAnchor.js'
 
 const styles = styler(css)
 
-type NodeViewProps = {
-  node: {attrs: {[BlockNode.id]?: string}}
-  deleteNode: () => void
+export interface RichTextFieldViewProps<Blocks extends Schema> {
+  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
 }
 
-function typeExtension(field: Field, name: string, type: Type) {
-  function View({node, deleteNode}: NodeViewProps) {
-    const {[BlockNode.id]: id} = node.attrs
-    const meta = getType(type)
-    const {readOnly} = useFieldOptions(field)
-    return (
-      <FormRow field={field} type={type} rowId={id} readOnly={readOnly}>
-        <NodeViewWrapper>
-          <Sink.Root style={{margin: `${px(18)} 0`}}>
-            <Sink.Header>
-              <Sink.Options>
-                <IconButton
-                  icon={meta.icon || IcRoundDragHandle}
-                  data-drag-handle
-                  style={{cursor: 'grab'}}
-                />
-              </Sink.Options>
-              <Sink.Title>
-                <TextLabel label={Type.label(type)} />
-              </Sink.Title>
-              <Sink.Options>
-                <IconButton icon={IcRoundClose} onClick={deleteNode} />
-              </Sink.Options>
-            </Sink.Header>
-            <Sink.Content>
-              <InputForm type={type} />
-            </Sink.Content>
-          </Sink.Root>
-        </NodeViewWrapper>
-      </FormRow>
+export function RichTextFieldView<Blocks extends Schema>({
+  field
+}: RichTextFieldViewProps<Blocks>) {
+  const options = useFieldOptions(field)
+  const error = useFieldError(field)
+  const fieldNode = useFieldNode<TextDoc>(field)
+  const store = useStore()
+  const {blocks, structure} = useAtomValue(
+    useMemo(() => richTextStructureAtom(fieldNode), [fieldNode])
+  )
+  const blocksById = useMemo(
+    () => new Map(blocks.map(block => [block.id, block])),
+    [blocks]
+  )
+  const blocksByIdRef = useRef(blocksById)
+  blocksByIdRef.current = blocksById
+  const lastEditorDocument = useRef<string>()
+  const pendingExternalDocument = useRef<string>()
+  const documentKey = documentStructureKey(structure)
+  if (lastEditorDocument.current && lastEditorDocument.current !== documentKey)
+    pendingExternalDocument.current = documentKey
+  const updateDocument = useSetAtom(
+    useMemo(() => documentUpdateAtom(fieldNode), [fieldNode])
+  )
+  const hosts = useMemo(() => new RichTextBlockHosts(), [])
+  const pendingBlocks = useRef(new Map<string, BlockNode>())
+  const [activeEditor, setActiveEditor] = useState<Editor>()
+  const [focused, setFocused] = useState(false)
+  const [innerBlockFocused, setInnerBlockFocused] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
+  const ownerId = useId()
+  const picker = usePickTextLink()
+  const anchorPicker = usePickTextAnchor()
+  const dashboardEditor = useDashboardEditor()
+  const entryAnchors = rootEditor(dashboardEditor).anchors
+  const getEntryAnchors = useCallback(
+    () => store.get(entryAnchors).map(anchor => anchor.id),
+    [entryAnchors, store]
+  )
+  const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
+  const extensions = useMemo<Array<AnyExtension>>(() => {
+    const configured = Object.values(
+      configureRichTextExtensions(
+        options.extensions,
+        defaultExtensionConfig(getEntryAnchors)
+      )
     )
-  }
-  return TipTapNode.create({
-    name,
-    group: 'block',
-    atom: true,
-    draggable: true,
-    parseHTML() {
-      return [{tag: name}]
-    },
-    renderHTML({HTMLAttributes}) {
-      return [name, mergeAttributes(HTMLAttributes)]
-    },
-    addNodeView() {
-      return ReactNodeViewRenderer(View)
-    },
-    addAttributes() {
-      return {
-        [BlockNode.id]: {default: null}
+    const blocks = richTextBlockExtensions(options.schema, hosts)
+    return [
+      richTextDocumentExtension(blocks.length > 0),
+      richTextBlockClipboard,
+      ...configured.filter(extension => extension.name !== 'doc'),
+      ...blocks
+    ]
+  }, [getEntryAnchors, hosts, options.extensions, options.schema])
+  const content = useMemo(
+    () => editorContent(store.get(fieldNode.value)),
+    [fieldNode, store]
+  )
+
+  const resolveBlock = useCallback(
+    function resolveBlock(
+      id: string,
+      typeName: string,
+      snapshot: BlockNode | undefined
+    ): BlockNode | undefined {
+      const pending = pendingBlocks.current.get(id)
+      if (pending) return pending
+      const part = blocksByIdRef.current.get(id)
+      if (part) {
+        const value = store.get(part.node.value)
+        if (Node.isBlock(value)) return value
       }
+      if (snapshot?.[Node.type] === typeName) return snapshot
+      const type = options.schema?.[typeName]
+      if (!type) return
+      return {
+        [Node.type]: typeName,
+        [BlockNode.id]: id,
+        ...Type.initialValue(type)
+      } as BlockNode
+    },
+    [options.schema, store]
+  )
+
+  const editor = useEditor({
+    content,
+    extensions,
+    editable: !readOnly,
+    onCreate({editor}) {
+      // ProseMirror owns selection restoration. React's contenteditable
+      // traversal cannot safely inspect nested ProseMirror-owned DOM.
+      setEditorReadOnly(editor, readOnly)
+      lastEditorDocument.current = documentStructureKey(
+        editorNodes(editor.getJSON(), resolveBlock)
+      )
+    },
+    onFocus({editor}) {
+      setActiveEditor(editor)
+      setFocused(true)
+    },
+    onUpdate({editor, transaction}) {
+      if (!transaction.docChanged) return
+      const next = editorNodes(editor.getJSON(), resolveBlock)
+      const nextKey = documentStructureKey(next)
+      if (
+        pendingExternalDocument.current &&
+        nextKey === lastEditorDocument.current
+      )
+        return
+      lastEditorDocument.current = nextKey
+      if (nextKey === pendingExternalDocument.current)
+        pendingExternalDocument.current = undefined
+      updateDocument(next)
+      for (const node of next)
+        if (Node.isBlock(node))
+          pendingBlocks.current.delete(String(node[BlockNode.id]))
     }
   })
-}
 
-function schemaToExtensions(field: Field, schema: Schema | undefined) {
-  if (!schema) return []
-  return entries(schema).map(([name, type]) => {
-    return typeExtension(field, name, type)
-  })
-}
-
-type InsertMenuProps = {
-  editor: Editor
-  schema: Schema | undefined
-  onInsert: (id: string, type: string) => void
-}
-
-function InsertMenu({editor, schema, onInsert}: InsertMenuProps) {
-  const id = createId()
-  if (!schema) return null
-  const blocks = entries(schema).map(([key, type]) => {
-    return (
-      <DropdownMenu.Item
-        key={key}
-        onClick={() => {
-          onInsert(id, key)
-          editor
-            .chain()
-            .focus()
-            .insertContent({
-              type: key,
-              attrs: {[BlockNode.id]: id}
-            })
-            .run()
-        }}
-      >
-        <HStack center gap={8}>
-          <Icon icon={getType(type).icon ?? IcRoundAddCircle} />
-          <TextLabel label={Type.label(type)} />
-        </HStack>
-      </DropdownMenu.Item>
-    )
-  })
-  return (
-    <FloatingMenu
-      editor={editor}
-      tippyOptions={{
-        zIndex: 1,
-        maxWidth: 'none'
-      }}
-    >
-      <DropdownMenu.Root bottom>
-        <DropdownMenu.Trigger className={styles.insert.trigger()}>
-          <Icon icon={IcRoundAddCircle} />
-          <span>Insert block</span>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Items>{blocks}</DropdownMenu.Items>
-      </DropdownMenu.Root>
-    </FloatingMenu>
-  )
-}
-
-export interface RichTextInputProps<Blocks extends Schema> {
-  field: RichTextField<Blocks, RichTextOptions<Blocks>>
-}
-
-export function RichTextInput<Blocks extends Schema>({
-  field
-}: RichTextInputProps<Blocks>) {
-  const {value, mutator, options, error} = useField(field)
-  const forceUpdate = useForceUpdate()
-  const {fragment, insert} = mutator
-  const picker = usePickTextLink()
-  const {readOnly, schema, enableTables, toolbar} = options
-  const [focus, setFocus] = useState(false)
-  const containerRef = useRef<HTMLElement>(null)
-  const focusToggle = useCallback(
-    function focusToggle(target: EventTarget | null) {
-      const element =
-        (target as HTMLElement | null) ||
-        (document.activeElement as HTMLElement | null)
-      const editorElement = () =>
-        containerRef.current?.querySelector(
-          `.${styles.root.editor()} > .ProseMirror`
-        ) as HTMLElement | null
-      const isInToolbar =
-        element?.closest?.('[data-richtext-toolbar=\"true\"]') !== null
-      const editor = editorElement()
-      const isInEditor =
-        !!editor &&
-        (editor === element || editor.contains(element as HTMLElement))
-      const isFocused = isInToolbar || isInEditor
-      setFocus(isFocused)
-    },
-    [setFocus, containerRef]
-  )
-  const blocks = useMemo(() => {
-    return schemaToExtensions(field, schema)
-  }, [field, schema])
-  const base = useMemo(() => {
-    return values(options.extensions ?? baseExtensions)
-  }, [options.extensions])
-  const extensions = useMemo(() => {
-    return [Collaboration.configure({fragment}), ...base, ...blocks]
-  }, [fragment, blocks, base])
-  // The collaboration extension takes over content syncing after inital content
-  // is set. Unfortunately we can't fully utilize it to set the content initally
-  // as well because it does not work synchronously causing flickering.
-  const content: JSONContent = useMemo(
-    () => ({
-      type: 'doc',
-      content: value.map(toContent)
-    }),
-    [fragment]
-  )
-  const onFocus = useCallback(
-    ({event}: {event: Event}) => focusToggle(event.currentTarget),
-    [focusToggle]
-  )
-  const onBlur = useCallback(
-    ({event}: {event: FocusEvent}) => focusToggle(event.relatedTarget),
-    [focusToggle]
-  )
-  const isEditable = !options.readOnly && !readOnly
-  const editor = useMemo(() => {
-    const doc = fragment.doc!
-    let editor!: Editor
-    // The y-prosemirror plugin sometimes mutates the doc during setup
-    // which we want to catch because the mutations do not mean a value change
-    doc.transact(() => {
-      editor = new Editor({
-        content,
-        onFocus,
-        onBlur,
-        extensions,
-        editable: isEditable
-      })
-    }, 'self')
-    return editor
-  }, [fragment])
-  useNonInitialEffect(() => {
-    editor.setOptions({editable: isEditable})
-  }, [isEditable])
   useEffect(() => {
-    editor.on('transaction', forceUpdate)
-    return () => editor.destroy()
-  }, [editor])
+    if (editor) setEditorReadOnly(editor, readOnly)
+  }, [editor, readOnly])
+
+  useEffect(() => {
+    if (!editor) return
+    const current = editorNodes(editor.getJSON(), resolveBlock)
+    if (documentKey === documentStructureKey(current)) return
+    const documentValue = store.get(fieldNode.value)
+    editor.commands.setContent(editorContent(documentValue), {
+      emitUpdate: false
+    })
+    lastEditorDocument.current = documentKey
+    pendingExternalDocument.current = undefined
+  }, [documentKey, editor, fieldNode, resolveBlock, store])
+
+  const toolbarTarget =
+    typeof document === 'undefined'
+      ? null
+      : document.getElementById('alinea-toolbar')
+
+  function insertBlock(block: BlockNode) {
+    if (!editor || editor.state.selection.$from.depth !== 1) return
+    const id = String(block[BlockNode.id])
+    pendingBlocks.current.set(id, block)
+    // The menu preserves the editor selection. Refocusing here makes React
+    // inspect ProseMirror-owned DOM while the new block portal is mounting.
+    const inserted = editor
+      .chain()
+      .insertContent({type: block[Node.type], attrs: {[BlockNode.id]: id}})
+      .run()
+    if (!inserted) pendingBlocks.current.delete(id)
+  }
+
+  function checkFocus() {
+    requestAnimationFrame(() => {
+      const target = document.activeElement
+      setFocused(ownsFocus(target))
+      setInnerBlockFocused(isInnerBlockField(target))
+    })
+  }
+
+  function handleBlur(nextTarget: EventTarget | null) {
+    if (nextTarget instanceof HTMLElement) {
+      setFocused(ownsFocus(nextTarget))
+      setInnerBlockFocused(isInnerBlockField(nextTarget))
+    } else checkFocus()
+  }
+
+  function ownsFocus(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false
+    const richText = target.closest<HTMLElement>('[data-richtext-field]')
+    if (richText && richText !== root.current) return false
+    if (root.current?.contains(target)) return true
+    const toolbar = target.closest<HTMLElement>('[data-richtext-toolbar-owner]')
+    return toolbar?.dataset.richtextToolbarOwner === ownerId
+  }
+
+  function isInnerBlockField(target: EventTarget | null): boolean {
+    return (
+      target instanceof HTMLElement &&
+      root.current?.contains(target) === true &&
+      target.closest('[data-richtext-block-editor]') !== null
+    )
+  }
+
   return (
     <>
-      {isEditable && focus && (
-        <FieldToolbar.Slot>
-          <RichTextToolbar
-            editor={editor}
-            focusToggle={focusToggle}
-            pickLink={picker.pickLink}
-            enableTables={enableTables}
-            toolbar={toolbar}
-          />
-        </FieldToolbar.Slot>
-      )}
       <PickTextLink picker={picker} />
-      <InputLabel
-        {...options}
-        focused={focus}
-        icon={IcRoundNotes}
-        empty={editor.isEmpty}
-        ref={containerRef}
-        error={error}
+      <PickTextAnchor picker={anchorPicker} />
+      <Label
+        description={options.help}
+        errorMessage={error}
+        isRequired={options.required}
+        label={options.label}
+        shared={options.shared}
       >
-        <InsertMenu editor={editor} schema={schema} onInsert={insert} />
-
-        <EditorContent
-          className={styles.root.editor({focus, readonly: options.readOnly})}
-          editor={editor}
-        />
-      </InputLabel>
+        <div
+          ref={root}
+          className={styles.RichTextFieldView()}
+          data-richtext-field={ownerId}
+          data-inline={options.inline || undefined}
+          data-invalid={Boolean(error) || undefined}
+          data-focused={
+            focused && !innerBlockFocused && !readOnly ? 'true' : undefined
+          }
+          data-read-only={readOnly || undefined}
+          onFocusCapture={event => {
+            setFocused(ownsFocus(event.target))
+            setInnerBlockFocused(isInnerBlockField(event.target))
+          }}
+          onBlurCapture={event => handleBlur(event.relatedTarget)}
+        >
+          {editor && !readOnly && options.schema && (
+            <RichTextInsertMenu
+              editor={editor}
+              schema={options.schema}
+              onInsert={insertBlock}
+            />
+          )}
+          <EditorContent editor={editor} />
+          {editor && (
+            <RichTextBlockPortals
+              blocksById={blocksById}
+              editor={editor}
+              hosts={hosts}
+              pendingBlocks={pendingBlocks.current}
+              readOnly={readOnly}
+              schema={options.schema}
+              store={store}
+            />
+          )}
+        </div>
+      </Label>
+      {toolbarTarget &&
+      editor &&
+      activeEditor === editor &&
+      focused &&
+      !readOnly
+        ? createPortal(
+            <RichTextToolbar
+              editor={editor}
+              enableTables={options.enableTables}
+              ownerId={ownerId}
+              pickLink={picker.pickLink}
+              pickAnchor={anchorPicker.pickAnchor}
+              getEntryAnchors={getEntryAnchors}
+              toolbar={options.toolbar}
+              onFocusChange={(next, nextTarget) => {
+                if (next) setFocused(true)
+                else handleBlur(nextTarget ?? null)
+              }}
+            />,
+            toolbarTarget
+          )
+        : null}
     </>
   )
 }
 
-function toContent(node: Node): JSONContent {
-  if (Node.isText(node))
-    return {
-      type: 'text',
-      text: node[TextNode.text],
-      marks: node[TextNode.marks]?.map(mark => {
-        const {[Mark.type]: type, ...attrs} = mark
-        const res = Object.fromEntries(
-          entries(attrs).map(([key, value]) => {
-            if (key.startsWith('_')) return [`data-${key.slice(1)}`, value]
-            return [key, value]
-          })
-        )
-        return {type, attrs: res}
+function setEditorReadOnly(editor: Editor, readOnly: boolean) {
+  if (editor.isDestroyed) return
+  editor.setEditable(!readOnly, false)
+  editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
+}
+
+interface RichTextBlockPortalsProps {
+  blocksById: ReadonlyMap<string, ReactiveRichTextBlock>
+  editor: Editor
+  hosts: RichTextBlockHosts
+  pendingBlocks: Map<string, BlockNode>
+  readOnly: boolean
+  schema?: Schema
+  store: ReturnType<typeof useStore>
+}
+
+function RichTextBlockPortals({
+  blocksById,
+  editor,
+  hosts,
+  pendingBlocks,
+  readOnly,
+  schema,
+  store
+}: RichTextBlockPortalsProps) {
+  const mounted = useSyncExternalStore(
+    hosts.subscribe,
+    hosts.snapshot,
+    hosts.snapshot
+  )
+
+  function remove(host: RichTextBlockHost) {
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    editor.commands.deleteRange({from: position, to: position + 1})
+  }
+
+  function duplicate(host: RichTextBlockHost, part: ReactiveRichTextBlock) {
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    const value = store.get(part.node.value)
+    if (!Node.isBlock(value)) return
+    const id = createId()
+    const block = {...value, [BlockNode.id]: id}
+    pendingBlocks.set(id, block)
+    const inserted = editor
+      .chain()
+      .insertContentAt(position + 1, {
+        type: host.typeName,
+        attrs: {[BlockNode.id]: id}
       })
-    }
-  if (Node.isElement(node)) {
-    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
-    return {type, content: content?.map(toContent), attrs}
+      .run()
+    if (!inserted) pendingBlocks.delete(id)
   }
-  if (Node.isBlock(node)) {
-    const {[Node.type]: type} = node
-    return {type, attrs: {[BlockNode.id]: node[BlockNode.id]}}
-  }
-  throw new TypeError('Invalid node')
+
+  return mounted.map(host => {
+    const part = blocksById.get(host.id)
+    const type = schema?.[host.typeName]
+    if (!part || !type) return null
+    return createPortal(
+      <>
+        <RichTextBlockSnapshot editor={editor} host={host} node={part.node} />
+        <RichTextBlock
+          id={part.id}
+          node={part.node}
+          type={type}
+          readOnly={readOnly}
+          onDelete={() => remove(host)}
+          onDuplicate={() => duplicate(host, part)}
+        />
+      </>,
+      host.dom,
+      host.id
+    )
+  })
+}
+
+interface RichTextBlockSnapshotProps {
+  editor: Editor
+  host: RichTextBlockHost
+  node: ReactiveRichTextBlock['node']
+}
+
+function RichTextBlockSnapshot({
+  editor,
+  host,
+  node
+}: RichTextBlockSnapshotProps) {
+  const value = useAtomValue(node.value)
+
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- Synchronize the Jotai block value to TipTap's external editor store.
+  useEffect(() => {
+    if (!Node.isBlock(value)) return
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    const editorNode = editor.state.doc.nodeAt(position)
+    if (!editorNode || editorNode.type.name !== host.typeName) return
+    const current = decodeBlockValue(
+      editorNode.attrs[richTextBlockValueAttribute]
+    )
+    if (encodeBlockValue(current) === encodeBlockValue(value)) return
+    const transaction = editor.state.tr.setNodeMarkup(
+      position,
+      undefined,
+      blockAttributes(value)
+    )
+    transaction.setMeta('addToHistory', false)
+    editor.view.dispatch(transaction)
+  }, [editor, host, value])
+  // oxlint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent
+
+  return null
+}
+
+function documentStructureKey(value: TextDoc): string {
+  return stableStringify(
+    value.map(node =>
+      Node.isBlock(node)
+        ? {[Node.type]: node[Node.type], [BlockNode.id]: node[BlockNode.id]}
+        : node
+    )
+  )
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map(item => stableStringify(item)).join(',')}]`
+  if (isRecord(value))
+    return `{${Object.keys(value)
+      .sort()
+      .map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(',')}}`
+  return JSON.stringify(value) ?? String(value)
+}
+
+export interface RichTextFieldCompactViewProps<Blocks extends Schema> {
+  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
+  value: TextDoc<Blocks>
+}
+
+export function RichTextFieldCompactView<Blocks extends Schema>({
+  value
+}: RichTextFieldCompactViewProps<Blocks>) {
+  const text = previewText(value)
+  return (
+    <span
+      className={styles.RichTextFieldCompactView()}
+      data-empty={text ? undefined : 'true'}
+    >
+      {text || '-'}
+    </span>
+  )
+}
+
+function previewText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value))
+    return value.map(previewText).filter(Boolean).join(' ')
+  if (!isRecord(value)) return ''
+  return [previewText(value.text), previewText(value.content)]
+    .filter(Boolean)
+    .join(' ')
 }
