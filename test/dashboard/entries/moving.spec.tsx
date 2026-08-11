@@ -45,8 +45,9 @@ test('moves a child above its expanded parent', async ({dashboard, mount}) => {
     /Child$/,
     /Folder$/,
     /Alpha$/,
-    /Wireless receiver at 77 GHz$/,
-    /Archive$/
+    /Wireless receiver archive$/,
+    /Archive$/,
+    /Wireless receiver at 77 GHz$/
   ])
 })
 
