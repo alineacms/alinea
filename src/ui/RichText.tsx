@@ -11,6 +11,7 @@ import {slugify} from 'alinea/core/util/Slugs'
 import {
   type ComponentType,
   type CSSProperties,
+  cloneElement,
   Fragment,
   isValidElement,
   type JSX,
@@ -94,6 +95,10 @@ function nodeElement(
       return <sub />
     case 'superscript':
       return <sup />
+    case 'anchor': {
+      const id = attributes?.id
+      return <span id={typeof id === 'string' ? id : undefined} />
+    }
     case 'link': {
       const href = attributes?.href
       const target = attributes?.target
@@ -180,7 +185,17 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
       type: mark[Mark.type],
       element: nodeElement(mark[Mark.type], mark)
     }))
-    return (wrappers ?? []).reduce((children, {element}) => {
+    const anchors: Array<ReactElement> = []
+    const wrapped = (wrappers ?? []).reduce((children, {type, element}) => {
+      if (type === 'anchor' && element) {
+        const id = element.props.id
+        anchors.push(
+          cloneElement(element, {
+            key: typeof id === 'string' ? id : anchors.length
+          })
+        )
+        return children
+      }
       if (!element?.type) return children
       const View = views[String(element.type)]
       if (isComponentView(View)) {
@@ -194,6 +209,14 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
         </view.type>
       )
     }, content)
+    return anchors.length > 0 ? (
+      <Fragment>
+        {anchors}
+        {wrapped}
+      </Fragment>
+    ) : (
+      wrapped
+    )
   }
   if (Node.isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node

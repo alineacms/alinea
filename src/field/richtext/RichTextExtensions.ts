@@ -1,8 +1,8 @@
-import type {Schema} from '#/core/Schema.js'
 import {createId} from '#/core/Id.js'
+import type {Schema} from '#/core/Schema.js'
 import {BlockNode} from '#/core/TextDoc.js'
-import {entries} from '#/core/util/Objects.js'
 import {createUniqueAnchor, isGeneratedAnchor} from '#/core/util/Anchors.js'
+import {entries} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import styler from '@alinea/styler'
 import {
@@ -11,10 +11,6 @@ import {
   Node as TipTapNode,
   type AnyExtension
 } from '@tiptap/core'
-import {Fragment, type Node as ProseMirrorNode, Slice} from '@tiptap/pm/model'
-import {Plugin, type Transaction} from '@tiptap/pm/state'
-import {dropPoint} from '@tiptap/pm/transform'
-import type {EditorView} from '@tiptap/pm/view'
 import Blockquote from '@tiptap/extension-blockquote'
 import Bold from '@tiptap/extension-bold'
 import Document from '@tiptap/extension-document'
@@ -33,15 +29,19 @@ import {Table, TableCell, TableHeader, TableRow} from '@tiptap/extension-table'
 import Text from '@tiptap/extension-text'
 import TextAlign from '@tiptap/extension-text-align'
 import {Dropcursor, Gapcursor, UndoRedo} from '@tiptap/extensions'
+import {Fragment, Slice, type Node as ProseMirrorNode} from '@tiptap/pm/model'
+import {Plugin, type Transaction} from '@tiptap/pm/state'
+import {dropPoint} from '@tiptap/pm/transform'
+import type {EditorView} from '@tiptap/pm/view'
+import Anchor from './extensions/Anchor.js'
+import {Link} from './extensions/Link.js'
+import Small from './extensions/Small.js'
 import type {RichTextBlockHosts} from './RichTextBlockHost.js'
 import {
   decodeBlockValue,
   encodeBlockValue,
   richTextBlockValueAttribute
 } from './RichTextBlockValue.js'
-import Anchor from './extensions/Anchor.js'
-import {Link} from './extensions/Link.js'
-import Small from './extensions/Small.js'
 import css from './RichTextExtensions.module.css'
 
 const styles = styler(css)
@@ -80,63 +80,118 @@ function headingExtension(getEntryAnchors?: () => Iterable<string>) {
         new Plugin({
           appendTransaction(transactions, oldState, newState) {
             const tr = newState.tr
-            let modified = false
-            const anchors = entryAnchorsOutsideDocument(
+            const anchors = createAnchorPool(
               getEntryAnchors?.() ?? [],
-              oldState.doc
+              oldState.doc,
+              newState.doc
             )
-            for (const anchor of inlineAnchors(newState.doc))
-              anchors.add(anchor)
-            const headings: Array<{
-              node: ProseMirrorNode
-              pos: number
-              custom: boolean
-            }> = []
-            newState.doc.descendants((node, pos) => {
-              if (node.type.name !== 'heading') return
-              const previous = previousHeading(transactions, oldState.doc, pos)
-              headings.push({
-                node,
-                pos,
-                custom: isCustomHeadingAnchor(node, previous)
-              })
-            })
-            const customAnchors = new Map<number, string | undefined>()
-            for (const {node, pos, custom} of headings) {
-              if (!custom) continue
-              customAnchors.set(
-                pos,
-                createUniqueAnchor(
-                  typeof node.attrs._anchor === 'string'
-                    ? node.attrs._anchor
-                    : undefined,
-                  anchors
-                )
-              )
-            }
-            for (const {node, pos, custom} of headings) {
-              const anchor = custom
-                ? customAnchors.get(pos)
-                : createUniqueAnchor(slugify(node.textContent), anchors)
-              const slug = anchor ?? null
-              if (node.attrs._anchor === slug && !headingHasAnchorMark(node))
-                continue
-              if (node.attrs._anchor !== slug)
-                tr.setNodeMarkup(pos, undefined, {...node.attrs, _anchor: slug})
-              node.descendants((child, childPos) => {
-                if (!child.isText || !child.text) return true
-                const from = pos + childPos + 1
-                const to = from + child.text.length
-                tr.removeMark(from, to, newState.schema.marks.anchor)
-                return false
-              })
-              modified = true
-            }
+            const headings = collectHeadingsToSync(
+              transactions,
+              oldState.doc,
+              newState.doc
+            )
+            const customAnchors = reserveCustomHeadingAnchors(headings, anchors)
+            const modified = syncHeadingAnchors(
+              tr,
+              newState.schema.marks.anchor,
+              headings,
+              customAnchors,
+              anchors
+            )
             return modified ? tr : null
           }
         })
       ]
     }
+  })
+}
+
+interface HeadingToSync {
+  node: ProseMirrorNode
+  pos: number
+  custom: boolean
+}
+
+function createAnchorPool(
+  entryAnchors: Iterable<string>,
+  oldDocument: ProseMirrorNode,
+  newDocument: ProseMirrorNode
+): Set<string> {
+  const anchors = entryAnchorsOutsideDocument(entryAnchors, oldDocument)
+  for (const anchor of inlineAnchors(newDocument)) anchors.add(anchor)
+  return anchors
+}
+
+function collectHeadingsToSync(
+  transactions: ReadonlyArray<Transaction>,
+  oldDocument: ProseMirrorNode,
+  newDocument: ProseMirrorNode
+): Array<HeadingToSync> {
+  const headings: Array<HeadingToSync> = []
+  newDocument.descendants((node, pos) => {
+    if (node.type.name !== 'heading') return
+    const previous = previousHeading(transactions, oldDocument, pos)
+    headings.push({
+      node,
+      pos,
+      custom: isCustomHeadingAnchor(node, previous)
+    })
+  })
+  return headings
+}
+
+function reserveCustomHeadingAnchors(
+  headings: ReadonlyArray<HeadingToSync>,
+  anchors: Set<string>
+): Map<number, string | undefined> {
+  const customAnchors = new Map<number, string | undefined>()
+  for (const {node, pos, custom} of headings) {
+    if (!custom) continue
+    customAnchors.set(
+      pos,
+      createUniqueAnchor(
+        typeof node.attrs._anchor === 'string' ? node.attrs._anchor : undefined,
+        anchors
+      )
+    )
+  }
+  return customAnchors
+}
+
+function syncHeadingAnchors(
+  tr: Transaction,
+  anchorMark: ProseMirrorNode['type']['schema']['marks']['anchor'],
+  headings: ReadonlyArray<HeadingToSync>,
+  customAnchors: ReadonlyMap<number, string | undefined>,
+  anchors: Set<string>
+): boolean {
+  let modified = false
+  for (const {node, pos, custom} of headings) {
+    const anchor = custom
+      ? customAnchors.get(pos)
+      : createUniqueAnchor(slugify(node.textContent), anchors)
+    const slug = anchor ?? null
+    if (node.attrs._anchor === slug && !headingHasAnchorMark(node)) continue
+    if (node.attrs._anchor !== slug)
+      tr.setNodeMarkup(pos, undefined, {...node.attrs, _anchor: slug})
+    removeHeadingAnchorMarks(tr, anchorMark, node, pos)
+    modified = true
+  }
+  return modified
+}
+
+function removeHeadingAnchorMarks(
+  tr: Transaction,
+  anchorMark: ProseMirrorNode['type']['schema']['marks']['anchor'],
+  heading: ProseMirrorNode,
+  position: number
+) {
+  heading.descendants((node, nodePos) => {
+    if (!node.isText || !node.text) return true
+    const from = position + nodePos + 1
+    const to = from + node.text.length
+    tr.removeMark(from, to, anchorMark)
+    return false
   })
 }
 
