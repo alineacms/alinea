@@ -1,11 +1,11 @@
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {createId} from '#/core/Id.js'
 import {Permission} from '#/core/Role.js'
-import type {Policy} from '#/core/Role.js'
 import {atom} from 'jotai'
 import {configAtom, graphAtom} from './core.js'
 import {dashboardAtoms} from './dashboard.js'
-import {dispense, uploadSizeError} from './utils.js'
+import {uploadSizeError} from './utils.js'
+import {policyAtom} from './user.js'
 
 export interface UploadFilesRequest {
   files: Iterable<File> | ArrayLike<File>
@@ -14,13 +14,14 @@ export interface UploadFilesRequest {
   parentId?: string
 }
 
-export const uploadFilesAtom = dispense((policy: Policy) =>
-  atom(null, async (get, set, request: UploadFilesRequest) => {
+export const uploadFilesAtom = atom(
+  null,
+  async (get, set, request: UploadFilesRequest) => {
     const files = Array.from(request.files)
     if (files.length === 0) return
     const config = get(configAtom)
     const graph = get(graphAtom)
-    policy.assert(Permission.Upload, {
+    get(policyAtom).assert(Permission.Upload, {
       workspace: request.workspace,
       root: request.root,
       id: request.parentId
@@ -77,5 +78,5 @@ export const uploadFilesAtom = dispense((policy: Policy) =>
         }
       })
     )
-  })
+  }
 )

@@ -41,7 +41,7 @@ export interface SidebarTreeExplorerProps {
   root: RootAtoms
   rootSelected?: boolean
   selectedKeys?: Set<Key>
-  selectedLocale?: WritableAtom<string | null, [string], unknown>
+  selectedLocale: WritableAtom<string | null, [string], unknown>
 }
 
 interface SidebarStatusDisplay {
@@ -52,7 +52,7 @@ interface SidebarStatusDisplay {
 
 function sidebarStatus(
   item: RootTreeItem,
-  locale: string | null | undefined
+  locale: string | null
 ): SidebarStatusDisplay | undefined {
   if (locale && item.locale !== locale)
     return {
@@ -71,7 +71,7 @@ function sidebarStatus(
 interface SidebarItemProps {
   item: RootTreeItem
   items: Array<RootTreeItem>
-  locale: string | null | undefined
+  locale: string | null
   selectedId?: string
 }
 
@@ -151,11 +151,11 @@ export const SidebarTree = memo(function SidebarTree({
   page,
   root
 }: SidebarTreeProps) {
-  const items = useAtomValue(root.treeItems)
+  const {locale} = page
+  const items = useAtomValue(root.treeItems(locale))
   const label = useAtomValue(root.label)
   const icon = useAtomValue(root.icon)
   const i18n = useAtomValue(root.i18n)
-  const selectedLocale = useAtomValue(root.selectedLocale)
   const setRoute = useSetAtom(routeAtom)
   const [expandedIds, setExpandedIds] = useAtom(root.treeExpandedKeys)
   const [collapsedIds, setCollapsedIds] = useAtom(root.treeCollapsedKeys)
@@ -164,17 +164,16 @@ export const SidebarTree = memo(function SidebarTree({
   const dragDisabled = useAtomValue(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const getDropOperation = useSetAtom(root.getDropOperation)
-  const onInsert = useSetAtom(root.onInsert)
-  const onItemDrop = useSetAtom(root.onItemDrop)
-  const onMove = useSetAtom(root.onMove)
+  const drop = useSetAtom(root.onDrop)
+  const move = useSetAtom(root.onMove)
   const {dragAndDropHooks} = useDragAndDrop<RootTreeItem>({
     acceptedDragTypes: root.acceptedDragTypes,
     getItems,
     isDisabled: dragDisabled,
     getDropOperation,
-    onInsert,
-    onItemDrop,
-    onMove
+    onInsert: event => drop(event, locale),
+    onItemDrop: event => drop(event, locale),
+    onMove: event => move(event, locale)
   })
 
   const selectedParents = useMemo(() => {
@@ -220,7 +219,18 @@ export const SidebarTree = memo(function SidebarTree({
             </Button>
             {i18n && i18n.locales.length > 0 && (
               <span className={styles.SidebarTree.rootButton.locale()}>
-                <LocaleMenu root={root} />
+                <LocaleMenu
+                  root={root}
+                  locale={locale}
+                  onLocaleChange={locale =>
+                    setRoute({
+                      workspace: root.workspace,
+                      root: root.key,
+                      entry: page.entry,
+                      locale
+                    })
+                  }
+                />
               </span>
             )}
           </div>
@@ -266,7 +276,7 @@ export const SidebarTree = memo(function SidebarTree({
                 <SidebarTreeItem
                   item={item}
                   items={items}
-                  locale={selectedLocale}
+                  locale={locale}
                   selectedId={page.entry}
                 />
               )}
@@ -286,13 +296,13 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   root,
   rootSelected = false,
   selectedKeys = new Set<Key>(),
-  selectedLocale = root.selectedLocale
+  selectedLocale
 }: SidebarTreeExplorerProps) {
-  const items = useAtomValue(root.treeItems)
+  const [locale, setLocale] = useAtom(selectedLocale)
+  const items = useAtomValue(root.treeItems(locale))
   const label = useAtomValue(root.label)
   const icon = useAtomValue(root.icon)
   const i18n = useAtomValue(root.i18n)
-  const locale = useAtomValue(selectedLocale)
   const [expandedIdsAtom] = useState(() => atom(new Set<string>()))
   const [expandedIds, setExpandedIds] = useAtom(expandedIdsAtom)
   const expandedKeys = new Set<Key>(expandedIds)
@@ -300,17 +310,16 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   const dragDisabled = useAtomValue(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const getDropOperation = useSetAtom(root.getDropOperation)
-  const onInsert = useSetAtom(root.onInsert)
-  const onItemDrop = useSetAtom(root.onItemDrop)
-  const onMove = useSetAtom(root.onMove)
+  const drop = useSetAtom(root.onDrop)
+  const move = useSetAtom(root.onMove)
   const {dragAndDropHooks} = useDragAndDrop<RootTreeItem>({
     acceptedDragTypes: root.acceptedDragTypes,
     getItems,
     isDisabled: disableDragAndDrop || dragDisabled,
     getDropOperation,
-    onInsert,
-    onItemDrop,
-    onMove
+    onInsert: event => drop(event, locale),
+    onItemDrop: event => drop(event, locale),
+    onMove: event => move(event, locale)
   })
   return (
     <SidebarBody>
@@ -331,7 +340,11 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
             </Button>
             {i18n && i18n.locales.length > 0 && (
               <span className={styles.SidebarTree.rootButton.locale()}>
-                <LocaleMenu root={root} selectedLocale={selectedLocale} />
+                <LocaleMenu
+                  root={root}
+                  locale={locale}
+                  onLocaleChange={setLocale}
+                />
               </span>
             )}
           </div>

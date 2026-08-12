@@ -34,15 +34,18 @@ test('required atom values remain scoped to their store', () => {
   expect(second.get(valueAtom)).toBe('second')
 })
 
-test('required atoms store functions without evaluating them', () => {
-  const callbackAtom = requiredAtom<(value: string) => string>('test.callback')
-  const callback = (value: string) => `received ${value}`
+test('required atoms ignore writes of the current value', () => {
+  const valueAtom = requiredAtom<object>('test.stable')
   const store = createStore()
+  const value = {}
+  let updates = 0
+  store.set(valueAtom, value)
+  const unsubscribe = store.sub(valueAtom, () => updates++)
 
-  store.set(callbackAtom, callback)
+  store.set(valueAtom, value)
 
-  expect(store.get(callbackAtom)).toBe(callback)
-  expect(store.get(callbackAtom)('value')).toBe('received value')
+  expect(updates).toBe(0)
+  unsubscribe()
 })
 
 test('dispense caches values by key identity', () => {
@@ -52,6 +55,17 @@ test('dispense caches values by key identity', () => {
 
   expect(cached(first)).toBe(cached(first))
   expect(cached(first)).not.toBe(cached(second))
+})
+
+test('dispense caches values over multiple keys', () => {
+  const cached = dispense((_scope: object, _locale: string | null) => ({}))
+  const first = {}
+  const second = {}
+
+  expect(cached(first, 'en')).toBe(cached(first, 'en'))
+  expect(cached(first, 'en')).not.toBe(cached(first, 'fr'))
+  expect(cached(first, 'en')).not.toBe(cached(second, 'en'))
+  expect(cached(first, null)).toBe(cached(first, null))
 })
 
 test('creates dashboard entry drag data with a plain text fallback', () => {

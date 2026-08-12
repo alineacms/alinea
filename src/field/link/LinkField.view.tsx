@@ -46,7 +46,6 @@ import {LinkPicker, type LinkPickerOptions} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/atoms/nav.js'
 import {
   useEntry,
-  useDashboardContext,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -198,8 +197,10 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
 }
 
 function useLinkEntryState(entryId: string) {
-  const {page} = useDashboardContext()
-  return useAtomValue(linkEntryAtoms(page, entryId))
+  const data = useAtomValue(linkEntryAtoms(entryId).value)
+  return data === undefined
+    ? ({state: 'loading'} as const)
+    : ({state: 'hasData', data} as const)
 }
 
 interface EntryLoadingRowProps {

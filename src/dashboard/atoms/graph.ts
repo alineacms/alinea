@@ -42,13 +42,9 @@ export const shaAtom = atom(async get => {
   return readGraphSha(get(graphAtom))
 })
 
-const entryRevisionAtoms = dispense((id: string) =>
+export const entryRevisionAtom = dispense((id: string) =>
   selectAtom(indexStateAtom, state => state.entryRevisions.get(id))
 )
-
-export function entryRevisionAtom(id: string) {
-  return entryRevisionAtoms(id)
-}
 
 export const syncAtom = atom(null, async (get, set) => {
   const graph = get(graphAtom)

@@ -1,7 +1,7 @@
 import {Icon, Menu, MenuItem} from '#/components.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, type WritableAtom} from 'jotai'
+import {useAtomValue} from 'jotai'
 import {useTransition} from 'react'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
@@ -11,7 +11,8 @@ const styles = styler(css)
 
 interface LocaleMenuProps {
   root: RootAtoms
-  selectedLocale?: WritableAtom<string | null, [string], unknown>
+  locale: string | null
+  onLocaleChange(locale: string): void
 }
 
 interface LocaleDisplay {
@@ -55,15 +56,11 @@ function LocaleLabel({locale}: LocaleLabelProps) {
   )
 }
 
-export function LocaleMenu({
-  root,
-  selectedLocale: selectedLocaleAtom = root.selectedLocale
-}: LocaleMenuProps) {
+export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
   const i18n = useAtomValue(root.i18n)
-  const [selectedLocale, setSelectedLocale] = useAtom(selectedLocaleAtom)
   const [isPending, startTransition] = useTransition()
   if (!i18n || i18n.locales.length === 0) return null
-  const activeLocale = selectedLocale ?? i18n.locales[0]
+  const activeLocale = locale ?? i18n.locales[0]
   if (!activeLocale) return null
   return (
     <Menu
@@ -82,7 +79,7 @@ export function LocaleMenu({
       selectedKeys={[activeLocale]}
       onAction={key => {
         startTransition(() => {
-          setSelectedLocale(String(key))
+          onLocaleChange(String(key))
         })
       }}
     >

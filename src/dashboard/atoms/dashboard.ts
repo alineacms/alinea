@@ -36,21 +36,23 @@ interface LogoutConnection {
 
 const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 
-export class DashboardAtoms {
-  #mutationQueue = atom<DashboardMutationQueue>(mutationQueueState([]))
-  #uploadQueue = atom<Array<MutationQueueEntry>>([])
-  #themeStorage = atomWithStorage<DashboardTheme>(
-    dashboardThemeStorageKey,
-    'system',
-    undefined
-  )
-  entrySidebarOpen = atom(true)
+const mutationQueueValueAtom = atom<DashboardMutationQueue>(
+  mutationQueueState([])
+)
+const uploadQueueAtom = atom<Array<MutationQueueEntry>>([])
+const themeStorageAtom = atomWithStorage<DashboardTheme>(
+  dashboardThemeStorageKey,
+  'system',
+  undefined
+)
 
-  mutationQueue = Object.assign(
+export const dashboardAtoms = {
+  entrySidebarOpen: atom(true),
+  mutationQueue: Object.assign(
     atom(
       get => {
-        const uploads = get(this.#uploadQueue)
-        const queue = get(this.#mutationQueue)
+        const uploads = get(uploadQueueAtom)
+        const queue = get(mutationQueueValueAtom)
         if (uploads.length === 0) return queue
         return mutationQueueState([...uploads, ...queue.entries])
       },
@@ -59,7 +61,7 @@ export class DashboardAtoms {
         const listen = (event: Event) => {
           if (!(event instanceof MutationQueueEvent)) return
           startTransition(() => {
-            set(this.#mutationQueue, mutationQueueState(event.entries))
+            set(mutationQueueValueAtom, mutationQueueState(event.entries))
           })
         }
         events.addEventListener(MutationQueueEvent.type, listen)
@@ -67,21 +69,21 @@ export class DashboardAtoms {
       }
     ),
     {onMount: (initialize: () => void) => initialize()}
-  )
+  ),
 
-  retryMutationQueue = atom(null, async get => {
+  retryMutationQueue: atom(null, async get => {
     const graph = get(graphAtom) as WriteableGraph & Partial<MutationQueueRetry>
     if (graph.retryMutationQueue) await graph.retryMutationQueue()
-  })
+  }),
 
-  discardMutationQueue = atom(null, async (get, set) => {
+  discardMutationQueue: atom(null, async (get, set) => {
     const graph = get(graphAtom) as WriteableGraph &
       Partial<MutationQueueDiscard>
     if (graph.discardMutationQueue) await graph.discardMutationQueue()
-    set(this.#uploadQueue, [])
-  })
+    set(uploadQueueAtom, [])
+  }),
 
-  uploadProgress = atom(
+  uploadProgress: atom(
     null,
     (
       _get,
@@ -108,7 +110,7 @@ export class DashboardAtoms {
           }
     ) => {
       if (update.type === 'start') {
-        set(this.#uploadQueue, current => [
+        set(uploadQueueAtom, current => [
           ...update.uploads.map(
             ({id, file}): MutationQueueEntry => ({
               id,
@@ -128,7 +130,7 @@ export class DashboardAtoms {
         return
       }
       if (update.type === 'progress') {
-        set(this.#uploadQueue, current =>
+        set(uploadQueueAtom, current =>
           current.map(entry => {
             if (entry.id !== update.id) return entry
             return {
@@ -144,7 +146,7 @@ export class DashboardAtoms {
       }
       if (update.type === 'fail') {
         const failedIds = new Set(update.uploads.map(upload => upload.id))
-        set(this.#uploadQueue, current => [
+        set(uploadQueueAtom, current => [
           ...update.uploads.map(
             ({id, file, error}): MutationQueueEntry => ({
               id,
@@ -164,19 +166,19 @@ export class DashboardAtoms {
         ])
         return
       }
-      set(this.#uploadQueue, current =>
+      set(uploadQueueAtom, current =>
         current.filter(entry => !update.ids.includes(entry.id))
       )
     }
-  )
+  ),
 
-  theme = Object.assign(
+  theme: Object.assign(
     atom(
-      get => get(this.#themeStorage),
+      get => get(themeStorageAtom),
       (get, set, update: SetStateAction<DashboardTheme>) => {
-        const current = get(this.#themeStorage)
+        const current = get(themeStorageAtom)
         const next = typeof update === 'function' ? update(current) : update
-        set(this.#themeStorage, next)
+        set(themeStorageAtom, next)
         applyDashboardTheme(next)
       }
     ),
@@ -185,24 +187,22 @@ export class DashboardAtoms {
         setTheme(current => current)
       }
     }
-  )
+  ),
 
-  canLogout = atom(get => {
+  canLogout: atom(get => {
     if (!get(authRequiredAtom)) return false
     const client = get(clientAtom) as LocalConnection &
       Partial<LogoutConnection>
     return typeof client.logout === 'function'
-  })
+  }),
 
-  logout = atom(null, async (get, set) => {
+  logout: atom(null, async (get, set) => {
     const client = get(clientAtom) as LocalConnection &
       Partial<LogoutConnection>
     if (client.logout) await client.logout()
     await set(authAtom, {type: 'check'})
   })
 }
-
-export const dashboardAtoms = new DashboardAtoms()
 
 export function mutationQueueState(
   entries: Array<MutationQueueEntry>

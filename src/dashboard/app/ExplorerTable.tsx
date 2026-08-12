@@ -41,6 +41,7 @@ interface ExplorerTableRowProps {
   breadcrumbs: boolean
   explorer: DashboardExplorer
   gridTemplateColumns: string
+  locale: string | null
 }
 
 interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
@@ -252,12 +253,12 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       isDisabled={!props.isSelectable}
       onAction={
         explorer.hasRowAction && explorer.mode !== 'search'
-          ? () => onAction(entry)
+          ? () => onAction(entry, props.locale)
           : undefined
       }
       onPress={
         explorer.hasRowAction && explorer.mode === 'search'
-          ? () => onAction(entry)
+          ? () => onAction(entry, props.locale)
           : undefined
       }
     >
@@ -288,8 +289,8 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
 function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
   const children = useAtomValue(
     useMemo(
-      () => props.explorer.children(props.entry),
-      [props.entry, props.explorer]
+      () => props.explorer.children(props.entry, props.locale),
+      [props.entry, props.explorer, props.locale]
     )
   )
   if (children.length === 0) return null
@@ -302,6 +303,7 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
           entry={child}
           explorer={props.explorer}
           gridTemplateColumns={props.gridTemplateColumns}
+          locale={props.locale}
         />
       )}
     </Collection>
@@ -367,13 +369,15 @@ export interface ExplorerTableProps {
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
   renderEmptyState: () => ReactNode
+  locale: string | null
 }
 
 export function ExplorerTable({
   dragAndDropHooks,
   explorer,
   items,
-  renderEmptyState
+  renderEmptyState,
+  locale
 }: ExplorerTableProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
@@ -449,6 +453,7 @@ export function ExplorerTable({
                 entry={item}
                 explorer={explorer}
                 gridTemplateColumns={gridTemplateColumns}
+                locale={locale}
               />
             )}
           </Tree>

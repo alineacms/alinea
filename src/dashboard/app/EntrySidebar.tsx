@@ -22,7 +22,6 @@ import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
-import {dispense} from '#/dashboard/atoms/utils.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
 import {atom, type Getter, useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -55,7 +54,6 @@ export interface EntrySidebarProps {
 
 export type EntrySidebarTab = 'preview' | 'history' | 'references'
 const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
-const previousVersionsOpenAtoms = dispense((_entryId: string) => atom(false))
 
 export async function entrySidebar(
   get: Getter,
@@ -71,7 +69,7 @@ export async function entrySidebar(
     ? requestedTab
     : allowedTabs[0]
   const previousVersionsOpen =
-    selectedTab === 'history' ? get(previousVersionsOpenAtoms(entry.id)) : false
+    selectedTab === 'history' ? get(entry.previousVersionsOpen) : false
   switch (selectedTab) {
     case 'preview': {
       const preview = get(entry.preview)
@@ -174,9 +172,7 @@ function EntrySidebarHistory({
   previousVersionsOpen
 }: EntrySidebarHistoryProps) {
   const statuses = useAtomValue(localeData.availableStatuses)
-  const setPreviousVersionsOpen = useSetAtom(
-    previousVersionsOpenAtoms(entry.id)
-  )
+  const setPreviousVersionsOpen = useSetAtom(entry.previousVersionsOpen)
   return (
     <div className={styles.EntrySidebar.history()}>
       <section className={styles.EntrySidebar.section()}>

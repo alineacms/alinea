@@ -1,86 +1,48 @@
 import {expect, test} from 'bun:test'
-import type {RootData} from '#/core/Root.js'
-import {Policy} from '#/core/Role.js'
-import {localUser} from '#/core/User.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
-import type {Page} from './nav.js'
-import {atom, createStore} from 'jotai'
+import {createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {RootAtoms, rootAtoms} from './root.js'
+import {authReady} from './user.js'
 
-test('rootAtoms returns stable bundles per root and locale', () => {
-  const page = testPage()
-  const english = rootAtoms(page, 'workspace', 'pages', 'en')
+test('rootAtoms returns stable bundles independent of route state', () => {
+  const root = rootAtoms('workspace', 'pages')
 
-  expect(english).toBeInstanceOf(RootAtoms)
-  expect(rootAtoms(page, 'workspace', 'pages', 'en')).toBe(english)
-  expect(rootAtoms(page, 'workspace', 'pages', 'fr')).not.toBe(english)
-  expect(rootAtoms(page, 'workspace', 'media', 'en')).not.toBe(english)
-  expect(rootAtoms(page, 'other-workspace', 'pages', 'en')).not.toBe(english)
-  expect(english.children(null)).toBe(english.explorer)
-  expect(english.children('parent')).toBe(english.children('parent'))
-  expect(english.children('parent')).not.toBe(english.explorer)
-  expect(english.explorer.supportsInlineExpansion).toBe(false)
+  expect(root).toBeInstanceOf(RootAtoms)
+  expect(rootAtoms('workspace', 'pages')).toBe(root)
+  expect(rootAtoms('workspace', 'media')).not.toBe(root)
+  expect(rootAtoms('other-workspace', 'pages')).not.toBe(root)
+  expect(root.children(null)).toBe(root.explorer)
+  expect(root.children('parent')).toBe(root.children('parent'))
+  expect(root.children('parent')).not.toBe(root.explorer)
+  expect(root.explorer.supportsInlineExpansion).toBe(false)
+  expect(root.treeItems('en')).toBe(root.treeItems('en'))
+  expect(root.treeItems('fr')).not.toBe(root.treeItems('en'))
 })
 
-test('root icon uses the original file fallback', () => {
-  const root = new RootAtoms(
-    'workspace',
-    'pages',
-    null,
-    atom<RootData>({label: 'Pages'}),
-    Policy.ALLOW_ALL
-  )
+test('root icon uses the original file fallback', async () => {
+  const {store} = await createDashboardAtomFixture()
+  const root = rootAtoms('main', 'pages')
 
-  expect(createStore().get(root.icon)).toBe(LucideFile)
+  expect(store.get(root.icon)).toBe(LucideFile)
 })
 
-test('tree expansion survives a locale bundle change', () => {
-  const data = atom<RootData>({label: 'Pages'})
-  const english = new RootAtoms(
-    'workspace',
-    'pages',
-    'en',
-    data,
-    Policy.ALLOW_ALL
-  )
-  const french = new RootAtoms(
-    'workspace',
-    'pages',
-    'fr',
-    data,
-    Policy.ALLOW_ALL
-  )
+test('tree expansion is independent of locale data', () => {
+  const root = rootAtoms('workspace', 'pages')
   const store = createStore()
 
-  store.set(english.treeExpandedKeys, new Set(['parent']))
+  store.set(root.treeExpandedKeys, new Set(['parent']))
 
-  expect(store.get(french.treeExpandedKeys)).toEqual(new Set(['parent']))
+  expect(store.get(root.treeExpandedKeys)).toEqual(new Set(['parent']))
 })
 
 test('preloading the tree primes the synchronous tree items atom', async () => {
   const {store} = await createDashboardAtomFixture()
-  const root = new RootAtoms(
-    'main',
-    'pages',
-    null,
-    atom<RootData>({label: 'Pages'}),
-    Policy.ALLOW_ALL
-  )
+  await store.get(authReady)
+  const root = rootAtoms('main', 'pages')
 
-  const readyItems = await store.get(root.treeReady)
+  const readyItems = await store.get(root.treeReady(null))
 
   expect(readyItems).not.toBeEmpty()
-  expect(store.get(root.treeItems)).toEqual(readyItems)
+  expect(store.get(root.treeItems(null))).toEqual(readyItems)
 })
-
-function testPage(): Page {
-  return {
-    type: 'entry',
-    workspace: 'workspace',
-    root: 'pages',
-    entry: undefined,
-    locale: null,
-    auth: {user: localUser, policy: Policy.ALLOW_ALL}
-  }
-}

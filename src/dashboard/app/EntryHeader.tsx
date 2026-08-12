@@ -13,6 +13,7 @@ import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {ComponentType, type ReactNode, useState, useTransition} from 'react'
@@ -153,7 +154,7 @@ export function EntryHeader({
   selectedEntry
 }: EntryHeaderProps) {
   const config = useAtomValue(configAtom)
-  const policy = entry.policy
+  const policy = useAtomValue(policyAtom)
   const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
   const versions = useAtomValue(localeData.versions)

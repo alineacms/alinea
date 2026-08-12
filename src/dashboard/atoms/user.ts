@@ -1,20 +1,30 @@
 import {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {atom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import {authAtom} from './auth.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
-import type {PageAuth} from './nav.js'
 
-export const userAtom = atom(get => {
+const userResult = atom(async get => {
   const auth = get(authAtom)
   if (auth.status === 'authenticated') return auth.user
   throw new Error('User is not authenticated')
 })
 
+const resolvedUser = unwrap(userResult, previous => previous)
+const preloadedUserAtom = atom<User>()
+const preloadedPolicyAtom = atom<Policy>()
+
+export const userAtom = atom(get => {
+  const user = get(preloadedUserAtom) ?? get(resolvedUser)
+  assert(user, 'Dashboard user was not preloaded')
+  return user
+})
+
 const policyResult = atom(async get => {
-  const user = get(userAtom)
+  const user = await get(userResult)
   if (!user?.roles) return Policy.ALLOW_NONE
   const graph = get(graphAtom)
   get(shaAtom)
@@ -23,23 +33,36 @@ const policyResult = atom(async get => {
 })
 
 const resolvedPolicy = unwrap(policyResult, previous => previous)
-const stablePolicy = selectAtom(
+const resolvedPolicyAtom = selectAtom(
   resolvedPolicy,
   policy => policy,
   (previous, next) =>
     previous === next || Boolean(previous && next && previous.equals(next))
 )
 
-export const authReady = atom(async (get): Promise<PageAuth> => {
-  // Read the equality-filtered atom before awaiting so it observes this result.
-  get(stablePolicy)
-  await get(policyResult)
-  const policy = get(stablePolicy)
-  assert(policy, 'Dashboard policy was not resolved')
-  return {
-    user: get(userAtom),
-    policy
+export const policyAtom = atom(get => {
+  const policy = get(preloadedPolicyAtom) ?? get(resolvedPolicyAtom)
+  assert(policy, 'Dashboard policy was not preloaded')
+  return policy
+})
+
+export const preloadUserPolicyAtom = atom(
+  null,
+  (_get, set, user: User, policy: Policy) => {
+    set(preloadedUserAtom, user)
+    set(preloadedPolicyAtom, policy)
   }
+)
+
+export const authReady = atom(async get => {
+  // Observe the unwrapped atoms before awaiting so they retain their resolved
+  // values while their resources revalidate.
+  get(resolvedUser)
+  await get(userResult)
+  get(userAtom)
+  get(resolvedPolicyAtom)
+  await get(policyResult)
+  get(policyAtom)
 })
 
 export const canManageMembersAtom = atom(async get => {

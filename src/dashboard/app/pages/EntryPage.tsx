@@ -1,8 +1,9 @@
 import {Button, Icon, Surface} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
-import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import {
   entryAtoms,
@@ -18,6 +19,7 @@ import {
   routeBlockAtom,
   routeGuardAtom
 } from '#/dashboard/atoms/nav.js'
+import {linkEntryAtoms} from '#/dashboard/atoms/link.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -52,19 +54,14 @@ const styles = styler(css)
 export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
-    const entry = await get(entryAtoms(page, page.entry))
-    const localeData = entry.locales(page.locale ?? null)
+    const entry = await get(entryAtoms(page.entry))
+    const localeData = entry.locales(page.locale)
     const type = get(typeAtoms(get(entry.type)))
     const view = get(entry.view)
     const selectedEntry = await get(localeData.selectedEntry)
     if (view === 'overview') {
-      const root = rootAtoms(
-        page,
-        get(entry.workspace),
-        get(entry.root),
-        page.locale ?? null
-      )
-      await get(root.children(entry.id).itemsReady)
+      const root = rootAtoms(get(entry.workspace), get(entry.root))
+      await get(root.children(entry.id).itemsReady(page.locale))
       return (
         <EntryOverview
           entry={entry}
@@ -75,6 +72,15 @@ export const entryPage = page(async (page, get) => {
       )
     }
     const selectedNode = await get(localeData.selectedNode)
+    const references = Type.references(
+      type.type,
+      get(selectedNode.value) as Record<string, unknown>
+    )
+    await Promise.all(
+      Array.from(new Set(references.map(reference => reference.targetId))).map(
+        id => get(linkEntryAtoms(id).ready)
+      )
+    )
     const parentNeedsTranslation = type.customView
       ? false
       : await get(localeData.parentNeedsTranslation)
@@ -104,8 +110,7 @@ interface MissingEntryProps {
 
 function MissingEntry({page}: MissingEntryProps) {
   assert(page.workspace && page.root && page.entry)
-  const {rootsAtom} = workspaceAtoms(page.workspace)
-  const root = useAtomValue(rootsAtom(page.root))
+  const root = useAtomValue(rootAtoms(page.workspace, page.root).data)
   const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
@@ -211,6 +216,7 @@ function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
     <Rail main>
       <Explorer
         explorer={root.children(entry.id)}
+        locale={page.locale}
         headerEntry={{
           backLabel: parentId ? 'Back to parent entry' : 'Back to root',
           title: selectedEntry.title,
@@ -244,7 +250,7 @@ function EntryEditorContent({
   const hasChildren = useAtomValue(entry.hasChildren)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
   const View = type.customView
-  const locale = page.locale ?? null
+  const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)

@@ -14,6 +14,7 @@ import {Type, type as createType} from '#/core/Type.js'
 import {createEntryAtom} from '#/dashboard/atoms/create.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
@@ -112,10 +113,11 @@ function CreateEntryLoading() {
 function CreateEntryForm() {
   const modal = useDashboardModal()
   const {page, root} = useDashboardContext()
-  const createEntry = useSetAtom(createEntryAtom(page.auth))
+  const createEntry = useSetAtom(createEntryAtom)
   const config = useAtomValue(configAtom).schema
-  const policy = page.auth.policy
-  const treeItems = useAtomValue(root.treeItems)
+  const policy = useAtomValue(policyAtom)
+  const {locale} = page
+  const treeItems = useAtomValue(root.treeItems(locale))
   const rootData = useAtomValue(root.data)
   const initialParentId = useMemo(() => {
     if (!page.entry) return undefined
@@ -130,7 +132,6 @@ function CreateEntryForm() {
   const [selectedTypeOverride, setSelectedType] = useState<string | null>(null)
   const [insertOrder, setInsertOrder] = useState<'first' | 'last'>('last')
   const [isCreating, setIsCreating] = useState(false)
-  const locale = root.locale
   const containerTypes = useMemo(
     () =>
       Object.entries(config)

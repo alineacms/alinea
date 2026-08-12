@@ -1,5 +1,4 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {startTransition} from 'react'
 import type {Key, Selection} from 'react-aria-components'
@@ -21,11 +20,10 @@ export function ExplorerPickerContent({
 }: ExplorerPickerContentProps) {
   const location = useAtomValue(explorer.location)
   const view = useAtomValue(explorer.view)
-  const {page} = useDashboardContext()
   const selectedLocale = useAtomValue(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
   const root = location.root
-    ? rootAtoms(page, location.workspace, location.root, selectedLocale)
+    ? rootAtoms(location.workspace, location.root)
     : undefined
   const enableNavigation = options.enableNavigation ?? true
   const selectedKeys = location.parentId
@@ -62,7 +60,7 @@ export function ExplorerPickerContent({
           onSelectionChange={onSelectionChange}
         />
       )}
-      <ExplorerBody explorer={explorer} />
+      <ExplorerBody explorer={explorer} locale={selectedLocale} />
     </ExplorerModalContent>
   )
 }
@@ -86,7 +84,8 @@ function ExplorerPickerNavigation({
   rootSelected,
   selectedKeys
 }: ExplorerPickerNavigationProps) {
-  useAtomValue(root.treeReady)
+  const locale = useAtomValue(explorer.selectedLocale)
+  useAtomValue(root.treeReady(locale))
   return (
     <ExplorerModalNavigation>
       <SidebarTreeExplorer

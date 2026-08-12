@@ -3,7 +3,7 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {styler} from '@alinea/styler'
-import {atom, createStore, Provider, useAtomValue} from 'jotai'
+import {atom, createStore, Provider, useAtomValue, type Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {useMemo, useState, type ComponentType, type ReactNode} from 'react'
 import css from './App.module.css'
@@ -17,10 +17,10 @@ import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
 import {Rail} from './app/ui/Rail.js'
 import {authAtom} from './atoms/auth.js'
-import {workspaceAtoms} from './atoms/config.js'
+import {workspaceAtom} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
-import {resolvePage} from './atoms/nav.js'
+import {pageAtom, type Page} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
 import {authReady, canManageMembersAtom} from './atoms/user.js'
 import {DashboardModelScope, type Dashboard} from './hooks.js'
@@ -47,15 +47,13 @@ const appAtom = atom(async get => {
 const appValueAtom = unwrap(appAtom, previous => previous)
 
 const authenticatedAtom = atom(async get => {
-  const [auth, canManageMembers] = await Promise.all([
+  const [, canManageMembers] = await Promise.all([
     get(authReady),
     get(canManageMembersAtom)
   ])
-  const page = resolvePage(get, auth)
+  const page = get(pageAtom)
   const {entry, workspace, root} = page
-  const workspaceData = workspace
-    ? get(workspaceAtoms(workspace).settingsAtom)
-    : undefined
+  const workspaceData = workspace ? get(workspaceAtom(workspace)) : undefined
   const meta = (label: string): ReactNode => (
     <DashboardMeta
       color={workspaceData?.color ?? '#7c3aed'}
@@ -92,10 +90,11 @@ const authenticatedAtom = atom(async get => {
     )
   }
 
-  const rootData = rootAtoms(page, workspace, root, page.locale ?? null)
+  const rootData = rootAtoms(workspace, root)
+  const {locale} = page
 
   if (page.requestedRoot && page.requestedRoot !== root) {
-    await get(rootData.treeReady)
+    await get(rootData.treeReady(locale))
     return (
       <>
         {meta('Root not found')}
@@ -119,7 +118,7 @@ const authenticatedAtom = atom(async get => {
     const [content, title] = await Promise.all([
       entryPage(page, get),
       entryTitle(page, entry, get),
-      get(rootData.treeReady)
+      get(rootData.treeReady(locale))
     ])
     return (
       <>
@@ -138,7 +137,7 @@ const authenticatedAtom = atom(async get => {
 
   const [content] = await Promise.all([
     rootPage(page, get),
-    get(rootData.treeReady)
+    get(rootData.treeReady(locale))
   ])
   return (
     <>
@@ -195,14 +194,10 @@ function AppLoading() {
   )
 }
 
-async function entryTitle(
-  page: ReturnType<typeof resolvePage>,
-  entryId: string,
-  get: Parameters<typeof resolvePage>[0]
-) {
+async function entryTitle(page: Page, entryId: string, get: Getter) {
   try {
-    const entry = await get(entryAtoms(page, entryId))
-    return (await get(entry.locales(page.locale ?? null).selectedEntry)).title
+    const entry = await get(entryAtoms(entryId))
+    return (await get(entry.locales(page.locale).selectedEntry)).title
   } catch (error) {
     if (error instanceof MissingEntryError) return 'Entry not found'
     throw error

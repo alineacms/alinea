@@ -56,10 +56,11 @@ function SearchIdleState() {
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
+  locale: string | null
 }
 
-export function ExplorerList({explorer}: ExplorerListProps) {
-  const items = useAtomValue(explorer.items)
+export function ExplorerList({explorer, locale}: ExplorerListProps) {
+  const items = useAtomValue(explorer.items(locale))
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
@@ -108,6 +109,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
+          locale={locale}
           renderEmptyState={() => <EmptyResults root={root} />}
         />
       ) : (
@@ -115,6 +117,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
+          locale={locale}
           renderEmptyState={() => <EmptyResults root={root} />}
         />
       )}

@@ -31,6 +31,9 @@
 - Use Jotai atoms for dashboard state and derive state by reading dependencies
   with `get`. Use memoized atom families for state scoped to an identity such as
   an entry id.
+- Prefer exposing inline atoms and atom families over forwarding methods or
+  single-use helpers. For example, define `treeReady = dispense(...)` directly
+  instead of forwarding through a private `treeReadyAtoms` family.
 - Async page atoms are the loading boundary for navigation and view-state changes.
   They must await exactly the data required by the UI state that is about to be
   shown before returning the next page.

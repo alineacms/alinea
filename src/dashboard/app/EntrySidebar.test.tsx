@@ -1,8 +1,6 @@
 import {cleanup, fireEvent, render, screen, waitFor} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
 import type {Entry} from '#/core/Entry.js'
-import {Policy} from '#/core/Role.js'
-import {localUser} from '#/core/User.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {EntryAtoms} from '#/dashboard/atoms/entry.js'
 import {atom, createStore, Provider} from 'jotai'
@@ -48,8 +46,7 @@ test('loads sidebar data only when its tab is selected', async () => {
       hasChildren: false,
       parents: [],
       entries: [selectedEntry]
-    } as never),
-    {user: localUser, policy: Policy.ALLOW_ALL}
+    } as never)
   )
   const localeData = entry.locales(null)
   const references = {
@@ -133,8 +130,7 @@ test('loads sidebar data only when its tab is selected', async () => {
       hasChildren: false,
       parents: [],
       entries: [nextSelectedEntry]
-    } as never),
-    {user: localUser, policy: Policy.ALLOW_ALL}
+    } as never)
   )
   let nextReferenceLoads = 0
   nextEntry.incomingReferencesReady = atom(async () => {

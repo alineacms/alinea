@@ -6,7 +6,6 @@ import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {RootData} from '#/core/Root.js'
-import type {Policy} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import type {Infer} from '#/types.js'
 import {parents} from '#/query.js'
@@ -26,6 +25,7 @@ import {configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
 import {uploadFilesAtom} from './upload.js'
+import {policyAtom} from './user.js'
 import {dispense} from './utils.js'
 
 export const dashboardEntryOverviewColumnCount = 5
@@ -86,7 +86,7 @@ export interface ExplorerOptions {
   nestedNavigation?: boolean
   pickChildren?: boolean
   rootData?: Atom<RootData>
-  treeItems?: Atom<Array<ExplorerTreeItem>>
+  treeItems?: (locale: string | null) => Atom<Array<ExplorerTreeItem>>
   selectedLocale?: string | null
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
@@ -95,7 +95,6 @@ export interface ExplorerOptions {
   searchDepth?: 'current' | 'all'
   onAction?: (entry: ExplorerEntry) => void
   onConfirm?: (selection: Array<string>) => void
-  policy: Policy
 }
 
 export interface ExplorerTreeItem {
@@ -259,9 +258,9 @@ export class ExplorerAtoms {
   #selectedFilter = atom<ExplorerTypeFilters>()
   selectedLocale: PrimitiveAtom<string | null>
   root: Atom<ExplorerRootData>
-  parent: Atom<ExplorerEntry | undefined>
-  itemsReady: Atom<Promise<Array<ExplorerEntry>>>
-  items: Atom<Array<ExplorerEntry>>
+  parent: (locale: string | null) => Atom<ExplorerEntry | undefined>
+  itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
+  items: (locale: string | null) => Atom<Array<ExplorerEntry>>
 
   constructor(
     public readonly location: WritableAtom<
@@ -321,59 +320,81 @@ export class ExplorerAtoms {
       }
       return new ExplorerEntry(item.id, value, atom(value), this.root)
     }
-    this.parent = atom(get => {
-      const parentId = get(this.location).parentId
-      if (!parentId || !options.treeItems) return undefined
-      const items = get(options.treeItems)
-      const item = items.find(candidate => candidate.id === parentId)
-      if (!item) return undefined
-      const parent = treeEntry(item)
-      const ancestors = new Array<ExplorerEntry>()
-      let ancestorId = item.parentId
-      while (ancestorId) {
-        const ancestor = items.find(candidate => candidate.id === ancestorId)
-        if (!ancestor) break
-        ancestors.unshift(treeEntry(ancestor))
-        ancestorId = ancestor.parentId
-      }
-      const {data} = get(parent.data)
-      if (data) data.parents = atom(ancestors)
-      return parent
-    })
-    const itemsSource = atom(async get => {
-      const values = await get(this.itemData)
-      return values.map(value => {
-        const parentEntries = value.parentEntries ?? []
-        const parentItems = parentEntries.map((parent, index) => {
-          const parentValue: ExplorerItemData = {
-            ...parent,
-            path: '',
-            parents: parentEntries.slice(0, index).map(item => item.id),
-            index: '',
-            data: {},
-            hasChildren: true
-          }
+    this.parent = dispense((locale: string | null) =>
+      atom(get => {
+        const parentId = get(this.location).parentId
+        if (!parentId || !options.treeItems) return undefined
+        const items = get(options.treeItems(locale))
+        const item = items.find(candidate => candidate.id === parentId)
+        if (!item) return undefined
+        const parent = treeEntry(item)
+        const ancestors = new Array<ExplorerEntry>()
+        let ancestorId = item.parentId
+        while (ancestorId) {
+          const ancestor = items.find(candidate => candidate.id === ancestorId)
+          if (!ancestor) break
+          ancestors.unshift(treeEntry(ancestor))
+          ancestorId = ancestor.parentId
+        }
+        const {data} = get(parent.data)
+        if (data) data.parents = atom(ancestors)
+        return parent
+      })
+    )
+    const itemsSource = dispense((locale: string | null) =>
+      atom(async get => {
+        const values = await get(this.itemData(locale))
+        return values.map(value => {
+          const parentEntries = value.parentEntries ?? []
+          const parentItems = parentEntries.map((parent, index) => {
+            const parentValue: ExplorerItemData = {
+              ...parent,
+              path: '',
+              parents: parentEntries.slice(0, index).map(item => item.id),
+              index: '',
+              data: {},
+              hasChildren: true
+            }
+            return new ExplorerEntry(
+              parent.id,
+              parentValue,
+              atom(parentValue),
+              this.root
+            )
+          })
           return new ExplorerEntry(
-            parent.id,
-            parentValue,
-            atom(parentValue),
-            this.root
+            value.id,
+            value,
+            atom(value),
+            this.root,
+            parentItems
           )
         })
-        return new ExplorerEntry(
-          value.id,
-          value,
-          atom(value),
-          this.root,
-          parentItems
-        )
       })
-    })
-    this.items = unwrap(itemsSource, previous => previous ?? [])
-    this.itemsReady = atom(async get => {
-      get(this.items)
-      return get(itemsSource)
-    })
+    )
+    this.items = dispense((locale: string | null) =>
+      unwrap(itemsSource(locale), previous => previous ?? [])
+    )
+    this.itemsReady = dispense((locale: string | null) =>
+      atom(async get => {
+        get(this.items(locale))
+        const items = await get(itemsSource(locale))
+        if (!this.supportsInlineExpansion) return items
+        const expandedKeys = get(this.expandedKeys)
+        const preloadExpanded = async (entries: Array<ExplorerEntry>) => {
+          await Promise.all(
+            entries.map(async entry => {
+              if (!expandedKeys.has(entry.id)) return
+              get(this.children(entry, locale))
+              const children = await get(this.childrenReady(entry, locale))
+              await preloadExpanded(children)
+            })
+          )
+        }
+        await preloadExpanded(items)
+        return items
+      })
+    )
   }
 
   showResults = atom(get => {
@@ -417,7 +438,7 @@ export class ExplorerAtoms {
   }
   canUpload = atom(get => {
     const location = get(this.location)
-    return this.options.policy.canUpload({
+    return get(policyAtom).canUpload({
       workspace: location.workspace,
       root: location.root,
       id: location.parentId
@@ -437,7 +458,7 @@ export class ExplorerAtoms {
   upload = atom(null, (get, set, files: Iterable<File> | ArrayLike<File>) => {
     const location = get(this.location)
     if (!location.root) return
-    set(uploadFilesAtom(this.options.policy), {
+    set(uploadFilesAtom, {
       files,
       workspace: location.workspace,
       root: location.root,
@@ -447,24 +468,27 @@ export class ExplorerAtoms {
   getItems = atom(null, (_get, _set, keys: Set<Key>) => {
     return [...keys].map(key => ({'text/plain': String(key)}))
   })
-  onAction = atom(null, (get, set, entry: ExplorerEntry) => {
-    if (this.options.onAction) {
-      this.options.onAction(entry)
-      return
+  onAction = atom(
+    null,
+    (get, set, entry: ExplorerEntry, locale: string | null) => {
+      if (this.options.onAction) {
+        this.options.onAction(entry)
+        return
+      }
+      if (this.hasRowAction) {
+        set(routeAtom, {
+          workspace: entry.workspace,
+          root: entry.root,
+          entry: entry.id,
+          locale: locale ?? undefined
+        })
+        return
+      }
+      const {data} = get(entry.data)
+      if (data && get(data.hasChildren))
+        set(this.location, location => ({...location, parentId: entry.id}))
     }
-    if (this.hasRowAction) {
-      set(routeAtom, {
-        workspace: entry.workspace,
-        root: entry.root,
-        entry: entry.id,
-        locale: get(this.selectedLocale) ?? undefined
-      })
-      return
-    }
-    const {data} = get(entry.data)
-    if (data && get(data.hasChildren))
-      set(this.location, location => ({...location, parentId: entry.id}))
-  })
+  )
   onConfirm = atom(null, get => {
     const selected = get(this.selection)
     if (selected !== 'all') this.options.onConfirm?.([...selected].map(String))
@@ -486,8 +510,8 @@ export class ExplorerAtoms {
       })(item as never)
     })
   )
-  children = dispense((entry: ExplorerEntry) => {
-    const childrenReady = atom(async get => {
+  childrenReady = dispense((entry: ExplorerEntry, locale: string | null) =>
+    atom(async get => {
       get(shaAtom)
       const {data} = get(entry.data)
       if (!data || !get(data.hasChildren)) return []
@@ -498,7 +522,7 @@ export class ExplorerAtoms {
         workspace: entry.workspace,
         root: entry.root,
         parentId: entry.id,
-        locale: get(this.selectedLocale),
+        locale,
         filter: undefined,
         type: filter,
         status: 'preferDraft',
@@ -541,9 +565,8 @@ export class ExplorerAtoms {
           data: Entry.data
         }
       })
-      const readable = entries.filter(candidate =>
-        this.options.policy.canRead(candidate)
-      )
+      const policy = get(policyAtom)
+      const readable = entries.filter(candidate => policy.canRead(candidate))
       const parentIds = await graph.find({
         workspace: entry.workspace,
         root: entry.root,
@@ -564,90 +587,94 @@ export class ExplorerAtoms {
         ])
       })
     })
-    return unwrap(childrenReady, previous => previous ?? [])
-  })
-  itemData = atom(async get => {
-    get(shaAtom)
-    const location = get(this.location)
-    const search = get(this.search).trim()
-    if (!location.root && this.rootScope === 'current') return []
-    if (this.hideResultsUntilSearch && !search) return []
-    const graph = get(graphAtom)
-    const policy = this.options.policy
-    const sort = get(this.sort)
-    const filter = get(this.filter)
-    const flatList =
-      Boolean(search && this.searchDepth === 'all') ||
-      Boolean(
-        this.options.condition &&
-        !this.options.pickChildren &&
-        this.options.flatResults !== false
-      )
-    const orderField =
-      sort.sortBy === 'title'
-        ? Entry.title
-        : sort.sortBy === 'path'
-          ? Entry.path
-          : sort.sortBy === 'size'
-            ? MediaFile.size
-            : sort.sortBy === 'id'
-              ? Entry.id
-              : Entry.index
-    const entries = await graph.find({
-      workspace: location.workspace,
-      root: this.rootScope === 'workspace' ? undefined : location.root,
-      parentId: flatList ? undefined : (location.parentId ?? null),
-      locale: get(this.selectedLocale),
-      search: search || undefined,
-      filter: flatList ? this.options.condition : undefined,
-      type: filter,
-      status: 'preferDraft',
-      groupBy: Entry.id,
-      orderBy: search
-        ? undefined
-        : {
-            [sort.direction]: orderField,
-            caseSensitive: sort.sortBy !== 'id'
-          },
-      select: {
-        id: Entry.id,
-        title: Entry.title,
-        path: Entry.path,
-        type: Entry.type,
-        workspace: Entry.workspace,
-        root: Entry.root,
-        locale: Entry.locale,
-        parentId: Entry.parentId,
-        parents: Entry.parents,
-        parentEntries: parents({
-          select: {
-            id: Entry.id,
-            title: Entry.title,
-            type: Entry.type,
-            workspace: Entry.workspace,
-            root: Entry.root,
-            locale: Entry.locale,
-            parentId: Entry.parentId
-          }
-        }),
-        index: Entry.index,
-        data: Entry.data
-      }
+  )
+  children = dispense((entry: ExplorerEntry, locale: string | null) =>
+    unwrap(this.childrenReady(entry, locale), previous => previous ?? [])
+  )
+  private readonly itemData = dispense((locale: string | null) =>
+    atom(async get => {
+      get(shaAtom)
+      const location = get(this.location)
+      const search = get(this.search).trim()
+      if (!location.root && this.rootScope === 'current') return []
+      if (this.hideResultsUntilSearch && !search) return []
+      const graph = get(graphAtom)
+      const sort = get(this.sort)
+      const filter = get(this.filter)
+      const flatList =
+        Boolean(search && this.searchDepth === 'all') ||
+        Boolean(
+          this.options.condition &&
+          !this.options.pickChildren &&
+          this.options.flatResults !== false
+        )
+      const orderField =
+        sort.sortBy === 'title'
+          ? Entry.title
+          : sort.sortBy === 'path'
+            ? Entry.path
+            : sort.sortBy === 'size'
+              ? MediaFile.size
+              : sort.sortBy === 'id'
+                ? Entry.id
+                : Entry.index
+      const entries = await graph.find({
+        workspace: location.workspace,
+        root: this.rootScope === 'workspace' ? undefined : location.root,
+        parentId: flatList ? undefined : (location.parentId ?? null),
+        locale,
+        search: search || undefined,
+        filter: flatList ? this.options.condition : undefined,
+        type: filter,
+        status: 'preferDraft',
+        groupBy: Entry.id,
+        orderBy: search
+          ? undefined
+          : {
+              [sort.direction]: orderField,
+              caseSensitive: sort.sortBy !== 'id'
+            },
+        select: {
+          id: Entry.id,
+          title: Entry.title,
+          path: Entry.path,
+          type: Entry.type,
+          workspace: Entry.workspace,
+          root: Entry.root,
+          locale: Entry.locale,
+          parentId: Entry.parentId,
+          parents: Entry.parents,
+          parentEntries: parents({
+            select: {
+              id: Entry.id,
+              title: Entry.title,
+              type: Entry.type,
+              workspace: Entry.workspace,
+              root: Entry.root,
+              locale: Entry.locale,
+              parentId: Entry.parentId
+            }
+          }),
+          index: Entry.index,
+          data: Entry.data
+        }
+      })
+      const policy = get(policyAtom)
+      const readable = entries.filter(entry => policy.canRead(entry))
+      const parentIds = await graph.find({
+        workspace: location.workspace,
+        root: this.rootScope === 'workspace' ? undefined : location.root,
+        parentId: {in: readable.map(entry => entry.id)},
+        status: 'preferDraft',
+        groupBy: Entry.parentId,
+        select: Entry.parentId
+      })
+      return readable.map(entry => ({
+        ...entry,
+        hasChildren: parentIds.includes(entry.id)
+      }))
     })
-    const readable = entries.filter(entry => policy.canRead(entry))
-    const parentIds = await graph.find({
-      workspace: location.workspace,
-      root: this.rootScope === 'workspace' ? undefined : location.root,
-      parentId: {in: readable.map(entry => entry.id)},
-      status: 'preferDraft',
-      groupBy: Entry.parentId,
-      select: Entry.parentId
-    })
-    return readable.map(entry => ({
-      ...entry,
-      hasChildren: parentIds.includes(entry.id)
-    }))
-  })
+  )
 }
 
 export function createExplorerAtoms(

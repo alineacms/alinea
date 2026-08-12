@@ -1,7 +1,7 @@
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
+import {DeepMap} from '#/core/util/DeepMap.js'
 import type {DragItem, DragTypes} from '@react-types/shared'
-import {Atom, atom, type WritableAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {atom, type WritableAtom} from 'jotai'
 import type {Key} from 'react-aria-components'
 
 type RequiredAtom<Value> = WritableAtom<Value, [Value], void>
@@ -9,39 +9,27 @@ type RequiredAtom<Value> = WritableAtom<Value, [Value], void>
 const missing = Symbol('required atom missing')
 
 export function requiredAtom<Value>(name: string): RequiredAtom<Value> {
-  const valueAtom = atom<{value: Value | typeof missing}>({value: missing})
+  const valueAtom = atom<Value | typeof missing>(missing)
   const result = atom(
     get => {
-      const {value} = get(valueAtom)
+      const value = get(valueAtom)
       if (value === missing)
         throw new Error(`Required atom "${name}" was not initialized`)
       return value
     },
-    (get, set, value: Value) => {
-      set(valueAtom, {value})
-    }
+    (_get, set, value: Value) => set(valueAtom, value)
   )
   result.debugLabel = name
   return result
 }
 
-export function atomWithPending<Value>(
-  asyncAtom: Atom<Promise<Value> | Value>
-) {
-  const wrappedAtom = atom(async get => {
-    const data = await get(asyncAtom)
-    return [false, data] as const
-  })
-  return unwrap(wrappedAtom, prev => [true, prev?.[1]] as const)
-}
-
-export function dispense<Key = string, Value = unknown>(
-  fn: (key: Key) => Value
-): (key: Key) => Value {
-  const values = new Map<Key, Value>()
-  return function dispenseValue(key: Key) {
-    if (!values.has(key)) values.set(key, fn(key))
-    return values.get(key)!
+export function dispense<Keys extends ReadonlyArray<unknown>, Value>(
+  fn: (...keys: Keys) => Value
+): (...keys: Keys) => Value {
+  const values = new DeepMap<Keys, Value>()
+  return function dispenseValue(...keys: Keys) {
+    if (!values.has(keys)) values.set(keys, fn(...keys))
+    return values.get(keys)!
   }
 }
 

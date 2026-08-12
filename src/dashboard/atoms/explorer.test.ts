@@ -1,5 +1,4 @@
 import {expect, test} from 'bun:test'
-import {Policy} from '#/core/Role.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
@@ -8,6 +7,7 @@ import {
   ExplorerEntry,
   type ExplorerItemData
 } from './explorer.js'
+import {authReady} from './user.js'
 
 function folderEntry(value: ExplorerItemData) {
   const item = atom(value)
@@ -18,7 +18,7 @@ function folderEntry(value: ExplorerItemData) {
 test('picker rows select instead of navigating the dashboard', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},
-    {enableNavigation: true, onConfirm() {}, policy: Policy.ALLOW_ALL}
+    {enableNavigation: true, onConfirm() {}}
   )
   const folder = folderEntry({
     id: 'folder',
@@ -37,24 +37,24 @@ test('picker rows select instead of navigating the dashboard', () => {
   const store = createStore()
 
   expect(explorer.hasRowAction).toBe(false)
-  store.set(explorer.onAction, folder)
+  store.set(explorer.onAction, folder, null)
   expect(store.get(explorer.location).parentId).toBe('folder')
 })
 
 test('page explorers keep their row navigation action', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},
-    {enableNavigation: true, policy: Policy.ALLOW_ALL}
+    {enableNavigation: true}
   )
 
   expect(explorer.hasRowAction).toBe(true)
+  expect(explorer.items('en')).not.toBe(explorer.items('fr'))
 })
 
 test('limits the picker to its allowed locations', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'outside', root: 'outside'},
     {
-      policy: Policy.ALLOW_ALL,
       limitLocations: [
         {workspace: 'main', root: 'pages'},
         {workspace: 'main', root: 'media'}
@@ -83,13 +83,27 @@ test('limits the picker to its allowed locations', () => {
 
 test('preloading items primes the synchronous items atom', async () => {
   const {store} = await createDashboardAtomFixture()
-  const explorer = createExplorerAtoms(
-    {workspace: 'main', root: 'pages'},
-    {policy: Policy.ALLOW_ALL}
-  )
+  await store.get(authReady)
+  const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})
 
-  const readyItems = await store.get(explorer.itemsReady)
+  const readyItems = await store.get(explorer.itemsReady(null))
 
   expect(readyItems).not.toBeEmpty()
-  expect(store.get(explorer.items)).toEqual(readyItems)
+  expect(store.get(explorer.items(null))).toEqual(readyItems)
+})
+
+test('preloading items includes expanded inline children', async () => {
+  const {store, parent} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {nestedNavigation: true}
+  )
+  store.set(explorer.expandedKeys, new Set([parent._id]))
+
+  const items = await store.get(explorer.itemsReady(null))
+  const parentEntry = items.find(entry => entry.id === parent._id)
+
+  expect(parentEntry).toBeDefined()
+  expect(store.get(explorer.children(parentEntry!, null))).not.toBeEmpty()
 })
