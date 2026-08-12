@@ -1,6 +1,14 @@
 import {
   Button,
   DialogTrigger,
+  Icon,
+  List,
+  ListEmpty,
+  ListItem,
+  ListItemDescription,
+  ListItemStatus,
+  ListItemTitle,
+  ListItemVisual,
   Popover,
   ProgressCircle,
   Tooltip,
@@ -10,7 +18,12 @@ import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef, useState, type ReactNode} from 'react'
 import {dashboardAtoms} from '../atoms/dashboard.js'
-import {IcRoundCheck, IcRoundWarning} from '../icons.js'
+import {
+  IcRoundCheck,
+  IcRoundHistory,
+  IcRoundSync,
+  IcRoundWarning
+} from '../icons.js'
 import css from './MutationQueueStatus.module.css'
 
 const styles = styler(css)
@@ -133,56 +146,52 @@ export function MutationQueueStatus({
               </div>
             )}
           </div>
-          {queue.entries.length === 0 && (
-            <p className={styles.MutationQueueStatus.popover.message()}>
-              All changes are synced.
-            </p>
-          )}
-          {queue.error && (
-            <p className={styles.MutationQueueStatus.popover.error()}>
-              {queue.error}
-            </p>
-          )}
-          <ul className={styles.MutationQueueStatus.popover.list()}>
-            {queue.entries.map(entry => (
-              <li
-                key={entry.id}
-                className={styles.MutationQueueStatus.popover.item()}
-              >
-                <div className={styles.MutationQueueStatus.popover.item.main()}>
-                  <span
-                    className={styles.MutationQueueStatus.popover.item.title()}
-                  >
+          <List
+            aria-label="Sync changes"
+            className={styles.MutationQueueStatus.popover.list()}
+            empty={queue.entries.length === 0}
+          >
+            {queue.entries.length === 0 ? (
+              <ListEmpty icon={IcRoundCheck} title="Up to date">
+                All changes are synced.
+              </ListEmpty>
+            ) : (
+              queue.entries.map(entry => (
+                <ListItem
+                  inner={
+                    entry.error && (
+                      <p
+                        className={styles.MutationQueueStatus.popover.item.error()}
+                      >
+                        {entry.error}
+                      </p>
+                    )
+                  }
+                  key={entry.id}
+                  leading={
+                    <ListItemVisual>
+                      <Icon
+                        data-slot="icon"
+                        icon={mutationStatusIcon(entry.status)}
+                      />
+                    </ListItemVisual>
+                  }
+                  trailing={
+                    <ListItemStatus tone={mutationStatusTone(entry.status)}>
+                      {formatMutationStatus(entry.status)}
+                    </ListItemStatus>
+                  }
+                >
+                  <ListItemTitle>
                     {formatMutationQueueTitle(entry.mutations)}
-                  </span>
-                  <span
-                    className={styles.MutationQueueStatus.popover.item.status({
-                      [entry.status]: true
-                    })}
-                  >
-                    {formatMutationStatus(entry.status)}
-                  </span>
-                </div>
-                <ul className={styles.MutationQueueStatus.popover.item.ops()}>
-                  {entry.mutations.map((mutation, index) => (
-                    <li
-                      key={index}
-                      className={styles.MutationQueueStatus.popover.item.op()}
-                    >
-                      {formatMutation(mutation)}
-                    </li>
-                  ))}
-                </ul>
-                {entry.error && (
-                  <p
-                    className={styles.MutationQueueStatus.popover.item.error()}
-                  >
-                    {entry.error}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ul>
+                  </ListItemTitle>
+                  <ListItemDescription>
+                    {entry.mutations.map(formatMutation).join(' · ')}
+                  </ListItemDescription>
+                </ListItem>
+              ))
+            )}
+          </List>
         </div>
       </Popover>
     </DialogTrigger>
@@ -201,6 +210,32 @@ function formatMutationStatus(status: string) {
       return 'Waiting'
     default:
       return status
+  }
+}
+
+function mutationStatusIcon(status: string) {
+  switch (status) {
+    case 'syncing':
+      return IcRoundSync
+    case 'failed':
+    case 'blocked':
+      return IcRoundWarning
+    default:
+      return IcRoundHistory
+  }
+}
+
+function mutationStatusTone(status: string) {
+  switch (status) {
+    case 'syncing':
+      return 'accent' as const
+    case 'failed':
+      return 'danger' as const
+    case 'pending':
+    case 'blocked':
+      return 'warning' as const
+    default:
+      return 'neutral' as const
   }
 }
 

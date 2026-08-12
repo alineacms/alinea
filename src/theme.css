@@ -176,12 +176,12 @@
       inset 0 1px 0 var(--alinea-border)
     );
 
-  --alinea-status-published-fg: var(--alinea-green-800);
-  --alinea-status-published-bg: var(--alinea-green-300);
+  --alinea-status-published-fg: light-dark(var(--alinea-green-800), var(--alinea-green-100));
+  --alinea-status-published-bg: light-dark(var(--alinea-green-300), var(--alinea-green-800));
   --alinea-status-unpublished-fg: light-dark(var(--alinea-orange-700), var(--alinea-orange-200));
-  --alinea-status-unpublished-bg: light-dark(var(--alinea-orange-50), var(--alinea-orange-700));
+  --alinea-status-unpublished-bg: light-dark(var(--alinea-orange-50), var(--alinea-orange-800));
   --alinea-status-draft-fg: light-dark(var(--alinea-blue-800), var(--alinea-blue-50));
-  --alinea-status-draft-bg: light-dark(var(--alinea-blue-50), var(--alinea-blue-700));
+  --alinea-status-draft-bg: light-dark(var(--alinea-blue-50), var(--alinea-blue-800));
   --alinea-status-archived-fg: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
   --alinea-status-archived-bg: light-dark(var(--alinea-gray-50), var(--alinea-gray-700));
 }

@@ -1,4 +1,13 @@
-import {Button, Icon} from '#/components.js'
+import {
+  Icon,
+  List,
+  ListEmpty,
+  ListItem,
+  ListItemDescription,
+  ListItemStatus,
+  ListItemTitle,
+  ListItemVisual
+} from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
@@ -11,15 +20,7 @@ import type {
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {
-  IcRoundArchive,
-  IcRoundCheck,
-  IcRoundEdit,
-  IcRoundImage,
-  IcRoundInsertDriveFile,
-  IcRoundLink
-} from '../icons.js'
-import {Badge} from './Badge.js'
+import {IcRoundImage, IcRoundInsertDriveFile, IcRoundLink} from '../icons.js'
 import css from './EntryReferences.module.css'
 
 const styles = styler(css)
@@ -49,9 +50,11 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
   if (groups.length === 0) {
     return (
       <div className={styles.EntryReferences()}>
-        <p className={styles.EntryReferences.empty()}>
-          {formatEmpty(selectedLocale, otherSummary)}
-        </p>
+        <List aria-label="References" empty>
+          <ListEmpty icon={IcRoundLink} title="No references">
+            {formatEmpty(selectedLocale, otherSummary)}
+          </ListEmpty>
+        </List>
         {otherSummary && (
           <p className={styles.EntryReferences.other()}>
             {formatOtherSummary(otherSummary)}
@@ -62,7 +65,7 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
   }
   return (
     <div className={styles.EntryReferences()}>
-      <ul className={styles.EntryReferences.list()}>
+      <List aria-label="References" className={styles.EntryReferences.list()}>
         {groups.map(item => (
           <EntryReferenceItem
             item={item}
@@ -77,7 +80,7 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
             }}
           />
         ))}
-      </ul>
+      </List>
       {otherSummary && (
         <p className={styles.EntryReferences.other()}>
           {formatOtherSummary(otherSummary)}
@@ -95,42 +98,29 @@ interface EntryReferenceItemProps {
 function EntryReferenceItem({item, onPress}: EntryReferenceItemProps) {
   const {linkType, source} = item
   return (
-    <li className={styles.EntryReferences.item()}>
-      <Button
-        appearance="outline"
-        className={styles.EntryReferences.button()}
-        onPress={onPress}
-        aria-label={`Open ${source.title}`}
-      >
-        <span className={styles.EntryReferences.icon()}>
-          <Icon icon={referenceIcon(linkType)} />
+    <ListItem
+      leading={
+        <ListItemVisual>
+          <Icon data-slot="icon" icon={referenceIcon(linkType)} />
+        </ListItemVisual>
+      }
+      onPress={onPress}
+      trailing={
+        <span className={styles.EntryReferences.trailing()}>
+          {item.statuses.map(status => (
+            <ListItemStatus key={status} tone={statusTone(status)}>
+              {statusLabel(status)}
+            </ListItemStatus>
+          ))}
         </span>
-        <span className={styles.EntryReferences.content()}>
-          <span className={styles.EntryReferences.title()}>{source.title}</span>
-          <span className={styles.EntryReferences.meta()}>
-            {formatFields(item.fields)}
-          </span>
-          <span className={styles.EntryReferences.statusLine()}>
-            <span className={styles.EntryReferences.path()}>{source.path}</span>
-            {item.locale && (
-              <span className={styles.EntryReferences.locale()}>
-                {formatLocale(item.locale)}
-              </span>
-            )}
-            {item.statuses.map(status => (
-              <Badge
-                className={styles.EntryReferences.status()}
-                icon={badgeIcon(status)}
-                key={status}
-                status={badgeStatus(status)}
-              >
-                {statusLabel(status)}
-              </Badge>
-            ))}
-          </span>
-        </span>
-      </Button>
-    </li>
+      }
+    >
+      <ListItemTitle>{source.title}</ListItemTitle>
+      <ListItemDescription>
+        {formatFields(item.fields)} · {source.path}
+        {item.locale && ` · ${formatLocale(item.locale)}`}
+      </ListItemDescription>
+    </ListItem>
   )
 }
 
@@ -271,17 +261,13 @@ function statusOrder(status: EntryStatus): number {
   }
 }
 
-function badgeStatus(status: EntryStatus) {
-  return status
-}
-
-function badgeIcon(status: EntryStatus) {
+function statusTone(status: EntryStatus) {
   switch (status) {
     case 'published':
-      return IcRoundCheck
+      return 'positive' as const
     case 'draft':
-      return IcRoundEdit
+      return 'accent' as const
     case 'archived':
-      return IcRoundArchive
+      return 'neutral' as const
   }
 }

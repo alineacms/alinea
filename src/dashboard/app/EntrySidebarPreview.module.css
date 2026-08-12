@@ -6,12 +6,10 @@
   overflow: hidden;
 }
 
-.EntrySidebarPreview-message {
-  margin: 0;
-  padding: 16px;
-  color: var(--alinea-fg-muted);
-  font-size: 13px;
-  line-height: 1.4;
+.EntrySidebarPreview-empty {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
 }
 
 .EntrySidebarPreview-subheader {

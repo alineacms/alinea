@@ -1,8 +1,14 @@
 import {
-  Button,
   Disclosure,
   DisclosureHeader,
   DisclosurePanel,
+  Icon,
+  List,
+  ListEmpty,
+  ListItem,
+  ListItemDescription,
+  ListItemTitle,
+  ListItemVisual,
   Tab,
   TabList,
   TabPanel,
@@ -25,6 +31,7 @@ import {
   IcOutlineDrafts,
   IcRoundArchive,
   IcRoundEdit,
+  IcRoundHistory,
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
@@ -174,7 +181,7 @@ function EntrySidebarHistory({
     <div className={styles.EntrySidebar.history()}>
       <section className={styles.EntrySidebar.section()}>
         <h2 className={styles.EntrySidebar.sectionTitle()}>Current versions</h2>
-        <ul className={styles.EntrySidebar.historyList()}>
+        <List aria-label="Current versions">
           {statuses.map(status => (
             <EntrySidebarStatusItem
               entry={entry}
@@ -183,7 +190,7 @@ function EntrySidebarHistory({
               status={status}
             />
           ))}
-        </ul>
+        </List>
       </section>
       <section className={styles.EntrySidebar.section()}>
         <Disclosure
@@ -214,23 +221,22 @@ function EntrySidebarPreviousVersions({
   const history = useAtomValue(localeData.history)
   if (history.length === 0)
     return (
-      <p className={styles.EntrySidebar.empty()}>No previous versions yet</p>
+      <List aria-label="Previous versions" empty>
+        <ListEmpty icon={IcRoundHistory} title="No history">
+          No previous versions yet.
+        </ListEmpty>
+      </List>
     )
   return (
-    <section className={styles.EntrySidebar.Versions()}>
-      <ul className={styles.EntrySidebar.Versions.Timeline()}>
-        {history.map(revision => EntrySidebarTimelineElement(revision))}
-      </ul>
-      <ul className={styles.EntrySidebar.historyList()}>
-        {history.map(revision => (
-          <EntrySidebarRevisionItem
-            key={`${revision.file}:${revision.ref}`}
-            localeData={localeData}
-            revision={revision}
-          />
-        ))}
-      </ul>
-    </section>
+    <List aria-label="Previous versions">
+      {history.map(revision => (
+        <EntrySidebarRevisionItem
+          key={`${revision.file}:${revision.ref}`}
+          localeData={localeData}
+          revision={revision}
+        />
+      ))}
+    </List>
   )
 }
 
@@ -265,18 +271,16 @@ function EntrySidebarStatusItem({
   const hasMetadata = Type.field(type, 'metadata') instanceof MetadataField
   const meta = hasMetadata ? formatMetadata(version?.data.metadata) : undefined
   return (
-    <li className={styles.EntrySidebar.historyItem()}>
-      <EntrySidebarVersionRow
-        selected={selected}
-        status={rowStatus}
-        icon={getVersionStatusIcon(rowStatus)}
-        title={formatStatus(status)}
-        meta={meta}
-        onPress={() => setSelectedVersion({type: 'status', status})}
-      >
-        {isEditing && <Badge size="small">Editing</Badge>}
-      </EntrySidebarVersionRow>
-    </li>
+    <EntrySidebarVersionRow
+      selected={selected}
+      status={rowStatus}
+      icon={getVersionStatusIcon(rowStatus)}
+      title={formatStatus(status)}
+      meta={meta}
+      onPress={() => setSelectedVersion({type: 'status', status})}
+    >
+      {isEditing && <Badge size="small">Editing</Badge>}
+    </EntrySidebarVersionRow>
   )
 }
 
@@ -298,40 +302,20 @@ function EntrySidebarRevisionItem({
     selectedVersion.file === revision.file
   const revisionKind = getRevisionKind(revision)
   return (
-    <li className={styles.EntrySidebar.historyItem()}>
-      <EntrySidebarVersionRow
-        selected={selected}
-        status={revisionKind.status}
-        icon={revisionKind.icon}
-        title={formatTime(revision.createdAt)}
-        meta={revision.user?.name}
-        onPress={() =>
-          setSelectedVersion({
-            type: 'history',
-            file: revision.file,
-            ref: revision.ref
-          })
-        }
-      />
-    </li>
-  )
-}
-
-function EntrySidebarTimelineElement(revision: Revision) {
-  const status = getRevisionKind(revision).status
-  return (
-    <li
-      key={`${revision.file}:${revision.ref}-line`}
-      className={styles.Timeline.element()}
-    >
-      <span className={styles.Timeline.element.outerCircle()}>
-        <span
-          className={styles.Timeline.element.innerCircle()}
-          data-status={status}
-        />
-      </span>
-      <span className={styles.Timeline.element.trail()} />
-    </li>
+    <EntrySidebarVersionRow
+      selected={selected}
+      status={revisionKind.status}
+      icon={revisionKind.icon}
+      title={formatTime(revision.createdAt)}
+      meta={revision.user?.name}
+      onPress={() =>
+        setSelectedVersion({
+          type: 'history',
+          file: revision.file,
+          ref: revision.ref
+        })
+      }
+    />
   )
 }
 
@@ -350,25 +334,27 @@ export interface EntrySidebarVersionRowProps {
 export function EntrySidebarVersionRow({
   selected = false,
   status = 'none',
+  icon,
   title,
   meta,
   children,
   onPress
 }: EntrySidebarVersionRowProps) {
   return (
-    <Button
-      appearance="outline"
-      className={styles.EntrySidebar.versionButton()}
-      data-selected={selected || undefined}
+    <ListItem
       data-status={status}
+      leading={
+        <ListItemVisual>
+          <Icon data-slot="icon" icon={icon} />
+        </ListItemVisual>
+      }
       onPress={onPress}
+      selected={selected}
+      trailing={children}
     >
-      <span className={styles.EntrySidebar.versionContent()}>
-        <span className={styles.EntrySidebar.versionTitle()}>{title}</span>
-        <span className={styles.EntrySidebar.versionMeta()}>{meta}</span>
-      </span>
-      {children}
-    </Button>
+      <ListItemTitle>{title}</ListItemTitle>
+      {meta && <ListItemDescription>{meta}</ListItemDescription>}
+    </ListItem>
   )
 }
 

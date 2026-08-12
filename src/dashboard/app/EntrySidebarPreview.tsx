@@ -1,4 +1,4 @@
-import {Button, ProgressCircle} from '#/components.js'
+import {Button, List, ListEmpty, ProgressCircle} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
@@ -10,7 +10,8 @@ import {
   IcRoundArrowBack,
   IcRoundArrowForward,
   IcRoundOpenInNew,
-  IcRoundRefresh
+  IcRoundRefresh,
+  IcRoundVisibilityOff
 } from '../icons.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
@@ -29,7 +30,7 @@ export function EntrySidebarPreview({
   const preview = useAtomValue(entry.preview)
   if (!preview)
     return (
-      <EntrySidebarPreviewMessage>
+      <EntrySidebarPreviewMessage title="No preview">
         This entry has no preview.
       </EntrySidebarPreviewMessage>
     )
@@ -52,7 +53,7 @@ function EntrySidebarComponentPreview({
   const previewEntry = useAtomValue(localeData.previewEntry)
   if (!previewEntry)
     return (
-      <EntrySidebarPreviewMessage>
+      <EntrySidebarPreviewMessage title="Preview unavailable">
         Preview is currently unavailable.
       </EntrySidebarPreviewMessage>
     )
@@ -67,14 +68,22 @@ function EntrySidebarComponentPreview({
 
 interface EntrySidebarPreviewMessageProps {
   children: string
+  title: string
 }
 
 function EntrySidebarPreviewMessage({
-  children
+  children,
+  title
 }: EntrySidebarPreviewMessageProps) {
   return (
     <div className={styles.EntrySidebarPreview()}>
-      <p className={styles.EntrySidebarPreview.message()}>{children}</p>
+      <div className={styles.EntrySidebarPreview.empty()}>
+        <List aria-label="Preview" empty>
+          <ListEmpty icon={IcRoundVisibilityOff} title={title}>
+            {children}
+          </ListEmpty>
+        </List>
+      </div>
     </div>
   )
 }
