@@ -122,6 +122,11 @@ export class CachedFSSource extends FSSource {
     return this.#tree
   }
 
+  async applyChanges(batch: ChangesBatch) {
+    await super.applyChanges(batch)
+    this.#tree = undefined
+  }
+
   async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
     const result = await super.getFile(current, builder, file)
     if (result) this.#blobs?.set(result[0], result[1])
