@@ -1,7 +1,6 @@
 import {Button, Icon, Surface} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
@@ -19,7 +18,6 @@ import {
   routeBlockAtom,
   routeGuardAtom
 } from '#/dashboard/atoms/nav.js'
-import {linkEntryAtoms} from '#/dashboard/atoms/link.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -72,15 +70,6 @@ export const entryPage = page(async (page, get) => {
       )
     }
     const selectedNode = await get(localeData.selectedNode)
-    const references = Type.references(
-      type.type,
-      get(selectedNode.value) as Record<string, unknown>
-    )
-    await Promise.all(
-      Array.from(new Set(references.map(reference => reference.targetId))).map(
-        id => get(linkEntryAtoms(id).ready)
-      )
-    )
     const parentNeedsTranslation = type.customView
       ? false
       : await get(localeData.parentNeedsTranslation)

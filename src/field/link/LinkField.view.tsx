@@ -197,10 +197,7 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
 }
 
 function useLinkEntryState(entryId: string) {
-  const data = useAtomValue(linkEntryAtoms(entryId).value)
-  return data === undefined
-    ? ({state: 'loading'} as const)
-    : ({state: 'hasData', data} as const)
+  return useAtomValue(linkEntryAtoms(entryId))
 }
 
 interface EntryLoadingRowProps {
