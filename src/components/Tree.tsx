@@ -41,11 +41,13 @@ export interface TreeItemContentProps extends Omit<
   'children'
 > {
   children?: ReactNode
+  disableDragging?: boolean
   icon?: IconProps['icon']
   suffix?: ReactNode
 }
 
 export const TreeItemContent = memo(function TreeItemContent({
+  disableDragging,
   icon,
   suffix,
   children
@@ -64,13 +66,15 @@ export const TreeItemContent = memo(function TreeItemContent({
             <Checkbox slot="selection" />
           )}
           <div className={styles.TreeItem.controls()}>
-            <Button
-              slot="drag"
-              data-invisible={!isDragging}
-              className={styles.TreeItem.dragHandle()}
-            >
-              ≡
-            </Button>
+            {allowsDragging && !disableDragging && (
+              <Button
+                slot="drag"
+                data-invisible={!isDragging}
+                className={styles.TreeItem.dragHandle()}
+              >
+                ≡
+              </Button>
+            )}
             <Button
               slot="chevron"
               data-invisible={isDragging}
@@ -97,6 +101,7 @@ export const TreeItemContent = memo(function TreeItemContent({
 })
 
 export interface TreeItemProps extends Partial<AriaTreeItemProps> {
+  disableDragging?: boolean
   title: string
   icon?: IconProps['icon']
   label?: ReactNode
@@ -104,6 +109,7 @@ export interface TreeItemProps extends Partial<AriaTreeItemProps> {
 }
 
 export function TreeItem({
+  disableDragging,
   title,
   icon,
   label,
@@ -129,7 +135,11 @@ export function TreeItem({
         )
       }
     >
-      <TreeItemContent icon={icon} suffix={suffix}>
+      <TreeItemContent
+        disableDragging={disableDragging}
+        icon={icon}
+        suffix={suffix}
+      >
         {label ?? title}
       </TreeItemContent>
       {children}

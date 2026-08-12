@@ -18,6 +18,10 @@ test('rootAtoms returns stable bundles independent of route state', () => {
   expect(root.explorer.supportsInlineExpansion).toBe(false)
   expect(root.treeItems('en')).toBe(root.treeItems('en'))
   expect(root.treeItems('fr')).not.toBe(root.treeItems('en'))
+  expect(root.treeChildren('en', null)).toBe(root.treeChildren('en', null))
+  expect(root.treeChildren('en', 'parent')).not.toBe(
+    root.treeChildren('en', null)
+  )
 })
 
 test('root icon uses the original file fallback', async () => {

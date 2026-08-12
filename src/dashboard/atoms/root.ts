@@ -1,7 +1,7 @@
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import {Permission} from '#/core/Role.js'
 import type {RootData, RootI18n} from '#/core/Root.js'
-import {getRoot, getWorkspace} from '#/core/Internal.js'
+import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
 import type {
   DragItem,
@@ -48,6 +48,39 @@ export interface RootTreeItem {
   parentId: string | null
   parents: Array<string>
   hasChildren: boolean
+  dragDisabled: boolean
+}
+
+export interface RootTreeNode {
+  id: string
+}
+
+const rootTreeNode = dispense((id: string): RootTreeNode => ({id}))
+
+const treeItemSelect = {
+  id: Entry.id,
+  title: Entry.title,
+  type: Entry.type,
+  status: Entry.status,
+  main: Entry.main,
+  locale: Entry.locale,
+  parentId: Entry.parentId,
+  parents: Entry.parents
+}
+
+function preferredLocaleEntries<
+  Item extends {id: string; locale: string | null}
+>(items: Array<Item>, locale: string | null): Array<Item> {
+  const translated = new Set(
+    items.filter(item => item.locale === locale).map(item => item.id)
+  )
+  const untranslated = new Set<string>()
+  return items.filter(item => {
+    if (translated.has(item.id)) return item.locale === locale
+    if (untranslated.has(item.id)) return false
+    untranslated.add(item.id)
+    return true
+  })
 }
 
 export class RootAtoms {
@@ -109,7 +142,6 @@ export class RootAtoms {
   })
   private readonly treeSource = atom(async get => {
     get(shaAtom)
-    const data = get(this.data)
     const config = get(configAtom)
     const graph = get(graphAtom)
     const visibleTypes = Object.entries(config.schema)
@@ -120,42 +152,111 @@ export class RootAtoms {
       root: this.key,
       filter: {_type: {in: visibleTypes}},
       status: 'preferDraft',
-      orderBy: data.orderChildrenBy,
-      select: {
-        id: Entry.id,
-        title: Entry.title,
-        type: Entry.type,
-        status: Entry.status,
-        main: Entry.main,
-        locale: Entry.locale,
-        parentId: Entry.parentId,
-        parents: Entry.parents
-      }
+      select: treeItemSelect
     })
   })
   private readonly treeSources = dispense((locale: string | null) =>
     atom(async get => {
       const entries = await get(this.treeSource)
+      const data = get(this.data)
+      const config = get(configAtom)
+      const graph = get(graphAtom)
       const policy = get(policyAtom)
       const readable = entries.filter(entry => policy.canRead(entry))
-      const preferred = new Map<string, (typeof readable)[number]>()
-      for (const entry of readable) {
-        const current = preferred.get(entry.id)
-        if (!current || entry.locale === locale) preferred.set(entry.id, entry)
-      }
-      const parentIds = new Set(
-        Array.from(preferred.values()).flatMap(entry =>
-          entry.parentId ? [entry.parentId] : []
-        )
+      const preferred = preferredLocaleEntries(readable, locale)
+      const preferredById = new Map(preferred.map(entry => [entry.id, entry]))
+      const visibleTypes = Object.entries(config.schema)
+        .filter(([, type]) => !Type.isHidden(type))
+        .map(([name]) => name)
+      const orderedParents = preferred.flatMap(parent => {
+        const orderBy = getType(config.schema[parent.type]).orderChildrenBy
+        return orderBy ? [{parentId: parent.id, orderBy}] : []
+      })
+      const orderQueries = data.orderChildrenBy
+        ? [{parentId: null, orderBy: data.orderChildrenBy}, ...orderedParents]
+        : orderedParents
+      const orderedChildren = await Promise.all(
+        orderQueries.map(async ({parentId, orderBy}) => {
+          const children = await graph.find({
+            workspace: this.workspace,
+            root: this.key,
+            parentId,
+            filter: {_type: {in: visibleTypes}},
+            status: 'preferDraft',
+            orderBy,
+            select: treeItemSelect
+          })
+          return {
+            parentId,
+            children: preferredLocaleEntries(
+              children.filter(child => policy.canRead(child)),
+              locale
+            )
+          }
+        })
       )
-      return Array.from(preferred.values()).map(entry => ({
-        ...entry,
-        hasChildren: parentIds.has(entry.id)
-      }))
+      const childrenByParent = new Map<string | null, typeof preferred>()
+      for (const entry of preferred) {
+        const siblings = childrenByParent.get(entry.parentId) ?? []
+        siblings.push(entry)
+        childrenByParent.set(entry.parentId, siblings)
+      }
+      for (const {parentId, children} of orderedChildren) {
+        childrenByParent.set(
+          parentId,
+          children.flatMap(child => {
+            const preferredChild = preferredById.get(child.id)
+            return preferredChild ? [preferredChild] : []
+          })
+        )
+      }
+      const sortedEntries: typeof preferred = []
+      function appendChildren(parentId: string | null) {
+        for (const child of childrenByParent.get(parentId) ?? []) {
+          sortedEntries.push(child)
+          appendChildren(child.id)
+        }
+      }
+      appendChildren(null)
+      const parentIds = new Set(
+        preferred.flatMap(entry => (entry.parentId ? [entry.parentId] : []))
+      )
+      return sortedEntries.map(entry => {
+        const parent = entry.parentId && preferredById.get(entry.parentId)
+        return {
+          ...entry,
+          dragDisabled: Boolean(
+            parent && getType(config.schema[parent.type]).orderChildrenBy
+          ),
+          hasChildren: parentIds.has(entry.id)
+        }
+      })
     })
   )
   treeItems = dispense((locale: string | null) =>
     unwrap(this.treeSources(locale), previous => previous ?? [])
+  )
+  private readonly treeItemsById = dispense((locale: string | null) =>
+    atom(
+      get => new Map(get(this.treeItems(locale)).map(item => [item.id, item]))
+    )
+  )
+  treeChildren = dispense((locale: string | null, parentId: string | null) =>
+    atom(get =>
+      get(this.treeItems(locale)).flatMap(item =>
+        item.parentId === parentId ? [rootTreeNode(item.id)] : []
+      )
+    )
+  )
+  treeItem = dispense((locale: string | null, id: string) =>
+    atom(get => {
+      const item = get(this.treeItemsById(locale)).get(id)
+      if (!item) throw new Error(`Tree item "${id}" not found`)
+      return item
+    })
+  )
+  selectedTreeItem = dispense((locale: string | null, id: string | undefined) =>
+    atom(get => (id ? get(this.treeItemsById(locale)).get(id) : undefined))
   )
   treeReady = dispense((locale: string | null) =>
     atom(async get => {
@@ -164,7 +265,10 @@ export class RootAtoms {
     })
   )
   treeExpandedKeys = atom(new Set<string>())
-  treeCollapsedKeys = atom(new Set<string>())
+  treeCollapsedKeys = atom({
+    selectedId: undefined as string | undefined,
+    keys: new Set<string>()
+  })
   acceptedDragTypes = [...dashboardEntryDragTypes]
   getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(dashboardEntryDragItem)
@@ -197,13 +301,13 @@ export class RootAtoms {
     ) => {
       const graph = get(graphAtom)
       const policy = get(policyAtom)
-      const treeItems = get(this.treeItems(locale))
+      const treeItemsById = get(this.treeItemsById(locale))
       const moveTarget = event.target.key ? String(event.target.key) : this.key
       const targetType = event.target.key ? 'entry' : 'root'
       for (const key of event.keys) {
         const id = String(key)
-        const item = treeItems.find(candidate => candidate.id === id)
-        if (!item) continue
+        const item = treeItemsById.get(id)
+        if (!item || item.dragDisabled) continue
         policy.assert(
           event.target.dropPosition === 'on'
             ? Permission.Move
@@ -248,13 +352,13 @@ export class RootAtoms {
       }
       const graph = get(graphAtom)
       const policy = get(policyAtom)
-      const treeItems = get(this.treeItems(locale))
+      const treeItemsById = get(this.treeItemsById(locale))
       const moveTarget = event.target.key ? String(event.target.key) : this.key
       const targetType = event.target.key ? 'entry' : 'root'
       for (const key of keys) {
         const id = String(key)
-        const item = treeItems.find(candidate => candidate.id === id)
-        if (!item) continue
+        const item = treeItemsById.get(id)
+        if (!item || item.dragDisabled) continue
         policy.assert(
           event.target.dropPosition === 'on'
             ? Permission.Move

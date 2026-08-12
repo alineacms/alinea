@@ -3,7 +3,7 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
-import {Config, Field} from '#/index.js'
+import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {views} from '#/field/views.js'
 import {use, useState} from 'react'
@@ -40,10 +40,18 @@ const HiddenFolder = Config.document('Hidden folder', {
   hidden: true
 })
 
+const OrderedFolder = Config.document('Ordered folder', {
+  contains: ['Page'],
+  fields: {},
+  orderChildrenBy: {asc: Query.title}
+})
+
 const main = Config.workspace('Main', {
   source: 'main',
   roots: {
-    pages: Config.root('Pages', {contains: ['Page', 'HiddenFolder']}),
+    pages: Config.root('Pages', {
+      contains: ['Page', 'HiddenFolder', 'OrderedFolder']
+    }),
     media: Config.media({i18n: {locales: ['en', 'fr']}})
   }
 })
@@ -57,7 +65,7 @@ const references = Config.workspace('References', {
 
 const config = Config.create({
   enableDrafts: true,
-  schema: {HiddenFolder, Page: ScenarioPage},
+  schema: {HiddenFolder, OrderedFolder, Page: ScenarioPage},
   workspaces: {main, references}
 })
 
@@ -142,6 +150,29 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     root: 'pages',
     parentId: dashboardScenarioIds.hiddenFolder,
     set: {title: 'Hidden child'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.orderedFolder,
+    type: OrderedFolder,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Ordered folder'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.orderedZebra,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    parentId: dashboardScenarioIds.orderedFolder,
+    set: {title: 'Zebra'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.orderedApple,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    parentId: dashboardScenarioIds.orderedFolder,
+    set: {title: 'Apple'}
   })
   await db.create({
     id: dashboardScenarioIds.searchPartial,

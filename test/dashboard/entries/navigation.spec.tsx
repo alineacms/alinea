@@ -96,6 +96,21 @@ test('expands and collapses an entry with the sidebar chevron', async ({
   ).toBeVisible()
 })
 
+test('orders children by their parent type and disables dragging', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
+
+  await tree.getByRole('button', {name: 'Expand Ordered folder'}).click()
+
+  const children = tree.locator('[role="row"][aria-level="2"]')
+  await expect(children).toHaveText([/Apple$/, /Zebra$/])
+  await expect(tree.getByRole('button', {name: 'Drag Apple'})).toHaveCount(0)
+  await expect(tree.getByRole('button', {name: 'Drag Zebra'})).toHaveCount(0)
+})
+
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({
   dashboard,
   mount
