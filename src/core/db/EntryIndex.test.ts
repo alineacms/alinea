@@ -3,8 +3,12 @@ import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
 import {cms} from '#test/cms.js'
 import {createEntryIndex} from '#test/EntryFixture.js'
+import {mkdtemp, rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import type {Entry} from '../Entry.js'
 import {createRecord} from '../EntryRecord.js'
+import {CachedFSSource} from '../source/FSSource.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {
@@ -698,7 +702,7 @@ test('active reference index is updated by later source changes', async () => {
   test.is((await index.referencesTo({targetId: 'target'})).total, 0)
 })
 
-test('seed creates missing seeded entries and reuses i18n ids', async () => {
+test('seed creates multiple entries against a cached filesystem source', async () => {
   const Page = Config.document('Page', {
     fields: {title: Field.text('Title')}
   })
@@ -720,20 +724,25 @@ test('seed creates missing seeded entries and reuses i18n ids', async () => {
     }
   })
   const seededCms = createCMS({schema: {Page}, workspaces: {main}})
-  const source = new MemorySource()
-  const index = new EntryIndex(seededCms.config)
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-entry-index-'))
+  try {
+    const source = new CachedFSSource(dir)
+    const index = new EntryIndex(seededCms.config)
 
-  await index.syncWith(source)
-  await index.seed(source)
+    await index.syncWith(source)
+    await index.seed(source)
 
-  const seeded = Array.from(index.filter({}))
-  test.is(seeded.length, 4)
-  const homeEntries = seeded.filter(entry => entry.path === 'home')
-  test.is(homeEntries.length, 2)
-  test.is(homeEntries[0].id, homeEntries[1].id)
+    const seeded = Array.from(index.filter({}))
+    test.is(seeded.length, 4)
+    const homeEntries = seeded.filter(entry => entry.path === 'home')
+    test.is(homeEntries.length, 2)
+    test.is(homeEntries[0].id, homeEntries[1].id)
 
-  await index.seed(source)
-  test.is(Array.from(index.filter({})).length, 4)
+    await index.seed(source)
+    test.is(Array.from(index.filter({})).length, 4)
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
 })
 
 test('fix rewrites changed blobs and transaction can be created', async () => {

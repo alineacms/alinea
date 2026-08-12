@@ -5,12 +5,14 @@ import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
 import {assert} from '../util/Assert.js'
 import {accumulate} from '../util/Async.js'
+import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 
 const limit = pLimit(1)
+const fileConcurrency = 64
 
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
@@ -29,7 +31,10 @@ export class FSSource implements Source {
       const files = await fs.readdir(this.#cwd, {
         recursive: true
       })
-      const tasks = files.map(file => this.getFile(current, builder, file))
+      const fileLimit = pLimit(fileConcurrency)
+      const tasks = files.map(file =>
+        fileLimit(() => this.getFile(current, builder, file))
+      )
       await Promise.all(tasks)
       const tree = await builder.compile(current)
       this.#current = tree
@@ -44,8 +49,9 @@ export class FSSource implements Source {
     try {
       stat = await fs.stat(fullPath)
       if (!stat.isFile()) return
-    } catch {
-      return
+    } catch (error) {
+      if (isRecord(error) && error.code === 'ENOENT') return
+      throw error
     }
     const previouslyModified = this.#lastModified.get(filePath)
     if (previouslyModified && stat.mtimeMs === previouslyModified) {
@@ -55,14 +61,18 @@ export class FSSource implements Source {
         return
       }
     }
+    let contents: Uint8Array
     try {
-      const contents = await fs.readFile(fullPath)
-      const sha = await hashBlob(contents)
-      this.#locations.set(sha, filePath)
-      this.#lastModified.set(filePath, stat.mtimeMs)
-      builder.add(filePath, sha)
-      return [sha, contents] as const
-    } catch {}
+      contents = await fs.readFile(fullPath)
+    } catch (error) {
+      if (isRecord(error) && error.code === 'ENOENT') return
+      throw error
+    }
+    const sha = await hashBlob(contents)
+    this.#locations.set(sha, filePath)
+    this.#lastModified.set(filePath, stat.mtimeMs)
+    builder.add(filePath, sha)
+    return [sha, contents] as const
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
