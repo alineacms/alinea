@@ -10,7 +10,6 @@ import {
   type EntryAtoms,
   type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
-import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   Page,
   page,
@@ -18,6 +17,7 @@ import {
   routeBlockAtom,
   routeGuardAtom
 } from '#/dashboard/atoms/nav.js'
+import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -29,7 +29,6 @@ import {
   IcRoundEdit
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
-import {Explorer} from './../Explorer.js'
 import {NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {
@@ -38,6 +37,7 @@ import {
   type EntrySidebarProps
 } from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
+import {Explorer} from './../Explorer.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -280,7 +280,7 @@ function EntryEditorContent({
   let editorBody = (
     <>
       <RailBody className={styles.EntryEditor.body()}>
-        <RailContent>
+        <RailContent className={styles.EntryEditor.fields()}>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
               <EntryTranslationBanner

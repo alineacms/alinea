@@ -1644,7 +1644,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     : undefined
   const showFold = Boolean(selectedPicker?.fields)
   const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'} data-depth="muted">
+    <List aria-label={options.label || 'Link'}>
       {selectedValue && (
         <SingleLinkRow
           field={field}
@@ -1755,7 +1755,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
           dropIndicator?.index === 0 && dropIndicator.position === 'before'
         }
       />
-      <List aria-label={options.label || 'Links'} data-depth="muted">
+      <List aria-label={options.label || 'Links'}>
         {nodes.length > 0 && (
           <>
             {nodes.map((node, index) => {
