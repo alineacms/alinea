@@ -101,31 +101,76 @@ const locationAtom = atomWithLocation({
   }
 })
 
-const browserRouteAtom = atom(get =>
-  routeFromHash(get(locationAtom).hash ?? '')
+const initialRoute = routeFromHash(
+  typeof window === 'undefined' ? '' : window.location.hash
 )
+const currentRouteAtom = atom(initialRoute)
+let ignoredBrowserHash: string | undefined
+
+interface NavigationRequest {
+  browser?: boolean
+  route: ResolvedDashboardRoute
+}
 
 /** @internal */
-export const routeAtom = atom(
-  get => get(browserRouteAtom),
-  (get, set, update: DashboardRoute) => {
-    const route = routeFromUpdate(update)
-    const commit = () =>
-      set(locationAtom, location => ({
-        ...location,
-        hash: hashFromRoute(route)
-      }))
-    const guard = get(routeGuardAtom)
-    if (guard && get(guard)) {
-      set(routeBlockAtom, {
-        confirm() {
-          set(routeBlockAtom, null)
-          commit()
+export const routeAtom = Object.assign(
+  atom(
+    get => get(currentRouteAtom),
+    (get, set, update: DashboardRoute | NavigationRequest) => {
+      const request =
+        'route' in update
+          ? update
+          : ({route: routeFromUpdate(update)} satisfies NavigationRequest)
+      const {route} = request
+      const previous = get(currentRouteAtom)
+      const commit = (replace = false, syncLocation = !request.browser) => {
+        set(currentRouteAtom, route)
+        if (!syncLocation) return
+        set(
+          locationAtom,
+          location => ({...location, hash: hashFromRoute(route)}),
+          {replace}
+        )
+      }
+      const guard = get(routeGuardAtom)
+      if (guard && get(guard)) {
+        if (request.browser) {
+          ignoredBrowserHash = hashFromRoute(previous)
+          set(
+            locationAtom,
+            location => ({...location, hash: hashFromRoute(previous)}),
+            {replace: true}
+          )
         }
-      })
-      return
+        set(routeBlockAtom, {
+          confirm() {
+            set(routeBlockAtom, null)
+            commit(request.browser, true)
+          }
+        })
+        return
+      }
+      commit()
     }
-    commit()
+  ),
+  {
+    onMount(navigate: (request: NavigationRequest) => void) {
+      if (typeof window === 'undefined') return
+      const onNavigation = () => {
+        if (window.location.hash === ignoredBrowserHash) {
+          ignoredBrowserHash = undefined
+          return
+        }
+        navigate({browser: true, route: routeFromHash(window.location.hash)})
+      }
+      window.addEventListener('hashchange', onNavigation)
+      window.addEventListener('popstate', onNavigation)
+      onNavigation()
+      return () => {
+        window.removeEventListener('hashchange', onNavigation)
+        window.removeEventListener('popstate', onNavigation)
+      }
+    }
   }
 )
 

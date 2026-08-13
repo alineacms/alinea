@@ -351,27 +351,10 @@ export class RootAtoms {
         if (id) keys.add(id)
       }
       const graph = get(graphAtom)
-      const policy = get(policyAtom)
-      const treeItemsById = get(this.treeItemsById(locale))
       const moveTarget = event.target.key ? String(event.target.key) : this.key
       const targetType = event.target.key ? 'entry' : 'root'
       for (const key of keys) {
         const id = String(key)
-        const item = treeItemsById.get(id)
-        if (!item || item.dragDisabled) continue
-        policy.assert(
-          event.target.dropPosition === 'on'
-            ? Permission.Move
-            : Permission.Reorder,
-          {
-            workspace: this.workspace,
-            root: this.key,
-            id,
-            type: item.type,
-            locale: item.locale,
-            parents: item.parents
-          }
-        )
         await graph.move({
           id,
           target: moveTarget,

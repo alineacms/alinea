@@ -8,7 +8,7 @@ test('navigates between entries and through browser history', async ({
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
   await app.openEntry('Beta')
-  await expect(app.page).toHaveURL(/workflow-beta$/)
+  await expect(app.page).toHaveURL(/workflow-beta\?view=edit$/)
 
   await app.page.goBack()
   await expect(app.title).toHaveText('Alpha')
@@ -165,7 +165,7 @@ test('blocks browser history until unsaved changes are resolved', async ({
     confirmation.getByRole('heading', {name: 'Confirm navigation'})
   ).toBeVisible()
   await expect(app.title).toHaveText('Beta')
-  await expect(app.page).toHaveURL(/workflow-beta$/)
+  await expect(app.page).toHaveURL(/workflow-beta\?view=edit$/)
 
   await confirmation.getByRole('button', {name: 'Discard my changes'}).click()
   await expect(app.title).toHaveText('Alpha')

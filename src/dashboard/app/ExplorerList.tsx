@@ -65,16 +65,22 @@ export function ExplorerList({explorer, locale}: ExplorerListProps) {
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
   const getItems = useSetAtom(explorer.getItems)
+  const getDropOperation = useSetAtom(explorer.getDropOperation)
+  const dropOnItem = useSetAtom(explorer.onItemDrop)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
     getItems,
-    getDropOperation(target, _types, allowedOperations) {
-      if (!isMedia || !canUpload) return 'cancel'
-      if (target.type !== 'root') return 'cancel'
+    getDropOperation(target, types, allowedOperations) {
+      const operation = getDropOperation(target, types, allowedOperations)
+      if (operation !== 'cancel') return operation
+      if (!isMedia || !canUpload || target.type !== 'root') return 'cancel'
       return allowedOperations.includes('copy') ? 'copy' : 'cancel'
+    },
+    onItemDrop(event) {
+      dropOnItem(event, locale)
     },
     async onRootDrop(event) {
       const files = await Promise.all(

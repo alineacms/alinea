@@ -248,6 +248,7 @@ function EntryEditorContent({
   const typeName = useAtomValue(entry.type)
   const type = useAtomValue(typeAtoms(typeName))
   const hasChildren = useAtomValue(entry.hasChildren)
+  const defaultView = useAtomValue(entry.view)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
   const View = type.customView
   const {locale} = page
@@ -337,7 +338,7 @@ function EntryEditorContent({
     <Rail main>
       <EntryHeader
         controls={
-          hasChildren ? (
+          hasChildren || defaultView === 'overview' ? (
             <EntryViewToggle entry={entry} page={page} />
           ) : undefined
         }

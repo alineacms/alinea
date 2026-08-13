@@ -578,9 +578,8 @@ export class EntryAtoms {
     const root = getWorkspace(workspace).roots[data.root]
     assert(root, `Root "${data.root}" not found in config`)
     assert(typeConfig, `Type "${data.type}" not found in config`)
-    const defaultView = data.hasChildren
-      ? 'overview'
-      : (Type.defaultView(typeConfig) ?? 'edit')
+    const defaultView =
+      Type.defaultView(typeConfig) ?? (data.hasChildren ? 'overview' : 'edit')
     const rootData = getRoot(root)
     const workspaceData = getWorkspace(workspace)
     const preview =

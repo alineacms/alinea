@@ -183,6 +183,7 @@ function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
     typeof window === 'undefined'
       ? `#${href}`
       : `${window.location.href.split('#', 1)[0]}#${href}`
+
   return (
     <a className={styles.SidebarTree.entryLink()} href={hashHref}>
       {title}
@@ -381,13 +382,15 @@ export const SidebarTree = memo(function SidebarTree({
               {item => (
                 <SidebarTreeItem
                   entryLink={entry => {
+                    const view =
+                      entry.type === 'MediaLibrary' ? undefined : 'edit'
                     return {
                       href: nav.entry(
                         root.workspace,
                         root.key,
                         entry.id,
                         page.locale,
-                        'edit'
+                        view
                       )
                     }
                   }}

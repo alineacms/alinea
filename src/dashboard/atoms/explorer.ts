@@ -5,6 +5,7 @@ import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {Permission} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import type {Infer} from '#/types.js'
@@ -18,7 +19,16 @@ import {
 } from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
-import type {Key} from 'react-aria-components'
+import type {
+  DragItem,
+  DragTypes,
+  DropOperation,
+  DropTarget
+} from '@react-types/shared'
+import type {
+  DroppableCollectionOnItemDropEvent,
+  Key
+} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
 import {dashboardAtoms} from './dashboard.js'
 import {configAtom, graphAtom} from './core.js'
@@ -26,7 +36,12 @@ import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
 import {uploadFilesAtom} from './upload.js'
 import {policyAtom} from './user.js'
-import {dispense} from './utils.js'
+import {
+  acceptsDashboardEntryDrag,
+  dashboardEntryDragItem,
+  dashboardEntryDragTypes,
+  dispense
+} from './utils.js'
 
 export const dashboardEntryOverviewColumnCount = 5
 
@@ -465,9 +480,56 @@ export class ExplorerAtoms {
       parentId: location.parentId
     })
   })
-  getItems = atom(null, (_get, _set, keys: Set<Key>) => {
-    return [...keys].map(key => ({'text/plain': String(key)}))
+  getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
+    return [...keys].map(dashboardEntryDragItem)
   })
+  getDropOperation = atom(
+    null,
+    (
+      _get,
+      _set,
+      target: DropTarget,
+      types: DragTypes,
+      allowedOperations: Array<DropOperation>
+    ) => {
+      if (target.type !== 'item' || !acceptsDashboardEntryDrag(types))
+        return 'cancel'
+      return allowedOperations.includes('move') ? 'move' : 'cancel'
+    }
+  )
+  onItemDrop = atom(
+    null,
+    async (
+      get,
+      _set,
+      event: DroppableCollectionOnItemDropEvent,
+      locale: string | null
+    ) => {
+      const target = String(event.target.key)
+      const entries = get(this.items(locale))
+      const policy = get(policyAtom)
+      const graph = get(graphAtom)
+      for (const dragItem of event.items) {
+        if (dragItem.kind !== 'text' || !dragItem.types || !dragItem.getText)
+          continue
+        const id = dragItem.types.has(dashboardEntryDragTypes[0])
+          ? await dragItem.getText(dashboardEntryDragTypes[0])
+          : await dragItem.getText('text/plain')
+        const entry = entries.find(entry => entry.id === id)
+        if (!entry) continue
+        const {data} = get(entry.data)
+        if (!data) continue
+        const item = get(data.item)
+        policy.assert(Permission.Move, item)
+        await graph.move({
+          id,
+          target,
+          targetType: 'entry',
+          dropPosition: 'on'
+        })
+      }
+    }
+  )
   onAction = atom(
     null,
     (get, set, entry: ExplorerEntry, locale: string | null) => {

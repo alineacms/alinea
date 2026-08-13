@@ -18,11 +18,7 @@ import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
-import {
-  IcOutlineSettings,
-  IcRoundSearch,
-  IcRoundUnfoldMore
-} from '../icons.js'
+import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
