@@ -29,11 +29,9 @@ function EmptyResults({root}: EmptyResultsProps) {
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>
-          No matching entries
-        </div>
+        <div className={styles.ExplorerList.empty.title()}>No results</div>
         <div className={styles.ExplorerList.empty.text()}>
-          Try a different title, path, or field value.
+          Try different search terms.
         </div>
       </div>
     </div>
@@ -45,9 +43,9 @@ function SearchIdleState() {
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={IcRoundSearch} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>Search entries</div>
+        <div className={styles.ExplorerList.empty.title()}>Search</div>
         <div className={styles.ExplorerList.empty.text()}>
-          Type to search all roots in this workspace.
+          Type to find any page in this workspace.
         </div>
       </div>
     </div>
