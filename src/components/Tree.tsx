@@ -8,7 +8,7 @@ import {
   type TreeItemProps as AriaTreeItemProps,
   Button,
   type TreeItemContentRenderProps,
-  type TreeProps
+  type TreeProps as AriaTreeProps
 } from 'react-aria-components'
 import {Checkbox} from './Checkbox.js'
 import {FoldIcon} from './FoldIcon.js'
@@ -17,22 +17,17 @@ import css from './Tree.module.css'
 
 const styles = styler(css)
 
+export interface TreeProps<T extends object> extends Omit<
+  AriaTreeProps<T>,
+  'className'
+> {
+  className?: string
+}
+
 export function Tree<T extends object>(props: TreeProps<T>) {
   const {className, ...rest} = props
   return (
-    <AriaTree
-      {...rest}
-      className={renderProps =>
-        styles.Tree(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
+    <AriaTree {...rest} className={styles.Tree(styler.merge({className}))} />
   )
 }
 
@@ -100,7 +95,10 @@ export const TreeItemContent = memo(function TreeItemContent({
   )
 })
 
-export interface TreeItemProps extends Partial<AriaTreeItemProps> {
+export interface TreeItemProps extends Partial<
+  Omit<AriaTreeItemProps, 'className'>
+> {
+  className?: string
   disableDragging?: boolean
   title: string
   icon?: IconProps['icon']
@@ -124,16 +122,7 @@ export function TreeItem({
       textValue={title}
       {...rest}
       hasChildItems={hasChildItems}
-      className={renderProps =>
-        styles.TreeItem(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+      className={styles.TreeItem(styler.merge({className}))}
     >
       <TreeItemContent
         disableDragging={disableDragging}

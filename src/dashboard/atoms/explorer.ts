@@ -276,6 +276,7 @@ export class ExplorerAtoms {
   parent: (locale: string | null) => Atom<ExplorerEntry | undefined>
   itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
+  #options: ExplorerOptions
 
   constructor(
     public readonly location: WritableAtom<
@@ -283,9 +284,10 @@ export class ExplorerAtoms {
       [SetStateAction<ExplorerLocation>],
       void
     >,
-    private readonly options: ExplorerOptions,
+    options: ExplorerOptions,
     initialLocation: ExplorerLocation
   ) {
+    this.#options = options
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
@@ -358,7 +360,7 @@ export class ExplorerAtoms {
     )
     const itemsSource = dispense((locale: string | null) =>
       atom(async get => {
-        const values = await get(this.itemData(locale))
+        const values = await get(this.#itemData(locale))
         return values.map(value => {
           const parentEntries = value.parentEntries ?? []
           const parentItems = parentEntries.map((parent, index) => {
@@ -416,7 +418,7 @@ export class ExplorerAtoms {
     return !this.hideResultsUntilSearch || Boolean(get(this.search).trim())
   })
   isMedia = atom(get =>
-    Boolean(this.options.rootData && get(this.options.rootData).isMediaRoot)
+    Boolean(this.#options.rootData && get(this.#options.rootData).isMediaRoot)
   )
   view = atom(
     get => get(this.#selectedView) ?? (get(this.isMedia) ? 'card' : 'row'),
@@ -449,7 +451,7 @@ export class ExplorerAtoms {
     }
   )
   get limitLocations() {
-    return this.options.limitLocations
+    return this.#options.limitLocations
   }
   canUpload = atom(get => {
     const location = get(this.location)
@@ -533,8 +535,8 @@ export class ExplorerAtoms {
   onAction = atom(
     null,
     (get, set, entry: ExplorerEntry, locale: string | null) => {
-      if (this.options.onAction) {
-        this.options.onAction(entry)
+      if (this.#options.onAction) {
+        this.#options.onAction(entry)
         return
       }
       if (this.hasRowAction) {
@@ -553,18 +555,18 @@ export class ExplorerAtoms {
   )
   onConfirm = atom(null, get => {
     const selected = get(this.selection)
-    if (selected !== 'all') this.options.onConfirm?.([...selected].map(String))
+    if (selected !== 'all') this.#options.onConfirm?.([...selected].map(String))
   })
   isExpanded = dispense((entry: ExplorerEntry) =>
     atom(get => get(this.expandedKeys).has(entry.id))
   )
   isSelectable = dispense((entry: ExplorerEntry) =>
     atom(get => {
-      if (!this.options.condition) return true
+      if (!this.#options.condition) return true
       const {data} = get(entry.data)
       if (!data) return false
       const item = get(data.item)
-      return filterChecker(this.options.condition, (candidate, name) => {
+      return filterChecker(this.#options.condition, (candidate, name) => {
         const value = candidate as ExplorerItemData
         if (name === '_id') return value.id
         if (name === '_type') return value.type
@@ -653,7 +655,7 @@ export class ExplorerAtoms {
   children = dispense((entry: ExplorerEntry, locale: string | null) =>
     unwrap(this.childrenReady(entry, locale), previous => previous ?? [])
   )
-  private readonly itemData = dispense((locale: string | null) =>
+  #itemData = dispense((locale: string | null) =>
     atom(async get => {
       get(shaAtom)
       const location = get(this.location)
@@ -666,9 +668,9 @@ export class ExplorerAtoms {
       const flatList =
         Boolean(search && this.searchDepth === 'all') ||
         Boolean(
-          this.options.condition &&
-          !this.options.pickChildren &&
-          this.options.flatResults !== false
+          this.#options.condition &&
+          !this.#options.pickChildren &&
+          this.#options.flatResults !== false
         )
       const orderField =
         sort.sortBy === 'title'
@@ -686,7 +688,7 @@ export class ExplorerAtoms {
         parentId: flatList ? undefined : (location.parentId ?? null),
         locale,
         search: search || undefined,
-        filter: flatList ? this.options.condition : undefined,
+        filter: flatList ? this.#options.condition : undefined,
         type: filter,
         status: 'preferDraft',
         groupBy: Entry.id,

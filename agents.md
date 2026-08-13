@@ -17,6 +17,7 @@
 - Use function instead of arrow functions when defining React components
 - Always name props interfaces with a `Props` suffix
 - Do not use the `any` type, unless communicated explicitly in the code review
+- Use JavaScript `#private` class fields instead of TypeScript's `private` modifier.
 - Reuse shared generic utilities before adding local copies; in particular, 
   use `isRecord` from `#/core/util/Objects.js` instead of defining another local record guard.
 - Imports should be relative if in same src subdir, otherwise absolute starting

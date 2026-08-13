@@ -94,7 +94,7 @@ const authenticatedAtom = atom(async get => {
   const {locale} = page
 
   if (page.requestedRoot && page.requestedRoot !== root) {
-    await get(rootData.treeReady(locale))
+    await get(rootData.tree(locale).ready)
     return (
       <>
         {meta('Root not found')}
@@ -118,7 +118,7 @@ const authenticatedAtom = atom(async get => {
     const [content, title] = await Promise.all([
       entryPage(page, get),
       entryTitle(page, entry, get),
-      get(rootData.treeReady(locale))
+      get(rootData.tree(locale).ready)
     ])
     return (
       <>
@@ -137,7 +137,7 @@ const authenticatedAtom = atom(async get => {
 
   const [content] = await Promise.all([
     rootPage(page, get),
-    get(rootData.treeReady(locale))
+    get(rootData.tree(locale).ready)
   ])
   return (
     <>
