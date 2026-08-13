@@ -29,10 +29,10 @@ export class NextCMS<
 
   throttle = createThrottledSync()
   bundledDb = PLazy.from(async () => {
-    if (process.env.NEXT_RUNTIME === 'edge')
-      throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} = await import('#/backend/store/GeneratedSource.js')
-    const source = await generatedSource
+    const {fetchGeneratedSource} =
+      await import('#/backend/store/GeneratedSource.js')
+    const {handlerUrl} = await requestContext(this.config)
+    const source = await fetchGeneratedSource(handlerUrl)
     const db = new LocalDB(this.config, source)
     await db.sync()
     return db
@@ -40,7 +40,7 @@ export class NextCMS<
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
-    const {handlerUrl, apiKey} = await requestContext(this.config)
+    const {isDev, handlerUrl, apiKey} = await requestContext(this.config)
     const client = new Client({
       config: this.config,
       url: handlerUrl.href,
@@ -61,11 +61,12 @@ export class NextCMS<
     }
     const {PHASE_PRODUCTION_SERVER, PHASE_PRODUCTION_BUILD} =
       await import('next/constants.js')
-    const isEdge = process.env.NEXT_RUNTIME === 'edge'
     const isServer = process.env.NEXT_PHASE === PHASE_PRODUCTION_SERVER
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
     const request = {preview, ...query, status}
-    const useLocalDb = !isEdge && (isServer || isBuild)
+    // The Alinea CLI stays online while `next build` runs. Query it directly
+    // instead of requiring the generated source snapshot to be in the bundle.
+    const useLocalDb = !isDev && (isServer || isBuild)
     if (!useLocalDb) return client.resolve(request)
     const db = await this.bundledDb
     await this.throttle(() => db.syncWith(client), request.syncInterval)

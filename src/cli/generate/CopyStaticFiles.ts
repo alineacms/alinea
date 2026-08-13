@@ -1,8 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {createId} from '#/core/Id.js'
-import {MemorySource} from '#/core/source/MemorySource.js'
-import {exportSource} from '#/core/source/SourceExport.js'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
 import type {GenerateContext} from './GenerateContext.js'
 
@@ -17,14 +15,9 @@ const packageJson = {
     './config.js': './config.js',
     './release.js': './release.js',
     './settings.json': './settings.json',
-    './source.js': {
-      'edge-light': './empty-source.js',
-      default: './source.js'
-    }
+    './source.js': './source.js'
   }
 }
-
-const emptySource = await exportSource(new MemorySource())
 
 export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
@@ -38,12 +31,8 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
     JSON.stringify(packageJson, null, 2)
   )
   await fs.writeFile(
-    path.join(outDir, 'empty-source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
-  )
-  await fs.writeFile(
     path.join(outDir, 'source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
+    'export const sourceFile = undefined'
   )
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(

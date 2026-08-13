@@ -21,6 +21,29 @@ test('content dir and file path of single workspace', () => {
   )
 })
 
+test('admin path defaults and preserves custom directories', () => {
+  const config = createConfig({
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {source: 'content', roots: {}})
+    }
+  })
+  test.equal(Config.dashboardPaths(config), {
+    adminPath: 'admin',
+    htmlFile: 'admin.html',
+    assetsDir: 'admin'
+  })
+  test.is(Config.adminPath(config), 'admin')
+
+  const custom = {...config, dashboardFile: 'dashboard/editor.html'}
+  test.equal(Config.dashboardPaths(custom), {
+    adminPath: 'dashboard/editor',
+    htmlFile: 'dashboard/editor.html',
+    assetsDir: 'dashboard/editor'
+  })
+  test.is(Config.adminPath(custom), 'dashboard/editor')
+})
+
 test('content dir and file path of multiple workspaces', () => {
   const config2 = createConfig({
     schema: {},
