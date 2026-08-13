@@ -21,14 +21,12 @@ import {Button as AriaButton} from 'react-aria-components'
 import {
   IcOutlineSettings,
   IcRoundSearch,
-  IcRoundUnfoldMore,
-  MaterialSymbolsEditSquareOutlineRounded
+  IcRoundUnfoldMore
 } from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
-import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -254,29 +252,7 @@ export function WorkspaceMenu({
           </Suspense>
         </DashboardModal>
       </DialogTrigger>
-      <WorkspaceCreateEntryButton root={root} />
     </div>
-  )
-}
-
-interface WorkspaceCreateEntryButtonProps {
-  root: RootAtoms
-}
-
-function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
-  const canCreate = useAtomValue(root.canCreate)
-  if (!canCreate) return null
-  return (
-    <DialogTrigger>
-      <Button
-        size="icon"
-        icon={MaterialSymbolsEditSquareOutlineRounded}
-        aria-label="Create entry"
-      />
-      <DashboardModal>
-        <CreateEntry />
-      </DashboardModal>
-    </DialogTrigger>
   )
 }
 
