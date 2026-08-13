@@ -29,7 +29,7 @@ import {
   IcRoundEdit
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
-import {NodeEditor} from './../EntryFields.js'
+import {EntryFields, NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {
   EntrySidebar,
@@ -304,7 +304,9 @@ function EntryEditorContent({
             </div>
           )}
 
-          <NodeEditor node={node} type={type.type} />
+          <NodeEditor node={node} type={type.type}>
+            <EntryFields />
+          </NodeEditor>
         </RailContent>
       </RailBody>
     </>

@@ -24,19 +24,24 @@ interface NodeEditorProps extends PropsWithChildren {
   type: Type
 }
 
-export function NodeEditor({
-  children = <FieldsEditor />,
-  node,
-  type
-}: NodeEditorProps) {
+export function NodeEditor({children, node, type}: NodeEditorProps) {
   const editor = useNodeEditor(node, type)
-  return <EditorScope editor={editor}>{children}</EditorScope>
+  return (
+    <EditorScope editor={editor}>{children ?? <FieldsEditor />}</EditorScope>
+  )
 }
 
 export function FieldsEditor() {
   const editor = useEditor()
   return editor.sections.map((section, index) => (
     <FormSection key={index} section={section} />
+  ))
+}
+
+export function EntryFields() {
+  const editor = useEditor()
+  return editor.sections.map((section, index) => (
+    <EntryFormSection key={index} section={section} />
   ))
 }
 
@@ -47,11 +52,17 @@ interface FormSectionProps {
 const FormSection = memo(function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
   if (View) return <View section={section.section} />
+  return <EditFields fields={Section.definition(section.section)} />
+})
+
+const EntryFormSection = memo(function EntryFormSection({
+  section
+}: FormSectionProps) {
+  const fields = <FormSection section={section} />
+  if (Section.view(section.section)) return fields
   return (
     <Surface>
-      <SurfaceContent>
-        <EditFields fields={Section.definition(section.section)} />
-      </SurfaceContent>
+      <SurfaceContent>{fields}</SurfaceContent>
     </Surface>
   )
 })
