@@ -55,7 +55,7 @@ export const entryPage = page(async (page, get) => {
     const entry = await get(entryAtoms(page.entry))
     const localeData = entry.locales(page.locale)
     const type = get(typeAtoms(get(entry.type)))
-    const view = get(entry.view)
+    const view = page.view ?? get(entry.view)
     const selectedEntry = await get(localeData.selectedEntry)
     if (view === 'overview') {
       const root = rootAtoms(get(entry.workspace), get(entry.root))
@@ -160,10 +160,13 @@ export function NotFoundPanel({
 
 interface EntryViewToggleProps {
   entry: EntryAtoms
+  page: Page
 }
 
-function EntryViewToggle({entry}: EntryViewToggleProps) {
-  const [view, setView] = useAtom(entry.view)
+function EntryViewToggle({entry, page}: EntryViewToggleProps) {
+  const entryView = useAtomValue(entry.view)
+  const view = page.view ?? entryView
+  const setRoute = useSetAtom(routeAtom)
   const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
@@ -175,7 +178,15 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       icon={ViewIcon}
       isDisabled={isPending}
       size="icon"
-      onPress={() => startTransition(() => setView(nextView))}
+      onPress={() =>
+        setRoute({
+          workspace: page.workspace,
+          root: page.root,
+          entry: page.entry,
+          locale: page.locale ?? undefined,
+          view: nextView
+        })
+      }
     />
   )
 }
@@ -218,7 +229,7 @@ function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
             })
           }
         }}
-        titleControls={<EntryViewToggle entry={entry} />}
+        titleControls={<EntryViewToggle entry={entry} page={page} />}
       />
     </Rail>
   )
@@ -325,7 +336,11 @@ function EntryEditorContent({
   const mainEditor = (
     <Rail main>
       <EntryHeader
-        controls={hasChildren ? <EntryViewToggle entry={entry} /> : undefined}
+        controls={
+          hasChildren ? (
+            <EntryViewToggle entry={entry} page={page} />
+          ) : undefined
+        }
         entry={entry}
         isSidebarOpen={isSidebarOpen}
         localeData={localeData}

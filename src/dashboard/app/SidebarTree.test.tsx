@@ -89,6 +89,9 @@ function SidebarTreeFixture({
       >
         {item => (
           <SidebarTreeItem
+            entryLink={entry => ({
+              href: `/entry/main/pages/${entry.id}?view=edit`
+            })}
             expandedKeys={expandedKeys}
             item={item}
             locale={null}
@@ -114,6 +117,14 @@ test('expanding materializes only immediate children and collapsing removes them
 
   fireEvent.click(parentChevron!)
   expect(screen.queryByText('Child')).toBeNull()
+})
+
+test('entry labels link directly to their edit view', () => {
+  render(<SidebarTreeFixture />)
+
+  expect(screen.getByRole('link', {name: 'Parent'}).getAttribute('href')).toBe(
+    'http://localhost/#/entry/main/pages/parent?view=edit'
+  )
 })
 
 function largeTree(): Array<RootTreeItem> {

@@ -78,9 +78,7 @@ export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
       selectionMode="single"
       selectedKeys={[activeLocale]}
       onAction={key => {
-        startTransition(() => {
-          onLocaleChange(String(key))
-        })
+        onLocaleChange(String(key))
       }}
     >
       {i18n.locales.map(locale => (

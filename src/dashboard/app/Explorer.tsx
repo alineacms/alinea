@@ -16,13 +16,7 @@ import {
   type ReactNode
 } from 'react'
 import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
-import {
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
-  IcRoundClose,
-  IcRoundFilterList,
-  IcRoundUploadFile
-} from '../icons.js'
+import {configAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
   type DashboardEntryData,
@@ -31,7 +25,13 @@ import {
   type ExplorerSortBy,
   type ExplorerTypeFilters
 } from '../atoms/explorer.js'
-import {configAtom} from '../atoms/core.js'
+import {
+  IcRoundArrowDownward,
+  IcRoundArrowUpward,
+  IcRoundClose,
+  IcRoundFilterList,
+  IcRoundUploadFile
+} from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'

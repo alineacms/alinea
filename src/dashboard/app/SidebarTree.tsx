@@ -1,7 +1,6 @@
 import {Button, Icon, Tree, TreeItem} from '#/components.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
-import type {Page} from '#/dashboard/atoms/nav.js'
-import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {nav, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
 import type {
   RootAtoms,
   RootTreeItem,
@@ -80,6 +79,7 @@ function sidebarStatus(
 }
 
 interface SidebarTreeItemProps {
+  entryLink?: (entry: RootTreeItem) => SidebarTreeLink
   expandedKeys: Set<Key>
   item: RootTreeNode
   locale: string | null
@@ -96,6 +96,7 @@ interface SidebarTreeSource {
 }
 
 export const SidebarTreeItem = memo(function SidebarTreeItem({
+  entryLink,
   expandedKeys,
   item,
   locale,
@@ -120,6 +121,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   const isArchived = rowStatus?.status === 'archived'
   const isUnpublished = rowStatus?.status === 'unpublished'
   const isUntranslated = displayStatus?.status === 'untranslated'
+  const link = entryLink?.(data)
   return (
     <TreeItem
       id={item.id}
@@ -147,9 +149,15 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
           </span>
         ) : undefined
       }
+      label={
+        link ? (
+          <SidebarTreeEntryLink href={link.href} title={data.title} />
+        ) : undefined
+      }
     >
       {expandedKeys.has(item.id) && (
         <SidebarTreeChildren
+          entryLink={entryLink}
           expandedKeys={expandedKeys}
           locale={locale}
           parentId={item.id}
@@ -161,7 +169,29 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   )
 })
 
+interface SidebarTreeEntryLinkProps {
+  href: string
+  title: string
+}
+
+interface SidebarTreeLink {
+  href: string
+}
+
+function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
+  const hashHref =
+    typeof window === 'undefined'
+      ? `#${href}`
+      : `${window.location.href.split('#', 1)[0]}#${href}`
+  return (
+    <a className={styles.SidebarTree.entryLink()} href={hashHref}>
+      {title}
+    </a>
+  )
+}
+
 interface SidebarTreeChildrenProps {
+  entryLink?: (entry: RootTreeItem) => SidebarTreeLink
   expandedKeys: Set<Key>
   locale: string | null
   parentId: string
@@ -170,6 +200,7 @@ interface SidebarTreeChildrenProps {
 }
 
 const SidebarTreeChildren = memo(function SidebarTreeChildren({
+  entryLink,
   expandedKeys,
   locale,
   parentId,
@@ -181,6 +212,7 @@ const SidebarTreeChildren = memo(function SidebarTreeChildren({
     <Collection items={children} dependencies={[children]}>
       {child => (
         <SidebarTreeItem
+          entryLink={entryLink}
           expandedKeys={expandedKeys}
           item={child}
           locale={locale}
@@ -340,13 +372,25 @@ export const SidebarTree = memo(function SidebarTree({
                     workspace: root.workspace,
                     root: root.key,
                     entry: String(entry),
-                    locale: page.locale ?? undefined
+                    locale: page.locale ?? undefined,
+                    view: 'edit'
                   })
                 }
               }}
             >
               {item => (
                 <SidebarTreeItem
+                  entryLink={entry => {
+                    return {
+                      href: nav.entry(
+                        root.workspace,
+                        root.key,
+                        entry.id,
+                        page.locale,
+                        'edit'
+                      )
+                    }
+                  }}
                   expandedKeys={expandedKeys}
                   item={item}
                   locale={locale}

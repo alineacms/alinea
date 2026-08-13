@@ -1,6 +1,5 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {startTransition} from 'react'
 import type {Key, Selection} from 'react-aria-components'
 import type {DashboardExplorer} from '../atoms/explorer.js'
 import {ExplorerBody} from './Explorer.js'
@@ -31,20 +30,16 @@ export function ExplorerPickerContent({
     : new Set<Key>()
 
   function onRootPress() {
-    startTransition(() => {
-      setLocation(current => ({...current, parentId: undefined}))
-    })
+    setLocation(current => ({...current, parentId: undefined}))
   }
 
   function onSelectionChange(keys: Selection) {
     if (keys === 'all') return
     const [selected] = keys
-    startTransition(() => {
-      setLocation(current => ({
-        ...current,
-        parentId: selected ? String(selected) : undefined
-      }))
-    })
+    setLocation(current => ({
+      ...current,
+      parentId: selected ? String(selected) : undefined
+    }))
   }
 
   return (

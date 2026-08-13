@@ -1,5 +1,7 @@
 import {Atom, atom, Getter} from 'jotai'
+import {atomWithLocation} from 'jotai-location'
 import {getRoot} from '#/core/Internal.js'
+import type {EntryDefaultView} from '#/core/Type.js'
 import {ReactNode} from 'react'
 import {workspaceAtom, workspacesAtom} from './config.js'
 import {configAtom} from './core.js'
@@ -18,23 +20,12 @@ export interface DashboardRoute {
   root?: string
   entry?: string
   locale?: string
+  view?: EntryDefaultView
 }
 
 interface ResolvedDashboardRoute extends DashboardRoute {
   page: 'entry' | 'users'
 }
-
-interface PushNavigation {
-  type: 'push'
-  route: ResolvedDashboardRoute
-}
-
-interface PopNavigation {
-  type: 'pop'
-  route: ResolvedDashboardRoute
-}
-
-type NavigationRequest = PushNavigation | PopNavigation
 
 export const nav = {
   users() {
@@ -44,26 +35,33 @@ export const nav = {
     workspace?: string,
     root?: string,
     entryId?: string,
-    locale?: string | null
+    locale?: string | null,
+    view?: EntryDefaultView
   ) {
     const rootPart = root ? `${root}${locale ? `:${locale}` : ''}` : ''
-    return `/entry/${[workspace, rootPart, entryId].filter(Boolean).join('/')}`
+    const path = `/entry/${[workspace, rootPart, entryId].filter(Boolean).join('/')}`
+    return view ? `${path}?view=${view}` : path
   }
 }
 
 function routeFromHash(hash: string): ResolvedDashboardRoute {
-  const [action, workspace, rootPart = '', entry] = hash
-    .slice(1)
+  const [path, search = ''] = hash.slice(1).split('?')
+  const [action, workspace, rootPart = '', entry] = path
     .split('/')
     .slice(1) as Array<string | undefined>
   const page = action === 'users' ? 'users' : 'entry'
   const [root, locale] = rootPart.split(':')
+  const view = new URLSearchParams(search).get('view')
   return {
     page,
     workspace: page === 'entry' ? workspace : undefined,
     root: page === 'entry' ? root : undefined,
     entry: page === 'entry' ? entry : undefined,
-    locale: page === 'entry' ? locale : undefined
+    locale: page === 'entry' ? locale : undefined,
+    view:
+      page === 'entry' && (view === 'edit' || view === 'overview')
+        ? view
+        : undefined
   }
 }
 
@@ -74,72 +72,61 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
     workspace: update.workspace,
     root: update.root,
     entry: update.entry,
-    locale: update.locale
+    locale: update.locale,
+    view: update.view
   }
 }
 
-function readBrowserRoute(): ResolvedDashboardRoute {
-  return routeFromHash(
-    typeof window === 'undefined' ? '' : window.location.hash
-  )
+function hashFromRoute(route: ResolvedDashboardRoute) {
+  return route.page === 'users'
+    ? `#${nav.users()}`
+    : `#${nav.entry(
+        route.workspace,
+        route.root,
+        route.entry,
+        route.locale,
+        route.view
+      )}`
 }
 
-function applyBrowserRoute(route: ResolvedDashboardRoute, replace: boolean) {
-  if (typeof window === 'undefined') return
-  const hash =
-    route.page === 'users'
-      ? `#${nav.users()}`
-      : `#${nav.entry(route.workspace, route.root, route.entry, route.locale)}`
-  const url = new URL(window.location.href)
-  url.hash = hash
-  if (replace) window.history.replaceState(window.history.state, '', url)
-  else window.history.pushState(null, '', url)
-}
-
-const currentRouteAtom = atom<ResolvedDashboardRoute>(readBrowserRoute())
-
-const navigationAtom = Object.assign(
-  atom(
-    get => get(currentRouteAtom),
-    (get, set, request: NavigationRequest) => {
-      const previous = get(currentRouteAtom)
-      const commit = () => {
-        if (request.type === 'push') applyBrowserRoute(request.route, false)
-        set(currentRouteAtom, request.route)
-      }
-      const guard = get(routeGuardAtom)
-      if (guard && get(guard)) {
-        if (request.type === 'pop') applyBrowserRoute(previous, true)
-        set(routeBlockAtom, {
-          confirm() {
-            set(routeBlockAtom, null)
-            if (request.type === 'pop') applyBrowserRoute(request.route, true)
-            commit()
-          }
-        })
-        return
-      }
-      commit()
-    }
-  ),
-  {
-    onMount(navigate: (request: NavigationRequest) => void) {
-      if (typeof window === 'undefined') return
-      const onPopState = () => {
-        navigate({type: 'pop', route: readBrowserRoute()})
-      }
-      window.addEventListener('popstate', onPopState)
-      onPopState()
-      return () => window.removeEventListener('popstate', onPopState)
+const locationAtom = atomWithLocation({
+  subscribe(callback) {
+    if (typeof window === 'undefined') return () => {}
+    window.addEventListener('hashchange', callback)
+    window.addEventListener('popstate', callback)
+    return () => {
+      window.removeEventListener('hashchange', callback)
+      window.removeEventListener('popstate', callback)
     }
   }
+})
+
+const browserRouteAtom = atom(get =>
+  routeFromHash(get(locationAtom).hash ?? '')
 )
 
 /** @internal */
 export const routeAtom = atom(
-  get => get(navigationAtom),
-  (_get, set, update: DashboardRoute) =>
-    set(navigationAtom, {type: 'push', route: routeFromUpdate(update)})
+  get => get(browserRouteAtom),
+  (get, set, update: DashboardRoute) => {
+    const route = routeFromUpdate(update)
+    const commit = () =>
+      set(locationAtom, location => ({
+        ...location,
+        hash: hashFromRoute(route)
+      }))
+    const guard = get(routeGuardAtom)
+    if (guard && get(guard)) {
+      set(routeBlockAtom, {
+        confirm() {
+          set(routeBlockAtom, null)
+          commit()
+        }
+      })
+      return
+    }
+    commit()
+  }
 )
 
 export interface Page {
@@ -149,6 +136,7 @@ export interface Page {
   requestedRoot?: string
   entry: string | undefined
   locale: string | null
+  view: EntryDefaultView | undefined
 }
 
 export const pageAtom = atom((get): Page => {
@@ -179,7 +167,8 @@ export const pageAtom = atom((get): Page => {
     root,
     requestedRoot: route.root,
     entry: route.entry,
-    locale
+    locale,
+    view: route.view
   }
 })
 

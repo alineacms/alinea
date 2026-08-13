@@ -65,7 +65,8 @@ export function StoryProvider({
       workspace: workspaceName,
       root: rootName,
       entry: undefined,
-      locale: null
+      locale: null,
+      view: undefined
     }
     return {
       page,
