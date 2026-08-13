@@ -179,13 +179,8 @@ interface SidebarTreeLink {
 }
 
 function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
-  const hashHref =
-    typeof window === 'undefined'
-      ? `#${href}`
-      : `${window.location.href.split('#', 1)[0]}#${href}`
-
   return (
-    <a className={styles.SidebarTree.entryLink()} href={hashHref}>
+    <a className={styles.SidebarTree.entryLink()} href={`#${href}`}>
       {title}
     </a>
   )

@@ -123,7 +123,7 @@ test('entry labels link directly to their edit view', () => {
   render(<SidebarTreeFixture />)
 
   expect(screen.getByRole('link', {name: 'Parent'}).getAttribute('href')).toBe(
-    'http://localhost/#/entry/main/pages/parent?view=edit'
+    '#/entry/main/pages/parent?view=edit'
   )
 })
 
