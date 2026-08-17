@@ -124,12 +124,18 @@ test('expanding materializes only immediate children and collapsing removes them
   expect(screen.queryByText('Child')).toBeNull()
 })
 
-test('entry labels link directly to their edit view', () => {
-  render(<SidebarTreeFixture />)
+test('entry labels link from the current dashboard pathname', () => {
+  const previousUrl = window.location.href
+  window.location.href = 'http://localhost/admin#/entry/main/pages/current'
+  try {
+    render(<SidebarTreeFixture />)
 
-  expect(screen.getByRole('link', {name: 'Parent'}).getAttribute('href')).toBe(
-    '#/entry/main/pages/parent?view=edit'
-  )
+    expect(
+      screen.getByRole('link', {name: 'Parent'}).getAttribute('href')
+    ).toBe('/admin#/entry/main/pages/parent?view=edit')
+  } finally {
+    window.location.href = previousUrl
+  }
 })
 
 function largeTree(): Array<RootTreeItem> {

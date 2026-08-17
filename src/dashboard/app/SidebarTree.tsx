@@ -19,9 +19,9 @@ import {memo, type ComponentType, type ReactNode} from 'react'
 import {
   Collection,
   ListLayout,
-  type Selection,
   useDragAndDrop,
-  Virtualizer
+  Virtualizer,
+  type Selection
 } from 'react-aria-components'
 import {
   IcOutlineArchive,
@@ -168,9 +168,17 @@ interface SidebarTreeLink {
   href: string
 }
 
+const documentPath =
+  typeof window === 'undefined'
+    ? ''
+    : `${window.location.pathname}${window.location.search}`
+
 function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
   return (
-    <a className={styles.SidebarTree.entryLink()} href={`#${href}`}>
+    <a
+      className={styles.SidebarTree.entryLink()}
+      href={`${documentPath}#${href}`}
+    >
       {title}
     </a>
   )
