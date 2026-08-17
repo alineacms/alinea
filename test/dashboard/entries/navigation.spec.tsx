@@ -38,6 +38,42 @@ test('keeps the sidebar and editor mounted between entry navigations', async ({
   )
 })
 
+test('scrolls the entry editor to the top when navigating to a different entry', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const title = app.field('Title')
+
+  const initialScrollTop = await title.evaluate(element => {
+    let ancestor = element.parentElement
+    while (ancestor && getComputedStyle(ancestor).overflowY !== 'auto') {
+      ancestor = ancestor.parentElement
+    }
+    if (!ancestor) throw new Error('Entry editor scroll container not found')
+    ancestor.style.flex = '0 0 40px'
+    ancestor.scrollTop = 100
+    return ancestor.scrollTop
+  })
+  expect(initialScrollTop).toBeGreaterThan(0)
+
+  await app.openEntry('Beta')
+
+  await expect
+    .poll(() =>
+      app.field('Title').evaluate(element => {
+        let ancestor = element.parentElement
+        while (ancestor && getComputedStyle(ancestor).overflowY !== 'auto') {
+          ancestor = ancestor.parentElement
+        }
+        if (!ancestor)
+          throw new Error('Entry editor scroll container not found')
+        return ancestor.scrollTop
+      })
+    )
+    .toBe(0)
+})
+
 test('selects the sidebar root when navigating back to it', async ({
   dashboard,
   mount
