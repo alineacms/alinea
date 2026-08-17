@@ -4,21 +4,20 @@ import {nav, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
 import type {
   RootAtoms,
   RootTreeItem,
-  RootTreeNode
+  RootTreeNode,
+  TreeAtoms
 } from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {
-  atom,
-  type Atom,
   useAtom,
   useAtomValue,
   useSetAtom,
+  type Atom,
   type WritableAtom
 } from 'jotai'
-import {memo, useMemo, useRef, useState, type ComponentType} from 'react'
+import {memo, type ComponentType, type ReactNode} from 'react'
 import {
   Collection,
-  type Key,
   ListLayout,
   type Selection,
   useDragAndDrop,
@@ -50,8 +49,8 @@ export interface SidebarTreeExplorerProps {
   onSelectionChange?: (keys: Selection) => void
   root: RootAtoms
   rootSelected?: boolean
-  selectedKeys?: Set<Key>
   selectedLocale: WritableAtom<string | null, [string], unknown>
+  tree: TreeAtoms
 }
 
 interface SidebarStatusDisplay {
@@ -79,33 +78,29 @@ function sidebarStatus(
 }
 
 interface SidebarTreeItemProps {
+  children?: ReactNode
   entryLink?: (entry: RootTreeItem) => SidebarTreeLink
-  expandedKeys: Set<Key>
   item: RootTreeNode
   locale: string | null
-  root: SidebarTreeSource
   selectedItem?: RootTreeItem
+  tree: SidebarTreeItemSource
 }
 
-interface SidebarTreeSource {
-  treeChildren(
-    locale: string | null,
-    parentId: string | null
-  ): Atom<Array<RootTreeNode>>
-  treeItem(locale: string | null, id: string): Atom<RootTreeItem>
+interface SidebarTreeItemSource {
+  item(id: string): Atom<RootTreeItem>
 }
 
 export const SidebarTreeItem = memo(function SidebarTreeItem({
+  children,
   entryLink,
-  expandedKeys,
   item,
   locale,
-  root,
-  selectedItem
+  selectedItem,
+  tree
 }: SidebarTreeItemProps) {
-  const data = useAtomValue(root.treeItem(locale, item.id))
-  const displayStatus = sidebarStatus(data, locale)
+  const data = useAtomValue(tree.item(item.id))
   const configuredIcon = useAtomValue(typeAtoms(data.type)).icon
+  const displayStatus = sidebarStatus(data, locale)
   const selectedAncestor =
     selectedItem && data.parents.includes(selectedItem.id)
       ? selectedItem
@@ -121,7 +116,6 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   const isArchived = rowStatus?.status === 'archived'
   const isUnpublished = rowStatus?.status === 'unpublished'
   const isUntranslated = displayStatus?.status === 'untranslated'
-  const link = entryLink?.(data)
   return (
     <TreeItem
       id={item.id}
@@ -150,21 +144,17 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
         ) : undefined
       }
       label={
-        link ? (
-          <SidebarTreeEntryLink href={link.href} title={data.title} />
-        ) : undefined
+        entryLink ? (
+          <SidebarTreeEntryLink
+            href={entryLink(data).href}
+            title={data.title}
+          />
+        ) : (
+          data.title
+        )
       }
     >
-      {expandedKeys.has(item.id) && (
-        <SidebarTreeChildren
-          entryLink={entryLink}
-          expandedKeys={expandedKeys}
-          locale={locale}
-          parentId={item.id}
-          root={root}
-          selectedItem={selectedItem}
-        />
-      )}
+      {children}
     </TreeItem>
   )
 })
@@ -186,42 +176,6 @@ function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
   )
 }
 
-interface SidebarTreeChildrenProps {
-  entryLink?: (entry: RootTreeItem) => SidebarTreeLink
-  expandedKeys: Set<Key>
-  locale: string | null
-  parentId: string
-  root: SidebarTreeSource
-  selectedItem?: RootTreeItem
-}
-
-const SidebarTreeChildren = memo(function SidebarTreeChildren({
-  entryLink,
-  expandedKeys,
-  locale,
-  parentId,
-  root,
-  selectedItem
-}: SidebarTreeChildrenProps) {
-  const children = useAtomValue(root.treeChildren(locale, parentId))
-  return (
-    <Collection items={children} dependencies={[children]}>
-      {child => (
-        <SidebarTreeItem
-          entryLink={entryLink}
-          expandedKeys={expandedKeys}
-          item={child}
-          locale={locale}
-          root={root}
-          selectedItem={selectedItem}
-        />
-      )}
-    </Collection>
-  )
-})
-
-const treeLayoutOptions = {rowHeight: 32, padding: 0, gap: 0}
-
 function equalStringSets(left: Set<string>, right: Set<string>): boolean {
   return (
     left.size === right.size &&
@@ -229,47 +183,22 @@ function equalStringSets(left: Set<string>, right: Set<string>): boolean {
   )
 }
 
-function useSelectedParentIds(selectedItem: RootTreeItem | undefined) {
-  const selected = useRef<{
-    id: string | undefined
-    parents: Set<string>
-  }>()
-  if (!selected.current || selected.current.id !== selectedItem?.id) {
-    selected.current = {
-      id: selectedItem?.id,
-      parents: new Set(selectedItem?.parents ?? [])
-    }
-  }
-  return selected.current.parents
-}
+const treeLayoutOptions = {rowHeight: 32, padding: 0, gap: 0}
 
 export const SidebarTree = memo(function SidebarTree({
   page,
   root
 }: SidebarTreeProps) {
   const {locale} = page
-  const rootItems = useAtomValue(root.treeChildren(locale, null))
-  const selectedItem = useAtomValue(root.selectedTreeItem(locale, page.entry))
+  const tree = root.tree(locale)
+  const snapshot = useAtomValue(tree.snapshot)
+  const selectedItem = useAtomValue(tree.selectedItem)
   const label = useAtomValue(root.label)
   const icon = useAtomValue(root.icon)
   const i18n = useAtomValue(root.i18n)
   const setRoute = useSetAtom(routeAtom)
-  const [expandedIds, setExpandedIds] = useAtom(root.treeExpandedKeys)
-  const [collapsed, setCollapsed] = useAtom(root.treeCollapsedKeys)
-  const selectedParentIds = useSelectedParentIds(selectedItem)
-  const expandedKeys = useMemo<Set<Key>>(() => {
-    const result = new Set<Key>(expandedIds)
-    const collapsedKeys =
-      collapsed.selectedId === selectedItem?.id ? collapsed.keys : undefined
-    for (const parentId of selectedParentIds) {
-      if (!collapsedKeys?.has(parentId)) result.add(parentId)
-    }
-    return result
-  }, [collapsed, expandedIds, selectedItem, selectedParentIds])
-  const selectedKeys = useMemo(
-    () => (page.entry ? new Set<Key>([page.entry]) : new Set<Key>()),
-    [page.entry]
-  )
+  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const [collapsed, setCollapsed] = useAtom(tree.collapsedKeys)
   const dragDisabled = useAtomValue(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const getDropOperation = useSetAtom(root.getDropOperation)
@@ -280,10 +209,34 @@ export const SidebarTree = memo(function SidebarTree({
     getItems,
     isDisabled: dragDisabled,
     getDropOperation,
-    onInsert: event => drop(event, locale),
-    onItemDrop: event => drop(event, locale),
-    onMove: event => move(event, locale)
+    onInsert: drop,
+    onItemDrop: drop,
+    onMove: event => move(event, tree)
   })
+  function entryLink(entry: RootTreeItem): SidebarTreeLink {
+    return {
+      href: nav.entry(
+        root.workspace,
+        root.key,
+        entry.id,
+        page.locale,
+        entry.type === 'MediaLibrary' ? undefined : 'edit'
+      )
+    }
+  }
+  function renderItem(item: RootTreeNode): ReactNode {
+    return (
+      <SidebarTreeItem
+        entryLink={entryLink}
+        item={item}
+        locale={locale}
+        selectedItem={selectedItem}
+        tree={tree}
+      >
+        <Collection items={item.children}>{renderItem}</Collection>
+      </SidebarTreeItem>
+    )
+  }
 
   return (
     <SidebarBody>
@@ -331,16 +284,15 @@ export const SidebarTree = memo(function SidebarTree({
           <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
             <Tree
               aria-label="Content tree"
-              items={rootItems}
-              dependencies={[expandedKeys]}
+              items={snapshot.items}
               dragAndDropHooks={dragAndDropHooks}
               selectionMode="single"
               selectionBehavior="replace"
               disallowEmptySelection={false}
-              expandedKeys={expandedKeys}
+              expandedKeys={snapshot.expandedKeys}
               onExpandedChange={keys => {
                 const next = new Set([...keys].map(String))
-                setExpandedIds(current =>
+                setExpandedKeys(current =>
                   equalStringSets(current, next) ? current : next
                 )
                 setCollapsed(current => {
@@ -348,7 +300,7 @@ export const SidebarTree = memo(function SidebarTree({
                     current.selectedId === selectedItem?.id ? current.keys : []
                   )
                   for (const id of next) result.delete(id)
-                  for (const id of selectedParentIds) {
+                  for (const id of selectedItem?.parents ?? []) {
                     if (!next.has(id)) result.add(id)
                   }
                   const selectedId = selectedItem?.id
@@ -358,44 +310,22 @@ export const SidebarTree = memo(function SidebarTree({
                     : {selectedId, keys: result}
                 })
               }}
-              selectedKeys={selectedKeys}
+              selectedKeys={snapshot.selectedKeys}
               onSelectionChange={keys => {
                 if (keys === 'all') return
                 const [entry] = keys
-                if (entry) {
-                  setExpandedIds(current => new Set(current).add(String(entry)))
-                  setRoute({
-                    workspace: root.workspace,
-                    root: root.key,
-                    entry: String(entry),
-                    locale: page.locale ?? undefined,
-                    view: 'edit'
-                  })
-                }
+                if (!entry || String(entry) === page.entry) return
+                setExpandedKeys(current => new Set(current).add(String(entry)))
+                setRoute({
+                  workspace: root.workspace,
+                  root: root.key,
+                  entry: String(entry),
+                  locale: page.locale ?? undefined,
+                  view: 'edit'
+                })
               }}
             >
-              {item => (
-                <SidebarTreeItem
-                  entryLink={entry => {
-                    const view =
-                      entry.type === 'MediaLibrary' ? undefined : 'edit'
-                    return {
-                      href: nav.entry(
-                        root.workspace,
-                        root.key,
-                        entry.id,
-                        page.locale,
-                        view
-                      )
-                    }
-                  }}
-                  expandedKeys={expandedKeys}
-                  item={item}
-                  locale={locale}
-                  root={root}
-                  selectedItem={selectedItem}
-                />
-              )}
+              {renderItem}
             </Tree>
           </Virtualizer>
         </div>
@@ -411,23 +341,16 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   onSelectionChange,
   root,
   rootSelected = false,
-  selectedKeys = new Set<Key>(),
-  selectedLocale
+  selectedLocale,
+  tree
 }: SidebarTreeExplorerProps) {
   const [locale, setLocale] = useAtom(selectedLocale)
-  const rootItems = useAtomValue(root.treeChildren(locale, null))
   const label = useAtomValue(root.label)
   const icon = useAtomValue(root.icon)
   const i18n = useAtomValue(root.i18n)
-  const [expandedIdsAtom] = useState(() => atom(new Set<string>()))
-  const [expandedIds, setExpandedIds] = useAtom(expandedIdsAtom)
-  const selectedKey = selectedKeys.values().next().value
-  const selectedId = selectedKey === undefined ? undefined : String(selectedKey)
-  const selectedItem = useAtomValue(root.selectedTreeItem(locale, selectedId))
-  const expandedKeys = useMemo(
-    () => new Set<Key>([...expandedIds, ...(selectedItem?.parents ?? [])]),
-    [expandedIds, selectedItem]
-  )
+  const setExpandedKeys = useSetAtom(tree.expandedKeys)
+  const snapshot = useAtomValue(tree.snapshot)
+  const selectedItem = useAtomValue(tree.selectedItem)
   const dragDisabled = useAtomValue(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const getDropOperation = useSetAtom(root.getDropOperation)
@@ -438,10 +361,23 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
     getItems,
     isDisabled: disableDragAndDrop || dragDisabled,
     getDropOperation,
-    onInsert: event => drop(event, locale),
-    onItemDrop: event => drop(event, locale),
-    onMove: event => move(event, locale)
+    onInsert: drop,
+    onItemDrop: drop,
+    onMove: event => move(event, tree)
   })
+  function renderItem(item: RootTreeNode): ReactNode {
+    return (
+      <SidebarTreeItem
+        item={item}
+        locale={locale}
+        selectedItem={selectedItem}
+        tree={tree}
+      >
+        <Collection items={item.children}>{renderItem}</Collection>
+      </SidebarTreeItem>
+    )
+  }
+
   return (
     <SidebarBody>
       <div className={styles.SidebarTree.tree()}>
@@ -474,31 +410,25 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
           <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
             <Tree
               aria-label={ariaLabel}
-              items={rootItems}
-              dependencies={[expandedKeys]}
+              items={snapshot.items}
               dragAndDropHooks={dragAndDropHooks}
               selectionMode="single"
               selectionBehavior="replace"
               disallowEmptySelection={false}
-              expandedKeys={expandedKeys}
+              expandedKeys={snapshot.expandedKeys}
               onExpandedChange={keys => {
                 const next = new Set([...keys].map(String))
-                setExpandedIds(current =>
+                setExpandedKeys(current =>
                   equalStringSets(current, next) ? current : next
                 )
               }}
-              selectedKeys={selectedKeys}
-              onSelectionChange={onSelectionChange}
+              selectedKeys={snapshot.selectedKeys}
+              onSelectionChange={keys => {
+                if (keys === 'all') return
+                onSelectionChange?.(keys)
+              }}
             >
-              {item => (
-                <SidebarTreeItem
-                  expandedKeys={expandedKeys}
-                  item={item}
-                  locale={locale}
-                  root={root}
-                  selectedItem={selectedItem}
-                />
-              )}
+              {renderItem}
             </Tree>
           </Virtualizer>
         </div>

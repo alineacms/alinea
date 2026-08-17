@@ -118,6 +118,9 @@
       },
     },
   },
+  "patchedDependencies": {
+    "react-aria@3.48.0": "patches/react-aria@3.48.0.patch",
+  },
   "overrides": {
     "lib0": "0.2.88",
     "vite": "^8.0.10",

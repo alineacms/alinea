@@ -1,11 +1,11 @@
-import {afterEach, expect, test} from 'bun:test'
-import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {Tree} from '#/components.js'
 import type {RootTreeItem, RootTreeNode} from '#/dashboard/atoms/root.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
+import {cleanup, fireEvent, render, screen} from '#test/react.js'
+import {afterEach, expect, test} from 'bun:test'
 import {atom} from 'jotai'
 import {useMemo, useState} from 'react'
-import type {Key} from 'react-aria-components'
+import {Collection, type Key} from 'react-aria-components'
 import {cms} from '../fixture/cms.js'
 import {SidebarTreeItem} from './SidebarTree.js'
 
@@ -41,7 +41,6 @@ const grandchild = treeItem(
   false,
   'Grandchild'
 )
-const noChildren = atom<Array<RootTreeNode>>([])
 
 interface SidebarTreeFixtureProps {
   initialExpandedKeys?: Set<Key>
@@ -53,31 +52,47 @@ function SidebarTreeFixture({
   items = [parent, child, grandchild]
 }: SidebarTreeFixtureProps) {
   const source = useMemo(() => {
-    const itemAtoms = new Map(items.map(item => [item.id, atom(item)] as const))
-    const children = new Map<string | null, Array<RootTreeNode>>()
+    const children = new Map<string | null, Array<RootTreeItem>>()
     for (const item of items) {
       const siblings = children.get(item.parentId) ?? []
-      siblings.push({id: item.id})
+      siblings.push(item)
       children.set(item.parentId, siblings)
     }
-    const childrenAtoms = new Map(
-      Array.from(children, ([parentId, nodes]) => [parentId, atom(nodes)])
-    )
+    function buildTreeNodes(parentId: string | null): Array<RootTreeNode> {
+      return (children.get(parentId) ?? []).map(item => ({
+        id: item.id,
+        children: buildTreeNodes(item.id)
+      }))
+    }
+    const rootItems = buildTreeNodes(null)
+    const itemAtoms = new Map(items.map(item => [item.id, atom(item)]))
     return {
-      treeChildren(_locale: string | null, parentId: string | null) {
-        return childrenAtoms.get(parentId) ?? noChildren
-      },
-      treeItem(_locale: string | null, id: string) {
-        const item = itemAtoms.get(id)
-        if (!item) throw new Error(`Tree item "${id}" not found`)
-        return item
+      rootItems,
+      tree: {
+        item(id: string) {
+          const item = itemAtoms.get(id)
+          if (!item) throw new Error(`Tree item "${id}" not found`)
+          return item
+        }
       }
     }
   }, [items])
   const [expandedKeys, setExpandedKeys] = useState(initialExpandedKeys)
-  const rootItems = items
-    .filter(item => item.parentId === null)
-    .map(item => ({id: item.id}))
+  const rootItems = source.rootItems
+  function renderItem(item: RootTreeNode) {
+    return (
+      <SidebarTreeItem
+        entryLink={entry => ({
+          href: `/entry/main/pages/${entry.id}?view=edit`
+        })}
+        item={item}
+        locale={null}
+        tree={source.tree}
+      >
+        <Collection items={item.children}>{renderItem}</Collection>
+      </SidebarTreeItem>
+    )
+  }
   return (
     <StoryProvider config={cms.config}>
       <Tree
@@ -87,17 +102,7 @@ function SidebarTreeFixture({
         expandedKeys={expandedKeys}
         onExpandedChange={setExpandedKeys}
       >
-        {item => (
-          <SidebarTreeItem
-            entryLink={entry => ({
-              href: `/entry/main/pages/${entry.id}?view=edit`
-            })}
-            expandedKeys={expandedKeys}
-            item={item}
-            locale={null}
-            root={source}
-          />
-        )}
+        {renderItem}
       </Tree>
     </StoryProvider>
   )
