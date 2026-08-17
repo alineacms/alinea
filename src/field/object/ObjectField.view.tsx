@@ -1,11 +1,11 @@
-import {Label, Surface, SurfaceContent} from '#/components.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {Label} from '#/components.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   useFieldError,
   useFieldNode,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import {ReactiveNode} from '#/dashboard/store.js'
 import {ObjectField} from '#/field/object.js'
 import {styler} from '@alinea/styler'
 import css from './ObjectFieldView.module.css'
@@ -22,17 +22,8 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const node = useFieldNode(field)
   return (
     <Label label={options.label} shared={options.shared}>
-      <Surface variant="muted">
-        <SurfaceContent>
-          <NodeEditor
-            node={node as ReactiveNode<object>}
-            type={options.fields}
-          />
-          {error && (
-            <div className={styles.ObjectFieldView.error()}>{error}</div>
-          )}
-        </SurfaceContent>
-      </Surface>
+      <NodeEditor node={node as ReactiveNode<object>} type={options.fields} />
+      {error && <div className={styles.ObjectFieldView.error()}>{error}</div>}
     </Label>
   )
 }

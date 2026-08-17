@@ -2,7 +2,12 @@ import * as cito from 'cito'
 import type {ComponentType} from 'react'
 import type {EntryStatus} from './Entry.js'
 import type {Expr} from './Expr.js'
-import {Field, type FieldBeforeSaveContext} from './Field.js'
+import {
+  Field,
+  type EntryAnchorTarget,
+  type FieldAnchorContext,
+  type FieldBeforeSaveContext
+} from './Field.js'
 import {type HasType, getType, hasType, internalType} from './Internal.js'
 import type {Label} from './Label.js'
 import type {OrderBy} from './OrderBy.js'
@@ -12,7 +17,7 @@ import type {View} from './View.js'
 import type {EntryReferenceTarget} from './db/EntryReference.js'
 import type {SummaryProps} from './media/Summary.js'
 import {isValidIdentifier} from './util/Identifiers.js'
-import {entries, fromEntries, keys, values} from './util/Objects.js'
+import {entries, fromEntries, isRecord, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
 
 export interface EntryUrlMeta {
@@ -57,6 +62,20 @@ export namespace Type {
       res += Field.searchableText(field, self[key])
     }
     return res.trim()
+  }
+
+  export function anchors(
+    type: Type,
+    value: Record<string, unknown>,
+    path: Array<string> = []
+  ): Array<EntryAnchorTarget> {
+    const self = value || {}
+    return entries(fields(type)).flatMap(([key, field]) => {
+      return Field.anchors(field, self[key], {
+        path: [...path, key],
+        label: Field.label(field)
+      })
+    })
   }
 
   export function references(
@@ -114,10 +133,35 @@ export namespace Type {
     type: Type,
     value: Record<string, unknown>
   ): Record<string, unknown> {
-    return mergeInitialValue(value, initialValue(type)) as Record<
+    const merged = mergeInitialValue(value, initialValue(type)) as Record<
       string,
       unknown
     >
+    let next = merged
+    for (const [key, field] of entries(fields(type))) {
+      const before = merged[key]
+      const after = Field.withInitialValue(field, before)
+      if (after === before) continue
+      if (next === merged) next = {...merged}
+      next[key] = after
+    }
+    return normalizeAnchors(type, next)
+  }
+
+  export function normalizeAnchors(
+    type: Type,
+    value: Record<string, unknown>,
+    context: FieldAnchorContext = {anchors: new Set()}
+  ): Record<string, unknown> {
+    let next = value
+    for (const [key, field] of entries(fields(type))) {
+      const before = next[key]
+      const after = Field.normalizeAnchors(field, before, context)
+      if (after === before) continue
+      if (next === value) next = {...value}
+      next[key] = after
+    }
+    return next
   }
 
   export function beforeSave(
@@ -133,7 +177,7 @@ export namespace Type {
       if (next === value) next = {...value}
       next[key] = after
     }
-    return next
+    return normalizeAnchors(type, next)
   }
 
   export async function applyLinks(
@@ -203,10 +247,6 @@ function mergeInitialValue(value: unknown, initialValue: unknown): unknown {
     }
   }
   return next
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function viewsOfDefinition(definition: FieldsDefinition): Array<string> {

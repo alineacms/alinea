@@ -77,4 +77,5 @@
   align-items: center;
   gap: 4px;
   line-height: 1;
+  flex-shrink: 0;
 }

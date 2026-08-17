@@ -1,4 +1,3 @@
-import type {Type} from '#/index.js'
 import type {Config} from '#/core/Config.js'
 import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
@@ -6,32 +5,34 @@ import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
 import type {AnyCondition, Filter} from '#/core/Filter.js'
 import {
+  querySource as queryEdge,
   type AnyQueryResult,
   type Edge,
   type EdgeQuery,
   type GraphQuery,
   type Projection,
   type QuerySettings,
-  querySource as queryEdge,
   type Status
 } from '#/core/Graph.js'
 import {
   getExpr,
-  type HasExpr,
   hasExpr,
   hasField,
   hasRoot,
-  hasWorkspace
+  hasWorkspace,
+  type HasExpr
 } from '#/core/Internal.js'
 import type {Resolver} from '#/core/Resolver.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {hasExact} from '#/core/util/Checks.js'
-import {entries, fromEntries} from '#/core/util/Objects.js'
+import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {unreachable} from '#/core/util/Types.js'
+import type {Type} from '#/index.js'
 import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
+import {aliasesFromData, aliasUrl} from './EntryAliases.js'
 import {
   combineConditions,
   type EntryCondition,
@@ -560,17 +561,13 @@ interface Check {
   (input: Entry): boolean
 }
 
-function isObject(input: any): input is Record<string, unknown> {
-  return input && typeof input === 'object'
-}
-
 function entryChecker(scope: Scope, query: QuerySettings): Check {
   const root =
-    isObject(query.root) && hasRoot(query.root)
+    isRecord(query.root) && hasRoot(query.root)
       ? scope.nameOf(query.root)
       : query.root
   const workspace =
-    isObject(query.workspace) && hasWorkspace(query.workspace)
+    isRecord(query.workspace) && hasWorkspace(query.workspace)
       ? scope.nameOf(query.workspace)
       : query.workspace
   const base = filterChecker(
@@ -593,6 +590,7 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
 }
 
 function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
+  if (name === 'aliases') return aliasesFromData(entry.data)
   if (path) return valueAtPath(entry.data, [...path, name])
   const expr = EntryExprs[name as keyof typeof EntryExprs]
   if (expr) {
@@ -606,7 +604,7 @@ function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
 function valueAtPath(value: unknown, path: Array<string>): unknown {
   let current = value
   for (const segment of path) {
-    if (!isObject(current)) return undefined
+    if (!isRecord(current)) return undefined
     current = current[segment]
   }
   return current
@@ -614,11 +612,9 @@ function valueAtPath(value: unknown, path: Array<string>): unknown {
 
 function aliasChecker(alias: string): Check {
   return entry => {
-    const aliases = entryFieldValue(entry, 'aliases')
-    if (!Array.isArray(aliases)) return false
+    const aliases = aliasesFromData(entry.data) ?? []
     for (const row of aliases) {
-      if (!isObject(row)) continue
-      if (row.url === alias) return true
+      if (aliasUrl(row) === alias) return true
     }
     return false
   }
@@ -663,9 +659,9 @@ function localeChecker(locale: string | null, preferred: boolean): Check {
   }
 }
 
-function filterChecker(
+export function filterChecker(
   filter: Filter,
-  getField = (input: any, name: string) => input[name]
+  getField = (input: any, name: string) => input?.[name]
 ): Check {
   const isOrFilter = orFilter.check(filter)
   if (isOrFilter) {

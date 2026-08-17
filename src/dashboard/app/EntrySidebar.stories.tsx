@@ -1,4 +1,5 @@
 import type {CSSProperties} from 'react'
+import {List} from '#/components.js'
 import {
   IcOutlineArchive,
   IcOutlineDrafts,
@@ -20,7 +21,7 @@ const storyStyle: CSSProperties = {
   gap: 24
 }
 
-const groupStyle: CSSProperties = {
+const sectionStyle: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 8
@@ -73,7 +74,7 @@ interface VersionRowsProps {
 
 function VersionRows({selected, showEditing}: VersionRowsProps) {
   return (
-    <div style={groupStyle}>
+    <List>
       {rows.map(row => (
         <EntrySidebarVersionRow
           key={row.status}
@@ -88,22 +89,22 @@ function VersionRows({selected, showEditing}: VersionRowsProps) {
           )}
         </EntrySidebarVersionRow>
       ))}
-    </div>
+    </List>
   )
 }
 
 export function VersionRowStates() {
   return (
     <div style={storyStyle}>
-      <section style={groupStyle}>
+      <section style={sectionStyle}>
         <h2 style={headingStyle}>Unselected</h2>
         <VersionRows />
       </section>
-      <section style={groupStyle}>
+      <section style={sectionStyle}>
         <h2 style={headingStyle}>Selected</h2>
         <VersionRows selected />
       </section>
-      <section style={groupStyle}>
+      <section style={sectionStyle}>
         <h2 style={headingStyle}>With editing badge</h2>
         <VersionRows selected showEditing />
       </section>

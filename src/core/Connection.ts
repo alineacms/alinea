@@ -1,4 +1,3 @@
-import type {PreviewInfo} from '#/backend/Previews.js'
 import type {Request, Response} from '@alinea/iso'
 import type {CommitRequest} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
@@ -9,8 +8,12 @@ import type {ReadonlyTree} from './source/Tree.js'
 import type {User, UserInput} from './User.js'
 
 export interface AuthApi {
-  authenticate(request: Request): Promise<Response>
+  authenticate(request: Request, options?: AuthOptions): Promise<Response>
   verify(request: Request): Promise<AuthedContext>
+}
+
+export interface AuthOptions {
+  enrichUser?(user: User): Promise<User>
 }
 
 export interface UserApi {
@@ -39,7 +42,7 @@ export interface BrowserConnection extends Connection {
 export interface LocalConnection extends Connection, CapabilitiesApi {
   capabilities(): Promise<BackendCapabilities>
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
-  previewToken(request: PreviewInfo): Promise<string>
+  previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>>
@@ -69,7 +72,10 @@ export interface DraftsApi {
 }
 
 export interface UploadsApi {
-  prepareUpload(file: string): Promise<UploadResponse>
+  prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse>
   handleUpload?(entryId: string, file: Blob): Promise<void>
   previewUpload?(entryId: string): Promise<Response>
 }
@@ -102,6 +108,10 @@ export interface UploadDestination {
   entryId: string
   location: string
   previewUrl: string
+}
+
+export interface UploadMetadata {
+  size: number
 }
 
 export interface UploadResponse extends UploadDestination {

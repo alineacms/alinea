@@ -8,8 +8,9 @@ import {Reference} from '#/core/Reference.js'
 import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
+import {applyUrlSuffix} from '#/core/util/Anchors.js'
 import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
-import {assign, keys} from '#/core/util/Objects.js'
+import {assign, isRecord, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
 
@@ -42,6 +43,8 @@ export interface EntryPickerConditions {
   location?: DynamicOption<EditorLocation>
   /** Filter entries by a condition, this results in a flat list of options */
   condition?: DynamicOption<Filter<EntryFields>>
+  /** Limit the entry picker to an array of location */
+  limitLocations?: Array<EditorLocation>
   /** @internal Enable entry picker navigation */
   enableNavigation?: boolean
 }
@@ -74,6 +77,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [Reference.id]: id,
         [Reference.type]: type,
         [EntryReference.entry]: entryId,
+        [EntryReference.anchor]: anchor,
         [EntryReference.suffix]: suffix,
         [ListRow.index]: index,
         ...fields
@@ -104,7 +108,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       if (type !== 'image') {
         assign(row, extra)
-        applyUrlSuffix(row, suffix)
+        applyUrlSuffixToRow(row, suffix, anchor)
         return
       }
       const {
@@ -139,12 +143,15 @@ export function entryPicker<Ref extends EntryReference, Fields>(
   }
 }
 
-function applyUrlSuffix(row: Record<string, unknown>, suffix: unknown) {
-  if (typeof suffix !== 'string') return
-  const value = suffix.trim()
-  if (!value) return
-  if (typeof row.url === 'string') row.url = `${row.url}${value}`
-  if (typeof row.href === 'string') row.href = `${row.href}${value}`
+function applyUrlSuffixToRow(
+  row: Record<string, unknown>,
+  suffix: string | undefined,
+  anchor: string | undefined
+) {
+  if (typeof row.url === 'string')
+    row.url = applyUrlSuffix(row.url, suffix, anchor)
+  if (typeof row.href === 'string')
+    row.href = applyUrlSuffix(row.href, suffix, anchor)
 }
 
 function mediaEntryUrl(
@@ -191,8 +198,4 @@ function linkedLocalisation(
   if (!rootConfig) return
   const rootData = Root.data(rootConfig)
   return Root.mediaI18n(rootData) ?? rootData.i18n
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }

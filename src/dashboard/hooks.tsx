@@ -1,65 +1,160 @@
+import type {Config} from '#/core/Config.js'
+import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
+import type {PreviewMetadata} from '#/core/Preview.js'
+import type {Policy} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
+import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {Type} from '#/index.js'
-import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useHydrateAtoms} from 'jotai/utils'
-import type {Dispatch, PropsWithChildren, SetStateAction} from 'react'
-import {createContext, createElement, useContext, useMemo} from 'react'
+import {
+  atom,
+  createStore,
+  Provider,
+  useAtom,
+  useAtomValue,
+  useSetAtom
+} from 'jotai'
 import type {
-  Dashboard,
-  DashboardEntryData,
-  ReactiveNode
-} from './store/Dashboard.js'
-import {dashboardAtom, DashboardEditor} from './store/Dashboard.js'
+  ComponentType,
+  Dispatch,
+  PropsWithChildren,
+  SetStateAction
+} from 'react'
+import {createContext, createElement, useContext, useMemo} from 'react'
+import {
+  alineaDevAtom,
+  clientAtom,
+  configAtom,
+  eventsAtom,
+  graphAtom,
+  localAtom,
+  viewsAtom
+} from './atoms/core.js'
+import {type EditorModel, type EditorNode, EntryEditor} from './atoms/editor.js'
+import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
+import type {Page} from './atoms/nav.js'
+import type {RootAtoms} from './atoms/root.js'
+import type {ReactiveNode} from './atoms/ReactiveNode.js'
+import {previewMetadataAtom} from './atoms/preview.js'
+import {policyAtom, userAtom} from './atoms/user.js'
 
-const entryContext = createContext<DashboardEntryData | null>(null)
-const editorContext = createContext<DashboardEditor | null>(null)
-const nullEntryAtom = atom<EntryRecord<Record<string, unknown>> | null>(null)
+interface EntryContextValue {
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
+  selectedEntry: EntryRecord<Record<string, unknown>>
+}
 
-export function DashboardScopeInternal({
+export interface DashboardOptions {
+  alineaDev?: boolean
+  local?: boolean
+}
+
+export interface Dashboard {
+  graph: WriteableGraph
+  config: Config
+  events: EventTarget
+  client: LocalConnection
+  views?: Record<string, ComponentType>
+  options?: DashboardOptions
+}
+
+export interface DashboardContextValue {
+  page: Page
+  workspace: WorkspaceInternal & {name: string}
+  root: RootAtoms
+}
+
+const entryContext = createContext<EntryContextValue | null>(null)
+const dashboardContext = createContext<DashboardContextValue | null>(null)
+const dashboardModelContext = createContext<Dashboard | null>(null)
+const editorContext = createContext<EditorModel | null>(null)
+const noPolicyAtom = atom<Policy | undefined>(undefined)
+
+interface DashboardModelScopeProps {
+  dashboard: Dashboard
+}
+
+export function DashboardModelScope({
   children,
   dashboard
-}: PropsWithChildren<{dashboard: Dashboard}>) {
-  useHydrateAtoms([[dashboardAtom, dashboard]])
-  return children
+}: PropsWithChildren<DashboardModelScopeProps>) {
+  return createElement(
+    dashboardModelContext.Provider,
+    {value: dashboard},
+    children
+  )
+}
+
+export interface DashboardScopeInternalProps {
+  dashboard: Dashboard
 }
 
 /**
- * Returns the active dashboard model from the nearest dashboard scope.
+ * Provides an isolated dashboard model for custom views and story fixtures.
  */
-export function useDashboard() {
-  return useAtomValue(dashboardAtom)
+export function DashboardScopeInternal({
+  children,
+  dashboard
+}: PropsWithChildren<DashboardScopeInternalProps>) {
+  const store = useMemo(() => {
+    const next = createStore()
+    next.set(graphAtom, dashboard.graph)
+    next.set(configAtom, dashboard.config)
+    next.set(eventsAtom, dashboard.events)
+    next.set(clientAtom, dashboard.client)
+    next.set(viewsAtom, dashboard.views ?? {})
+    next.set(localAtom, Boolean(dashboard.options?.local))
+    next.set(alineaDevAtom, Boolean(dashboard.options?.alineaDev))
+    return next
+  }, [dashboard])
+  return createElement(
+    Provider,
+    {store},
+    createElement(DashboardModelScope, {dashboard}, children)
+  )
 }
 
+/**
+ * Returns the active dashboard from the nearest dashboard model scope.
+ */
+export function useDashboard(): Dashboard {
+  const dashboard = useContext(dashboardModelContext)
+  assert(dashboard, 'Dashboard not found in context')
+  return dashboard
+}
 /**
  * Returns the active dashboard policy.
  */
 export function usePolicy() {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.policy)
+  return useAtomValue(policyAtom)
 }
 
 /**
  * Returns the authenticated dashboard user, or null when no user is active.
  */
 export function useUser(): User | null {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.user) ?? null
+  return useAtomValue(userAtom)
 }
 
 /**
  * Returns the dashboard graph database for direct read queries.
  */
 export function useGraph(): WriteableGraph {
-  const dashboard = useDashboard()
-  return useAtomValue(dashboard.db)
+  return useAtomValue(graphAtom)
+}
+
+/**
+ * Returns metadata reported by the active browser preview, when available.
+ */
+export function usePreviewMetadata(): PreviewMetadata | undefined {
+  return useAtomValue(previewMetadataAtom)
 }
 
 export interface EditorScopeProps {
-  editor: DashboardEditor
+  editor: EditorModel
 }
 
 export function EditorScope({
@@ -69,15 +164,50 @@ export function EditorScope({
   return createElement(editorContext.Provider, {value: editor}, children)
 }
 
+export interface DashboardScopeProps {
+  value: DashboardContextValue
+}
+
+export function DashboardScope({
+  children,
+  value
+}: PropsWithChildren<DashboardScopeProps>) {
+  return createElement(dashboardContext.Provider, {value}, children)
+}
+
+export function useDashboardContext(): DashboardContextValue {
+  const value = useContext(dashboardContext)
+  assert(value, 'DashboardScope not found in context')
+  return value
+}
+
 export interface EntryScopeProps {
-  entry: DashboardEntryData
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
+  selectedEntry: EntryRecord<Record<string, unknown>>
 }
 
 export function EntryScope({
   children,
-  entry
+  entry,
+  localeData,
+  selectedEntry
 }: PropsWithChildren<EntryScopeProps>) {
-  return createElement(entryContext.Provider, {value: entry}, children)
+  const value = useMemo(
+    () => ({entry, localeData, selectedEntry}),
+    [entry, localeData, selectedEntry]
+  )
+  return createElement(entryContext.Provider, {value}, children)
+}
+
+export function useEntryAtoms(): EntryContextValue {
+  const value = useContext(entryContext)
+  assert(value, 'EntryScope not found in context')
+  return value
+}
+
+export function useOptionalEntryAtoms(): EntryContextValue | null {
+  return useContext(entryContext)
 }
 
 /**
@@ -85,7 +215,7 @@ export function EntryScope({
  */
 export function useEditor() {
   const editor = useContext(editorContext)
-  assert(editor, 'DashboardEditor not found in context')
+  assert(editor, 'EntryEditor not found in context')
   return editor
 }
 
@@ -102,25 +232,20 @@ function useFieldInfo(field: Field) {
 /**
  * Creates an editor for a nested reactive node.
  */
-export function useNodeEditor(node: ReactiveNode<object>, type: Type) {
-  const dashboard = useDashboard()
+export function useNodeEditor(node: EditorNode, type: Type) {
   const parent = useContext(editorContext)
-  const entry = useContext(entryContext)
-  const activeVersionAtom = useMemo(() => {
-    return entry?.activeVersion ?? atom(null)
-  }, [entry])
-  const activeVersion = useAtomValue(activeVersionAtom)
-  const editor = useMemo(
-    () =>
-      new DashboardEditor(
-        dashboard,
-        type,
-        node,
-        parent ?? undefined,
-        activeVersion ?? undefined
-      ),
-    [activeVersion, dashboard, node, parent, type]
-  )
+  const scope = useContext(entryContext)
+  const policy = useAtomValue(scope ? policyAtom : noPolicyAtom)
+  const activeVersion = scope?.selectedEntry
+  const editor = useMemo(() => {
+    return new EntryEditor(
+      type,
+      node,
+      parent instanceof EntryEditor ? parent : undefined,
+      activeVersion ?? undefined,
+      policy
+    )
+  }, [activeVersion, node, parent, policy, type])
   return editor
 }
 
@@ -131,7 +256,6 @@ export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
   const key = useFieldKey(field)
   const editor = useEditor()
   const nodes = useAtomValue(editor.node.nodes) as Record<string, ReactiveNode>
-  if (!nodes[key]) console.trace(editor.node)
   assert(nodes[key], `Node not found for field key: ${key}`)
   return nodes[key] as ReactiveNode<Value>
 }
@@ -142,8 +266,8 @@ export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
 export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): StoredValue {
-  const info = useFieldInfo(field)
-  return useAtomValue(info.value) as StoredValue
+  const node = useFieldNode<StoredValue>(field)
+  return useAtomValue(node.value) as StoredValue
 }
 
 /**
@@ -153,11 +277,11 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): [StoredValue, Dispatch<SetStateAction<StoredValue>>] {
   const info = useFieldInfo(field)
-  // Todo: "mutator" will not really be relevant anymore
-  return useAtom(info.value) as [
-    StoredValue,
-    Dispatch<SetStateAction<StoredValue>>
-  ]
+  const value = useAtomValue(info.value) as StoredValue
+  const setValue = useSetAtom(info.value) as Dispatch<
+    SetStateAction<StoredValue>
+  >
+  return [value, setValue]
 }
 
 /**
@@ -235,8 +359,8 @@ function useEntryModel() {
  * expose internal atoms.
  */
 export function useEntry(): EntryRecord<Record<string, unknown>> | null {
-  const entry = useEntryModel()
-  return useAtomValue(entry?.currentEntry ?? nullEntryAtom)
+  const scope = useEntryModel()
+  return scope?.selectedEntry ?? null
 }
 
 /**
@@ -255,6 +379,6 @@ export function useNodes<Value>(
 export function useNodes<Value extends object>(
   node: ReactiveNode<Value>
 ): Record<string, ReactiveNode>
-export function useNodes(node: ReactiveNode<any>) {
+export function useNodes<Value>(node: ReactiveNode<Value>): unknown {
   return useAtomValue(node.nodes)
 }

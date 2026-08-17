@@ -1,7 +1,7 @@
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {styler} from '@alinea/styler'
 import type {PointerEvent} from 'react'
-import {useField} from '#/dashboard/store.js'
+import {useField} from '#/dashboard/hooks.js'
 import {useEffect, useRef, useState} from 'react'
 import css from './FilePreview.module.css'
 import {loadPreferredImageSource} from './MediaImageSource.js'
@@ -49,6 +49,9 @@ export function FilePreview({
   const interactiveRef = useRef<HTMLDivElement | null>(null)
   const imageRef = useRef<HTMLImageElement | null>(null)
 
+  // Preload the live URL before swapping from the static preview, and fall back
+  // if it fails. This keeps broken live media URLs from flashing in the UI.
+  // eslint-disable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   useEffect(() => {
     setIsPreviewVisible(false)
     let isActive = true
@@ -59,7 +62,10 @@ export function FilePreview({
       isActive = false
     }
   }, [liveUrl, preview])
+  // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
 
+  // Focus point placement depends on measured DOM bounds from ResizeObserver.
+  // eslint-disable react-you-might-not-need-an-effect/no-external-store-subscription
   useEffect(() => {
     function updateImageBounds() {
       const interactiveElement = interactiveRef.current
@@ -88,6 +94,7 @@ export function FilePreview({
       window.removeEventListener('resize', updateImageBounds)
     }
   }, [isPreviewVisible, previewSource])
+  // eslint-enable react-you-might-not-need-an-effect/no-external-store-subscription
 
   function locateFocusPoint(event: PointerEvent<HTMLDivElement>): FocusPoint {
     const rect = imageRef.current?.getBoundingClientRect()

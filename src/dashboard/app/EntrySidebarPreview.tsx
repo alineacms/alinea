@@ -1,73 +1,62 @@
-import {Button, ProgressCircle} from '#/components.js'
+import {Button, List, ListEmpty, ProgressCircle} from '#/components.js'
 import type {Preview} from '#/core/Preview.js'
+import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
+import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, useEffect, useMemo, useRef, useState} from 'react'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   IcRoundArrowBack,
   IcRoundArrowForward,
   IcRoundOpenInNew,
-  IcRoundRefresh
+  IcRoundRefresh,
+  IcRoundVisibilityOff
 } from '../icons.js'
-import {DashboardEntryData, useDashboard} from '../store.js'
 import css from './EntrySidebarPreview.module.css'
 import {RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
 
 export interface EntrySidebarPreviewProps {
-  entry: DashboardEntryData
+  entry: EntryAtoms
+  localeData: EntryLocaleAtoms
 }
 
-export function EntrySidebarPreview({entry}: EntrySidebarPreviewProps) {
+export function EntrySidebarPreview({
+  entry,
+  localeData
+}: EntrySidebarPreviewProps) {
   const preview = useAtomValue(entry.preview)
   if (!preview)
     return (
-      <EntrySidebarPreviewMessage>
+      <EntrySidebarPreviewMessage title="No preview">
         This entry has no preview.
       </EntrySidebarPreviewMessage>
     )
   if (preview === true)
-    return (
-      <Suspense fallback={<EntrySidebarBrowserPreviewFallback />}>
-        <EntrySidebarBrowserPreview entry={entry} />
-      </Suspense>
-    )
-  return <EntrySidebarComponentPreview entry={entry} preview={preview} />
-}
-
-interface EntrySidebarPreviewMessageProps {
-  children: string
-}
-
-function EntrySidebarPreviewMessage({
-  children
-}: EntrySidebarPreviewMessageProps) {
+    return <EntrySidebarBrowserPreview localeData={localeData} />
   return (
-    <div className={styles.EntrySidebarPreview()}>
-      <p className={styles.EntrySidebarPreview.message()}>{children}</p>
-    </div>
+    <EntrySidebarComponentPreview localeData={localeData} preview={preview} />
   )
 }
 
 interface EntrySidebarComponentPreviewProps {
-  entry: DashboardEntryData
+  localeData: EntryLocaleAtoms
   preview: Exclude<Preview, boolean>
 }
 
 function EntrySidebarComponentPreview({
-  entry,
-  preview
+  localeData,
+  preview: Component
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry = useAtomValue(entry.previewEntry)
+  const previewEntry = useAtomValue(localeData.previewEntry)
   if (!previewEntry)
     return (
-      <EntrySidebarPreviewMessage>
+      <EntrySidebarPreviewMessage title="Preview unavailable">
         Preview is currently unavailable.
       </EntrySidebarPreviewMessage>
     )
-  const Component = preview
   return (
     <div className={styles.EntrySidebarPreview()}>
       <div className={styles.EntrySidebarPreview.component()}>
@@ -77,8 +66,26 @@ function EntrySidebarComponentPreview({
   )
 }
 
-interface EntrySidebarBrowserPreviewProps {
-  entry: DashboardEntryData
+interface EntrySidebarPreviewMessageProps {
+  children: string
+  title: string
+}
+
+function EntrySidebarPreviewMessage({
+  children,
+  title
+}: EntrySidebarPreviewMessageProps) {
+  return (
+    <div className={styles.EntrySidebarPreview()}>
+      <div className={styles.EntrySidebarPreview.empty()}>
+        <List aria-label="Preview" empty>
+          <ListEmpty icon={IcRoundVisibilityOff} title={title}>
+            {children}
+          </ListEmpty>
+        </List>
+      </div>
+    </div>
+  )
 }
 
 interface EntrySidebarBrowserPreviewHeaderProps {
@@ -138,98 +145,94 @@ function EntrySidebarBrowserPreviewHeader({
   )
 }
 
-function EntrySidebarBrowserPreviewFallback() {
-  return (
-    <div className={styles.EntrySidebarPreview()}>
-      <EntrySidebarBrowserPreviewHeader
-        canOpenPreview={false}
-        reloadLabel="Reload preview"
-      />
-      <div className={styles.EntrySidebarPreview.browser()}>
-        <div className={styles.EntrySidebarPreview.loading()}>
-          <ProgressCircle isIndeterminate aria-label="Loading preview" />
-        </div>
-      </div>
-    </div>
-  )
+export interface EntrySidebarBrowserPreviewProps {
+  localeData: Pick<EntryLocaleAtoms, 'previewUrl' | 'retryPreviewUrl'> &
+    Partial<
+      Pick<EntryLocaleAtoms, 'previewPayloadSignal' | 'updatePreviewPayload'>
+    >
 }
 
-function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
-  const previewUrl = useAtomValue(entry.previewUrl)
-  const previewPayloadSignal = useAtomValue(entry.previewPayloadSignal)
-  const updatePreviewPayload = useSetAtom(entry.updatePreviewPayload)
-  const retryPreviewUrl = useSetAtom(entry.retryPreviewUrl)
+export function EntrySidebarBrowserPreview({
+  localeData
+}: EntrySidebarBrowserPreviewProps) {
+  const previewUrl = useAtomValue(localeData.previewUrl)
+  const retryPreviewUrl = useSetAtom(localeData.retryPreviewUrl)
+  const payloadSignalAtom = localeData.previewPayloadSignal
+  const payloadSignal = useAtomValue(
+    payloadSignalAtom ?? emptyPayloadSignalAtom
+  )
+  const updatePreviewPayload = useSetAtom(
+    localeData.updatePreviewPayload ?? emptyPreviewPayloadAtom
+  )
+  const setMetadata = useSetAtom(previewMetadataAtom)
   const iframe = useRef<HTMLIFrameElement>(null)
-  const previewPayload = useRef<string | undefined>(undefined)
+  const previewPayload = useRef<string>()
+  const hasPreviewListener = useRef(false)
   const [frameVersion, setFrameVersion] = useState(0)
   const [loading, setLoading] = useState(true)
-  const hasPreviewListener = useRef(false)
-  const dashboard = useDashboard()
-  const setMetadata = useSetAtom(dashboard.previewMetadata)
-
   const targetOrigin = useMemo(() => {
     if (!previewUrl) return undefined
-    const baseHref =
+    const base =
       typeof location === 'undefined' ? 'http://localhost' : location.href
-    return new URL(previewUrl, baseHref).origin
+    return new URL(previewUrl, base).origin
   }, [previewUrl])
 
   useEffect(() => {
     setLoading(true)
     setFrameVersion(0)
     hasPreviewListener.current = false
-  }, [previewUrl, targetOrigin])
+    previewPayload.current = undefined
+  }, [previewUrl])
 
   useEffect(() => {
     if (!targetOrigin) return
     function handleMessage(event: MessageEvent<PreviewMessage>) {
-      if (!event.data || typeof event.data !== 'object') return
       if (event.origin !== targetOrigin) return
+      if (event.source !== iframe.current?.contentWindow) return
+      if (!event.data || typeof event.data !== 'object') return
       if (event.data.action === PreviewAction.Ping) {
         hasPreviewListener.current = true
         iframe.current?.contentWindow?.postMessage(
           {action: PreviewAction.Pong},
           targetOrigin
         )
-        if (previewPayload.current) {
+        if (previewPayload.current)
           iframe.current?.contentWindow?.postMessage(
             {action: PreviewAction.Preview, payload: previewPayload.current},
             targetOrigin
           )
-        }
-        return
-      }
-      if (event.data.action === PreviewAction.Meta) {
+      } else if (event.data.action === PreviewAction.Meta) {
         setMetadata(event.data)
       }
     }
     addEventListener('message', handleMessage)
     return () => removeEventListener('message', handleMessage)
-  }, [targetOrigin, setMetadata])
+  }, [setMetadata, targetOrigin])
 
   useEffect(() => {
+    if (!localeData.updatePreviewPayload) return
     let cancelled = false
-    void updatePreviewPayload().then(payload => {
-      if (cancelled) return
-      previewPayload.current = payload
-      if (!payload) return
-      if (!targetOrigin || !hasPreviewListener.current) return
-      iframe.current?.contentWindow?.postMessage(
-        {action: PreviewAction.Preview, payload},
-        targetOrigin
-      )
-    })
+    const timeout = setTimeout(() => {
+      void updatePreviewPayload().then(payload => {
+        if (cancelled) return
+        previewPayload.current = payload
+        if (!payload || !targetOrigin || !hasPreviewListener.current) return
+        iframe.current?.contentWindow?.postMessage(
+          {action: PreviewAction.Preview, payload},
+          targetOrigin
+        )
+      })
+    }, 250)
     return () => {
       cancelled = true
+      clearTimeout(timeout)
     }
-  }, [previewPayloadSignal, targetOrigin, updatePreviewPayload])
-
-  useEffect(() => {
-    if (!previewUrl) {
-      previewPayload.current = undefined
-      return
-    }
-  }, [previewUrl])
+  }, [
+    localeData.updatePreviewPayload,
+    payloadSignal,
+    targetOrigin,
+    updatePreviewPayload
+  ])
 
   function post(
     action: PreviewAction.Previous | PreviewAction.Next | PreviewAction.Reload
@@ -238,20 +241,17 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
     iframe.current?.contentWindow?.postMessage({action}, targetOrigin)
   }
 
-  function openInNewTab() {
-    if (!previewUrl || typeof window === 'undefined') return
-    const href = `${previewUrl}${previewUrl.includes('?') ? '&' : '?'}full`
-    window.open(href, '_blank', 'noopener,noreferrer')
-  }
-
   function reloadPreview() {
-    if (!previewUrl) {
-      retryPreviewUrl()
-      return
-    }
+    if (!previewUrl) return retryPreviewUrl()
     setLoading(true)
     if (hasPreviewListener.current) post(PreviewAction.Reload)
     else setFrameVersion(version => version + 1)
+  }
+
+  function openPreview() {
+    if (!previewUrl || typeof window === 'undefined') return
+    const href = `${previewUrl}${previewUrl.includes('?') ? '&' : '?'}full`
+    window.open(href, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -262,7 +262,7 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
         onPrevious={() => post(PreviewAction.Previous)}
         onNext={() => post(PreviewAction.Next)}
         onReload={reloadPreview}
-        onOpen={openInNewTab}
+        onOpen={openPreview}
       />
       <div className={styles.EntrySidebarPreview.browser()}>
         {previewUrl && loading && (
@@ -289,3 +289,6 @@ function EntrySidebarBrowserPreview({entry}: EntrySidebarBrowserPreviewProps) {
     </div>
   )
 }
+
+const emptyPayloadSignalAtom = atom(undefined)
+const emptyPreviewPayloadAtom = atom(null, async () => undefined)

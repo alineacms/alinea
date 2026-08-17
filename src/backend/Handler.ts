@@ -11,14 +11,15 @@ import type {
 import type {LocalDB} from '#/core/db/LocalDB.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
-import {HttpError} from '#/core/HttpError.js'
+import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
-import {array, object, string} from 'cito'
+import {isRecord} from '#/core/util/Objects.js'
+import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
@@ -26,11 +27,8 @@ import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
 
 const PrepareBody = object({
-  filename: string
-})
-
-const PreviewBody = object({
-  url: string
+  filename: string,
+  size: optional(number)
 })
 
 export interface Handler {
@@ -90,7 +88,13 @@ export function createHandler({
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
 
-      if (auth) return cnx.authenticate(request)
+      if (auth) {
+        return cnx.authenticate(request, {
+          enrichUser(user) {
+            return cnx.enrichUser(user)
+          }
+        })
+      }
 
       const action = params.get('action') as HandleAction
       const expectJson = () => {
@@ -201,7 +205,7 @@ export function createHandler({
       if (action === HandleAction.PreviewToken && request.method === 'POST') {
         expectUser()
         expectJson()
-        return Response.json(await previews.sign(PreviewBody(await body)))
+        return Response.json(await previews.sign())
       }
 
       // Resolve
@@ -227,7 +231,10 @@ export function createHandler({
         const mutations = await body
         const attempt = async (retry = 0) => {
           await local.syncWith(cnx)
-          const request = await local.request(mutations, policy)
+          const request = {
+            ...(await local.request(mutations, policy)),
+            user: user.claims
+          }
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {
@@ -305,8 +312,27 @@ export function createHandler({
         const entryId = url.searchParams.get('entryId')
         if (!entryId) {
           expectJson()
+          const prepare = PrepareBody(await body)
+          if (
+            prepare.size !== undefined &&
+            (!Number.isSafeInteger(prepare.size) || prepare.size < 0)
+          ) {
+            throw new HttpError(ErrorCode.BadRequest, 'Invalid upload size')
+          }
+          assertUploadSize(
+            prepare.filename,
+            prepare.size,
+            cms.config.maxUploadSize
+          )
           return Response.json(
-            await cnx.prepareUpload(PrepareBody(await body).filename)
+            await cnx.prepareUpload(
+              prepare.filename,
+              prepare.size === undefined
+                ? undefined
+                : {
+                    size: prepare.size
+                  }
+            )
           )
         }
         const isPost = request.method === 'POST'
@@ -391,8 +417,4 @@ function requireSub(user: UserInput): User {
     throw new HttpError(400, 'Expected user sub')
   }
   return {...user, sub: user.sub}
-}
-
-function isRecord(input: unknown): input is Record<string, unknown> {
-  return input !== null && typeof input === 'object' && !Array.isArray(input)
 }

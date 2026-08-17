@@ -1,0 +1,56 @@
+.SmallLists {
+  width: min(100%, 1080px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.SmallLists-example {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.SmallLists-header {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 2px;
+}
+
+.SmallLists-title {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.SmallLists-count {
+  color: var(--alinea-fg-muted);
+  font-size: 11px;
+}
+
+.SmallLists-list {
+  width: 100%;
+}
+
+.SmallLists-visual {
+  color: light-dark(var(--alinea-gray-700), var(--alinea-gray-200));
+  background: light-dark(var(--alinea-gray-100), var(--alinea-gray-700));
+}
+
+.SmallLists-error {
+  margin: 0;
+  color: var(--alinea-danger-subtle-fg);
+  font-size: 11px;
+  line-height: 15px;
+}
+
+.SmallLists-trailing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

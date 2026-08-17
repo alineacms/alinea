@@ -1,5 +1,4 @@
 import {HandleAction} from '#/backend/HandleAction.js'
-import type {PreviewInfo} from '#/backend/Previews.js'
 import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import type {Config} from './Config.js'
@@ -8,6 +7,7 @@ import type {
   DraftTransport,
   LocalConnection,
   Revision,
+  UploadMetadata,
   UploadResponse
 } from './Connection.js'
 import type {CommitRequest} from './db/CommitRequest.js'
@@ -61,22 +61,24 @@ export class Client implements LocalConnection {
     }).then<BackendCapabilities>(this.#failOnHttpError)
   }
 
-  previewToken(request: PreviewInfo): Promise<string> {
+  previewToken(): Promise<string> {
     return this.#requestJson(
       {action: HandleAction.PreviewToken},
       {
-        method: 'POST',
-        body: JSON.stringify(request)
+        method: 'POST'
       }
     ).then<string>(this.#failOnHttpError)
   }
 
-  prepareUpload(file: string): Promise<UploadResponse> {
+  prepareUpload(
+    file: string,
+    metadata?: UploadMetadata
+  ): Promise<UploadResponse> {
     return this.#requestJson(
       {action: HandleAction.Upload},
       {
         method: 'POST',
-        body: JSON.stringify({filename: file})
+        body: JSON.stringify({filename: file, ...metadata})
       }
     ).then<UploadResponse>(this.#failOnHttpError)
   }

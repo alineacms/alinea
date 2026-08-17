@@ -1,5 +1,6 @@
 import * as paths from '#/core/util/Paths.js'
 import MiniSearch from 'minisearch'
+import pLimit from 'p-limit'
 import {Config} from '../Config.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {createRecord, parseRecord} from '../EntryRecord.js'
@@ -302,15 +303,51 @@ export class EntryNode extends Map<string | null, EntryLanguageNode> {
 const SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u
 const DIACRITIC = /\p{Diacritic}/gu
 
+function tokenizeSearchText(text: string): Array<string> {
+  return text
+    .normalize('NFD')
+    .replace(DIACRITIC, '')
+    .split(SPACE_OR_PUNCTUATION)
+}
+
+function normalizedSearchTerms(text: string): Array<string> {
+  return tokenizeSearchText(text)
+    .filter(Boolean)
+    .map(term => term.toLowerCase())
+}
+
+interface EntrySearchDocument {
+  id: string
+  title: string
+  searchableText: string
+}
+
+function searchPriority(
+  entry: Entry,
+  match: Record<string, Array<string>>,
+  queryTerms: ReadonlyArray<string>
+): number {
+  const titleTerms = normalizedSearchTerms(entry.title)
+  const titlePrefix = queryTerms.every((term, index) =>
+    titleTerms[index]?.startsWith(term)
+  )
+  if (queryTerms.length > 0 && titlePrefix) return 2
+  const titleMatch = Object.values(match).some(fields =>
+    fields.includes('title')
+  )
+  return titleMatch ? 1 : 0
+}
+
 export class EntryGraph {
   #config: Config
   #versionData: Map<string, EntryVersionData>
   #filesById = new Map<string, Array<string>>()
   #byId = new Map<string, EntryNode>()
   #byDir = new Map<string, string>()
+  #childrenByParentId = new Map<string, Array<EntryNode>>()
   nodes: Array<EntryNode>
   #singleWorkspace: string | undefined
-  #search: MiniSearch
+  #search: MiniSearch<EntrySearchDocument>
   #seeds: Map<string, Seed>
 
   constructor(
@@ -324,14 +361,10 @@ export class EntryGraph {
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
-    this.#search = new MiniSearch({
+    this.#search = new MiniSearch<EntrySearchDocument>({
       fields: ['title', 'searchableText'],
-      storeFields: ['entry'],
       tokenize(text) {
-        return text
-          .normalize('NFD')
-          .replace(DIACRITIC, '')
-          .split(SPACE_OR_PUNCTUATION)
+        return tokenizeSearchText(text)
       }
     })
     for (const [file, version] of versionData) {
@@ -345,6 +378,12 @@ export class EntryGraph {
     this.nodes = [...this.#filesById.keys()]
       .map(file => this.#mkNode(file))
       .sort((a, b) => compareStrings(a.index, b.index))
+    for (const node of this.nodes) {
+      if (!node.parentId) continue
+      const children = this.#childrenByParentId.get(node.parentId) ?? []
+      children.push(node)
+      this.#childrenByParentId.set(node.parentId, children)
+    }
   }
 
   byId(id: string) {
@@ -392,19 +431,37 @@ export class EntryGraph {
 
   *filter({search, ...filter}: EntryCondition): Generator<Entry> {
     if (search) {
-      const found = new Set(this.filter(filter))
-      for (const entry of found) {
+      const found = new Map(
+        Array.from(this.filter(filter), entry => [entry.filePath, entry])
+      )
+      for (const entry of found.values()) {
         if (!this.#search.has(entry.filePath)) this.#updateSearch(entry)
       }
+      const queryTerms = normalizedSearchTerms(search)
       const results = this.#search
         .search(search, {
+          combineWith: 'AND',
           prefix: true,
           fuzzy: 0.1,
-          boost: {title: 2},
-          filter: result => found.has(result.entry)
+          boost: {title: 10},
+          filter: result =>
+            typeof result.id === 'string' && found.has(result.id)
         })
-        .map(result => result.entry)
-      yield* results
+        .flatMap(result => {
+          if (typeof result.id !== 'string') return []
+          const entry = found.get(result.id)
+          if (!entry) return []
+          return [
+            {
+              entry,
+              priority: searchPriority(entry, result.match, queryTerms),
+              score: result.score
+            }
+          ]
+        })
+      results.sort((a, b) => b.priority - a.priority || b.score - a.score)
+      const entries = results.map(result => result.entry)
+      yield* entries
       return
     }
     for (const node of filter.nodes ?? this.nodes) {
@@ -417,8 +474,7 @@ export class EntryGraph {
     this.#search.add({
       id: entry.filePath,
       title: entry.title,
-      searchableText: entry.searchableText,
-      entry
+      searchableText: entry.searchableText
     })
   }
 
@@ -434,7 +490,7 @@ export class EntryGraph {
     const parentDir = segments.slice(0, -1).join('/')
     const childrenDir = `${parentDir}/${path}`
     const seed = this.#seeds.get(childrenDir)
-    const data: Record<string, unknown> = {path, ...version.data, ...seed?.data}
+    const data: Record<string, unknown> = {path, ...seed?.data, ...version.data}
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
     const workspaceConfig = this.#config.workspaces[workspace]
@@ -493,16 +549,11 @@ export class EntryGraph {
     }
     const parent = parentId ? this.#mkNode(parentId) : null
     const type = this.#config.schema[collection.type]
-    function* children(this: EntryGraph) {
-      for (const node of this.nodes) {
-        if (node.parentId === id) yield node
-      }
-    }
     const node = new EntryNode(
       this,
       type,
       parent,
-      children.bind(this),
+      () => this.#childrenByParentId.get(id) ?? [],
       collection
     )
     this.#byId.set(id, node)
@@ -606,6 +657,7 @@ export class EntryIndex extends EventTarget {
   #singleWorkspace: string | undefined
   #references: EntryReferenceIndex | undefined
   #referencesBuild: Promise<EntryReferenceIndex> | undefined
+  #syncLimit = pLimit(1)
   constructor(config: Config) {
     super()
     this.#config = config
@@ -651,6 +703,13 @@ export class EntryIndex extends EventTarget {
       return references
     })
     return this.#referencesBuild
+  }
+  async sync(source: Source): Promise<string> {
+    return this.#syncLimit(async () => {
+      await this.syncWith(source)
+      await this.seed(source)
+      return this.sha
+    })
   }
   async syncWith(source: Source): Promise<string> {
     const tree = await source.getTree()
@@ -707,16 +766,11 @@ export class EntryIndex extends EventTarget {
     const sha = updatedTree.sha
     this.tree = updatedTree
     const affectedParentIds = changedParentIds(previousRelations, nextRelations)
-    const emittedEntryIds = new Set<string>()
-    const dispatchEntry = (id: string) => {
-      if (emittedEntryIds.has(id)) return
-      emittedEntryIds.add(id)
-      this.dispatchEvent(new IndexEvent({op: 'entry', id}))
-    }
+    const changedEntryIds = new Set<string>()
     const pool = Array.from(changed)
     while (pool.length > 0) {
       const node = pool.shift()!
-      dispatchEntry(node.id)
+      changedEntryIds.add(node.id)
       for (const child of node.children()) {
         if (!changed.has(child)) {
           changed.add(child)
@@ -724,9 +778,11 @@ export class EntryIndex extends EventTarget {
         }
       }
     }
-    for (const id of affectedParentIds) dispatchEntry(id)
-    for (const id of affectedReferenceIds) dispatchEntry(id)
-    this.dispatchEvent(new IndexEvent({op: 'index', sha}))
+    for (const id of affectedParentIds) changedEntryIds.add(id)
+    for (const id of affectedReferenceIds) changedEntryIds.add(id)
+    this.dispatchEvent(
+      new IndexEvent({op: 'index', sha, ids: Array.from(changedEntryIds)})
+    )
     return sha
   }
   async seed(source: Source) {

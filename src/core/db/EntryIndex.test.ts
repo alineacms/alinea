@@ -3,8 +3,12 @@ import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
 import {cms} from '#test/cms.js'
 import {createEntryIndex} from '#test/EntryFixture.js'
+import {mkdtemp, rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import type {Entry} from '../Entry.js'
 import {createRecord} from '../EntryRecord.js'
+import {CachedFSSource} from '../source/FSSource.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {
@@ -260,15 +264,108 @@ test('search handles punctuation and diacritics', async () => {
   test.is(found[0].id, 'recipe-cafe')
 })
 
-test('syncWith and indexChanges dispatch entry/index events', async () => {
+test('search requires every word in a multi-word query', async () => {
+  const {index} = await createEntryIndex(cms.config, [
+    {
+      id: 'wireless-breakthrough',
+      type: 'DemoRecipe',
+      index: 'a1',
+      path: 'wireless-breakthrough',
+      data: {
+        title: 'Nanoelectronics team unveils an efficient 77 GHz transmitter'
+      }
+    },
+    {
+      id: 'efficient-circuits',
+      type: 'DemoRecipe',
+      index: 'a2',
+      path: 'efficient-circuits',
+      data: {title: 'Efficient circuits for wireless systems'}
+    },
+    {
+      id: 'nanotech-overview',
+      type: 'DemoRecipe',
+      index: 'a3',
+      path: 'nanotech-overview',
+      data: {title: 'Nanoelectronics research overview'}
+    }
+  ])
+
+  const found = Array.from(
+    index.filter({search: 'nanoelectronics unveils efficient 77 GHz'})
+  )
+
+  test.equal(
+    found.map(entry => entry.id),
+    ['wireless-breakthrough']
+  )
+})
+
+test('search prioritizes title prefixes, then title matches, over body matches', async () => {
+  const Page = Config.document('Page', {
+    fields: {
+      title: Field.text('Title'),
+      body: Field.richText('Body', {searchable: true})
+    }
+  })
+  const searchCms = createCMS({
+    schema: {Page},
+    workspaces: {
+      demo: Config.workspace('Demo', {
+        source: 'content/demo',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  })
+  const {index} = await createEntryIndex(searchCms.config, [
+    {
+      id: 'title-prefix-match',
+      type: 'Page',
+      index: 'a1',
+      path: 'title-prefix-match',
+      data: {
+        title: 'Unlocking the full potential of advanced semiconductor systems'
+      }
+    },
+    {
+      id: 'title-match',
+      type: 'Page',
+      index: 'a2',
+      path: 'title-match',
+      data: {title: 'System technology: unlocking innovation'}
+    },
+    {
+      id: 'body-match',
+      type: 'Page',
+      index: 'a3',
+      path: 'body-match',
+      data: {
+        title: 'Getting started',
+        body: [
+          {
+            _type: 'paragraph',
+            content: [{_type: 'text', text: 'Learn about unlocking here.'}]
+          }
+        ]
+      }
+    }
+  ])
+
+  const found = Array.from(index.filter({search: 'unlocking'}))
+
+  test.equal(
+    found.map(entry => entry.id),
+    ['title-prefix-match', 'title-match', 'body-match']
+  )
+})
+
+test('syncWith and indexChanges dispatch one batched index event', async () => {
   const {index, source} = await createEntryIndex(cms.config, fixtureEntries)
-  const emitted = Array<{op: string; value: string}>()
+  const emitted = Array<{sha: string; ids: Array<string>}>()
   index.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
-    if (indexEvent.data.op === 'entry')
-      emitted.push({op: 'entry', value: indexEvent.data.id})
     if (indexEvent.data.op === 'index')
-      emitted.push({op: 'index', value: indexEvent.data.sha})
+      emitted.push({sha: indexEvent.data.sha, ids: indexEvent.data.ids})
   })
 
   const from = await source.getTree()
@@ -306,18 +403,11 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
   })
   const changedSha = await index.syncWith(source)
   test.is(index.sha, changedSha)
-  test.ok(
-    emitted.some(event => event.op === 'entry' && event.value === 'cookie-2')
-  )
-  test.ok(
-    emitted.some(event => event.op === 'entry' && event.value === 'cookie-3')
-  )
-  test.ok(
-    emitted.some(event => event.op === 'entry' && event.value === 'recipes')
-  )
-  test.ok(
-    emitted.some(event => event.op === 'index' && event.value === changedSha)
-  )
+  test.is(emitted.length, 1)
+  test.is(emitted[0].sha, changedSha)
+  test.ok(emitted[0].ids.includes('cookie-2'))
+  test.ok(emitted[0].ids.includes('cookie-3'))
+  test.ok(emitted[0].ids.includes('recipes'))
 
   const noChangeSha = await index.syncWith(source)
   test.is(noChangeSha, changedSha)
@@ -325,13 +415,14 @@ test('syncWith and indexChanges dispatch entry/index events', async () => {
     await index.indexChanges({fromSha: index.sha, changes: []}),
     index.sha
   )
+  test.is(emitted.length, 1)
   await test.throws(
     () => index.indexChanges({fromSha: 'invalid-sha', changes: []}),
     'SHA mismatch'
   )
 })
 
-test('indexChanges dispatches entry events for old and new parents on move', async () => {
+test('indexChanges reports old and new parents on move', async () => {
   const {index, source} = await createEntryIndex(cms.config, [
     ...fixtureEntries,
     {
@@ -345,7 +436,7 @@ test('indexChanges dispatches entry events for old and new parents on move', asy
   const emitted = Array<string>()
   index.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
-    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+    if (indexEvent.data.op === 'index') emitted.push(...indexEvent.data.ids)
   })
 
   const from = await source.getTree()
@@ -595,7 +686,7 @@ test('active reference index is updated by later source changes', async () => {
   const emitted = Array<string>()
   index.addEventListener(IndexEvent.type, event => {
     const indexEvent = event as IndexEvent
-    if (indexEvent.data.op === 'entry') emitted.push(indexEvent.data.id)
+    if (indexEvent.data.op === 'index') emitted.push(...indexEvent.data.ids)
   })
 
   const sourceEntry = index.findFirst(entry => entry.id === 'source')!
@@ -625,7 +716,7 @@ test('active reference index is updated by later source changes', async () => {
   test.is((await index.referencesTo({targetId: 'target'})).total, 0)
 })
 
-test('seed creates missing seeded entries and reuses i18n ids', async () => {
+test('seed creates multiple entries against a cached filesystem source', async () => {
   const Page = Config.document('Page', {
     fields: {title: Field.text('Title')}
   })
@@ -647,20 +738,25 @@ test('seed creates missing seeded entries and reuses i18n ids', async () => {
     }
   })
   const seededCms = createCMS({schema: {Page}, workspaces: {main}})
-  const source = new MemorySource()
-  const index = new EntryIndex(seededCms.config)
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-entry-index-'))
+  try {
+    const source = new CachedFSSource(dir)
+    const index = new EntryIndex(seededCms.config)
 
-  await index.syncWith(source)
-  await index.seed(source)
+    await index.syncWith(source)
+    await index.seed(source)
 
-  const seeded = Array.from(index.filter({}))
-  test.is(seeded.length, 4)
-  const homeEntries = seeded.filter(entry => entry.path === 'home')
-  test.is(homeEntries.length, 2)
-  test.is(homeEntries[0].id, homeEntries[1].id)
+    const seeded = Array.from(index.filter({}))
+    test.is(seeded.length, 4)
+    const homeEntries = seeded.filter(entry => entry.path === 'home')
+    test.is(homeEntries.length, 2)
+    test.is(homeEntries[0].id, homeEntries[1].id)
 
-  await index.seed(source)
-  test.is(Array.from(index.filter({})).length, 4)
+    await index.seed(source)
+    test.is(Array.from(index.filter({})).length, 4)
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
 })
 
 test('fix rewrites changed blobs and transaction can be created', async () => {

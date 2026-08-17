@@ -1,5 +1,8 @@
 import {createCMS, Entry} from '#/core.js'
 import {ListRow} from '#/core/ListRow.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import {isRecord} from '#/core/util/Objects.js'
+import type {MetadataAlias} from '#/field/metadata/MetadataAliases.js'
 import {Config, Field} from '#/index.js'
 import {createEntryIndex} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
@@ -30,6 +33,9 @@ const cms = createCMS({
         }),
         docs: Config.root('Docs', {
           contains: ['Page']
+        }),
+        media: Config.media({
+          contains: ['MediaFile']
         })
       }
     })
@@ -50,7 +56,7 @@ const documentCms = createCMS({
   }
 })
 
-function alias(url: string) {
+function alias(url: string): MetadataAlias {
   return {
     [ListRow.id]: `alias-${url}`,
     [ListRow.index]: 'a0',
@@ -109,6 +115,20 @@ function pageDataWithAliases(title: string, path: string, urls: Array<string>) {
   }
 }
 
+function mediaFileData(title: string, path: string, aliases: Array<string>) {
+  return {
+    title,
+    path,
+    metadata: {
+      aliases: aliases.map(alias)
+    },
+    location: `/${path}.jpg`,
+    extension: '.jpg',
+    size: 1024,
+    hash: `${path}-hash`
+  }
+}
+
 async function createDb() {
   const {source} = await createEntryIndex(cms.config, [
     {
@@ -147,10 +167,6 @@ function aliasUrls(value: unknown): Array<string> {
     const url = alias.url
     return typeof url === 'string' ? [url] : []
   })
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 test('create blocks duplicate metadata URL aliases per root', async () => {
@@ -220,6 +236,28 @@ test('allows duplicate metadata URL aliases across roots', async () => {
   test.is(found, entry._id)
 })
 
+test('create blocks duplicate MediaFile URL aliases per root', async () => {
+  const db = await createDb()
+
+  await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: mediaFileData('One', 'one', ['/old-file'])
+  })
+
+  await test.throws(
+    () =>
+      db.create({
+        type: MediaFile,
+        root: 'media',
+        status: 'published',
+        set: mediaFileData('Two', 'two', ['/old-file'])
+      }),
+    'URL "/old-file" is already defined by entry'
+  )
+})
+
 test('allows duplicate metadata URL aliases on the same entry', async () => {
   const db = await createDb()
   const entry = await db.create({
@@ -257,6 +295,98 @@ test('update preserves the previous published URL as an alias', async () => {
   })
   test.is(result.url, '/two')
   test.equal(aliasUrls(result.aliases), ['/one'])
+})
+
+test('update preserves the previous MediaFile URL as an alias', async () => {
+  const db = await createEmptyDb()
+  const entry = await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: mediaFileData('One', 'one', [])
+  })
+
+  await db.update({
+    type: MediaFile,
+    id: entry._id,
+    status: 'published',
+    set: {path: 'two'}
+  })
+
+  const result = await db.get({
+    id: entry._id,
+    select: {
+      url: Entry.url,
+      aliases: Entry.aliases
+    }
+  })
+  test.is(result.url, '/two')
+  test.equal(aliasUrls(result.aliases), ['/one'])
+})
+
+test('update preserves a MediaFile URL with an empty alias row', async () => {
+  const db = await createEmptyDb()
+  const emptyAlias = {
+    ...alias(''),
+    [ListRow.index]: ''
+  }
+  const data = mediaFileData('One', 'one', [])
+  const entry = await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: {
+      ...data,
+      metadata: {
+        ...data.metadata,
+        aliases: [emptyAlias]
+      }
+    }
+  })
+
+  await db.update({
+    type: MediaFile,
+    id: entry._id,
+    status: 'published',
+    set: {path: 'two'}
+  })
+
+  const aliases = await db.get({
+    id: entry._id,
+    select: Entry.aliases
+  })
+  test.equal(aliasUrls(aliases), ['', '/one'])
+})
+
+test('update removes a current MediaFile URL from legacy aliases', async () => {
+  const {source} = await createEntryIndex(cms.config, [
+    {
+      id: 'media-one',
+      type: 'MediaFile',
+      index: 'a1',
+      root: 'media',
+      path: 'one',
+      data: {
+        ...mediaFileData('One', 'one', []),
+        aliases: [alias('/two')]
+      }
+    }
+  ])
+  const db = new TestDB(cms.config, source)
+  await db.sync()
+
+  await db.update({
+    type: MediaFile,
+    id: 'media-one',
+    status: 'published',
+    set: {path: 'two'}
+  })
+
+  const aliases = await db.get({
+    id: 'media-one',
+    select: Entry.aliases
+  })
+  test.equal(aliasUrls(aliases), ['/one'])
 })
 
 test('publish preserves the previous published URL as an alias', async () => {

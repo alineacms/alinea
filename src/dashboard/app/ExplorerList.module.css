@@ -78,3 +78,7 @@
   font-weight: 400;
   line-height: 1.4;
 }
+
+.ExplorerList-empty-button {
+  pointer-events: auto;
+}

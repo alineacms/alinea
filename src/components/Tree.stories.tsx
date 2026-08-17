@@ -1,5 +1,5 @@
 import type {Key, Selection} from '@react-types/shared'
-import {useEffect, useMemo, useState, useTransition} from 'react'
+import {useMemo, useState, useTransition} from 'react'
 import {Collection, ListLayout, Virtualizer} from 'react-aria-components'
 import {
   IcOutlineDescription,
@@ -228,10 +228,25 @@ export function DynamicList() {
   )
   const [selectedKeys, setSelectedKeys] = useState<Set<Key>>(new Set())
   const [isExpandAllPreferred, setIsExpandAllPreferred] = useState(false)
+  const visibleExpandedKeys = useMemo(() => {
+    if (isExpandAllPreferred) return new Set<Key>(allExpandableKeys)
+    if (expandedKeys.size === 0) return expandedKeys
+
+    const validKeys = new Set(allExpandableKeys)
+    const nextKeys = new Set<Key>(
+      Array.from(expandedKeys).filter(key => validKeys.has(key))
+    )
+    return nextKeys.size ? nextKeys : new Set<Key>(defaultExpandedKeys)
+  }, [
+    allExpandableKeys,
+    defaultExpandedKeys,
+    expandedKeys,
+    isExpandAllPreferred
+  ])
   const isAllExpanded =
     allExpandableKeys.length > 0 &&
-    allExpandableKeys.every(key => expandedKeys.has(key))
-  const isPartiallyExpanded = expandedKeys.size > 0 && !isAllExpanded
+    allExpandableKeys.every(key => visibleExpandedKeys.has(key))
+  const isPartiallyExpanded = visibleExpandedKeys.size > 0 && !isAllExpanded
 
   function handleAmountChange(key: Key | null) {
     if (key) setSelectedAmount(String(key))
@@ -271,20 +286,6 @@ export function DynamicList() {
       setSelectedKeys(new Set(keys))
     })
   }
-
-  useEffect(() => {
-    setExpandedKeys(current => {
-      if (isExpandAllPreferred) return new Set<Key>(allExpandableKeys)
-      if (current.size === 0) return current
-
-      const validKeys = new Set(allExpandableKeys)
-      const nextKeys = new Set<Key>(
-        Array.from(current).filter(key => validKeys.has(key))
-      )
-
-      return nextKeys.size ? nextKeys : new Set<Key>(defaultExpandedKeys)
-    })
-  }, [allExpandableKeys, defaultExpandedKeys, isExpandAllPreferred])
 
   return (
     <div
@@ -335,7 +336,7 @@ export function DynamicList() {
           <Tree
             aria-label={`Generated tree with ${itemCount} items`}
             items={nodes}
-            expandedKeys={expandedKeys}
+            expandedKeys={visibleExpandedKeys}
             onExpandedChange={handleExpandedChange}
             selectedKeys={selectedKeys}
             onSelectionChange={handleSelectionChange}

@@ -2,18 +2,19 @@ import {Button, DialogTrigger} from '#/components.js'
 import {Field} from '#/core/Field.js'
 import {Reference} from '#/core/Reference.js'
 import {ListRow} from '#/core/ListRow.js'
-import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
+import {Type, type} from '#/core/Type.js'
 import {ExternalLinkPicker} from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
 import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
 import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
-import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
-import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
+import {EntryEditor} from '#/dashboard/atoms/editor.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {EditorScope} from '#/dashboard/hooks.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
-import {createTestConnection} from '#test/CreateConnection.js'
 import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import {views} from '../views.js'
@@ -98,20 +99,10 @@ const pickerStoryStyle: CSSProperties = {
   padding: 24
 }
 
-const fixtureConnection = createTestConnection(db)
-
-const dashboard = new Dashboard(
-  db,
-  cms.config,
-  db.index,
-  fixtureConnection,
-  views
-)
-
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return new DashboardEditor(dashboard, pageType as TypeInstance, node)
+    return new EntryEditor(pageType, node)
   }, [])
   const relatedLink = Field.isField(pageType.relatedLink)
     ? pageType.relatedLink
@@ -124,7 +115,13 @@ export function Example() {
     : null
   if (!relatedLink || !heroImage || !resources) return null
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.index}
+      graph={db}
+      views={views}
+    >
       <EditorScope editor={editor}>
         <div style={storyStyle}>
           <SingleLinkFieldView field={relatedLink} />
@@ -134,7 +131,7 @@ export function Example() {
           <MultipleLinksFieldView field={resources} />
         </div>
       </EditorScope>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 
@@ -178,7 +175,13 @@ function ExplorerPickerStory({
       ? {workspace: 'simple', root: 'pages'}
       : {workspace: 'simple', root: 'media'}
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.index}
+      graph={db}
+      views={views}
+    >
       <div style={pickerStoryStyle}>
         <DialogTrigger>
           <Button>{label}</Button>
@@ -200,7 +203,7 @@ function ExplorerPickerStory({
           )}
         </DialogTrigger>
       </div>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 

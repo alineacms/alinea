@@ -7,6 +7,26 @@ import type {AnyExtension} from '@tiptap/core'
 import type {ReactNode} from 'react'
 import type {ToolbarConfig} from './Toolbar.js'
 
+export interface RichTextExtensionConfig {
+  [name: string]: AnyExtension
+}
+
+export interface ConfigureRichTextExtensions {
+  (defaults: RichTextExtensionConfig): RichTextExtensionConfig
+}
+
+export function configureRichTextExtensions(
+  configure: ConfigureRichTextExtensions | undefined,
+  defaults: RichTextExtensionConfig
+): RichTextExtensionConfig {
+  if (configure === undefined) return defaults
+  if (typeof configure !== 'function')
+    throw new TypeError(
+      'Rich text extensions must be configured with a function, for example: extensions: defaults => ({...defaults})'
+    )
+  return configure(defaults)
+}
+
 /** Optional settings to configure a rich text field */
 export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
   TextDoc<Blocks>
@@ -28,7 +48,7 @@ export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
   /** Configure the toolbar layout and items */
   toolbar?: ToolbarConfig
   /** Configure tiptap extensions */
-  extensions?: Record<string, AnyExtension>
+  extensions?: ConfigureRichTextExtensions
 }
 
 /** Create a rich text field configuration */

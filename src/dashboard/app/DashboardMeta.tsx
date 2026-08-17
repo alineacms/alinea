@@ -1,14 +1,14 @@
 import {btoa} from '#/core/util/Encoding.js'
-import {useAtomValue} from 'jotai'
 import type {ComponentType} from 'react'
 import {useMemo} from 'react'
 import {renderToString} from 'react-dom/server'
 import {AlineaLogo} from './AlineaLogo.js'
 import {LogoShape} from './LogoShape.js'
-import type {Dashboard} from '../store/Dashboard.js'
 
 export interface DashboardMetaProps {
-  dashboard: Dashboard
+  color: string
+  icon?: ComponentType
+  title: string
 }
 
 function faviconHref(color: string, Icon: ComponentType): string {
@@ -18,9 +18,7 @@ function faviconHref(color: string, Icon: ComponentType): string {
   return `data:image/svg+xml;base64,${btoa(svg)}`
 }
 
-export function DashboardMeta({dashboard}: DashboardMetaProps) {
-  const title = useAtomValue(dashboard.title)
-  const {color, icon} = useAtomValue(dashboard.favicon)
+export function DashboardMeta({color, icon, title}: DashboardMetaProps) {
   const href = useMemo(
     () => faviconHref(color, icon ?? AlineaLogo),
     [color, icon]

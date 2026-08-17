@@ -10,7 +10,7 @@ import type {
   DashboardEntry,
   DashboardExplorer,
   DashboardRoot
-} from '../store.js'
+} from '../atoms/explorer.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
 import css from './ExplorerList.module.css'
@@ -29,11 +29,9 @@ function EmptyResults({root}: EmptyResultsProps) {
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>
-          No matching entries
-        </div>
+        <div className={styles.ExplorerList.empty.title()}>No results</div>
         <div className={styles.ExplorerList.empty.text()}>
-          Try a different title, path, or field value.
+          Try different search terms.
         </div>
       </div>
     </div>
@@ -45,9 +43,9 @@ function SearchIdleState() {
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={IcRoundSearch} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>Search entries</div>
+        <div className={styles.ExplorerList.empty.title()}>Search</div>
         <div className={styles.ExplorerList.empty.text()}>
-          Type to search all roots in this workspace.
+          Type to find any page in this workspace.
         </div>
       </div>
     </div>
@@ -56,24 +54,31 @@ function SearchIdleState() {
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
+  locale: string | null
 }
 
-export function ExplorerList({explorer}: ExplorerListProps) {
-  const items = useAtomValue(explorer.items)
+export function ExplorerList({explorer, locale}: ExplorerListProps) {
+  const items = useAtomValue(explorer.items(locale))
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
   const getItems = useSetAtom(explorer.getItems)
+  const getDropOperation = useSetAtom(explorer.getDropOperation)
+  const dropOnItem = useSetAtom(explorer.onItemDrop)
   const isMedia = useAtomValue(explorer.isMedia)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes: isMedia && canUpload ? 'all' : [],
     getItems,
-    getDropOperation(target, _types, allowedOperations) {
-      if (!isMedia || !canUpload) return 'cancel'
-      if (target.type !== 'root') return 'cancel'
+    getDropOperation(target, types, allowedOperations) {
+      const operation = getDropOperation(target, types, allowedOperations)
+      if (operation !== 'cancel') return operation
+      if (!isMedia || !canUpload || target.type !== 'root') return 'cancel'
       return allowedOperations.includes('copy') ? 'copy' : 'cancel'
+    },
+    onItemDrop(event) {
+      dropOnItem(event, locale)
     },
     async onRootDrop(event) {
       const files = await Promise.all(
@@ -108,6 +113,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
+          locale={locale}
           renderEmptyState={() => <EmptyResults root={root} />}
         />
       ) : (
@@ -115,6 +121,7 @@ export function ExplorerList({explorer}: ExplorerListProps) {
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
+          locale={locale}
           renderEmptyState={() => <EmptyResults root={root} />}
         />
       )}

@@ -21,6 +21,12 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
       defaultValue() {
         return Type.initialValue(type) as Row
       },
+      withInitialValue(value) {
+        return Type.withInitialValue(
+          type,
+          (value ?? {}) as Record<string, unknown>
+        ) as Row
+      },
       applyLinks(value, loader) {
         return Type.applyLinks(type, value as Record<string, unknown>, loader)
       },
@@ -34,6 +40,22 @@ export class RecordField<Row, Options extends FieldOptions<Row>> extends Field<
           (value ?? {}) as Record<string, unknown>,
           context.path
         )
+      },
+      anchors(value, context) {
+        if (value === undefined || value === null) return []
+        return Type.anchors(
+          type,
+          value as Record<string, unknown>,
+          context.path
+        )
+      },
+      normalizeAnchors(value, context) {
+        if (value === undefined || value === null) return value
+        return Type.normalizeAnchors(
+          type,
+          value as Record<string, unknown>,
+          context
+        ) as Row
       },
       async queryValue(value, loader) {
         const row = (value ?? {}) as Record<string, unknown>

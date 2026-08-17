@@ -17,7 +17,7 @@ export async function loadWorker(gen: ConfigGenerator) {
     const listen = (event: Event) => {
       try {
         port.postMessage({...event, type: event.type})
-      } catch (error) {
+      } catch {
         worker.removeEventListener(IndexEvent.type, listen)
         worker.removeEventListener(MutationQueueEvent.type, listen)
       }

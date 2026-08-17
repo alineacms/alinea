@@ -40,6 +40,7 @@ export interface LinkMark extends Mark {
   _id: string
   _link: 'entry' | 'file' | 'url'
   _entry?: string
+  _anchor?: string
   _suffix?: string
 }
 
@@ -47,6 +48,7 @@ export namespace LinkMark {
   export const id = '_id' satisfies keyof LinkMark
   export const link = '_link' satisfies keyof LinkMark
   export const entry = '_entry' satisfies keyof LinkMark
+  export const anchor = '_anchor' satisfies keyof LinkMark
   export const suffix = '_suffix' satisfies keyof LinkMark
 }
 

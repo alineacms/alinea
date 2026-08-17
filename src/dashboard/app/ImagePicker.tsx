@@ -1,8 +1,15 @@
 // oxlint-disable jsx_a11y/no-autofocus
 import {Button} from '#/components.js'
+import {getRoot} from '#/core/Internal.js'
+import {
+  createExplorerAtoms,
+  type ExplorerOptions
+} from '#/dashboard/atoms/explorer.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState, type ReactNode} from 'react'
-import {ExplorerOptions, useDashboard} from '../store.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -49,19 +56,30 @@ interface ExplorerModalProps {
 
 function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const mediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const {page, root, workspace} = useDashboardContext()
+  const policy = useAtomValue(policyAtom)
+  const mediaRoot = Object.entries(workspace.roots).find(
+    ([key, value]) =>
+      policy.canRead({workspace: root.workspace, root: key}) &&
+      Boolean(getRoot(value).isMediaRoot)
+  )?.[0]
   const location = options.location ?? {
-    workspace,
-    root: mediaRoot ?? undefined
+    workspace: root.workspace,
+    root: mediaRoot ?? root.key
   }
+  const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
+  const initialLocale = options.selectedLocale ?? page.locale
   const [explorer] = useState(() =>
-    dashboard.explore(location, {
+    createExplorerAtoms(location, {
       ...options,
-      searchDepth: 'all'
+      flatResults: false,
+      rootData: pickerRoot.data,
+      searchDepth: 'all',
+      selectedLocale: initialLocale,
+      treeItems: pickerRoot.treeItems
     })
   )
+  const selectedLocale = useAtomValue(explorer.selectedLocale)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -80,6 +98,8 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
           <ExplorerHeader
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            navigate
+            locale={selectedLocale}
           />
           <ExplorerPickerContent
             explorer={explorer}

@@ -7,18 +7,20 @@ import {
   ToggleButton,
   ToggleButtonGroup
 } from '#/components.js'
-import {Entry} from '#/core/Entry.js'
-import {getRoot, getType} from '#/core/Internal.js'
+import {getType} from '#/core/Internal.js'
 import {Reference} from '#/core/Reference.js'
 import {Schema} from '#/core/Schema.js'
 import {Type, type as createType} from '#/core/Type.js'
-import {assert} from '#/core/util/Assert.js'
+import {createEntryAtom} from '#/dashboard/atoms/create.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom, type WritableAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {useAtomValue, useSetAtom, type WritableAtom} from 'jotai'
 import {
   Suspense,
   useMemo,
@@ -26,14 +28,8 @@ import {
   type FormEvent,
   type SetStateAction
 } from 'react'
-import {useDashboard} from '../../hooks.js'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {
-  ReactiveNode,
-  dashboardAtom,
-  type ExplorerLocation
-} from '../../store.js'
-import {NodeEditor} from '../Editor.js'
+import {EntryFields, NodeEditor} from '../EntryFields.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,
@@ -88,47 +84,12 @@ function buildTypeOptions(
     .filter((option): option is TypeOption => option !== null)
 }
 
-const initialLocationAtom = atom(async get => {
-  const dashboard = get(dashboardAtom)
-  const selectedWorkspace = get(dashboard.selectedWorkspace)
-  const selectedRoot = get(dashboard.selectedRoot)
-  const route = get(dashboard.route)
-
-  if (!route.entry) {
-    return {
-      workspace: selectedWorkspace,
-      root: selectedRoot
-    }
-  }
-
-  const entry = dashboard.entries(route.entry)
-  const {data} = get(entry.data)
-  if (!data) {
-    return {
-      workspace: selectedWorkspace,
-      root: selectedRoot
-    }
-  }
-  const type = get(data.type).type
-  const parentId = get(data.parentId) ?? undefined
-
-  return {
-    workspace: selectedWorkspace,
-    root: selectedRoot,
-    parentId: Type.isContainer(type) ? route.entry : parentId
-  }
-})
-
 function createLinkEditor(
   key: string,
   field: LinkField<EntryReference, unknown>,
   initialValue?: EntryReference | null
 ): LinkEditor {
-  const formType = createType(`${key} link`, {
-    fields: {
-      [key]: field
-    }
-  })
+  const formType = createType(`${key} link`, {fields: {[key]: field}})
   const value = Type.initialValue(formType) as Record<string, unknown>
   if (initialValue !== undefined) value[key] = initialValue
   const node = new ReactiveNode(value as object)
@@ -138,86 +99,6 @@ function createLinkEditor(
     value: node.field(key) as LinkFieldValueAtom
   }
 }
-
-function typeOptionsAtom(
-  location: ExplorerLocation,
-  locale: string | null,
-  parentId: string | undefined
-) {
-  return unwrap(
-    atom(async get => {
-      const dashboard = get(dashboardAtom)
-      const config = get(dashboard.config)
-      const db = get(dashboard.db)
-      const policy = get(dashboard.policy)
-      const rootKey = location.root
-      let allowed = [] as Array<string>
-      let parentIds = [] as Array<string>
-
-      if (parentId) {
-        const parent = await db.first({
-          select: {type: Entry.type, parents: Entry.parents},
-          id: parentId,
-          status: 'preferDraft'
-        })
-        const parentType = parent && config.schema[parent.type]
-        parentIds = [parentId, ...(parent?.parents ?? [])]
-        allowed = parentType
-          ? Schema.contained(config.schema, Type.contains(parentType))
-          : []
-      } else {
-        const rootConfig =
-          rootKey && config.workspaces[location.workspace]?.[rootKey]
-        allowed = rootConfig
-          ? Schema.contained(config.schema, getRoot(rootConfig).contains ?? [])
-          : []
-      }
-
-      return buildTypeOptions(
-        config.schema,
-        allowed.filter(type => {
-          return policy.canCreate({
-            workspace: location.workspace,
-            root: rootKey,
-            locale,
-            parents: parentIds,
-            type
-          })
-        })
-      )
-    }),
-    previous => previous ?? []
-  )
-}
-
-function insertOrderVisibleAtom(parentId: string | undefined) {
-  return unwrap(
-    atom(async get => {
-      if (!parentId) return true
-      const dashboard = get(dashboardAtom)
-      const config = get(dashboard.config)
-      const db = get(dashboard.db)
-      const parent = await db.first({
-        select: {type: Entry.type},
-        id: parentId,
-        status: 'preferDraft'
-      })
-      const parentType = parent ? config.schema[parent.type] : undefined
-      return parentType ? Type.insertOrder(parentType) === 'free' : false
-    }),
-    previous => previous ?? false
-  )
-}
-
-const containerTypesAtom = atom(get => {
-  const dashboard = get(dashboardAtom)
-  const config = get(dashboard.config)
-  return (Object.entries(config.schema) as Array<[string, Type]>)
-    .filter(([, schemaType]) => {
-      return Type.isContainer(schemaType) && !Type.isHidden(schemaType)
-    })
-    .map(([type]) => type)
-})
 
 function CreateEntryLoading() {
   return (
@@ -231,52 +112,81 @@ function CreateEntryLoading() {
 
 function CreateEntryForm() {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const createEntry = useSetAtom(dashboard.createEntry)
-  const initial = useAtomValue(initialLocationAtom)
+  const {page, root} = useDashboardContext()
+  const createEntry = useSetAtom(createEntryAtom)
+  const config = useAtomValue(configAtom).schema
+  const policy = useAtomValue(policyAtom)
+  const {locale} = page
+  const treeItems = useAtomValue(root.treeItems(locale))
+  const rootData = useAtomValue(root.data)
+  const initialParentId = useMemo(() => {
+    if (!page.entry) return undefined
+    const current = treeItems.find(item => item.id === page.entry)
+    if (!current) return undefined
+    const type = config[current.type]
+    return type && Type.isContainer(type)
+      ? current.id
+      : (current.parentId ?? undefined)
+  }, [config, page.entry, treeItems])
   const [title, setTitle] = useState('')
   const [selectedTypeOverride, setSelectedType] = useState<string | null>(null)
   const [insertOrder, setInsertOrder] = useState<'first' | 'last'>('last')
   const [isCreating, setIsCreating] = useState(false)
-  const workspace = dashboard.workspace(initial.workspace)
-  const roots = useAtomValue(workspace.roots)
-  const rootKey = initial.root ?? roots[0]
-  assert(rootKey, 'No root selected')
-  const root = workspace.root(rootKey)
-  const locale = useAtomValue(root.selectedLocale)
-  const containerTypes = useAtomValue(containerTypesAtom)
+  const containerTypes = useMemo(
+    () =>
+      Object.entries(config)
+        .filter(([, type]) => Type.isContainer(type) && !Type.isHidden(type))
+        .map(([name]) => name),
+    [config]
+  )
 
   const parent = useMemo(() => {
     const field = entryField('Parent', {
       condition: {_type: {in: containerTypes}},
-      initialValue: initial.parentId
-        ? entryReference(initial.parentId, 'parent')
+      initialValue: initialParentId
+        ? entryReference(initialParentId, 'parent')
         : null!,
-      location: {workspace: initial.workspace, root: rootKey},
+      location: {workspace: root.workspace, root: root.key},
       title: 'Select parent'
     }) as LinkField<EntryReference, unknown>
     return createLinkEditor(
       'parent',
       field,
-      initial.parentId ? entryReference(initial.parentId, 'parent') : null
+      initialParentId ? entryReference(initialParentId, 'parent') : null
     )
-  }, [containerTypes, initial.parentId, initial.workspace, rootKey])
+  }, [containerTypes, initialParentId, root.key, root.workspace])
   const parentValue = useAtomValue(parent.value)
   const parentId = entryIdOf(parentValue)
-  const location = useMemo(
-    () => ({
-      workspace: initial.workspace,
-      root: rootKey,
-      parentId
-    }),
-    [initial.workspace, parentId, rootKey]
-  )
-
-  const typeOptions = useAtomValue(
-    useMemo(
-      () => typeOptionsAtom(location, locale, parentId),
-      [locale, location, parentId]
-    )
+  const parentItem = treeItems.find(item => item.id === parentId)
+  const parentType = parentItem ? config[parentItem.type] : undefined
+  const allowed = parentType
+    ? Schema.contained(config, Type.contains(parentType))
+    : Schema.contained(config, rootData.contains ?? [])
+  const parentIds = parentId
+    ? [
+        parentId,
+        ...treeItems
+          .filter(item => {
+            let current = parentItem
+            while (current?.parentId) {
+              if (current.parentId === item.id) return true
+              current = treeItems.find(
+                candidate => candidate.id === current?.parentId
+              )
+            }
+            return false
+          })
+          .map(item => item.id)
+      ]
+    : []
+  const typeOptions = buildTypeOptions(config, allowed).filter(option =>
+    policy.canCreate({
+      workspace: root.workspace,
+      root: root.key,
+      locale,
+      parents: parentIds,
+      type: option.id
+    })
   )
   const selectedType =
     selectedTypeOverride &&
@@ -287,29 +197,27 @@ function CreateEntryForm() {
   const copyFrom = useMemo(() => {
     const field = entryField('Copy content from', {
       condition: {_type: selectedType ?? ''},
-      location: {workspace: initial.workspace, root: rootKey},
+      location: {workspace: root.workspace, root: root.key},
       readOnly: !selectedType,
       title: 'Select entry'
     }) as LinkField<EntryReference, unknown>
     return createLinkEditor('copyFrom', field)
-  }, [initial.workspace, rootKey, selectedType])
+  }, [root.key, root.workspace, selectedType])
   const copyFromValue = useAtomValue(copyFrom.value)
   const copyFromId = entryIdOf(copyFromValue)
-
-  const showInsertOrder = useAtomValue(
-    useMemo(() => insertOrderVisibleAtom(parentId), [parentId])
-  )
+  const showInsertOrder = parentType
+    ? Type.insertOrder(parentType) === 'free'
+    : true
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const nextTitle = title.trim()
     if (isCreating || !selectedType || !nextTitle) return
-
     setIsCreating(true)
     try {
       await createEntry({
-        workspace: location.workspace,
-        root: rootKey,
+        workspace: root.workspace,
+        root: root.key,
         locale,
         parentId,
         type: selectedType,
@@ -364,7 +272,9 @@ function CreateEntryForm() {
 
           <div className={styles.CreateEntry.parentRow()}>
             <div className={styles.CreateEntry.parentField()}>
-              <NodeEditor node={parent.node} type={parent.type} />
+              <NodeEditor node={parent.node} type={parent.type}>
+                <EntryFields />
+              </NodeEditor>
             </div>
             {showInsertOrder && (
               <Label
@@ -392,7 +302,9 @@ function CreateEntryForm() {
             )}
           </div>
 
-          <NodeEditor node={copyFrom.node} type={copyFrom.type} />
+          <NodeEditor node={copyFrom.node} type={copyFrom.type}>
+            <EntryFields />
+          </NodeEditor>
         </DashboardModalContent>
       </form>
 

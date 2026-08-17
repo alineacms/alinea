@@ -1,7 +1,12 @@
 import {Button} from '#/components.js'
+import {
+  createExplorerAtoms,
+  type ExplorerOptions
+} from '#/dashboard/atoms/explorer.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState} from 'react'
-import {ExplorerOptions, useDashboard} from '../store.js'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -18,7 +23,9 @@ import {
   useDashboardModal
 } from './ui/DashboardModal.js'
 
-export function LinkPicker(options: ExplorerOptions) {
+export interface LinkPickerOptions extends ExplorerOptions {}
+
+export function LinkPicker(options: LinkPickerOptions) {
   return (
     <DashboardModal size="explorer">
       <Suspense
@@ -37,24 +44,28 @@ export function LinkPicker(options: ExplorerOptions) {
 }
 
 interface ExplorerModalProps {
-  options: ExplorerOptions
+  options: LinkPickerOptions
 }
 
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
-  const dashboard = useDashboard()
-  const workspace = useAtomValue(dashboard.selectedWorkspace)
-  const root = useAtomValue(dashboard.selectedRoot)
+  const {page, root} = useDashboardContext()
   const location = options.location ?? {
-    workspace,
-    root: root ?? undefined
+    workspace: root.workspace,
+    root: root.key
   }
+  const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
+  const initialLocale = options.selectedLocale ?? page.locale
   const [explorer] = useState(() =>
-    dashboard.explore(location, {
+    createExplorerAtoms(location, {
       ...options,
-      searchDepth: 'all'
+      rootData: pickerRoot.data,
+      searchDepth: 'all',
+      selectedLocale: initialLocale,
+      treeItems: pickerRoot.treeItems
     })
   )
+  const selectedLocale = useAtomValue(explorer.selectedLocale)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -71,6 +82,8 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
           <ExplorerHeader
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            navigate
+            locale={selectedLocale}
           />
           <ExplorerPickerContent
             explorer={explorer}

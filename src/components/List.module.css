@@ -1,4 +1,4 @@
-.ListItem {
+.ListItem.ListItem {
   flex-direction: column;
   align-items: stretch;
   gap: 0;
@@ -8,14 +8,47 @@
 .ListItem-header {
   align-items: center;
   display: flex;
-  gap: 8px;
-  min-height: 26px;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 12px;
+}
+
+.ListItem-header[data-action] {
+  width: 100%;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 0;
+  color: inherit;
+  font-weight: inherit;
+  line-height: normal;
+  text-align: left;
+}
+
+.ListItem-header[data-action][data-focus-visible] {
+  outline-offset: -2px;
+}
+
+.ListItem[data-selected] {
+  background: var(--alinea-muted);
+  color: var(--alinea-fg);
+}
+
+.ListItem[data-selected] .ListItem-header[data-action] {
+  --alinea-button-hovered: var(--alinea-muted-hover);
+}
+
+.ListItem[data-selected] .ListItemVisual {
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
 }
 
 .ListItem-content {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
+  flex-direction: column;
   flex-grow: 1;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -29,11 +62,121 @@
 
 .ListItem-inner {
   flex-grow: 1;
-  padding: 10px;
+  padding: 0 12px 10px;
+}
+
+.ListItem[data-has-leading] .ListItem-inner {
+  padding-left: 50px;
 }
 
 .ListItem-header + .ListItem-inner {
-  padding-top: 4px;
+  padding-top: 0;
+}
+
+.ListItemVisual {
+  align-items: center;
+  background: var(--alinea-bg-muted);
+  border-radius: 8px;
+  color: var(--alinea-fg-muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 16px;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.ListItemVisual [data-slot='icon'] {
+  height: 14px;
+  width: 14px;
+}
+
+.ListItemTitle,
+.ListItemDescription {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ListItemTitle {
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.ListItemDescription {
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.ListItemStatus {
+  --alinea-list-status-color: var(--alinea-fg-subtle);
+
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--alinea-list-status-color);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ListItemStatus::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--alinea-list-status-color);
+  content: '';
+}
+
+.ListItemStatus[data-tone='accent'] {
+  --alinea-list-status-color: var(--alinea-primary-subtle-fg);
+}
+
+.ListItemStatus[data-tone='positive'] {
+  --alinea-list-status-color: var(--alinea-status-published-fg);
+}
+
+.ListItemStatus[data-tone='warning'] {
+  --alinea-list-status-color: var(--alinea-warning-subtle-fg);
+}
+
+.ListItemStatus[data-tone='danger'] {
+  --alinea-list-status-color: var(--alinea-danger-subtle-fg);
+}
+
+.ListEmpty {
+  min-height: 52px;
+  align-items: center;
+  box-sizing: border-box;
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.ListEmpty-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ListEmpty-title {
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.ListEmpty-description {
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .ListLabel {

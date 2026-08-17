@@ -1,5 +1,5 @@
 import {NumberField as RacNumberField} from '#/components.js'
-import {useField, useFieldError, useFieldOptions} from '#/dashboard/store.js'
+import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
 import {NumberField} from '#/field/number.js'
 
 export interface NumberFieldViewProps {

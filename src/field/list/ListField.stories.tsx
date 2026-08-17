@@ -1,9 +1,12 @@
 import {Field} from '#/core/Field.js'
 import {createId} from '#/core/Id.js'
 import type {ListRow} from '#/core/ListRow.js'
-import {Type, type, type Type as TypeInstance} from '#/core/Type.js'
+import {Type, type} from '#/core/Type.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
-import {DashboardScopeInternal, EditorScope} from '#/dashboard/hooks.js'
+import {EntryEditor} from '#/dashboard/atoms/editor.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {EditorScope} from '#/dashboard/hooks.js'
+import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {
   IcOutlineGridView,
   IcRoundCode,
@@ -12,7 +15,6 @@ import {
   IcRoundNorthEast,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {Dashboard, DashboardEditor, ReactiveNode} from '#/dashboard/store.js'
 import {code} from '#/field/code.js'
 import {date} from '#/field/date.js'
 import {list} from '#/field/list.js'
@@ -20,8 +22,7 @@ import {number} from '#/field/number.js'
 import {path} from '#/field/path.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
-import {atom, type Atom} from 'jotai'
-import type {ComponentType, CSSProperties} from 'react'
+import type {CSSProperties} from 'react'
 import {useMemo} from 'react'
 import {views} from '../views.js'
 import {ListFieldView} from './ListField.view.js'
@@ -245,31 +246,21 @@ const storyStyle: CSSProperties = {
   padding: 24
 }
 
-interface StoryDashboard {
-  view(key: string): Atom<ComponentType | undefined>
-}
-
-const dashboard = {
-  view(key) {
-    return atom(() => views[key])
-  }
-} satisfies StoryDashboard as unknown as Dashboard
-
 export function Example() {
   const editor = useMemo(() => {
     const node = new ReactiveNode(Type.initialValue(pageType) as object)
-    return new DashboardEditor(dashboard, pageType as TypeInstance, node)
+    return new EntryEditor(pageType, node)
   }, [])
   const sections = Field.isField(pageType.sections) ? pageType.sections : null
   if (!sections) return null
   return (
-    <DashboardScopeInternal dashboard={dashboard}>
+    <StoryProvider views={views}>
       <EditorScope editor={editor}>
         <div style={storyStyle}>
           <ListFieldView field={sections} />
         </div>
       </EditorScope>
-    </DashboardScopeInternal>
+    </StoryProvider>
   )
 }
 

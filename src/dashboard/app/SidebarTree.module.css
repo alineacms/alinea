@@ -7,6 +7,13 @@
   height: 100%;
 }
 
+.SidebarTree-entryLink {
+  display: block;
+  width: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
 .SidebarTree-tree :global(.react-aria-DropIndicator) {
   position: relative;
   height: 0;
@@ -145,11 +152,11 @@
 }
 
 .SidebarTree-item.is-parentSelected[data-hovered]:not([data-selected]):not(
-    .SidebarTree-item.is-archived
-  ),
+  .SidebarTree-item.is-archived
+),
 .SidebarTree-item.is-parentSelected[data-hovered]:not([data-selected]):not(
-    .SidebarTree-item.is-unpublished
-  ) {
+  .SidebarTree-item.is-unpublished
+) {
   background: var(--alinea-selected);
   border-radius: 0;
 }

@@ -19,29 +19,39 @@ import {
   ListRowSettingsButton,
   MenuSeparator,
   Popover,
+  Select,
+  SelectItem,
   TextField
 } from '#/components.js'
+import type {Config} from '#/core/Config.js'
+import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
+import {getType, getWorkspace} from '#/core/Internal.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
+import {Root} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
+import {linkEntryAtoms, type LinkEntrySummary} from '#/dashboard/atoms/link.js'
 import {
   ExternalLinkPicker,
   type ExternalLinkValue
 } from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
-import {LinkPicker} from '#/dashboard/app/LinkPicker.js'
-import {nav} from '#/dashboard/DashboardNav.js'
+import {LinkPicker, type LinkPickerOptions} from '#/dashboard/app/LinkPicker.js'
+import {nav} from '#/dashboard/atoms/nav.js'
 import {
-  useDashboard,
   useEntry,
   useField,
   useFieldNode,
   useFieldOptions,
-  useNodes
+  useGraph,
+  useNodes,
+  useOptionalEntryAtoms
 } from '#/dashboard/hooks.js'
 import {
   IcRoundAttachFile,
@@ -52,19 +62,13 @@ import {
   IcRoundOpenInNew,
   IcRoundPanorama
 } from '#/dashboard/icons.js'
-import {
-  type DashboardEntry,
-  type DashboardEntryData,
-  type ExplorerOptions,
-  ReactiveNode
-} from '#/dashboard/store.js'
 import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
-import type {EntryPickerOptions} from '#/picker/entry.js'
+import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
-import {Fragment, useMemo, useRef, useState} from 'react'
+import {Fragment, useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
@@ -163,28 +167,17 @@ interface EntryRowProps {
 }
 
 function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
-  const dashboard = useDashboard()
-  const entry = dashboard.entries(entryId)
-  const {pending, data, error} = useAtomValue(entry.data)
-  if (data)
+  const state = useLinkEntryState(entryId)
+  if (state.state === 'hasData' && state.data)
     return (
       <LoadedEntryRow
-        entry={data}
+        entry={state.data}
         hasFields={hasFields}
         image={image}
         textOnly={textOnly}
       />
     )
-  if (error)
-    return (
-      <MissingEntryRow
-        entryId={entryId}
-        hasFields={hasFields}
-        image={image}
-        textOnly={textOnly}
-      />
-    )
-  if (!pending)
+  if (state.state !== 'loading')
     return (
       <MissingEntryRow
         entryId={entryId}
@@ -197,10 +190,14 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
     <EntryLoadingRow
       hasFields={hasFields}
       image={image}
-      pending
+      pending={true}
       textOnly={textOnly}
     />
   )
+}
+
+function useLinkEntryState(entryId: string) {
+  return useAtomValue(linkEntryAtoms(entryId))
 }
 
 interface EntryLoadingRowProps {
@@ -269,7 +266,7 @@ function EntryLoadingRow({
 }
 
 interface LoadedEntryRowProps {
-  entry: DashboardEntryData
+  entry: LinkEntrySummary
   hasFields?: boolean
   image?: boolean
   textOnly?: boolean
@@ -281,23 +278,16 @@ function LoadedEntryRow({
   image,
   textOnly
 }: LoadedEntryRowProps) {
-  const label = useAtomValue(entry.label)
-  const parentIds = useAtomValue(entry.parentIds)
-  const [parentsPending, parents] = useAtomValue(entry.parentsState)
   return (
     <span className={styles.LinkFieldView.label()}>
       {image && !textOnly && (
         <EntryRowImage entry={entry} hasFields={hasFields} />
       )}
       <span className={styles.LinkFieldView.labelText()}>
-        <span className={styles.LinkFieldView.title()}>{label}</span>
-        {(parentsPending && parents === undefined && parentIds.length > 0) ||
-        (parents && parents.length > 0) ? (
+        <span className={styles.LinkFieldView.title()}>{entry.title}</span>
+        {entry.parents.length > 0 ? (
           <span className={styles.LinkFieldView.meta()}>
-            <EntryParents
-              loading={parentsPending && parents === undefined}
-              parents={parents ?? []}
-            />
+            <EntryParents parents={entry.parents} />
           </span>
         ) : null}
       </span>
@@ -306,28 +296,18 @@ function LoadedEntryRow({
 }
 
 interface EntryRowImageProps {
-  entry: DashboardEntryData
+  entry: LinkEntrySummary
   hasFields?: boolean
 }
 
 function EntryRowImage({entry, hasFields}: EntryRowImageProps) {
-  const {pending, data: fileInfo} = useAtomValue(entry.fileInfoState)
-  if (fileInfo?.preview) {
+  if (entry.preview) {
     return (
       <img
         alt=""
         className={styles.LinkFieldView.image()}
         data-has-fields={hasFields ? 'true' : undefined}
-        src={fileInfo.preview}
-      />
-    )
-  }
-  if (pending) {
-    return (
-      <span
-        className={styles.LinkFieldView.imagePlaceholder()}
-        data-has-fields={hasFields ? 'true' : undefined}
-        aria-hidden="true"
+        src={entry.preview}
       />
     )
   }
@@ -350,60 +330,18 @@ function UrlRow({node, textOnly}: RowLayerProps) {
 }
 
 interface EntryParentsProps {
-  loading: boolean
-  parents: Array<DashboardEntry>
+  parents: LinkEntrySummary['parents']
 }
 
-function EntryParents({loading, parents}: EntryParentsProps) {
-  if (loading) return <EntryParentsLoading />
+function EntryParents({parents}: EntryParentsProps) {
   return (
     <>
       {parents.map((parent, index) => (
-        <EntryParentLabel
-          key={parent.id}
-          parent={parent}
-          suffix={index < parents.length - 1 ? ' / ' : ''}
-        />
+        <span key={parent.id}>
+          {parent.title}
+          {index < parents.length - 1 ? ' / ' : ''}
+        </span>
       ))}
-    </>
-  )
-}
-
-function EntryParentsLoading() {
-  return (
-    <>
-      <span
-        className={styles.LinkFieldView.skeleton({wide: true})}
-        aria-hidden="true"
-      />
-      {' / '}
-      <span className={styles.LinkFieldView.skeleton()} aria-hidden="true" />
-    </>
-  )
-}
-
-interface EntryParentLabelProps {
-  parent: DashboardEntry
-  suffix: string
-}
-
-function EntryParentLabel({parent, suffix}: EntryParentLabelProps) {
-  const {data} = useAtomValue(parent.data)
-  if (!data) return null
-  return <LoadedEntryParentLabel parent={data} suffix={suffix} />
-}
-
-interface LoadedEntryParentLabelProps {
-  parent: DashboardEntryData
-  suffix: string
-}
-
-function LoadedEntryParentLabel({parent, suffix}: LoadedEntryParentLabelProps) {
-  const label = useAtomValue(parent.label)
-  return (
-    <>
-      {label}
-      {suffix}
     </>
   )
 }
@@ -496,11 +434,13 @@ function LinkPickerAction({
   type,
   value
 }: LinkPickerActionProps) {
-  const dashboard = useDashboard()
   const currentEntry = useEntry()
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const config = useAtomValue(configAtom)
+  const selectedWorkspace = currentEntry?.workspace
+  const selectedRoot = currentEntry?.root
+  const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const resolved = useResolvedEntryPickerOptions(options, type)
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -515,6 +455,7 @@ function LinkPickerAction({
           {children}
         </Button>
         <ExternalLinkPicker
+          key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
           selectionMode="single"
           submitLabel={value ? 'Save link' : undefined}
@@ -523,9 +464,6 @@ function LinkPickerAction({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
   const childLocation =
     options.pickChildren && currentEntry
       ? {
@@ -541,16 +479,18 @@ function LinkPickerAction({
     selectedWorkspace && fallbackRoot
       ? {workspace: selectedWorkspace, root: fallbackRoot}
       : undefined
-  const location = childLocation
-    ? childLocation
-    : typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
+  const location = childLocation ?? resolved.location ?? fallbackLocation
+  const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const pickerProps: ExplorerOptions = {
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
+  const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    limitLocations: options.limitLocations,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -579,6 +519,7 @@ function LinkPickerAction({
         </Button>
         <ImagePicker
           {...pickerProps}
+          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -596,7 +537,10 @@ function LinkPickerAction({
       >
         {children}
       </Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker
+        {...pickerProps}
+        key={entryPickerOptionsKey(location, condition)}
+      />
     </DialogTrigger>
   )
 }
@@ -611,11 +555,13 @@ function LinkPickerDialog({
   type,
   value
 }: LinkPickerDialogProps) {
-  const dashboard = useDashboard()
   const currentEntry = useEntry()
-  const selectedWorkspace = useAtomValue(dashboard.selectedWorkspace)
-  const selectedRoot = useAtomValue(dashboard.selectedRoot)
-  const selectedMediaRoot = useAtomValue(dashboard.selectedMediaRoot)
+  const config = useAtomValue(configAtom)
+  const selectedWorkspace = currentEntry?.workspace
+  const selectedRoot = currentEntry?.root
+  const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
+  const options = picker.options as Partial<EntryPickerOptions>
+  const resolved = useResolvedEntryPickerOptions(options, type)
 
   function handlePick(link: LinkFieldRow) {
     onPick(link)
@@ -627,6 +573,7 @@ function LinkPickerDialog({
       <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
         <Button style={{display: 'none'}}>Edit link</Button>
         <ExternalLinkPicker
+          key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
           selectionMode="single"
           submitLabel={value ? 'Save link' : undefined}
@@ -635,9 +582,6 @@ function LinkPickerDialog({
       </DialogTrigger>
     )
   }
-  const options = picker.options as Partial<EntryPickerOptions>
-  const condition =
-    typeof options.condition === 'function' ? undefined : options.condition
   const childLocation =
     options.pickChildren && currentEntry
       ? {
@@ -653,16 +597,18 @@ function LinkPickerDialog({
     selectedWorkspace && fallbackRoot
       ? {workspace: selectedWorkspace, root: fallbackRoot}
       : undefined
-  const location = childLocation
-    ? childLocation
-    : typeof options.location === 'function'
-      ? fallbackLocation
-      : (options.location ?? fallbackLocation)
+  const location = childLocation ?? resolved.location ?? fallbackLocation
+  const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const pickerProps: ExplorerOptions = {
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
+  const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    limitLocations: options.limitLocations,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -686,6 +632,7 @@ function LinkPickerDialog({
         <Button style={{display: 'none'}}>Edit link</Button>
         <ImagePicker
           {...pickerProps}
+          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -694,9 +641,68 @@ function LinkPickerDialog({
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Edit link</Button>
-      <LinkPicker {...pickerProps} />
+      <LinkPicker
+        {...pickerProps}
+        key={entryPickerOptionsKey(location, condition)}
+      />
     </DialogTrigger>
   )
+}
+
+interface ResolvedEntryPickerOptions {
+  condition: Filter | undefined
+  location: EditorLocation | undefined
+}
+
+function useResolvedEntryPickerOptions(
+  options: Partial<EntryPickerOptions>,
+  type: PickerType
+): ResolvedEntryPickerOptions {
+  const entry = useEntry()
+  const graph = useGraph()
+  const {condition: conditionOption, location: locationOption} = options
+  const [resolved, setResolved] = useState<ResolvedEntryPickerOptions>(() => ({
+    condition:
+      typeof conditionOption === 'function' ? undefined : conditionOption,
+    location: typeof locationOption === 'function' ? undefined : locationOption
+  }))
+
+  useEffect(() => {
+    let active = true
+    if (type === 'url' || !entry) {
+      setResolved({condition: undefined, location: undefined})
+      return () => {
+        active = false
+      }
+    }
+    const info = {entry, graph}
+    const condition =
+      typeof conditionOption === 'function'
+        ? conditionOption(info)
+        : conditionOption
+    const location =
+      typeof locationOption === 'function'
+        ? locationOption(info)
+        : locationOption
+    void Promise.all([condition, location]).then(
+      ([nextCondition, nextLocation]) => {
+        if (active)
+          setResolved({condition: nextCondition, location: nextLocation})
+      }
+    )
+    return () => {
+      active = false
+    }
+  }, [conditionOption, entry, graph, locationOption, type])
+
+  return resolved
+}
+
+function entryPickerOptionsKey(
+  location: EditorLocation | undefined,
+  condition: Filter | undefined
+): string {
+  return JSON.stringify([location ?? null, condition ?? null])
 }
 
 function externalLinkValue(
@@ -716,6 +722,15 @@ function initialSelection(
 ): Array<string> {
   if (value && '_entry' in value) return [value._entry]
   return selection.flatMap(row => ('_entry' in row ? [row._entry] : []))
+}
+
+function mediaRoot(config: Config, workspaceName?: string): string | undefined {
+  if (!workspaceName) return undefined
+  const workspace = config.workspaces[workspaceName]
+  if (!workspace) return undefined
+  return Object.entries(getWorkspace(workspace).roots).find(([, root]) =>
+    Root.isMediaRoot(root)
+  )?.[0]
 }
 
 function insertIndex(rowIndex: number, position: 'before' | 'after'): number {
@@ -939,12 +954,72 @@ function EntryLinkSuffixField({
   if (value[Reference.type] !== 'entry') return null
   return (
     <TextField
-      description="For example: #id"
+      description="E.g. ?s=search"
       isDisabled={isDisabled}
       label="URL suffix"
       onChange={next => setSuffix(next || undefined)}
       value={suffix ?? ''}
     />
+  )
+}
+
+interface EntryAnchorFieldProps {
+  node: ReactiveNode<LinkFieldRow>
+  value: LinkFieldRow
+}
+
+function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  const setAnchor = useSetAtom(node.field('_anchor'))
+  if (value[Reference.type] !== 'entry') return null
+  return (
+    <EntryAnchorFieldInner
+      anchor={anchor}
+      entryId={value._entry}
+      onChange={setAnchor}
+    />
+  )
+}
+
+function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
+  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  if (value[Reference.type] !== 'entry' || !anchor) return null
+  return <Badge size="small">#{anchor}</Badge>
+}
+
+interface EntryAnchorFieldInnerProps {
+  anchor?: string
+  entryId: string
+  onChange(value: string | undefined): void
+}
+
+function EntryAnchorFieldInner({
+  anchor,
+  entryId,
+  onChange
+}: EntryAnchorFieldInnerProps) {
+  const state = useLinkEntryState(entryId)
+  const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
+  return (
+    <Select
+      items={anchors}
+      label="Anchor"
+      onChange={next => onChange(next === null ? undefined : String(next))}
+      value={anchor ?? null}
+    >
+      {item => (
+        <SelectItem id={item.id} textValue={item.label ?? `#${item.id}`}>
+          <span className={styles.LinkFieldView.anchorOption()}>
+            <span className={styles.LinkFieldView.anchorOption.label()}>
+              {item.label ?? `#${item.id}`}
+            </span>
+            <span className={styles.LinkFieldView.anchorOption.location()}>
+              {item.fieldLabel ?? item.fieldPath}
+            </span>
+          </span>
+        </SelectItem>
+      )}
+    </Select>
   )
 }
 
@@ -990,36 +1065,14 @@ function EntryLinkMetaLabel({
   customLabel,
   entryId
 }: EntryLinkMetaLabelProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
-  if (!data) {
+  const state = useLinkEntryState(entryId)
+  if (state.state !== 'hasData' || !state.data) {
     return <ResolvedLinkMetaLabel className={className} label={customLabel} />
   }
   return (
-    <LoadedEntryLinkMetaLabel
-      className={className}
-      customLabel={customLabel}
-      data={data}
-    />
-  )
-}
-
-interface LoadedEntryLinkMetaLabelProps {
-  className: string
-  customLabel?: string
-  data: DashboardEntryData
-}
-
-function LoadedEntryLinkMetaLabel({
-  className,
-  customLabel,
-  data
-}: LoadedEntryLinkMetaLabelProps) {
-  const fallbackLabel = useAtomValue(data.label)
-  return (
     <ResolvedLinkMetaLabel
       className={className}
-      label={customLabel ?? fallbackLabel}
+      label={customLabel ?? state.data.title}
     />
   )
 }
@@ -1074,33 +1127,16 @@ interface EntryLinkImagePreviewProps {
 }
 
 function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
-  if (!data)
+  const state = useLinkEntryState(entryId)
+  if (state.state !== 'hasData' || !state.data?.preview)
     return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
-  return <LoadedEntryLinkImagePreview entry={data} />
-}
-
-interface LoadedEntryLinkImagePreviewProps {
-  entry: DashboardEntryData
-}
-
-function LoadedEntryLinkImagePreview({
-  entry
-}: LoadedEntryLinkImagePreviewProps) {
-  const {pending, data: fileInfo} = useAtomValue(entry.fileInfoState)
-  if (fileInfo?.preview) {
-    return (
-      <img
-        alt=""
-        className={styles.LinkFieldView.previewImage()}
-        src={fileInfo.preview}
-      />
-    )
-  }
-  if (pending)
-    return <span className={styles.LinkFieldView.previewImagePlaceholder()} />
-  return null
+  return (
+    <img
+      alt=""
+      className={styles.LinkFieldView.previewImage()}
+      src={state.data.preview}
+    />
+  )
 }
 
 interface EntryLinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
@@ -1115,36 +1151,27 @@ function EntryLinkTypeBadge({
   fallbackLabel,
   ...props
 }: EntryLinkTypeBadgeProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
-  if (!data) {
+  const state = useLinkEntryState(entryId)
+  const config = useAtomValue(configAtom)
+  const entry = state.state === 'hasData' ? state.data : undefined
+  const type = entry ? config.schema[entry.type] : undefined
+  if (!type) {
     return (
       <Badge {...props} icon={fallbackIcon} size="small">
         {fallbackLabel}
       </Badge>
     )
   }
-  return <LoadedEntryTypeBadge {...props} entry={data} />
-}
-
-interface LoadedEntryTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
-  entry: DashboardEntryData
-}
-
-function LoadedEntryTypeBadge({
-  className,
-  entry,
-  ...props
-}: LoadedEntryTypeBadgeProps) {
-  const type = useAtomValue(entry.type)
   return (
     <Badge
       {...props}
-      className={styles.LinkFieldView.type(styler.merge({className}))}
-      icon={type.icon || IcRoundLink}
+      className={styles.LinkFieldView.type(
+        styler.merge({className: props.className})
+      )}
+      icon={getType(type).icon || IcRoundLink}
       size="small"
     >
-      {type.label}
+      {Type.label(type)}
     </Badge>
   )
 }
@@ -1162,45 +1189,11 @@ function EntryLinkLabelField({
   isDisabled,
   onChange
 }: EntryLinkLabelFieldProps) {
-  const dashboard = useDashboard()
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
-  if (data) {
-    return (
-      <LoadedEntryLinkLabelField
-        customLabel={customLabel}
-        data={data}
-        isDisabled={isDisabled}
-        onChange={onChange}
-      />
-    )
-  }
+  const state = useLinkEntryState(entryId)
   return (
     <ResolvedLinkLabelField
       customLabel={customLabel}
-      isDisabled={isDisabled}
-      onChange={onChange}
-    />
-  )
-}
-
-interface LoadedEntryLinkLabelFieldProps {
-  customLabel?: string
-  data: DashboardEntryData
-  isDisabled?: boolean
-  onChange: (value: string | undefined) => void
-}
-
-function LoadedEntryLinkLabelField({
-  customLabel,
-  data,
-  isDisabled,
-  onChange
-}: LoadedEntryLinkLabelFieldProps) {
-  const fallbackLabel = useAtomValue(data.label)
-  return (
-    <ResolvedLinkLabelField
-      customLabel={customLabel}
-      fallbackLabel={fallbackLabel}
+      fallbackLabel={state.state === 'hasData' ? state.data?.title : undefined}
       isDisabled={isDisabled}
       onChange={onChange}
     />
@@ -1269,10 +1262,9 @@ function EntryLinkRowActions({
   entryId,
   type
 }: EntryLinkRowActionsProps) {
-  const dashboard = useDashboard()
-  const route = useAtomValue(dashboard.route)
-  const {data} = useAtomValue(dashboard.entries(entryId).data)
-  if (!data) {
+  const scope = useOptionalEntryAtoms()
+  const state = useLinkEntryState(entryId)
+  if (state.state !== 'hasData' || !state.data) {
     return (
       <Button
         aria-label="Open link"
@@ -1285,29 +1277,10 @@ function EntryLinkRowActions({
       </Button>
     )
   }
-  return (
-    <LoadedEntryLinkRowActions
-      closeActions={closeActions}
-      entry={data}
-      locale={type === 'entry' ? route.locale : undefined}
-    />
-  )
-}
-
-interface LoadedEntryLinkRowActionsProps {
-  closeActions: () => void
-  entry: DashboardEntryData
-  locale?: string
-}
-
-function LoadedEntryLinkRowActions({
-  closeActions,
-  entry,
-  locale
-}: LoadedEntryLinkRowActionsProps) {
-  const workspace = useAtomValue(entry.workspaceKey)
-  const root = useAtomValue(entry.rootKey)
-  const href = `#${nav.entry(workspace, root, entry.entry.id, locale)}`
+  const entry = state.data
+  const locale =
+    type === 'entry' ? scope?.localeData.requestedLocale : undefined
+  const href = `#${nav.entry(entry.workspace, entry.root, entry.id, locale)}`
   return (
     <Button
       aria-label="Open link"
@@ -1358,6 +1331,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 node={node}
                 value={value}
               />
+              <EntryAnchorBadge node={node} value={value} />
             </ListRowBadges>
           </ListRowDrag>
           {!options.readOnly && (
@@ -1367,6 +1341,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                 <Popover placement="bottom right">
                   <ListRowSettings>
                     <LinkLabelField node={node} value={value} />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
                   <MenuSeparator />
@@ -1557,6 +1532,7 @@ function MultipleLinkRow({
                   node={node}
                   value={value}
                 />
+                <EntryAnchorBadge node={node} value={value} />
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
@@ -1569,6 +1545,7 @@ function MultipleLinkRow({
                       node={node}
                       value={value}
                     />
+                    <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField
                       isDisabled={readOnly}
                       node={node}
@@ -1667,7 +1644,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     : undefined
   const showFold = Boolean(selectedPicker?.fields)
   const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'} data-depth="muted">
+    <List aria-label={options.label || 'Link'}>
       {selectedValue && (
         <SingleLinkRow
           field={field}
@@ -1778,7 +1755,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
           dropIndicator?.index === 0 && dropIndicator.position === 'before'
         }
       />
-      <List aria-label={options.label || 'Links'} data-depth="muted">
+      <List aria-label={options.label || 'Links'}>
         {nodes.length > 0 && (
           <>
             {nodes.map((node, index) => {

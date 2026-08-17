@@ -1,9 +1,21 @@
 import {Button, Icon, Tree, TreeItem} from '#/components.js'
-import {assert} from '#/core/util/Assert.js'
+import {typeAtoms} from '#/dashboard/atoms/config.js'
+import {nav, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
+import type {
+  RootAtoms,
+  RootTreeItem,
+  RootTreeNode
+} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {type ComponentType, memo, useMemo} from 'react'
+import {
+  atom,
+  type Atom,
+  useAtom,
+  useAtomValue,
+  useSetAtom,
+  type WritableAtom
+} from 'jotai'
+import {memo, useMemo, useRef, useState, type ComponentType} from 'react'
 import {
   Collection,
   type Key,
@@ -20,25 +32,15 @@ import {
   LucideFolder,
   RiFlashlightFill
 } from '../icons.js'
-import {
-  Dashboard,
-  type DashboardLocaleSelection,
-  DashboardEntry,
-  DashboardEntryData,
-  type DashboardEntryTreeStatus,
-  DashboardRoot,
-  DashboardTree,
-  DashboardWorkspace,
-  createDashboardTreeSelection
-} from '../store/Dashboard.js'
-import css from './SidebarTree.module.css'
 import {LocaleMenu} from './LocaleMenu.js'
+import css from './SidebarTree.module.css'
 import {SidebarBody} from './ui/Sidebar.js'
 
 const styles = styler(css)
 
-interface SidebarTreeProps {
-  dashboard: Dashboard
+export interface SidebarTreeProps {
+  page: Page
+  root: RootAtoms
 }
 
 export interface SidebarTreeExplorerProps {
@@ -46,16 +48,10 @@ export interface SidebarTreeExplorerProps {
   disableDragAndDrop?: boolean
   onRootPress?: () => void
   onSelectionChange?: (keys: Selection) => void
-  root: DashboardRoot
+  root: RootAtoms
   rootSelected?: boolean
   selectedKeys?: Set<Key>
-  selectedLocale?: DashboardLocaleSelection
-  workspace: DashboardWorkspace
-}
-
-interface SidebarItemProps {
-  item: DashboardEntry
-  tree: DashboardTree
+  selectedLocale: WritableAtom<string | null, [string], unknown>
 }
 
 interface SidebarStatusDisplay {
@@ -65,138 +61,82 @@ interface SidebarStatusDisplay {
 }
 
 function sidebarStatus(
-  treeStatus: DashboardEntryTreeStatus
+  item: RootTreeItem,
+  locale: string | null
 ): SidebarStatusDisplay | undefined {
-  if (treeStatus.status === 'untranslated') {
+  if (locale && item.locale !== locale)
     return {
       icon: IcRoundTranslate,
       label: 'Untranslated',
       status: 'untranslated'
     }
-  }
-  if (treeStatus.status === 'archived') {
-    return {
-      icon: IcOutlineArchive,
-      label: 'Archived',
-      status: 'archived'
-    }
-  }
-  if (treeStatus.status === 'unpublished') {
-    return {
-      icon: RiFlashlightFill,
-      label: 'Unpublished',
-      status: 'unpublished'
-    }
-  }
-  if (treeStatus.status === 'draft') {
-    return {
-      icon: IcRoundEdit,
-      label: 'Draft',
-      status: 'draft'
-    }
-  }
-  return undefined
+  if (item.status === 'archived')
+    return {icon: IcOutlineArchive, label: 'Archived', status: 'archived'}
+  if (item.status === 'draft' && item.main)
+    return {icon: RiFlashlightFill, label: 'Unpublished', status: 'unpublished'}
+  if (item.status === 'draft')
+    return {icon: IcRoundEdit, label: 'Draft', status: 'draft'}
 }
 
-function affectedStatus(
-  ownStatus: DashboardEntryTreeStatus,
-  ancestorStatus: DashboardEntryTreeStatus | undefined
-) {
-  if (ancestorStatus?.status === 'archived') return ancestorStatus
-  if (ancestorStatus?.status === 'unpublished') return ancestorStatus
-  return ownStatus
+interface SidebarTreeItemProps {
+  entryLink?: (entry: RootTreeItem) => SidebarTreeLink
+  expandedKeys: Set<Key>
+  item: RootTreeNode
+  locale: string | null
+  root: SidebarTreeSource
+  selectedItem?: RootTreeItem
 }
 
-const SidebarItem = memo(function SidebarItem({item, tree}: SidebarItemProps) {
-  const {pending, data} = useAtomValue(item.data)
-  if (!data) return <SidebarLoadingItem item={item} pending={pending} />
-  return (
-    <SidebarLoadedItem item={item} data={data} tree={tree} pending={pending} />
-  )
-})
-
-interface SidebarLoadingItemProps {
-  item: DashboardEntry
-  pending: boolean
+interface SidebarTreeSource {
+  treeChildren(
+    locale: string | null,
+    parentId: string | null
+  ): Atom<Array<RootTreeNode>>
+  treeItem(locale: string | null, id: string): Atom<RootTreeItem>
 }
 
-function SidebarLoadingItem({item, pending}: SidebarLoadingItemProps) {
-  return (
-    <TreeItem
-      id={item.id}
-      textValue="Loading entry"
-      title="Loading entry"
-      icon={LucideFile}
-      label={
-        <span
-          className={styles.SidebarTree.itemSkeleton.label()}
-          aria-hidden="true"
-        />
-      }
-      className={styles.SidebarTree.item({loading: true})}
-      suffix={
-        pending ? (
-          <span
-            className={styles.SidebarTree.itemLoading()}
-            aria-hidden="true"
-          />
-        ) : undefined
-      }
-    />
-  )
-}
-
-interface SidebarLoadedItemProps {
-  item: DashboardEntry
-  data: DashboardEntryData
-  tree: DashboardTree
-  pending: boolean
-}
-
-const SidebarLoadedItem = memo(function SidebarLoadedItem({
+export const SidebarTreeItem = memo(function SidebarTreeItem({
+  entryLink,
+  expandedKeys,
   item,
-  data,
-  tree,
-  pending
-}: SidebarLoadedItemProps) {
-  const label = useAtomValue(data.label)
-  const isExpanded = useAtomValue(tree.isExpanded(item))
-  const status = useAtomValue(data.treeStatus)
-  const selectedAncestorStatus = useAtomValue(
-    useMemo(() => unwrap(tree.selectedAncestorStatus(item)), [item, tree])
-  )
-  const childItemsAtom = useMemo(() => tree.children(item), [item, tree])
-  const childItems = useAtomValue(childItemsAtom)
-  let icon = useAtomValue(data.icon)
-  const hasChildren = useAtomValue(data.hasChildren)
-  if (!icon) icon = hasChildren ? LucideFolder : LucideFile
-  const isLoadingChildren =
-    hasChildren && isExpanded && childItems === undefined
-  const displayStatus = sidebarStatus(status)
-  const rowStatus = affectedStatus(status, selectedAncestorStatus)
-  const isArchived = rowStatus.status === 'archived'
-  const isUnpublished = rowStatus.status === 'unpublished'
-
+  locale,
+  root,
+  selectedItem
+}: SidebarTreeItemProps) {
+  const data = useAtomValue(root.treeItem(locale, item.id))
+  const displayStatus = sidebarStatus(data, locale)
+  const configuredIcon = useAtomValue(typeAtoms(data.type)).icon
+  const selectedAncestor =
+    selectedItem && data.parents.includes(selectedItem.id)
+      ? selectedItem
+      : undefined
+  const selectedStatus = selectedAncestor
+    ? sidebarStatus(selectedAncestor, locale)
+    : undefined
+  const rowStatus =
+    selectedStatus?.status === 'archived' ||
+    selectedStatus?.status === 'unpublished'
+      ? selectedStatus
+      : displayStatus
+  const isArchived = rowStatus?.status === 'archived'
+  const isUnpublished = rowStatus?.status === 'unpublished'
+  const isUntranslated = displayStatus?.status === 'untranslated'
+  const link = entryLink?.(data)
   return (
     <TreeItem
       id={item.id}
-      textValue={label}
-      title={label}
-      hasChildItems={hasChildren}
-      icon={icon}
+      disableDragging={data.dragDisabled}
+      title={data.title}
+      hasChildItems={data.hasChildren}
+      icon={configuredIcon ?? (data.hasChildren ? LucideFolder : LucideFile)}
       className={styles.SidebarTree.item({
         archived: isArchived,
+        parentSelected: selectedAncestor !== undefined,
         unpublished: isUnpublished,
-        untranslated: status.status === 'untranslated',
-        parentSelected: selectedAncestorStatus !== undefined
+        untranslated: isUntranslated
       })}
       suffix={
-        isLoadingChildren || pending ? (
-          <span
-            className={styles.SidebarTree.itemLoading()}
-            aria-hidden="true"
-          />
-        ) : displayStatus ? (
+        displayStatus ? (
           <span
             className={styles.SidebarTree.status({
               [displayStatus.status]: true
@@ -209,176 +149,258 @@ const SidebarLoadedItem = memo(function SidebarLoadedItem({
           </span>
         ) : undefined
       }
+      label={
+        link ? (
+          <SidebarTreeEntryLink href={link.href} title={data.title} />
+        ) : undefined
+      }
     >
-      {isExpanded && childItems && (
-        <Collection items={childItems}>
-          {child => <SidebarItem item={child} tree={tree} />}
-        </Collection>
+      {expandedKeys.has(item.id) && (
+        <SidebarTreeChildren
+          entryLink={entryLink}
+          expandedKeys={expandedKeys}
+          locale={locale}
+          parentId={item.id}
+          root={root}
+          selectedItem={selectedItem}
+        />
       )}
     </TreeItem>
   )
 })
 
-const treeLayoutOptions = {
-  rowHeight: 32,
-  padding: 0,
-  gap: 0
+interface SidebarTreeEntryLinkProps {
+  href: string
+  title: string
 }
 
-interface SidebarTreeBodyProps {
-  ariaLabel?: string
-  disableDragAndDrop?: boolean
-  onSelectionChange?: (keys: Selection) => void
-  root: DashboardRoot
-  selectedKeys?: Set<Key>
-  tree: DashboardTree
+interface SidebarTreeLink {
+  href: string
 }
 
-interface SidebarTreeContentProps extends SidebarTreeBodyProps {
-  onRootPress?: () => void
-  root: DashboardRoot
-  rootSelected?: boolean
-  selectedLocale?: DashboardLocaleSelection
-}
-
-const SidebarTreeBody = memo(function SidebarTreeBody({
-  ariaLabel = 'Content tree',
-  disableDragAndDrop = false,
-  onSelectionChange,
-  root,
-  selectedKeys,
-  tree
-}: SidebarTreeBodyProps) {
-  const [treeSelectedKeys, setTreeSelectedKeys] = useAtom(tree.selectedKeys)
-  const [expandedKeys, setExpandedKeys] = useAtom(tree.expandedKeys)
-  const rootChildren = useAtomValue(root.children)
-  const items = rootChildren.map(id => tree.entryItems(id))
-  const dragDisabled = useAtomValue(tree.dragDisabled)
-  const getItems = useSetAtom(tree.getItems)
-  const getDropOperation = useSetAtom(tree.getDropOperation)
-  const onInsert = useSetAtom(tree.onInsert)
-  const onItemDrop = useSetAtom(tree.onItemDrop)
-  const onMove = useSetAtom(tree.onMove)
-  const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
-    acceptedDragTypes: tree.acceptedDragTypes,
-    getItems,
-    isDisabled: disableDragAndDrop || dragDisabled,
-    getDropOperation,
-    onInsert,
-    onItemDrop,
-    onMove
-  })
-  const controlledSelection =
-    selectedKeys !== undefined && onSelectionChange !== undefined
+function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
   return (
-    <div className={styles.SidebarTree.tree.viewport()}>
-      <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
-        <Tree
-          aria-label={ariaLabel}
-          items={items}
-          dragAndDropHooks={dragAndDropHooks}
-          selectionMode="single"
-          selectionBehavior="replace"
-          disallowEmptySelection={!controlledSelection}
+    <a className={styles.SidebarTree.entryLink()} href={`#${href}`}>
+      {title}
+    </a>
+  )
+}
+
+interface SidebarTreeChildrenProps {
+  entryLink?: (entry: RootTreeItem) => SidebarTreeLink
+  expandedKeys: Set<Key>
+  locale: string | null
+  parentId: string
+  root: SidebarTreeSource
+  selectedItem?: RootTreeItem
+}
+
+const SidebarTreeChildren = memo(function SidebarTreeChildren({
+  entryLink,
+  expandedKeys,
+  locale,
+  parentId,
+  root,
+  selectedItem
+}: SidebarTreeChildrenProps) {
+  const children = useAtomValue(root.treeChildren(locale, parentId))
+  return (
+    <Collection items={children} dependencies={[children]}>
+      {child => (
+        <SidebarTreeItem
+          entryLink={entryLink}
           expandedKeys={expandedKeys}
-          onExpandedChange={setExpandedKeys}
-          selectedKeys={controlledSelection ? selectedKeys : treeSelectedKeys}
-          onSelectionChange={
-            controlledSelection ? onSelectionChange : setTreeSelectedKeys
-          }
-        >
-          {item => <SidebarItem item={item} tree={tree} />}
-        </Tree>
-      </Virtualizer>
-    </div>
+          item={child}
+          locale={locale}
+          root={root}
+          selectedItem={selectedItem}
+        />
+      )}
+    </Collection>
   )
 })
 
-function SidebarTreeRootButton({
-  onPress,
-  root,
-  selected,
-  selectedLocale
-}: {
-  onPress?: () => void
-  root: DashboardRoot
-  selected: boolean
-  selectedLocale?: DashboardLocaleSelection
-}) {
-  const label = useAtomValue(root.label)
-  const icon = useAtomValue(root.icon)
-  const i18n = useAtomValue(root.i18n)
+const treeLayoutOptions = {rowHeight: 32, padding: 0, gap: 0}
+
+function equalStringSets(left: Set<string>, right: Set<string>): boolean {
   return (
-    <div className={styles.SidebarTree.rootButton({selected})}>
-      <Button
-        appearance="plain"
-        className={styles.SidebarTree.rootButton.action()}
-        icon={icon}
-        onPress={onPress}
-      >
-        <span className={styles.SidebarTree.rootButton.label()}>{label}</span>
-      </Button>
-      {i18n && i18n.locales.length > 0 && (
-        <span className={styles.SidebarTree.rootButton.locale()}>
-          <LocaleMenu root={root} selectedLocale={selectedLocale} />
-        </span>
-      )}
-    </div>
+    left.size === right.size &&
+    Array.from(left).every(value => right.has(value))
   )
 }
 
-function SidebarTreeContent({
-  onRootPress,
-  root,
-  rootSelected = false,
-  selectedLocale,
-  ...bodyProps
-}: SidebarTreeContentProps) {
+function useSelectedParentIds(selectedItem: RootTreeItem | undefined) {
+  const selected = useRef<{
+    id: string | undefined
+    parents: Set<string>
+  }>()
+  if (!selected.current || selected.current.id !== selectedItem?.id) {
+    selected.current = {
+      id: selectedItem?.id,
+      parents: new Set(selectedItem?.parents ?? [])
+    }
+  }
+  return selected.current.parents
+}
+
+export const SidebarTree = memo(function SidebarTree({
+  page,
+  root
+}: SidebarTreeProps) {
+  const {locale} = page
+  const rootItems = useAtomValue(root.treeChildren(locale, null))
+  const selectedItem = useAtomValue(root.selectedTreeItem(locale, page.entry))
+  const label = useAtomValue(root.label)
+  const icon = useAtomValue(root.icon)
+  const i18n = useAtomValue(root.i18n)
+  const setRoute = useSetAtom(routeAtom)
+  const [expandedIds, setExpandedIds] = useAtom(root.treeExpandedKeys)
+  const [collapsed, setCollapsed] = useAtom(root.treeCollapsedKeys)
+  const selectedParentIds = useSelectedParentIds(selectedItem)
+  const expandedKeys = useMemo<Set<Key>>(() => {
+    const result = new Set<Key>(expandedIds)
+    const collapsedKeys =
+      collapsed.selectedId === selectedItem?.id ? collapsed.keys : undefined
+    for (const parentId of selectedParentIds) {
+      if (!collapsedKeys?.has(parentId)) result.add(parentId)
+    }
+    return result
+  }, [collapsed, expandedIds, selectedItem, selectedParentIds])
+  const selectedKeys = useMemo(
+    () => (page.entry ? new Set<Key>([page.entry]) : new Set<Key>()),
+    [page.entry]
+  )
+  const dragDisabled = useAtomValue(root.dragDisabled)
+  const getItems = useSetAtom(root.getItems)
+  const getDropOperation = useSetAtom(root.getDropOperation)
+  const drop = useSetAtom(root.onDrop)
+  const move = useSetAtom(root.onMove)
+  const {dragAndDropHooks} = useDragAndDrop<RootTreeNode>({
+    acceptedDragTypes: root.acceptedDragTypes,
+    getItems,
+    isDisabled: dragDisabled,
+    getDropOperation,
+    onInsert: event => drop(event, locale),
+    onItemDrop: event => drop(event, locale),
+    onMove: event => move(event, locale)
+  })
+
   return (
     <SidebarBody>
       <div className={styles.SidebarTree.tree()}>
         <div className={styles.SidebarTree.root()}>
-          <SidebarTreeRootButton
-            root={root}
-            selected={rootSelected}
-            selectedLocale={selectedLocale}
-            onPress={onRootPress}
-          />
+          <div
+            className={styles.SidebarTree.rootButton({selected: !page.entry})}
+          >
+            <Button
+              appearance="plain"
+              aria-current={!page.entry ? 'page' : undefined}
+              className={styles.SidebarTree.rootButton.action()}
+              icon={icon}
+              onPress={() =>
+                setRoute({
+                  workspace: root.workspace,
+                  root: root.key,
+                  locale: page.locale ?? undefined
+                })
+              }
+            >
+              <span className={styles.SidebarTree.rootButton.label()}>
+                {label}
+              </span>
+            </Button>
+            {i18n && i18n.locales.length > 0 && (
+              <span className={styles.SidebarTree.rootButton.locale()}>
+                <LocaleMenu
+                  root={root}
+                  locale={locale}
+                  onLocaleChange={locale =>
+                    setRoute({
+                      workspace: root.workspace,
+                      root: root.key,
+                      entry: page.entry,
+                      locale
+                    })
+                  }
+                />
+              </span>
+            )}
+          </div>
         </div>
-        <SidebarTreeBody root={root} {...bodyProps} />
+        <div className={styles.SidebarTree.tree.viewport()}>
+          <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+            <Tree
+              aria-label="Content tree"
+              items={rootItems}
+              dependencies={[expandedKeys]}
+              dragAndDropHooks={dragAndDropHooks}
+              selectionMode="single"
+              selectionBehavior="replace"
+              disallowEmptySelection={false}
+              expandedKeys={expandedKeys}
+              onExpandedChange={keys => {
+                const next = new Set([...keys].map(String))
+                setExpandedIds(current =>
+                  equalStringSets(current, next) ? current : next
+                )
+                setCollapsed(current => {
+                  const result = new Set(
+                    current.selectedId === selectedItem?.id ? current.keys : []
+                  )
+                  for (const id of next) result.delete(id)
+                  for (const id of selectedParentIds) {
+                    if (!next.has(id)) result.add(id)
+                  }
+                  const selectedId = selectedItem?.id
+                  return current.selectedId === selectedId &&
+                    equalStringSets(current.keys, result)
+                    ? current
+                    : {selectedId, keys: result}
+                })
+              }}
+              selectedKeys={selectedKeys}
+              onSelectionChange={keys => {
+                if (keys === 'all') return
+                const [entry] = keys
+                if (entry) {
+                  setExpandedIds(current => new Set(current).add(String(entry)))
+                  setRoute({
+                    workspace: root.workspace,
+                    root: root.key,
+                    entry: String(entry),
+                    locale: page.locale ?? undefined,
+                    view: 'edit'
+                  })
+                }
+              }}
+            >
+              {item => (
+                <SidebarTreeItem
+                  entryLink={entry => {
+                    const view =
+                      entry.type === 'MediaLibrary' ? undefined : 'edit'
+                    return {
+                      href: nav.entry(
+                        root.workspace,
+                        root.key,
+                        entry.id,
+                        page.locale,
+                        view
+                      )
+                    }
+                  }}
+                  expandedKeys={expandedKeys}
+                  item={item}
+                  locale={locale}
+                  root={root}
+                  selectedItem={selectedItem}
+                />
+              )}
+            </Tree>
+          </Virtualizer>
+        </div>
       </div>
     </SidebarBody>
-  )
-}
-
-export const SidebarTree = memo(function SidebarTree({
-  dashboard
-}: SidebarTreeProps) {
-  const workspace = useAtomValue(dashboard.currentWorkspace)
-  assert(workspace, 'No workspace selected')
-  const selectedWorkspace = workspace
-  const currentRoot = useAtomValue(dashboard.currentRoot)
-  const route = useAtomValue(dashboard.route)
-  const setRoute = useSetAtom(dashboard.route)
-  function onRootPress() {
-    if (!currentRoot) return
-    setRoute({
-      workspace: selectedWorkspace.key,
-      root: currentRoot.key,
-      locale: route.locale
-    })
-  }
-  return (
-    <>
-      {currentRoot && (
-        <SidebarTreeContent
-          root={currentRoot}
-          rootSelected={!route.entry}
-          tree={selectedWorkspace.tree}
-          onRootPress={onRootPress}
-        />
-      )}
-    </>
   )
 })
 
@@ -389,28 +411,98 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   onSelectionChange,
   root,
   rootSelected = false,
-  selectedKeys,
-  selectedLocale,
-  workspace
+  selectedKeys = new Set<Key>(),
+  selectedLocale
 }: SidebarTreeExplorerProps) {
-  const tree = useMemo(
-    () =>
-      new DashboardTree(workspace, createDashboardTreeSelection(), {
-        syncRouteExpansion: false
-      }),
-    [workspace]
+  const [locale, setLocale] = useAtom(selectedLocale)
+  const rootItems = useAtomValue(root.treeChildren(locale, null))
+  const label = useAtomValue(root.label)
+  const icon = useAtomValue(root.icon)
+  const i18n = useAtomValue(root.i18n)
+  const [expandedIdsAtom] = useState(() => atom(new Set<string>()))
+  const [expandedIds, setExpandedIds] = useAtom(expandedIdsAtom)
+  const selectedKey = selectedKeys.values().next().value
+  const selectedId = selectedKey === undefined ? undefined : String(selectedKey)
+  const selectedItem = useAtomValue(root.selectedTreeItem(locale, selectedId))
+  const expandedKeys = useMemo(
+    () => new Set<Key>([...expandedIds, ...(selectedItem?.parents ?? [])]),
+    [expandedIds, selectedItem]
   )
+  const dragDisabled = useAtomValue(root.dragDisabled)
+  const getItems = useSetAtom(root.getItems)
+  const getDropOperation = useSetAtom(root.getDropOperation)
+  const drop = useSetAtom(root.onDrop)
+  const move = useSetAtom(root.onMove)
+  const {dragAndDropHooks} = useDragAndDrop<RootTreeNode>({
+    acceptedDragTypes: root.acceptedDragTypes,
+    getItems,
+    isDisabled: disableDragAndDrop || dragDisabled,
+    getDropOperation,
+    onInsert: event => drop(event, locale),
+    onItemDrop: event => drop(event, locale),
+    onMove: event => move(event, locale)
+  })
   return (
-    <SidebarTreeContent
-      ariaLabel={ariaLabel}
-      disableDragAndDrop={disableDragAndDrop}
-      onRootPress={onRootPress}
-      onSelectionChange={onSelectionChange}
-      root={root}
-      rootSelected={rootSelected}
-      selectedKeys={selectedKeys}
-      selectedLocale={selectedLocale}
-      tree={tree}
-    />
+    <SidebarBody>
+      <div className={styles.SidebarTree.tree()}>
+        <div className={styles.SidebarTree.root()}>
+          <div
+            className={styles.SidebarTree.rootButton({selected: rootSelected})}
+          >
+            <Button
+              appearance="plain"
+              className={styles.SidebarTree.rootButton.action()}
+              icon={icon}
+              onPress={onRootPress}
+            >
+              <span className={styles.SidebarTree.rootButton.label()}>
+                {label}
+              </span>
+            </Button>
+            {i18n && i18n.locales.length > 0 && (
+              <span className={styles.SidebarTree.rootButton.locale()}>
+                <LocaleMenu
+                  root={root}
+                  locale={locale}
+                  onLocaleChange={setLocale}
+                />
+              </span>
+            )}
+          </div>
+        </div>
+        <div className={styles.SidebarTree.tree.viewport()}>
+          <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
+            <Tree
+              aria-label={ariaLabel}
+              items={rootItems}
+              dependencies={[expandedKeys]}
+              dragAndDropHooks={dragAndDropHooks}
+              selectionMode="single"
+              selectionBehavior="replace"
+              disallowEmptySelection={false}
+              expandedKeys={expandedKeys}
+              onExpandedChange={keys => {
+                const next = new Set([...keys].map(String))
+                setExpandedIds(current =>
+                  equalStringSets(current, next) ? current : next
+                )
+              }}
+              selectedKeys={selectedKeys}
+              onSelectionChange={onSelectionChange}
+            >
+              {item => (
+                <SidebarTreeItem
+                  expandedKeys={expandedKeys}
+                  item={item}
+                  locale={locale}
+                  root={root}
+                  selectedItem={selectedItem}
+                />
+              )}
+            </Tree>
+          </Virtualizer>
+        </div>
+      </div>
+    </SidebarBody>
   )
 })

@@ -24,7 +24,7 @@ import type {
   DashboardEntry,
   DashboardEntryData,
   DashboardExplorer
-} from '../store.js'
+} from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
 
@@ -39,11 +39,13 @@ const cardLayoutOptions: GridLayoutOptions = {
 }
 
 interface ExplorerCardItemProps {
+  breadcrumbs: boolean
   entry: DashboardEntry
   showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
+  breadcrumbs,
   entry,
   showSelectionControls
 }: ExplorerCardItemProps) {
@@ -57,6 +59,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
     )
   return (
     <ExplorerCardLoadedItem
+      breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
       showSelectionControls={showSelectionControls}
@@ -104,12 +107,14 @@ function ExplorerCardLoadingItem({
 }
 
 interface ExplorerCardLoadedItemProps {
+  breadcrumbs: boolean
   entry: DashboardEntry
   data: DashboardEntryData
   showSelectionControls: boolean
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
+  breadcrumbs,
   entry,
   data,
   showSelectionControls
@@ -118,6 +123,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const hasChildren = useAtomValue(data.hasChildren)
+  const parents = useAtomValue(data.parents)
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -143,6 +149,9 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
+            parents={
+              breadcrumbs ? <ExplorerCardParents parents={parents} /> : null
+            }
             typeLabel={type.label}
           />
         )}
@@ -197,17 +206,10 @@ function ExplorerEntryCard({
 }
 
 interface ExplorerCardParentsProps {
-  loading: boolean
-  parentIds: Array<string>
   parents: Array<DashboardEntry>
 }
 
-function ExplorerCardParents({
-  loading,
-  parentIds,
-  parents
-}: ExplorerCardParentsProps) {
-  if (loading && parentIds.length > 0) return <ExplorerCardParentsLoading />
+function ExplorerCardParents({parents}: ExplorerCardParentsProps) {
   if (parents.length === 0) return null
   return (
     <div className={styles.ExplorerCards.parents()}>
@@ -224,25 +226,6 @@ function ExplorerCardParents({
           />,
           curr
         ])}
-    </div>
-  )
-}
-
-function ExplorerCardParentsLoading() {
-  return (
-    <div className={styles.ExplorerCards.parents()}>
-      <span
-        className={styles.ExplorerCards.parents.skeleton({wide: true})}
-        aria-hidden="true"
-      />
-      <IcRoundKeyboardArrowRight
-        aria-hidden
-        className={styles.ExplorerCards.parents.separator()}
-      />
-      <span
-        className={styles.ExplorerCards.parents.skeleton()}
-        aria-hidden="true"
-      />
     </div>
   )
 }
@@ -271,13 +254,15 @@ export interface ExplorerCardsProps {
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
   renderEmptyState: () => ReactNode
+  locale: string | null
 }
 
 export function ExplorerCards({
   dragAndDropHooks,
   explorer,
   items,
-  renderEmptyState
+  renderEmptyState,
+  locale
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const performAction = useSetAtom(explorer.onAction)
@@ -286,7 +271,7 @@ export function ExplorerCards({
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
-    if (entry) performAction(entry)
+    if (entry) performAction(entry, locale)
   }
   const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (
@@ -308,6 +293,7 @@ export function ExplorerCards({
         >
           {item => (
             <ExplorerCardItem
+              breadcrumbs={explorer.breadcrumbs}
               entry={item}
               showSelectionControls={showSelectionControls}
             />

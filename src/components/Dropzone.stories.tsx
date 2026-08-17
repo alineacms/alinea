@@ -4,7 +4,9 @@ import {FileTrigger, isFileDropItem, Text} from 'react-aria-components'
 import {Button} from './Button.js'
 import {DropZone} from './DropZone.js'
 
-export const image = () => {
+export const image = ImageStory
+
+function ImageStory() {
   const [droppedImage, setDroppedImage] = useState<string | undefined>(
     undefined
   )
@@ -64,7 +66,9 @@ export const image = () => {
   )
 }
 
-export const file = () => {
+export const file = FileStory
+
+function FileStory() {
   const [droppedFile, setDroppedFile] = useState<string | undefined>(undefined)
 
   const onDropHandler = async (e: DropEvent) => {

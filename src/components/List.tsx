@@ -19,10 +19,18 @@ import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
 
 const styles = styler(css)
 
-export interface ListProps extends SurfaceProps {}
+export interface ListProps extends SurfaceProps {
+  empty?: boolean
+}
 
-export function List({className, ...props}: ListProps) {
-  return <Surface role="list" {...props} className={className} />
+export function List({className, empty, role, ...props}: ListProps) {
+  return (
+    <Surface
+      {...props}
+      className={className}
+      role={role ?? (empty ? 'status' : 'list')}
+    />
+  )
 }
 
 export interface ListItemProps extends Omit<
@@ -32,6 +40,8 @@ export interface ListItemProps extends Omit<
   leading?: ReactNode
   trailing?: ReactNode
   inner?: ReactNode
+  onPress?: ButtonProps['onPress']
+  selected?: boolean
 }
 
 export function ListItem({
@@ -39,21 +49,126 @@ export function ListItem({
   trailing,
   inner,
   children,
+  onPress,
+  selected,
   ...props
 }: ListItemProps) {
+  const headerContent = (
+    <>
+      {leading && <div className={styles.ListItem.leading()}>{leading}</div>}
+      {children && <div className={styles.ListItem.content()}>{children}</div>}
+      {trailing && <div className={styles.ListItem.trailing()}>{trailing}</div>}
+    </>
+  )
   return (
-    <SurfaceRow {...props} className={styles.ListItem(styler.merge(props))}>
-      <header className={styles.ListItem.header()}>
-        {leading && <div className={styles.ListItem.leading()}>{leading}</div>}
-        {children && (
-          <div className={styles.ListItem.content()}>{children}</div>
-        )}
-        {trailing && (
-          <div className={styles.ListItem.trailing()}>{trailing}</div>
-        )}
-      </header>
+    <SurfaceRow
+      {...props}
+      className={styles.ListItem(styler.merge(props))}
+      data-has-leading={leading ? 'true' : undefined}
+      data-selected={selected || undefined}
+      role={props.role ?? 'listitem'}
+    >
+      {onPress ? (
+        <Button
+          appearance="plain"
+          aria-pressed={selected || undefined}
+          className={styles.ListItem.header()}
+          data-action="true"
+          onPress={onPress}
+        >
+          {headerContent}
+        </Button>
+      ) : (
+        <header className={styles.ListItem.header()}>{headerContent}</header>
+      )}
       {inner && <div className={styles.ListItem.inner()}>{inner}</div>}
     </SurfaceRow>
+  )
+}
+
+export interface ListItemVisualProps extends ComponentPropsWithoutRef<'span'> {}
+
+export function ListItemVisual({className, ...props}: ListItemVisualProps) {
+  return (
+    <span
+      {...props}
+      className={styles.ListItemVisual(styler.merge({className}))}
+    />
+  )
+}
+
+export interface ListItemTitleProps extends ComponentPropsWithoutRef<'span'> {}
+
+export function ListItemTitle({className, ...props}: ListItemTitleProps) {
+  return (
+    <span
+      {...props}
+      className={styles.ListItemTitle(styler.merge({className}))}
+    />
+  )
+}
+
+export interface ListItemDescriptionProps extends ComponentPropsWithoutRef<'span'> {}
+
+export function ListItemDescription({
+  className,
+  ...props
+}: ListItemDescriptionProps) {
+  return (
+    <span
+      {...props}
+      className={styles.ListItemDescription(styler.merge({className}))}
+    />
+  )
+}
+
+export interface ListItemStatusProps extends ComponentPropsWithoutRef<'span'> {
+  tone?: 'neutral' | 'accent' | 'positive' | 'warning' | 'danger'
+}
+
+export function ListItemStatus({
+  className,
+  tone = 'neutral',
+  ...props
+}: ListItemStatusProps) {
+  return (
+    <span
+      {...props}
+      className={styles.ListItemStatus(styler.merge({className}))}
+      data-tone={tone}
+    />
+  )
+}
+
+export interface ListEmptyProps extends Omit<
+  ComponentPropsWithoutRef<'div'>,
+  'title'
+> {
+  icon?: ComponentType
+  title: ReactNode
+}
+
+export function ListEmpty({
+  children,
+  className,
+  icon,
+  title,
+  ...props
+}: ListEmptyProps) {
+  return (
+    <div {...props} className={styles.ListEmpty(styler.merge({className}))}>
+      {icon && (
+        <ListItemVisual>
+          <Icon data-slot="icon" icon={icon} />
+        </ListItemVisual>
+      )}
+      <div className={styles.ListEmpty.content()}>
+        <strong className={styles.ListEmpty.title()}>{title}</strong>
+        {children && (
+          <span className={styles.ListEmpty.description()}>{children}</span>
+        )}
+      </div>
+    </div>
   )
 }
 

@@ -76,6 +76,10 @@ export class DashboardWorker extends EventTarget {
     return db.sha
   }
 
+  async sha() {
+    return (await this.db).sha
+  }
+
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
     return this.#local(async () => {
       const db = await this.db
@@ -139,11 +143,17 @@ export class DashboardWorker extends EventTarget {
     for (const item of this.#queue) this.#flush(item)
   }
 
-  discardQueue(): void {
-    this.#blocked = false
-    for (const item of this.#queue) item.attempt += 1
-    this.#queue = []
-    this.#emitQueue()
+  async discardQueue(): Promise<void> {
+    await this.#local(async () => {
+      if (this.#queue.length === 0) return
+      const db = await this.db
+      const client = await this.#client
+      for (const item of this.#queue) item.attempt += 1
+      await db.syncWith(client)
+      this.#blocked = false
+      this.#queue = []
+      this.#emitQueue()
+    })
   }
 
   #flush(item: MutationQueueItem) {
@@ -213,18 +223,13 @@ export class DashboardWorker extends EventTarget {
     }
     this.#currentRevision = revision
     const db = new LocalDB(config, this.#source)
-    let recoverFromRemote = false
     try {
       if (this.#defer) this.#defer()
-      await this.#syncLocalIndex(db).catch(
-        // We end up syncing afterwards with remote anyway
-        () => {
-          recoverFromRemote = true
-        }
-      )
-      this.#nextLoad.resolve({db, client})
+      const cacheReady = await this.#syncLocalIndex(db)
+      if (!cacheReady) await remote(() => db.syncWith(client))
       this.#localDB = db
       this.#localClient = client
+      this.#nextLoad.resolve({db, client})
       const listen = (event: Event) => {
         if (event instanceof IndexEvent)
           this.dispatchEvent(new IndexEvent(event.data))
@@ -233,28 +238,30 @@ export class DashboardWorker extends EventTarget {
       this.#defer = () => {
         db.index.removeEventListener(IndexEvent.type, listen)
       }
+      this.#startSyncing(cacheReady)
     } catch (cause) {
       this.#nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
-    } finally {
-      this.#nextLoad = trigger()
     }
-    if (recoverFromRemote)
-      await remote(() => db.syncWith(client)).catch(() => {})
-    this.#startSyncing()
   }
 
-  async #syncLocalIndex(db: LocalDB) {
+  async #syncLocalIndex(db: LocalDB): Promise<boolean> {
     const sourceTree = await db.source.getTree()
-    if (!sourceTree.isEmpty) await db.sync()
+    if (sourceTree.isEmpty) return false
+    try {
+      await db.sync()
+      return true
+    } catch {
+      return false
+    }
   }
 
-  #startSyncing() {
+  #startSyncing(refreshImmediately: boolean) {
     if (this.#syncInterval) return
     const sync = () => {
       void this.sync().catch(() => {})
     }
-    sync()
+    if (refreshImmediately) sync()
     this.#syncInterval = setInterval(sync, syncInterval)
   }
 }
