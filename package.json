@@ -174,5 +174,8 @@
     "vite": "^8.0.10",
     "vite-plus": "^0.1.16",
     "use-sync-external-store": "^1.6.0"
+  },
+  "patchedDependencies": {
+    "react-aria@3.48.0": "patches/react-aria@3.48.0.patch"
   }
 }

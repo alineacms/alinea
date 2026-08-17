@@ -13,7 +13,7 @@ import {
   createExplorerAtoms,
   type ExplorerAtoms
 } from '#/dashboard/atoms/explorer.js'
-import {type Atom, atom} from 'jotai'
+import {type Atom, atom, type PrimitiveAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType} from 'react'
 import type {
@@ -68,6 +68,16 @@ interface TreeSource {
   snapshot: TreeSnapshot
 }
 
+interface TreeCollapseState {
+  selectedId: string | undefined
+  keys: Set<string>
+}
+
+interface TreeViewState {
+  expandedKeys: PrimitiveAtom<Set<string>>
+  collapsedKeys: PrimitiveAtom<TreeCollapseState>
+}
+
 const emptyTreeSnapshot: TreeSnapshot = {
   expandedKeys: new Set(),
   items: [],
@@ -101,11 +111,8 @@ function preferredLocaleEntries<
 }
 
 export class TreeAtoms {
-  expandedKeys = atom(new Set<string>())
-  collapsedKeys = atom({
-    selectedId: undefined as string | undefined,
-    keys: new Set<string>()
-  })
+  expandedKeys: PrimitiveAtom<Set<string>>
+  collapsedKeys: PrimitiveAtom<TreeCollapseState>
   #root: RootAtoms
   #locale: string | null
   #selectedKeys: Atom<Set<Key>>
@@ -113,11 +120,19 @@ export class TreeAtoms {
   constructor(
     root: RootAtoms,
     locale: string | null,
-    selectedKeys: Atom<Set<Key>>
+    selectedKeys: Atom<Set<Key>>,
+    viewState?: TreeViewState
   ) {
     this.#root = root
     this.#locale = locale
     this.#selectedKeys = selectedKeys
+    this.expandedKeys = viewState?.expandedKeys ?? atom(new Set<string>())
+    this.collapsedKeys =
+      viewState?.collapsedKeys ??
+      atom<TreeCollapseState>({
+        selectedId: undefined,
+        keys: new Set<string>()
+      })
   }
 
   #source = atom(async get => {
@@ -201,7 +216,7 @@ export class TreeAtoms {
       })
     )
     const loadedEntries = childLists.flat()
-    const entriesWithChildren = new Set(
+    const possibleChildren =
       loadedEntries.length === 0
         ? []
         : await graph.find({
@@ -210,9 +225,13 @@ export class TreeAtoms {
             parentId: {in: loadedEntries.map(entry => entry.id)},
             filter: {_type: {in: visibleTypes}},
             status: 'preferDraft',
-            groupBy: Entry.parentId,
-            select: Entry.parentId
+            select: treeItemSelect
           })
+    const entriesWithChildren = new Set(
+      preferredLocaleEntries(
+        possibleChildren.filter(entry => policy.canRead(entry)),
+        this.#locale
+      ).flatMap(entry => (entry.parentId ? [entry.parentId] : []))
     )
     const entries = new Map<string, RootTreeItem>()
     const children = new Map<string | null, Array<string>>()
@@ -284,15 +303,18 @@ export class TreeAtoms {
         parentId: id,
         filter: {_type: {in: visibleTypes}},
         status: 'preferDraft',
-        select: Entry.id,
-        take: 1
+        select: treeItemSelect
       })
       return {
         ...entry,
         dragDisabled: Boolean(
           parent && getType(config.schema[parent.type]).orderChildrenBy
         ),
-        hasChildren: children.length > 0
+        hasChildren:
+          preferredLocaleEntries(
+            children.filter(child => policy.canRead(child)),
+            this.#locale
+          ).length > 0
       }
     })
   )
@@ -350,8 +372,16 @@ export class RootAtoms {
         ? new Set<Key>([page.entry])
         : new Set<Key>()
     })
+    const treeViewState: TreeViewState = {
+      expandedKeys: atom(new Set<string>()),
+      collapsedKeys: atom<TreeCollapseState>({
+        selectedId: undefined,
+        keys: new Set<string>()
+      })
+    }
     this.tree = dispense(
-      (locale: string | null) => new TreeAtoms(this, locale, selectedKeys)
+      (locale: string | null) =>
+        new TreeAtoms(this, locale, selectedKeys, treeViewState)
     )
     this.explorer = this.children(null)
   }
