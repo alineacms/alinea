@@ -52,6 +52,10 @@ const main = Config.workspace('Main', {
     pages: Config.root('Pages', {
       contains: ['Page', 'HiddenFolder', 'OrderedFolder']
     }),
+    ordered: Config.root('Ordered pages', {
+      contains: ['Page'],
+      orderChildrenBy: {asc: Query.title}
+    }),
     media: Config.media({i18n: {locales: ['en', 'fr']}})
   }
 })
@@ -172,6 +176,20 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     workspace: 'main',
     root: 'pages',
     parentId: dashboardScenarioIds.orderedFolder,
+    set: {title: 'Apple'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.rootOrderedZebra,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'ordered',
+    set: {title: 'Zebra'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.rootOrderedApple,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'ordered',
     set: {title: 'Apple'}
   })
   await db.create({

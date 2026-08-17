@@ -168,16 +168,17 @@ interface SidebarTreeLink {
   href: string
 }
 
-const documentPath =
-  typeof window === 'undefined'
+function documentPath(): string {
+  return typeof window === 'undefined'
     ? ''
     : `${window.location.pathname}${window.location.search}`
+}
 
 function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
   return (
     <a
       className={styles.SidebarTree.entryLink()}
-      href={`${documentPath}#${href}`}
+      href={`${documentPath()}#${href}`}
     >
       {title}
     </a>

@@ -398,6 +398,10 @@ export class RootAtoms {
         parentId: parentId ?? undefined
       },
       {
+        defaultOrderBy:
+          parentId === null
+            ? atom(get => get(this.data).orderChildrenBy)
+            : undefined,
         enableNavigation: true,
         rootData: this.data,
         treeItems: locale => this.tree(locale).items,

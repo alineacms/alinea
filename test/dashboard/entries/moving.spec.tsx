@@ -46,7 +46,9 @@ test('moves a child above its expanded parent', async ({dashboard, mount}) => {
   const workspaceRoots = app.page.getByRole('complementary', {
     name: 'Workspace roots'
   })
-  await workspaceRoots.getByRole('button', {name: 'Pages'}).click()
+  await workspaceRoots
+    .getByRole('button', {name: 'Pages', exact: true})
+    .click()
   const expandFolder = tree.getByRole('button', {name: 'Expand Folder'})
   if (await expandFolder.isVisible()) await expandFolder.click()
   await expect(
@@ -89,7 +91,9 @@ test('moves a child between expanded tree levels', async ({
   const workspaceRoots = app.page.getByRole('complementary', {
     name: 'Workspace roots'
   })
-  await workspaceRoots.getByRole('button', {name: 'Pages'}).click()
+  await workspaceRoots
+    .getByRole('button', {name: 'Pages', exact: true})
+    .click()
   const expandFolder = tree.getByRole('button', {name: 'Expand Folder'})
   if (await expandFolder.isVisible()) await expandFolder.click()
   await expect(

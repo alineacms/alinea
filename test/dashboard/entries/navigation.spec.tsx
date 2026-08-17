@@ -147,6 +147,19 @@ test('orders children by their parent type and disables dragging', async ({
   await expect(tree.getByRole('button', {name: 'Drag Zebra'})).toHaveCount(0)
 })
 
+test('orders a root overview by the root configuration', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const roots = app.page.getByRole('complementary', {name: 'Workspace roots'})
+
+  await roots.getByRole('button', {name: 'Ordered pages'}).click()
+
+  const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  await expect(overview.getByRole('row')).toHaveText([/^Apple/, /^Zebra/])
+})
+
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({
   dashboard,
   mount

@@ -5,6 +5,7 @@ import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import type {OrderBy} from '#/core/OrderBy.js'
 import {Permission} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
@@ -92,6 +93,7 @@ export interface ExplorerOptions {
   autoSelectFirstItem?: boolean
   breadcrumbs?: boolean
   condition?: Filter<EntryFields>
+  defaultOrderBy?: Atom<OrderBy | Array<OrderBy> | undefined>
   enableNavigation?: boolean
   flatResults?: boolean
   hideResultsUntilSearch?: boolean
@@ -664,7 +666,11 @@ export class ExplorerAtoms {
       if (this.hideResultsUntilSearch && !search) return []
       const graph = get(graphAtom)
       const sort = get(this.sort)
+      const selectedSort = get(this.#selectedSort)
       const filter = get(this.filter)
+      const defaultOrderBy = this.#options.defaultOrderBy
+        ? get(this.#options.defaultOrderBy)
+        : undefined
       const flatList =
         Boolean(search && this.searchDepth === 'all') ||
         Boolean(
@@ -694,10 +700,12 @@ export class ExplorerAtoms {
         groupBy: Entry.id,
         orderBy: search
           ? undefined
-          : {
-              [sort.direction]: orderField,
-              caseSensitive: sort.sortBy !== 'id'
-            },
+          : selectedSort === undefined && defaultOrderBy !== undefined
+            ? defaultOrderBy
+            : {
+                [sort.direction]: orderField,
+                caseSensitive: sort.sortBy !== 'id'
+              },
         select: {
           id: Entry.id,
           title: Entry.title,
