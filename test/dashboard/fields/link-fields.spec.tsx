@@ -51,9 +51,53 @@ test('opens a functional location in another workspace and root', async ({
   ).toHaveCount(1)
   await expect(
     resultModes
-      .getByRole('radio', {name: 'Matches'})
+      .getByRole('radio', {name: 'Filtered'})
       .locator('[data-slot="icon"]')
   ).toHaveCount(1)
+})
+
+test('switches a localized card picker without showing its loader', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Localized page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await picker
+    .getByRole('radiogroup', {name: 'Explorer view'})
+    .getByRole('radio')
+    .first()
+    .click()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select I18 result'})
+  ).toBeVisible()
+
+  await app.page.evaluate(() => {
+    document.documentElement.dataset.localizedPickerLoaderSeen = 'false'
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[aria-label="Loading explorer"]'))
+        document.documentElement.dataset.localizedPickerLoaderSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
+
+  await picker.getByRole('button', {name: 'EN', exact: true}).first().click()
+  await app.page.getByRole('menuitemradio', {name: /^FR/}).click()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select French result'})
+  ).toBeVisible()
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.localizedPickerLoaderSeen
+      )
+    )
+    .toBe('false')
 })
 
 test('filters entries with a functional condition', async ({
@@ -73,7 +117,7 @@ test('filters entries with a functional condition', async ({
     name: 'Explorer results'
   })
   const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(resultModes.getByRole('radio', {name: 'Matches'})).toBeChecked()
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
   await expect(allLocations).not.toBeChecked()
   await expect(location).toContainText(/References.*Reference library/)
   await expect(
@@ -123,10 +167,21 @@ test('defaults a condition without a location to all locations', async ({
     name: 'Explorer results'
   })
   const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(resultModes.getByRole('radio', {name: 'Matches'})).toBeChecked()
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
   await expect(allLocations).toBeChecked()
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
+
+  await resultModes.getByRole('radio', {name: 'Browse'}).click()
+  await expect(allLocations).toBeChecked()
+  await expect(allLocations).toBeDisabled()
+  await expect(entries.getByRole('row', {name: /Folder/})).toBeVisible()
+  await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
+
+  await resultModes.getByRole('radio', {name: 'Filtered'}).click()
+  await expect(allLocations).toBeChecked()
+  await expect(allLocations).toBeEnabled()
+  await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
 
   await allLocations.press('Space')
   await expect(allLocations).not.toBeChecked()
@@ -157,8 +212,21 @@ test('opens pickChildren at the children of the edited entry', async ({
   const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
   })
-  await expect(resultModes.getByRole('radio', {name: 'Matches'})).toBeChecked()
-  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeDisabled()
+  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+  await expect(browseMode).toBeDisabled()
+  await expect(browseMode).toHaveCSS('cursor', 'default')
+  const browseBackground = await browseMode.evaluate(
+    element => getComputedStyle(element).backgroundColor
+  )
+  await browseMode.hover()
+  await expect(browseMode).toHaveCSS('background-color', browseBackground)
+  await expect(
+    picker.getByRole('button', {name: 'Main', exact: true})
+  ).toHaveCount(0)
+  await expect(
+    picker.getByRole('button', {name: 'Pages', exact: true})
+  ).toHaveCount(0)
   await expect(picker.getByRole('row', {name: 'Child'})).toBeVisible()
   await expect(picker.getByRole('row', {name: 'Beta'})).toHaveCount(0)
 })
@@ -397,13 +465,13 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
     name: 'Explorer results'
   })
   const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(location).toContainText(/Browse.*Matches.*Main.*Pages.*Folder/)
+  await expect(location).toContainText(/Browse.*Filtered.*Main.*Pages.*Folder/)
   await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeChecked()
   await expect(allLocations).toBeDisabled()
 
   const search = picker.getByRole('searchbox', {name: 'Search'})
   await search.fill('i18')
-  await expect(resultModes.getByRole('radio', {name: 'Matches'})).toBeChecked()
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
   await expect(allLocations).toBeEnabled()
   await expect(folders).toHaveCount(0)
   await expect(picker.getByText('No results found')).toBeVisible()
@@ -432,11 +500,15 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
     document.documentElement.dataset.cardScopeGapSeen = 'false'
   })
 
-  await resultModes.getByRole('radio', {name: 'Browse'}).click()
-  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeChecked()
+  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
+  await expect(browseMode).toBeDisabled()
+  await search.fill('')
+  await expect(browseMode).toBeChecked()
+  await expect(browseMode).toBeEnabled()
   await expect(folders).toBeVisible()
-  await resultModes.getByRole('radio', {name: 'Matches'}).click()
-  await expect(resultModes.getByRole('radio', {name: 'Matches'})).toBeChecked()
+  await search.fill('i18')
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+  await expect(browseMode).toBeDisabled()
   await expect(folders).toHaveCount(0)
   await expect
     .poll(() =>

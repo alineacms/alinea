@@ -107,8 +107,14 @@ export interface ExplorerOptions {
   nestedNavigation?: boolean
   pickChildren?: boolean
   rootData?: Atom<RootData>
-  treeItems?: (locale: string | null) => Atom<Array<ExplorerTreeItem>>
-  treeReady?: (locale: string | null) => Atom<Promise<unknown>>
+  treeItems?: (
+    locale: string | null,
+    location: ExplorerLocation
+  ) => Atom<Array<ExplorerTreeItem>>
+  treeReady?: (
+    locale: string | null,
+    location: ExplorerLocation
+  ) => Atom<Promise<unknown>>
   selectedLocale?: string | null
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
@@ -130,10 +136,15 @@ export interface ExplorerTreeItem {
 export type ExplorerResultMode = 'browse' | 'matches'
 
 export interface ExplorerReadyPage {
+  isMedia: boolean
   items: Array<ExplorerEntry>
+  locale: string | null
+  location: ExplorerLocation
+  root: ExplorerRootData
   resultMode: ExplorerResultMode
   searchScope: 'workspace' | 'everything'
   searchesEverything: boolean
+  view: ExplorerView
 }
 
 export interface ExplorerItemData {
@@ -225,7 +236,7 @@ export class ExplorerEntryData {
 
   constructor(
     public readonly item: Atom<ExplorerItemData>,
-    root: Atom<ExplorerRootData>,
+    _root: Atom<ExplorerRootData>,
     parents: Array<ExplorerEntry> = []
   ) {
     const configuredRoot = (get: Getter) => {
@@ -238,11 +249,11 @@ export class ExplorerEntryData {
     }
     const icon = atom(get => {
       const data = configuredRoot(get)
-      return data?.icon ?? get(get(root).icon)
+      return data?.icon ?? LucideFile
     })
     const label = atom(get => {
       const data = configuredRoot(get)
-      return data?.label ?? get(get(root).label)
+      return data?.label ?? get(this.item).root
     })
     this.root = atom({icon, label})
     this.parents = atom(parents)
@@ -299,6 +310,8 @@ export class ExplorerAtoms {
   readonly readySearchesEverything: Atom<boolean>
   readonly readySearchScope: Atom<'workspace' | 'everything'>
   readonly readyResultMode: Atom<ExplorerResultMode>
+  readonly readyView: Atom<ExplorerView>
+  readonly locationIsPending: Atom<boolean>
 
   search = atom('')
   searchScope: PrimitiveAtom<'workspace' | 'everything'>
@@ -310,10 +323,13 @@ export class ExplorerAtoms {
   #selectedFilter = atom<ExplorerTypeFilters>()
   selectedLocale: PrimitiveAtom<string | null>
   root: Atom<ExplorerRootData>
-  parent: (locale: string | null) => Atom<ExplorerEntry | undefined>
+  parent: (
+    location: ExplorerLocation,
+    locale: string | null
+  ) => Atom<ExplorerEntry | undefined>
   itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
-  page: (locale: string | null) => Atom<ExplorerReadyPage>
+  page: Atom<ExplorerReadyPage>
   #options: ExplorerOptions
 
   constructor(
@@ -402,26 +418,29 @@ export class ExplorerAtoms {
       }
       return new ExplorerEntry(item.id, value, atom(value), this.root)
     }
-    this.parent = dispense((locale: string | null) =>
-      atom(get => {
-        const parentId = get(this.location).parentId
-        if (!parentId || !options.treeItems) return undefined
-        const items = get(options.treeItems(locale))
-        const item = items.find(candidate => candidate.id === parentId)
-        if (!item) return undefined
-        const parent = treeEntry(item)
-        const ancestors = new Array<ExplorerEntry>()
-        let ancestorId = item.parentId
-        while (ancestorId) {
-          const ancestor = items.find(candidate => candidate.id === ancestorId)
-          if (!ancestor) break
-          ancestors.unshift(treeEntry(ancestor))
-          ancestorId = ancestor.parentId
-        }
-        const {data} = get(parent.data)
-        if (data) data.parents = atom(ancestors)
-        return parent
-      })
+    this.parent = dispense(
+      (location: ExplorerLocation, locale: string | null) =>
+        atom(get => {
+          const parentId = location.parentId
+          if (!parentId || !options.treeItems) return undefined
+          const items = get(options.treeItems(locale, location))
+          const item = items.find(candidate => candidate.id === parentId)
+          if (!item) return undefined
+          const parent = treeEntry(item)
+          const ancestors = new Array<ExplorerEntry>()
+          let ancestorId = item.parentId
+          while (ancestorId) {
+            const ancestor = items.find(
+              candidate => candidate.id === ancestorId
+            )
+            if (!ancestor) break
+            ancestors.unshift(treeEntry(ancestor))
+            ancestorId = ancestor.parentId
+          }
+          const {data} = get(parent.data)
+          if (data) data.parents = atom(ancestors)
+          return parent
+        })
     )
     const itemsSource = dispense((locale: string | null) =>
       atom(async get => {
@@ -477,41 +496,75 @@ export class ExplorerAtoms {
         return items
       })
     )
-    const pageSource = dispense((locale: string | null) =>
-      atom(async get => {
-        const resultMode = get(this.resultMode)
-        const searchScope = get(this.searchScope)
-        const searchesEverything = get(this.searchesEverything)
-        const itemsPromise = get(this.itemsReady(locale))
-        const needsTree = get(this.view) === 'card' && resultMode === 'browse'
-        const treeReady = needsTree ? options.treeReady?.(locale) : undefined
-        if (treeReady) await get(treeReady)
-        const items = await itemsPromise
-        return {items, resultMode, searchScope, searchesEverything}
-      })
+    const initialView = options.initialView ?? 'row'
+    const pageSource = atom(async get => {
+      const locale = get(this.selectedLocale)
+      const location = get(this.location)
+      const resultMode = get(this.resultMode)
+      const searchScope = get(this.searchScope)
+      const searchesEverything = get(this.searchesEverything)
+      const view = get(this.view)
+      const isMedia = get(this.isMedia)
+      const requestedRoot = get(this.root)
+      const root = {
+        icon: atom(get(requestedRoot.icon)),
+        label: atom(get(requestedRoot.label))
+      }
+      const itemsPromise = get(this.itemsReady(locale))
+      const needsTree = view === 'card' && resultMode === 'browse'
+      const treeReady = needsTree
+        ? options.treeReady?.(locale, location)
+        : undefined
+      if (treeReady) await get(treeReady)
+      const items = await itemsPromise
+      return {
+        isMedia,
+        items,
+        locale,
+        location,
+        resultMode,
+        root,
+        searchScope,
+        searchesEverything,
+        view
+      }
+    })
+    this.page = unwrap(
+      pageSource,
+      previous =>
+        previous ?? {
+          isMedia: false,
+          items: [],
+          locale: initialLocation.locale ?? options.selectedLocale ?? null,
+          location: initialLocation,
+          resultMode: initialResultMode,
+          root: {icon: atom(LucideFile), label: atom('')},
+          searchScope: initialSearchScope,
+          searchesEverything:
+            this.allowAllWorkspaces &&
+            this.hasCondition &&
+            initialResultMode === 'matches' &&
+            initialSearchScope === 'everything',
+          view: initialView
+        }
     )
-    this.page = dispense((locale: string | null) =>
-      unwrap(
-        pageSource(locale),
-        previous =>
-          previous ?? {
-            items: [],
-            resultMode: initialResultMode,
-            searchScope: initialSearchScope,
-            searchesEverything:
-              this.allowAllWorkspaces &&
-              this.hasCondition &&
-              initialResultMode === 'matches' &&
-              initialSearchScope === 'everything'
-          }
-      )
-    )
-    const readyPage = (get: Getter) => get(this.page(get(this.selectedLocale)))
+    const readyPage = (get: Getter) => get(this.page)
     this.readySearchScope = atom(get => readyPage(get).searchScope)
     this.readyResultMode = atom(get => readyPage(get).resultMode)
     this.readySearchesEverything = atom(
       get => readyPage(get).searchesEverything
     )
+    this.readyView = atom(get => readyPage(get).view)
+    this.locationIsPending = atom(get => {
+      const ready = readyPage(get)
+      const requested = get(this.location)
+      return (
+        ready.locale !== get(this.selectedLocale) ||
+        ready.location.workspace !== requested.workspace ||
+        ready.location.root !== requested.root ||
+        ready.location.parentId !== requested.parentId
+      )
+    })
   }
 
   showResults = atom(get => {

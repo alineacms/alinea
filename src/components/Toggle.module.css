@@ -70,14 +70,14 @@
     outline-offset: 1px;
   }
 
-  &:hover,
-  &[data-focused] {
+  &:not([data-disabled]):hover,
+  &[data-focused]:not([data-disabled]) {
     color: var(--alinea-fg);
     background-color: var(--alinea-muted-hover);
   }
 
   &[data-disabled] {
     color: var(--alinea-fg-disabled);
-    cursor: not-allowed;
+    cursor: default;
   }
 }

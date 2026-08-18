@@ -26,10 +26,14 @@ interface EmptyResultsProps {
 
 function EmptyResults({explorer, root}: EmptyResultsProps) {
   const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
-  const searchScope = useAtomValue(explorer.searchScope)
+  const searchScope = useAtomValue(explorer.readySearchScope)
+  const resultMode = useAtomValue(explorer.readyResultMode)
   const setSearchScope = useSetAtom(explorer.searchScope)
   const canSearchEverything = useAtomValue(explorer.canSearchEverything)
-  const canSearchAll = canSearchEverything && searchScope === 'workspace'
+  const canSearchAll =
+    canSearchEverything &&
+    searchScope === 'workspace' &&
+    (explorer.mode === 'search' || resultMode === 'matches')
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
@@ -65,7 +69,7 @@ function SearchIdleState() {
       <div className={styles.ExplorerList.empty.copy()}>
         <div className={styles.ExplorerList.empty.title()}>Search</div>
         <div className={styles.ExplorerList.empty.text()}>
-          Type to find any page in this workspace.
+          Type to find a page.
         </div>
       </div>
     </div>
@@ -74,38 +78,49 @@ function SearchIdleState() {
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
+  isMedia?: boolean
   items?: Atom<Array<DashboardEntry>>
   locale: string | null
+  root?: Atom<DashboardRoot>
+  view?: 'card' | 'row'
 }
 
 export function ExplorerList({
   explorer,
+  isMedia: readyIsMedia,
   items: readyItems,
-  locale
+  locale,
+  root: readyRoot,
+  view: readyView
 }: ExplorerListProps) {
   const items = useAtomValue(readyItems ?? explorer.items(locale))
-  const view = useAtomValue(explorer.view)
+  const requestedView = useAtomValue(explorer.view)
+  const view = readyView ?? requestedView
   const showResults = useAtomValue(explorer.showResults)
-  const root = useAtomValue(explorer.root)
+  const root = useAtomValue(readyRoot ?? explorer.root)
   const getItems = useSetAtom(explorer.getItems)
   const getDropOperation = useSetAtom(explorer.getDropOperation)
   const dropOnItem = useSetAtom(explorer.onItemDrop)
-  const isMedia = useAtomValue(explorer.isMedia)
+  const requestedIsMedia = useAtomValue(explorer.isMedia)
+  const isMedia = readyIsMedia ?? requestedIsMedia
+  const locationIsPending = useAtomValue(explorer.locationIsPending)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
-    acceptedDragTypes: isMedia && canUpload ? 'all' : [],
+    acceptedDragTypes: isMedia && canUpload && !locationIsPending ? 'all' : [],
     getItems,
     getDropOperation(target, types, allowedOperations) {
       const operation = getDropOperation(target, types, allowedOperations)
       if (operation !== 'cancel') return operation
-      if (!isMedia || !canUpload || target.type !== 'root') return 'cancel'
+      if (!isMedia || !canUpload || locationIsPending || target.type !== 'root')
+        return 'cancel'
       return allowedOperations.includes('copy') ? 'copy' : 'cancel'
     },
     onItemDrop(event) {
       dropOnItem(event, locale)
     },
     async onRootDrop(event) {
+      if (locationIsPending) return
       const files = await Promise.all(
         event.items.filter(isFileDropItem).map(item => item.getFile())
       )

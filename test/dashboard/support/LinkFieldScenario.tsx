@@ -43,6 +43,9 @@ const ScenarioPage = Config.document('Page', {
     globalFilteredPage: Field.entry('Global filtered page', {
       condition: {_id: dashboardScenarioIds.child}
     }),
+    localizedPage: Field.entry('Localized page', {
+      location: {workspace: 'localized', root: 'pages'}
+    }),
     childPage: Field.entry('Child page', {pickChildren: true}),
     browsePage: Field.entry('Browse page', {
       location: {workspace: 'main', root: 'pages'}
@@ -179,6 +182,14 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     root: 'pages',
     locale: 'en',
     set: {summary: 'Localized search result', title: 'I18 result'}
+  })
+  await db.create({
+    id: 'localized-fr-result',
+    type: ScenarioPage,
+    workspace: 'localized',
+    root: 'pages',
+    locale: 'fr',
+    set: {summary: 'Localized French result', title: 'French result'}
   })
   return {client: createTestConnection(db), db}
 }

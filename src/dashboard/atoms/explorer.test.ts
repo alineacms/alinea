@@ -79,6 +79,11 @@ test('all-workspace search is opt-in and defaults to the current workspace', () 
   expect(store.get(explorer.searchesEverything)).toBe(false)
   store.set(explorer.resultMode, 'matches')
   expect(store.get(explorer.searchesEverything)).toBe(true)
+  store.set(explorer.resultMode, 'browse')
+  expect(store.get(explorer.searchScope)).toBe('everything')
+  expect(store.get(explorer.searchesEverything)).toBe(false)
+  store.set(explorer.resultMode, 'matches')
+  expect(store.get(explorer.searchesEverything)).toBe(true)
 })
 
 test('limits the picker to its allowed locations', () => {

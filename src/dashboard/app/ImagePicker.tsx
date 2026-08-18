@@ -3,12 +3,13 @@ import {Button} from '#/components.js'
 import {getRoot} from '#/core/Internal.js'
 import {
   createExplorerAtoms,
+  type ExplorerLocation,
   type ExplorerOptions
 } from '#/dashboard/atoms/explorer.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState, type ReactNode} from 'react'
 import {ExplorerHeader} from './Explorer.js'
 import {
@@ -18,7 +19,11 @@ import {
   ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
-import {explorerTree, ExplorerPickerContent} from './ExplorerPickerContent.js'
+import {
+  explorerTree,
+  ExplorerPickerContent,
+  normalizePickerLocale
+} from './ExplorerPickerContent.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -68,19 +73,30 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     root: mediaRoot ?? root.key
   }
   const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
-  const initialLocale = location.locale ?? options.selectedLocale ?? page.locale
+  const pickerI18n = useAtomValue(pickerRoot.i18n)
+  const initialLocale = normalizePickerLocale(
+    location.locale ?? options.selectedLocale ?? page.locale,
+    pickerI18n?.locales ?? []
+  )
+  const initialLocation = {...location, locale: initialLocale ?? undefined}
   const [explorer] = useState(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
-    explorer = createExplorerAtoms(location, {
+    const currentRoot = (location: ExplorerLocation) =>
+      rootAtoms(location.workspace, location.root ?? root.key)
+    const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
+    explorer = createExplorerAtoms(initialLocation, {
       ...options,
       allowAllWorkspaces:
         options.allowAllWorkspaces ??
         (!options.limitLocations?.length && !options.pickChildren),
-      rootData: pickerRoot.data,
+      initialView: options.initialView ?? 'card',
+      rootData,
       searchDepth: 'all',
       selectedLocale: initialLocale,
-      treeItems: locale => explorerTree(pickerRoot, explorer, locale).items,
-      treeReady: locale => explorerTree(pickerRoot, explorer, locale).ready
+      treeItems: (locale, location) =>
+        explorerTree(currentRoot(location), explorer, locale, location).items,
+      treeReady: (locale, location) =>
+        explorerTree(currentRoot(location), explorer, locale, location).ready
     })
     return explorer
   })

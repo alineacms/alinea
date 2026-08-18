@@ -27,7 +27,9 @@ test('switches link picker workspaces and roots', async ({mount, page}) => {
 
   await page.getByRole('button', {name: 'Pages'}).click()
   await page.getByRole('menuitemradio', {name: 'Media'}).click()
-  await expect(page.getByRole('button', {name: 'Media'})).toBeVisible()
+  await expect(
+    page.getByRole('button', {name: 'Media', exact: true})
+  ).toBeVisible()
 
   await page.getByRole('button', {name: 'Deeply nested'}).click()
   await page.getByRole('menuitemradio', {name: 'Simple'}).click()

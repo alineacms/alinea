@@ -323,6 +323,8 @@ export class TreeAtoms {
   )
   item = dispense((id: string) =>
     atom(get => {
+      const loaded = get(this.#state)?.entries.get(id)
+      if (loaded) return loaded
       const item = get(this.#itemState(id))
       if (!item) throw get(this.#itemSource(id))
       return item
