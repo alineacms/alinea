@@ -1,12 +1,26 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {useDashboardContext} from '#/dashboard/hooks.js'
-import {useAtomValue, useSetAtom} from 'jotai'
-import {startTransition} from 'react'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import type {Key, Selection} from 'react-aria-components'
 import type {DashboardExplorer} from '../atoms/explorer.js'
+import {dispense} from '../atoms/utils.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
+
+export const explorerTree = dispense(
+  (
+    root: ReturnType<typeof rootAtoms>,
+    explorer: DashboardExplorer,
+    locale: string | null
+  ) =>
+    root.createTree(
+      locale,
+      atom(get => {
+        const parentId = get(explorer.location).parentId
+        return parentId ? new Set<Key>([parentId]) : new Set<Key>()
+      })
+    )
+)
 
 export interface ExplorerPickerContentProps {
   explorer: DashboardExplorer
@@ -20,48 +34,40 @@ export function ExplorerPickerContent({
   options
 }: ExplorerPickerContentProps) {
   const location = useAtomValue(explorer.location)
-  const {page} = useDashboardContext()
+  const view = useAtomValue(explorer.view)
   const selectedLocale = useAtomValue(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
   const root = location.root
-    ? rootAtoms(page, location.workspace, location.root, selectedLocale)
+    ? rootAtoms(location.workspace, location.root)
     : undefined
   const enableNavigation = options.enableNavigation ?? true
-  const selectedKeys = location.parentId
-    ? new Set<Key>([location.parentId])
-    : new Set<Key>()
 
   function onRootPress() {
-    startTransition(() => {
-      setLocation(current => ({...current, parentId: undefined}))
-    })
+    setLocation(current => ({...current, parentId: undefined}))
   }
 
   function onSelectionChange(keys: Selection) {
     if (keys === 'all') return
     const [selected] = keys
-    startTransition(() => {
-      setLocation(current => ({
-        ...current,
-        parentId: selected ? String(selected) : undefined
-      }))
-    })
+    setLocation(current => ({
+      ...current,
+      parentId: selected ? String(selected) : undefined
+    }))
   }
 
   return (
     <ExplorerModalContent>
-      {enableNavigation && root && (
+      {enableNavigation && view === 'card' && root && (
         <ExplorerPickerNavigation
           explorer={explorer}
           navigationLabel={navigationLabel}
           root={root}
           rootSelected={!location.parentId}
-          selectedKeys={selectedKeys}
           onRootPress={onRootPress}
           onSelectionChange={onSelectionChange}
         />
       )}
-      <ExplorerBody explorer={explorer} />
+      <ExplorerBody explorer={explorer} locale={selectedLocale} />
     </ExplorerModalContent>
   )
 }
@@ -73,7 +79,6 @@ interface ExplorerPickerNavigationProps {
   onSelectionChange: (keys: Selection) => void
   root: ReturnType<typeof rootAtoms>
   rootSelected: boolean
-  selectedKeys: Set<Key>
 }
 
 function ExplorerPickerNavigation({
@@ -82,18 +87,19 @@ function ExplorerPickerNavigation({
   onRootPress,
   onSelectionChange,
   root,
-  rootSelected,
-  selectedKeys
+  rootSelected
 }: ExplorerPickerNavigationProps) {
-  useAtomValue(root.treeReady)
+  const locale = useAtomValue(explorer.selectedLocale)
+  const tree = explorerTree(root, explorer, locale)
+  useAtomValue(tree.ready)
   return (
     <ExplorerModalNavigation>
       <SidebarTreeExplorer
         ariaLabel={navigationLabel}
         root={root}
         rootSelected={rootSelected}
-        selectedKeys={selectedKeys}
         selectedLocale={explorer.selectedLocale}
+        tree={tree}
         onRootPress={onRootPress}
         onSelectionChange={onSelectionChange}
       />

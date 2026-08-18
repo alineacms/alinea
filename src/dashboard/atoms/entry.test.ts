@@ -1,29 +1,57 @@
-import {expect, test} from 'bun:test'
+import {expect, spyOn, test} from 'bun:test'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {atom, createStore} from 'jotai'
 import type {Entry} from '#/core/Entry.js'
-import {Policy} from '#/core/Role.js'
-import {localUser} from '#/core/User.js'
 import {Config, Field} from '#/index.js'
-import {configAtom} from './core.js'
-import type {Page} from './nav.js'
+import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
+import {configAtom, eventsAtom} from './core.js'
 import {EntryAtoms, EntryLocaleAtoms, entryAtoms} from './entry.js'
+import {authReady} from './user.js'
 
 test('entryAtoms returns stable entry and locale atom bundles', () => {
-  const page: Page = {
-    type: 'entry',
-    workspace: 'workspace',
-    root: 'pages',
-    entry: 'entry-id',
-    locale: null,
-    auth: {user: localUser, policy: Policy.ALLOW_ALL}
-  }
-  const entry = new EntryAtoms('entry-id', atom({} as never), page.auth)
+  const entry = new EntryAtoms('entry-id', atom({} as never))
 
   expect(entry).toBeInstanceOf(EntryAtoms)
-  expect(entryAtoms(page, 'entry-id')).toBe(entryAtoms(page, 'entry-id'))
+  expect(entryAtoms('entry-id')).toBe(entryAtoms('entry-id'))
   expect(entry.locales('en')).toBeInstanceOf(EntryLocaleAtoms)
   expect(entry.locales('en')).toBe(entry.locales('en'))
   expect(entry.locales('fr')).not.toBe(entry.locales('en'))
+})
+
+test('entry atoms only reload for matching index event ids', async () => {
+  const {db, parent, child, store} = await createDashboardAtomFixture()
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  await store.get(authReady)
+  const resolve = spyOn(db, 'resolve')
+  const parentAtom = entryAtoms(parent._id)
+  const childAtom = entryAtoms(child._id)
+  const unsubscribeParent = store.sub(parentAtom, () => {})
+  const unsubscribeChild = store.sub(childAtom, () => {})
+  await Promise.all([store.get(parentAtom), store.get(childAtom)])
+  resolve.mockClear()
+
+  events.emit(
+    new IndexEvent({op: 'index', sha: 'unrelated-sha', ids: ['unrelated']})
+  )
+  await Promise.resolve()
+  expect(resolve).not.toHaveBeenCalled()
+
+  events.emit(
+    new IndexEvent({op: 'index', sha: 'parent-sha', ids: [parent._id]})
+  )
+  await store.get(parentAtom)
+  await Promise.resolve()
+
+  expect(resolve).toHaveBeenCalledTimes(2)
+  expect(resolve.mock.calls[0][0]).toMatchObject({id: {in: [parent._id]}})
+  expect(resolve.mock.calls[1][0]).toMatchObject({
+    parentId: {in: [parent._id]}
+  })
+
+  unsubscribeParent()
+  unsubscribeChild()
+  resolve.mockRestore()
 })
 
 test('currently editing nodes preserve arbitrary JSON values', async () => {
@@ -63,14 +91,6 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
     url: '/entry',
     workspace: 'main'
   }
-  const page: Page = {
-    type: 'entry',
-    workspace: 'main',
-    root: 'pages',
-    entry: selectedEntry.id,
-    locale: null,
-    auth: {user: localUser, policy: Policy.ALLOW_ALL}
-  }
   const entryData = {
     id: selectedEntry.id,
     type: selectedEntry.type,
@@ -82,9 +102,10 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
     entries: [selectedEntry]
   }
   const entryDataAtom = atom(entryData)
-  const entry = new EntryAtoms(selectedEntry.id, entryDataAtom, page.auth)
-  const store = createStore()
+  const entry = new EntryAtoms(selectedEntry.id, entryDataAtom)
+  const {store} = await createDashboardAtomFixture()
   store.set(configAtom, config)
+  await store.get(authReady)
 
   const selectedNode = entry.locales(null).selectedNode
   const first = await store.get(selectedNode)

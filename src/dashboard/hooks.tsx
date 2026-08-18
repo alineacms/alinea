@@ -4,11 +4,19 @@ import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
+import type {Policy} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {Type} from '#/index.js'
-import {createStore, Provider, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {
+  atom,
+  createStore,
+  Provider,
+  useAtom,
+  useAtomValue,
+  useSetAtom
+} from 'jotai'
 import type {
   ComponentType,
   Dispatch,
@@ -31,6 +39,7 @@ import type {Page} from './atoms/nav.js'
 import type {RootAtoms} from './atoms/root.js'
 import type {ReactiveNode} from './atoms/ReactiveNode.js'
 import {previewMetadataAtom} from './atoms/preview.js'
+import {policyAtom, userAtom} from './atoms/user.js'
 
 interface EntryContextValue {
   entry: EntryAtoms
@@ -62,6 +71,7 @@ const entryContext = createContext<EntryContextValue | null>(null)
 const dashboardContext = createContext<DashboardContextValue | null>(null)
 const dashboardModelContext = createContext<Dashboard | null>(null)
 const editorContext = createContext<EditorModel | null>(null)
+const noPolicyAtom = atom<Policy | undefined>(undefined)
 
 interface DashboardModelScopeProps {
   dashboard: Dashboard
@@ -119,14 +129,14 @@ export function useDashboard(): Dashboard {
  * Returns the active dashboard policy.
  */
 export function usePolicy() {
-  return useDashboardContext().page.auth.policy
+  return useAtomValue(policyAtom)
 }
 
 /**
  * Returns the authenticated dashboard user, or null when no user is active.
  */
 export function useUser(): User | null {
-  return useDashboardContext().page.auth.user
+  return useAtomValue(userAtom)
 }
 
 /**
@@ -225,7 +235,7 @@ function useFieldInfo(field: Field) {
 export function useNodeEditor(node: EditorNode, type: Type) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
-  const policy = scope?.entry.policy
+  const policy = useAtomValue(scope ? policyAtom : noPolicyAtom)
   const activeVersion = scope?.selectedEntry
   const editor = useMemo(() => {
     return new EntryEditor(

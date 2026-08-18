@@ -3,7 +3,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {createStore} from 'jotai'
 import {eventsAtom, graphAtom} from './core.js'
 import {mutationQueueState} from './dashboard.js'
-import {shaAtom, syncAtom} from './graph.js'
+import {entryRevisionAtom, shaAtom, syncAtom} from './graph.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reads the indexed content hash without synchronizing the graph', async () => {
@@ -23,7 +23,7 @@ test('reads the indexed content hash without synchronizing the graph', async () 
   expect(syncs).toBe(0)
 
   const unsubscribe = store.sub(shaAtom, () => {})
-  events.emit(new IndexEvent({op: 'index', sha: 'external-sha'}))
+  events.emit(new IndexEvent({op: 'index', sha: 'external-sha', ids: []}))
 
   expect(await store.get(shaAtom)).toBe('external-sha')
 
@@ -33,6 +33,31 @@ test('reads the indexed content hash without synchronizing the graph', async () 
   expect(syncs).toBe(1)
   expect(sha).toBeString()
   expect(await store.get(shaAtom)).toBe(sha)
+})
+
+test('only invalidates revisions for changed entry ids', async () => {
+  const {db} = await createDashboardAtomFixture()
+  const store = createStore()
+  const events = new TestEvents()
+  store.set(graphAtom, db)
+  store.set(eventsAtom, events)
+
+  const first = entryRevisionAtom('first')
+  const second = entryRevisionAtom('second')
+  let firstChanges = 0
+  let secondChanges = 0
+  const unsubscribeFirst = store.sub(first, () => firstChanges++)
+  const unsubscribeSecond = store.sub(second, () => secondChanges++)
+
+  events.emit(new IndexEvent({op: 'index', sha: 'changed-sha', ids: ['first']}))
+
+  expect(store.get(first)).toBe('changed-sha')
+  expect(store.get(second)).toBeUndefined()
+  expect(firstChanges).toBe(1)
+  expect(secondChanges).toBe(0)
+
+  unsubscribeFirst()
+  unsubscribeSecond()
 })
 
 test('summarizes mutation queue state without a store instance', () => {

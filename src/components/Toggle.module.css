@@ -53,7 +53,7 @@
     outline-offset: 1px;
   }
 
-  &[data-hovered],
+  &:hover,
   &[data-focused] {
     color: var(--alinea-fg);
     background-color: var(--alinea-muted-hover);

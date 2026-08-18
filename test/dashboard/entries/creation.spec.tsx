@@ -18,7 +18,7 @@ test('opens for the current folder without showing a suspense loader', async ({
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await app.page.getByRole('button', {name: 'Create entry'}).click()
+  await app.page.getByRole('button', {name: 'Create new'}).click()
   const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
   await expect(createEntry.getByRole('textbox', {name: 'Title'})).toBeVisible()
   await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(
@@ -39,7 +39,7 @@ test('creates a draft entry and opens it for editing', async ({
 }) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
-  await app.page.getByRole('button', {name: 'Create entry'}).click()
+  await app.page.getByRole('button', {name: 'Create new'}).click()
   const createEntry = app.page.getByRole('dialog')
   await createEntry.getByRole('textbox', {name: 'Title'}).fill('New page')
   await createEntry.getByRole('button', {name: 'Create entry'}).click()
@@ -56,4 +56,33 @@ test('creates a draft entry and opens it for editing', async ({
     app.page.getByRole('button', {name: 'Collapse Alpha'})
   ).toBeVisible()
   await app.openEntry('New page')
+})
+
+test('loads a parent selected from a collapsed branch by id', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.page.getByRole('button', {name: 'Create new'}).click()
+  const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
+  await createEntry.getByRole('button', {name: 'Link settings'}).click()
+  await app.page
+    .getByRole('dialog', {name: 'Link settings'})
+    .getByRole('button', {name: 'Edit link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await picker
+    .getByRole('checkbox', {name: 'Select Ordered folder'})
+    .click({force: true})
+  await picker.getByRole('button', {name: 'Select', exact: true}).click()
+
+  await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(
+    'Ordered folder'
+  )
+  await createEntry.getByRole('button', {name: /Page Type/}).click()
+  await expect(
+    app.page.getByRole('option', {name: 'Ordered folder'})
+  ).toHaveCount(0)
 })

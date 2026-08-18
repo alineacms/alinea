@@ -1,6 +1,6 @@
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {App} from '#/dashboard/App.js'
 import {views} from '#/field/views.js'
 import {Config, Field} from '#/index.js'
@@ -103,6 +103,13 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     'Child',
     dashboardScenarioIds.folder
   )
+  await db.create({
+    id: linkScenarioIds.mediaDirectory,
+    type: MediaLibrary,
+    workspace: 'main',
+    root: 'media',
+    set: {title: 'Media directory', path: 'media-directory'}
+  })
   await db.create({
     id: linkScenarioIds.existingImage,
     type: MediaFile,

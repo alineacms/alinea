@@ -8,7 +8,7 @@ import {
   type TreeItemProps as AriaTreeItemProps,
   Button,
   type TreeItemContentRenderProps,
-  type TreeProps
+  type TreeProps as AriaTreeProps
 } from 'react-aria-components'
 import {Checkbox} from './Checkbox.js'
 import {FoldIcon} from './FoldIcon.js'
@@ -17,22 +17,17 @@ import css from './Tree.module.css'
 
 const styles = styler(css)
 
+export interface TreeProps<T extends object> extends Omit<
+  AriaTreeProps<T>,
+  'className'
+> {
+  className?: string
+}
+
 export function Tree<T extends object>(props: TreeProps<T>) {
   const {className, ...rest} = props
   return (
-    <AriaTree
-      {...rest}
-      className={renderProps =>
-        styles.Tree(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
-    />
+    <AriaTree {...rest} className={styles.Tree(styler.merge({className}))} />
   )
 }
 
@@ -41,11 +36,13 @@ export interface TreeItemContentProps extends Omit<
   'children'
 > {
   children?: ReactNode
+  disableDragging?: boolean
   icon?: IconProps['icon']
   suffix?: ReactNode
 }
 
 export const TreeItemContent = memo(function TreeItemContent({
+  disableDragging,
   icon,
   suffix,
   children
@@ -64,13 +61,15 @@ export const TreeItemContent = memo(function TreeItemContent({
             <Checkbox slot="selection" />
           )}
           <div className={styles.TreeItem.controls()}>
-            <Button
-              slot="drag"
-              data-invisible={!isDragging}
-              className={styles.TreeItem.dragHandle()}
-            >
-              ≡
-            </Button>
+            {allowsDragging && !disableDragging && (
+              <Button
+                slot="drag"
+                data-invisible={!isDragging}
+                className={styles.TreeItem.dragHandle()}
+              >
+                ≡
+              </Button>
+            )}
             <Button
               slot="chevron"
               data-invisible={isDragging}
@@ -96,7 +95,11 @@ export const TreeItemContent = memo(function TreeItemContent({
   )
 })
 
-export interface TreeItemProps extends Partial<AriaTreeItemProps> {
+export interface TreeItemProps extends Partial<
+  Omit<AriaTreeItemProps, 'className'>
+> {
+  className?: string
+  disableDragging?: boolean
   title: string
   icon?: IconProps['icon']
   label?: ReactNode
@@ -104,6 +107,7 @@ export interface TreeItemProps extends Partial<AriaTreeItemProps> {
 }
 
 export function TreeItem({
+  disableDragging,
   title,
   icon,
   label,
@@ -118,18 +122,13 @@ export function TreeItem({
       textValue={title}
       {...rest}
       hasChildItems={hasChildItems}
-      className={renderProps =>
-        styles.TreeItem(
-          styler.merge({
-            className:
-              typeof className === 'function'
-                ? className(renderProps)
-                : className
-          })
-        )
-      }
+      className={styles.TreeItem(styler.merge({className}))}
     >
-      <TreeItemContent icon={icon} suffix={suffix}>
+      <TreeItemContent
+        disableDragging={disableDragging}
+        icon={icon}
+        suffix={suffix}
+      >
         {label ?? title}
       </TreeItemContent>
       {children}

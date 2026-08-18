@@ -14,12 +14,13 @@ import {Type, type as createType} from '#/core/Type.js'
 import {createEntryAtom} from '#/dashboard/atoms/create.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom, type WritableAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom, type WritableAtom} from 'jotai'
 import {
   Suspense,
   useMemo,
@@ -28,7 +29,7 @@ import {
   type SetStateAction
 } from 'react'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {NodeEditor} from '../EntryFields.js'
+import {EntryFields, NodeEditor} from '../EntryFields.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,
@@ -112,25 +113,24 @@ function CreateEntryLoading() {
 function CreateEntryForm() {
   const modal = useDashboardModal()
   const {page, root} = useDashboardContext()
-  const createEntry = useSetAtom(createEntryAtom(page.auth))
+  const createEntry = useSetAtom(createEntryAtom)
   const config = useAtomValue(configAtom).schema
-  const policy = page.auth.policy
-  const treeItems = useAtomValue(root.treeItems)
+  const policy = useAtomValue(policyAtom)
+  const {locale} = page
+  const tree = root.tree(locale)
+  const selectedItem = useAtomValue(tree.selectedItem)
   const rootData = useAtomValue(root.data)
   const initialParentId = useMemo(() => {
-    if (!page.entry) return undefined
-    const current = treeItems.find(item => item.id === page.entry)
-    if (!current) return undefined
-    const type = config[current.type]
+    if (!page.entry || !selectedItem) return undefined
+    const type = config[selectedItem.type]
     return type && Type.isContainer(type)
-      ? current.id
-      : (current.parentId ?? undefined)
-  }, [config, page.entry, treeItems])
+      ? selectedItem.id
+      : (selectedItem.parentId ?? undefined)
+  }, [config, page.entry, selectedItem])
   const [title, setTitle] = useState('')
   const [selectedTypeOverride, setSelectedType] = useState<string | null>(null)
   const [insertOrder, setInsertOrder] = useState<'first' | 'last'>('last')
   const [isCreating, setIsCreating] = useState(false)
-  const locale = root.locale
   const containerTypes = useMemo(
     () =>
       Object.entries(config)
@@ -156,28 +156,20 @@ function CreateEntryForm() {
   }, [containerTypes, initialParentId, root.key, root.workspace])
   const parentValue = useAtomValue(parent.value)
   const parentId = entryIdOf(parentValue)
-  const parentItem = treeItems.find(item => item.id === parentId)
+  const parentItemAtom = useMemo(
+    () =>
+      atom(get => {
+        const id = entryIdOf(get(parent.value))
+        return id ? get(tree.item(id)) : undefined
+      }),
+    [parent.value, tree]
+  )
+  const parentItem = useAtomValue(parentItemAtom)
   const parentType = parentItem ? config[parentItem.type] : undefined
   const allowed = parentType
     ? Schema.contained(config, Type.contains(parentType))
     : Schema.contained(config, rootData.contains ?? [])
-  const parentIds = parentId
-    ? [
-        parentId,
-        ...treeItems
-          .filter(item => {
-            let current = parentItem
-            while (current?.parentId) {
-              if (current.parentId === item.id) return true
-              current = treeItems.find(
-                candidate => candidate.id === current?.parentId
-              )
-            }
-            return false
-          })
-          .map(item => item.id)
-      ]
-    : []
+  const parentIds = parentItem ? [parentItem.id, ...parentItem.parents] : []
   const typeOptions = buildTypeOptions(config, allowed).filter(option =>
     policy.canCreate({
       workspace: root.workspace,
@@ -271,7 +263,9 @@ function CreateEntryForm() {
 
           <div className={styles.CreateEntry.parentRow()}>
             <div className={styles.CreateEntry.parentField()}>
-              <NodeEditor node={parent.node} type={parent.type} />
+              <NodeEditor node={parent.node} type={parent.type}>
+                <EntryFields />
+              </NodeEditor>
             </div>
             {showInsertOrder && (
               <Label
@@ -299,7 +293,9 @@ function CreateEntryForm() {
             )}
           </div>
 
-          <NodeEditor node={copyFrom.node} type={copyFrom.type} />
+          <NodeEditor node={copyFrom.node} type={copyFrom.type}>
+            <EntryFields />
+          </NodeEditor>
         </DashboardModalContent>
       </form>
 

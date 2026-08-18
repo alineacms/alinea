@@ -1,7 +1,9 @@
-import {Button, Popover, SearchField} from '#/components.js'
+import {Button, Menu, MenuItem, Popover, SearchField} from '#/components.js'
+import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
@@ -14,13 +16,7 @@ import {
   type ReactNode
 } from 'react'
 import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
-import {
-  IcRoundArrowDownward,
-  IcRoundArrowUpward,
-  IcRoundClose,
-  IcRoundFilterList,
-  IcRoundUploadFile
-} from '../icons.js'
+import {configAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
   type DashboardEntryData,
@@ -29,6 +25,13 @@ import {
   type ExplorerSortBy,
   type ExplorerTypeFilters
 } from '../atoms/explorer.js'
+import {
+  IcRoundArrowDownward,
+  IcRoundArrowUpward,
+  IcRoundClose,
+  IcRoundFilterList,
+  IcRoundUploadFile
+} from '../icons.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
@@ -42,6 +45,7 @@ export interface ExplorerProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
+  locale: string | null
 }
 
 export interface ExplorerHeaderEntry {
@@ -55,22 +59,27 @@ export interface ExplorerHeaderProps {
   controls?: ReactNode
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
+  navigate?: boolean
   titleControls?: ReactNode
+  locale: string | null
 }
 
 export interface ExplorerBodyProps {
   explorer: DashboardExplorer
+  locale: string | null
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
+  locale: string | null
 }
 
 interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
   titleControls?: ReactNode
+  locale: string | null
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
@@ -85,11 +94,11 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
+function ExplorerSearch({autoFocus, explorer, locale}: ExplorerSearchProps) {
   const items = useAtomValue(
     useMemo(
-      () => unwrap(explorer.items, previous => previous ?? []),
-      [explorer]
+      () => unwrap(explorer.items(locale), previous => previous ?? []),
+      [explorer, locale]
     )
   )
   const [selection, setSelection] = useAtom(explorer.selection)
@@ -171,7 +180,7 @@ function ExplorerSearch({autoFocus, explorer}: ExplorerSearchProps) {
         selectedEntry ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
-      performAction(entry)
+      performAction(entry, locale)
     }
   }
 
@@ -219,10 +228,11 @@ function ExplorerHeaderLoadedParentMain({
 function ExplorerHeaderMain({
   explorer,
   headerEntry,
-  titleControls
+  titleControls,
+  locale
 }: ExplorerHeaderMainProps) {
   const root = useAtomValue(explorer.root)
-  const parent = useAtomValue(explorer.parent)
+  const parent = useAtomValue(explorer.parent(locale))
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
@@ -248,6 +258,69 @@ function ExplorerHeaderMain({
     return <div className={styles.ExplorerHeader.main()}>{titleControls}</div>
   }
   return null
+}
+
+interface ExplorerLocationMenuProps {
+  explorer: DashboardExplorer
+}
+
+function ExplorerLocationMenu({explorer}: ExplorerLocationMenuProps) {
+  const config = useAtomValue(configAtom)
+  const location = useAtomValue(explorer.location)
+  const policy = useAtomValue(policyAtom)
+  const setLocation = useSetAtom(explorer.location)
+  const configuredLocations =
+    explorer.limitLocations ??
+    Object.entries(config.workspaces).flatMap(([workspace, value]) =>
+      Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
+    )
+  const locations = configuredLocations
+    .filter(location => policy.canRead(location))
+    .map(candidate => {
+      const workspace = config.workspaces[candidate.workspace]
+      const root = workspace
+        ? getWorkspace(workspace).roots[candidate.root]
+        : undefined
+      return {
+        ...candidate,
+        label: root ? getRoot(root).label : candidate.root
+      }
+    })
+  const selected = locations.find(
+    candidate =>
+      candidate.workspace === location.workspace &&
+      candidate.root === location.root
+  )
+  const label = selected?.label ?? location.root ?? 'Select root'
+  if (locations.length <= 1) return null
+  return (
+    <Menu
+      label={label}
+      appearance="plain"
+      selectionMode="single"
+      selectedKeys={[`${location.workspace}/${location.root}`]}
+      onAction={key => {
+        const selected = locations.find(
+          candidate => `${candidate.workspace}/${candidate.root}` === key
+        )
+        if (!selected) return
+        setLocation({
+          workspace: selected.workspace,
+          root: selected.root
+        })
+      }}
+    >
+      {locations.map(location => (
+        <MenuItem
+          id={`${location.workspace}/${location.root}`}
+          key={`${location.workspace}/${location.root}`}
+          textValue={location.label}
+        >
+          {location.label}
+        </MenuItem>
+      ))}
+    </Menu>
+  )
 }
 
 function ExplorerHeaderParentMain({
@@ -409,7 +482,9 @@ export function ExplorerHeader({
   controls,
   explorer,
   headerEntry,
-  titleControls
+  navigate,
+  titleControls,
+  locale
 }: ExplorerHeaderProps) {
   return (
     <RailHeader className={styles.ExplorerHeader()}>
@@ -418,9 +493,19 @@ export function ExplorerHeader({
           explorer={explorer}
           headerEntry={headerEntry}
           titleControls={titleControls}
+          locale={locale}
         />
+        {navigate && (
+          <div className={styles.Explorer.searchMenu()}>
+            <ExplorerLocationMenu explorer={explorer} />
+          </div>
+        )}
         <div className={styles.Explorer.searchSlot()}>
-          <ExplorerSearch autoFocus={autoFocusSearch} explorer={explorer} />
+          <ExplorerSearch
+            autoFocus={autoFocusSearch}
+            explorer={explorer}
+            locale={locale}
+          />
         </div>
         <div className={styles.Explorer.toolbar()}>
           <ExplorerToolbar explorer={explorer} />
@@ -431,11 +516,11 @@ export function ExplorerHeader({
   )
 }
 
-export function ExplorerBody({explorer}: ExplorerBodyProps) {
+export function ExplorerBody({explorer, locale}: ExplorerBodyProps) {
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} />
+        <ExplorerList explorer={explorer} locale={locale} />
       </div>
     </RailBody>
   )
@@ -445,7 +530,8 @@ export function Explorer({
   controls,
   explorer,
   headerEntry,
-  titleControls
+  titleControls,
+  locale
 }: ExplorerProps) {
   return (
     <>
@@ -454,8 +540,9 @@ export function Explorer({
         explorer={explorer}
         headerEntry={headerEntry}
         titleControls={titleControls}
+        locale={locale}
       />
-      <ExplorerBody explorer={explorer} />
+      <ExplorerBody explorer={explorer} locale={locale} />
     </>
   )
 }

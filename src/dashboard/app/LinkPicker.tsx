@@ -4,7 +4,7 @@ import {
   type ExplorerOptions
 } from '#/dashboard/atoms/explorer.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {useDashboardContext, usePolicy} from '#/dashboard/hooks.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useState} from 'react'
 import {ExplorerHeader} from './Explorer.js'
@@ -15,7 +15,7 @@ import {
   ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
-import {ExplorerPickerContent} from './ExplorerPickerContent.js'
+import {explorerTree, ExplorerPickerContent} from './ExplorerPickerContent.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -23,7 +23,7 @@ import {
   useDashboardModal
 } from './ui/DashboardModal.js'
 
-export interface LinkPickerOptions extends Omit<ExplorerOptions, 'policy'> {}
+export interface LinkPickerOptions extends ExplorerOptions {}
 
 export function LinkPicker(options: LinkPickerOptions) {
   return (
@@ -50,28 +50,24 @@ interface ExplorerModalProps {
 function LinkPickerModalContent({options}: ExplorerModalProps) {
   const modal = useDashboardModal()
   const {page, root} = useDashboardContext()
-  const policy = usePolicy()
   const location = options.location ?? {
     workspace: root.workspace,
     root: root.key
   }
-  const pickerRoot = rootAtoms(
-    page,
-    location.workspace,
-    location.root ?? root.key,
-    options.selectedLocale ?? root.locale
-  )
-  const selectedLocale = useAtomValue(pickerRoot.selectedLocale)
-  const [explorer] = useState(() =>
-    createExplorerAtoms(location, {
+  const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
+  const initialLocale = options.selectedLocale ?? page.locale
+  const [explorer] = useState(() => {
+    let explorer: ReturnType<typeof createExplorerAtoms>
+    explorer = createExplorerAtoms(location, {
       ...options,
-      policy,
       rootData: pickerRoot.data,
       searchDepth: 'all',
-      selectedLocale,
-      treeItems: pickerRoot.treeItems
+      selectedLocale: initialLocale,
+      treeItems: locale => explorerTree(pickerRoot, explorer, locale).items
     })
-  )
+    return explorer
+  })
+  const selectedLocale = useAtomValue(explorer.selectedLocale)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -88,6 +84,8 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
           <ExplorerHeader
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            navigate
+            locale={selectedLocale}
           />
           <ExplorerPickerContent
             explorer={explorer}

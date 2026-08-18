@@ -10,8 +10,9 @@ import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {Root} from '#/core/Root.js'
-import {Permission, type Policy} from '#/core/Role.js'
+import {Permission} from '#/core/Role.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
+import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
@@ -22,9 +23,9 @@ import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {ReactiveNode} from './ReactiveNode.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
-import {shaAtom} from './graph.js'
+import {entryRevisionAtom, shaAtom} from './graph.js'
 import {dispense, loader} from './utils.js'
-import type {Page, PageAuth} from './nav.js'
+import {policyAtom, userAtom} from './user.js'
 
 interface EntryData {
   id: string
@@ -93,12 +94,12 @@ function prepareData(
   node: ReactiveNode<object>,
   type: Type,
   action: FieldBeforeSaveAction,
-  auth: PageAuth
+  user: User
 ) {
   const current = get(node.value) as Record<string, unknown>
   const data = Type.beforeSave(type, current, {
     action,
-    user: auth.user,
+    user,
     now: new Date()
   })
   return {data, changed: data !== current}
@@ -225,7 +226,7 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const type = config.schema[entry.type]
     assert(type, `Type "${entry.type}" not found in config`)
-    const policy = this.entry.policy
+    const policy = get(policyAtom)
     const readOnly =
       version?.type === 'history' ||
       (!isUntranslated && (!entry.active || !policy.canUpdate(entry)))
@@ -331,7 +332,7 @@ export class EntryLocaleAtoms {
   saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const dataState = get(this.entry.data)
     const {id, type} = dataState
-    const policy = this.entry.policy
+    const policy = get(policyAtom)
     const config = get(configAtom)
     const typeConfig = config.schema[type]
     assert(typeConfig, `Type "${type}" not found in config`)
@@ -345,7 +346,7 @@ export class EntryLocaleAtoms {
       node,
       typeConfig,
       'update',
-      this.entry.auth
+      get(userAtom)
     )
     policy.assert(Permission.Update, activeEntry)
     await graph.create({
@@ -363,7 +364,7 @@ export class EntryLocaleAtoms {
   publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
     const dataState = get(this.entry.data)
     const {id, type} = dataState
-    const policy = this.entry.policy
+    const policy = get(policyAtom)
     const config = get(configAtom)
     const typeConfig = config.schema[type]
     assert(typeConfig, `Type "${type}" not found in config`)
@@ -377,7 +378,7 @@ export class EntryLocaleAtoms {
       node,
       typeConfig,
       'publish',
-      this.entry.auth
+      get(userAtom)
     )
     policy.assert(Permission.Publish, activeEntry)
     await graph.create({
@@ -399,7 +400,7 @@ export class EntryLocaleAtoms {
     )
     const dataState = get(this.entry.data)
     const sourceEntry = await get(this.selectedEntry)
-    const policy = this.entry.policy
+    const policy = get(policyAtom)
     policy.assert(Permission.Update, {
       ...sourceEntry,
       locale: this.requestedLocale
@@ -422,7 +423,7 @@ export class EntryLocaleAtoms {
       node,
       type,
       'translate',
-      this.entry.auth
+      get(userAtom)
     )
     const graph = get(graphAtom)
     await graph.create({
@@ -448,7 +449,7 @@ export class EntryLocaleAtoms {
 
   publishDraft = atom(null, async get => {
     const entry = this.#activeEntry(get)
-    this.entry.policy.assert(Permission.Publish, entry)
+    get(policyAtom).assert(Permission.Publish, entry)
     await get(graphAtom).publish({
       id: this.entry.id,
       locale: this.requestedLocale,
@@ -457,7 +458,7 @@ export class EntryLocaleAtoms {
   })
   discardDraft = atom(null, async get => {
     const entry = this.#activeEntry(get)
-    this.entry.policy.assert(Permission.Update, entry)
+    get(policyAtom).assert(Permission.Update, entry)
     await get(graphAtom).discard({
       id: this.entry.id,
       locale: this.requestedLocale,
@@ -466,7 +467,7 @@ export class EntryLocaleAtoms {
   })
   unpublish = atom(null, async get => {
     const entry = this.#activeEntry(get)
-    this.entry.policy.assert(Permission.Publish, entry)
+    get(policyAtom).assert(Permission.Publish, entry)
     await get(graphAtom).unpublish({
       id: this.entry.id,
       locale: this.requestedLocale
@@ -474,7 +475,7 @@ export class EntryLocaleAtoms {
   })
   archive = atom(null, async get => {
     const entry = this.#activeEntry(get)
-    this.entry.policy.assert(Permission.Archive, entry)
+    get(policyAtom).assert(Permission.Archive, entry)
     await get(graphAtom).archive({
       id: this.entry.id,
       locale: this.requestedLocale
@@ -482,7 +483,7 @@ export class EntryLocaleAtoms {
   })
   publishArchived = atom(null, async get => {
     const entry = this.#activeEntry(get)
-    this.entry.policy.assert(Permission.Publish, entry)
+    get(policyAtom).assert(Permission.Publish, entry)
     await get(graphAtom).publish({
       id: this.entry.id,
       locale: this.requestedLocale,
@@ -491,12 +492,12 @@ export class EntryLocaleAtoms {
   })
   deleteEntry = atom(null, async get => {
     const entry = this.#activeEntry(get)
-    this.entry.policy.assert(Permission.Delete, entry)
+    get(policyAtom).assert(Permission.Delete, entry)
     await get(graphAtom).remove(this.entry.id)
   })
   replaceFile = atom(null, async (get, set, file: File) => {
     const entry = this.#activeEntry(get)
-    const policy = this.entry.policy
+    const policy = get(policyAtom)
     policy.assert(Permission.Update, entry)
     policy.assert(Permission.Upload, entry)
     await get(graphAtom).upload({
@@ -514,21 +515,17 @@ export class EntryLocaleAtoms {
 export class EntryAtoms {
   constructor(
     public readonly id: string,
-    public readonly data: Atom<EntryData>,
-    public readonly auth: PageAuth
+    public readonly data: Atom<EntryData>
   ) {}
-
-  get policy() {
-    return this.auth.policy
-  }
 
   // Should UI show overview or editor?
   #selectedView = atom<EntryDefaultView>()
+  previousVersionsOpen = atom(false)
 
   incomingReferencesReady = atom(async get => {
-    get(shaAtom)
+    get(entryRevisionAtom(this.id))
     const graph = get(graphAtom)
-    const policy = this.policy
+    const policy = get(policyAtom)
     const result = await graph.referencesTo({
       targetId: this.id,
       status: 'preferDraft'
@@ -581,9 +578,8 @@ export class EntryAtoms {
     const root = getWorkspace(workspace).roots[data.root]
     assert(root, `Root "${data.root}" not found in config`)
     assert(typeConfig, `Type "${data.type}" not found in config`)
-    const defaultView = data.hasChildren
-      ? 'overview'
-      : (Type.defaultView(typeConfig) ?? 'edit')
+    const defaultView =
+      Type.defaultView(typeConfig) ?? (data.hasChildren ? 'overview' : 'edit')
     const rootData = getRoot(root)
     const workspaceData = getWorkspace(workspace)
     const preview =
@@ -629,38 +625,26 @@ export class EntryAtoms {
   )
 }
 
-const entryPolicyAtoms = dispense((policy: Policy) =>
-  dispense((user: PageAuth['user']) => {
-    const auth: PageAuth = {user, policy}
-    return dispense((entryId: string) => {
-      const data = atom(async get => {
-        get(shaAtom)
-        const load = get(entryLoader(policy))
-        const [result, error] = await load(entryId)
-        if (error) {
-          // Subscribe to revisions so a missing entry can appear after syncing.
-          if (error instanceof MissingEntryError) get(shaAtom)
-          throw error
-        }
-        assert(result, `Entry "${entryId}" not found`)
-        return result
-      })
-      let entry: EntryAtoms | undefined
-      return atom(async get => {
-        const initial = await get(data)
-        return (entry ??= new EntryAtoms(
-          entryId,
-          unwrap(data, previous => previous ?? initial) as Atom<EntryData>,
-          auth
-        ))
-      })
-    })
+export const entryAtoms = dispense((entryId: string) => {
+  const data = atom(async get => {
+    get(entryRevisionAtom(entryId))
+    const load = get(entryLoader)
+    const [result, error] = await load(entryId)
+    if (error) {
+      throw error
+    }
+    assert(result, `Entry "${entryId}" not found`)
+    return result
   })
-)
-
-export function entryAtoms(page: Page, entryId: string) {
-  return entryPolicyAtoms(page.auth.policy)(page.auth.user)(entryId)
-}
+  let entry: EntryAtoms | undefined
+  return atom(async get => {
+    const initial = await get(data)
+    return (entry ??= new EntryAtoms(
+      entryId,
+      unwrap(data, previous => previous ?? initial) as Atom<EntryData>
+    ))
+  })
+})
 
 function referenceKey(reference: {
   sourceId: string
@@ -673,48 +657,45 @@ function referenceSourceKey(source: EntryReferenceSource) {
   return `${source.id}\0${source.locale ?? ''}`
 }
 
-const entryLoader = dispense((policy: Policy) =>
-  atom(get => {
-    const config = get(configAtom)
-    const graph = get(graphAtom)
-    const visibleTypes = entries(config.schema)
-      .filter(([, type]) => !Type.isHidden(type))
-      .map(([name]) => name)
-    return loader(async ids => {
-      const rows = await graph.find({
-        groupBy: Entry.id,
-        select: selection,
-        id: {in: ids},
-        status: 'preferDraft'
-      })
-      const parentIds = await graph.find({
-        select: Entry.parentId,
-        parentId: {in: ids},
-        filter: {_type: {in: visibleTypes}},
-        groupBy: Entry.parentId,
-        status: 'preferDraft'
-      })
-      const byId = new Map(rows.map(row => [row.id, row] as const))
-      return ids.map(id => {
-        const row = byId.get(id)
-        if (!row) return [null, new MissingEntryError(id)] as const
-        const readableEntries = row.entries.filter(entry =>
-          policy.canRead(entry)
-        )
-        if (readableEntries.length === 0)
-          return [null, new MissingEntryError(id)] as const
-        return [
-          {
-            ...row,
-            entries: readableEntries,
-            hasChildren: parentIds.includes(id)
-          },
-          null
-        ] as const
-      })
+const entryLoader = atom(get => {
+  const config = get(configAtom)
+  const graph = get(graphAtom)
+  const policy = get(policyAtom)
+  const visibleTypes = entries(config.schema)
+    .filter(([, type]) => !Type.isHidden(type))
+    .map(([name]) => name)
+  return loader(async ids => {
+    const rows = await graph.find({
+      groupBy: Entry.id,
+      select: selection,
+      id: {in: ids},
+      status: 'preferDraft'
+    })
+    const parentIds = await graph.find({
+      select: Entry.parentId,
+      parentId: {in: ids},
+      filter: {_type: {in: visibleTypes}},
+      groupBy: Entry.parentId,
+      status: 'preferDraft'
+    })
+    const byId = new Map(rows.map(row => [row.id, row] as const))
+    return ids.map(id => {
+      const row = byId.get(id)
+      if (!row) return [null, new MissingEntryError(id)] as const
+      const readableEntries = row.entries.filter(entry => policy.canRead(entry))
+      if (readableEntries.length === 0)
+        return [null, new MissingEntryError(id)] as const
+      return [
+        {
+          ...row,
+          entries: readableEntries,
+          hasChildren: parentIds.includes(id)
+        },
+        null
+      ] as const
     })
   })
-)
+})
 
 export class MissingEntryError extends Error {
   constructor(public id: string) {

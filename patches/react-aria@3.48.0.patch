@@ -1,0 +1,210 @@
+diff --git a/dist/private/dnd/useDroppableCollection.cjs b/dist/private/dnd/useDroppableCollection.cjs
+index 633aa2687cb9d0029a66e300342bc679c17c631e..27940ed1ece533a8d82b57b703948f5e1b5383c4 100644
+--- a/dist/private/dnd/useDroppableCollection.cjs
++++ b/dist/private/dnd/useDroppableCollection.cjs
+@@ -185,11 +185,11 @@ function $94cf00b2b86ad837$export$f4e2f423c21f7b04(props, state, ref) {
+     let updateFocusAfterDrop = (0, $ldyCh$react.useCallback)(()=>{
+         let { state: state } = localState;
+         if (droppingState.current) {
+-            let { target: target, collection: prevCollection, selectedKeys: prevSelectedKeys, focusedKey: prevFocusedKey, isInternal: isInternal, draggingKeys: draggingKeys } = droppingState.current;
++            let { target: target, collection: prevCollection, selectedKeys: prevSelectedKeys, focusedKey: prevFocusedKey, isInternal: isInternal, draggingKeys: draggingKeys, didSelectInsertedItems: didSelectInsertedItems } = droppingState.current;
+             // If an insert occurs during a drop, we want to immediately select these items to give
+             // feedback to the user that a drop occurred. Only do this if the selection didn't change
+             // since the drop started so we don't override if the user or application did something.
+-            if (state.collection.size > prevCollection.size && state.selectionManager.isSelectionEqual(prevSelectedKeys)) {
++            if (!isInternal && !didSelectInsertedItems && state.collection.size > prevCollection.size && state.selectionManager.isSelectionEqual(prevSelectedKeys)) {
+                 let newKeys = new Set();
+                 let key = state.collection.getFirstKey();
+                 while(key != null){
+@@ -198,23 +198,26 @@ function $94cf00b2b86ad837$export$f4e2f423c21f7b04(props, state, ref) {
+                     if (item?.hasChildNodes && state.collection.getItem(item.lastChildKey)?.type === 'item') key = item.firstChildKey;
+                     else key = state.collection.getKeyAfter(key);
+                 }
+-                state.selectionManager.setSelectedKeys(newKeys);
+-                // If the focused item didn't change since the drop occurred, also focus the first
+-                // inserted item. If selection is disabled, then also show the focus ring so there
+-                // is some indication that items were added.
+-                if (state.selectionManager.focusedKey === prevFocusedKey) {
+-                    let first = newKeys.keys().next().value;
+-                    if (first != null) {
+-                        let item = state.collection.getItem(first);
+-                        let dropTarget = droppingState.current.target;
+-                        let isParentRowExpanded = state.collection['expandedKeys'] ? state.collection['expandedKeys'].has(item?.parentKey) : false;
+-                        // If this is a cell, focus the parent row.
+-                        // eslint-disable-next-line max-depth
+-                        if (item && (item?.type === 'cell' || dropTarget.type === 'item' && dropTarget.dropPosition === 'on' && !isParentRowExpanded)) first = item.parentKey;
+-                        // eslint-disable-next-line max-depth
+-                        if (first != null) state.selectionManager.setFocusedKey(first);
+-                        // eslint-disable-next-line max-depth
+-                        if (state.selectionManager.selectionMode === 'none') (0, $d0df89f3abe2c2ca$exports.setInteractionModality)('keyboard');
++                if (newKeys.size > 0) {
++                    droppingState.current.didSelectInsertedItems = true;
++                    state.selectionManager.setSelectedKeys(newKeys);
++                    // If the focused item didn't change since the drop occurred, also focus the first
++                    // inserted item. If selection is disabled, then also show the focus ring so there
++                    // is some indication that items were added.
++                    if (state.selectionManager.focusedKey === prevFocusedKey) {
++                        let first = newKeys.keys().next().value;
++                        if (first != null) {
++                            let item = state.collection.getItem(first);
++                            let dropTarget = droppingState.current.target;
++                            let isParentRowExpanded = state.collection['expandedKeys'] ? state.collection['expandedKeys'].has(item?.parentKey) : false;
++                            // If this is a cell, focus the parent row.
++                            // eslint-disable-next-line max-depth
++                            if (item && (item?.type === 'cell' || dropTarget.type === 'item' && dropTarget.dropPosition === 'on' && !isParentRowExpanded)) first = item.parentKey;
++                            // eslint-disable-next-line max-depth
++                            if (first != null) state.selectionManager.setFocusedKey(first);
++                            // eslint-disable-next-line max-depth
++                            if (state.selectionManager.selectionMode === 'none') (0, $d0df89f3abe2c2ca$exports.setInteractionModality)('keyboard');
++                        }
+                     }
+                 }
+             } else if (prevFocusedKey != null && state.selectionManager.focusedKey === prevFocusedKey && isInternal && target.type === 'item' && target.dropPosition !== 'on' && draggingKeys.has(state.collection.getItem(prevFocusedKey)?.parentKey)) {
+@@ -238,6 +241,7 @@ function $94cf00b2b86ad837$export$f4e2f423c21f7b04(props, state, ref) {
+         // Save some state of the collection/selection before the drop occurs so we can compare later.
+         droppingState.current = {
+             timeout: undefined,
++            didSelectInsertedItems: false,
+             focusedKey: state.selectionManager.focusedKey,
+             collection: state.collection,
+             selectedKeys: state.selectionManager.selectedKeys,
+diff --git a/dist/private/dnd/useDroppableCollection.js b/dist/private/dnd/useDroppableCollection.js
+index 89ee4fef7c94c83c0a066cac58f12977b7b76979..cceb4893761d16ed8e810896798a669fcc790172 100644
+--- a/dist/private/dnd/useDroppableCollection.js
++++ b/dist/private/dnd/useDroppableCollection.js
+@@ -181,11 +181,11 @@ function $e9d8ec9c7ee36249$export$f4e2f423c21f7b04(props, state, ref) {
+         let { state: state } = localState;
+         if (droppingState.current) {
+             var _state_collection_getItem;
+-            let { target: target, collection: prevCollection, selectedKeys: prevSelectedKeys, focusedKey: prevFocusedKey, isInternal: isInternal, draggingKeys: draggingKeys } = droppingState.current;
++            let { target: target, collection: prevCollection, selectedKeys: prevSelectedKeys, focusedKey: prevFocusedKey, isInternal: isInternal, draggingKeys: draggingKeys, didSelectInsertedItems: didSelectInsertedItems } = droppingState.current;
+             // If an insert occurs during a drop, we want to immediately select these items to give
+             // feedback to the user that a drop occurred. Only do this if the selection didn't change
+             // since the drop started so we don't override if the user or application did something.
+-            if (state.collection.size > prevCollection.size && state.selectionManager.isSelectionEqual(prevSelectedKeys)) {
++            if (!isInternal && !didSelectInsertedItems && state.collection.size > prevCollection.size && state.selectionManager.isSelectionEqual(prevSelectedKeys)) {
+                 let newKeys = new Set();
+                 let key = state.collection.getFirstKey();
+                 while(key != null){
+@@ -195,23 +195,26 @@ function $e9d8ec9c7ee36249$export$f4e2f423c21f7b04(props, state, ref) {
+                     if ((item === null || item === void 0 ? void 0 : item.hasChildNodes) && ((_state_collection_getItem1 = state.collection.getItem(item.lastChildKey)) === null || _state_collection_getItem1 === void 0 ? void 0 : _state_collection_getItem1.type) === 'item') key = item.firstChildKey;
+                     else key = state.collection.getKeyAfter(key);
+                 }
+-                state.selectionManager.setSelectedKeys(newKeys);
+-                // If the focused item didn't change since the drop occurred, also focus the first
+-                // inserted item. If selection is disabled, then also show the focus ring so there
+-                // is some indication that items were added.
+-                if (state.selectionManager.focusedKey === prevFocusedKey) {
+-                    let first = newKeys.keys().next().value;
+-                    if (first != null) {
+-                        let item = state.collection.getItem(first);
+-                        let dropTarget = droppingState.current.target;
+-                        let isParentRowExpanded = state.collection['expandedKeys'] ? state.collection['expandedKeys'].has(item === null || item === void 0 ? void 0 : item.parentKey) : false;
+-                        // If this is a cell, focus the parent row.
+-                        // eslint-disable-next-line max-depth
+-                        if (item && ((item === null || item === void 0 ? void 0 : item.type) === 'cell' || dropTarget.type === 'item' && dropTarget.dropPosition === 'on' && !isParentRowExpanded)) first = item.parentKey;
+-                        // eslint-disable-next-line max-depth
+-                        if (first != null) state.selectionManager.setFocusedKey(first);
+-                        // eslint-disable-next-line max-depth
+-                        if (state.selectionManager.selectionMode === 'none') (0, $b50b1cc8a843ace7$export$8397ddfc504fdb9a)('keyboard');
++                if (newKeys.size > 0) {
++                    droppingState.current.didSelectInsertedItems = true;
++                    state.selectionManager.setSelectedKeys(newKeys);
++                    // If the focused item didn't change since the drop occurred, also focus the first
++                    // inserted item. If selection is disabled, then also show the focus ring so there
++                    // is some indication that items were added.
++                    if (state.selectionManager.focusedKey === prevFocusedKey) {
++                        let first = newKeys.keys().next().value;
++                        if (first != null) {
++                            let item = state.collection.getItem(first);
++                            let dropTarget = droppingState.current.target;
++                            let isParentRowExpanded = state.collection['expandedKeys'] ? state.collection['expandedKeys'].has(item === null || item === void 0 ? void 0 : item.parentKey) : false;
++                            // If this is a cell, focus the parent row.
++                            // eslint-disable-next-line max-depth
++                            if (item && ((item === null || item === void 0 ? void 0 : item.type) === 'cell' || dropTarget.type === 'item' && dropTarget.dropPosition === 'on' && !isParentRowExpanded)) first = item.parentKey;
++                            // eslint-disable-next-line max-depth
++                            if (first != null) state.selectionManager.setFocusedKey(first);
++                            // eslint-disable-next-line max-depth
++                            if (state.selectionManager.selectionMode === 'none') (0, $b50b1cc8a843ace7$export$8397ddfc504fdb9a)('keyboard');
++                        }
+                     }
+                 }
+             } else if (prevFocusedKey != null && state.selectionManager.focusedKey === prevFocusedKey && isInternal && target.type === 'item' && target.dropPosition !== 'on' && draggingKeys.has((_state_collection_getItem = state.collection.getItem(prevFocusedKey)) === null || _state_collection_getItem === void 0 ? void 0 : _state_collection_getItem.parentKey)) {
+@@ -237,6 +240,7 @@ function $e9d8ec9c7ee36249$export$f4e2f423c21f7b04(props, state, ref) {
+         // Save some state of the collection/selection before the drop occurs so we can compare later.
+         droppingState.current = {
+             timeout: undefined,
++            didSelectInsertedItems: false,
+             focusedKey: state.selectionManager.focusedKey,
+             collection: state.collection,
+             selectedKeys: state.selectionManager.selectedKeys,
+diff --git a/dist/private/dnd/useDroppableCollection.mjs b/dist/private/dnd/useDroppableCollection.mjs
+index 5d173349d3594ce13e29b4239f8fec9a854e371c..00d78cd7300814de09d746b81e5d6fc8c6b319da 100644
+--- a/dist/private/dnd/useDroppableCollection.mjs
++++ b/dist/private/dnd/useDroppableCollection.mjs
+@@ -179,11 +179,11 @@ function $768d61f7ff22c01a$export$f4e2f423c21f7b04(props, state, ref) {
+     let updateFocusAfterDrop = (0, $7dnNz$useCallback)(()=>{
+         let { state: state } = localState;
+         if (droppingState.current) {
+-            let { target: target, collection: prevCollection, selectedKeys: prevSelectedKeys, focusedKey: prevFocusedKey, isInternal: isInternal, draggingKeys: draggingKeys } = droppingState.current;
++            let { target: target, collection: prevCollection, selectedKeys: prevSelectedKeys, focusedKey: prevFocusedKey, isInternal: isInternal, draggingKeys: draggingKeys, didSelectInsertedItems: didSelectInsertedItems } = droppingState.current;
+             // If an insert occurs during a drop, we want to immediately select these items to give
+             // feedback to the user that a drop occurred. Only do this if the selection didn't change
+             // since the drop started so we don't override if the user or application did something.
+-            if (state.collection.size > prevCollection.size && state.selectionManager.isSelectionEqual(prevSelectedKeys)) {
++            if (!isInternal && !didSelectInsertedItems && state.collection.size > prevCollection.size && state.selectionManager.isSelectionEqual(prevSelectedKeys)) {
+                 let newKeys = new Set();
+                 let key = state.collection.getFirstKey();
+                 while(key != null){
+@@ -192,23 +192,26 @@ function $768d61f7ff22c01a$export$f4e2f423c21f7b04(props, state, ref) {
+                     if (item?.hasChildNodes && state.collection.getItem(item.lastChildKey)?.type === 'item') key = item.firstChildKey;
+                     else key = state.collection.getKeyAfter(key);
+                 }
+-                state.selectionManager.setSelectedKeys(newKeys);
+-                // If the focused item didn't change since the drop occurred, also focus the first
+-                // inserted item. If selection is disabled, then also show the focus ring so there
+-                // is some indication that items were added.
+-                if (state.selectionManager.focusedKey === prevFocusedKey) {
+-                    let first = newKeys.keys().next().value;
+-                    if (first != null) {
+-                        let item = state.collection.getItem(first);
+-                        let dropTarget = droppingState.current.target;
+-                        let isParentRowExpanded = state.collection['expandedKeys'] ? state.collection['expandedKeys'].has(item?.parentKey) : false;
+-                        // If this is a cell, focus the parent row.
+-                        // eslint-disable-next-line max-depth
+-                        if (item && (item?.type === 'cell' || dropTarget.type === 'item' && dropTarget.dropPosition === 'on' && !isParentRowExpanded)) first = item.parentKey;
+-                        // eslint-disable-next-line max-depth
+-                        if (first != null) state.selectionManager.setFocusedKey(first);
+-                        // eslint-disable-next-line max-depth
+-                        if (state.selectionManager.selectionMode === 'none') (0, $8f5a2122b0992be3$export$8397ddfc504fdb9a)('keyboard');
++                if (newKeys.size > 0) {
++                    droppingState.current.didSelectInsertedItems = true;
++                    state.selectionManager.setSelectedKeys(newKeys);
++                    // If the focused item didn't change since the drop occurred, also focus the first
++                    // inserted item. If selection is disabled, then also show the focus ring so there
++                    // is some indication that items were added.
++                    if (state.selectionManager.focusedKey === prevFocusedKey) {
++                        let first = newKeys.keys().next().value;
++                        if (first != null) {
++                            let item = state.collection.getItem(first);
++                            let dropTarget = droppingState.current.target;
++                            let isParentRowExpanded = state.collection['expandedKeys'] ? state.collection['expandedKeys'].has(item?.parentKey) : false;
++                            // If this is a cell, focus the parent row.
++                            // eslint-disable-next-line max-depth
++                            if (item && (item?.type === 'cell' || dropTarget.type === 'item' && dropTarget.dropPosition === 'on' && !isParentRowExpanded)) first = item.parentKey;
++                            // eslint-disable-next-line max-depth
++                            if (first != null) state.selectionManager.setFocusedKey(first);
++                            // eslint-disable-next-line max-depth
++                            if (state.selectionManager.selectionMode === 'none') (0, $8f5a2122b0992be3$export$8397ddfc504fdb9a)('keyboard');
++                        }
+                     }
+                 }
+             } else if (prevFocusedKey != null && state.selectionManager.focusedKey === prevFocusedKey && isInternal && target.type === 'item' && target.dropPosition !== 'on' && draggingKeys.has(state.collection.getItem(prevFocusedKey)?.parentKey)) {
+@@ -232,6 +235,7 @@ function $768d61f7ff22c01a$export$f4e2f423c21f7b04(props, state, ref) {
+         // Save some state of the collection/selection before the drop occurs so we can compare later.
+         droppingState.current = {
+             timeout: undefined,
++            didSelectInsertedItems: false,
+             focusedKey: state.selectionManager.focusedKey,
+             collection: state.collection,
+             selectedKeys: state.selectionManager.selectedKeys,

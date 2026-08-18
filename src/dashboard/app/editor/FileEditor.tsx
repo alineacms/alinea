@@ -1,15 +1,12 @@
 import {type} from '#/config.js'
 import {Surface, Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {Config} from '#/core/Config.js'
-import type {RootI18n} from '#/core/Root.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
-import type {EntryAtoms} from '#/dashboard/atoms/entry.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {useEditor, useField, useFieldValue} from '#/dashboard/hooks.js'
-import {localiser, text} from '#/field.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import prettyBytes from 'pretty-bytes'
@@ -21,27 +18,17 @@ import {FilePreview, type FocusPoint} from './FilePreview.js'
 
 const styles = styler(css)
 
-interface FileEditorProps {
-  entry: EntryAtoms
-}
-
-const alt = text('Alt text', {
-  multiline: true,
-  help: 'Describe the image for screen readers and SEO'
+const metadataFields = type('Metadata', {
+  fields: {
+    title: MediaFile.title,
+    path: MediaFile.path,
+    alt: MediaFile.alt,
+    metadata: MediaFile.metadata
+  }
 })
 
-export function FileEditor({entry}: FileEditorProps) {
+export function FileEditor() {
   const config = useAtomValue(configAtom)
-  const i18n = useAtomValue(entry.mediaI18n)
-  return <FileEditorContent config={config} i18n={i18n} />
-}
-
-interface FileEditorContentProps {
-  config: Config
-  i18n: RootI18n | undefined
-}
-
-function FileEditorContent({config, i18n}: FileEditorContentProps) {
   const location = useFieldValue(MediaFile.location)
   const extension = useFieldValue(MediaFile.extension)
   const isImage = isImageExtension(extension)
@@ -60,17 +47,6 @@ function FileEditorContent({config, i18n}: FileEditorContentProps) {
     () => new URL(location, Config.baseUrl(config) ?? window.location.href)
   )
   const displayedFocusPoint = hoverPoint ?? focusPoint
-  const metadataFields = useMemo(() => {
-    const altField = i18n ? localiser(i18n)(alt) : alt
-    return type('Metadata', {
-      fields: {
-        title: MediaFile.title,
-        path: MediaFile.path,
-        alt: altField,
-        metadata: MediaFile.metadata
-      }
-    })
-  }, [i18n])
   const node = useEditor().node
   return (
     <Surface className={styles.FileEditor.surface()}>

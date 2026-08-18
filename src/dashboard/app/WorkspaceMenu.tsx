@@ -9,7 +9,7 @@ import {
   type PopoverProps
 } from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
-import {workspaceAtoms, workspacesAtom} from '#/dashboard/atoms/config.js'
+import {workspaceAtom, workspacesAtom} from '#/dashboard/atoms/config.js'
 import {createExplorerAtoms} from '#/dashboard/atoms/explorer.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
@@ -18,17 +18,11 @@ import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
-import {
-  IcOutlineSettings,
-  IcRoundSearch,
-  IcRoundUnfoldMore,
-  MaterialSymbolsEditSquareOutlineRounded
-} from '../icons.js'
+import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
 import {ExplorerModal, ExplorerModalSuspense} from './ExplorerModal.js'
 import {LogoShape} from './LogoShape.js'
-import {CreateEntry} from './modals/CreateEntry.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -86,7 +80,7 @@ function WorkspaceSelectorMenu({
   popoverProps
 }: WorkspaceSelectorMenuProps) {
   const setRoute = useSetAtom(routeAtom)
-  const workspaces = useAtomValue(workspacesAtom(page.auth.policy))
+  const workspaces = useAtomValue(workspacesAtom)
   if (workspaces.length <= 1 && !includeUsersLink) return label
   return (
     <Menu
@@ -126,7 +120,7 @@ interface WorkspaceAvatarMenuProps {
 }
 
 export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
-  const workspace = useAtomValue(workspaceAtoms(page.workspace!).settingsAtom)
+  const workspace = useAtomValue(workspaceAtom(page.workspace!))
   return (
     <WorkspaceSelectorMenu
       page={page}
@@ -162,7 +156,6 @@ function SearchPopup({page, root}: SearchPopupProps) {
     createExplorerAtoms(
       {workspace: root.workspace, root: root.key},
       {
-        policy: page.auth.policy,
         autoSelectFirstItem: true,
         breadcrumbs: true,
         enableNavigation: true,
@@ -170,8 +163,7 @@ function SearchPopup({page, root}: SearchPopupProps) {
         mode: 'search',
         rootData: root.data,
         searchDepth: 'all',
-        selectedLocale: page.locale ?? null,
-        treeItems: root.treeItems,
+        treeItems: locale => root.tree(locale).items,
         onAction(entry) {
           setRoute({
             workspace: entry.workspace,
@@ -192,8 +184,9 @@ function SearchPopup({page, root}: SearchPopupProps) {
             autoFocusSearch
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
+            locale={page.locale}
           />
-          <ExplorerBody explorer={explorer} />
+          <ExplorerBody explorer={explorer} locale={page.locale} />
         </ExplorerModal>
       </ExplorerModalSuspense>
     </DashboardModalDialog>
@@ -206,7 +199,7 @@ export function WorkspaceMenu({
   root,
   workspace
 }: WorkspaceMenuProps) {
-  const workspaces = useAtomValue(workspacesAtom(page.auth.policy))
+  const workspaces = useAtomValue(workspacesAtom)
   const menu =
     workspaces.length > 1 ? (
       <WorkspaceSelectorMenu
@@ -255,29 +248,7 @@ export function WorkspaceMenu({
           </Suspense>
         </DashboardModal>
       </DialogTrigger>
-      <WorkspaceCreateEntryButton root={root} />
     </div>
-  )
-}
-
-interface WorkspaceCreateEntryButtonProps {
-  root: RootAtoms
-}
-
-function WorkspaceCreateEntryButton({root}: WorkspaceCreateEntryButtonProps) {
-  const canCreate = useAtomValue(root.canCreate)
-  if (!canCreate) return null
-  return (
-    <DialogTrigger>
-      <Button
-        size="icon"
-        icon={MaterialSymbolsEditSquareOutlineRounded}
-        aria-label="Create entry"
-      />
-      <DashboardModal>
-        <CreateEntry />
-      </DashboardModal>
-    </DialogTrigger>
   )
 }
 
@@ -286,7 +257,7 @@ interface WorkspaceItemProps {
 }
 
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
-  const data = useAtomValue(workspaceAtoms(workspace).settingsAtom)
+  const data = useAtomValue(workspaceAtom(workspace))
   return (
     <MenuItem key={workspace} id={workspace} textValue={data.label}>
       {data.label}

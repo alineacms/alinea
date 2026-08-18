@@ -1,3 +1,4 @@
+import {Surface, SurfaceContent} from '#/components.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {Section} from '#/core/Section.js'
 import type {Type} from '#/core/Type.js'
@@ -5,8 +6,8 @@ import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
 import {memo, type PropsWithChildren} from 'react'
-import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
 import type {EditorNode} from '../atoms/editor.js'
+import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
 import {
   EditorScope,
   useEditor,
@@ -23,19 +24,24 @@ interface NodeEditorProps extends PropsWithChildren {
   type: Type
 }
 
-export function NodeEditor({
-  children = <FieldsEditor />,
-  node,
-  type
-}: NodeEditorProps) {
+export function NodeEditor({children, node, type}: NodeEditorProps) {
   const editor = useNodeEditor(node, type)
-  return <EditorScope editor={editor}>{children}</EditorScope>
+  return (
+    <EditorScope editor={editor}>{children ?? <FieldsEditor />}</EditorScope>
+  )
 }
 
 export function FieldsEditor() {
   const editor = useEditor()
   return editor.sections.map((section, index) => (
     <FormSection key={index} section={section} />
+  ))
+}
+
+export function EntryFields() {
+  const editor = useEditor()
+  return editor.sections.map((section, index) => (
+    <EntryFormSection key={index} section={section} />
   ))
 }
 
@@ -47,6 +53,18 @@ const FormSection = memo(function FormSection({section}: FormSectionProps) {
   const View = useAtomValue(section.view)
   if (View) return <View section={section.section} />
   return <EditFields fields={Section.definition(section.section)} />
+})
+
+const EntryFormSection = memo(function EntryFormSection({
+  section
+}: FormSectionProps) {
+  const fields = <FormSection section={section} />
+  if (Section.view(section.section)) return fields
+  return (
+    <Surface>
+      <SurfaceContent>{fields}</SurfaceContent>
+    </Surface>
+  )
 })
 
 export interface EditFieldsProps {

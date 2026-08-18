@@ -8,13 +8,15 @@ import {
   type FieldMeta,
   type FieldOptions
 } from '../Field.js'
+import {createId} from '../Id.js'
+import type {InferStoredValue} from '../Infer.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
-  type ElementNode,
   LinkMark,
   Mark,
   Node,
+  type ElementNode,
   type TextDoc,
   type TextNode
 } from '../TextDoc.js'
@@ -409,8 +411,21 @@ function iterNodes(
   })
 }
 
-export class RichTextEditor<Blocks> {
+export type RichTextBlockInput<Blocks, Key extends keyof Blocks> = Omit<
+  InferStoredValue<Blocks[Key]>,
+  '_type' | '_id'
+>
+
+export class RichTextEditor<Blocks = Schema> {
   constructor(private doc: TextDoc<Blocks> = []) {}
+
+  add<Key extends keyof Blocks>(
+    type: Key,
+    block: RichTextBlockInput<Blocks, Key>
+  ) {
+    this.doc.push({_id: createId(), _type: type as string, ...block})
+    return this
+  }
 
   addHtml(html: string) {
     this.doc.push(...parseHTML(html.trim()))

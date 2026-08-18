@@ -254,13 +254,15 @@ export interface ExplorerCardsProps {
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
   renderEmptyState: () => ReactNode
+  locale: string | null
 }
 
 export function ExplorerCards({
   dragAndDropHooks,
   explorer,
   items,
-  renderEmptyState
+  renderEmptyState,
+  locale
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const performAction = useSetAtom(explorer.onAction)
@@ -269,7 +271,7 @@ export function ExplorerCards({
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
-    if (entry) performAction(entry)
+    if (entry) performAction(entry, locale)
   }
   const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (

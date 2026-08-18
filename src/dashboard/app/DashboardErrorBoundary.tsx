@@ -2,7 +2,7 @@ import {Icon, Surface} from '#/components.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue} from 'jotai'
-import type {PropsWithChildren} from 'react'
+import {useEffect, useRef, type PropsWithChildren} from 'react'
 import useErrorBoundary from 'use-error-boundary'
 import {IcRoundWarning} from '../icons.js'
 import css from './DashboardErrorBoundary.module.css'
@@ -13,14 +13,29 @@ export function DashboardErrorBoundary({children}: PropsWithChildren) {
   const route = useAtomValue(routeAtom)
   const routeKey = JSON.stringify(route)
   return (
-    <DashboardRouteErrorBoundary key={routeKey}>
+    <DashboardRouteErrorBoundary routeKey={routeKey}>
       {children}
     </DashboardRouteErrorBoundary>
   )
 }
 
-function DashboardRouteErrorBoundary({children}: PropsWithChildren) {
-  const {ErrorBoundary, didCatch, error} = useErrorBoundary()
+interface DashboardRouteErrorBoundaryProps extends PropsWithChildren {
+  routeKey: string
+}
+
+function DashboardRouteErrorBoundary({
+  children,
+  routeKey
+}: DashboardRouteErrorBoundaryProps) {
+  const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
+  const previousRouteKey = useRef(routeKey)
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler -- The boundary exposes an imperative reset API, and recovery must follow a route change after an error.
+  useEffect(() => {
+    const routeChanged = previousRouteKey.current !== routeKey
+    previousRouteKey.current = routeKey
+    if (routeChanged && didCatch) reset()
+  }, [didCatch, reset, routeKey])
+  // oxlint-enable react-you-might-not-need-an-effect/no-event-handler
   if (didCatch) {
     const message = error instanceof Error ? error.message : String(error)
     return (

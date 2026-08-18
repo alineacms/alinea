@@ -8,6 +8,7 @@ import {
 } from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
+import {useDashboardContext} from '#/dashboard/hooks.js'
 import type {ComponentType} from 'react'
 import {Explorer} from '../Explorer.js'
 import {NotFoundPanel} from './EntryPage.js'
@@ -19,10 +20,10 @@ const styles = styler(css)
 export const rootPage = page(async (page, get) => {
   assert(page.workspace, 'Workspace expected')
   assert(page.root, 'Root expected')
-  const root = rootAtoms(page, page.workspace, page.root, page.locale ?? null)
+  const root = rootAtoms(page.workspace, page.root)
   const data = get(root.data)
   const view = get(root.view)
-  if (!view) await get(root.explorer.itemsReady)
+  if (!view) await get(root.explorer.itemsReady(page.locale))
   return <RootEditor data={data} root={root} view={view} />
 })
 
@@ -51,9 +52,10 @@ interface RootBrowserProps {
 }
 
 function RootBrowser({root}: RootBrowserProps) {
+  const {page} = useDashboardContext()
   return (
     <Rail main>
-      <Explorer explorer={root.explorer} />
+      <Explorer explorer={root.explorer} locale={page.locale} />
     </Rail>
   )
 }

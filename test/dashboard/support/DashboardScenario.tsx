@@ -3,7 +3,7 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
-import {Config, Field} from '#/index.js'
+import {Config, Field, Query} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {views} from '#/field/views.js'
 import {use, useState} from 'react'
@@ -40,10 +40,23 @@ const HiddenFolder = Config.document('Hidden folder', {
   hidden: true
 })
 
+const OrderedFolder = Config.document('Ordered folder', {
+  contains: ['Page'],
+  fields: {},
+  orderChildrenBy: {asc: Query.title}
+})
+
 const main = Config.workspace('Main', {
   source: 'main',
   roots: {
-    pages: Config.root('Pages', {contains: ['Page', 'HiddenFolder']})
+    pages: Config.root('Pages', {
+      contains: ['Page', 'HiddenFolder', 'OrderedFolder']
+    }),
+    ordered: Config.root('Ordered pages', {
+      contains: ['Page'],
+      orderChildrenBy: {asc: Query.title}
+    }),
+    media: Config.media({i18n: {locales: ['en', 'fr']}})
   }
 })
 
@@ -56,7 +69,7 @@ const references = Config.workspace('References', {
 
 const config = Config.create({
   enableDrafts: true,
-  schema: {HiddenFolder, Page: ScenarioPage},
+  schema: {HiddenFolder, OrderedFolder, Page: ScenarioPage},
   workspaces: {main, references}
 })
 
@@ -113,6 +126,21 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     set: {title: 'Child'}
   })
   await db.create({
+    id: dashboardScenarioIds.otherFolder,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Other folder'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.otherChild,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    parentId: dashboardScenarioIds.otherFolder,
+    set: {title: 'Other child'}
+  })
+  await db.create({
     id: dashboardScenarioIds.hiddenFolder,
     type: HiddenFolder,
     workspace: 'main',
@@ -128,12 +156,51 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     set: {title: 'Hidden child'}
   })
   await db.create({
-    id: dashboardScenarioIds.searchTitle,
+    id: dashboardScenarioIds.orderedFolder,
+    type: OrderedFolder,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Ordered folder'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.orderedZebra,
     type: ScenarioPage,
     workspace: 'main',
     root: 'pages',
-    set: {title: 'Wireless receiver at 77 GHz'}
+    parentId: dashboardScenarioIds.orderedFolder,
+    set: {title: 'Zebra'}
   })
+  await db.create({
+    id: dashboardScenarioIds.orderedApple,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    parentId: dashboardScenarioIds.orderedFolder,
+    set: {title: 'Apple'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.rootOrderedZebra,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'ordered',
+    set: {title: 'Zebra'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.rootOrderedApple,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'ordered',
+    set: {title: 'Apple'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.searchPartial,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Receiver archive for wireless systems'}
+  })
+  // Keep the body match before the title match so index order conflicts with
+  // search relevance.
   await db.create({
     id: dashboardScenarioIds.searchBody,
     type: ScenarioPage,
@@ -154,6 +221,32 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
       ]
     }
   })
+  await db.create({
+    id: dashboardScenarioIds.searchTitle,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'pages',
+    set: {title: 'Wireless receiver at 77 GHz'}
+  })
+  await db.mutate([
+    {
+      op: 'create',
+      id: dashboardScenarioIds.mediaFile,
+      type: 'MediaFile',
+      locale: null,
+      workspace: 'main',
+      root: 'media',
+      data: {
+        title: 'Legacy image',
+        path: 'legacy-image',
+        location: 'legacy-image.jpg',
+        extension: '.jpg',
+        size: 1024,
+        hash: 'legacy-image',
+        alt: null
+      }
+    }
+  ])
   await db.create({
     id: dashboardLinkScenarioIds.referenceFolder,
     type: ScenarioPage,

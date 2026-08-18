@@ -46,7 +46,6 @@ import {LinkPicker, type LinkPickerOptions} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/atoms/nav.js'
 import {
   useEntry,
-  useDashboardContext,
   useField,
   useFieldNode,
   useFieldOptions,
@@ -198,8 +197,7 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
 }
 
 function useLinkEntryState(entryId: string) {
-  const {page} = useDashboardContext()
-  return useAtomValue(linkEntryAtoms(page, entryId))
+  return useAtomValue(linkEntryAtoms(entryId))
 }
 
 interface EntryLoadingRowProps {
@@ -484,11 +482,15 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
-    flatResults: options.enableNavigation !== true,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    limitLocations: options.limitLocations,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -599,11 +601,15 @@ function LinkPickerDialog({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const enableNavigation = options.enableNavigation ?? !pickingChildren
+  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation: options.enableNavigation ?? !pickingChildren,
-    flatResults: options.enableNavigation !== true,
+    enableNavigation,
+    flatResults: !nestedResults,
     location,
+    limitLocations: options.limitLocations,
+    nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
     preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -1633,7 +1639,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     : undefined
   const showFold = Boolean(selectedPicker?.fields)
   const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'} data-depth="muted">
+    <List aria-label={options.label || 'Link'}>
       {selectedValue && (
         <SingleLinkRow
           field={field}
@@ -1744,7 +1750,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
           dropIndicator?.index === 0 && dropIndicator.position === 'before'
         }
       />
-      <List aria-label={options.label || 'Links'} data-depth="muted">
+      <List aria-label={options.label || 'Links'}>
         {nodes.length > 0 && (
           <>
             {nodes.map((node, index) => {

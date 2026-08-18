@@ -1,21 +1,22 @@
 import {Button, Icon, Menu, MenuItem} from '#/components.js'
-import {getType} from '#/core/Internal.js'
-import {assert} from '#/core/util/Assert.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
 } from '#/core/db/EntryUrlConflictError.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Entry} from '#/core/Entry.js'
+import {getType} from '#/core/Internal.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
+import {assert} from '#/core/util/Assert.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
-import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
+import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {ComponentType, type ReactNode, useState, useTransition} from 'react'
+import {ComponentType, useState, useTransition, type ReactNode} from 'react'
 import {
   IcOutlineArchive,
   IcRoundArchive,
@@ -23,8 +24,8 @@ import {
   IcRoundDelete,
   IcRoundEdit,
   IcRoundFlashOn,
-  IcRoundPublishedWithChanges,
   IcRoundMoreHoriz,
+  IcRoundPublishedWithChanges,
   IcRoundSave,
   IcRoundSync,
   IcRoundVisibilityOff
@@ -153,7 +154,7 @@ export function EntryHeader({
   selectedEntry
 }: EntryHeaderProps) {
   const config = useAtomValue(configAtom)
-  const policy = entry.policy
+  const policy = useAtomValue(policyAtom)
   const route = useAtomValue(routeAtom)
   const setRoute = useSetAtom(routeAtom)
   const versions = useAtomValue(localeData.versions)
@@ -404,6 +405,7 @@ export function EntryHeader({
             }
           />
           <h1 className={styles.EntryHeader.title()}>{selectedEntry.title}</h1>
+          {controls}
           <Badge
             className={styles.EntryHeader.status()}
             icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
@@ -412,7 +414,6 @@ export function EntryHeader({
             {isRevision ? 'Revision' : variantDescription[status]}
           </Badge>
           <Badge icon={typeData.icon}>{typeData.label}</Badge>
-          {controls}
           {menuItems.length > 0 && (
             <Menu
               label={

@@ -16,6 +16,12 @@
   background: var(--alinea-bg-muted);
 }
 
+.EntryEditor-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .EntryEditor-banner {
   padding-bottom: 22px;
   background: var(--alinea-bg-muted);

@@ -1,24 +1,31 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
+import {selectAtom} from 'jotai/utils'
 import {eventsAtom, graphAtom} from './core.js'
+import {dispense} from './utils.js'
 
-const contentShaAtom = atom<string>()
+interface IndexState {
+  sha?: string
+  entryRevisions: ReadonlyMap<string, string>
+}
 
-export const shaAtom = Object.assign(
+const indexStateValueAtom = atom<IndexState>({entryRevisions: new Map()})
+
+const indexStateAtom = Object.assign(
   atom(
-    async get => {
-      const current = get(contentShaAtom)
-      if (current) return current
-      return readGraphSha(get(graphAtom))
-    },
+    get => get(indexStateValueAtom),
     (get, set) => {
       const events = get(eventsAtom)
       const listen = (event: Event) => {
-        if (event instanceof IndexEvent && event.data.op === 'index') {
-          const sha = event.data.sha
-          set(contentShaAtom, sha)
-        }
+        if (!(event instanceof IndexEvent)) return
+        const data = event.data
+        if (data.op !== 'index') return
+        set(indexStateValueAtom, current => {
+          const entryRevisions = new Map(current.entryRevisions)
+          for (const id of data.ids) entryRevisions.set(id, data.sha)
+          return {sha: data.sha, entryRevisions}
+        })
       }
       events.addEventListener(IndexEvent.type, listen)
       return () => {
@@ -29,11 +36,21 @@ export const shaAtom = Object.assign(
   {onMount: (init: () => () => void) => init()}
 )
 
+export const shaAtom = atom(async get => {
+  const current = get(indexStateAtom).sha
+  if (current) return current
+  return readGraphSha(get(graphAtom))
+})
+
+export const entryRevisionAtom = dispense((id: string) =>
+  selectAtom(indexStateAtom, state => state.entryRevisions.get(id))
+)
+
 export const syncAtom = atom(null, async (get, set) => {
   const graph = get(graphAtom)
   if (!isSyncableGraph(graph)) return
   const sha = await graph.sync()
-  set(contentShaAtom, sha)
+  set(indexStateValueAtom, current => ({...current, sha}))
   return sha
 })
 

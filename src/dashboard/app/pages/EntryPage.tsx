@@ -2,7 +2,7 @@ import {Button, Icon, Surface} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
-import {typeAtoms, workspaceAtoms} from '#/dashboard/atoms/config.js'
+import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
 import {
   entryAtoms,
@@ -10,7 +10,6 @@ import {
   type EntryAtoms,
   type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
-import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   Page,
   page,
@@ -18,10 +17,11 @@ import {
   routeBlockAtom,
   routeGuardAtom
 } from '#/dashboard/atoms/nav.js'
+import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useTransition} from 'react'
+import {useEffect, useLayoutEffect, useRef, useTransition} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -29,8 +29,7 @@ import {
   IcRoundEdit
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
-import {Explorer} from './../Explorer.js'
-import {NodeEditor} from './../EntryFields.js'
+import {EntryFields, NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {
   EntrySidebar,
@@ -38,6 +37,7 @@ import {
   type EntrySidebarProps
 } from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
+import {Explorer} from './../Explorer.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -52,19 +52,14 @@ const styles = styler(css)
 export const entryPage = page(async (page, get) => {
   assert(page.entry, 'Entry id expected')
   try {
-    const entry = await get(entryAtoms(page, page.entry))
-    const localeData = entry.locales(page.locale ?? null)
+    const entry = await get(entryAtoms(page.entry))
+    const localeData = entry.locales(page.locale)
     const type = get(typeAtoms(get(entry.type)))
-    const view = get(entry.view)
+    const view = page.view ?? get(entry.view)
     const selectedEntry = await get(localeData.selectedEntry)
     if (view === 'overview') {
-      const root = rootAtoms(
-        page,
-        get(entry.workspace),
-        get(entry.root),
-        page.locale ?? null
-      )
-      await get(root.children(entry.id).itemsReady)
+      const root = rootAtoms(get(entry.workspace), get(entry.root))
+      await get(root.children(entry.id).itemsReady(page.locale))
       return (
         <EntryOverview
           entry={entry}
@@ -104,8 +99,7 @@ interface MissingEntryProps {
 
 function MissingEntry({page}: MissingEntryProps) {
   assert(page.workspace && page.root && page.entry)
-  const {rootsAtom} = workspaceAtoms(page.workspace)
-  const root = useAtomValue(rootsAtom(page.root))
+  const root = useAtomValue(rootAtoms(page.workspace, page.root).data)
   const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
@@ -166,10 +160,13 @@ export function NotFoundPanel({
 
 interface EntryViewToggleProps {
   entry: EntryAtoms
+  page: Page
 }
 
-function EntryViewToggle({entry}: EntryViewToggleProps) {
-  const [view, setView] = useAtom(entry.view)
+function EntryViewToggle({entry, page}: EntryViewToggleProps) {
+  const entryView = useAtomValue(entry.view)
+  const view = page.view ?? entryView
+  const setRoute = useSetAtom(routeAtom)
   const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
@@ -181,7 +178,15 @@ function EntryViewToggle({entry}: EntryViewToggleProps) {
       icon={ViewIcon}
       isDisabled={isPending}
       size="icon"
-      onPress={() => startTransition(() => setView(nextView))}
+      onPress={() =>
+        setRoute({
+          workspace: page.workspace,
+          root: page.root,
+          entry: page.entry,
+          locale: page.locale ?? undefined,
+          view: nextView
+        })
+      }
     />
   )
 }
@@ -211,6 +216,7 @@ function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
     <Rail main>
       <Explorer
         explorer={root.children(entry.id)}
+        locale={page.locale}
         headerEntry={{
           backLabel: parentId ? 'Back to parent entry' : 'Back to root',
           title: selectedEntry.title,
@@ -223,7 +229,7 @@ function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
             })
           }
         }}
-        titleControls={<EntryViewToggle entry={entry} />}
+        titleControls={<EntryViewToggle entry={entry} page={page} />}
       />
     </Rail>
   )
@@ -242,9 +248,10 @@ function EntryEditorContent({
   const typeName = useAtomValue(entry.type)
   const type = useAtomValue(typeAtoms(typeName))
   const hasChildren = useAtomValue(entry.hasChildren)
+  const defaultView = useAtomValue(entry.view)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
   const View = type.customView
-  const locale = page.locale ?? null
+  const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
@@ -256,6 +263,7 @@ function EntryEditorContent({
   const [isSidebarOpen, setSidebarOpen] = useAtom(
     dashboardAtoms.entrySidebarOpen
   )
+  const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
@@ -282,10 +290,14 @@ function EntryEditorContent({
     }
   }, [node, setRouteGuard])
 
+  useLayoutEffect(() => {
+    if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0
+  }, [entry.id])
+
   let editorBody = (
     <>
-      <RailBody className={styles.EntryEditor.body()}>
-        <RailContent>
+      <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
+        <RailContent className={styles.EntryEditor.fields()}>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
               <EntryTranslationBanner
@@ -297,7 +309,9 @@ function EntryEditorContent({
             </div>
           )}
 
-          <NodeEditor node={node} type={type.type} />
+          <NodeEditor node={node} type={type.type}>
+            <EntryFields />
+          </NodeEditor>
         </RailContent>
       </RailBody>
     </>
@@ -306,9 +320,9 @@ function EntryEditorContent({
   if (isMediaFile) {
     editorBody = (
       <>
-        <RailBody className={styles.EntryEditor.body()}>
+        <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor entry={entry} />
+            <FileEditor />
           </NodeEditor>
         </RailBody>
       </>
@@ -330,7 +344,11 @@ function EntryEditorContent({
   const mainEditor = (
     <Rail main>
       <EntryHeader
-        controls={hasChildren ? <EntryViewToggle entry={entry} /> : undefined}
+        controls={
+          hasChildren || defaultView === 'overview' ? (
+            <EntryViewToggle entry={entry} page={page} />
+          ) : undefined
+        }
         entry={entry}
         isSidebarOpen={isSidebarOpen}
         localeData={localeData}

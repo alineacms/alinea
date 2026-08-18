@@ -70,8 +70,9 @@ export class IndexedDBSource implements Source {
           request.onerror = event => reject((event.target as IDBRequest).error)
         })
       ])
+      const availableBlobs = new Set(blobKeys)
       for (const sha of tree.shas) {
-        if (!blobKeys.includes(sha)) {
+        if (!availableBlobs.has(sha)) {
           console.warn(`Blob ${sha} in tree, but not found`)
           return ReadonlyTree.EMPTY
         }
@@ -93,26 +94,27 @@ export class IndexedDBSource implements Source {
     const db = await this.#connect()
     const transaction = db.transaction(['blobs'], 'readonly')
     const store = transaction.objectStore('blobs')
-    const pending = new Set<Promise<[sha: string, blob: Uint8Array]>>()
-    for (const sha of shas) {
-      const request = store.get(sha)
-      const entry = new Promise<[sha: string, blob: Uint8Array]>(
-        (resolve, reject) => {
-          request.onsuccess = event => {
-            const entry = (event.target as IDBRequest).result
-            if (entry !== undefined) resolve([sha, entry])
-            else reject(new Error(`Blob not found: ${sha}`))
-          }
-          request.onerror = event => reject((event.target as IDBRequest).error)
-        }
-      )
-      pending.add(entry)
-      void entry.finally(() => pending.delete(entry))
+    const [keys, values] = await Promise.all([
+      new Promise<Array<IDBValidKey>>((resolve, reject) => {
+        const request = store.getAllKeys()
+        request.onsuccess = () => resolve(request.result)
+        request.onerror = event => reject((event.target as IDBRequest).error)
+      }),
+      new Promise<Array<Uint8Array>>((resolve, reject) => {
+        const request = store.getAll()
+        request.onsuccess = () => resolve(request.result as Array<Uint8Array>)
+        request.onerror = event => reject((event.target as IDBRequest).error)
+      })
+    ])
+    const missing = new Set(shas)
+    for (let index = 0; index < keys.length; index++) {
+      const key = keys[index]
+      const value = values[index]
+      if (typeof key === 'string' && value !== undefined && missing.delete(key))
+        yield [key, value]
     }
-    while (pending.size > 0) {
-      const entry = await Promise.race(pending)
-      yield entry
-    }
+    const sha = missing.values().next().value
+    if (sha !== undefined) throw new Error(`Blob not found: ${sha}`)
   }
 
   async applyChanges(batch: ChangesBatch) {

@@ -1,18 +1,16 @@
-import {Policy} from '#/core/Role.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {expect, spyOn, test} from 'bun:test'
 import {configAtom} from './core.js'
 import {dashboardAtoms} from './dashboard.js'
 import {createExplorerAtoms} from './explorer.js'
+import {authReady} from './user.js'
 
 test('reports invalid uploads while continuing with valid files', async () => {
   const {config, db, store} = await createDashboardAtomFixture()
+  await store.get(authReady)
   store.set(configAtom, {...config, maxUploadSize: 5})
   const upload = spyOn(db, 'upload').mockResolvedValue(undefined as never)
-  const explorer = createExplorerAtoms(
-    {workspace: 'main', root: 'pages'},
-    {policy: Policy.ALLOW_ALL}
-  )
+  const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})
   const valid = new File(['small'], 'valid.jpg')
   const invalid = new File(['too large'], 'invalid.jpg')
 

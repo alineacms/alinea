@@ -17,6 +17,7 @@ import {
 } from './atoms/core.js'
 import type {Page} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
+import {preloadUserPolicyAtom} from './atoms/user.js'
 import {
   DashboardModelScope,
   DashboardScope,
@@ -45,6 +46,7 @@ export function StoryProvider({
     next.set(viewsAtom, views)
     next.set(localAtom, true)
     next.set(alineaDevAtom, false)
+    next.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
     if (client) next.set(clientAtom, client)
     if (config) next.set(configAtom, config)
     if (events) next.set(eventsAtom, events)
@@ -64,11 +66,11 @@ export function StoryProvider({
       root: rootName,
       entry: undefined,
       locale: null,
-      auth: {policy: Policy.ALLOW_ALL, user: localUser}
+      view: undefined
     }
     return {
       page,
-      root: rootAtoms(page, workspaceName, rootName, null),
+      root: rootAtoms(workspaceName, rootName),
       workspace: {...workspace, name: workspaceName}
     }
   }, [config])
