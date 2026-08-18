@@ -213,6 +213,8 @@ test('picks and persists a referenced rich text image', async ({
   const storedImage = (await storedValue(page)).find(
     item => item._type === 'image'
   )
+  expect(storedImage).not.toHaveProperty('src')
+  expect(storedImage).not.toHaveProperty('alt')
   expect(storedImage).not.toHaveProperty('width')
   expect(storedImage).not.toHaveProperty('height')
   await expect(image).toHaveAttribute('src', /landscape/)
@@ -350,6 +352,8 @@ test('resizes and replaces a referenced rich text image', async ({
   const replacedImage = (await storedValue(page)).find(
     item => item._type === 'image'
   )
+  expect(replacedImage).not.toHaveProperty('src')
+  expect(replacedImage).not.toHaveProperty('alt')
   expect(replacedImage).not.toHaveProperty('width')
   expect(replacedImage).not.toHaveProperty('height')
   await expect(frame.locator('img')).toHaveAttribute('src', /portrait/)

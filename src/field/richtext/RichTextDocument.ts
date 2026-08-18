@@ -14,10 +14,13 @@ import {
 } from './RichTextBlockValue.js'
 import {isRecord} from '#/core/util/Objects.js'
 
-export function editorContent(nodes: TextDoc): JSONContent {
+export function editorContent(
+  nodes: TextDoc,
+  images?: ReadonlyMap<string, {src: string; alt: string}>
+): JSONContent {
   return {
     type: 'doc',
-    content: nodes.map(nodeToContent)
+    content: nodes.map(node => nodeToContent(node, images))
   }
 }
 
@@ -34,7 +37,10 @@ export function editorNodes(
   return isEmptyDocument(nodes) ? [] : nodes
 }
 
-function nodeToContent(node: Node): JSONContent {
+function nodeToContent(
+  node: Node,
+  images: ReadonlyMap<string, {src: string; alt: string}> | undefined
+): JSONContent {
   if (isBlock(node)) {
     return {
       type: node[Node.type],
@@ -50,6 +56,10 @@ function nodeToContent(node: Node): JSONContent {
   }
   if (isElement(node)) {
     const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+    const resolvedImage =
+      type === 'image' && typeof attrs._entry === 'string'
+        ? images?.get(attrs._entry)
+        : undefined
     let editorContent = content
     // Tiptap requires list items to contain paragraphs, so normalize imported
     // inline content before passing it to the editor.
@@ -77,8 +87,8 @@ function nodeToContent(node: Node): JSONContent {
     }
     return {
       type,
-      attrs: withoutNullish(attrs),
-      content: editorContent?.map(nodeToContent)
+      attrs: withoutNullish({...attrs, ...resolvedImage}),
+      content: editorContent?.map(child => nodeToContent(child, images))
     }
   }
   throw new TypeError(
@@ -122,6 +132,14 @@ function contentToNodes(
   }
   const {[richTextBlockValueAttribute]: _blockSnapshot, ...elementAttributes} =
     attrs ?? {}
+  if (
+    type === 'image' &&
+    elementAttributes._link === 'image' &&
+    typeof elementAttributes._entry === 'string'
+  ) {
+    delete elementAttributes.src
+    delete elementAttributes.alt
+  }
   const children = content.content?.flatMap(node =>
     contentToNodes(node, resolveBlock)
   )

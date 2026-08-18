@@ -12,6 +12,13 @@ import type {ComponentType, ReactNode} from 'react'
 import {configAtom, viewsAtom} from './core.js'
 import {dispense} from './utils.js'
 
+export interface ResolvedEditorImage {
+  src: string
+  alt: string
+}
+
+const emptyResolvedImages = new Map<string, ResolvedEditorImage>()
+
 export interface EditorNode {
   readOnly: boolean
   nodes: WritableAtom<unknown, [unknown], void>
@@ -23,6 +30,7 @@ export interface EditorModel {
   anchors: Atom<Array<EntryAnchorTarget>>
   node: EditorNode
   parent?: EditorModel
+  resolvedImages: ReadonlyMap<string, ResolvedEditorImage>
   sections: Array<EditorSection>
   type: Type
   field(key: string): EditorField | undefined
@@ -62,7 +70,11 @@ export class EntryEditor implements EditorModel {
     public node: EditorNode,
     public parent?: EntryEditor,
     public resource?: Resource,
-    public policy?: Policy
+    public policy?: Policy,
+    public resolvedImages: ReadonlyMap<
+      string,
+      ResolvedEditorImage
+    > = parent?.resolvedImages ?? emptyResolvedImages
   ) {
     this.resource ??= parent?.resource
     this.policy ??= parent?.policy

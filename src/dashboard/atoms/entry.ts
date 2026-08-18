@@ -9,6 +9,8 @@ import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
+import {mediaAltText} from '#/core/media/MediaAltField.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Root} from '#/core/Root.js'
 import {Permission} from '#/core/Role.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
@@ -17,6 +19,7 @@ import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
+import {mediaLiveUrl} from '#/dashboard/app/editor/MediaImageSource.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
@@ -65,6 +68,11 @@ export interface EntryReferenceSource {
   status: EntryStatus
   path: string
   url: string
+}
+
+export interface ResolvedRichTextImage {
+  src: string
+  alt: string
 }
 
 const selection = {
@@ -236,6 +244,48 @@ export class EntryLocaleAtoms {
       ...(isUntranslated ? {path: undefined} : undefined)
     })
     return new ReactiveNode<object>(value, readOnly)
+  })
+  richTextImages = atom(async get => {
+    const entry = await get(this.selectedEntry)
+    const config = get(configAtom)
+    const type = config.schema[entry.type]
+    assert(type, `Type "${entry.type}" not found in config`)
+    const value = Type.withInitialValue(type, {
+      ...Type.initialValue(type),
+      ...entry.data
+    })
+    const imageIds = Array.from(
+      new Set(
+        Type.references(type, value)
+          .filter(reference => reference.linkType === 'image')
+          .map(reference => reference.targetId)
+      )
+    )
+    if (imageIds.length === 0) return new Map<string, ResolvedRichTextImage>()
+    const graph = get(graphAtom)
+    const images = await graph.find({
+      id: {in: imageIds},
+      preferredLocale: this.requestedLocale ?? entry.locale ?? undefined,
+      status: 'preferDraft',
+      select: {
+        id: Entry.id,
+        workspace: Entry.workspace,
+        location: MediaFile.location,
+        alt: MediaFile.alt
+      }
+    })
+    return new Map(
+      images.map(image => [
+        image.id,
+        {
+          src: mediaLiveUrl(config, image.workspace, image.location) ?? '',
+          alt: mediaAltText(
+            image.alt,
+            this.requestedLocale ?? entry.locale ?? undefined
+          )
+        }
+      ])
+    )
   })
   anchors = atom(async get => {
     const entry = await get(this.selectedEntry)

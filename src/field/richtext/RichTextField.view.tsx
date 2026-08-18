@@ -99,7 +99,9 @@ export function RichTextFieldView<Blocks extends Schema>({
   const picker = usePickTextLink()
   const anchorPicker = usePickTextAnchor()
   const dashboardEditor = useDashboardEditor()
-  const entryAnchors = rootEditor(dashboardEditor).anchors
+  const rootDashboardEditor = rootEditor(dashboardEditor)
+  const entryAnchors = rootDashboardEditor.anchors
+  const richTextImages = rootDashboardEditor.resolvedImages
   const getEntryAnchors = useCallback(
     () => store.get(entryAnchors).map(anchor => anchor.id),
     [entryAnchors, store]
@@ -127,8 +129,8 @@ export function RichTextFieldView<Blocks extends Schema>({
     options.schema
   ])
   const content = useMemo(
-    () => editorContent(store.get(fieldNode.value)),
-    [fieldNode, store]
+    () => editorContent(store.get(fieldNode.value), richTextImages),
+    [fieldNode, richTextImages, store]
   )
 
   const resolveBlock = useCallback(
@@ -200,12 +202,12 @@ export function RichTextFieldView<Blocks extends Schema>({
     const current = editorNodes(editor.getJSON(), resolveBlock)
     if (documentKey === documentStructureKey(current)) return
     const documentValue = store.get(fieldNode.value)
-    editor.commands.setContent(editorContent(documentValue), {
+    editor.commands.setContent(editorContent(documentValue, richTextImages), {
       emitUpdate: false
     })
     lastEditorDocument.current = documentKey
     pendingExternalDocument.current = undefined
-  }, [documentKey, editor, fieldNode, resolveBlock, store])
+  }, [documentKey, editor, fieldNode, resolveBlock, richTextImages, store])
 
   const toolbarTarget =
     typeof document === 'undefined'

@@ -33,7 +33,12 @@ import {
   localAtom,
   viewsAtom
 } from './atoms/core.js'
-import {type EditorModel, type EditorNode, EntryEditor} from './atoms/editor.js'
+import {
+  type EditorModel,
+  type EditorNode,
+  EntryEditor,
+  type ResolvedEditorImage
+} from './atoms/editor.js'
 import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
 import type {Page} from './atoms/nav.js'
 import type {RootAtoms} from './atoms/root.js'
@@ -44,6 +49,7 @@ import {policyAtom, userAtom} from './atoms/user.js'
 interface EntryContextValue {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: EntryRecord<Record<string, unknown>>
 }
 
@@ -184,6 +190,7 @@ export function useDashboardContext(): DashboardContextValue {
 export interface EntryScopeProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
+  richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: EntryRecord<Record<string, unknown>>
 }
 
@@ -191,11 +198,12 @@ export function EntryScope({
   children,
   entry,
   localeData,
+  richTextImages,
   selectedEntry
 }: PropsWithChildren<EntryScopeProps>) {
   const value = useMemo(
-    () => ({entry, localeData, selectedEntry}),
-    [entry, localeData, selectedEntry]
+    () => ({entry, localeData, richTextImages, selectedEntry}),
+    [entry, localeData, richTextImages, selectedEntry]
   )
   return createElement(entryContext.Provider, {value}, children)
 }
@@ -243,9 +251,10 @@ export function useNodeEditor(node: EditorNode, type: Type) {
       node,
       parent instanceof EntryEditor ? parent : undefined,
       activeVersion ?? undefined,
-      policy
+      policy,
+      scope?.richTextImages
     )
-  }, [activeVersion, node, parent, policy, type])
+  }, [activeVersion, node, parent, policy, scope?.richTextImages, type])
   return editor
 }
 

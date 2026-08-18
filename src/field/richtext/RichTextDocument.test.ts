@@ -180,6 +180,79 @@ test('drops internal block snapshots and nullish attributes from elements', () =
   )
 })
 
+test('does not store resolved attributes for linked images', () => {
+  const content = {
+    type: 'doc',
+    content: [
+      {
+        type: 'image',
+        attrs: {
+          _id: 'image-1',
+          _entry: 'media-1',
+          _link: 'image',
+          src: 'http://localhost:3000/image.jpg',
+          alt: 'Resolved alt text',
+          width: 640
+        }
+      },
+      {
+        type: 'image',
+        attrs: {
+          src: 'https://example.com/external.jpg',
+          alt: 'External image'
+        }
+      }
+    ]
+  }
+
+  test.equal(editorNodes(content), [
+    {
+      _type: 'image',
+      _id: 'image-1',
+      _entry: 'media-1',
+      _link: 'image',
+      width: 640
+    },
+    {
+      _type: 'image',
+      src: 'https://example.com/external.jpg',
+      alt: 'External image'
+    }
+  ])
+})
+
+test('adds resolved image attributes only to editor content', () => {
+  const stored = [
+    {
+      _type: 'image',
+      _id: 'image-1',
+      _entry: 'media-1',
+      _link: 'image',
+      width: 640
+    }
+  ]
+  const content = editorContent(
+    stored,
+    new Map([['media-1', {src: '/media/image.jpg', alt: 'Resolved alt text'}]])
+  )
+
+  test.equal(content.content, [
+    {
+      type: 'image',
+      attrs: {
+        _id: 'image-1',
+        _entry: 'media-1',
+        _link: 'image',
+        width: 640,
+        src: '/media/image.jpg',
+        alt: 'Resolved alt text'
+      },
+      content: undefined
+    }
+  ])
+  test.equal(editorNodes(content), stored)
+})
+
 test('normalizes the editor empty paragraph to an empty field value', () => {
   test.equal(
     editorNodes({
