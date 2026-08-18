@@ -315,9 +315,10 @@ export class ExplorerAtoms {
 
   search = atom('')
   searchScope: PrimitiveAtom<'workspace' | 'everything'>
-  resultMode: PrimitiveAtom<ExplorerResultMode>
+  resultMode: WritableAtom<ExplorerResultMode, [ExplorerResultMode], void>
   selection: PrimitiveAtom<'all' | Set<Key>>
   expandedKeys = atom(new Set<Key>())
+  #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
   #selectedSort = atom<ExplorerSort>()
   #selectedFilter = atom<ExplorerTypeFilters>()
@@ -350,7 +351,15 @@ export class ExplorerAtoms {
       options.initialResultMode ??
       (options.condition || options.pickChildren ? 'matches' : 'browse')
     this.searchScope = atom(initialSearchScope)
-    this.resultMode = atom(initialResultMode)
+    this.#selectedResultMode = atom(initialResultMode)
+    this.resultMode = atom(
+      get =>
+        get(this.search).trim()
+          ? ('matches' as const)
+          : get(this.#selectedResultMode),
+      (_get, set, resultMode: ExplorerResultMode) =>
+        set(this.#selectedResultMode, resultMode)
+    )
     this.#selectedView = atom(options.initialView)
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
@@ -842,13 +851,13 @@ export class ExplorerAtoms {
         ? get(this.#options.defaultOrderBy)
         : undefined
       const flatList = resultMode === 'matches'
-      const selectedLocation =
+      const selectedLocationParentId =
         !searchesEverything &&
         flatList &&
         !this.pickChildren &&
         location.root &&
         location.parentId
-          ? [location.workspace, location.root, location.parentId]
+          ? location.parentId
           : undefined
       const orderField =
         sort.sortBy === 'title'
@@ -863,7 +872,6 @@ export class ExplorerAtoms {
       const entries = await graph.find({
         workspace,
         root,
-        location: selectedLocation,
         parentId: this.pickChildren
           ? (location.parentId ?? null)
           : flatList
@@ -925,6 +933,8 @@ export class ExplorerAtoms {
       const readable = entries.filter(
         entry =>
           policy.canRead(entry) &&
+          (!selectedLocationParentId ||
+            entry.parents.includes(selectedLocationParentId)) &&
           (!flatList || !matchesCondition || matchesCondition(entry as never))
       )
       const parentIds = await graph.find({

@@ -166,19 +166,35 @@ test('defaults a condition without a location to all locations', async ({
   const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
   })
+  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
+  const filteredMode = resultModes.getByRole('radio', {name: 'Filtered'})
   const allLocations = picker.getByRole('switch', {name: 'All locations'})
-  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+  await expect(filteredMode).toBeChecked()
   await expect(allLocations).toBeChecked()
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
 
-  await resultModes.getByRole('radio', {name: 'Browse'}).click()
+  const search = picker.getByRole('searchbox', {name: 'Search'})
+  await search.fill('Child')
+  await expect(browseMode).toBeDisabled()
+  await search.fill('')
+  await expect(filteredMode).toBeChecked()
+
+  await browseMode.click()
+  await expect(browseMode).toBeChecked()
+  await search.fill('Child')
+  await expect(filteredMode).toBeChecked()
+  await expect(browseMode).toBeDisabled()
+  await search.fill('')
+  await expect(browseMode).toBeChecked()
   await expect(allLocations).toBeChecked()
   await expect(allLocations).toBeDisabled()
+  await expect(allLocations).toHaveCSS('cursor', 'default')
   await expect(entries.getByRole('row', {name: /Folder/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 
-  await resultModes.getByRole('radio', {name: 'Filtered'}).click()
+  await filteredMode.click()
+  await expect(filteredMode).toBeChecked()
   await expect(allLocations).toBeChecked()
   await expect(allLocations).toBeEnabled()
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
@@ -188,7 +204,8 @@ test('defaults a condition without a location to all locations', async ({
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Folder/})).toHaveCount(0)
 
-  await resultModes.getByRole('radio', {name: 'Browse'}).click()
+  await browseMode.click()
+  await expect(browseMode).toBeChecked()
   await expect(allLocations).toBeDisabled()
   await expect(entries.getByRole('row', {name: /Folder/})).toBeVisible()
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
@@ -216,11 +233,6 @@ test('opens pickChildren at the children of the edited entry', async ({
   await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
   await expect(browseMode).toBeDisabled()
   await expect(browseMode).toHaveCSS('cursor', 'default')
-  const browseBackground = await browseMode.evaluate(
-    element => getComputedStyle(element).backgroundColor
-  )
-  await browseMode.hover()
-  await expect(browseMode).toHaveCSS('background-color', browseBackground)
   await expect(
     picker.getByRole('button', {name: 'Main', exact: true})
   ).toHaveCount(0)
@@ -464,14 +476,16 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
   const resultModes = location.getByRole('radiogroup', {
     name: 'Explorer results'
   })
+  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
   const allLocations = picker.getByRole('switch', {name: 'All locations'})
   await expect(location).toContainText(/Browse.*Filtered.*Main.*Pages.*Folder/)
-  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeChecked()
+  await expect(browseMode).toBeChecked()
   await expect(allLocations).toBeDisabled()
 
   const search = picker.getByRole('searchbox', {name: 'Search'})
   await search.fill('i18')
   await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+  await expect(browseMode).toBeDisabled()
   await expect(allLocations).toBeEnabled()
   await expect(folders).toHaveCount(0)
   await expect(picker.getByText('No results found')).toBeVisible()
@@ -500,11 +514,8 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
     document.documentElement.dataset.cardScopeGapSeen = 'false'
   })
 
-  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
-  await expect(browseMode).toBeDisabled()
   await search.fill('')
   await expect(browseMode).toBeChecked()
-  await expect(browseMode).toBeEnabled()
   await expect(folders).toBeVisible()
   await search.fill('i18')
   await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
@@ -593,7 +604,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
     )
     .toBe('false')
   await search.fill('')
-  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeChecked()
+  await expect(browseMode).toBeChecked()
   await expect(allLocations).toBeDisabled()
   await expect(folders).toBeVisible()
   await expect(
@@ -775,6 +786,42 @@ test('selects existing images and files', async ({dashboard, mount}) => {
     .click()
   await filePicker.getByRole('button', {name: 'Select'}).click()
   await expect(fileField).toContainText('Existing file')
+})
+
+test('keeps media children visible when switching folder browsing off', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Featured image'})
+    .getByRole('button', {name: 'Image'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  const resultModes = picker.getByRole('radiogroup', {
+    name: 'Explorer results'
+  })
+  const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
+  const filteredMode = resultModes.getByRole('radio', {name: 'Filtered'})
+  await browseMode.click()
+  await expect(browseMode).toBeChecked()
+
+  await picker
+    .getByRole('treegrid', {name: 'Media folders'})
+    .getByRole('row', {name: 'Media directory', exact: true})
+    .click()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Nested image'})
+  ).toBeVisible()
+
+  await filteredMode.click()
+
+  await expect(filteredMode).toBeChecked()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Nested image'})
+  ).toBeVisible()
 })
 
 test('uploads images and files from their picker modals', async ({

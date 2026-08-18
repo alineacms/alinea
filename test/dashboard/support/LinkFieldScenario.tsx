@@ -138,6 +138,21 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     }
   })
   await db.create({
+    id: linkScenarioIds.nestedImage,
+    type: MediaFile,
+    workspace: 'main',
+    root: 'media',
+    parentId: linkScenarioIds.mediaDirectory,
+    set: {
+      title: 'Nested image',
+      path: 'nested-image',
+      location: 'nested-image.jpg',
+      extension: '.jpg',
+      size: 512,
+      hash: 'nested-image'
+    }
+  })
+  await db.create({
     id: linkScenarioIds.existingFile,
     type: MediaFile,
     workspace: 'main',

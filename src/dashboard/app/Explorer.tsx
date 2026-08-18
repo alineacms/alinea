@@ -131,7 +131,6 @@ function ExplorerSearch({
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
-  const setResultMode = useSetAtom(explorer.resultMode)
   const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
   const [isPending, startTransition] = useTransition()
@@ -172,13 +171,9 @@ function ExplorerSearch({
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
 
   function onSearchChange(value: string) {
-    const hadSearch = Boolean(inputValue.trim())
     setInputValue(value)
     startTransition(() => {
       setSearch(value)
-      if (!value.trim()) {
-        if (!explorer.hasCondition) setResultMode('browse')
-      } else if (!hadSearch) setResultMode('matches')
     })
   }
 
