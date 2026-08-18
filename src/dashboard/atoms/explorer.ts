@@ -1,4 +1,4 @@
-import {Entry} from '#/core/Entry.js'
+import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
 import {filterChecker} from '#/core/db/EntryResolver.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
@@ -59,6 +59,7 @@ export interface ExplorerLocation {
   workspace: string
   root?: string
   parentId?: string
+  locale?: string
 }
 
 export interface ExplorerLimitLocation {
@@ -90,13 +91,16 @@ function constrainLocation(
 }
 
 export interface ExplorerOptions {
+  allowAllWorkspaces?: boolean
   autoSelectFirstItem?: boolean
   breadcrumbs?: boolean
   condition?: Filter<EntryFields>
   defaultOrderBy?: Atom<OrderBy | Array<OrderBy> | undefined>
   enableNavigation?: boolean
-  flatResults?: boolean
   hideResultsUntilSearch?: boolean
+  initialView?: ExplorerView
+  initialResultMode?: ExplorerResultMode
+  initialSearchScope?: 'workspace' | 'everything'
   location?: ExplorerLocation
   limitLocations?: Array<ExplorerLimitLocation>
   mode?: 'browse' | 'search'
@@ -104,6 +108,7 @@ export interface ExplorerOptions {
   pickChildren?: boolean
   rootData?: Atom<RootData>
   treeItems?: (locale: string | null) => Atom<Array<ExplorerTreeItem>>
+  treeReady?: (locale: string | null) => Atom<Promise<unknown>>
   selectedLocale?: string | null
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
@@ -122,10 +127,24 @@ export interface ExplorerTreeItem {
   hasChildren: boolean
 }
 
+export type ExplorerResultMode = 'browse' | 'matches'
+
+export interface ExplorerReadyPage {
+  items: Array<ExplorerEntry>
+  resultMode: ExplorerResultMode
+  searchScope: 'workspace' | 'everything'
+  searchesEverything: boolean
+}
+
 export interface ExplorerItemData {
+  active?: boolean
+  createdAt?: number | null
   id: string
+  status?: EntryStatus
   title: string
   path: string
+  updatedAt?: number | null
+  url?: string
   type: string
   workspace: string
   root: string
@@ -144,6 +163,12 @@ export interface ExplorerItemData {
   index: string
   data: Record<string, unknown>
   hasChildren: boolean
+}
+
+function explorerItemField(item: ExplorerItemData, name: string) {
+  if (!name.startsWith('_')) return item.data[name]
+  const entry = item as unknown as Record<string, unknown>
+  return entry[name.slice(1)]
 }
 
 export interface DashboardEntryOverviewCell {
@@ -254,6 +279,7 @@ export class ExplorerEntry {
 }
 
 export class ExplorerAtoms {
+  readonly allowAllWorkspaces
   readonly selectionMode
   readonly selectionBehavior
   readonly showSelectionControls
@@ -266,11 +292,20 @@ export class ExplorerAtoms {
   readonly hideResultsUntilSearch
   readonly searchDepth
   readonly supportsInlineExpansion
+  readonly pickChildren
+  readonly hasCondition
+  readonly canSearchEverything: Atom<boolean>
+  readonly searchesEverything: Atom<boolean>
+  readonly readySearchesEverything: Atom<boolean>
+  readonly readySearchScope: Atom<'workspace' | 'everything'>
+  readonly readyResultMode: Atom<ExplorerResultMode>
 
   search = atom('')
+  searchScope: PrimitiveAtom<'workspace' | 'everything'>
+  resultMode: PrimitiveAtom<ExplorerResultMode>
   selection: PrimitiveAtom<'all' | Set<Key>>
   expandedKeys = atom(new Set<Key>())
-  #selectedView = atom<ExplorerView>()
+  #selectedView: PrimitiveAtom<ExplorerView | undefined>
   #selectedSort = atom<ExplorerSort>()
   #selectedFilter = atom<ExplorerTypeFilters>()
   selectedLocale: PrimitiveAtom<string | null>
@@ -278,6 +313,7 @@ export class ExplorerAtoms {
   parent: (locale: string | null) => Atom<ExplorerEntry | undefined>
   itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
+  page: (locale: string | null) => Atom<ExplorerReadyPage>
   #options: ExplorerOptions
 
   constructor(
@@ -290,6 +326,16 @@ export class ExplorerAtoms {
     initialLocation: ExplorerLocation
   ) {
     this.#options = options
+    this.allowAllWorkspaces = options.allowAllWorkspaces ?? false
+    const initialSearchScope = this.allowAllWorkspaces
+      ? (options.initialSearchScope ?? 'workspace')
+      : 'workspace'
+    const initialResultMode =
+      options.initialResultMode ??
+      (options.condition || options.pickChildren ? 'matches' : 'browse')
+    this.searchScope = atom(initialSearchScope)
+    this.resultMode = atom(initialResultMode)
+    this.#selectedView = atom(options.initialView)
     this.mode = options.mode ?? 'browse'
     this.hasRowAction =
       options.onAction !== undefined ||
@@ -308,10 +354,27 @@ export class ExplorerAtoms {
     this.searchDepth =
       options.searchDepth ?? (this.mode === 'search' ? 'all' : 'current')
     this.supportsInlineExpansion = options.nestedNavigation ?? false
+    this.pickChildren = options.pickChildren ?? false
+    this.hasCondition = Boolean(options.condition)
+    this.canSearchEverything = atom(
+      get =>
+        this.allowAllWorkspaces &&
+        (this.mode === 'search' ||
+          this.hasCondition ||
+          Boolean(get(this.search).trim()))
+    )
+    this.searchesEverything = atom(
+      get =>
+        get(this.canSearchEverything) &&
+        get(this.resultMode) === 'matches' &&
+        get(this.searchScope) === 'everything'
+    )
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>(options.initialSelection)
     )
-    this.selectedLocale = atom(options.selectedLocale ?? null)
+    this.selectedLocale = atom(
+      initialLocation.locale ?? options.selectedLocale ?? null
+    )
     if (options.rootData) {
       const rootData = options.rootData
       const value = {
@@ -413,6 +476,41 @@ export class ExplorerAtoms {
         await preloadExpanded(items)
         return items
       })
+    )
+    const pageSource = dispense((locale: string | null) =>
+      atom(async get => {
+        const resultMode = get(this.resultMode)
+        const searchScope = get(this.searchScope)
+        const searchesEverything = get(this.searchesEverything)
+        const itemsPromise = get(this.itemsReady(locale))
+        const needsTree = get(this.view) === 'card' && resultMode === 'browse'
+        const treeReady = needsTree ? options.treeReady?.(locale) : undefined
+        if (treeReady) await get(treeReady)
+        const items = await itemsPromise
+        return {items, resultMode, searchScope, searchesEverything}
+      })
+    )
+    this.page = dispense((locale: string | null) =>
+      unwrap(
+        pageSource(locale),
+        previous =>
+          previous ?? {
+            items: [],
+            resultMode: initialResultMode,
+            searchScope: initialSearchScope,
+            searchesEverything:
+              this.allowAllWorkspaces &&
+              this.hasCondition &&
+              initialResultMode === 'matches' &&
+              initialSearchScope === 'everything'
+          }
+      )
+    )
+    const readyPage = (get: Getter) => get(this.page(get(this.selectedLocale)))
+    this.readySearchScope = atom(get => readyPage(get).searchScope)
+    this.readyResultMode = atom(get => readyPage(get).resultMode)
+    this.readySearchesEverything = atom(
+      get => readyPage(get).searchesEverything
     )
   }
 
@@ -551,10 +649,18 @@ export class ExplorerAtoms {
         return
       }
       const {data} = get(entry.data)
-      if (data && get(data.hasChildren))
-        set(this.location, location => ({...location, parentId: entry.id}))
+      if (data && get(data.hasChildren)) set(this.openLocation, entry)
     }
   )
+  openLocation = atom(null, (_get, set, entry: ExplorerEntry) => {
+    set(this.selectedLocale, entry.locale)
+    set(this.location, {
+      workspace: entry.workspace,
+      root: entry.root,
+      parentId: entry.id,
+      locale: entry.locale ?? undefined
+    })
+  })
   onConfirm = atom(null, get => {
     const selected = get(this.selection)
     if (selected !== 'all') this.#options.onConfirm?.([...selected].map(String))
@@ -568,12 +674,9 @@ export class ExplorerAtoms {
       const {data} = get(entry.data)
       if (!data) return false
       const item = get(data.item)
-      return filterChecker(this.#options.condition, (candidate, name) => {
-        const value = candidate as ExplorerItemData
-        if (name === '_id') return value.id
-        if (name === '_type') return value.type
-        return value.data[name]
-      })(item as never)
+      return filterChecker(this.#options.condition, (candidate, name) =>
+        explorerItemField(candidate as ExplorerItemData, name)
+      )(item as never)
     })
   )
   childrenReady = dispense((entry: ExplorerEntry, locale: string | null) =>
@@ -607,9 +710,14 @@ export class ExplorerAtoms {
           caseSensitive: sort.sortBy !== 'id'
         },
         select: {
+          active: Entry.active,
+          createdAt: Entry.createdAt,
           id: Entry.id,
+          status: Entry.status,
           title: Entry.title,
           path: Entry.path,
+          updatedAt: Entry.updatedAt,
+          url: Entry.url,
           type: Entry.type,
           workspace: Entry.workspace,
           root: Entry.root,
@@ -662,7 +770,16 @@ export class ExplorerAtoms {
       get(shaAtom)
       const location = get(this.location)
       const search = get(this.search).trim()
-      if (!location.root && this.rootScope === 'current') return []
+      const searchesEverything = get(this.searchesEverything)
+      const resultMode = get(this.resultMode)
+      const workspace = searchesEverything ? undefined : location.workspace
+      const root = searchesEverything
+        ? undefined
+        : this.rootScope === 'workspace'
+          ? undefined
+          : location.root
+      if (!searchesEverything && !location.root && this.rootScope === 'current')
+        return []
       if (this.hideResultsUntilSearch && !search) return []
       const graph = get(graphAtom)
       const sort = get(this.sort)
@@ -671,13 +788,15 @@ export class ExplorerAtoms {
       const defaultOrderBy = this.#options.defaultOrderBy
         ? get(this.#options.defaultOrderBy)
         : undefined
-      const flatList =
-        Boolean(search && this.searchDepth === 'all') ||
-        Boolean(
-          this.#options.condition &&
-          !this.#options.pickChildren &&
-          this.#options.flatResults !== false
-        )
+      const flatList = resultMode === 'matches'
+      const selectedLocation =
+        !searchesEverything &&
+        flatList &&
+        !this.pickChildren &&
+        location.root &&
+        location.parentId
+          ? [location.workspace, location.root, location.parentId]
+          : undefined
       const orderField =
         sort.sortBy === 'title'
           ? Entry.title
@@ -689,10 +808,17 @@ export class ExplorerAtoms {
                 ? Entry.id
                 : Entry.index
       const entries = await graph.find({
-        workspace: location.workspace,
-        root: this.rootScope === 'workspace' ? undefined : location.root,
-        parentId: flatList ? undefined : (location.parentId ?? null),
-        locale,
+        workspace,
+        root,
+        location: selectedLocation,
+        parentId: this.pickChildren
+          ? (location.parentId ?? null)
+          : flatList
+            ? undefined
+            : searchesEverything
+              ? null
+              : (location.parentId ?? null),
+        locale: searchesEverything ? undefined : locale,
         search: search || undefined,
         filter: flatList ? this.#options.condition : undefined,
         type: filter,
@@ -707,9 +833,14 @@ export class ExplorerAtoms {
                 caseSensitive: sort.sortBy !== 'id'
               },
         select: {
+          active: Entry.active,
+          createdAt: Entry.createdAt,
           id: Entry.id,
+          status: Entry.status,
           title: Entry.title,
           path: Entry.path,
+          updatedAt: Entry.updatedAt,
+          url: Entry.url,
           type: Entry.type,
           workspace: Entry.workspace,
           root: Entry.root,
@@ -732,10 +863,20 @@ export class ExplorerAtoms {
         }
       })
       const policy = get(policyAtom)
-      const readable = entries.filter(entry => policy.canRead(entry))
+      const condition = this.#options.condition
+      const matchesCondition = condition
+        ? filterChecker(condition, (candidate, name) =>
+            explorerItemField(candidate as ExplorerItemData, name)
+          )
+        : undefined
+      const readable = entries.filter(
+        entry =>
+          policy.canRead(entry) &&
+          (!flatList || !matchesCondition || matchesCondition(entry as never))
+      )
       const parentIds = await graph.find({
-        workspace: location.workspace,
-        root: this.rootScope === 'workspace' ? undefined : location.root,
+        workspace,
+        root,
         parentId: {in: readable.map(entry => entry.id)},
         status: 'preferDraft',
         groupBy: Entry.parentId,

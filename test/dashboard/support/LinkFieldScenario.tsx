@@ -40,14 +40,16 @@ const ScenarioPage = Config.document('Page', {
         }
       }
     }),
+    globalFilteredPage: Field.entry('Global filtered page', {
+      condition: {_id: dashboardScenarioIds.child}
+    }),
     childPage: Field.entry('Child page', {pickChildren: true}),
     browsePage: Field.entry('Browse page', {
       location: {workspace: 'main', root: 'pages'}
     }),
     navigablePage: Field.entry('Navigable page', {
       condition: {_id: dashboardScenarioIds.child},
-      enableNavigation: true,
-      location: {workspace: 'main', root: 'pages'}
+      enableNavigation: true
     }),
     image: Field.image('Featured image'),
     file: Field.file('Download')
@@ -69,10 +71,20 @@ const references = Config.workspace('References', {
   }
 })
 
+const localized = Config.workspace('Localized', {
+  source: 'localized',
+  roots: {
+    pages: Config.root('Localized pages', {
+      contains: ['Page'],
+      i18n: {locales: ['en', 'fr']}
+    })
+  }
+})
+
 const config = Config.create({
   enableDrafts: true,
   schema: {Page: ScenarioPage},
-  workspaces: {main, references}
+  workspaces: {localized, main, references}
 })
 
 interface LinkFieldScenarioState {
@@ -100,6 +112,7 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     'Child',
     dashboardScenarioIds.folder
   )
+  await createPage(db, 'main-i18-result', 'I18 local result')
   await db.create({
     id: linkScenarioIds.mediaDirectory,
     type: MediaLibrary,
@@ -159,6 +172,14 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     'references',
     'library'
   )
+  await db.create({
+    id: 'localized-i18-result',
+    type: ScenarioPage,
+    workspace: 'localized',
+    root: 'pages',
+    locale: 'en',
+    set: {summary: 'Localized search result', title: 'I18 result'}
+  })
   return {client: createTestConnection(db), db}
 }
 

@@ -1,5 +1,7 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
+import {startTransition, useMemo} from 'react'
 import type {Key, Selection} from 'react-aria-components'
 import type {DashboardExplorer} from '../atoms/explorer.js'
 import {dispense} from '../atoms/utils.js'
@@ -22,10 +24,15 @@ export const explorerTree = dispense(
     )
 )
 
+const explorerTreeReady = dispense((tree: ReturnType<typeof explorerTree>) => {
+  const ready = unwrap(tree.ready, previous => previous)
+  return atom(get => get(ready) ?? get(tree.ready))
+})
+
 export interface ExplorerPickerContentProps {
   explorer: DashboardExplorer
   navigationLabel: string
-  options: {enableNavigation?: boolean}
+  options: {pickChildren?: boolean}
 }
 
 export function ExplorerPickerContent({
@@ -36,38 +43,52 @@ export function ExplorerPickerContent({
   const location = useAtomValue(explorer.location)
   const view = useAtomValue(explorer.view)
   const selectedLocale = useAtomValue(explorer.selectedLocale)
+  const page = useAtomValue(explorer.page(selectedLocale))
+  const readyItems = useMemo(() => atom(page.items), [page.items])
   const setLocation = useSetAtom(explorer.location)
   const root = location.root
     ? rootAtoms(location.workspace, location.root)
     : undefined
-  const enableNavigation = options.enableNavigation ?? true
+  const showNavigation = !options.pickChildren
 
   function onRootPress() {
-    setLocation(current => ({...current, parentId: undefined}))
+    startTransition(() => {
+      setLocation(current => ({...current, parentId: undefined}))
+    })
   }
 
   function onSelectionChange(keys: Selection) {
     if (keys === 'all') return
     const [selected] = keys
-    setLocation(current => ({
-      ...current,
-      parentId: selected ? String(selected) : undefined
-    }))
+    startTransition(() => {
+      setLocation(current => ({
+        ...current,
+        parentId: selected ? String(selected) : undefined
+      }))
+    })
   }
 
   return (
     <ExplorerModalContent>
-      {enableNavigation && view === 'card' && root && (
-        <ExplorerPickerNavigation
-          explorer={explorer}
-          navigationLabel={navigationLabel}
-          root={root}
-          rootSelected={!location.parentId}
-          onRootPress={onRootPress}
-          onSelectionChange={onSelectionChange}
-        />
-      )}
-      <ExplorerBody explorer={explorer} locale={selectedLocale} />
+      {showNavigation &&
+        view === 'card' &&
+        page.resultMode === 'browse' &&
+        !page.searchesEverything &&
+        root && (
+          <ExplorerPickerNavigation
+            explorer={explorer}
+            navigationLabel={navigationLabel}
+            root={root}
+            rootSelected={!location.parentId}
+            onRootPress={onRootPress}
+            onSelectionChange={onSelectionChange}
+          />
+        )}
+      <ExplorerBody
+        explorer={explorer}
+        items={readyItems}
+        locale={selectedLocale}
+      />
     </ExplorerModalContent>
   )
 }
@@ -91,7 +112,7 @@ function ExplorerPickerNavigation({
 }: ExplorerPickerNavigationProps) {
   const locale = useAtomValue(explorer.selectedLocale)
   const tree = explorerTree(root, explorer, locale)
-  useAtomValue(tree.ready)
+  useAtomValue(explorerTreeReady(tree))
   return (
     <ExplorerModalNavigation>
       <SidebarTreeExplorer

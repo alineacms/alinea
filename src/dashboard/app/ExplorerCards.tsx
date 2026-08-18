@@ -1,7 +1,7 @@
 import {Checkbox, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom, useStore} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
 import {Fragment, memo, useMemo} from 'react'
@@ -41,12 +41,14 @@ const cardLayoutOptions: GridLayoutOptions = {
 interface ExplorerCardItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
+  explorer: DashboardExplorer
   showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
   breadcrumbs,
   entry,
+  explorer,
   showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
@@ -62,6 +64,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
+      explorer={explorer}
       showSelectionControls={showSelectionControls}
     />
   )
@@ -110,6 +113,7 @@ interface ExplorerCardLoadedItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   data: DashboardEntryData
+  explorer: DashboardExplorer
   showSelectionControls: boolean
 }
 
@@ -117,6 +121,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   breadcrumbs,
   entry,
   data,
+  explorer,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
@@ -124,6 +129,9 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const type = useAtomValue(data.type)
   const hasChildren = useAtomValue(data.hasChildren)
   const parents = useAtomValue(data.parents)
+  const isSelectable = useAtomValue(
+    useMemo(() => explorer.isSelectable(entry), [entry, explorer])
+  )
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -132,9 +140,13 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     <GridListItem
       id={entry.id}
       textValue={label}
-      className={styles.ExplorerCards.item()}
+      className={styles.ExplorerCards.item({unselectable: !isSelectable})}
+      data-unselectable={!isSelectable || undefined}
+      isDisabled={!isSelectable}
     >
-      {showSelectionControls && <ExplorerCardCheckbox label={label} />}
+      {showSelectionControls && isSelectable && (
+        <ExplorerCardCheckbox label={label} />
+      )}
       <AriaButton
         slot="drag"
         aria-label={`Drag ${label}`}
@@ -265,17 +277,33 @@ export function ExplorerCards({
   locale
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
+  const resultMode = useAtomValue(explorer.readyResultMode)
+  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   const performAction = useSetAtom(explorer.onAction)
+  const store = useStore()
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
-    if (entry) performAction(entry, locale)
+    if (!entry) return
+    const canNavigate =
+      resultMode === 'browse' &&
+      explorer.supportsInlineExpansion &&
+      entry.hasChildren &&
+      !store.get(explorer.isSelectable(entry))
+    if (explorer.hasRowAction || canNavigate) performAction(entry, locale)
   }
-  const onAction = explorer.hasRowAction ? onItemAction : undefined
+  const onAction =
+    explorer.hasRowAction || explorer.supportsInlineExpansion
+      ? onItemAction
+      : undefined
   return (
-    <div className={styles.ExplorerCards.viewport()}>
+    <div
+      aria-label="Explorer card results"
+      className={styles.ExplorerCards.viewport()}
+      role="region"
+    >
       <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
         <GridList
           aria-label="Explorer entries"
@@ -284,6 +312,7 @@ export function ExplorerCards({
           className={styles.ExplorerCards()}
           selectionMode={hasSelection ? selectionMode : undefined}
           selectionBehavior={explorer.selectionBehavior}
+          disabledBehavior="selection"
           dragAndDropHooks={dragAndDropHooks}
           selectedKeys={hasSelection ? selected : undefined}
           onSelectionChange={hasSelection ? setSelected : undefined}
@@ -293,8 +322,13 @@ export function ExplorerCards({
         >
           {item => (
             <ExplorerCardItem
-              breadcrumbs={explorer.breadcrumbs}
+              breadcrumbs={
+                explorer.breadcrumbs ||
+                resultMode === 'matches' ||
+                searchesEverything
+              }
               entry={item}
+              explorer={explorer}
               showSelectionControls={showSelectionControls}
             />
           )}

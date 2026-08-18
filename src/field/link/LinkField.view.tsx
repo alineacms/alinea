@@ -469,7 +469,8 @@ function LinkPickerAction({
       ? {
           workspace: currentEntry.workspace,
           root: currentEntry.root,
-          parentId: currentEntry.id
+          parentId: currentEntry.id,
+          locale: currentEntry.locale
         }
       : undefined
   const pickingChildren = Boolean(childLocation)
@@ -482,15 +483,23 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation,
-    flatResults: !nestedResults,
+    initialView: type === 'file' ? 'row' : undefined,
+    initialResultMode: entryPickerResultMode(
+      condition,
+      options.enableNavigation,
+      pickingChildren
+    ),
+    initialSearchScope: entryPickerSearchScope(
+      condition,
+      resolved.location,
+      options.enableNavigation,
+      type
+    ),
     location,
     limitLocations: options.limitLocations,
-    nestedNavigation: enableNavigation,
+    nestedNavigation: !pickingChildren,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -600,15 +609,23 @@ function LinkPickerDialog({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation,
-    flatResults: !nestedResults,
+    initialView: type === 'file' ? 'row' : undefined,
+    initialResultMode: entryPickerResultMode(
+      condition,
+      options.enableNavigation,
+      pickingChildren
+    ),
+    initialSearchScope: entryPickerSearchScope(
+      condition,
+      resolved.location,
+      options.enableNavigation,
+      type
+    ),
     location,
     limitLocations: options.limitLocations,
-    nestedNavigation: enableNavigation,
+    nestedNavigation: !pickingChildren,
     pickChildren: pickingChildren,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
@@ -652,6 +669,28 @@ function LinkPickerDialog({
 interface ResolvedEntryPickerOptions {
   condition: Filter | undefined
   location: EditorLocation | undefined
+}
+
+function entryPickerSearchScope(
+  condition: Filter | undefined,
+  location: EditorLocation | undefined,
+  enableNavigation: boolean | undefined,
+  type: PickerType
+) {
+  if (type === 'file' || type === 'image') return 'workspace' as const
+  return condition && !location && enableNavigation !== true
+    ? ('everything' as const)
+    : ('workspace' as const)
+}
+
+function entryPickerResultMode(
+  condition: Filter | undefined,
+  enableNavigation: boolean | undefined,
+  pickChildren: boolean
+) {
+  return pickChildren || (condition && enableNavigation !== true)
+    ? ('matches' as const)
+    : ('browse' as const)
 }
 
 function useResolvedEntryPickerOptions(

@@ -1,7 +1,7 @@
-import {Icon} from '#/components.js'
+import {Button, Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom, type Atom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
@@ -20,19 +20,39 @@ const styles = styler(css)
 const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
+  explorer: DashboardExplorer
   root?: DashboardRoot
 }
 
-function EmptyResults({root}: EmptyResultsProps) {
+function EmptyResults({explorer, root}: EmptyResultsProps) {
   const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
+  const searchScope = useAtomValue(explorer.searchScope)
+  const setSearchScope = useSetAtom(explorer.searchScope)
+  const canSearchEverything = useAtomValue(explorer.canSearchEverything)
+  const canSearchAll = canSearchEverything && searchScope === 'workspace'
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>No results</div>
-        <div className={styles.ExplorerList.empty.text()}>
-          Try different search terms.
+        <div className={styles.ExplorerList.empty.title()}>
+          No results found
         </div>
+        <div className={styles.ExplorerList.empty.text()}>
+          {canSearchAll
+            ? 'Try different search terms or search all workspaces.'
+            : 'Try different search terms.'}
+        </div>
+        {canSearchAll && (
+          <Button
+            appearance="plain"
+            intent="primary"
+            size="small"
+            className={styles.ExplorerList.empty.button()}
+            onPress={() => setSearchScope('everything')}
+          >
+            Try searching all workspaces
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -54,11 +74,16 @@ function SearchIdleState() {
 
 export interface ExplorerListProps {
   explorer: DashboardExplorer
+  items?: Atom<Array<DashboardEntry>>
   locale: string | null
 }
 
-export function ExplorerList({explorer, locale}: ExplorerListProps) {
-  const items = useAtomValue(explorer.items(locale))
+export function ExplorerList({
+  explorer,
+  items: readyItems,
+  locale
+}: ExplorerListProps) {
+  const items = useAtomValue(readyItems ?? explorer.items(locale))
   const view = useAtomValue(explorer.view)
   const showResults = useAtomValue(explorer.showResults)
   const root = useAtomValue(explorer.root)
@@ -114,7 +139,9 @@ export function ExplorerList({explorer, locale}: ExplorerListProps) {
           explorer={explorer}
           items={items}
           locale={locale}
-          renderEmptyState={() => <EmptyResults root={root} />}
+          renderEmptyState={() => (
+            <EmptyResults explorer={explorer} root={root} />
+          )}
         />
       ) : (
         <ExplorerTable
@@ -122,7 +149,9 @@ export function ExplorerList({explorer, locale}: ExplorerListProps) {
           explorer={explorer}
           items={items}
           locale={locale}
-          renderEmptyState={() => <EmptyResults root={root} />}
+          renderEmptyState={() => (
+            <EmptyResults explorer={explorer} root={root} />
+          )}
         />
       )}
     </div>

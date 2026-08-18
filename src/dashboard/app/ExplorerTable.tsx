@@ -2,7 +2,7 @@ import {Checkbox, FoldIcon, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
-import {useMemo} from 'react'
+import {startTransition, useMemo} from 'react'
 import {
   Button as AriaButton,
   Collection,
@@ -139,12 +139,13 @@ function ExplorerTableCell({
   if (column.kind === 'selection') {
     return (
       <div className={styles.ExplorerTable.cell.selection()} role="gridcell">
-        <Checkbox
-          slot="selection"
-          className={styles.ExplorerTable.checkbox()}
-          aria-label={`Select ${label}`}
-          isDisabled={!isSelectable}
-        />
+        {isSelectable && (
+          <Checkbox
+            slot="selection"
+            className={styles.ExplorerTable.checkbox()}
+            aria-label={`Select ${label}`}
+          />
+        )}
       </div>
     )
   }
@@ -188,7 +189,9 @@ function ExplorerTableCell({
               />
             </span>
           )}
-          <span className={styles.ExplorerTable.field.value()}>{label}</span>
+          <span className={styles.ExplorerTable.field.value()} title={label}>
+            <span className={styles.ExplorerTable.title()}>{label}</span>
+          </span>
         </span>
       </div>
     )
@@ -237,6 +240,21 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     useMemo(() => explorer.isExpanded(entry), [explorer, entry])
   )
   const onAction = useSetAtom(explorer.onAction)
+  const openLocation = useSetAtom(explorer.openLocation)
+  const setExpandedKeys = useSetAtom(explorer.expandedKeys)
+  const canExpandOnAction =
+    !props.isSelectable && hasChildren && explorer.supportsInlineExpansion
+  const hasAction = explorer.hasRowAction || canExpandOnAction
+  function performAction() {
+    if (canExpandOnAction) {
+      setExpandedKeys(current => new Set(current).add(entry.id))
+      return
+    }
+    onAction(entry, props.locale)
+  }
+  function enterParent() {
+    startTransition(() => openLocation(entry))
+  }
   const textValue = useMemo(
     () =>
       [label, ...cells.map(cell => compactFieldText(cell.field, cell.value))]
@@ -249,18 +267,18 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       id={entry.id}
       textValue={textValue}
       hasChildItems={hasChildren}
-      className={styles.ExplorerTable.row()}
+      className={styles.ExplorerTable.row({
+        unselectable: !props.isSelectable
+      })}
+      data-unselectable={!props.isSelectable || undefined}
       isDisabled={!props.isSelectable}
       onAction={
-        explorer.hasRowAction && explorer.mode !== 'search'
-          ? () => onAction(entry, props.locale)
-          : undefined
+        hasAction && explorer.mode !== 'search' ? performAction : undefined
       }
       onPress={
-        explorer.hasRowAction && explorer.mode === 'search'
-          ? () => onAction(entry, props.locale)
-          : undefined
+        hasAction && explorer.mode === 'search' ? performAction : undefined
       }
+      onDoubleClick={hasChildren ? enterParent : undefined}
     >
       <TreeItemContent>
         {({isExpanded: expanded, level}) => (
@@ -340,6 +358,7 @@ function ExplorerTableLoadedRow({
   const hasChildren = useAtomValue(data.hasChildren)
   const cells = useAtomValue(data.overviewCells)
   const parents = useAtomValue(data.parents)
+  const resultMode = useAtomValue(explorer.readyResultMode)
   const isSelectable = useAtomValue(
     useMemo(() => explorer.isSelectable(props.entry), [explorer, props.entry])
   )
@@ -348,7 +367,11 @@ function ExplorerTableLoadedRow({
       {...props}
       cells={cells}
       explorer={explorer}
-      hasChildren={explorer.supportsInlineExpansion && hasChildren}
+      hasChildren={
+        resultMode === 'browse' &&
+        explorer.supportsInlineExpansion &&
+        hasChildren
+      }
       icon={configuredIcon ?? (hasChildren ? LucideFolder : LucideFile)}
       isSelectable={isSelectable}
       label={label}
@@ -383,8 +406,14 @@ export function ExplorerTable({
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
   const selectionMode = explorer.selectionMode
   const search = useAtomValue(explorer.search)
+  const resultMode = useAtomValue(explorer.readyResultMode)
+  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   const isSearching = Boolean(search.trim())
-  const breadcrumbs = explorer.breadcrumbs || isSearching
+  const breadcrumbs =
+    explorer.breadcrumbs ||
+    resultMode === 'matches' ||
+    isSearching ||
+    searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   const columns = useMemo<Array<ExplorerTableColumn>>(

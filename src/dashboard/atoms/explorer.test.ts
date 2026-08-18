@@ -51,6 +51,36 @@ test('page explorers keep their row navigation action', () => {
   expect(explorer.items('en')).not.toBe(explorer.items('fr'))
 })
 
+test('uses the locale from its initial location', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages', locale: 'fr'},
+    {selectedLocale: 'en'}
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.selectedLocale)).toBe('fr')
+})
+
+test('all-workspace search is opt-in and defaults to the current workspace', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {allowAllWorkspaces: true, mode: 'search'}
+  )
+  const store = createStore()
+
+  expect(explorer.allowAllWorkspaces).toBe(true)
+  expect(store.get(explorer.searchScope)).toBe('workspace')
+  expect(store.get(explorer.canSearchEverything)).toBe(true)
+  store.set(explorer.searchScope, 'everything')
+  expect(store.get(explorer.searchScope)).toBe('everything')
+  expect(store.get(explorer.searchesEverything)).toBe(false)
+  store.set(explorer.search, 'Alpha')
+  expect(store.get(explorer.canSearchEverything)).toBe(true)
+  expect(store.get(explorer.searchesEverything)).toBe(false)
+  store.set(explorer.resultMode, 'matches')
+  expect(store.get(explorer.searchesEverything)).toBe(true)
+})
+
 test('limits the picker to its allowed locations', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'outside', root: 'outside'},
@@ -106,4 +136,21 @@ test('preloading items includes expanded inline children', async () => {
 
   expect(parentEntry).toBeDefined()
   expect(store.get(explorer.children(parentEntry!, null))).not.toBeEmpty()
+})
+
+test('matches only contain selectable rows for compound conditions', async () => {
+  const {store, child} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {
+      condition: {_type: 'Page', _status: 'published'},
+      initialResultMode: 'matches'
+    }
+  )
+
+  const items = await store.get(explorer.itemsReady(null))
+
+  expect(items.map(item => item.id)).toEqual([child._id])
+  expect(items.every(item => store.get(explorer.isSelectable(item)))).toBe(true)
 })

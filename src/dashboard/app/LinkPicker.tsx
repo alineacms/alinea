@@ -55,15 +55,19 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
     root: root.key
   }
   const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
-  const initialLocale = options.selectedLocale ?? page.locale
+  const initialLocale = location.locale ?? options.selectedLocale ?? page.locale
   const [explorer] = useState(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
     explorer = createExplorerAtoms(location, {
       ...options,
+      allowAllWorkspaces:
+        options.allowAllWorkspaces ??
+        (!options.limitLocations?.length && !options.pickChildren),
       rootData: pickerRoot.data,
       searchDepth: 'all',
       selectedLocale: initialLocale,
-      treeItems: locale => explorerTree(pickerRoot, explorer, locale).items
+      treeItems: locale => explorerTree(pickerRoot, explorer, locale).items,
+      treeReady: locale => explorerTree(pickerRoot, explorer, locale).ready
     })
     return explorer
   })
@@ -82,6 +86,7 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
+            autoFocusSearch
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate

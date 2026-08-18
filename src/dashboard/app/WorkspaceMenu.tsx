@@ -156,6 +156,7 @@ function SearchPopup({page, root}: SearchPopupProps) {
     createExplorerAtoms(
       {workspace: root.workspace, root: root.key},
       {
+        allowAllWorkspaces: true,
         autoSelectFirstItem: true,
         breadcrumbs: true,
         enableNavigation: true,
