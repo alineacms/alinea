@@ -21,7 +21,7 @@ import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useTransition} from 'react'
+import {useEffect, useLayoutEffect, useRef, useTransition} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -263,6 +263,7 @@ function EntryEditorContent({
   const [isSidebarOpen, setSidebarOpen] = useAtom(
     dashboardAtoms.entrySidebarOpen
   )
+  const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
   const mediaDraftsDisabled = isMediaFile || isMediaLibrary
@@ -289,9 +290,13 @@ function EntryEditorContent({
     }
   }, [node, setRouteGuard])
 
+  useLayoutEffect(() => {
+    if (editorBodyRef.current) editorBodyRef.current.scrollTop = 0
+  }, [entry.id])
+
   let editorBody = (
     <>
-      <RailBody className={styles.EntryEditor.body()}>
+      <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
         <RailContent className={styles.EntryEditor.fields()}>
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
@@ -315,7 +320,7 @@ function EntryEditorContent({
   if (isMediaFile) {
     editorBody = (
       <>
-        <RailBody className={styles.EntryEditor.body()}>
+        <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
             <FileEditor />
           </NodeEditor>

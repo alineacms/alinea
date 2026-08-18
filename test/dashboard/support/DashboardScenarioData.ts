@@ -8,6 +8,8 @@ export const dashboardScenarioIds = {
   orderedFolder: 'workflow-ordered-folder',
   orderedApple: 'workflow-ordered-apple',
   orderedZebra: 'workflow-ordered-zebra',
+  rootOrderedApple: 'workflow-root-ordered-apple',
+  rootOrderedZebra: 'workflow-root-ordered-zebra',
   hiddenFolder: 'workflow-hidden-folder',
   hiddenChild: 'workflow-hidden-child',
   mediaFile: 'workflow-media-file',

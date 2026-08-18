@@ -38,6 +38,42 @@ test('keeps the sidebar and editor mounted between entry navigations', async ({
   )
 })
 
+test('scrolls the entry editor to the top when navigating to a different entry', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const title = app.field('Title')
+
+  const initialScrollTop = await title.evaluate(element => {
+    let ancestor = element.parentElement
+    while (ancestor && getComputedStyle(ancestor).overflowY !== 'auto') {
+      ancestor = ancestor.parentElement
+    }
+    if (!ancestor) throw new Error('Entry editor scroll container not found')
+    ancestor.style.flex = '0 0 40px'
+    ancestor.scrollTop = 100
+    return ancestor.scrollTop
+  })
+  expect(initialScrollTop).toBeGreaterThan(0)
+
+  await app.openEntry('Beta')
+
+  await expect
+    .poll(() =>
+      app.field('Title').evaluate(element => {
+        let ancestor = element.parentElement
+        while (ancestor && getComputedStyle(ancestor).overflowY !== 'auto') {
+          ancestor = ancestor.parentElement
+        }
+        if (!ancestor)
+          throw new Error('Entry editor scroll container not found')
+        return ancestor.scrollTop
+      })
+    )
+    .toBe(0)
+})
+
 test('selects the sidebar root when navigating back to it', async ({
   dashboard,
   mount
@@ -109,6 +145,19 @@ test('orders children by their parent type and disables dragging', async ({
   await expect(children).toHaveText([/Apple$/, /Zebra$/])
   await expect(tree.getByRole('button', {name: 'Drag Apple'})).toHaveCount(0)
   await expect(tree.getByRole('button', {name: 'Drag Zebra'})).toHaveCount(0)
+})
+
+test('orders a root overview by the root configuration', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const roots = app.page.getByRole('complementary', {name: 'Workspace roots'})
+
+  await roots.getByRole('button', {name: 'Ordered pages'}).click()
+
+  const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  await expect(overview.getByRole('row')).toHaveText([/^Apple/, /^Zebra/])
 })
 
 test('keeps a collapsed parent closed when selecting a child elsewhere', async ({

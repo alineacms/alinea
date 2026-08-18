@@ -73,18 +73,6 @@ export namespace ElementNode {
   export const content = 'content' satisfies keyof ElementNode
 }
 
-export interface ImageNode extends ElementNode {
-  _type: 'image'
-  _id?: string
-  _link?: 'image'
-  _entry?: string
-  src?: string
-  alt?: string
-  title?: string
-  width?: number | string
-  height?: number | string
-}
-
 export interface BlockNode {
   _id: string
   _type: string

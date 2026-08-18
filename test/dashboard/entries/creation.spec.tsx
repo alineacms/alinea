@@ -57,3 +57,32 @@ test('creates a draft entry and opens it for editing', async ({
   ).toBeVisible()
   await app.openEntry('New page')
 })
+
+test('loads a parent selected from a collapsed branch by id', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+
+  await app.page.getByRole('button', {name: 'Create new'}).click()
+  const createEntry = app.page.getByRole('dialog', {name: 'Create entry'})
+  await createEntry.getByRole('button', {name: 'Link settings'}).click()
+  await app.page
+    .getByRole('dialog', {name: 'Link settings'})
+    .getByRole('button', {name: 'Edit link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  await picker
+    .getByRole('checkbox', {name: 'Select Ordered folder'})
+    .click({force: true})
+  await picker.getByRole('button', {name: 'Select', exact: true}).click()
+
+  await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(
+    'Ordered folder'
+  )
+  await createEntry.getByRole('button', {name: /Page Type/}).click()
+  await expect(
+    app.page.getByRole('option', {name: 'Ordered folder'})
+  ).toHaveCount(0)
+})

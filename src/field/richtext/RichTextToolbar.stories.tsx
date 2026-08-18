@@ -61,11 +61,11 @@ function ToolbarStory({enableImages, enableTables}: ToolbarStoryProps) {
       <div style={toolbarFrameStyle}>
         <RichTextToolbar
           editor={editor}
-          enableImages={enableImages}
           enableTables={enableTables}
-          focusToggle={() => undefined}
-          pickImage={() => Promise.resolve(undefined)}
+          ownerId="story"
           pickLink={() => Promise.resolve(undefined)}
+          getEntryAnchors={() => []}
+          onFocusChange={() => undefined}
         />
       </div>
       <div style={editorStyle}>

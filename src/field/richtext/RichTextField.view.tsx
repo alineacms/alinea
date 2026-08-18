@@ -1,410 +1,260 @@
-import {
-  Button,
-  DialogTrigger,
-  Icon,
-  Label,
-  List,
-  ListRow,
-  ListRowActions,
-  ListRowBadges,
-  ListRowBody,
-  ListRowDrag,
-  ListRowDragHandle,
-  ListRowHeader,
-  ListRowSettings,
-  ListRowSettingsButton,
-  MenuSeparator,
-  Popover
-} from '#/components.js'
+import {Label} from '#/components.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
-import {getType} from '#/core/Internal.js'
-import {Schema} from '#/core/Schema.js'
-import {BlockNode, Node, TextDoc} from '#/core/TextDoc.js'
+import type {Schema} from '#/core/Schema.js'
+import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
-import {entries, values} from '#/core/util/Objects.js'
-import {Badge} from '#/dashboard/app/Badge.js'
-import {NodeEditor} from '#/dashboard/app/Editor.js'
+import {isRecord} from '#/core/util/Objects.js'
+import {rootEditor} from '#/dashboard/atoms/editor.js'
 import {
+  useEditor as useDashboardEditor,
   useFieldError,
   useFieldNode,
-  useFieldOptions,
-  useFieldSetter
+  useFieldOptions
 } from '#/dashboard/hooks.js'
 import {
-  IcBaselineContentCopy,
-  IcRoundClose,
-  IcRoundMoreHoriz
-} from '#/dashboard/icons.js'
-import {ReactiveNode} from '#/dashboard/store/Dashboard.js'
-import {RichTextOptions} from '#/field/richtext/RichTextField.js'
-import styler from '@alinea/styler'
-import {Node as TipTapNode, type AnyExtension} from '@tiptap/core'
-import type {Editor as TipTapEditor} from '@tiptap/react'
-import {
-  EditorContent,
-  mergeAttributes,
-  NodeViewWrapper,
-  ReactNodeViewRenderer,
-  useEditor
-} from '@tiptap/react'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {memo, useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {createPortal} from 'react-dom'
-import {extensions as baseExtensions} from './Extensions.js'
-import {InsertMenu} from './InsertMenu.js'
+  configureRichTextExtensions,
+  type RichTextOptions
+} from './RichTextField.js'
 import {PickTextLink, usePickTextLink} from './PickTextLink.js'
+import styler from '@alinea/styler'
+import type {AnyExtension, Editor} from '@tiptap/core'
+import {EditorContent, useEditor} from '@tiptap/react'
+import {useAtomValue, useSetAtom, useStore} from 'jotai'
 import {
-  decodeRichTextBlock,
-  encodeRichTextBlock,
-  richTextBlockAttribute,
-  richTextBlockAttributes
-} from './RichTextBlockCodec.js'
-import {cacheRichTextBlocks, fromContent, toContent} from './RichTextContent.js'
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore
+} from 'react'
+import {createPortal} from 'react-dom'
+import {RichTextBlock} from './RichTextBlock.js'
+import {
+  type ReactiveRichTextBlock,
+  richTextStructureAtom
+} from './RichTextBlocks.js'
+import {
+  type RichTextBlockHost,
+  RichTextBlockHosts
+} from './RichTextBlockHost.js'
+import {editorContent, editorNodes} from './RichTextDocument.js'
+import {
+  defaultExtensionConfig,
+  richTextBlockClipboard,
+  richTextBlockExtensions,
+  richTextDocumentExtension
+} from './RichTextExtensions.js'
+import {
+  blockAttributes,
+  decodeBlockValue,
+  encodeBlockValue,
+  richTextBlockValueAttribute
+} from './RichTextBlockValue.js'
 import css from './RichTextField.module.css'
+import {RichTextInsertMenu} from './RichTextInsertMenu.js'
+import {documentUpdateAtom} from './RichTextState.js'
 import {RichTextToolbar} from './RichTextToolbar.js'
+import {PickTextAnchor, usePickTextAnchor} from './PickTextAnchor.js'
 
 const styles = styler(css)
-const gatedExtensionOptions = new Set(['Image'])
 
-interface NodeViewProps {
-  editor: TipTapEditor
-  getPos: () => number | undefined
-  node: {
-    attrs: {[BlockNode.id]?: string}
-    nodeSize: number
-  }
-  deleteNode: () => void
+export interface RichTextFieldViewProps<Blocks extends Schema> {
+  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
 }
 
-interface TypeExtensionHeaderProps {
-  exp: boolean
-  readOnly: boolean
-  type: Type
-  onDelete: () => void
-  onCopy: () => void
-}
-
-function TypeExtensionHeader({
-  exp,
-  readOnly,
-  type,
-  onDelete,
-  onCopy
-}: TypeExtensionHeaderProps) {
-  const label = Type.label(type)
-  const typeIcon = getType(type).icon
-  const [actionsOpen, setActionsOpen] = useState(false)
-
-  function closeActions() {
-    setActionsOpen(false)
-  }
-
-  return (
-    <ListRowHeader expanded={exp}>
-      {!readOnly && (
-        <ListRowDragHandle
-          aria-label={`Drag ${label} block`}
-          data-drag-handle
-        />
-      )}
-      <ListRowDrag>
-        <ListRowBadges>
-          <Badge icon={typeIcon} size="small">
-            {label}
-          </Badge>
-        </ListRowBadges>
-      </ListRowDrag>
-      <ListRowActions>
-        <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-          <ListRowSettingsButton
-            aria-label={`${label} actions`}
-            icon={IcRoundMoreHoriz}
-          />
-          <Popover placement="bottom right">
-            <ListRowSettings actions>
-              <Button
-                appearance="plain"
-                isDisabled={readOnly}
-                onPress={() => {
-                  onCopy()
-                  closeActions()
-                }}
-              >
-                <Icon icon={IcBaselineContentCopy} />
-                Duplicate
-              </Button>
-            </ListRowSettings>
-            <MenuSeparator />
-            <ListRowSettings actions>
-              <Button
-                appearance="plain"
-                isDisabled={readOnly}
-                onPress={() => {
-                  onDelete()
-                  closeActions()
-                }}
-              >
-                <Icon icon={IcRoundClose} />
-                Delete
-              </Button>
-            </ListRowSettings>
-          </Popover>
-        </DialogTrigger>
-      </ListRowActions>
-    </ListRowHeader>
-  )
-}
-
-function typeExtension(
-  reactive: ReactiveNode<TextDoc>,
-  name: string,
-  type: Type,
-  expandedByBlockId: Map<string, boolean>,
-  readOnly: boolean
-) {
-  const fieldKeys = entries(Type.initialValue(type)).map(([key]) => key)
-
-  function View({editor, getPos, node, deleteNode}: NodeViewProps) {
-    const {[BlockNode.id]: id} = node.attrs
-    const blockId = String(id ?? '')
-
-    const [exp, setExp] = useState(() => {
-      return expandedByBlockId.get(blockId) ?? true
-    })
-
-    const rowNodeAtom = useMemo(() => {
-      return atom(get => {
-        const nodes = get(reactive.nodes) as Array<ReactiveNode> | undefined
-        return nodes?.find(node => {
-          const value = get(node.value) as Node | undefined
-          return isEditableBlockValue(value, blockId, name, fieldKeys)
-        })
-      })
-    }, [blockId])
-    const rowNode = useAtomValue(rowNodeAtom) as
-      | ReactiveNode<object>
-      | undefined
-    const rowValueAtom = useMemo(() => {
-      return atom(get => {
-        if (!rowNode) return
-        return get(rowNode.value) as Node
-      })
-    }, [rowNode])
-    const rowValue = useAtomValue(rowValueAtom)
-    useEffect(() => {
-      if (!isBlockNode(rowValue)) return
-      cacheRichTextBlocks([rowValue])
-      const pos = getPos()
-      if (typeof pos !== 'number') return
-      const editorNode = editor.view.state.doc.nodeAt(pos)
-      if (!editorNode || editorNode.type.name !== name) return
-      const currentBlock = editorNode.attrs[richTextBlockAttribute]
-      if (encodeRichTextBlock(currentBlock) === encodeRichTextBlock(rowValue))
-        return
-      const tr = editor.view.state.tr.setNodeMarkup(pos, undefined, {
-        ...editorNode.attrs,
-        ...richTextBlockAttributes(rowValue)
-      })
-      tr.setMeta('addToHistory', false)
-      editor.view.dispatch(tr)
-    }, [editor, getPos, rowValue])
-    const copyBlockAtom = useMemo(() => {
-      return atom(null, (get, set): BlockNode | undefined => {
-        if (!rowNode) return
-        const nodes = get(reactive.nodes) as
-          | Array<ReactiveNode<object>>
-          | undefined
-        const index = nodes?.indexOf(rowNode)
-        if (index === undefined || index < 0) return
-        const value = get(rowNode.value) as Node
-        if (!isBlockNode(value)) return
-        const newId = createId()
-        const block = {
-          ...value,
-          [BlockNode.id]: newId
-        }
-        set(reactive.insert, index + 1, block)
-        return block
-      })
-    }, [rowNode])
-    const copyBlock = useSetAtom(copyBlockAtom)
-
-    function onCopy() {
-      const pos = getPos()
-      if (typeof pos !== 'number') return
-      const block = copyBlock()
-      if (!block) return
-      editor
-        .chain()
-        .focus()
-        .insertContentAt(pos + node.nodeSize, {
-          type: name,
-          attrs: richTextBlockAttributes(block)
-        })
-        .run()
-    }
-
-    if (!rowNode) return null
-    return (
-      <NodeViewWrapper>
-        <List className={styles.RichTextFieldBlock()} data-depth="muted">
-          <ListRow role="listitem" tabIndex={0}>
-            <TypeExtensionHeader
-              type={type}
-              readOnly={readOnly}
-              onDelete={deleteNode}
-              onCopy={onCopy}
-              exp={exp}
-            />
-            {exp && (
-              <ListRowBody>
-                <NodeEditor type={type} node={rowNode} />
-              </ListRowBody>
-            )}
-          </ListRow>
-        </List>
-      </NodeViewWrapper>
-    )
-  }
-  return TipTapNode.create({
-    name,
-    group: 'block',
-    atom: true,
-    draggable: true,
-    parseHTML() {
-      return [{tag: name}]
-    },
-    renderHTML({HTMLAttributes}) {
-      return [name, mergeAttributes(HTMLAttributes)]
-    },
-    addNodeView() {
-      return ReactNodeViewRenderer(View)
-    },
-    addAttributes() {
-      return {
-        [BlockNode.id]: {default: null},
-        [richTextBlockAttribute]: {
-          default: null,
-          parseHTML(element) {
-            return decodeRichTextBlock(
-              element.getAttribute(richTextBlockAttribute)
-            )
-          },
-          renderHTML(attributes) {
-            const encoded = encodeRichTextBlock(
-              attributes[richTextBlockAttribute]
-            )
-            if (!encoded) return {}
-            return {[richTextBlockAttribute]: encoded}
-          }
-        }
-      }
-    }
-  })
-}
-
-function isEditableBlockValue(
-  value: unknown,
-  blockId: string,
-  name: string,
-  fieldKeys: Array<string>
-): value is BlockNode {
-  if (!isBlockNode(value)) return false
-  if (String(value[BlockNode.id]) !== blockId) return false
-  if (value[Node.type] !== name) return false
-  for (const key of fieldKeys) {
-    if (!(key in value)) return false
-  }
-  return true
-}
-
-function isBlockNode(value: unknown): value is BlockNode {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value) &&
-    Node.isBlock(value)
-  )
-}
-
-function schemaToExtensions(
-  reactive: ReactiveNode<TextDoc>,
-  schema: Schema | undefined,
-  expandedByBlockId: Map<string, boolean>,
-  readOnly: boolean
-) {
-  if (!schema) return []
-  return entries(schema).map(([name, type]) => {
-    return typeExtension(reactive, name, type, expandedByBlockId, readOnly)
-  })
-}
-
-function RTView<Blocks extends Schema>({
+export function RichTextFieldView<Blocks extends Schema>({
   field
 }: RichTextFieldViewProps<Blocks>) {
   const options = useFieldOptions(field)
   const error = useFieldError(field)
-  const toolbar = document.getElementById('alinea-toolbar')
+  const fieldNode = useFieldNode<TextDoc>(field)
+  const store = useStore()
+  const {blocks, structure} = useAtomValue(
+    useMemo(() => richTextStructureAtom(fieldNode), [fieldNode])
+  )
+  const blocksById = useMemo(
+    () => new Map(blocks.map(block => [block.id, block])),
+    [blocks]
+  )
+  const blocksByIdRef = useRef(blocksById)
+  blocksByIdRef.current = blocksById
+  const lastEditorDocument = useRef<string>()
+  const pendingExternalDocument = useRef<string>()
+  const documentKey = documentStructureKey(structure)
+  if (lastEditorDocument.current && lastEditorDocument.current !== documentKey)
+    pendingExternalDocument.current = documentKey
+  const updateDocument = useSetAtom(
+    useMemo(() => documentUpdateAtom(fieldNode), [fieldNode])
+  )
+  const hosts = useMemo(() => new RichTextBlockHosts(), [])
+  const pendingBlocks = useRef(new Map<string, BlockNode>())
+  const [activeEditor, setActiveEditor] = useState<Editor>()
+  const [focused, setFocused] = useState(false)
+  const [innerBlockFocused, setInnerBlockFocused] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
+  const ownerId = useId()
   const picker = usePickTextLink()
-  const setValue = useFieldSetter(field)
-  const node = useFieldNode<TextDoc>(field)
-  const peekValue = useSetAtom(node.peek)
-  const [focus, setFocus] = useState(false)
-  const expandedByBlockId = useRef(new Map<string, boolean>())
-  const containerRef = useRef<HTMLDivElement>(null)
-  const content = useMemo(() => {
-    const value = peekValue()
-    return {
-      type: 'doc',
-      content: value?.map(toContent) ?? []
-    }
-  }, [peekValue])
-  const base = useMemo(() => {
-    return fieldExtensions(options.extensions, options.enableImages)
-  }, [options.enableImages, options.extensions])
-  const readOnly = options.readOnly || node.readOnly
-  const editable = !readOnly
-  const extensions = useMemo(() => {
-    const schemaExtensions = schemaToExtensions(
-      node,
-      options.schema,
-      expandedByBlockId.current,
-      readOnly
+  const anchorPicker = usePickTextAnchor()
+  const dashboardEditor = useDashboardEditor()
+  const entryAnchors = rootEditor(dashboardEditor).anchors
+  const getEntryAnchors = useCallback(
+    () => store.get(entryAnchors).map(anchor => anchor.id),
+    [entryAnchors, store]
+  )
+  const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
+  const extensions = useMemo<Array<AnyExtension>>(() => {
+    const configured = Object.values(
+      configureRichTextExtensions(
+        options.extensions,
+        defaultExtensionConfig(getEntryAnchors)
+      )
     )
-    return [...base, ...schemaExtensions]
-  }, [base, node, options.schema, readOnly])
-  const focusToggle = useCallback(function focusToggle(
-    target: EventTarget | null
-  ) {
-    const element =
-      (target as HTMLElement | null) ||
-      (document.activeElement as HTMLElement | null)
-    const editorElement = containerRef.current?.querySelector('.ProseMirror')
-    setFocus(
-      !!element &&
-        (element.closest('[data-richtext-toolbar="true"]') !== null ||
-          (editorElement instanceof HTMLElement &&
-            (editorElement === element || editorElement.contains(element))))
-    )
-  }, [])
+    const blocks = richTextBlockExtensions(options.schema, hosts)
+    return [
+      richTextDocumentExtension(blocks.length > 0),
+      richTextBlockClipboard,
+      ...configured.filter(extension => extension.name !== 'doc'),
+      ...blocks
+    ]
+  }, [getEntryAnchors, hosts, options.extensions, options.schema])
+  const content = useMemo(
+    () => editorContent(store.get(fieldNode.value)),
+    [fieldNode, store]
+  )
+
+  const resolveBlock = useCallback(
+    function resolveBlock(
+      id: string,
+      typeName: string,
+      snapshot: BlockNode | undefined
+    ): BlockNode | undefined {
+      const pending = pendingBlocks.current.get(id)
+      if (pending) return pending
+      const part = blocksByIdRef.current.get(id)
+      if (part) {
+        const value = store.get(part.node.value)
+        if (Node.isBlock(value)) return value
+      }
+      if (snapshot?.[Node.type] === typeName) return snapshot
+      const type = options.schema?.[typeName]
+      if (!type) return
+      return {
+        [Node.type]: typeName,
+        [BlockNode.id]: id,
+        ...Type.initialValue(type)
+      } as BlockNode
+    },
+    [options.schema, store]
+  )
+
   const editor = useEditor({
     content,
     extensions,
-    editable,
-    onFocus({event}) {
-      focusToggle(event.currentTarget)
+    editable: !readOnly,
+    onCreate({editor}) {
+      // ProseMirror owns selection restoration. React's contenteditable
+      // traversal cannot safely inspect nested ProseMirror-owned DOM.
+      setEditorReadOnly(editor, readOnly)
+      lastEditorDocument.current = documentStructureKey(
+        editorNodes(editor.getJSON(), resolveBlock)
+      )
     },
-    onBlur({event}) {
-      focusToggle(event.relatedTarget)
+    onFocus({editor}) {
+      setActiveEditor(editor)
+      setFocused(true)
     },
-    onUpdate({editor}) {
-      setValue(current => fromContent(editor.getJSON(), current))
+    onUpdate({editor, transaction}) {
+      if (!transaction.docChanged) return
+      const next = editorNodes(editor.getJSON(), resolveBlock)
+      const nextKey = documentStructureKey(next)
+      if (
+        pendingExternalDocument.current &&
+        nextKey === lastEditorDocument.current
+      )
+        return
+      lastEditorDocument.current = nextKey
+      if (nextKey === pendingExternalDocument.current)
+        pendingExternalDocument.current = undefined
+      updateDocument(next)
+      for (const node of next)
+        if (Node.isBlock(node))
+          pendingBlocks.current.delete(String(node[BlockNode.id]))
     }
   })
+
+  useEffect(() => {
+    if (editor) setEditorReadOnly(editor, readOnly)
+  }, [editor, readOnly])
+
+  useEffect(() => {
+    if (!editor) return
+    const current = editorNodes(editor.getJSON(), resolveBlock)
+    if (documentKey === documentStructureKey(current)) return
+    const documentValue = store.get(fieldNode.value)
+    editor.commands.setContent(editorContent(documentValue), {
+      emitUpdate: false
+    })
+    lastEditorDocument.current = documentKey
+    pendingExternalDocument.current = undefined
+  }, [documentKey, editor, fieldNode, resolveBlock, store])
+
+  const toolbarTarget =
+    typeof document === 'undefined'
+      ? null
+      : document.getElementById('alinea-toolbar')
+
+  function insertBlock(block: BlockNode) {
+    if (!editor || editor.state.selection.$from.depth !== 1) return
+    const id = String(block[BlockNode.id])
+    pendingBlocks.current.set(id, block)
+    // The menu preserves the editor selection. Refocusing here makes React
+    // inspect ProseMirror-owned DOM while the new block portal is mounting.
+    const inserted = editor
+      .chain()
+      .insertContent({type: block[Node.type], attrs: {[BlockNode.id]: id}})
+      .run()
+    if (!inserted) pendingBlocks.current.delete(id)
+  }
+
+  function checkFocus() {
+    requestAnimationFrame(() => {
+      const target = document.activeElement
+      setFocused(ownsFocus(target))
+      setInnerBlockFocused(isInnerBlockField(target))
+    })
+  }
+
+  function handleBlur(nextTarget: EventTarget | null) {
+    if (nextTarget instanceof HTMLElement) {
+      setFocused(ownsFocus(nextTarget))
+      setInnerBlockFocused(isInnerBlockField(nextTarget))
+    } else checkFocus()
+  }
+
+  function ownsFocus(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false
+    const richText = target.closest<HTMLElement>('[data-richtext-field]')
+    if (richText && richText !== root.current) return false
+    if (root.current?.contains(target)) return true
+    const toolbar = target.closest<HTMLElement>('[data-richtext-toolbar-owner]')
+    return toolbar?.dataset.richtextToolbarOwner === ownerId
+  }
+
+  function isInnerBlockField(target: EventTarget | null): boolean {
+    return (
+      target instanceof HTMLElement &&
+      root.current?.contains(target) === true &&
+      target.closest('[data-richtext-block-editor]') !== null
+    )
+  }
+
   return (
     <>
       <PickTextLink picker={picker} />
+      <PickTextAnchor picker={anchorPicker} />
       <Label
         description={options.help}
         errorMessage={error}
@@ -412,77 +262,203 @@ function RTView<Blocks extends Schema>({
         label={options.label}
         shared={options.shared}
       >
-        {editor && !readOnly && (
-          <InsertMenu
-            editor={editor}
-            schema={options.schema}
-            onInsert={(id, typeName) => {
-              const type = options.schema?.[typeName]
-              const block = {
-                [Node.type]: typeName,
-                [BlockNode.id]: id,
-                ...(type ? Type.initialValue(type) : {})
-              } as BlockNode
-              setValue(current => [...(current ?? []), block])
-              return block
-            }}
-          />
-        )}
-        <EditorContent
-          ref={containerRef}
-          editor={editor}
+        <div
+          ref={root}
           className={styles.RichTextFieldView()}
+          data-richtext-field={ownerId}
+          data-inline={options.inline || undefined}
           data-invalid={Boolean(error) || undefined}
+          data-focused={
+            focused && !innerBlockFocused && !readOnly ? 'true' : undefined
+          }
           data-read-only={readOnly || undefined}
-        />
+          onFocusCapture={event => {
+            setFocused(ownsFocus(event.target))
+            setInnerBlockFocused(isInnerBlockField(event.target))
+          }}
+          onBlurCapture={event => handleBlur(event.relatedTarget)}
+        >
+          {editor && !readOnly && options.schema && (
+            <RichTextInsertMenu
+              editor={editor}
+              schema={options.schema}
+              onInsert={insertBlock}
+            />
+          )}
+          <EditorContent editor={editor} />
+          {editor && (
+            <RichTextBlockPortals
+              blocksById={blocksById}
+              editor={editor}
+              hosts={hosts}
+              pendingBlocks={pendingBlocks.current}
+              readOnly={readOnly}
+              schema={options.schema}
+              store={store}
+            />
+          )}
+        </div>
       </Label>
-      {toolbar &&
-        editor &&
-        focus &&
-        createPortal(
-          <RichTextToolbar
-            editor={editor}
-            enableImages={options.enableImages}
-            enableTables={options.enableTables}
-            focusToggle={focusToggle}
-            pickImage={picker.pickImage}
-            pickLink={picker.pickLink}
-            toolbar={options.toolbar}
-          />,
-          toolbar
-        )}
+      {toolbarTarget &&
+      editor &&
+      activeEditor === editor &&
+      focused &&
+      !readOnly
+        ? createPortal(
+            <RichTextToolbar
+              editor={editor}
+              enableTables={options.enableTables}
+              ownerId={ownerId}
+              pickLink={picker.pickLink}
+              pickAnchor={anchorPicker.pickAnchor}
+              getEntryAnchors={getEntryAnchors}
+              toolbar={options.toolbar}
+              onFocusChange={(next, nextTarget) => {
+                if (next) setFocused(true)
+                else handleBlur(nextTarget ?? null)
+              }}
+            />,
+            toolbarTarget
+          )
+        : null}
     </>
   )
 }
 
-function fieldExtensions(
-  configuredExtensions: Record<string, AnyExtension> | undefined,
-  enableImages: boolean | undefined
-) {
-  const allExtensions = configuredExtensions ?? baseExtensions
-  return entries(allExtensions)
-    .filter(([name]) => {
-      if (enableImages && name === 'Image') return true
-      return !gatedExtensionOptions.has(name)
-    })
-    .map(([, extension]) => extension)
+function setEditorReadOnly(editor: Editor, readOnly: boolean) {
+  if (editor.isDestroyed) return
+  editor.setEditable(!readOnly, false)
+  editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
 }
 
-export interface RichTextFieldViewProps<Blocks extends Schema> {
-  field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
+interface RichTextBlockPortalsProps {
+  blocksById: ReadonlyMap<string, ReactiveRichTextBlock>
+  editor: Editor
+  hosts: RichTextBlockHosts
+  pendingBlocks: Map<string, BlockNode>
+  readOnly: boolean
+  schema?: Schema
+  store: ReturnType<typeof useStore>
 }
 
-export const RichTextFieldView = memo(function RichTextFieldView<
-  Blocks extends Schema
->({field}: RichTextFieldViewProps<Blocks>) {
-  const node = useFieldNode(field)
-  const isDirty = useAtomValue(node.isDirty)
-  const prevIsDirty = useRef(isDirty)
-  const wasReset = !isDirty && prevIsDirty.current
-  prevIsDirty.current = isDirty
-  // Tiptap really does not want you to control its state
-  return <RTView field={field} key={`${node.value}:${wasReset}`} />
-})
+function RichTextBlockPortals({
+  blocksById,
+  editor,
+  hosts,
+  pendingBlocks,
+  readOnly,
+  schema,
+  store
+}: RichTextBlockPortalsProps) {
+  const mounted = useSyncExternalStore(
+    hosts.subscribe,
+    hosts.snapshot,
+    hosts.snapshot
+  )
+
+  function remove(host: RichTextBlockHost) {
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    editor.commands.deleteRange({from: position, to: position + 1})
+  }
+
+  function duplicate(host: RichTextBlockHost, part: ReactiveRichTextBlock) {
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    const value = store.get(part.node.value)
+    if (!Node.isBlock(value)) return
+    const id = createId()
+    const block = {...value, [BlockNode.id]: id}
+    pendingBlocks.set(id, block)
+    const inserted = editor
+      .chain()
+      .insertContentAt(position + 1, {
+        type: host.typeName,
+        attrs: {[BlockNode.id]: id}
+      })
+      .run()
+    if (!inserted) pendingBlocks.delete(id)
+  }
+
+  return mounted.map(host => {
+    const part = blocksById.get(host.id)
+    const type = schema?.[host.typeName]
+    if (!part || !type) return null
+    return createPortal(
+      <>
+        <RichTextBlockSnapshot editor={editor} host={host} node={part.node} />
+        <RichTextBlock
+          id={part.id}
+          node={part.node}
+          type={type}
+          readOnly={readOnly}
+          onDelete={() => remove(host)}
+          onDuplicate={() => duplicate(host, part)}
+        />
+      </>,
+      host.dom,
+      host.id
+    )
+  })
+}
+
+interface RichTextBlockSnapshotProps {
+  editor: Editor
+  host: RichTextBlockHost
+  node: ReactiveRichTextBlock['node']
+}
+
+function RichTextBlockSnapshot({
+  editor,
+  host,
+  node
+}: RichTextBlockSnapshotProps) {
+  const value = useAtomValue(node.value)
+
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- Synchronize the Jotai block value to TipTap's external editor store.
+  useEffect(() => {
+    if (!Node.isBlock(value)) return
+    const position = host.getPos()
+    if (typeof position !== 'number') return
+    const editorNode = editor.state.doc.nodeAt(position)
+    if (!editorNode || editorNode.type.name !== host.typeName) return
+    const current = decodeBlockValue(
+      editorNode.attrs[richTextBlockValueAttribute]
+    )
+    if (encodeBlockValue(current) === encodeBlockValue(value)) return
+    const transaction = editor.state.tr.setNodeMarkup(
+      position,
+      undefined,
+      blockAttributes(value)
+    )
+    transaction.setMeta('addToHistory', false)
+    editor.view.dispatch(transaction)
+  }, [editor, host, value])
+  // oxlint-enable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent
+
+  return null
+}
+
+function documentStructureKey(value: TextDoc): string {
+  return stableStringify(
+    value.map(node =>
+      Node.isBlock(node)
+        ? {[Node.type]: node[Node.type], [BlockNode.id]: node[BlockNode.id]}
+        : node
+    )
+  )
+}
+
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value))
+    return `[${value.map(item => stableStringify(item)).join(',')}]`
+  if (isRecord(value))
+    return `{${Object.keys(value)
+      .sort()
+      .map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(',')}}`
+  return JSON.stringify(value) ?? String(value)
+}
 
 export interface RichTextFieldCompactViewProps<Blocks extends Schema> {
   field: CoreRichTextField<Blocks, RichTextOptions<Blocks>>
@@ -492,7 +468,7 @@ export interface RichTextFieldCompactViewProps<Blocks extends Schema> {
 export function RichTextFieldCompactView<Blocks extends Schema>({
   value
 }: RichTextFieldCompactViewProps<Blocks>) {
-  const text = richTextPreviewText(value)
+  const text = previewText(value)
   return (
     <span
       className={styles.RichTextFieldCompactView()}
@@ -503,18 +479,12 @@ export function RichTextFieldCompactView<Blocks extends Schema>({
   )
 }
 
-function richTextPreviewText(value: unknown): string {
+function previewText(value: unknown): string {
   if (typeof value === 'string') return value
   if (Array.isArray(value))
-    return value.map(richTextPreviewText).filter(Boolean).join(' ')
-  if (!value || typeof value !== 'object') return ''
-  const record = value as Record<string, unknown>
-  const text = record.text
-  const content = record.content
-  return [
-    typeof text === 'string' ? text : '',
-    Array.isArray(content) ? richTextPreviewText(content) : ''
-  ]
+    return value.map(previewText).filter(Boolean).join(' ')
+  if (!isRecord(value)) return ''
+  return [previewText(value.text), previewText(value.content)]
     .filter(Boolean)
     .join(' ')
 }

@@ -3,7 +3,6 @@ import {
   alignment,
   formatting,
   headings,
-  images,
   inserts,
   links,
   lists,
@@ -76,11 +75,7 @@ export const RichTextFields = Config.document('Rich text fields', {
     table: Field.richText('With table support', {
       enableTables: true
     }),
-    image: Field.richText('With image support', {
-      enableImages: true
-    }),
     tableCustom: Field.richText('With custom toolbar', {
-      enableImages: true,
       enableTables: true,
       extensions: extensions => ({
         ...extensions,
@@ -109,7 +104,6 @@ export const RichTextFields = Config.document('Rich text fields', {
         alignment,
         lists,
         links,
-        images,
         quotes,
         inserts
       }

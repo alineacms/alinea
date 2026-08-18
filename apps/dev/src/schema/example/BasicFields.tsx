@@ -21,10 +21,7 @@ export const BasicFields = Config.document('Basic fields', {
         }
       }
     }),
-    richText: Field.richText('Rich text field', {
-      enableImages: true,
-      enableTables: true
-    }),
+    richText: Field.richText('Rich text field', {enableTables: true}),
     select: Field.select('Select field', {
       options: {
         a: 'Option a',

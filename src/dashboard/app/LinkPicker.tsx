@@ -15,7 +15,7 @@ import {
   ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
-import {ExplorerPickerContent} from './ExplorerPickerContent.js'
+import {explorerTree, ExplorerPickerContent} from './ExplorerPickerContent.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -56,15 +56,17 @@ function LinkPickerModalContent({options}: ExplorerModalProps) {
   }
   const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
   const initialLocale = options.selectedLocale ?? page.locale
-  const [explorer] = useState(() =>
-    createExplorerAtoms(location, {
+  const [explorer] = useState(() => {
+    let explorer: ReturnType<typeof createExplorerAtoms>
+    explorer = createExplorerAtoms(location, {
       ...options,
       rootData: pickerRoot.data,
       searchDepth: 'all',
       selectedLocale: initialLocale,
-      treeItems: pickerRoot.treeItems
+      treeItems: locale => explorerTree(pickerRoot, explorer, locale).items
     })
-  )
+    return explorer
+  })
   const selectedLocale = useAtomValue(explorer.selectedLocale)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)

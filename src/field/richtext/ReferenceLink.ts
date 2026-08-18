@@ -5,12 +5,10 @@ import {UrlReference} from '#/picker/url.js'
 import type {HTMLProps} from 'react'
 
 interface Anchor extends HTMLProps<HTMLAnchorElement> {
-  _id?: string
-  _entry?: string
-  _link?: 'entry' | 'file' | 'image' | 'url'
   'data-id'?: string
   'data-entry'?: string
-  'data-link'?: 'entry' | 'file' | 'image' | 'url'
+  'data-anchor'?: string
+  'data-link'?: 'entry' | 'file' | 'url'
   'data-suffix'?: string
 }
 
@@ -22,6 +20,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': undefined,
+        'data-anchor': undefined,
         'data-link': 'url',
         href: ref._url,
         target: ref._target
@@ -32,6 +31,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-anchor': ref[EntryReference.anchor],
         'data-link': 'entry',
         'data-suffix': ref._suffix,
         href: undefined,
@@ -43,18 +43,8 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-anchor': undefined,
         'data-link': 'file',
-        'data-suffix': undefined,
-        href: undefined,
-        target: undefined
-      }
-    }
-    case 'image': {
-      const ref = reference as EntryReference
-      return {
-        'data-id': ref[Reference.id],
-        'data-entry': ref[EntryReference.entry],
-        'data-link': 'image',
         'data-suffix': undefined,
         href: undefined,
         target: undefined
@@ -68,9 +58,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
 export function attributesToReference(
   attributes: Anchor
 ): Reference | undefined {
-  const id = attributes['data-id'] ?? attributes._id
-  const entry = attributes['data-entry'] ?? attributes._entry
-  const link = attributes['data-link'] ?? attributes._link
+  const id = attributes['data-id']
   if (!id) {
     if (attributes.href)
       return {
@@ -81,12 +69,14 @@ export function attributesToReference(
       } as UrlReference
     return
   }
-  if (entry) {
-    const type = link === 'file' ? 'file' : link === 'image' ? 'image' : 'entry'
+  if (attributes['data-entry']) {
+    const type = attributes['data-link'] === 'file' ? 'file' : 'entry'
     return {
       [Reference.id]: id,
       [Reference.type]: type,
-      [EntryReference.entry]: entry,
+      [EntryReference.entry]: attributes['data-entry'],
+      [EntryReference.anchor]:
+        type === 'entry' ? attributes['data-anchor'] : undefined,
       [EntryReference.suffix]:
         type === 'entry' ? attributes['data-suffix'] : undefined
     } as EntryReference
