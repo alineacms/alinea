@@ -492,6 +492,7 @@ function LinkPickerAction({
     limitLocations: options.limitLocations,
     nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
+    preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -610,6 +611,7 @@ function LinkPickerDialog({
     limitLocations: options.limitLocations,
     nestedNavigation: enableNavigation,
     pickChildren: pickingChildren,
+    preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
@@ -817,16 +819,9 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           onPick={link => {
             setValue(links => [...(links ?? []), link])
           }}
-          onPickMany={picked => {
-            if (picker.handlesMultiple) {
-              setValue(links => [
-                ...(links ?? []).filter(link => link._type !== type),
-                ...picked
-              ])
-            } else {
-              setValue(links => [...(links ?? []), ...picked])
-            }
-          }}
+          onPickMany={picked =>
+            setValue(links => [...(links ?? []), ...picked])
+          }
           picker={picker as Picker<LinkFieldRow>}
           selection={links.filter(row => row._type === type)}
           type={type as PickerType}

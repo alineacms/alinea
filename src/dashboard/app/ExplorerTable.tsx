@@ -39,6 +39,7 @@ interface ExplorerTableRowProps {
   columns: Array<ExplorerTableColumn>
   entry: DashboardEntry
   breadcrumbs: boolean
+  isLinked: boolean
   explorer: DashboardExplorer
   gridTemplateColumns: string
   locale: string | null
@@ -249,7 +250,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       id={entry.id}
       textValue={textValue}
       hasChildItems={hasChildren}
-      className={styles.ExplorerTable.row()}
+      className={styles.ExplorerTable.row({linked: props.isLinked})}
       isDisabled={!props.isSelectable}
       onAction={
         explorer.hasRowAction && explorer.mode !== 'search'
@@ -303,6 +304,7 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
           entry={child}
           explorer={props.explorer}
           gridTemplateColumns={props.gridTemplateColumns}
+          isLinked={props.explorer.linkedKeys.has(child.id)}
           locale={props.locale}
         />
       )}
@@ -453,6 +455,7 @@ export function ExplorerTable({
                 entry={item}
                 explorer={explorer}
                 gridTemplateColumns={gridTemplateColumns}
+                isLinked={explorer.linkedKeys.has(item.id)}
                 locale={locale}
               />
             )}

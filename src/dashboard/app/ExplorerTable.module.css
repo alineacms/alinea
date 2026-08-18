@@ -143,6 +143,10 @@
   }
 }
 
+.ExplorerTable-row.is-linked {
+  background: color-mix(in srgb, var(--alinea-blue-50) 60%, var(--alinea-bg));
+}
+
 .ExplorerTable-cell {
   box-sizing: border-box;
   min-width: 0;
