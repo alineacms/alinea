@@ -61,6 +61,7 @@ function ToolbarStory({enableImages, enableTables}: ToolbarStoryProps) {
       <div style={toolbarFrameStyle}>
         <RichTextToolbar
           editor={editor}
+          enableImages={enableImages}
           enableTables={enableTables}
           ownerId="story"
           pickLink={() => Promise.resolve(undefined)}

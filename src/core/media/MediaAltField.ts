@@ -2,6 +2,7 @@ import type {FieldOptions, WithoutLabel} from '#/core/Field.js'
 import {ScalarField} from '#/core/field/ScalarField.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
 import type {TextOptions} from '#/field/text/TextField.js'
+import {isRecord} from '../util/Objects.js'
 
 export type MediaAltValue = string | Record<string, string> | undefined
 
@@ -23,4 +24,11 @@ export function mediaAlt(
     options: {label, ...options},
     view: viewKeys.MediaAltInput
   })
+}
+
+export function mediaAltText(value: MediaAltValue, locale?: string): string {
+  if (typeof value === 'string') return value
+  if (!isRecord(value)) return ''
+  if (locale && typeof value[locale] === 'string') return value[locale]
+  return Object.values(value).find(value => typeof value === 'string') ?? ''
 }

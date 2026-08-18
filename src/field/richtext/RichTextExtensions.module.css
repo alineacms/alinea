@@ -171,3 +171,20 @@
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
 }
+
+.RichTextExtensions-image {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+}
+
+.RichTextExtensions-image ~ :global([data-resize-handle='bottom-right']) {
+  transform: translate(50%, 50%);
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--alinea-bg);
+  border-radius: 50%;
+  background: var(--alinea-primary);
+  cursor: nwse-resize;
+}

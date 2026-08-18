@@ -13,6 +13,7 @@ import type {InferStoredValue} from '../Infer.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
+  type ImageNode,
   LinkMark,
   Mark,
   Node,
@@ -354,7 +355,7 @@ async function applyLinkMarks(
     const entryId = mark[LinkMark.entry]
     if (typeof entryId === 'string') links.set(mark, entryId)
   })
-  const images = new Map<ElementNode, string>()
+  const images = new Map<ImageNode, string>()
   iterImageNodes(doc, node => {
     if (node._link === 'image' && typeof node._entry === 'string')
       images.set(node, node._entry)
@@ -427,11 +428,11 @@ function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
 
 function iterImageNodes(
   doc: TextDoc<unknown>,
-  fn: (node: ElementNode, index: number) => void
+  fn: (node: ImageNode, index: number) => void
 ) {
   doc.forEach((node, index) => {
     if (!Node.isElement(node)) return
-    if (node._type === 'image') fn(node, index)
+    if (node._type === 'image') fn(node as ImageNode, index)
     if (node.content) iterImageNodes(node.content, fn)
   })
 }

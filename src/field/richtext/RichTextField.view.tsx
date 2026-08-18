@@ -109,7 +109,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     const configured = Object.values(
       configureRichTextExtensions(
         options.extensions,
-        defaultExtensionConfig(getEntryAnchors)
+        defaultExtensionConfig(getEntryAnchors, Boolean(options.enableImages))
       )
     )
     const blocks = richTextBlockExtensions(options.schema, hosts)
@@ -119,7 +119,13 @@ export function RichTextFieldView<Blocks extends Schema>({
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
-  }, [getEntryAnchors, hosts, options.extensions, options.schema])
+  }, [
+    getEntryAnchors,
+    hosts,
+    options.enableImages,
+    options.extensions,
+    options.schema
+  ])
   const content = useMemo(
     () => editorContent(store.get(fieldNode.value)),
     [fieldNode, store]
@@ -307,8 +313,10 @@ export function RichTextFieldView<Blocks extends Schema>({
         ? createPortal(
             <RichTextToolbar
               editor={editor}
+              enableImages={options.enableImages}
               enableTables={options.enableTables}
               ownerId={ownerId}
+              pickImage={picker.pickImage}
               pickLink={picker.pickLink}
               pickAnchor={anchorPicker.pickAnchor}
               getEntryAnchors={getEntryAnchors}
@@ -327,7 +335,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 
 function setEditorReadOnly(editor: Editor, readOnly: boolean) {
   if (editor.isDestroyed) return
-  editor.setEditable(!readOnly, false)
+  editor.setEditable(!readOnly)
   editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
 }
 
