@@ -67,7 +67,12 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
+import type {
+  ComponentPropsWithoutRef,
+  ComponentType,
+  ReactNode,
+  RefObject
+} from 'react'
 import {Fragment, useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
@@ -358,6 +363,7 @@ interface StandardFieldActionProps {
 }
 
 interface LinkPickerActionProps {
+  anchorRef?: RefObject<Element | null>
   ariaLabel?: string
   buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
   buttonIcon?: ComponentType
@@ -420,6 +426,7 @@ function initialFields(picker: Picker<LinkFieldRow>) {
 }
 
 function LinkPickerAction({
+  anchorRef,
   ariaLabel,
   buttonAppearance = 'plain',
   buttonIcon,
@@ -469,7 +476,8 @@ function LinkPickerAction({
       ? {
           workspace: currentEntry.workspace,
           root: currentEntry.root,
-          parentId: currentEntry.id
+          parentId: currentEntry.id,
+          locale: currentEntry.locale
         }
       : undefined
   const pickingChildren = Boolean(childLocation)
@@ -482,15 +490,24 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation,
-    flatResults: !nestedResults,
+    initialView: type === 'file' ? 'row' : undefined,
+    initialResultMode: entryPickerResultMode(
+      type,
+      condition,
+      options.enableNavigation,
+      pickingChildren
+    ),
+    initialSearchScope: entryPickerSearchScope(
+      condition,
+      resolved.location,
+      options.enableNavigation,
+      type
+    ),
     location,
     limitLocations: options.limitLocations,
-    nestedNavigation: enableNavigation,
+    nestedNavigation: !pickingChildren,
     pickChildren: pickingChildren,
     preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -540,6 +557,7 @@ function LinkPickerAction({
       </Button>
       <LinkPicker
         {...pickerProps}
+        anchorRef={anchorRef}
         key={entryPickerOptionsKey(location, condition)}
       />
     </DialogTrigger>
@@ -601,15 +619,24 @@ function LinkPickerDialog({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
-  const enableNavigation = options.enableNavigation ?? !pickingChildren
-  const nestedResults = options.enableNavigation === true && !pickingChildren
   const pickerProps: LinkPickerOptions = {
     condition,
-    enableNavigation,
-    flatResults: !nestedResults,
+    initialView: type === 'file' ? 'row' : undefined,
+    initialResultMode: entryPickerResultMode(
+      type,
+      condition,
+      options.enableNavigation,
+      pickingChildren
+    ),
+    initialSearchScope: entryPickerSearchScope(
+      condition,
+      resolved.location,
+      options.enableNavigation,
+      type
+    ),
     location,
     limitLocations: options.limitLocations,
-    nestedNavigation: enableNavigation,
+    nestedNavigation: !pickingChildren,
     pickChildren: pickingChildren,
     preselect: false,
     selectionMode: handlesMultiple ? 'multiple' : 'single',
@@ -654,6 +681,30 @@ function LinkPickerDialog({
 interface ResolvedEntryPickerOptions {
   condition: Filter | undefined
   location: EditorLocation | undefined
+}
+
+function entryPickerSearchScope(
+  condition: Filter | undefined,
+  location: EditorLocation | undefined,
+  enableNavigation: boolean | undefined,
+  type: PickerType
+) {
+  if (type === 'file' || type === 'image') return 'workspace' as const
+  return condition && !location && enableNavigation !== true
+    ? ('everything' as const)
+    : ('workspace' as const)
+}
+
+function entryPickerResultMode(
+  type: PickerType,
+  condition: Filter | undefined,
+  enableNavigation: boolean | undefined,
+  pickChildren: boolean
+) {
+  return pickChildren ||
+    (type !== 'image' && condition && enableNavigation !== true)
+    ? ('matches' as const)
+    : ('browse' as const)
 }
 
 function useResolvedEntryPickerOptions(
@@ -777,11 +828,13 @@ interface SingleLinkCreateActionsProps extends StandardFieldActionProps {
 function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
   const options = useFieldOptions(field)
   const [, setValue] = useField(field)
+  const anchorRef = useRef<HTMLDivElement>(null)
   if (options.readOnly) return null
   return (
-    <div className={styles.LinkFieldView.create()}>
+    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
+          anchorRef={anchorRef}
           buttonSize="small"
           className={styles.LinkFieldView.createButton()}
           key={type}
@@ -805,14 +858,16 @@ interface MultipleLinkCreateActionsProps {
 function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   const options = useFieldOptions(field)
   const [value, setValue] = useField(field)
+  const anchorRef = useRef<HTMLDivElement>(null)
   const links = value ?? []
   const showCreate = options.max ? links.length < options.max : true
   if (options.readOnly) return null
   if (!showCreate) return null
   return (
-    <div className={styles.LinkFieldView.create()}>
+    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
+          anchorRef={anchorRef}
           buttonSize="small"
           className={styles.LinkFieldView.createButton()}
           key={type}

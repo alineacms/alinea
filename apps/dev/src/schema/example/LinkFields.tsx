@@ -8,6 +8,11 @@ export const LinkFields = Config.document('Link fields', {
       help: 'Show only entries of type BasicFields',
       condition: {_type: 'BasicFields'}
     }),
+    entryWithConditionAndNav: Field.entry('With condition and navigation', {
+      help: 'Show only entries of type BasicFields',
+      condition: {_type: 'BasicFields'},
+      enableNavigation: true
+    }),
     entryWithLocation: Field.entry('With location', {
       async location({graph}) {
         const subFolder = await graph.get({path: 'sub-folder'})

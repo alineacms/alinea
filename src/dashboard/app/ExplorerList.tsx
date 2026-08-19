@@ -1,11 +1,12 @@
-import {Icon} from '#/components.js'
+import {Button, Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValue, useSetAtom, type Atom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
+import type {Selection} from 'react-aria-components'
 import type {
   DashboardEntry,
   DashboardExplorer,
@@ -20,19 +21,43 @@ const styles = styler(css)
 const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
+  explorer: DashboardExplorer
   root?: DashboardRoot
 }
 
-function EmptyResults({root}: EmptyResultsProps) {
+function EmptyResults({explorer, root}: EmptyResultsProps) {
   const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
+  const searchScope = useAtomValue(explorer.readySearchScope)
+  const resultMode = useAtomValue(explorer.readyResultMode)
+  const setSearchScope = useSetAtom(explorer.searchScope)
+  const canSearchEverything = useAtomValue(explorer.canSearchEverything)
+  const canSearchAll =
+    canSearchEverything &&
+    searchScope === 'workspace' &&
+    (explorer.mode === 'search' || resultMode === 'matches')
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
       <div className={styles.ExplorerList.empty.copy()}>
-        <div className={styles.ExplorerList.empty.title()}>No results</div>
-        <div className={styles.ExplorerList.empty.text()}>
-          Try different search terms.
+        <div className={styles.ExplorerList.empty.title()}>
+          No results found
         </div>
+        <div className={styles.ExplorerList.empty.text()}>
+          {canSearchAll
+            ? 'Try different search terms or search all workspaces.'
+            : 'Try different search terms.'}
+        </div>
+        {canSearchAll && (
+          <Button
+            appearance="plain"
+            intent="primary"
+            size="small"
+            className={styles.ExplorerList.empty.button()}
+            onPress={() => setSearchScope('everything')}
+          >
+            Try searching all workspaces
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -45,7 +70,7 @@ function SearchIdleState() {
       <div className={styles.ExplorerList.empty.copy()}>
         <div className={styles.ExplorerList.empty.title()}>Search</div>
         <div className={styles.ExplorerList.empty.text()}>
-          Type to find any page in this workspace.
+          Type to find a page.
         </div>
       </div>
     </div>
@@ -53,34 +78,54 @@ function SearchIdleState() {
 }
 
 export interface ExplorerListProps {
+  compactTable?: boolean
   explorer: DashboardExplorer
+  isMedia?: boolean
+  items?: Atom<Array<DashboardEntry>>
   locale: string | null
+  onSelectionChange?: (selection: Selection) => void
+  root?: Atom<DashboardRoot>
+  view?: 'card' | 'row'
 }
 
-export function ExplorerList({explorer, locale}: ExplorerListProps) {
-  const items = useAtomValue(explorer.items(locale))
-  const view = useAtomValue(explorer.view)
+export function ExplorerList({
+  compactTable,
+  explorer,
+  isMedia: readyIsMedia,
+  items: readyItems,
+  locale,
+  onSelectionChange,
+  root: readyRoot,
+  view: readyView
+}: ExplorerListProps) {
+  const items = useAtomValue(readyItems ?? explorer.items(locale))
+  const requestedView = useAtomValue(explorer.view)
+  const view = readyView ?? requestedView
   const showResults = useAtomValue(explorer.showResults)
-  const root = useAtomValue(explorer.root)
+  const root = useAtomValue(readyRoot ?? explorer.root)
   const getItems = useSetAtom(explorer.getItems)
   const getDropOperation = useSetAtom(explorer.getDropOperation)
   const dropOnItem = useSetAtom(explorer.onItemDrop)
-  const isMedia = useAtomValue(explorer.isMedia)
+  const requestedIsMedia = useAtomValue(explorer.isMedia)
+  const isMedia = readyIsMedia ?? requestedIsMedia
+  const locationIsPending = useAtomValue(explorer.locationIsPending)
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
-    acceptedDragTypes: isMedia && canUpload ? 'all' : [],
+    acceptedDragTypes: isMedia && canUpload && !locationIsPending ? 'all' : [],
     getItems,
     getDropOperation(target, types, allowedOperations) {
       const operation = getDropOperation(target, types, allowedOperations)
       if (operation !== 'cancel') return operation
-      if (!isMedia || !canUpload || target.type !== 'root') return 'cancel'
+      if (!isMedia || !canUpload || locationIsPending || target.type !== 'root')
+        return 'cancel'
       return allowedOperations.includes('copy') ? 'copy' : 'cancel'
     },
     onItemDrop(event) {
       dropOnItem(event, locale)
     },
     async onRootDrop(event) {
+      if (locationIsPending) return
       const files = await Promise.all(
         event.items.filter(isFileDropItem).map(item => item.getFile())
       )
@@ -114,15 +159,21 @@ export function ExplorerList({explorer, locale}: ExplorerListProps) {
           explorer={explorer}
           items={items}
           locale={locale}
-          renderEmptyState={() => <EmptyResults root={root} />}
+          renderEmptyState={() => (
+            <EmptyResults explorer={explorer} root={root} />
+          )}
         />
       ) : (
         <ExplorerTable
+          compact={compactTable}
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
           locale={locale}
-          renderEmptyState={() => <EmptyResults root={root} />}
+          onSelectionChange={onSelectionChange}
+          renderEmptyState={() => (
+            <EmptyResults explorer={explorer} root={root} />
+          )}
         />
       )}
     </div>

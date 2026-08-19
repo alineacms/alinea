@@ -5,6 +5,10 @@
   height: 100%;
   padding: 16px;
   overflow: hidden;
+
+  &.is-compact {
+    padding: 0;
+  }
 }
 
 .ExplorerTable-surface {
@@ -98,6 +102,16 @@
 
   &[data-selected] {
     background: color-mix(in srgb, var(--alinea-blue-600) 9%, var(--alinea-bg));
+  }
+
+  &.is-unselectable {
+    opacity: 1;
+    color: var(--alinea-fg-muted);
+    background: var(--alinea-bg-muted);
+  }
+
+  &.is-unselectable[data-hovered] {
+    background: color-mix(in srgb, var(--alinea-fg-muted) 10%, var(--alinea-bg));
   }
 
   &[data-focus-visible] {
@@ -326,4 +340,17 @@
   text-overflow: ellipsis;
   color: var(--alinea-fg);
   white-space: nowrap;
+}
+
+.ExplorerTable-title {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ExplorerTable-row.is-unselectable .ExplorerTable-cell-title .ExplorerTable-field-value {
+  color: color-mix(in srgb, var(--alinea-fg-muted) 72%, transparent);
 }

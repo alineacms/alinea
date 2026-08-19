@@ -143,7 +143,13 @@
   }
 }
 
+.ExplorerFileCard.is-card.is-breadcrumbs .ExplorerFileCard-body-inner {
+  gap: 2px;
+  padding: 5px 12px 6px;
+}
+
 .ExplorerFileCard-label {
+  flex: 0 0 auto;
   overflow: hidden;
   color: var(--alinea-fg);
   text-overflow: ellipsis;
@@ -155,6 +161,7 @@
 
 .ExplorerFileCard-meta {
   display: flex;
+  flex: 0 0 auto;
   min-width: 0;
   align-items: center;
   gap: 8px;
