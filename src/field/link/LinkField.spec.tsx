@@ -60,6 +60,21 @@ test('opens a compact entry picker and selects immediately', async ({
   page
 }) => {
   await mount(<EntryPickerSingle />)
+  await page.evaluate(() => {
+    document.documentElement.dataset.partialCompactPickerSeen = 'false'
+    const observer = new MutationObserver(() => {
+      const picker = document.querySelector(
+        '[role="dialog"][aria-label="Pick a link"]'
+      )
+      const search = picker?.querySelector('[role="searchbox"]')
+      const home = Array.from(
+        picker?.querySelectorAll('[role="row"]') ?? []
+      ).find(row => row.textContent?.includes('Home'))
+      if (search && !home)
+        document.documentElement.dataset.partialCompactPickerSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
   await page.getByRole('button', {name: 'Pick an entry'}).click()
 
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
@@ -79,6 +94,13 @@ test('opens a compact entry picker and selects immediately', async ({
   await expect(home.locator('[role="gridcell"] [role="gridcell"]')).toHaveCount(
     2
   )
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.dataset.partialCompactPickerSeen
+      )
+    )
+    .toBe('false')
   await home.click()
   await expect(picker).toBeHidden()
 })

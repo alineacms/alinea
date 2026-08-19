@@ -4,7 +4,8 @@ import {
   type DashboardEntry,
   type DashboardExplorer,
   type ExplorerLocation,
-  type ExplorerOptions
+  type ExplorerOptions,
+  type ExplorerReadyPage
 } from '#/dashboard/atoms/explorer.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
@@ -13,7 +14,6 @@ import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {
   Suspense,
   startTransition,
-  useMemo,
   useState,
   type ReactNode,
   type RefObject
@@ -132,11 +132,21 @@ function LinkPickerReady({
   options
 }: LinkPickerReadyProps) {
   const explorer = useLinkPickerExplorer(options)
+  const page = useAtomValue(explorer.page)
+  if (!page)
+    return (
+      <LinkPickerLoading
+        anchorRef={anchorRef}
+        expanded={expanded}
+        onExpandedChange={onExpandedChange}
+      />
+    )
   return (
     <>
       <LinkPickerPopover anchorRef={anchorRef}>
         <LinkPickerCompact
           explorer={explorer}
+          page={page}
           onCommit={options.onConfirm}
           onExpand={() => onExpandedChange(true)}
         />
@@ -146,7 +156,7 @@ function LinkPickerReady({
         size="explorer"
         onOpenChange={onExpandedChange}
       >
-        <LinkPickerExpanded explorer={explorer} options={options} />
+        <LinkPickerExpanded explorer={explorer} options={options} page={page} />
       </DashboardModal>
     </>
   )
@@ -201,20 +211,19 @@ function LinkPickerCompactLoading() {
 
 interface LinkPickerCompactProps {
   explorer: DashboardExplorer
+  page: ExplorerReadyPage
   onCommit: LinkPickerOptions['onConfirm']
   onExpand: () => void
 }
 
 function LinkPickerCompact({
   explorer,
+  page,
   onCommit,
   onExpand
 }: LinkPickerCompactProps) {
   const popover = useDashboardModal()
-  const page = useAtomValue(explorer.page)
   const setSelection = useSetAtom(explorer.selection)
-  const readyItems = useMemo(() => atom(page.items), [page.items])
-  const readyRoot = useMemo(() => atom(page.root), [page.root])
 
   function commitSelection(selection: Selection) {
     if (selection === 'all' || selection.size === 0) return
@@ -241,9 +250,8 @@ function LinkPickerCompact({
         <ExplorerSearch
           autoFocus
           explorer={explorer}
-          locale={page.locale}
           onEntryAction={commitEntry}
-          ready
+          page={page}
         />
         <Button
           aria-label="Expand entry picker"
@@ -256,12 +264,8 @@ function LinkPickerCompact({
       <ExplorerBody
         compactTable
         explorer={explorer}
-        isMedia={page.isMedia}
-        items={readyItems}
-        locale={page.locale}
-        root={readyRoot}
-        view="row"
         onSelectionChange={commitSelection}
+        page={page}
       />
     </Dialog>
   )
@@ -270,11 +274,15 @@ function LinkPickerCompact({
 interface LinkPickerExpandedProps {
   explorer: DashboardExplorer
   options: LinkPickerOptions
+  page: ExplorerReadyPage
 }
 
-function LinkPickerExpanded({explorer, options}: LinkPickerExpandedProps) {
+function LinkPickerExpanded({
+  explorer,
+  options,
+  page
+}: LinkPickerExpandedProps) {
   const modal = useDashboardModal()
-  const selectedLocale = useAtomValue(explorer.selectedLocale)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -298,12 +306,13 @@ function LinkPickerExpanded({explorer, options}: LinkPickerExpandedProps) {
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate
-            locale={selectedLocale}
+            page={page}
           />
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Link folders"
             options={options}
+            page={page}
           />
           <ExplorerModalFooter>
             <ExplorerModalSelection>

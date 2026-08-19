@@ -1,8 +1,12 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useSetAtom} from 'jotai'
 import {startTransition, useMemo} from 'react'
 import type {Key, Selection} from 'react-aria-components'
-import type {DashboardExplorer, ExplorerLocation} from '../atoms/explorer.js'
+import type {
+  DashboardExplorer,
+  ExplorerLocation,
+  ExplorerReadyPage
+} from '../atoms/explorer.js'
 import {dispense} from '../atoms/utils.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
@@ -30,17 +34,16 @@ export interface ExplorerPickerContentProps {
   explorer: DashboardExplorer
   navigationLabel: string
   options: {pickChildren?: boolean}
+  page: ExplorerReadyPage
 }
 
 export function ExplorerPickerContent({
   explorer,
   navigationLabel,
-  options
+  options,
+  page
 }: ExplorerPickerContentProps) {
-  const page = useAtomValue(explorer.page)
-  const {isMedia, locale, location, root: readyRoot, view} = page
-  const readyItems = useMemo(() => atom(page.items), [page.items])
-  const readyRootAtom = useMemo(() => atom(readyRoot), [readyRoot])
+  const {location, view} = page
   const setLocation = useSetAtom(explorer.location)
   const root = location.root
     ? rootAtoms(location.workspace, location.root)
@@ -74,20 +77,14 @@ export function ExplorerPickerContent({
           <ExplorerPickerNavigation
             explorer={explorer}
             navigationLabel={navigationLabel}
+            page={page}
             root={root}
             rootSelected={!location.parentId}
             onRootPress={onRootPress}
             onSelectionChange={onSelectionChange}
           />
         )}
-      <ExplorerBody
-        explorer={explorer}
-        isMedia={isMedia}
-        items={readyItems}
-        locale={locale}
-        root={readyRootAtom}
-        view={view}
-      />
+      <ExplorerBody explorer={explorer} page={page} />
     </ExplorerModalContent>
   )
 }
@@ -97,6 +94,7 @@ interface ExplorerPickerNavigationProps {
   navigationLabel: string
   onRootPress: () => void
   onSelectionChange: (keys: Selection) => void
+  page: ExplorerReadyPage
   root: ReturnType<typeof rootAtoms>
   rootSelected: boolean
 }
@@ -114,10 +112,10 @@ function ExplorerPickerNavigation({
   navigationLabel,
   onRootPress,
   onSelectionChange,
+  page,
   root,
   rootSelected
 }: ExplorerPickerNavigationProps) {
-  const page = useAtomValue(explorer.page)
   const readyLocale = useMemo(
     () =>
       atom(

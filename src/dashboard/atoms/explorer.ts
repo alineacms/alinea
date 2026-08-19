@@ -148,6 +148,19 @@ export interface ExplorerReadyPage {
   view: ExplorerView
 }
 
+export function explorerPageIsPending(
+  page: ExplorerReadyPage,
+  location: ExplorerLocation,
+  locale: string | null
+) {
+  return (
+    page.locale !== locale ||
+    page.location.workspace !== location.workspace ||
+    page.location.root !== location.root ||
+    page.location.parentId !== location.parentId
+  )
+}
+
 export interface ExplorerItemData {
   active?: boolean
   createdAt?: number | null
@@ -309,11 +322,6 @@ export class ExplorerAtoms {
   readonly hasCondition
   readonly canSearchEverything: Atom<boolean>
   readonly searchesEverything: Atom<boolean>
-  readonly readySearchesEverything: Atom<boolean>
-  readonly readySearchScope: Atom<'workspace' | 'everything'>
-  readonly readyResultMode: Atom<ExplorerResultMode>
-  readonly readyView: Atom<ExplorerView>
-  readonly locationIsPending: Atom<boolean>
 
   search = atom('')
   searchScope: PrimitiveAtom<'workspace' | 'everything'>
@@ -332,7 +340,8 @@ export class ExplorerAtoms {
   ) => Atom<ExplorerEntry | undefined>
   itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
-  page: Atom<ExplorerReadyPage>
+  pageReady: Atom<Promise<ExplorerReadyPage>>
+  page: Atom<ExplorerReadyPage | undefined>
   #options: ExplorerOptions
 
   constructor(
@@ -508,8 +517,7 @@ export class ExplorerAtoms {
         return items
       })
     )
-    const initialView = options.initialView ?? 'row'
-    const pageSource = atom(async get => {
+    this.pageReady = atom(async get => {
       const locale = get(this.selectedLocale)
       const location = get(this.location)
       const resultMode = get(this.resultMode)
@@ -541,42 +549,7 @@ export class ExplorerAtoms {
         view
       }
     })
-    this.page = unwrap(
-      pageSource,
-      previous =>
-        previous ?? {
-          isMedia: false,
-          items: [],
-          locale: initialLocation.locale ?? options.selectedLocale ?? null,
-          location: initialLocation,
-          resultMode: initialResultMode,
-          root: {icon: atom(LucideFile), label: atom('')},
-          searchScope: initialSearchScope,
-          searchesEverything:
-            this.allowAllWorkspaces &&
-            this.hasCondition &&
-            initialResultMode === 'matches' &&
-            initialSearchScope === 'everything',
-          view: initialView
-        }
-    )
-    const readyPage = (get: Getter) => get(this.page)
-    this.readySearchScope = atom(get => readyPage(get).searchScope)
-    this.readyResultMode = atom(get => readyPage(get).resultMode)
-    this.readySearchesEverything = atom(
-      get => readyPage(get).searchesEverything
-    )
-    this.readyView = atom(get => readyPage(get).view)
-    this.locationIsPending = atom(get => {
-      const ready = readyPage(get)
-      const requested = get(this.location)
-      return (
-        ready.locale !== get(this.selectedLocale) ||
-        ready.location.workspace !== requested.workspace ||
-        ready.location.root !== requested.root ||
-        ready.location.parentId !== requested.parentId
-      )
-    })
+    this.page = unwrap(this.pageReady, previous => previous)
   }
 
   showResults = atom(get => {

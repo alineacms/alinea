@@ -4,6 +4,7 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
 import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
+import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
   entryAtoms,
   MissingEntryError,
@@ -59,10 +60,11 @@ export const entryPage = page(async (page, get) => {
     const selectedEntry = await get(localeData.selectedEntry)
     if (view === 'overview') {
       const root = rootAtoms(get(entry.workspace), get(entry.root))
-      await get(root.children(entry.id).itemsReady(page.locale))
+      const explorerPage = await get(root.children(entry.id).pageReady)
       return (
         <EntryOverview
           entry={entry}
+          explorerPage={explorerPage}
           page={page}
           root={root}
           selectedEntry={selectedEntry}
@@ -204,19 +206,26 @@ interface EntryEditorContentProps {
 
 interface EntryOverviewProps {
   entry: EntryAtoms
+  explorerPage: ExplorerReadyPage
   page: Page
   root: RootAtoms
   selectedEntry: Entry
 }
 
-function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
+function EntryOverview({
+  entry,
+  explorerPage,
+  page,
+  root,
+  selectedEntry
+}: EntryOverviewProps) {
   const setRoute = useSetAtom(routeAtom)
   const parentId = selectedEntry.parentId
   return (
     <Rail main>
       <Explorer
         explorer={root.children(entry.id)}
-        locale={page.locale}
+        page={explorerPage}
         headerEntry={{
           backLabel: parentId ? 'Back to parent entry' : 'Back to root',
           title: selectedEntry.title,

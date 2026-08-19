@@ -100,10 +100,15 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     })
     return explorer
   })
-  const selectedLocale = useAtomValue(explorer.selectedLocale)
+  const explorerPage = useAtomValue(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
+
+  if (!explorerPage)
+    return (
+      <DashboardModalDialog aria-label={label} variant="explorer" isLoading />
+    )
 
   function onSubmit() {
     startTransition(() => {
@@ -121,12 +126,13 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate
-            locale={selectedLocale}
+            page={explorerPage}
           />
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Media folders"
             options={options}
+            page={explorerPage}
           />
           <ExplorerModalFooter>
             <ExplorerModalSelection>

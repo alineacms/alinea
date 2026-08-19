@@ -25,7 +25,8 @@ import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
   DashboardEntryData,
-  DashboardExplorer
+  DashboardExplorer,
+  ExplorerReadyPage
 } from '../atoms/explorer.js'
 import css from './ExplorerCards.module.css'
 import {ExplorerFileCard} from './ExplorerFileCard.js'
@@ -311,6 +312,7 @@ export interface ExplorerCardsProps {
   dragAndDropHooks: DragAndDropHooks<DashboardEntry>
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
+  page: ExplorerReadyPage
   renderEmptyState: () => ReactNode
   locale: string | null
 }
@@ -319,12 +321,11 @@ export function ExplorerCards({
   dragAndDropHooks,
   explorer,
   items,
+  page,
   renderEmptyState,
   locale
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
-  const resultMode = useAtomValue(explorer.readyResultMode)
-  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   const performAction = useSetAtom(explorer.onAction)
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
@@ -361,11 +362,11 @@ export function ExplorerCards({
             <ExplorerCardItem
               breadcrumbs={
                 explorer.breadcrumbs ||
-                resultMode === 'matches' ||
-                searchesEverything
+                page.resultMode === 'matches' ||
+                page.searchesEverything
               }
               entry={item}
-              includeWorkspace={searchesEverything}
+              includeWorkspace={page.searchesEverything}
               showSelectionControls={showSelectionControls}
             />
           )}

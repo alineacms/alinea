@@ -145,11 +145,10 @@ export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
 }
 
 interface SearchPopupProps {
-  page: Page
   root: RootAtoms
 }
 
-function SearchPopup({page, root}: SearchPopupProps) {
+function SearchPopup({root}: SearchPopupProps) {
   const modal = useDashboardModal()
   const setRoute = useSetAtom(routeAtom)
   const [explorer] = useState(() =>
@@ -177,6 +176,15 @@ function SearchPopup({page, root}: SearchPopupProps) {
       }
     )
   )
+  const explorerPage = useAtomValue(explorer.page)
+  if (!explorerPage)
+    return (
+      <DashboardModalDialog
+        aria-label="Search entries"
+        variant="explorer"
+        isLoading
+      />
+    )
   return (
     <DashboardModalDialog aria-label="Search entries" variant="explorer">
       <ExplorerModalSuspense>
@@ -185,9 +193,9 @@ function SearchPopup({page, root}: SearchPopupProps) {
             autoFocusSearch
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
-            locale={page.locale}
+            page={explorerPage}
           />
-          <ExplorerBody explorer={explorer} locale={page.locale} />
+          <ExplorerBody explorer={explorer} page={explorerPage} />
         </ExplorerModal>
       </ExplorerModalSuspense>
     </DashboardModalDialog>
@@ -245,7 +253,7 @@ export function WorkspaceMenu({
               />
             }
           >
-            <SearchPopup page={page} root={root} />
+            <SearchPopup root={root} />
           </Suspense>
         </DashboardModal>
       </DialogTrigger>

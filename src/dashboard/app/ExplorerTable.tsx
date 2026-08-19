@@ -19,7 +19,8 @@ import type {
   DashboardEntry,
   DashboardEntryData,
   DashboardEntryOverviewCell,
-  DashboardExplorer
+  DashboardExplorer,
+  ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
 import {LucideFile, LucideFolder} from '../icons.js'
@@ -107,6 +108,7 @@ interface ExplorerTableRowProps {
   explorer: DashboardExplorer
   gridTemplateColumns: string
   locale: string | null
+  page: ExplorerReadyPage
 }
 
 interface ExplorerTableDisplayRowProps extends ExplorerTableRowProps {
@@ -389,6 +391,7 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
           gridTemplateColumns={props.gridTemplateColumns}
           isLinked={props.explorer.linkedKeys.has(child.id)}
           locale={props.locale}
+          page={props.page}
         />
       )}
     </Collection>
@@ -425,7 +428,6 @@ function ExplorerTableLoadedRow({
   const hasChildren = useAtomValue(data.hasChildren)
   const cells = useAtomValue(data.overviewCells)
   const parents = useAtomValue(data.parents)
-  const resultMode = useAtomValue(explorer.readyResultMode)
   const isSelectable = useAtomValue(
     useMemo(() => explorer.isSelectable(props.entry), [explorer, props.entry])
   )
@@ -435,7 +437,7 @@ function ExplorerTableLoadedRow({
       cells={cells}
       explorer={explorer}
       hasChildren={
-        resultMode === 'browse' &&
+        props.page.resultMode === 'browse' &&
         explorer.supportsInlineExpansion &&
         hasChildren
       }
@@ -460,6 +462,7 @@ export interface ExplorerTableProps {
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
   onSelectionChange?: (selection: Selection) => void
+  page: ExplorerReadyPage
   renderEmptyState: () => ReactNode
   locale: string | null
 }
@@ -470,6 +473,7 @@ export function ExplorerTable({
   explorer,
   items,
   onSelectionChange,
+  page,
   renderEmptyState,
   locale
 }: ExplorerTableProps) {
@@ -477,14 +481,12 @@ export function ExplorerTable({
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
   const selectionMode = explorer.selectionMode
   const search = useAtomValue(explorer.search)
-  const resultMode = useAtomValue(explorer.readyResultMode)
-  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   const isSearching = Boolean(search.trim())
   const breadcrumbs =
     explorer.breadcrumbs ||
-    resultMode === 'matches' ||
+    page.resultMode === 'matches' ||
     isSearching ||
-    searchesEverything
+    page.searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
     hasSelection && (compact || explorer.showSelectionControls)
@@ -535,6 +537,7 @@ export function ExplorerTable({
                 gridTemplateColumns={gridTemplateColumns}
                 isLinked={explorer.linkedKeys.has(item.id)}
                 locale={locale}
+                page={page}
               />
             )}
           </Tree>
