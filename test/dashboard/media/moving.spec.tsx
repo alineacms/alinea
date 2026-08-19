@@ -2,6 +2,24 @@ import {expect, test} from '../support/DashboardTest.js'
 import {dashboardLinkScenarioIds} from '../support/DashboardScenarioData.js'
 import {LinkFieldScenarioMount} from '../support/LinkFieldScenarioMount.js'
 
+test('opens a media directory card', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    routeEntry: dashboardLinkScenarioIds.mediaDirectory,
+    routeRoot: 'media',
+    title: 'Media directory'
+  })
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+
+  const explorer = app.page.getByRole('grid', {name: 'Explorer entries'})
+  await explorer
+    .getByRole('row', {name: 'Media directory', exact: true})
+    .click()
+
+  await expect(
+    explorer.getByRole('row', {name: 'Nested image', exact: true})
+  ).toBeVisible()
+})
+
 test('moves media files from an overview into a media directory card', async ({
   dashboard,
   mount

@@ -29,7 +29,7 @@ async function expectVerticallyUnclipped(locator: Locator) {
   )
 }
 
-test('caps the compact picker height without showing a loader', async ({
+test('opens entry fields in the compact picker', async ({
   dashboard,
   mount
 }) => {
@@ -46,7 +46,7 @@ test('caps the compact picker height without showing a loader', async ({
 
   await app.page
     .getByRole('list', {name: 'Browse page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Browse page'})
     .click()
 
   const picker = app.page.getByRole('dialog', {
@@ -54,8 +54,7 @@ test('caps the compact picker height without showing a loader', async ({
     exact: true
   })
   await expect(picker).toBeVisible()
-  const box = await picker.boundingBox()
-  expect(box?.height).toBeLessThanOrEqual(450)
+  await expect(picker.locator('..')).toHaveCSS('height', '350px')
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -73,7 +72,7 @@ test('opens a functional location in another workspace and root', async ({
 
   await app.page
     .getByRole('list', {name: 'Related page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Related page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -128,7 +127,7 @@ test('switches a localized card picker without showing its loader', async ({
 
   await app.page
     .getByRole('list', {name: 'Localized page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Localized page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -184,7 +183,7 @@ test('hides card navigation when picker locations are limited', async ({
 
   await app.page
     .getByRole('list', {name: 'Limited page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Limited page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -220,7 +219,7 @@ test('filters entries with a functional condition', async ({
 
   await app.page
     .getByRole('list', {name: 'Filtered page', exact: true})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Filtered page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -269,7 +268,7 @@ test('defaults a condition without a location to all locations', async ({
 
   await app.page
     .getByRole('list', {name: 'Global filtered page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Global filtered page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -339,7 +338,7 @@ test('adds the same entry to a multiple link field more than once', async ({
   const field = app.page.getByRole('list', {name: 'Repeated pages'})
 
   async function addAlpha() {
-    await field.getByRole('button', {name: 'Page link'}).click()
+    await field.getByRole('button', {name: 'Repeated pages'}).click()
     const picker = app.page.getByRole('dialog', {
       name: 'Pick a link',
       exact: true
@@ -367,7 +366,7 @@ test('opens pickChildren at the children of the edited entry', async ({
 
   await app.page
     .getByRole('list', {name: 'Child page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Child page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -395,7 +394,7 @@ test('keeps pickChildren breadcrumbs static', async ({dashboard, mount}) => {
 
   await app.page
     .getByRole('list', {name: 'Child page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Child page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -416,7 +415,7 @@ test('navigates into folders without showing a suspense loader', async ({
 
   await app.page
     .getByRole('list', {name: 'Browse page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Browse page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -527,7 +526,7 @@ test('preloads entries before card sidebar navigation commits', async ({
 
   await app.page
     .getByRole('list', {name: 'Browse page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Browse page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -572,7 +571,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
 
   await app.page
     .getByRole('list', {name: 'Browse page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Browse page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -815,7 +814,7 @@ test('navigates through folders to matching rows in a link picker', async ({
 
   await app.page
     .getByRole('list', {name: 'Navigable page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Navigable page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -873,7 +872,7 @@ test('opens a table parent as the current location on double click', async ({
 
   await app.page
     .getByRole('list', {name: 'Navigable page'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Navigable page'})
     .click()
 
   const picker = await expandLinkPicker(app.page)
@@ -1028,6 +1027,31 @@ test('card image picker browses directories and filters within them', async ({
   await expect(
     picker.getByRole('checkbox', {name: 'Select Existing image'})
   ).toHaveCount(0)
+})
+
+test('card image picker opens empty media directories', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Featured image'})
+    .getByRole('button', {name: 'Image'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  await picker
+    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('row', {name: 'Empty media directory', exact: true})
+    .click()
+
+  await expect(
+    picker
+      .getByRole('group', {name: 'Explorer location'})
+      .getByText('Empty media directory', {exact: true})
+  ).toBeVisible()
+  await expect(picker.getByText('No results found')).toBeVisible()
 })
 
 test('uploads images and files from their picker modals', async ({

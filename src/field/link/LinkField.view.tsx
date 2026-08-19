@@ -43,7 +43,11 @@ import {
   type ExternalLinkValue
 } from '#/dashboard/app/ExternalLinkPicker.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
-import {LinkPicker, type LinkPickerOptions} from '#/dashboard/app/LinkPicker.js'
+import {
+  LinkPicker,
+  LinkPickerModal,
+  type LinkPickerOptions
+} from '#/dashboard/app/LinkPicker.js'
 import {nav} from '#/dashboard/atoms/nav.js'
 import {
   useEntry,
@@ -55,6 +59,7 @@ import {
 } from '#/dashboard/hooks.js'
 import {
   IcRoundAttachFile,
+  IcRoundAdd,
   IcRoundClose,
   IcRoundEdit,
   IcRoundLink,
@@ -538,7 +543,6 @@ function LinkPickerAction({
         </Button>
         <ImagePicker
           {...pickerProps}
-          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -556,11 +560,7 @@ function LinkPickerAction({
       >
         {children}
       </Button>
-      <LinkPicker
-        {...pickerProps}
-        anchorRef={anchorRef}
-        key={entryPickerOptionsKey(location, condition)}
-      />
+      <LinkPicker {...pickerProps} anchorRef={anchorRef} />
     </DialogTrigger>
   )
 }
@@ -591,7 +591,7 @@ function LinkPickerDialog({
   if (type === 'url') {
     return (
       <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
-        <Button style={{display: 'none'}}>Edit link</Button>
+        <Button style={{display: 'none'}}>Replace link</Button>
         <ExternalLinkPicker
           key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
@@ -659,10 +659,9 @@ function LinkPickerDialog({
   if (type === 'file' || type === 'image') {
     return (
       <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
-        <Button style={{display: 'none'}}>Edit link</Button>
+        <Button style={{display: 'none'}}>Replace link</Button>
         <ImagePicker
           {...pickerProps}
-          key={entryPickerOptionsKey(location, condition)}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
       </DialogTrigger>
@@ -670,11 +669,8 @@ function LinkPickerDialog({
   }
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Button style={{display: 'none'}}>Edit link</Button>
-      <LinkPicker
-        {...pickerProps}
-        key={entryPickerOptionsKey(location, condition)}
-      />
+      <Button style={{display: 'none'}}>Replace link</Button>
+      <LinkPickerModal {...pickerProps} />
     </DialogTrigger>
   )
 }
@@ -742,13 +738,6 @@ function entryPickerResultMode(
     (type !== 'image' && condition && enableNavigation !== true)
     ? ('matches' as const)
     : ('browse' as const)
-}
-
-function entryPickerOptionsKey(
-  location: EditorLocation | undefined,
-  condition: Filter | undefined
-): string {
-  return JSON.stringify([location ?? null, condition ?? null])
 }
 
 function externalLinkValue(
@@ -836,8 +825,11 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
           type={type as PickerType}
           value={value?._type === type ? value : undefined}
         >
-          <Icon aria-hidden icon={getLinkIcon(type)} />
-          {picker.label}
+          <Icon
+            aria-hidden
+            icon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
+          />
+          {options.isEntryField ? options.label : picker.label}
         </LinkPickerAction>
       ))}
     </div>
@@ -874,8 +866,11 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           selection={links.filter(row => row._type === type)}
           type={type as PickerType}
         >
-          <Icon aria-hidden icon={getLinkIcon(type)} />
-          {picker.label}
+          <Icon
+            aria-hidden
+            icon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
+          />
+          {options.isEntryField ? options.label : picker.label}
         </LinkPickerAction>
       ))}
     </div>
@@ -925,7 +920,7 @@ function LinkRowActions({
       />
       {picker && (
         <Button
-          aria-label="Edit link"
+          aria-label="Replace link"
           appearance="plain"
           icon={IcRoundEdit}
           isDisabled={isDisabled}
@@ -934,7 +929,7 @@ function LinkRowActions({
             onEdit()
           }}
         >
-          Edit link
+          Replace link
         </Button>
       )}
       <Button

@@ -131,6 +131,13 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     set: {title: 'Media directory', path: 'media-directory'}
   })
   await db.create({
+    id: linkScenarioIds.emptyMediaDirectory,
+    type: MediaLibrary,
+    workspace: 'main',
+    root: 'media',
+    set: {title: 'Empty media directory', path: 'empty-media-directory'}
+  })
+  await db.create({
     id: linkScenarioIds.existingImage,
     type: MediaFile,
     workspace: 'main',

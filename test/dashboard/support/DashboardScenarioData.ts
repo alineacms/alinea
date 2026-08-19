@@ -21,6 +21,7 @@ export const dashboardScenarioIds = {
 export const dashboardLinkScenarioIds = {
   existingFile: 'workflow-existing-file',
   existingImage: 'workflow-existing-image',
+  emptyMediaDirectory: 'workflow-empty-media-directory',
   mediaDirectory: 'workflow-media-directory',
   nestedImage: 'workflow-nested-image',
   referenceFolder: 'workflow-reference-folder',

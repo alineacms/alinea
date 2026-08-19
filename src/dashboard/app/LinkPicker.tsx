@@ -14,6 +14,7 @@ import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {
   Suspense,
   startTransition,
+  useMemo,
   useState,
   type ReactNode,
   type RefObject
@@ -42,6 +43,7 @@ import {
 } from './ui/DashboardModal.js'
 
 const styles = styler(css)
+const expandedPickerLabel = 'Pick a link in expanded view'
 
 export interface LinkPickerOptions extends ExplorerOptions {}
 
@@ -66,6 +68,44 @@ export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
         onExpandedChange={setExpanded}
       />
     </Suspense>
+  )
+}
+
+export function LinkPickerModal(options: LinkPickerOptions) {
+  return (
+    <DashboardModal size="explorer">
+      <Suspense fallback={<LinkPickerModalLoading />}>
+        <LinkPickerModalContent options={options} />
+      </Suspense>
+    </DashboardModal>
+  )
+}
+
+function LinkPickerModalLoading() {
+  return (
+    <DashboardModalDialog
+      aria-label={expandedPickerLabel}
+      variant="explorer"
+      isLoading
+    />
+  )
+}
+
+interface LinkPickerModalContentProps {
+  options: LinkPickerOptions
+}
+
+function LinkPickerModalContent({options}: LinkPickerModalContentProps) {
+  const {explorer, tree} = useLinkPickerExplorer(options)
+  const page = useAtomValue(explorer.page)
+  if (!page) return <LinkPickerModalLoading />
+  return (
+    <LinkPickerExpanded
+      explorer={explorer}
+      options={options}
+      page={page}
+      tree={tree}
+    />
   )
 }
 
@@ -98,11 +138,7 @@ function LinkPickerLoading({
   if (!expanded) return null
   return (
     <DashboardModal isOpen size="explorer" onOpenChange={onExpandedChange}>
-      <DashboardModalDialog
-        aria-label="Pick a link in expanded view"
-        variant="explorer"
-        isLoading
-      />
+      <LinkPickerModalLoading />
     </DashboardModal>
   )
 }
@@ -168,7 +204,13 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
     pickerI18n?.locales ?? []
   )
   const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const [picker] = useState(() => {
+  const explorerIdentity = JSON.stringify([
+    initialLocation,
+    options.condition ?? null
+  ])
+  // Explorer atoms capture their initial options and reset only with this scope.
+  // oxlint-disable react-hooks/exhaustive-deps
+  const picker = useMemo(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
     const tree = createExplorerTree(() => explorer)
     const currentRoot = (location: ExplorerLocation) =>
@@ -189,7 +231,8 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
         tree(currentRoot(location), locale, location).ready
     })
     return {explorer, tree}
-  })
+  }, [explorerIdentity])
+  // oxlint-enable react-hooks/exhaustive-deps
   return picker
 }
 
@@ -281,10 +324,7 @@ function LinkPickerExpanded({
   }
 
   return (
-    <DashboardModalDialog
-      aria-label="Pick a link in expanded view"
-      variant="explorer"
-    >
+    <DashboardModalDialog aria-label={expandedPickerLabel} variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader

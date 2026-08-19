@@ -220,6 +220,12 @@ export interface ExplorerTypeData {
 export class ExplorerEntryData {
   label = atom(get => get(this.item).title)
   hasChildren = atom(get => get(this.item).hasChildren)
+  canOpen = atom(get => {
+    const item = get(this.item)
+    if (item.hasChildren) return true
+    const type = get(configAtom).schema[item.type]
+    return Boolean(type && Type.isContainer(type))
+  })
   parents: Atom<Array<ExplorerEntry>>
   root: Atom<ExplorerRootData>
   icon = atom((get): ComponentType | undefined => {
@@ -702,7 +708,7 @@ export class ExplorerAtoms {
         return
       }
       const {data} = get(entry.data)
-      if (data && get(data.hasChildren)) set(this.openLocation, entry)
+      if (data && get(data.canOpen)) set(this.openLocation, entry)
     }
   )
   openLocation = atom(null, (_get, set, entry: ExplorerEntry) => {

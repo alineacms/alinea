@@ -10,7 +10,7 @@ import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, startTransition, useState, type ReactNode} from 'react'
+import {Suspense, startTransition, useMemo, type ReactNode} from 'react'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -79,7 +79,13 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     pickerI18n?.locales ?? []
   )
   const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const [{explorer, tree}] = useState(() => {
+  const explorerIdentity = JSON.stringify([
+    initialLocation,
+    options.condition ?? null
+  ])
+  // Explorer atoms capture their initial options and reset only with this scope.
+  // oxlint-disable react-hooks/exhaustive-deps
+  const {explorer, tree} = useMemo(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
     const tree = createExplorerTree(() => explorer)
     const currentRoot = (location: ExplorerLocation) =>
@@ -100,7 +106,8 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
         tree(currentRoot(location), locale, location).ready
     })
     return {explorer, tree}
-  })
+  }, [explorerIdentity])
+  // oxlint-enable react-hooks/exhaustive-deps
   const explorerPage = useAtomValue(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)

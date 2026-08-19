@@ -35,6 +35,8 @@ export interface LinkFieldOptions<Value> extends FieldOptions<Value> {
 }
 
 export interface LinkOptions<Value> extends LinkFieldOptions<Value> {
+  /** @internal */
+  isEntryField?: boolean
   pickers: Record<string, Picker<any, any>>
 }
 

@@ -98,6 +98,18 @@ test('opens a compact entry picker and selects immediately', async ({
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const search = picker.getByRole('searchbox', {name: 'Search'})
   await expect(picker).toBeVisible()
+  const [pickerBox, viewportHeight] = await Promise.all([
+    picker.locator('..').boundingBox(),
+    page.evaluate(() => window.visualViewport?.height ?? window.innerHeight)
+  ])
+  expect(pickerBox?.height).toBeLessThanOrEqual(350)
+  expect(pickerBox?.height).toBeLessThanOrEqual(viewportHeight - 32)
+  await search.fill('No matching entries')
+  await expect(picker.getByText('No results found')).toBeVisible()
+  expect((await picker.locator('..').boundingBox())?.height).toBe(
+    pickerBox?.height
+  )
+  await search.fill('')
   await expect(search).toBeFocused()
   await expect(
     picker.getByRole('button', {name: 'Expand entry picker'})
@@ -130,14 +142,25 @@ test('keeps static picker conditions outside an entry scope', async ({
   await mount(<FilteredEntryFieldWithoutEntryScope />)
   await page
     .getByRole('list', {name: 'Filtered entry'})
-    .getByRole('button', {name: 'Page link'})
+    .getByRole('button', {name: 'Filtered entry'})
     .click()
   await page.getByRole('button', {name: 'Expand entry picker'}).click()
 
-  const resultModes = page.getByRole('radiogroup', {
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
   })
   await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+})
+
+test('keeps picker copy for generic link fields', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const field = page.getByRole('list', {name: 'Resources'})
+  await expect(field.getByRole('button', {name: 'Page link'})).toBeVisible()
+  await expect(field.getByRole('button', {name: 'Resources'})).toHaveCount(0)
 })
 
 test('expands the compact entry picker into the explorer modal', async ({
@@ -171,7 +194,9 @@ test('centers the compact picker on the entire link field', async ({
   page
 }) => {
   await mount(<Example />)
-  const trigger = page.getByRole('button', {name: 'Page link'})
+  const trigger = page
+    .getByRole('list', {name: 'Resources'})
+    .getByRole('button', {name: 'Page link'})
   const field = trigger.locator('..')
   await trigger.click()
 

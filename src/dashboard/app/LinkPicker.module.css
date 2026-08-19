@@ -3,8 +3,8 @@
   width: min(520px, calc(100vw - 32px));
   min-width: min(360px, calc(100vw - 32px));
   max-width: min(520px, calc(100vw - 32px));
-  height: min(450px, calc(var(--visual-viewport-height) - 32px));
-  max-height: min(450px, calc(var(--visual-viewport-height) - 32px));
+  height: min(350px, calc(var(--visual-viewport-height, 100dvh) - 32px));
+  max-height: min(350px, calc(var(--visual-viewport-height, 100dvh) - 32px));
   padding: 0;
   overflow: hidden;
   background: var(--alinea-bg);

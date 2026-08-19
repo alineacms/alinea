@@ -142,7 +142,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
-  const hasChildren = useAtomValue(data.hasChildren)
+  const canOpen = useAtomValue(data.canOpen)
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -153,7 +153,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
       includeWorkspace={includeWorkspace}
     />
   ) : null
-  const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
+  const fallbackIcon = canOpen ? IcTwotoneFolder : IcTwotoneDescription
   return (
     <GridListItem
       id={entry.id}
@@ -354,7 +354,7 @@ export function ExplorerCards({
       const canOpen =
         !store.get(explorer.isSelectable(entry)) &&
         data !== undefined &&
-        store.get(data.hasChildren)
+        store.get(data.canOpen)
       if (!canOpen) return
       startTransition(() => performAction(entry, locale))
       return
