@@ -86,37 +86,6 @@
       var(--alinea-blue-600)
     );
   }
-
-  &.is-unselectable {
-    --alinea-dashboard-explorer-card-background: var(--alinea-bg-muted);
-    --alinea-dashboard-explorer-card-footer-background: var(--alinea-bg-muted);
-    --alinea-dashboard-explorer-card-top-background: color-mix(
-      in srgb,
-      var(--alinea-fg-muted) 8%,
-      var(--alinea-bg-muted)
-    );
-    opacity: 1;
-  }
-
-  &.is-unselectable .ExplorerCards-item-card {
-    color: var(--alinea-fg-muted);
-    box-shadow: none;
-  }
-
-  &.is-unselectable .ExplorerCards-entry,
-  &.is-unselectable .ExplorerCards-entry-top,
-  &.is-unselectable .ExplorerCards-entry-meta {
-    color: var(--alinea-fg-muted);
-  }
-
-  &.is-unselectable[data-hovered] .ExplorerCards-item-card {
-    --alinea-dashboard-explorer-card-footer-background: color-mix(
-      in srgb,
-      var(--alinea-fg-muted) 10%,
-      var(--alinea-bg)
-    );
-    background: var(--alinea-dashboard-explorer-card-footer-background);
-  }
 }
 
 .ExplorerCards-item-checkbox {
@@ -240,10 +209,6 @@
   font-size: 13px;
   font-weight: 600;
   line-height: 1.35;
-}
-
-.ExplorerCards-item.is-unselectable .ExplorerCards-entry-label {
-  color: color-mix(in srgb, var(--alinea-fg-muted) 72%, transparent);
 }
 
 .ExplorerCards-entry-meta {

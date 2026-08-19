@@ -757,15 +757,15 @@ test('navigates through folders to matching rows in a link picker', async ({
     .getByRole('radiogroup', {name: 'Explorer view'})
     .getByRole('radio', {name: 'Card view'})
     .click()
-  const folderCard = picker.locator('[data-unselectable="true"]', {
-    hasText: 'Folder'
-  })
-  await expect(folderCard).toBeVisible()
   await expect(
-    folderCard.getByRole('checkbox', {name: 'Select Folder'})
+    picker.getByRole('grid', {name: 'Explorer entries'}).getByText('Folder', {
+      exact: true
+    })
   ).toHaveCount(0)
-
-  await folderCard.click()
+  await picker
+    .getByRole('treegrid', {name: 'Link folders'})
+    .getByRole('row', {name: 'Folder', exact: true})
+    .click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select Child'})
   ).toBeVisible()
@@ -812,6 +812,11 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   const imagePicker = app.page.getByRole('dialog', {name: 'Pick an image'})
   await expect(
     imagePicker
+      .getByRole('radiogroup', {name: 'Explorer results'})
+      .getByRole('radio', {name: 'Browse'})
+  ).toBeChecked()
+  await expect(
+    imagePicker
       .getByRole('radiogroup', {name: 'Explorer view'})
       .getByRole('radio', {name: 'Card view'})
   ).toBeChecked()
@@ -820,9 +825,14 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   ).not.toBeChecked()
   await expect(
     imagePicker.getByRole('switch', {name: 'All locations'})
-  ).toBeEnabled()
+  ).toBeDisabled()
   await expect(
     imagePicker.getByRole('treegrid', {name: 'Media folders'})
+  ).toBeVisible()
+  await expect(
+    imagePicker
+      .getByRole('grid', {name: 'Explorer entries'})
+      .getByText('Existing file', {exact: true})
   ).toHaveCount(0)
   await expectVerticallyUnclipped(
     imagePicker.getByText('Existing image', {exact: true})
@@ -879,7 +889,6 @@ test('keeps media children visible when switching folder browsing off', async ({
   })
   const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
   const filteredMode = resultModes.getByRole('radio', {name: 'Filtered'})
-  await browseMode.click()
   await expect(browseMode).toBeChecked()
 
   await picker

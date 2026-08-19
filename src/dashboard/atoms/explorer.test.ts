@@ -179,6 +179,26 @@ test('matches only contain selectable rows for compound conditions', async () =>
   expect(items.every(item => store.get(explorer.isSelectable(item)))).toBe(true)
 })
 
+test('filters browse queries only in card view', async () => {
+  const {store, child, parent} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {condition: {_id: child._id}, initialResultMode: 'browse'}
+  )
+
+  await store.get(explorer.itemsReady(null))
+
+  expect(store.get(explorer.items(null)).map(item => item.id)).toEqual([
+    parent._id
+  ])
+
+  store.set(explorer.view, 'card')
+  const cardItems = await store.get(explorer.itemsReady(null))
+
+  expect(cardItems).toEqual([])
+})
+
 test('picker can mark initial links without preselecting them', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},

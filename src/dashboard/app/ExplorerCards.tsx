@@ -2,7 +2,7 @@ import {Checkbox, Icon, Surface} from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom, useStore} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
 import {Fragment, memo, useMemo} from 'react'
@@ -43,7 +43,6 @@ const cardLayoutOptions: GridLayoutOptions = {
 interface ExplorerCardItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
-  explorer: DashboardExplorer
   includeWorkspace: boolean
   showSelectionControls: boolean
 }
@@ -51,7 +50,6 @@ interface ExplorerCardItemProps {
 const ExplorerCardItem = memo(function ExplorerCardItem({
   breadcrumbs,
   entry,
-  explorer,
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardItemProps) {
@@ -68,7 +66,6 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
-      explorer={explorer}
       includeWorkspace={includeWorkspace}
       showSelectionControls={showSelectionControls}
     />
@@ -118,7 +115,6 @@ interface ExplorerCardLoadedItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   data: DashboardEntryData
-  explorer: DashboardExplorer
   includeWorkspace: boolean
   showSelectionControls: boolean
 }
@@ -127,7 +123,6 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   breadcrumbs,
   entry,
   data,
-  explorer,
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
@@ -135,9 +130,6 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const hasChildren = useAtomValue(data.hasChildren)
-  const isSelectable = useAtomValue(
-    useMemo(() => explorer.isSelectable(entry), [entry, explorer])
-  )
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -153,13 +145,9 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     <GridListItem
       id={entry.id}
       textValue={label}
-      className={styles.ExplorerCards.item({unselectable: !isSelectable})}
-      data-unselectable={!isSelectable || undefined}
-      isDisabled={!isSelectable}
+      className={styles.ExplorerCards.item()}
     >
-      {showSelectionControls && isSelectable && (
-        <ExplorerCardCheckbox label={label} />
-      )}
+      {showSelectionControls && <ExplorerCardCheckbox label={label} />}
       <AriaButton
         slot="drag"
         aria-label={`Drag ${label}`}
@@ -338,24 +326,15 @@ export function ExplorerCards({
   const resultMode = useAtomValue(explorer.readyResultMode)
   const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   const performAction = useSetAtom(explorer.onAction)
-  const store = useStore()
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
     if (!entry) return
-    const canNavigate =
-      resultMode === 'browse' &&
-      explorer.supportsInlineExpansion &&
-      entry.hasChildren &&
-      !store.get(explorer.isSelectable(entry))
-    if (explorer.hasRowAction || canNavigate) performAction(entry, locale)
+    performAction(entry, locale)
   }
-  const onAction =
-    explorer.hasRowAction || explorer.supportsInlineExpansion
-      ? onItemAction
-      : undefined
+  const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (
     <div
       aria-label="Explorer card results"
@@ -386,7 +365,6 @@ export function ExplorerCards({
                 searchesEverything
               }
               entry={item}
-              explorer={explorer}
               includeWorkspace={searchesEverything}
               showSelectionControls={showSelectionControls}
             />

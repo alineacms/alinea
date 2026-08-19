@@ -837,6 +837,7 @@ export class ExplorerAtoms {
       const search = get(this.search).trim()
       const searchesEverything = get(this.searchesEverything)
       const resultMode = get(this.resultMode)
+      const view = get(this.view)
       const workspace = searchesEverything ? undefined : location.workspace
       const root = searchesEverything
         ? undefined
@@ -854,6 +855,7 @@ export class ExplorerAtoms {
         ? get(this.#options.defaultOrderBy)
         : undefined
       const flatList = resultMode === 'matches'
+      const filterSelectable = flatList || view === 'card'
       const selectedLocationParentId =
         !searchesEverything &&
         flatList &&
@@ -884,7 +886,7 @@ export class ExplorerAtoms {
               : (location.parentId ?? null),
         locale: searchesEverything ? undefined : locale,
         search: search || undefined,
-        filter: flatList ? this.#options.condition : undefined,
+        filter: filterSelectable ? this.#options.condition : undefined,
         type: filter,
         status: 'preferDraft',
         groupBy: Entry.id,
@@ -938,7 +940,9 @@ export class ExplorerAtoms {
           policy.canRead(entry) &&
           (!selectedLocationParentId ||
             entry.parents.includes(selectedLocationParentId)) &&
-          (!flatList || !matchesCondition || matchesCondition(entry as never))
+          (!filterSelectable ||
+            !matchesCondition ||
+            matchesCondition(entry as never))
       )
       const parentIds = await graph.find({
         workspace,

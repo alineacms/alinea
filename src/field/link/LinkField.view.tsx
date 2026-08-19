@@ -487,6 +487,7 @@ function LinkPickerAction({
     condition,
     initialView: type === 'file' ? 'row' : undefined,
     initialResultMode: entryPickerResultMode(
+      type,
       condition,
       options.enableNavigation,
       pickingChildren
@@ -614,6 +615,7 @@ function LinkPickerDialog({
     condition,
     initialView: type === 'file' ? 'row' : undefined,
     initialResultMode: entryPickerResultMode(
+      type,
       condition,
       options.enableNavigation,
       pickingChildren
@@ -686,11 +688,13 @@ function entryPickerSearchScope(
 }
 
 function entryPickerResultMode(
+  type: PickerType,
   condition: Filter | undefined,
   enableNavigation: boolean | undefined,
   pickChildren: boolean
 ) {
-  return pickChildren || (condition && enableNavigation !== true)
+  return pickChildren ||
+    (type !== 'image' && condition && enableNavigation !== true)
     ? ('matches' as const)
     : ('browse' as const)
 }
