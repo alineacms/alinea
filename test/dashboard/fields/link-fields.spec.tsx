@@ -68,6 +68,19 @@ test('switches a localized card picker without showing its loader', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const rootLabel = picker.getByText('Localized pages', {exact: true})
+  const localeButton = picker
+    .getByRole('button', {name: 'EN', exact: true})
+    .first()
+  const rootTypography = await rootLabel.evaluate(element => {
+    const style = getComputedStyle(element)
+    return {fontSize: style.fontSize, lineHeight: style.lineHeight}
+  })
+  const localeTypography = await localeButton.evaluate(element => {
+    const style = getComputedStyle(element)
+    return {fontSize: style.fontSize, lineHeight: style.lineHeight}
+  })
+  expect(localeTypography).toEqual(rootTypography)
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
     .getByRole('radio')

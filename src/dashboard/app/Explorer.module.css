@@ -193,6 +193,10 @@
 }
 
 .Explorer-locationBreadcrumbs-root-locale {
+  --alinea-locale-height: 30px;
+  --alinea-locale-font-size: var(--alinea-font-size-base);
+  --alinea-locale-line-height: 24px;
+
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
