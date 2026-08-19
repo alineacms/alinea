@@ -1,5 +1,6 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
+import {createId} from '#/core/Id.js'
 import {exportSource} from '#/core/source/SourceExport.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
@@ -38,11 +39,8 @@ export interface GenerateOptions {
 
 async function generatePackage(context: GenerateContext, cms: CMS) {
   const {config} = cms
-  if (!config.dashboardFile) return
-  const staticFile = config.dashboardFile
-    ? join(config.publicDir, config.dashboardFile)
-    : undefined
-  if (!staticFile) return
+  const {htmlFile} = Config.dashboardPaths(config)
+  const staticFile = join(config.publicDir, htmlFile)
   await generateDashboard(
     context,
     cms,
@@ -105,9 +103,26 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   async function writeStore(db: DevDB) {
     const exported = await exportSource(db.source)
     const data = JSON.stringify(exported, null, 2)
+    const {assetsDir} = Config.dashboardPaths(db.config)
+    const sourceName = `source-${createId()}.json`
+    const sourceFile = join('/', assetsDir, sourceName)
+    const sourceDirectory = path.join(
+      context.rootDir,
+      db.config.publicDir ?? '/public',
+      assetsDir
+    )
+    const sourceLocation = path.join(sourceDirectory, sourceName)
+    await fsp.mkdir(sourceDirectory, {recursive: true})
+    await fsp.writeFile(sourceLocation, data)
+    const staleSources = (await fsp.readdir(sourceDirectory)).filter(
+      file => file !== sourceName && /^source-[0-9A-Za-z]{27}\.json$/.test(file)
+    )
+    await Promise.all(
+      staleSources.map(file => fsp.unlink(path.join(sourceDirectory, file)))
+    )
     await fsp.writeFile(
       join(context.outDir, 'source.js'),
-      `export const source = ${data}`
+      `export const sourceFile = ${JSON.stringify(sourceFile)}`
     )
     return data.length
   }

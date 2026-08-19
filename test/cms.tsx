@@ -28,6 +28,5 @@ export const cms = createCMS({
     development: 'http://localhost:3000'
   },
   handlerUrl: '/api/cms',
-  dashboardFile: 'admin.html',
   preview: true
 })

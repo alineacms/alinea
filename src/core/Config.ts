@@ -43,6 +43,12 @@ export interface Config {
   auth?: Auth.View
 }
 
+export interface DashboardPaths {
+  adminPath: string
+  htmlFile: string
+  assetsDir: string
+}
+
 export namespace Config {
   export function baseUrl(
     config: Config,
@@ -58,8 +64,15 @@ export namespace Config {
   }
 
   export function adminPath(config: Config) {
+    return dashboardPaths(config).adminPath
+  }
+
+  export function dashboardPaths(config: Config): DashboardPaths {
     const file = config.dashboardFile ?? 'admin.html'
-    return paths.basename(file, '.html')
+    if (!file.endsWith('.html'))
+      throw new Error('dashboardFile must point to an .html file')
+    const adminPath = file.slice(0, -'.html'.length)
+    return {adminPath, htmlFile: file, assetsDir: adminPath}
   }
 
   export function mainWorkspace(config: Config): WorkspaceInternal {

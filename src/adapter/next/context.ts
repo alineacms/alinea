@@ -3,11 +3,16 @@ import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
 
 export async function requestContext(config: Config): Promise<RequestContext> {
+  const dev = process.env.ALINEA_DEV_SERVER
+  if (dev)
+    return {
+      isDev: true,
+      handlerUrl: new URL('/api', dev),
+      apiKey: process.env.ALINEA_API_KEY || 'dev'
+    }
   const apiKey =
     process.env.ALINEA_API_KEY ||
     (process.env.NODE_ENV === 'development' ? 'dev' : await generatedRelease)
-  const dev = process.env.ALINEA_DEV_SERVER
-  if (dev) return {isDev: true, handlerUrl: new URL('/api', dev), apiKey}
   const nodeEnv = process.env.NODE_ENV
   const baseUrl = Config.baseUrl(config, nodeEnv)
   if (!baseUrl) throw new Error(`Missing baseUrl in config for ${nodeEnv}`)

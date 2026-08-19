@@ -37,8 +37,5 @@ export const cms = createCMS({
   // preview: true,
 
   // The handler route URL
-  handlerUrl: '/api/cms',
-
-  // The admin dashboard will be bundled in this static file
-  dashboardFile: 'admin.html'
+  handlerUrl: '/api/cms'
 })
