@@ -1,5 +1,8 @@
 export enum HandleAction {
   Auth = 'auth',
+  Bootstrap = 'bootstrap',
+  ContentState = 'contentState',
+  ContentEntries = 'contentEntries',
   Capabilities = 'capabilities',
   User = 'user',
   Resolve = 'resolve',

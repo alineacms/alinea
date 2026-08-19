@@ -2,6 +2,7 @@ import * as paths from '#/core/util/Paths.js'
 import MiniSearch from 'minisearch'
 import pLimit from 'p-limit'
 import {Config} from '../Config.js'
+import type {ContentEntry} from '../ContentSync.js'
 import type {Entry, EntryStatus} from '../Entry.js'
 import {createRecord, parseRecord} from '../EntryRecord.js'
 import {createId} from '../Id.js'
@@ -12,7 +13,7 @@ import type {ChangesBatch} from '../source/Change.js'
 import {hashBlob} from '../source/GitUtils.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import {bundleContents, type Source} from '../source/Source.js'
-import {ReadonlyTree} from '../source/Tree.js'
+import {ReadonlyTree, type Entry as SourceTreeEntry} from '../source/Tree.js'
 import {compareStrings} from '../source/Utils.js'
 import {Type} from '../Type.js'
 import {assert} from '../util/Assert.js'
@@ -88,6 +89,10 @@ interface EntryVersion extends EntryVersionData {
   childrenDir: string
   filePath: string
   level: number
+}
+
+interface HydratedEntryVersion extends EntryVersion {
+  parentId: string | null
 }
 
 class EntryLanguage extends Map<EntryStatus, EntryVersion> {
@@ -349,15 +354,18 @@ export class EntryGraph {
   #singleWorkspace: string | undefined
   #search: MiniSearch<EntrySearchDocument>
   #seeds: Map<string, Seed>
+  #hydrated: Map<string, HydratedEntryVersion> | undefined
 
   constructor(
     config: Config,
     versionData: Map<string, EntryVersionData>,
-    seeds: Map<string, Seed>
+    seeds: Map<string, Seed>,
+    hydrated?: Map<string, HydratedEntryVersion>
   ) {
     this.#config = config
     this.#versionData = versionData
     this.#seeds = seeds
+    this.#hydrated = hydrated
     this.#singleWorkspace = Config.multipleWorkspaces(config)
       ? undefined
       : keys(config.workspaces)[0]
@@ -479,6 +487,8 @@ export class EntryGraph {
   }
 
   #mkEntry(filePath: string): EntryVersion {
+    const hydrated = this.#hydrated?.get(filePath)
+    if (hydrated) return hydrated
     const version = this.#versionData.get(filePath)!
     const segments = filePath.split('/')
     const baseName = segments.at(-1)
@@ -539,14 +549,18 @@ export class EntryGraph {
       files.map(file => this.#mkEntry(file))
     )
     const [first, ...rest] = collection.values()
-    const parentId = this.#byDir.get(first.parentDir) ?? null
-    for (const language of rest) {
-      const otherParentId = this.#byDir.get(language.parentDir) ?? null
-      assert(
-        parentId === otherParentId,
-        `Expected matching parents for entries "${first.selfDir}" and "${language.selfDir}"`
-      )
-    }
+    const hydrated = this.#hydrated?.get(files[0])
+    const parentId = hydrated
+      ? hydrated.parentId
+      : (this.#byDir.get(first.parentDir) ?? null)
+    if (!this.#hydrated)
+      for (const language of rest) {
+        const otherParentId = this.#byDir.get(language.parentDir) ?? null
+        assert(
+          parentId === otherParentId,
+          `Expected matching parents for entries "${first.selfDir}" and "${language.selfDir}"`
+        )
+      }
     const parent = parentId ? this.#mkNode(parentId) : null
     const type = this.#config.schema[collection.type]
     const node = new EntryNode(
@@ -703,6 +717,42 @@ export class EntryIndex extends EventTarget {
       return references
     })
     return this.#referencesBuild
+  }
+  hydrate(revision: string, objects: Array<ContentEntry>): string {
+    if (revision === this.sha) return revision
+    const previousIds = new Set(this.graph.nodes.map(node => node.id))
+    const versions = new Map<string, EntryVersionData>()
+    const hydrated = new Map<string, HydratedEntryVersion>()
+    const references = new EntryReferenceIndex(this.#config)
+    for (const object of objects) {
+      for (const version of object.versions) {
+        const entry = version.entry
+        versions.set(entry.filePath, {
+          id: entry.id,
+          type: entry.type,
+          index: entry.index,
+          searchableText: entry.searchableText,
+          title: entry.title,
+          data: entry.data,
+          seeded: entry.seeded,
+          rowHash: entry.rowHash,
+          fileHash: entry.fileHash
+        })
+        hydrated.set(entry.filePath, entry)
+        references.replaceFile(entry.filePath, version.references)
+      }
+    }
+    this.graph = new EntryGraph(this.#config, versions, this.#seeds, hydrated)
+    this.#references = references
+    this.#referencesBuild = undefined
+    this.tree = contentTree(revision, hydrated.values())
+    this.initialSync = this.tree
+    const changedIds = new Set(previousIds)
+    for (const object of objects) changedIds.add(object.id)
+    this.dispatchEvent(
+      new IndexEvent({op: 'index', sha: revision, ids: [...changedIds]})
+    )
+    return revision
   }
   async sync(source: Source): Promise<string> {
     return this.#syncLimit(async () => {
@@ -888,6 +938,32 @@ export class EntryIndex extends EventTarget {
     const from = await source.getTree()
     return new EntryTransaction(this.#config, this, source, from)
   }
+}
+
+function contentTree(
+  revision: string,
+  versions: Iterable<HydratedEntryVersion>
+): ReadonlyTree {
+  const root: Array<SourceTreeEntry> = []
+  for (const version of versions) {
+    const segments = version.filePath.split('/')
+    let current = root
+    for (const [index, name] of segments.entries()) {
+      const isFile = index === segments.length - 1
+      if (isFile) {
+        current.push({name, mode: '100644', sha: version.fileHash})
+        continue
+      }
+      let directory = current.find(entry => entry.name === name)
+      if (!directory) {
+        directory = {name, mode: '040000', sha: revision, entries: []}
+        current.push(directory)
+      }
+      directory.entries ??= []
+      current = directory.entries
+    }
+  }
+  return new ReadonlyTree({sha: revision, entries: root})
 }
 
 interface Seed {

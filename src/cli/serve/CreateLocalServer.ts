@@ -86,7 +86,8 @@ export function createLocalServer(
     return handleApi(request, {
       isDev: true,
       handlerUrl: new URL(request.url.split('?')[0]),
-      apiKey: process.env.ALINEA_API_KEY || 'dev'
+      apiKey: process.env.ALINEA_API_KEY || '',
+      internalToken: 'dev'
     })
   }
   const devDir = path.join(staticDir, 'dev')
@@ -131,7 +132,6 @@ export function createLocalServer(
     ...buildOptions,
     plugins,
     alias,
-    external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.NODE_ENV': production ? '"production"' : '"development"',

@@ -57,7 +57,9 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
         status: 400
       })
     try {
-      const previews = new JWTPreviews(context.apiKey)
+      const previews = new JWTPreviews(
+        context.apiKey || context.internalToken || 'dev'
+      )
       const previewToken = searchParams.get('preview')
       if (previewToken) {
         const {draftMode} = await import('next/headers')

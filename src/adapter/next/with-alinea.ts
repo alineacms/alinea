@@ -25,7 +25,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const adminPath = resolveAdminPath()
   if (!adminPath) {
     console.warn(
-      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI and deploy @alinea/generated.'
+      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI.'
     )
   }
   let nextVersion = 15
@@ -57,15 +57,18 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const rewrites = adminPath
     ? createRewrites(config, adminPath)
     : config.rewrites
+  const env = {
+    ...config.env,
+    ALINEA_ADMIN_PATH: process.env.ALINEA_ADMIN_PATH,
+    ALINEA_CONFIG_ID: process.env.ALINEA_CONFIG_ID,
+    ALINEA_SOURCE_ID: process.env.ALINEA_SOURCE_ID
+  }
   if (nextVersion < 15)
     return {
       ...config,
+      env,
       experimental: {
-        ...config.experimental,
-        serverComponentsExternalPackages: [
-          ...(config.experimental?.serverComponentsExternalPackages ?? []),
-          '@alinea/generated'
-        ]
+        ...config.experimental
       },
       images,
       redirects,
@@ -73,10 +76,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     }
   return {
     ...config,
-    serverExternalPackages: [
-      ...(config.serverExternalPackages ?? []),
-      '@alinea/generated'
-    ],
+    env,
     images,
     redirects,
     rewrites
@@ -147,20 +147,9 @@ function createRewrites(config: NextConfig, adminPath: string) {
   }
 }
 
-interface GeneratedSettings {
-  adminPath?: unknown
-}
-
 function resolveAdminPath(): string | undefined {
-  try {
-    const require = createRequire(resolve('./index.js'))
-    const location = require.resolve('@alinea/generated/settings.json')
-    const settings = JSON.parse(
-      readFileSync(location, 'utf-8')
-    ) as GeneratedSettings
-    if (typeof settings.adminPath === 'string' && settings.adminPath)
-      return normalizeBasePath(settings.adminPath)
-  } catch {}
+  const adminPath = process.env.ALINEA_ADMIN_PATH
+  if (adminPath) return normalizeBasePath(adminPath)
 }
 
 function normalizeBasePath(value: string): string {

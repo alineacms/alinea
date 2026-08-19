@@ -94,6 +94,7 @@ test('explicitDeny', async () => {
   test.ok(policy.canRead(b))
   test.ok(policy.canCreate(c))
   test.not.ok(policy.canRead(c))
+  test.not.ok(policy.get(c).read)
 })
 
 test('admin permissions', async () => {
@@ -215,6 +216,16 @@ test('Policy.from creates a copy', async () => {
   // Mutating policy1 does not affect policy2
   policy1.set({id: a.id, deny: {read: true}})
   test.ok(policy2.canRead(a))
+})
+
+test('Policy export can be imported without evaluating a role', async () => {
+  const original = new WriteablePolicy(scope)
+  await explicitDeny.permissions(original, undefined!)
+  const imported = Policy.import(original.export())
+
+  test.ok(imported.equals(original))
+  test.ok(imported.canRead(b))
+  test.not.ok(imported.canRead(c))
 })
 
 test('Policy.concat merges permissions', async () => {

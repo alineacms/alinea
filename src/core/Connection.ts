@@ -1,5 +1,6 @@
 import type {Request, Response} from '@alinea/iso'
 import type {CommitRequest} from './db/CommitRequest.js'
+import type {ContentEntry, ContentState} from './ContentSync.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
@@ -47,6 +48,8 @@ export interface LocalConnection extends Connection, CapabilitiesApi {
     query: Query
   ): Promise<AnyQueryResult<Query>>
   user(): Promise<User | undefined>
+  contentState?(revision?: string): Promise<ContentState | undefined>
+  contentEntries?(hashes: Array<string>): Promise<Record<string, ContentEntry>>
 }
 
 export interface SyncApi {
@@ -87,6 +90,7 @@ export interface RequestContext {
   isDev: boolean
   handlerUrl: URL
   apiKey: string
+  internalToken?: string
   user?: User
   token?: string
 }

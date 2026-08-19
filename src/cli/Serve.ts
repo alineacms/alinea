@@ -54,7 +54,7 @@ export async function serve(options: ServeOptions): Promise<void> {
         )
       },
       dashboardUrl,
-      onAfterGenerate(msg, config) {
+      onAfterGenerate(msg, config, release) {
         dashboardUrl.then(url => {
           const version = gray(pkg.version)
           const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
@@ -67,7 +67,9 @@ export async function serve(options: ServeOptions): Promise<void> {
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({
             ALINEA_DEV_SERVER: url,
-            ALINEA_ADMIN_PATH: Config.adminPath(config)
+            ALINEA_ADMIN_PATH: Config.adminPath(config),
+            ALINEA_CONFIG_ID: release.configId,
+            ALINEA_SOURCE_ID: release.sourceId
           })
         })
       }

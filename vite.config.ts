@@ -40,7 +40,6 @@ export default defineConfig({
       neverBundle: [
         'fs-extra',
         '@alinea/iso',
-        '@alinea/generated',
         'next',
         'react',
         'sharp',

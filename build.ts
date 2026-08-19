@@ -1,6 +1,5 @@
 import {ReporterPlugin} from '@esbx/reporter'
 import {commonjs} from '@hyrious/esbuild-plugin-commonjs'
-import {dequal} from 'dequal'
 import esbuild, {
   type BuildContext,
   type BuildOptions,
@@ -36,7 +35,6 @@ const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
   .concat([
     'fs-extra',
-    '@alinea/generated',
     '@alinea/iso',
     '@alinea/sqlite-wasm',
     'next',
@@ -379,7 +377,10 @@ function jsEntry({
             if (!test && file.endsWith('.test.tsx')) return false
             return !file.endsWith('.d.ts') && !file.endsWith('.stories.tsx')
           })
-          if (!context || !dequal(currentFiles, files)) {
+          const filesChanged =
+            currentFiles.length !== files.length ||
+            currentFiles.some((file, index) => file !== files[index])
+          if (!context || filesChanged) {
             context = await esbuild.context({
               plugins,
               format: 'esm',

@@ -42,6 +42,7 @@ export async function* compileConfig(ctx: GenerateContext) {
     ...config,
     outdir: outDir,
     entryPoints: {config: configLocation},
+    outExtension: {'.js': '.mjs'},
     sourcemap: true
   })
   const halt = (error: Error) => {

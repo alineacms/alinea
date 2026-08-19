@@ -1,0 +1,27 @@
+{
+  "_id": "2yttiWCu3gsP5Yxs6YSEuh8RiA2",
+  "_type": "Folder",
+  "_index": "a0",
+  "title": "New 123",
+  "childrenLink": null,
+  "metadata": {
+    "title": "",
+    "description": "",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1786975975,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1786975975,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

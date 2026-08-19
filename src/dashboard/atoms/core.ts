@@ -2,8 +2,8 @@ import {Config} from '#/core/Config.js'
 import {LocalConnection} from '#/core/Connection.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom, useStore} from 'jotai'
-import {ComponentType} from 'react'
-import {AppProps} from '../App.js'
+import type {ComponentType} from 'react'
+import type {AppProps} from '../App.js'
 import {requiredAtom} from './utils.js'
 
 export const graphAtom = requiredAtom<WriteableGraph>('graph')

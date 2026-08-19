@@ -1,11 +1,13 @@
 import type {Client} from '#/core/Client.js'
 import type {Config} from '#/core/Config.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
+import type {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
+import {ContentStateEvent} from './ContentStateEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
 import {MutationQueueEvent} from './MutationQueueEvent.js'
@@ -17,6 +19,10 @@ export interface ConfigBatch {
   config: Config
   client: Client
   views: Record<string, ComponentType>
+  cacheKey?: string
+  configId?: string
+  user?: User
+  policy?: Policy
   alineaDev?: boolean
 }
 
@@ -33,8 +39,7 @@ export async function boot(gen: ConfigGenerator) {
       ;[events, worker] = createSharedWorker()
     } catch {
       console.warn('Shared worker not supported, falling back to local worker.')
-      const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
-      events = worker = new DashboardWorker(source)
+      events = worker = new DashboardWorker(globalThis.indexedDB)
     }
     const scripts = document.getElementsByTagName('script')
     const element = scripts[scripts.length - 1]
@@ -55,7 +60,14 @@ export async function boot(gen: ConfigGenerator) {
         link.after(copy)
       }
       const isLocal = worker instanceof DashboardWorker
-      if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
+      if (isLocal)
+        await worker.load(
+          batch.revision,
+          batch.config,
+          batch.client,
+          batch.cacheKey,
+          batch.configId
+        )
       if (batch.revision !== lastRevision) {
         const db = new WorkerDB(batch.config, worker, batch.client, events)
         root.render(<App graph={db} events={events} {...batch} />)
@@ -74,6 +86,8 @@ function createSharedWorker(): [EventTarget, DashboardWorker] {
   worker.port.addEventListener('message', ({data}) => {
     if (data.type === IndexEvent.type) {
       events.dispatchEvent(new IndexEvent(data.data))
+    } else if (data.type === ContentStateEvent.type) {
+      events.dispatchEvent(new ContentStateEvent(data.policy))
     } else if (data.type === MutationQueueEvent.type) {
       events.dispatchEvent(new MutationQueueEvent(data.entries))
     }

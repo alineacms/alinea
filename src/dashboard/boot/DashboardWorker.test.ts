@@ -1,8 +1,10 @@
 import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
+import {createContentState} from '#/backend/ContentSync.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {Policy} from '#/core/Role.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
@@ -10,6 +12,70 @@ import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {DashboardWorker} from './DashboardWorker.js'
+
+test('selectively fetches changed content objects and hydrates the index', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, fixture)
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let requested: Array<string> = []
+  const client: LocalConnection = {
+    ...baseClient,
+    async contentState(revision) {
+      const {state} = await createContentState(
+        remoteDB,
+        Policy.ALLOW_ALL,
+        'test-config'
+      )
+      return state.revision === revision ? undefined : state
+    },
+    async contentEntries(hashes) {
+      requested.push(...hashes)
+      const {objects} = await createContentState(
+        remoteDB,
+        Policy.ALLOW_ALL,
+        'test-config'
+      )
+      return Object.fromEntries(hashes.map(hash => [hash, objects[hash]]))
+    }
+  }
+  const worker = new DashboardWorker(indexedDB)
+  worker.dispatchEvent = () => true
+  await worker.load(
+    'content-protocol',
+    cms.config,
+    client,
+    'content-protocol-test',
+    'test-config'
+  )
+  expect(requested.length).toBeGreaterThan(1)
+
+  requested = []
+  await worker.sync()
+  expect(requested).toEqual([])
+
+  const entry = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  await baseClient.mutate([
+    {
+      op: 'update',
+      id: entry._id,
+      locale: null,
+      status: 'published',
+      set: {title: 'Server title'}
+    }
+  ])
+  await worker.sync()
+
+  expect(requested).toHaveLength(1)
+  expect(
+    await (await worker.db).get({type: cms.schema.DemoRecipe, id: entry._id})
+  ).toMatchObject({title: 'Server title'})
+})
 
 test('recovers from an incompatible IndexedDB cache using the remote source', async () => {
   const staleSource = new MemorySource()
@@ -71,7 +137,7 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
   ).toMatchObject({title: 'Chocolate chip'})
 })
 
-test('discarding failed mutations restores the remote state', async () => {
+test('failed server-first mutations leave local state unchanged', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
   await remoteDB.sync()
@@ -82,12 +148,8 @@ test('discarding failed mutations restores the remote state', async () => {
   const baseClient = createTestConnection(remoteDB)
   let unavailable = false
   let initialSync: (() => void) | undefined
-  let failedRecovery: (() => void) | undefined
   const initialSyncStarted = new Promise<void>(resolve => {
     initialSync = resolve
-  })
-  const recoveryFailed = new Promise<void>(resolve => {
-    failedRecovery = resolve
   })
   const client: LocalConnection = {
     ...baseClient,
@@ -96,10 +158,7 @@ test('discarding failed mutations restores the remote state', async () => {
       return baseClient.mutate(mutations)
     },
     async getTreeIfDifferent(sha) {
-      if (unavailable) {
-        failedRecovery?.()
-        throw new Error('Remote unavailable')
-      }
+      if (unavailable) throw new Error('Remote unavailable')
       initialSync?.()
       return baseClient.getTreeIfDifferent(sha)
     },
@@ -128,11 +187,12 @@ test('discarding failed mutations restores the remote state', async () => {
     set: {title: 'Optimistic title'}
   }
   unavailable = true
-  await worker.queue('test-mutation', [mutation])
-  await recoveryFailed
+  await expect(worker.queue('test-mutation', [mutation])).rejects.toThrow(
+    'Remote unavailable'
+  )
   expect(
     await db.get({type: cms.schema.DemoRecipe, id: original._id})
-  ).toMatchObject({title: 'Optimistic title'})
+  ).toMatchObject({title: original.title})
 
   unavailable = false
   await worker.discardQueue()

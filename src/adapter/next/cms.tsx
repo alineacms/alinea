@@ -40,13 +40,13 @@ export class NextCMS<
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
-    const {isDev, handlerUrl, apiKey} = await requestContext(this.config)
+    const {isDev, handlerUrl, internalToken} = await requestContext(this.config)
     const client = new Client({
       config: this.config,
       url: handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
+        headers.set('Authorization', `Bearer ${internalToken}`)
         return {...init, headers}
       }
     })

@@ -16,7 +16,8 @@ export async function generateDashboard(
   {configLocation, rootDir, configDir}: GenerateContext,
   cms: CMS,
   handlerUrl: string,
-  staticFile: string
+  staticFile: string,
+  configId: string
 ) {
   if (!staticFile.endsWith('.html'))
     throw new Error(
@@ -24,7 +25,8 @@ export async function generateDashboard(
     )
   const buildId = createId()
   const entryPoints = {
-    entry: 'alinea/cli/static/dashboard/entry'
+    bootstrap: 'alinea/cli/static/dashboard/bootstrap',
+    [`release/${configId}/config`]: 'alinea/cli/static/dashboard/entry'
   }
   const basename = path.basename(staticFile, '.html')
   const assetsFolder = path.join(rootDir, path.dirname(staticFile), basename)
@@ -48,7 +50,6 @@ export async function generateDashboard(
       'alinea/next': 'alinea/core',
       '#alinea/config': configLocation
     },
-    external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
@@ -66,12 +67,11 @@ export async function generateDashboard(
         <!DOCTYPE html>
         <meta charset="utf-8" />
         <link rel="icon" href="data:," />
-        <link href="${baseUrl}/entry.css?${buildId}" rel="stylesheet" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
         <body>
-          <script type="module" src="${baseUrl}/entry.js?buildId=${buildId}&handlerUrl=${encodeURIComponent(
+          <script type="module" src="${baseUrl}/bootstrap.js?buildId=${buildId}&handlerUrl=${encodeURIComponent(
             handlerUrl
           )}">
           </script>

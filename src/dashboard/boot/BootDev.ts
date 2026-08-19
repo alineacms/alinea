@@ -1,4 +1,6 @@
 import {Client} from '#/core/Client.js'
+import {Policy} from '#/core/Role.js'
+import {localUser} from '#/core/User.js'
 import {SharedEventSource} from 'shared-event-source'
 import {boot, type ConfigBatch, type ConfigGenerator} from './Boot.js'
 
@@ -15,10 +17,18 @@ async function* getConfig(): ConfigGenerator {
     const {cms, views} = await loadConfig(revision)
     const {config} = cms
     const client = new Client({config, url})
+    const state = await client.contentState()
+    if (!state) throw new Error('Content state was not available')
+    const userData = process.env.ALINEA_USER as string | undefined
+    const user = userData ? JSON.parse(userData) : localUser
     return {
       local: true,
       alineaDev: Boolean(process.env.ALINEA_DEV),
       revision,
+      configId: state.configId,
+      cacheKey: `dev-${state.configId}-${user.sub}`,
+      user,
+      policy: Policy.import(state.policy),
       config,
       views,
       client

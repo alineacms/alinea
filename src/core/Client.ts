@@ -2,6 +2,7 @@ import {HandleAction} from '#/backend/HandleAction.js'
 import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
 import type {Config} from './Config.js'
+import type {ContentEntry, ContentState} from './ContentSync.js'
 import type {
   BackendCapabilities,
   DraftTransport,
@@ -152,6 +153,25 @@ export class Client implements LocalConnection {
       {action: HandleAction.Mutate},
       {method: 'POST', body: JSON.stringify(mutations)}
     ).then<{sha: string}>(this.#failOnHttpError)
+  }
+
+  async contentState(revision?: string): Promise<ContentState | undefined> {
+    const headers = new Headers()
+    headers.set('accept', 'application/json')
+    if (revision) headers.set('if-none-match', `"${revision}"`)
+    const response = await this.#request(
+      {action: HandleAction.ContentState},
+      {headers}
+    )
+    if (response.status === 304) return undefined
+    return this.#failOnHttpError<ContentState>(response)
+  }
+
+  contentEntries(hashes: Array<string>): Promise<Record<string, ContentEntry>> {
+    return this.#requestJson(
+      {action: HandleAction.ContentEntries},
+      {method: 'POST', body: JSON.stringify({hashes})}
+    ).then<Record<string, ContentEntry>>(this.#failOnHttpError)
   }
 
   authenticate(applyAuth: AuthenticateRequest, unauthorized: () => void) {

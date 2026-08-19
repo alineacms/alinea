@@ -130,19 +130,21 @@ function pack(input: PermissionInput): number {
 }
 
 function entitlements(packed: number): Permissions {
+  const granted = (permission: Permission) =>
+    (packed & permission) === permission && (packed & deny(permission)) === 0
   return {
-    create: Boolean(packed & Permission.Create),
-    read: Boolean(packed & Permission.Read),
-    update: Boolean(packed & Permission.Update),
-    delete: Boolean(packed & Permission.Delete),
-    reorder: Boolean(packed & Permission.Reorder),
-    move: Boolean(packed & Permission.Move),
-    publish: Boolean(packed & Permission.Publish),
-    archive: Boolean(packed & Permission.Archive),
-    upload: Boolean(packed & Permission.Upload),
-    explore: Boolean(packed & Permission.Explore),
-    manageMembers: Boolean(packed & Permission.ManageMembers),
-    all: Boolean(packed & Permission.All)
+    create: granted(Permission.Create),
+    read: granted(Permission.Read),
+    update: granted(Permission.Update),
+    delete: granted(Permission.Delete),
+    reorder: granted(Permission.Reorder),
+    move: granted(Permission.Move),
+    publish: granted(Permission.Publish),
+    archive: granted(Permission.Archive),
+    upload: granted(Permission.Upload),
+    explore: granted(Permission.Explore),
+    manageMembers: granted(Permission.ManageMembers),
+    all: granted(Permission.All)
   }
 }
 
@@ -183,6 +185,21 @@ export class Policy {
 
   constructor(root?: Permission) {
     if (root !== undefined) this.acl.root = root
+  }
+
+  static import(data: PolicyData): Policy {
+    const policy = new Policy()
+    policy.acl.root = data.root
+    for (const [key, permissions] of data.resources)
+      policy.acl.set(key, permissions)
+    return policy
+  }
+
+  export(): PolicyData {
+    return {
+      root: this.acl.root,
+      resources: Array.from(this.acl)
+    }
   }
 
   static from(policy: Policy): Policy {
@@ -312,6 +329,11 @@ export class Policy {
   canAll(resource?: Resource): boolean {
     return this.check(Permission.All, resource)
   }
+}
+
+export interface PolicyData {
+  root: number
+  resources: Array<[key: string, permissions: number]>
 }
 
 export class WriteablePolicy extends Policy {

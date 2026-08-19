@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import type {ContentEntry, ContentState} from '#/core/ContentSync.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -12,8 +13,13 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
+import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import type {Source} from '#/core/source/Source.js'
 import pLimit from 'p-limit'
+import {ContentCache} from './ContentCache.js'
+import {ContentStateEvent} from './ContentStateEvent.js'
 import {
   MutationQueueEvent,
   type MutationQueueEntry,
@@ -28,10 +34,15 @@ interface MutationQueueItem extends MutationQueueEntry {
   mutationSummaries: Array<MutationQueueMutation>
   attempt: number
   sha?: string
+  committed?: boolean
 }
 
 export class DashboardWorker extends EventTarget {
-  #source: Source
+  #source: Source | undefined
+  #indexedDB: IDBFactory | undefined
+  #contentCache: ContentCache | undefined
+  #cacheKey: string | undefined
+  #configId: string | undefined
   #localDB: LocalDB | undefined
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<{db: LocalDB; client: LocalConnection}>()
@@ -42,9 +53,10 @@ export class DashboardWorker extends EventTarget {
   #blocked = false
   #syncInterval: ReturnType<typeof setInterval> | undefined
 
-  constructor(source: Source) {
+  constructor(source: Source | IDBFactory) {
     super()
-    this.#source = source
+    if ('getTree' in source) this.#source = source
+    else this.#indexedDB = source
   }
 
   get db() {
@@ -65,15 +77,7 @@ export class DashboardWorker extends EventTarget {
       remote.pendingCount > 0
     )
       return db.sha
-    // The source is IndexedDB: if it has data, we can boot from cache.
-    const sourceTree = await db.source.getTree()
-    // The index is in-memory and starts empty for every fresh worker.
-    if (db.index.tree.isEmpty && !sourceTree.isEmpty) await db.sync()
-    // Always schedule a remote freshness check, but do not block boot if local
-    // data was enough to build the index.
-    const sync = remote(() => db.syncWith(client))
-    if (sourceTree.isEmpty) await sync
-    return db.sha
+    return remote(() => this.#refresh(db, client))
   }
 
   async sha() {
@@ -97,10 +101,13 @@ export class DashboardWorker extends EventTarget {
       this.#queue.push(item)
       this.#emitQueue()
       try {
-        await db.mutate(mutations)
-        item.sha = db.sha
+        item.status = 'syncing'
         this.#emitQueue()
-        this.#flush(item)
+        const client = await this.#client
+        await remote(() => client.mutate(mutations))
+        item.committed = true
+        item.sha = await remote(() => this.#refresh(db, client, true))
+        this.#removeQueueItem(item)
         return item.sha
       } catch (error) {
         if (error instanceof EntryUrlConflictError) {
@@ -120,67 +127,44 @@ export class DashboardWorker extends EventTarget {
     if (!this.#blocked) return
     await this.#local(async () => {
       const db = await this.db
+      const client = await this.#client
       this.#blocked = false
-      for (const item of this.#queue) {
+      for (const item of [...this.#queue]) {
         item.attempt += 1
-        item.status = 'pending'
+        item.status = 'syncing'
         item.error = undefined
-        if (!item.sha) {
-          try {
-            await db.mutate(item.mutations)
-            item.sha = db.sha
-          } catch (error) {
-            this.#blocked = true
-            item.status = 'failed'
-            item.error = errorMessage(error)
-            this.#emitQueue()
-            throw error
+        this.#emitQueue()
+        try {
+          if (!item.committed) {
+            await remote(() => client.mutate(item.mutations))
+            item.committed = true
           }
+          item.sha = await remote(() => this.#refresh(db, client, true))
+          this.#removeQueueItem(item)
+        } catch (error) {
+          this.#blocked = true
+          item.status = 'failed'
+          item.error = errorMessage(error)
+          this.#emitQueue()
+          throw error
         }
       }
     })
-    this.#emitQueue()
-    for (const item of this.#queue) this.#flush(item)
   }
 
   async discardQueue(): Promise<void> {
     await this.#local(async () => {
       if (this.#queue.length === 0) return
-      const db = await this.db
-      const client = await this.#client
+      const committed = this.#queue.some(item => item.committed)
+      if (committed) {
+        const db = await this.db
+        const client = await this.#client
+        await remote(() => this.#refresh(db, client, true))
+      }
       for (const item of this.#queue) item.attempt += 1
-      await db.syncWith(client)
       this.#blocked = false
       this.#queue = []
       this.#emitQueue()
-    })
-  }
-
-  #flush(item: MutationQueueItem) {
-    const attempt = item.attempt
-    void remote(async () => {
-      if (item.attempt !== attempt) return
-      if (this.#blocked) return
-      if (item.status === 'failed') return
-      item.status = 'syncing'
-      this.#emitQueue()
-      const client = await this.#client
-      const db = await this.db
-      try {
-        const {sha} = await client.mutate(item.mutations)
-        if (remote.pendingCount === 0 && sha !== item.sha)
-          await db.syncWith(client)
-        this.#removeQueueItem(item)
-      } catch (error) {
-        this.#blocked = true
-        item.status = 'failed'
-        item.error = errorMessage(error)
-        this.#emitQueue()
-        try {
-          await db.syncWith(client)
-          item.sha = undefined
-        } catch {}
-      }
     })
   }
 
@@ -216,17 +200,41 @@ export class DashboardWorker extends EventTarget {
     return db.referencesTo(query)
   }
 
-  async load(revision: string, config: Config, client: LocalConnection) {
-    if (this.#currentRevision === revision) {
+  async load(
+    revision: string,
+    config: Config,
+    client: LocalConnection,
+    cacheKey?: string,
+    configId?: string
+  ) {
+    if (
+      this.#currentRevision === revision &&
+      this.#cacheKey === cacheKey &&
+      this.#configId === configId
+    ) {
+      this.#localClient = client
       await this.sync()
       return
     }
     this.#currentRevision = revision
-    const db = new LocalDB(config, this.#source)
+    if (this.#cacheKey !== cacheKey) this.#contentCache = undefined
+    this.#cacheKey = cacheKey
+    this.#configId = configId
+    const contentClient = isContentClient(client) && cacheKey && this.#indexedDB
+    const source = contentClient
+      ? new MemorySource()
+      : (this.#source ?? new IndexedDBSource(this.#indexedDB!, 'alinea'))
+    const db = new LocalDB(config, source)
     try {
       if (this.#defer) this.#defer()
-      const cacheReady = await this.#syncLocalIndex(db)
-      if (!cacheReady) await remote(() => db.syncWith(client))
+      let cacheReady = false
+      if (contentClient) {
+        await this.#syncContent(db, client, cacheKey)
+        cacheReady = true
+      } else {
+        cacheReady = await this.#syncLocalIndex(db)
+        if (!cacheReady) await remote(() => db.syncWith(client))
+      }
       this.#localDB = db
       this.#localClient = client
       this.#nextLoad.resolve({db, client})
@@ -238,7 +246,7 @@ export class DashboardWorker extends EventTarget {
       this.#defer = () => {
         db.index.removeEventListener(IndexEvent.type, listen)
       }
-      this.#startSyncing(cacheReady)
+      this.#startSyncing(Boolean(cacheReady && !contentClient))
     } catch (cause) {
       this.#nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
@@ -264,6 +272,90 @@ export class DashboardWorker extends EventTarget {
     if (refreshImmediately) sync()
     this.#syncInterval = setInterval(sync, syncInterval)
   }
+
+  async #refresh(
+    db: LocalDB,
+    client: LocalConnection,
+    force = false
+  ): Promise<string> {
+    if (isContentClient(client) && this.#cacheKey && this.#indexedDB)
+      return this.#syncContent(db, client, this.#cacheKey, force)
+    return db.syncWith(client)
+  }
+
+  async #syncContent(
+    db: LocalDB,
+    client: ContentClient,
+    cacheKey: string,
+    force = false
+  ): Promise<string> {
+    this.#contentCache ??= new ContentCache(
+      this.#indexedDB!,
+      `alinea-content-${cacheKey}`
+    )
+    const cache = this.#contentCache
+    const cached = await cache.getState()
+    let state: ContentState | undefined
+    try {
+      state = await client.contentState(force ? undefined : cached?.revision)
+    } catch (error) {
+      if (force || !cached) throw error
+      state = cached
+    }
+    state ??= cached
+    if (!state) throw new Error('Content state was not available')
+    if (this.#configId && state.configId !== this.#configId)
+      throw new Error('Content state belongs to a different config release')
+    if (db.sha === state.revision) return state.revision
+    const hashes = Array.from(new Set(Object.values(state.entries)))
+    const cachedObjects = await cache.getObjects(hashes)
+    const validObjects: Record<string, ContentEntry> = {}
+    const missing: Array<string> = []
+    for (const hash of hashes) {
+      const object = cachedObjects[hash]
+      if (object && (await contentHash(object)) === hash)
+        validObjects[hash] = object
+      else missing.push(hash)
+    }
+    for (let offset = 0; offset < missing.length; offset += 250) {
+      const batch = missing.slice(offset, offset + 250)
+      const received = await client.contentEntries(batch)
+      for (const hash of batch) {
+        const object = received[hash]
+        if (!object || (await contentHash(object)) !== hash)
+          throw new Error(`Invalid content object: ${hash}`)
+        validObjects[hash] = object
+      }
+    }
+    const objects = Object.entries(state.entries).map(([id, hash]) => {
+      const object = validObjects[hash]
+      if (!object || object.id !== id)
+        throw new Error(`Missing content entry: ${id}`)
+      return object
+    })
+    await cache.put(state, validObjects)
+    const revision = db.index.hydrate(state.revision, objects)
+    this.dispatchEvent(new ContentStateEvent(state.policy))
+    return revision
+  }
+}
+
+interface ContentClient extends LocalConnection {
+  contentState(revision?: string): Promise<ContentState | undefined>
+  contentEntries(hashes: Array<string>): Promise<Record<string, ContentEntry>>
+}
+
+function isContentClient(client: LocalConnection): client is ContentClient {
+  return (
+    typeof client.contentState === 'function' &&
+    typeof client.contentEntries === 'function'
+  )
+}
+
+const contentEncoder = new TextEncoder()
+
+function contentHash(value: unknown): Promise<string> {
+  return hashBlob(contentEncoder.encode(JSON.stringify(value)))
 }
 
 function errorMessage(error: unknown): string {

@@ -48,6 +48,7 @@ export type DashboardAuthState =
 
 interface DashboardAuthCheck {
   type: 'check'
+  keepAuthenticated?: boolean
 }
 
 interface DashboardAuthSetupCloud {
@@ -57,6 +58,10 @@ interface DashboardAuthSetupCloud {
 export type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
 
 const authState = atom<DashboardAuthState>({status: 'loading'})
+
+export const preloadAuthAtom = atom(null, (_get, set, user: User) => {
+  set(authState, {status: 'authenticated', user})
+})
 
 export const setUserRolesAtom = atom(null, (get, set, roles: Array<string>) => {
   const state = get(authAtom)
@@ -87,6 +92,9 @@ export const authAtom = Object.assign(
       }
 
       if (!get(authRequiredAtom)) return
+
+      if (action.keepAuthenticated && get(authState).status === 'authenticated')
+        return
 
       const client = get(clientAtom)
       if (!(client instanceof Client)) {
@@ -137,7 +145,7 @@ export const authAtom = Object.assign(
   ),
   {
     onMount(checkAuth: (action?: DashboardAuthAction) => void) {
-      checkAuth({type: 'check'})
+      checkAuth({type: 'check', keepAuthenticated: true})
     }
   }
 )

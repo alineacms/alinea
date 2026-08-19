@@ -5,11 +5,11 @@ import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
 import type {BuildOptions} from 'esbuild'
-import {generate} from '../Generate.js'
+import {generate, type GeneratedRelease} from '../Generate.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
 import {reportError} from '../util/Report.js'
@@ -36,7 +36,11 @@ export interface CreateDevServerOptions {
   alineaDev?: boolean
   production?: boolean
   dashboardUrl: Promise<string>
-  onAfterGenerate?: (message: string, config: Config) => void
+  onAfterGenerate?: (
+    message: string,
+    config: Config,
+    release: GeneratedRelease
+  ) => void
 }
 
 export interface DevServer {
@@ -117,7 +121,7 @@ export async function createDevServer(
 
   async function reloadServer() {
     try {
-      for await (const {cms, db} of generateFiles) {
+      for await (const {cms, db, release} of generateFiles) {
         if (currentCMS === cms) {
           context.liveReload.reload('refetch')
           continue
@@ -127,7 +131,11 @@ export async function createDevServer(
         const handleApi = createHandler({
           cms,
           remote: backend,
-          db
+          db,
+          release: {
+            configId: release.configId,
+            adminPath: Config.adminPath(cms.config)
+          }
         })
         const nextServer = createLocalServer(
           context,

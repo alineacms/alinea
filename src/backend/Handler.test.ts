@@ -279,6 +279,86 @@ test('rejects oversized uploads before preparing a remote upload', async () => {
   test.is(prepareCalls, 0)
 })
 
+test('serves dashboard bootstrap and content state only through user access', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main}
+  })
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    release: {configId: 'config-release', adminPath: 'admin'},
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async getTreeIfDifferent() {
+          return undefined
+        },
+        async *getBlobs() {}
+      })
+    }
+  })
+
+  const bootstrap = await handle(
+    new Request('http://localhost/api?action=bootstrap', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.is(bootstrap.status, 200)
+  const bootstrapData = await bootstrap.json()
+  test.equal(
+    {
+      ...bootstrapData,
+      cacheKey: typeof bootstrapData.cacheKey
+    },
+    {
+      configId: 'config-release',
+      moduleUrl: '/admin/release/config-release/config.js',
+      styleUrl: '/admin/release/config-release/config.css',
+      cacheKey: 'string'
+    }
+  )
+  test.is(bootstrap.headers.get('cache-control'), 'private, no-store')
+
+  const content = await handle(
+    new Request('http://localhost/api?action=contentState', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.is(content.status, 200)
+  const state = await content.json()
+  test.is(state.configId, 'config-release')
+  test.equal(state.entries, {})
+
+  const rawTree = await handle(
+    new Request('http://localhost/api?action=tree&sha=current', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.is(rawTree.status, 401)
+
+  const internalTree = await handle(
+    new Request('http://localhost/api?action=tree&sha=current', {
+      headers: {
+        accept: 'application/json',
+        authorization: 'Bearer internal'
+      }
+    }),
+    {...requestContext(), internalToken: 'internal'}
+  )
+  test.is(internalTree.status, 200)
+})
+
 function userRequest(operation: string): Request {
   return new Request(
     `http://localhost/api?action=user&operation=${operation}`,

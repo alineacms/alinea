@@ -54,7 +54,12 @@ export const preloadUserPolicyAtom = atom(
   }
 )
 
+export const preloadPolicyAtom = atom(null, (_get, set, policy: Policy) => {
+  set(preloadedPolicyAtom, policy)
+})
+
 export const authReady = atom(async get => {
+  if (get(preloadedUserAtom) && get(preloadedPolicyAtom)) return
   // Observe the unwrapped atoms before awaiting so they retain their resolved
   // values while their resources revalidate.
   get(resolvedUser)
@@ -68,6 +73,6 @@ export const authReady = atom(async get => {
 export const canManageMembersAtom = atom(async get => {
   const capabilities = await get(clientAtom).capabilities()
   if (!capabilities.users) return false
-  const policy = await get(policyResult)
-  return policy.canManageMembers()
+  await get(authReady)
+  return get(policyAtom).canManageMembers()
 })

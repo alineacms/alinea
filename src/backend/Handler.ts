@@ -2,6 +2,8 @@ import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {Entry} from '#/core.js'
 import type {CMS} from '#/core/CMS.js'
+import {Config} from '#/core/Config.js'
+import type {ContentStateResponse} from '#/core/ContentSync.js'
 import type {
   AuthedContext,
   DraftTransport,
@@ -16,12 +18,14 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
+import {createContentState} from './ContentSync.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
@@ -52,15 +56,29 @@ export interface HandlerOptions extends HandlerHooks {
   cms: CMS
   db: LocalDB | Promise<LocalDB>
   remote?: (context: RequestContext) => RemoteConnection
+  release?: {
+    configId: string
+    adminPath: string
+  }
 }
 
 export function createHandler({
   cms,
   remote = context => new CloudRemote(context, cms.config),
   db,
+  release,
   ...hooks
 }: HandlerOptions): Handler {
+  const configId = release?.configId ?? process.env.ALINEA_CONFIG_ID
+  const adminPath =
+    release?.adminPath ??
+    process.env.ALINEA_ADMIN_PATH ??
+    Config.adminPath(cms.config)
   const throttle = createThrottledSync()
+  const contentStates = new Map<
+    string,
+    {sourceSha: string; result: ContentStateResponse}
+  >()
   const previewParser = PLazy.from(async () => {
     const local = await db
     return createPreviewParser(local)
@@ -81,12 +99,15 @@ export function createHandler({
     }
 
     try {
-      const previews = new JWTPreviews(context.apiKey)
+      const previews = new JWTPreviews(
+        context.apiKey || context.internalToken || 'dev'
+      )
       const url = new URL(request.url)
       const params = url.searchParams
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
+      let internalRequest = false
 
       if (auth) {
         return cnx.authenticate(request, {
@@ -120,24 +141,25 @@ export function createHandler({
           return await cnx.previewUpload(entryId)
       }
 
-      try {
-        userCtx = await cnx.verify(request)
-        cnx = remote(userCtx)
-        userCtx = {
-          ...userCtx,
-          user: await cnx.enrichUser(userCtx.user)
-        }
-      } catch (cause) {
-        if (cause instanceof MissingCredentialsError) {
-          const authorization = request.headers.get('authorization')
-          const bearer = authorization?.slice('Bearer '.length)
-          if (!context.apiKey)
-            throw new MissingCredentialsError('Missing API key', {cause})
-          if (bearer !== context.apiKey)
-            throw new InvalidCredentialsError('Expected matching api key', {
+      const authorization = request.headers.get('authorization')
+      const bearer = authorization?.startsWith('Bearer ')
+        ? authorization.slice('Bearer '.length)
+        : undefined
+      if (context.internalToken && bearer === context.internalToken) {
+        internalRequest = true
+      } else {
+        try {
+          userCtx = await cnx.verify(request)
+          cnx = remote(userCtx)
+          userCtx = {
+            ...userCtx,
+            user: await cnx.enrichUser(userCtx.user)
+          }
+        } catch (cause) {
+          if (cause instanceof MissingCredentialsError && bearer)
+            throw new InvalidCredentialsError('Invalid internal token', {
               cause
             })
-        } else {
           throw cause
         }
       }
@@ -163,6 +185,9 @@ export function createHandler({
           })
         }
       }
+      const expectInternal = () => {
+        if (!internalRequest) throw new Response('Unauthorized', {status: 401})
+      }
 
       const body = PLazy.from(() => {
         const isJson = request.headers
@@ -171,6 +196,84 @@ export function createHandler({
         if (!isJson) throw new Response('Expected JSON', {status: 400})
         return request.json()
       })
+
+      const contentState = async () => {
+        const user = expectUser()
+        await local.syncWith(cnx)
+        if (!configId) throw new Error('Missing Alinea config release id')
+        const roles = user.claims.roles ?? []
+        const key = JSON.stringify([user.claims.sub, roles])
+        const cached = contentStates.get(key)
+        if (cached?.sourceSha === local.sha) return cached.result
+        const policy = await user.policy
+        const result = await createContentState(local, policy, configId)
+        contentStates.set(key, {sourceSha: local.sha, result})
+        return result
+      }
+
+      if (action === HandleAction.Bootstrap && request.method === 'GET') {
+        const user = expectUser()
+        expectJson()
+        if (!configId || !adminPath)
+          throw new Error('Missing Alinea dashboard release settings')
+        const normalized = adminPath.startsWith('/')
+          ? adminPath
+          : `/${adminPath}`
+        const base = `${normalized}/release/${configId}`
+        const cacheKey = await hashBlob(
+          new TextEncoder().encode(`${configId}:${user.claims.sub}`)
+        )
+        return Response.json(
+          {
+            configId,
+            moduleUrl: `${base}/config.js`,
+            styleUrl: `${base}/config.css`,
+            cacheKey
+          },
+          {headers: {'Cache-Control': 'private, no-store'}}
+        )
+      }
+
+      if (action === HandleAction.ContentState && request.method === 'GET') {
+        expectJson()
+        const {state} = await contentState()
+        if (request.headers.get('if-none-match') === `"${state.revision}"`)
+          return new Response(null, {
+            status: 304,
+            headers: {
+              'Cache-Control': 'private, no-store',
+              ETag: `"${state.revision}"`
+            }
+          })
+        return Response.json(state, {
+          headers: {
+            'Cache-Control': 'private, no-store',
+            ETag: `"${state.revision}"`
+          }
+        })
+      }
+
+      if (action === HandleAction.ContentEntries && request.method === 'POST') {
+        expectJson()
+        const {hashes} = object({hashes: array(string)})(await body)
+        if (hashes.length > 500)
+          throw new HttpError(
+            ErrorCode.BadRequest,
+            'Too many content objects requested'
+          )
+        const {state, objects} = await contentState()
+        const allowed = new Set(Object.values(state.entries))
+        const result = [...new Set(hashes)].map(hash => {
+          if (!allowed.has(hash))
+            throw new HttpError(ErrorCode.Unauthorized, 'Unknown content hash')
+          const object = objects[hash]
+          if (!object) throw new HttpError(404, 'Missing content entry')
+          return [hash, object] as const
+        })
+        return Response.json(Object.fromEntries(result), {
+          headers: {'Cache-Control': 'private, no-store'}
+        })
+      }
 
       if (action === HandleAction.User) {
         const user = expectUser()
@@ -210,6 +313,7 @@ export function createHandler({
 
       // Resolve
       if (action === HandleAction.Resolve && request.method === 'POST') {
+        expectInternal()
         expectJson()
         const raw = await request.text()
         const scope = getScope(cms.config)
@@ -271,6 +375,7 @@ export function createHandler({
       // Syncable
 
       if (action === HandleAction.Tree && request.method === 'GET') {
+        expectInternal()
         expectJson()
         const sha = string(url.searchParams.get('sha'))
         await local.syncWith(cnx)
@@ -279,6 +384,7 @@ export function createHandler({
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
+        expectInternal()
         const {shas} = object({shas: array(string)})(await body)
         await periodicSync(cnx)
         const tree = await local.source.getTree()
