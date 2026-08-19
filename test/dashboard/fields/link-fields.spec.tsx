@@ -29,6 +29,42 @@ async function expectVerticallyUnclipped(locator: Locator) {
   )
 }
 
+test('caps the compact picker height without showing a loader', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page.evaluate(() => {
+    document.documentElement.dataset.compactPickerLoaderSeen = 'false'
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[aria-label="Loading entry picker"]'))
+        document.documentElement.dataset.compactPickerLoaderSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
+
+  await app.page
+    .getByRole('list', {name: 'Browse page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const picker = app.page.getByRole('dialog', {
+    name: 'Pick a link',
+    exact: true
+  })
+  await expect(picker).toBeVisible()
+  const box = await picker.boundingBox()
+  expect(box?.height).toBeLessThanOrEqual(450)
+  await expect
+    .poll(() =>
+      app.page.evaluate(
+        () => document.documentElement.dataset.compactPickerLoaderSeen
+      )
+    )
+    .toBe('false')
+})
+
 test('opens a functional location in another workspace and root', async ({
   dashboard,
   mount
@@ -138,6 +174,42 @@ test('switches a localized card picker without showing its loader', async ({
       )
     )
     .toBe('false')
+})
+
+test('hides card navigation when picker locations are limited', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+
+  await app.page
+    .getByRole('list', {name: 'Limited page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const picker = await expandLinkPicker(app.page)
+  await picker
+    .getByRole('radiogroup', {name: 'Explorer view'})
+    .getByRole('radio', {name: 'Card view'})
+    .click()
+
+  await expect(
+    picker.getByRole('treegrid', {name: 'Link folders'})
+  ).toHaveCount(0)
+  await expect(
+    picker
+      .getByRole('radiogroup', {name: 'Explorer results'})
+      .getByRole('radio', {name: 'Browse'})
+  ).toBeChecked()
+  await expect(
+    picker.getByRole('switch', {name: 'All locations'})
+  ).toHaveCount(0)
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Alpha'})
+  ).toBeVisible()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Child'})
+  ).toHaveCount(0)
 })
 
 test('filters entries with a functional condition', async ({
@@ -478,6 +550,9 @@ test('preloads entries before card sidebar navigation commits', async ({
 
   await folders.getByRole('row', {name: /Folder/}).click()
   await expect(
+    folders.getByRole('row', {name: 'Child', exact: true})
+  ).toBeVisible()
+  await expect(
     picker.getByRole('checkbox', {name: 'Select Child'})
   ).toBeVisible()
   await expect
@@ -774,10 +849,12 @@ test('navigates through folders to matching rows in a link picker', async ({
     .getByRole('radiogroup', {name: 'Explorer view'})
     .getByRole('radio', {name: 'Card view'})
     .click()
+  const cardFolder = picker
+    .getByRole('grid', {name: 'Explorer entries'})
+    .getByRole('row', {name: 'Folder', exact: true})
+  await expect(cardFolder).toBeVisible()
   await expect(
-    picker.getByRole('grid', {name: 'Explorer entries'}).getByText('Folder', {
-      exact: true
-    })
+    cardFolder.getByRole('checkbox', {name: 'Select Folder'})
   ).toHaveCount(0)
   await picker
     .getByRole('treegrid', {name: 'Link folders'})
@@ -850,10 +927,24 @@ test('selects existing images and files', async ({dashboard, mount}) => {
     imagePicker
       .getByRole('grid', {name: 'Explorer entries'})
       .getByText('Existing file', {exact: true})
+  ).toBeVisible()
+  await expect(
+    imagePicker.getByRole('checkbox', {name: 'Select Existing file'})
+  ).toHaveCount(0)
+  await expect(
+    imagePicker
+      .getByRole('grid', {name: 'Explorer entries'})
+      .getByRole('row', {name: 'Media directory', exact: true})
+  ).toBeVisible()
+  await expect(
+    imagePicker.getByRole('checkbox', {name: 'Select Media directory'})
   ).toHaveCount(0)
   await expectVerticallyUnclipped(
     imagePicker.getByText('Existing image', {exact: true})
   )
+  await expect(
+    imagePicker.getByRole('checkbox', {name: 'Select Nested image'})
+  ).toHaveCount(0)
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -889,7 +980,7 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(fileField).toContainText('Existing file')
 })
 
-test('keeps media children visible when switching folder browsing off', async ({
+test('card image picker browses directories and filters within them', async ({
   dashboard,
   mount
 }) => {
@@ -901,27 +992,42 @@ test('keeps media children visible when switching folder browsing off', async ({
     .click()
 
   const picker = app.page.getByRole('dialog', {name: 'Pick an image'})
+  const folders = picker.getByRole('treegrid', {name: 'Media folders'})
   const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
   })
   const browseMode = resultModes.getByRole('radio', {name: 'Browse'})
   const filteredMode = resultModes.getByRole('radio', {name: 'Filtered'})
   await expect(browseMode).toBeChecked()
-
-  await picker
-    .getByRole('treegrid', {name: 'Media folders'})
+  await expect(folders).toBeVisible()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Existing image'})
+  ).toBeVisible()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Nested image'})
+  ).toHaveCount(0)
+  const mediaDirectoryCard = picker
+    .getByRole('grid', {name: 'Explorer entries'})
     .getByRole('row', {name: 'Media directory', exact: true})
-    .click()
+  await expect(mediaDirectoryCard).toBeVisible()
+
+  await mediaDirectoryCard.click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select Nested image'})
   ).toBeVisible()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Existing image'})
+  ).toHaveCount(0)
 
   await filteredMode.click()
-
   await expect(filteredMode).toBeChecked()
+  await expect(folders).toHaveCount(0)
   await expect(
     picker.getByRole('checkbox', {name: 'Select Nested image'})
   ).toBeVisible()
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select Existing image'})
+  ).toHaveCount(0)
 })
 
 test('uploads images and files from their picker modals', async ({

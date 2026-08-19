@@ -20,7 +20,7 @@ import {
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
-  explorerTree,
+  createExplorerTree,
   ExplorerPickerContent,
   normalizePickerLocale
 } from './ExplorerPickerContent.js'
@@ -79,8 +79,9 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     pickerI18n?.locales ?? []
   )
   const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const [explorer] = useState(() => {
+  const [{explorer, tree}] = useState(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
+    const tree = createExplorerTree(() => explorer)
     const currentRoot = (location: ExplorerLocation) =>
       rootAtoms(location.workspace, location.root ?? root.key)
     const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
@@ -94,11 +95,11 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
       searchDepth: 'all',
       selectedLocale: initialLocale,
       treeItems: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).items,
+        tree(currentRoot(location), locale, location).items,
       treeReady: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).ready
+        tree(currentRoot(location), locale, location).ready
     })
-    return explorer
+    return {explorer, tree}
   })
   const explorerPage = useAtomValue(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
@@ -133,6 +134,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
             navigationLabel="Media folders"
             options={options}
             page={explorerPage}
+            tree={tree}
           />
           <ExplorerModalFooter>
             <ExplorerModalSelection>

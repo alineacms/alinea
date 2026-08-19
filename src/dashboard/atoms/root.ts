@@ -410,8 +410,25 @@ export class RootAtoms {
     this.explorer = this.children(null)
   }
 
-  createTree(locale: string | null, selectedKeys: Atom<Set<Key>>) {
-    return new TreeAtoms(this, locale, selectedKeys)
+  createTree(
+    locale: string | null,
+    selectedKeys: Atom<Set<Key>>,
+    expandedKeys?: PrimitiveAtom<Set<string>>
+  ) {
+    return new TreeAtoms(
+      this,
+      locale,
+      selectedKeys,
+      expandedKeys
+        ? {
+            expandedKeys,
+            collapsedKeys: atom<TreeCollapseState>({
+              selectedId: undefined,
+              keys: new Set<string>()
+            })
+          }
+        : undefined
+    )
   }
 
   children = dispense((parentId: string | null) =>

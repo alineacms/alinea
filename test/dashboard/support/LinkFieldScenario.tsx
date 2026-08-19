@@ -50,6 +50,10 @@ const ScenarioPage = Config.document('Page', {
     browsePage: Field.entry('Browse page', {
       location: {workspace: 'main', root: 'pages'}
     }),
+    limitedPage: Field.entry('Limited page', {
+      location: {workspace: 'main', root: 'pages'},
+      limitLocations: [{workspace: 'main', root: 'pages'}]
+    }),
     relatedPages: Field.entry.multiple('Repeated pages', {
       location: {workspace: 'main', root: 'pages'}
     }),

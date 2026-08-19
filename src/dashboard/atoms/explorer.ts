@@ -333,6 +333,7 @@ export class ExplorerAtoms {
   resultMode: WritableAtom<ExplorerResultMode, [ExplorerResultMode], void>
   selection: PrimitiveAtom<'all' | Set<Key>>
   expandedKeys = atom(new Set<Key>())
+  sidebarExpandedKeys = atom(new Set<string>())
   #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
   #selectedSort = atom<ExplorerSort>()
@@ -540,7 +541,12 @@ export class ExplorerAtoms {
         label: atom(get(requestedRoot.label))
       }
       const itemsPromise = get(this.itemsReady(locale))
-      const needsTree = view === 'card' && resultMode === 'browse'
+      const needsTree =
+        view === 'card' &&
+        resultMode === 'browse' &&
+        !searchesEverything &&
+        !this.pickChildren &&
+        !options.limitLocations?.length
       const treeReady = needsTree
         ? options.treeReady?.(locale, location)
         : undefined
@@ -819,7 +825,6 @@ export class ExplorerAtoms {
       const search = get(this.search).trim()
       const searchesEverything = get(this.searchesEverything)
       const resultMode = get(this.resultMode)
-      const view = get(this.view)
       const workspace = searchesEverything ? undefined : location.workspace
       const root = searchesEverything
         ? undefined
@@ -837,7 +842,7 @@ export class ExplorerAtoms {
         ? get(this.#options.defaultOrderBy)
         : undefined
       const flatList = resultMode === 'matches'
-      const filterSelectable = flatList || view === 'card'
+      const filterSelectable = flatList
       const selectedLocationParentId =
         !searchesEverything &&
         flatList &&

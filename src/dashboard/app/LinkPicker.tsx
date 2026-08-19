@@ -1,4 +1,4 @@
-import {Button, Dialog, Popover, ProgressCircle} from '#/components.js'
+import {Button, Dialog, Popover} from '#/components.js'
 import {
   createExplorerAtoms,
   type DashboardEntry,
@@ -29,7 +29,7 @@ import {
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
-  explorerTree,
+  createExplorerTree,
   ExplorerPickerContent,
   normalizePickerLocale
 } from './ExplorerPickerContent.js'
@@ -56,11 +56,7 @@ export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
   return (
     <Suspense
       fallback={
-        <LinkPickerLoading
-          anchorRef={anchorRef}
-          expanded={expanded}
-          onExpandedChange={setExpanded}
-        />
+        <LinkPickerLoading expanded={expanded} onExpandedChange={setExpanded} />
       }
     >
       <LinkPickerReady
@@ -91,22 +87,15 @@ function LinkPickerPopover({anchorRef, children}: LinkPickerPopoverProps) {
 }
 
 interface LinkPickerLoadingProps {
-  anchorRef?: RefObject<Element | null>
   expanded: boolean
   onExpandedChange: (expanded: boolean) => void
 }
 
 function LinkPickerLoading({
-  anchorRef,
   expanded,
   onExpandedChange
 }: LinkPickerLoadingProps) {
-  if (!expanded)
-    return (
-      <LinkPickerPopover anchorRef={anchorRef}>
-        <LinkPickerCompactLoading />
-      </LinkPickerPopover>
-    )
+  if (!expanded) return null
   return (
     <DashboardModal isOpen size="explorer" onOpenChange={onExpandedChange}>
       <DashboardModalDialog
@@ -131,12 +120,11 @@ function LinkPickerReady({
   onExpandedChange,
   options
 }: LinkPickerReadyProps) {
-  const explorer = useLinkPickerExplorer(options)
+  const {explorer, tree} = useLinkPickerExplorer(options)
   const page = useAtomValue(explorer.page)
   if (!page)
     return (
       <LinkPickerLoading
-        anchorRef={anchorRef}
         expanded={expanded}
         onExpandedChange={onExpandedChange}
       />
@@ -156,7 +144,12 @@ function LinkPickerReady({
         size="explorer"
         onOpenChange={onExpandedChange}
       >
-        <LinkPickerExpanded explorer={explorer} options={options} page={page} />
+        <LinkPickerExpanded
+          explorer={explorer}
+          options={options}
+          page={page}
+          tree={tree}
+        />
       </DashboardModal>
     </>
   )
@@ -175,8 +168,9 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
     pickerI18n?.locales ?? []
   )
   const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const [explorer] = useState(() => {
+  const [picker] = useState(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
+    const tree = createExplorerTree(() => explorer)
     const currentRoot = (location: ExplorerLocation) =>
       rootAtoms(location.workspace, location.root ?? root.key)
     const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
@@ -190,23 +184,13 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
       searchDepth: 'all',
       selectedLocale: initialLocale,
       treeItems: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).items,
+        tree(currentRoot(location), locale, location).items,
       treeReady: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).ready
+        tree(currentRoot(location), locale, location).ready
     })
-    return explorer
+    return {explorer, tree}
   })
-  return explorer
-}
-
-function LinkPickerCompactLoading() {
-  return (
-    <Dialog aria-label="Pick a link" className={styles.LinkPickerCompact()}>
-      <div className={styles.LinkPickerCompact.loading()}>
-        <ProgressCircle isIndeterminate aria-label="Loading entry picker" />
-      </div>
-    </Dialog>
-  )
+  return picker
 }
 
 interface LinkPickerCompactProps {
@@ -275,12 +259,14 @@ interface LinkPickerExpandedProps {
   explorer: DashboardExplorer
   options: LinkPickerOptions
   page: ExplorerReadyPage
+  tree: ReturnType<typeof createExplorerTree>
 }
 
 function LinkPickerExpanded({
   explorer,
   options,
-  page
+  page,
+  tree
 }: LinkPickerExpandedProps) {
   const modal = useDashboardModal()
   const onConfirm = useSetAtom(explorer.onConfirm)
@@ -313,6 +299,7 @@ function LinkPickerExpanded({
             navigationLabel="Link folders"
             options={options}
             page={page}
+            tree={tree}
           />
           <ExplorerModalFooter>
             <ExplorerModalSelection>

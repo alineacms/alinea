@@ -2,10 +2,10 @@ import {Checkbox, Icon, Surface} from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom, useStore} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
-import {Fragment, memo, useMemo} from 'react'
+import {Fragment, memo, startTransition, useMemo} from 'react'
 import {
   Button as AriaButton,
   type DragAndDropHooks,
@@ -44,6 +44,7 @@ const cardLayoutOptions: GridLayoutOptions = {
 interface ExplorerCardItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
+  explorer: DashboardExplorer
   includeWorkspace: boolean
   showSelectionControls: boolean
 }
@@ -51,14 +52,17 @@ interface ExplorerCardItemProps {
 const ExplorerCardItem = memo(function ExplorerCardItem({
   breadcrumbs,
   entry,
+  explorer,
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
+  const isSelectable = useAtomValue(explorer.isSelectable(entry))
   if (!data)
     return (
       <ExplorerCardLoadingItem
         entry={entry}
+        isSelectable={isSelectable}
         showSelectionControls={showSelectionControls}
       />
     )
@@ -67,6 +71,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
+      isSelectable={isSelectable}
       includeWorkspace={includeWorkspace}
       showSelectionControls={showSelectionControls}
     />
@@ -75,11 +80,13 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
 
 interface ExplorerCardLoadingItemProps {
   entry: DashboardEntry
+  isSelectable: boolean
   showSelectionControls: boolean
 }
 
 function ExplorerCardLoadingItem({
   entry,
+  isSelectable,
   showSelectionControls
 }: ExplorerCardLoadingItemProps) {
   return (
@@ -88,8 +95,11 @@ function ExplorerCardLoadingItem({
       textValue="Loading entry"
       className={styles.ExplorerCards.item({loading: true})}
       aria-label="Loading entry"
+      isDisabled={!isSelectable}
     >
-      {showSelectionControls && <ExplorerCardCheckbox label="Loading entry" />}
+      {showSelectionControls && isSelectable && (
+        <ExplorerCardCheckbox label="Loading entry" />
+      )}
       <Surface className={styles.ExplorerCards.item.card()}>
         <div className={styles.ExplorerCards.entry()}>
           <div className={styles.ExplorerCards.entry.top()}>
@@ -116,6 +126,7 @@ interface ExplorerCardLoadedItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   data: DashboardEntryData
+  isSelectable: boolean
   includeWorkspace: boolean
   showSelectionControls: boolean
 }
@@ -124,6 +135,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   breadcrumbs,
   entry,
   data,
+  isSelectable,
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
@@ -147,8 +159,11 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
       id={entry.id}
       textValue={label}
       className={styles.ExplorerCards.item()}
+      isDisabled={!isSelectable}
     >
-      {showSelectionControls && <ExplorerCardCheckbox label={label} />}
+      {showSelectionControls && isSelectable && (
+        <ExplorerCardCheckbox label={label} />
+      )}
       <AriaButton
         slot="drag"
         aria-label={`Drag ${label}`}
@@ -327,15 +342,25 @@ export function ExplorerCards({
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
   const performAction = useSetAtom(explorer.onAction)
+  const store = useStore()
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
     if (!entry) return
+    if (!explorer.hasRowAction) {
+      const {data} = store.get(entry.data)
+      const canOpen =
+        !store.get(explorer.isSelectable(entry)) &&
+        data !== undefined &&
+        store.get(data.hasChildren)
+      if (!canOpen) return
+      startTransition(() => performAction(entry, locale))
+      return
+    }
     performAction(entry, locale)
   }
-  const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (
     <div
       aria-label="Explorer card results"
@@ -354,7 +379,7 @@ export function ExplorerCards({
           dragAndDropHooks={dragAndDropHooks}
           selectedKeys={hasSelection ? selected : undefined}
           onSelectionChange={hasSelection ? setSelected : undefined}
-          onAction={onAction}
+          onAction={onItemAction}
           renderEmptyState={renderEmptyState}
           style={{display: 'block', width: '100%', height: '100%'}}
         >
@@ -366,6 +391,7 @@ export function ExplorerCards({
                 page.searchesEverything
               }
               entry={item}
+              explorer={explorer}
               includeWorkspace={page.searchesEverything}
               showSelectionControls={showSelectionControls}
             />
