@@ -81,4 +81,5 @@
 
 .ExplorerList-empty-button {
   pointer-events: auto;
+  margin-top: 4px;
 }

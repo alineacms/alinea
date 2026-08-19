@@ -28,10 +28,14 @@ export interface EditorInfo {
   }
 }
 
-export interface EditorLocation {
-  parentId?: string
+export interface EditorLimitLocation {
   workspace: string
   root: string
+}
+
+export interface EditorLocation extends EditorLimitLocation {
+  parentId?: string
+  locale?: string
 }
 
 type DynamicOption<T> = T | ((info: EditorInfo) => T | Promise<T>)
@@ -41,11 +45,11 @@ export interface EntryPickerConditions {
   pickChildren?: boolean
   /** Set the initial location in which the entry picker is opened */
   location?: DynamicOption<EditorLocation>
-  /** Filter entries by a condition, this results in a flat list of options */
+  /** Filter entries by a condition, shown as a flat list across all locations */
   condition?: DynamicOption<Filter<EntryFields>>
-  /** Limit the entry picker to an array of location */
-  limitLocations?: Array<EditorLocation>
-  /** @internal Enable entry picker navigation */
+  /** Limit the entry picker to an array of workspace and root locations */
+  limitLocations?: Array<EditorLimitLocation>
+  /** @internal Start the entry picker at its selected location */
   enableNavigation?: boolean
 }
 

@@ -1,11 +1,21 @@
-import {Button, Menu, MenuItem, Popover, SearchField} from '#/components.js'
+import {
+  Button,
+  Menu,
+  MenuItem,
+  Popover,
+  SearchField,
+  Switch,
+  ToggleButton,
+  ToggleButtonGroup
+} from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
+import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom, type Atom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {
   useEffect,
@@ -15,17 +25,25 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
+import {
+  DialogTrigger,
+  FileTrigger,
+  type Key,
+  type Selection
+} from 'react-aria-components'
 import {configAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
   type DashboardEntryData,
   type DashboardExplorer,
+  type DashboardRoot,
   type ExplorerSort,
   type ExplorerSortBy,
-  type ExplorerTypeFilters
+  type ExplorerTypeFilters,
+  type ExplorerView
 } from '../atoms/explorer.js'
 import {
+  IcRoundAccountTree,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundClose,
@@ -35,6 +53,7 @@ import {
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
+import {LocaleMenu} from './LocaleMenu.js'
 import {MutationQueueStatus} from './MutationQueueStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
 
@@ -65,14 +84,22 @@ export interface ExplorerHeaderProps {
 }
 
 export interface ExplorerBodyProps {
+  compactTable?: boolean
   explorer: DashboardExplorer
+  isMedia?: boolean
+  items?: Atom<Array<DashboardEntry>>
   locale: string | null
+  onSelectionChange?: (selection: Selection) => void
+  root?: Atom<DashboardRoot>
+  view?: ExplorerView
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
   locale: string | null
+  onEntryAction?: (entry: DashboardEntry) => void
+  ready?: boolean
 }
 
 interface ExplorerHeaderMainProps {
@@ -94,13 +121,22 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({autoFocus, explorer, locale}: ExplorerSearchProps) {
-  const items = useAtomValue(
+export function ExplorerSearch({
+  autoFocus,
+  explorer,
+  locale,
+  onEntryAction,
+  ready = false
+}: ExplorerSearchProps) {
+  const page = useAtomValue(explorer.page)
+  const requestedItems = useAtomValue(
     useMemo(
       () => unwrap(explorer.items(locale), previous => previous ?? []),
       [explorer, locale]
     )
   )
+  const items = ready ? page.items : requestedItems
+  const actionLocale = ready ? page.locale : locale
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -146,7 +182,6 @@ function ExplorerSearch({autoFocus, explorer, locale}: ExplorerSearchProps) {
   function onSearchChange(value: string) {
     setInputValue(value)
     startTransition(() => {
-      if (explorer.hasSelection) setSelection(new Set<Key>())
       setSearch(value)
     })
   }
@@ -180,7 +215,8 @@ function ExplorerSearch({autoFocus, explorer, locale}: ExplorerSearchProps) {
         selectedEntry ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
-      performAction(entry, locale)
+      if (onEntryAction) onEntryAction(entry)
+      else performAction(entry, actionLocale)
     }
   }
 
@@ -196,6 +232,76 @@ function ExplorerSearch({autoFocus, explorer, locale}: ExplorerSearchProps) {
       onChange={onSearchChange}
       onKeyDown={onSearchKeyDown}
     />
+  )
+}
+
+interface ExplorerSearchScopeProps {
+  explorer: DashboardExplorer
+}
+
+function ExplorerSearchScope({explorer}: ExplorerSearchScopeProps) {
+  const searchScope = useAtomValue(explorer.readySearchScope)
+  const setSearchScope = useSetAtom(explorer.searchScope)
+  const resultMode = useAtomValue(explorer.readyResultMode)
+  const canSearchEverything = useAtomValue(explorer.canSearchEverything)
+  const [, startTransition] = useTransition()
+  if (!explorer.allowAllWorkspaces) return null
+  const isDisabled =
+    !canSearchEverything ||
+    (explorer.mode !== 'search' && resultMode !== 'matches')
+  return (
+    <Switch
+      className={styles.Explorer.searchScope()}
+      isDisabled={isDisabled}
+      isSelected={searchScope === 'everything'}
+      onChange={selected =>
+        startTransition(() =>
+          setSearchScope(selected ? 'everything' : 'workspace')
+        )
+      }
+    >
+      All locations
+    </Switch>
+  )
+}
+
+interface ExplorerResultModeProps {
+  explorer: DashboardExplorer
+}
+
+function ExplorerResultMode({explorer}: ExplorerResultModeProps) {
+  const resultMode = useAtomValue(explorer.readyResultMode)
+  const setResultMode = useSetAtom(explorer.resultMode)
+  const search = useAtomValue(explorer.search)
+  const [, startTransition] = useTransition()
+  const canShowFiltered =
+    explorer.pickChildren || explorer.hasCondition || Boolean(search.trim())
+  const canBrowse = !explorer.pickChildren && !search.trim()
+  return (
+    <ToggleButtonGroup
+      aria-label="Explorer results"
+      className={styles.Explorer.resultMode()}
+      disallowEmptySelection
+      selectedKeys={[resultMode]}
+      selectionMode="single"
+      variant="compact"
+      onSelectionChange={(keys: Set<Key>) => {
+        const next = keys.has('matches') ? 'matches' : 'browse'
+        if (!canBrowse && next === 'browse') return
+        startTransition(() => {
+          setResultMode(next)
+        })
+      }}
+    >
+      <ToggleButton id="browse" isDisabled={!canBrowse}>
+        <IcRoundAccountTree aria-hidden data-slot="icon" />
+        Browse
+      </ToggleButton>
+      <ToggleButton id="matches" isDisabled={!canShowFiltered}>
+        <IcRoundFilterList aria-hidden data-slot="icon" />
+        Filtered
+      </ToggleButton>
+    </ToggleButtonGroup>
   )
 }
 
@@ -231,8 +337,9 @@ function ExplorerHeaderMain({
   titleControls,
   locale
 }: ExplorerHeaderMainProps) {
+  const location = useAtomValue(explorer.location)
   const root = useAtomValue(explorer.root)
-  const parent = useAtomValue(explorer.parent(locale))
+  const parent = useAtomValue(explorer.parent(location, locale))
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
@@ -262,64 +369,312 @@ function ExplorerHeaderMain({
 
 interface ExplorerLocationMenuProps {
   explorer: DashboardExplorer
+  lockNavigation?: boolean
 }
 
-function ExplorerLocationMenu({explorer}: ExplorerLocationMenuProps) {
-  const config = useAtomValue(configAtom)
-  const location = useAtomValue(explorer.location)
-  const policy = useAtomValue(policyAtom)
+interface ExplorerLocationParentsProps {
+  explorer: DashboardExplorer
+  lockNavigation: boolean
+  parent: DashboardEntry
+}
+
+function ExplorerLocationParents({
+  explorer,
+  lockNavigation,
+  parent
+}: ExplorerLocationParentsProps) {
+  const {data} = useAtomValue(parent.data)
+  if (!data) return null
+  return (
+    <ExplorerLoadedLocationParents
+      data={data}
+      explorer={explorer}
+      lockNavigation={lockNavigation}
+      parent={parent}
+    />
+  )
+}
+
+interface ExplorerLoadedLocationParentsProps {
+  data: DashboardEntryData
+  explorer: DashboardExplorer
+  lockNavigation: boolean
+  parent: DashboardEntry
+}
+
+function ExplorerLoadedLocationParents({
+  data,
+  explorer,
+  lockNavigation,
+  parent
+}: ExplorerLoadedLocationParentsProps) {
+  const parents = useAtomValue(data.parents)
+  return [...parents, parent].map((entry, index, entries) => (
+    <ExplorerLocationParent
+      current={index === entries.length - 1}
+      entry={entry}
+      explorer={explorer}
+      key={entry.id}
+      lockNavigation={lockNavigation}
+    />
+  ))
+}
+
+interface ExplorerLocationParentProps {
+  current: boolean
+  entry: DashboardEntry
+  explorer: DashboardExplorer
+  lockNavigation: boolean
+}
+
+function ExplorerLocationParent({
+  current,
+  entry,
+  explorer,
+  lockNavigation
+}: ExplorerLocationParentProps) {
+  const {data} = useAtomValue(entry.data)
+  if (!data) return null
+  return (
+    <ExplorerLoadedLocationParent
+      current={current}
+      data={data}
+      entry={entry}
+      explorer={explorer}
+      lockNavigation={lockNavigation}
+    />
+  )
+}
+
+interface ExplorerLoadedLocationParentProps {
+  current: boolean
+  data: DashboardEntryData
+  entry: DashboardEntry
+  explorer: DashboardExplorer
+  lockNavigation: boolean
+}
+
+function ExplorerLoadedLocationParent({
+  current,
+  data,
+  entry,
+  explorer,
+  lockNavigation
+}: ExplorerLoadedLocationParentProps) {
+  const label = useAtomValue(data.label)
   const setLocation = useSetAtom(explorer.location)
-  const configuredLocations =
-    explorer.limitLocations ??
-    Object.entries(config.workspaces).flatMap(([workspace, value]) =>
-      Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
-    )
-  const locations = configuredLocations
-    .filter(location => policy.canRead(location))
-    .map(candidate => {
-      const workspace = config.workspaces[candidate.workspace]
-      const root = workspace
-        ? getWorkspace(workspace).roots[candidate.root]
-        : undefined
-      return {
-        ...candidate,
-        label: root ? getRoot(root).label : candidate.root
-      }
-    })
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className={styles.Explorer.locationBreadcrumbs.separator()}
+      >
+        ›
+      </span>
+      {current || lockNavigation ? (
+        <span
+          className={
+            current
+              ? styles.Explorer.locationBreadcrumbs.current()
+              : styles.Explorer.locationBreadcrumbs.parentValue()
+          }
+        >
+          {label}
+        </span>
+      ) : (
+        <Button
+          appearance="plain"
+          className={styles.Explorer.locationBreadcrumbs.parentAction()}
+          onPress={() =>
+            setLocation(location => ({...location, parentId: entry.id}))
+          }
+        >
+          {label}
+        </Button>
+      )}
+    </>
+  )
+}
+
+function ExplorerLocationMenu({
+  explorer,
+  lockNavigation = false
+}: ExplorerLocationMenuProps) {
+  const config = useAtomValue(configAtom)
+  const page = useAtomValue(explorer.page)
+  const location = page.location
+  const policy = useAtomValue(policyAtom)
+  const selectedLocale = page.locale
+  const setSelectedLocale = useSetAtom(explorer.selectedLocale)
+  const setLocation = useSetAtom(explorer.location)
+  const parent = useAtomValue(explorer.parent(location, selectedLocale))
+  const configuredLocations = explorer.limitLocations?.length
+    ? explorer.limitLocations
+    : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
+        Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
+      )
+  const visibleLocations = configuredLocations.filter(location =>
+    policy.canRead(location)
+  )
+  const locations = visibleLocations.map(candidate => {
+    const workspace = config.workspaces[candidate.workspace]
+    const workspaceLabel = workspace
+      ? getWorkspace(workspace).label
+      : candidate.workspace
+    const root = workspace
+      ? getWorkspace(workspace).roots[candidate.root]
+      : undefined
+    const rootData = root ? getRoot(root) : undefined
+    const rootLabel = rootData?.label ?? candidate.root
+    const locales: ReadonlyArray<string> = rootData?.i18n?.locales ?? []
+    return {
+      ...candidate,
+      locales,
+      rootLabel,
+      workspaceLabel
+    }
+  })
   const selected = locations.find(
     candidate =>
       candidate.workspace === location.workspace &&
       candidate.root === location.root
   )
-  const label = selected?.label ?? location.root ?? 'Select root'
-  if (locations.length <= 1) return null
+  const workspaces = Array.from(
+    new Map(
+      locations.map(candidate => [
+        candidate.workspace,
+        {
+          key: candidate.workspace,
+          label: candidate.workspaceLabel
+        }
+      ])
+    ).values()
+  )
+  const roots = locations.filter(
+    candidate => candidate.workspace === location.workspace
+  )
+  const locales = selected?.locales ?? []
+  const localeRoot = selected
+    ? rootAtoms(selected.workspace, selected.root)
+    : undefined
+
+  function selectLocation(candidate: (typeof locations)[number]) {
+    const locale = candidate.locales.includes(selectedLocale ?? '')
+      ? selectedLocale
+      : (candidate.locales[0] ?? null)
+    setSelectedLocale(locale)
+    setLocation({
+      workspace: candidate.workspace,
+      root: candidate.root,
+      locale: locale ?? undefined
+    })
+  }
+
+  function selectLocale(locale: string) {
+    setSelectedLocale(locale)
+    setLocation(current => ({...current, locale}))
+  }
+
   return (
-    <Menu
-      label={label}
-      appearance="plain"
-      selectionMode="single"
-      selectedKeys={[`${location.workspace}/${location.root}`]}
-      onAction={key => {
-        const selected = locations.find(
-          candidate => `${candidate.workspace}/${candidate.root}` === key
-        )
-        if (!selected) return
-        setLocation({
-          workspace: selected.workspace,
-          root: selected.root
-        })
-      }}
-    >
-      {locations.map(location => (
-        <MenuItem
-          id={`${location.workspace}/${location.root}`}
-          key={`${location.workspace}/${location.root}`}
-          textValue={location.label}
-        >
-          {location.label}
-        </MenuItem>
-      ))}
-    </Menu>
+    <div className={styles.Explorer.locationBreadcrumbs()}>
+      <div className={styles.Explorer.locationBreadcrumbs.item()}>
+        {workspaces.length > 1 && !lockNavigation ? (
+          <Menu
+            appearance="plain"
+            label={selected?.workspaceLabel ?? location.workspace}
+            selectionMode="single"
+            selectedKeys={[location.workspace]}
+            onAction={key => {
+              const workspace = String(key)
+              const next =
+                locations.find(
+                  candidate =>
+                    candidate.workspace === workspace &&
+                    candidate.root === location.root
+                ) ??
+                locations.find(candidate => candidate.workspace === workspace)
+              if (!next) return
+              selectLocation(next)
+            }}
+          >
+            {workspaces.map(workspace => (
+              <MenuItem
+                id={workspace.key}
+                key={workspace.key}
+                textValue={workspace.label}
+              >
+                {workspace.label}
+              </MenuItem>
+            ))}
+          </Menu>
+        ) : (
+          <span className={styles.Explorer.locationBreadcrumbs.value()}>
+            {selected?.workspaceLabel}
+          </span>
+        )}
+      </div>
+      <span
+        aria-hidden="true"
+        className={styles.Explorer.locationBreadcrumbs.separator()}
+      >
+        ›
+      </span>
+      <div className={styles.Explorer.locationBreadcrumbs.root()}>
+        <div className={styles.Explorer.locationBreadcrumbs.item()}>
+          {roots.length > 1 && !lockNavigation ? (
+            <Menu
+              appearance="plain"
+              label={selected?.rootLabel ?? location.root ?? 'Select root'}
+              selectionMode="single"
+              selectedKeys={location.root ? [location.root] : []}
+              onAction={key => {
+                const root = String(key)
+                const next = roots.find(candidate => candidate.root === root)
+                if (next) selectLocation(next)
+              }}
+            >
+              {roots.map(root => (
+                <MenuItem
+                  id={root.root}
+                  key={root.root}
+                  textValue={root.rootLabel}
+                >
+                  {root.rootLabel}
+                </MenuItem>
+              ))}
+            </Menu>
+          ) : (
+            <span className={styles.Explorer.locationBreadcrumbs.value()}>
+              {selected?.rootLabel ?? location.root ?? 'Select root'}
+            </span>
+          )}
+        </div>
+        {localeRoot && locales.length > 1 && (
+          <div className={styles.Explorer.locationBreadcrumbs.root.locale()}>
+            {lockNavigation ? (
+              <span
+                className={styles.Explorer.locationBreadcrumbs.localeValue()}
+              >
+                {(selectedLocale ?? locales[0])?.toUpperCase()}
+              </span>
+            ) : (
+              <LocaleMenu
+                root={localeRoot}
+                locale={selectedLocale}
+                onLocaleChange={selectLocale}
+              />
+            )}
+          </div>
+        )}
+      </div>
+      {parent && (
+        <ExplorerLocationParents
+          explorer={explorer}
+          lockNavigation={lockNavigation}
+          parent={parent}
+        />
+      )}
+    </div>
   )
 }
 
@@ -341,6 +696,7 @@ function ExplorerHeaderParentMain({
 
 interface ExplorerToolbarProps {
   explorer: DashboardExplorer
+  ready?: boolean
 }
 const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
@@ -431,11 +787,15 @@ function ExplorerControlsPopover({
   )
 }
 
-function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
-  const [view, setView] = useAtom(explorer.view)
+function ExplorerToolbar({explorer, ready = false}: ExplorerToolbarProps) {
+  const [requestedView, setView] = useAtom(explorer.view)
+  const page = useAtomValue(explorer.page)
+  const view = ready ? page.view : requestedView
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
-  const isMedia = useAtomValue(explorer.isMedia)
+  const requestedIsMedia = useAtomValue(explorer.isMedia)
+  const isMedia = ready ? page.isMedia : requestedIsMedia
+  const locationIsPending = useAtomValue(explorer.locationIsPending)
   const canUpload = useAtomValue(explorer.canUpload)
   const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
@@ -460,7 +820,7 @@ function ExplorerToolbar({explorer}: ExplorerToolbarProps) {
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={view} setView={setView} />
-        {isMedia && canUpload && (
+        {isMedia && canUpload && (!ready || !locationIsPending) && (
           <FileTrigger
             allowsMultiple
             onSelect={files => {
@@ -486,41 +846,76 @@ export function ExplorerHeader({
   titleControls,
   locale
 }: ExplorerHeaderProps) {
+  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   return (
-    <RailHeader className={styles.ExplorerHeader()}>
+    <RailHeader className={styles.ExplorerHeader({navigation: navigate})}>
       <div className={styles.ExplorerHeader.content()}>
-        <ExplorerHeaderMain
-          explorer={explorer}
-          headerEntry={headerEntry}
-          titleControls={titleControls}
-          locale={locale}
-        />
+        <div className={styles.ExplorerHeader.primary()}>
+          {!navigate && (
+            <ExplorerHeaderMain
+              explorer={explorer}
+              headerEntry={headerEntry}
+              titleControls={titleControls}
+              locale={locale}
+            />
+          )}
+          <div className={styles.Explorer.searchSlot()}>
+            <ExplorerSearch
+              autoFocus={autoFocusSearch}
+              explorer={explorer}
+              locale={locale}
+              ready={navigate}
+            />
+            <ExplorerSearchScope explorer={explorer} />
+          </div>
+          <div className={styles.Explorer.toolbar()}>
+            <ExplorerToolbar explorer={explorer} ready={navigate} />
+            {controls}
+          </div>
+        </div>
         {navigate && (
-          <div className={styles.Explorer.searchMenu()}>
-            <ExplorerLocationMenu explorer={explorer} />
+          <div
+            aria-label="Explorer location"
+            className={styles.ExplorerHeader.location()}
+            role="group"
+          >
+            <ExplorerResultMode explorer={explorer} />
+            {!searchesEverything && (
+              <ExplorerLocationMenu
+                explorer={explorer}
+                lockNavigation={explorer.pickChildren}
+              />
+            )}
           </div>
         )}
-        <div className={styles.Explorer.searchSlot()}>
-          <ExplorerSearch
-            autoFocus={autoFocusSearch}
-            explorer={explorer}
-            locale={locale}
-          />
-        </div>
-        <div className={styles.Explorer.toolbar()}>
-          <ExplorerToolbar explorer={explorer} />
-          {controls}
-        </div>
       </div>
     </RailHeader>
   )
 }
 
-export function ExplorerBody({explorer, locale}: ExplorerBodyProps) {
+export function ExplorerBody({
+  compactTable,
+  explorer,
+  isMedia,
+  items,
+  locale,
+  onSelectionChange,
+  root,
+  view
+}: ExplorerBodyProps) {
   return (
     <RailBody>
       <div className={styles.Explorer.viewport()}>
-        <ExplorerList explorer={explorer} locale={locale} />
+        <ExplorerList
+          compactTable={compactTable}
+          explorer={explorer}
+          isMedia={isMedia}
+          items={items}
+          locale={locale}
+          onSelectionChange={onSelectionChange}
+          root={root}
+          view={view}
+        />
       </div>
     </RailBody>
   )

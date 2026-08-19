@@ -1,4 +1,5 @@
 import {Checkbox, Icon, Surface} from '#/components.js'
+import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom} from 'jotai'
@@ -20,6 +21,7 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
+import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
   DashboardEntryData,
@@ -41,12 +43,14 @@ const cardLayoutOptions: GridLayoutOptions = {
 interface ExplorerCardItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
+  includeWorkspace: boolean
   showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
   breadcrumbs,
   entry,
+  includeWorkspace,
   showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
@@ -62,6 +66,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
+      includeWorkspace={includeWorkspace}
       showSelectionControls={showSelectionControls}
     />
   )
@@ -110,6 +115,7 @@ interface ExplorerCardLoadedItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   data: DashboardEntryData
+  includeWorkspace: boolean
   showSelectionControls: boolean
 }
 
@@ -117,16 +123,23 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   breadcrumbs,
   entry,
   data,
+  includeWorkspace,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const hasChildren = useAtomValue(data.hasChildren)
-  const parents = useAtomValue(data.parents)
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
+  const location = breadcrumbs ? (
+    <ExplorerCardLocation
+      data={data}
+      entry={entry}
+      includeWorkspace={includeWorkspace}
+    />
+  ) : null
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   return (
     <GridListItem
@@ -144,14 +157,17 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         className={styles.ExplorerCards.item.card({file: Boolean(info)})}
       >
         {info ? (
-          <ExplorerFileCard file={info} label={label} layout="card" />
+          <ExplorerFileCard
+            file={info}
+            label={label}
+            layout="card"
+            parents={location}
+          />
         ) : (
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
-            parents={
-              breadcrumbs ? <ExplorerCardParents parents={parents} /> : null
-            }
+            parents={location}
             typeLabel={type.label}
           />
         )}
@@ -159,6 +175,34 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     </GridListItem>
   )
 })
+
+interface ExplorerCardLocationProps {
+  data: DashboardEntryData
+  entry: DashboardEntry
+  includeWorkspace: boolean
+}
+
+function ExplorerCardLocation({
+  data,
+  entry,
+  includeWorkspace
+}: ExplorerCardLocationProps) {
+  const config = useAtomValue(configAtom)
+  const parents = useAtomValue(data.parents)
+  const root = useAtomValue(data.root)
+  const rootLabel = useAtomValue(root.label)
+  const workspace = config.workspaces[entry.workspace]
+  const workspaceLabel = workspace
+    ? getWorkspace(workspace).label
+    : entry.workspace
+  return (
+    <ExplorerCardParents
+      parents={parents}
+      rootLabel={rootLabel}
+      workspaceLabel={includeWorkspace ? workspaceLabel : undefined}
+    />
+  )
+}
 
 interface ExplorerCardCheckboxProps {
   label: string
@@ -188,7 +232,9 @@ function ExplorerEntryCard({
   typeLabel
 }: ExplorerEntryCardProps) {
   return (
-    <div className={styles.ExplorerCards.entry()}>
+    <div
+      className={styles.ExplorerCards.entry({breadcrumbs: Boolean(parents)})}
+    >
       <div className={styles.ExplorerCards.entry.top()}>
         {icon && (
           <Icon icon={icon} className={styles.ExplorerCards.entry.icon()} />
@@ -207,25 +253,37 @@ function ExplorerEntryCard({
 
 interface ExplorerCardParentsProps {
   parents: Array<DashboardEntry>
+  rootLabel: string
+  workspaceLabel?: string
 }
 
-function ExplorerCardParents({parents}: ExplorerCardParentsProps) {
-  if (parents.length === 0) return null
+function ExplorerCardParents({
+  parents,
+  rootLabel,
+  workspaceLabel
+}: ExplorerCardParentsProps) {
+  const breadcrumbs: Array<{id: string; value: ReactNode}> = [
+    ...(workspaceLabel ? [{id: 'workspace', value: workspaceLabel}] : []),
+    ...(rootLabel ? [{id: 'root', value: rootLabel}] : []),
+    ...parents.map(parent => ({
+      id: `parent-${parent.id}`,
+      value: <ExplorerCardParent parent={parent} />
+    }))
+  ]
+  if (breadcrumbs.length === 0) return null
   return (
     <div className={styles.ExplorerCards.parents()}>
-      {parents
-        .map<ReactNode>(parent => (
-          <ExplorerCardParent key={parent.id} parent={parent} />
-        ))
-        .reduce((prev, curr, index) => [
-          prev,
-          <IcRoundKeyboardArrowRight
-            aria-hidden
-            className={styles.ExplorerCards.parents.separator()}
-            key={`separator-${index}`}
-          />,
-          curr
-        ])}
+      {breadcrumbs.map((breadcrumb, index) => (
+        <Fragment key={breadcrumb.id}>
+          {index > 0 && (
+            <IcRoundKeyboardArrowRight
+              aria-hidden
+              className={styles.ExplorerCards.parents.separator()}
+            />
+          )}
+          {breadcrumb.value}
+        </Fragment>
+      ))}
     </div>
   )
 }
@@ -265,17 +323,24 @@ export function ExplorerCards({
   locale
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
+  const resultMode = useAtomValue(explorer.readyResultMode)
+  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   const performAction = useSetAtom(explorer.onAction)
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
   function onItemAction(key: Key) {
     const entry = items.find(item => item.id === String(key))
-    if (entry) performAction(entry, locale)
+    if (!entry) return
+    performAction(entry, locale)
   }
   const onAction = explorer.hasRowAction ? onItemAction : undefined
   return (
-    <div className={styles.ExplorerCards.viewport()}>
+    <div
+      aria-label="Explorer card results"
+      className={styles.ExplorerCards.viewport()}
+      role="region"
+    >
       <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
         <GridList
           aria-label="Explorer entries"
@@ -284,6 +349,7 @@ export function ExplorerCards({
           className={styles.ExplorerCards()}
           selectionMode={hasSelection ? selectionMode : undefined}
           selectionBehavior={explorer.selectionBehavior}
+          disabledBehavior="selection"
           dragAndDropHooks={dragAndDropHooks}
           selectedKeys={hasSelection ? selected : undefined}
           onSelectionChange={hasSelection ? setSelected : undefined}
@@ -293,8 +359,13 @@ export function ExplorerCards({
         >
           {item => (
             <ExplorerCardItem
-              breadcrumbs={explorer.breadcrumbs}
+              breadcrumbs={
+                explorer.breadcrumbs ||
+                resultMode === 'matches' ||
+                searchesEverything
+              }
               entry={item}
+              includeWorkspace={searchesEverything}
               showSelectionControls={showSelectionControls}
             />
           )}

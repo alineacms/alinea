@@ -68,6 +68,7 @@
   font-weight: 600;
   color: var(--alinea-fg-muted);
   min-width: 0;
+  max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -112,6 +113,7 @@
 
 .LinkFieldView-metaLabel {
   min-width: 0;
+  max-width: 240px;
   overflow: hidden;
   color: var(--alinea-fg-muted);
   font-size: 12px;

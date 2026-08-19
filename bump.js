@@ -8,5 +8,6 @@ delete pkg.workspaces
 // These are not needed in the final package
 delete pkg.devDependencies
 delete pkg.resolutions
+delete pkg.patchedDependencies
 fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n')
 console.log(`bumped version to ${semver}`)

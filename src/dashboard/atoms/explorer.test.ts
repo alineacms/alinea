@@ -1,5 +1,5 @@
-import {expect, test} from 'bun:test'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
+import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {
@@ -49,6 +49,60 @@ test('page explorers keep their row navigation action', () => {
 
   expect(explorer.hasRowAction).toBe(true)
   expect(explorer.items('en')).not.toBe(explorer.items('fr'))
+})
+
+test('uses the locale from its initial location', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages', locale: 'fr'},
+    {selectedLocale: 'en'}
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.selectedLocale)).toBe('fr')
+})
+
+test('all-workspace search is opt-in and defaults to the current workspace', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {allowAllWorkspaces: true, mode: 'search'}
+  )
+  const store = createStore()
+
+  expect(explorer.allowAllWorkspaces).toBe(true)
+  expect(store.get(explorer.searchScope)).toBe('workspace')
+  expect(store.get(explorer.canSearchEverything)).toBe(true)
+  store.set(explorer.searchScope, 'everything')
+  expect(store.get(explorer.searchScope)).toBe('everything')
+  expect(store.get(explorer.searchesEverything)).toBe(false)
+  store.set(explorer.search, 'Alpha')
+  expect(store.get(explorer.canSearchEverything)).toBe(true)
+  expect(store.get(explorer.resultMode)).toBe('matches')
+  expect(store.get(explorer.searchesEverything)).toBe(true)
+  store.set(explorer.search, '')
+  expect(store.get(explorer.resultMode)).toBe('browse')
+  expect(store.get(explorer.searchScope)).toBe('everything')
+  expect(store.get(explorer.searchesEverything)).toBe(false)
+})
+
+test('search temporarily overrides the preferred result mode', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {condition: {_type: 'Page'}}
+  )
+  const store = createStore()
+
+  store.set(explorer.resultMode, 'browse')
+  expect(store.get(explorer.resultMode)).toBe('browse')
+  store.set(explorer.search, 'Alpha')
+  expect(store.get(explorer.resultMode)).toBe('matches')
+  store.set(explorer.search, '')
+  expect(store.get(explorer.resultMode)).toBe('browse')
+
+  store.set(explorer.resultMode, 'matches')
+  store.set(explorer.search, 'Alpha')
+  expect(store.get(explorer.resultMode)).toBe('matches')
+  store.set(explorer.search, '')
+  expect(store.get(explorer.resultMode)).toBe('matches')
 })
 
 test('limits the picker to its allowed locations', () => {
@@ -106,4 +160,71 @@ test('preloading items includes expanded inline children', async () => {
 
   expect(parentEntry).toBeDefined()
   expect(store.get(explorer.children(parentEntry!, null))).not.toBeEmpty()
+})
+
+test('matches only contain selectable rows for compound conditions', async () => {
+  const {store, child} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {
+      condition: {_type: 'Page', _status: 'published'},
+      initialResultMode: 'matches'
+    }
+  )
+
+  const items = await store.get(explorer.itemsReady(null))
+
+  expect(items.map(item => item.id)).toEqual([child._id])
+  expect(items.every(item => store.get(explorer.isSelectable(item)))).toBe(true)
+})
+
+test('filters browse queries only in card view', async () => {
+  const {store, child, parent} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {condition: {_id: child._id}, initialResultMode: 'browse'}
+  )
+
+  await store.get(explorer.itemsReady(null))
+
+  expect(store.get(explorer.items(null)).map(item => item.id)).toEqual([
+    parent._id
+  ])
+
+  store.set(explorer.view, 'card')
+  const cardItems = await store.get(explorer.itemsReady(null))
+
+  expect(cardItems).toEqual([])
+})
+
+test('picker can mark initial links without preselecting them', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {
+      initialSelection: ['linked-entry'],
+      onConfirm() {},
+      preselect: false,
+      selectionMode: 'multiple'
+    }
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.selection)).toEqual(new Set())
+  expect(explorer.linkedKeys).toEqual(new Set(['linked-entry']))
+})
+
+test('picker preselects initial links by default', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {
+      initialSelection: ['linked-entry'],
+      onConfirm() {},
+      selectionMode: 'multiple'
+    }
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.selection)).toEqual(new Set(['linked-entry']))
 })

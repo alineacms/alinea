@@ -31,6 +31,7 @@ export function ExplorerFileCard({
   return (
     <div
       className={styles.ExplorerFileCard(layout, {
+        breadcrumbs: Boolean(parents),
         image: Boolean(preview)
       })}
     >
