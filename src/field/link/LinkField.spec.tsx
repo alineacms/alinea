@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import {
   EntryPickerSingle,
   Example,
+  FilteredEntryFieldWithoutEntryScope,
   ImagePickerSingle
 } from './LinkField.stories.js'
 
@@ -103,6 +104,23 @@ test('opens a compact entry picker and selects immediately', async ({
     .toBe('false')
   await home.click()
   await expect(picker).toBeHidden()
+})
+
+test('keeps static picker conditions outside an entry scope', async ({
+  mount,
+  page
+}) => {
+  await mount(<FilteredEntryFieldWithoutEntryScope />)
+  await page
+    .getByRole('list', {name: 'Filtered entry'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+
+  const resultModes = page.getByRole('radiogroup', {
+    name: 'Explorer results'
+  })
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
 })
 
 test('expands the compact entry picker into the explorer modal', async ({

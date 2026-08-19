@@ -24,6 +24,7 @@ import {
   TextField
 } from '#/components.js'
 import type {Config} from '#/core/Config.js'
+import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Filter} from '#/core/Filter.js'
 import {createId} from '#/core/Id.js'
 import {getType, getWorkspace} from '#/core/Internal.js'
@@ -35,7 +36,7 @@ import {Badge} from '#/dashboard/app/Badge.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
+import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
 import {linkEntryAtoms, type LinkEntrySummary} from '#/dashboard/atoms/link.js'
 import {
   ExternalLinkPicker,
@@ -49,7 +50,6 @@ import {
   useField,
   useFieldNode,
   useFieldOptions,
-  useGraph,
   useNodes,
   useOptionalEntryAtoms
 } from '#/dashboard/hooks.js'
@@ -67,13 +67,14 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
   ReactNode,
   RefObject
 } from 'react'
-import {Fragment, useEffect, useMemo, useRef, useState} from 'react'
+import {Fragment, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
   DragPreview,
@@ -447,7 +448,7 @@ function LinkPickerAction({
   const selectedRoot = currentEntry?.root
   const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
   const options = picker.options as Partial<EntryPickerOptions>
-  const resolved = useResolvedEntryPickerOptions(options, type)
+  const resolved = useResolvedEntryPickerOptions(options, type, currentEntry)
   if (type === 'url') {
     return (
       <DialogTrigger>
@@ -580,7 +581,7 @@ function LinkPickerDialog({
   const selectedRoot = currentEntry?.root
   const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
   const options = picker.options as Partial<EntryPickerOptions>
-  const resolved = useResolvedEntryPickerOptions(options, type)
+  const resolved = useResolvedEntryPickerOptions(options, type, currentEntry)
 
   function handlePick(link: LinkFieldRow) {
     onPick(link)
@@ -683,6 +684,42 @@ interface ResolvedEntryPickerOptions {
   location: EditorLocation | undefined
 }
 
+function useResolvedEntryPickerOptions(
+  options: Partial<EntryPickerOptions>,
+  type: PickerType,
+  entry: EntryRecord<Record<string, unknown>> | null
+): ResolvedEntryPickerOptions {
+  const {condition: conditionOption, location: locationOption} = options
+  const resolvedAtom = useMemo(() => {
+    const initialValue: ResolvedEntryPickerOptions = {
+      condition:
+        typeof conditionOption === 'function' ? undefined : conditionOption,
+      location:
+        typeof locationOption === 'function' ? undefined : locationOption
+    }
+    const resolved = atom(async get => {
+      if (type === 'url') return {condition: undefined, location: undefined}
+      if (!entry) return initialValue
+      const info = {entry, graph: get(graphAtom)}
+      const condition =
+        typeof conditionOption === 'function'
+          ? conditionOption(info)
+          : conditionOption
+      const location =
+        typeof locationOption === 'function'
+          ? locationOption(info)
+          : locationOption
+      const [nextCondition, nextLocation] = await Promise.all([
+        condition,
+        location
+      ])
+      return {condition: nextCondition, location: nextLocation}
+    })
+    return unwrap(resolved, previous => previous ?? initialValue)
+  }, [conditionOption, entry, locationOption, type])
+  return useAtomValue(resolvedAtom)
+}
+
 function entryPickerSearchScope(
   condition: Filter | undefined,
   location: EditorLocation | undefined,
@@ -705,50 +742,6 @@ function entryPickerResultMode(
     (type !== 'image' && condition && enableNavigation !== true)
     ? ('matches' as const)
     : ('browse' as const)
-}
-
-function useResolvedEntryPickerOptions(
-  options: Partial<EntryPickerOptions>,
-  type: PickerType
-): ResolvedEntryPickerOptions {
-  const entry = useEntry()
-  const graph = useGraph()
-  const {condition: conditionOption, location: locationOption} = options
-  const [resolved, setResolved] = useState<ResolvedEntryPickerOptions>(() => ({
-    condition:
-      typeof conditionOption === 'function' ? undefined : conditionOption,
-    location: typeof locationOption === 'function' ? undefined : locationOption
-  }))
-
-  useEffect(() => {
-    let active = true
-    if (type === 'url' || !entry) {
-      setResolved({condition: undefined, location: undefined})
-      return () => {
-        active = false
-      }
-    }
-    const info = {entry, graph}
-    const condition =
-      typeof conditionOption === 'function'
-        ? conditionOption(info)
-        : conditionOption
-    const location =
-      typeof locationOption === 'function'
-        ? locationOption(info)
-        : locationOption
-    void Promise.all([condition, location]).then(
-      ([nextCondition, nextLocation]) => {
-        if (active)
-          setResolved({condition: nextCondition, location: nextLocation})
-      }
-    )
-    return () => {
-      active = false
-    }
-  }, [conditionOption, entry, graph, locationOption, type])
-
-  return resolved
 }
 
 function entryPickerOptionsKey(

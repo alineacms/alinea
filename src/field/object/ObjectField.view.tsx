@@ -1,5 +1,5 @@
 import {Label} from '#/components.js'
-import {NodeEditor} from '#/dashboard/app/EntryFields.js'
+import {EntryFields, NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   useFieldError,
@@ -22,7 +22,9 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const node = useFieldNode(field)
   return (
     <Label label={options.label} shared={options.shared}>
-      <NodeEditor node={node as ReactiveNode<object>} type={options.fields} />
+      <NodeEditor node={node as ReactiveNode<object>} type={options.fields}>
+        <EntryFields />
+      </NodeEditor>
       {error && <div className={styles.ObjectFieldView.error()}>{error}</div>}
     </Label>
   )

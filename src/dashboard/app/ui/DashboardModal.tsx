@@ -1,6 +1,6 @@
 'use client'
 
-import {Button, Dialog, Modal, ProgressCircle} from '#/components.js'
+import {Button, Dialog, Modal, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {
   useContext,
@@ -18,11 +18,16 @@ import {RailBody, RailFooter, RailHeader} from './Rail.js'
 
 const styles = styler(css)
 
-export interface DashboardModalProps extends ModalOverlayProps {
+export interface DashboardModalProps extends Omit<
+  ModalOverlayProps,
+  'children'
+> {
+  children?: ReactNode
   size?: 'default' | 'explorer'
 }
 
 export function DashboardModal({
+  children,
   size = 'default',
   ...props
 }: DashboardModalProps) {
@@ -32,7 +37,9 @@ export function DashboardModal({
       className={styles.DashboardModal(size)}
       overlayClassName={styles.DashboardModalOverlay()}
       {...props}
-    />
+    >
+      <Surface className={styles.DashboardModal.surface()}>{children}</Surface>
+    </Modal>
   )
 }
 
