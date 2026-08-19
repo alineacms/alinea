@@ -359,16 +359,18 @@ function ExplorerHeaderMain({
 
 interface ExplorerLocationMenuProps {
   explorer: DashboardExplorer
-  lockRoot?: boolean
+  lockNavigation?: boolean
 }
 
 interface ExplorerLocationParentsProps {
   explorer: DashboardExplorer
+  lockNavigation: boolean
   parent: DashboardEntry
 }
 
 function ExplorerLocationParents({
   explorer,
+  lockNavigation,
   parent
 }: ExplorerLocationParentsProps) {
   const {data} = useAtomValue(parent.data)
@@ -377,6 +379,7 @@ function ExplorerLocationParents({
     <ExplorerLoadedLocationParents
       data={data}
       explorer={explorer}
+      lockNavigation={lockNavigation}
       parent={parent}
     />
   )
@@ -385,12 +388,14 @@ function ExplorerLocationParents({
 interface ExplorerLoadedLocationParentsProps {
   data: DashboardEntryData
   explorer: DashboardExplorer
+  lockNavigation: boolean
   parent: DashboardEntry
 }
 
 function ExplorerLoadedLocationParents({
   data,
   explorer,
+  lockNavigation,
   parent
 }: ExplorerLoadedLocationParentsProps) {
   const parents = useAtomValue(data.parents)
@@ -400,6 +405,7 @@ function ExplorerLoadedLocationParents({
       entry={entry}
       explorer={explorer}
       key={entry.id}
+      lockNavigation={lockNavigation}
     />
   ))
 }
@@ -408,12 +414,14 @@ interface ExplorerLocationParentProps {
   current: boolean
   entry: DashboardEntry
   explorer: DashboardExplorer
+  lockNavigation: boolean
 }
 
 function ExplorerLocationParent({
   current,
   entry,
-  explorer
+  explorer,
+  lockNavigation
 }: ExplorerLocationParentProps) {
   const {data} = useAtomValue(entry.data)
   if (!data) return null
@@ -423,6 +431,7 @@ function ExplorerLocationParent({
       data={data}
       entry={entry}
       explorer={explorer}
+      lockNavigation={lockNavigation}
     />
   )
 }
@@ -432,13 +441,15 @@ interface ExplorerLoadedLocationParentProps {
   data: DashboardEntryData
   entry: DashboardEntry
   explorer: DashboardExplorer
+  lockNavigation: boolean
 }
 
 function ExplorerLoadedLocationParent({
   current,
   data,
   entry,
-  explorer
+  explorer,
+  lockNavigation
 }: ExplorerLoadedLocationParentProps) {
   const label = useAtomValue(data.label)
   const setLocation = useSetAtom(explorer.location)
@@ -450,8 +461,14 @@ function ExplorerLoadedLocationParent({
       >
         ›
       </span>
-      {current ? (
-        <span className={styles.Explorer.locationBreadcrumbs.current()}>
+      {current || lockNavigation ? (
+        <span
+          className={
+            current
+              ? styles.Explorer.locationBreadcrumbs.current()
+              : styles.Explorer.locationBreadcrumbs.parentValue()
+          }
+        >
           {label}
         </span>
       ) : (
@@ -471,7 +488,7 @@ function ExplorerLoadedLocationParent({
 
 function ExplorerLocationMenu({
   explorer,
-  lockRoot = false
+  lockNavigation = false
 }: ExplorerLocationMenuProps) {
   const config = useAtomValue(configAtom)
   const page = useAtomValue(explorer.page)
@@ -481,11 +498,11 @@ function ExplorerLocationMenu({
   const setSelectedLocale = useSetAtom(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
   const parent = useAtomValue(explorer.parent(location, selectedLocale))
-  const configuredLocations =
-    explorer.limitLocations ??
-    Object.entries(config.workspaces).flatMap(([workspace, value]) =>
-      Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
-    )
+  const configuredLocations = explorer.limitLocations?.length
+    ? explorer.limitLocations
+    : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
+        Object.keys(getWorkspace(value).roots).map(root => ({workspace, root}))
+      )
   const visibleLocations = configuredLocations.filter(location =>
     policy.canRead(location)
   )
@@ -551,7 +568,7 @@ function ExplorerLocationMenu({
   return (
     <div className={styles.Explorer.locationBreadcrumbs()}>
       <div className={styles.Explorer.locationBreadcrumbs.item()}>
-        {workspaces.length > 1 && !lockRoot ? (
+        {workspaces.length > 1 && !lockNavigation ? (
           <Menu
             appearance="plain"
             label={selected?.workspaceLabel ?? location.workspace}
@@ -594,7 +611,7 @@ function ExplorerLocationMenu({
       </span>
       <div className={styles.Explorer.locationBreadcrumbs.root()}>
         <div className={styles.Explorer.locationBreadcrumbs.item()}>
-          {roots.length > 1 && !lockRoot ? (
+          {roots.length > 1 && !lockNavigation ? (
             <Menu
               appearance="plain"
               label={selected?.rootLabel ?? location.root ?? 'Select root'}
@@ -624,16 +641,28 @@ function ExplorerLocationMenu({
         </div>
         {localeRoot && locales.length > 1 && (
           <div className={styles.Explorer.locationBreadcrumbs.root.locale()}>
-            <LocaleMenu
-              root={localeRoot}
-              locale={selectedLocale}
-              onLocaleChange={selectLocale}
-            />
+            {lockNavigation ? (
+              <span
+                className={styles.Explorer.locationBreadcrumbs.localeValue()}
+              >
+                {(selectedLocale ?? locales[0])?.toUpperCase()}
+              </span>
+            ) : (
+              <LocaleMenu
+                root={localeRoot}
+                locale={selectedLocale}
+                onLocaleChange={selectLocale}
+              />
+            )}
           </div>
         )}
       </div>
       {parent && (
-        <ExplorerLocationParents explorer={explorer} parent={parent} />
+        <ExplorerLocationParents
+          explorer={explorer}
+          lockNavigation={lockNavigation}
+          parent={parent}
+        />
       )}
     </div>
   )
@@ -844,7 +873,7 @@ export function ExplorerHeader({
             {!searchesEverything && (
               <ExplorerLocationMenu
                 explorer={explorer}
-                lockRoot={explorer.pickChildren}
+                lockNavigation={explorer.pickChildren}
               />
             )}
           </div>

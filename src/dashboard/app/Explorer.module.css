@@ -204,6 +204,16 @@
   margin-left: 2px;
 }
 
+.Explorer-locationBreadcrumbs-localeValue {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 4px;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+  line-height: 24px;
+}
+
 .Explorer-locationBreadcrumbs-current {
   min-width: 0;
   max-width: 160px;
@@ -219,6 +229,17 @@
   min-width: 0;
   max-width: 140px;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.Explorer-locationBreadcrumbs-parentValue {
+  min-width: 0;
+  max-width: 140px;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 13px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

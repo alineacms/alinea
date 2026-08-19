@@ -1,5 +1,17 @@
+import type {Locator} from 'playwright'
 import {expect, test} from '../support/DashboardTest.js'
 import {LinkFieldScenarioMount} from '../support/LinkFieldScenarioMount.js'
+
+async function expectVerticallyUnclipped(locator: Locator) {
+  await expect(locator).toBeVisible()
+  const dimensions = await locator.evaluate(element => ({
+    clientHeight: element.clientHeight,
+    scrollHeight: element.scrollHeight
+  }))
+  expect(dimensions.clientHeight).toBeGreaterThanOrEqual(
+    dimensions.scrollHeight
+  )
+}
 
 test('opens a functional location in another workspace and root', async ({
   dashboard,
@@ -83,8 +95,7 @@ test('switches a localized card picker without showing its loader', async ({
   expect(localeTypography).toEqual(rootTypography)
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
-    .getByRole('radio')
-    .first()
+    .getByRole('radio', {name: 'Card view'})
     .click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select I18 result'})
@@ -152,8 +163,7 @@ test('filters entries with a functional condition', async ({
 
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
-    .getByRole('radio')
-    .first()
+    .getByRole('radio', {name: 'Card view'})
     .click()
   await expect(
     picker.getByRole('treegrid', {name: 'Link folders'})
@@ -211,6 +221,15 @@ test('defaults a condition without a location to all locations', async ({
   await expect(allLocations).toBeChecked()
   await expect(allLocations).toBeEnabled()
   await expect(entries.getByRole('row', {name: /Child/})).toBeVisible()
+
+  const view = picker.getByRole('radiogroup', {name: 'Explorer view'})
+  await view.getByRole('radio', {name: 'Card view'}).click()
+  const cards = picker.getByRole('grid', {name: 'Explorer entries'})
+  await expect(cards.getByRole('row', {name: /Child/})).toContainText(
+    /Main.*Pages.*Folder/
+  )
+  await expectVerticallyUnclipped(cards.getByText('Child', {exact: true}))
+  await view.getByRole('radio', {name: 'Row view'}).click()
 
   await allLocations.press('Space')
   await expect(allLocations).not.toBeChecked()
@@ -276,6 +295,28 @@ test('opens pickChildren at the children of the edited entry', async ({
   ).toHaveCount(0)
   await expect(picker.getByRole('row', {name: 'Child'})).toBeVisible()
   await expect(picker.getByRole('row', {name: 'Beta'})).toHaveCount(0)
+})
+
+test('keeps pickChildren breadcrumbs static', async ({dashboard, mount}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    entry: 'child'
+  })
+
+  await app.page
+    .getByRole('list', {name: 'Child page'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
+
+  const location = app.page.getByRole('dialog', {name: 'Pick a link'}).getByRole(
+    'group',
+    {name: 'Explorer location'}
+  )
+  await expect(location.getByText('Folder', {exact: true})).toBeVisible()
+  for (const breadcrumb of ['Main', 'Pages', 'Folder', 'Child']) {
+    await expect(
+      location.getByRole('button', {name: breadcrumb, exact: true})
+    ).toHaveCount(0)
+  }
 })
 
 test('navigates into folders without showing a suspense loader', async ({
@@ -403,8 +444,7 @@ test('preloads entries before card sidebar navigation commits', async ({
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
-    .getByRole('radio')
-    .first()
+    .getByRole('radio', {name: 'Card view'})
     .click()
 
   const folders = picker.getByRole('treegrid', {name: 'Link folders'})
@@ -446,8 +486,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
   const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
-    .getByRole('radio')
-    .first()
+    .getByRole('radio', {name: 'Card view'})
     .click()
 
   const folders = picker.getByRole('treegrid', {name: 'Link folders'})
@@ -716,8 +755,7 @@ test('navigates through folders to matching rows in a link picker', async ({
 
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
-    .getByRole('radio')
-    .first()
+    .getByRole('radio', {name: 'Card view'})
     .click()
   const folderCard = picker.locator('[data-unselectable="true"]', {
     hasText: 'Folder'
@@ -775,8 +813,7 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(
     imagePicker
       .getByRole('radiogroup', {name: 'Explorer view'})
-      .getByRole('radio')
-      .first()
+      .getByRole('radio', {name: 'Card view'})
   ).toBeChecked()
   await expect(
     imagePicker.getByRole('switch', {name: 'All locations'})
@@ -787,6 +824,9 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(
     imagePicker.getByRole('treegrid', {name: 'Media folders'})
   ).toHaveCount(0)
+  await expectVerticallyUnclipped(
+    imagePicker.getByText('Existing image', {exact: true})
+  )
   await expect
     .poll(() =>
       app.page.evaluate(
@@ -806,8 +846,7 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(
     filePicker
       .getByRole('radiogroup', {name: 'Explorer view'})
-      .getByRole('radio')
-      .nth(1)
+      .getByRole('radio', {name: 'Row view'})
   ).toBeChecked()
   await expect(
     filePicker.getByRole('switch', {name: 'All locations'})

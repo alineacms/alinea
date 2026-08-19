@@ -1,4 +1,5 @@
 import {Checkbox, Icon, Surface} from '#/components.js'
+import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValue, useSetAtom, useStore} from 'jotai'
@@ -20,6 +21,7 @@ import {
   IcTwotoneDescription,
   IcTwotoneFolder
 } from '../icons.js'
+import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
   DashboardEntryData,
@@ -42,6 +44,7 @@ interface ExplorerCardItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   explorer: DashboardExplorer
+  includeWorkspace: boolean
   showSelectionControls: boolean
 }
 
@@ -49,6 +52,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   breadcrumbs,
   entry,
   explorer,
+  includeWorkspace,
   showSelectionControls
 }: ExplorerCardItemProps) {
   const {data} = useAtomValue(entry.data)
@@ -65,6 +69,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       entry={entry}
       data={data}
       explorer={explorer}
+      includeWorkspace={includeWorkspace}
       showSelectionControls={showSelectionControls}
     />
   )
@@ -114,6 +119,7 @@ interface ExplorerCardLoadedItemProps {
   entry: DashboardEntry
   data: DashboardEntryData
   explorer: DashboardExplorer
+  includeWorkspace: boolean
   showSelectionControls: boolean
 }
 
@@ -122,19 +128,26 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   entry,
   data,
   explorer,
+  includeWorkspace,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValue(data.label)
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const hasChildren = useAtomValue(data.hasChildren)
-  const parents = useAtomValue(data.parents)
   const isSelectable = useAtomValue(
     useMemo(() => explorer.isSelectable(entry), [entry, explorer])
   )
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
+  const location = breadcrumbs ? (
+    <ExplorerCardLocation
+      data={data}
+      entry={entry}
+      includeWorkspace={includeWorkspace}
+    />
+  ) : null
   const fallbackIcon = hasChildren ? IcTwotoneFolder : IcTwotoneDescription
   return (
     <GridListItem
@@ -156,14 +169,17 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
         className={styles.ExplorerCards.item.card({file: Boolean(info)})}
       >
         {info ? (
-          <ExplorerFileCard file={info} label={label} layout="card" />
+          <ExplorerFileCard
+            file={info}
+            label={label}
+            layout="card"
+            parents={location}
+          />
         ) : (
           <ExplorerEntryCard
             icon={icon ?? fallbackIcon}
             label={label}
-            parents={
-              breadcrumbs ? <ExplorerCardParents parents={parents} /> : null
-            }
+            parents={location}
             typeLabel={type.label}
           />
         )}
@@ -171,6 +187,34 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     </GridListItem>
   )
 })
+
+interface ExplorerCardLocationProps {
+  data: DashboardEntryData
+  entry: DashboardEntry
+  includeWorkspace: boolean
+}
+
+function ExplorerCardLocation({
+  data,
+  entry,
+  includeWorkspace
+}: ExplorerCardLocationProps) {
+  const config = useAtomValue(configAtom)
+  const parents = useAtomValue(data.parents)
+  const root = useAtomValue(data.root)
+  const rootLabel = useAtomValue(root.label)
+  const workspace = config.workspaces[entry.workspace]
+  const workspaceLabel = workspace
+    ? getWorkspace(workspace).label
+    : entry.workspace
+  return (
+    <ExplorerCardParents
+      parents={parents}
+      rootLabel={rootLabel}
+      workspaceLabel={includeWorkspace ? workspaceLabel : undefined}
+    />
+  )
+}
 
 interface ExplorerCardCheckboxProps {
   label: string
@@ -200,7 +244,9 @@ function ExplorerEntryCard({
   typeLabel
 }: ExplorerEntryCardProps) {
   return (
-    <div className={styles.ExplorerCards.entry()}>
+    <div
+      className={styles.ExplorerCards.entry({breadcrumbs: Boolean(parents)})}
+    >
       <div className={styles.ExplorerCards.entry.top()}>
         {icon && (
           <Icon icon={icon} className={styles.ExplorerCards.entry.icon()} />
@@ -219,25 +265,37 @@ function ExplorerEntryCard({
 
 interface ExplorerCardParentsProps {
   parents: Array<DashboardEntry>
+  rootLabel: string
+  workspaceLabel?: string
 }
 
-function ExplorerCardParents({parents}: ExplorerCardParentsProps) {
-  if (parents.length === 0) return null
+function ExplorerCardParents({
+  parents,
+  rootLabel,
+  workspaceLabel
+}: ExplorerCardParentsProps) {
+  const breadcrumbs: Array<{id: string; value: ReactNode}> = [
+    ...(workspaceLabel ? [{id: 'workspace', value: workspaceLabel}] : []),
+    ...(rootLabel ? [{id: 'root', value: rootLabel}] : []),
+    ...parents.map(parent => ({
+      id: `parent-${parent.id}`,
+      value: <ExplorerCardParent parent={parent} />
+    }))
+  ]
+  if (breadcrumbs.length === 0) return null
   return (
     <div className={styles.ExplorerCards.parents()}>
-      {parents
-        .map<ReactNode>(parent => (
-          <ExplorerCardParent key={parent.id} parent={parent} />
-        ))
-        .reduce((prev, curr, index) => [
-          prev,
-          <IcRoundKeyboardArrowRight
-            aria-hidden
-            className={styles.ExplorerCards.parents.separator()}
-            key={`separator-${index}`}
-          />,
-          curr
-        ])}
+      {breadcrumbs.map((breadcrumb, index) => (
+        <Fragment key={breadcrumb.id}>
+          {index > 0 && (
+            <IcRoundKeyboardArrowRight
+              aria-hidden
+              className={styles.ExplorerCards.parents.separator()}
+            />
+          )}
+          {breadcrumb.value}
+        </Fragment>
+      ))}
     </div>
   )
 }
@@ -329,6 +387,7 @@ export function ExplorerCards({
               }
               entry={item}
               explorer={explorer}
+              includeWorkspace={searchesEverything}
               showSelectionControls={showSelectionControls}
             />
           )}
