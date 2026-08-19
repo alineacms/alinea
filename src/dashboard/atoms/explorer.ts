@@ -115,6 +115,11 @@ export interface ExplorerOptions {
     locale: string | null,
     location: ExplorerLocation
   ) => Atom<Promise<unknown>>
+  selectedLocaleAtom?: WritableAtom<
+    string | null,
+    [SetStateAction<string | null>],
+    void
+  >
   selectedLocale?: string | null
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
@@ -332,7 +337,11 @@ export class ExplorerAtoms {
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
   #selectedSort = atom<ExplorerSort>()
   #selectedFilter = atom<ExplorerTypeFilters>()
-  selectedLocale: PrimitiveAtom<string | null>
+  selectedLocale: WritableAtom<
+    string | null,
+    [SetStateAction<string | null>],
+    void
+  >
   root: Atom<ExplorerRootData>
   parent: (
     location: ExplorerLocation,
@@ -409,9 +418,9 @@ export class ExplorerAtoms {
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>((options.preselect ?? true) ? options.initialSelection : [])
     )
-    this.selectedLocale = atom(
-      initialLocation.locale ?? options.selectedLocale ?? null
-    )
+    this.selectedLocale =
+      options.selectedLocaleAtom ??
+      atom(initialLocation.locale ?? options.selectedLocale ?? null)
     if (options.rootData) {
       const rootData = options.rootData
       const value = {

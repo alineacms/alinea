@@ -15,7 +15,7 @@ import {
 } from '#/dashboard/atoms/explorer.js'
 import {type Atom, atom, type PrimitiveAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {ComponentType} from 'react'
+import type {ComponentType, SetStateAction} from 'react'
 import type {
   DroppableCollectionInsertDropEvent,
   DroppableCollectionOnItemDropEvent,
@@ -350,6 +350,28 @@ export class RootAtoms {
   readonly tree: (locale: string | null) => TreeAtoms
   explorer: ExplorerAtoms
 
+  #explorerLocaleState = atom<string | null>(null)
+  #explorerLocale = atom(
+    get => {
+      if (get(this.data).isMediaRoot) return null
+      const page = get(pageAtom)
+      return page.workspace === this.workspace && page.root === this.key
+        ? page.locale
+        : get(this.#explorerLocaleState)
+    },
+    (get, set, update: SetStateAction<string | null>) => {
+      const page = get(pageAtom)
+      const current =
+        page.workspace === this.workspace && page.root === this.key
+          ? page.locale
+          : get(this.#explorerLocaleState)
+      set(
+        this.#explorerLocaleState,
+        typeof update === 'function' ? update(current) : update
+      )
+    }
+  )
+
   constructor(
     public readonly workspace: string,
     public readonly key: string
@@ -406,6 +428,8 @@ export class RootAtoms {
             : undefined,
         enableNavigation: true,
         rootData: this.data,
+        selectedLocaleAtom:
+          parentId === null ? this.#explorerLocale : undefined,
         treeItems: locale => this.tree(locale).items,
         selectionBehavior: 'toggle',
         selectionMode: 'multiple'
@@ -415,7 +439,10 @@ export class RootAtoms {
 
   label = atom(get => get(this.data).label)
   icon = atom(get => get(this.data).icon ?? LucideFile)
-  i18n = atom((get): RootI18n | undefined => get(this.data).i18n)
+  i18n = atom((get): RootI18n | undefined => {
+    const data = get(this.data)
+    return data.isMediaRoot ? undefined : data.i18n
+  })
   isMedia = atom(get => Boolean(get(this.data).isMediaRoot))
   canCreate = atom(get => {
     return get(policyAtom).canCreate({

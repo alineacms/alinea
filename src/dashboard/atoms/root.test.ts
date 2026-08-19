@@ -1,8 +1,15 @@
 import {expect, test} from 'bun:test'
-import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
 import {WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
+import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {Config} from '#/index.js'
+import {
+  createDashboardAtomFixture,
+  createDashboardStore,
+  DashboardTestPage
+} from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import type {Key} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
@@ -29,6 +36,78 @@ test('root icon uses the original file fallback', async () => {
   const root = rootAtoms('main', 'pages')
 
   expect(store.get(root.icon)).toBe(LucideFile)
+})
+
+test('root explorers follow route locales and keep media unlocalized', async () => {
+  const workspace = 'localized_root_test'
+  const config = Config.create({
+    schema: {Page: DashboardTestPage},
+    workspaces: {
+      [workspace]: Config.workspace('Localized', {
+        source: '.',
+        roots: {
+          legacy_media: Config.root('Media', {
+            contains: ['MediaFile'],
+            i18n: {locales: ['en', 'fr']},
+            isMediaRoot: true
+          }),
+          pages: Config.root('Pages', {
+            contains: ['Page'],
+            i18n: {locales: ['en', 'fr']}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  await db.create({
+    id: 'english-root-entry',
+    locale: 'en',
+    root: 'pages',
+    type: DashboardTestPage,
+    workspace,
+    set: {title: 'English entry'}
+  })
+  await db.create({
+    id: 'french-root-entry',
+    locale: 'fr',
+    root: 'pages',
+    type: DashboardTestPage,
+    workspace,
+    set: {title: 'French entry'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(authReady)
+  const root = rootAtoms(workspace, 'pages')
+
+  store.set(routeAtom, {
+    browser: true,
+    route: {page: 'entry', workspace, root: 'pages', locale: 'fr'}
+  })
+  const frenchPage = await store.get(root.explorer.pageReady)
+
+  expect(frenchPage.locale).toBe('fr')
+  expect(frenchPage.items.map(item => item.title)).toEqual(['French entry'])
+
+  store.set(routeAtom, {
+    browser: true,
+    route: {page: 'entry', workspace, root: 'pages', locale: 'en'}
+  })
+  const englishPage = await store.get(root.explorer.pageReady)
+
+  expect(englishPage.locale).toBe('en')
+  expect(englishPage.items.map(item => item.title)).toEqual(['English entry'])
+
+  store.set(routeAtom, {
+    browser: true,
+    route: {page: 'entry', workspace, root: 'legacy_media', locale: 'fr'}
+  })
+  const mediaRoot = rootAtoms(workspace, 'legacy_media')
+  const mediaPage = await store.get(mediaRoot.explorer.pageReady)
+
+  expect(store.get(mediaRoot.i18n)).toBeUndefined()
+  expect(mediaPage.locale).toBeNull()
 })
 
 test('tree bundles own independent expansion state', () => {

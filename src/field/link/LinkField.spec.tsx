@@ -18,6 +18,23 @@ test('opens the standalone image picker story', async ({mount, page}) => {
   await expect(page.getByRole('searchbox', {name: 'Search'})).toBeFocused()
 })
 
+test('shows image results outside an entry scope', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const field = page.getByRole('list', {name: 'Hero image'})
+  await field.getByRole('button', {name: 'Link settings'}).click()
+  await page
+    .getByRole('dialog', {name: 'Link settings'})
+    .getByRole('button', {name: 'Remove link'})
+    .click()
+  await field.getByRole('button', {name: 'Image'}).click()
+
+  const picker = page.getByRole('dialog', {name: 'Pick an image'})
+  await expect(
+    picker.getByRole('grid', {name: 'Explorer entries'})
+  ).toContainText('landscape')
+})
+
 test('switches link picker workspaces and roots', async ({mount, page}) => {
   await mount(<EntryPickerSingle />)
   await page.getByRole('button', {name: 'Pick an entry'}).click()
