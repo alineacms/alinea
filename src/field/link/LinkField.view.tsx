@@ -67,7 +67,12 @@ import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import type {ComponentPropsWithoutRef, ComponentType, ReactNode} from 'react'
+import type {
+  ComponentPropsWithoutRef,
+  ComponentType,
+  ReactNode,
+  RefObject
+} from 'react'
 import {Fragment, useEffect, useMemo, useRef, useState} from 'react'
 import {
   type DragItem,
@@ -358,6 +363,7 @@ interface StandardFieldActionProps {
 }
 
 interface LinkPickerActionProps {
+  anchorRef?: RefObject<Element | null>
   ariaLabel?: string
   buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
   buttonIcon?: ComponentType
@@ -420,6 +426,7 @@ function initialFields(picker: Picker<LinkFieldRow>) {
 }
 
 function LinkPickerAction({
+  anchorRef,
   ariaLabel,
   buttonAppearance = 'plain',
   buttonIcon,
@@ -550,6 +557,7 @@ function LinkPickerAction({
       </Button>
       <LinkPicker
         {...pickerProps}
+        anchorRef={anchorRef}
         key={entryPickerOptionsKey(location, condition)}
       />
     </DialogTrigger>
@@ -820,11 +828,13 @@ interface SingleLinkCreateActionsProps extends StandardFieldActionProps {
 function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
   const options = useFieldOptions(field)
   const [, setValue] = useField(field)
+  const anchorRef = useRef<HTMLDivElement>(null)
   if (options.readOnly) return null
   return (
-    <div className={styles.LinkFieldView.create()}>
+    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
+          anchorRef={anchorRef}
           buttonSize="small"
           className={styles.LinkFieldView.createButton()}
           key={type}
@@ -848,14 +858,16 @@ interface MultipleLinkCreateActionsProps {
 function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   const options = useFieldOptions(field)
   const [value, setValue] = useField(field)
+  const anchorRef = useRef<HTMLDivElement>(null)
   const links = value ?? []
   const showCreate = options.max ? links.length < options.max : true
   if (options.readOnly) return null
   if (!showCreate) return null
   return (
-    <div className={styles.LinkFieldView.create()}>
+    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
+          anchorRef={anchorRef}
           buttonSize="small"
           className={styles.LinkFieldView.createButton()}
           key={type}

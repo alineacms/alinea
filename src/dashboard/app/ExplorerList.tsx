@@ -6,6 +6,7 @@ import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
+import type {Selection} from 'react-aria-components'
 import type {
   DashboardEntry,
   DashboardExplorer,
@@ -77,19 +78,23 @@ function SearchIdleState() {
 }
 
 export interface ExplorerListProps {
+  compactTable?: boolean
   explorer: DashboardExplorer
   isMedia?: boolean
   items?: Atom<Array<DashboardEntry>>
   locale: string | null
+  onSelectionChange?: (selection: Selection) => void
   root?: Atom<DashboardRoot>
   view?: 'card' | 'row'
 }
 
 export function ExplorerList({
+  compactTable,
   explorer,
   isMedia: readyIsMedia,
   items: readyItems,
   locale,
+  onSelectionChange,
   root: readyRoot,
   view: readyView
 }: ExplorerListProps) {
@@ -160,10 +165,12 @@ export function ExplorerList({
         />
       ) : (
         <ExplorerTable
+          compact={compactTable}
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
           items={items}
           locale={locale}
+          onSelectionChange={onSelectionChange}
           renderEmptyState={() => (
             <EmptyResults explorer={explorer} root={root} />
           )}

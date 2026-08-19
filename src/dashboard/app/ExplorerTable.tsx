@@ -11,7 +11,8 @@ import {
   TreeItem,
   TreeItemContent,
   Virtualizer,
-  type DragAndDropHooks
+  type DragAndDropHooks,
+  type Selection
 } from 'react-aria-components'
 import type {ListLayoutOptions} from 'react-stately/useVirtualizerState'
 import type {
@@ -33,6 +34,69 @@ interface ExplorerTableColumn {
   kind: 'selection' | 'title' | 'overview' | 'filler'
   minWidth?: number
   width: number | '1fr'
+}
+
+interface ExplorerTableColumnsOptions {
+  compact: boolean
+  showSelectionControls: boolean
+}
+
+const explorerTableSelectionColumn: ExplorerTableColumn = {
+  id: 'selection',
+  kind: 'selection',
+  width: 30
+}
+
+const explorerTableTitleColumn: ExplorerTableColumn = {
+  id: 'title',
+  kind: 'title',
+  width: 220
+}
+
+const compactExplorerTableTitleColumn: ExplorerTableColumn = {
+  id: 'title',
+  kind: 'title',
+  minWidth: 0,
+  width: '1fr'
+}
+
+const explorerTableOverviewColumns: Array<ExplorerTableColumn> = Array.from(
+  {length: dashboardEntryOverviewColumnCount},
+  (_, index) => ({
+    id: `overview-${index}`,
+    index,
+    kind: 'overview',
+    minWidth: 120,
+    width: '1fr'
+  })
+)
+
+const explorerTableLayoutOptions: ListLayoutOptions = {
+  rowHeight: 44,
+  padding: 0,
+  gap: 0
+}
+
+function createExplorerTableColumns({
+  compact,
+  showSelectionControls
+}: ExplorerTableColumnsOptions): Array<ExplorerTableColumn> {
+  const columns = new Array<ExplorerTableColumn>()
+  if (showSelectionControls) columns.push(explorerTableSelectionColumn)
+  columns.push(
+    compact ? compactExplorerTableTitleColumn : explorerTableTitleColumn
+  )
+  if (!compact) columns.push(...explorerTableOverviewColumns)
+  return columns
+}
+
+function explorerTableGridTemplate(columns: Array<ExplorerTableColumn>) {
+  return columns
+    .map(column => {
+      if (column.width !== '1fr') return `${column.width}px`
+      return `minmax(${column.minWidth ?? 0}px, 1fr)`
+    })
+    .join(' ')
 }
 
 interface ExplorerTableRowProps {
@@ -391,17 +455,21 @@ function ExplorerTableRow(props: ExplorerTableRowProps) {
 }
 
 export interface ExplorerTableProps {
+  compact?: boolean
   dragAndDropHooks: DragAndDropHooks<DashboardEntry>
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
+  onSelectionChange?: (selection: Selection) => void
   renderEmptyState: () => ReactNode
   locale: string | null
 }
 
 export function ExplorerTable({
+  compact = false,
   dragAndDropHooks,
   explorer,
   items,
+  onSelectionChange,
   renderEmptyState,
   locale
 }: ExplorerTableProps) {
@@ -418,49 +486,29 @@ export function ExplorerTable({
     isSearching ||
     searchesEverything
   const hasSelection = selectionMode !== 'none'
-  const showSelectionControls = hasSelection && explorer.showSelectionControls
+  const showSelectionControls =
+    hasSelection && (compact || explorer.showSelectionControls)
   const columns = useMemo<Array<ExplorerTableColumn>>(
-    () => [
-      ...(showSelectionControls
-        ? [{id: 'selection', kind: 'selection' as const, width: 30}]
-        : []),
-      {id: 'title', kind: 'title', width: 220},
-      ...Array.from(
-        {length: dashboardEntryOverviewColumnCount},
-        (_, index) => ({
-          id: `overview-${index}`,
-          index,
-          kind: 'overview' as const,
-          minWidth: 120,
-          width: '1fr' as const
-        })
-      )
-    ],
-    [showSelectionControls]
+    () => createExplorerTableColumns({compact, showSelectionControls}),
+    [compact, showSelectionControls]
   )
   const gridTemplateColumns = useMemo(
-    () =>
-      columns
-        .map(column =>
-          column.width === '1fr'
-            ? `minmax(${column.minWidth ?? 0}px, 1fr)`
-            : `${column.width}px`
-        )
-        .join(' '),
+    () => explorerTableGridTemplate(columns),
     [columns]
   )
-  const layoutOptions = useMemo<ListLayoutOptions>(
-    () => ({
-      rowHeight: 44,
-      padding: 0,
-      gap: 0
-    }),
-    []
-  )
+
+  function changeSelection(selection: Selection) {
+    setSelected(selection)
+    onSelectionChange?.(selection)
+  }
+
   return (
-    <div className={styles.ExplorerTable.viewport()}>
+    <div className={styles.ExplorerTable.viewport({compact})}>
       <Surface className={styles.ExplorerTable.surface()}>
-        <Virtualizer layout={ListLayout} layoutOptions={layoutOptions}>
+        <Virtualizer
+          layout={ListLayout}
+          layoutOptions={explorerTableLayoutOptions}
+        >
           <Tree
             aria-label="Explorer entries"
             className={styles.ExplorerTable({
@@ -475,7 +523,7 @@ export function ExplorerTable({
             selectionBehavior={explorer.selectionBehavior}
             selectionMode={hasSelection ? selectionMode : undefined}
             onExpandedChange={setExpandedKeys}
-            onSelectionChange={hasSelection ? setSelected : undefined}
+            onSelectionChange={hasSelection ? changeSelection : undefined}
             style={{display: 'block', width: '100%', height: '100%'}}
           >
             {item => (

@@ -25,7 +25,12 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {DialogTrigger, FileTrigger, type Key} from 'react-aria-components'
+import {
+  DialogTrigger,
+  FileTrigger,
+  type Key,
+  type Selection
+} from 'react-aria-components'
 import {configAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
@@ -79,10 +84,12 @@ export interface ExplorerHeaderProps {
 }
 
 export interface ExplorerBodyProps {
+  compactTable?: boolean
   explorer: DashboardExplorer
   isMedia?: boolean
   items?: Atom<Array<DashboardEntry>>
   locale: string | null
+  onSelectionChange?: (selection: Selection) => void
   root?: Atom<DashboardRoot>
   view?: ExplorerView
 }
@@ -91,6 +98,7 @@ interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
   locale: string | null
+  onEntryAction?: (entry: DashboardEntry) => void
   ready?: boolean
 }
 
@@ -113,10 +121,11 @@ interface ExplorerHeaderParentMainProps {
   titleControls?: ReactNode
 }
 
-function ExplorerSearch({
+export function ExplorerSearch({
   autoFocus,
   explorer,
   locale,
+  onEntryAction,
   ready = false
 }: ExplorerSearchProps) {
   const page = useAtomValue(explorer.page)
@@ -206,7 +215,8 @@ function ExplorerSearch({
         selectedEntry ?? (explorer.autoSelectFirstItem ? items[0] : undefined)
       if (!entry) return
       event.preventDefault()
-      performAction(entry, actionLocale)
+      if (onEntryAction) onEntryAction(entry)
+      else performAction(entry, actionLocale)
     }
   }
 
@@ -884,10 +894,12 @@ export function ExplorerHeader({
 }
 
 export function ExplorerBody({
+  compactTable,
   explorer,
   isMedia,
   items,
   locale,
+  onSelectionChange,
   root,
   view
 }: ExplorerBodyProps) {
@@ -895,10 +907,12 @@ export function ExplorerBody({
     <RailBody>
       <div className={styles.Explorer.viewport()}>
         <ExplorerList
+          compactTable={compactTable}
           explorer={explorer}
           isMedia={isMedia}
           items={items}
           locale={locale}
+          onSelectionChange={onSelectionChange}
           root={root}
           view={view}
         />

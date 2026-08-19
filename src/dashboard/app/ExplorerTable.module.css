@@ -5,6 +5,10 @@
   height: 100%;
   padding: 16px;
   overflow: hidden;
+
+  &.is-compact {
+    padding: 0;
+  }
 }
 
 .ExplorerTable-surface {
