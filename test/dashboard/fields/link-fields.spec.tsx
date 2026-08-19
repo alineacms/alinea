@@ -1,6 +1,22 @@
-import type {Locator} from 'playwright'
+import type {Locator, Page} from 'playwright'
 import {expect, test} from '../support/DashboardTest.js'
 import {LinkFieldScenarioMount} from '../support/LinkFieldScenarioMount.js'
+
+async function expandLinkPicker(page: Page): Promise<Locator> {
+  const compactPicker = page.getByRole('dialog', {
+    name: 'Pick a link',
+    exact: true
+  })
+  await compactPicker
+    .getByRole('button', {name: 'Expand entry picker'})
+    .click()
+  const expandedPicker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view',
+    exact: true
+  })
+  await expect(expandedPicker).toBeVisible()
+  return expandedPicker
+}
 
 async function expectVerticallyUnclipped(locator: Locator) {
   await expect(locator).toBeVisible()
@@ -24,7 +40,7 @@ test('opens a functional location in another workspace and root', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   await expect(
     picker.getByRole('row', {name: 'Reference target'})
   ).toBeVisible()
@@ -79,7 +95,7 @@ test('switches a localized card picker without showing its loader', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const rootLabel = picker.getByText('Localized pages', {exact: true})
   const localeButton = picker
     .getByRole('button', {name: 'EN', exact: true})
@@ -135,7 +151,7 @@ test('filters entries with a functional condition', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const location = picker.getByRole('group', {name: 'Explorer location'})
   const resultModes = location.getByRole('radiogroup', {
     name: 'Explorer results'
@@ -184,7 +200,7 @@ test('defaults a condition without a location to all locations', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
@@ -252,11 +268,14 @@ test('adds the same entry to a multiple link field more than once', async ({
 
   async function addAlpha() {
     await field.getByRole('button', {name: 'Page link'}).click()
-    const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+    const picker = app.page.getByRole('dialog', {
+      name: 'Pick a link',
+      exact: true
+    })
     const alpha = picker.getByRole('checkbox', {name: 'Select Alpha'})
     await expect(alpha).not.toBeChecked()
     await alpha.locator('xpath=ancestor::label').click()
-    await picker.getByRole('button', {name: 'Select'}).click()
+    await expect(picker).toBeHidden()
   }
 
   await addAlpha()
@@ -279,7 +298,7 @@ test('opens pickChildren at the children of the edited entry', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
   })
@@ -307,10 +326,8 @@ test('keeps pickChildren breadcrumbs static', async ({dashboard, mount}) => {
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const location = app.page.getByRole('dialog', {name: 'Pick a link'}).getByRole(
-    'group',
-    {name: 'Explorer location'}
-  )
+  const picker = await expandLinkPicker(app.page)
+  const location = picker.getByRole('group', {name: 'Explorer location'})
   await expect(location.getByText('Folder', {exact: true})).toBeVisible()
   for (const breadcrumb of ['Main', 'Pages', 'Folder', 'Child']) {
     await expect(
@@ -330,7 +347,7 @@ test('navigates into folders without showing a suspense loader', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const allLocations = picker.getByRole('switch', {name: 'All locations'})
   await expect(allLocations).not.toBeChecked()
@@ -441,7 +458,7 @@ test('preloads entries before card sidebar navigation commits', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
     .getByRole('radio', {name: 'Card view'})
@@ -483,7 +500,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   await picker
     .getByRole('radiogroup', {name: 'Explorer view'})
     .getByRole('radio', {name: 'Card view'})
@@ -506,7 +523,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
       if (document.querySelector('[aria-label="Loading entry"]'))
         document.documentElement.dataset.cardParentPlaceholderSeen = 'true'
       const picker = document.querySelector(
-        '[role="dialog"][aria-label="Pick a link"]'
+        '[role="dialog"][aria-label="Pick a link in expanded view"]'
       )
       const results = picker?.querySelector(
         '[aria-label="Explorer card results"]'
@@ -514,7 +531,7 @@ test('keeps card mode rendered while navigating sidebar parents', async ({
       if (picker && !results) {
         requestAnimationFrame(() => {
           const currentPicker = document.querySelector(
-            '[role="dialog"][aria-label="Pick a link"]'
+            '[role="dialog"][aria-label="Pick a link in expanded view"]'
           )
           const currentResults = currentPicker?.querySelector(
             '[aria-label="Explorer card results"]'
@@ -726,7 +743,7 @@ test('navigates through folders to matching rows in a link picker', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const resultModes = picker.getByRole('radiogroup', {
     name: 'Explorer results'
@@ -782,7 +799,7 @@ test('opens a table parent as the current location on double click', async ({
     .getByRole('button', {name: 'Page link'})
     .click()
 
-  const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+  const picker = await expandLinkPicker(app.page)
   const entries = picker.getByRole('treegrid', {name: 'Explorer entries'})
   const folder = entries.getByRole('row', {name: /Folder/})
   await folder.dblclick()
