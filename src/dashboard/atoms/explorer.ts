@@ -123,6 +123,7 @@ export interface ExplorerOptions {
   searchDepth?: 'current' | 'all'
   onAction?: (entry: ExplorerEntry) => void
   onConfirm?: (selection: Array<string>) => void
+  preselect?: boolean
 }
 
 export interface ExplorerTreeItem {
@@ -301,6 +302,7 @@ export class ExplorerAtoms {
   readonly mode: 'browse' | 'search'
   readonly hasSelection
   readonly hideResultsUntilSearch
+  readonly linkedKeys: ReadonlySet<Key>
   readonly searchDepth
   readonly supportsInlineExpansion
   readonly pickChildren
@@ -378,6 +380,7 @@ export class ExplorerAtoms {
       options.hideResultsUntilSearch ?? this.mode === 'search'
     this.searchDepth =
       options.searchDepth ?? (this.mode === 'search' ? 'all' : 'current')
+    this.linkedKeys = new Set<Key>(options.initialSelection)
     this.supportsInlineExpansion = options.nestedNavigation ?? false
     this.pickChildren = options.pickChildren ?? false
     this.hasCondition = Boolean(options.condition)
@@ -395,7 +398,7 @@ export class ExplorerAtoms {
         get(this.searchScope) === 'everything'
     )
     this.selection = atom<'all' | Set<Key>>(
-      new Set<Key>(options.initialSelection)
+      new Set<Key>((options.preselect ?? true) ? options.initialSelection : [])
     )
     this.selectedLocale = atom(
       initialLocation.locale ?? options.selectedLocale ?? null

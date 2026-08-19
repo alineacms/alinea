@@ -50,6 +50,9 @@ const ScenarioPage = Config.document('Page', {
     browsePage: Field.entry('Browse page', {
       location: {workspace: 'main', root: 'pages'}
     }),
+    relatedPages: Field.entry.multiple('Repeated pages', {
+      location: {workspace: 'main', root: 'pages'}
+    }),
     navigablePage: Field.entry('Navigable page', {
       condition: {_id: dashboardScenarioIds.child},
       enableNavigation: true

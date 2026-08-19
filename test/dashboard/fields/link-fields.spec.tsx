@@ -211,6 +211,28 @@ test('defaults a condition without a location to all locations', async ({
   await expect(entries.getByRole('row', {name: /Child/})).toHaveCount(0)
 })
 
+test('adds the same entry to a multiple link field more than once', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+  const field = app.page.getByRole('list', {name: 'Repeated pages'})
+
+  async function addAlpha() {
+    await field.getByRole('button', {name: 'Page link'}).click()
+    const picker = app.page.getByRole('dialog', {name: 'Pick a link'})
+    const alpha = picker.getByRole('checkbox', {name: 'Select Alpha'})
+    await expect(alpha).not.toBeChecked()
+    await alpha.locator('xpath=ancestor::label').click()
+    await picker.getByRole('button', {name: 'Select'}).click()
+  }
+
+  await addAlpha()
+  await addAlpha()
+
+  await expect(field.getByText('Alpha', {exact: true})).toHaveCount(2)
+})
+
 test('opens pickChildren at the children of the edited entry', async ({
   dashboard,
   mount

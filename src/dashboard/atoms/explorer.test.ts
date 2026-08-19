@@ -1,5 +1,5 @@
-import {expect, test} from 'bun:test'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
+import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
 import {
@@ -177,4 +177,34 @@ test('matches only contain selectable rows for compound conditions', async () =>
 
   expect(items.map(item => item.id)).toEqual([child._id])
   expect(items.every(item => store.get(explorer.isSelectable(item)))).toBe(true)
+})
+
+test('picker can mark initial links without preselecting them', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {
+      initialSelection: ['linked-entry'],
+      onConfirm() {},
+      preselect: false,
+      selectionMode: 'multiple'
+    }
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.selection)).toEqual(new Set())
+  expect(explorer.linkedKeys).toEqual(new Set(['linked-entry']))
+})
+
+test('picker preselects initial links by default', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages'},
+    {
+      initialSelection: ['linked-entry'],
+      onConfirm() {},
+      selectionMode: 'multiple'
+    }
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.selection)).toEqual(new Set(['linked-entry']))
 })

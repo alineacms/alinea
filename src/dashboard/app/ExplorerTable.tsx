@@ -14,7 +14,6 @@ import {
   type DragAndDropHooks
 } from 'react-aria-components'
 import type {ListLayoutOptions} from 'react-stately/useVirtualizerState'
-import {LucideFile, LucideFolder} from '../icons.js'
 import type {
   DashboardEntry,
   DashboardEntryData,
@@ -22,6 +21,7 @@ import type {
   DashboardExplorer
 } from '../atoms/explorer.js'
 import {dashboardEntryOverviewColumnCount} from '../atoms/explorer.js'
+import {LucideFile, LucideFolder} from '../icons.js'
 import {CompactField, compactFieldText} from './CompactField.js'
 import css from './ExplorerTable.module.css'
 
@@ -39,6 +39,7 @@ interface ExplorerTableRowProps {
   columns: Array<ExplorerTableColumn>
   entry: DashboardEntry
   breadcrumbs: boolean
+  isLinked: boolean
   explorer: DashboardExplorer
   gridTemplateColumns: string
   locale: string | null
@@ -268,7 +269,8 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
       textValue={textValue}
       hasChildItems={hasChildren}
       className={styles.ExplorerTable.row({
-        unselectable: !props.isSelectable
+        unselectable: !props.isSelectable,
+        linked: props.isLinked
       })}
       data-unselectable={!props.isSelectable || undefined}
       isDisabled={!props.isSelectable}
@@ -321,6 +323,7 @@ function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
           entry={child}
           explorer={props.explorer}
           gridTemplateColumns={props.gridTemplateColumns}
+          isLinked={props.explorer.linkedKeys.has(child.id)}
           locale={props.locale}
         />
       )}
@@ -482,6 +485,7 @@ export function ExplorerTable({
                 entry={item}
                 explorer={explorer}
                 gridTemplateColumns={gridTemplateColumns}
+                isLinked={explorer.linkedKeys.has(item.id)}
                 locale={locale}
               />
             )}
