@@ -174,7 +174,7 @@ test('picks and persists a referenced rich text image', async ({
 
   const picker = page.getByRole('dialog', {name: 'Pick image'})
   await expect(
-    picker.getByRole('treegrid', {name: 'Media folders'})
+    picker.getByRole('grid', {name: 'Explorer entries'})
   ).toBeVisible()
   await picker
     .getByRole('checkbox', {name: 'Select landscape'})
