@@ -1,0 +1,72 @@
+.alinea-Badge {
+  --alinea-Badge-color: var(--alinea-fg-muted);
+  --alinea-Badge-background: var(--alinea-muted);
+  --alinea-Badge-gap: 4px;
+  --alinea-Badge-height: 24px;
+  --alinea-Badge-padding: 0 12px;
+  --alinea-Badge-font-size: 12px;
+
+  box-sizing: border-box;
+  display: inline-flex;
+  min-width: 0;
+  height: var(--alinea-Badge-height);
+  flex: 0 0 auto;
+  align-items: center;
+  align-self: center;
+  border-radius: 32px;
+  padding: var(--alinea-Badge-padding);
+  gap: var(--alinea-Badge-gap);
+  background: var(--alinea-Badge-background);
+  color: var(--alinea-Badge-color);
+  font-size: var(--alinea-Badge-font-size);
+  font-weight: var(--alinea-font-weight-semibold);
+  line-height: var(--alinea-Badge-height);
+  white-space: nowrap;
+}
+
+.alinea-Badge[data-size='small'] {
+  --alinea-Badge-gap: 3px;
+  --alinea-Badge-height: 18px;
+  --alinea-Badge-padding: 0 4px;
+  --alinea-Badge-font-size: 11px;
+
+  border-radius: 4px;
+}
+
+.alinea-Badge[data-status='published'] {
+  --alinea-Badge-color: var(--alinea-status-published-fg);
+  --alinea-Badge-background: var(--alinea-status-published-bg);
+}
+
+.alinea-Badge[data-status='draft'] {
+  --alinea-Badge-color: var(--alinea-status-draft-fg);
+  --alinea-Badge-background: var(--alinea-status-draft-bg);
+}
+
+.alinea-Badge[data-status='unpublished'] {
+  --alinea-Badge-color: var(--alinea-status-unpublished-fg);
+  --alinea-Badge-background: var(--alinea-status-unpublished-bg);
+}
+
+.alinea-Badge[data-status='archived'] {
+  --alinea-Badge-color: var(--alinea-status-archived-fg);
+  --alinea-Badge-background: var(--alinea-status-archived-bg);
+}
+
+.alinea-Badge-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.alinea-Badge[data-size='small'] .alinea-Badge-icon {
+  font-size: 12px;
+}
+
+.alinea-Badge-label {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

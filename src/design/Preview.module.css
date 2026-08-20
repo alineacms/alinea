@@ -1,0 +1,32 @@
+.alinea-Preview-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--alinea-Preview-gap, var(--alinea-space-3));
+}
+
+.alinea-Preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--alinea-Preview-gap, var(--alinea-space-3));
+}
+
+.alinea-Preview-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--alinea-Preview-columns, 2), minmax(0, 1fr));
+  gap: var(--alinea-Preview-gap, var(--alinea-space-4));
+}
+
+.alinea-Preview-caption {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  line-height: var(--alinea-line-height-base);
+}
+
+.alinea-Preview-icon {
+  font-size: 16px;
+  font-weight: var(--alinea-font-weight-semibold);
+  line-height: 1;
+}

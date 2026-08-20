@@ -1,0 +1,114 @@
+.alinea-Checkbox {
+  --alinea-Checkbox-color: var(--alinea-fg);
+  --alinea-Checkbox-box-background: var(--alinea-input);
+  --alinea-Checkbox-box-border: var(--alinea-border);
+  --alinea-Checkbox-box-ring: transparent;
+  --alinea-Checkbox-mark: var(--alinea-primary-fg);
+
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--alinea-space-2);
+  color: var(--alinea-Checkbox-color);
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  line-height: 1;
+}
+
+.alinea-Checkbox:hover,
+.alinea-Checkbox[data-hovered] {
+  --alinea-Checkbox-box-border: var(--alinea-border-hover);
+  --alinea-Checkbox-box-ring: var(--alinea-ring-subtle);
+}
+
+.alinea-Checkbox:focus-within,
+.alinea-Checkbox[data-focus-visible] {
+  --alinea-Checkbox-box-ring: var(--alinea-primary-overlay);
+}
+
+.alinea-Checkbox[data-selected],
+.alinea-Checkbox[data-indeterminate] {
+  --alinea-Checkbox-box-background: var(--alinea-primary);
+  --alinea-Checkbox-box-border: var(--alinea-primary);
+}
+
+.alinea-Checkbox[data-invalid] {
+  --alinea-Checkbox-box-border: var(--alinea-border-danger);
+  --alinea-Checkbox-box-ring: var(--alinea-danger-overlay);
+}
+
+.alinea-Checkbox[data-invalid][data-selected],
+.alinea-Checkbox[data-invalid][data-indeterminate] {
+  --alinea-Checkbox-box-background: var(--alinea-border-danger);
+}
+
+.alinea-Checkbox[data-disabled] {
+  --alinea-Checkbox-color: var(--alinea-fg-disabled);
+
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.alinea-Checkbox-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.alinea-Checkbox-box {
+  box-sizing: border-box;
+  display: flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--alinea-Checkbox-box-border);
+  border-radius: 4px;
+  background: var(--alinea-Checkbox-box-background);
+  box-shadow: 0 0 0 3px var(--alinea-Checkbox-box-ring);
+  transition: var(--alinea-transition);
+  transition-property: background-color, border-color, box-shadow;
+}
+
+.alinea-Checkbox-mark {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  opacity: 0;
+  stroke: var(--alinea-Checkbox-mark);
+  stroke-width: 3px;
+}
+
+.alinea-Checkbox[data-selected] .alinea-Checkbox-mark,
+.alinea-Checkbox[data-indeterminate] .alinea-Checkbox-mark {
+  opacity: 1;
+}
+
+.alinea-Checkbox[data-indeterminate] .alinea-Checkbox-mark {
+  fill: var(--alinea-Checkbox-mark);
+  stroke: none;
+}
+
+.alinea-Checkbox-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  text-align: left;
+}
+
+.alinea-Checkbox-label {
+  color: inherit;
+  font-weight: var(--alinea-font-weight-regular);
+  line-height: 16px;
+}
+
+.alinea-Checkbox-description {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  line-height: 1.25;
+}

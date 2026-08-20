@@ -1,0 +1,115 @@
+.alinea-Field {
+  --alinea-Field-background: var(--alinea-input);
+  --alinea-Field-border: var(--alinea-border);
+  --alinea-Field-outline: transparent;
+
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  color: var(--alinea-fg);
+}
+
+.alinea-Field[data-invalid] {
+  --alinea-Field-border: var(--alinea-border-danger);
+  --alinea-Field-outline: var(--alinea-danger-overlay);
+}
+
+.alinea-Field-heading {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-bottom: var(--alinea-space-2);
+  gap: var(--alinea-space-1) var(--alinea-space-2);
+  line-height: var(--alinea-line-height-tight);
+}
+
+.alinea-Field-label {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: var(--alinea-font-weight-semibold);
+}
+
+.alinea-Field-optional {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-style: italic;
+  font-weight: var(--alinea-font-weight-regular);
+}
+
+.alinea-Field-description {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-style: italic;
+  font-weight: var(--alinea-font-weight-regular);
+  line-height: 1.1;
+}
+
+.alinea-Field-control {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  border: 1px solid var(--alinea-Field-border);
+  border-radius: var(--alinea-radius-control);
+  outline: 3px solid var(--alinea-Field-outline);
+  background: var(--alinea-Field-background);
+  transition: var(--alinea-transition);
+  transition-property: background-color, border-color, outline-color;
+}
+
+.alinea-Field-control:hover,
+.alinea-Field-control[data-hovered] {
+  --alinea-Field-border: var(--alinea-border-hover);
+  --alinea-Field-outline: var(--alinea-ring-subtle);
+}
+
+.alinea-Field-control:focus-within,
+.alinea-Field-control[data-focused] {
+  --alinea-Field-border: var(--alinea-border-accent);
+  --alinea-Field-outline: var(--alinea-primary-overlay);
+}
+
+.alinea-Field[data-invalid] .alinea-Field-control {
+  --alinea-Field-border: var(--alinea-border-danger);
+  --alinea-Field-outline: var(--alinea-danger-overlay);
+}
+
+.alinea-Field[data-disabled] .alinea-Field-control {
+  --alinea-Field-background: var(--alinea-input-disabled);
+
+  color: var(--alinea-fg-disabled);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.alinea-Field-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  border: 0;
+  outline: 0;
+  padding: 8px 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  line-height: var(--alinea-line-height-base);
+}
+
+.alinea-Field-input::placeholder {
+  color: var(--alinea-input-placeholder);
+}
+
+.alinea-Field-input:disabled {
+  cursor: not-allowed;
+}
+
+.alinea-Field-error {
+  margin: 0;
+  padding-top: var(--alinea-space-1);
+  color: var(--alinea-danger-subtle-fg);
+  font-size: var(--alinea-font-size-base);
+  line-height: var(--alinea-line-height-base);
+}

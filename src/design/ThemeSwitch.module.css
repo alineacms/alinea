@@ -1,0 +1,21 @@
+.alinea-ThemeSwitch {
+  position: fixed;
+  z-index: 10000;
+  top: var(--alinea-space-3);
+  right: var(--alinea-space-4);
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--alinea-border);
+  border-radius: calc(var(--alinea-radius-control) + var(--alinea-space-1));
+  padding: var(--alinea-space-1);
+  gap: var(--alinea-space-1);
+  background: var(--alinea-bg);
+  box-shadow: var(--alinea-shadow-raised);
+}
+
+.alinea-ThemeSwitch-label {
+  padding-inline: var(--alinea-space-2);
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  font-weight: var(--alinea-font-weight-semibold);
+}

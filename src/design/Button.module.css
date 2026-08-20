@@ -1,0 +1,168 @@
+.alinea-Button {
+  --alinea-Button-color: var(--alinea-fg);
+  --alinea-Button-background: var(--alinea-muted);
+  --alinea-Button-background-hover: var(--alinea-muted-hover);
+  --alinea-Button-background-disabled: var(--alinea-input);
+  --alinea-Button-border: transparent;
+  --alinea-Button-border-disabled: transparent;
+  --alinea-Button-color-disabled: var(--alinea-fg-disabled);
+  --alinea-Button-focus: var(--alinea-primary);
+  --alinea-Button-padding: 3px 8px;
+
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+  min-height: var(--alinea-control-height);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--alinea-Button-border);
+  border-radius: var(--alinea-radius-control);
+  padding: var(--alinea-Button-padding);
+  gap: 6px;
+  appearance: none;
+  background: var(--alinea-Button-background);
+  color: var(--alinea-Button-color);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  font-weight: var(--alinea-font-weight-semibold);
+  line-height: 24px;
+  text-align: left;
+  text-decoration: none;
+  transition: var(--alinea-transition);
+  transition-property: background-color, border-color, color;
+  vertical-align: middle;
+}
+
+.alinea-Button[data-intent='primary'] {
+  --alinea-Button-color: var(--alinea-primary-fg);
+  --alinea-Button-background: var(--alinea-primary);
+  --alinea-Button-background-hover: var(--alinea-primary-hover);
+  --alinea-Button-background-disabled: var(--alinea-primary-subtle);
+  --alinea-Button-color-disabled: light-dark(var(--alinea-blue-400), var(--alinea-blue-500));
+}
+
+.alinea-Button[data-intent='secondary'] {
+  --alinea-Button-color: var(--alinea-secondary-fg);
+  --alinea-Button-background: var(--alinea-secondary);
+  --alinea-Button-background-hover: var(--alinea-secondary-hover);
+  --alinea-Button-background-disabled: var(--alinea-secondary);
+  --alinea-Button-color-disabled: light-dark(var(--alinea-blue-300), var(--alinea-blue-500));
+}
+
+.alinea-Button[data-intent='danger'] {
+  --alinea-Button-color: var(--alinea-danger-fg);
+  --alinea-Button-background: var(--alinea-danger);
+  --alinea-Button-background-hover: var(--alinea-danger-hover);
+  --alinea-Button-background-disabled: var(--alinea-danger-subtle);
+  --alinea-Button-color-disabled: var(--alinea-red-400);
+  --alinea-Button-focus: var(--alinea-danger);
+}
+
+.alinea-Button[data-appearance='outline'] {
+  --alinea-Button-background: transparent;
+  --alinea-Button-background-hover: var(--alinea-input);
+  --alinea-Button-background-disabled: transparent;
+  --alinea-Button-border: var(--alinea-border);
+  --alinea-Button-border-disabled: var(--alinea-border-muted);
+}
+
+.alinea-Button[data-appearance='outline'][data-intent='primary'] {
+  --alinea-Button-color: var(--alinea-primary-subtle-fg);
+  --alinea-Button-background-hover: var(--alinea-primary-subtle);
+  --alinea-Button-border: var(--alinea-primary-subtle-fg);
+}
+
+.alinea-Button[data-appearance='outline'][data-intent='secondary'] {
+  --alinea-Button-color: var(--alinea-secondary-fg);
+  --alinea-Button-background-hover: var(--alinea-secondary);
+  --alinea-Button-border: var(--alinea-blue-100);
+}
+
+.alinea-Button[data-appearance='outline'][data-intent='danger'] {
+  --alinea-Button-color: var(--alinea-danger-subtle-fg);
+  --alinea-Button-background-hover: var(--alinea-danger-subtle);
+  --alinea-Button-border: var(--alinea-danger-subtle-fg);
+}
+
+.alinea-Button[data-appearance='plain'] {
+  --alinea-Button-background: transparent;
+  --alinea-Button-background-hover: var(--alinea-muted);
+  --alinea-Button-background-disabled: transparent;
+  --alinea-Button-border: transparent;
+  --alinea-Button-border-disabled: transparent;
+  --alinea-Button-focus: var(--alinea-muted);
+}
+
+.alinea-Button[data-appearance='plain'][data-intent='primary'] {
+  --alinea-Button-color: var(--alinea-primary-subtle-fg);
+}
+
+.alinea-Button[data-appearance='plain'][data-intent='secondary'] {
+  --alinea-Button-color: var(--alinea-secondary-fg);
+}
+
+.alinea-Button[data-appearance='plain'][data-intent='danger'] {
+  --alinea-Button-color: var(--alinea-danger-subtle-fg);
+}
+
+.alinea-Button[data-appearance='active'] {
+  --alinea-Button-color: var(--alinea-primary-subtle-fg);
+  --alinea-Button-background: var(--alinea-primary-subtle);
+  --alinea-Button-background-hover: var(--alinea-primary-subtle);
+  --alinea-Button-border: transparent;
+}
+
+.alinea-Button[data-size='small'] {
+  --alinea-Button-padding: 2px 10px;
+
+  line-height: 20px;
+}
+
+.alinea-Button[data-size='large'] {
+  --alinea-Button-padding: 8px 14px;
+}
+
+.alinea-Button[data-size='icon'] {
+  --alinea-Button-padding: 0;
+
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: var(--alinea-radius-round);
+}
+
+.alinea-Button:hover,
+.alinea-Button[data-hovered] {
+  background: var(--alinea-Button-background-hover);
+}
+
+.alinea-Button:focus-visible,
+.alinea-Button[data-focus-visible] {
+  outline: 2px solid var(--alinea-Button-focus);
+  outline-offset: 2px;
+}
+
+.alinea-Button:disabled,
+.alinea-Button[data-disabled] {
+  border-color: var(--alinea-Button-border-disabled);
+  background: var(--alinea-Button-background-disabled);
+  color: var(--alinea-Button-color-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.alinea-Button-icon {
+  display: block;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+  font-size: 16px;
+}
+
+.alinea-Button-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
