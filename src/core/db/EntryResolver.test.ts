@@ -9,6 +9,7 @@ import {DemoRecipes} from '#test/schema/DemoRecipes.js'
 import {suite} from '@alinea/suite'
 import {Expr} from '../Expr.js'
 import type {GraphQuery} from '../Graph.js'
+import {getScope} from '../Scope.js'
 import {FSSource} from '../source/FSSource.js'
 import {Node} from '../TextDoc.js'
 import {EntryIndex} from './EntryIndex.js'
@@ -363,7 +364,20 @@ const advancedEntries = [
       title: 'Trans EN',
       score: 1,
       text: 'trans en',
-      heroImage: {_type: 'image', _id: 'image-link-2', _entry: 'image-i18n'}
+      heroImage: {_type: 'image', _id: 'image-link-2', _entry: 'image-i18n'},
+      single: {
+        _id: 'localized-single-link',
+        _type: 'entry',
+        _entry: 'parent'
+      },
+      multi: [
+        {
+          [ListRow.id]: 'localized-multi-link',
+          [ListRow.index]: 'a0',
+          [ListRow.type]: 'entry',
+          _entry: 'parent'
+        }
+      ]
     }
   },
   {
@@ -755,6 +769,62 @@ test('locales, translations and link edges', async () => {
     select: Article.multi.find({select: Query.id})
   })
   test.equal(linkedMany, ['child-2'])
+})
+
+test('direct entry selections resolve unlocalized links from localized entries', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const query = {
+    first: true,
+    id: 'trans',
+    locale: 'en',
+    select: {
+      single: Article.single,
+      multiple: Article.multi
+    }
+  } as const
+  const scope = getScope(advancedCms.config)
+  const roundTrippedQuery = scope.parse<typeof query>(scope.stringify(query))
+  const result = await resolver.resolve(roundTrippedQuery)
+
+  test.is(result?.single.entryId, 'parent')
+  test.is(result?.single.title, 'Parent')
+  test.is(result?.multiple[0]?.entryId, 'parent')
+  test.is(result?.multiple[0]?.title, 'Parent')
+})
+
+test('nested entry selections resolve unlocalized links from localized entries', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const selection = {
+    id: Query.id,
+    title: Query.title,
+    locale: Query.locale,
+    filterItems: Query.children({
+      select: {id: Query.id, title: Query.title}
+    })
+  }
+  const query = {
+    first: true,
+    id: 'trans',
+    locale: 'en',
+    select: {
+      availableFilters: Article.multi.find({select: selection})
+    }
+  } as const
+  const scope = getScope(advancedCms.config)
+  const roundTrippedQuery = scope.parse<typeof query>(scope.stringify(query))
+  const result = await resolver.resolve(roundTrippedQuery)
+
+  test.equal(result?.availableFilters, [
+    {
+      id: 'parent',
+      title: 'Parent',
+      locale: null,
+      filterItems: [
+        {id: 'child-1', title: 'Alpha'},
+        {id: 'child-2', title: 'beta'}
+      ]
+    }
+  ])
 })
 
 test('entry link suffixes are appended to query URLs', async () => {
