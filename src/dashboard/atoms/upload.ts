@@ -2,8 +2,8 @@ import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {createId} from '#/core/Id.js'
 import {Permission} from '#/core/Role.js'
 import {atom} from 'jotai'
+import {uploadProgressAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
-import {dashboardAtoms} from './dashboard.js'
 import {uploadSizeError} from './utils.js'
 import {policyAtom} from './user.js'
 
@@ -36,7 +36,7 @@ export const uploadFilesAtom = atom(
       return error ? [{id: createId(), file, error}] : []
     })
     if (invalidUploads.length > 0)
-      set(dashboardAtoms.uploadProgress, {
+      set(uploadProgressAtom, {
         type: 'fail',
         uploads: invalidUploads,
         destination
@@ -45,7 +45,7 @@ export const uploadFilesAtom = atom(
     const validFiles = files.filter(file => !failedFiles.has(file))
     const uploads = validFiles.map(file => ({id: createId(), file}))
     if (uploads.length === 0) return
-    set(dashboardAtoms.uploadProgress, {type: 'start', uploads, destination})
+    set(uploadProgressAtom, {type: 'start', uploads, destination})
     await Promise.all(
       uploads.map(async ({id, file}) => {
         try {
@@ -56,15 +56,15 @@ export const uploadFilesAtom = atom(
             workspace: request.workspace,
             root: request.root,
             onProgress: progress =>
-              set(dashboardAtoms.uploadProgress, {
+              set(uploadProgressAtom, {
                 type: 'progress',
                 id,
                 progress
               })
           })
-          set(dashboardAtoms.uploadProgress, {type: 'finish', ids: [id]})
+          set(uploadProgressAtom, {type: 'finish', ids: [id]})
         } catch (error) {
-          set(dashboardAtoms.uploadProgress, {
+          set(uploadProgressAtom, {
             type: 'fail',
             uploads: [
               {

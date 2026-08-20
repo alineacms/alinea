@@ -1,44 +1,43 @@
-.MutationQueueStatus {
+.ActivityStatus {
   border: 0;
   flex: 0 0 auto;
   color: var(--alinea-fg-muted);
 }
 
-.MutationQueueStatus.is-syncing {
+.ActivityStatus.is-syncing {
   color: var(--alinea-fg);
 }
 
-.MutationQueueStatus.is-failed {
+.ActivityStatus.is-failed {
   color: var(--alinea-danger);
 }
 
-.MutationQueueStatus-icon {
+.ActivityStatus-icon {
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
 }
 
-.MutationQueueStatus-label {
+.ActivityStatus-label {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 0;
-  min-height: 16px;
   min-width: 28px;
+  min-height: 16px;
 }
 
-.MutationQueueStatus-popover {
+.ActivityStatus-popover {
   width: 320px;
   max-width: calc(100vw - 32px);
 }
 
-.MutationQueueStatus-popover-surface {
+.ActivityStatus-popover-surface {
   overflow: hidden;
   background: var(--alinea-bg);
 }
 
-.MutationQueueStatus-popover-header {
+.ActivityStatus-popover-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -47,24 +46,24 @@
   border-bottom: 1px solid var(--alinea-border);
 }
 
-.MutationQueueStatus-popover-title {
+.ActivityStatus-popover-title {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
 }
 
-.MutationQueueStatus-popover-actions {
+.ActivityStatus-popover-actions {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.MutationQueueStatus-popover-list {
+.ActivityStatus-popover-list {
   max-height: 280px;
   overflow: auto;
 }
 
-.MutationQueueStatus-popover-item-error {
+.ActivityStatus-popover-item-error {
   margin: 0;
   color: var(--alinea-danger-subtle-fg);
   font-size: 11px;

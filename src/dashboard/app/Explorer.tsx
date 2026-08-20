@@ -53,7 +53,7 @@ import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
-import {MutationQueueStatus} from './MutationQueueStatus.js'
+import {ActivityStatus} from './ActivityStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
@@ -787,17 +787,16 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const canUpload = useAtomValue(explorer.canUpload)
   const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
+  const uploadCount = uploads.length
   const uploadLabel =
-    uploads.length === 1
-      ? '1 file uploading'
-      : `${uploads.length} files uploading`
+    uploadCount === 1 ? '1 file uploading' : `${uploadCount} files uploading`
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
-      {page.isMedia && uploads.length > 0 && (
-        <MutationQueueStatus ariaLabel={uploadLabel} placement="bottom">
-          {uploads.length}
-        </MutationQueueStatus>
+      {page.isMedia && uploadCount > 0 && (
+        <ActivityStatus ariaLabel={uploadLabel} placement="bottom">
+          {uploadCount}
+        </ActivityStatus>
       )}
       <ExplorerControlsButton
         isMedia={page.isMedia}

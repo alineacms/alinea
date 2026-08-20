@@ -31,7 +31,7 @@ import type {
   Key
 } from 'react-aria-components'
 import {LucideFile} from '../icons.js'
-import {dashboardAtoms} from './dashboard.js'
+import {activityAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
@@ -622,12 +622,17 @@ export class ExplorerAtoms {
   })
   uploadsInCurrentFolder = atom(get => {
     const location = get(this.location)
-    return get(dashboardAtoms.mutationQueue).entries.filter(entry => {
-      if (!entry.upload) return false
+    return get(activityAtom).items.filter(activity => {
+      if (
+        activity.type !== 'upload' ||
+        activity.status !== 'running' ||
+        !activity.upload
+      )
+        return false
       return (
-        entry.upload.workspace === location.workspace &&
-        entry.upload.root === location.root &&
-        (entry.upload.parentId ?? null) === (location.parentId ?? null)
+        activity.upload.workspace === location.workspace &&
+        activity.upload.root === location.root &&
+        (activity.upload.parentId ?? null) === (location.parentId ?? null)
       )
     })
   })

@@ -3,9 +3,21 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {styler} from '@alinea/styler'
-import {atom, createStore, Provider, useAtomValue, type Getter} from 'jotai'
-import {unwrap} from 'jotai/utils'
-import {useMemo, useState, type ComponentType, type ReactNode} from 'react'
+import {
+  atom,
+  createStore,
+  Provider,
+  useAtom,
+  useAtomValue,
+  type Getter
+} from 'jotai'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+  type ReactNode
+} from 'react'
 import css from './App.module.css'
 import {AccessDenied} from './app/AccessDenied.js'
 import {AuthView} from './app/AuthView.js'
@@ -16,6 +28,7 @@ import {entryPage} from './app/pages/EntryPage.js'
 import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
 import {Rail} from './app/ui/Rail.js'
+import {activityAtom, activityPendingAtom} from './atoms/activity.js'
 import {authAtom} from './atoms/auth.js'
 import {workspaceAtom} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
@@ -23,6 +36,7 @@ import {entryAtoms, MissingEntryError} from './atoms/entry.js'
 import {pageAtom, type Page} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
 import {authReady, canManageMembersAtom} from './atoms/user.js'
+import {atomWithPending} from './atoms/utils.js'
 import {DashboardModelScope, type Dashboard} from './hooks.js'
 import './global.css'
 
@@ -38,13 +52,13 @@ export interface AppProps {
   alineaDev?: boolean
 }
 
-const appAtom = atom(async get => {
-  const auth = get(authAtom)
-  if (auth.status === 'authenticated') return get(authenticatedAtom)
-  return <AuthView />
-})
-
-const appValueAtom = unwrap(appAtom, previous => previous)
+export const appAtom = atomWithPending(
+  atom(async get => {
+    const auth = get(authAtom)
+    if (auth.status === 'authenticated') return get(authenticatedAtom)
+    return <AuthView />
+  })
+)
 
 const authenticatedAtom = atom(async get => {
   const [, canManageMembers] = await Promise.all([
@@ -180,7 +194,14 @@ export function App(props: AppProps) {
 
 function DashboardApp(props: AppProps): ReactNode {
   useInitAtoms(props)
-  const app = useAtomValue(appValueAtom)
+  const [appPending, app] = useAtomValue(appAtom)
+  const activity = useAtomValue(activityAtom)
+  const [, setActivityPending] = useAtom(activityPendingAtom)
+  const pending =
+    appPending || activity.isFetchingUpdates || activity.isMutating
+  useEffect(() => {
+    setActivityPending(pending)
+  }, [pending, setActivityPending])
   return app ?? <AppLoading />
 }
 

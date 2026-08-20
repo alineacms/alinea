@@ -1,7 +1,8 @@
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {DeepMap} from '#/core/util/DeepMap.js'
 import type {DragItem, DragTypes} from '@react-types/shared'
-import {atom, type WritableAtom} from 'jotai'
+import {atom, type Atom, type WritableAtom} from 'jotai'
+import {unwrap} from 'jotai/utils'
 import type {Key} from 'react-aria-components'
 
 type RequiredAtom<Value> = WritableAtom<Value, [Value], void>
@@ -21,6 +22,71 @@ export function requiredAtom<Value>(name: string): RequiredAtom<Value> {
   )
   result.debugLabel = name
   return result
+}
+
+export function atomWithPending<Value>(
+  asyncAtom: Atom<Promise<Value> | Value>
+) {
+  const wrappedAtom = atom(async get => {
+    const data = await get(asyncAtom)
+    return [false, data] as const
+  })
+  return unwrap(wrappedAtom, previous => [true, previous?.[1]] as const)
+}
+
+export function pendingTimerAtom(bufferMs: number, minimumMs: number) {
+  const startTimeAtom = atom<number>()
+  const timeoutAtom = atom<ReturnType<typeof setTimeout>>()
+  const isPendingAtom = atom(false)
+
+  return atom(
+    get => get(isPendingAtom),
+    (get, set, pending: boolean) => {
+      const isPending = get(isPendingAtom)
+      const timeout = get(timeoutAtom)
+
+      if (pending) {
+        if (isPending) {
+          if (timeout !== undefined) {
+            clearTimeout(timeout)
+            set(timeoutAtom, undefined)
+          }
+          return
+        }
+        if (timeout !== undefined) return
+        set(startTimeAtom, Date.now())
+        set(
+          timeoutAtom,
+          setTimeout(() => {
+            set(startTimeAtom, Date.now())
+            set(isPendingAtom, true)
+            set(timeoutAtom, undefined)
+          }, bufferMs)
+        )
+        return
+      }
+
+      if (!isPending) {
+        if (timeout !== undefined) clearTimeout(timeout)
+        set(startTimeAtom, undefined)
+        set(timeoutAtom, undefined)
+        return
+      }
+      if (timeout !== undefined) return
+      const elapsed = Date.now() - (get(startTimeAtom) ?? Date.now())
+      set(
+        timeoutAtom,
+        setTimeout(
+          () => {
+            set(startTimeAtom, undefined)
+            set(isPendingAtom, false)
+            set(timeoutAtom, undefined)
+          },
+          Math.max(0, minimumMs - elapsed)
+        )
+      )
+    }
+  )
 }
 
 export function dispense<Keys extends ReadonlyArray<unknown>, Value>(

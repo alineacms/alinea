@@ -3,7 +3,7 @@ import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
-import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
+import {entrySidebarOpenAtom} from '#/dashboard/atoms/dashboard.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
   entryAtoms,
@@ -269,9 +269,7 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(
-    dashboardAtoms.entrySidebarOpen
-  )
+  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary

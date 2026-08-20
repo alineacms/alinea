@@ -9,7 +9,11 @@ import {
 } from '#/components.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
+import {
+  canLogoutAtom,
+  logoutAtom,
+  themeAtom
+} from '#/dashboard/atoms/dashboard.js'
 import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {workspaceAtom} from '#/dashboard/atoms/config.js'
@@ -29,7 +33,7 @@ import {
   IcRoundUnfoldMore,
   IcRoundWbSunny
 } from '../icons.js'
-import {MutationQueueStatus} from './MutationQueueStatus.js'
+import {ActivityStatus} from './ActivityStatus.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
 
@@ -58,7 +62,7 @@ export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <MutationQueueStatus openOnFail />
+        <ActivityStatus openOnFail />
         <WorkspaceProfileMenu canManageMembers={canManageMembers} page={page} />
       </div>
     </aside>
@@ -104,11 +108,11 @@ function WorkspaceProfileMenu({
   const user = useUser()
   const config = useAtomValue(configAtom)
   const isLocal = useAtomValue(localAtom)
-  const canLogout = useAtomValue(dashboardAtoms.canLogout)
-  const [theme, setTheme] = useAtom(dashboardAtoms.theme)
+  const canLogout = useAtomValue(canLogoutAtom)
+  const [theme, setTheme] = useAtom(themeAtom)
   const setUserRoles = useSetAtom(setUserRolesAtom)
   const setRoute = useSetAtom(routeAtom)
-  const logout = useSetAtom(dashboardAtoms.logout)
+  const logout = useSetAtom(logoutAtom)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
   const selectedRoles = new Set<Key>(user.roles)

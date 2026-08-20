@@ -6,9 +6,35 @@ import {
   dashboardEntryDragType,
   dashboardEntryDragTypes,
   dispense,
+  pendingTimerAtom,
   requiredAtom,
   uploadSizeError
 } from './utils.js'
+
+test('buffers pending state and keeps it visible for a minimum', async () => {
+  const pendingAtom = pendingTimerAtom(100, 1000)
+  const store = createStore()
+
+  store.set(pendingAtom, true)
+  expect(store.get(pendingAtom)).toBe(false)
+  await pause(50)
+  store.set(pendingAtom, false)
+  await pause(100)
+  expect(store.get(pendingAtom)).toBe(false)
+
+  store.set(pendingAtom, true)
+  await pause(110)
+  expect(store.get(pendingAtom)).toBe(true)
+  store.set(pendingAtom, false)
+  await pause(800)
+  expect(store.get(pendingAtom)).toBe(true)
+  await pause(250)
+  expect(store.get(pendingAtom)).toBe(false)
+})
+
+function pause(duration: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, duration))
+}
 
 test('throws until a required atom is initialized', () => {
   const valueAtom = requiredAtom<string>('test.value')

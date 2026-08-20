@@ -25,6 +25,7 @@ import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../../icons.js'
+import {ActivityStatus} from '../ActivityStatus.js'
 import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
 import {Badge} from '../Badge.js'
 import {
@@ -256,6 +257,9 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
           />
         </Button>
       </nav>
+      <div className={styles.UsersPageSidebar.footer()}>
+        <ActivityStatus />
+      </div>
     </aside>
   )
 }

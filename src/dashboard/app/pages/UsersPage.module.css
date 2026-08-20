@@ -22,6 +22,12 @@
   justify-items: center;
 }
 
+.UsersPageSidebar-footer {
+  display: grid;
+  justify-items: center;
+  margin-top: auto;
+}
+
 .UsersPageSidebar-item {
   color: var(--alinea-fg-muted);
 }
