@@ -249,9 +249,14 @@ export class EntryResolver implements Resolver {
         })
       )
     const related = value as object as EdgeQuery<Projection>
+    const isEntryLink =
+      related.edge === 'entryMultiple' || related.edge === 'entrySingle'
+    const relatedQuery = isEntryLink
+      ? {preferredLocale: entry.locale ?? undefined, ...related}
+      : related
     return this.query(
-      {...ctx, locale: entry.locale},
-      related,
+      {...ctx, locale: isEntryLink ? undefined : entry.locale},
+      relatedQuery,
       this.sourceFilter(ctx, entry, related)
     ).getUnprocessed()
   }
