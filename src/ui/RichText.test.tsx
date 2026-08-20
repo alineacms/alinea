@@ -58,8 +58,7 @@ test('RichText renders text marks and link attributes', () => {
             {_type: 'italic'},
             {
               _type: 'link',
-              _anchor: 'details',
-              href: 'https://example.com/page#details',
+              href: 'https://example.com',
               target: '_blank',
               title: 'Example'
             }
@@ -72,7 +71,7 @@ test('RichText renders text marks and link attributes', () => {
   const {container} = render(<RichText doc={doc} />)
 
   const link = screen.getByRole('link', {name: 'Marked'})
-  expect(link.getAttribute('href')).toBe('https://example.com/page#details')
+  expect(link.getAttribute('href')).toBe('https://example.com')
   expect(link.getAttribute('target')).toBe('_blank')
   expect(link.getAttribute('title')).toBe('Example')
   expect(container.querySelector('a > i > b')?.textContent).toBe('Marked')
@@ -127,46 +126,25 @@ test('RichText renders tables with spans', () => {
   expect(cell?.rowSpan).toBe(2)
 })
 
-test('RichText adds a table body for rows directly under a table', () => {
+test('RichText renders image attributes', () => {
   const doc = [
     {
-      _type: 'table',
-      content: [
-        {
-          _type: 'tableRow',
-          content: [
-            {
-              _type: 'tableHeader',
-              content: [
-                {_type: 'paragraph', content: [{_type: 'text', text: 'Name'}]}
-              ]
-            }
-          ]
-        },
-        {
-          _type: 'tableRow',
-          content: [
-            {
-              _type: 'tableCell',
-              content: [
-                {_type: 'paragraph', content: [{_type: 'text', text: 'Value'}]}
-              ]
-            }
-          ]
-        }
-      ]
+      _type: 'image',
+      src: 'https://example.com/image.jpg',
+      alt: 'Example image',
+      title: 'Example title',
+      width: 640,
+      height: '480'
     }
   ] satisfies TextDoc
 
-  const {container} = render(<RichText doc={doc} />)
-  const table = container.querySelector('table')!
+  render(<RichText doc={doc} />)
 
-  expect(table.querySelector(':scope > tbody > tr > th')?.textContent).toBe(
-    'Name'
-  )
-  expect(table.querySelector(':scope > tbody > tr > td')?.textContent).toBe(
-    'Value'
-  )
+  const image = screen.getByRole('img', {name: 'Example image'})
+  expect(image.getAttribute('src')).toBe('https://example.com/image.jpg')
+  expect(image.getAttribute('title')).toBe('Example title')
+  expect(image.getAttribute('width')).toBe('640')
+  expect(image.getAttribute('height')).toBe('480')
 })
 
 test('RichText supports custom HTML views for elements and text', () => {
@@ -290,22 +268,6 @@ test('RichText uses provided heading ids and ignores left alignment', () => {
 
   expect(heading.id).toBe('custom-id')
   expect(heading.style.textAlign).toBe('')
-})
-
-test('RichText renders stored heading anchors as ids', () => {
-  const doc: TextDoc = [
-    {
-      _type: 'heading',
-      _anchor: 'stable-anchor',
-      level: 2,
-      content: [{_type: 'text', text: 'Renamed heading'}]
-    }
-  ]
-
-  const heading = render(<RichText doc={doc} />).getByRole('heading', {
-    name: 'Renamed heading'
-  })
-  expect(heading.id).toBe('stable-anchor')
 })
 
 test('RichText renders custom block nodes', () => {

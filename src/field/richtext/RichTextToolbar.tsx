@@ -16,7 +16,11 @@ import {slugify} from '#/core/util/Slugs.js'
 import styler from '@alinea/styler'
 import type {Editor} from '@tiptap/core'
 import {useMemo, type ReactNode} from 'react'
-import type {PickTextLinkFunc, PickerValue} from './PickTextLink.js'
+import type {
+  PickRichTextImageFunc,
+  PickTextLinkFunc,
+  PickerValue
+} from './PickTextLink.js'
 import {attributesToReference, referenceToAttributes} from './ReferenceLink.js'
 import {currentAnchor} from './extensions/Anchor.js'
 import {
@@ -34,8 +38,10 @@ const styles = styler(css)
 
 export interface RichTextToolbarProps {
   editor: Editor
+  enableImages?: boolean
   enableTables?: boolean
   ownerId: string
+  pickImage?: PickRichTextImageFunc
   pickLink?: PickTextLinkFunc
   pickAnchor?: PickTextAnchorFunc
   getEntryAnchors: () => Array<string>
@@ -45,8 +51,10 @@ export interface RichTextToolbarProps {
 
 export function RichTextToolbar({
   editor,
+  enableImages,
   enableTables,
   ownerId,
+  pickImage,
   pickLink,
   pickAnchor,
   getEntryAnchors,
@@ -54,17 +62,20 @@ export function RichTextToolbar({
   onFocusChange
 }: RichTextToolbarProps) {
   const config = useMemo(
-    () => toolbar ?? defaultToolbar(Boolean(enableTables)),
-    [enableTables, toolbar]
+    () => toolbar ?? defaultToolbar({enableImages, enableTables}),
+    [enableImages, enableTables, toolbar]
   )
   const context = useMemo(() => {
     const exec = () => editor.chain().focus(null, {scrollIntoView: false})
     return {
       editor,
+      enableImages,
       enableTables,
       exec,
       focusToggle: target => onFocusChange(Boolean(target)),
+      pickImage: pickImage ?? emptyPicker,
       pickLink: pickLink ?? emptyPicker,
+      handleImage: createImageHandler(editor, pickImage, exec),
       handleLink: createLinkHandler(editor, pickLink, exec),
       handleAnchor: pickAnchor
         ? createAnchorHandler(editor, pickAnchor, getEntryAnchors, exec)
@@ -74,10 +85,12 @@ export function RichTextToolbar({
   }, [
     config,
     editor,
+    enableImages,
     enableTables,
     getEntryAnchors,
     onFocusChange,
     pickAnchor,
+    pickImage,
     pickLink
   ])
 
@@ -99,6 +112,40 @@ export function RichTextToolbar({
       </Toolbar>
     </div>
   )
+}
+
+export function createImageHandler(
+  editor: Editor,
+  pickImage: PickRichTextImageFunc | undefined,
+  exec: () => ReturnType<Editor['chain']>
+) {
+  return function handleImage() {
+    if (!pickImage) return
+    const existing = attributesToReference(editor.getAttributes('image'))
+    void pickImage({link: existing})
+      .then(picked => {
+        if (picked === undefined) return
+        if (!picked.link) {
+          if (editor.isActive('image')) exec().deleteSelection().run()
+          return
+        }
+        const link = picked.link
+        if (link._type !== 'image' || !('_entry' in link)) return
+        const attributes = {
+          alt: picked.alt ?? '',
+          height: null,
+          src: picked.src ?? '',
+          width: null,
+          _id: link._id,
+          _entry: link._entry,
+          _link: 'image'
+        }
+        if (editor.isActive('image'))
+          exec().updateAttributes('image', attributes).run()
+        else exec().insertContent({type: 'image', attrs: attributes}).run()
+      })
+      .catch(console.error)
+  }
 }
 
 interface ToolbarItemsProps {

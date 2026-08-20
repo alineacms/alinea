@@ -1,8 +1,20 @@
-import {Button, TextField} from '#/components.js'
+import {Button, DialogTrigger, TextField} from '#/components.js'
+import type {Config} from '#/core/Config.js'
+import {Entry} from '#/core/Entry.js'
+import type {Graph} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
+import {imageExtensions} from '#/core/media/IsImage.js'
+import {mediaAltText} from '#/core/media/MediaAltField.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Reference} from '#/core/Reference.js'
 import {type as createType, Type} from '#/core/Type.js'
+import type {EntryReference} from '#/picker/entry/EntryReference.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
+import {useDashboardContext} from '#/dashboard/hooks.js'
+import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
+import {mediaLiveUrl} from '#/dashboard/app/editor/MediaImageSource.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -21,6 +33,7 @@ import {useAtomValue, type WritableAtom} from 'jotai'
 import {
   useCallback,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type SetStateAction
@@ -29,7 +42,9 @@ import css from './PickTextLink.module.css'
 
 export interface PickerValue {
   link?: Reference
+  alt?: string
   description?: string
+  src?: string
   title?: string
   blank?: boolean
 }
@@ -43,6 +58,10 @@ export interface PickTextLinkFunc {
   (options: Partial<PickerOptions>): Promise<PickerValue | undefined>
 }
 
+export interface PickRichTextImageFunc {
+  (options: Partial<PickerOptions>): Promise<PickerValue | undefined>
+}
+
 const styles = styler(css)
 
 type TextLinkValueAtom = WritableAtom<
@@ -52,6 +71,7 @@ type TextLinkValueAtom = WritableAtom<
 >
 
 interface PendingTextLinkPicker {
+  kind: 'image' | 'link'
   options: Partial<PickerOptions>
   resolve: (value: PickerValue | undefined) => void
 }
@@ -64,7 +84,9 @@ interface TextLinkEditor {
 
 export interface PickTextLinkState {
   isOpen: boolean
+  kind: 'image' | 'link'
   options: Partial<PickerOptions>
+  pickImage: PickRichTextImageFunc
   pickLink: PickTextLinkFunc
   cancel: () => void
   confirm: (value: PickerValue | undefined) => void
@@ -78,7 +100,12 @@ export function usePickTextLink(): PickTextLinkState {
   const [pending, setPending] = useState<PendingTextLinkPicker | undefined>()
   const pickLink = useCallback<PickTextLinkFunc>(options => {
     return new Promise(resolve => {
-      setPending({options, resolve})
+      setPending({kind: 'link', options, resolve})
+    })
+  }, [])
+  const pickImage = useCallback<PickRichTextImageFunc>(options => {
+    return new Promise(resolve => {
+      setPending({kind: 'image', options, resolve})
     })
   }, [])
   const cancel = useCallback(() => {
@@ -95,7 +122,9 @@ export function usePickTextLink(): PickTextLinkState {
   }, [])
   return {
     isOpen: Boolean(pending),
+    kind: pending?.kind ?? 'link',
     options: pending?.options ?? {},
+    pickImage,
     pickLink,
     cancel,
     confirm
@@ -104,6 +133,7 @@ export function usePickTextLink(): PickTextLinkState {
 
 export function PickTextLink({picker}: PickTextLinkProps) {
   if (!picker.isOpen) return null
+  if (picker.kind === 'image') return <PickRichTextImage picker={picker} />
   return (
     <DashboardModal
       isOpen
@@ -114,6 +144,98 @@ export function PickTextLink({picker}: PickTextLinkProps) {
       <PickTextLinkForm picker={picker} />
     </DashboardModal>
   )
+}
+
+function PickRichTextImage({picker}: PickTextLinkProps) {
+  const config = useAtomValue(configAtom)
+  const graph = useAtomValue(graphAtom)
+  const locale = useDashboardContext().page.locale ?? undefined
+  const confirming = useRef(false)
+  const initialEntry = imageReferenceEntryId(picker.options.link)
+  const initialSelection = initialEntry ? [initialEntry] : []
+
+  function onConfirm(selection: Array<string>) {
+    const [entryId] = selection
+    if (!entryId) {
+      picker.confirm({link: undefined})
+      return
+    }
+    confirming.current = true
+    void resolveRichTextImage(
+      config,
+      graph,
+      entryId,
+      picker.options.link,
+      locale
+    ).then(picker.confirm, error => {
+      console.error(error)
+      picker.cancel()
+    })
+  }
+
+  return (
+    <DialogTrigger
+      isOpen
+      onOpenChange={isOpen => {
+        if (!isOpen && !confirming.current) picker.cancel()
+      }}
+    >
+      <Button style={{display: 'none'}}>Pick image</Button>
+      <ImagePicker
+        condition={richTextImageCondition}
+        initialSelection={initialSelection}
+        label="Pick image"
+        selectionBehavior="replace"
+        selectionMode="single"
+        onConfirm={onConfirm}
+      />
+    </DialogTrigger>
+  )
+}
+
+async function resolveRichTextImage(
+  config: Config,
+  graph: Graph,
+  entryId: string,
+  existing: Reference | undefined,
+  locale: string | undefined
+): Promise<PickerValue> {
+  const image = await graph.first({
+    id: entryId,
+    status: 'preferDraft',
+    select: {
+      workspace: Entry.workspace,
+      location: MediaFile.location,
+      alt: MediaFile.alt
+    }
+  })
+  if (!image) throw new Error(`Image entry not found: ${entryId}`)
+  const link: EntryReference = {
+    [Reference.id]: existing?._id ?? createId(),
+    [Reference.type]: 'image',
+    _entry: entryId
+  }
+  return {
+    alt: mediaAltText(image.alt, locale),
+    link,
+    src: mediaLiveUrl(config, image.workspace, image.location)
+  }
+}
+
+const richTextImageCondition = {
+  _type: 'MediaFile',
+  extension: {
+    in: [
+      ...imageExtensions,
+      ...imageExtensions.map(extension => extension.toUpperCase())
+    ]
+  }
+}
+
+function imageReferenceEntryId(reference: Reference | undefined) {
+  if (!reference || reference._type !== 'image' || !('_entry' in reference))
+    return
+  return typeof reference._entry === 'string' ? reference._entry : undefined
 }
 
 function PickTextLinkForm({picker}: PickTextLinkProps) {

@@ -101,6 +101,7 @@
     "@tiptap/extension-heading": "^3.27.3",
     "@tiptap/extension-highlight": "^3.27.3",
     "@tiptap/extension-horizontal-rule": "^3.27.3",
+    "@tiptap/extension-image": "^3.27.3",
     "@tiptap/extension-italic": "^3.27.3",
     "@tiptap/extension-list": "^3.27.3",
     "@tiptap/extension-paragraph": "^3.27.3",

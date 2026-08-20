@@ -552,11 +552,20 @@ test('referencesTo indexes links reported by fields', async () => {
 
   test.equal(
     (await index.referencesFrom('source')).map(reference => reference.targetId),
-    ['target', 'target', 'other', 'media-target', 'target', 'target', 'target']
+    [
+      'target',
+      'target',
+      'other',
+      'media-target',
+      'target',
+      'target',
+      'media-target',
+      'target'
+    ]
   )
 })
 
-test('referencesTo indexes MediaFile targets reported by file fields', async () => {
+test('referencesTo indexes MediaFile targets reported by file and rich text image fields', async () => {
   const {index} = await createEntryIndex(
     referenceCms.config,
     referenceEntries()
@@ -567,12 +576,17 @@ test('referencesTo indexes MediaFile targets reported by file fields', async () 
     status: 'all'
   })
 
-  test.is(result.total, 1)
+  test.is(result.total, 2)
   test.equal(result.references[0]?.sourceId, 'source')
   test.equal(result.references[0]?.fieldPath, 'attachment')
   test.equal(result.references[0]?.fieldLabel, 'Attachment')
   test.equal(result.references[0]?.linkId, 'file-link')
   test.equal(result.references[0]?.linkType, 'file')
+  test.equal(result.references[1]?.sourceId, 'source')
+  test.equal(result.references[1]?.fieldPath, 'body.rich-text-image')
+  test.equal(result.references[1]?.fieldLabel, 'Body')
+  test.equal(result.references[1]?.linkId, 'rich-text-image')
+  test.equal(result.references[1]?.linkType, 'image')
 })
 
 test('referencesTo applies status and locale filters', async () => {
@@ -902,6 +916,12 @@ function referenceEntries() {
             _id: 'block-link',
             _type: 'ReferenceBlock',
             cta: entryLink('target', 'block-link')
+          },
+          {
+            _type: 'image',
+            _id: 'rich-text-image',
+            _link: 'image',
+            _entry: 'media-target'
           }
         ]
       }

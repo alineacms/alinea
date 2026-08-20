@@ -2,11 +2,14 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
+  RichTextImageDisabledStory,
+  RichTextImageStory,
   RichTextImportedListStory,
   RichTextLargeStory,
   RichTextLegacyEmptyStory,
   RichTextPlainStory,
   RichTextReadOnlyStory,
+  RichTextReadOnlyImageStory,
   RichTextStory
 } from './RichTextField.story.js'
 
@@ -44,6 +47,21 @@ interface StoredRichTextBlock extends StoredRichTextNode {
 async function storedValue(page: Page): Promise<Array<StoredRichTextNode>> {
   const value = await page.getByTestId('value').textContent()
   return JSON.parse(value ?? '[]')
+}
+
+async function serveFixtureImages(page: Page) {
+  await page.route('**/landscape.*.jpg', route =>
+    route.fulfill({
+      contentType: 'image/jpeg',
+      path: 'apps/dev/public/landscape.2V4cZVLipKGYEYJTIK1GMBHJMY0.jpg'
+    })
+  )
+  await page.route('**/portrait.*.jpg', route =>
+    route.fulfill({
+      contentType: 'image/jpeg',
+      path: 'apps/dev/public/portrait.2V4cZWf1Mb18DtEjGBsOUyhLRDU.jpg'
+    })
+  )
 }
 
 function isStoredBlock(node: StoredRichTextNode): node is StoredRichTextBlock {
@@ -96,6 +114,265 @@ test('renders a rich text field without an embedded block schema', async ({
     'Select this text'
   )
   expect(errors).toEqual([])
+})
+
+test('does not expose image insertion when images are disabled', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextPlainStory />)
+  await page.locator('.ProseMirror').first().locator('p').first().click()
+  await expect(page.getByRole('button', {name: 'Image'})).toHaveCount(0)
+})
+
+test('preserves existing images when image insertion is disabled', async ({
+  mount,
+  page
+}) => {
+  await serveFixtureImages(page)
+  await mount(<RichTextImageDisabledStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  const image = editor.locator('img')
+  await expect(image).toHaveAttribute('alt', 'A mountain path through a valley')
+  await expect(editor.locator('[data-resize-handle]')).toHaveCount(0)
+  await placeCaret(editor.locator('p').first(), 'end')
+  await page.keyboard.type(' Edited')
+
+  await expect(page.getByRole('button', {name: 'Image'})).toHaveCount(0)
+  await expect
+    .poll(async () =>
+      (await storedValue(page)).some(node => node._id === 'existing-image')
+    )
+    .toBe(true)
+})
+
+test('does not resize images in a read-only field', async ({mount, page}) => {
+  await serveFixtureImages(page)
+  await mount(<RichTextReadOnlyImageStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await expect(editor).toHaveAttribute('contenteditable', 'false')
+  await expect(editor.locator('img')).toHaveAttribute(
+    'alt',
+    'A mountain path through a valley'
+  )
+  await expect(editor.locator('[data-resize-handle]')).toHaveCount(0)
+  await expect(page.getByTestId('value')).toContainText('existing-image')
+})
+
+test('picks and persists a referenced rich text image', async ({
+  mount,
+  page
+}) => {
+  await serveFixtureImages(page)
+  await mount(<RichTextImageStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.locator('p').first().click()
+  await page.getByRole('button', {name: 'Image'}).click()
+
+  const picker = page.getByRole('dialog', {name: 'Pick image'})
+  await expect(
+    picker.getByRole('grid', {name: 'Explorer entries'})
+  ).toBeVisible()
+  await picker
+    .getByRole('checkbox', {name: 'Select landscape'})
+    .locator('xpath=ancestor::label')
+    .click()
+  await picker.getByRole('button', {name: 'Select'}).click()
+
+  const image = editor.locator('[data-resize-container][data-node="image"] img')
+  await expect(image).toHaveCount(1)
+  await expect
+    .poll(async () => {
+      return image.evaluate(element => {
+        const bounds = element.getBoundingClientRect()
+        return bounds.width / bounds.height
+      })
+    })
+    .toBeCloseTo(3970 / 2717, 1)
+  const editorBounds = await editor.boundingBox()
+  const imageBounds = await image.boundingBox()
+  expect(editorBounds).not.toBeNull()
+  expect(imageBounds).not.toBeNull()
+  expect(imageBounds!.width).toBeLessThanOrEqual(editorBounds!.width)
+  expect(imageBounds!.height).toBeLessThan(editorBounds!.width)
+  await expect
+    .poll(async () => {
+      const node = (await storedValue(page)).find(
+        item => item._type === 'image'
+      )
+      return node
+    })
+    .toMatchObject({
+      _type: 'image',
+      _link: 'image',
+      _entry: '2V4cZVEDtL1vrIdrk3gqsR3Jc5t'
+    })
+  const storedImage = (await storedValue(page)).find(
+    item => item._type === 'image'
+  )
+  expect(storedImage).not.toHaveProperty('src')
+  expect(storedImage).not.toHaveProperty('alt')
+  expect(storedImage).not.toHaveProperty('width')
+  expect(storedImage).not.toHaveProperty('height')
+  await expect(image).toHaveAttribute('src', /landscape/)
+  await expect(image).toHaveAttribute('alt', 'A mountain path through a valley')
+})
+
+test('resizes and replaces a referenced rich text image', async ({
+  mount,
+  page
+}) => {
+  await serveFixtureImages(page)
+  await mount(<RichTextImageStory />)
+
+  const editor = page.locator('.ProseMirror').first()
+  await editor.locator('p').first().click()
+  await page.getByRole('button', {name: 'Image'}).click()
+  let picker = page.getByRole('dialog', {name: 'Pick image'})
+  await picker
+    .getByRole('checkbox', {name: 'Select landscape'})
+    .locator('xpath=ancestor::label')
+    .click()
+  await picker.getByRole('button', {name: 'Select'}).click()
+
+  const frame = editor.locator('[data-resize-container][data-node="image"]')
+  const handle = frame.locator('[data-resize-handle="bottom-right"]')
+  const initialImageBounds = await frame.locator('img').boundingBox()
+  const initialHandleBounds = await handle.boundingBox()
+  expect(initialImageBounds).not.toBeNull()
+  expect(initialHandleBounds).not.toBeNull()
+  expect(initialHandleBounds!.x + initialHandleBounds!.width / 2).toBeCloseTo(
+    initialImageBounds!.x + initialImageBounds!.width,
+    0
+  )
+  expect(initialHandleBounds!.y + initialHandleBounds!.height / 2).toBeCloseTo(
+    initialImageBounds!.y + initialImageBounds!.height,
+    0
+  )
+  await page.waitForTimeout(600)
+  await handle.evaluate(element => {
+    const bounds = element.getBoundingClientRect()
+    const startX = bounds.left + bounds.width / 2
+    element.dispatchEvent(
+      new MouseEvent('mousedown', {bubbles: true, clientX: startX})
+    )
+    document.dispatchEvent(
+      new MouseEvent('mousemove', {bubbles: true, clientX: startX - 80})
+    )
+    document.dispatchEvent(
+      new MouseEvent('mouseup', {bubbles: true, clientX: startX - 80})
+    )
+  })
+
+  await expect
+    .poll(async () => {
+      const node = (await storedValue(page)).find(
+        item => item._type === 'image'
+      )
+      return typeof node?.width === 'number'
+        ? node.width
+        : initialImageBounds!.width
+    })
+    .toBeLessThan(initialImageBounds!.width)
+  const resizedImage = (await storedValue(page)).find(
+    item => item._type === 'image'
+  )
+  expect(
+    Number(resizedImage?.width) / Number(resizedImage?.height)
+  ).toBeCloseTo(3970 / 2717, 1)
+  const resizedWidth = Number(resizedImage?.width)
+
+  await frame.locator('img').click()
+  await page.keyboard.press('ControlOrMeta+z')
+  await expect
+    .poll(async () => {
+      const node = (await storedValue(page)).find(
+        item => item._type === 'image'
+      )
+      return node?.width
+    })
+    .toBeUndefined()
+  await expect
+    .poll(async () => (await frame.locator('img').boundingBox())?.width)
+    .toBeCloseTo(initialImageBounds!.width, 0)
+
+  await page.keyboard.press('ControlOrMeta+Shift+z')
+  await expect
+    .poll(async () => {
+      const node = (await storedValue(page)).find(
+        item => item._type === 'image'
+      )
+      return node?.width
+    })
+    .toBe(resizedWidth)
+  await expect
+    .poll(async () => (await frame.locator('img').boundingBox())?.width)
+    .toBeCloseTo(resizedWidth, 0)
+
+  await page.setViewportSize({width: 640, height: 800})
+  await expect
+    .poll(async () => {
+      const bounds = await frame.locator('img').boundingBox()
+      return bounds ? bounds.width / bounds.height : 0
+    })
+    .toBeCloseTo(3970 / 2717, 1)
+  await page.setViewportSize({width: 1280, height: 800})
+
+  await frame.locator('img').click()
+  const previous = (await storedValue(page)).find(
+    item => item._type === 'image'
+  )
+  await page.getByRole('button', {name: 'Image'}).click()
+  picker = page.getByRole('dialog', {name: 'Pick image'})
+  await expect(
+    picker.getByRole('checkbox', {name: 'Select landscape'})
+  ).toBeChecked()
+  await picker
+    .getByRole('checkbox', {name: 'Select portrait'})
+    .locator('xpath=ancestor::label')
+    .click()
+  await picker.getByRole('button', {name: 'Select'}).click()
+
+  await expect
+    .poll(async () => {
+      const node = (await storedValue(page)).find(
+        item => item._type === 'image'
+      )
+      return node
+    })
+    .toMatchObject({
+      _id: previous?._id,
+      _type: 'image',
+      _link: 'image',
+      _entry: '2V4cZZUKeTjNkONU1l6NUe16OSH'
+    })
+  const replacedImage = (await storedValue(page)).find(
+    item => item._type === 'image'
+  )
+  expect(replacedImage).not.toHaveProperty('src')
+  expect(replacedImage).not.toHaveProperty('alt')
+  expect(replacedImage).not.toHaveProperty('width')
+  expect(replacedImage).not.toHaveProperty('height')
+  await expect(frame.locator('img')).toHaveAttribute('src', /portrait/)
+
+  await frame.locator('img').click()
+  await page.getByRole('button', {name: 'Image'}).click()
+  picker = page.getByRole('dialog', {name: 'Pick image'})
+  await picker
+    .getByRole('checkbox', {name: 'Select portrait'})
+    .locator('xpath=ancestor::label')
+    .click()
+  await picker.getByRole('button', {name: 'Select'}).click()
+
+  await expect(frame).toHaveCount(0)
+  await expect
+    .poll(async () =>
+      (await storedValue(page)).some(item => item._type === 'image')
+    )
+    .toBe(false)
 })
 
 test('does not dirty or normalize an empty paragraph while mounting', async ({
