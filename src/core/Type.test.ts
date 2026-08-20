@@ -1,6 +1,6 @@
 import {suite} from '@alinea/suite'
 import {Type, type} from '#/core/Type.js'
-import {list, richText, select, text} from '#/field.js'
+import {link, list, richText, select, text} from '#/field.js'
 import {ElementNode, Mark, Node, type TextDoc, TextNode} from './TextDoc.js'
 import {ListRow} from './ListRow.js'
 
@@ -106,6 +106,84 @@ test('Anchors', () => {
         fieldLabel: 'Rich'
       }
     ]
+  )
+})
+
+test('derives list anchors from labels', () => {
+  const Labeled = type('Labeled', {
+    fields: {
+      items: list('Items', {
+        schema: {
+          Item: type('Item', {fields: {title: text('Title')}})
+        }
+      })
+    }
+  })
+  const value = {
+    items: [
+      {
+        [ListRow.type]: 'Item',
+        [ListRow.id]: 'item-1',
+        _label: 'Learn more about our technology',
+        title: 'Technology'
+      }
+    ]
+  }
+
+  const initialized = Type.withInitialValue(Labeled, value)
+  test.equal(initialized, {
+    items: [
+      {
+        [ListRow.type]: 'Item',
+        [ListRow.id]: 'item-1',
+        _label: 'Learn more about our technology',
+        _anchor: 'learn-more-about-our-technology',
+        title: 'Technology'
+      }
+    ]
+  })
+})
+
+test('does not derive link anchors from labels', () => {
+  const Linked = type('Linked', {
+    fields: {
+      links: link.multiple('Links')
+    }
+  })
+  const value = {
+    links: [
+      {
+        [ListRow.type]: 'entry',
+        [ListRow.id]: 'link-1',
+        _label: 'Learn more about our technology',
+        _entry: 'entry-1'
+      }
+    ]
+  }
+
+  const initialized = Type.withInitialValue(Linked, value)
+  const saved = Type.beforeSave(Linked, value, {
+    action: 'update',
+    now: new Date(0)
+  })
+  const anchoredValue = {
+    links: [
+      {
+        ...value.links[0],
+        _anchor: 'details'
+      }
+    ]
+  }
+
+  test.equal(initialized, value)
+  test.equal(saved, value)
+  test.equal(Type.anchors(Linked, anchoredValue), [])
+  test.equal(
+    Type.beforeSave(Linked, anchoredValue, {
+      action: 'update',
+      now: new Date(0)
+    }),
+    anchoredValue
   )
 })
 
