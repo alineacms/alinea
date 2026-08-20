@@ -1,0 +1,100 @@
+body {
+  background: #f5f5f5;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 32px;
+}
+
+@property --content-width {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 960px;
+}
+
+@property --viewport-width {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 500px;
+}
+
+@property --viewport-height {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 300px;
+}
+::view-transition-group(root) {
+  z-index: 0;
+}
+
+::view-transition-group(*) {
+  z-index: 1;
+}
+.viewport {
+  display: flex;
+  flex-direction: column;
+  width: var(--viewport-width);
+}
+
+.canvas {
+  position: relative;
+  width: var(--viewport-width);
+  height: var(--viewport-height);
+}
+
+.frame {
+  position: relative;
+  width: var(--viewport-width);
+  height: var(--viewport-height);
+  container-type: size;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ecebeb;
+
+  &:focus,
+  &.is-active {
+    z-index: 9999;
+  }
+
+  &:focus {
+    outline: none;
+    view-transition-name: var(--alinea-viewport-transition-name);
+  }
+
+  &.is-active {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  &.is-active .inner {
+    min-height: max(100cqh, calc(var(--content-width) * (100cqh / 100cqi)));
+  }
+}
+
+.inner {
+  pointer-events: none;
+  width: var(--content-width);
+  min-width: var(--content-width);
+  min-height: max(100cqh, calc(var(--content-width) * (100cqh / 100cqi)));
+  transform-origin: center center;
+  scale: min(1, calc(100cqi / var(--content-width)));
+
+  display: flex;
+}
+
+.layout {
+  width: 100%;
+  min-height: 100%;
+}
+
+.label {
+  color: #bababa;
+  font-size: 16px;
+  padding-bottom: 8px;
+}
