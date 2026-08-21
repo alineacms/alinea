@@ -3,6 +3,10 @@ export type {Root} from '#/core/Root.js'
 export type {Schema} from '#/core/Schema.js'
 export type {TextDoc} from '#/core/TextDoc.js'
 export type {Type} from '#/core/Type.js'
+export type {
+  MediaUrlMeta,
+  MediaUrlResolver
+} from '#/core/media/MediaLocation.js'
 export type {Workspace} from '#/core/Workspace.js'
 export type {EntryLink} from '#/field/link/EntryLink.js'
 export type {FileLink} from '#/field/link/FileLink.js'

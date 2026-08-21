@@ -1,7 +1,10 @@
 import type {EntryFields} from '#/core/EntryFields.js'
+import {Entry} from '#/core/Entry.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Graph, Projection} from '#/core/Graph.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {Label} from '#/core/Label.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
@@ -9,7 +12,6 @@ import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
 import {applyUrlSuffix} from '#/core/util/Anchors.js'
-import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
 import {assign, isRecord, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
@@ -94,53 +96,68 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       const linkIds = [entryId]
       if (!options.selection) return
-      const [extra] = await loader.resolveLinks(options.selection, linkIds)
+      const selection = {
+        ...options.selection,
+        _media: {
+          entryUrl: Entry.url,
+          extension: MediaFile.extension,
+          location: MediaFile.location,
+          path: Entry.path,
+          root: Entry.root,
+          workspace: Entry.workspace
+        }
+      }
+      const [extra] = await loader.resolveLinks(selection, linkIds)
       if (!extra) {
         row[unresolvedEntryMarker] = true
         return
       }
+      const {_media: media, ...selected} = extra
       if (type === 'file') {
-        const {href, url, root, workspace, ...rest} = extra
-        const location = typeof href === 'string' ? href : url
-        assign(row, rest)
-        const publicUrl = mediaEntryUrl(loader, workspace, location)
-        if (typeof publicUrl === 'string') {
-          row.href = publicUrl
-          if (typeof url === 'string') row.url = publicUrl
-        }
+        const {
+          extension,
+          href: _href,
+          root: _root,
+          url,
+          workspace: _workspace,
+          ...rest
+        } = selected
+        const mediaUrl = MediaLocation.publicUrl(loader.resolver.config, media)
+        assign(row, rest, {extension})
+        row.href = mediaUrl
+        if (typeof url === 'string') row.url = mediaUrl
         return
       }
       if (type !== 'image') {
-        assign(row, extra)
+        assign(row, selected)
         applyUrlSuffixToRow(row, suffix, anchor)
         return
       }
       const {
-        src: location,
+        extension,
+        src: _location,
         previewUrl,
         filePath,
         alt,
-        root,
-        workspace,
+        root: _root,
+        workspace: _workspace,
         ...rest
-      } = extra
+      } = selected
+      const mediaUrl = MediaLocation.publicUrl(loader.resolver.config, media)
       const selectedAlt = selectImageAlt(alt, loader, {
-        root,
-        workspace
+        root: media.root,
+        workspace: media.workspace
       })
       if (!previewUrl) {
-        const src = mediaEntryUrl(loader, workspace, location)
-        assign(row, rest, {src})
+        assign(row, rest, {extension, src: mediaUrl})
         if (typeof selectedAlt === 'string') row.alt = selectedAlt
         return
       }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
-      const src = locationAvailable
-        ? mediaEntryUrl(loader, workspace, location)
-        : previewUrl
-      row.src = src
+      row.src = locationAvailable ? mediaUrl : previewUrl
+      row.extension = extension
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)
     }
@@ -156,16 +173,6 @@ function applyUrlSuffixToRow(
     row.url = applyUrlSuffix(row.url, suffix, anchor)
   if (typeof row.href === 'string')
     row.href = applyUrlSuffix(row.href, suffix, anchor)
-}
-
-function mediaEntryUrl(
-  loader: LinkResolver,
-  workspace: unknown,
-  location: unknown
-): unknown {
-  if (typeof location !== 'string') return location
-  if (typeof workspace !== 'string') return location
-  return mediaLocationUrl(loader.resolver.config, workspace, location)
 }
 
 interface LinkedEntryLocation {

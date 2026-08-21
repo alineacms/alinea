@@ -6,6 +6,7 @@ interface Article {
   title: string
   metadata: {
     description?: string
+    generated?: string
   }
   tags: Array<string>
 }
@@ -46,6 +47,87 @@ test('commits and resets nested editor changes as one document', () => {
     title: 'Published title',
     metadata: {description: 'A short summary'},
     tags: ['news', 'featured']
+  })
+  expect(store.get(article.isDirty)).toBeFalse()
+})
+
+test('commits persisted data into each nested reset snapshot', () => {
+  const store = createStore()
+  const article = articleNode()
+  const fields = store.get(article.nodes) as Record<keyof Article, ReactiveNode>
+  const metadata = fields.metadata
+
+  store.set(article.field('title'), 'Submitted title')
+  store.set(metadata.field('description'), 'Submitted summary')
+  store.set(article.commit, {
+    title: 'Persisted title',
+    metadata: {description: 'Persisted summary'},
+    tags: ['news', 'featured']
+  })
+
+  expect(store.get(article.value)).toEqual({
+    title: 'Persisted title',
+    metadata: {description: 'Persisted summary'},
+    tags: ['news', 'featured']
+  })
+  expect(store.get(article.isDirty)).toBeFalse()
+  expect(
+    (store.get(article.nodes) as Record<keyof Article, ReactiveNode>).metadata
+  ).toBe(metadata)
+
+  store.set(metadata.field('description'), 'Unsaved summary')
+  store.set(metadata.reset)
+  expect(store.get(article.value).metadata.description).toBe(
+    'Persisted summary'
+  )
+  expect(store.get(article.isDirty)).toBeFalse()
+})
+
+test('rebases edits made while persisted data was pending', () => {
+  const store = createStore()
+  const article = articleNode()
+  const fields = store.get(article.nodes) as Record<keyof Article, ReactiveNode>
+  const metadata = fields.metadata
+
+  store.set(article.field('title'), 'Submitted title')
+  store.set(metadata.field('description'), 'Submitted summary')
+  store.set(fields.tags.push, 'submitted')
+  const checkpoint = store.get(article.value)
+
+  store.set(article.field('title'), 'Typed while saving')
+  store.set(metadata.field('description'), 'Edited while saving')
+  const tags = store.get(fields.tags.nodes) as Array<ReactiveNode<string>>
+  store.set(tags[0].value, 'local news')
+  store.set(article.rebase, {
+    checkpoint,
+    saved: {
+      title: 'Submitted title',
+      metadata: {
+        description: 'Submitted summary',
+        generated: 'Added while saving'
+      },
+      tags: ['news', 'submitted', 'persisted']
+    }
+  })
+
+  expect(store.get(article.value)).toEqual({
+    title: 'Typed while saving',
+    metadata: {
+      description: 'Edited while saving',
+      generated: 'Added while saving'
+    },
+    tags: ['local news', 'submitted', 'persisted']
+  })
+  expect(store.get(article.isDirty)).toBeTrue()
+
+  store.set(article.reset)
+  expect(store.get(article.value)).toEqual({
+    title: 'Submitted title',
+    metadata: {
+      description: 'Submitted summary',
+      generated: 'Added while saving'
+    },
+    tags: ['news', 'submitted', 'persisted']
   })
   expect(store.get(article.isDirty)).toBeFalse()
 })

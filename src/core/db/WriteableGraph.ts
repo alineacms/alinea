@@ -8,7 +8,7 @@ import type {
 } from './EntryReference.js'
 import {Entry} from '../Entry.js'
 import type {EntryFields} from '../EntryFields.js'
-import {Graph} from '../Graph.js'
+import {Graph, type InferProjection, type Projection} from '../Graph.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Policy, WriteablePolicy} from '../Role.js'
 import {getScope} from '../Scope.js'
@@ -45,22 +45,37 @@ export abstract class WriteableGraph extends Graph {
     throw new Error('Entry references are not supported on this graph')
   }
 
+  async create<Definition, Selection extends Projection>(
+    create: CreateQuery<Definition> & {select: Selection}
+  ): Promise<InferProjection<Selection>>
   async create<Definition>(
     create: CreateQuery<Definition>
-  ): Promise<EntryFields & Infer<Type<Definition>>> {
+  ): Promise<EntryFields & Infer<Type<Definition>>>
+  async create<Definition>(
+    create: CreateQuery<Definition> & {select?: Projection}
+  ) {
     const op = new CreateOp(create)
     await this.commit(op)
+    const status =
+      create.status === 'draft'
+        ? 'preferDraft'
+        : create.status === 'archived'
+          ? 'archived'
+          : 'preferPublished'
+    if (create.select)
+      return this.get({
+        id: op.id,
+        type: create.type,
+        locale: create.locale,
+        status,
+        select: create.select
+      })
     return this.get({
       id: op.id,
       type: create.type,
       locale: create.locale,
-      status:
-        create.status === 'draft'
-          ? 'preferDraft'
-          : create.status === 'archived'
-            ? 'archived'
-            : 'preferPublished'
-    }) as Promise<EntryFields & Infer<Type<Definition>>>
+      status
+    })
   }
 
   async update<Definition>(

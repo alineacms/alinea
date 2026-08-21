@@ -8,7 +8,8 @@ interface RouteProps {
 export const dynamic = 'force-static'
 export const revalidate = 60 * 60
 
-async function mediaLocation(file: string) {
+export async function GET(_: Request, {params}: RouteProps) {
+  const {file} = await params
   const extensionIndex = file.lastIndexOf('.')
   const path = extensionIndex > 0 ? file.slice(0, extensionIndex) : file
   const extension = extensionIndex > 0 ? file.slice(extensionIndex) : ''
@@ -19,15 +20,21 @@ async function mediaLocation(file: string) {
     select: MediaFile.location
   }
   const location = await cms.first({...query, path})
-  return location ?? cms.first({...query, alias: `/${path}`})
-}
-
-export async function GET(_: Request, {params}: RouteProps) {
-  const {file} = await params
-  const location = await mediaLocation(file)
-  if (!location) return new Response('Not found', {status: 404})
-  return new Response(null, {
-    status: 307,
-    headers: {Location: location}
+  if (location)
+    return new Response(null, {
+      status: 302,
+      headers: {Location: location}
+    })
+  const alias = await cms.first({
+    root: cms.workspaces.primary.media,
+    type: MediaFile,
+    alias: `/media/${file}`,
+    select: MediaFile.location
   })
+  if (alias)
+    return new Response(null, {
+      status: 301,
+      headers: {Location: alias}
+    })
+  return new Response('Not found', {status: 404})
 }

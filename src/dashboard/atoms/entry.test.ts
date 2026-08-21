@@ -1,9 +1,15 @@
 import {expect, spyOn, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {atom, createStore} from 'jotai'
+import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Entry} from '#/core/Entry.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
-import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
+import {
+  createDashboardAtomFixture,
+  createDashboardStore,
+  TestEvents
+} from '#test/DashboardFixture.js'
+import {atom} from 'jotai'
 import {configAtom, eventsAtom} from './core.js'
 import {EntryAtoms, EntryLocaleAtoms, entryAtoms} from './entry.js'
 import {authReady} from './user.js'
@@ -140,4 +146,77 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
   const updatedValue = store.get(updated.value) as Record<string, unknown>
   expect(updated).not.toBe(first)
   expect(updatedValue.payload).toEqual(nextPayload)
+})
+
+test('publishing reconciles transaction-generated media aliases immediately', async () => {
+  const config = Config.create({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        mediaUrl: ({path, extension}) => `/assets/${path}${extension}`,
+        roots: {
+          media: Config.media({contains: ['MediaFile']})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const created = await db.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'File',
+      path: 'original',
+      metadata: {aliases: []},
+      location: '/stored.jpg',
+      extension: '.jpg',
+      size: 1024,
+      hash: 'file-hash'
+    }
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(authReady)
+  const entry = await store.get(entryAtoms(created._id))
+  const locale = entry.locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  store.set(node.field('path'), 'updated')
+
+  const mutate = db.mutate.bind(db)
+  let notifyStarted: () => void
+  let releaseSave: () => void
+  const started = new Promise<void>(resolve => {
+    notifyStarted = resolve
+  })
+  const blocked = new Promise<void>(resolve => {
+    releaseSave = resolve
+  })
+  const mutateSpy = spyOn(db, 'mutate').mockImplementation(async mutations => {
+    notifyStarted()
+    await blocked
+    return mutate(mutations)
+  })
+
+  const saving = store.set(locale.publishEdits, node)
+  await started
+  store.set(node.field('title'), 'Typed while saving')
+  releaseSave()
+  await saving
+  mutateSpy.mockRestore()
+
+  expect(store.get(node.value)).toMatchObject({
+    title: 'Typed while saving',
+    metadata: {aliases: [{url: '/assets/original.jpg'}]}
+  })
+  expect(store.get(node.isDirty)).toBeTrue()
+
+  store.set(node.reset)
+  expect(store.get(node.value)).toMatchObject({
+    title: 'File',
+    path: 'updated',
+    metadata: {aliases: [{url: '/assets/original.jpg'}]}
+  })
+  expect(store.get(node.isDirty)).toBeFalse()
 })

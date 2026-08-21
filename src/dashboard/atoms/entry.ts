@@ -9,23 +9,23 @@ import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
-import {Root} from '#/core/Root.js'
 import {Permission} from '#/core/Role.js'
+import {Root} from '#/core/Root.js'
+import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
-import {createFilePatch} from '#/core/source/FilePatch.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {ReactiveNode} from './ReactiveNode.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
-import {dispense, loader} from './utils.js'
+import {ReactiveNode} from './ReactiveNode.js'
 import {policyAtom, userAtom} from './user.js'
+import {dispense, loader} from './utils.js'
 
 interface EntryData {
   id: string
@@ -97,12 +97,14 @@ function prepareData(
   user: User
 ) {
   const current = get(node.value) as Record<string, unknown>
-  const data = Type.beforeSave(type, current, {
-    action,
-    user,
-    now: new Date()
-  })
-  return {data, changed: data !== current}
+  return {
+    checkpoint: current,
+    data: Type.beforeSave(type, current, {
+      action,
+      user,
+      now: new Date()
+    })
+  }
 }
 
 export class EntryLocaleAtoms {
@@ -341,7 +343,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {data, changed} = prepareData(
+    const {checkpoint, data} = prepareData(
       get,
       node,
       typeConfig,
@@ -349,16 +351,16 @@ export class EntryLocaleAtoms {
       get(userAtom)
     )
     policy.assert(Permission.Update, activeEntry)
-    await graph.create({
+    const saved = await graph.create({
       type: typeConfig,
       id,
       locale: this.requestedLocale,
       status: 'draft',
       set: data,
-      overwrite: true
+      overwrite: true,
+      select: Entry.data
     })
-    if (changed) set(node.value, data)
-    set(node.commit)
+    set(node.rebase, {checkpoint, saved})
   })
 
   publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
@@ -373,7 +375,7 @@ export class EntryLocaleAtoms {
     })
     assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
     const graph = get(graphAtom)
-    const {data, changed} = prepareData(
+    const {checkpoint, data} = prepareData(
       get,
       node,
       typeConfig,
@@ -381,16 +383,16 @@ export class EntryLocaleAtoms {
       get(userAtom)
     )
     policy.assert(Permission.Publish, activeEntry)
-    await graph.create({
+    const saved = await graph.create({
       type: typeConfig,
       id,
       locale: this.requestedLocale,
       status: 'published',
       set: data,
-      overwrite: true
+      overwrite: true,
+      select: Entry.data
     })
-    if (changed) set(node.value, data)
-    set(node.commit)
+    set(node.rebase, {checkpoint, saved})
   })
 
   saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
@@ -418,7 +420,7 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     const type = config.schema[dataState.type]
     assert(type, `Type "${dataState.type}" not found in config`)
-    const {data, changed} = prepareData(
+    const {checkpoint, data} = prepareData(
       get,
       node,
       type,
@@ -426,16 +428,16 @@ export class EntryLocaleAtoms {
       get(userAtom)
     )
     const graph = get(graphAtom)
-    await graph.create({
+    const saved = await graph.create({
       type,
       id: this.entry.id,
       parentId: dataState.parentId,
       locale: this.requestedLocale,
       status: config.enableDrafts ? 'draft' : 'published',
-      set: data
+      set: data,
+      select: Entry.data
     })
-    if (changed) set(node.value, data)
-    set(node.commit)
+    set(node.rebase, {checkpoint, saved})
   })
 
   #activeEntry(get: Getter) {

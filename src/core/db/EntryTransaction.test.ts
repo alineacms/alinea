@@ -27,6 +27,7 @@ const cms = createCMS({
   workspaces: {
     main: Config.workspace('Main', {
       source: 'content',
+      mediaUrl: ({path, extension}) => `/assets/${path}${extension}`,
       roots: {
         pages: Config.root('Pages', {
           contains: ['Page']
@@ -297,6 +298,29 @@ test('update preserves the previous published URL as an alias', async () => {
   test.equal(aliasUrls(result.aliases), ['/one'])
 })
 
+test('update does not add a MediaFile alias when its public URL is unchanged', async () => {
+  const db = await createEmptyDb()
+  const entry = await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: mediaFileData('One', 'one', [])
+  })
+
+  await db.update({
+    type: MediaFile,
+    id: entry._id,
+    status: 'published',
+    set: {location: '/replacement.jpg'}
+  })
+
+  const aliases = await db.get({
+    id: entry._id,
+    select: Entry.aliases
+  })
+  test.equal(aliasUrls(aliases), [])
+})
+
 test('update preserves the previous MediaFile URL as an alias', async () => {
   const db = await createEmptyDb()
   const entry = await db.create({
@@ -321,7 +345,7 @@ test('update preserves the previous MediaFile URL as an alias', async () => {
     }
   })
   test.is(result.url, '/two')
-  test.equal(aliasUrls(result.aliases), ['/one'])
+  test.equal(aliasUrls(result.aliases), ['/assets/one.jpg'])
 })
 
 test('update preserves a MediaFile URL with an empty alias row', async () => {
@@ -355,7 +379,7 @@ test('update preserves a MediaFile URL with an empty alias row', async () => {
     id: entry._id,
     select: Entry.aliases
   })
-  test.equal(aliasUrls(aliases), ['', '/one'])
+  test.equal(aliasUrls(aliases), ['', '/assets/one.jpg'])
 })
 
 test('update removes a current MediaFile URL from legacy aliases', async () => {
@@ -368,7 +392,7 @@ test('update removes a current MediaFile URL from legacy aliases', async () => {
       path: 'one',
       data: {
         ...mediaFileData('One', 'one', []),
-        aliases: [alias('/two')]
+        aliases: [alias('/assets/two.jpg')]
       }
     }
   ])
@@ -386,7 +410,7 @@ test('update removes a current MediaFile URL from legacy aliases', async () => {
     id: 'media-one',
     select: Entry.aliases
   })
-  test.equal(aliasUrls(aliases), ['/one'])
+  test.equal(aliasUrls(aliases), ['/assets/one.jpg'])
 })
 
 test('publish preserves the previous published URL as an alias', async () => {
@@ -420,6 +444,43 @@ test('publish preserves the previous published URL as an alias', async () => {
   })
   test.is(result.url, '/two')
   test.equal(aliasUrls(result.aliases), ['/one'])
+})
+
+test('publish preserves the previous public MediaFile URL as an alias', async () => {
+  const db = await createEmptyDb()
+  const entry = await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: mediaFileData('One', 'one', [])
+  })
+  await db.create({
+    type: MediaFile,
+    id: entry._id,
+    root: 'media',
+    status: 'draft',
+    overwrite: true,
+    set: {
+      ...mediaFileData('One', 'two', []),
+      extension: '.png',
+      location: '/replacement.png'
+    }
+  })
+
+  await db.publish({
+    id: entry._id,
+    status: 'draft'
+  })
+
+  const result = await db.get({
+    id: entry._id,
+    select: {
+      url: Entry.url,
+      aliases: Entry.aliases
+    }
+  })
+  test.is(result.url, '/two')
+  test.equal(aliasUrls(result.aliases), ['/assets/one.jpg'])
 })
 
 test('move preserves previous URLs for moved entries and children', async () => {

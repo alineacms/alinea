@@ -37,6 +37,21 @@ test('create entry', async () => {
   test.is(newRecipe._parentId, parent._id)
 })
 
+test('create entry with a result selection', async () => {
+  const parent = await db.get({
+    type: schema.DemoRecipes
+  })
+  const data = await db.create({
+    type: schema.DemoRecipe,
+    parentId: parent._id,
+    set: {title: 'Selected Recipe'},
+    select: Entry.data
+  })
+
+  test.is(data.title, 'Selected Recipe')
+  test.is('_id' in data, false)
+})
+
 /*test('remove entry', async () => {
   const parent = await db.get({
     type: schema.DemoRecipes

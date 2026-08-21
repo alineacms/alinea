@@ -10,21 +10,6 @@ import {getRoot, getType} from '../Internal.js'
 import type {EntryUrlMeta, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
 import {join} from './Paths.js'
-import {joinPaths} from './Urls.js'
-
-export function workspaceMediaDir(config: Config, workspace: string): string {
-  return Workspace.data(config.workspaces[workspace])?.mediaDir ?? ''
-}
-
-export function mediaLocationUrl(
-  config: Config,
-  workspace: string,
-  location: string
-): string {
-  const {mediaUrl} = Workspace.data(config.workspaces[workspace])
-  if (!mediaUrl) return location
-  return joinPaths(mediaUrl, location)
-}
 
 export function entryInfo(
   fileName: string

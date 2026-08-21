@@ -329,7 +329,7 @@ function EntryEditorContent({
       <>
         <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor />
+            <FileEditor entry={selectedEntry} />
           </NodeEditor>
         </RailBody>
       </>

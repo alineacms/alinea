@@ -11,6 +11,7 @@ import {
 import {createId} from '../Id.js'
 import type {InferStoredValue} from '../Infer.js'
 import {MediaFile} from '../media/MediaTypes.js'
+import {MediaLocation} from '../media/MediaLocation.js'
 import {Schema} from '../Schema.js'
 import {
   LinkMark,
@@ -22,7 +23,6 @@ import {
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
-import {mediaLocationUrl} from '../util/EntryFilenames.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
 
@@ -31,10 +31,14 @@ export type RichTextMutator<R> = {
 }
 
 const linkInfoFields = {
+  entryUrl: Entry.url,
+  extension: MediaFile.extension,
   id: Entry.id,
+  location: MediaFile.location,
+  path: Entry.path,
+  root: Entry.root,
   url: Entry.url,
-  workspace: Entry.workspace,
-  location: MediaFile.location
+  workspace: Entry.workspace
 }
 
 export class RichTextField<
@@ -349,11 +353,14 @@ async function applyLinkMarks(
     if (!data) continue
     const href =
       type === 'file'
-        ? mediaLocationUrl(
-            loader.resolver.config,
-            data.workspace,
-            data.location
-          )
+        ? MediaLocation.publicUrl(loader.resolver.config, {
+            entryUrl: data.entryUrl,
+            extension: data.extension,
+            location: data.location,
+            path: data.path,
+            root: data.root,
+            workspace: data.workspace
+          })
         : data.url
     mark.href = applyUrlSuffix(
       href,
