@@ -40,8 +40,7 @@ import {
   ListRowFooter,
   ListRowHeader,
   ListRowMeta,
-  ListRowSettings,
-  ListRowSettingsButton
+  ListRowSettings
 } from './List.js'
 import css from './List.stories.module.css'
 import {Popover} from './Popover.js'
@@ -121,9 +120,11 @@ export function FieldRows() {
             </ListRowDrag>
             <ListRowActions>
               <DialogTrigger>
-                <ListRowSettingsButton
+                <Button
+                  appearance="plain"
                   aria-label="Hero settings"
                   icon={IcRoundMoreHoriz}
+                  size="icon-small"
                 />
                 <Popover placement="bottom right">
                   <ListRowSettings>
@@ -156,9 +157,11 @@ export function FieldRows() {
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
-              <ListRowSettingsButton
+              <Button
+                appearance="plain"
                 aria-label="Quote settings"
                 icon={IcRoundMoreHoriz}
+                size="icon-small"
               />
             </ListRowActions>
           </ListRowHeader>

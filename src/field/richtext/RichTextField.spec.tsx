@@ -436,7 +436,9 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(2)
 
   await page.getByRole('button', {name: 'Callout actions'}).first().click()
-  await page.getByRole('button', {name: 'Delete'}).click()
+  await expect(page.getByRole('button', {name: 'Delete'})).toHaveCount(0)
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', {name: 'Remove Callout'}).first().click()
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(1)
 })
 
@@ -580,7 +582,10 @@ test('keeps outer and inner block fields read only', async ({mount, page}) => {
 
   await page.getByRole('button', {name: 'Callout actions'}).click()
   await expect(page.getByRole('button', {name: 'Duplicate'})).toBeDisabled()
-  await expect(page.getByRole('button', {name: 'Delete'})).toBeDisabled()
+  await expect(page.getByRole('button', {name: 'Delete'})).toHaveCount(0)
+  await expect(
+    page.getByRole('button', {name: 'Remove Callout'})
+  ).toBeDisabled()
 })
 
 /**
@@ -642,8 +647,7 @@ test('undoes block deletion without losing edited field values', async ({
     .click()
   await expect(page.getByTestId('value')).toContainText('Keep this value')
 
-  await page.getByRole('button', {name: 'Callout actions'}).click()
-  await page.getByRole('button', {name: 'Delete'}).click()
+  await page.getByRole('button', {name: 'Remove Callout'}).click()
   await expect(title).toHaveCount(0)
 
   const editor = page.locator('.ProseMirror').first()

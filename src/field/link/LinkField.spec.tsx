@@ -22,17 +22,45 @@ test('shows image results outside an entry scope', async ({mount, page}) => {
   await mount(<Example />)
 
   const field = page.getByRole('list', {name: 'Hero image'})
-  await field.getByRole('button', {name: 'Link settings'}).click()
-  await page
-    .getByRole('dialog', {name: 'Link settings'})
-    .getByRole('button', {name: 'Remove link'})
-    .click()
+  await field.getByRole('button', {name: 'Remove link'}).click()
   await field.getByRole('button', {name: 'Image'}).click()
 
   const picker = page.getByRole('dialog', {name: 'Pick an image'})
   await expect(
     picker.getByRole('grid', {name: 'Explorer entries'})
   ).toContainText('landscape')
+})
+
+test('keeps remove controls visible on single and multiple link rows', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const heroImage = page.getByRole('list', {name: 'Hero image'})
+  await expect(
+    heroImage.getByRole('button', {name: 'Remove link'})
+  ).toBeVisible()
+  await heroImage.getByRole('button', {name: 'Link settings'}).click()
+  await expect(
+    page
+      .getByRole('dialog', {name: 'Link settings'})
+      .getByRole('button', {name: 'Remove link'})
+  ).toHaveCount(0)
+  await page.keyboard.press('Escape')
+
+  const resources = page.getByRole('list', {name: 'Resources'})
+  await expect(
+    resources.getByRole('button', {name: 'Remove link'})
+  ).toHaveCount(3)
+  await resources
+    .getByRole('listitem')
+    .first()
+    .getByRole('button', {name: 'Remove link'})
+    .click()
+  await expect(
+    resources.getByRole('button', {name: 'Remove link'})
+  ).toHaveCount(2)
 })
 
 test('switches link picker workspaces and roots', async ({mount, page}) => {

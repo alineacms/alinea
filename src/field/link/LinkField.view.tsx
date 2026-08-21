@@ -16,7 +16,6 @@ import {
   ListRowFooter,
   ListRowHeader,
   ListRowSettings,
-  ListRowSettingsButton,
   MenuSeparator,
   Popover,
   Select,
@@ -899,7 +898,6 @@ interface LinkRowActionsProps {
   type: PickerType
   value: LinkFieldRow
   onEdit: () => void
-  onRemove: () => void
 }
 
 function LinkRowActions({
@@ -908,8 +906,7 @@ function LinkRowActions({
   picker,
   type,
   value,
-  onEdit,
-  onRemove
+  onEdit
 }: LinkRowActionsProps) {
   return (
     <>
@@ -932,18 +929,6 @@ function LinkRowActions({
           Replace link
         </Button>
       )}
-      <Button
-        aria-label="Remove link"
-        appearance="plain"
-        icon={IcRoundClose}
-        isDisabled={isDisabled}
-        onPress={() => {
-          onRemove()
-          closeActions()
-        }}
-      >
-        Remove link
-      </Button>
     </>
   )
 }
@@ -1264,7 +1249,12 @@ function ResolvedLinkLabelField({
 
 function LinkSettingsButton() {
   return (
-    <ListRowSettingsButton aria-label="Link settings" icon={IcRoundMoreHoriz} />
+    <Button
+      appearance="plain"
+      aria-label="Link settings"
+      icon={IcRoundMoreHoriz}
+      size="icon-small"
+    />
   )
 }
 
@@ -1349,6 +1339,10 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
     setActionsOpen(false)
   }
 
+  function removeLink() {
+    setValue(undefined!)
+  }
+
   return (
     <>
       <ListRow aria-label="Link item 1" first role="listitem">
@@ -1387,7 +1381,6 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                     <LinkRowActions
                       closeActions={closeActions}
                       onEdit={() => setEditOpen(true)}
-                      onRemove={() => setValue(undefined!)}
                       picker={picker}
                       type={type}
                       value={value}
@@ -1395,6 +1388,13 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                   </ListRowSettings>
                 </Popover>
               </DialogTrigger>
+              <Button
+                appearance="plain"
+                aria-label="Remove link"
+                icon={IcRoundClose}
+                onPress={removeLink}
+                size="icon-small"
+              />
             </ListRowActions>
           )}
         </ListRowHeader>
@@ -1520,6 +1520,10 @@ function MultipleLinkRow({
     setActionsOpen(false)
   }
 
+  function removeLink() {
+    setValue(links => links.filter((_, currentIndex) => currentIndex !== index))
+  }
+
   return (
     <>
       <div
@@ -1596,13 +1600,6 @@ function MultipleLinkRow({
                       closeActions={closeActions}
                       isDisabled={readOnly}
                       onEdit={() => setEditOpen(true)}
-                      onRemove={() =>
-                        setValue(links =>
-                          links.filter(
-                            (_, currentIndex) => currentIndex !== index
-                          )
-                        )
-                      }
                       picker={picker}
                       type={type}
                       value={value}
@@ -1610,6 +1607,14 @@ function MultipleLinkRow({
                   </ListRowSettings>
                 </Popover>
               </DialogTrigger>
+              <Button
+                appearance="plain"
+                aria-label="Remove link"
+                icon={IcRoundClose}
+                isDisabled={readOnly}
+                onPress={removeLink}
+                size="icon-small"
+              />
             </ListRowActions>
           </ListRowHeader>
           {expanded && hasFields && (
