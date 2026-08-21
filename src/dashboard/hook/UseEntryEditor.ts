@@ -1,4 +1,4 @@
-import type {EntryStatus} from 'alinea/core/Entry'
+import type {EntryStatus} from '#/core/Entry.js'
 import {useEntry} from '../hooks.js'
 
 export interface EntryEditorVersionData {

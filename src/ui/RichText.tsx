@@ -1,4 +1,4 @@
-import type {Infer} from 'alinea/core/Infer'
+import type {Infer} from '#/core/Infer.js'
 import {
   BlockNode,
   ElementNode,
@@ -6,8 +6,8 @@ import {
   Node,
   type TextDoc,
   TextNode
-} from 'alinea/core/TextDoc'
-import {slugify} from 'alinea/core/util/Slugs'
+} from '#/core/TextDoc.js'
+import {slugify} from '#/core/util/Slugs.js'
 import {
   type ComponentType,
   type CSSProperties,

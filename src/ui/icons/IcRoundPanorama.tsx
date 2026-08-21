@@ -1,4 +1,4 @@
-import {IcRoundPanorama as Icon} from 'alinea/dashboard/icons'
+import {IcRoundPanorama as Icon} from '#/dashboard/icons.js'
 
 /** @deprecated Import from `alinea/dashboard/icons` instead. */
 export const IcRoundPanorama = Icon

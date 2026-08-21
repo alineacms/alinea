@@ -1,5 +1,5 @@
 import {cleanup, render, screen, within} from '#test/react.js'
-import type {TextDoc} from 'alinea/core/TextDoc'
+import type {TextDoc} from '#/core/TextDoc.js'
 import {afterEach, expect, test} from 'bun:test'
 import type {ComponentPropsWithoutRef, PropsWithChildren} from 'react'
 import {RichText, type RichTextProps} from './RichText.js'
