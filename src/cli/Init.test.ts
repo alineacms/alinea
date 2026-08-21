@@ -61,5 +61,6 @@ if (testPms) {
     await run(cwd)
     const config = await fs.readFile(path.join(cwd, 'src/cms.ts'), 'utf-8')
     test.ok(config.includes("mediaDir: 'public/media'"))
+    test.ok(config.includes("mediaUrl: '/media'"))
   })
 }
