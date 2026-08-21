@@ -20,8 +20,10 @@ const example = new File(
 
 class DB extends LocalDB {
   uploads = 0
+  preparedFiles: Array<string> = []
 
   async prepareUpload(file: string): Promise<UploadResponse> {
+    this.preparedFiles.push(file)
     const id = `upload-${++this.uploads}`
     return {
       entryId: id,
@@ -98,6 +100,46 @@ test('upload urls keep nested mediaDir out of image URLs by default', async () =
 test('upload urls use configured mediaUrl', async () => {
   const src = await queryUploadedImageSrc('/assets/uploads', '/media')
   test.is(src, '/media/example.jpg_upload-1')
+})
+
+test('uploads use the mediaDir of the selected workspace', async () => {
+  const main = Config.workspace('Main', {
+    source: 'content/main',
+    mediaDir: 'public/media',
+    roots: {
+      media: Config.media()
+    }
+  })
+  const secondary = Config.workspace('Secondary', {
+    source: 'content/secondary',
+    mediaDir: 'public/media/secondary',
+    roots: {
+      media: Config.media()
+    }
+  })
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main, secondary}
+  })
+  const db = new DB(cms.config)
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+
+  try {
+    await db.upload({
+      file: example,
+      workspace: 'secondary'
+    })
+  } finally {
+    globalThis.fetch = fetch
+  }
+
+  test.equal(db.preparedFiles, [
+    'public/media/secondary/example.jpg'
+  ])
 })
 
 test('uploads reject files over maxUploadSize before upload', async () => {
