@@ -44,6 +44,10 @@
   }
 }
 
+.EntryOverview-mobileActions {
+  display: none;
+}
+
 .MissingEntry {
   min-height: 100%;
   display: grid;
@@ -91,6 +95,10 @@
 }
 
 @media (max-width: 768px) {
+  .EntryOverview-mobileActions {
+    display: flex;
+  }
+
   .EntryEditor-body {
     padding: 8px;
   }

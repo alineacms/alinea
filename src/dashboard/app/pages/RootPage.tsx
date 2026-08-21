@@ -68,7 +68,7 @@ function RootBrowser({page, root}: RootBrowserProps) {
       <Explorer
         controls={
           <div className={styles.RootPage.mobileActions()}>
-            <CreateEntryButton compact root={root} />
+            <CreateEntryButton root={root} toolbar />
           </div>
         }
         explorer={root.explorer}

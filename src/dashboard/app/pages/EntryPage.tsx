@@ -30,6 +30,7 @@ import {
   IcRoundEdit
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
+import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields, NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {
@@ -224,6 +225,11 @@ function EntryOverview({
   return (
     <Rail main>
       <Explorer
+        controls={
+          <div className={styles.EntryOverview.mobileActions()}>
+            <CreateEntryButton root={root} toolbar />
+          </div>
+        }
         explorer={root.children(entry.id)}
         page={explorerPage}
         headerEntry={{

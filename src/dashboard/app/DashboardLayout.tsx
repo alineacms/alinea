@@ -71,13 +71,13 @@ function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
 }
 
 export interface CreateEntryButtonProps {
-  compact?: boolean
   root: RootAtoms
+  toolbar?: boolean
 }
 
 export function CreateEntryButton({
-  compact = false,
-  root
+  root,
+  toolbar = false
 }: CreateEntryButtonProps) {
   const canCreate = useAtomValue(root.canCreate)
   if (!canCreate) return null
@@ -85,12 +85,11 @@ export function CreateEntryButton({
     <DialogTrigger>
       <Button
         aria-label="Create new"
-        className={styles.DashboardLayout.create({compact})}
+        className={styles.DashboardLayout.create({toolbar})}
         icon={IcRoundAdd}
-        intent={compact ? 'primary' : 'secondary'}
-        size={compact ? 'icon' : undefined}
+        intent={toolbar ? 'primary' : 'secondary'}
       >
-        {compact ? null : 'Create new'}
+        Create new
       </Button>
       <DashboardModal>
         <CreateEntry />

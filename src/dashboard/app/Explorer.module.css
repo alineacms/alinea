@@ -281,4 +281,15 @@
   .Explorer-toolbar-mediaActions {
     gap: 6px;
   }
+
+  .Explorer-toolbar {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .Explorer-toolbar-tools {
+    flex-basis: 100%;
+  }
 }

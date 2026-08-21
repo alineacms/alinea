@@ -3,8 +3,8 @@
   width: calc(100% - 16px);
   justify-content: center;
 
-  &.is-compact {
-    width: 32px;
+  &.is-toolbar {
+    width: auto;
     margin: 0;
   }
 }
