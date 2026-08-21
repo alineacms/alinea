@@ -2,4 +2,15 @@
   margin: 8px;
   width: calc(100% - 16px);
   justify-content: center;
+
+  &.is-compact {
+    width: 32px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .DashboardLayout-sidebar {
+    display: none;
+  }
 }

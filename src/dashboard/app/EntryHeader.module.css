@@ -42,3 +42,42 @@
     white-space: nowrap;
   }
 }
+
+@media (max-width: 768px) {
+  .EntryHeader {
+    padding: 0 8px;
+  }
+
+  .EntryHeader-content,
+  .EntryHeader-main,
+  .EntryHeader-actions {
+    gap: 4px;
+  }
+
+  .EntryHeader-status,
+  .EntryHeader-type {
+    display: none;
+  }
+
+  .EntryHeader.is-dirty {
+    height: auto;
+    padding-block: 8px;
+    overflow: visible;
+  }
+
+  .EntryHeader.is-dirty .EntryHeader-content {
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .EntryHeader.is-dirty .EntryHeader-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .EntryHeader.is-dirty .EntryHeader-sidebarToggle {
+    display: none;
+  }
+}

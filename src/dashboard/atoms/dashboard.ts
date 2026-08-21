@@ -19,7 +19,10 @@ const themeStorageAtom = atomWithStorage<DashboardTheme>(
   undefined
 )
 
-export const entrySidebarOpenAtom = atom(true)
+export const entrySidebarOpenAtom = atom(
+  typeof window === 'undefined' ||
+    !window.matchMedia?.('(max-width: 768px)').matches
+)
 
 export const themeAtom = Object.assign(
   atom(

@@ -16,7 +16,13 @@ import {
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useRef, useState, type ReactNode} from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode
+} from 'react'
 import {appAtom} from '../App.js'
 import {
   activityAtom,
@@ -30,10 +36,31 @@ import {IcRoundCheck, IcRoundHistory, IcRoundWarning} from '../icons.js'
 import css from './ActivityStatus.module.css'
 
 const styles = styler(css)
+const mobileActivityMediaQuery = '(max-width: 768px)'
+
+function subscribeToMobileActivity(onStoreChange: () => void): () => void {
+  const media = window.matchMedia?.(mobileActivityMediaQuery)
+  if (!media) return () => {}
+  media.addEventListener('change', onStoreChange)
+  return () => media.removeEventListener('change', onStoreChange)
+}
+
+function mobileActivitySnapshot() {
+  return window.matchMedia?.(mobileActivityMediaQuery).matches ?? false
+}
+
+function desktopActivitySnapshot() {
+  return false
+}
+
+function ignoreActivityBreakpoint() {
+  return () => {}
+}
 
 export interface ActivityStatusProps {
   ariaLabel?: string
   children?: ReactNode
+  mobilePlacement?: PopoverProps['placement']
   openOnFail?: boolean
   placement?: PopoverProps['placement']
 }
@@ -41,6 +68,7 @@ export interface ActivityStatusProps {
 export function ActivityStatus({
   ariaLabel,
   children,
+  mobilePlacement,
   openOnFail = false,
   placement = 'right'
 }: ActivityStatusProps) {
@@ -49,6 +77,11 @@ export function ActivityStatus({
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
+  const isMobile = useSyncExternalStore(
+    mobilePlacement ? subscribeToMobileActivity : ignoreActivityBreakpoint,
+    mobilePlacement ? mobileActivitySnapshot : desktopActivitySnapshot,
+    desktopActivitySnapshot
+  )
   const wasFailed = useRef(false)
   const lastActivityLabel = useRef('Finishing up')
   const activityLabel = getActivityLabel(
@@ -74,11 +107,16 @@ export function ActivityStatus({
     if (openOnFail && activity.hasFailed && !wasFailed.current) setIsOpen(true)
     wasFailed.current = activity.hasFailed
   }, [activity.hasFailed, openOnFail])
+
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
     <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip placement={placement} delay={300} tooltip={label}>
+      <Tooltip
+        placement={isMobile ? mobilePlacement : placement}
+        delay={300}
+        tooltip={label}
+      >
         <Button
           size={children ? undefined : 'icon'}
           appearance={children ? 'outline' : 'plain'}
@@ -130,7 +168,7 @@ export function ActivityStatus({
       </Tooltip>
       <Popover
         className={styles.ActivityStatus.popover.surface()}
-        placement={placement}
+        placement={isMobile ? mobilePlacement : placement}
         offset={16}
         style={{
           padding: '0',

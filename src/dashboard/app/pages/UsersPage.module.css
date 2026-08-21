@@ -170,13 +170,33 @@
 
 @media (max-width: 720px) {
   .UsersPageSidebar {
-    flex-basis: 32px;
+    flex: 0 0 48px;
+    flex-direction: row;
+    width: 100%;
+    height: 48px;
+    padding: 8px;
+  }
+
+  .UsersPageSidebar-nav,
+  .UsersPageSidebar-footer {
+    display: flex;
+  }
+
+  .UsersPageSidebar-footer {
+    margin-top: 0;
+    margin-left: auto;
   }
 
   .UsersPage-header {
     align-items: stretch;
     flex-direction: column;
+    height: auto;
     padding-top: 10px;
     padding-bottom: 10px;
+    overflow: visible;
+  }
+
+  .UsersPage-createButton {
+    justify-content: center;
   }
 }

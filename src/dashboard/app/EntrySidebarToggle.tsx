@@ -5,11 +5,13 @@ import {
 } from '../icons.js'
 
 export interface EntrySidebarToggleProps {
+  className?: string
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
 }
 
 export function EntrySidebarToggle({
+  className,
   isOpen,
   onOpenChange
 }: EntrySidebarToggleProps) {
@@ -18,6 +20,7 @@ export function EntrySidebarToggle({
     : MaterialSymbolsRightPanelOpenRounded
   return (
     <ToggleButton
+      className={className}
       isSelected={isOpen}
       aria-label={isOpen ? 'Close entry sidebar' : 'Open entry sidebar'}
       onChange={onOpenChange}

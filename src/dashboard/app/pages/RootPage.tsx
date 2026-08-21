@@ -11,6 +11,7 @@ import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
 import type {ComponentType} from 'react'
 import {Explorer} from '../Explorer.js'
+import {CreateEntryButton} from '../DashboardLayout.js'
 import {NotFoundPanel} from './EntryPage.js'
 import {Rail, RailBody} from '../ui/Rail.js'
 import css from './RootPage.module.css'
@@ -64,7 +65,15 @@ interface RootBrowserProps {
 function RootBrowser({page, root}: RootBrowserProps) {
   return (
     <Rail main>
-      <Explorer explorer={root.explorer} page={page} />
+      <Explorer
+        controls={
+          <div className={styles.RootPage.mobileActions()}>
+            <CreateEntryButton compact root={root} />
+          </div>
+        }
+        explorer={root.explorer}
+        page={page}
+      />
     </Rail>
   )
 }

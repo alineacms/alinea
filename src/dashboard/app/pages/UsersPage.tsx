@@ -168,7 +168,7 @@ export function UsersPage() {
 
   return (
     <div className={styles.UsersPage()}>
-      <SidebarHeader>
+      <SidebarHeader className={styles.UsersPage.header()}>
         <div className={styles.UsersPage.header.title()}>Manage users</div>
 
         <SearchField
@@ -258,7 +258,7 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
         </Button>
       </nav>
       <div className={styles.UsersPageSidebar.footer()}>
-        <ActivityStatus />
+        <ActivityStatus mobilePlacement="bottom right" />
       </div>
     </aside>
   )

@@ -62,7 +62,7 @@ export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <ActivityStatus openOnFail />
+        <ActivityStatus mobilePlacement="bottom right" openOnFail />
         <WorkspaceProfileMenu canManageMembers={canManageMembers} page={page} />
       </div>
     </aside>

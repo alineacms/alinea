@@ -89,3 +89,13 @@
   font-family: var(--alinea-mono-font);
   font-size: 12px;
 }
+
+@media (max-width: 768px) {
+  .EntryEditor-body {
+    padding: 8px;
+  }
+
+  .MissingEntry {
+    padding: 12px;
+  }
+}

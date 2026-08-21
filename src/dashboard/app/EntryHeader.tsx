@@ -390,7 +390,7 @@ export function EntryHeader({
   }
 
   return (
-    <header className={styles.EntryHeader()}>
+    <header className={styles.EntryHeader({dirty: isDirty})}>
       <div className={styles.EntryHeader.content()}>
         <div className={styles.EntryHeader.main()}>
           <EditorBackButton
@@ -413,7 +413,9 @@ export function EntryHeader({
           >
             {isRevision ? 'Revision' : variantDescription[status]}
           </Badge>
-          <Badge icon={typeData.icon}>{typeData.label}</Badge>
+          <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
+            {typeData.label}
+          </Badge>
           {menuItems.length > 0 && (
             <Menu
               label={
@@ -448,6 +450,7 @@ export function EntryHeader({
           {primaryAction}
           {onSidebarOpenChange && !isSidebarOpen && (
             <EntrySidebarToggle
+              className={styles.EntryHeader.sidebarToggle()}
               isOpen={false}
               onOpenChange={onSidebarOpenChange}
             />

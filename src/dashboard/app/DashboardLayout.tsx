@@ -38,7 +38,7 @@ export function DashboardLayout({
         <AppShellInner>
           <WorkspaceRoots canManageMembers={canManageMembers} page={page} />
           <AppShellContent>
-            <Sidebar>
+            <Sidebar className={styles.DashboardLayout.sidebar()}>
               <SidebarHeader>
                 <WorkspaceMenu
                   canManageMembers={canManageMembers}
@@ -63,22 +63,38 @@ interface SidebarCreateEntryButtonProps {
 }
 
 function SidebarCreateEntryButton({root}: SidebarCreateEntryButtonProps) {
+  return (
+    <SidebarFooter>
+      <CreateEntryButton root={root} />
+    </SidebarFooter>
+  )
+}
+
+export interface CreateEntryButtonProps {
+  compact?: boolean
+  root: RootAtoms
+}
+
+export function CreateEntryButton({
+  compact = false,
+  root
+}: CreateEntryButtonProps) {
   const canCreate = useAtomValue(root.canCreate)
   if (!canCreate) return null
   return (
-    <SidebarFooter>
-      <DialogTrigger>
-        <Button
-          className={styles.DashboardLayout.create()}
-          icon={IcRoundAdd}
-          intent="secondary"
-        >
-          Create new
-        </Button>
-        <DashboardModal>
-          <CreateEntry />
-        </DashboardModal>
-      </DialogTrigger>
-    </SidebarFooter>
+    <DialogTrigger>
+      <Button
+        aria-label="Create new"
+        className={styles.DashboardLayout.create({compact})}
+        icon={IcRoundAdd}
+        intent={compact ? 'primary' : 'secondary'}
+        size={compact ? 'icon' : undefined}
+      >
+        {compact ? null : 'Create new'}
+      </Button>
+      <DashboardModal>
+        <CreateEntry />
+      </DashboardModal>
+    </DialogTrigger>
   )
 }
