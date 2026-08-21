@@ -3,7 +3,9 @@
   "_type": "MediaFile",
   "_index": "a0",
   "title": "landscape",
-  "path": "landscape.jpg",
+  "metadata": {
+    "aliases": []
+  },
   "location": "/landscape.2V4cZVLipKGYEYJTIK1GMBHJMY0.jpg",
   "extension": ".jpg",
   "size": 918672,

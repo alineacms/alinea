@@ -2,9 +2,10 @@
   "_id": "2V4cZT6gxL9DI5U4D7jkonlpr5A",
   "_type": "MediaFile",
   "_index": "a0",
-  "_i18nId": "2V4cZT6gxL9DI5U4D7jkonlpr5A",
-  "_root": "media",
   "title": "panorama",
+  "metadata": {
+    "aliases": []
+  },
   "location": "/panorama.2V4cZWYopuryTp11Z4s0QnZXdlx.jpg",
   "extension": ".jpg",
   "size": 1240877,
