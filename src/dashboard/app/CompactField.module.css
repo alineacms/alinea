@@ -94,7 +94,7 @@
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
-  color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
+  color: var(--alinea-field-label);
   font-size: 11px;
   font-weight: 500;
   text-overflow: ellipsis;

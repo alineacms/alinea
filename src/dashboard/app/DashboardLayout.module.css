@@ -10,7 +10,7 @@
 }
 
 @media (max-width: 768px) {
-  .DashboardLayout-sidebar {
+  .DashboardLayout-sidebar.DashboardLayout-sidebar {
     display: none;
   }
 }

@@ -147,7 +147,7 @@
 }
 
 .SidebarTree-item.is-parentSelected:not([data-hovered]):not([data-selected]) {
-  background: color-mix(in oklab, var(--alinea-selected), white 60%);
+  background: color-mix(in oklab, var(--alinea-selected), var(--alinea-bg) 60%);
   border-radius: 0;
 }
 
