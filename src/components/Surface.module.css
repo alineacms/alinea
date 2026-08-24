@@ -16,12 +16,12 @@
 }
 
 .Surface[data-depth='muted'] {
-  --alinea-surface-bg: var(--alinea-bg-muted);
+  --alinea-surface-bg: var(--alinea-surface-bg-muted);
   box-shadow: var(--alinea-shadow-muted);
 }
 
 .Surface .Surface:not([data-depth]) {
-  --alinea-surface-bg: var(--alinea-bg-muted);
+  --alinea-surface-bg: var(--alinea-surface-bg-muted);
   box-shadow: var(--alinea-shadow-muted);
 }
 
@@ -30,7 +30,7 @@
 }
 
 .Surface .Surface .Surface .Surface:not([data-depth]) {
-  --alinea-surface-bg: var(--alinea-bg-muted);
+  --alinea-surface-bg: var(--alinea-surface-bg-muted);
   box-shadow: var(--alinea-shadow-muted);
 }
 
