@@ -54,6 +54,7 @@ describe('EntryReplicaClient', () => {
     expect(
       await client.resolver(cms.config).resolve({select: Entry.id})
     ).toEqual([])
+    expect(client.resolver(cms.config)).toBe(client.resolver(cms.config))
     expect(await client.sync()).toMatchObject({
       revision: 'tree-1',
       changed: false

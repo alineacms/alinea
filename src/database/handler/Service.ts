@@ -1,6 +1,6 @@
 import type {DatabaseSnapshot} from '../Database.js'
 import type {Config} from '#/core/Config.js'
-import type {EntryAccessPolicy} from '../entry/Access.js'
+import type {Policy} from '#/core/Role.js'
 import type {AlineaDatabaseRecord} from '../entry/Model.js'
 import type {HandlerKeyCatalog} from '../release/Exporter.js'
 import type {ReplicaBootstrap, ReplicaUser} from '../replica/Protocol.js'
@@ -22,7 +22,7 @@ export interface ReplicaRelease {
 
 export interface AuthenticatedReplicaSession {
   user: ReplicaUser
-  policy: EntryAccessPolicy
+  policy: Policy
   /** Stable for users whose combined role policies produce the same view. */
   policyFingerprint: string
 }
@@ -54,6 +54,7 @@ export class ReplicaService {
   #views = new Map<string, ReplicaState>()
   #mutate?: ReplicaMutationHandler
   #transactions = new Map<string, Promise<FieldTransactionResult>>()
+  #bundles = new Map<string, Uint8Array>()
 
   constructor(options: ReplicaServiceOptions) {
     this.#configId = options.configId
@@ -62,6 +63,10 @@ export class ReplicaService {
     this.#cacheKey = options.cacheKey
     this.#release = options.release
     this.#mutate = options.mutate
+  }
+
+  get release(): ReplicaRelease {
+    return this.#release
   }
 
   bootstrap(session: AuthenticatedReplicaSession): ReplicaBootstrap {
@@ -119,10 +124,18 @@ export class ReplicaService {
   ): Promise<FieldTransactionResult> {
     if (!this.#mutate)
       return Promise.reject(new Error('Replica mutations are not configured'))
+    return this.mutateWith(session, transaction, this.#mutate)
+  }
+
+  mutateWith(
+    session: AuthenticatedReplicaSession,
+    transaction: FieldTransaction,
+    handler: ReplicaMutationHandler
+  ): Promise<FieldTransactionResult> {
     const key = `${session.user.id}\0${transaction.id}`
     let pending = this.#transactions.get(key)
     if (!pending) {
-      pending = this.#mutate(session, transaction).catch(error => {
+      pending = handler(session, transaction).catch(error => {
         this.#transactions.delete(key)
         throw error
       })
@@ -135,5 +148,24 @@ export class ReplicaService {
     this.#release = release
     this.#views.clear()
     this.revisions.publish(release.catalog.revision)
+  }
+
+  installOverlay(
+    release: ReplicaRelease,
+    bundleId: string,
+    contents: Uint8Array
+  ): void {
+    this.#bundles.set(bundleId, contents.slice())
+    this.install(release)
+  }
+
+  bundle(bundleId: string, offset: number, length: number): Uint8Array {
+    const contents = this.#bundles.get(bundleId)
+    if (!contents) throw new Error(`Replica bundle "${bundleId}" was not found`)
+    return contents.slice(offset, offset + length)
+  }
+
+  bundleSize(bundleId: string): number | undefined {
+    return this.#bundles.get(bundleId)?.length
   }
 }

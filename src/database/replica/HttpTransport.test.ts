@@ -19,19 +19,23 @@ describe('HttpReplicaTransport', () => {
       recordAccess: {}
     }
     const actions: Array<string | null> = []
-    const fetch: typeof globalThis.fetch = async input => {
-      const url = new URL(String(input))
-      const action = url.searchParams.get('action')
-      actions.push(action)
-      if (action === 'replicaBootstrap')
-        return Response.json({
-          user: {id: 'user-1', roles: ['editor']},
-          configId: 'config-1',
-          configUrl: '/secret/config.js',
-          cacheKey: 'cache-1'
-        })
-      return Response.json(serializeReplicaState(state))
-    }
+    const fetch = Object.assign(
+      async function fetch(input: URL | RequestInfo) {
+        const url = new URL(String(input))
+        const action = url.searchParams.get('action')
+        actions.push(action)
+        if (action === 'replicaBootstrap')
+          return Response.json({
+            user: {id: 'user-1', roles: ['editor']},
+            configId: 'config-1',
+            configUrl: '/secret/config.js',
+            cacheKey: 'cache-1'
+          })
+        if (action === 'replicaEligible') return Response.json(['entry-a'])
+        return Response.json(serializeReplicaState(state))
+      },
+      {preconnect() {}}
+    )
     const transport = new HttpReplicaTransport({
       handlerUrl: 'https://example.com/api/cms',
       fetch
@@ -39,16 +43,24 @@ describe('HttpReplicaTransport', () => {
 
     expect((await transport.bootstrap()).configId).toBe('config-1')
     expect(await transport.state()).toEqual(state)
-    expect(actions).toEqual(['replicaBootstrap', 'replicaState'])
+    expect(await transport.eligible('{"filter":{}}')).toEqual(['entry-a'])
+    expect(actions).toEqual([
+      'replicaBootstrap',
+      'replicaState',
+      'replicaEligible'
+    ])
   })
 
   test('sends byte ranges and handles static hosts that ignore Range', async () => {
     const contents = new Uint8Array([0, 1, 2, 3, 4, 5])
     let requestedRange = ''
-    const fetch: typeof globalThis.fetch = async (_input, init) => {
-      requestedRange = new Headers(init?.headers).get('range') ?? ''
-      return new Response(contents)
-    }
+    const fetch = Object.assign(
+      async function fetch(_input: URL | RequestInfo, init?: RequestInit) {
+        requestedRange = new Headers(init?.headers).get('range') ?? ''
+        return new Response(contents)
+      },
+      {preconnect() {}}
+    )
     const source = new HttpRangeSource(
       'https://example.com/secret/database.bin',
       fetch

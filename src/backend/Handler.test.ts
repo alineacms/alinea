@@ -347,6 +347,32 @@ test('serves replica bootstrap and state only after authentication', async () =>
     requestContext()
   )
   test.is(unchanged.status, 204)
+  const eligible = await handle(
+    new Request('http://localhost/api?action=replicaEligible', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({filter: {title: 'Example'}})
+    }),
+    requestContext()
+  )
+  test.is(eligible.status, 200)
+  test.equal(await eligible.json(), [])
+  replica.installOverlay(
+    {snapshot, catalog: release.catalog, keys: release.keys},
+    'overlay-1',
+    new Uint8Array([0, 1, 2, 3])
+  )
+  const range = await handle(
+    new Request('http://localhost/api?action=replicaBundle&bundle=overlay-1', {
+      headers: {range: 'bytes=1-2'}
+    }),
+    requestContext()
+  )
+  test.is(range.status, 206)
+  test.equal(new Uint8Array(await range.arrayBuffer()), new Uint8Array([1, 2]))
 })
 
 function userRequest(operation: string): Request {

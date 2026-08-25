@@ -10,6 +10,7 @@ import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
+import type {GeneratedSecrets} from './generate/CopyStaticFiles.js'
 import {DevDB} from './generate/DevDB.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
@@ -38,7 +39,11 @@ export interface GenerateOptions {
   dashboardUrl?: Promise<string>
 }
 
-async function generatePackage(context: GenerateContext, cms: CMS) {
+async function generatePackage(
+  context: GenerateContext,
+  cms: CMS,
+  generated: GeneratedSecrets
+) {
   const {config} = cms
   if (!config.dashboardFile) return
   const staticFile = config.dashboardFile
@@ -49,7 +54,8 @@ async function generatePackage(context: GenerateContext, cms: CMS) {
     context,
     cms,
     config.handlerUrl ?? '/api/cms',
-    staticFile
+    staticFile,
+    generated.configId
   )
   return basename(staticFile)
 }
@@ -135,10 +141,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         path.join(releaseDir, 'catalog.json'),
         artifacts.catalogJson
       ),
-      fsp.copyFile(
-        path.join(context.outDir, 'config.js'),
-        path.join(configDir, 'config.js')
-      ),
       fsp.writeFile(
         path.join(context.outDir, 'replica-keys.json'),
         artifacts.handlerKeysJson
@@ -190,7 +192,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       let dbSize = 0
       if (cmd === 'build') {
         const sizes = await Promise.all([
-          generatePackage(context, cms),
+          generatePackage(context, cms, generated),
           writeStore(db),
           writeRelease(db, cms)
         ])

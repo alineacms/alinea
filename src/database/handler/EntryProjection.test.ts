@@ -1,6 +1,8 @@
 import {describe, expect, test} from 'bun:test'
 import {createCMS, Entry} from '#/core.js'
 import {Config} from '#/index.js'
+import {WriteablePolicy} from '#/core/Role.js'
+import {getScope} from '#/core/Scope.js'
 import {DatabaseSnapshot} from '../Database.js'
 import type {EntryAccessPolicy} from '../entry/Access.js'
 import {entryDatabaseSchema} from '../entry/Indexes.js'
@@ -141,9 +143,13 @@ describe('projectEntryReplicaState', () => {
       cacheKey: 'cache-1',
       release: {snapshot, catalog: release.catalog, keys: release.keys}
     })
+    const servicePolicy = new WriteablePolicy(getScope(config)).set(
+      {id: 'readable', allow: {read: true}},
+      {id: 'explorable', allow: {explore: true}}
+    )
     const session = {
       user: {id: 'user-1', roles: ['editor']},
-      policy,
+      policy: servicePolicy,
       policyFingerprint: 'editor-view'
     }
     expect(service.bootstrap(session).configUrl).toBe('/secret/config.js')

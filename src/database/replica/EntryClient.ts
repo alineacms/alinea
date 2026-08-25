@@ -3,7 +3,7 @@ import type {DatabaseReader} from '../Reader.js'
 import {CachedDatabaseReader, ReplicaDatabaseReader} from '../Reader.js'
 import type {AlineaDatabaseRecord} from '../entry/Model.js'
 import {DatabaseResolver} from '../query/Resolver.js'
-import {BundleFrameLoader} from './Bundle.js'
+import {CatalogFrameLoader} from './Bundle.js'
 import {diffCatalogs, type ReplicaChangeSet} from './Catalog.js'
 import {HttpRangeSource} from './HttpTransport.js'
 import {JsonReplicaCodec, LazyIndexReader} from './IndexReader.js'
@@ -31,6 +31,7 @@ export class EntryReplicaClient {
   #bootstrap?: Promise<ReplicaBootstrap>
   #state?: ReplicaState
   #reader?: DatabaseReader<AlineaDatabaseRecord>
+  #resolvers = new WeakMap<Config, DatabaseResolver>()
 
   constructor(options: EntryReplicaClientOptions) {
     this.#transport = options.transport
@@ -61,17 +62,26 @@ export class EntryReplicaClient {
 
   resolver(config: Config): DatabaseResolver {
     if (!this.#reader) throw new Error('Replica must be synchronized first')
-    return new DatabaseResolver(config, this.#reader)
+    const cached = this.#resolvers.get(config)
+    if (cached) return cached
+    const resolver = new DatabaseResolver(config, this.#reader)
+    this.#resolvers.set(config, resolver)
+    return resolver
   }
 
   access(recordId: string): 'explore' | 'read' | undefined {
     return this.#state?.recordAccess[recordId]
   }
 
+  get revision(): string | undefined {
+    return this.#state?.catalog.revision
+  }
+
   #install(cacheKey: string, state: ReplicaState): void {
-    const loader = new BundleFrameLoader(
+    const loader = new CatalogFrameLoader(
       state.catalog.bundleId,
-      new HttpRangeSource(state.catalog.bundleUrl, this.#fetch),
+      state.catalog.bundleUrl,
+      url => new HttpRangeSource(url, this.#fetch),
       state.grants,
       this.#cache
     )
@@ -86,5 +96,6 @@ export class EntryReplicaClient {
       this.#cache,
       `${cacheKey}\0${state.viewId}`
     )
+    this.#resolvers = new WeakMap()
   }
 }

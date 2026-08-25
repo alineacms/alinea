@@ -12,6 +12,7 @@ import type {
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
 import pLimit from 'p-limit'
@@ -21,6 +22,9 @@ import {
   type ActivityOperation,
   type ActivityTarget
 } from './ActivityEvent.js'
+import {ReplicaDashboardDB} from './ReplicaDashboardDB.js'
+
+type DashboardDatabase = LocalDB | ReplicaDashboardDB
 
 const remote = pLimit(1)
 const syncInterval = 120_000
@@ -37,9 +41,9 @@ const activityHistoryLimit = 100
 
 export class DashboardWorker extends EventTarget {
   #source: Source
-  #localDB: LocalDB | undefined
+  #localDB: DashboardDatabase | undefined
   #localClient: LocalConnection | undefined
-  #nextLoad = trigger<{db: LocalDB; client: LocalConnection}>()
+  #nextLoad = trigger<{db: DashboardDatabase; client: LocalConnection}>()
   #defer: Function | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
@@ -71,6 +75,8 @@ export class DashboardWorker extends EventTarget {
       remote.pendingCount > 0
     )
       return db.sha
+    if (db instanceof ReplicaDashboardDB)
+      return remote(() => this.#syncReplica(db))
     // The source is IndexedDB: if it has data, we can boot from cache.
     const sourceTree = await db.source.getTree()
     // The index is in-memory and starts empty for every fresh worker.
@@ -111,6 +117,13 @@ export class DashboardWorker extends EventTarget {
       this.#mutations.push(item)
       this.#emitActivity()
       try {
+        if (db instanceof ReplicaDashboardDB) {
+          const {sha} = await db.mutate(mutations)
+          item.sha = sha
+          this.#completeMutation(item)
+          this.#emitActivity()
+          return sha
+        }
         await db.mutate(mutations)
         item.sha = db.sha
         this.#emitActivity()
@@ -137,7 +150,11 @@ export class DashboardWorker extends EventTarget {
     if (latestFetch?.status === 'failed') {
       const db = await this.db
       const client = await this.#client
-      await remote(() => this.#syncWithClient(db, client))
+      await remote(() =>
+        db instanceof ReplicaDashboardDB
+          ? this.#syncReplica(db)
+          : this.#syncWithClient(db, client)
+      )
     }
   }
 
@@ -172,7 +189,8 @@ export class DashboardWorker extends EventTarget {
       const db = await this.db
       const client = await this.#client
       for (const item of this.#mutations) item.attempt += 1
-      await this.#syncWithClient(db, client)
+      if (db instanceof ReplicaDashboardDB) await this.#syncReplica(db)
+      else await this.#syncWithClient(db, client)
       this.#blocked = false
       const finishedAt = Date.now()
       for (const item of this.#mutations) {
@@ -200,6 +218,7 @@ export class DashboardWorker extends EventTarget {
       this.#emitActivity()
       const client = await this.#client
       const db = await this.db
+      if (db instanceof ReplicaDashboardDB) return
       try {
         const {sha} = await client.mutate(item.mutations)
         if (remote.pendingCount === 0 && sha !== item.sha)
@@ -271,6 +290,31 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
+  async #syncReplica(db: ReplicaDashboardDB): Promise<string> {
+    const activity: Activity = {
+      id: createId(),
+      type: 'fetch',
+      status: 'running',
+      operations: [],
+      startedAt: Date.now()
+    }
+    this.#activities.unshift(activity)
+    this.#emitActivity()
+    try {
+      const revision = await db.sync()
+      activity.status = 'succeeded'
+      return revision
+    } catch (error) {
+      activity.status = 'failed'
+      activity.error = errorMessage(error)
+      throw error
+    } finally {
+      activity.finishedAt = Date.now()
+      this.#trimActivities()
+      this.#emitActivity()
+    }
+  }
+
   #failActivity(activity: Activity, error: unknown) {
     activity.status = 'failed'
     activity.finishedAt = Date.now()
@@ -309,15 +353,39 @@ export class DashboardWorker extends EventTarget {
     return db.referencesTo(query)
   }
 
-  async load(revision: string, config: Config, client: LocalConnection) {
+  async load(
+    revision: string,
+    config: Config,
+    client: LocalConnection,
+    handlerUrl?: string
+  ) {
     if (this.#currentRevision === revision) {
       await this.sync()
       return
     }
     this.#currentRevision = revision
-    const db = new LocalDB(config, this.#source)
     try {
       if (this.#defer) this.#defer()
+      if (handlerUrl) {
+        const db = await ReplicaDashboardDB.load(
+          config,
+          client,
+          handlerUrl,
+          globalThis.indexedDB
+        )
+        this.#localDB = db
+        this.#localClient = client
+        this.#nextLoad.resolve({db, client})
+        const listen = (event: Event) => {
+          if (event instanceof IndexEvent)
+            this.dispatchEvent(new IndexEvent(event.data))
+        }
+        db.addEventListener(IndexEvent.type, listen)
+        this.#defer = () => db.removeEventListener(IndexEvent.type, listen)
+        this.#startSyncing(true)
+        return
+      }
+      const db = new LocalDB(config, this.#source)
       const cacheReady = await this.#syncLocalIndex(db)
       if (!cacheReady) await remote(() => this.#syncWithClient(db, client))
       this.#localDB = db
@@ -378,7 +446,7 @@ interface MutationActivitySummary {
 }
 
 async function summarizeMutations(
-  db: LocalDB,
+  db: WriteableGraph,
   mutations: Array<Mutation>
 ): Promise<MutationActivitySummary> {
   const targets = mutations.flatMap(mutation =>

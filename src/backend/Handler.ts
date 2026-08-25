@@ -1,6 +1,6 @@
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
-import type {Entry} from '#/core.js'
+import {Entry} from '#/core.js'
 import type {CMS} from '#/core/CMS.js'
 import type {
   AuthedContext,
@@ -25,8 +25,17 @@ import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
+import {diffDatabaseSnapshots} from '#/database/Database.js'
+import {buildEntryDatabase} from '#/database/entry/Source.js'
+import {prepareFieldMutation} from '#/database/handler/Mutation.js'
 import type {ReplicaService} from '#/database/handler/Service.js'
+import {exportEntryReleaseDelta} from '#/database/release/Delta.js'
+import type {FieldTransaction} from '#/database/replica/Operations.js'
 import {serializeReplicaState} from '#/database/replica/Serialization.js'
+import {createId} from '#/core/Id.js'
+import {DatabaseResolver} from '#/database/query/Resolver.js'
+import {entryResource} from '#/database/entry/Access.js'
+import {isEntryCoreRecord} from '#/database/entry/Model.js'
 
 const PrepareBody = object({
   filename: string,
@@ -218,10 +227,104 @@ export function createHandler({
           : new Response(null, {status: 404})
       }
 
+      if (
+        action === HandleAction.ReplicaEligible &&
+        request.method === 'POST'
+      ) {
+        expectJson()
+        const {service, session} = await expectReplica()
+        const scope = getScope(cms.config)
+        const query = scope.parse<GraphQuery>(await request.text())
+        const eligibilityQuery = {
+          ...query,
+          first: undefined,
+          get: undefined,
+          count: undefined,
+          select: Entry.id
+        } as GraphQuery
+        const ids = await new DatabaseResolver(
+          cms.config,
+          service.release.snapshot
+        ).resolve(eligibilityQuery)
+        const candidates = new Set(ids as Array<string>)
+        const visible = new Set<string>()
+        for (const record of service.release.snapshot.records()) {
+          if (!isEntryCoreRecord(record) || !candidates.has(record.entryId))
+            continue
+          const resource = entryResource(record)
+          if (
+            session.policy.canRead(resource) ||
+            session.policy.canExplore(resource)
+          )
+            visible.add(record.entryId)
+        }
+        return Response.json([...visible])
+      }
+
       if (action === HandleAction.ReplicaMutate && request.method === 'POST') {
         expectJson()
         const {service, session} = await expectReplica()
-        return Response.json(await service.mutate(session, await body))
+        const transaction = parseFieldTransaction(await body)
+        return Response.json(
+          await service.mutateWith(session, transaction, async () => {
+            await local.syncWith(cnx)
+            await updateReplicaFromSource(
+              service,
+              cms.config,
+              local.source,
+              context
+            )
+            const prepared = await prepareFieldMutation(
+              service.release.snapshot,
+              transaction,
+              session.policy
+            )
+            if (prepared.mutations.length === 0)
+              return {
+                revision: service.release.snapshot.revision,
+                conflicts: prepared.conflicts
+              }
+            const request = {
+              ...(await local.request([...prepared.mutations], session.policy)),
+              user: userCtx!.user
+            }
+            let {sha} = await cnx.write(request)
+            if (sha === request.intoSha) await local.write(request)
+            else sha = await local.syncWith(cnx)
+            await updateReplicaFromSource(
+              service,
+              cms.config,
+              local.source,
+              context
+            )
+            return {
+              revision: service.release.snapshot.revision,
+              conflicts: prepared.conflicts
+            }
+          })
+        )
+      }
+
+      if (action === HandleAction.ReplicaBundle && request.method === 'GET') {
+        const {service} = await expectReplica()
+        const bundleId = string(url.searchParams.get('bundle'))
+        const size = service.bundleSize(bundleId)
+        if (size === undefined) throw new HttpError(404, 'Bundle not found')
+        const range = parseByteRange(request.headers.get('range'), size)
+        const contents = service.bundle(bundleId, range.offset, range.length)
+        return new Response(contents as BodyInit, {
+          status: range.partial ? 206 : 200,
+          headers: {
+            'accept-ranges': 'bytes',
+            'content-type': 'application/octet-stream',
+            'content-length': String(contents.length),
+            ...(range.partial
+              ? {
+                  'content-range': `bytes ${range.offset}-${range.offset + contents.length - 1}/${size}`
+                }
+              : {})
+          }
+        })
       }
 
       if (action === HandleAction.User) {
@@ -301,7 +404,17 @@ export function createHandler({
             throw error
           }
         }
-        return Response.json({sha: await attempt()})
+        const sha = await attempt()
+        if (replica) {
+          const service = await replica
+          await updateReplicaFromSource(
+            service,
+            cms.config,
+            local.source,
+            context
+          )
+        }
+        return Response.json({sha})
       }
 
       if (action === HandleAction.Commit && request.method === 'POST') {
@@ -433,6 +546,64 @@ export function createHandler({
         {status}
       )
     }
+  }
+}
+
+async function updateReplicaFromSource(
+  service: ReplicaService,
+  config: import('#/core/Config.js').Config,
+  source: import('#/core/source/Source.js').Source,
+  context: RequestContext
+): Promise<void> {
+  const previous = service.release
+  const snapshot = await buildEntryDatabase(config, source)
+  if (snapshot.revision === previous.snapshot.revision) return
+  const commit = diffDatabaseSnapshots(previous.snapshot, snapshot)
+  const bundleId = createId()
+  const bundleUrl = new URL(context.handlerUrl)
+  bundleUrl.searchParams.set('action', HandleAction.ReplicaBundle)
+  bundleUrl.searchParams.set('bundle', bundleId)
+  const delta = await exportEntryReleaseDelta({
+    bundleId,
+    bundleUrl: String(bundleUrl),
+    snapshot: commit.snapshot,
+    changes: commit.changes,
+    previousCatalog: previous.catalog,
+    previousKeys: previous.keys
+  })
+  service.installOverlay(
+    {snapshot: commit.snapshot, catalog: delta.catalog, keys: delta.keys},
+    bundleId,
+    delta.overlay.contents
+  )
+}
+
+function parseFieldTransaction(input: unknown): FieldTransaction {
+  if (
+    !isRecord(input) ||
+    typeof input.id !== 'string' ||
+    typeof input.baseRevision !== 'string' ||
+    !Array.isArray(input.operations)
+  )
+    throw new HttpError(400, 'Expected field transaction')
+  return input as unknown as FieldTransaction
+}
+
+function parseByteRange(
+  header: string | null,
+  size: number
+): {offset: number; length: number; partial: boolean} {
+  if (!header) return {offset: 0, length: size, partial: false}
+  const match = /^bytes=(\d+)-(\d+)$/.exec(header)
+  if (!match) throw new HttpError(416, 'Invalid byte range')
+  const offset = Number(match[1])
+  const end = Number(match[2])
+  if (offset > end || offset >= size)
+    throw new HttpError(416, 'Byte range is outside the bundle')
+  return {
+    offset,
+    length: Math.min(end, size - 1) - offset + 1,
+    partial: true
   }
 }
 

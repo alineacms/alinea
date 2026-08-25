@@ -1,9 +1,11 @@
 # Replica architecture
 
-This directory is an isolated foundation for the database that will replace
-`EntryIndex`, `EntryGraph`, and `EntryResolver`. The same database and query
-engine will run over a complete server snapshot and a selectively synchronized
-client snapshot. Nothing here is connected to production paths yet.
+This directory contains the database replacing `EntryIndex`, `EntryGraph`, and
+`EntryResolver`. The same database and query engine run over a complete handler
+snapshot and a selectively synchronized client snapshot. The Next build,
+authenticated handler routes, encrypted static data plane, persistent client
+cache, and production dashboard read path are connected; compatibility paths
+remain for development and existing mutation commands during cutover.
 
 ## Boundaries
 
@@ -32,6 +34,10 @@ client snapshot. Nothing here is connected to production paths yet.
   catalog, and the granted decryption keys. The client can then range-load
   ciphertext directly from static hosting without proxying bundle bytes through
   the handler.
+- A static release remains the base after cloud mutations. The handler encrypts
+  only changed records and exact changed index buckets into a small overlay
+  bundle. Catalog frame descriptors can address either source, so clients reuse
+  all unchanged cached frames.
 - The client installs an immutable catalog, range-loads granted frames, and runs
   queries over a snapshot-scoped `IndexReader`.
 - The authenticated state labels each synchronized entry as `explore` or `read`
@@ -45,6 +51,16 @@ client snapshot. Nothing here is connected to production paths yet.
 - Ordinary concurrent mutations operate on field paths and carry a base hash.
   Rich text remains an opaque field until its concurrency semantics are designed
   separately. This package does not introduce CRDTs.
+- Role callbacks remain JavaScript and therefore the handler still loads the
+  compiled server config. It runs callbacks against the complete normalized
+  `DatabaseResolver`; clients receive the resulting projection and never rerun
+  role code. A hosted handler must receive this server artifact (or a future
+  compiled policy representation). Knowing release keys alone cannot reproduce
+  arbitrary graph-backed role functions.
+- Client config has a different unguessable URL from the data release. The
+  minimal dashboard authenticates first, receives that URL in bootstrap, and
+  only then imports the client config. The current config may still contain role
+  declarations for compatibility, but the client does not call them.
 
 ## Framework integration
 
@@ -59,21 +75,21 @@ mutations, but no longer proxies the static read data plane.
 
 ## Delivery plan
 
-1. **Foundation (this slice)**
+1. **Foundation (implemented)**
    - role masks and read-access classes;
    - independently encrypted bundle frames and range reads;
    - immutable replica catalogs and change sets;
    - lazy index/record loading;
    - dependency-tracked live query invalidation;
    - per-field operation contracts.
-2. **Database core**
+2. **Database core (implemented)**
    - define normalized structural nodes and locale/status entry versions;
    - build persistent primary, children, type, location, reference, and search
      indexes;
    - apply record changes transactionally and emit exact changed index buckets;
    - support complete in-memory and lazy content-addressed snapshots through the
      same `IndexReader` contract.
-3. **Query engine**
+3. **Query engine (implemented and parity-tested)**
    - compile `GraphQuery` into scans, filters, traversals, sorts, paging, and
      projections;
    - implement locale fallback, status preference, previews, links, references,
@@ -81,12 +97,12 @@ mutations, but no longer proxies the static read data plane.
    - expose the existing `Resolver` API from the new engine;
    - run the current `EntryResolver` test corpus against both implementations
      until results are identical.
-4. **Build integration**
+4. **Build integration (implemented)**
    - export normalized records, index buckets, references, and frame metadata;
    - compile immutable build content into the encrypted release bundle;
    - retain the handler-only access/key catalog beside the generated source;
    - persist the generated release id in server-only build configuration.
-5. **Handler integration**
+5. **Handler integration (implemented)**
    - load a complete new-database snapshot instead of constructing `EntryIndex`;
    - authenticate before returning catalogs or grants;
    - execute graph-backed role policies using the new query engine, project a
@@ -96,19 +112,33 @@ mutations, but no longer proxies the static read data plane.
    - expose an authenticated bootstrap containing the secret release URL,
      scoped catalog, grants, and current revision;
    - expose state, grant refresh, object fallback, and mutation endpoints.
-6. **Dashboard integration**
+6. **Dashboard integration (production read path implemented)**
    - add IndexedDB ciphertext/object caches;
    - install catalogs atomically and request only missing ranges;
    - switch dashboard queries to the new resolver and delete local `EntryIndex`
      hydration;
    - replace broad index refreshes with live query dependencies.
-7. **Writes, concurrency, and deltas**
-   - replace `EntryTransaction` only after read/query parity is complete;
-   - submit field operations through the handler;
-   - merge operations on different paths;
-   - surface conflicts for competing writes to the same scalar field;
-   - add an ordered handler delta stream only after state synchronization is
-     stable.
+7. **Writes, concurrency, and deltas (field path implemented; cutover remains)**
+   - field-operation endpoint translates accepted paths into cloud mutations;
+   - operations on unchanged paths merge across stale base revisions;
+   - competing writes to the same scalar field return conflicts;
+   - rich text remains one opaque field value;
+   - ordered revision notifications trigger scoped state refreshes;
+   - existing dashboard mutation commands remain online-only compatibility
+     calls until every editor emits field operations directly.
+
+## Remaining cutover
+
+- convert editor mutation producers from legacy `Mutation` arrays to field
+  operations where their semantics are equivalent;
+- remove the legacy production mutation fallback and then remove
+  `EntryTransaction` from dashboard-facing paths;
+- move server build artifacts out of the temporary `@alinea/generated` package
+  once every framework adapter can trace an equivalent private server artifact;
+- remove `EntryIndex`/`EntryResolver` after the development server and remaining
+  write utilities use the normalized database;
+- keep running `Benchmark.test.ts` and the shared resolver corpus during that
+  removal.
 
 ## Replacement strategy
 

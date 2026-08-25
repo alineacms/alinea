@@ -11,6 +11,9 @@ export type FrameCompression = 'none' | 'deflate' | 'gzip'
 
 export interface FrameDescriptor {
   id: FrameId
+  /** Overrides the base catalog bundle for handler-produced overlay frames. */
+  bundleId?: BundleId
+  bundleUrl?: string
   accessClassId: AccessClassId
   offset: number
   length: number

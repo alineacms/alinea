@@ -62,6 +62,8 @@ export class DatabaseResolver extends Graph implements Resolver {
   readonly config: Config
   #reader: DatabaseReader<AlineaDatabaseRecord>
   #scope: Scope
+  #loader: EntryLoader
+  #cores: Promise<ReadonlyArray<EntryCoreRecord>>
 
   constructor(
     config: Config,
@@ -74,6 +76,8 @@ export class DatabaseResolver extends Graph implements Resolver {
     this.#reader =
       'schema' in source ? new SnapshotDatabaseReader(source) : source
     this.#scope = getScope(config)
+    this.#loader = new EntryLoader(this.#reader)
+    this.#cores = new EntryQueryEngine(this.#reader).find({status: 'all'})
   }
 
   async resolve<Query extends GraphQuery>(
@@ -100,7 +104,7 @@ export class DatabaseResolver extends Graph implements Resolver {
             )
           }
         : requestedPreview
-    const cores = await new EntryQueryEngine(this.#reader).find({status: 'all'})
+    const cores = await this.#cores
     const context: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
@@ -108,7 +112,7 @@ export class DatabaseResolver extends Graph implements Resolver {
         ? query.search.join(' ')
         : query.search,
       cores,
-      loader: new EntryLoader(this.#reader),
+      loader: this.#loader,
       previewEntry: preview
     }
     const result = await this.#query(context, query as GraphQuery<Projection>)

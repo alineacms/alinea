@@ -17,6 +17,7 @@ export interface ConfigBatch {
   config: Config
   client: Client
   views: Record<string, ComponentType>
+  handlerUrl?: string
   alineaDev?: boolean
 }
 
@@ -55,7 +56,13 @@ export async function boot(gen: ConfigGenerator) {
         link.after(copy)
       }
       const isLocal = worker instanceof DashboardWorker
-      if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
+      if (isLocal)
+        await worker.load(
+          batch.revision,
+          batch.config,
+          batch.client,
+          batch.handlerUrl
+        )
       if (batch.revision !== lastRevision) {
         const db = new WorkerDB(batch.config, worker, batch.client, events)
         root.render(<App graph={db} events={events} {...batch} />)

@@ -17,7 +17,10 @@ export class HttpReplicaTransport implements ReplicaTransport {
   #fetch: typeof globalThis.fetch
 
   constructor(options: HttpReplicaTransportOptions) {
-    this.#handlerUrl = new URL(options.handlerUrl)
+    this.#handlerUrl = new URL(
+      options.handlerUrl,
+      globalThis.location?.href ?? 'http://localhost'
+    )
     this.#fetch = options.fetch ?? globalThis.fetch
   }
 
@@ -48,6 +51,14 @@ export class HttpReplicaTransport implements ReplicaTransport {
       method: 'POST',
       signal,
       body: JSON.stringify(transaction)
+    })
+  }
+
+  eligible(query: string, signal?: AbortSignal): Promise<Array<string>> {
+    return this.#json('replicaEligible', {
+      method: 'POST',
+      signal,
+      body: query
     })
   }
 

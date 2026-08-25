@@ -66,6 +66,8 @@ function sameFrames(
   }
   return (
     left.id === right.id &&
+    left.bundleId === right.bundleId &&
+    left.bundleUrl === right.bundleUrl &&
     left.accessClassId === right.accessClassId &&
     left.cipherHash === right.cipherHash
   )

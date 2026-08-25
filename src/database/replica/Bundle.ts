@@ -52,6 +52,10 @@ export interface FrameLoader {
   load(frame: FrameDescriptor, signal?: AbortSignal): Promise<Uint8Array>
 }
 
+export interface ByteRangeSourceFactory {
+  (url: string): ByteRangeSource
+}
+
 export interface CiphertextCache {
   get(
     bundleId: BundleId,
@@ -212,6 +216,47 @@ export class BundleFrameLoader implements FrameLoader {
       ciphertext as BufferSource
     )
     return decompress(new Uint8Array(decrypted), frame.compression)
+  }
+}
+
+/** Resolves static base and handler overlay frames from one logical catalog. */
+export class CatalogFrameLoader implements FrameLoader {
+  #catalogBundleId: BundleId
+  #catalogBundleUrl: string
+  #source: ByteRangeSourceFactory
+  #grants: ReadonlyArray<AccessClassGrant>
+  #cache?: CiphertextCache
+  #loaders = new Map<string, BundleFrameLoader>()
+
+  constructor(
+    bundleId: BundleId,
+    bundleUrl: string,
+    source: ByteRangeSourceFactory,
+    grants: ReadonlyArray<AccessClassGrant>,
+    cache?: CiphertextCache
+  ) {
+    this.#catalogBundleId = bundleId
+    this.#catalogBundleUrl = bundleUrl
+    this.#source = source
+    this.#grants = grants
+    this.#cache = cache
+  }
+
+  load(frame: FrameDescriptor, signal?: AbortSignal): Promise<Uint8Array> {
+    const bundleId = frame.bundleId ?? this.#catalogBundleId
+    const bundleUrl = frame.bundleUrl ?? this.#catalogBundleUrl
+    const key = `${bundleId}\0${bundleUrl}`
+    let loader = this.#loaders.get(key)
+    if (!loader) {
+      loader = new BundleFrameLoader(
+        bundleId,
+        this.#source(bundleUrl),
+        this.#grants,
+        this.#cache
+      )
+      this.#loaders.set(key, loader)
+    }
+    return loader.load(frame, signal)
   }
 }
 

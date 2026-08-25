@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '#/cli/util/FS.js'
 import type {CMS} from '#/core/CMS.js'
+import {Config} from '#/core/Config.js'
 import {createId} from '#/core/Id.js'
 import {code} from '#/core/util/CodeGen.js'
 import esbuild from 'esbuild'
@@ -16,7 +17,8 @@ export async function generateDashboard(
   {configLocation, rootDir, configDir}: GenerateContext,
   cms: CMS,
   handlerUrl: string,
-  staticFile: string
+  staticFile: string,
+  configId: string
 ) {
   if (!staticFile.endsWith('.html'))
     throw new Error(
@@ -42,6 +44,48 @@ export async function generateDashboard(
     bundle: true,
     absWorkingDir: configDir,
     entryPoints,
+    platform: 'browser',
+    inject: ['alinea/cli/util/WarnPublicEnv'],
+    alias: {
+      'alinea/next': 'alinea/core',
+      '#alinea/config': configLocation
+    },
+    external: ['@alinea/generated'],
+    define: {
+      'process.env.NODE_ENV': '"production"',
+      'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
+      ...publicDefines(process.env)
+    },
+    ...buildOptions,
+    plugins,
+    tsconfig,
+    logLevel: 'error'
+  })
+  const publicDir = cms.config.publicDir ?? 'public'
+  const clientConfigDir = path.join(
+    rootDir,
+    publicDir,
+    Config.adminPath(cms.config),
+    'config',
+    configId
+  )
+  await esbuild.build({
+    format: 'esm',
+    target: 'esnext',
+    treeShaking: true,
+    minify: true,
+    outfile: path.join(clientConfigDir, 'config.js'),
+    bundle: true,
+    absWorkingDir: configDir,
+    stdin: {
+      contents: `
+        import {cms} from '#alinea/config'
+        import {views} from '#alinea/views'
+        export {cms, views}
+      `,
+      resolveDir: configDir,
+      sourcefile: 'alinea-client-config.js'
+    },
     platform: 'browser',
     inject: ['alinea/cli/util/WarnPublicEnv'],
     alias: {

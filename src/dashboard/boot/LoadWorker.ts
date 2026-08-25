@@ -27,6 +27,11 @@ export async function loadWorker(gen: ConfigGenerator) {
   })
 
   for await (const batch of gen) {
-    await worker.load(batch.revision, batch.config, batch.client)
+    await worker.load(
+      batch.revision,
+      batch.config,
+      batch.client,
+      batch.handlerUrl
+    )
   }
 }

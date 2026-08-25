@@ -61,6 +61,10 @@ export class DatabaseSchema<Row> {
     return this.#indexes.get(index.name) === index
   }
 
+  get(name: string): DatabaseIndex<Row, unknown> | undefined {
+    return this.#indexes.get(name)
+  }
+
   seal(): void {
     this.#sealed = true
   }
@@ -223,6 +227,30 @@ export class DatabaseSnapshot<Row extends DatabaseRecord> {
       }
     }
   }
+}
+
+export function diffDatabaseSnapshots<Row extends DatabaseRecord>(
+  previous: DatabaseSnapshot<Row>,
+  next: DatabaseSnapshot<Row>
+): DatabaseCommit<Row> {
+  if (previous.schema !== next.schema)
+    throw new Error('Cannot diff snapshots with different schemas')
+  const changes: Array<DatabaseChange<Row>> = []
+  const previousRecords = new Map(
+    [...previous.records()].map(record => [record.id, record])
+  )
+  const nextRecords = new Map(
+    [...next.records()].map(record => [record.id, record])
+  )
+  const ids = new Set([...previousRecords.keys(), ...nextRecords.keys()])
+  for (const id of ids) {
+    const before = previousRecords.get(id)
+    const after = nextRecords.get(id)
+    if (!after) changes.push({op: 'delete', id})
+    else if (!before || JSON.stringify(before) !== JSON.stringify(after))
+      changes.push({op: 'put', record: after})
+  }
+  return previous.apply(next.revision, changes)
 }
 
 function buildIndexes<Row extends DatabaseRecord>(
