@@ -2,6 +2,7 @@ import {
   Button,
   DialogTrigger,
   Icon,
+  Label,
   List,
   ListCreateRow,
   ListDragPreview,
@@ -1680,12 +1681,6 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const isEmpty = nodeIsEmpty || !selectedValue
   const hasRows = Boolean(selectedValue)
   const readOnly = Boolean(options.readOnly)
-  const selectedPicker = selectedValue
-    ? (options.pickers[getPickerType(selectedValue[Reference.type])] as
-        | Picker<LinkFieldRow>
-        | undefined)
-    : undefined
-  const showFold = Boolean(selectedPicker?.fields)
   const content = (hasRows || !readOnly) && (
     <List aria-label={options.label || 'Link'}>
       {selectedValue && (
@@ -1703,21 +1698,13 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     </List>
   )
   return (
-    <>
-      <ListLabel
-        aria-label={hasRows ? 'Link selected' : 'No link selected'}
-        expanded
-        hasRows={hasRows}
-        isDisabled
-        description={options.help}
-        shared={options.shared}
-        showFold={showFold}
-        inline={options.inline}
-      >
-        {options.label}
-      </ListLabel>
+    <Label
+      description={options.help}
+      label={options.inline ? undefined : options.label}
+      shared={options.shared}
+    >
       {content}
-    </>
+    </Label>
   )
 }
 
