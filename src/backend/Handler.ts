@@ -16,11 +16,13 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {syncWith} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
+import pLimit from 'p-limit'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
@@ -40,6 +42,9 @@ import {
   mutationsFromReplicaCommands,
   parseReplicaCommands
 } from '#/database/replica/Commands.js'
+import {requestSourceMutations} from '#/database/handler/SourceWriter.js'
+import {sourceChanges} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 
 const PrepareBody = object({
   filename: string,
@@ -78,6 +83,7 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
+  const replicaWrite = pLimit(1)
   const previewParser = PLazy.from(async () => {
     const local = await db
     return createPreviewParser(local)
@@ -271,40 +277,43 @@ export function createHandler({
         const transaction = parseFieldTransaction(await body)
         return Response.json(
           await service.mutateWith(session, transaction, async () => {
-            await local.syncWith(cnx)
-            await updateReplicaFromSource(
-              service,
-              cms.config,
-              local.source,
-              context
-            )
-            const prepared = await prepareFieldMutation(
-              service.release.snapshot,
-              transaction,
-              session.policy
-            )
-            if (prepared.mutations.length === 0)
+            return replicaWrite(async () => {
+              await syncWith(local.source, cnx)
+              await updateReplicaFromSource(
+                service,
+                cms.config,
+                local.source,
+                context
+              )
+              const prepared = await prepareFieldMutation(
+                service.release.snapshot,
+                transaction,
+                session.policy
+              )
+              if (prepared.mutations.length === 0)
+                return {
+                  revision: service.release.snapshot.revision,
+                  conflicts: prepared.conflicts
+                }
+              await writeSourceMutations(
+                cms.config,
+                local.source,
+                cnx,
+                [...prepared.mutations],
+                session.policy,
+                userCtx!.user
+              )
+              await updateReplicaFromSource(
+                service,
+                cms.config,
+                local.source,
+                context
+              )
               return {
                 revision: service.release.snapshot.revision,
                 conflicts: prepared.conflicts
               }
-            const request = {
-              ...(await local.request([...prepared.mutations], session.policy)),
-              user: userCtx!.user
-            }
-            let {sha} = await cnx.write(request)
-            if (sha === request.intoSha) await local.write(request)
-            else sha = await local.syncWith(cnx)
-            await updateReplicaFromSource(
-              service,
-              cms.config,
-              local.source,
-              context
-            )
-            return {
-              revision: service.release.snapshot.revision,
-              conflicts: prepared.conflicts
-            }
+            })
           })
         )
       }
@@ -313,22 +322,25 @@ export function createHandler({
         expectJson()
         const {service, session} = await expectReplica()
         const commands = parseReplicaCommands(await body)
-        const mutations = mutationsFromReplicaCommands(commands)
-        await local.syncWith(cnx)
-        const commit = {
-          ...(await local.request(mutations, session.policy)),
-          user: userCtx!.user
-        }
-        let {sha} = await cnx.write(commit)
-        if (sha === commit.intoSha) await local.write(commit)
-        else sha = await local.syncWith(cnx)
-        await updateReplicaFromSource(
-          service,
-          cms.config,
-          local.source,
-          context
-        )
-        return Response.json({revision: service.release.snapshot.revision})
+        return replicaWrite(async () => {
+          const mutations = mutationsFromReplicaCommands(commands)
+          await syncWith(local.source, cnx)
+          await writeSourceMutations(
+            cms.config,
+            local.source,
+            cnx,
+            mutations,
+            session.policy,
+            userCtx!.user
+          )
+          await updateReplicaFromSource(
+            service,
+            cms.config,
+            local.source,
+            context
+          )
+          return Response.json({revision: service.release.snapshot.revision})
+        })
       }
 
       if (action === HandleAction.ReplicaBundle && request.method === 'GET') {
@@ -573,6 +585,27 @@ export function createHandler({
       )
     }
   }
+}
+
+async function writeSourceMutations(
+  config: import('#/core/Config.js').Config,
+  source: import('#/core/source/Source.js').Source,
+  remote: RemoteConnection,
+  mutations: Array<Mutation>,
+  policy: Policy,
+  user: User
+): Promise<string> {
+  const request = {
+    ...(await requestSourceMutations(config, source, mutations, policy)),
+    user
+  }
+  let {sha} = await remote.write(request)
+  if (sha === request.intoSha) await source.applyChanges(sourceChanges(request))
+  else {
+    await syncWith(source, remote)
+    sha = (await source.getTree()).sha
+  }
+  return sha
 }
 
 async function updateReplicaFromSource(

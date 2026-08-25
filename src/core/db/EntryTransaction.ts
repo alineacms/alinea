@@ -27,7 +27,6 @@ import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
 import {aliasesFromData, aliasUrl} from './EntryAliases.js'
-import type {EntryIndex} from './EntryIndex.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
   ArchiveMutation,
@@ -84,11 +83,61 @@ interface MoveUrlAliasUpdate {
   filePath: string
 }
 
+export interface EntryTransactionLanguage extends Iterable<
+  readonly [EntryStatus, EntryTransactionVersion]
+> {
+  readonly main: EntryTransactionVersion
+  readonly path: string
+  readonly seeded: string | null
+  has(status: EntryStatus): boolean
+}
+
+export interface EntryTransactionVersion extends Pick<
+  Entry,
+  | 'id'
+  | 'status'
+  | 'title'
+  | 'type'
+  | 'seeded'
+  | 'workspace'
+  | 'root'
+  | 'level'
+  | 'filePath'
+  | 'parentDir'
+  | 'childrenDir'
+  | 'index'
+  | 'locale'
+  | 'rowHash'
+  | 'path'
+  | 'fileHash'
+  | 'data'
+  | 'searchableText'
+> {}
+
+export interface EntryTransactionNode {
+  readonly id: string
+  readonly index: string
+  readonly parentId: string | null
+  readonly workspace: string
+  readonly root: string
+  readonly type: string
+  readonly parent: EntryTransactionNode | null
+  get(locale: string | null): EntryTransactionLanguage | undefined
+  keys(): IterableIterator<string | null>
+}
+
+export interface EntryTransactionIndex {
+  readonly sha: string
+  byId(id: string): EntryTransactionNode | undefined
+  findFirst(filter: (entry: Entry) => boolean): Entry | undefined
+  findMany(filter: (entry: Entry) => boolean): Iterable<Entry>
+}
+
 export class EntryTransaction {
   #checks = [] as [path: string, sha: string][]
   #messages = [] as string[]
   #config: Config
-  #index: EntryIndex
+  #index: EntryTransactionIndex
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
   #policy: Policy
@@ -96,7 +145,7 @@ export class EntryTransaction {
 
   constructor(
     config: Config,
-    index: EntryIndex,
+    index: EntryTransactionIndex,
     source: Source,
     from: ReadonlyTree,
     policy = Policy.ALLOW_ALL
