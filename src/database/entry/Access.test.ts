@@ -5,6 +5,7 @@ import type {EntryCoreRecord} from './Model.js'
 
 const entry: EntryCoreRecord = {
   kind: 'entry',
+  queryable: true,
   id: 'entry:page:published',
   entryId: 'page',
   versionStatus: 'published',

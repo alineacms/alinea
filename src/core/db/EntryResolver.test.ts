@@ -6,6 +6,8 @@ import {cms} from '#test/cms.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {DemoRecipes} from '#test/schema/DemoRecipes.js'
+import {buildEntryDatabase} from '#/database/entry/Source.js'
+import {DatabaseResolver} from '#/database/query/Resolver.js'
 import {suite} from '@alinea/suite'
 import {Expr} from '../Expr.js'
 import type {GraphQuery} from '../Graph.js'
@@ -451,6 +453,15 @@ const advancedEntries = [
 
 async function createAdvancedResolver() {
   return createEntryResolver(advancedCms.config, advancedEntries)
+}
+
+async function createAdvancedResolvers() {
+  const fixture = await createAdvancedResolver()
+  const database = await buildEntryDatabase(advancedCms.config, fixture.source)
+  return {
+    legacy: fixture.resolver,
+    current: new DatabaseResolver(advancedCms.config, database)
+  }
 }
 
 test('projects metadata URL aliases as entry shortcuts', async () => {
@@ -926,4 +937,71 @@ test('direct condition and helper branches', async () => {
     edge: 'siblings',
     select: Query.id
   } as any)
+})
+
+test('new database resolver matches advanced query behavior', async () => {
+  const {legacy, current} = await createAdvancedResolvers()
+  const queries: Array<GraphQuery> = [
+    {
+      id: 'child-1',
+      first: true,
+      select: {
+        aliases: Entry.aliases,
+        createdAt: Entry.createdAt,
+        updatedAt: Entry.updatedAt
+      }
+    },
+    {
+      alias: '/old-beta',
+      first: true,
+      select: Entry.id
+    },
+    {
+      type: Article,
+      id: {in: ['child-1', 'child-2', 'missing']},
+      filter: {
+        score: {gt: 4, lte: 5},
+        meta: {has: {inner: {is: 'x'}}},
+        tags: {includes: {itemId: {is: 'a'}}}
+      },
+      select: Query.id
+    },
+    {
+      type: Article,
+      id: {in: ['child-1', 'child-2', 'grand']},
+      orderBy: {asc: Article.score},
+      skip: 1,
+      take: 1,
+      select: Query.id
+    },
+    {
+      first: true,
+      locale: 'en',
+      root: mainWorkspace.localized,
+      id: 'trans',
+      select: Query.translations({select: Query.locale})
+    },
+    {
+      first: true,
+      id: 'child-1',
+      select: Article.single.first({select: Query.id})
+    },
+    {
+      first: true,
+      id: 'child-1',
+      select: Article.multi.find({select: Query.id})
+    },
+    {
+      first: true,
+      id: 'child-1',
+      select: Article.single
+    },
+    {
+      type: Article,
+      root: mainWorkspace.pages,
+      count: true
+    }
+  ]
+  for (const query of queries)
+    test.equal(await current.resolve(query), await legacy.resolve(query))
 })

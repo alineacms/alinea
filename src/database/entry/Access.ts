@@ -25,6 +25,15 @@ export function selectEntryForSync(
   policy: EntryAccessPolicy,
   entry: EntryCoreRecord
 ): EntrySyncSelection {
+  if (!entry.queryable) {
+    return {
+      access: 'none',
+      syncCore: false,
+      syncReadMetadata: false,
+      syncPayload: false,
+      searchAudience: 'none'
+    }
+  }
   const resource = entryResource(entry)
   if (policy.canRead(resource)) {
     return {

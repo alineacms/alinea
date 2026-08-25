@@ -23,6 +23,7 @@ function entry(
 ): EntryCoreRecord {
   return {
     kind: 'entry',
+    queryable: true,
     id,
     entryId,
     versionStatus: 'published',

@@ -137,6 +137,17 @@ export class DatabaseSnapshot<Row extends DatabaseRecord> {
     >
   }
 
+  buckets<Metadata>(
+    index: DatabaseIndex<Row, Metadata>
+  ): Iterable<readonly [string, ReadonlyArray<IndexedRecord<Metadata>>]> {
+    if (!this.schema.has(index))
+      throw new Error(`Index "${index.name}" does not belong to this database`)
+    return (this.#indexes.get(index.name) ?? new Map()) as ReadonlyMap<
+      string,
+      ReadonlyArray<IndexedRecord<Metadata>>
+    >
+  }
+
   apply(
     toRevision: string,
     changes: Iterable<DatabaseChange<Row>>

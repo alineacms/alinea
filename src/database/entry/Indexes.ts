@@ -18,6 +18,31 @@ export interface EntryReference {
   index: string
 }
 
+export interface EntryLinkReference {
+  targetId: string
+  sourceEntryId: string
+  sourceVersionId: string
+  sourceFilePath: string
+  sourceType: string
+  sourceLocale: string | null
+  sourceStatus: EntryStatus
+  sourceActive: boolean
+  sourceMain: boolean
+  fieldPath: string
+  fieldLabel?: string
+  linkId?: string
+  linkType?: 'entry' | 'image' | 'file'
+}
+
+export interface EntrySearchReference {
+  entryVersionId: string
+  title: string
+}
+
+export interface EntryReadReference {
+  recordId: string
+}
+
 export const allEntries = entryIndex('entry.all', () => ['all'])
 
 export const entriesById = entryIndex('entry.id', entry => [entry.entryId])
@@ -35,6 +60,105 @@ export const entriesByLocation = entryIndex('entry.location', entry => [
 
 export const entriesByUrl = entryIndex('entry.url', entry => [entry.url])
 
+export const entryReadsByVersion = new DatabaseIndex<
+  AlineaDatabaseRecord,
+  EntryReadReference
+>({
+  name: 'entry.read',
+  project(record) {
+    if (record.kind !== 'entryRead') return []
+    return [
+      {
+        key: record.entryVersionId,
+        metadata: {recordId: record.id}
+      }
+    ]
+  },
+  metadataEqual(left, right) {
+    return left.recordId === right.recordId
+  }
+})
+
+export const referencesByTarget = new DatabaseIndex<
+  AlineaDatabaseRecord,
+  EntryLinkReference
+>({
+  name: 'reference.target',
+  project(record) {
+    if (record.kind !== 'link') return []
+    return [
+      {
+        key: record.targetId,
+        order: [record.sourceEntryId, record.fieldPath, record.id],
+        metadata: linkReference(record)
+      }
+    ]
+  },
+  metadataEqual: linkReferenceEqual
+})
+
+export const referencesBySource = new DatabaseIndex<
+  AlineaDatabaseRecord,
+  EntryLinkReference
+>({
+  name: 'reference.source',
+  project(record) {
+    if (record.kind !== 'link') return []
+    return [
+      {
+        key: record.sourceEntryId,
+        order: [record.targetId, record.fieldPath, record.id],
+        metadata: linkReference(record)
+      }
+    ]
+  },
+  metadataEqual: linkReferenceEqual
+})
+
+export const searchesByAudience = new DatabaseIndex<
+  AlineaDatabaseRecord,
+  EntrySearchReference
+>({
+  name: 'search.audience',
+  project(record) {
+    if (record.kind !== 'search') return []
+    return [
+      {
+        key: record.audience,
+        order: [record.title, record.entryVersionId],
+        metadata: {
+          entryVersionId: record.entryVersionId,
+          title: record.title
+        }
+      }
+    ]
+  },
+  metadataEqual(left, right) {
+    return (
+      left.entryVersionId === right.entryVersionId && left.title === right.title
+    )
+  }
+})
+
+export const searchesByVersion = new DatabaseIndex<
+  AlineaDatabaseRecord,
+  EntryReadReference
+>({
+  name: 'search.version',
+  project(record) {
+    if (record.kind !== 'search') return []
+    return [
+      {
+        key: searchVersionKey(record.entryVersionId, record.audience),
+        metadata: {recordId: record.id}
+      }
+    ]
+  },
+  metadataEqual(left, right) {
+    return left.recordId === right.recordId
+  }
+})
+
 export const entryDatabaseSchema = new DatabaseSchema<AlineaDatabaseRecord>()
   .add(allEntries)
   .add(entriesById)
@@ -42,6 +166,11 @@ export const entryDatabaseSchema = new DatabaseSchema<AlineaDatabaseRecord>()
   .add(entriesByType)
   .add(entriesByLocation)
   .add(entriesByUrl)
+  .add(entryReadsByVersion)
+  .add(referencesByTarget)
+  .add(referencesBySource)
+  .add(searchesByAudience)
+  .add(searchesByVersion)
 
 export function workspaceKey(workspace: string): string {
   return `workspace\0${workspace}`
@@ -61,6 +190,13 @@ export function parentKey(
     : `parent\0${parentId}`
 }
 
+export function searchVersionKey(
+  entryVersionId: string,
+  audience: 'explore' | 'read'
+): string {
+  return `${audience}\0${entryVersionId}`
+}
+
 function entryIndex(
   name: string,
   keys: (entry: EntryCoreRecord) => ReadonlyArray<string>
@@ -68,7 +204,7 @@ function entryIndex(
   return new DatabaseIndex({
     name,
     project(record) {
-      if (record.kind !== 'entry') return []
+      if (record.kind !== 'entry' || !record.queryable) return []
       return keys(record).map(key => ({
         key,
         order: [record.index, record.locale, statusOrder(record.versionStatus)],
@@ -77,6 +213,47 @@ function entryIndex(
     },
     metadataEqual: entryReferenceEqual
   })
+}
+
+function linkReference(
+  record: Extract<AlineaDatabaseRecord, {kind: 'link'}>
+): EntryLinkReference {
+  return {
+    targetId: record.targetId,
+    sourceEntryId: record.sourceEntryId,
+    sourceVersionId: record.sourceVersionId,
+    sourceFilePath: record.sourceFilePath,
+    sourceType: record.sourceType,
+    sourceLocale: record.sourceLocale,
+    sourceStatus: record.sourceStatus,
+    sourceActive: record.sourceActive,
+    sourceMain: record.sourceMain,
+    fieldPath: record.fieldPath,
+    fieldLabel: record.fieldLabel,
+    linkId: record.linkId,
+    linkType: record.linkType
+  }
+}
+
+function linkReferenceEqual(
+  left: EntryLinkReference,
+  right: EntryLinkReference
+): boolean {
+  return (
+    left.targetId === right.targetId &&
+    left.sourceEntryId === right.sourceEntryId &&
+    left.sourceVersionId === right.sourceVersionId &&
+    left.sourceFilePath === right.sourceFilePath &&
+    left.sourceType === right.sourceType &&
+    left.sourceLocale === right.sourceLocale &&
+    left.sourceStatus === right.sourceStatus &&
+    left.sourceActive === right.sourceActive &&
+    left.sourceMain === right.sourceMain &&
+    left.fieldPath === right.fieldPath &&
+    left.fieldLabel === right.fieldLabel &&
+    left.linkId === right.linkId &&
+    left.linkType === right.linkType
+  )
 }
 
 function entryReference(entry: EntryCoreRecord): EntryReference {

@@ -408,7 +408,10 @@ export class EntryResolver implements Resolver {
       if (isSingle) {
         const entry = entries[0]
         if (results[0]) {
-          const linkResolver = new LinkResolver(this, ctx, entry.locale)
+          const linkResolver = new LinkResolver(this, ctx, entry.locale, {
+            includedAtBuild: filePath =>
+              this.index.initialSync?.has(filePath) ?? false
+          })
           return (await this.postRow({linkResolver}, results[0], asEdge)) as any
         }
         return results[0] as any
@@ -421,7 +424,11 @@ export class EntryResolver implements Resolver {
               const linkResolver = new LinkResolver(
                 this,
                 ctx,
-                entries[index].locale
+                entries[index].locale,
+                {
+                  includedAtBuild: filePath =>
+                    this.index.initialSync?.has(filePath) ?? false
+                }
               )
               return this.postRow({linkResolver}, result, asEdge).then(
                 processed => {
