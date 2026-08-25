@@ -56,6 +56,10 @@ const main = Config.workspace('Main', {
       contains: ['Page'],
       orderChildrenBy: {asc: Query.title}
     }),
+    localized: Config.root('Localized pages', {
+      contains: ['Page'],
+      i18n: {locales: ['en', 'fr']}
+    }),
     media: Config.media({i18n: {locales: ['en', 'fr']}})
   }
 })
@@ -191,6 +195,31 @@ async function createDashboardScenario(): Promise<DashboardScenarioState> {
     workspace: 'main',
     root: 'ordered',
     set: {title: 'Apple'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.localizedStart,
+    locale: 'en',
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {title: 'Localized start'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.localizedFolder,
+    locale: 'en',
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {title: 'Localized folder'}
+  })
+  await db.create({
+    id: dashboardScenarioIds.localizedChild,
+    locale: 'en',
+    parentId: dashboardScenarioIds.localizedFolder,
+    type: ScenarioPage,
+    workspace: 'main',
+    root: 'localized',
+    set: {title: 'Localized child'}
   })
   await db.create({
     id: dashboardScenarioIds.searchPartial,

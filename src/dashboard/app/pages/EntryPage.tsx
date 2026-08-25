@@ -1,4 +1,4 @@
-import {Button, Icon, Surface} from '#/components.js'
+import {Button, Icon, Surface, Tooltip} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
@@ -173,24 +173,27 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
   const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
+  const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
   return (
-    <Button
-      aria-label={label}
-      appearance="plain"
-      icon={ViewIcon}
-      isDisabled={isPending}
-      size="icon"
-      onPress={() =>
-        setRoute({
-          workspace: page.workspace,
-          root: page.root,
-          entry: page.entry,
-          locale: page.locale ?? undefined,
-          view: nextView
-        })
-      }
-    />
+    <Tooltip delay={300} tooltip={tooltip}>
+      <Button
+        aria-label={label}
+        appearance="plain"
+        icon={ViewIcon}
+        isDisabled={isPending}
+        size="icon"
+        onPress={() =>
+          setRoute({
+            workspace: page.workspace,
+            root: page.root,
+            entry: page.entry,
+            locale: page.locale ?? undefined,
+            view: nextView
+          })
+        }
+      />
+    </Tooltip>
   )
 }
 

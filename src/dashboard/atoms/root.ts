@@ -445,8 +445,7 @@ export class RootAtoms {
             : undefined,
         enableNavigation: true,
         rootData: this.data,
-        selectedLocaleAtom:
-          parentId === null ? this.#explorerLocale : undefined,
+        selectedLocaleAtom: this.#explorerLocale,
         treeItems: locale => this.tree(locale).items,
         selectionBehavior: 'toggle',
         selectionMode: 'multiple'

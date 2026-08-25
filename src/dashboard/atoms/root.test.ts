@@ -77,6 +77,15 @@ test('root explorers follow route locales and keep media unlocalized', async () 
     workspace,
     set: {title: 'French entry'}
   })
+  await db.create({
+    id: 'french-child-entry',
+    locale: 'fr',
+    parentId: 'french-root-entry',
+    root: 'pages',
+    type: DashboardTestPage,
+    workspace,
+    set: {title: 'French child'}
+  })
   const store = createDashboardStore(config, db)
   await store.get(authReady)
   const root = rootAtoms(workspace, 'pages')
@@ -89,6 +98,13 @@ test('root explorers follow route locales and keep media unlocalized', async () 
 
   expect(frenchPage.locale).toBe('fr')
   expect(frenchPage.items.map(item => item.title)).toEqual(['French entry'])
+  const frenchChildrenPage = await store.get(
+    root.children('french-root-entry').pageReady
+  )
+  expect(frenchChildrenPage.locale).toBe('fr')
+  expect(frenchChildrenPage.items.map(item => item.title)).toEqual([
+    'French child'
+  ])
 
   store.set(routeAtom, {
     browser: true,
