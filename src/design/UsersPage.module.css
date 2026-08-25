@@ -1,0 +1,46 @@
+.alinea-UsersPage {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--alinea-bg);
+}
+
+.alinea-UsersPage-content {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+  padding: var(--alinea-space-3);
+}
+
+.alinea-UsersPage-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--alinea-space-2);
+}
+
+.alinea-UsersPage-avatar {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--alinea-radius-round);
+  background: var(--alinea-primary-subtle);
+  color: var(--alinea-primary-subtle-fg);
+  font-size: var(--alinea-font-size-small);
+  font-weight: var(--alinea-font-weight-semibold);
+}
+
+.alinea-UsersPage-roles {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}

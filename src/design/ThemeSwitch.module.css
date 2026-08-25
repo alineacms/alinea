@@ -1,8 +1,8 @@
 .alinea-ThemeSwitch {
   position: fixed;
   z-index: 10000;
-  top: var(--alinea-space-3);
   right: var(--alinea-space-4);
+  bottom: var(--alinea-space-3);
   display: flex;
   align-items: center;
   border: 1px solid var(--alinea-border);

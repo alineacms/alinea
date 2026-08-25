@@ -108,9 +108,9 @@
 }
 
 .alinea-Button[data-appearance='active'] {
-  --alinea-Button-color: var(--alinea-primary-subtle-fg);
-  --alinea-Button-background: var(--alinea-primary-subtle);
-  --alinea-Button-background-hover: var(--alinea-primary-subtle);
+  --alinea-Button-color: var(--alinea-selected-fg);
+  --alinea-Button-background: var(--alinea-selected);
+  --alinea-Button-background-hover: var(--alinea-selected);
   --alinea-Button-border: transparent;
 }
 
@@ -131,6 +131,24 @@
   height: 32px;
   flex: 0 0 auto;
   border-radius: var(--alinea-radius-round);
+}
+
+.alinea-Button[data-size='icon-small'] {
+  --alinea-Button-padding: 0;
+
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+
+.alinea-Button[data-size='icon-nav'] {
+  --alinea-Button-padding: 0;
+
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: var(--alinea-radius-control);
 }
 
 .alinea-Button:hover,

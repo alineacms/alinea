@@ -25,7 +25,15 @@ import {
   DialogOverlay,
   DialogTitle
 } from './Dialog.js'
+import {EntryPage} from './EntryPage.js'
 import {Field} from './Field.js'
+import {
+  Navigation,
+  NavigationHeading,
+  NavigationItem,
+  NavigationSection
+} from './Navigation.js'
+import {OverviewPage} from './OverviewPage.js'
 import {
   PreviewCaption,
   PreviewGrid,
@@ -49,6 +57,9 @@ import {
 } from './Tokens.js'
 import {ThemeSwitch} from './ThemeSwitch.js'
 import {Tabs} from './Tabs.js'
+import {SearchField} from './SearchField.js'
+import {Toolbar, ToolbarGroup, ToolbarSeparator} from './Toolbar.js'
+import {UsersPage} from './UsersPage.js'
 import viewport from './viewport.module.css'
 
 const styles = styler(viewport)
@@ -61,6 +72,8 @@ function pageWhitespace(zoom: number, focusWhitespace = 0) {
 }
 
 interface ViewportProps extends PropsWithChildren {
+  bleed?: boolean
+  height?: number
   label?: ReactNode
   width?: number
 }
@@ -77,16 +90,23 @@ interface PanState {
   y: number
 }
 
-function Viewport({label, width, children}: ViewportProps) {
+function Viewport({bleed, height, label, width, children}: ViewportProps) {
   const uniqueId = useId().replace(/:/g, '')
+  const contentWidth = width ?? defaultContentWidth
+  const viewportHeight = height ? height * Math.min(1, 500 / contentWidth) : 300
 
   return (
-    <div className={viewport.viewport}>
+    <div
+      className={viewport.viewport}
+      style={
+        {'--alinea-viewport-height': `${viewportHeight}px`} as CSSProperties
+      }
+    >
       {label && <div className={viewport.label}>{label}</div>}
       <div className={viewport.canvas}>
         <div
           className={viewport.frame}
-          data-content-width={width ?? defaultContentWidth}
+          data-content-width={contentWidth}
           data-design-frame
           style={
             {
@@ -99,11 +119,16 @@ function Viewport({label, width, children}: ViewportProps) {
             className={viewport.inner}
             style={
               {
-                '--alinea-content-width': `${width ?? defaultContentWidth}px`
+                '--alinea-content-width': `${contentWidth}px`
               } as CSSProperties
             }
           >
-            <div className={viewport.layout}>{children}</div>
+            <div
+              className={viewport.layout}
+              data-bleed={bleed ? '' : undefined}
+            >
+              {children}
+            </div>
           </div>
         </div>
       </div>
@@ -336,6 +361,75 @@ function DialogStory() {
         </DialogFooter>
       </Dialog>
     </DialogOverlay>
+  )
+}
+
+function SearchAndToolbarStory() {
+  return (
+    <PreviewStack gap="large">
+      <PreviewStack>
+        <PreviewCaption>Search</PreviewCaption>
+        <SearchField aria-label="Search content" placeholder="Search content" />
+        <SearchField
+          aria-label="Filled search"
+          defaultValue="homepage"
+          placeholder="Search content"
+        />
+      </PreviewStack>
+      <PreviewStack>
+        <PreviewCaption>Toolbar</PreviewCaption>
+        <Toolbar label="Entry actions">
+          <ToolbarGroup>
+            <Button appearance="plain" size="small">
+              Preview
+            </Button>
+            <Button appearance="active" size="small">
+              Edit
+            </Button>
+          </ToolbarGroup>
+          <ToolbarSeparator />
+          <ToolbarGroup>
+            <Button appearance="plain" size="small">
+              History
+            </Button>
+            <Button intent="primary" size="small">
+              Publish
+            </Button>
+          </ToolbarGroup>
+        </Toolbar>
+      </PreviewStack>
+    </PreviewStack>
+  )
+}
+
+function NavigationStory() {
+  return (
+    <Navigation label="Example navigation">
+      <NavigationSection>
+        <NavigationHeading>Content</NavigationHeading>
+        <NavigationItem
+          icon={<PreviewIcon>◆</PreviewIcon>}
+          label="Pages"
+          selected
+        />
+        <NavigationItem
+          depth={1}
+          icon={<PreviewIcon>□</PreviewIcon>}
+          label="Home"
+        />
+        <NavigationItem
+          depth={1}
+          icon={<PreviewIcon>□</PreviewIcon>}
+          label="A page title that is deliberately very long"
+          meta="12"
+        />
+      </NavigationSection>
+      <NavigationSection>
+        <NavigationHeading>Workspace</NavigationHeading>
+        <NavigationItem icon={<PreviewIcon>◎</PreviewIcon>} label="Locales" />
+        <NavigationItem icon={<PreviewIcon>◇</PreviewIcon>} label="Archive" />
+      </NavigationSection>
+    </Navigation>
   )
 }
 
@@ -615,11 +709,29 @@ function App() {
           <Viewport label="Tabs" width={640}>
             <TabsStory />
           </Viewport>
+          <Viewport label="Search and toolbar" width={560}>
+            <SearchAndToolbarStory />
+          </Viewport>
+          <Viewport label="Navigation" width={360}>
+            <NavigationStory />
+          </Viewport>
           <Viewport label="Composition" width={720}>
             <CompositionStory />
           </Viewport>
           <Viewport label="Dialog" width={720}>
             <DialogStory />
+          </Viewport>
+        </StoryRow>
+
+        <StoryRow title="Pages">
+          <Viewport bleed height={720} label="Overview · 1280" width={1280}>
+            <OverviewPage />
+          </Viewport>
+          <Viewport bleed height={720} label="Users · 1280" width={1280}>
+            <UsersPage />
+          </Viewport>
+          <Viewport bleed height={720} label="Entry editor · 960" width={960}>
+            <EntryPage />
           </Viewport>
         </StoryRow>
       </DesignSurface>

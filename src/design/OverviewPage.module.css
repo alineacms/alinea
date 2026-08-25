@@ -1,0 +1,53 @@
+.alinea-OverviewPage-sidebarHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--alinea-space-2);
+}
+
+.alinea-OverviewPage-sidebarTitle {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: var(--alinea-font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alinea-OverviewPage-sidebarFooter {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+}
+
+.alinea-OverviewPage-content {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: var(--alinea-space-3);
+}
+
+.alinea-OverviewPage-fileIcon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--alinea-fg-muted);
+  font-size: 16px;
+}
+
+.alinea-OverviewPage-date {
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

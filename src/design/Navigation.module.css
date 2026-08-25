@@ -1,0 +1,100 @@
+.alinea-Navigation {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  padding: var(--alinea-space-2);
+  gap: 2px;
+}
+
+.alinea-Navigation-section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.alinea-Navigation-section + .alinea-Navigation-section {
+  margin-top: var(--alinea-space-3);
+}
+
+.alinea-Navigation-heading {
+  overflow: hidden;
+  margin: 0;
+  padding: 6px 12px;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  font-weight: var(--alinea-font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alinea-Navigation-item {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  align-items: center;
+  justify-content: flex-start;
+  border: 0;
+  border-radius: var(--alinea-radius-control);
+  padding: 7px 10px 7px calc(12px + var(--alinea-Navigation-depth, 0) * 16px);
+  gap: 7px;
+  outline: none;
+  background: transparent;
+  color: var(--alinea-fg);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--alinea-font-size-base);
+  font-weight: var(--alinea-font-weight-regular);
+  text-align: left;
+}
+
+.alinea-Navigation-item:hover,
+.alinea-Navigation-item[data-hovered] {
+  background: var(--alinea-muted);
+}
+
+.alinea-Navigation-item:focus-visible,
+.alinea-Navigation-item[data-focus-visible] {
+  outline: 2px solid var(--alinea-ring);
+  outline-offset: -2px;
+}
+
+.alinea-Navigation-item[data-selected] {
+  background: var(--alinea-selected);
+  color: var(--alinea-selected-fg);
+  font-weight: var(--alinea-font-weight-semibold);
+}
+
+.alinea-Navigation-item[data-disabled] {
+  color: var(--alinea-fg-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.alinea-Navigation-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-size: 16px;
+}
+
+.alinea-Navigation-label {
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alinea-Navigation-meta {
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+}

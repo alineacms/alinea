@@ -1,0 +1,31 @@
+.alinea-Toolbar {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--alinea-space-2);
+}
+
+.alinea-Toolbar[data-orientation='vertical'] {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.alinea-Toolbar-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--alinea-space-1);
+}
+
+.alinea-Toolbar-separator {
+  width: 1px;
+  height: 16px;
+  border: 0;
+  margin: var(--alinea-space-1) 0;
+  background: var(--alinea-border);
+}
+
+.alinea-Toolbar[data-orientation='vertical'] .alinea-Toolbar-separator {
+  width: 16px;
+  height: 1px;
+}

@@ -11,7 +11,7 @@ export interface ButtonProps extends Omit<
   appearance?: 'solid' | 'outline' | 'plain' | 'active'
   icon?: ReactNode
   intent?: 'neutral' | 'primary' | 'secondary' | 'danger'
-  size?: 'small' | 'medium' | 'large' | 'icon'
+  size?: 'small' | 'medium' | 'large' | 'icon' | 'icon-small' | 'icon-nav'
 }
 
 export function Button({

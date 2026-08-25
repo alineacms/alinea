@@ -1,0 +1,111 @@
+.alinea-EntryPage-sidebarHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--alinea-space-2);
+}
+
+.alinea-EntryPage-sidebarTitle {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: var(--alinea-font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alinea-EntryPage-headerTitle {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--alinea-space-2);
+}
+
+.alinea-EntryPage-body {
+  box-sizing: border-box;
+  min-height: 0;
+  overflow: auto;
+  flex: 1;
+  padding: var(--alinea-space-3);
+  background: var(--alinea-bg-muted);
+}
+
+.alinea-EntryPage-fields {
+  display: flex;
+  width: 100%;
+  max-width: 960px;
+  min-width: 0;
+  flex-direction: column;
+  margin-inline: auto;
+  gap: var(--alinea-space-3);
+}
+
+.alinea-EntryPage-fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--alinea-space-3);
+}
+
+.alinea-EntryPage-fieldWide {
+  min-width: 0;
+  grid-column: span 8;
+}
+
+.alinea-EntryPage-fieldNarrow {
+  min-width: 0;
+  grid-column: span 4;
+}
+
+.alinea-EntryPage-fieldFull {
+  min-width: 0;
+  grid-column: 1 / -1;
+}
+
+.alinea-EntryPage-sectionIntro {
+  display: grid;
+  gap: var(--alinea-space-1);
+}
+
+.alinea-EntryPage-sectionTitle {
+  margin: 0;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: var(--alinea-font-weight-semibold);
+  line-height: 1.3;
+}
+
+.alinea-EntryPage-sectionDescription {
+  margin: 0;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  line-height: var(--alinea-line-height-base);
+}
+
+.alinea-EntryPage-footer {
+  display: flex;
+  min-height: var(--alinea-row-height);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--alinea-border);
+  padding: 0 var(--alinea-space-3);
+  gap: var(--alinea-space-2);
+  background: var(--alinea-bg);
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+}
+
+@media (max-width: 768px) {
+  .alinea-EntryPage-fieldGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .alinea-EntryPage-fieldWide,
+  .alinea-EntryPage-fieldNarrow,
+  .alinea-EntryPage-fieldFull {
+    grid-column: 1 / -1;
+  }
+}

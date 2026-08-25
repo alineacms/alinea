@@ -132,6 +132,12 @@ body {
   background: var(--alinea-bg);
 }
 
+.layout[data-bleed] {
+  min-height: max(100cqh, calc(var(--alinea-content-width) * (100cqh / 100cqi)));
+  padding: 0;
+  background: transparent;
+}
+
 .label {
   color: var(--alinea-fg-muted);
   font-family: var(--alinea-font-family);
