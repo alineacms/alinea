@@ -495,12 +495,13 @@ function readRecord(
 }
 
 function payloadRecord(
-  _core: EntryCoreRecord,
+  core: EntryCoreRecord,
   version: ParsedVersion
 ): EntryPayloadRecord {
   return {
     kind: 'payload',
     id: payloadRecordId(version.filePath),
+    entryVersionId: core.id,
     data: version.data
   }
 }

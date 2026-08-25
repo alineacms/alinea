@@ -1,10 +1,6 @@
 import {describe, expect, test} from 'bun:test'
 import {DatabaseSnapshot} from '../Database.js'
-import {
-  ReplicaDatabaseReader,
-  type ReplicaIndexedMetadata,
-  replicaIndexKey
-} from '../Reader.js'
+import {ReplicaDatabaseReader, replicaIndexKey} from '../Reader.js'
 import type {IndexReader} from '../replica/IndexReader.js'
 import type {QueryDependency} from '../replica/Dependency.js'
 import type {FrameDescriptor, RecordReference} from '../replica/Types.js'
@@ -90,6 +86,7 @@ describe('EntryQueryEngine', () => {
     const payload: EntryPayloadRecord = {
       kind: 'payload',
       id: `payload:${core.id}`,
+      entryVersionId: core.id,
       data: {body: 'Before'}
     }
     const before = new DatabaseSnapshot({
@@ -120,10 +117,8 @@ describe('EntryQueryEngine', () => {
             {
               id: core.id,
               frame: frame(core.id),
-              metadata: {
-                order: projected.order ?? [],
-                metadata: projected.metadata
-              }
+              order: projected.order ?? [],
+              metadata: projected.metadata
             }
           ]
         ]
@@ -142,22 +137,16 @@ describe('EntryQueryEngine', () => {
 
 class CountingReplicaReader implements IndexReader<
   AlineaDatabaseRecord,
-  ReplicaIndexedMetadata<unknown>
+  unknown
 > {
   readonly revision = 'one'
   gets = 0
   #records: ReadonlyMap<string, AlineaDatabaseRecord>
-  #indexes: ReadonlyMap<
-    string,
-    ReadonlyArray<RecordReference<ReplicaIndexedMetadata<unknown>>>
-  >
+  #indexes: ReadonlyMap<string, ReadonlyArray<RecordReference<unknown>>>
 
   constructor(
     records: ReadonlyArray<AlineaDatabaseRecord>,
-    indexes: ReadonlyMap<
-      string,
-      ReadonlyArray<RecordReference<ReplicaIndexedMetadata<unknown>>>
-    >
+    indexes: ReadonlyMap<string, ReadonlyArray<RecordReference<unknown>>>
   ) {
     this.#records = new Map(records.map(record => [record.id, record]))
     this.#indexes = indexes
@@ -168,14 +157,12 @@ class CountingReplicaReader implements IndexReader<
     return this.#records.get(id)
   }
 
-  async *scan(
-    key: string
-  ): AsyncIterable<RecordReference<ReplicaIndexedMetadata<unknown>>> {
+  async *scan(key: string): AsyncIterable<RecordReference<unknown>> {
     yield* this.#indexes.get(key) ?? []
   }
 
   async load(
-    references: Iterable<RecordReference<ReplicaIndexedMetadata<unknown>>>
+    references: Iterable<RecordReference<unknown>>
   ): Promise<ReadonlyMap<string, AlineaDatabaseRecord>> {
     const result = new Map<string, AlineaDatabaseRecord>()
     for (const reference of references) {

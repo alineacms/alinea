@@ -1,7 +1,8 @@
 import {describe, expect, test} from 'bun:test'
 import {DatabaseSchema, DatabaseSnapshot} from '../Database.js'
-import {ReplicaDatabaseReader, type ReplicaIndexedMetadata} from '../Reader.js'
+import {ReplicaDatabaseReader} from '../Reader.js'
 import {DatabaseIndex} from '../SecondaryIndex.js'
+import {projectReplicaState} from '../handler/Projection.js'
 import {
   BundleFrameLoader,
   MemoryRangeSource,
@@ -37,8 +38,8 @@ describe('exportRelease', () => {
       bundleId: 'release-secret',
       bundleUrl: '/admin/release/release-secret/database.bin',
       snapshot,
-      accessClass({record}) {
-        return record ? `record:${record.id}` : 'index:pages'
+      accessClass({kind, record}) {
+        return kind === 'record' ? `record:${record.id}` : 'index:pages'
       }
     })
     const grants = Object.entries(release.keys.accessClasses).map(
@@ -49,10 +50,11 @@ describe('exportRelease', () => {
       new MemoryRangeSource(release.bundle.contents),
       grants
     )
-    const lazy = new LazyIndexReader<
-      TestRecord,
-      ReplicaIndexedMetadata<unknown>
-    >(release.catalog, loader, new JsonReplicaCodec())
+    const lazy = new LazyIndexReader<TestRecord, unknown>(
+      release.catalog,
+      loader,
+      new JsonReplicaCodec()
+    )
     const reader = new ReplicaDatabaseReader(lazy)
 
     expect(await reader.get('a')).toEqual({id: 'a', group: 'pages', rank: 1})
@@ -76,8 +78,8 @@ describe('exportRelease', () => {
       bundleId: 'release-secret',
       bundleUrl: '/database.bin',
       snapshot,
-      accessClass({record}) {
-        return record ? 'content' : 'indexes'
+      accessClass({kind}) {
+        return kind === 'record' ? 'content' : 'indexes'
       }
     })
     const indexKey = release.keys.accessClasses.indexes
@@ -89,5 +91,49 @@ describe('exportRelease', () => {
     const record = release.catalog.records.a
 
     expect(() => loader.load(record)).toThrow(MissingFrameGrantError)
+  })
+
+  test('splits shared indexes so an authenticated view reveals only granted rows', async () => {
+    const snapshot = new DatabaseSnapshot({
+      schema: new DatabaseSchema<TestRecord>().add(byGroup),
+      revision: 'tree-1',
+      records: [
+        {id: 'a', group: 'pages', rank: 1},
+        {id: 'b', group: 'pages', rank: 2}
+      ]
+    })
+    const release = await exportRelease({
+      bundleId: 'release-secret',
+      bundleUrl: '/database.bin',
+      snapshot,
+      accessClass({record}) {
+        return `entry:${record.id}`
+      }
+    })
+    const state = projectReplicaState({
+      viewId: 'only-a',
+      catalog: release.catalog,
+      keys: release.keys,
+      accessClasses: new Set(['entry:a']),
+      recordAccess: {a: 'read'}
+    })
+    const loader = new BundleFrameLoader(
+      state.catalog.bundleId,
+      new MemoryRangeSource(release.bundle.contents),
+      state.grants
+    )
+    const lazy = new LazyIndexReader<TestRecord, unknown>(
+      state.catalog,
+      loader,
+      new JsonReplicaCodec()
+    )
+    const reader = new ReplicaDatabaseReader(lazy)
+    const visible = []
+    for await (const item of reader.scan(byGroup, 'pages'))
+      visible.push(item.id)
+
+    expect(release.catalog.indexes['["group","pages"]']).toHaveLength(2)
+    expect(visible).toEqual(['a'])
+    expect(await reader.get('b')).toBeUndefined()
   })
 })

@@ -52,6 +52,19 @@ export interface FrameLoader {
   load(frame: FrameDescriptor, signal?: AbortSignal): Promise<Uint8Array>
 }
 
+export interface CiphertextCache {
+  get(
+    bundleId: BundleId,
+    frame: FrameDescriptor
+  ): Promise<Uint8Array | undefined>
+  put(
+    bundleId: BundleId,
+    frame: FrameDescriptor,
+    ciphertext: Uint8Array
+  ): Promise<void>
+  delete(bundleId: BundleId, frame: FrameDescriptor): Promise<void>
+}
+
 export class MissingFrameGrantError extends Error {
   constructor(accessClassId: AccessClassId) {
     super(`Missing grant for access class "${accessClassId}"`)
@@ -144,15 +157,18 @@ export function packEncryptedFrames(
 export class BundleFrameLoader implements FrameLoader {
   #bundleId: BundleId
   #source: ByteRangeSource
+  #cache?: CiphertextCache
   #grants = new Map<AccessClassId, Uint8Array>()
 
   constructor(
     bundleId: BundleId,
     source: ByteRangeSource,
-    grants: Iterable<AccessClassGrant>
+    grants: Iterable<AccessClassGrant>,
+    cache?: CiphertextCache
   ) {
     this.#bundleId = bundleId
     this.#source = source
+    this.#cache = cache
     for (const grant of grants) {
       this.#grants.set(grant.accessClassId, grant.key.slice())
     }
@@ -164,16 +180,19 @@ export class BundleFrameLoader implements FrameLoader {
   ): Promise<Uint8Array> {
     const classKey = this.#grants.get(frame.accessClassId)
     if (!classKey) throw new MissingFrameGrantError(frame.accessClassId)
-    const ciphertext = await this.#source.read(
-      frame.offset,
-      frame.length,
-      signal
-    )
+    let ciphertext = await this.#cache?.get(this.#bundleId, frame)
+    if (!ciphertext) {
+      ciphertext = await this.#source.read(frame.offset, frame.length, signal)
+      if (ciphertext.length === frame.length)
+        await this.#cache?.put(this.#bundleId, frame, ciphertext)
+    }
     if (ciphertext.length !== frame.length)
       throw new BundleIntegrityError(`Incomplete frame "${frame.id}"`)
     const actualHash = await sha256(ciphertext)
-    if (actualHash !== frame.cipherHash)
+    if (actualHash !== frame.cipherHash) {
+      await this.#cache?.delete(this.#bundleId, frame)
       throw new BundleIntegrityError(`Invalid hash for frame "${frame.id}"`)
+    }
     const key = await deriveFrameKey(classKey, this.#bundleId, frame.id, [
       'decrypt'
     ])

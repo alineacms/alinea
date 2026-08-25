@@ -227,7 +227,7 @@ function createFixture(
       bundleUrl: '/admin/release/release-1/replica.bundle',
       revision,
       records: descriptors,
-      indexes: {'children:root': index}
+      indexes: {'children:root': [index]}
     },
     contents
   }

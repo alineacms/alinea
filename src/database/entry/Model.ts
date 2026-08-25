@@ -42,6 +42,7 @@ export interface EntryReadRecord extends DatabaseRecord {
 
 export interface EntryPayloadRecord extends DatabaseRecord {
   kind: 'payload'
+  entryVersionId: string
   data: Readonly<Record<string, unknown>>
 }
 

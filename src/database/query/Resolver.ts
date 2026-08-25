@@ -5,6 +5,7 @@ import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import {
+  Graph,
   querySource,
   type AnyQueryResult,
   type EdgeQuery,
@@ -51,7 +52,7 @@ interface QueryResult {
   value: unknown
 }
 
-export class DatabaseResolver implements Resolver {
+export class DatabaseResolver extends Graph implements Resolver {
   readonly config: Config
   #reader: DatabaseReader<AlineaDatabaseRecord>
   #scope: Scope
@@ -62,6 +63,7 @@ export class DatabaseResolver implements Resolver {
       | DatabaseReader<AlineaDatabaseRecord>
       | DatabaseSnapshot<AlineaDatabaseRecord>
   ) {
+    super()
     this.config = config
     this.#reader =
       'schema' in source ? new SnapshotDatabaseReader(source) : source
@@ -114,8 +116,15 @@ export class DatabaseResolver implements Resolver {
   ): Promise<QueryResult> {
     const edge = query as EdgeQuery<Projection>
     const structural = this.#coreCondition(context, edge)
+    let narrowed = source.filter(structural)
+    if (query.search)
+      narrowed = await this.#searchCores(
+        context,
+        narrowed,
+        context.searchTerms ?? ''
+      )
     const loaded = await Promise.all(
-      source.filter(structural).map(core => context.loader.load(core))
+      narrowed.map(core => context.loader.load(core))
     )
     let candidates = loaded.filter((entry): entry is Entry => Boolean(entry))
     if (context.previewEntry) {
@@ -127,7 +136,6 @@ export class DatabaseResolver implements Resolver {
     }
     const predicate = this.#condition(context, edge)
     let found = candidates.filter(predicate)
-    if (query.search) found = searchEntries(found, context.searchTerms ?? '')
     if (query.groupBy) {
       assert(!Array.isArray(query.groupBy), 'groupBy must be a single field')
       const groups = new Map<unknown, Entry>()
@@ -169,6 +177,51 @@ export class DatabaseResolver implements Resolver {
       entries: found,
       value: single ? selected[0] : selected
     }
+  }
+
+  async #searchCores(
+    context: ResolveContext,
+    cores: ReadonlyArray<EntryCoreRecord>,
+    search: string
+  ): Promise<Array<EntryCoreRecord>> {
+    const documents = await Promise.all(
+      cores.map(async core => {
+        if (
+          context.previewEntry &&
+          context.previewEntry.id === core.entryId &&
+          context.previewEntry.status === core.versionStatus &&
+          context.previewEntry.locale === core.locale
+        )
+          return {
+            value: core,
+            id: core.id,
+            title: context.previewEntry.title,
+            searchableText: context.previewEntry.searchableText
+          }
+        const record = await context.loader.search(core, 'read')
+        return record
+          ? {
+              value: core,
+              id: core.id,
+              title: record.title,
+              searchableText: record.searchableText
+            }
+          : undefined
+      })
+    )
+    return rankSearchDocuments(
+      documents.filter(
+        (
+          document
+        ): document is {
+          value: EntryCoreRecord
+          id: string
+          title: string
+          searchableText: string
+        } => Boolean(document)
+      ),
+      search
+    )
   }
 
   #isSingleResult(query: GraphQuery & Partial<EdgeQuery>): boolean {
@@ -674,10 +727,17 @@ function normalizedSearchTerms(text: string): Array<string> {
     .map(term => term.toLowerCase())
 }
 
-function searchEntries(
-  source: ReadonlyArray<Entry>,
+interface SearchDocument<Value> {
+  value: Value
+  id: string
+  title: string
+  searchableText: string
+}
+
+function rankSearchDocuments<Value>(
+  source: ReadonlyArray<SearchDocument<Value>>,
   search: string
-): Array<Entry> {
+): Array<Value> {
   const index = new MiniSearch<{
     id: string
     title: string
@@ -686,12 +746,12 @@ function searchEntries(
     fields: ['title', 'searchableText'],
     tokenize: tokenizeSearchText
   })
-  const entriesByFile = new Map(source.map(entry => [entry.filePath, entry]))
+  const byId = new Map(source.map(document => [document.id, document]))
   index.addAll(
-    source.map(entry => ({
-      id: entry.filePath,
-      title: entry.title,
-      searchableText: entry.searchableText
+    source.map(document => ({
+      id: document.id,
+      title: document.title,
+      searchableText: document.searchableText
     }))
   )
   const terms = normalizedSearchTerms(search)
@@ -703,9 +763,9 @@ function searchEntries(
       boost: {title: 10}
     })
     .flatMap(result => {
-      const entry = entriesByFile.get(String(result.id))
-      if (!entry) return []
-      const titleTerms = normalizedSearchTerms(entry.title)
+      const document = byId.get(String(result.id))
+      if (!document) return []
+      const titleTerms = normalizedSearchTerms(document.title)
       const titlePrefix = terms.every((term, position) =>
         titleTerms[position]?.startsWith(term)
       )
@@ -714,7 +774,7 @@ function searchEntries(
       )
       return [
         {
-          entry,
+          value: document.value,
           priority: terms.length > 0 && titlePrefix ? 2 : titleMatch ? 1 : 0,
           score: result.score
         }
@@ -724,7 +784,7 @@ function searchEntries(
       (left, right) =>
         right.priority - left.priority || right.score - left.score
     )
-    .map(result => result.entry)
+    .map(result => result.value)
 }
 
 function snippet(

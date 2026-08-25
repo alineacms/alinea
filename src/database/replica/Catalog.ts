@@ -36,26 +36,43 @@ export function diffCatalogs(
 }
 
 function changedKeys(
-  previous: Readonly<Record<string, FrameDescriptor>>,
-  next: Readonly<Record<string, FrameDescriptor>>,
+  previous: Readonly<
+    Record<string, FrameDescriptor | ReadonlyArray<FrameDescriptor>>
+  >,
+  next: Readonly<
+    Record<string, FrameDescriptor | ReadonlyArray<FrameDescriptor>>
+  >,
   force: boolean
 ): ReadonlySet<string> {
   const changed = new Set<string>()
   const keys = new Set([...Object.keys(previous), ...Object.keys(next)])
   for (const key of keys) {
-    if (force || !sameFrame(previous[key], next[key])) changed.add(key)
+    if (force || !sameFrames(previous[key], next[key])) changed.add(key)
   }
   return changed
 }
 
-function sameFrame(
-  left: FrameDescriptor | undefined,
-  right: FrameDescriptor | undefined
+function sameFrames(
+  left: FrameDescriptor | ReadonlyArray<FrameDescriptor> | undefined,
+  right: FrameDescriptor | ReadonlyArray<FrameDescriptor> | undefined
 ): boolean {
   if (!left || !right) return left === right
+  if (isFrameList(left) || isFrameList(right)) {
+    if (!isFrameList(left) || !isFrameList(right)) return false
+    return (
+      left.length === right.length &&
+      left.every((frame, index) => sameFrames(frame, right[index]))
+    )
+  }
   return (
     left.id === right.id &&
     left.accessClassId === right.accessClassId &&
     left.cipherHash === right.cipherHash
   )
+}
+
+function isFrameList(
+  value: FrameDescriptor | ReadonlyArray<FrameDescriptor>
+): value is ReadonlyArray<FrameDescriptor> {
+  return Array.isArray(value)
 }

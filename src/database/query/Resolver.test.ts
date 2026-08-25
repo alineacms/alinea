@@ -150,4 +150,33 @@ describe('DatabaseResolver parity', () => {
     })
     expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(1)
   })
+
+  test('searches dedicated search frames before loading matching payloads', async () => {
+    const base = new SnapshotDatabaseReader(database)
+    const requested: Array<string> = []
+    const reader: DatabaseReader<AlineaDatabaseRecord> = {
+      revision: base.revision,
+      get(id, signal) {
+        requested.push(id)
+        return base.get(id, signal)
+      },
+      scan<Metadata>(
+        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
+        key: string,
+        signal?: AbortSignal
+      ): AsyncIterable<IndexedRecord<Metadata>> {
+        return base.scan(index, key, signal)
+      }
+    }
+    const resolver = new DatabaseResolver(cms.config, reader)
+    const result = await resolver.resolve({
+      search: 'chocolate',
+      select: Entry.id
+    })
+
+    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(
+      result.length
+    )
+    expect(result.length).toBeLessThan(database.size)
+  })
 })

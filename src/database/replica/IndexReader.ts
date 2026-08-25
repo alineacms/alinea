@@ -75,15 +75,30 @@ export class LazyIndexReader<
     signal?: AbortSignal
   ): AsyncIterable<RecordReference<Metadata>> {
     this.#tracker.add(indexDependency(key))
-    const frame = this.#catalog.indexes[key]
-    if (!frame) return
-    const contents = await this.#loader.load(frame, signal)
-    const bucket = this.#codec.decodeIndex(contents, key)
-    for (const item of bucket.records) {
+    const frames = this.#catalog.indexes[key]
+    if (!frames) return
+    const fragments = await Promise.all(
+      frames.map(async frame => ({
+        frame,
+        bucket: this.#codec.decodeIndex(
+          await this.#loader.load(frame, signal),
+          key
+        )
+      }))
+    )
+    const records = fragments
+      .flatMap(({frame, bucket}) => bucket.records.map(item => ({frame, item})))
+      .sort((left, right) => compareOrder(left.item.order, right.item.order))
+    for (const {frame, item} of records) {
       signal?.throwIfAborted()
       const recordFrame = this.#catalog.records[item.id]
       if (!recordFrame) continue
-      yield {id: item.id, frame: recordFrame, metadata: item.metadata}
+      yield {
+        id: item.id,
+        frame: recordFrame,
+        order: item.order ?? [],
+        metadata: item.metadata
+      }
     }
   }
 
@@ -106,6 +121,25 @@ export class LazyIndexReader<
   dependencies(): ReadonlySet<QueryDependency> {
     return this.#tracker.snapshot()
   }
+}
+
+function compareOrder(
+  left: ReadonlyArray<boolean | number | string | null> = [],
+  right: ReadonlyArray<boolean | number | string | null> = []
+): number {
+  const length = Math.max(left.length, right.length)
+  for (let index = 0; index < length; index++) {
+    const a = left[index]
+    const b = right[index]
+    if (a === b) continue
+    if (a === undefined) return -1
+    if (b === undefined) return 1
+    if (a === null) return -1
+    if (b === null) return 1
+    if (a < b) return -1
+    if (a > b) return 1
+  }
+  return 0
 }
 
 export class JsonReplicaCodec<

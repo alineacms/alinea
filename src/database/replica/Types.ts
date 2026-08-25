@@ -30,7 +30,8 @@ export interface ReplicaCatalog {
   bundleUrl: string
   revision: Revision
   records: Readonly<Record<RecordId, FrameDescriptor>>
-  indexes: Readonly<Record<IndexKey, FrameDescriptor>>
+  /** One bucket may contain several independently granted fragments. */
+  indexes: Readonly<Record<IndexKey, ReadonlyArray<FrameDescriptor>>>
 }
 
 export interface ReplicaState {
@@ -44,12 +45,14 @@ export interface ReplicaState {
 export interface RecordReference<Metadata = Record<string, unknown>> {
   id: RecordId
   frame: FrameDescriptor
+  order: ReadonlyArray<boolean | number | string | null>
   metadata: Metadata
 }
 
 export interface IndexBucket<Metadata = Record<string, unknown>> {
   records: ReadonlyArray<{
     id: RecordId
+    order?: ReadonlyArray<boolean | number | string | null>
     metadata: Metadata
   }>
 }

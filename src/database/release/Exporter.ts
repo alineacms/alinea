@@ -1,6 +1,8 @@
 import {crypto} from '@alinea/iso'
 import type {DatabaseRecord, DatabaseSnapshot} from '../Database.js'
 import type {DatabaseIndex, IndexedRecord} from '../SecondaryIndex.js'
+import {entryReleaseAccessClass} from '../entry/Release.js'
+import type {AlineaDatabaseRecord} from '../entry/Model.js'
 import {replicaIndexKey} from '../Reader.js'
 import {
   encryptFrame,
@@ -17,7 +19,9 @@ import type {
 const encoder = new TextEncoder()
 
 export interface ReleaseFrameContext<Row extends DatabaseRecord> {
-  record?: Row
+  kind: 'record' | 'index'
+  /** The record itself, or the record contributing to an index fragment. */
+  record: Row
   index?: DatabaseIndex<Row, unknown>
   indexKey?: string
 }
@@ -55,11 +59,11 @@ export async function exportRelease<Row extends DatabaseRecord>(
   const keys = new Map<AccessClassId, Uint8Array>()
   const frames = []
   const recordFrameIds = new Map<string, string>()
-  const indexFrameIds = new Map<string, string>()
+  const indexFrameIds = new Map<string, Array<string>>()
 
   for (const record of options.snapshot.records()) {
     const id = `record:${record.id}`
-    const accessClassId = options.accessClass({record})
+    const accessClassId = options.accessClass({kind: 'record', record})
     frames.push(
       await encryptFrame({
         bundleId: options.bundleId,
@@ -76,19 +80,40 @@ export async function exportRelease<Row extends DatabaseRecord>(
   for (const index of options.snapshot.schema.indexes) {
     for (const [key, bucket] of options.snapshot.buckets(index)) {
       const catalogKey = replicaIndexKey(index.name, key)
-      const id = `index:${catalogKey}`
-      const accessClassId = options.accessClass({index, indexKey: key})
-      frames.push(
-        await encryptFrame({
-          bundleId: options.bundleId,
-          id,
-          accessClassId,
-          key: keyFor(keys, accessClassId),
-          contents: encodeIndexBucket(bucket),
-          compression: options.compression
+      const fragments = new Map<AccessClassId, Array<IndexedRecord<unknown>>>()
+      for (const contribution of bucket) {
+        const record = options.snapshot.get(contribution.id)
+        if (!record)
+          throw new Error(
+            `Index references missing record "${contribution.id}"`
+          )
+        const accessClassId = options.accessClass({
+          kind: 'index',
+          record,
+          index,
+          indexKey: key
         })
-      )
-      indexFrameIds.set(catalogKey, id)
+        const fragment = fragments.get(accessClassId) ?? []
+        fragment.push(contribution)
+        fragments.set(accessClassId, fragment)
+      }
+      const ids: Array<string> = []
+      let fragmentIndex = 0
+      for (const [accessClassId, fragment] of fragments) {
+        const id = `index:${catalogKey}:${fragmentIndex++}`
+        frames.push(
+          await encryptFrame({
+            bundleId: options.bundleId,
+            id,
+            accessClassId,
+            key: keyFor(keys, accessClassId),
+            contents: encodeIndexBucket(fragment),
+            compression: options.compression
+          })
+        )
+        ids.push(id)
+      }
+      indexFrameIds.set(catalogKey, ids)
     }
   }
 
@@ -102,7 +127,7 @@ export async function exportRelease<Row extends DatabaseRecord>(
       bundleUrl: options.bundleUrl,
       revision: options.snapshot.revision,
       records: descriptors(recordFrameIds, byId),
-      indexes: descriptors(indexFrameIds, byId)
+      indexes: descriptorLists(indexFrameIds, byId)
     },
     keys: {
       version: 1,
@@ -111,6 +136,17 @@ export async function exportRelease<Row extends DatabaseRecord>(
       accessClasses: Object.fromEntries(keys)
     }
   }
+}
+
+export function exportEntryRelease(
+  options: Omit<ReleaseExportOptions<AlineaDatabaseRecord>, 'accessClass'>
+): Promise<ReleaseExport> {
+  return exportRelease({
+    ...options,
+    accessClass({record}) {
+      return entryReleaseAccessClass(record)
+    }
+  })
 }
 
 function keyFor(
@@ -138,6 +174,20 @@ function descriptors(
   return result
 }
 
+function descriptorLists(
+  ids: ReadonlyMap<string, ReadonlyArray<string>>,
+  frames: ReadonlyMap<string, FrameDescriptor>
+): Record<string, ReadonlyArray<FrameDescriptor>> {
+  const result: Record<string, ReadonlyArray<FrameDescriptor>> = {}
+  for (const [key, frameIds] of ids)
+    result[key] = frameIds.map(id => {
+      const frame = frames.get(id)
+      if (!frame) throw new Error(`Missing packed frame "${id}"`)
+      return frame
+    })
+  return result
+}
+
 function encode(value: unknown): Uint8Array {
   return encoder.encode(JSON.stringify(value))
 }
@@ -148,7 +198,8 @@ function encodeIndexBucket(
   return encode({
     records: bucket.map(record => ({
       id: record.id,
-      metadata: {order: record.order, metadata: record.metadata}
+      order: record.order,
+      metadata: record.metadata
     }))
   })
 }

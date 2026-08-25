@@ -14,6 +14,50 @@ export interface DatabaseReader<Row extends DatabaseRecord> {
   ): AsyncIterable<IndexedRecord<Metadata>>
 }
 
+export interface DecodedObjectCache<Row extends DatabaseRecord> {
+  get(scope: string, revision: string, id: string): Promise<Row | undefined>
+  put(scope: string, revision: string, id: string, value: Row): Promise<void>
+}
+
+export class CachedDatabaseReader<
+  Row extends DatabaseRecord
+> implements DatabaseReader<Row> {
+  #source: DatabaseReader<Row>
+  #cache: DecodedObjectCache<Row>
+  #scope: string
+
+  constructor(
+    source: DatabaseReader<Row>,
+    cache: DecodedObjectCache<Row>,
+    scope: string
+  ) {
+    this.#source = source
+    this.#cache = cache
+    this.#scope = scope
+  }
+
+  get revision(): string {
+    return this.#source.revision
+  }
+
+  async get(id: string, signal?: AbortSignal): Promise<Row | undefined> {
+    signal?.throwIfAborted()
+    const cached = await this.#cache.get(this.#scope, this.revision, id)
+    if (cached) return cached
+    const value = await this.#source.get(id, signal)
+    if (value) await this.#cache.put(this.#scope, this.revision, id, value)
+    return value
+  }
+
+  scan<Metadata>(
+    index: DatabaseIndex<Row, Metadata>,
+    key: string,
+    signal?: AbortSignal
+  ): AsyncIterable<IndexedRecord<Metadata>> {
+    return this.#source.scan(index, key, signal)
+  }
+}
+
 export class SnapshotDatabaseReader<
   Row extends DatabaseRecord
 > implements DatabaseReader<Row> {
@@ -44,20 +88,13 @@ export class SnapshotDatabaseReader<
   }
 }
 
-export interface ReplicaIndexedMetadata<Metadata> {
-  order: ReadonlyArray<boolean | number | string | null>
-  metadata: Metadata
-}
-
 /** Connects range-loaded replica indexes to the generic database query API. */
 export class ReplicaDatabaseReader<
   Row extends DatabaseRecord
 > implements DatabaseReader<Row> {
-  #reader: ReplicaIndexReader<Row, ReplicaIndexedMetadata<unknown>>
+  #reader: ReplicaIndexReader<Row, unknown>
 
-  constructor(
-    reader: ReplicaIndexReader<Row, ReplicaIndexedMetadata<unknown>>
-  ) {
+  constructor(reader: ReplicaIndexReader<Row, unknown>) {
     this.#reader = reader
   }
 
@@ -78,11 +115,10 @@ export class ReplicaDatabaseReader<
       replicaIndexKey(index.name, key),
       signal
     )) {
-      const projected = reference.metadata as ReplicaIndexedMetadata<Metadata>
       yield {
         id: reference.id,
-        order: projected.order,
-        metadata: projected.metadata
+        order: reference.order,
+        metadata: reference.metadata as Metadata
       }
     }
   }
