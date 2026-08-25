@@ -118,21 +118,26 @@ mutations, but no longer proxies the static read data plane.
    - switch dashboard queries to the new resolver and delete local `EntryIndex`
      hydration;
    - replace broad index refreshes with live query dependencies.
-7. **Writes, concurrency, and deltas (field path implemented; cutover remains)**
+7. **Writes, concurrency, and deltas (production transport implemented; internal cutover remains)**
    - field-operation endpoint translates accepted paths into cloud mutations;
    - operations on unchanged paths merge across stale base revisions;
    - competing writes to the same scalar field return conflicts;
    - rich text remains one opaque field value;
    - ordered revision notifications trigger scoped state refreshes;
-   - existing dashboard mutation commands remain online-only compatibility
-     calls until every editor emits field operations directly.
+   - production dashboard updates are converted to hashed field operations;
+   - structural writes use a separate authenticated replica command endpoint,
+     and no production dashboard write calls the legacy mutation HTTP endpoint;
+   - dashboard operation helpers still construct internal `Mutation` arrays and
+     the structural command writer still delegates to `LocalDB` until the source
+     writer migration is complete.
 
 ## Remaining cutover
 
-- convert editor mutation producers from legacy `Mutation` arrays to field
-  operations where their semantics are equivalent;
-- remove the legacy production mutation fallback and then remove
-  `EntryTransaction` from dashboard-facing paths;
+- move field-update construction from the replica transport boundary into the
+  editor operation producers so dashboard-facing APIs no longer exchange
+  legacy `Mutation` arrays;
+- replace the structural command handler's `LocalDB`/`EntryTransaction` writer
+  with a normalized-database source writer;
 - move server build artifacts out of the temporary `@alinea/generated` package
   once every framework adapter can trace an equivalent private server artifact;
 - remove `EntryIndex`/`EntryResolver` after the development server and remaining

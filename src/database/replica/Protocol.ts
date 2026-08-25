@@ -1,4 +1,5 @@
 import type {FieldTransaction, FieldTransactionResult} from './Operations.js'
+import type {ReplicaCommand, ReplicaCommandResult} from './Commands.js'
 import type {ReplicaState, Revision} from './Types.js'
 
 export interface ReplicaUser {
@@ -30,4 +31,9 @@ export interface ReplicaTransport {
     transaction: FieldTransaction,
     signal?: AbortSignal
   ): Promise<FieldTransactionResult>
+
+  command(
+    commands: ReadonlyArray<ReplicaCommand>,
+    signal?: AbortSignal
+  ): Promise<ReplicaCommandResult>
 }

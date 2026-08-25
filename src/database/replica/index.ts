@@ -1,6 +1,7 @@
 export * from './Access.js'
 export * from './Bundle.js'
 export * from './Catalog.js'
+export * from './Commands.js'
 export * from './Dependency.js'
 export * from './EntryClient.js'
 export * from './IndexReader.js'

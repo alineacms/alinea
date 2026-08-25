@@ -36,6 +36,10 @@ import {createId} from '#/core/Id.js'
 import {DatabaseResolver} from '#/database/query/Resolver.js'
 import {entryResource} from '#/database/entry/Access.js'
 import {isEntryCoreRecord} from '#/database/entry/Model.js'
+import {
+  mutationsFromReplicaCommands,
+  parseReplicaCommands
+} from '#/database/replica/Commands.js'
 
 const PrepareBody = object({
   filename: string,
@@ -303,6 +307,28 @@ export function createHandler({
             }
           })
         )
+      }
+
+      if (action === HandleAction.ReplicaCommand && request.method === 'POST') {
+        expectJson()
+        const {service, session} = await expectReplica()
+        const commands = parseReplicaCommands(await body)
+        const mutations = mutationsFromReplicaCommands(commands)
+        await local.syncWith(cnx)
+        const commit = {
+          ...(await local.request(mutations, session.policy)),
+          user: userCtx!.user
+        }
+        let {sha} = await cnx.write(commit)
+        if (sha === commit.intoSha) await local.write(commit)
+        else sha = await local.syncWith(cnx)
+        await updateReplicaFromSource(
+          service,
+          cms.config,
+          local.source,
+          context
+        )
+        return Response.json({revision: service.release.snapshot.revision})
       }
 
       if (action === HandleAction.ReplicaBundle && request.method === 'GET') {

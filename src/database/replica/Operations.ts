@@ -52,6 +52,14 @@ export interface FieldConflict {
   remoteValue: unknown
 }
 
+export class FieldConflictError extends Error {
+  name = 'FieldConflictError'
+
+  constructor(public conflicts: ReadonlyArray<FieldConflict>) {
+    super('One or more fields changed remotely')
+  }
+}
+
 export interface FieldTransactionResult {
   revision: Revision
   conflicts: ReadonlyArray<FieldConflict>

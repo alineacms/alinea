@@ -22,8 +22,9 @@ describe('ReplicaDashboardDB', () => {
       grants: [],
       recordAccess: {}
     }
+    let commandBody: unknown
     const fetch = Object.assign(
-      async function fetch(input: URL | RequestInfo) {
+      async function fetch(input: URL | RequestInfo, init?: RequestInit) {
         const action = new URL(String(input)).searchParams.get('action')
         if (action === 'replicaBootstrap')
           return Response.json({
@@ -32,15 +33,24 @@ describe('ReplicaDashboardDB', () => {
             configUrl: '/secret/config.js',
             cacheKey: 'site-1'
           })
+        if (
+          action === 'replicaState' &&
+          new URL(String(input)).searchParams.get('revision') === 'tree-1'
+        )
+          return new Response(null, {status: 204})
         if (action === 'replicaState')
           return Response.json(serializeReplicaState(state))
+        if (action === 'replicaCommand') {
+          commandBody = JSON.parse(String(init?.body))
+          return Response.json({revision: 'tree-1'})
+        }
         throw new Error(`Unexpected request: ${input}`)
       },
       {preconnect() {}}
     )
     const client = {
       async mutate() {
-        return {sha: 'tree-1'}
+        throw new Error('Production mutations must use replica transports')
       },
       async prepareUpload() {
         throw new Error('Not used')
@@ -57,5 +67,9 @@ describe('ReplicaDashboardDB', () => {
     expect(await db.resolve({select: Entry.id})).toEqual([])
     expect(db.sha).toBe('tree-1')
     expect((await db.referencesTo({targetId: 'missing'})).total).toBe(0)
+    expect(await db.mutate([{op: 'remove', id: 'entry-1'}])).toEqual({
+      sha: 'tree-1'
+    })
+    expect(commandBody).toEqual([{kind: 'removeEntry', id: 'entry-1'}])
   })
 })

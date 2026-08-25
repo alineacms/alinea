@@ -32,6 +32,8 @@ describe('HttpReplicaTransport', () => {
             cacheKey: 'cache-1'
           })
         if (action === 'replicaEligible') return Response.json(['entry-a'])
+        if (action === 'replicaCommand')
+          return Response.json({revision: 'tree-2'})
         return Response.json(serializeReplicaState(state))
       },
       {preconnect() {}}
@@ -44,10 +46,14 @@ describe('HttpReplicaTransport', () => {
     expect((await transport.bootstrap()).configId).toBe('config-1')
     expect(await transport.state()).toEqual(state)
     expect(await transport.eligible('{"filter":{}}')).toEqual(['entry-a'])
+    expect(
+      await transport.command([{kind: 'removeEntry', id: 'entry-a'}])
+    ).toEqual({revision: 'tree-2'})
     expect(actions).toEqual([
       'replicaBootstrap',
       'replicaState',
-      'replicaEligible'
+      'replicaEligible',
+      'replicaCommand'
     ])
   })
 

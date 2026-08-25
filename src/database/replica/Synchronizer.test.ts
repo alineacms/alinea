@@ -44,6 +44,9 @@ test('coalesces concurrent synchronization and installs one snapshot', async () 
     },
     async mutate(_transaction: FieldTransaction) {
       return {revision: 'r2', conflicts: []}
+    },
+    async command() {
+      return {revision: 'r2'}
     }
   }
   const factory: ReplicaSnapshotFactory<unknown> = {

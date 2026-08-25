@@ -1,4 +1,5 @@
 import type {ByteRangeSource} from './Bundle.js'
+import type {ReplicaCommand, ReplicaCommandResult} from './Commands.js'
 import type {FieldTransaction, FieldTransactionResult} from './Operations.js'
 import type {ReplicaBootstrap, ReplicaTransport} from './Protocol.js'
 import {
@@ -51,6 +52,17 @@ export class HttpReplicaTransport implements ReplicaTransport {
       method: 'POST',
       signal,
       body: JSON.stringify(transaction)
+    })
+  }
+
+  command(
+    commands: ReadonlyArray<ReplicaCommand>,
+    signal?: AbortSignal
+  ): Promise<ReplicaCommandResult> {
+    return this.#json('replicaCommand', {
+      method: 'POST',
+      signal,
+      body: JSON.stringify(commands)
     })
   }
 

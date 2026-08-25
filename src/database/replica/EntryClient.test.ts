@@ -39,6 +39,9 @@ describe('EntryReplicaClient', () => {
       },
       async mutate() {
         return {revision: 'tree-1', conflicts: []}
+      },
+      async command() {
+        return {revision: 'tree-1'}
       }
     }
     const cache = new IndexedDBReplicaCache<AlineaDatabaseRecord>(

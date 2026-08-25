@@ -7,6 +7,7 @@ export enum HandleAction {
   ReplicaState = 'replicaState',
   ReplicaObject = 'replicaObject',
   ReplicaMutate = 'replicaMutate',
+  ReplicaCommand = 'replicaCommand',
   ReplicaBundle = 'replicaBundle',
   ReplicaEligible = 'replicaEligible',
   Pending = 'pending',

@@ -6,6 +6,8 @@ import type {
 } from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
+import {createId} from '#/core/Id.js'
+import type {Resolver} from '#/core/Resolver.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
@@ -17,6 +19,13 @@ import type {AlineaDatabaseRecord} from '#/database/entry/Model.js'
 import {EntryReplicaClient} from '#/database/replica/EntryClient.js'
 import {HttpReplicaTransport} from '#/database/replica/HttpTransport.js'
 import {IndexedDBReplicaCache} from '#/database/replica/IndexedDBCache.js'
+import {replicaCommandsFromMutations} from '#/database/replica/Commands.js'
+import {
+  FieldConflictError,
+  hashFieldValue,
+  type FieldOperation,
+  type FieldTransaction
+} from '#/database/replica/Operations.js'
 import {getScope} from '#/core/Scope.js'
 
 export class ReplicaDashboardDB extends WriteableGraph {
@@ -100,7 +109,18 @@ export class ReplicaDashboardDB extends WriteableGraph {
   }
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
-    await this.#client.mutate(mutations)
+    const transaction = await fieldTransactionForUpdates(
+      this.#replica.resolver(this.config),
+      this.sha,
+      mutations
+    )
+    if (!transaction) {
+      await this.#transport.command(replicaCommandsFromMutations(mutations))
+      return {sha: await this.sync()}
+    }
+    const result = await this.#transport.mutate(transaction)
+    if (result.conflicts.length > 0)
+      throw new FieldConflictError(result.conflicts)
     return {sha: await this.sync()}
   }
 
@@ -124,4 +144,44 @@ export class ReplicaDashboardDB extends WriteableGraph {
   ): void {
     this.#events.removeEventListener(type, listener)
   }
+}
+
+export async function fieldTransactionForUpdates(
+  resolver: Pick<Resolver, 'resolve'>,
+  baseRevision: string,
+  mutations: ReadonlyArray<Mutation>,
+  transactionId = createId()
+): Promise<FieldTransaction | undefined> {
+  if (mutations.some(mutation => mutation.op !== 'update')) return
+  const operations: Array<FieldOperation> = []
+  for (const mutation of mutations) {
+    if (mutation.op !== 'update') return
+    const entry = await resolver.resolve({
+      id: mutation.id,
+      locale: mutation.locale,
+      status: mutation.status,
+      first: true,
+      select: Entry
+    })
+    if (!entry)
+      throw new Error(
+        `Cannot update missing entry "${mutation.id}" (${mutation.locale ?? 'default'}, ${mutation.status})`
+      )
+    if (!entry.filePath)
+      throw new Error(`Cannot update explore-only entry "${mutation.id}"`)
+    for (const [field, value] of Object.entries(mutation.set)) {
+      operations.push({
+        kind: 'set',
+        recordId: `payload:${entry.filePath}`,
+        path: `/${escapePointerSegment(field)}`,
+        baseHash: await hashFieldValue(entry.data[field]),
+        value
+      })
+    }
+  }
+  return {id: transactionId, baseRevision, operations}
+}
+
+function escapePointerSegment(value: string): string {
+  return value.replaceAll('~', '~0').replaceAll('/', '~1')
 }

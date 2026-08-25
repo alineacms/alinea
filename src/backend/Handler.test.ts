@@ -317,6 +317,12 @@ test('serves replica bootstrap and state only after authentication', async () =>
         },
         async enrichUser(user: User): Promise<User> {
           return user
+        },
+        async getTreeIfDifferent() {
+          return undefined
+        },
+        async write(request) {
+          return {sha: request.intoSha}
         }
       })
     }
@@ -360,6 +366,19 @@ test('serves replica bootstrap and state only after authentication', async () =>
   )
   test.is(eligible.status, 200)
   test.equal(await eligible.json(), [])
+  const command = await handle(
+    new Request('http://localhost/api?action=replicaCommand', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify([])
+    }),
+    requestContext()
+  )
+  test.is(command.status, 200)
+  test.is((await command.json()).revision, replica.release.snapshot.revision)
   replica.installOverlay(
     {snapshot, catalog: release.catalog, keys: release.keys},
     'overlay-1',
