@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
@@ -10,7 +10,7 @@ const dir = 'test/fixtures/demo'
 const source = new FSSource(dir)
 const copy = new MemorySource()
 await syncWith(copy, source)
-const db = new LocalDB(cms, copy)
+const db = new SourceDB(cms, copy)
 await db.sync()
 
 test('move in between duplicate indexes', async () => {

@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config} from '#/index.js'
 import {createCMS, Entry} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -27,7 +27,7 @@ const cms = createCMS({
 })
 
 test('new entries default to published', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -36,7 +36,7 @@ test('new entries default to published', async () => {
 })
 
 test('creating new child defaults to archived when parent is archived', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent = await db.create({
     type: Page,
     set: {path: 'page1'},
@@ -57,7 +57,7 @@ test('creating new child defaults to archived when parent is archived', async ()
 })
 
 test('archive action', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -94,7 +94,7 @@ test('archive action', async () => {
 })
 
 test('persist archived over children', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'},
@@ -128,7 +128,7 @@ test('persist archived over children', async () => {
 })
 
 test('persist unpublished over children', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'},
@@ -162,7 +162,7 @@ test('persist unpublished over children', async () => {
 })
 
 test('creating new versions default to published if parent is archived/unpublished', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent = await db.create({
     type: Page,
     set: {path: 'page1'},
@@ -197,7 +197,7 @@ test('creating new versions default to published if parent is archived/unpublish
 })
 
 test('unpublish action', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -228,7 +228,7 @@ test('unpublish action', async () => {
 })
 
 test('new entries default to published', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -237,7 +237,7 @@ test('new entries default to published', async () => {
 })
 
 test('creating new child defaults to archived when parent is archived', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent = await db.create({
     type: Page,
     set: {path: 'page1'},
@@ -258,7 +258,7 @@ test('creating new child defaults to archived when parent is archived', async ()
 })
 
 test('publishing removes other statuses', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1', title: 'Published'},
@@ -277,7 +277,7 @@ test('publishing removes other statuses', async () => {
 })
 
 test('publishing action removes other statuses', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1', title: 'Published'},
@@ -303,7 +303,7 @@ test('publishing action removes other statuses', async () => {
 
 test('unique path check in unpublished', async () => {
   const data = {title: 'John Doe', path: 'john-doe'}
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const unpublished = await db.create({
     type: Page,
     set: {path: 'page1', title: 'Unublished'},
@@ -335,7 +335,7 @@ test('unique path check in unpublished', async () => {
 })
 
 test("it's possible to archive unpublished entries", async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const unpublished = await db.create({
     type: Page,
     set: {path: 'page1', title: 'Unpublished'},
@@ -375,7 +375,7 @@ test("it's possible to archive unpublished entries", async () => {
 })
 
 test('creating entry with mismatched workspace throws error', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const entry = await db.create({
     type: Page,
     set: {path: 'page1'},
@@ -397,7 +397,7 @@ test('creating entry with mismatched workspace throws error', async () => {
 })
 
 test('creating entry with mismatched root throws error', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const entry = await db.create({
     type: Page,
     set: {path: 'page1'},

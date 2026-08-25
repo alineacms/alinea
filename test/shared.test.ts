@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -26,7 +26,7 @@ const cms = createCMS({
 })
 
 test('shared fields', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1EN = await db.create({
     type: Page,
     locale: 'en',

@@ -1,11 +1,11 @@
 import type {Config} from '#/core/Config.js'
 import {Config as ConfigUtils} from '#/core/Config.js'
-import {EntryIndex} from '#/core/db/EntryIndex.js'
-import {EntryResolver} from '#/core/db/EntryResolver.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
+import {buildEntryDatabase} from '#/database/entry/Source.js'
+import {DatabaseResolver} from '#/database/query/Resolver.js'
 
 export interface EntryFixtureEntry {
   id: string
@@ -22,15 +22,9 @@ export interface EntryFixtureEntry {
   seeded?: string | null
 }
 
-export interface EntryResolverFixture {
+export interface DatabaseResolverFixture {
   source: MemorySource
-  index: EntryIndex
-  resolver: EntryResolver
-}
-
-export interface EntryIndexFixture {
-  source: MemorySource
-  index: EntryIndex
+  resolver: DatabaseResolver
 }
 
 function defaultWorkspace(config: Config) {
@@ -67,10 +61,10 @@ function filePathFor(
   )
 }
 
-export async function createEntryIndex(
+export async function createEntrySource(
   config: Config,
   entries: Array<EntryFixtureEntry>
-): Promise<EntryIndexFixture> {
+): Promise<MemorySource> {
   const source = new MemorySource()
   const changes = await Promise.all(
     entries.map(async input => {
@@ -122,16 +116,15 @@ export async function createEntryIndex(
     fromSha: tree.sha,
     changes
   })
-  const index = new EntryIndex(config)
-  await index.syncWith(source)
-  return {source, index}
+  return source
 }
 
-export async function createEntryResolver(
+export async function createDatabaseResolver(
   config: Config,
   entries: Array<EntryFixtureEntry>
-): Promise<EntryResolverFixture> {
-  const {source, index} = await createEntryIndex(config, entries)
-  const resolver = new EntryResolver(config, index)
-  return {source, index, resolver}
+): Promise<DatabaseResolverFixture> {
+  const source = await createEntrySource(config, entries)
+  const database = await buildEntryDatabase(config, source)
+  const resolver = new DatabaseResolver(config, database)
+  return {source, resolver}
 }

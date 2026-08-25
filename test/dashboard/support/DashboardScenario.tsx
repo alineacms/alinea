@@ -1,5 +1,5 @@
 import type {LocalConnection, Revision} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
@@ -75,7 +75,7 @@ const config = Config.create({
 
 interface DashboardScenarioState {
   client: LocalConnection
-  db: LocalDB
+  db: SourceDB
 }
 
 const users: Array<User> = [
@@ -94,7 +94,7 @@ const users: Array<User> = [
 ]
 
 async function createDashboardScenario(): Promise<DashboardScenarioState> {
-  const db = new LocalDB(config)
+  const db = new SourceDB(config)
   await db.sync()
   await db.create({
     id: dashboardScenarioIds.alpha,

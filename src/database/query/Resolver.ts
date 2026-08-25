@@ -16,6 +16,7 @@ import {
 } from '#/core/Graph.js'
 import {
   getExpr,
+  getRoot,
   hasExpr,
   hasField,
   hasRoot,
@@ -444,11 +445,22 @@ export class DatabaseResolver extends Graph implements Resolver {
             (query.includeSelf || core.entryId !== entry.id)
         )
       case 'translations':
-        return all.filter(
-          core =>
-            core.entryId === entry.id &&
-            (query.includeSelf || core.locale !== entry.locale)
-        )
+        return all
+          .filter(
+            core =>
+              core.entryId === entry.id &&
+              (query.includeSelf || core.locale !== entry.locale)
+          )
+          .sort((left, right) => {
+            const root = this.config.workspaces[entry.workspace]?.[entry.root]
+            const locales =
+              root && hasRoot(root) ? getRoot(root).i18n?.locales : undefined
+            if (!locales) return 0
+            return (
+              localeIndex(locales, left.locale) -
+              localeIndex(locales, right.locale)
+            )
+          })
       case 'children': {
         const depth = query.depth ?? 1
         return all.filter(
@@ -878,6 +890,15 @@ function matchesReference(
     case 'all':
       return true
   }
+}
+
+function localeIndex(
+  locales: ReadonlyArray<string>,
+  locale: string | null
+): number {
+  if (locale === null) return locales.length
+  const index = locales.indexOf(locale)
+  return index === -1 ? locales.length : index
 }
 
 function referenceFromMetadata(reference: {

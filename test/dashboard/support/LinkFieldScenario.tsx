@@ -1,5 +1,5 @@
 import type {LocalConnection} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {App} from '#/dashboard/App.js'
 import {views} from '#/field/views.js'
@@ -99,11 +99,11 @@ const config = Config.create({
 
 interface LinkFieldScenarioState {
   client: LocalConnection
-  db: LocalDB
+  db: SourceDB
 }
 
 async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
-  const db = new LocalDB(config)
+  const db = new SourceDB(config)
   db.prepareUpload = file =>
     Promise.resolve({
       entryId: 'dashboard-scenario-upload',
@@ -224,7 +224,7 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
 }
 
 function createPage(
-  db: LocalDB,
+  db: SourceDB,
   id: string,
   title: string,
   parentId?: string,

@@ -1,8 +1,8 @@
 import type {LocalConnection} from '../Connection.js'
 import {type User, type UserInput, localUser} from '../User.js'
-import {LocalDB} from './LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
-export class TestDB extends LocalDB implements LocalConnection {
+export class TestDB extends SourceDB implements LocalConnection {
   async capabilities() {
     return {users: true}
   }

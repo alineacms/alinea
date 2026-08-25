@@ -1,4 +1,4 @@
-import { LocalDB } from '#/core/db/LocalDB.js';
+import { SourceDB } from '#/database/entry/SourceDB.js';
 export declare const config: {
     schema: {
         Fields: import("#/index.js").Type<import("../src/core/Document").Document & {
@@ -134,4 +134,4 @@ export declare const config: {
         }>;
     };
 };
-export declare function createExample(): Promise<LocalDB>;
+export declare function createExample(): Promise<SourceDB>;

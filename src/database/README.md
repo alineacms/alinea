@@ -5,7 +5,7 @@ This directory contains the database replacing `EntryIndex`, `EntryGraph`, and
 snapshot and a selectively synchronized client snapshot. The Next build,
 authenticated handler routes, encrypted static data plane, persistent client
 cache, and production dashboard read path are connected; compatibility paths
-remain for development and existing mutation commands during cutover.
+remain only at the unchanged cloud `Mutation` protocol boundary.
 
 ## Boundaries
 
@@ -46,8 +46,8 @@ remain for development and existing mutation commands during cutover.
 - The new query engine owns filtering, graph traversal, locale/status selection,
   ordering, paging, projection, references, and search. It does not delegate
   query execution to `EntryResolver`.
-- `EntryIndex` and `EntryResolver` are temporary correctness and benchmark
-  oracles only. Production migration removes them rather than wrapping them.
+- The legacy `EntryIndex` and `EntryResolver` implementations have been removed.
+  Their useful query, source, and mutation cases run against this database.
 - Ordinary concurrent mutations operate on field paths and carry a base hash.
   Rich text remains an opaque field until its concurrency semantics are designed
   separately. This package does not introduce CRDTs.
@@ -96,8 +96,8 @@ mutations, but no longer proxies the static read data plane.
    - implement locale fallback, status preference, previews, links, references,
      snippets, grouping, and aggregates;
    - expose the existing `Resolver` API from the new engine;
-   - run the current `EntryResolver` test corpus against both implementations
-     until results are identical.
+   - port the useful `EntryResolver` corpus to stable expectations on the new
+     implementation after dual-run parity was established.
 4. **Build integration (implemented)**
    - export normalized records, index buckets, references, and frame metadata;
    - compile immutable build content into the encrypted release bundle;
@@ -140,27 +140,25 @@ mutations, but no longer proxies the static read data plane.
    - replica field and structural writes use a normalized snapshot-backed source
      writer.
 
-## Remaining cutover
+## Completed cutover
 
-- delete the legacy `EntryIndex`/`EntryResolver` compatibility classes after
-  retaining any still-useful oracle cases in the shared resolver corpus;
-- keep running `Benchmark.test.ts` and the shared resolver corpus during that
-  removal.
+- production, development, handler, and test database paths use normalized
+  snapshots and `DatabaseResolver`;
+- the legacy `EntryIndex`, `EntryResolver`, `EntryDB`, and `LocalDB` classes are
+  deleted;
+- `Benchmark.test.ts` measures normalized build, query, and encrypted bundle
+  costs, while resolver/source tests retain the useful behavioral cases.
 
 ## Replacement strategy
 
-The migration is a dual-run, not an adapter architecture:
+The completed data path is direct rather than an adapter around the old index:
 
 ```text
 Source records ──► new DatabaseSnapshot ──► new QueryEngine
-       │                                      │
-       └────► EntryIndex + EntryResolver ─────┘ compare in tests/benchmarks only
 ```
 
-New production code must not depend on `EntryIndex` or `EntryResolver`. A small
-compatibility facade may implement the public `Resolver` and `Graph` interfaces
-while callers migrate, but its implementation is entirely backed by the new
-database.
+The public `Resolver` and `Graph` interfaces are implemented entirely by the new
+database, without a compatibility index or resolver beneath them.
 
 ## Security properties
 

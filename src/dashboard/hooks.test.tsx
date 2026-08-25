@@ -1,5 +1,5 @@
 import {cleanup, fireEvent, render, screen} from '#test/react.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {afterEach, expect, test} from 'bun:test'
@@ -60,7 +60,7 @@ function testDashboard(workspace: string) {
       [workspace]: Config.workspace(workspace, {source: '.', roots: {}})
     }
   })
-  const graph = new LocalDB(config)
+  const graph = new SourceDB(config)
   return {
     graph,
     config,

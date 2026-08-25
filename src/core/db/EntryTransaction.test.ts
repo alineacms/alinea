@@ -4,7 +4,7 @@ import {MediaFile} from '#/core/media/MediaTypes.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {MetadataAlias} from '#/field/metadata/MetadataAliases.js'
 import {Config, Field} from '#/index.js'
-import {createEntryIndex} from '#test/EntryFixture.js'
+import {createEntrySource} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
 import {TestDB} from './TestDB.js'
 
@@ -131,7 +131,7 @@ function mediaFileData(title: string, path: string, aliases: Array<string>) {
 }
 
 async function createDb() {
-  const {source} = await createEntryIndex(cms.config, [
+  const source = await createEntrySource(cms.config, [
     {
       id: 'one',
       type: 'Page',
@@ -383,7 +383,7 @@ test('update preserves a MediaFile URL with an empty alias row', async () => {
 })
 
 test('update removes a current MediaFile URL from legacy aliases', async () => {
-  const {source} = await createEntryIndex(cms.config, [
+  const source = await createEntrySource(cms.config, [
     {
       id: 'media-one',
       type: 'MediaFile',

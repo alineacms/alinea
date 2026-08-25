@@ -3,7 +3,7 @@ import type {
   LocalConnection,
   Revision
 } from '#/core/Connection.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {SourceDB} from '#/database/entry/SourceDB.js'
 import type {User, UserInput} from '#/core/User.js'
 import {localUser} from '#/core/User.js'
 
@@ -22,7 +22,7 @@ interface ConnectionOverrides extends Partial<
 > {}
 
 export function createTestConnection(
-  db: LocalDB & ConnectionOverrides,
+  db: SourceDB & ConnectionOverrides,
   options: TestConnectionOptions = {}
 ): LocalConnection {
   const currentUser: User = options.user ?? localUser

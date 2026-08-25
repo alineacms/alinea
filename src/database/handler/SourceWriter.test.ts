@@ -1,14 +1,16 @@
 import {describe, expect, test} from 'bun:test'
+import {sourceChanges} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import {cms} from '#test/cms.js'
-import {createEntryIndex} from '#test/EntryFixture.js'
+import {createEntrySource} from '#test/EntryFixture.js'
+import {buildEntryDatabase} from '../entry/Source.js'
+import {EntryQueryEngine} from '../entry/Query.js'
 import {requestSourceMutations} from './SourceWriter.js'
 
 describe('requestSourceMutations', () => {
   for (const [name, mutation] of cases()) {
-    test(`matches the legacy source transaction for ${name}`, async () => {
-      const {source} = await createEntryIndex(cms.config, [
+    test(`writes normalized source changes for ${name}`, async () => {
+      const source = await createEntrySource(cms.config, [
         {
           id: 'recipes',
           type: 'DemoRecipes',
@@ -36,15 +38,34 @@ describe('requestSourceMutations', () => {
           data: {title: 'Draft'}
         }
       ])
-      const legacy = new LocalDB(cms.config, source)
-      await legacy.sync()
-
-      const expected = await legacy.request([mutation])
-      const actual = await requestSourceMutations(cms.config, source, [
+      const request = await requestSourceMutations(cms.config, source, [
         mutation
       ])
-
-      expect(actual).toEqual(expected)
+      expect(request.changes.length).toBeGreaterThan(0)
+      await source.applyChanges(sourceChanges(request))
+      const query = new EntryQueryEngine(
+        await buildEntryDatabase(cms.config, source)
+      )
+      const entries = await query.find({status: 'all'})
+      if (name === 'update')
+        expect(entries.find(entry => entry.entryId === 'apple')?.title).toBe(
+          'Green apple'
+        )
+      if (name === 'create')
+        expect(entries.some(entry => entry.entryId === 'pear')).toBe(true)
+      if (name === 'move')
+        expect(entries.find(entry => entry.entryId === 'apple')?.parentId).toBe(
+          null
+        )
+      if (name === 'remove')
+        expect(entries.some(entry => entry.entryId === 'apple')).toBe(false)
+      if (name === 'publish')
+        expect(
+          entries.some(
+            entry =>
+              entry.entryId === 'draft' && entry.versionStatus === 'published'
+          )
+        ).toBe(true)
     })
   }
 })

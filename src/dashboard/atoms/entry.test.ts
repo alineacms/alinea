@@ -1,6 +1,6 @@
 import {expect, spyOn, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
@@ -161,7 +161,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
       })
     }
   })
-  const db = new LocalDB(config)
+  const db = new SourceDB(config)
   await db.sync()
   const created = await db.create({
     type: MediaFile,

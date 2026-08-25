@@ -1,5 +1,6 @@
 import type {Client} from '#/core/Client.js'
 import type {Config} from '#/core/Config.js'
+import {EventDispatcher} from '#/core/EventDispatcher.js'
 import type {Policy} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
@@ -76,7 +77,7 @@ export async function boot(gen: ConfigGenerator) {
 }
 
 function createSharedWorker(): [EventTarget, DashboardWorker] {
-  const events = new EventTarget()
+  const events = new EventDispatcher()
   const worker = new SharedWorker(import.meta.url, {
     type: 'module',
     name: 'Alinea dashboard'

@@ -7,7 +7,7 @@ import type {
   AuthedContext,
   RequestContext
 } from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
@@ -49,7 +49,7 @@ test('requires member management capability for user management', async () => {
       })
     }
   })
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   let userRoles = ['editor']
   let listCalls = 0
   const handle = createHandler({
@@ -94,7 +94,7 @@ test('reports missing user api capability without listUsers', async () => {
     schema: {Page},
     workspaces: {main}
   })
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const handle = createHandler({
     cms,
     db,
@@ -115,7 +115,7 @@ test('reports user api capability when listUsers exists', async () => {
     schema: {Page},
     workspaces: {main}
   })
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const handle = createHandler({
     cms,
     db,
@@ -140,7 +140,7 @@ test('enriches authenticated user in auth status response', async () => {
     schema: {Page},
     workspaces: {main}
   })
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const handle = createHandler({
     cms,
     db,
@@ -185,7 +185,7 @@ test('adds enriched user to commit requests', async () => {
     schema: {Page},
     workspaces: {main}
   })
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   let commitUser: User | undefined
   const handle = createHandler({
     cms,
@@ -245,7 +245,7 @@ test('rejects oversized uploads before preparing a remote upload', async () => {
     workspaces: {main},
     maxUploadSize: 3
   })
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   let prepareCalls = 0
   const handle = createHandler({
     cms,
@@ -285,7 +285,7 @@ test('rejects oversized uploads before preparing a remote upload', async () => {
 
 test('serves replica bootstrap and state only after authentication', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const snapshot = new DatabaseSnapshot({
     schema: entryDatabaseSchema,
     revision: 'tree-1'

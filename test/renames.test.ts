@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config} from '#/index.js'
 import {createCMS, Entry} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -18,7 +18,7 @@ const cms = createCMS({
 })
 
 test('avoid overwriting existing paths', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -49,7 +49,7 @@ test('avoid overwriting existing paths', async () => {
 })
 
 test('rename via publish', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -69,7 +69,7 @@ test('rename via publish', async () => {
 })
 
 test('rename via update', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -87,7 +87,7 @@ test('rename via update', async () => {
 })
 
 test('rename parent via draft', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'}
@@ -130,7 +130,7 @@ test('rename parent via draft', async () => {
 })
 
 test('create new entry draft with same path name as published entry with children, then publish', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const pagePublished = await db.create({
     type: Page,
     status: 'published',

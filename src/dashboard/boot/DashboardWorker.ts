@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {EventDispatcher} from '#/core/EventDispatcher.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -43,7 +44,7 @@ interface QueuedMutation {
 
 const activityHistoryLimit = 100
 
-export class DashboardWorker extends EventTarget {
+export class DashboardWorker extends EventDispatcher {
   #source: Source
   #localDB: DashboardDatabase | undefined
   #localClient: LocalConnection | undefined

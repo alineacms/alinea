@@ -4,7 +4,7 @@ import {ListRow} from '#/core/ListRow.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {Config, Field} from '#/index.js'
-import {createEntryResolver} from '#test/EntryFixture.js'
+import {createDatabaseResolver} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
 import {localiser} from './Localiser.js'
 
@@ -98,7 +98,7 @@ const cms = createCMS({
 })
 
 async function createResolver() {
-  return createEntryResolver(cms.config, [
+  return createDatabaseResolver(cms.config, [
     {
       id: 'article',
       type: 'Article',

@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config} from '#/index.js'
 import {Entry, createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -34,7 +34,7 @@ const cms = createCMS({
 })
 
 test('move parent', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent1 = await db.create({
     type: Page,
     set: {title: 'Page 1'}

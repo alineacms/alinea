@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {EventDispatcher} from '#/core/EventDispatcher.js'
 import type {
   SyncApi,
   UploadMetadata,
@@ -38,7 +39,7 @@ export class SourceDB extends WriteableGraph {
   source: Source
   #database: SourceEntryDatabase | undefined
   #resolver: DatabaseResolver | undefined
-  #events = new EventTarget()
+  #events = new EventDispatcher()
   #limit = pLimit(1)
 
   constructor(

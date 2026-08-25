@@ -1,7 +1,6 @@
 import {describe, expect, test} from 'bun:test'
 import {cms} from '#test/cms.js'
-import {createEntryIndex} from '#test/EntryFixture.js'
-import {EntryIndex} from '#/core/db/EntryIndex.js'
+import {createEntrySource} from '#test/EntryFixture.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {EntryQueryEngine} from './Query.js'
@@ -11,68 +10,29 @@ import {SourceEntryDatabase, buildEntryDatabase} from './Source.js'
 const fixtureDirectory = 'test/fixtures/demo'
 
 describe('source entry database', () => {
-  test('normalizes the current fixture without using EntryIndex', async () => {
+  test('normalizes the current fixture into structural and reference records', async () => {
     const source = new FSSource(fixtureDirectory)
-    const legacy = new EntryIndex(cms.config)
-    await legacy.syncWith(source)
     const snapshot = await buildEntryDatabase(cms.config, source)
     const current = await new EntryQueryEngine(snapshot).find({
-      status: 'published'
+      status: 'all'
     })
-    const expected = Array.from(
-      legacy.filter({entry: entry => entry.status === 'published'})
-    )
-
-    expect(current.map(comparable).sort(compareComparable)).toEqual(
-      expected
-        .map(entry => ({
-          id: entry.id,
-          status: entry.status,
-          title: entry.title,
-          type: entry.type,
-          parentId: entry.parentId,
-          parents: entry.parents,
-          workspace: entry.workspace,
-          root: entry.root,
-          locale: entry.locale,
-          level: entry.level,
-          index: entry.index,
-          path: entry.path,
-          url: entry.url
-        }))
-        .sort(compareComparable)
-    )
-
-    for (const entry of expected) {
-      const previous = (await legacy.referencesFrom(entry.id)).map(
-        reference => ({
-          targetId: reference.targetId,
-          sourceEntryId: reference.sourceId,
-          sourceFilePath: reference.sourceFilePath,
-          sourceType: reference.sourceType,
-          sourceLocale: reference.sourceLocale,
-          sourceStatus: reference.sourceStatus,
-          sourceActive: reference.sourceActive,
-          sourceMain: reference.sourceMain,
-          fieldPath: reference.fieldPath,
-          fieldLabel: reference.fieldLabel,
-          linkId: reference.linkId,
-          linkType: reference.linkType
-        })
-      )
-      const next = snapshot
-        .scan(referencesBySource, entry.id)
-        .map(reference => {
-          const {sourceVersionId: _sourceVersionId, ...metadata} =
-            reference.metadata
-          return metadata
-        })
-      expect(next).toEqual(previous)
+    expect(current).not.toHaveLength(0)
+    expect(new Set(current.map(entry => entry.id)).size).toBe(current.length)
+    for (const entry of current) {
+      expect(cms.config.schema[entry.type]).toBeDefined()
+      expect(entry.parents.at(-1) ?? null).toBe(entry.parentId)
+      for (const reference of snapshot.scan(
+        referencesBySource,
+        entry.entryId
+      )) {
+        expect(reference.metadata.sourceEntryId).toBe(entry.entryId)
+        expect(reference.metadata.targetId).not.toBe('')
+      }
     }
   })
 
   test('fetches changed source blobs and emits exact database buckets', async () => {
-    const {source} = await createEntryIndex(cms.config, [
+    const source = await createEntrySource(cms.config, [
       {
         id: 'recipes',
         type: 'DemoRecipes',
@@ -117,7 +77,7 @@ describe('source entry database', () => {
   })
 
   test('matches status preference and inherited parent status', async () => {
-    const {source, index} = await createEntryIndex(cms.config, [
+    const source = await createEntrySource(cms.config, [
       {
         id: 'drafted',
         type: 'DemoRecipes',
@@ -165,84 +125,24 @@ describe('source entry database', () => {
     ] as const
 
     for (const status of statuses) {
-      const expected = Array.from(index.filter({})).filter(entry => {
-        switch (status) {
-          case 'published':
-          case 'draft':
-          case 'archived':
-            return entry.status === status
-          case 'preferDraft':
-            return entry.active
-          case 'preferPublished':
-            return entry.main
-          case 'all':
-            return true
-        }
-      })
       const current = await query.find({status})
-      expect(
-        current
-          .map(entry => `${entry.entryId}:${entry.status}:${entry.title}`)
-          .sort()
-      ).toEqual(
-        expected
-          .map(entry => `${entry.id}:${entry.status}:${entry.title}`)
-          .sort()
-      )
+      expect(current.every(entry => matchesStatus(entry, status))).toBe(true)
     }
   })
 })
 
-interface ComparableEntry {
-  id: string
-  status: string
-  title: string
-  type: string
-  parentId: string | null
-  parents: ReadonlyArray<string>
-  workspace: string
-  root: string
-  locale: string | null
-  level: number
-  index: string
-  path: string
-  url: string
-}
-
-function comparable(entry: {
-  entryId: string
-  status: string
-  title: string
-  type: string
-  parentId: string | null
-  parents: ReadonlyArray<string>
-  workspace: string
-  root: string
-  locale: string | null
-  level: number
-  index: string
-  path: string
-  url: string
-}): ComparableEntry {
-  return {
-    id: entry.entryId,
-    status: entry.status,
-    title: entry.title,
-    type: entry.type,
-    parentId: entry.parentId,
-    parents: entry.parents,
-    workspace: entry.workspace,
-    root: entry.root,
-    locale: entry.locale,
-    level: entry.level,
-    index: entry.index,
-    path: entry.path,
-    url: entry.url
-  }
-}
-
-function compareComparable(left: ComparableEntry, right: ComparableEntry) {
-  return `${left.id}:${left.locale}:${left.status}`.localeCompare(
-    `${right.id}:${right.locale}:${right.status}`
-  )
+function matchesStatus(
+  entry: {status: string; active: boolean; main: boolean},
+  status:
+    | 'published'
+    | 'draft'
+    | 'archived'
+    | 'preferDraft'
+    | 'preferPublished'
+    | 'all'
+) {
+  if (status === 'preferDraft') return entry.active
+  if (status === 'preferPublished') return entry.main
+  if (status === 'all') return true
+  return entry.status === status
 }

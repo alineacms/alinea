@@ -3,7 +3,7 @@ import {suite} from '@alinea/suite'
 import {Config, Edit, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 import type {
   MediaUrlMeta,
@@ -24,7 +24,7 @@ const example = new File(
   'example.jpg'
 )
 
-class DB extends LocalDB {
+class DB extends SourceDB {
   uploads = 0
   preparedFiles: Array<string> = []
 

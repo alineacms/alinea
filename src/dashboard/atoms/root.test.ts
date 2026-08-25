@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
@@ -59,7 +59,7 @@ test('root explorers follow route locales and keep media unlocalized', async () 
       })
     }
   })
-  const db = new LocalDB(config)
+  const db = new SourceDB(config)
   await db.sync()
   await db.create({
     id: 'english-root-entry',

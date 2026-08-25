@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config} from '#/index.js'
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -18,7 +18,7 @@ const cms = createCMS({
 })
 
 test('new drafts', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     status: 'draft',
@@ -34,7 +34,7 @@ test('new drafts', async () => {
 })
 
 test("don't drop children when discarding drafts", async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const page1 = await db.create({
     type: Page,
     set: {path: 'page1'}

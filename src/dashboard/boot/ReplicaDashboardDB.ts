@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {EventDispatcher} from '#/core/EventDispatcher.js'
 import type {
   LocalConnection,
   UploadMetadata,
@@ -38,7 +39,7 @@ import {
 export class ReplicaDashboardDB extends WriteableGraph {
   #replica: EntryReplicaClient
   #client: LocalConnection
-  #events = new EventTarget()
+  #events = new EventDispatcher()
   #transport: HttpReplicaTransport
   #queryDependencies = new Map<string, ReadonlySet<QueryDependency>>()
 

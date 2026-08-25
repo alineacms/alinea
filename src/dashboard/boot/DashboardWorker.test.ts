@@ -1,13 +1,12 @@
 import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import type {EntryWrite} from '#/core/db/EntryWrite.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
-import {SourceDB} from '#/database/entry/SourceDB.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
@@ -15,7 +14,7 @@ import {DashboardWorker} from './DashboardWorker.js'
 
 test('records remote database sync activity and keeps its outcome', async () => {
   const fixture = new FSSource('test/fixtures/demo')
-  const remoteDB = new LocalDB(cms.config, fixture)
+  const remoteDB = new SourceDB(cms.config, fixture)
   await remoteDB.sync()
 
   const baseClient = createTestConnection(remoteDB)
@@ -67,7 +66,7 @@ test('keeps successful content actions in activity history', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteSource = new MemorySource()
   await syncWith(remoteSource, fixture)
-  const remoteDB = new LocalDB(cms.config, remoteSource)
+  const remoteDB = new SourceDB(cms.config, remoteSource)
   await remoteDB.sync()
 
   const worker = new DashboardWorker(new MemorySource())
@@ -158,7 +157,7 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
   )
 
   const fixture = new FSSource('test/fixtures/demo')
-  const remoteDB = new LocalDB(cms.config, fixture)
+  const remoteDB = new SourceDB(cms.config, fixture)
   await remoteDB.sync()
   const baseClient = createTestConnection(remoteDB)
   let remoteSyncs = 0
@@ -226,7 +225,7 @@ async function createFailedMutationFixture() {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteSource = new MemorySource()
   await syncWith(remoteSource, fixture)
-  const remoteDB = new LocalDB(cms.config, remoteSource)
+  const remoteDB = new SourceDB(cms.config, remoteSource)
   await remoteDB.sync()
 
   const localSource = new MemorySource()

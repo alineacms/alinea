@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config} from 'alinea'
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 
@@ -31,7 +31,7 @@ const cms = createCMS({
 })
 
 test('seed multiple languages', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await db.sync()
   const page1EN = await db.get({
     locale: 'en',
@@ -65,7 +65,7 @@ test('serializes concurrent seeding on the same index', async () => {
       firstApply()
     }
   })()
-  const db = new LocalDB(cms.config, source)
+  const db = new SourceDB(cms.config, source)
 
   const results = await Promise.allSettled([db.sync(), db.sync()])
 

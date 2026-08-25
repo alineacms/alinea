@@ -1,7 +1,8 @@
 import {createCMS} from '#/core.js'
 import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
+import {mutationsFromEntryWrites} from '#/core/db/EntryWrite.js'
 import {create, move, update} from '#/core/db/Operation.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
@@ -39,25 +40,28 @@ const cms = createCMS({
 })
 
 test('enforce permissions', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const mutations = await create({
     type: Page,
     root: 'pages',
     workspace: 'main',
     set: {title: 'Test Page'}
   }).task(db)
-  await test.throws(() => db.request(mutations, Policy.ALLOW_NONE), 'denied')
+  await test.throws(
+    () => db.request(mutationsFromEntryWrites(mutations), Policy.ALLOW_NONE),
+    'denied'
+  )
 })
 
 test('enforce field update permissions', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const createSubPage = create({
     type: SubPage,
     root: 'pages',
     workspace: 'main',
     set: {title: 'Sub page', x: 'before'}
   })
-  await db.mutate(await createSubPage.task(db))
+  await db.writeEntries(await createSubPage.task(db))
 
   const policy = new WriteablePolicy(getScope(cms.config))
   policy.allowAll()
@@ -70,7 +74,10 @@ test('enforce field update permissions', async () => {
     status: 'published',
     set: {x: 'after'}
   }).task(db)
-  await test.throws(() => db.request(denyUpdate, policy), 'denied')
+  await test.throws(
+    () => db.request(mutationsFromEntryWrites(denyUpdate), policy),
+    'denied'
+  )
 
   const allowOtherField = await update({
     type: SubPage,
@@ -79,11 +86,11 @@ test('enforce field update permissions', async () => {
     status: 'published',
     set: {title: 'Updated title'}
   }).task(db)
-  await db.request(allowOtherField, policy)
+  await db.request(mutationsFromEntryWrites(allowOtherField), policy)
 })
 
 test('enforce reorder permissions', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const parent = await db.create({
     type: Page,
     root: 'pages',
@@ -110,11 +117,14 @@ test('enforce reorder permissions', async () => {
     target: childB._id,
     dropPosition: 'after'
   }).task(db)
-  await test.throws(() => db.request(reorder, policy), 'denied')
+  await test.throws(
+    () => db.request(mutationsFromEntryWrites(reorder), policy),
+    'denied'
+  )
 })
 
 test('enforce move permissions', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   const sourceParent = await db.create({
     type: Page,
     root: 'pages',
@@ -142,5 +152,8 @@ test('enforce move permissions', async () => {
     target: targetParent._id,
     dropPosition: 'on'
   }).task(db)
-  await test.throws(() => db.request(moveMutation, policy), 'denied')
+  await test.throws(
+    () => db.request(mutationsFromEntryWrites(moveMutation), policy),
+    'denied'
+  )
 })

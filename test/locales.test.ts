@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config, Edit, Field, Query} from '#/index.js'
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -32,7 +32,7 @@ const cms = createCMS({
 })
 
 test('fetch edges via locale', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await db.sync()
   const page1EN = await db.get({
     type: Page,
@@ -62,7 +62,7 @@ test('fetch edges via locale', async () => {
 })
 
 test('seeding', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await db.sync()
   const page1EN = await db.first({
     type: Page,
@@ -79,7 +79,7 @@ test('seeding', async () => {
 })
 
 test('get translations', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await db.sync()
   const page = await db.get({
     root: cms.workspaces.main.pages,
@@ -142,7 +142,7 @@ test('get translations', async () => {
 })
 
 test('create entries', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await test.throws(
     () => db.create({type: Page, set: {title: 'x'}}),
     'Invalid locale'

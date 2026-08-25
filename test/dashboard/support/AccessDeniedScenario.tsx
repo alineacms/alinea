@@ -3,7 +3,7 @@ import {App} from '#/dashboard/App.js'
 import {Config, Field} from '#/index.js'
 import {views} from '#/field/views.js'
 import {createTestConnection} from '#test/CreateConnection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {use, useState} from 'react'
 
 const Page = Config.document('Page', {
@@ -21,7 +21,7 @@ const config = Config.create({
 })
 
 async function createAccessDeniedScenario() {
-  const db = new LocalDB(config)
+  const db = new SourceDB(config)
   await db.sync()
   db.createPolicy = async () => Policy.ALLOW_NONE
   return {client: createTestConnection(db), db}

@@ -1,6 +1,6 @@
 import {Config, Field} from '#/index.js'
 import type {Config as ConfigDefinition} from '#/core/Config.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {
   alineaDevAtom,
   clientAtom,
@@ -34,7 +34,7 @@ export const dashboardTestConfig = Config.create({
 
 export function createDashboardStore(
   config: ConfigDefinition,
-  db: LocalDB
+  db: SourceDB
 ) {
   const store = createStore()
   store.set(configAtom, config)
@@ -84,7 +84,7 @@ export class TestEvents implements EventTarget {
 }
 
 export async function createDashboardAtomFixture() {
-  const db = new LocalDB(dashboardTestConfig)
+  const db = new SourceDB(dashboardTestConfig)
   await db.sync()
   const parent = await db.create({
     type: DashboardTestPage,

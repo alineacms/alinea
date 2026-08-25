@@ -1,4 +1,4 @@
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {createMediaRoot} from '#/core/media/MediaRoot.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
@@ -227,7 +227,7 @@ export const config = Config.create({
 })
 
 export async function createExample() {
-  const db = new LocalDB(config)
+  const db = new SourceDB(config)
   await db.sync()
   return db
 }

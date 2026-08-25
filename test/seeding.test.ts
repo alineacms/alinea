@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 const test = suite(import.meta)
 
@@ -30,7 +30,7 @@ const cms = createCMS({
 })
 
 test('seed multiple languages', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await db.sync()
   const page1EN = await db.get({
     locale: 'en',
@@ -44,7 +44,7 @@ test('seed multiple languages', async () => {
 })
 
 test('keeps updated titles when re-indexing multiple seeded translations', async () => {
-  const db = new LocalDB(cms.config)
+  const db = new SourceDB(cms.config)
   await db.sync()
 
   const page1EN = await db.get({locale: 'en', path: 'page1'})
@@ -77,7 +77,7 @@ test('keeps updated titles when re-indexing multiple seeded translations', async
 
   await db.sync()
 
-  const reindexed = new LocalDB(cms.config, db.source)
+  const reindexed = new SourceDB(cms.config, db.source)
   await reindexed.sync()
   const updatedPage1EN = await reindexed.get({
     locale: 'en',
