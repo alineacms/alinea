@@ -40,7 +40,6 @@
   overflow: hidden;
 
   .ExplorerFileCard.is-card & {
-    align-items: center;
     justify-content: center;
     border-radius: inherit inherit 0 0;
   }
