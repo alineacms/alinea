@@ -179,4 +179,16 @@ describe('DatabaseResolver parity', () => {
     )
     expect(result.length).toBeLessThan(database.size)
   })
+
+  test('reads references from the persistent reference index', async () => {
+    const link = [...database.records()].find(record => record.kind === 'link')
+    expect(link).toBeDefined()
+    const query = {targetId: link!.targetId, status: 'all' as const}
+    const actual = await current.referencesTo(query)
+    const expected = await legacyIndex.referencesTo(query)
+
+    expect(actual.references).toEqual(expected.references)
+    expect(actual.total).toBe(expected.total)
+    expect(actual.scan.complete).toBe(true)
+  })
 })

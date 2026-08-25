@@ -22,7 +22,8 @@ export function createCMS() {
 }
 
 export function withAlinea(config: NextConfig = {}): NextConfig {
-  const adminPath = resolveAdminPath()
+  const settings = resolveGeneratedSettings()
+  const adminPath = settings?.adminPath
   if (!adminPath) {
     console.warn(
       'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI and deploy @alinea/generated.'
@@ -57,6 +58,16 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const rewrites = adminPath
     ? createRewrites(config, adminPath)
     : config.rewrites
+  const env = settings
+    ? {
+        ...config.env,
+        ALINEA_ADMIN_PATH: settings.adminPath,
+        ALINEA_GENERATED_RELEASE: settings.releaseId,
+        ALINEA_GENERATED_CONFIG: settings.configId,
+        ALINEA_RELEASE_URL: `${settings.adminPath}/release/${settings.releaseId}/database.bin`,
+        ALINEA_CONFIG_URL: `${settings.adminPath}/config/${settings.configId}/config.js`
+      }
+    : config.env
   if (nextVersion < 15)
     return {
       ...config,
@@ -68,6 +79,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ]
       },
       images,
+      env,
       redirects,
       rewrites
     }
@@ -78,6 +90,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
       '@alinea/generated'
     ],
     images,
+    env,
     redirects,
     rewrites
   }
@@ -149,17 +162,36 @@ function createRewrites(config: NextConfig, adminPath: string) {
 
 interface GeneratedSettings {
   adminPath?: unknown
+  releaseId?: unknown
+  configId?: unknown
 }
 
-function resolveAdminPath(): string | undefined {
+interface ResolvedGeneratedSettings {
+  adminPath: string
+  releaseId: string
+  configId: string
+}
+
+function resolveGeneratedSettings(): ResolvedGeneratedSettings | undefined {
   try {
     const require = createRequire(resolve('./index.js'))
     const location = require.resolve('@alinea/generated/settings.json')
     const settings = JSON.parse(
       readFileSync(location, 'utf-8')
     ) as GeneratedSettings
-    if (typeof settings.adminPath === 'string' && settings.adminPath)
-      return normalizeBasePath(settings.adminPath)
+    if (
+      typeof settings.adminPath === 'string' &&
+      settings.adminPath &&
+      typeof settings.releaseId === 'string' &&
+      settings.releaseId &&
+      typeof settings.configId === 'string' &&
+      settings.configId
+    )
+      return {
+        adminPath: normalizeBasePath(settings.adminPath),
+        releaseId: settings.releaseId,
+        configId: settings.configId
+      }
   } catch {}
 }
 

@@ -1,6 +1,7 @@
 import {Entry} from '#/core/Entry.js'
 import type {EntryAnchorTarget} from '#/core/Field.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import type {Policy, Resource} from '#/core/Role.js'
 import {Type} from '#/core/Type.js'
 import {parents} from '#/query.js'
 import {atom} from 'jotai'
@@ -51,7 +52,7 @@ const linkEntryLoader = atom(get => {
       const entry = byId.get(id)
       if (
         !entry ||
-        !policy.canRead({
+        !canDiscoverLink(policy, {
           id: entry.id,
           type: entry.type,
           workspace: entry.workspace,
@@ -71,6 +72,13 @@ const linkEntryLoader = atom(get => {
     })
   })
 })
+
+function canDiscoverLink(
+  policy: Pick<Policy, 'canRead' | 'canExplore'>,
+  resource: Resource
+): boolean {
+  return policy.canRead(resource) || policy.canExplore(resource)
+}
 
 export const linkEntryAtoms = dispense((id: string) => {
   const source = atom(async get => {

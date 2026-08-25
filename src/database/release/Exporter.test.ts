@@ -1,4 +1,6 @@
 import {describe, expect, test} from 'bun:test'
+import {FSSource} from '#/core/source/FSSource.js'
+import {cms} from '#test/cms.js'
 import {DatabaseSchema, DatabaseSnapshot} from '../Database.js'
 import {ReplicaDatabaseReader} from '../Reader.js'
 import {DatabaseIndex} from '../SecondaryIndex.js'
@@ -9,6 +11,7 @@ import {
   MissingFrameGrantError
 } from '../replica/Bundle.js'
 import {JsonReplicaCodec, LazyIndexReader} from '../replica/IndexReader.js'
+import {buildEntryReleaseArtifacts} from './Artifacts.js'
 import {exportRelease} from './Exporter.js'
 
 interface TestRecord {
@@ -25,6 +28,22 @@ const byGroup = new DatabaseIndex<TestRecord, string>({
 })
 
 describe('exportRelease', () => {
+  test('builds co-located release artifacts with a separate config secret', async () => {
+    const artifacts = await buildEntryReleaseArtifacts(
+      cms.config,
+      new FSSource('test/fixtures/demo'),
+      {releaseId: 'release-secret', configId: 'config-secret'}
+    )
+
+    expect(artifacts.releasePath).toBe('admin/release/release-secret')
+    expect(artifacts.releaseUrl).toBe(
+      '/admin/release/release-secret/database.bin'
+    )
+    expect(artifacts.configUrl).toBe('/admin/config/config-secret/config.js')
+    expect(artifacts.catalogJson).toContain('release-secret')
+    expect(artifacts.handlerKeysJson).not.toContain('database.bin')
+  })
+
   test('round trips records and ordered index buckets through range frames', async () => {
     const snapshot = new DatabaseSnapshot({
       schema: new DatabaseSchema<TestRecord>().add(byGroup),

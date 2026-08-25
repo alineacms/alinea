@@ -69,7 +69,34 @@ export class EntryLoader {
     signal?: AbortSignal
   ): Promise<Entry | undefined> {
     const read = await this.read(core, signal)
-    if (!read) return undefined
+    if (!read) {
+      const search = await this.search(core, 'explore', signal)
+      return {
+        id: core.entryId,
+        status: core.status,
+        title: core.title,
+        type: core.type,
+        seeded: core.seeded,
+        workspace: core.workspace,
+        root: core.root,
+        level: core.level,
+        filePath: '',
+        parentDir: '',
+        childrenDir: '',
+        index: core.index,
+        parentId: core.parentId,
+        parents: [...core.parents],
+        locale: core.locale,
+        rowHash: '',
+        active: core.active,
+        main: core.main,
+        path: core.path,
+        fileHash: '',
+        url: core.url,
+        data: {},
+        searchableText: search?.searchableText ?? ''
+      }
+    }
     const payload = await this.#reader.get(read.payloadId, signal)
     if (!isEntryPayloadRecord(payload)) return undefined
     const search = await this.search(core, 'read', signal)

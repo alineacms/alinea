@@ -997,6 +997,29 @@ test('new database resolver matches advanced query behavior', async () => {
       select: Article.single
     },
     {
+      first: true,
+      id: 'child-1',
+      select: Article.body
+    },
+    {
+      first: true,
+      id: 'child-1',
+      select: Article.heroImage
+    },
+    {
+      first: true,
+      locale: 'de',
+      root: mainWorkspace.localized,
+      id: 'trans',
+      select: Article.heroImage
+    },
+    {
+      first: true,
+      locale: 'en',
+      id: 'trans',
+      select: {single: Article.single, multiple: Article.multi}
+    },
+    {
       type: Article,
       root: mainWorkspace.pages,
       count: true

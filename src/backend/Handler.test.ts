@@ -11,6 +11,10 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
+import {DatabaseSnapshot} from '#/database/Database.js'
+import {entryDatabaseSchema} from '#/database/entry/Indexes.js'
+import {ReplicaService} from '#/database/handler/Service.js'
+import {exportEntryRelease} from '#/database/release/Exporter.js'
 import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
@@ -277,6 +281,72 @@ test('rejects oversized uploads before preparing a remote upload', async () => {
 
   test.is(response.status, 413)
   test.is(prepareCalls, 0)
+})
+
+test('serves replica bootstrap and state only after authentication', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const snapshot = new DatabaseSnapshot({
+    schema: entryDatabaseSchema,
+    revision: 'tree-1'
+  })
+  const release = await exportEntryRelease({
+    bundleId: 'release-1',
+    bundleUrl: '/admin/release/release-1/database.bin',
+    snapshot
+  })
+  const replica = new ReplicaService({
+    config: cms.config,
+    configId: 'config-1',
+    configUrl: '/admin/config/config-1/config.js',
+    cacheKey: 'cache-1',
+    release: {snapshot, catalog: release.catalog, keys: release.keys}
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    replica,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async enrichUser(user: User): Promise<User> {
+          return user
+        }
+      })
+    }
+  })
+  const bootstrap = await handle(
+    new Request('http://localhost/api?action=replicaBootstrap', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.is(bootstrap.status, 200)
+  test.is(
+    (await bootstrap.json()).configUrl,
+    '/admin/config/config-1/config.js'
+  )
+  const state = await handle(
+    new Request('http://localhost/api?action=replicaState', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.is(state.status, 200)
+  test.is((await state.json()).catalog.revision, 'tree-1')
+  const unchanged = await handle(
+    new Request('http://localhost/api?action=replicaState&revision=tree-1', {
+      headers: {accept: 'application/json'}
+    }),
+    requestContext()
+  )
+  test.is(unchanged.status, 204)
 })
 
 function userRequest(operation: string): Request {

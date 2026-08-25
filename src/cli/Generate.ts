@@ -1,5 +1,6 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
+import {createId} from '#/core/Id.js'
 import {exportSource} from '#/core/source/SourceExport.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
@@ -18,6 +19,7 @@ import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
 import {writeFileIfContentsDiffer} from './util/FS.js'
 import {reportError, reportFatal} from './util/Report.js'
+import {buildEntryReleaseArtifacts} from '#/database/release/Artifacts.js'
 
 const __dirname = dirname(import.meta.url)
 const require = createRequire(import.meta.url)
@@ -96,7 +98,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     fix: options.fix || false,
     outDir: path.join(nodeModules, '@alinea/generated')
   }
-  await copyStaticFiles(context)
+  const generated = {releaseId: createId(), configId: createId()}
+  await copyStaticFiles(context, generated)
   let indexing!: Emitter<DevDB>
   const builder = compileConfig(context)
   const builds = genEffect(builder, () => indexing?.return())
@@ -111,10 +114,67 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     )
     return data.length
   }
+  async function writeRelease(db: DevDB, cms: CMS) {
+    const artifacts = await buildEntryReleaseArtifacts(cms.config, db.source, {
+      releaseId: generated.releaseId,
+      configId: generated.configId
+    })
+    const publicDir = path.join(rootDir, cms.config.publicDir ?? 'public')
+    const releaseDir = path.join(publicDir, artifacts.releasePath)
+    const configDir = path.join(publicDir, artifacts.configPath)
+    await Promise.all([
+      fsp.mkdir(releaseDir, {recursive: true}),
+      fsp.mkdir(configDir, {recursive: true})
+    ])
+    await Promise.all([
+      fsp.writeFile(
+        path.join(releaseDir, 'database.bin'),
+        artifacts.release.bundle.contents
+      ),
+      fsp.writeFile(
+        path.join(releaseDir, 'catalog.json'),
+        artifacts.catalogJson
+      ),
+      fsp.copyFile(
+        path.join(context.outDir, 'config.js'),
+        path.join(configDir, 'config.js')
+      ),
+      fsp.writeFile(
+        path.join(context.outDir, 'replica-keys.json'),
+        artifacts.handlerKeysJson
+      ),
+      fsp.writeFile(
+        path.join(context.outDir, 'replica-catalog.json'),
+        artifacts.catalogJson
+      ),
+      fsp.writeFile(
+        path.join(context.outDir, 'release-meta.json'),
+        JSON.stringify(
+          {
+            releaseId: generated.releaseId,
+            releaseUrl: artifacts.releaseUrl,
+            configId: generated.configId,
+            configUrl: artifacts.configUrl
+          },
+          null,
+          2
+        )
+      )
+    ])
+    return artifacts.release.bundle.contents.length
+  }
   for await (const cms of builds) {
     await writeFileIfContentsDiffer(
       join(context.outDir, 'settings.json'),
-      JSON.stringify({adminPath: Config.adminPath(cms.config)}, null, 2)
+      JSON.stringify(
+        {
+          adminPath: Config.adminPath(cms.config),
+          releaseId: generated.releaseId,
+          configId: generated.configId
+        },
+        null,
+        2
+      )
     )
     if (cmd === 'build') {
       const handlerUrl = cms.config.handlerUrl
@@ -129,10 +189,12 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     const write = async (recordCount: number) => {
       let dbSize = 0
       if (cmd === 'build') {
-        ;[, dbSize] = await Promise.all([
+        const sizes = await Promise.all([
           generatePackage(context, cms),
-          writeStore(db)
+          writeStore(db),
+          writeRelease(db, cms)
         ])
+        dbSize = sizes[2]
       }
       let message = `${cmd} ${location} in `
       const duration = performance.now() - now

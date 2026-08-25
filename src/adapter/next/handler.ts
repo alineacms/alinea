@@ -8,6 +8,7 @@ import {
   type HandlerHooks
 } from '#/backend/Handler.js'
 import {generatedSource} from '#/backend/store/GeneratedSource.js'
+import {generatedReplica} from '#/backend/store/GeneratedReplica.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {RequestContext} from '#/core/Connection.js'
@@ -15,6 +16,7 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
+import {ReplicaService} from '#/database/handler/Service.js'
 
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
@@ -41,10 +43,25 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
     await db.sync()
     return db
   })
+  const replica =
+    process.env.NODE_ENV === 'production'
+      ? PLazy.from(async () => {
+          const release = await generatedReplica(config)
+          return new ReplicaService({
+            config,
+            configId:
+              process.env.ALINEA_GENERATED_CONFIG ?? release.catalog.bundleId,
+            configUrl: process.env.ALINEA_CONFIG_URL ?? '',
+            cacheKey: release.catalog.bundleId,
+            release
+          })
+        })
+      : undefined
   const handleBackend = createCoreHandler({
     ...options,
     remote,
-    db
+    db,
+    replica
   })
   const handle: Handler = async request => {
     const url = new URL(request.url)

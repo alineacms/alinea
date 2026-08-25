@@ -1,11 +1,28 @@
 import {describe, expect, test} from 'bun:test'
+import {createCMS, Entry} from '#/core.js'
+import {Config} from '#/index.js'
 import {DatabaseSnapshot} from '../Database.js'
 import type {EntryAccessPolicy} from '../entry/Access.js'
 import {entryDatabaseSchema} from '../entry/Indexes.js'
 import type {AlineaDatabaseRecord, EntryCoreRecord} from '../entry/Model.js'
 import {exportEntryRelease} from '../release/Exporter.js'
+import {ReplicaDatabaseReader} from '../Reader.js'
+import {DatabaseResolver} from '../query/Resolver.js'
+import {BundleFrameLoader, MemoryRangeSource} from '../replica/Bundle.js'
+import {JsonReplicaCodec, LazyIndexReader} from '../replica/IndexReader.js'
 import {projectEntryReplicaState} from './EntryProjection.js'
 import {ReplicaService} from './Service.js'
+
+const Page = Config.document('Page', {fields: {}})
+const config = createCMS({
+  schema: {Page},
+  workspaces: {
+    main: Config.workspace('Main', {
+      source: 'content',
+      roots: {pages: Config.root('Pages')}
+    })
+  }
+}).config
 
 function core(entryId: string): EntryCoreRecord {
   return {
@@ -97,8 +114,28 @@ describe('projectEntryReplicaState', () => {
       'entry-explore:entry:readable',
       'entry-read:entry:readable'
     ])
+    const reader = new ReplicaDatabaseReader(
+      new LazyIndexReader<AlineaDatabaseRecord, unknown>(
+        state.catalog,
+        new BundleFrameLoader(
+          state.catalog.bundleId,
+          new MemoryRangeSource(release.bundle.contents),
+          state.grants
+        ),
+        new JsonReplicaCodec()
+      )
+    )
+    const resolver = new DatabaseResolver(config, reader)
+    expect(
+      await resolver.resolve({
+        id: 'explorable',
+        first: true,
+        select: {id: Entry.id, title: Entry.title, data: Entry.data}
+      })
+    ).toEqual({id: 'explorable', title: 'explorable', data: {}})
 
     const service = new ReplicaService({
+      config,
       configId: 'config-1',
       configUrl: '/secret/config.js',
       cacheKey: 'cache-1',

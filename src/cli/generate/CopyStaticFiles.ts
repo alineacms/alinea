@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import {createId} from '#/core/Id.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {exportSource} from '#/core/source/SourceExport.js'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
@@ -16,6 +15,9 @@ const packageJson = {
     './package.json': './package.json',
     './config.js': './config.js',
     './release.js': './release.js',
+    './release-meta.json': './release-meta.json',
+    './replica-catalog.json': './replica-catalog.json',
+    './replica-keys.json': './replica-keys.json',
     './settings.json': './settings.json',
     './source.js': {
       'edge-light': './empty-source.js',
@@ -26,12 +28,49 @@ const packageJson = {
 
 const emptySource = await exportSource(new MemorySource())
 
-export async function copyStaticFiles({outDir}: GenerateContext) {
+export interface GeneratedSecrets {
+  releaseId: string
+  configId: string
+}
+
+export async function copyStaticFiles(
+  {outDir}: GenerateContext,
+  secrets: GeneratedSecrets
+) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
 
   await fs.writeFile(
     path.join(outDir, 'release.js'),
-    `export const release = ${JSON.stringify(createId())}`
+    `export const release = ${JSON.stringify(secrets.releaseId)}`
+  )
+  await fs.writeFile(
+    path.join(outDir, 'release-meta.json'),
+    JSON.stringify({
+      releaseId: secrets.releaseId,
+      releaseUrl: '',
+      configId: secrets.configId,
+      configUrl: ''
+    })
+  )
+  await fs.writeFile(
+    path.join(outDir, 'replica-catalog.json'),
+    JSON.stringify({
+      version: 1,
+      bundleId: secrets.releaseId,
+      bundleUrl: '',
+      revision: '',
+      records: {},
+      indexes: {}
+    })
+  )
+  await fs.writeFile(
+    path.join(outDir, 'replica-keys.json'),
+    JSON.stringify({
+      version: 1,
+      bundleId: secrets.releaseId,
+      revision: '',
+      accessClasses: {}
+    })
   )
   await fs.writeFile(
     path.join(outDir, 'package.json'),

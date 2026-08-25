@@ -22,6 +22,11 @@ import {
   hasWorkspace
 } from '#/core/Internal.js'
 import type {Resolver} from '#/core/Resolver.js'
+import type {
+  EntryReference,
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {compareStrings} from '#/core/source/Utils.js'
 import {assert} from '#/core/util/Assert.js'
@@ -36,6 +41,7 @@ import {type DatabaseReader, SnapshotDatabaseReader} from '../Reader.js'
 import {EntryLoader} from '../entry/Loader.js'
 import type {AlineaDatabaseRecord, EntryCoreRecord} from '../entry/Model.js'
 import {EntryQueryEngine} from '../entry/Query.js'
+import {referencesBySource, referencesByTarget} from '../entry/Indexes.js'
 import {filterPredicate} from './Filter.js'
 
 interface ResolveContext {
@@ -107,6 +113,33 @@ export class DatabaseResolver extends Graph implements Resolver {
     }
     const result = await this.#query(context, query as GraphQuery<Projection>)
     return result.value as AnyQueryResult<Query>
+  }
+
+  async referencesTo(
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    const references: Array<EntryReference> = []
+    let scanned = 0
+    for await (const item of this.#reader.scan(
+      referencesByTarget,
+      query.targetId
+    )) {
+      scanned++
+      if (!matchesReference(item.metadata, query)) continue
+      references.push(referenceFromMetadata(item.metadata))
+    }
+    return {
+      references,
+      total: references.length,
+      scan: {scanned, total: scanned, complete: true}
+    }
+  }
+
+  async referencesFrom(sourceId: string): Promise<Array<EntryReference>> {
+    const references: Array<EntryReference> = []
+    for await (const item of this.#reader.scan(referencesBySource, sourceId))
+      references.push(referenceFromMetadata(item.metadata))
+    return references
   }
 
   async #query(
@@ -816,4 +849,59 @@ function snippet(
   if (offset > 0) result = `${cutOff}${result}`
   if (offset + limit < highlighted.length) result = `${result}${cutOff}`
   return result
+}
+
+function matchesReference(
+  reference: {
+    sourceStatus: Entry['status']
+    sourceActive: boolean
+    sourceMain: boolean
+    sourceLocale: string | null
+  },
+  query: EntryReferenceQuery
+): boolean {
+  if (query.locale !== undefined && reference.sourceLocale !== query.locale)
+    return false
+  switch (query.status ?? 'published') {
+    case 'published':
+    case 'draft':
+    case 'archived':
+      return reference.sourceStatus === (query.status ?? 'published')
+    case 'preferDraft':
+      return reference.sourceActive
+    case 'preferPublished':
+      return reference.sourceMain
+    case 'all':
+      return true
+  }
+}
+
+function referenceFromMetadata(reference: {
+  targetId: string
+  sourceEntryId: string
+  sourceFilePath: string
+  sourceType: string
+  sourceLocale: string | null
+  sourceStatus: Entry['status']
+  sourceActive: boolean
+  sourceMain: boolean
+  fieldPath: string
+  fieldLabel?: string
+  linkId?: string
+  linkType?: 'entry' | 'image' | 'file'
+}): EntryReference {
+  return {
+    targetId: reference.targetId,
+    sourceId: reference.sourceEntryId,
+    sourceFilePath: reference.sourceFilePath,
+    sourceType: reference.sourceType,
+    sourceLocale: reference.sourceLocale,
+    sourceStatus: reference.sourceStatus,
+    sourceActive: reference.sourceActive,
+    sourceMain: reference.sourceMain,
+    fieldPath: reference.fieldPath,
+    fieldLabel: reference.fieldLabel,
+    linkId: reference.linkId,
+    linkType: reference.linkType
+  }
 }

@@ -804,7 +804,11 @@ export class ExplorerAtoms {
         }
       })
       const policy = get(policyAtom)
-      const readable = entries.filter(candidate => policy.canRead(candidate))
+      const readable = entries.filter(
+        candidate =>
+          policy.canRead(candidate) ||
+          (this.hasSelection && policy.canExplore(candidate))
+      )
       const parentIds = await graph.find({
         workspace: entry.workspace,
         root: entry.root,
@@ -935,7 +939,8 @@ export class ExplorerAtoms {
         : undefined
       const readable = entries.filter(
         entry =>
-          policy.canRead(entry) &&
+          (policy.canRead(entry) ||
+            (this.hasSelection && policy.canExplore(entry))) &&
           (!selectedLocationParentId ||
             entry.parents.includes(selectedLocationParentId)) &&
           (!filterSelectable ||

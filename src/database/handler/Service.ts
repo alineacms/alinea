@@ -1,11 +1,18 @@
 import type {DatabaseSnapshot} from '../Database.js'
+import type {Config} from '#/core/Config.js'
 import type {EntryAccessPolicy} from '../entry/Access.js'
 import type {AlineaDatabaseRecord} from '../entry/Model.js'
 import type {HandlerKeyCatalog} from '../release/Exporter.js'
 import type {ReplicaBootstrap, ReplicaUser} from '../replica/Protocol.js'
 import type {ReplicaCatalog, ReplicaState, Revision} from '../replica/Types.js'
+import type {
+  FieldTransaction,
+  FieldTransactionResult
+} from '../replica/Operations.js'
 import {ReplicaRevisionLog} from './Deltas.js'
 import {projectEntryReplicaState} from './EntryProjection.js'
+import {evaluateRolePolicy, roleFingerprint} from './Policy.js'
+import {DatabaseResolver} from '../query/Resolver.js'
 
 export interface ReplicaRelease {
   snapshot: DatabaseSnapshot<AlineaDatabaseRecord>
@@ -21,10 +28,19 @@ export interface AuthenticatedReplicaSession {
 }
 
 export interface ReplicaServiceOptions {
+  config?: Config
   configId: string
   configUrl: string
   cacheKey: string
   release: ReplicaRelease
+  mutate?: ReplicaMutationHandler
+}
+
+export interface ReplicaMutationHandler {
+  (
+    session: AuthenticatedReplicaSession,
+    transaction: FieldTransaction
+  ): Promise<FieldTransactionResult>
 }
 
 /** Framework-neutral authenticated read plane used by HTTP handler adapters. */
@@ -34,13 +50,18 @@ export class ReplicaService {
   #configUrl: string
   #cacheKey: string
   #release: ReplicaRelease
+  #config?: Config
   #views = new Map<string, ReplicaState>()
+  #mutate?: ReplicaMutationHandler
+  #transactions = new Map<string, Promise<FieldTransactionResult>>()
 
   constructor(options: ReplicaServiceOptions) {
     this.#configId = options.configId
+    this.#config = options.config
     this.#configUrl = options.configUrl
     this.#cacheKey = options.cacheKey
     this.#release = options.release
+    this.#mutate = options.mutate
   }
 
   bootstrap(session: AuthenticatedReplicaSession): ReplicaBootstrap {
@@ -49,6 +70,17 @@ export class ReplicaService {
       configId: this.#configId,
       configUrl: this.#configUrl,
       cacheKey: this.#cacheKey
+    }
+  }
+
+  async session(user: ReplicaUser): Promise<AuthenticatedReplicaSession> {
+    if (!this.#config)
+      throw new Error('Replica role evaluation requires handler config')
+    const graph = new DatabaseResolver(this.#config, this.#release.snapshot)
+    return {
+      user,
+      policy: await evaluateRolePolicy(this.#config, graph, user.roles),
+      policyFingerprint: roleFingerprint(user.roles)
     }
   }
 
@@ -79,6 +111,24 @@ export class ReplicaService {
     const state = this.state(session)
     if (!state?.catalog.records[id]) return undefined
     return this.#release.snapshot.get(id)
+  }
+
+  mutate(
+    session: AuthenticatedReplicaSession,
+    transaction: FieldTransaction
+  ): Promise<FieldTransactionResult> {
+    if (!this.#mutate)
+      return Promise.reject(new Error('Replica mutations are not configured'))
+    const key = `${session.user.id}\0${transaction.id}`
+    let pending = this.#transactions.get(key)
+    if (!pending) {
+      pending = this.#mutate(session, transaction).catch(error => {
+        this.#transactions.delete(key)
+        throw error
+      })
+      this.#transactions.set(key, pending)
+    }
+    return pending
   }
 
   install(release: ReplicaRelease): void {

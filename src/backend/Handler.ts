@@ -25,6 +25,8 @@ import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
+import type {ReplicaService} from '#/database/handler/Service.js'
+import {serializeReplicaState} from '#/database/replica/Serialization.js'
 
 const PrepareBody = object({
   filename: string,
@@ -52,12 +54,14 @@ export interface HandlerOptions extends HandlerHooks {
   cms: CMS
   db: LocalDB | Promise<LocalDB>
   remote?: (context: RequestContext) => RemoteConnection
+  replica?: ReplicaService | Promise<ReplicaService>
 }
 
 export function createHandler({
   cms,
   remote = context => new CloudRemote(context, cms.config),
   db,
+  replica,
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
@@ -171,6 +175,54 @@ export function createHandler({
         if (!isJson) throw new Response('Expected JSON', {status: 400})
         return request.json()
       })
+
+      const expectReplica = async () => {
+        if (!replica) throw new HttpError(404, 'Replica is not configured')
+        const user = expectUser()
+        const roles = user.claims.roles ?? []
+        const service = await replica
+        return {
+          service,
+          session: await service.session({id: user.claims.sub, roles})
+        }
+      }
+
+      if (
+        action === HandleAction.ReplicaBootstrap &&
+        request.method === 'GET'
+      ) {
+        expectJson()
+        const {service, session} = await expectReplica()
+        return Response.json(service.bootstrap(session))
+      }
+
+      if (action === HandleAction.ReplicaState && request.method === 'GET') {
+        expectJson()
+        const {service, session} = await expectReplica()
+        const state = service.state(
+          session,
+          url.searchParams.get('revision') ?? undefined
+        )
+        return state
+          ? Response.json(serializeReplicaState(state))
+          : new Response(null, {status: 204})
+      }
+
+      if (action === HandleAction.ReplicaObject && request.method === 'GET') {
+        expectJson()
+        const {service, session} = await expectReplica()
+        const id = string(url.searchParams.get('id'))
+        const record = service.object(session, id)
+        return record
+          ? Response.json(record)
+          : new Response(null, {status: 404})
+      }
+
+      if (action === HandleAction.ReplicaMutate && request.method === 'POST') {
+        expectJson()
+        const {service, session} = await expectReplica()
+        return Response.json(await service.mutate(session, await body))
+      }
 
       if (action === HandleAction.User) {
         const user = expectUser()
