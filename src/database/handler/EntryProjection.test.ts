@@ -111,6 +111,9 @@ describe('projectEntryReplicaState', () => {
     expect(state.catalog.records['payload:readable']).toBeDefined()
     expect(state.catalog.records['entry:explorable']).toBeDefined()
     expect(state.catalog.records['payload:explorable']).toBeUndefined()
+    expect(state.recordEntries?.['entry:readable']).toEqual(['readable'])
+    expect(state.recordEntries?.['payload:readable']).toEqual(['readable'])
+    expect(state.recordEntries?.['payload:explorable']).toBeUndefined()
     expect(state.grants.map(grant => grant.accessClassId).sort()).toEqual([
       'entry-explore:entry:explorable',
       'entry-explore:entry:readable',

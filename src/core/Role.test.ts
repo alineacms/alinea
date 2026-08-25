@@ -217,6 +217,17 @@ test('Policy.from creates a copy', async () => {
   test.ok(policy2.canRead(a))
 })
 
+test('Policy data round trips an evaluated ACL', () => {
+  const policy = new WriteablePolicy(scope)
+    .set({id: a.id, allow: {read: true, update: true}})
+    .set({id: b.id, deny: {read: true}})
+  const copy = Policy.fromData(policy.data())
+
+  test.ok(copy.equals(policy))
+  test.ok(copy.canUpdate(a))
+  test.not.ok(copy.canRead(b))
+})
+
 test('Policy.concat merges permissions', async () => {
   const p1 = new WriteablePolicy(scope)
   const p2 = new WriteablePolicy(scope)

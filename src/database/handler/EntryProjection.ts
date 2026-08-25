@@ -25,7 +25,13 @@ export function projectEntryReplicaState(
 ): ReplicaState {
   const accessClasses = new Set<AccessClassId>()
   const recordAccess: Record<string, 'explore' | 'read'> = {}
+  const entryByVersion = new Map<string, string>()
+  for (const record of options.snapshot.records())
+    if (isEntryCoreRecord(record)) entryByVersion.set(record.id, record.entryId)
+  const recordEntries: Record<string, ReadonlyArray<string>> = {}
   for (const record of options.snapshot.records()) {
+    const affected = affectedEntries(record, entryByVersion)
+    if (affected.length > 0) recordEntries[record.id] = affected
     if (!isEntryCoreRecord(record)) continue
     const selection = selectEntryForSync(options.policy, record)
     if (selection.access === 'none') continue
@@ -39,6 +45,25 @@ export function projectEntryReplicaState(
     catalog: options.catalog,
     keys: options.keys,
     accessClasses,
-    recordAccess
+    recordAccess,
+    recordEntries
   })
+}
+
+function affectedEntries(
+  record: AlineaDatabaseRecord,
+  entryByVersion: ReadonlyMap<string, string>
+): ReadonlyArray<string> {
+  switch (record.kind) {
+    case 'entry':
+      return [record.entryId]
+    case 'entryRead':
+    case 'payload':
+    case 'search': {
+      const entryId = entryByVersion.get(record.entryVersionId)
+      return entryId ? [entryId] : []
+    }
+    case 'link':
+      return [...new Set([record.sourceEntryId, record.targetId])]
+  }
 }

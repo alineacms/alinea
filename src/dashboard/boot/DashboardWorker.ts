@@ -343,6 +343,8 @@ export class DashboardWorker extends EventTarget {
     const db = await this.db
     const scope = getScope(db.config)
     const query = scope.parse<GraphQuery>(raw)
+    if (db instanceof ReplicaDashboardDB)
+      return db.resolveSerialized(raw, query)
     return db.resolve(query)
   }
 

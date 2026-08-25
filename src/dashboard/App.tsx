@@ -2,6 +2,8 @@ import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import {styler} from '@alinea/styler'
 import {
   atom,
@@ -50,6 +52,7 @@ export interface AppProps {
   views: Record<string, ComponentType>
   local?: boolean
   alineaDev?: boolean
+  authenticated?: {user: User; policy: Policy}
 }
 
 export const appAtom = atomWithPending(

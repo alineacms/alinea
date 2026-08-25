@@ -25,7 +25,7 @@ import type {
 import {LucideFile} from '../icons.js'
 import {viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
-import {shaAtom} from './graph.js'
+import {trackedQuery} from './graph.js'
 import {pageAtom} from './nav.js'
 import {policyAtom} from './user.js'
 import {
@@ -136,7 +136,6 @@ export class TreeAtoms {
   }
 
   #source = atom(async get => {
-    get(shaAtom)
     const data = get(this.#root.data)
     const config = get(configAtom)
     const graph = get(graphAtom)
@@ -152,14 +151,16 @@ export class TreeAtoms {
     const metadata =
       metadataIds.size === 0
         ? []
-        : await graph.find({
-            workspace: this.#root.workspace,
-            root: this.#root.key,
-            id: {in: [...metadataIds]},
-            filter: {_type: {in: visibleTypes}},
-            status: 'preferDraft',
-            select: treeItemSelect
-          })
+        : await graph.find(
+            trackedQuery(get, {
+              workspace: this.#root.workspace,
+              root: this.#root.key,
+              id: {in: [...metadataIds]},
+              filter: {_type: {in: visibleTypes}},
+              status: 'preferDraft',
+              select: treeItemSelect
+            })
+          )
     const metadataById = new Map(
       preferredLocaleEntries(
         metadata.filter(entry => policy.canRead(entry)),
@@ -179,14 +180,16 @@ export class TreeAtoms {
       (id): id is string => id !== null && !metadataById.has(id)
     )
     if (missingParentIds.length > 0) {
-      const parents = await graph.find({
-        workspace: this.#root.workspace,
-        root: this.#root.key,
-        id: {in: missingParentIds},
-        filter: {_type: {in: visibleTypes}},
-        status: 'preferDraft',
-        select: treeItemSelect
-      })
+      const parents = await graph.find(
+        trackedQuery(get, {
+          workspace: this.#root.workspace,
+          root: this.#root.key,
+          id: {in: missingParentIds},
+          filter: {_type: {in: visibleTypes}},
+          status: 'preferDraft',
+          select: treeItemSelect
+        })
+      )
       for (const parent of preferredLocaleEntries(
         parents.filter(entry => policy.canRead(entry)),
         this.#locale
@@ -198,17 +201,19 @@ export class TreeAtoms {
       [...parentIds].map(async parentId => {
         const parent =
           parentId === null ? undefined : metadataById.get(parentId)
-        const entries = await graph.find({
-          workspace: this.#root.workspace,
-          root: this.#root.key,
-          parentId,
-          filter: {_type: {in: visibleTypes}},
-          status: 'preferDraft',
-          orderBy: parent
-            ? getType(config.schema[parent.type]).orderChildrenBy
-            : data.orderChildrenBy,
-          select: treeItemSelect
-        })
+        const entries = await graph.find(
+          trackedQuery(get, {
+            workspace: this.#root.workspace,
+            root: this.#root.key,
+            parentId,
+            filter: {_type: {in: visibleTypes}},
+            status: 'preferDraft',
+            orderBy: parent
+              ? getType(config.schema[parent.type]).orderChildrenBy
+              : data.orderChildrenBy,
+            select: treeItemSelect
+          })
+        )
         return preferredLocaleEntries(
           entries.filter(entry => policy.canRead(entry)),
           this.#locale
@@ -219,14 +224,16 @@ export class TreeAtoms {
     const possibleChildren =
       loadedEntries.length === 0
         ? []
-        : await graph.find({
-            workspace: this.#root.workspace,
-            root: this.#root.key,
-            parentId: {in: loadedEntries.map(entry => entry.id)},
-            filter: {_type: {in: visibleTypes}},
-            status: 'preferDraft',
-            select: treeItemSelect
-          })
+        : await graph.find(
+            trackedQuery(get, {
+              workspace: this.#root.workspace,
+              root: this.#root.key,
+              parentId: {in: loadedEntries.map(entry => entry.id)},
+              filter: {_type: {in: visibleTypes}},
+              status: 'preferDraft',
+              select: treeItemSelect
+            })
+          )
     const entriesWithChildren = new Set(
       preferredLocaleEntries(
         possibleChildren.filter(entry => policy.canRead(entry)),

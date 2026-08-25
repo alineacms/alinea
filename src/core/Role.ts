@@ -156,6 +156,11 @@ export interface Resource {
   locale?: string | null
 }
 
+export interface PolicyData {
+  root: number
+  entries: Array<[key: string, permissions: number]>
+}
+
 export class ACL extends Map<string, number> {
   root = Permission.None
   constructor(acl?: ACL) {
@@ -189,6 +194,30 @@ export class Policy {
     const result = new Policy()
     result.acl = new ACL(policy.acl)
     return result
+  }
+
+  static fromData(data: PolicyData): Policy {
+    assert(
+      Number.isSafeInteger(data.root) &&
+        Array.isArray(data.entries) &&
+        data.entries.every(
+          entry =>
+            Array.isArray(entry) &&
+            entry.length === 2 &&
+            typeof entry[0] === 'string' &&
+            Number.isSafeInteger(entry[1])
+        ),
+      'Invalid policy data'
+    )
+    const result = new Policy()
+    result.acl.root = data.root
+    for (const [key, permissions] of data.entries)
+      result.acl.set(key, permissions)
+    return result
+  }
+
+  data(): PolicyData {
+    return {root: this.acl.root, entries: [...this.acl]}
   }
 
   equals(that: Policy): boolean {

@@ -1,5 +1,7 @@
 import type {Client} from '#/core/Client.js'
 import type {Config} from '#/core/Config.js'
+import type {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
@@ -19,6 +21,7 @@ export interface ConfigBatch {
   views: Record<string, ComponentType>
   handlerUrl?: string
   alineaDev?: boolean
+  authenticated?: {user: User; policy: Policy}
 }
 
 export type ConfigGenerator = AsyncGenerator<ConfigBatch>

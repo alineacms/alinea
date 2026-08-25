@@ -1,6 +1,10 @@
 import type {Config} from '#/core/Config.js'
 import type {DatabaseReader} from '../Reader.js'
-import {CachedDatabaseReader, ReplicaDatabaseReader} from '../Reader.js'
+import {
+  CachedDatabaseReader,
+  ReplicaDatabaseReader,
+  TrackedDatabaseReader
+} from '../Reader.js'
 import type {AlineaDatabaseRecord} from '../entry/Model.js'
 import {DatabaseResolver} from '../query/Resolver.js'
 import {CatalogFrameLoader} from './Bundle.js'
@@ -10,6 +14,7 @@ import {JsonReplicaCodec, LazyIndexReader} from './IndexReader.js'
 import {IndexedDBReplicaCache} from './IndexedDBCache.js'
 import type {ReplicaBootstrap, ReplicaTransport} from './Protocol.js'
 import type {ReplicaState} from './Types.js'
+import type {QueryDependency} from './Dependency.js'
 
 export interface EntryReplicaClientOptions {
   transport: ReplicaTransport
@@ -21,6 +26,12 @@ export interface EntryReplicaSyncResult {
   revision: string
   changed: boolean
   change?: ReplicaChangeSet
+  entryIds: ReadonlySet<string>
+}
+
+export interface TrackedDatabaseResolver {
+  resolver: DatabaseResolver
+  dependencies(): ReadonlySet<QueryDependency>
 }
 
 /** Owns authenticated state installation and the lazy client read model. */
@@ -31,6 +42,7 @@ export class EntryReplicaClient {
   #bootstrap?: Promise<ReplicaBootstrap>
   #state?: ReplicaState
   #reader?: DatabaseReader<AlineaDatabaseRecord>
+  #cacheKey?: string
   #resolvers = new WeakMap<Config, DatabaseResolver>()
 
   constructor(options: EntryReplicaClientOptions) {
@@ -46,18 +58,23 @@ export class EntryReplicaClient {
 
   async sync(signal?: AbortSignal): Promise<EntryReplicaSyncResult> {
     const bootstrap = await this.bootstrap()
-    const cached = this.#state ?? (await this.#cache.state(bootstrap.cacheKey))
+    const previous = this.#state
+    const cached = previous ?? (await this.#cache.state(bootstrap.cacheKey))
     const next = await this.#transport.state(cached?.catalog.revision, signal)
     const state = next ?? cached
     if (!state) throw new Error('Replica state is unavailable')
     if (next) await this.#cache.installState(bootstrap.cacheKey, next)
-    const changed = !this.#state || Boolean(next)
+    const changed = !previous || Boolean(next)
     const change =
-      this.#state && next
-        ? diffCatalogs(this.#state.catalog, next.catalog)
+      previous && next
+        ? diffCatalogs(previous.catalog, next.catalog)
         : undefined
+    const entryIds =
+      change && previous
+        ? changedEntryIds(previous, state, change.records)
+        : new Set<string>()
     if (changed) this.#install(bootstrap.cacheKey, state)
-    return {revision: state.catalog.revision, changed, change}
+    return {revision: state.catalog.revision, changed, change, entryIds}
   }
 
   resolver(config: Config): DatabaseResolver {
@@ -69,6 +86,18 @@ export class EntryReplicaClient {
     return resolver
   }
 
+  trackedResolver(config: Config): TrackedDatabaseResolver {
+    if (!this.#state) throw new Error('Replica must be synchronized first')
+    if (!this.#cacheKey) throw new Error('Replica cache key is unavailable')
+    const tracked = new TrackedDatabaseReader(
+      this.#readerForState(this.#state, this.#cacheKey).reader
+    )
+    return {
+      resolver: new DatabaseResolver(config, tracked),
+      dependencies: () => tracked.dependencies()
+    }
+  }
+
   access(recordId: string): 'explore' | 'read' | undefined {
     return this.#state?.recordAccess[recordId]
   }
@@ -78,6 +107,19 @@ export class EntryReplicaClient {
   }
 
   #install(cacheKey: string, state: ReplicaState): void {
+    const tracked = this.#readerForState(state, cacheKey)
+    this.#state = state
+    this.#cacheKey = cacheKey
+    this.#reader = tracked.reader
+    this.#resolvers = new WeakMap()
+  }
+
+  #readerForState(
+    state: ReplicaState,
+    cacheKey: string
+  ): {
+    reader: DatabaseReader<AlineaDatabaseRecord>
+  } {
     const loader = new CatalogFrameLoader(
       state.catalog.bundleId,
       state.catalog.bundleUrl,
@@ -90,12 +132,26 @@ export class EntryReplicaClient {
       loader,
       new JsonReplicaCodec()
     )
-    this.#state = state
-    this.#reader = new CachedDatabaseReader(
+    const reader = new CachedDatabaseReader(
       new ReplicaDatabaseReader(lazy),
       this.#cache,
       `${cacheKey}\0${state.viewId}`
     )
-    this.#resolvers = new WeakMap()
+    return {reader}
   }
+}
+
+function changedEntryIds(
+  previous: ReplicaState,
+  next: ReplicaState,
+  records: ReadonlySet<string>
+): ReadonlySet<string> {
+  const result = new Set<string>()
+  for (const recordId of records) {
+    for (const entryId of previous.recordEntries?.[recordId] ?? [])
+      result.add(entryId)
+    for (const entryId of next.recordEntries?.[recordId] ?? [])
+      result.add(entryId)
+  }
+  return result
 }

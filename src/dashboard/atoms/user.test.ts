@@ -1,9 +1,17 @@
 import {createTestConnection} from '#test/CreateConnection.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
+import {Policy} from '#/core/Role.js'
+import {localUser} from '#/core/User.js'
 import {clientAtom} from './core.js'
 import {configAtom} from './core.js'
-import {authReady, canManageMembersAtom, policyAtom, userAtom} from './user.js'
+import {
+  authReady,
+  canManageMembersAtom,
+  policyAtom,
+  preloadUserPolicyAtom,
+  userAtom
+} from './user.js'
 
 test('user and policy are synchronous after preloading', async () => {
   const {store} = await createDashboardAtomFixture()
@@ -17,6 +25,17 @@ test('user and policy are synchronous after preloading', async () => {
 
   expect(store.get(userAtom).sub).toBe('local')
   expect(store.get(policyAtom).canManageMembers()).toBeTrue()
+})
+
+test('an authenticated handler policy bypasses client role evaluation', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  db.createPolicy = async () => {
+    throw new Error('Client role callback must not run')
+  }
+  store.set(preloadUserPolicyAtom, localUser, Policy.ALLOW_ALL)
+
+  await expect(store.get(authReady)).resolves.toBeUndefined()
+  expect(store.get(policyAtom)).toBe(Policy.ALLOW_ALL)
 })
 
 test('policy stays stale while its replacement resolves', async () => {

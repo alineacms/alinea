@@ -4,7 +4,13 @@ import {assert} from '#/core/util/Assert.js'
 import {atom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import {authAtom} from './auth.js'
-import {clientAtom, configAtom, graphAtom} from './core.js'
+import {
+  authenticatedPolicyAtom,
+  authenticatedUserAtom,
+  clientAtom,
+  configAtom,
+  graphAtom
+} from './core.js'
 import {shaAtom} from './graph.js'
 
 const userResult = atom(async get => {
@@ -14,16 +20,15 @@ const userResult = atom(async get => {
 })
 
 const resolvedUser = unwrap(userResult, previous => previous)
-const preloadedUserAtom = atom<User>()
-const preloadedPolicyAtom = atom<Policy>()
-
 export const userAtom = atom(get => {
-  const user = get(preloadedUserAtom) ?? get(resolvedUser)
+  const user = get(authenticatedUserAtom) ?? get(resolvedUser)
   assert(user, 'Dashboard user was not preloaded')
   return user
 })
 
 const policyResult = atom(async get => {
+  const authenticated = get(authenticatedPolicyAtom)
+  if (authenticated) return authenticated
   const user = await get(userResult)
   if (!user?.roles) return Policy.ALLOW_NONE
   const graph = get(graphAtom)
@@ -41,7 +46,7 @@ const resolvedPolicyAtom = selectAtom(
 )
 
 export const policyAtom = atom(get => {
-  const policy = get(preloadedPolicyAtom) ?? get(resolvedPolicyAtom)
+  const policy = get(authenticatedPolicyAtom) ?? get(resolvedPolicyAtom)
   assert(policy, 'Dashboard policy was not preloaded')
   return policy
 })
@@ -49,8 +54,8 @@ export const policyAtom = atom(get => {
 export const preloadUserPolicyAtom = atom(
   null,
   (_get, set, user: User, policy: Policy) => {
-    set(preloadedUserAtom, user)
-    set(preloadedPolicyAtom, policy)
+    set(authenticatedUserAtom, user)
+    set(authenticatedPolicyAtom, policy)
   }
 )
 

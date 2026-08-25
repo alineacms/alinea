@@ -53,8 +53,9 @@ remain for development and existing mutation commands during cutover.
   separately. This package does not introduce CRDTs.
 - Role callbacks remain JavaScript and therefore the handler still loads the
   compiled server config. It runs callbacks against the complete normalized
-  `DatabaseResolver`; clients receive the resulting projection and never rerun
-  role code. A hosted handler must receive this server artifact (or a future
+  `DatabaseResolver`; authenticated bootstrap includes the resulting evaluated
+  ACL, so clients never rerun role code against a partial graph. A hosted
+  handler must receive this server artifact (or a future
   compiled policy representation). Knowing release keys alone cannot reproduce
   arbitrary graph-backed role functions.
 - Client config has a different unguessable URL from the data release. The
@@ -110,14 +111,15 @@ mutations, but no longer proxies the static read data plane.
    - include core/index frames for both explored and readable entries, but grant
      payload and full-search frames only for readable entries;
    - expose an authenticated bootstrap containing the secret release URL,
-     scoped catalog, grants, and current revision;
+     evaluated ACL, scoped catalog, grants, and current revision;
    - expose state, grant refresh, object fallback, and mutation endpoints.
 6. **Dashboard integration (production read path implemented)**
    - add IndexedDB ciphertext/object caches;
    - install catalogs atomically and request only missing ranges;
    - switch dashboard queries to the new resolver and delete local `EntryIndex`
      hydration;
-   - replace broad index refreshes with live query dependencies.
+   - record per-query index/record dependencies in the worker and invalidate
+     only intersecting queries and affected logical entry ids.
 7. **Writes, concurrency, and deltas (production transport implemented; internal cutover remains)**
    - field-operation endpoint translates accepted paths into cloud mutations;
    - operations on unchanged paths merge across stale base revisions;

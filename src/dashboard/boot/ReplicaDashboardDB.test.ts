@@ -31,7 +31,8 @@ describe('ReplicaDashboardDB', () => {
             user: {id: 'user-1', roles: ['editor']},
             configId: 'config-1',
             configUrl: '/secret/config.js',
-            cacheKey: 'site-1'
+            cacheKey: 'site-1',
+            policy: {root: 0, entries: []}
           })
         if (
           action === 'replicaState' &&

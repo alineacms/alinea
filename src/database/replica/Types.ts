@@ -43,6 +43,8 @@ export interface ReplicaState {
   grants: ReadonlyArray<AccessClassGrant>
   /** Effective access for synchronized core records, computed by the handler. */
   recordAccess: Readonly<Record<RecordId, 'explore' | 'read'>>
+  /** Logical entries affected by each granted record, for exact UI invalidation. */
+  recordEntries?: Readonly<Record<RecordId, ReadonlyArray<string>>>
 }
 
 export interface RecordReference<Metadata = Record<string, unknown>> {

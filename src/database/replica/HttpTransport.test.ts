@@ -29,7 +29,8 @@ describe('HttpReplicaTransport', () => {
             user: {id: 'user-1', roles: ['editor']},
             configId: 'config-1',
             configUrl: '/secret/config.js',
-            cacheKey: 'cache-1'
+            cacheKey: 'cache-1',
+            policy: {root: 0, entries: []}
           })
         if (action === 'replicaEligible') return Response.json(['entry-a'])
         if (action === 'replicaCommand')

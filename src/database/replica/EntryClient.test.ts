@@ -30,7 +30,8 @@ describe('EntryReplicaClient', () => {
           user: {id: 'user-1', roles: ['editor']},
           configId: 'config-1',
           configUrl: '/secret/config.js',
-          cacheKey: 'site-1'
+          cacheKey: 'site-1',
+          policy: {root: 0, entries: []}
         }
       },
       async state(knownRevision) {
@@ -58,6 +59,11 @@ describe('EntryReplicaClient', () => {
       await client.resolver(cms.config).resolve({select: Entry.id})
     ).toEqual([])
     expect(client.resolver(cms.config)).toBe(client.resolver(cms.config))
+    const tracked = client.trackedResolver(cms.config)
+    expect(await tracked.resolver.resolve({select: Entry.id})).toEqual([])
+    expect([...tracked.dependencies()]).toContain(
+      `index:${JSON.stringify(['entry.all', 'all'])}`
+    )
     expect(await client.sync()).toMatchObject({
       revision: 'tree-1',
       changed: false

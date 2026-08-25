@@ -2,7 +2,12 @@ import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
 import {localUser, User} from '#/core/User.js'
 import {atom} from 'jotai'
-import {alineaDevAtom, clientAtom, localAtom} from './core.js'
+import {
+  alineaDevAtom,
+  authenticatedUserAtom,
+  clientAtom,
+  localAtom
+} from './core.js'
 
 export const authRequiredAtom = atom(get => {
   const forceAuth =
@@ -67,6 +72,8 @@ export const setUserRolesAtom = atom(null, (get, set, roles: Array<string>) => {
 export const authAtom = Object.assign(
   atom(
     (get): DashboardAuthState => {
+      const authenticated = get(authenticatedUserAtom)
+      if (authenticated) return {status: 'authenticated', user: authenticated}
       if (!get(authRequiredAtom)) {
         const userData =
           typeof process !== 'undefined' &&

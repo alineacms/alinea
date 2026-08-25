@@ -34,7 +34,8 @@ test('coalesces concurrent synchronization and installs one snapshot', async () 
         user: {id: 'user-1', roles: ['editor']},
         configId: 'config-1',
         configUrl: '/config.js',
-        cacheKey: 'cache-1'
+        cacheKey: 'cache-1',
+        policy: {root: 0, entries: []}
       }
     },
     async state() {

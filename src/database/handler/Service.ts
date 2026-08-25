@@ -74,7 +74,8 @@ export class ReplicaService {
       user: session.user,
       configId: this.#configId,
       configUrl: this.#configUrl,
-      cacheKey: this.#cacheKey
+      cacheKey: this.#cacheKey,
+      policy: session.policy.data()
     }
   }
 

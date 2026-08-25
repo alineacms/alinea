@@ -1,5 +1,6 @@
 import type {FieldTransaction, FieldTransactionResult} from './Operations.js'
 import type {ReplicaCommand, ReplicaCommandResult} from './Commands.js'
+import type {PolicyData} from '#/core/Role.js'
 import type {ReplicaState, Revision} from './Types.js'
 
 export interface ReplicaUser {
@@ -12,6 +13,8 @@ export interface ReplicaBootstrap {
   configId: string
   configUrl: string
   cacheKey: string
+  /** Handler-evaluated ACL. Clients never execute role callbacks. */
+  policy: PolicyData
 }
 
 /**

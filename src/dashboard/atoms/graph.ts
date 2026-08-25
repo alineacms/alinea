@@ -1,16 +1,22 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import {atom} from 'jotai'
+import type {GraphQuery} from '#/core/Graph.js'
+import {getScope} from '#/core/Scope.js'
+import {atom, type Getter} from 'jotai'
 import {selectAtom} from 'jotai/utils'
-import {eventsAtom, graphAtom} from './core.js'
+import {configAtom, eventsAtom, graphAtom, localAtom} from './core.js'
 import {dispense} from './utils.js'
 
 interface IndexState {
   sha?: string
   entryRevisions: ReadonlyMap<string, string>
+  queryRevisions: ReadonlyMap<string, string>
 }
 
-const indexStateValueAtom = atom<IndexState>({entryRevisions: new Map()})
+const indexStateValueAtom = atom<IndexState>({
+  entryRevisions: new Map(),
+  queryRevisions: new Map()
+})
 
 const indexStateAtom = Object.assign(
   atom(
@@ -24,7 +30,10 @@ const indexStateAtom = Object.assign(
         set(indexStateValueAtom, current => {
           const entryRevisions = new Map(current.entryRevisions)
           for (const id of data.ids) entryRevisions.set(id, data.sha)
-          return {sha: data.sha, entryRevisions}
+          const queryRevisions = new Map(current.queryRevisions)
+          for (const query of data.queries ?? [])
+            queryRevisions.set(query, data.sha)
+          return {sha: data.sha, entryRevisions, queryRevisions}
         })
       }
       events.addEventListener(IndexEvent.type, listen)
@@ -45,6 +54,22 @@ export const shaAtom = atom(async get => {
 export const entryRevisionAtom = dispense((id: string) =>
   selectAtom(indexStateAtom, state => state.entryRevisions.get(id))
 )
+
+export const queryRevisionAtom = dispense((query: string) =>
+  selectAtom(indexStateAtom, state => state.queryRevisions.get(query))
+)
+
+export function trackedQuery<Query extends GraphQuery>(
+  get: Getter,
+  query: Query
+): Query {
+  if (get(localAtom)) get(shaAtom)
+  else {
+    const serialized = getScope(get(configAtom)).stringify(query)
+    get(queryRevisionAtom(serialized))
+  }
+  return query
+}
 
 export const syncAtom = atom(null, async (get, set) => {
   const graph = get(graphAtom)

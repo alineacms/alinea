@@ -14,6 +14,7 @@ export interface ProjectReplicaStateOptions {
   keys: HandlerKeyCatalog
   accessClasses: ReadonlySet<AccessClassId>
   recordAccess: ReplicaState['recordAccess']
+  recordEntries?: ReplicaState['recordEntries']
 }
 
 /**
@@ -50,11 +51,15 @@ export function projectReplicaState(
   const recordAccess = Object.fromEntries(
     Object.entries(options.recordAccess).filter(([id]) => id in records)
   )
+  const recordEntries = Object.fromEntries(
+    Object.entries(options.recordEntries ?? {}).filter(([id]) => id in records)
+  )
   return {
     viewId: options.viewId,
     catalog: {...options.catalog, records, indexes},
     grants,
-    recordAccess
+    recordAccess,
+    recordEntries
   }
 }
 

@@ -33,7 +33,7 @@ import type {
 import {LucideFile} from '../icons.js'
 import {activityAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
-import {shaAtom} from './graph.js'
+import {trackedQuery} from './graph.js'
 import {routeAtom} from './nav.js'
 import {uploadFilesAtom} from './upload.js'
 import {policyAtom} from './user.js'
@@ -745,78 +745,81 @@ export class ExplorerAtoms {
   )
   childrenReady = dispense((entry: ExplorerEntry, locale: string | null) =>
     atom(async get => {
-      get(shaAtom)
       const {data} = get(entry.data)
       if (!data || !get(data.hasChildren)) return []
       const graph = get(graphAtom)
       const sort = get(this.sort)
       const filter = get(this.filter)
-      const entries = await graph.find({
-        workspace: entry.workspace,
-        root: entry.root,
-        parentId: entry.id,
-        locale,
-        filter: undefined,
-        type: filter,
-        status: 'preferDraft',
-        groupBy: Entry.id,
-        orderBy: {
-          [sort.direction]:
-            sort.sortBy === 'title'
-              ? Entry.title
-              : sort.sortBy === 'path'
-                ? Entry.path
-                : sort.sortBy === 'size'
-                  ? MediaFile.size
-                  : sort.sortBy === 'id'
-                    ? Entry.id
-                    : Entry.index,
-          caseSensitive: sort.sortBy !== 'id'
-        },
-        select: {
-          active: Entry.active,
-          createdAt: Entry.createdAt,
-          id: Entry.id,
-          status: Entry.status,
-          title: Entry.title,
-          path: Entry.path,
-          updatedAt: Entry.updatedAt,
-          url: Entry.url,
-          type: Entry.type,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          locale: Entry.locale,
-          parentId: Entry.parentId,
-          parents: Entry.parents,
-          parentEntries: parents({
-            select: {
-              id: Entry.id,
-              title: Entry.title,
-              type: Entry.type,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              parentId: Entry.parentId
-            }
-          }),
-          index: Entry.index,
-          data: Entry.data
-        }
-      })
+      const entries = await graph.find(
+        trackedQuery(get, {
+          workspace: entry.workspace,
+          root: entry.root,
+          parentId: entry.id,
+          locale,
+          filter: undefined,
+          type: filter,
+          status: 'preferDraft',
+          groupBy: Entry.id,
+          orderBy: {
+            [sort.direction]:
+              sort.sortBy === 'title'
+                ? Entry.title
+                : sort.sortBy === 'path'
+                  ? Entry.path
+                  : sort.sortBy === 'size'
+                    ? MediaFile.size
+                    : sort.sortBy === 'id'
+                      ? Entry.id
+                      : Entry.index,
+            caseSensitive: sort.sortBy !== 'id'
+          },
+          select: {
+            active: Entry.active,
+            createdAt: Entry.createdAt,
+            id: Entry.id,
+            status: Entry.status,
+            title: Entry.title,
+            path: Entry.path,
+            updatedAt: Entry.updatedAt,
+            url: Entry.url,
+            type: Entry.type,
+            workspace: Entry.workspace,
+            root: Entry.root,
+            locale: Entry.locale,
+            parentId: Entry.parentId,
+            parents: Entry.parents,
+            parentEntries: parents({
+              select: {
+                id: Entry.id,
+                title: Entry.title,
+                type: Entry.type,
+                workspace: Entry.workspace,
+                root: Entry.root,
+                locale: Entry.locale,
+                parentId: Entry.parentId
+              }
+            }),
+            index: Entry.index,
+            data: Entry.data
+          }
+        })
+      )
       const policy = get(policyAtom)
       const readable = entries.filter(
         candidate =>
           policy.canRead(candidate) ||
           (this.hasSelection && policy.canExplore(candidate))
       )
-      const parentIds = await graph.find({
-        workspace: entry.workspace,
-        root: entry.root,
-        parentId: {in: readable.map(candidate => candidate.id)},
-        status: 'preferDraft',
-        groupBy: Entry.parentId,
-        select: Entry.parentId
-      })
+      const parentIds = await graph.find(
+        trackedQuery(get, {
+          workspace: entry.workspace,
+          root: entry.root,
+          parentId: {in: readable.map(candidate => candidate.id)},
+          status: 'preferDraft',
+          groupBy: Entry.parentId,
+          select: Entry.parentId
+        })
+      )
       const currentParents = get(data.parents)
       return readable.map(candidate => {
         const value = {
@@ -835,7 +838,6 @@ export class ExplorerAtoms {
   )
   #itemData = dispense((locale: string | null) =>
     atom(async get => {
-      get(shaAtom)
       const location = get(this.location)
       const search = get(this.search).trim()
       const searchesEverything = get(this.searchesEverything)
@@ -876,60 +878,62 @@ export class ExplorerAtoms {
               : sort.sortBy === 'id'
                 ? Entry.id
                 : Entry.index
-      const entries = await graph.find({
-        workspace,
-        root,
-        parentId: this.pickChildren
-          ? (location.parentId ?? null)
-          : flatList
+      const entries = await graph.find(
+        trackedQuery(get, {
+          workspace,
+          root,
+          parentId: this.pickChildren
+            ? (location.parentId ?? null)
+            : flatList
+              ? undefined
+              : searchesEverything
+                ? null
+                : (location.parentId ?? null),
+          locale: searchesEverything ? undefined : locale,
+          search: search || undefined,
+          filter: filterSelectable ? this.#options.condition : undefined,
+          type: filter,
+          status: 'preferDraft',
+          groupBy: Entry.id,
+          orderBy: search
             ? undefined
-            : searchesEverything
-              ? null
-              : (location.parentId ?? null),
-        locale: searchesEverything ? undefined : locale,
-        search: search || undefined,
-        filter: filterSelectable ? this.#options.condition : undefined,
-        type: filter,
-        status: 'preferDraft',
-        groupBy: Entry.id,
-        orderBy: search
-          ? undefined
-          : selectedSort === undefined && defaultOrderBy !== undefined
-            ? defaultOrderBy
-            : {
-                [sort.direction]: orderField,
-                caseSensitive: sort.sortBy !== 'id'
-              },
-        select: {
-          active: Entry.active,
-          createdAt: Entry.createdAt,
-          id: Entry.id,
-          status: Entry.status,
-          title: Entry.title,
-          path: Entry.path,
-          updatedAt: Entry.updatedAt,
-          url: Entry.url,
-          type: Entry.type,
-          workspace: Entry.workspace,
-          root: Entry.root,
-          locale: Entry.locale,
-          parentId: Entry.parentId,
-          parents: Entry.parents,
-          parentEntries: parents({
-            select: {
-              id: Entry.id,
-              title: Entry.title,
-              type: Entry.type,
-              workspace: Entry.workspace,
-              root: Entry.root,
-              locale: Entry.locale,
-              parentId: Entry.parentId
-            }
-          }),
-          index: Entry.index,
-          data: Entry.data
-        }
-      })
+            : selectedSort === undefined && defaultOrderBy !== undefined
+              ? defaultOrderBy
+              : {
+                  [sort.direction]: orderField,
+                  caseSensitive: sort.sortBy !== 'id'
+                },
+          select: {
+            active: Entry.active,
+            createdAt: Entry.createdAt,
+            id: Entry.id,
+            status: Entry.status,
+            title: Entry.title,
+            path: Entry.path,
+            updatedAt: Entry.updatedAt,
+            url: Entry.url,
+            type: Entry.type,
+            workspace: Entry.workspace,
+            root: Entry.root,
+            locale: Entry.locale,
+            parentId: Entry.parentId,
+            parents: Entry.parents,
+            parentEntries: parents({
+              select: {
+                id: Entry.id,
+                title: Entry.title,
+                type: Entry.type,
+                workspace: Entry.workspace,
+                root: Entry.root,
+                locale: Entry.locale,
+                parentId: Entry.parentId
+              }
+            }),
+            index: Entry.index,
+            data: Entry.data
+          }
+        })
+      )
       const policy = get(policyAtom)
       const condition = this.#options.condition
       const matchesCondition = condition
@@ -947,14 +951,16 @@ export class ExplorerAtoms {
             !matchesCondition ||
             matchesCondition(entry as never))
       )
-      const parentIds = await graph.find({
-        workspace,
-        root,
-        parentId: {in: readable.map(entry => entry.id)},
-        status: 'preferDraft',
-        groupBy: Entry.parentId,
-        select: Entry.parentId
-      })
+      const parentIds = await graph.find(
+        trackedQuery(get, {
+          workspace,
+          root,
+          parentId: {in: readable.map(entry => entry.id)},
+          status: 'preferDraft',
+          groupBy: Entry.parentId,
+          select: Entry.parentId
+        })
+      )
       return readable.map(entry => ({
         ...entry,
         hasChildren: parentIds.includes(entry.id)

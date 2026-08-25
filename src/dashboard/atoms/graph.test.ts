@@ -4,7 +4,12 @@ import {createStore} from 'jotai'
 import {activityState} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {activityAtom} from './activity.js'
-import {entryRevisionAtom, shaAtom, syncAtom} from './graph.js'
+import {
+  entryRevisionAtom,
+  queryRevisionAtom,
+  shaAtom,
+  syncAtom
+} from './graph.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reads the indexed content hash without synchronizing the graph', async () => {
@@ -57,6 +62,34 @@ test('only invalidates revisions for changed entry ids', async () => {
   expect(firstChanges).toBe(1)
   expect(secondChanges).toBe(0)
 
+  unsubscribeFirst()
+  unsubscribeSecond()
+})
+
+test('only invalidates queries reported by replica dependencies', async () => {
+  const store = createStore()
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  const first = queryRevisionAtom('first-query')
+  const second = queryRevisionAtom('second-query')
+  let firstChanges = 0
+  let secondChanges = 0
+  const unsubscribeFirst = store.sub(first, () => firstChanges++)
+  const unsubscribeSecond = store.sub(second, () => secondChanges++)
+
+  events.emit(
+    new IndexEvent({
+      op: 'index',
+      sha: 'changed-sha',
+      ids: [],
+      queries: ['first-query']
+    })
+  )
+
+  expect(store.get(first)).toBe('changed-sha')
+  expect(store.get(second)).toBeUndefined()
+  expect(firstChanges).toBe(1)
+  expect(secondChanges).toBe(0)
   unsubscribeFirst()
   unsubscribeSecond()
 })

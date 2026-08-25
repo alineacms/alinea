@@ -1,6 +1,12 @@
 import type {IndexReader as ReplicaIndexReader} from './replica/IndexReader.js'
 import type {DatabaseIndex, IndexedRecord} from './SecondaryIndex.js'
 import type {DatabaseRecord, DatabaseSnapshot} from './Database.js'
+import {
+  DependencyTracker,
+  indexDependency,
+  recordDependency,
+  type QueryDependency
+} from './replica/Dependency.js'
 
 export interface DatabaseReader<Row extends DatabaseRecord> {
   readonly revision: string
@@ -55,6 +61,40 @@ export class CachedDatabaseReader<
     signal?: AbortSignal
   ): AsyncIterable<IndexedRecord<Metadata>> {
     return this.#source.scan(index, key, signal)
+  }
+}
+
+/** Tracks logical reads even when decoded values are served from cache. */
+export class TrackedDatabaseReader<
+  Row extends DatabaseRecord
+> implements DatabaseReader<Row> {
+  #source: DatabaseReader<Row>
+  #tracker = new DependencyTracker()
+
+  constructor(source: DatabaseReader<Row>) {
+    this.#source = source
+  }
+
+  get revision(): string {
+    return this.#source.revision
+  }
+
+  get(id: string, signal?: AbortSignal): Promise<Row | undefined> {
+    this.#tracker.add(recordDependency(id))
+    return this.#source.get(id, signal)
+  }
+
+  scan<Metadata>(
+    index: DatabaseIndex<Row, Metadata>,
+    key: string,
+    signal?: AbortSignal
+  ): AsyncIterable<IndexedRecord<Metadata>> {
+    this.#tracker.add(indexDependency(replicaIndexKey(index.name, key)))
+    return this.#source.scan(index, key, signal)
+  }
+
+  dependencies(): ReadonlySet<QueryDependency> {
+    return this.#tracker.snapshot()
   }
 }
 
