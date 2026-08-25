@@ -9,6 +9,7 @@ import type {
   RequestContext
 } from '#/core/Connection.js'
 import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {SourceDB} from '#/database/entry/SourceDB.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
@@ -70,7 +71,7 @@ export interface HandlerHooks {
 
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
-  db: LocalDB | Promise<LocalDB>
+  db: LocalDB | SourceDB | Promise<LocalDB | SourceDB>
   remote?: (context: RequestContext) => RemoteConnection
   replica?: ReplicaService | Promise<ReplicaService>
 }

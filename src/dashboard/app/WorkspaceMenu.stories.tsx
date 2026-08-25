@@ -15,7 +15,7 @@ export function GlobalSearchStory() {
     view: undefined
   }
   return (
-    <StoryProvider client={db} config={cms.config} events={db.index} graph={db}>
+    <StoryProvider client={db} config={cms.config} events={db} graph={db}>
       <WorkspaceMenu
         canManageMembers={false}
         page={page}

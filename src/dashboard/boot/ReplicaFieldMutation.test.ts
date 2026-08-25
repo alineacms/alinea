@@ -25,7 +25,7 @@ describe('fieldTransactionForUpdates', () => {
       snapshot.revision,
       [
         {
-          op: 'update',
+          kind: 'updateEntry',
           id: entry.id,
           locale: entry.locale,
           status: entry.status,
@@ -57,7 +57,7 @@ describe('fieldTransactionForUpdates', () => {
     })
   })
 
-  test('leaves structural mutations for the command transport', async () => {
+  test('leaves structural writes for the command transport', async () => {
     const snapshot = await buildEntryDatabase(
       cms.config,
       new FSSource('test/fixtures/demo')
@@ -65,7 +65,7 @@ describe('fieldTransactionForUpdates', () => {
     const resolver = new DatabaseResolver(cms.config, snapshot)
     expect(
       await fieldTransactionForUpdates(resolver, 'revision-1', [
-        {op: 'remove', id: 'entry-1'}
+        {kind: 'removeEntry', id: 'entry-1'}
       ])
     ).toBeUndefined()
   })

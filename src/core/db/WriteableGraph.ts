@@ -13,6 +13,7 @@ import {MediaFile} from '../media/MediaTypes.js'
 import {Policy, WriteablePolicy} from '../Role.js'
 import {getScope} from '../Scope.js'
 import type {Mutation} from './Mutation.js'
+import {mutationsFromEntryWrites, type EntryWrite} from './EntryWrite.js'
 import {
   ArchiveOperation,
   type ArchiveQuery,
@@ -43,6 +44,10 @@ export abstract class WriteableGraph extends Graph {
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
     throw new Error('Entry references are not supported on this graph')
+  }
+
+  writeEntries(writes: Array<EntryWrite>): Promise<{sha: string}> {
+    return this.mutate(mutationsFromEntryWrites(writes))
   }
 
   async create<Definition, Selection extends Projection>(
@@ -132,8 +137,8 @@ export abstract class WriteableGraph extends Graph {
   }
 
   async commit(...operations: Array<Operation>) {
-    const mutations = await Promise.all(operations.map(op => op.task(this)))
-    await this.mutate(mutations.flat())
+    const writes = await Promise.all(operations.map(op => op.task(this)))
+    await this.writeEntries(writes.flat())
   }
 
   async createPolicy(forRoles: Array<string>): Promise<Policy> {

@@ -13,11 +13,11 @@ import {createFileHash} from '../util/ContentHash.js'
 import {basename, extname} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
 import {Workspace} from '../Workspace.js'
-import type {Mutation} from './Mutation.js'
+import type {EntryWrite} from './EntryWrite.js'
 import type {WriteableGraph} from './WriteableGraph.js'
 
 type Awaitable<T> = T | Promise<T>
-type Task = (graph: WriteableGraph) => Awaitable<Array<Mutation>>
+type Task = (graph: WriteableGraph) => Awaitable<Array<EntryWrite>>
 
 export class Operation {
   constructor(public task: Task) {}
@@ -47,11 +47,11 @@ function typeName(config: Config, type: Type) {
 export class CreateOp<Fields> extends Operation {
   id: string
   constructor(op: CreateQuery<Fields>) {
-    super(async (db): Promise<Array<Mutation>> => {
+    super(async (db): Promise<Array<EntryWrite>> => {
       const {config} = db
       return [
         {
-          op: 'create',
+          kind: 'createEntry',
           id: this.id,
           locale: op.locale ?? null,
           parentId: op.parentId ?? null,
@@ -71,10 +71,10 @@ export class CreateOp<Fields> extends Operation {
 
 export class DeleteOp extends Operation {
   constructor(protected entryIds: Array<string>) {
-    super((): Array<Mutation> => {
+    super((): Array<EntryWrite> => {
       return entryIds.map(id => {
         return {
-          op: 'remove',
+          kind: 'removeEntry',
           id
         }
       })
@@ -90,10 +90,10 @@ export interface DiscardQuery {
 
 export class DiscardOp extends Operation {
   constructor(query: DiscardQuery) {
-    super((): Array<Mutation> => {
+    super((): Array<EntryWrite> => {
       return [
         {
-          op: 'remove',
+          kind: 'removeEntry',
           ...query
         }
       ]
@@ -111,11 +111,11 @@ export interface UpdateQuery<Fields> {
 
 export class UpdateOperation<Definition> extends Operation {
   constructor(query: UpdateQuery<Definition>) {
-    super((): Array<Mutation> => {
+    super((): Array<EntryWrite> => {
       const {status = 'published', locale = null, id, set} = query
       return [
         {
-          op: 'update',
+          kind: 'updateEntry',
           id,
           locale,
           status: status as EntryStatus,
@@ -135,8 +135,10 @@ export interface MoveQuery {
 
 export class MoveOperation extends Operation {
   constructor(query: MoveQuery) {
-    super((): Array<Mutation> => {
-      return [{op: 'move', ...query, targetType: query.targetType ?? 'entry'}]
+    super((): Array<EntryWrite> => {
+      return [
+        {kind: 'moveEntry', ...query, targetType: query.targetType ?? 'entry'}
+      ]
     })
   }
 }
@@ -149,8 +151,8 @@ export interface PublishQuery {
 
 export class PublishOperation extends Operation {
   constructor(query: PublishQuery) {
-    super((): Array<Mutation> => {
-      return [{op: 'publish', ...query, locale: query.locale ?? null}]
+    super((): Array<EntryWrite> => {
+      return [{kind: 'publishEntry', ...query, locale: query.locale ?? null}]
     })
   }
 }
@@ -162,8 +164,8 @@ export interface UnpublishQuery {
 
 export class UnpublishOperation extends Operation {
   constructor(query: UnpublishQuery) {
-    super((): Array<Mutation> => {
-      return [{op: 'unpublish', ...query, locale: query.locale ?? null}]
+    super((): Array<EntryWrite> => {
+      return [{kind: 'unpublishEntry', ...query, locale: query.locale ?? null}]
     })
   }
 }
@@ -175,8 +177,8 @@ export interface ArchiveQuery {
 
 export class ArchiveOperation extends Operation {
   constructor(query: ArchiveQuery) {
-    super((): Array<Mutation> => {
-      return [{op: 'archive', ...query, locale: query.locale ?? null}]
+    super((): Array<EntryWrite> => {
+      return [{kind: 'archiveEntry', ...query, locale: query.locale ?? null}]
     })
   }
 }
@@ -200,7 +202,7 @@ export class UploadOperation extends Operation {
   id: string
 
   constructor(query: UploadQuery) {
-    super(async (db): Promise<Array<Mutation>> => {
+    super(async (db): Promise<Array<EntryWrite>> => {
       const entryId = this.id
       const {file, createPreview} = query
       const {workspace: _workspace, root: _root, parentId: _parentId} = query
@@ -238,13 +240,13 @@ export class UploadOperation extends Operation {
         workspace,
         info.location
       )
-      const uploadFile: Mutation = {
-        op: 'uploadFile',
+      const uploadFile: EntryWrite = {
+        kind: 'uploadFile',
         url: info.previewUrl,
         location: MediaLocation.storagePath(db.config, workspace, fileLocation)
       }
-      const createEntry: Mutation = {
-        op: 'create',
+      const createEntry: EntryWrite = {
+        kind: 'createEntry',
         id: entryId,
         locale: null,
         parentId: _parentId ?? null,

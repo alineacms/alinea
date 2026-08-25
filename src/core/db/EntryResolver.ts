@@ -3,7 +3,8 @@ import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
-import type {AnyCondition, Filter} from '#/core/Filter.js'
+import type {Filter} from '#/core/Filter.js'
+import {filterChecker} from '#/core/FilterMatcher.js'
 import {
   querySource as queryEdge,
   type AnyQueryResult,
@@ -24,11 +25,9 @@ import {
 } from '#/core/Internal.js'
 import type {Resolver} from '#/core/Resolver.js'
 import {getScope, type Scope} from '#/core/Scope.js'
-import {hasExact} from '#/core/util/Checks.js'
 import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {unreachable} from '#/core/util/Types.js'
 import type {Type} from '#/index.js'
-import * as cito from 'cito'
 import {createRecord} from '../EntryRecord.js'
 import {compareStrings} from '../source/Utils.js'
 import {assert} from '../util/Assert.js'
@@ -42,11 +41,6 @@ import {
   type EntryNode
 } from './EntryIndex.js'
 import {LinkResolver} from './LinkResolver.js'
-
-const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
-const andFilter = cito
-  .object({and: cito.array(cito.any)})
-  .and(hasExact(['and']))
 
 type Interim = any
 
@@ -300,7 +294,7 @@ export class EntryResolver implements Resolver {
     const checkEntry = entryChecker(this.#scope, query)
     const checkFilter =
       query.filter &&
-      filterChecker(query.filter, (entry, name) => {
+      filterChecker<Entry>(query.filter, (entry, name) => {
         if (name.startsWith('_')) return entryFieldValue(entry, name.slice(1))
         return entry.data[name]
       })
@@ -669,105 +663,6 @@ function localeChecker(locale: string | null, preferred: boolean): Check {
       return entry.locale.toLowerCase() === locale
     return entry.locale === locale
   }
-}
-
-export function filterChecker(
-  filter: Filter,
-  getField = (input: any, name: string) => input?.[name]
-): Check {
-  const isOrFilter = orFilter.check(filter)
-  if (isOrFilter) {
-    const or = filter.or.filter(Boolean).map(op => filterChecker(op, getField))
-    return input => {
-      for (const fn of or) if (fn(input)) return true
-      return false
-    }
-  }
-  const isAndFilter = andFilter.check(filter)
-  if (isAndFilter) {
-    const and = filter.and
-      .filter(Boolean)
-      .map(op => filterChecker(op, getField))
-    return input => {
-      for (const fn of and) if (!fn(input)) return false
-      return true
-    }
-  }
-  if (typeof filter !== 'object' || filter === null) {
-    return input => input === filter
-  }
-  const conditions = createConditions(filter, getField)
-  return input => {
-    for (const condition of conditions) if (!condition(input)) return false
-    return true
-  }
-}
-
-function createConditions(
-  ops: AnyCondition<any>,
-  getField: (input: any, name: string) => any
-): Array<Check> {
-  const conditions = Array<Check>()
-  for (const [name, op] of entries(ops)) {
-    if (op === undefined) continue
-    if (typeof op !== 'object' || op === null) {
-      conditions.push(input => getField(input, name) === op)
-      continue
-    }
-    const inner = op as AnyCondition<any>
-    if (inner.is !== undefined)
-      conditions.push(input => getField(input, name) === inner.is)
-    if (inner.isNot !== undefined)
-      conditions.push(input => getField(input, name) !== inner.isNot)
-    const inOp = inner.in
-    if (Array.isArray(inOp))
-      conditions.push(input => input && inOp.includes(getField(input, name)))
-    const notInOp = inner.notIn
-    if (Array.isArray(notInOp))
-      conditions.push(
-        input => input && !notInOp.includes(getField(input, name))
-      )
-    if (inner.gt !== undefined)
-      conditions.push(input => getField(input, name) > inner.gt)
-    if (inner.gte !== undefined)
-      conditions.push(input => getField(input, name) >= inner.gte)
-    if (inner.lt !== undefined)
-      conditions.push(input => getField(input, name) < inner.lt)
-    if (inner.lte !== undefined)
-      conditions.push(input => getField(input, name) <= inner.lte)
-    if (inner.startsWith)
-      conditions.push(input => {
-        const field = getField(input, name)
-        return (
-          typeof field === 'string' &&
-          field.startsWith(inner.startsWith as string)
-        )
-      })
-    const orOp = inner.or
-    if (orOp) {
-      const inner = Array.isArray(orOp)
-        ? orOp.flatMap(op => createConditions(op, getField))
-        : createConditions(orOp, getField)
-      conditions.push(input => {
-        for (const condition of inner) if (condition(input)) return true
-        return false
-      })
-    }
-    if (inner.has) {
-      const has = filterChecker(inner.has)
-      conditions.push(input => has(getField(input, name)))
-    }
-    if (inner.includes) {
-      const includes = filterChecker(inner.includes)
-      conditions.push(input => {
-        const field = getField(input, name)
-        if (!Array.isArray(field)) return false
-        for (const item of field) if (includes(item)) return true
-        return false
-      })
-    }
-  }
-  return conditions
 }
 
 function snippet(

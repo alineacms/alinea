@@ -122,7 +122,9 @@ mutations, but no longer proxies the static read data plane.
      hydration;
    - record per-query index/record dependencies in the worker and invalidate
      only intersecting queries and affected logical entry ids.
-7. **Writes, concurrency, and deltas (production transport and handler writer implemented; producer cutover remains)**
+   - use the normalized `SourceDB` for development/offline-cache reads and
+     writes instead of constructing the legacy index and resolver.
+7. **Writes, concurrency, and deltas (implemented)**
    - field-operation endpoint translates accepted paths into cloud mutations;
    - operations on unchanged paths merge across stale base revisions;
    - competing writes to the same scalar field return conflicts;
@@ -131,17 +133,17 @@ mutations, but no longer proxies the static read data plane.
    - production dashboard updates are converted to hashed field operations;
    - structural writes use a separate authenticated replica command endpoint,
      and no production dashboard write calls the legacy mutation HTTP endpoint;
+   - editor operation producers emit typed entry writes directly; replica field
+     updates become hashed operations, structural writes become authenticated
+     commands, and only the handler/cloud compatibility boundary converts them
+     to the unchanged cloud `Mutation` format;
    - replica field and structural writes use a normalized snapshot-backed source
-     writer; dashboard operation helpers still construct internal `Mutation`
-     arrays until their producer migration is complete.
+     writer.
 
 ## Remaining cutover
 
-- move field-update construction from the replica transport boundary into the
-  editor operation producers so dashboard-facing APIs no longer exchange
-  legacy `Mutation` arrays;
-- remove `EntryIndex`/`EntryResolver` after the development server and remaining
-  write utilities use the normalized database;
+- delete the legacy `EntryIndex`/`EntryResolver` compatibility classes after
+  retaining any still-useful oracle cases in the shared resolver corpus;
 - keep running `Benchmark.test.ts` and the shared resolver corpus during that
   removal.
 

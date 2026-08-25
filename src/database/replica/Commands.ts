@@ -1,86 +1,13 @@
+import {
+  entryWritesFromMutations,
+  mutationsFromEntryWrites,
+  type EntryWrite
+} from '#/core/db/EntryWrite.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {isRecord} from '#/core/util/Objects.js'
 
-export type ReplicaCommand =
-  | CreateEntryCommand
-  | UpdateEntryCommand
-  | RemoveEntryCommand
-  | MoveEntryCommand
-  | PublishEntryCommand
-  | UnpublishEntryCommand
-  | ArchiveEntryCommand
-  | UploadFileCommand
-  | RemoveFileCommand
-
-export interface CreateEntryCommand {
-  kind: 'createEntry'
-  type: string
-  locale: string | null
-  data: Record<string, unknown>
-  parentId?: string | null
-  id?: string
-  insertOrder?: 'first' | 'last'
-  status?: 'draft' | 'archived' | 'published'
-  overwrite?: boolean
-  fromSeed?: string
-  root?: string
-  workspace?: string
-}
-
-/** Compatibility for an update mixed with structural commands. */
-export interface UpdateEntryCommand {
-  kind: 'updateEntry'
-  id: string
-  locale: string | null
-  status: EntryStatus
-  set: Record<string, unknown>
-}
-
-export interface RemoveEntryCommand {
-  kind: 'removeEntry'
-  id: string
-  locale?: string | null
-  status?: 'draft' | 'archived' | 'published'
-}
-
-export interface MoveEntryCommand {
-  kind: 'moveEntry'
-  id: string
-  target: string
-  dropPosition: 'after' | 'before' | 'on'
-  targetType?: 'entry' | 'root'
-}
-
-export interface PublishEntryCommand {
-  kind: 'publishEntry'
-  id: string
-  locale: string | null
-  status: 'draft' | 'archived'
-}
-
-export interface UnpublishEntryCommand {
-  kind: 'unpublishEntry'
-  id: string
-  locale: string | null
-}
-
-export interface ArchiveEntryCommand {
-  kind: 'archiveEntry'
-  id: string
-  locale: string | null
-}
-
-export interface UploadFileCommand {
-  kind: 'uploadFile'
-  url: string
-  location: string
-}
-
-export interface RemoveFileCommand {
-  kind: 'removeFile'
-  location: string
-}
+export type ReplicaCommand = EntryWrite
 
 export interface ReplicaCommandResult {
   revision: string
@@ -89,91 +16,13 @@ export interface ReplicaCommandResult {
 export function replicaCommandsFromMutations(
   mutations: ReadonlyArray<Mutation>
 ): Array<ReplicaCommand> {
-  return mutations.map(mutation => {
-    switch (mutation.op) {
-      case 'create': {
-        const {op: _, ...input} = mutation
-        return {kind: 'createEntry', ...input}
-      }
-      case 'update': {
-        const {op: _, ...input} = mutation
-        return {kind: 'updateEntry', ...input}
-      }
-      case 'remove': {
-        const {op: _, ...input} = mutation
-        return {kind: 'removeEntry', ...input}
-      }
-      case 'move': {
-        const {op: _, ...input} = mutation
-        return {kind: 'moveEntry', ...input}
-      }
-      case 'publish': {
-        const {op: _, ...input} = mutation
-        return {kind: 'publishEntry', ...input}
-      }
-      case 'unpublish': {
-        const {op: _, ...input} = mutation
-        return {kind: 'unpublishEntry', ...input}
-      }
-      case 'archive': {
-        const {op: _, ...input} = mutation
-        return {kind: 'archiveEntry', ...input}
-      }
-      case 'uploadFile': {
-        const {op: _, ...input} = mutation
-        return {kind: 'uploadFile', ...input}
-      }
-      case 'removeFile': {
-        const {op: _, ...input} = mutation
-        return {kind: 'removeFile', ...input}
-      }
-    }
-  })
+  return entryWritesFromMutations(mutations)
 }
 
 export function mutationsFromReplicaCommands(
   commands: ReadonlyArray<ReplicaCommand>
 ): Array<Mutation> {
-  return commands.map(command => {
-    switch (command.kind) {
-      case 'createEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'create', ...input}
-      }
-      case 'updateEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'update', ...input}
-      }
-      case 'removeEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'remove', ...input}
-      }
-      case 'moveEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'move', ...input}
-      }
-      case 'publishEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'publish', ...input}
-      }
-      case 'unpublishEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'unpublish', ...input}
-      }
-      case 'archiveEntry': {
-        const {kind: _, ...input} = command
-        return {op: 'archive', ...input}
-      }
-      case 'uploadFile': {
-        const {kind: _, ...input} = command
-        return {op: 'uploadFile', ...input}
-      }
-      case 'removeFile': {
-        const {kind: _, ...input} = command
-        return {op: 'removeFile', ...input}
-      }
-    }
-  })
+  return mutationsFromEntryWrites(commands)
 }
 
 export function parseReplicaCommands(input: unknown): Array<ReplicaCommand> {

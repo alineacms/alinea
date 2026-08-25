@@ -10,8 +10,11 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {
+  mutationsFromEntryWrites,
+  type EntryWrite
+} from '#/core/db/EntryWrite.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
@@ -23,15 +26,16 @@ import {
   type ActivityTarget
 } from './ActivityEvent.js'
 import {ReplicaDashboardDB} from './ReplicaDashboardDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
-type DashboardDatabase = LocalDB | ReplicaDashboardDB
+type DashboardDatabase = SourceDB | ReplicaDashboardDB
 
 const remote = pLimit(1)
 const syncInterval = 120_000
 
 interface QueuedMutation {
   id: string
-  mutations: Array<Mutation>
+  writes: Array<EntryWrite>
   activity: Activity
   attempt: number
   sha?: string
@@ -79,8 +83,8 @@ export class DashboardWorker extends EventTarget {
       return remote(() => this.#syncReplica(db))
     // The source is IndexedDB: if it has data, we can boot from cache.
     const sourceTree = await db.source.getTree()
-    // The index is in-memory and starts empty for every fresh worker.
-    if (db.index.tree.isEmpty && !sourceTree.isEmpty) await db.sync()
+    // The normalized snapshot is in-memory and starts empty for every worker.
+    if (!db.loaded && !sourceTree.isEmpty) await db.sync()
     // Always schedule a remote freshness check, but do not block boot if local
     // data was enough to build the index.
     const sync = remote(() => this.#syncWithClient(db, client))
@@ -92,13 +96,16 @@ export class DashboardWorker extends EventTarget {
     return (await this.db).sha
   }
 
-  async queue(id: string, mutations: Array<Mutation>): Promise<string> {
+  async queue(id: string, writes: Array<EntryWrite>): Promise<string> {
     return this.#local(async () => {
       const db = await this.db
       if (this.#blocked) {
         throw new Error('Resolve the sync error before making more changes')
       }
-      const summary = await summarizeMutations(db, mutations)
+      const summary = await summarizeMutations(
+        db,
+        mutationsFromEntryWrites(writes)
+      )
       const activity: Activity = {
         id,
         type: 'mutation',
@@ -109,7 +116,7 @@ export class DashboardWorker extends EventTarget {
       }
       const item: QueuedMutation = {
         id,
-        mutations,
+        writes,
         activity,
         attempt: 0
       }
@@ -118,13 +125,13 @@ export class DashboardWorker extends EventTarget {
       this.#emitActivity()
       try {
         if (db instanceof ReplicaDashboardDB) {
-          const {sha} = await db.mutate(mutations)
+          const {sha} = await db.writeEntries(writes)
           item.sha = sha
           this.#completeMutation(item)
           this.#emitActivity()
           return sha
         }
-        await db.mutate(mutations)
+        await db.writeEntries(writes)
         item.sha = db.sha
         this.#emitActivity()
         void this.#flush(item)
@@ -169,7 +176,7 @@ export class DashboardWorker extends EventTarget {
         item.activity.error = undefined
         if (!item.sha) {
           try {
-            await db.mutate(item.mutations)
+            await db.writeEntries(item.writes)
             item.sha = db.sha
           } catch (error) {
             this.#blocked = true
@@ -220,7 +227,7 @@ export class DashboardWorker extends EventTarget {
       const db = await this.db
       if (db instanceof ReplicaDashboardDB) return
       try {
-        const {sha} = await client.mutate(item.mutations)
+        const {sha} = await client.mutate(mutationsFromEntryWrites(item.writes))
         if (remote.pendingCount === 0 && sha !== item.sha)
           await this.#syncWithClient(db, client)
         this.#completeMutation(item)
@@ -265,7 +272,7 @@ export class DashboardWorker extends EventTarget {
     this.dispatchEvent(new ActivityEvent(this.activities()))
   }
 
-  async #syncWithClient(db: LocalDB, client: LocalConnection) {
+  async #syncWithClient(db: SourceDB, client: LocalConnection) {
     const activity: Activity = {
       id: createId(),
       type: 'fetch',
@@ -387,7 +394,7 @@ export class DashboardWorker extends EventTarget {
         this.#startSyncing(true)
         return
       }
-      const db = new LocalDB(config, this.#source)
+      const db = new SourceDB(config, this.#source)
       const cacheReady = await this.#syncLocalIndex(db)
       if (!cacheReady) await remote(() => this.#syncWithClient(db, client))
       this.#localDB = db
@@ -397,9 +404,9 @@ export class DashboardWorker extends EventTarget {
         if (event instanceof IndexEvent)
           this.dispatchEvent(new IndexEvent(event.data))
       }
-      db.index.addEventListener(IndexEvent.type, listen)
+      db.addEventListener(IndexEvent.type, listen)
       this.#defer = () => {
-        db.index.removeEventListener(IndexEvent.type, listen)
+        db.removeEventListener(IndexEvent.type, listen)
       }
       this.#startSyncing(cacheReady)
     } catch (cause) {
@@ -408,7 +415,7 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async #syncLocalIndex(db: LocalDB): Promise<boolean> {
+  async #syncLocalIndex(db: SourceDB): Promise<boolean> {
     const sourceTree = await db.source.getTree()
     if (sourceTree.isEmpty) return false
     try {

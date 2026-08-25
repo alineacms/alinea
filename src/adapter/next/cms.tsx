@@ -3,7 +3,7 @@ import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
@@ -33,7 +33,7 @@ export class NextCMS<
       throw new Error('Local DB is not supported in Edge runtime environments.')
     const {generatedSource} = await import('#/backend/store/GeneratedSource.js')
     const source = await generatedSource
-    const db = new LocalDB(this.config, source)
+    const db = new SourceDB(this.config, source)
     await db.sync()
     return db
   })

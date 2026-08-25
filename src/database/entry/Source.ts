@@ -32,7 +32,15 @@ export interface EntrySourceFile {
   contents: Uint8Array
 }
 
-interface EntrySeed {
+export interface EntrySeed {
+  seedId: string
+  seedPath: string
+  translationPathEnd: string
+  nodePath: string
+  type: string
+  workspace: string
+  root: string
+  locale: string | null
   data: Record<string, unknown>
 }
 
@@ -319,7 +327,7 @@ function parseVersion(
   }
 }
 
-function entrySeeds(config: ConfigDefinition): Map<string, EntrySeed> {
+export function entrySeeds(config: ConfigDefinition): Map<string, EntrySeed> {
   const result = new Map<string, EntrySeed>()
   const typeNames = Schema.typeNames(config.schema)
   for (const [workspaceName, workspace] of entries(config.workspaces)) {
@@ -332,7 +340,8 @@ function entrySeeds(config: ConfigDefinition): Map<string, EntrySeed> {
           const path = pagePath.split('/').map(slugify).join('/')
           if (!Page.isPage(page)) continue
           const {type, fields = {}} = Page.data(page)
-          if (!typeNames.has(type)) continue
+          const typeName = typeNames.get(type)
+          if (!typeName) continue
           const filePath = Config.filePath(
             config,
             workspaceName,
@@ -342,7 +351,19 @@ function entrySeeds(config: ConfigDefinition): Map<string, EntrySeed> {
           )
           const lastSlash = filePath.lastIndexOf('/')
           const parentDir = filePath.slice(0, lastSlash)
-          result.set(`${parentDir}/${path.split('/').at(-1)}`, {
+          const nodePath = `${parentDir}/${path.split('/').at(-1)}`
+          const pathSegments = nodePath
+            .split('/')
+            .slice(Config.multipleWorkspaces(config) ? 2 : 1)
+          result.set(nodePath, {
+            seedId: `${rootName}/${path}`,
+            seedPath: `/${pathSegments.join('/')}.json`,
+            translationPathEnd: `/${pathSegments.slice(1).join('/')}.json`,
+            nodePath,
+            type: typeName,
+            workspace: workspaceName,
+            root: rootName,
+            locale,
             data: {
               ...fields,
               path: path.split('/').at(-1),

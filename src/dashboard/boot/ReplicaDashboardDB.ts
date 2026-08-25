@@ -14,12 +14,15 @@ import type {
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {
+  entryWritesFromMutations,
+  type EntryWrite
+} from '#/core/db/EntryWrite.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {AlineaDatabaseRecord} from '#/database/entry/Model.js'
 import {EntryReplicaClient} from '#/database/replica/EntryClient.js'
 import {HttpReplicaTransport} from '#/database/replica/HttpTransport.js'
 import {IndexedDBReplicaCache} from '#/database/replica/IndexedDBCache.js'
-import {replicaCommandsFromMutations} from '#/database/replica/Commands.js'
 import {
   FieldConflictError,
   hashFieldValue,
@@ -132,13 +135,17 @@ export class ReplicaDashboardDB extends WriteableGraph {
   }
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+    return this.writeEntries(entryWritesFromMutations(mutations))
+  }
+
+  async writeEntries(writes: Array<EntryWrite>): Promise<{sha: string}> {
     const transaction = await fieldTransactionForUpdates(
       this.#replica.resolver(this.config),
       this.sha,
-      mutations
+      writes
     )
     if (!transaction) {
-      await this.#transport.command(replicaCommandsFromMutations(mutations))
+      await this.#transport.command(writes)
       return {sha: await this.sync()}
     }
     const result = await this.#transport.mutate(transaction)
@@ -172,13 +179,13 @@ export class ReplicaDashboardDB extends WriteableGraph {
 export async function fieldTransactionForUpdates(
   resolver: Pick<Resolver, 'resolve'>,
   baseRevision: string,
-  mutations: ReadonlyArray<Mutation>,
+  writes: ReadonlyArray<EntryWrite>,
   transactionId = createId()
 ): Promise<FieldTransaction | undefined> {
-  if (mutations.some(mutation => mutation.op !== 'update')) return
+  if (writes.some(write => write.kind !== 'updateEntry')) return
   const operations: Array<FieldOperation> = []
-  for (const mutation of mutations) {
-    if (mutation.op !== 'update') return
+  for (const mutation of writes) {
+    if (mutation.kind !== 'updateEntry') return
     const entry = await resolver.resolve({
       id: mutation.id,
       locale: mutation.locale,

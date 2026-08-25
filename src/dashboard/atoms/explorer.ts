@@ -1,6 +1,6 @@
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
-import {filterChecker} from '#/core/db/EntryResolver.js'
+import {filterChecker} from '#/core/FilterMatcher.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'

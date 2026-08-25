@@ -2,7 +2,6 @@ import * as fsp from 'node:fs/promises'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {type CommitRequest, checkCommit} from '#/core/db/CommitRequest.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
@@ -10,6 +9,7 @@ import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
 import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 
 export interface DevDBOptions {
   config: Config
@@ -22,7 +22,7 @@ export interface WatchFiles {
   dirs: Array<string>
 }
 
-export class DevDB extends LocalDB {
+export class DevDB extends SourceDB {
   source: CachedFSSource
   #options: DevDBOptions
 
@@ -38,10 +38,6 @@ export class DevDB extends LocalDB {
   async sync() {
     await this.source.refresh()
     return super.sync()
-  }
-
-  async fix() {
-    await this.index.fix(this.source)
   }
 
   async watchFiles() {

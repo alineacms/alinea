@@ -1,5 +1,5 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {PreviewRequest} from '#/core/Preview.js'
@@ -9,7 +9,9 @@ import {decodePreviewPayload} from '#/preview/PreviewPayload.js'
 
 const decoder = new TextDecoder()
 
-export function createPreviewParser(local: LocalDB) {
+export function createPreviewParser(
+  local: WriteableGraph & {readonly sha: string}
+) {
   return {
     async parse(
       preview: PreviewRequest,

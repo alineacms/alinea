@@ -151,7 +151,7 @@ export function alineaFixturePlugin(): Plugin {
       const importPath = JSON.stringify(cmsFile)
 
       return `
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {importSource} from '#/core/source/SourceExport.js'
 import {cms} from ${importPath}
 
@@ -165,7 +165,7 @@ const fixtureUser = {
   roles: ['admin']
 }
 
-class FixtureDB extends LocalDB {
+class FixtureDB extends SourceDB {
   capabilities() {
     return Promise.resolve({users: true})
   }

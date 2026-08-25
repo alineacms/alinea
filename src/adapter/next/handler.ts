@@ -12,7 +12,7 @@ import {generatedReplica} from '#/backend/store/GeneratedReplica.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
@@ -39,7 +39,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const remote = (context: RequestContext) => backend(context, config)
   const db = PLazy.from(async () => {
     const source = await generatedSource
-    const db = new LocalDB(config, source)
+    const db = new SourceDB(config, source)
     await db.sync()
     return db
   })

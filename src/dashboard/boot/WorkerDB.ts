@@ -12,6 +12,10 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import {
+  entryWritesFromMutations,
+  type EntryWrite
+} from '#/core/db/EntryWrite.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {DashboardWorker} from './DashboardWorker.js'
 import type {Activity} from './ActivityEvent.js'
@@ -32,8 +36,14 @@ export class WorkerDB extends WriteableGraph {
   }
 
   async mutate(mutations: Array<Mutation>): Promise<{id: string; sha: string}> {
+    return this.writeEntries(entryWritesFromMutations(mutations))
+  }
+
+  async writeEntries(
+    writes: Array<EntryWrite>
+  ): Promise<{id: string; sha: string}> {
     const id = createId()
-    return {id, sha: await this.#worker.queue(id, mutations)}
+    return {id, sha: await this.#worker.queue(id, writes)}
   }
 
   resolve<Query extends GraphQuery>(

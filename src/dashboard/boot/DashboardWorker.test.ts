@@ -2,11 +2,12 @@ import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
-import type {Mutation} from '#/core/db/Mutation.js'
+import type {EntryWrite} from '#/core/db/EntryWrite.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
+import {SourceDB} from '#/database/entry/SourceDB.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
@@ -76,9 +77,7 @@ test('keeps successful content actions in activity history', async () => {
     createTestConnection(remoteDB)
   )
   const db = await worker.db
-  if (!(db instanceof LocalDB)) throw new Error('Expected local database')
-  // Index notifications are orthogonal to the activity behavior under test.
-  db.index.dispatchEvent = () => true
+  if (!(db instanceof SourceDB)) throw new Error('Expected source database')
   const original = await db.get({
     type: cms.schema.DemoRecipe,
     path: 'chocolate-chip'
@@ -99,7 +98,7 @@ test('keeps successful content actions in activity history', async () => {
 
   await worker.queue('successful-mutation', [
     {
-      op: 'create',
+      kind: 'createEntry',
       id: original._id,
       type: original._type,
       locale: null,
@@ -154,8 +153,8 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
     'dashboard-worker-incompatible-cache'
   )
   await syncWith(localSource, staleSource)
-  await expect(new LocalDB(cms.config, localSource).sync()).rejects.toThrow(
-    'Invalid root: removed-root'
+  await expect(new SourceDB(cms.config, localSource).sync()).rejects.toThrow(
+    'Invalid root "removed-root"'
   )
 
   const fixture = new FSSource('test/fixtures/demo')
@@ -267,15 +266,13 @@ async function createFailedMutationFixture() {
   await worker.load('test', cms.config, client)
   await initialSyncStarted
   const db = await worker.db
-  if (!(db instanceof LocalDB)) throw new Error('Expected local database')
-  // Index notifications are orthogonal to the queue behavior under test.
-  db.index.dispatchEvent = () => true
+  if (!(db instanceof SourceDB)) throw new Error('Expected source database')
   const original = await db.get({
     type: cms.schema.DemoRecipe,
     path: 'chocolate-chip'
   })
-  const mutation: Mutation = {
-    op: 'update',
+  const mutation: EntryWrite = {
+    kind: 'updateEntry',
     id: original._id,
     locale: null,
     status: 'published',
