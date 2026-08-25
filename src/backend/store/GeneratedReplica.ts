@@ -7,6 +7,7 @@ import {
   deserializeReplicaCatalog,
   type SerializedReplicaCatalog
 } from '#/database/replica/Serialization.js'
+import {readGeneratedJson} from './GeneratedArtifacts.js'
 import {generatedSource} from './GeneratedSource.js'
 
 const releases = new WeakMap<Config, Promise<ReplicaRelease>>()
@@ -21,23 +22,13 @@ export function generatedReplica(config: Config): Promise<ReplicaRelease> {
 }
 
 async function loadGeneratedReplica(config: Config): Promise<ReplicaRelease> {
-  // @ts-ignore Generated during the Alinea build.
-  const catalogModule = await import('@alinea/generated/replica-catalog.json')
-  // @ts-ignore Generated during the Alinea build.
-  const keysModule = await import('@alinea/generated/replica-keys.json')
+  const [serializedCatalog, serializedKeys] = await Promise.all([
+    readGeneratedJson<SerializedReplicaCatalog>('replica-catalog.json'),
+    readGeneratedJson<SerializedHandlerKeyCatalog>('replica-keys.json')
+  ])
   const source = await generatedSource
-  const catalog = deserializeReplicaCatalog(
-    moduleValue(catalogModule) as SerializedReplicaCatalog
-  )
-  const keys = deserializeHandlerKeys(
-    moduleValue(keysModule) as SerializedHandlerKeyCatalog
-  )
+  const catalog = deserializeReplicaCatalog(serializedCatalog)
+  const keys = deserializeHandlerKeys(serializedKeys)
   const snapshot = await buildEntryDatabase(config, source)
   return {snapshot, catalog, keys}
-}
-
-function moduleValue(value: unknown): unknown {
-  if (value && typeof value === 'object' && 'default' in value && value.default)
-    return value.default
-  return value
 }

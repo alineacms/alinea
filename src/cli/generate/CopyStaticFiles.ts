@@ -5,27 +5,6 @@ import {exportSource} from '#/core/source/SourceExport.js'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
 import type {GenerateContext} from './GenerateContext.js'
 
-const packageJson = {
-  private: true,
-  version: '0.0.0',
-  name: '@alinea/generated',
-  type: 'module',
-  sideEffects: false,
-  exports: {
-    './package.json': './package.json',
-    './config.js': './config.js',
-    './release.js': './release.js',
-    './release-meta.json': './release-meta.json',
-    './replica-catalog.json': './replica-catalog.json',
-    './replica-keys.json': './replica-keys.json',
-    './settings.json': './settings.json',
-    './source.js': {
-      'edge-light': './empty-source.js',
-      default: './source.js'
-    }
-  }
-}
-
 const emptySource = await exportSource(new MemorySource())
 
 export interface GeneratedSecrets {
@@ -39,10 +18,6 @@ export async function copyStaticFiles(
 ) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
 
-  await fs.writeFile(
-    path.join(outDir, 'release.js'),
-    `export const release = ${JSON.stringify(secrets.releaseId)}`
-  )
   await fs.writeFile(
     path.join(outDir, 'release-meta.json'),
     JSON.stringify({
@@ -73,16 +48,8 @@ export async function copyStaticFiles(
     })
   )
   await fs.writeFile(
-    path.join(outDir, 'package.json'),
-    JSON.stringify(packageJson, null, 2)
-  )
-  await fs.writeFile(
-    path.join(outDir, 'empty-source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
-  )
-  await fs.writeFile(
-    path.join(outDir, 'source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
+    path.join(outDir, 'source.json'),
+    JSON.stringify(emptySource, null, 2)
   )
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(

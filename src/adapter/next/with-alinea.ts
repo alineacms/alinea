@@ -1,7 +1,9 @@
 import type {NextConfig} from 'next/dist/types.js'
+import {
+  generatedArtifactPath,
+  generatedArtifactsPath
+} from '#/backend/store/GeneratedArtifacts.js'
 import {readFileSync} from 'node:fs'
-import {createRequire} from 'node:module'
-import {resolve} from 'node:path'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
@@ -26,19 +28,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const adminPath = settings?.adminPath
   if (!adminPath) {
     console.warn(
-      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI and deploy @alinea/generated.'
+      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI so .alinea/generated is available.'
     )
-  }
-  let nextVersion = 15
-  try {
-    // Ducktape this together so we can get the package.json contents regardless
-    // of .cjs, .mjs, compiled .ts or Node version
-    const require = createRequire(resolve('./index.js'))
-    const pkgLocation = require.resolve('next/package.json')
-    const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
-    nextVersion = Number(pkg.version.split('.')[0])
-  } catch {
-    console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
   const imagesConfig = config.images ?? {}
   const remotePatterns = [
@@ -68,29 +59,16 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ALINEA_CONFIG_URL: `${settings.adminPath}/config/${settings.configId}/config.js`
       }
     : config.env
-  if (nextVersion < 15)
-    return {
-      ...config,
-      experimental: {
-        ...config.experimental,
-        serverComponentsExternalPackages: [
-          ...(config.experimental?.serverComponentsExternalPackages ?? []),
-          '@alinea/generated'
-        ]
-      },
-      images,
-      env,
-      redirects,
-      rewrites
-    }
+  const tracedArtifacts = `${generatedArtifactsPath}/**/*`
+  const outputFileTracingIncludes = {
+    ...config.outputFileTracingIncludes,
+    '/*': [...(config.outputFileTracingIncludes?.['/*'] ?? []), tracedArtifacts]
+  }
   return {
     ...config,
-    serverExternalPackages: [
-      ...(config.serverExternalPackages ?? []),
-      '@alinea/generated'
-    ],
     images,
     env,
+    outputFileTracingIncludes,
     redirects,
     rewrites
   }
@@ -174,8 +152,7 @@ interface ResolvedGeneratedSettings {
 
 function resolveGeneratedSettings(): ResolvedGeneratedSettings | undefined {
   try {
-    const require = createRequire(resolve('./index.js'))
-    const location = require.resolve('@alinea/generated/settings.json')
+    const location = generatedArtifactPath('settings.json')
     const settings = JSON.parse(
       readFileSync(location, 'utf-8')
     ) as GeneratedSettings

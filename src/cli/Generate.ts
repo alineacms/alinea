@@ -5,7 +5,6 @@ import {exportSource} from '#/core/source/SourceExport.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
 import * as fsp from 'node:fs/promises'
-import {createRequire} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
@@ -23,8 +22,6 @@ import {reportError, reportFatal} from './util/Report.js'
 import {buildEntryReleaseArtifacts} from '#/database/release/Artifacts.js'
 
 const __dirname = dirname(import.meta.url)
-const require = createRequire(import.meta.url)
-const alineaPackageDir = path.dirname(require.resolve('alinea/package.json'))
 
 export interface GenerateOptions {
   cmd: 'dev' | 'build'
@@ -89,10 +86,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   const rootDir = path.resolve(cwd)
   const configDir = path.dirname(configLocation)
 
-  const nodeModules = alineaPackageDir.includes('node_modules')
-    ? path.join(alineaPackageDir, '..')
-    : path.join(alineaPackageDir, 'node_modules')
-
   const context: GenerateContext = {
     cmd,
     wasmCache,
@@ -102,7 +95,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configDir,
     configLocation,
     fix: options.fix || false,
-    outDir: path.join(nodeModules, '@alinea/generated')
+    outDir: path.join(rootDir, '.alinea', 'generated')
   }
   const generated = {releaseId: createId(), configId: createId()}
   await copyStaticFiles(context, generated)
@@ -114,10 +107,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   async function writeStore(db: DevDB) {
     const exported = await exportSource(db.source)
     const data = JSON.stringify(exported, null, 2)
-    await fsp.writeFile(
-      join(context.outDir, 'source.js'),
-      `export const source = ${data}`
-    )
+    await fsp.writeFile(join(context.outDir, 'source.json'), data)
     return data.length
   }
   async function writeRelease(db: DevDB, cms: CMS) {

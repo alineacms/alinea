@@ -101,7 +101,9 @@ mutations, but no longer proxies the static read data plane.
 4. **Build integration (implemented)**
    - export normalized records, index buckets, references, and frame metadata;
    - compile immutable build content into the encrypted release bundle;
-   - retain the handler-only access/key catalog beside the generated source;
+   - retain the handler-only access/key catalog and compatibility source export
+     in `.alinea/generated`, traced as private server files rather than an npm
+     package;
    - persist the generated release id in server-only build configuration.
 5. **Handler integration (implemented)**
    - load a complete new-database snapshot instead of constructing `EntryIndex`;
@@ -140,8 +142,6 @@ mutations, but no longer proxies the static read data plane.
   legacy `Mutation` arrays;
 - replace the structural command handler's `LocalDB`/`EntryTransaction` writer
   with a normalized-database source writer;
-- move server build artifacts out of the temporary `@alinea/generated` package
-  once every framework adapter can trace an equivalent private server artifact;
 - remove `EntryIndex`/`EntryResolver` after the development server and remaining
   write utilities use the normalized database;
 - keep running `Benchmark.test.ts` and the shared resolver corpus during that

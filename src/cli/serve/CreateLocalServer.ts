@@ -131,7 +131,6 @@ export function createLocalServer(
     ...buildOptions,
     plugins,
     alias,
-    external: ['@alinea/generated'],
     inject: ['alinea/cli/util/WarnPublicEnv'],
     define: {
       'process.env.NODE_ENV': production ? '"production"' : '"development"',

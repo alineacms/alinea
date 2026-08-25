@@ -50,7 +50,6 @@ export async function generateDashboard(
       'alinea/next': 'alinea/core',
       '#alinea/config': configLocation
     },
-    external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
@@ -92,7 +91,6 @@ export async function generateDashboard(
       'alinea/next': 'alinea/core',
       '#alinea/config': configLocation
     },
-    external: ['@alinea/generated'],
     define: {
       'process.env.NODE_ENV': '"production"',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
