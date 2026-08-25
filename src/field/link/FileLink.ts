@@ -32,7 +32,9 @@ export namespace FileLink {
 
 const fileCondition = {
   _type: 'MediaFile',
-  extension: {notIn: imageExtensions}
+  extension: {
+    notIn: [...imageExtensions, ...imageExtensions.map(e => e.toUpperCase())]
+  }
 }
 
 export function filePicker<Fields>(

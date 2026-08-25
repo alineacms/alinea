@@ -586,7 +586,7 @@ export class ExplorerAtoms {
   sort = atom(
     (get): ExplorerSort =>
       get(this.#selectedSort) ?? {
-        sortBy: get(this.isMedia) ? 'title' : 'index',
+        sortBy: 'index',
         direction: 'asc'
       },
     (get, set, sortBy: ExplorerSortBy) => {

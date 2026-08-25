@@ -123,7 +123,11 @@ export function FileEditor({entry}: FileEditorProps) {
                       className={styles.FileEditor.metadata.item({full: true})}
                     >
                       <dt className={styles.FileEditor.metadata.term()}>URL</dt>
-                      <dd className={styles.FileEditor.metadata.value()}>
+                      <dd
+                        className={styles.FileEditor.metadata.value({
+                          link: true
+                        })}
+                      >
                         <a
                           href={liveUrl.href}
                           target="_blank"

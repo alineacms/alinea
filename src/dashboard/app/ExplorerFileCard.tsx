@@ -88,7 +88,7 @@ function formatExtension(extension?: string) {
 
 function formatFileDetails(file: Infer<typeof MediaFile>) {
   const details = new Array<string>()
-  if (file.width && file.height) details.push(`${file.width}x${file.height}`)
+  if (file.width && file.height) details.push(`${file.width}×${file.height}`)
   if (typeof file.size === 'number') details.push(prettyBytes(file.size))
-  return details.join(' ')
+  return details.join(' - ')
 }

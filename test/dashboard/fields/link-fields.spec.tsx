@@ -963,14 +963,19 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(
     filePicker
       .getByRole('radiogroup', {name: 'Explorer view'})
-      .getByRole('radio', {name: 'Row view'})
+      .getByRole('radio', {name: 'Card view'})
+  ).toBeChecked()
+  await expect(
+    filePicker
+      .getByRole('radiogroup', {name: 'Explorer results'})
+      .getByRole('radio', {name: 'Browse'})
   ).toBeChecked()
   await expect(
     filePicker.getByRole('switch', {name: 'All locations'})
   ).not.toBeChecked()
   await expect(
     filePicker.getByRole('switch', {name: 'All locations'})
-  ).toBeEnabled()
+  ).toBeDisabled()
   await filePicker
     .getByRole('checkbox', {name: 'Select Existing file'})
     .locator('xpath=ancestor::label')

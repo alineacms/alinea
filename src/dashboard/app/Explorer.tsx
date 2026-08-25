@@ -712,7 +712,12 @@ function ExplorerControlsButton({
 }: ExplorerControlsProps) {
   return (
     <DialogTrigger>
-      <Button size="icon-nav" appearance="outline" icon={IcRoundFilterList} />
+      <Button
+        aria-label="Filter and sort"
+        appearance={selectedFilter ? 'active' : 'outline'}
+        icon={IcRoundFilterList}
+        size="icon-nav"
+      />
       <Popover placement="bottom left">
         <ExplorerControlsPopover
           isMedia={isMedia}

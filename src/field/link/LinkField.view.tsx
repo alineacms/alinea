@@ -498,7 +498,8 @@ function LinkPickerAction({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: LinkPickerOptions = {
     condition,
-    initialView: type === 'file' ? 'row' : undefined,
+    initialView:
+      type === 'file' || type === 'image' ? ('card' as const) : undefined,
     initialResultMode: entryPickerResultMode(
       type,
       condition,
@@ -622,7 +623,8 @@ function LinkPickerDialog({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: LinkPickerOptions = {
     condition,
-    initialView: type === 'file' ? 'row' : undefined,
+    initialView:
+      type === 'file' || type === 'image' ? ('card' as const) : undefined,
     initialResultMode: entryPickerResultMode(
       type,
       condition,
@@ -734,8 +736,8 @@ function entryPickerResultMode(
   enableNavigation: boolean | undefined,
   pickChildren: boolean
 ) {
-  return pickChildren ||
-    (type !== 'image' && condition && enableNavigation !== true)
+  if (type === 'file' || type === 'image') return 'browse' as const
+  return pickChildren || (condition && enableNavigation !== true)
     ? ('matches' as const)
     : ('browse' as const)
 }
