@@ -5,9 +5,10 @@ import type {
   EntryReferenceScan
 } from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
+import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
-import {getRoot, getWorkspace} from '#/core/Internal.js'
+import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {Permission} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
@@ -710,3 +711,211 @@ export class MissingEntryError extends Error {
     this.name = 'MissingEntryError'
   }
 }
+
+export interface TreeEntrySummary {
+  id: string
+  title: string
+  type: string
+  status: EntryStatus
+  main: boolean
+  locale: string | null
+  parentId: string | null
+  parents: Array<string>
+  workspace: string
+  root: string
+  hasChildren: boolean
+}
+
+interface TreeEntryData {
+  entries: Array<Omit<TreeEntrySummary, 'hasChildren'>>
+  hasChildren: boolean
+}
+
+interface TreeChildrenLocation {
+  workspace: string
+  root: string
+  parentId: string | null
+}
+
+const treeEntrySelect = {
+  id: Entry.id,
+  title: Entry.title,
+  type: Entry.type,
+  status: Entry.status,
+  main: Entry.main,
+  locale: Entry.locale,
+  parentId: Entry.parentId,
+  parents: Entry.parents,
+  workspace: Entry.workspace,
+  root: Entry.root
+}
+
+const treeChildSelect = {
+  id: Entry.id,
+  type: Entry.type,
+  locale: Entry.locale,
+  parentId: Entry.parentId,
+  parents: Entry.parents,
+  workspace: Entry.workspace,
+  root: Entry.root
+}
+
+function preferredTreeEntries<Item extends {id: string; locale: string | null}>(
+  items: Array<Item>,
+  locale: string | null
+): Array<Item> {
+  const translated = new Set(
+    items.filter(item => item.locale === locale).map(item => item.id)
+  )
+  const untranslated = new Set<string>()
+  return items.filter(item => {
+    if (translated.has(item.id)) return item.locale === locale
+    if (untranslated.has(item.id)) return false
+    untranslated.add(item.id)
+    return true
+  })
+}
+
+export async function loadTreeChildren(
+  get: Getter,
+  location: TreeChildrenLocation,
+  locale: string | null,
+  orderBy?: Order | Array<Order>
+): Promise<Array<TreeEntryAtoms>> {
+  const config = get(configAtom)
+  const graph = get(graphAtom)
+  const policy = get(policyAtom)
+  const visibleTypes = entries(config.schema)
+    .filter(([, type]) => !Type.isHidden(type))
+    .map(([name]) => name)
+  const matches = await graph.find({
+    ...location,
+    filter: {_type: {in: visibleTypes}},
+    orderBy,
+    select: treeChildSelect,
+    status: 'preferDraft'
+  })
+  return preferredTreeEntries(
+    matches.filter(entry => policy.canRead(entry)),
+    locale
+  ).map(entry => treeEntryAtoms(entry.id))
+}
+
+const treeEntryLoader = atom(get => {
+  const config = get(configAtom)
+  const graph = get(graphAtom)
+  const policy = get(policyAtom)
+  const visibleTypes = entries(config.schema)
+    .filter(([, type]) => !Type.isHidden(type))
+    .map(([name]) => name)
+  return loader<TreeEntryData>(async ids => {
+    const [rows, children] = await Promise.all([
+      graph.find({
+        id: {in: ids},
+        select: treeEntrySelect,
+        status: 'preferDraft'
+      }),
+      graph.find({
+        filter: {_type: {in: visibleTypes}},
+        parentId: {in: ids},
+        select: treeChildSelect,
+        status: 'preferDraft'
+      })
+    ])
+    const entriesById = new Map<string, Array<(typeof rows)[number]>>()
+    for (const entry of rows) {
+      const versions = entriesById.get(entry.id) ?? []
+      versions.push(entry)
+      entriesById.set(entry.id, versions)
+    }
+    const parentsWithChildren = new Set(
+      children
+        .filter(child => policy.canRead(child))
+        .flatMap(child => (child.parentId ? [child.parentId] : []))
+    )
+    return ids.map(id => {
+      const entryVersions = entriesById.get(id)
+      if (!entryVersions) return [null, new MissingEntryError(id)] as const
+      return [
+        {
+          entries: entryVersions,
+          hasChildren: parentsWithChildren.has(id)
+        },
+        null
+      ] as const
+    })
+  })
+})
+
+export class TreeEntryAtoms {
+  #data = atom(async get => {
+    get(entryRevisionAtom(this.id))
+    const [data, error] = await get(treeEntryLoader)(this.id)
+    if (error) throw error
+    assert(data, `Tree entry "${this.id}" not found`)
+    return data
+  })
+
+  constructor(public readonly id: string) {}
+
+  ready = atom(async get => {
+    await get(this.#data)
+    return this
+  })
+
+  raw = dispense((locale: string | null) =>
+    atom(async get => {
+      const data = await get(this.#data)
+      const entry = preferredTreeEntries(data.entries, locale)[0]
+      assert(entry, `Tree entry "${this.id}" has no versions`)
+      return entry
+    })
+  )
+
+  summary = dispense((locale: string | null) =>
+    atom(async get => {
+      const data = await get(this.#data)
+      const config = get(configAtom)
+      const policy = get(policyAtom)
+      const entry = preferredTreeEntries(
+        data.entries.filter(candidate => {
+          const type = config.schema[candidate.type]
+          return Boolean(
+            type && !Type.isHidden(type) && policy.canRead(candidate)
+          )
+        }),
+        locale
+      )[0]
+      if (!entry) throw new MissingEntryError(this.id)
+      return {...entry, hasChildren: data.hasChildren}
+    })
+  )
+
+  parents = atom(async get => {
+    const entry = await get(this.raw(null))
+    const models = entry.parents.map(treeEntryAtoms)
+    await Promise.all(models.map(model => get(model.ready)))
+    return models
+  })
+
+  children = dispense((locale: string | null) =>
+    atom(async get => {
+      get(shaAtom)
+      const entry = await get(this.raw(locale))
+      const type = get(configAtom).schema[entry.type]
+      assert(type, `Type "${entry.type}" not found in config`)
+      return loadTreeChildren(
+        get,
+        {
+          workspace: entry.workspace,
+          root: entry.root,
+          parentId: this.id
+        },
+        locale,
+        getType(type).orderChildrenBy
+      )
+    })
+  )
+}
+
+export const treeEntryAtoms = dispense((id: string) => new TreeEntryAtoms(id))
