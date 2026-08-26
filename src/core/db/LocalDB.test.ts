@@ -1,6 +1,7 @@
 import {cms} from '#test/cms.js'
 import {suite} from '@alinea/suite'
 import {Entry} from '../Entry.js'
+import type {ChangesBatch} from '../source/Change.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {type GetBlobsOptions, syncWith} from '../source/Source.js'
@@ -137,6 +138,38 @@ test('syncWith indexes the downloaded batch without rereading local blobs', asyn
   await fresh.syncWith(remote)
 
   test.is(local.blobReads, 0)
+  test.is(fresh.sha, (await remote.getTree()).sha)
+})
+
+test('syncWith stores and indexes downloaded changes concurrently', async () => {
+  class DelayedMemorySource extends MemorySource {
+    applying = false
+
+    async applyChanges(batch: ChangesBatch) {
+      this.applying = true
+      await new Promise(resolve => setTimeout(resolve, 10))
+      try {
+        await super.applyChanges(batch)
+      } finally {
+        this.applying = false
+      }
+    }
+  }
+
+  const remote = new MemorySource()
+  await syncWith(remote, source)
+  const local = new DelayedMemorySource()
+  const fresh = new LocalDB(cms.config, local)
+  const indexChanges = fresh.index.indexChanges.bind(fresh.index)
+  let indexedWhileApplying = false
+  fresh.index.indexChanges = async batch => {
+    indexedWhileApplying = local.applying
+    return indexChanges(batch)
+  }
+
+  await fresh.syncWith(remote)
+
+  test.is(indexedWhileApplying, true)
   test.is(fresh.sha, (await remote.getTree()).sha)
 })
 

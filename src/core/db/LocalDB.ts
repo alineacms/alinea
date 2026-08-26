@@ -75,9 +75,13 @@ export class LocalDB extends WriteableGraph {
   syncWith(remote: SyncApi) {
     return limit(async () => {
       const batch = await diff(this.source, remote)
-      if (batch.changes.length > 0) await this.source.applyChanges(batch)
-      if (this.index.sha === batch.fromSha) {
-        if (batch.changes.length > 0) await this.index.indexChanges(batch)
+      const canIndexChanges = this.index.sha === batch.fromSha
+      if (batch.changes.length > 0)
+        await Promise.all([
+          this.source.applyChanges(batch),
+          canIndexChanges ? this.index.indexChanges(batch) : undefined
+        ])
+      if (canIndexChanges) {
         await this.index.seed(this.source)
         return this.index.sha
       }
