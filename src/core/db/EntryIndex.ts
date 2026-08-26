@@ -715,9 +715,9 @@ export class EntryIndex extends EventTarget {
     if (!this.initialSync) this.initialSync = tree
     const batch = await bundleContents(source, this.tree.diff(tree))
     if (batch.changes.length === 0) return tree.sha
-    return this.indexChanges(batch)
+    return this.indexChanges(batch, tree)
   }
-  async indexChanges(batch: ChangesBatch) {
+  async indexChanges(batch: ChangesBatch, targetTree?: ReadonlyTree) {
     const {fromSha, changes} = batch
     if (fromSha !== this.tree.sha)
       throw new ShaMismatchError(fromSha, this.tree.sha)
@@ -761,7 +761,7 @@ export class EntryIndex extends EventTarget {
         }
       }
     }
-    const updatedTree = await this.tree.withChanges(batch)
+    const updatedTree = targetTree ?? (await this.tree.withChanges(batch))
     const sha = updatedTree.sha
     this.tree = updatedTree
     const affectedParentIds = changedParentIds(previousRelations, nextRelations)

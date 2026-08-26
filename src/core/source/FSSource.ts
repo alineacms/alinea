@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto'
 import type {Stats} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
@@ -7,13 +8,18 @@ import {assert} from '../util/Assert.js'
 import {mapConcurrent} from '../util/Async.js'
 import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
-import {hashBlob} from './GitUtils.js'
 import type {GetBlobsOptions, Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 
 const limit = pLimit(1)
 const fileConcurrency = 64
 const blobReadConcurrency = 32
+const encoder = new TextEncoder()
+
+function hashFileBlob(contents: Uint8Array): string {
+  const header = encoder.encode(`blob ${contents.byteLength}\0`)
+  return createHash('sha1').update(header).update(contents).digest('hex')
+}
 
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
@@ -70,7 +76,7 @@ export class FSSource implements Source {
       if (isRecord(error) && error.code === 'ENOENT') return
       throw error
     }
-    const sha = await hashBlob(contents)
+    const sha = hashFileBlob(contents)
     this.#locations.set(sha, filePath)
     this.#lastModified.set(filePath, stat.mtimeMs)
     builder.add(filePath, sha)
