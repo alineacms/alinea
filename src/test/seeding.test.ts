@@ -1,9 +1,9 @@
-import {suite} from '@alinea/suite'
-import {Config} from 'alinea'
 import {createCMS} from '#/core.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {Config} from '#/index.js'
+import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
 

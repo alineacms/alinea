@@ -1,4 +1,3 @@
-import {expect, spyOn, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Entry} from '#/core/Entry.js'
@@ -9,9 +8,10 @@ import {
   createDashboardStore,
   TestEvents
 } from '#test/DashboardFixture.js'
+import {expect, spyOn, test} from 'bun:test'
 import {atom} from 'jotai'
 import {configAtom, eventsAtom} from './core.js'
-import {EntryAtoms, EntryLocaleAtoms, entryAtoms} from './entry.js'
+import {EntryAtoms, entryAtoms, EntryLocaleAtoms} from './entry.js'
 import {authReady} from './user.js'
 
 test('entryAtoms returns stable entry and locale atom bundles', () => {
@@ -186,7 +186,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
 
   const mutate = db.mutate.bind(db)
   let notifyStarted: () => void
-  let releaseSave: () => void
+  let releaseSave!: () => void
   const started = new Promise<void>(resolve => {
     notifyStarted = resolve
   })

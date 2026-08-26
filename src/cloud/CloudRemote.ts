@@ -20,6 +20,7 @@ import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import type {GetBlobsOptions} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {entries, values} from '#/core/util/Objects.js'
@@ -73,12 +74,14 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
   }
 
   async *getBlobs(
-    shas: Array<string>
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const ctx = this.#context
     const response = await fetch(cloudConfig.blobs, {
       method: 'POST',
       body: JSON.stringify({shas}),
+      signal: options.signal,
       headers: {
         ...bearer(ctx),
         'content-type': 'application/json',

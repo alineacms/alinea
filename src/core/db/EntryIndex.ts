@@ -70,7 +70,7 @@ interface EntryVersionData {
   id: string
   type: string
   index: string
-  searchableText: string
+  searchableText?: string
   title: string
   data: Record<string, unknown>
   seeded: string | null
@@ -226,6 +226,7 @@ class EntryLanguageNode {
 
   get entries() {
     if (this.#entries) return this.#entries
+    const entryType = this.node.entryType
     const entries = (
       this.inheritedStatus ? [this.active] : [...this.language.values()]
     ).map((version): Entry => {
@@ -236,7 +237,13 @@ class EntryLanguageNode {
         parents: this.node.parents,
         url: this.url,
         active: version === this.active,
-        main: version === this.main
+        main: version === this.main,
+        get searchableText() {
+          return (version.searchableText ??= Type.searchableText(
+            entryType,
+            version.data
+          ))
+        }
       }
     })
     this.#entries = entries
@@ -562,26 +569,18 @@ export class EntryGraph {
 }
 
 class VersionParser extends Map<string, EntryVersionData> {
-  #config: Config
-  constructor(config: Config) {
-    super()
-    this.#config = config
-  }
   parse(sha: string, blob: Uint8Array): EntryVersionData {
     if (super.has(sha)) return super.get(sha)!
     const decoder = new TextDecoder()
     const text = decoder.decode(blob)
     const raw = JSON.parse(text)
     const {meta, data} = parseRecord(raw)
-    const entryType = this.#config.schema[meta.type]
-    const searchableText = Type.searchableText(entryType, data)
     const version = {
       id: meta.id,
       type: meta.type,
       index: meta.index,
       data,
       title: data.title as string,
-      searchableText,
       seeded: meta.seeded ?? null,
       rowHash: sha,
       fileHash: sha
@@ -593,7 +592,7 @@ class VersionParser extends Map<string, EntryVersionData> {
 
 class ParserCache extends WeakMap<Config, VersionParser> {
   get = (config: Config) => {
-    if (!this.has(config)) this.set(config, new VersionParser(config))
+    if (!this.has(config)) this.set(config, new VersionParser())
     return super.get(config)!
   }
 }

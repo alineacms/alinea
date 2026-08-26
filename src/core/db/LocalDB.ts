@@ -6,8 +6,8 @@ import type {AnyQueryResult, GraphQuery} from '../Graph.js'
 import type {Policy} from '../Role.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
-import type {Source} from '../source/Source.js'
-import {syncWith} from '../source/Source.js'
+import type {GetBlobsOptions} from '../source/Source.js'
+import {diff, type Source} from '../source/Source.js'
 import {type CommitRequest, sourceChanges} from './CommitRequest.js'
 import {EntryIndex} from './EntryIndex.js'
 import type {
@@ -64,8 +64,8 @@ export class LocalDB extends WriteableGraph {
     return this.source.getTreeIfDifferent(sha)
   }
 
-  getBlobs(shas: Array<string>) {
-    return this.source.getBlobs(shas)
+  getBlobs(shas: ReadonlyArray<string>, options?: GetBlobsOptions) {
+    return this.source.getBlobs(shas, options)
   }
 
   async sync() {
@@ -74,7 +74,13 @@ export class LocalDB extends WriteableGraph {
 
   syncWith(remote: SyncApi) {
     return limit(async () => {
-      await syncWith(this.source, remote)
+      const batch = await diff(this.source, remote)
+      if (batch.changes.length > 0) await this.source.applyChanges(batch)
+      if (this.index.sha === batch.fromSha) {
+        if (batch.changes.length > 0) await this.index.indexChanges(batch)
+        await this.index.seed(this.source)
+        return this.index.sha
+      }
       return this.sync()
     })
   }

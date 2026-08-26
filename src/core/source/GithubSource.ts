@@ -3,7 +3,7 @@ import pLimit from 'p-limit'
 import {HttpError} from '../HttpError.js'
 import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
-import type {Source} from './Source.js'
+import type {GetBlobsOptions, Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 
 export interface GithubSourceOptions {
@@ -92,14 +92,18 @@ export class GithubSource implements Source {
   }
 
   async *getBlobs(
-    shas: Array<string>
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const {owner, repo, authToken} = this.#options
     const responses = shas.map(sha => {
       const promise = this.#limit(() =>
         fetch(
           `https://api.github.com/repos/${owner}/${repo}/git/blobs/${sha}`,
-          {headers: {Authorization: `Bearer ${authToken}`}}
+          {
+            headers: {Authorization: `Bearer ${authToken}`},
+            signal: options.signal
+          }
         )
       )
       return [sha, promise] as const

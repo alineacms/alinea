@@ -3,7 +3,7 @@ import {suite} from '@alinea/suite'
 import {Entry} from '../Entry.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
-import {syncWith} from '../source/Source.js'
+import {type GetBlobsOptions, syncWith} from '../source/Source.js'
 import {LocalDB} from './LocalDB.js'
 
 const dir = 'test/fixtures/demo'
@@ -114,6 +114,30 @@ test('update path', async () => {
     updatedParent.childrenDir,
     updatedParent.childrenDir
   ])
+})
+
+test('syncWith indexes the downloaded batch without rereading local blobs', async () => {
+  class TrackingMemorySource extends MemorySource {
+    blobReads = 0
+
+    async *getBlobs(
+      shas: ReadonlyArray<string>,
+      options?: GetBlobsOptions
+    ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+      this.blobReads++
+      yield* super.getBlobs(shas, options)
+    }
+  }
+
+  const remote = new MemorySource()
+  await syncWith(remote, source)
+  const local = new TrackingMemorySource()
+  const fresh = new LocalDB(cms.config, local)
+
+  await fresh.syncWith(remote)
+
+  test.is(local.blobReads, 0)
+  test.is(fresh.sha, (await remote.getTree()).sha)
 })
 
 test('change order', async () => {

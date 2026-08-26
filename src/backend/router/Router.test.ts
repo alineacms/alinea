@@ -1,6 +1,6 @@
-import {Request, Response} from '@alinea/iso'
+import {DecompressionStream, Request, Response} from '@alinea/iso'
 import {suite} from '@alinea/suite'
-import {router} from '#/backend/router/Router.js'
+import {compressResponse, router} from '#/backend/router/Router.js'
 
 const matcher = router.matcher()
 
@@ -20,4 +20,20 @@ test('root', async () => {
 test('param', async () => {
   const response = await handle(new Request('http://localhost/param/123'))
   test.is(await response?.text(), '123')
+})
+
+test('compresses a response when the request accepts gzip', async () => {
+  const request = new Request('http://localhost', {
+    headers: {'accept-encoding': 'gzip, deflate'}
+  })
+  const response = compressResponse(request, new Response('hello'))
+
+  test.is(response.headers.get('content-encoding'), 'gzip')
+  test.is(response.headers.get('vary'), 'accept-encoding')
+  test.is(response.headers.get('content-length'), null)
+
+  const decompressed = response.body?.pipeThrough(
+    new DecompressionStream('gzip')
+  )
+  test.is(await new Response(decompressed).text(), 'hello')
 })

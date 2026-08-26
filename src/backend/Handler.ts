@@ -1,5 +1,9 @@
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
+import {
+  BLOB_SEQUENCE_CONTENT_TYPE,
+  encodeBlobSequence
+} from '#/core/BlobTransport.js'
 import type {Entry} from '#/core.js'
 import type {CMS} from '#/core/CMS.js'
 import type {
@@ -24,6 +28,7 @@ import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
+import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
 
 const PrepareBody = object({
@@ -275,33 +280,31 @@ export function createHandler({
         const sha = string(url.searchParams.get('sha'))
         await local.syncWith(cnx)
         const tree = await local.getTreeIfDifferent(sha)
-        return Response.json(tree ?? null)
+        return compressResponse(request, Response.json(tree ?? null))
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
         await periodicSync(cnx)
         const tree = await local.source.getTree()
-        const fromLocal = []
-        const fromRemote = []
+        const fromLocal: Array<string> = []
+        const fromRemote: Array<string> = []
         for (const sha of shas) {
           if (tree.hasSha(sha)) fromLocal.push(sha)
           else fromRemote.push(sha)
         }
-        const formData = new FormData()
-        if (fromLocal.length > 0) {
-          const blobs = local.source.getBlobs(fromLocal)
-          for await (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob as BlobPart]))
-          }
+        async function* blobs() {
+          const options = {signal: request.signal}
+          if (fromLocal.length > 0)
+            yield* local.source.getBlobs(fromLocal, options)
+          if (fromRemote.length > 0) yield* cnx.getBlobs(fromRemote, options)
         }
-        if (fromRemote.length > 0) {
-          const blobs = cnx.getBlobs(fromRemote)
-          for await (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob as BlobPart]))
-          }
-        }
-        return new Response(formData)
+        return compressResponse(
+          request,
+          new Response(encodeBlobSequence(blobs()), {
+            headers: {'content-type': BLOB_SEQUENCE_CONTENT_TYPE}
+          })
+        )
       }
 
       // Media

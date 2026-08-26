@@ -1,7 +1,7 @@
 import {assert} from '../util/Assert.js'
 import {entries, keys} from '../util/Objects.js'
 import type {Change, ChangesBatch} from './Change.js'
-import type {Source} from './Source.js'
+import type {GetBlobsOptions, Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 import {splitPath} from './Utils.js'
 
@@ -37,9 +37,13 @@ export class CombinedSource implements Source {
   }
 
   async *getBlobs(
-    shas: Array<string>
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
-    if (this.#only) return this.#only.getBlobs(shas)
+    if (this.#only) {
+      yield* this.#only.getBlobs(shas, options)
+      return
+    }
     const tree = await this.getTree()
     const perSource = new Map<Source, Array<string>>()
     for (const [name, source] of entries(this.#sources)) {
@@ -53,7 +57,7 @@ export class CombinedSource implements Source {
       }
     }
     for (const [source, shas] of perSource) {
-      yield* source.getBlobs(shas)
+      yield* source.getBlobs(shas, options)
     }
   }
 
