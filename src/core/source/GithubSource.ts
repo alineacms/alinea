@@ -15,6 +15,11 @@ export interface GithubSourceOptions {
   contentDir: string
 }
 
+interface ShaCacheEntry {
+  etag: string
+  sha: string
+}
+
 export function normalizeGithubSourceOptions<
   Options extends GithubSourceOptions
 >(options: Options): Options {
@@ -29,6 +34,7 @@ export class GithubSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #options: GithubSourceOptions
   #limit = pLimit(8)
+  #shaCache = new Map<string, ShaCacheEntry>()
 
   constructor(options: GithubSourceOptions) {
     this.#options = normalizeGithubSourceOptions(options)
@@ -49,17 +55,25 @@ export class GithubSource implements Source {
   async shaAt(ref: string): Promise<string> {
     const {owner, repo, authToken} = this.#options
     const parentDir = this.contentLocation.split('/').slice(0, -1).join('/')
-    const parentInfo = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${ref}`,
-      {headers: {Authorization: `Bearer ${authToken}`}}
-    )
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${parentDir}?ref=${ref}`
+    const cached = this.#shaCache.get(url)
+    const headers = new Headers({Authorization: `Bearer ${authToken}`})
+    if (cached) headers.set('If-None-Match', cached.etag)
+    const parentInfo = await fetch(url, {headers})
+    if (parentInfo.status === 304) {
+      assert(cached, 'Received 304 without a cached GitHub response')
+      return cached.sha
+    }
     assert(parentInfo.ok, `Failed to get parent: ${parentInfo.statusText}`)
     const parents = await parentInfo.json()
     assert(Array.isArray(parents))
     const parent = parents.find(entry => entry.path === this.contentLocation)
-    if (!parent) return ReadonlyTree.EMPTY.sha
-    assert(typeof parent.sha === 'string')
-    return parent.sha
+    const sha = parent ? parent.sha : ReadonlyTree.EMPTY.sha
+    assert(typeof sha === 'string')
+    const etag = parentInfo.headers.get('etag')
+    if (etag) this.#shaCache.set(url, {etag, sha})
+    else this.#shaCache.delete(url)
+    return sha
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
