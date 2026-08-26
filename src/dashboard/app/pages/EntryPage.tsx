@@ -268,6 +268,7 @@ function EntryEditorContent({
   const hasChildren = useAtomValue(entry.hasChildren)
   const defaultView = useAtomValue(entry.view)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
+  const parentPaths = useAtomValue(entry.parentPaths)
   const View = type.customView
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
@@ -338,7 +339,7 @@ function EntryEditorContent({
       <>
         <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor entry={selectedEntry} />
+            <FileEditor entry={selectedEntry} parentPaths={parentPaths} />
           </NodeEditor>
         </RailBody>
       </>

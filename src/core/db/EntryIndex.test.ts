@@ -195,6 +195,37 @@ test('entryUrl receives the root key', async () => {
   const [entry] = Array.from(index.filter({}))
   test.is(entry.url, '/main/docs/guide')
 })
+
+test('indexes the public URL of MediaFile entries', async () => {
+  const mediaCms = createCMS({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        mediaUrl: ({parentPaths, path, extension}) =>
+          `/assets/${parentPaths.concat(path).join('/')}${extension}`,
+        roots: {media: Config.media()}
+      })
+    }
+  })
+  const {index} = await createEntryIndex(mediaCms.config, [
+    {
+      id: 'guide',
+      type: 'MediaFile',
+      index: 'a0',
+      root: 'media',
+      path: 'guide',
+      data: {
+        title: 'Guide',
+        extension: '.pdf',
+        location: '/uploads/guide.pdf'
+      }
+    }
+  ])
+
+  const [entry] = Array.from(index.filter({}))
+  test.is(entry.url, '/assets/guide.pdf')
+})
 test('filters by entry predicate', async () => {
   const {index} = await createEntryIndex(cms.config, fixtureEntries)
   const recipes = Array.from(

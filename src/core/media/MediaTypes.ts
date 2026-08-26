@@ -6,6 +6,7 @@ import {path} from '#/field/path/PathField.js'
 import {text} from '#/field/text/TextField.js'
 import {type Type, type} from '../Type.js'
 import {mediaAlt} from './MediaAltField.js'
+import {MediaLocation} from './MediaLocation.js'
 
 export type MediaLibrary = Type.Infer<typeof MediaLibrary>
 export const MediaLibrary = type('Media directory', {
@@ -21,6 +22,16 @@ export const MediaLibrary = type('Media directory', {
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
   hidden: true,
+  entryUrl({config, data, defaultUrl, parentPaths, path, root, workspace}) {
+    return MediaLocation.entryUrl(config, {
+      data,
+      defaultUrl,
+      parentPaths,
+      path,
+      root,
+      workspace
+    })
+  },
   fields: {
     title: text('Title'),
     path: path('Path'),

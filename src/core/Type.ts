@@ -1,5 +1,6 @@
 import * as cito from 'cito'
 import type {ComponentType} from 'react'
+import type {Config} from './Config.js'
 import type {EntryStatus} from './Entry.js'
 import type {Expr} from './Expr.js'
 import {
@@ -20,13 +21,19 @@ import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, fromEntries, isRecord, keys, values} from './util/Objects.js'
 import type {Expand} from './util/Types.js'
 
-export interface EntryUrlMeta {
+export interface EntryUrlInput {
+  config: Config
+  data: Record<string, unknown>
   status: EntryStatus
   path: string
   parentPaths: Array<string>
   locale?: string | null
   workspace: string
   root: string
+}
+
+export interface EntryUrlMeta extends EntryUrlInput {
+  defaultUrl: string
 }
 
 export type EntryDefaultView = 'edit' | 'overview'

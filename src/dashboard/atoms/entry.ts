@@ -596,6 +596,11 @@ export class EntryAtoms {
   parentId = atom(get => get(this.data).parentId)
   workspace = atom(get => get(this.data).workspace)
   root = atom(get => get(this.data).root)
+  parentPaths = atom(get =>
+    get(this.data)
+      .parents.filter(parent => parent.main)
+      .map(parent => parent.path)
+  )
   hasChildren = atom(get => get(this.data).hasChildren)
   canPublishParents = atom(get =>
     get(this.data).parents.every(parent => parent.status === 'published')

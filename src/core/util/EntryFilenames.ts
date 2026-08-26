@@ -7,7 +7,7 @@ import {
   entryStatuses
 } from '../Entry.js'
 import {getRoot, getType} from '../Internal.js'
-import type {EntryUrlMeta, Type} from '../Type.js'
+import type {EntryUrlInput, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
 import {join} from './Paths.js'
 
@@ -106,17 +106,17 @@ export function entryFile(config: Config, entry: Entry) {
   return join(contentDir, entry.root, filePath)
 }
 
-export function entryUrl(type: Type, meta: EntryUrlMeta) {
-  const {entryUrl} = getType(type)
-  if (entryUrl) return entryUrl(meta)
+export function entryUrl(type: Type, meta: EntryUrlInput) {
   const segments = meta.locale ? [meta.locale.toLowerCase()] : []
-  return `/${segments
+  const defaultUrl = `/${segments
     .concat(
       meta.parentPaths
         .concat(meta.path)
         .filter(segment => segment !== 'index' && segment !== '')
     )
     .join('/')}`
+  const {entryUrl} = getType(type)
+  return entryUrl ? entryUrl({...meta, defaultUrl}) : defaultUrl
 }
 
 export function pathSuffix(

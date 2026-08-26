@@ -437,22 +437,15 @@ export class EntryTransaction {
   #resolvedUrl(candidate: UrlCandidate): string {
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
-    const url =
-      candidate.url ??
-      entryUrl(type, {
-        status: 'published',
-        path: candidate.path,
-        parentPaths:
-          candidate.parentPaths ??
-          this.#parentPaths(candidate.parentId, candidate.locale),
-        locale: candidate.locale,
-        workspace: candidate.workspace,
-        root: candidate.root
-      })
-    if (candidate.type !== 'MediaFile') return url
-    return MediaLocation.entryUrl(this.#config, {
-      entryUrl: url,
+    if (candidate.url !== undefined) return candidate.url
+    return entryUrl(type, {
+      config: this.#config,
       path: candidate.path,
+      parentPaths:
+        candidate.parentPaths ??
+        this.#parentPaths(candidate.parentId, candidate.locale),
+      locale: candidate.locale,
+      status: 'published',
       workspace: candidate.workspace,
       root: candidate.root,
       data: candidate.data

@@ -344,7 +344,7 @@ test('update preserves the previous MediaFile URL as an alias', async () => {
       aliases: Entry.aliases
     }
   })
-  test.is(result.url, '/two')
+  test.is(result.url, '/assets/two.jpg')
   test.equal(aliasUrls(result.aliases), ['/assets/one.jpg'])
 })
 
@@ -479,7 +479,7 @@ test('publish preserves the previous public MediaFile URL as an alias', async ()
       aliases: Entry.aliases
     }
   })
-  test.is(result.url, '/two')
+  test.is(result.url, '/assets/two.png')
   test.equal(aliasUrls(result.aliases), ['/assets/one.jpg'])
 })
 

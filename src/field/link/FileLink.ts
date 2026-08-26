@@ -24,8 +24,8 @@ export interface FileLink<InferredFields = undefined> extends EntryReference {
 
 export namespace FileLink {
   export const title = Entry.title
-  export const url = MediaFile.location
-  export const href = MediaFile.location
+  export const url = Entry.url
+  export const href = Entry.url
   export const extension = MediaFile.extension
   export const size = MediaFile.size
 }

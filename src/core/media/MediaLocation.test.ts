@@ -88,7 +88,8 @@ test('resolves a media entry URL from its stored data', () => {
     }
   })
   const entry = {
-    entryUrl: '/example',
+    defaultUrl: '/example',
+    parentPaths: [],
     path: 'example',
     root: 'media',
     workspace: 'main'

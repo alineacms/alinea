@@ -10,8 +10,6 @@ import {
 } from '../Field.js'
 import {createId} from '../Id.js'
 import type {InferStoredValue} from '../Infer.js'
-import {MediaFile} from '../media/MediaTypes.js'
-import {MediaLocation} from '../media/MediaLocation.js'
 import {Schema} from '../Schema.js'
 import {
   LinkMark,
@@ -31,14 +29,8 @@ export type RichTextMutator<R> = {
 }
 
 const linkInfoFields = {
-  entryUrl: Entry.url,
-  extension: MediaFile.extension,
   id: Entry.id,
-  location: MediaFile.location,
-  path: Entry.path,
-  root: Entry.root,
-  url: Entry.url,
-  workspace: Entry.workspace
+  url: Entry.url
 }
 
 export class RichTextField<
@@ -348,20 +340,9 @@ async function applyLinkMarks(
   const entries = await loader.resolveLinks(linkInfoFields, linkIds)
   const info = new Map(entries.map(entry => [entry.id, entry]))
   for (const [mark, entryId] of links) {
-    const type = mark[LinkMark.link] as 'entry' | 'file' | undefined
     const data = info.get(entryId)
     if (!data) continue
-    const href =
-      type === 'file'
-        ? MediaLocation.publicUrl(loader.resolver.config, {
-            entryUrl: data.entryUrl,
-            extension: data.extension,
-            location: data.location,
-            path: data.path,
-            root: data.root,
-            workspace: data.workspace
-          })
-        : data.url
+    const href = data.url
     mark.href = applyUrlSuffix(
       href,
       mark[LinkMark.suffix],

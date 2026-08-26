@@ -193,6 +193,8 @@ class EntryLanguageNode {
     assert(active, `EntryLanguageNode missing active version`)
     this.active = active
     this.url = entryUrl(node.entryType, {
+      config: node.graph.config,
+      data: main.data,
       status: main.status,
       path: main.path,
       parentPaths: this.parentPaths,
