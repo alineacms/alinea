@@ -32,6 +32,7 @@ export interface GenerateOptions {
   fix?: boolean
   wasmCache?: boolean
   quiet?: boolean
+  onConfigReady?: (config: Config) => void
   onAfterGenerate?: (buildMessage: string, config: Config) => void
   dashboardUrl?: Promise<string>
 }
@@ -66,6 +67,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configFile,
     staticDir = path.join(__dirname, 'static'),
     quiet = false,
+    onConfigReady,
     onAfterGenerate
   } = options
 
@@ -100,6 +102,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let indexing!: Emitter<DevDB>
   const builder = compileConfig(context)
   const builds = genEffect(builder, () => indexing?.return())
+  let configReadyCalled = false
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
@@ -116,6 +119,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       join(context.outDir, 'settings.json'),
       JSON.stringify({adminPath: Config.adminPath(cms.config)}, null, 2)
     )
+    if (onConfigReady && !configReadyCalled) {
+      configReadyCalled = true
+      onConfigReady(cms.config)
+    }
     if (cmd === 'build') {
       const handlerUrl = cms.config.handlerUrl
       const baseUrl = Config.baseUrl(cms.config, 'production')

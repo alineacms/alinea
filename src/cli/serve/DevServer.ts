@@ -36,6 +36,7 @@ export interface CreateDevServerOptions {
   alineaDev?: boolean
   production?: boolean
   dashboardUrl: Promise<string>
+  onConfigReady?: (config: Config) => void
   onAfterGenerate?: (message: string, config: Config) => void
 }
 
@@ -56,6 +57,7 @@ export async function createDevServer(
     alineaDev = false,
     production = false,
     dashboardUrl,
+    onConfigReady,
     onAfterGenerate
   } = options
 
@@ -90,6 +92,7 @@ export async function createDevServer(
     staticDir,
     dashboardUrl,
     watch: cmd === 'dev',
+    onConfigReady,
     onAfterGenerate
   })
   let currentCMS: CMS | undefined

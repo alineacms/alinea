@@ -20,6 +20,7 @@ export interface ServeOptions {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  onConfigReady?: (env: Record<string, string>) => void
   onAfterGenerate?: (env?: Record<string, string>) => void
 }
 
@@ -54,11 +55,19 @@ export async function serve(options: ServeOptions): Promise<void> {
         )
       },
       dashboardUrl,
+      onConfigReady(config) {
+        dashboardUrl.then(url => {
+          options.onConfigReady?.({
+            ALINEA_DEV_SERVER: url,
+            ALINEA_ADMIN_PATH: Config.adminPath(config)
+          })
+        })
+      },
       onAfterGenerate(msg, config) {
         dashboardUrl.then(url => {
           const version = gray(pkg.version)
           const header = `${cyan(bold('ɑ Alinea'))} ${version}\n`
-          const showUrl = cmd === 'dev' && !options.onAfterGenerate
+          const showUrl = cmd === 'dev'
           const connector = gray(showUrl ? '├' : '╰')
           const details = `${connector} ${gray(msg)}\n`
           const footer = showUrl
