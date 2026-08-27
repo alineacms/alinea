@@ -9,9 +9,9 @@ import {
   entryAtoms,
   MissingEntryError,
   type EntryAtoms,
-  type EntryLocaleAtoms,
-  type ResolvedRichTextImage
+  type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
+import type {ResolvedEditorImage} from '#/dashboard/atoms/editor.js'
 import {
   Page,
   page,
@@ -205,7 +205,7 @@ interface EntryEditorContentProps {
   entry: EntryAtoms
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
-  richTextImages: ReadonlyMap<string, ResolvedRichTextImage>
+  richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: Entry
   sidebar: EntrySidebarProps | undefined
   sourceLocale: string | null

@@ -5,7 +5,6 @@ import type {Entry} from '#/core/Entry.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {useEditor, useField, useFieldValue} from '#/dashboard/hooks.js'
@@ -60,7 +59,7 @@ export function FileEditor({entry, parentPaths}: FileEditorProps) {
     workspace: entry.workspace
   })
   const baseUrl = Config.baseUrl(config) ?? window.location.href
-  const [liveUrl] = outcome(() => new URL(publicLocation, baseUrl))
+  const liveUrl = URL.parse(publicLocation, baseUrl)
   const parsedBaseUrl = URL.parse(baseUrl)
   const displayedUrl = liveUrl
     ? parsedBaseUrl && liveUrl.origin === parsedBaseUrl.origin

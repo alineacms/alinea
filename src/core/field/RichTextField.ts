@@ -458,12 +458,12 @@ export class RichTextEditor<Blocks = Schema> {
   }
 
   addHtml(html: string, options?: ParseHTMLSyncOptions) {
-    this.doc.push(...parseHTMLSync(html.trim(), options))
+    this.doc.push(...parseHTML(html.trim(), options))
     return this
   }
 
-  async addHtmlAsync(html: string, options?: ParseHTMLOptions) {
-    this.doc.push(...(await parseHTML(html.trim(), options)))
+  async addHtmlAsync(html: string, options?: ParseHTMLAsyncOptions) {
+    this.doc.push(...(await parseHTMLAsync(html.trim(), options)))
     return this
   }
 
@@ -560,7 +560,7 @@ export interface ParseHTMLSyncOptions {
   marks?: Record<string, ParseHTMLMarkHandler>
 }
 
-export interface ParseHTMLOptions {
+export interface ParseHTMLAsyncOptions {
   tags?: Record<string, ParseHTMLAsyncTagHandler>
   marks?: Record<string, ParseHTMLAsyncMarkHandler>
 }
@@ -605,9 +605,9 @@ interface ParseHTMLState {
  * Parse HTML using handlers that may perform asynchronous work, such as
  * importing remote images into a media directory.
  */
-export async function parseHTML(
+export async function parseHTMLAsync(
   html: string,
-  options: ParseHTMLOptions = {}
+  options: ParseHTMLAsyncOptions = {}
 ): Promise<TextDoc> {
   const state = createParseHTMLState()
   if (typeof html !== 'string') return state.doc
@@ -634,8 +634,8 @@ export async function parseHTML(
   return state.doc
 }
 
-/** Parse HTML synchronously. Async handlers are only supported by parseHTML. */
-export function parseHTMLSync(
+/** Parse HTML synchronously. Async handlers are only supported by parseHTMLAsync. */
+export function parseHTML(
   html: string,
   options: ParseHTMLSyncOptions = {}
 ): TextDoc {

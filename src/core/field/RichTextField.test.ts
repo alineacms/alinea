@@ -1,4 +1,4 @@
-import {parseHTML, parseHTMLSync, RichTextEditor} from '#/core.js'
+import {parseHTML, parseHTMLAsync, RichTextEditor} from '#/core.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {Field} from '#/core/Field.js'
 import type {TextDoc} from '#/core/TextDoc.js'
@@ -119,7 +119,7 @@ test('parse html nodes & marks', () => {
 })
 
 test('parses custom tags and marks synchronously', () => {
-  const value = parseHTMLSync(
+  const value = parseHTML(
     '<p>Use <code data-language="ts">const value = 1</code>.</p><img src="cover.jpg" alt="Cover">',
     {
       tags: {
@@ -154,7 +154,7 @@ test('parses custom tags and marks synchronously', () => {
 
 test('awaits custom tag and mark handlers', async () => {
   const imported: Array<string> = []
-  const value = await parseHTML(
+  const value = await parseHTMLAsync(
     '<p><highlight>Async</highlight></p><img src="cover.jpg">',
     {
       tags: {

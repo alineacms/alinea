@@ -20,12 +20,12 @@ import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {entries} from '#/core/util/Objects.js'
 import {join} from '#/core/util/Paths.js'
-import {mediaLiveUrl} from '#/dashboard/app/editor/MediaImageSource.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {clientAtom, configAtom, graphAtom} from './core.js'
+import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {ReactiveNode} from './ReactiveNode.js'
 import {policyAtom, userAtom} from './user.js'
@@ -69,11 +69,6 @@ export interface EntryReferenceSource {
   status: EntryStatus
   path: string
   url: string
-}
-
-export interface ResolvedRichTextImage {
-  src: string
-  alt: string
 }
 
 const selection = {
@@ -264,7 +259,7 @@ export class EntryLocaleAtoms {
           .map(reference => reference.targetId)
       )
     )
-    if (imageIds.length === 0) return new Map<string, ResolvedRichTextImage>()
+    if (imageIds.length === 0) return new Map<string, ResolvedEditorImage>()
     const graph = get(graphAtom)
     const images = await graph.find({
       id: {in: imageIds},
@@ -276,11 +271,14 @@ export class EntryLocaleAtoms {
         alt: MediaFile.alt
       }
     })
+    const baseUrl =
+      Config.baseUrl(config) ??
+      (typeof location === 'undefined' ? undefined : location.href)
     return new Map(
       images.map(image => [
         image.id,
         {
-          src: mediaLiveUrl(config, image.url) ?? '',
+          src: URL.parse(image.url, baseUrl)?.href ?? '',
           alt: mediaAltText(
             image.alt,
             this.requestedLocale ?? entry.locale ?? undefined

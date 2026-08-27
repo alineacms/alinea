@@ -1,5 +1,5 @@
 import {Button, DialogTrigger, TextField} from '#/components.js'
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
@@ -14,7 +14,6 @@ import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {ImagePicker} from '#/dashboard/app/ImagePicker.js'
-import {mediaLiveUrl} from '#/dashboard/app/editor/MediaImageSource.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -217,7 +216,8 @@ async function resolveRichTextImage(
   return {
     alt: mediaAltText(image.alt, locale),
     link,
-    src: mediaLiveUrl(config, image.url)
+    src: URL.parse(image.url, Config.baseUrl(config) ?? window.location.href)
+      ?.href
   }
 }
 
