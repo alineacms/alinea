@@ -11,8 +11,6 @@ import {
   ListRowDragHandle,
   ListRowHeader,
   ListRowSettings,
-  ListRowSettingsButton,
-  MenuSeparator,
   Popover
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
@@ -90,9 +88,11 @@ export const RichTextBlock = memo(function RichTextBlock({
           </ListRowDrag>
           <ListRowActions>
             <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-              <ListRowSettingsButton
+              <Button
+                appearance="plain"
                 aria-label={`${label} actions`}
                 icon={IcRoundMoreHoriz}
+                size="icon-small"
               />
               <Popover placement="bottom right">
                 <ListRowSettings actions>
@@ -108,22 +108,16 @@ export const RichTextBlock = memo(function RichTextBlock({
                     Duplicate
                   </Button>
                 </ListRowSettings>
-                <MenuSeparator />
-                <ListRowSettings actions>
-                  <Button
-                    appearance="plain"
-                    isDisabled={readOnly}
-                    onPress={() => {
-                      onDelete()
-                      closeActions()
-                    }}
-                  >
-                    <Icon icon={IcRoundClose} />
-                    Delete
-                  </Button>
-                </ListRowSettings>
               </Popover>
             </DialogTrigger>
+            <Button
+              appearance="plain"
+              aria-label={`Remove ${label}`}
+              icon={IcRoundClose}
+              isDisabled={readOnly}
+              onPress={onDelete}
+              size="icon-small"
+            />
           </ListRowActions>
         </ListRowHeader>
         <ListRowBody data-richtext-block-editor="true">

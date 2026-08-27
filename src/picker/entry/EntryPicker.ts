@@ -1,4 +1,5 @@
 import type {EntryFields} from '#/core/EntryFields.js'
+import {Entry} from '#/core/Entry.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Graph, Projection} from '#/core/Graph.js'
@@ -9,7 +10,6 @@ import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
 import {applyUrlSuffix} from '#/core/util/Anchors.js'
-import {mediaLocationUrl} from '#/core/util/EntryFilenames.js'
 import {assign, isRecord, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
 import {EntryReference} from './EntryReference.js'
@@ -100,14 +100,8 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         return
       }
       if (type === 'file') {
-        const {href, url, root, workspace, ...rest} = extra
-        const location = typeof href === 'string' ? href : url
-        assign(row, rest)
-        const publicUrl = mediaEntryUrl(loader, workspace, location)
-        if (typeof publicUrl === 'string') {
-          row.href = publicUrl
-          if (typeof url === 'string') row.url = publicUrl
-        }
+        const {extension, root: _root, workspace: _workspace, ...rest} = extra
+        assign(row, rest, {extension})
         return
       }
       if (type !== 'image') {
@@ -116,31 +110,29 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         return
       }
       const {
-        src: location,
+        extension,
+        src,
         previewUrl,
         filePath,
         alt,
-        root,
-        workspace,
+        root: _root,
+        workspace: _workspace,
         ...rest
       } = extra
       const selectedAlt = selectImageAlt(alt, loader, {
-        root,
-        workspace
+        root: _root,
+        workspace: _workspace
       })
       if (!previewUrl) {
-        const src = mediaEntryUrl(loader, workspace, location)
-        assign(row, rest, {src})
+        assign(row, rest, {extension, src})
         if (typeof selectedAlt === 'string') row.alt = selectedAlt
         return
       }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
-      const src = locationAvailable
-        ? mediaEntryUrl(loader, workspace, location)
-        : previewUrl
-      row.src = src
+      row.src = locationAvailable ? src : previewUrl
+      row.extension = extension
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)
     }
@@ -156,16 +148,6 @@ function applyUrlSuffixToRow(
     row.url = applyUrlSuffix(row.url, suffix, anchor)
   if (typeof row.href === 'string')
     row.href = applyUrlSuffix(row.href, suffix, anchor)
-}
-
-function mediaEntryUrl(
-  loader: LinkResolver,
-  workspace: unknown,
-  location: unknown
-): unknown {
-  if (typeof location !== 'string') return location
-  if (typeof workspace !== 'string') return location
-  return mediaLocationUrl(loader.resolver.config, workspace, location)
 }
 
 interface LinkedEntryLocation {

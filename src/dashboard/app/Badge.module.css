@@ -1,5 +1,5 @@
 .Badge {
-  --alinea-badge-color: var(--alinea-fg-muted);
+  --alinea-badge-color: var(--alinea-fg-subtle);
   --alinea-badge-background: var(--alinea-muted);
   --alinea-badge-gap: 4px;
   --alinea-badge-height: 24px;

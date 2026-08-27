@@ -68,9 +68,7 @@ test('resolves linked image data for queried rich text', async () => {
       return [
         {
           id: 'media-1',
-          url: '/image',
-          workspace: 'main',
-          location: 'image.jpg',
+          url: '/media/image.jpg',
           alt: {en: 'English alt text', fr: 'Texte alternatif'}
         }
       ]

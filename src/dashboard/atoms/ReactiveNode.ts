@@ -13,6 +13,62 @@ function isArray<Value>(input: unknown): input is Array<Value> {
 
 type ReactiveObject = Record<string, ReactiveNode>
 
+interface Rebase<Value> {
+  checkpoint: Value
+  saved: Value
+}
+
+const USE_SAVED = Symbol('use saved value')
+
+function rebaseValue(
+  checkpoint: unknown,
+  edited: unknown,
+  saved: unknown
+): unknown {
+  if (Object.is(checkpoint, edited) || Object.is(edited, saved)) {
+    return USE_SAVED
+  }
+  if (isArray(checkpoint) && isArray(edited)) {
+    const savedItems = isArray(saved) ? saved : []
+    const result = []
+    let changed = false
+    const length = Math.max(checkpoint.length, edited.length, savedItems.length)
+    for (let index = 0; index < length; index++) {
+      const value = rebaseValue(
+        checkpoint[index],
+        edited[index],
+        savedItems[index]
+      )
+      if (value === USE_SAVED) {
+        if (index < savedItems.length) result.push(savedItems[index])
+      } else {
+        changed = true
+        if (value !== undefined) result.push(value)
+      }
+    }
+    return changed ? result : USE_SAVED
+  }
+  if (isRecord(checkpoint) && isRecord(edited)) {
+    const savedFields = isRecord(saved) ? saved : {}
+    const result = {...savedFields}
+    let changed = false
+    const keys = new Set([
+      ...Object.keys(checkpoint),
+      ...Object.keys(edited),
+      ...Object.keys(savedFields)
+    ])
+    for (const key of keys) {
+      const value = rebaseValue(checkpoint[key], edited[key], savedFields[key])
+      if (value === USE_SAVED) continue
+      changed = true
+      if (value === undefined) delete result[key]
+      else result[key] = value
+    }
+    return changed ? result : USE_SAVED
+  }
+  return edited
+}
+
 function resolveUpdate<Value>(
   update: SetStateAction<Value>,
   current: Value
@@ -134,12 +190,21 @@ export class ReactiveNode<Value = unknown> {
     set(this.isDirty, false)
   })
 
-  commit = atom(null, (get, set): Value => {
+  commit = atom(null, (get, set, data?: Value): Value => {
+    if (data !== undefined) set(this.value, data)
     for (const node of get(this.#inner)) set(node.commit)
     const value = get(this.value)
     set(this.#initialValue, value)
     set(this.#dirty, false)
     return value
+  })
+
+  rebase = atom(null, (get, set, {checkpoint, saved}: Rebase<Value>): Value => {
+    const edited = get(this.value)
+    const rebased = rebaseValue(checkpoint, edited, saved)
+    set(this.commit, saved)
+    if (rebased !== USE_SAVED) set(this.value, rebased as Value)
+    return get(this.value)
   })
 
   field = dispense(

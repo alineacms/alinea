@@ -2,9 +2,17 @@
   "_id": "2V4cZZUKeTjNkONU1l6NUe16OSH",
   "_type": "MediaFile",
   "_index": "a0",
-  "_i18nId": "2V4cZZUKeTjNkONU1l6NUe16OSH",
-  "_root": "media",
   "title": "portrait",
+  "metadata": {
+    "aliases": [
+      {
+        "_id": "3IDYAQfd9TiNX9cfRgn6fZvrTnF",
+        "_index": "a0",
+        "_type": "alias",
+        "url": "/portrait.jpg"
+      }
+    ]
+  },
   "location": "/portrait.2V4cZWf1Mb18DtEjGBsOUyhLRDU.jpg",
   "extension": ".jpg",
   "size": 1548065,

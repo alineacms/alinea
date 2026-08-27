@@ -59,5 +59,8 @@ if (testPms) {
     await setup(cwd)
     await fs.mkdir(path.join(cwd, 'src'), {recursive: true})
     await run(cwd)
+    const config = await fs.readFile(path.join(cwd, 'src/cms.ts'), 'utf-8')
+    test.ok(config.includes("mediaDir: 'public/media'"))
+    test.ok(config.includes("mediaUrl: '/media'"))
   })
 }

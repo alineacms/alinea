@@ -53,9 +53,15 @@
   --alinea-button-primary-plain-color: var(--alinea-primary-subtle-fg);
   --alinea-button-primary-plain-color-disabled: var(--alinea-primary-disabled-fg);
 
-  --alinea-button-secondary-color: var(--alinea-blue-900);
-  --alinea-button-secondary-background: var(--alinea-blue-50);
-  --alinea-button-secondary-background-hover: var(--alinea-blue-100);
+  --alinea-button-secondary-color: light-dark(var(--alinea-blue-900), var(--alinea-blue-200));
+  --alinea-button-secondary-background: light-dark(
+    var(--alinea-blue-50),
+    rgb(from var(--alinea-blue-800) r g b / 22%)
+  );
+  --alinea-button-secondary-background-hover: light-dark(
+    var(--alinea-blue-100),
+    rgb(from var(--alinea-blue-700) r g b / 32%)
+  );
   --alinea-button-secondary-background-disabled: var(--alinea-button-secondary-background);
   --alinea-button-secondary-color-disabled: light-dark(
     var(--alinea-blue-300),

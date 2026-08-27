@@ -18,7 +18,6 @@ import {
   ListRowHeader,
   ListRowMeta,
   ListRowSettings,
-  ListRowSettingsButton,
   MenuSeparator,
   Popover,
   SearchField,
@@ -802,7 +801,12 @@ function ListFieldRowHeader({
       </ListRowDrag>
       <ListRowActions>
         <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-          <ListRowSettingsButton icon={IcRoundMoreHoriz} />
+          <Button
+            appearance="plain"
+            aria-label={`${label} actions`}
+            icon={IcRoundMoreHoriz}
+            size="icon-small"
+          />
           <Popover placement="bottom right">
             {insertPosition ? (
               <ListFieldInsertPanel
@@ -906,24 +910,18 @@ function ListFieldRowHeader({
                     }
                   />
                 </ListRowSettings>
-                <MenuSeparator />
-                <ListRowSettings actions>
-                  <Button
-                    appearance="plain"
-                    onPress={() => {
-                      onDelete?.()
-                      closeActions()
-                    }}
-                    isDisabled={readOnly || isPreview}
-                  >
-                    <Icon icon={IcRoundClose} />
-                    Delete
-                  </Button>
-                </ListRowSettings>
               </>
             )}
           </Popover>
         </DialogTrigger>
+        <Button
+          appearance="plain"
+          aria-label={`Remove ${label}`}
+          icon={IcRoundClose}
+          isDisabled={readOnly || isPreview}
+          onPress={onDelete}
+          size="icon-small"
+        />
       </ListRowActions>
     </ListRowHeader>
   )

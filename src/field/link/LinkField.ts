@@ -4,7 +4,7 @@ import {
   type EntryReferenceTarget,
   referenceFieldPath
 } from '#/core/db/EntryReference.js'
-import {ListField} from '#/core/field/ListField.js'
+import {ListFieldBase} from '#/core/field/ListField.js'
 import {UnionField} from '#/core/field/UnionField.js'
 import type {
   EdgeEntries,
@@ -35,6 +35,8 @@ export interface LinkFieldOptions<Value> extends FieldOptions<Value> {
 }
 
 export interface LinkOptions<Value> extends LinkFieldOptions<Value> {
+  /** @internal */
+  isEntryField?: boolean
   pickers: Record<string, Picker<any, any>>
 }
 
@@ -93,7 +95,11 @@ export function createLink<StoredValue extends Reference, QueryValue>(
 export class LinksField<
   StoredValue extends ListRow,
   QueryValue
-> extends ListField<StoredValue, QueryValue, LinkOptions<Array<StoredValue>>> {
+> extends ListFieldBase<
+  StoredValue,
+  QueryValue,
+  LinkOptions<Array<StoredValue>>
+> {
   find<
     Selection extends SelectionGuard = undefined,
     Type extends TypeGuard = undefined,

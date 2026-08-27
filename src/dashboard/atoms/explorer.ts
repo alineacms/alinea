@@ -31,7 +31,7 @@ import type {
   Key
 } from 'react-aria-components'
 import {LucideFile} from '../icons.js'
-import {dashboardAtoms} from './dashboard.js'
+import {activityAtom} from './activity.js'
 import {configAtom, graphAtom} from './core.js'
 import {shaAtom} from './graph.js'
 import {routeAtom} from './nav.js'
@@ -115,6 +115,11 @@ export interface ExplorerOptions {
     locale: string | null,
     location: ExplorerLocation
   ) => Atom<Promise<unknown>>
+  selectedLocaleAtom?: WritableAtom<
+    string | null,
+    [SetStateAction<string | null>],
+    void
+  >
   selectedLocale?: string | null
   selectionMode?: 'none' | 'single' | 'multiple'
   selectionBehavior?: 'toggle' | 'replace'
@@ -146,6 +151,19 @@ export interface ExplorerReadyPage {
   searchScope: 'workspace' | 'everything'
   searchesEverything: boolean
   view: ExplorerView
+}
+
+export function explorerPageIsPending(
+  page: ExplorerReadyPage,
+  location: ExplorerLocation,
+  locale: string | null
+) {
+  return (
+    page.locale !== locale ||
+    page.location.workspace !== location.workspace ||
+    page.location.root !== location.root ||
+    page.location.parentId !== location.parentId
+  )
 }
 
 export interface ExplorerItemData {
@@ -202,6 +220,12 @@ export interface ExplorerTypeData {
 export class ExplorerEntryData {
   label = atom(get => get(this.item).title)
   hasChildren = atom(get => get(this.item).hasChildren)
+  canOpen = atom(get => {
+    const item = get(this.item)
+    if (item.hasChildren) return true
+    const type = get(configAtom).schema[item.type]
+    return Boolean(type && Type.isContainer(type))
+  })
   parents: Atom<Array<ExplorerEntry>>
   root: Atom<ExplorerRootData>
   icon = atom((get): ComponentType | undefined => {
@@ -309,22 +333,22 @@ export class ExplorerAtoms {
   readonly hasCondition
   readonly canSearchEverything: Atom<boolean>
   readonly searchesEverything: Atom<boolean>
-  readonly readySearchesEverything: Atom<boolean>
-  readonly readySearchScope: Atom<'workspace' | 'everything'>
-  readonly readyResultMode: Atom<ExplorerResultMode>
-  readonly readyView: Atom<ExplorerView>
-  readonly locationIsPending: Atom<boolean>
 
   search = atom('')
   searchScope: PrimitiveAtom<'workspace' | 'everything'>
   resultMode: WritableAtom<ExplorerResultMode, [ExplorerResultMode], void>
   selection: PrimitiveAtom<'all' | Set<Key>>
   expandedKeys = atom(new Set<Key>())
+  sidebarExpandedKeys = atom(new Set<string>())
   #selectedResultMode: PrimitiveAtom<ExplorerResultMode>
   #selectedView: PrimitiveAtom<ExplorerView | undefined>
   #selectedSort = atom<ExplorerSort>()
   #selectedFilter = atom<ExplorerTypeFilters>()
-  selectedLocale: PrimitiveAtom<string | null>
+  selectedLocale: WritableAtom<
+    string | null,
+    [SetStateAction<string | null>],
+    void
+  >
   root: Atom<ExplorerRootData>
   parent: (
     location: ExplorerLocation,
@@ -332,7 +356,8 @@ export class ExplorerAtoms {
   ) => Atom<ExplorerEntry | undefined>
   itemsReady: (locale: string | null) => Atom<Promise<Array<ExplorerEntry>>>
   items: (locale: string | null) => Atom<Array<ExplorerEntry>>
-  page: Atom<ExplorerReadyPage>
+  pageReady: Atom<Promise<ExplorerReadyPage>>
+  page: Atom<ExplorerReadyPage | undefined>
   #options: ExplorerOptions
 
   constructor(
@@ -400,9 +425,9 @@ export class ExplorerAtoms {
     this.selection = atom<'all' | Set<Key>>(
       new Set<Key>((options.preselect ?? true) ? options.initialSelection : [])
     )
-    this.selectedLocale = atom(
-      initialLocation.locale ?? options.selectedLocale ?? null
-    )
+    this.selectedLocale =
+      options.selectedLocaleAtom ??
+      atom(initialLocation.locale ?? options.selectedLocale ?? null)
     if (options.rootData) {
       const rootData = options.rootData
       const value = {
@@ -508,8 +533,7 @@ export class ExplorerAtoms {
         return items
       })
     )
-    const initialView = options.initialView ?? 'row'
-    const pageSource = atom(async get => {
+    this.pageReady = atom(async get => {
       const locale = get(this.selectedLocale)
       const location = get(this.location)
       const resultMode = get(this.resultMode)
@@ -523,7 +547,12 @@ export class ExplorerAtoms {
         label: atom(get(requestedRoot.label))
       }
       const itemsPromise = get(this.itemsReady(locale))
-      const needsTree = view === 'card' && resultMode === 'browse'
+      const needsTree =
+        view === 'card' &&
+        resultMode === 'browse' &&
+        !searchesEverything &&
+        !this.pickChildren &&
+        !options.limitLocations?.length
       const treeReady = needsTree
         ? options.treeReady?.(locale, location)
         : undefined
@@ -541,42 +570,7 @@ export class ExplorerAtoms {
         view
       }
     })
-    this.page = unwrap(
-      pageSource,
-      previous =>
-        previous ?? {
-          isMedia: false,
-          items: [],
-          locale: initialLocation.locale ?? options.selectedLocale ?? null,
-          location: initialLocation,
-          resultMode: initialResultMode,
-          root: {icon: atom(LucideFile), label: atom('')},
-          searchScope: initialSearchScope,
-          searchesEverything:
-            this.allowAllWorkspaces &&
-            this.hasCondition &&
-            initialResultMode === 'matches' &&
-            initialSearchScope === 'everything',
-          view: initialView
-        }
-    )
-    const readyPage = (get: Getter) => get(this.page)
-    this.readySearchScope = atom(get => readyPage(get).searchScope)
-    this.readyResultMode = atom(get => readyPage(get).resultMode)
-    this.readySearchesEverything = atom(
-      get => readyPage(get).searchesEverything
-    )
-    this.readyView = atom(get => readyPage(get).view)
-    this.locationIsPending = atom(get => {
-      const ready = readyPage(get)
-      const requested = get(this.location)
-      return (
-        ready.locale !== get(this.selectedLocale) ||
-        ready.location.workspace !== requested.workspace ||
-        ready.location.root !== requested.root ||
-        ready.location.parentId !== requested.parentId
-      )
-    })
+    this.page = unwrap(this.pageReady, previous => previous)
   }
 
   showResults = atom(get => {
@@ -592,7 +586,7 @@ export class ExplorerAtoms {
   sort = atom(
     (get): ExplorerSort =>
       get(this.#selectedSort) ?? {
-        sortBy: get(this.isMedia) ? 'title' : 'index',
+        sortBy: 'index',
         direction: 'asc'
       },
     (get, set, sortBy: ExplorerSortBy) => {
@@ -628,12 +622,17 @@ export class ExplorerAtoms {
   })
   uploadsInCurrentFolder = atom(get => {
     const location = get(this.location)
-    return get(dashboardAtoms.mutationQueue).entries.filter(entry => {
-      if (!entry.upload) return false
+    return get(activityAtom).items.filter(activity => {
+      if (
+        activity.type !== 'upload' ||
+        activity.status !== 'running' ||
+        !activity.upload
+      )
+        return false
       return (
-        entry.upload.workspace === location.workspace &&
-        entry.upload.root === location.root &&
-        (entry.upload.parentId ?? null) === (location.parentId ?? null)
+        activity.upload.workspace === location.workspace &&
+        activity.upload.root === location.root &&
+        (activity.upload.parentId ?? null) === (location.parentId ?? null)
       )
     })
   })
@@ -714,7 +713,7 @@ export class ExplorerAtoms {
         return
       }
       const {data} = get(entry.data)
-      if (data && get(data.hasChildren)) set(this.openLocation, entry)
+      if (data && get(data.canOpen)) set(this.openLocation, entry)
     }
   )
   openLocation = atom(null, (_get, set, entry: ExplorerEntry) => {
@@ -752,6 +751,16 @@ export class ExplorerAtoms {
       const graph = get(graphAtom)
       const sort = get(this.sort)
       const filter = get(this.filter)
+      const orderField =
+        sort.sortBy === 'title'
+          ? Entry.title
+          : sort.sortBy === 'path'
+            ? Entry.path
+            : sort.sortBy === 'size'
+              ? MediaFile.size
+              : sort.sortBy === 'id'
+                ? Entry.id
+                : Entry.index
       const entries = await graph.find({
         workspace: entry.workspace,
         root: entry.root,
@@ -761,19 +770,10 @@ export class ExplorerAtoms {
         type: filter,
         status: 'preferDraft',
         groupBy: Entry.id,
-        orderBy: {
-          [sort.direction]:
-            sort.sortBy === 'title'
-              ? Entry.title
-              : sort.sortBy === 'path'
-                ? Entry.path
-                : sort.sortBy === 'size'
-                  ? MediaFile.size
-                  : sort.sortBy === 'id'
-                    ? Entry.id
-                    : Entry.index,
-          caseSensitive: sort.sortBy !== 'id'
-        },
+        orderBy:
+          sort.direction === 'asc'
+            ? {asc: orderField, caseSensitive: sort.sortBy !== 'id'}
+            : {desc: orderField, caseSensitive: sort.sortBy !== 'id'},
         select: {
           active: Entry.active,
           createdAt: Entry.createdAt,
@@ -837,7 +837,6 @@ export class ExplorerAtoms {
       const search = get(this.search).trim()
       const searchesEverything = get(this.searchesEverything)
       const resultMode = get(this.resultMode)
-      const view = get(this.view)
       const workspace = searchesEverything ? undefined : location.workspace
       const root = searchesEverything
         ? undefined
@@ -855,7 +854,7 @@ export class ExplorerAtoms {
         ? get(this.#options.defaultOrderBy)
         : undefined
       const flatList = resultMode === 'matches'
-      const filterSelectable = flatList || view === 'card'
+      const filterSelectable = flatList
       const selectedLocationParentId =
         !searchesEverything &&
         flatList &&
@@ -894,10 +893,9 @@ export class ExplorerAtoms {
           ? undefined
           : selectedSort === undefined && defaultOrderBy !== undefined
             ? defaultOrderBy
-            : {
-                [sort.direction]: orderField,
-                caseSensitive: sort.sortBy !== 'id'
-              },
+            : sort.direction === 'asc'
+              ? {asc: orderField, caseSensitive: sort.sortBy !== 'id'}
+              : {desc: orderField, caseSensitive: sort.sortBy !== 'id'},
         select: {
           active: Entry.active,
           createdAt: Entry.createdAt,

@@ -1,9 +1,10 @@
-import {Button, Icon, Surface} from '#/components.js'
+import {Button, Icon, Surface, Tooltip} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
-import {dashboardAtoms} from '#/dashboard/atoms/dashboard.js'
+import {entrySidebarOpenAtom} from '#/dashboard/atoms/dashboard.js'
+import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
   entryAtoms,
   MissingEntryError,
@@ -30,6 +31,7 @@ import {
   IcRoundEdit
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
+import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields, NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
 import {
@@ -60,10 +62,11 @@ export const entryPage = page(async (page, get) => {
     const selectedEntry = await get(localeData.selectedEntry)
     if (view === 'overview') {
       const root = rootAtoms(get(entry.workspace), get(entry.root))
-      await get(root.children(entry.id).itemsReady(page.locale))
+      const explorerPage = await get(root.children(entry.id).pageReady)
       return (
         <EntryOverview
           entry={entry}
+          explorerPage={explorerPage}
           page={page}
           root={root}
           selectedEntry={selectedEntry}
@@ -173,24 +176,27 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
   const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
+  const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
   return (
-    <Button
-      aria-label={label}
-      appearance="plain"
-      icon={ViewIcon}
-      isDisabled={isPending}
-      size="icon"
-      onPress={() =>
-        setRoute({
-          workspace: page.workspace,
-          root: page.root,
-          entry: page.entry,
-          locale: page.locale ?? undefined,
-          view: nextView
-        })
-      }
-    />
+    <Tooltip delay={300} tooltip={tooltip}>
+      <Button
+        aria-label={label}
+        appearance="plain"
+        icon={ViewIcon}
+        isDisabled={isPending}
+        size="icon"
+        onPress={() =>
+          setRoute({
+            workspace: page.workspace,
+            root: page.root,
+            entry: page.entry,
+            locale: page.locale ?? undefined,
+            view: nextView
+          })
+        }
+      />
+    </Tooltip>
   )
 }
 
@@ -208,19 +214,31 @@ interface EntryEditorContentProps {
 
 interface EntryOverviewProps {
   entry: EntryAtoms
+  explorerPage: ExplorerReadyPage
   page: Page
   root: RootAtoms
   selectedEntry: Entry
 }
 
-function EntryOverview({entry, page, root, selectedEntry}: EntryOverviewProps) {
+function EntryOverview({
+  entry,
+  explorerPage,
+  page,
+  root,
+  selectedEntry
+}: EntryOverviewProps) {
   const setRoute = useSetAtom(routeAtom)
   const parentId = selectedEntry.parentId
   return (
     <Rail main>
       <Explorer
+        controls={
+          <div className={styles.EntryOverview.mobileActions()}>
+            <CreateEntryButton root={root} toolbar />
+          </div>
+        }
         explorer={root.children(entry.id)}
-        locale={page.locale}
+        page={explorerPage}
         headerEntry={{
           backLabel: parentId ? 'Back to parent entry' : 'Back to root',
           title: selectedEntry.title,
@@ -255,6 +273,7 @@ function EntryEditorContent({
   const hasChildren = useAtomValue(entry.hasChildren)
   const defaultView = useAtomValue(entry.view)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
+  const parentPaths = useAtomValue(entry.parentPaths)
   const View = type.customView
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
@@ -265,9 +284,7 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(
-    dashboardAtoms.entrySidebarOpen
-  )
+  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
@@ -327,7 +344,7 @@ function EntryEditorContent({
       <>
         <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor />
+            <FileEditor entry={selectedEntry} parentPaths={parentPaths} />
           </NodeEditor>
         </RailBody>
       </>

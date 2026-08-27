@@ -29,7 +29,7 @@ import {
   type SetStateAction
 } from 'react'
 import {IcRoundFirstPage, IcRoundLastPage} from '../../icons.js'
-import {EntryFields, NodeEditor} from '../EntryFields.js'
+import {NodeEditor} from '../EntryFields.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,
@@ -263,9 +263,7 @@ function CreateEntryForm() {
 
           <div className={styles.CreateEntry.parentRow()}>
             <div className={styles.CreateEntry.parentField()}>
-              <NodeEditor node={parent.node} type={parent.type}>
-                <EntryFields />
-              </NodeEditor>
+              <NodeEditor node={parent.node} type={parent.type} />
             </div>
             {showInsertOrder && (
               <Label
@@ -293,9 +291,7 @@ function CreateEntryForm() {
             )}
           </div>
 
-          <NodeEditor node={copyFrom.node} type={copyFrom.type}>
-            <EntryFields />
-          </NodeEditor>
+          <NodeEditor node={copyFrom.node} type={copyFrom.type} />
         </DashboardModalContent>
       </form>
 

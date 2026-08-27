@@ -172,6 +172,13 @@
   flex-shrink: 0;
 }
 
+.LinkFieldView-rowAction {
+  align-self: stretch;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
 .LinkFieldView-rowDropTarget {
   display: grid;
 }

@@ -158,7 +158,7 @@
 }
 
 .ExplorerTable-row.is-linked {
-  background: color-mix(in srgb, var(--alinea-blue-50) 60%, var(--alinea-bg));
+  background: color-mix(in srgb, var(--alinea-selected) 60%, var(--alinea-bg));
 }
 
 .ExplorerTable-cell {
@@ -321,7 +321,7 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: color-mix(in srgb, var(--alinea-fg) 28%, transparent);
+  color: var(--alinea-field-label);
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
@@ -353,4 +353,23 @@
 
 .ExplorerTable-row.is-unselectable .ExplorerTable-cell-title .ExplorerTable-field-value {
   color: color-mix(in srgb, var(--alinea-fg-muted) 72%, transparent);
+}
+
+@media (max-width: 768px) {
+  .ExplorerTable-viewport {
+    padding: 8px;
+  }
+
+  .ExplorerTable-row-grid {
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+  }
+
+  .ExplorerTable.is-noSelectionControls .ExplorerTable-row-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ExplorerTable-cell,
+  .ExplorerTable-cell-filler {
+    display: none;
+  }
 }

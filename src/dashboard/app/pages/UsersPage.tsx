@@ -25,6 +25,7 @@ import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
 import {IcRoundAdd, IcRoundArrowBack, IcRoundMoreHoriz} from '../../icons.js'
+import {ActivityStatus} from '../ActivityStatus.js'
 import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
 import {Badge} from '../Badge.js'
 import {
@@ -167,7 +168,7 @@ export function UsersPage() {
 
   return (
     <div className={styles.UsersPage()}>
-      <SidebarHeader>
+      <SidebarHeader className={styles.UsersPage.header()}>
         <div className={styles.UsersPage.header.title()}>Manage users</div>
 
         <SearchField
@@ -256,6 +257,9 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
           />
         </Button>
       </nav>
+      <div className={styles.UsersPageSidebar.footer()}>
+        <ActivityStatus mobilePlacement="bottom right" />
+      </div>
     </aside>
   )
 }

@@ -1,51 +1,61 @@
 import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useSetAtom} from 'jotai'
 import {startTransition, useMemo} from 'react'
 import type {Key, Selection} from 'react-aria-components'
-import type {DashboardExplorer, ExplorerLocation} from '../atoms/explorer.js'
+import type {
+  DashboardExplorer,
+  ExplorerLocation,
+  ExplorerReadyPage
+} from '../atoms/explorer.js'
 import {dispense} from '../atoms/utils.js'
 import {ExplorerBody} from './Explorer.js'
 import {ExplorerModalContent, ExplorerModalNavigation} from './ExplorerModal.js'
 import {SidebarTreeExplorer} from './SidebarTree.js'
 
-export const explorerTree = dispense(
-  (
-    root: ReturnType<typeof rootAtoms>,
-    explorer: DashboardExplorer,
-    locale: string | null,
-    location?: ExplorerLocation
-  ) =>
-    root.createTree(
-      locale,
-      atom(get => {
-        const parentId = location
-          ? location.parentId
-          : get(explorer.location).parentId
-        return parentId ? new Set<Key>([parentId]) : new Set<Key>()
-      })
-    )
-)
+export function createExplorerTree(explorer: () => DashboardExplorer) {
+  return dispense(
+    (
+      root: ReturnType<typeof rootAtoms>,
+      locale: string | null,
+      location?: ExplorerLocation
+    ) => {
+      const current = explorer()
+      return root.createTree(
+        locale,
+        atom(get => {
+          const parentId = location
+            ? location.parentId
+            : get(current.location).parentId
+          return parentId ? new Set<Key>([parentId]) : new Set<Key>()
+        }),
+        current.sidebarExpandedKeys
+      )
+    }
+  )
+}
 
 export interface ExplorerPickerContentProps {
   explorer: DashboardExplorer
   navigationLabel: string
   options: {pickChildren?: boolean}
+  page: ExplorerReadyPage
+  tree: ReturnType<typeof createExplorerTree>
 }
 
 export function ExplorerPickerContent({
   explorer,
   navigationLabel,
-  options
+  options,
+  page,
+  tree
 }: ExplorerPickerContentProps) {
-  const page = useAtomValue(explorer.page)
-  const {isMedia, locale, location, root: readyRoot, view} = page
-  const readyItems = useMemo(() => atom(page.items), [page.items])
-  const readyRootAtom = useMemo(() => atom(readyRoot), [readyRoot])
+  const {location, view} = page
   const setLocation = useSetAtom(explorer.location)
   const root = location.root
     ? rootAtoms(location.workspace, location.root)
     : undefined
-  const showNavigation = !options.pickChildren
+  const showNavigation =
+    !options.pickChildren && !explorer.limitLocations?.length
 
   function onRootPress() {
     startTransition(() => {
@@ -74,20 +84,15 @@ export function ExplorerPickerContent({
           <ExplorerPickerNavigation
             explorer={explorer}
             navigationLabel={navigationLabel}
+            page={page}
             root={root}
             rootSelected={!location.parentId}
+            tree={tree}
             onRootPress={onRootPress}
             onSelectionChange={onSelectionChange}
           />
         )}
-      <ExplorerBody
-        explorer={explorer}
-        isMedia={isMedia}
-        items={readyItems}
-        locale={locale}
-        root={readyRootAtom}
-        view={view}
-      />
+      <ExplorerBody explorer={explorer} page={page} />
     </ExplorerModalContent>
   )
 }
@@ -97,8 +102,10 @@ interface ExplorerPickerNavigationProps {
   navigationLabel: string
   onRootPress: () => void
   onSelectionChange: (keys: Selection) => void
+  page: ExplorerReadyPage
   root: ReturnType<typeof rootAtoms>
   rootSelected: boolean
+  tree: ReturnType<typeof createExplorerTree>
 }
 
 export function normalizePickerLocale(
@@ -114,10 +121,11 @@ function ExplorerPickerNavigation({
   navigationLabel,
   onRootPress,
   onSelectionChange,
+  page,
   root,
-  rootSelected
+  rootSelected,
+  tree
 }: ExplorerPickerNavigationProps) {
-  const page = useAtomValue(explorer.page)
   const readyLocale = useMemo(
     () =>
       atom(
@@ -126,7 +134,7 @@ function ExplorerPickerNavigation({
       ),
     [explorer, page.locale]
   )
-  const tree = explorerTree(root, explorer, page.locale, page.location)
+  const treeAtoms = tree(root, page.locale, page.location)
   return (
     <ExplorerModalNavigation>
       <SidebarTreeExplorer
@@ -134,7 +142,7 @@ function ExplorerPickerNavigation({
         root={root}
         rootSelected={rootSelected}
         selectedLocale={readyLocale}
-        tree={tree}
+        tree={treeAtoms}
         onRootPress={onRootPress}
         onSelectionChange={onSelectionChange}
       />

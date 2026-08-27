@@ -60,8 +60,8 @@
   }
 
   &[data-selected] {
-    color: var(--alinea-fg);
-    background-color: light-dark(var(--alinea-gray-100), var(--alinea-gray-800));
+    color: var(--alinea-selected-fg);
+    background-color: var(--alinea-selected);
     border-color: transparent;
   }
 
@@ -70,8 +70,8 @@
     outline-offset: 1px;
   }
 
-  &:not([data-disabled]):hover,
-  &[data-focused]:not([data-disabled]) {
+  &:not([data-selected]):not([data-disabled]):hover,
+  &[data-focused]:not([data-selected]):not([data-disabled]) {
     color: var(--alinea-fg);
     background-color: var(--alinea-muted-hover);
   }

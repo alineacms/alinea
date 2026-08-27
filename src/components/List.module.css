@@ -338,10 +338,6 @@
   font-size: 16px;
 }
 
-.ListRowSettingsButton {
-  position: relative;
-}
-
 .ListRowBody {
   display: grid;
   gap: 12px;

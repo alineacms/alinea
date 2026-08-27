@@ -204,8 +204,7 @@ async function resolveRichTextImage(
     id: entryId,
     status: 'preferDraft',
     select: {
-      workspace: Entry.workspace,
-      location: MediaFile.location,
+      url: Entry.url,
       alt: MediaFile.alt
     }
   })
@@ -218,7 +217,7 @@ async function resolveRichTextImage(
   return {
     alt: mediaAltText(image.alt, locale),
     link,
-    src: mediaLiveUrl(config, image.workspace, image.location)
+    src: mediaLiveUrl(config, image.url)
   }
 }
 

@@ -1,10 +1,11 @@
-import {Button, Dialog, Popover, ProgressCircle} from '#/components.js'
+import {Button, Dialog, Popover} from '#/components.js'
 import {
   createExplorerAtoms,
   type DashboardEntry,
   type DashboardExplorer,
   type ExplorerLocation,
-  type ExplorerOptions
+  type ExplorerOptions,
+  type ExplorerReadyPage
 } from '#/dashboard/atoms/explorer.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
@@ -29,7 +30,7 @@ import {
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
-  explorerTree,
+  createExplorerTree,
   ExplorerPickerContent,
   normalizePickerLocale
 } from './ExplorerPickerContent.js'
@@ -42,6 +43,7 @@ import {
 } from './ui/DashboardModal.js'
 
 const styles = styler(css)
+const expandedPickerLabel = 'Pick a link in expanded view'
 
 export interface LinkPickerOptions extends ExplorerOptions {}
 
@@ -56,11 +58,7 @@ export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
   return (
     <Suspense
       fallback={
-        <LinkPickerLoading
-          anchorRef={anchorRef}
-          expanded={expanded}
-          onExpandedChange={setExpanded}
-        />
+        <LinkPickerLoading expanded={expanded} onExpandedChange={setExpanded} />
       }
     >
       <LinkPickerReady
@@ -70,6 +68,44 @@ export function LinkPicker({anchorRef, ...options}: LinkPickerProps) {
         onExpandedChange={setExpanded}
       />
     </Suspense>
+  )
+}
+
+export function LinkPickerModal(options: LinkPickerOptions) {
+  return (
+    <DashboardModal size="explorer">
+      <Suspense fallback={<LinkPickerModalLoading />}>
+        <LinkPickerModalContent options={options} />
+      </Suspense>
+    </DashboardModal>
+  )
+}
+
+function LinkPickerModalLoading() {
+  return (
+    <DashboardModalDialog
+      aria-label={expandedPickerLabel}
+      variant="explorer"
+      isLoading
+    />
+  )
+}
+
+interface LinkPickerModalContentProps {
+  options: LinkPickerOptions
+}
+
+function LinkPickerModalContent({options}: LinkPickerModalContentProps) {
+  const {explorer, tree} = useLinkPickerExplorer(options)
+  const page = useAtomValue(explorer.page)
+  if (!page) return <LinkPickerModalLoading />
+  return (
+    <LinkPickerExpanded
+      explorer={explorer}
+      options={options}
+      page={page}
+      tree={tree}
+    />
   )
 }
 
@@ -91,29 +127,18 @@ function LinkPickerPopover({anchorRef, children}: LinkPickerPopoverProps) {
 }
 
 interface LinkPickerLoadingProps {
-  anchorRef?: RefObject<Element | null>
   expanded: boolean
   onExpandedChange: (expanded: boolean) => void
 }
 
 function LinkPickerLoading({
-  anchorRef,
   expanded,
   onExpandedChange
 }: LinkPickerLoadingProps) {
-  if (!expanded)
-    return (
-      <LinkPickerPopover anchorRef={anchorRef}>
-        <LinkPickerCompactLoading />
-      </LinkPickerPopover>
-    )
+  if (!expanded) return null
   return (
     <DashboardModal isOpen size="explorer" onOpenChange={onExpandedChange}>
-      <DashboardModalDialog
-        aria-label="Pick a link in expanded view"
-        variant="explorer"
-        isLoading
-      />
+      <LinkPickerModalLoading />
     </DashboardModal>
   )
 }
@@ -131,12 +156,21 @@ function LinkPickerReady({
   onExpandedChange,
   options
 }: LinkPickerReadyProps) {
-  const explorer = useLinkPickerExplorer(options)
+  const {explorer, tree} = useLinkPickerExplorer(options)
+  const page = useAtomValue(explorer.page)
+  if (!page)
+    return (
+      <LinkPickerLoading
+        expanded={expanded}
+        onExpandedChange={onExpandedChange}
+      />
+    )
   return (
     <>
       <LinkPickerPopover anchorRef={anchorRef}>
         <LinkPickerCompact
           explorer={explorer}
+          page={page}
           onCommit={options.onConfirm}
           onExpand={() => onExpandedChange(true)}
         />
@@ -146,7 +180,12 @@ function LinkPickerReady({
         size="explorer"
         onOpenChange={onExpandedChange}
       >
-        <LinkPickerExpanded explorer={explorer} options={options} />
+        <LinkPickerExpanded
+          explorer={explorer}
+          options={options}
+          page={page}
+          tree={tree}
+        />
       </DashboardModal>
     </>
   )
@@ -165,8 +204,15 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
     pickerI18n?.locales ?? []
   )
   const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const [explorer] = useState(() => {
+  const explorerIdentity = JSON.stringify([
+    initialLocation,
+    options.condition ?? null
+  ])
+  // Explorer atoms capture their initial options and reset only with this scope.
+  // oxlint-disable react-hooks/exhaustive-deps
+  const picker = useMemo(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
+    const tree = createExplorerTree(() => explorer)
     const currentRoot = (location: ExplorerLocation) =>
       rootAtoms(location.workspace, location.root ?? root.key)
     const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
@@ -180,41 +226,31 @@ function useLinkPickerExplorer(options: LinkPickerOptions) {
       searchDepth: 'all',
       selectedLocale: initialLocale,
       treeItems: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).items,
+        tree(currentRoot(location), locale, location).items,
       treeReady: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).ready
+        tree(currentRoot(location), locale, location).ready
     })
-    return explorer
-  })
-  return explorer
-}
-
-function LinkPickerCompactLoading() {
-  return (
-    <Dialog aria-label="Pick a link" className={styles.LinkPickerCompact()}>
-      <div className={styles.LinkPickerCompact.loading()}>
-        <ProgressCircle isIndeterminate aria-label="Loading entry picker" />
-      </div>
-    </Dialog>
-  )
+    return {explorer, tree}
+  }, [explorerIdentity])
+  // oxlint-enable react-hooks/exhaustive-deps
+  return picker
 }
 
 interface LinkPickerCompactProps {
   explorer: DashboardExplorer
+  page: ExplorerReadyPage
   onCommit: LinkPickerOptions['onConfirm']
   onExpand: () => void
 }
 
 function LinkPickerCompact({
   explorer,
+  page,
   onCommit,
   onExpand
 }: LinkPickerCompactProps) {
   const popover = useDashboardModal()
-  const page = useAtomValue(explorer.page)
   const setSelection = useSetAtom(explorer.selection)
-  const readyItems = useMemo(() => atom(page.items), [page.items])
-  const readyRoot = useMemo(() => atom(page.root), [page.root])
 
   function commitSelection(selection: Selection) {
     if (selection === 'all' || selection.size === 0) return
@@ -241,9 +277,8 @@ function LinkPickerCompact({
         <ExplorerSearch
           autoFocus
           explorer={explorer}
-          locale={page.locale}
           onEntryAction={commitEntry}
-          ready
+          page={page}
         />
         <Button
           aria-label="Expand entry picker"
@@ -256,12 +291,8 @@ function LinkPickerCompact({
       <ExplorerBody
         compactTable
         explorer={explorer}
-        isMedia={page.isMedia}
-        items={readyItems}
-        locale={page.locale}
-        root={readyRoot}
-        view="row"
         onSelectionChange={commitSelection}
+        page={page}
       />
     </Dialog>
   )
@@ -270,11 +301,17 @@ function LinkPickerCompact({
 interface LinkPickerExpandedProps {
   explorer: DashboardExplorer
   options: LinkPickerOptions
+  page: ExplorerReadyPage
+  tree: ReturnType<typeof createExplorerTree>
 }
 
-function LinkPickerExpanded({explorer, options}: LinkPickerExpandedProps) {
+function LinkPickerExpanded({
+  explorer,
+  options,
+  page,
+  tree
+}: LinkPickerExpandedProps) {
   const modal = useDashboardModal()
-  const selectedLocale = useAtomValue(explorer.selectedLocale)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
@@ -287,10 +324,7 @@ function LinkPickerExpanded({explorer, options}: LinkPickerExpandedProps) {
   }
 
   return (
-    <DashboardModalDialog
-      aria-label="Pick a link in expanded view"
-      variant="explorer"
-    >
+    <DashboardModalDialog aria-label={expandedPickerLabel} variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
@@ -298,12 +332,14 @@ function LinkPickerExpanded({explorer, options}: LinkPickerExpandedProps) {
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate
-            locale={selectedLocale}
+            page={page}
           />
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Link folders"
             options={options}
+            page={page}
+            tree={tree}
           />
           <ExplorerModalFooter>
             <ExplorerModalSelection>

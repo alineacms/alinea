@@ -12,6 +12,9 @@ export const dashboardScenarioIds = {
   rootOrderedZebra: 'workflow-root-ordered-zebra',
   hiddenFolder: 'workflow-hidden-folder',
   hiddenChild: 'workflow-hidden-child',
+  localizedStart: 'workflow-localized-start',
+  localizedFolder: 'workflow-localized-folder',
+  localizedChild: 'workflow-localized-child',
   mediaFile: 'workflow-media-file',
   searchPartial: 'workflow-search-partial',
   searchTitle: 'workflow-search-title',
@@ -21,6 +24,7 @@ export const dashboardScenarioIds = {
 export const dashboardLinkScenarioIds = {
   existingFile: 'workflow-existing-file',
   existingImage: 'workflow-existing-image',
+  emptyMediaDirectory: 'workflow-empty-media-directory',
   mediaDirectory: 'workflow-media-directory',
   nestedImage: 'workflow-nested-image',
   referenceFolder: 'workflow-reference-folder',

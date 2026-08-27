@@ -1,5 +1,6 @@
 import type {RootData} from '#/core/Root.js'
 import {assert} from '#/core/util/Assert.js'
+import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {page, routeAtom, type Page} from '#/dashboard/atoms/nav.js'
 import {
   rootAtoms,
@@ -8,9 +9,9 @@ import {
 } from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtomValue, useSetAtom} from 'jotai'
-import {useDashboardContext} from '#/dashboard/hooks.js'
 import type {ComponentType} from 'react'
 import {Explorer} from '../Explorer.js'
+import {CreateEntryButton} from '../DashboardLayout.js'
 import {NotFoundPanel} from './EntryPage.js'
 import {Rail, RailBody} from '../ui/Rail.js'
 import css from './RootPage.module.css'
@@ -23,17 +24,25 @@ export const rootPage = page(async (page, get) => {
   const root = rootAtoms(page.workspace, page.root)
   const data = get(root.data)
   const view = get(root.view)
-  if (!view) await get(root.explorer.itemsReady(page.locale))
-  return <RootEditor data={data} root={root} view={view} />
+  const explorerPage = view ? undefined : await get(root.explorer.pageReady)
+  return (
+    <RootEditor
+      data={data}
+      explorerPage={explorerPage}
+      root={root}
+      view={view}
+    />
+  )
 })
 
 interface RootEditorProps {
   root: RootAtoms
   data: RootData
+  explorerPage: ExplorerReadyPage | undefined
   view: ComponentType<RootViewProps> | undefined
 }
 
-function RootEditor({data, root, view: View}: RootEditorProps) {
+function RootEditor({data, explorerPage, root, view: View}: RootEditorProps) {
   if (View) {
     const rootData = {...data, name: root.key}
     return (
@@ -44,18 +53,27 @@ function RootEditor({data, root, view: View}: RootEditorProps) {
       </Rail>
     )
   }
-  return <RootBrowser root={root} />
+  assert(explorerPage, 'Explorer page expected')
+  return <RootBrowser page={explorerPage} root={root} />
 }
 
 interface RootBrowserProps {
+  page: ExplorerReadyPage
   root: RootAtoms
 }
 
-function RootBrowser({root}: RootBrowserProps) {
-  const {page} = useDashboardContext()
+function RootBrowser({page, root}: RootBrowserProps) {
   return (
     <Rail main>
-      <Explorer explorer={root.explorer} locale={page.locale} />
+      <Explorer
+        controls={
+          <div className={styles.RootPage.mobileActions()}>
+            <CreateEntryButton root={root} toolbar />
+          </div>
+        }
+        explorer={root.explorer}
+        page={page}
+      />
     </Rail>
   )
 }

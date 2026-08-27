@@ -50,6 +50,10 @@ const ScenarioPage = Config.document('Page', {
     browsePage: Field.entry('Browse page', {
       location: {workspace: 'main', root: 'pages'}
     }),
+    limitedPage: Field.entry('Limited page', {
+      location: {workspace: 'main', root: 'pages'},
+      limitLocations: [{workspace: 'main', root: 'pages'}]
+    }),
     relatedPages: Field.entry.multiple('Repeated pages', {
       location: {workspace: 'main', root: 'pages'}
     }),
@@ -125,6 +129,13 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     workspace: 'main',
     root: 'media',
     set: {title: 'Media directory', path: 'media-directory'}
+  })
+  await db.create({
+    id: linkScenarioIds.emptyMediaDirectory,
+    type: MediaLibrary,
+    workspace: 'main',
+    root: 'media',
+    set: {title: 'Empty media directory', path: 'empty-media-directory'}
   })
   await db.create({
     id: linkScenarioIds.existingImage,

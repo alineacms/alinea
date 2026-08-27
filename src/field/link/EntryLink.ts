@@ -45,6 +45,7 @@ export function entry<Fields = undefined>(
     EntryLink<Type.Infer<Fields>>
   >(label, {
     ...options,
+    isEntryField: true,
     pickers: {
       entry: entryPicker({
         ...options,
@@ -72,6 +73,7 @@ export namespace entry {
   ) {
     return createLinks<EntryReference & ListRow, EntryRow<Fields>>(label, {
       ...options,
+      isEntryField: true,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({
           ...options,

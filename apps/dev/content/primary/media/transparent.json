@@ -2,9 +2,17 @@
   "_id": "2V4cZUBByx9N29qv1YybylOCQqI",
   "_type": "MediaFile",
   "_index": "a0",
-  "_i18nId": "2V4cZUBByx9N29qv1YybylOCQqI",
-  "_root": "media",
   "title": "transparent",
+  "metadata": {
+    "aliases": [
+      {
+        "_id": "3IDYCDvDn5vp6hSpC4TflbFIUur",
+        "_index": "a0",
+        "_type": "alias",
+        "url": "/transparent.png"
+      }
+    ]
+  },
   "location": "/transparent.2V4cZZ0VKtcoWxoJHQLyTM2D99c.png",
   "extension": ".png",
   "size": 5056,

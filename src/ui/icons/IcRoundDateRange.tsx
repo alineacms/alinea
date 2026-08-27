@@ -1,4 +1,4 @@
-import {IcRoundDateRange as Icon} from 'alinea/dashboard/icons'
+import {IcRoundDateRange as Icon} from '#/dashboard/icons.js'
 
 /** @deprecated Import from `alinea/dashboard/icons` instead. */
 export const IcRoundDateRange = Icon

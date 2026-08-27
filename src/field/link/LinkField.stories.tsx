@@ -11,7 +11,7 @@ import {EntryEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {EditorScope} from '#/dashboard/hooks.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
-import {image, link, type LinkRow} from '#/field/link.js'
+import {entry, image, link, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
@@ -88,6 +88,15 @@ const pageType = type('Page', {
   }
 })
 
+const filteredEntryType = type('Filtered entry', {
+  fields: {
+    relatedEntry: entry('Filtered entry', {
+      condition: {_type: 'Page'},
+      location: {workspace: 'simple', root: 'pages'}
+    })
+  }
+})
+
 const storyStyle: CSSProperties = {
   maxWidth: 760,
   padding: 24,
@@ -129,6 +138,37 @@ export function Example() {
             field={heroImage as unknown as LinkField<LinkRow, unknown>}
           />
           <MultipleLinksFieldView field={resources} />
+        </div>
+      </EditorScope>
+    </StoryProvider>
+  )
+}
+
+export function FilteredEntryFieldWithoutEntryScope() {
+  const editor = useMemo(() => {
+    const node = new ReactiveNode(
+      Type.initialValue(filteredEntryType) as object
+    )
+    return new EntryEditor(filteredEntryType, node)
+  }, [])
+  return (
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.index}
+      graph={db}
+      views={views}
+    >
+      <EditorScope editor={editor}>
+        <div style={storyStyle}>
+          <SingleLinkFieldView
+            field={
+              filteredEntryType.relatedEntry as unknown as LinkField<
+                LinkRow,
+                unknown
+              >
+            }
+          />
         </div>
       </EditorScope>
     </StoryProvider>

@@ -22,7 +22,7 @@ export interface ListMutator<Row> {
   read(id: string): Row | undefined
 }
 
-export class ListField<
+export class ListFieldBase<
   StoredValue extends ListRow,
   QueryValue,
   Options extends FieldOptions<Array<unknown>>
@@ -103,6 +103,43 @@ export class ListField<
         }
         return result
       },
+      async queryValue(value, loader) {
+        const rows = Array.isArray(value) ? value : []
+        await Promise.all(
+          rows.map(async row => {
+            const type = schema[row[ListRow.type]]
+            if (!type) return
+            const record = row as Record<string, unknown>
+            await Promise.all(
+              entries(Type.fields(type)).map(async ([key, field]) => {
+                record[key] = await Field.queryValue(field, record[key], loader)
+              })
+            )
+          })
+        )
+        if (customQueryValue) return customQueryValue(rows, loader)
+        return rows as unknown as Array<QueryValue>
+      }
+    })
+  }
+}
+
+export class ListField<
+  StoredValue extends ListRow,
+  QueryValue,
+  Options extends FieldOptions<Array<unknown>>
+> extends ListFieldBase<StoredValue, QueryValue, Options> {
+  constructor(
+    schema: Schema,
+    meta: FieldMeta<
+      Array<StoredValue>,
+      Array<QueryValue>,
+      ListMutator<StoredValue>,
+      Options
+    >
+  ) {
+    super(schema, {
+      ...meta,
       anchors(value, context) {
         const result: Array<EntryAnchorTarget> = []
         const rows = Array.isArray(value) ? value : []
@@ -161,23 +198,6 @@ export class ListField<
           next[index] = normalized as StoredValue
         })
         return next
-      },
-      async queryValue(value, loader) {
-        const rows = Array.isArray(value) ? value : []
-        await Promise.all(
-          rows.map(async row => {
-            const type = schema[row[ListRow.type]]
-            if (!type) return
-            const record = row as Record<string, unknown>
-            await Promise.all(
-              entries(Type.fields(type)).map(async ([key, field]) => {
-                record[key] = await Field.queryValue(field, record[key], loader)
-              })
-            )
-          })
-        )
-        if (customQueryValue) return customQueryValue(rows, loader)
-        return rows as unknown as Array<QueryValue>
       }
     })
   }

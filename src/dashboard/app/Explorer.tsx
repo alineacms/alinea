@@ -15,8 +15,7 @@ import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom, type Atom} from 'jotai'
-import {unwrap} from 'jotai/utils'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {
   useEffect,
   useMemo,
@@ -36,11 +35,11 @@ import {
   type DashboardEntry,
   type DashboardEntryData,
   type DashboardExplorer,
-  type DashboardRoot,
+  explorerPageIsPending,
+  type ExplorerReadyPage,
   type ExplorerSort,
   type ExplorerSortBy,
-  type ExplorerTypeFilters,
-  type ExplorerView
+  type ExplorerTypeFilters
 } from '../atoms/explorer.js'
 import {
   IcRoundAccountTree,
@@ -54,7 +53,7 @@ import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
-import {MutationQueueStatus} from './MutationQueueStatus.js'
+import {ActivityStatus} from './ActivityStatus.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
@@ -63,8 +62,8 @@ export interface ExplorerProps {
   controls?: ReactNode
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
+  page: ExplorerReadyPage
   titleControls?: ReactNode
-  locale: string | null
 }
 
 export interface ExplorerHeaderEntry {
@@ -79,34 +78,29 @@ export interface ExplorerHeaderProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
   navigate?: boolean
+  page: ExplorerReadyPage
   titleControls?: ReactNode
-  locale: string | null
 }
 
 export interface ExplorerBodyProps {
   compactTable?: boolean
   explorer: DashboardExplorer
-  isMedia?: boolean
-  items?: Atom<Array<DashboardEntry>>
-  locale: string | null
   onSelectionChange?: (selection: Selection) => void
-  root?: Atom<DashboardRoot>
-  view?: ExplorerView
+  page: ExplorerReadyPage
 }
 
 interface ExplorerSearchProps {
   autoFocus?: boolean
   explorer: DashboardExplorer
-  locale: string | null
   onEntryAction?: (entry: DashboardEntry) => void
-  ready?: boolean
+  page: ExplorerReadyPage
 }
 
 interface ExplorerHeaderMainProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
+  page: ExplorerReadyPage
   titleControls?: ReactNode
-  locale: string | null
 }
 
 interface ExplorerHeaderLoadedParentMainProps {
@@ -124,19 +118,10 @@ interface ExplorerHeaderParentMainProps {
 export function ExplorerSearch({
   autoFocus,
   explorer,
-  locale,
   onEntryAction,
-  ready = false
+  page
 }: ExplorerSearchProps) {
-  const page = useAtomValue(explorer.page)
-  const requestedItems = useAtomValue(
-    useMemo(
-      () => unwrap(explorer.items(locale), previous => previous ?? []),
-      [explorer, locale]
-    )
-  )
-  const items = ready ? page.items : requestedItems
-  const actionLocale = ready ? page.locale : locale
+  const items = page.items
   const [selection, setSelection] = useAtom(explorer.selection)
   const search = useAtomValue(explorer.search)
   const setSearch = useSetAtom(explorer.search)
@@ -216,7 +201,7 @@ export function ExplorerSearch({
       if (!entry) return
       event.preventDefault()
       if (onEntryAction) onEntryAction(entry)
-      else performAction(entry, actionLocale)
+      else performAction(entry, page.locale)
     }
   }
 
@@ -237,12 +222,13 @@ export function ExplorerSearch({
 
 interface ExplorerSearchScopeProps {
   explorer: DashboardExplorer
+  page: ExplorerReadyPage
 }
 
-function ExplorerSearchScope({explorer}: ExplorerSearchScopeProps) {
-  const searchScope = useAtomValue(explorer.readySearchScope)
+function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
+  const searchScope = page.searchScope
   const setSearchScope = useSetAtom(explorer.searchScope)
-  const resultMode = useAtomValue(explorer.readyResultMode)
+  const resultMode = page.resultMode
   const canSearchEverything = useAtomValue(explorer.canSearchEverything)
   const [, startTransition] = useTransition()
   if (!explorer.allowAllWorkspaces) return null
@@ -267,10 +253,11 @@ function ExplorerSearchScope({explorer}: ExplorerSearchScopeProps) {
 
 interface ExplorerResultModeProps {
   explorer: DashboardExplorer
+  page: ExplorerReadyPage
 }
 
-function ExplorerResultMode({explorer}: ExplorerResultModeProps) {
-  const resultMode = useAtomValue(explorer.readyResultMode)
+function ExplorerResultMode({explorer, page}: ExplorerResultModeProps) {
+  const resultMode = page.resultMode
   const setResultMode = useSetAtom(explorer.resultMode)
   const search = useAtomValue(explorer.search)
   const [, startTransition] = useTransition()
@@ -334,12 +321,10 @@ function ExplorerHeaderLoadedParentMain({
 function ExplorerHeaderMain({
   explorer,
   headerEntry,
-  titleControls,
-  locale
+  page,
+  titleControls
 }: ExplorerHeaderMainProps) {
-  const location = useAtomValue(explorer.location)
-  const root = useAtomValue(explorer.root)
-  const parent = useAtomValue(explorer.parent(location, locale))
+  const parent = useAtomValue(explorer.parent(page.location, page.locale))
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
@@ -361,7 +346,7 @@ function ExplorerHeaderMain({
       />
     )
   }
-  if (root && titleControls) {
+  if (titleControls) {
     return <div className={styles.ExplorerHeader.main()}>{titleControls}</div>
   }
   return null
@@ -370,6 +355,7 @@ function ExplorerHeaderMain({
 interface ExplorerLocationMenuProps {
   explorer: DashboardExplorer
   lockNavigation?: boolean
+  page: ExplorerReadyPage
 }
 
 interface ExplorerLocationParentsProps {
@@ -498,10 +484,10 @@ function ExplorerLoadedLocationParent({
 
 function ExplorerLocationMenu({
   explorer,
-  lockNavigation = false
+  lockNavigation = false,
+  page
 }: ExplorerLocationMenuProps) {
   const config = useAtomValue(configAtom)
-  const page = useAtomValue(explorer.page)
   const location = page.location
   const policy = useAtomValue(policyAtom)
   const selectedLocale = page.locale
@@ -696,7 +682,7 @@ function ExplorerHeaderParentMain({
 
 interface ExplorerToolbarProps {
   explorer: DashboardExplorer
-  ready?: boolean
+  page: ExplorerReadyPage
 }
 const filters: Array<{type: ExplorerTypeFilters; label: string}> = [
   {type: MediaFile, label: 'File'},
@@ -726,7 +712,12 @@ function ExplorerControlsButton({
 }: ExplorerControlsProps) {
   return (
     <DialogTrigger>
-      <Button size="icon-nav" appearance="outline" icon={IcRoundFilterList} />
+      <Button
+        aria-label="Filter and sort"
+        appearance={selectedFilter ? 'active' : 'outline'}
+        icon={IcRoundFilterList}
+        size="icon-nav"
+      />
       <Popover placement="bottom left">
         <ExplorerControlsPopover
           isMedia={isMedia}
@@ -787,40 +778,41 @@ function ExplorerControlsPopover({
   )
 }
 
-function ExplorerToolbar({explorer, ready = false}: ExplorerToolbarProps) {
-  const [requestedView, setView] = useAtom(explorer.view)
-  const page = useAtomValue(explorer.page)
-  const view = ready ? page.view : requestedView
+function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
+  const [, setView] = useAtom(explorer.view)
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
-  const requestedIsMedia = useAtomValue(explorer.isMedia)
-  const isMedia = ready ? page.isMedia : requestedIsMedia
-  const locationIsPending = useAtomValue(explorer.locationIsPending)
+  const requestedLocation = useAtomValue(explorer.location)
+  const selectedLocale = useAtomValue(explorer.selectedLocale)
+  const locationIsPending = explorerPageIsPending(
+    page,
+    requestedLocation,
+    selectedLocale
+  )
   const canUpload = useAtomValue(explorer.canUpload)
   const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
+  const uploadCount = uploads.length
   const uploadLabel =
-    uploads.length === 1
-      ? '1 file uploading'
-      : `${uploads.length} files uploading`
+    uploadCount === 1 ? '1 file uploading' : `${uploadCount} files uploading`
 
   return (
     <div className={styles.Explorer.toolbar.tools()}>
-      {isMedia && uploads.length > 0 && (
-        <MutationQueueStatus ariaLabel={uploadLabel} placement="bottom">
-          {uploads.length}
-        </MutationQueueStatus>
+      {page.isMedia && uploadCount > 0 && (
+        <ActivityStatus ariaLabel={uploadLabel} placement="bottom">
+          {uploadCount}
+        </ActivityStatus>
       )}
       <ExplorerControlsButton
-        isMedia={isMedia}
+        isMedia={page.isMedia}
         sort={sort}
         selectedFilter={selectedFilter}
         setSort={setSort}
         toggleFilter={toggleFilter}
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
-        <ViewToggle view={view} setView={setView} />
-        {isMedia && canUpload && (!ready || !locationIsPending) && (
+        <ViewToggle view={page.view} setView={setView} />
+        {page.isMedia && canUpload && !locationIsPending && (
           <FileTrigger
             allowsMultiple
             onSelect={files => {
@@ -843,10 +835,9 @@ export function ExplorerHeader({
   explorer,
   headerEntry,
   navigate,
-  titleControls,
-  locale
+  page,
+  titleControls
 }: ExplorerHeaderProps) {
-  const searchesEverything = useAtomValue(explorer.readySearchesEverything)
   return (
     <RailHeader className={styles.ExplorerHeader({navigation: navigate})}>
       <div className={styles.ExplorerHeader.content()}>
@@ -855,21 +846,20 @@ export function ExplorerHeader({
             <ExplorerHeaderMain
               explorer={explorer}
               headerEntry={headerEntry}
+              page={page}
               titleControls={titleControls}
-              locale={locale}
             />
           )}
           <div className={styles.Explorer.searchSlot()}>
             <ExplorerSearch
               autoFocus={autoFocusSearch}
               explorer={explorer}
-              locale={locale}
-              ready={navigate}
+              page={page}
             />
-            <ExplorerSearchScope explorer={explorer} />
+            <ExplorerSearchScope explorer={explorer} page={page} />
           </div>
           <div className={styles.Explorer.toolbar()}>
-            <ExplorerToolbar explorer={explorer} ready={navigate} />
+            <ExplorerToolbar explorer={explorer} page={page} />
             {controls}
           </div>
         </div>
@@ -879,11 +869,12 @@ export function ExplorerHeader({
             className={styles.ExplorerHeader.location()}
             role="group"
           >
-            <ExplorerResultMode explorer={explorer} />
-            {!searchesEverything && (
+            <ExplorerResultMode explorer={explorer} page={page} />
+            {!page.searchesEverything && (
               <ExplorerLocationMenu
                 explorer={explorer}
                 lockNavigation={explorer.pickChildren}
+                page={page}
               />
             )}
           </div>
@@ -896,12 +887,8 @@ export function ExplorerHeader({
 export function ExplorerBody({
   compactTable,
   explorer,
-  isMedia,
-  items,
-  locale,
   onSelectionChange,
-  root,
-  view
+  page
 }: ExplorerBodyProps) {
   return (
     <RailBody>
@@ -909,12 +896,8 @@ export function ExplorerBody({
         <ExplorerList
           compactTable={compactTable}
           explorer={explorer}
-          isMedia={isMedia}
-          items={items}
-          locale={locale}
           onSelectionChange={onSelectionChange}
-          root={root}
-          view={view}
+          page={page}
         />
       </div>
     </RailBody>
@@ -925,19 +908,21 @@ export function Explorer({
   controls,
   explorer,
   headerEntry,
-  titleControls,
-  locale
+  page: loadedPage,
+  titleControls
 }: ExplorerProps) {
+  const resolvedPage = useAtomValue(explorer.page)
+  const page = resolvedPage ?? loadedPage
   return (
     <>
       <ExplorerHeader
         controls={controls}
         explorer={explorer}
         headerEntry={headerEntry}
+        page={page}
         titleControls={titleControls}
-        locale={locale}
       />
-      <ExplorerBody explorer={explorer} locale={locale} />
+      <ExplorerBody explorer={explorer} page={page} />
     </>
   )
 }

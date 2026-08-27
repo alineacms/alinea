@@ -67,7 +67,6 @@
     "web:run": "bun build.ts --watch -- node dev.js -- bun run --cwd apps/web dev"
   },
   "resolutions": {
-    "lib0": "0.2.88",
     "vite": "^8.0.10"
   },
   "dependencies": {
@@ -84,6 +83,7 @@
     "@badgateway/oauth2-client": "^3.2.0",
     "@esbx/reporter": "^0.0.20",
     "@esbx/workspaces": "^0.0.20",
+    "@floating-ui/dom": "^1.8.0",
     "@happy-dom/global-registrator": "^20.8.3",
     "@hyrious/esbuild-plugin-commonjs": "^0.2.6",
     "@internationalized/date": "3.12.1",
@@ -91,7 +91,6 @@
     "@playwright/experimental-ct-react": "1.61.1",
     "@react-stately/virtualizer": "^4.5.0",
     "@testing-library/react": "^16.3.2",
-    "@floating-ui/dom": "^1.8.0",
     "@tiptap/core": "^3.27.3",
     "@tiptap/extension-blockquote": "^3.27.3",
     "@tiptap/extension-bold": "^3.27.3",
@@ -106,11 +105,11 @@
     "@tiptap/extension-list": "^3.27.3",
     "@tiptap/extension-paragraph": "^3.27.3",
     "@tiptap/extension-strike": "^3.27.3",
+    "@tiptap/extension-subscript": "^3.27.3",
+    "@tiptap/extension-superscript": "^3.27.3",
     "@tiptap/extension-table": "^3.27.3",
     "@tiptap/extension-text": "^3.27.3",
     "@tiptap/extension-text-align": "^3.27.3",
-    "@tiptap/extension-subscript": "^3.27.3",
-    "@tiptap/extension-superscript": "^3.27.3",
     "@tiptap/extensions": "^3.27.3",
     "@tiptap/pm": "^3.27.3",
     "@tiptap/react": "^3.27.3",
@@ -133,16 +132,15 @@
     "escape-html": "^1.0.3",
     "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "fake-indexeddb": "^6.0.0",
-    "get-tsconfig": "^4.6.0",
     "glob": "^7.2.0",
     "htmlparser2": "^9.1.0",
     "jotai": "^2.19.1",
     "jotai-location": "^0.6.2",
     "knip": "^6.4.1",
-    "lib0": "^0.2.88",
     "lightningcss": "^1.32.0",
     "lolight": "^1.4.1",
     "madge": "^6.1.0",
+    "microcbor": "^1.2.1",
     "minisearch": "^7.1.2",
     "next": "^16.1.6",
     "npm-run-all": "^4.1.5",
@@ -172,9 +170,9 @@
     "typescript": "^7.0.1-rc",
     "typescript-plugin-css-modules": "^5.2.0",
     "use-error-boundary": "^2.0.6",
+    "use-sync-external-store": "^1.6.0",
     "vite": "^8.0.10",
-    "vite-plus": "^0.1.16",
-    "use-sync-external-store": "^1.6.0"
+    "vite-plus": "^0.1.16"
   },
   "patchedDependencies": {
     "react-aria@3.48.0": "patches/react-aria@3.48.0.patch"

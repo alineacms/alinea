@@ -1,4 +1,4 @@
-import {IcRoundShare as Icon} from 'alinea/dashboard/icons'
+import {IcRoundShare as Icon} from '#/dashboard/icons.js'
 
 /** @deprecated Import from `alinea/dashboard/icons` instead. */
 export const IcRoundShare = Icon

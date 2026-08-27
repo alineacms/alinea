@@ -51,6 +51,16 @@ test('page explorers keep their row navigation action', () => {
   expect(explorer.items('en')).not.toBe(explorer.items('fr'))
 })
 
+test('explorers default to index sorting', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'media'},
+    {}
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.sort)).toEqual({sortBy: 'index', direction: 'asc'})
+})
+
 test('uses the locale from its initial location', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages', locale: 'fr'},
@@ -179,24 +189,50 @@ test('matches only contain selectable rows for compound conditions', async () =>
   expect(items.every(item => store.get(explorer.isSelectable(item)))).toBe(true)
 })
 
-test('filters browse queries only in card view', async () => {
+test('card browse queries show direct children without applying conditions', async () => {
   const {store, child, parent} = await createDashboardAtomFixture()
   await store.get(authReady)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages'},
-    {condition: {_id: child._id}, initialResultMode: 'browse'}
+    {
+      condition: {_id: child._id},
+      initialResultMode: 'browse',
+      initialView: 'card'
+    }
   )
 
-  await store.get(explorer.itemsReady(null))
+  const rootItems = await store.get(explorer.itemsReady(null))
 
-  expect(store.get(explorer.items(null)).map(item => item.id)).toEqual([
-    parent._id
-  ])
+  expect(rootItems.map(item => item.id)).toEqual([parent._id])
 
-  store.set(explorer.view, 'card')
-  const cardItems = await store.get(explorer.itemsReady(null))
+  store.set(explorer.location, current => ({
+    ...current,
+    parentId: parent._id
+  }))
+  const childItems = await store.get(explorer.itemsReady(null))
 
-  expect(cardItems).toEqual([])
+  expect(childItems.map(item => item.id)).toEqual([child._id])
+})
+
+test('filtered card queries stay scoped to the selected location', async () => {
+  const {store, child, parent} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {
+      condition: {_type: 'Page'},
+      initialResultMode: 'matches',
+      initialView: 'card'
+    }
+  )
+
+  store.set(explorer.location, current => ({
+    ...current,
+    parentId: parent._id
+  }))
+  const items = await store.get(explorer.itemsReady(null))
+
+  expect(items.map(item => item.id)).toEqual([child._id])
 })
 
 test('picker can mark initial links without preselecting them', () => {

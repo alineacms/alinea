@@ -2,9 +2,17 @@
   "_id": "2VIQEijQeV2wB47xuXdxDnPnJz2",
   "_type": "MediaFile",
   "_index": "a0",
-  "_i18nId": "2VIQEijQeV2wB47xuXdxDnPnJz2",
-  "_root": "media",
   "title": "vector",
+  "metadata": {
+    "aliases": [
+      {
+        "_id": "3IDYCtNNu0OTf0CX1xsezLlKL9E",
+        "_index": "a0",
+        "_type": "alias",
+        "url": "/vector.svg"
+      }
+    ]
+  },
   "location": "/vector.2VIQEjmTVqvzPLK5fWpHQBXLRhc.svg",
   "extension": ".svg",
   "size": 68630,

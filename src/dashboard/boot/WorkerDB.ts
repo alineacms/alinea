@@ -14,6 +14,7 @@ import type {
 import type {Mutation} from '#/core/db/Mutation.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {DashboardWorker} from './DashboardWorker.js'
+import type {Activity} from './ActivityEvent.js'
 
 export class WorkerDB extends WriteableGraph {
   #worker: DashboardWorker
@@ -55,12 +56,16 @@ export class WorkerDB extends WriteableGraph {
     return this.#worker.referencesTo(query)
   }
 
-  retryMutationQueue(): Promise<void> {
-    return this.#worker.retryQueue()
+  retryActivity(): Promise<void> {
+    return this.#worker.retryActivity()
   }
 
-  discardMutationQueue(): Promise<void> {
-    return this.#worker.discardQueue()
+  discardActivity(): Promise<void> {
+    return this.#worker.discardActivity()
+  }
+
+  async activities(): Promise<Array<Activity>> {
+    return this.#worker.activities()
   }
 
   prepareUpload(

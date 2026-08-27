@@ -5,6 +5,7 @@ import type {Expr} from './Expr.js'
 import type {Condition, Filter} from './Filter.js'
 import type {Infer, StoredRow} from './Infer.js'
 import type {HasField} from './Internal.js'
+import type {OrderBy} from './OrderBy.js'
 import type {Page} from './Page.js'
 import type {PreviewRequest} from './Preview.js'
 import type {Type} from './Type.js'
@@ -90,9 +91,7 @@ interface SelectObject {
 export type Projection = SelectContent | SelectObject
 export type InferProjection<Selection> = InferSelection<Selection>
 
-export interface Order {
-  asc?: Expr<any>
-  desc?: Expr<any>
+export type Order = OrderBy & {
   caseSensitive?: boolean
 }
 

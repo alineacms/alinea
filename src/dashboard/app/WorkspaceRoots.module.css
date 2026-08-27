@@ -139,3 +139,27 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .WorkspaceRoots {
+    flex-direction: row;
+    width: 100%;
+    height: 48px;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .WorkspaceRoots-roots {
+    flex: 1;
+    flex-direction: row;
+    justify-content: flex-start;
+    width: auto;
+    overflow-x: auto;
+  }
+
+  .WorkspaceRoots-footer {
+    flex-direction: row;
+    width: auto;
+    margin-top: 0;
+  }
+}

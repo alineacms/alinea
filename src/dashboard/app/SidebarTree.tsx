@@ -434,6 +434,11 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
               selectedKeys={snapshot.selectedKeys}
               onSelectionChange={keys => {
                 if (keys === 'all') return
+                const [selected] = keys
+                if (selected)
+                  setExpandedKeys(current =>
+                    new Set(current).add(String(selected))
+                  )
                 onSelectionChange?.(keys)
               }}
             >

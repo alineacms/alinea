@@ -1,16 +1,18 @@
 import {Button, Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom, type Atom} from 'jotai'
+import {atom, useAtomValue, useSetAtom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
 } from 'react-aria-components/useDragAndDrop'
 import type {Selection} from 'react-aria-components'
-import type {
-  DashboardEntry,
-  DashboardExplorer,
-  DashboardRoot
+import {
+  explorerPageIsPending,
+  type DashboardEntry,
+  type DashboardExplorer,
+  type DashboardRoot,
+  type ExplorerReadyPage
 } from '../atoms/explorer.js'
 import {IcRoundSearch, LucideFile} from '../icons.js'
 import {ExplorerCards} from './ExplorerCards.js'
@@ -22,19 +24,18 @@ const fallbackEmptyIcon = atom(LucideFile)
 
 interface EmptyResultsProps {
   explorer: DashboardExplorer
+  page: ExplorerReadyPage
   root?: DashboardRoot
 }
 
-function EmptyResults({explorer, root}: EmptyResultsProps) {
+function EmptyResults({explorer, page, root}: EmptyResultsProps) {
   const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
-  const searchScope = useAtomValue(explorer.readySearchScope)
-  const resultMode = useAtomValue(explorer.readyResultMode)
   const setSearchScope = useSetAtom(explorer.searchScope)
   const canSearchEverything = useAtomValue(explorer.canSearchEverything)
   const canSearchAll =
     canSearchEverything &&
-    searchScope === 'workspace' &&
-    (explorer.mode === 'search' || resultMode === 'matches')
+    page.searchScope === 'workspace' &&
+    (explorer.mode === 'search' || page.resultMode === 'matches')
   return (
     <div className={styles.ExplorerList.empty()}>
       <Icon icon={icon} className={styles.ExplorerList.empty.icon()} />
@@ -80,49 +81,47 @@ function SearchIdleState() {
 export interface ExplorerListProps {
   compactTable?: boolean
   explorer: DashboardExplorer
-  isMedia?: boolean
-  items?: Atom<Array<DashboardEntry>>
-  locale: string | null
   onSelectionChange?: (selection: Selection) => void
-  root?: Atom<DashboardRoot>
-  view?: 'card' | 'row'
+  page: ExplorerReadyPage
 }
 
 export function ExplorerList({
   compactTable,
   explorer,
-  isMedia: readyIsMedia,
-  items: readyItems,
-  locale,
   onSelectionChange,
-  root: readyRoot,
-  view: readyView
+  page
 }: ExplorerListProps) {
-  const items = useAtomValue(readyItems ?? explorer.items(locale))
-  const requestedView = useAtomValue(explorer.view)
-  const view = readyView ?? requestedView
   const showResults = useAtomValue(explorer.showResults)
-  const root = useAtomValue(readyRoot ?? explorer.root)
   const getItems = useSetAtom(explorer.getItems)
   const getDropOperation = useSetAtom(explorer.getDropOperation)
   const dropOnItem = useSetAtom(explorer.onItemDrop)
-  const requestedIsMedia = useAtomValue(explorer.isMedia)
-  const isMedia = readyIsMedia ?? requestedIsMedia
-  const locationIsPending = useAtomValue(explorer.locationIsPending)
+  const requestedLocation = useAtomValue(explorer.location)
+  const selectedLocale = useAtomValue(explorer.selectedLocale)
+  const locationIsPending = explorerPageIsPending(
+    page,
+    requestedLocation,
+    selectedLocale
+  )
   const canUpload = useAtomValue(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
-    acceptedDragTypes: isMedia && canUpload && !locationIsPending ? 'all' : [],
+    acceptedDragTypes:
+      page.isMedia && canUpload && !locationIsPending ? 'all' : [],
     getItems,
     getDropOperation(target, types, allowedOperations) {
       const operation = getDropOperation(target, types, allowedOperations)
       if (operation !== 'cancel') return operation
-      if (!isMedia || !canUpload || locationIsPending || target.type !== 'root')
+      if (
+        !page.isMedia ||
+        !canUpload ||
+        locationIsPending ||
+        target.type !== 'root'
+      )
         return 'cancel'
       return allowedOperations.includes('copy') ? 'copy' : 'cancel'
     },
     onItemDrop(event) {
-      dropOnItem(event, locale)
+      dropOnItem(event, page.locale)
     },
     async onRootDrop(event) {
       if (locationIsPending) return
@@ -148,19 +147,20 @@ export function ExplorerList({
       </div>
     )
   assert(
-    root || explorer.rootScope === 'workspace',
+    page.root || explorer.rootScope === 'workspace',
     'ExplorerList requires a root'
   )
   return (
     <div className={styles.ExplorerList()}>
-      {view === 'card' ? (
+      {page.view === 'card' ? (
         <ExplorerCards
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
-          items={items}
-          locale={locale}
+          items={page.items}
+          locale={page.locale}
+          page={page}
           renderEmptyState={() => (
-            <EmptyResults explorer={explorer} root={root} />
+            <EmptyResults explorer={explorer} page={page} root={page.root} />
           )}
         />
       ) : (
@@ -168,11 +168,12 @@ export function ExplorerList({
           compact={compactTable}
           dragAndDropHooks={dragAndDropHooks}
           explorer={explorer}
-          items={items}
-          locale={locale}
+          items={page.items}
+          locale={page.locale}
           onSelectionChange={onSelectionChange}
+          page={page}
           renderEmptyState={() => (
-            <EmptyResults explorer={explorer} root={root} />
+            <EmptyResults explorer={explorer} page={page} root={page.root} />
           )}
         />
       )}

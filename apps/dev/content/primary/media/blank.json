@@ -2,9 +2,17 @@
   "_id": "2V4cZQX2vXGoBOko2s3apBX6oWG",
   "_type": "MediaFile",
   "_index": "a0",
-  "_i18nId": "2V4cZQX2vXGoBOko2s3apBX6oWG",
-  "_root": "media",
   "title": "blank",
+  "metadata": {
+    "aliases": [
+      {
+        "_id": "3IDYDpq9tlJlS9dMDh3r02IcfqZ",
+        "_index": "a0",
+        "_type": "alias",
+        "url": "/blank.pdf"
+      }
+    ]
+  },
   "location": "/blank.2V4cZPNjcPrfelJe3bGVDxTbcCc.pdf",
   "extension": ".pdf",
   "size": 26468,

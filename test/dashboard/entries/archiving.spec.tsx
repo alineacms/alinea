@@ -27,5 +27,11 @@ test('deletes an entry and navigates to its parent', async ({
   await expect(app.page).toHaveURL(/workflow-folder$/)
   await expect(app.title).toHaveText('Folder')
   await expect(app.entry('Child')).toHaveCount(0)
+
+  await app.page.goBack()
+  await expect(app.title).toHaveText('Entry not found')
+  await expect(app.page.getByText('Requested id:')).toContainText(
+    'workflow-child'
+  )
   expect(pageErrors).toEqual([])
 })

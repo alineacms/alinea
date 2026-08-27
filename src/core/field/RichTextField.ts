@@ -23,7 +23,6 @@ import {
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
-import {mediaLocationUrl} from '../util/EntryFilenames.js'
 import {entries} from '../util/Objects.js'
 import {slugify} from '../util/Slugs.js'
 
@@ -34,8 +33,6 @@ export type RichTextMutator<R> = {
 const linkInfoFields = {
   id: Entry.id,
   url: Entry.url,
-  workspace: Entry.workspace,
-  location: MediaFile.location,
   alt: MediaFile.alt
 }
 
@@ -368,17 +365,9 @@ async function applyLinkMarks(
   const entries = await loader.resolveLinks(linkInfoFields, linkIds)
   const info = new Map(entries.map(entry => [entry.id, entry]))
   for (const [mark, entryId] of links) {
-    const type = mark[LinkMark.link] as 'entry' | 'file' | undefined
     const data = info.get(entryId)
     if (!data) continue
-    const href =
-      type === 'file'
-        ? mediaLocationUrl(
-            loader.resolver.config,
-            data.workspace,
-            data.location
-          )
-        : data.url
+    const href = data.url
     mark.href = applyUrlSuffix(
       href,
       mark[LinkMark.suffix],
@@ -388,13 +377,7 @@ async function applyLinkMarks(
   for (const [node, entryId] of images) {
     const data = info.get(entryId)
     if (!data) continue
-    if (data.location) {
-      node.src = mediaLocationUrl(
-        loader.resolver.config,
-        data.workspace,
-        data.location
-      )
-    }
+    node.src = data.url
     node.alt = mediaAltText(data.alt, loader.locale ?? undefined)
   }
 }

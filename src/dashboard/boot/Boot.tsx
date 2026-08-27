@@ -6,9 +6,9 @@ import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
+import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
-import {MutationQueueEvent} from './MutationQueueEvent.js'
 import {WorkerDB} from './WorkerDB.js'
 
 export interface ConfigBatch {
@@ -74,8 +74,8 @@ function createSharedWorker(): [EventTarget, DashboardWorker] {
   worker.port.addEventListener('message', ({data}) => {
     if (data.type === IndexEvent.type) {
       events.dispatchEvent(new IndexEvent(data.data))
-    } else if (data.type === MutationQueueEvent.type) {
-      events.dispatchEvent(new MutationQueueEvent(data.entries))
+    } else if (data.type === ActivityEvent.type) {
+      events.dispatchEvent(new ActivityEvent(data.activities))
     }
   })
   return [events, Comlink.wrap(worker.port) as any] as const

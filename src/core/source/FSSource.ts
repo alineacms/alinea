@@ -1,18 +1,25 @@
+import {createHash} from 'node:crypto'
 import type {Stats} from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path/posix'
 import pDebounce from 'p-debounce'
 import pLimit from 'p-limit'
 import {assert} from '../util/Assert.js'
-import {accumulate} from '../util/Async.js'
+import {mapConcurrent} from '../util/Async.js'
 import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
-import {hashBlob} from './GitUtils.js'
-import type {Source} from './Source.js'
+import type {GetBlobsOptions, Source} from './Source.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 
 const limit = pLimit(1)
 const fileConcurrency = 64
+const blobReadConcurrency = 32
+const encoder = new TextEncoder()
+
+function hashFileBlob(contents: Uint8Array): string {
+  const header = encoder.encode(`blob ${contents.byteLength}\0`)
+  return createHash('sha1').update(header).update(contents).digest('hex')
+}
 
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
@@ -31,11 +38,12 @@ export class FSSource implements Source {
       const files = await fs.readdir(this.#cwd, {
         recursive: true
       })
-      const fileLimit = pLimit(fileConcurrency)
-      const tasks = files.map(file =>
-        fileLimit(() => this.getFile(current, builder, file))
-      )
-      await Promise.all(tasks)
+      for await (const result of mapConcurrent(
+        files,
+        file => this.getFile(current, builder, file),
+        {concurrency: fileConcurrency}
+      ))
+        void result
       const tree = await builder.compile(current)
       this.#current = tree
       return tree
@@ -68,7 +76,7 @@ export class FSSource implements Source {
       if (isRecord(error) && error.code === 'ENOENT') return
       throw error
     }
-    const sha = await hashBlob(contents)
+    const sha = hashFileBlob(contents)
     this.#locations.set(sha, filePath)
     this.#lastModified.set(filePath, stat.mtimeMs)
     builder.add(filePath, sha)
@@ -80,14 +88,28 @@ export class FSSource implements Source {
     return current.sha === sha ? undefined : current
   }
 
-  async *getBlobs(
-    shas: Array<string>
+  getBlobs(
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
-    for (const sha of shas) {
-      const path = this.#locations.get(sha)
-      assert(path, `Missing path for blob ${sha}`)
-      yield [sha, await fs.readFile(`${this.#cwd}/${path}`)]
-    }
+    return mapConcurrent(
+      shas,
+      (sha, signal) => {
+        const file = this.#locations.get(sha)
+        assert(file, `Missing path for blob ${sha}`)
+        return this.readBlob(sha, file, signal)
+      },
+      {concurrency: blobReadConcurrency, signal: options.signal}
+    )
+  }
+
+  async readBlob(
+    sha: string,
+    file: string,
+    signal?: AbortSignal
+  ): Promise<[sha: string, blob: Uint8Array]> {
+    const blob = await fs.readFile(`${this.#cwd}/${file}`, {signal})
+    return [sha, blob]
   }
 
   async applyChanges(batch: ChangesBatch) {
@@ -122,9 +144,23 @@ export class CachedFSSource extends FSSource {
     super(cwd)
   }
 
-  refresh = pDebounce(async () => {
-    this.#blobs = new Map()
-    return (this.#tree = super.getTree())
+  refresh = pDebounce(() => {
+    let refresh: Promise<ReadonlyTree>
+    refresh = super.getTree().then(
+      tree => {
+        const currentShas = new Set(tree.index().values())
+        for (const sha of this.#blobs.keys()) {
+          if (!currentShas.has(sha)) this.#blobs.delete(sha)
+        }
+        return tree
+      },
+      error => {
+        if (this.#tree === refresh) this.#tree = undefined
+        throw error
+      }
+    )
+    this.#tree = refresh
+    return refresh
   }, 50)
 
   getTree() {
@@ -144,17 +180,20 @@ export class CachedFSSource extends FSSource {
   }
 
   async *getBlobs(
-    shas: Array<string>
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
-    const fromLocal = shas.filter(sha => this.#blobs.has(sha))
-    const localEntries = fromLocal.map(
-      (sha): [sha: string, blob: Uint8Array] => [sha, this.#blobs.get(sha)!]
-    )
-    const fromRemote = shas.filter(sha => !this.#blobs.has(sha))
-    const remoteEntries =
-      fromRemote.length > 0 ? await accumulate(super.getBlobs(fromRemote)) : []
-    const entries = [...localEntries, ...remoteEntries]
-    this.#blobs = new Map(entries)
-    yield* entries
+    const fromRemote = []
+    for (const sha of shas) {
+      if (options.signal?.aborted)
+        throw options.signal.reason ?? new Error('Blob transfer aborted')
+      const blob = this.#blobs.get(sha)
+      if (blob) yield [sha, blob]
+      else fromRemote.push(sha)
+    }
+    for await (const [sha, blob] of super.getBlobs(fromRemote, options)) {
+      this.#blobs.set(sha, blob)
+      yield [sha, blob]
+    }
   }
 }

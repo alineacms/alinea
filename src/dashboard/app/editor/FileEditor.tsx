@@ -1,7 +1,9 @@
 import {type} from '#/config.js'
 import {Surface, Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {Config} from '#/core/Config.js'
+import type {Entry} from '#/core/Entry.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
@@ -27,9 +29,15 @@ const metadataFields = type('Metadata', {
   }
 })
 
-export function FileEditor() {
+export interface FileEditorProps {
+  entry: Pick<Entry, 'root' | 'url' | 'workspace'>
+  parentPaths: Array<string>
+}
+
+export function FileEditor({entry, parentPaths}: FileEditorProps) {
   const config = useAtomValue(configAtom)
   const location = useFieldValue(MediaFile.location)
+  const path = useFieldValue(MediaFile.path)
   const extension = useFieldValue(MediaFile.extension)
   const isImage = isImageExtension(extension)
   const size = useFieldValue(MediaFile.size)
@@ -43,9 +51,22 @@ export function FileEditor() {
   }, [thumbHash])
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
-  const [liveUrl] = outcome(
-    () => new URL(location, Config.baseUrl(config) ?? window.location.href)
-  )
+  const publicLocation = MediaLocation.publicUrl(config, {
+    extension,
+    location,
+    parentPaths,
+    path,
+    root: entry.root,
+    workspace: entry.workspace
+  })
+  const baseUrl = Config.baseUrl(config) ?? window.location.href
+  const [liveUrl] = outcome(() => new URL(publicLocation, baseUrl))
+  const parsedBaseUrl = URL.parse(baseUrl)
+  const displayedUrl = liveUrl
+    ? parsedBaseUrl && liveUrl.origin === parsedBaseUrl.origin
+      ? `${liveUrl.pathname}${liveUrl.search}${liveUrl.hash}`
+      : liveUrl.href
+    : undefined
   const displayedFocusPoint = hoverPoint ?? focusPoint
   const node = useEditor().node
   return (
@@ -61,7 +82,7 @@ export function FileEditor() {
           <div className={styles.FileEditor({image: isImage})}>
             {isImage && (
               <FilePreview
-                liveUrl={liveUrl ? String(liveUrl) : undefined}
+                liveUrl={liveUrl?.href}
                 preview={preview}
                 thumbBackground={thumbBackground}
                 width={width}
@@ -103,13 +124,17 @@ export function FileEditor() {
                       className={styles.FileEditor.metadata.item({full: true})}
                     >
                       <dt className={styles.FileEditor.metadata.term()}>URL</dt>
-                      <dd className={styles.FileEditor.metadata.value()}>
+                      <dd
+                        className={styles.FileEditor.metadata.value({
+                          link: true
+                        })}
+                      >
                         <a
-                          href={liveUrl.pathname}
+                          href={liveUrl.href}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          {liveUrl.pathname}
+                          {displayedUrl}
                         </a>
                       </dd>
                     </div>

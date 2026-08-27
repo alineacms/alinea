@@ -1,7 +1,7 @@
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {expect, spyOn, test} from 'bun:test'
+import {activityAtom} from './activity.js'
 import {configAtom} from './core.js'
-import {dashboardAtoms} from './dashboard.js'
 import {createExplorerAtoms} from './explorer.js'
 import {authReady} from './user.js'
 
@@ -18,11 +18,22 @@ test('reports invalid uploads while continuing with valid files', async () => {
 
   expect(upload).toHaveBeenCalledTimes(1)
   expect(upload.mock.calls[0]?.[0].file).toBe(valid)
-  expect(store.get(dashboardAtoms.mutationQueue).entries).toEqual([
+  const activity = store.get(activityAtom)
+  const failedActivity = activity.items.filter(item => item.status === 'failed')
+  expect(failedActivity).toContainEqual(
     expect.objectContaining({
+      type: 'upload',
       status: 'failed',
       error: expect.stringContaining('invalid.jpg'),
       upload: {workspace: 'main', root: 'pages', parentId: undefined}
     })
-  ])
+  )
+  expect(failedActivity).toHaveLength(1)
+  expect(activity.items).not.toContainEqual(
+    expect.objectContaining({
+      type: 'upload',
+      status: 'running',
+      operations: [expect.objectContaining({title: 'valid.jpg'})]
+    })
+  )
 })

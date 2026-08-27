@@ -44,6 +44,10 @@
   }
 }
 
+.EntryOverview-mobileActions {
+  display: none;
+}
+
 .MissingEntry {
   min-height: 100%;
   display: grid;
@@ -88,4 +92,18 @@
 .MissingEntry-id {
   font-family: var(--alinea-mono-font);
   font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .EntryOverview-mobileActions {
+    display: flex;
+  }
+
+  .EntryEditor-body {
+    padding: 8px;
+  }
+
+  .MissingEntry {
+    padding: 12px;
+  }
 }

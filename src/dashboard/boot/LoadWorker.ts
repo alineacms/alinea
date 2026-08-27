@@ -1,9 +1,9 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
+import {ActivityEvent} from './ActivityEvent.js'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'
-import {MutationQueueEvent} from './MutationQueueEvent.js'
 
 export async function loadWorker(gen: ConfigGenerator) {
   const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
@@ -19,11 +19,11 @@ export async function loadWorker(gen: ConfigGenerator) {
         port.postMessage({...event, type: event.type})
       } catch {
         worker.removeEventListener(IndexEvent.type, listen)
-        worker.removeEventListener(MutationQueueEvent.type, listen)
+        worker.removeEventListener(ActivityEvent.type, listen)
       }
     }
     worker.addEventListener(IndexEvent.type, listen)
-    worker.addEventListener(MutationQueueEvent.type, listen)
+    worker.addEventListener(ActivityEvent.type, listen)
   })
 
   for await (const batch of gen) {

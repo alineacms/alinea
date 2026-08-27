@@ -382,27 +382,6 @@ export function ListRowFoldButton({
   )
 }
 
-export interface ListRowSettingsButtonProps extends Omit<
-  ButtonProps,
-  'appearance' | 'className' | 'size'
-> {
-  className?: string
-}
-
-export function ListRowSettingsButton({
-  className,
-  ...props
-}: ListRowSettingsButtonProps) {
-  return (
-    <Button
-      {...props}
-      appearance="plain"
-      className={styles.ListRowSettingsButton(styler.merge({className}))}
-      size="icon-small"
-    />
-  )
-}
-
 export interface ListRowBodyProps extends ComponentPropsWithoutRef<'div'> {}
 
 export function ListRowBody({className, ...props}: ListRowBodyProps) {

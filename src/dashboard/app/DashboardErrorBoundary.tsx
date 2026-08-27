@@ -1,7 +1,8 @@
 import {Icon, Surface} from '#/components.js'
-import {routeAtom} from '#/dashboard/atoms/nav.js'
+import {MissingEntryError} from '#/dashboard/atoms/entry.js'
+import {routeAtom, routeGuardAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {useEffect, useRef, type PropsWithChildren} from 'react'
 import useErrorBoundary from 'use-error-boundary'
 import {IcRoundWarning} from '../icons.js'
@@ -28,6 +29,9 @@ function DashboardRouteErrorBoundary({
   routeKey
 }: DashboardRouteErrorBoundaryProps) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
+  const route = useAtomValue(routeAtom)
+  const setRoute = useSetAtom(routeAtom)
+  const setRouteGuard = useSetAtom(routeGuardAtom)
   const previousRouteKey = useRef(routeKey)
   // oxlint-disable react-you-might-not-need-an-effect/no-event-handler -- The boundary exposes an imperative reset API, and recovery must follow a route change after an error.
   useEffect(() => {
@@ -36,6 +40,13 @@ function DashboardRouteErrorBoundary({
     if (routeChanged && didCatch) reset()
   }, [didCatch, reset, routeKey])
   // oxlint-enable react-you-might-not-need-an-effect/no-event-handler
+  useEffect(() => {
+    if (!(error instanceof MissingEntryError) || route.entry !== error.id)
+      return
+    setRouteGuard(null)
+    setRoute({...route, entry: undefined, view: undefined})
+  }, [error, route, setRoute, setRouteGuard])
+  if (didCatch && error instanceof MissingEntryError) return null
   if (didCatch) {
     const message = error instanceof Error ? error.message : String(error)
     return (

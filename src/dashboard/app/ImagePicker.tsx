@@ -10,7 +10,7 @@ import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {Suspense, startTransition, useState, type ReactNode} from 'react'
+import {Suspense, startTransition, useMemo, type ReactNode} from 'react'
 import {ExplorerHeader} from './Explorer.js'
 import {
   ExplorerModal,
@@ -20,7 +20,7 @@ import {
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
-  explorerTree,
+  createExplorerTree,
   ExplorerPickerContent,
   normalizePickerLocale
 } from './ExplorerPickerContent.js'
@@ -79,8 +79,15 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     pickerI18n?.locales ?? []
   )
   const initialLocation = {...location, locale: initialLocale ?? undefined}
-  const [explorer] = useState(() => {
+  const explorerIdentity = JSON.stringify([
+    initialLocation,
+    options.condition ?? null
+  ])
+  // Explorer atoms capture their initial options and reset only with this scope.
+  // oxlint-disable react-hooks/exhaustive-deps
+  const {explorer, tree} = useMemo(() => {
     let explorer: ReturnType<typeof createExplorerAtoms>
+    const tree = createExplorerTree(() => explorer)
     const currentRoot = (location: ExplorerLocation) =>
       rootAtoms(location.workspace, location.root ?? root.key)
     const rootData = atom(get => get(currentRoot(get(explorer.location)).data))
@@ -94,16 +101,22 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
       searchDepth: 'all',
       selectedLocale: initialLocale,
       treeItems: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).items,
+        tree(currentRoot(location), locale, location).items,
       treeReady: (locale, location) =>
-        explorerTree(currentRoot(location), explorer, locale, location).ready
+        tree(currentRoot(location), locale, location).ready
     })
-    return explorer
-  })
-  const selectedLocale = useAtomValue(explorer.selectedLocale)
+    return {explorer, tree}
+  }, [explorerIdentity])
+  // oxlint-enable react-hooks/exhaustive-deps
+  const explorerPage = useAtomValue(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
   const selection = useAtomValue(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
+
+  if (!explorerPage)
+    return (
+      <DashboardModalDialog aria-label={label} variant="explorer" isLoading />
+    )
 
   function onSubmit() {
     startTransition(() => {
@@ -121,12 +134,14 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate
-            locale={selectedLocale}
+            page={explorerPage}
           />
           <ExplorerPickerContent
             explorer={explorer}
             navigationLabel="Media folders"
             options={options}
+            page={explorerPage}
+            tree={tree}
           />
           <ExplorerModalFooter>
             <ExplorerModalSelection>

@@ -3,10 +3,11 @@ import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
 import {createId} from '#/core/Id.js'
-import {getRoot, getWorkspace} from '#/core/Internal.js'
+import {getRoot} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
 import {ListEditor} from '#/core/field/ListField.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {entryUrl, pathSuffix} from '#/core/util/EntryFilenames.js'
 import {
   generateKeyBetween,
@@ -62,6 +63,7 @@ interface UrlCandidate {
   root: string
   locale: string | null
   data: Record<string, unknown>
+  url?: string
 }
 
 interface UrlClaim {
@@ -206,8 +208,9 @@ export class EntryTransaction {
       const prevLocation = prev.data.location
       if (prevLocation !== data.location)
         this.removeFile({
-          location: paths.join(
-            getWorkspace(this.#config.workspaces[prev.workspace]).mediaDir,
+          location: MediaLocation.storagePath(
+            this.#config,
+            prev.workspace,
             prev.data.location as string
           )
         })
@@ -271,7 +274,7 @@ export class EntryTransaction {
       }
       data = this.#dataWithPreviousUrlAlias(
         urlCandidate,
-        this.#publishedEntry(id, locale)?.url
+        this.#publishedEntry(id, locale)
       )
       if (locale !== null) this.#persistSharedFields(id, locale, type, data)
       this.#assertUniqueUrls({...urlCandidate, data})
@@ -359,7 +362,7 @@ export class EntryTransaction {
         locale,
         data
       }
-      data = this.#dataWithPreviousUrlAlias(urlCandidate, entry.url)
+      data = this.#dataWithPreviousUrlAlias(urlCandidate, entry)
       if (locale !== null)
         this.#persistSharedFields(id, locale, entry.type, data)
       this.#assertUniqueUrls({...urlCandidate, data})
@@ -428,33 +431,37 @@ export class EntryTransaction {
   }
 
   #candidateUrls(candidate: UrlCandidate): Array<string> {
-    return [this.#canonicalUrl(candidate), ...aliasUrlsFromData(candidate.data)]
+    return [this.#resolvedUrl(candidate), ...aliasUrlsFromData(candidate.data)]
   }
 
-  #canonicalUrl(candidate: UrlCandidate): string {
+  #resolvedUrl(candidate: UrlCandidate): string {
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
+    if (candidate.url !== undefined) return candidate.url
     return entryUrl(type, {
-      status: 'published',
+      config: this.#config,
       path: candidate.path,
       parentPaths:
         candidate.parentPaths ??
         this.#parentPaths(candidate.parentId, candidate.locale),
       locale: candidate.locale,
+      status: 'published',
       workspace: candidate.workspace,
-      root: candidate.root
+      root: candidate.root,
+      data: candidate.data
     })
   }
 
   #dataWithPreviousUrlAlias(
     candidate: UrlCandidate,
-    previousUrl: string | undefined
+    previousEntry: Entry | undefined
   ): Record<string, unknown> {
-    if (!previousUrl) return candidate.data
-    if (previousUrl === this.#canonicalUrl(candidate)) return candidate.data
+    if (!previousEntry) return candidate.data
+    const previousUrl = this.#resolvedUrl(previousEntry)
+    const currentUrl = this.#resolvedUrl(candidate)
+    if (previousUrl === currentUrl) return candidate.data
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
-    const currentUrl = this.#canonicalUrl(candidate)
     return dataWithUrlAlias(type, candidate.data, previousUrl, currentUrl)
   }
 
@@ -486,7 +493,10 @@ export class EntryTransaction {
     for (const entry of this.#index.findMany(entry => {
       return entry.status === 'published'
     })) {
-      for (const url of [entry.url, ...aliasUrlsFromData(entry.data)]) {
+      for (const url of [
+        this.#resolvedUrl(entry),
+        ...aliasUrlsFromData(entry.data)
+      ]) {
         claims.set(this.#urlClaimKey(entry.workspace, entry.root, url), {
           id: entry.id,
           url
@@ -559,7 +569,7 @@ export class EntryTransaction {
         locale: entry.locale,
         data: entry.data
       }
-      const data = this.#dataWithPreviousUrlAlias(candidate, entry.url)
+      const data = this.#dataWithPreviousUrlAlias(candidate, entry)
       this.#assertUniqueUrls({...candidate, data})
       updates.push({
         entry,
@@ -658,7 +668,10 @@ export class EntryTransaction {
       locale,
       data
     }
-    data = this.#dataWithPreviousUrlAlias(urlCandidate, entry.url)
+    data = this.#dataWithPreviousUrlAlias(
+      urlCandidate,
+      this.#publishedEntry(id, locale)
+    )
     if (entry.locale !== null)
       this.#persistSharedFields(id, entry.locale, entry.type, data)
     this.#assertUniqueUrls({...urlCandidate, data})
@@ -916,8 +929,6 @@ export class EntryTransaction {
         this.#tx.remove(entry.childrenDir)
       }
       if (entry.type === 'MediaLibrary') {
-        const workspace = this.#config.workspaces[entry.workspace]
-        const mediaDir = getWorkspace(workspace).mediaDir
         // Find all files within children
         const files = index.findMany(f => {
           return (
@@ -929,16 +940,19 @@ export class EntryTransaction {
         })
         for (const file of files) {
           this.removeFile({
-            location: paths.join(mediaDir, file.data.location as string)
+            location: MediaLocation.storagePath(
+              this.#config,
+              entry.workspace,
+              file.data.location as string
+            )
           })
         }
       }
       if (entry.type === 'MediaFile') {
-        const workspace = this.#config.workspaces[entry.workspace]
-        const mediaDir = getWorkspace(workspace).mediaDir
         this.removeFile({
-          location: paths.join(
-            mediaDir,
+          location: MediaLocation.storagePath(
+            this.#config,
+            entry.workspace,
             (<Entry<MediaFile>>entry).data.location
           )
         })

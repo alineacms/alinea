@@ -69,16 +69,23 @@ test('loads a parent selected from a collapsed branch by id', async ({
   await createEntry.getByRole('button', {name: 'Link settings'}).click()
   await app.page
     .getByRole('dialog', {name: 'Link settings'})
-    .getByRole('button', {name: 'Edit link'})
+    .getByRole('button', {name: 'Replace link'})
     .click()
 
   const picker = app.page.getByRole('dialog', {
-    name: 'Pick a link',
+    name: 'Pick a link in expanded view',
     exact: true
   })
+  await expect(
+    app.page.getByRole('dialog', {name: 'Pick a link', exact: true})
+  ).toHaveCount(0)
+  await expect(
+    picker.getByRole('treegrid', {name: 'Explorer entries'})
+  ).toBeVisible()
   await picker
     .getByRole('checkbox', {name: 'Select Ordered folder'})
     .click({force: true})
+  await picker.getByRole('button', {name: 'Select'}).click()
   await expect(picker).toBeHidden()
 
   await expect(createEntry.getByRole('list', {name: 'Parent'})).toContainText(

@@ -8,7 +8,7 @@ const styles = styler(css)
 export interface SidebarProps extends RailProps {}
 
 export function Sidebar(props: SidebarProps) {
-  return <Rail className={styles.Sidebar(styler.merge(props))} {...props} />
+  return <Rail {...props} className={styles.Sidebar(styler.merge(props))} />
 }
 
 export interface SidebarHeaderProps extends RailHeaderProps {}

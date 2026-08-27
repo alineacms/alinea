@@ -1,27 +1,43 @@
 import type {PreviewUpdate} from '#/core/Preview.js'
-import {decode, encode} from '#/core/util/BufferToBase64.js'
-import * as decoding from 'lib0/decoding.js'
-import * as encoding from 'lib0/encoding.js'
+import {assert} from '#/core/util/Assert.js'
+import {
+  decode as decodeBase64,
+  encode as encodeBase64
+} from '#/core/util/BufferToBase64.js'
+import {decode, encode} from 'microcbor'
 
 export function encodePreviewPayload(update: PreviewUpdate): Promise<string> {
-  const encoder = encoding.createEncoder()
-  encoding.writeVarString(encoder, update.locale ?? '')
-  encoding.writeVarString(encoder, update.entryId)
-  encoding.writeVarString(encoder, update.contentHash)
-  encoding.writeVarString(encoder, update.status)
-  encoding.writeVarUint8Array(encoder, update.patch)
-  return encode(encoding.toUint8Array(encoder))
+  return encodeBase64(
+    encode([
+      update.locale,
+      update.entryId,
+      update.contentHash,
+      update.status,
+      update.patch
+    ])
+  )
 }
 
 export async function decodePreviewPayload(
   payload: string
 ): Promise<PreviewUpdate> {
-  const decoder = decoding.createDecoder(new Uint8Array(await decode(payload)))
+  const value = decode(new Uint8Array(await decodeBase64(payload)))
+  assert(Array.isArray(value), 'Invalid preview payload')
+  assert(value.length === 5, 'Invalid preview payload')
+  const [locale, entryId, contentHash, status, patch] = value
+  assert(
+    locale === null || typeof locale === 'string',
+    'Invalid preview locale'
+  )
+  assert(typeof entryId === 'string', 'Invalid preview entry id')
+  assert(typeof contentHash === 'string', 'Invalid preview content hash')
+  assert(typeof status === 'string', 'Invalid preview status')
+  assert(patch instanceof Uint8Array, 'Invalid preview patch')
   return {
-    locale: decoding.readVarString(decoder) || null,
-    entryId: decoding.readVarString(decoder),
-    contentHash: decoding.readVarString(decoder),
-    status: decoding.readVarString(decoder),
-    patch: decoding.readVarUint8Array(decoder)
+    locale,
+    entryId,
+    contentHash,
+    status,
+    patch
   }
 }

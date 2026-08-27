@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import {
   EntryPickerSingle,
   Example,
+  FilteredEntryFieldWithoutEntryScope,
   ImagePickerSingle
 } from './LinkField.stories.js'
 
@@ -15,6 +16,65 @@ test('opens the standalone image picker story', async ({mount, page}) => {
     page.getByRole('treegrid', {name: 'Media folders'})
   ).toBeVisible()
   await expect(page.getByRole('searchbox', {name: 'Search'})).toBeFocused()
+})
+
+test('shows image results outside an entry scope', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const field = page.getByRole('list', {name: 'Hero image'})
+  await field.getByRole('button', {name: 'Remove link'}).click()
+  await field.getByRole('button', {name: 'Image'}).click()
+
+  const picker = page.getByRole('dialog', {name: 'Pick an image'})
+  await expect(
+    picker.getByRole('grid', {name: 'Explorer entries'})
+  ).toContainText('landscape')
+})
+
+test('keeps remove controls visible on single and multiple link rows', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const heroImage = page.getByRole('list', {name: 'Hero image'})
+  await expect(
+    heroImage.getByRole('button', {name: 'Remove link'})
+  ).toBeVisible()
+  await heroImage.getByRole('button', {name: 'Link settings'}).click()
+  await expect(
+    page
+      .getByRole('dialog', {name: 'Link settings'})
+      .getByRole('button', {name: 'Remove link'})
+  ).toHaveCount(0)
+  await page.keyboard.press('Escape')
+
+  const resources = page.getByRole('list', {name: 'Resources'})
+  await expect(
+    resources.getByRole('button', {name: 'Remove link'})
+  ).toHaveCount(3)
+  await resources
+    .getByRole('listitem')
+    .first()
+    .getByRole('button', {name: 'Remove link'})
+    .click()
+  await expect(
+    resources.getByRole('button', {name: 'Remove link'})
+  ).toHaveCount(2)
+})
+
+test('opens single-link settings from the linked row', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const relatedLink = page.getByRole('list', {name: 'Related link'})
+  await relatedLink.getByRole('button', {name: 'Edit link'}).click()
+
+  const settings = page.getByRole('dialog', {name: 'Link settings'})
+  await expect(settings).toBeVisible()
+  await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
 })
 
 test('switches link picker workspaces and roots', async ({mount, page}) => {
@@ -60,11 +120,38 @@ test('opens a compact entry picker and selects immediately', async ({
   page
 }) => {
   await mount(<EntryPickerSingle />)
+  await page.evaluate(() => {
+    document.documentElement.dataset.partialCompactPickerSeen = 'false'
+    const observer = new MutationObserver(() => {
+      const picker = document.querySelector(
+        '[role="dialog"][aria-label="Pick a link"]'
+      )
+      const search = picker?.querySelector('[role="searchbox"]')
+      const home = Array.from(
+        picker?.querySelectorAll('[role="row"]') ?? []
+      ).find(row => row.textContent?.includes('Home'))
+      if (search && !home)
+        document.documentElement.dataset.partialCompactPickerSeen = 'true'
+    })
+    observer.observe(document.body, {childList: true, subtree: true})
+  })
   await page.getByRole('button', {name: 'Pick an entry'}).click()
 
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const search = picker.getByRole('searchbox', {name: 'Search'})
   await expect(picker).toBeVisible()
+  const [pickerBox, viewportHeight] = await Promise.all([
+    picker.locator('..').boundingBox(),
+    page.evaluate(() => window.visualViewport?.height ?? window.innerHeight)
+  ])
+  expect(pickerBox?.height).toBeLessThanOrEqual(350)
+  expect(pickerBox?.height).toBeLessThanOrEqual(viewportHeight - 32)
+  await search.fill('No matching entries')
+  await expect(picker.getByText('No results found')).toBeVisible()
+  expect((await picker.locator('..').boundingBox())?.height).toBe(
+    pickerBox?.height
+  )
+  await search.fill('')
   await expect(search).toBeFocused()
   await expect(
     picker.getByRole('button', {name: 'Expand entry picker'})
@@ -79,8 +166,43 @@ test('opens a compact entry picker and selects immediately', async ({
   await expect(home.locator('[role="gridcell"] [role="gridcell"]')).toHaveCount(
     2
   )
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.dataset.partialCompactPickerSeen
+      )
+    )
+    .toBe('false')
   await home.click()
   await expect(picker).toBeHidden()
+})
+
+test('keeps static picker conditions outside an entry scope', async ({
+  mount,
+  page
+}) => {
+  await mount(<FilteredEntryFieldWithoutEntryScope />)
+  await page
+    .getByRole('list', {name: 'Filtered entry'})
+    .getByRole('button', {name: 'Filtered entry'})
+    .click()
+  await page.getByRole('button', {name: 'Expand entry picker'}).click()
+
+  const picker = page.getByRole('dialog', {
+    name: 'Pick a link in expanded view'
+  })
+  const resultModes = picker.getByRole('radiogroup', {
+    name: 'Explorer results'
+  })
+  await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+})
+
+test('keeps picker copy for generic link fields', async ({mount, page}) => {
+  await mount(<Example />)
+
+  const field = page.getByRole('list', {name: 'Resources'})
+  await expect(field.getByRole('button', {name: 'Page link'})).toBeVisible()
+  await expect(field.getByRole('button', {name: 'Resources'})).toHaveCount(0)
 })
 
 test('expands the compact entry picker into the explorer modal', async ({
@@ -114,7 +236,9 @@ test('centers the compact picker on the entire link field', async ({
   page
 }) => {
   await mount(<Example />)
-  const trigger = page.getByRole('button', {name: 'Page link'})
+  const trigger = page
+    .getByRole('list', {name: 'Resources'})
+    .getByRole('button', {name: 'Page link'})
   const field = trigger.locator('..')
   await trigger.click()
 

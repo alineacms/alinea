@@ -243,3 +243,53 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+@media (max-width: 768px) {
+  .ExplorerHeader,
+  .ExplorerHeader.is-navigation {
+    height: auto;
+    min-height: 48px;
+    padding: 8px;
+    overflow: visible;
+  }
+
+  .ExplorerHeader-content {
+    height: auto;
+  }
+
+  .ExplorerHeader-primary {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .ExplorerHeader-main {
+    flex: 1 1 120px;
+  }
+
+  .ExplorerHeader-primary:has(.ExplorerHeader-main) .Explorer-searchSlot {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .Explorer-searchSlot {
+    min-width: 160px;
+    gap: 8px;
+  }
+
+  .Explorer-toolbar,
+  .Explorer-toolbar-tools,
+  .Explorer-toolbar-mediaActions {
+    gap: 6px;
+  }
+
+  .Explorer-toolbar {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .Explorer-toolbar-tools {
+    flex-basis: 100%;
+  }
+}
