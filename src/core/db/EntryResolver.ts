@@ -368,21 +368,38 @@ export class EntryResolver implements Resolver {
       const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
       entries.sort((a, b) => {
         for (const order of orders) {
-          const expr = (order.asc ?? order.desc)!
-          const valueA = this.expr(ctx, a, expr) as string | number
-          const valueB = this.expr(ctx, b, expr) as string | number
+          const ascending = order.asc !== undefined
+          const descending = order.desc !== undefined
+          assert(
+            ascending !== descending,
+            'orderBy must specify exactly one direction'
+          )
+          const expr = ascending ? order.asc : order.desc
+          const valueA = this.expr(ctx, a, expr)
+          const valueB = this.expr(ctx, b, expr)
+          const nullishA = valueA === null || valueA === undefined
+          const nullishB = valueB === null || valueB === undefined
+          if (nullishA || nullishB) {
+            if (nullishA !== nullishB) return nullishA ? 1 : -1
+            continue
+          }
           const strings =
             typeof valueA === 'string' && typeof valueB === 'string'
           const numbers =
             typeof valueA === 'number' && typeof valueB === 'number'
+          const booleans =
+            typeof valueA === 'boolean' && typeof valueB === 'boolean'
           if (strings) {
             const compare = order.caseSensitive
               ? compareStrings(valueA, valueB)
               : valueA.localeCompare(valueB, undefined, {numeric: true})
-            if (compare !== 0) return order.asc ? compare : -compare
+            if (compare !== 0) return ascending ? compare : -compare
           } else if (numbers) {
             if (valueA !== valueB)
-              return order.asc ? valueA - valueB : valueB - valueA
+              return ascending ? valueA - valueB : valueB - valueA
+          } else if (booleans && valueA !== valueB) {
+            const compare = Number(valueA) - Number(valueB)
+            return ascending ? compare : -compare
           }
         }
         return 0

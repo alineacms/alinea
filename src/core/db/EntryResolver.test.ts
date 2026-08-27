@@ -201,6 +201,7 @@ const Article = Config.document('Article', {
     title: Field.text('Title'),
     path: Field.path('Path'),
     score: Field.number('Score'),
+    spotlight: Field.check('Spotlight'),
     text: Field.text('Text'),
     single: Field.entry('Single'),
     multi: Field.entry.multiple('Multi'),
@@ -253,7 +254,7 @@ const advancedEntries = [
     type: 'Article',
     index: 'a1',
     path: 'parent',
-    data: {title: 'Parent', score: 10, text: 'top level'}
+    data: {title: 'Parent', score: 10, spotlight: true, text: 'top level'}
   },
   {
     id: 'child-1',
@@ -264,6 +265,7 @@ const advancedEntries = [
     data: {
       title: 'Alpha',
       score: 5,
+      spotlight: false,
       text: 'one two cookie four five',
       single: {
         _id: 'single-link',
@@ -328,6 +330,7 @@ const advancedEntries = [
     data: {
       title: 'beta',
       score: 8,
+      spotlight: true,
       text: 'beta text',
       meta: {inner: 'y'},
       metadata: {
@@ -735,6 +738,47 @@ test('paging, numeric ordering, parents sorting and location filters', async () 
     select: Query.id
   })
   test.equal(level2, [])
+})
+
+test('boolean and compound ordering', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const ids = ['parent', 'child-1', 'child-2', 'grand']
+  const ascending = await resolver.resolve({
+    type: Article,
+    id: {in: ids},
+    orderBy: {asc: Article.spotlight},
+    select: Query.id
+  })
+  test.equal(ascending, ['child-1', 'parent', 'child-2', 'grand'])
+
+  const descending = await resolver.resolve({
+    type: Article,
+    id: {in: ids},
+    orderBy: {desc: Article.spotlight},
+    select: Query.id
+  })
+  test.equal(descending, ['parent', 'child-2', 'child-1', 'grand'])
+
+  const compound = await resolver.resolve({
+    type: Article,
+    id: {in: ids},
+    orderBy: [{desc: Article.spotlight}, {asc: Article.title}],
+    select: Query.id
+  })
+  test.equal(compound, ['child-2', 'parent', 'child-1', 'grand'])
+})
+
+test('rejects ambiguous ordering', async () => {
+  const {resolver} = await createAdvancedResolver()
+  await test.throws(
+    () =>
+      resolver.resolve({
+        type: Article,
+        // @ts-expect-error An order clause must specify exactly one direction.
+        orderBy: {asc: Article.title, desc: Article.spotlight}
+      }),
+    'orderBy must specify exactly one direction'
+  )
 })
 
 test('locales, translations and link edges', async () => {
