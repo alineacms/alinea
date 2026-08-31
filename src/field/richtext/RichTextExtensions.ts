@@ -9,8 +9,6 @@ import {
   Extension,
   mergeAttributes,
   Node as TipTapNode,
-  ResizableNodeView,
-  type ResizableNodeViewDirection,
   type AnyExtension
 } from '@tiptap/core'
 import {Fragment, type Node as ProseMirrorNode, Slice} from '@tiptap/pm/model'
@@ -25,7 +23,7 @@ import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
 import Highlight from '@tiptap/extension-highlight'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
-import Image, {type ImageOptions} from '@tiptap/extension-image'
+import Image from '@tiptap/extension-image'
 import Italic from '@tiptap/extension-italic'
 import {BulletList, ListItem, OrderedList} from '@tiptap/extension-list'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -49,26 +47,10 @@ import css from './RichTextExtensions.module.css'
 
 const styles = styler(css)
 
-interface RichTextImageOptions extends ImageOptions {
-  resize:
-    | false
-    | {
-        directions: Array<ResizableNodeViewDirection>
-        minHeight: number
-        minWidth: number
-        preserveAspectRatio: boolean
-      }
-}
-
-const ImageWithReferenceAttributes = Image.extend<RichTextImageOptions>({
-  addOptions() {
-    return {...(this.parent?.() ?? {}), resize: false} as RichTextImageOptions
-  },
+const ImageWithReferenceAttributes = Image.extend({
   addAttributes() {
     return {
       ...(this.parent?.() ?? {}),
-      width: {default: null},
-      height: {default: null},
       _id: {
         default: null,
         parseHTML: element => element.getAttribute('data-id'),
@@ -90,89 +72,22 @@ const ImageWithReferenceAttributes = Image.extend<RichTextImageOptions>({
     }
   },
   addNodeView() {
-    const resize = this.options.resize
-    if (!resize) return null
-    return ({node, getPos, HTMLAttributes}) => {
-      const image = document.createElement('img')
-      image.className = styles.RichTextExtensions.image()
-      for (const [name, value] of Object.entries(HTMLAttributes)) {
-        if (name === 'class') continue
-        if (value !== null && value !== undefined)
-          image.setAttribute(name, String(value))
+    const parent = this.parent?.()
+    if (!parent) return null
+    return props => {
+      const view = parent(props)
+      const update = view.update?.bind(view)
+      if (!update) return view
+      const {width, height} = props.node.attrs
+      view.update = (node, decorations, innerDecorations) => {
+        if (node.attrs.width !== width || node.attrs.height !== height)
+          return false
+        return update(node, decorations, innerDecorations)
       }
-      syncImageDimensions(image, node.attrs)
-      let currentNode = node
-      return new ResizableNodeView({
-        element: image,
-        node,
-        editor: this.editor,
-        getPos,
-        onCommit: (width, height) => {
-          const pos = getPos()
-          if (pos === undefined) return
-          const current = this.editor.state.doc.nodeAt(pos)
-          if (!current) return
-          this.editor.view.dispatch(
-            this.editor.state.tr.setNodeMarkup(pos, undefined, {
-              ...current.attrs,
-              width,
-              height
-            })
-          )
-        },
-        onUpdate: nextNode => {
-          if (imageAttributesRequireRecreate(currentNode.attrs, nextNode.attrs))
-            return false
-          syncImageDimensions(image, nextNode.attrs)
-          currentNode = nextNode
-          return true
-        },
-        options: {
-          directions: resize.directions,
-          min: {width: resize.minWidth, height: resize.minHeight},
-          preserveAspectRatio: resize.preserveAspectRatio,
-          className: {
-            container: styles.RichTextExtensions.imageResizeContainer(),
-            wrapper: styles.RichTextExtensions.imageResizeWrapper(),
-            handle: styles.RichTextExtensions.imageResizeHandle()
-          }
-        }
-      })
+      return view
     }
   }
 })
-
-function imageAttributesRequireRecreate(
-  current: Record<string, unknown>,
-  next: Record<string, unknown>
-) {
-  return ['src', 'alt', 'title', '_id', '_entry', '_link'].some(
-    attribute => current[attribute] !== next[attribute]
-  )
-}
-
-function syncImageDimensions(
-  dom: HTMLElement,
-  attributes: Record<string, unknown>
-) {
-  const image = dom instanceof HTMLImageElement ? dom : dom.querySelector('img')
-  if (!image) return
-  setImageDimension(image, 'width', attributes.width)
-  setImageDimension(image, 'height', attributes.height)
-}
-
-function setImageDimension(
-  image: HTMLImageElement,
-  dimension: 'height' | 'width',
-  value: unknown
-) {
-  const pixels =
-    typeof value === 'number' || typeof value === 'string'
-      ? Number(value)
-      : Number.NaN
-  if (Number.isFinite(pixels)) image.style[dimension] = `${pixels}px`
-  else image.style.removeProperty(dimension)
-}
 
 function headingExtension(getEntryAnchors?: () => Iterable<string>) {
   return Heading.extend({
@@ -511,10 +426,11 @@ function createExtensions(
       HTMLAttributes: {class: styles.RichTextExtensions.image()},
       resize: enableImageResize
         ? {
+            enabled: true,
             directions: ['bottom-right'],
             minWidth: 80,
             minHeight: 8,
-            preserveAspectRatio: true
+            alwaysPreserveAspectRatio: true
           }
         : false
     }),
