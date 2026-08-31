@@ -138,6 +138,14 @@ test('loads sidebar data only when its tab is selected', async () => {
     return references
   })
   nextEntry.incomingReferences = atom(references)
+  const closedSidebar = await entrySidebar(
+    store.get,
+    nextEntry,
+    nextEntry.locales(null),
+    false
+  )
+  expect(closedSidebar?.selectedTab).toBe('references')
+  expect(nextReferenceLoads).toBe(0)
   const nextSidebar = await entrySidebar(
     store.get,
     nextEntry,

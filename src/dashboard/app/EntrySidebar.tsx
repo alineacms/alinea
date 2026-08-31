@@ -58,7 +58,8 @@ const entrySidebarTabAtom = atom<EntrySidebarTab>('preview')
 export async function entrySidebar(
   get: Getter,
   entry: EntryAtoms,
-  localeData: EntryLocaleAtoms
+  localeData: EntryLocaleAtoms,
+  isOpen = true
 ): Promise<EntrySidebarProps | undefined> {
   const typeName = get(entry.type)
   const type = get(typeAtoms(typeName))
@@ -70,6 +71,7 @@ export async function entrySidebar(
     : allowedTabs[0]
   const previousVersionsOpen =
     selectedTab === 'history' ? get(entry.previousVersionsOpen) : false
+  if (!isOpen) return {entry, localeData, selectedTab, previousVersionsOpen}
   switch (selectedTab) {
     case 'preview': {
       const preview = get(entry.preview)

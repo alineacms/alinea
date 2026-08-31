@@ -77,10 +77,12 @@ export const entryPage = page(async (page, get) => {
       ? false
       : await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
-    const sidebar = await entrySidebar(get, entry, localeData)
+    const isSidebarOpen = get(entrySidebarOpenAtom)
+    const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
     return (
       <EntryEditorContent
         entry={entry}
+        isSidebarOpen={Boolean(sidebar && isSidebarOpen)}
         localeData={localeData}
         node={selectedNode}
         page={page}
@@ -200,6 +202,7 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
 interface EntryEditorContentProps {
   page: Page
   entry: EntryAtoms
+  isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
   selectedEntry: Entry
@@ -256,6 +259,7 @@ function EntryOverview({
 function EntryEditorContent({
   page,
   entry,
+  isSidebarOpen,
   localeData,
   parentNeedsTranslation,
   selectedEntry,
@@ -279,7 +283,7 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
+  const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
