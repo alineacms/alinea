@@ -75,7 +75,7 @@ export async function entrySidebar(
   switch (selectedTab) {
     case 'preview': {
       const preview = get(entry.preview)
-      if (preview === true) await get(localeData.previewUrlReady)
+      if (preview === true) void get(localeData.previewUrlReady)
       else if (preview) await get(localeData.previewEntryReady)
       break
     }
