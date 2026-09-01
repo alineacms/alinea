@@ -146,7 +146,7 @@ function EntrySidebarBrowserPreviewHeader({
 }
 
 export interface EntrySidebarBrowserPreviewProps {
-  localeData: Pick<EntryLocaleAtoms, 'previewUrl' | 'retryPreviewUrl'> &
+  localeData: Pick<EntryLocaleAtoms, 'previewUrlState' | 'retryPreviewUrl'> &
     Partial<
       Pick<EntryLocaleAtoms, 'previewPayloadSignal' | 'updatePreviewPayload'>
     >
@@ -155,7 +155,9 @@ export interface EntrySidebarBrowserPreviewProps {
 export function EntrySidebarBrowserPreview({
   localeData
 }: EntrySidebarBrowserPreviewProps) {
-  const previewUrl = useAtomValue(localeData.previewUrl)
+  const [previewUrlPending, previewUrl] = useAtomValue(
+    localeData.previewUrlState
+  )
   const retryPreviewUrl = useSetAtom(localeData.retryPreviewUrl)
   const payloadSignalAtom = localeData.previewPayloadSignal
   const payloadSignal = useAtomValue(
@@ -245,7 +247,10 @@ export function EntrySidebarBrowserPreview({
     if (!previewUrl) return retryPreviewUrl()
     setLoading(true)
     if (hasPreviewListener.current) post(PreviewAction.Reload)
-    else setFrameVersion(version => version + 1)
+    else {
+      retryPreviewUrl()
+      setFrameVersion(version => version + 1)
+    }
   }
 
   function openPreview() {
@@ -265,7 +270,7 @@ export function EntrySidebarBrowserPreview({
         onOpen={openPreview}
       />
       <div className={styles.EntrySidebarPreview.browser()}>
-        {previewUrl && loading && (
+        {((previewUrl && loading) || (!previewUrl && previewUrlPending)) && (
           <div className={styles.EntrySidebarPreview.loading()}>
             <ProgressCircle isIndeterminate aria-label="Loading preview" />
           </div>
@@ -280,7 +285,7 @@ export function EntrySidebarBrowserPreview({
             src={previewUrl}
             onLoad={() => setLoading(false)}
           />
-        ) : (
+        ) : previewUrlPending ? null : (
           <p className={styles.EntrySidebarPreview.browserMessage()}>
             Preview is currently unavailable.
           </p>

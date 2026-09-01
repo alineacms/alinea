@@ -24,9 +24,10 @@ import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {clientAtom, configAtom, graphAtom} from './core.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
+import {getPreviewToken, retryPreviewToken} from './preview.js'
 import {ReactiveNode} from './ReactiveNode.js'
 import {policyAtom, userAtom} from './user.js'
-import {dispense, loader} from './utils.js'
+import {atomWithPending, dispense, loader} from './utils.js'
 
 interface EntryData {
   id: string
@@ -247,9 +248,10 @@ export class EntryLocaleAtoms {
     assert(type, `Type "${entry.type}" not found in config`)
     return Type.anchors(type, get(node.value) as Record<string, unknown>)
   })
-  #previewRetry = atom(0)
+  #previewUrlRetry = atom(0)
   retryPreviewUrl = atom(null, (get, set) => {
-    set(this.#previewRetry, current => current + 1)
+    retryPreviewToken(get(clientAtom))
+    set(this.#previewUrlRetry, current => current + 1)
   })
   previewEntryReady = atom(async get => {
     const activeEntry = await get(this.selectedEntry)
@@ -263,34 +265,30 @@ export class EntryLocaleAtoms {
     }
   })
   previewEntry = unwrap(this.previewEntryReady, previous => previous)
-  #previewTargetUrl = atom(get => {
-    const versions = get(this.versions)
-    const entry =
-      Array.from(versions.values()).find(version => version.active) ??
-      versions.values().next().value
-    return entry?.url
-  })
   previewUrlReady = atom(async get => {
-    get(this.#previewRetry)
-    const targetUrl = get(this.#previewTargetUrl)
+    get(this.#previewUrlRetry)
+    const versions = get(this.versions)
+    const targetUrl =
+      Array.from(versions.values()).find(version => version.active)?.url ??
+      versions.values().next().value?.url
     if (!targetUrl) return undefined
     const config = get(configAtom)
-    const client = get(clientAtom)
-    if (typeof client.previewToken !== 'function') return undefined
     try {
       const base = new URL(
         config.handlerUrl ?? '',
         Config.baseUrl(config) ??
           (typeof location === 'undefined' ? 'http://localhost' : location.href)
       )
-      base.searchParams.set('preview', await client.previewToken())
+      const previewToken = await getPreviewToken(get(clientAtom))
+      if (!previewToken) return undefined
+      base.searchParams.set('preview', previewToken)
       base.searchParams.set('returnTo', targetUrl)
       return base.toString()
     } catch {
       return undefined
     }
   })
-  previewUrl = unwrap(this.previewUrlReady, previous => previous)
+  previewUrlState = atomWithPending(this.previewUrlReady)
   previewPayloadSignal = atom(get => {
     const version = get(this.selectedVersion)
     const editing = get(this.currentlyEditing)

@@ -60,7 +60,10 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       const previewToken = searchParams.get('preview')
       if (previewToken) {
         const {draftMode} = await import('next/headers')
-        await previews.verify(previewToken)
+        const dm = await draftMode()
+        // The token bootstraps draft mode. Once its cookie is present, the
+        // browser session no longer depends on the short-lived token.
+        if (!dm.isEnabled) await previews.verify(previewToken)
         const source = new URL(request.url)
         // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
         // listening on all interfaces
@@ -71,7 +74,6 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
         const location = new URL(returnTo, source.origin)
         if (location.origin !== source.origin)
           throw new Error('Invalid preview return origin')
-        const dm = await draftMode()
         dm.enable()
         return new Response('Redirecting...', {
           status: 302,

@@ -1,7 +1,7 @@
 import type {EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
+import {atomWithPending} from '#/dashboard/atoms/utils.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
-import {unwrap} from 'jotai/utils'
 import {EntrySidebarBrowserPreview} from './EntrySidebarPreview.js'
 
 const node = new ReactiveNode({title: 'Original title'})
@@ -10,7 +10,7 @@ const previewUrlRequest = atom<Promise<string>>(
 )
 const localeData = {
   previewPayloadSignal: atom(get => [get(node.value)]),
-  previewUrl: unwrap(previewUrlRequest, previous => previous),
+  previewUrlState: atomWithPending(previewUrlRequest),
   retryPreviewUrl: atom(null, () => {}),
   updatePreviewPayload: atom(null, async get => {
     const value = get(node.value)
@@ -24,7 +24,7 @@ const localeData = {
 } satisfies Pick<
   EntryLocaleAtoms,
   | 'previewPayloadSignal'
-  | 'previewUrl'
+  | 'previewUrlState'
   | 'retryPreviewUrl'
   | 'updatePreviewPayload'
 >
