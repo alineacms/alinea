@@ -668,6 +668,13 @@ export class EntryIndex extends EventTarget {
       ? undefined
       : keys(config.workspaces)[0]
   }
+  clone(): EntryIndex {
+    const clone = new EntryIndex(this.#config)
+    clone.tree = this.tree
+    clone.initialSync = this.initialSync
+    clone.graph = this.graph
+    return clone
+  }
   get sha() {
     return this.tree.sha
   }

@@ -1,12 +1,13 @@
 import path from 'node:path'
-import type {Request, Response} from '@alinea/iso'
+import {fetch, Headers, Request, type Response} from '@alinea/iso'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {CMS} from '#/core/CMS.js'
-import type {Config} from '#/core/Config.js'
+import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import {developmentKeyHeader} from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
 import type {BuildOptions} from 'esbuild'
 import {generate} from '../Generate.js'
@@ -35,6 +36,7 @@ export interface CreateDevServerOptions {
   buildOptions?: BuildOptions
   alineaDev?: boolean
   production?: boolean
+  apiKey?: string
   dashboardUrl: Promise<string>
   onAfterGenerate?: (message: string, config: Config) => void
 }
@@ -78,7 +80,8 @@ export async function createDevServer(
     buildOptions: options.buildOptions || {},
     production,
     liveReload: new LiveReload(),
-    buildId: createId()
+    buildId: createId(),
+    apiKey: options.apiKey ?? process.env.ALINEA_API_KEY ?? 'dev'
   }
 
   const drafts = new MemoryDrafts()
@@ -127,7 +130,10 @@ export async function createDevServer(
         const handleApi = createHandler({
           cms,
           remote: backend,
-          db
+          db,
+          forwardMutations(request) {
+            return forwardMutation(request, cms, context.apiKey)
+          }
         })
         const nextServer = createLocalServer(
           context,
@@ -172,4 +178,54 @@ export async function createDevServer(
       return server.handle(request)
     }
   }
+}
+
+async function forwardMutation(
+  request: Request,
+  cms: CMS,
+  apiKey: string
+): Promise<Response | undefined> {
+  const origin = forwardedRequestOrigin(request)
+  if (!origin) return
+  const source = new URL(request.url)
+  const target = new URL(Config.handlerUrl(cms.config), origin)
+  target.search = source.search
+  const headers = new Headers(request.headers)
+  for (const name of hopByHopHeaders) headers.delete(name)
+  headers.set(developmentKeyHeader, apiKey)
+  const init: RequestInit & {duplex: 'half'} = {
+    method: request.method,
+    headers,
+    body: request.body,
+    signal: request.signal,
+    duplex: 'half'
+  }
+  return fetch(new Request(target, init))
+}
+
+const hopByHopHeaders = [
+  'connection',
+  'content-length',
+  'expect',
+  'host',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade'
+]
+
+function firstHeaderValue(value: string | null): string | undefined {
+  return value?.split(',')[0]?.trim() || undefined
+}
+
+function forwardedRequestOrigin(request: Request): string | undefined {
+  const host = firstHeaderValue(request.headers.get('x-forwarded-host'))
+  if (!host) return
+  const protocol =
+    firstHeaderValue(request.headers.get('x-forwarded-proto')) ?? 'http'
+  const normalizedProtocol = protocol.endsWith(':') ? protocol : `${protocol}:`
+  return `${normalizedProtocol}//${host}`
 }

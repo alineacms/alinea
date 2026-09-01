@@ -161,6 +161,104 @@ async function createDocumentDb() {
   return db
 }
 
+test('assigns distinct order indexes to entries created in one batch', async () => {
+  const db = await createEmptyDb()
+
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'batch-entry-0',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 0'}
+    },
+    {
+      op: 'create',
+      id: 'batch-entry-1',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 1'}
+    }
+  ])
+
+  const first = db.index.findFirst(entry => entry.id === 'batch-entry-0')
+  const second = db.index.findFirst(entry => entry.id === 'batch-entry-1')
+  if (!first || !second) throw new Error('Expected both batch entries')
+  test.ok(first.index !== second.index)
+  test.ok(first.index < second.index)
+})
+
+test('resolves path collisions sequentially within one batch', async () => {
+  const db = await createEmptyDb()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'batch-path-0',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 0', path: 'first'}
+    },
+    {
+      op: 'create',
+      id: 'batch-path-1',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 1', path: 'second'}
+    }
+  ])
+
+  await db.mutate([
+    {
+      op: 'update',
+      id: 'batch-path-0',
+      locale: null,
+      status: 'published',
+      set: {path: 'same'}
+    },
+    {
+      op: 'update',
+      id: 'batch-path-1',
+      locale: null,
+      status: 'published',
+      set: {path: 'same'}
+    }
+  ])
+
+  const first = db.index.findFirst(entry => entry.id === 'batch-path-0')
+  const second = db.index.findFirst(entry => entry.id === 'batch-path-1')
+  test.is(first?.path, 'same')
+  test.is(second?.path, 'same-1')
+})
+
+test('allows later mutations to target entries created in the same batch', async () => {
+  const db = await createEmptyDb()
+
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'batch-created',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Original'}
+    },
+    {
+      op: 'update',
+      id: 'batch-created',
+      locale: null,
+      status: 'published',
+      set: {title: 'Updated'}
+    }
+  ])
+
+  const entry = db.index.findFirst(entry => entry.id === 'batch-created')
+  test.is(entry?.title, 'Updated')
+})
+
 function aliasUrls(value: unknown): Array<string> {
   if (!Array.isArray(value)) return []
   return value.flatMap(alias => {

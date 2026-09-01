@@ -73,7 +73,8 @@ export function createLocalServer(
     buildOptions,
     production,
     liveReload,
-    buildId
+    buildId,
+    apiKey
   }: ServeContext,
   cms: CMS,
   handleApi: Handler,
@@ -86,7 +87,7 @@ export function createLocalServer(
     return handleApi(request, {
       isDev: true,
       handlerUrl: new URL(request.url.split('?')[0]),
-      apiKey: process.env.ALINEA_API_KEY || 'dev'
+      apiKey
     })
   }
   const devDir = path.join(staticDir, 'dev')

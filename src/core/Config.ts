@@ -57,6 +57,15 @@ export namespace Config {
     return `https://${result}`
   }
 
+  export function handlerUrl(config: Config): string {
+    if (
+      typeof config.handlerUrl !== 'string' ||
+      config.handlerUrl.trim().length === 0
+    )
+      throw new Error('Missing handlerUrl in Alinea config')
+    return config.handlerUrl
+  }
+
   export function adminPath(config: Config) {
     const file = config.dashboardFile ?? 'admin.html'
     return paths.basename(file, '.html')

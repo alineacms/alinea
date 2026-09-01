@@ -16,7 +16,6 @@ import {generateDashboard} from './generate/GenerateDashboard.js'
 import {dirname} from './util/Dirname.js'
 import type {Emitter} from './util/Emitter.js'
 import {findConfigFile} from './util/FindConfigFile.js'
-import {writeFileIfContentsDiffer} from './util/FS.js'
 import {reportError, reportFatal} from './util/Report.js'
 
 const __dirname = dirname(import.meta.url)
@@ -43,12 +42,7 @@ async function generatePackage(context: GenerateContext, cms: CMS) {
     ? join(config.publicDir, config.dashboardFile)
     : undefined
   if (!staticFile) return
-  await generateDashboard(
-    context,
-    cms,
-    config.handlerUrl ?? '/api/cms',
-    staticFile
-  )
+  await generateDashboard(context, cms, Config.handlerUrl(config), staticFile)
   return basename(staticFile)
 }
 
@@ -112,14 +106,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     return data.length
   }
   for await (const cms of builds) {
-    await writeFileIfContentsDiffer(
-      join(context.outDir, 'settings.json'),
-      JSON.stringify({adminPath: Config.adminPath(cms.config)}, null, 2)
-    )
+    Config.handlerUrl(cms.config)
     if (cmd === 'build') {
-      const handlerUrl = cms.config.handlerUrl
       const baseUrl = Config.baseUrl(cms.config, 'production')
-      if (handlerUrl && !baseUrl) {
+      if (!baseUrl) {
         reportFatal(
           'No baseUrl was set for the production build in Alinea config'
         )

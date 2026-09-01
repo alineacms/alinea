@@ -2,7 +2,7 @@ import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import type {UploadResponse} from '#/core/Connection.js'
+import type {RequestContext, UploadResponse} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -40,15 +40,11 @@ export class NextCMS<
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
-    const {handlerUrl, apiKey} = await requestContext(this.config)
+    const context = await requestContext(this.config)
     const client = new Client({
       config: this.config,
-      url: handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
-        return {...init, headers}
-      }
+      url: context.handlerUrl.href,
+      applyAuth: init => applyContextAuth(context, init)
     })
     let preview: PreviewRequest | undefined
     const {cookies, draftMode} = await import('next/headers.js')
@@ -73,7 +69,7 @@ export class NextCMS<
   }
 
   async #authenticatedClient() {
-    const {handlerUrl, apiKey} = await requestContext(this.config)
+    const context = await requestContext(this.config)
     const authCookies: Array<[name: string, value: string]> = []
     try {
       const {cookies} = await import('next/headers.js')
@@ -86,16 +82,16 @@ export class NextCMS<
     } catch {}
     return new Client({
       config: this.config,
-      url: handlerUrl.href,
+      url: context.handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
         if (authCookies.length) {
-          for (const [name, value] of authCookies) {
-            headers.set('Cookie', `${name}=${value}`)
-          }
+          headers.set(
+            'Cookie',
+            authCookies.map(([name, value]) => `${name}=${value}`).join('; ')
+          )
         }
-        return {...init, headers}
+        return applyContextAuth(context, {...init, headers})
       }
     })
   }
@@ -144,4 +140,14 @@ export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
   return new NextCMS(config)
+}
+
+function applyContextAuth(
+  context: RequestContext,
+  init?: RequestInit
+): RequestInit {
+  if (context.applyAuth) return context.applyAuth(init)
+  const headers = new Headers(init?.headers)
+  headers.set('Authorization', `Bearer ${context.apiKey}`)
+  return {...init, headers}
 }

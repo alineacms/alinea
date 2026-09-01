@@ -1,4 +1,5 @@
 import {Config} from '#/core/Config.js'
+import {createId} from '#/core/Id.js'
 import type {BuildOptions} from 'esbuild'
 import path from 'node:path'
 import pkg from '../../package.json' with {type: 'json'}
@@ -32,9 +33,10 @@ export async function serve(options: ServeOptions): Promise<void> {
   } = options
 
   const preferredPort = options.port ? Number(options.port) : 4500
+  const apiKey = process.env.ALINEA_API_KEY ?? createId()
   const nodeServer = startServer(preferredPort, 0, cmd === 'build')
   const dashboardUrl = nodeServer.then(
-    server => `http://localhost:${server.port}`
+    server => `http://${server.hostname}:${server.port}`
   )
 
   let devServer: DevServer
@@ -46,6 +48,7 @@ export async function serve(options: ServeOptions): Promise<void> {
       configFile: options.configFile,
       alineaDev: options.alineaDev,
       production: options.production,
+      apiKey,
       buildOptions: {
         ...buildOptions,
         ...options.buildOptions,
@@ -67,7 +70,8 @@ export async function serve(options: ServeOptions): Promise<void> {
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({
             ALINEA_DEV_SERVER: url,
-            ALINEA_ADMIN_PATH: Config.adminPath(config)
+            ALINEA_ADMIN_PATH: Config.adminPath(config),
+            ALINEA_API_KEY: apiKey
           })
         })
       }

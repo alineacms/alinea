@@ -28,10 +28,10 @@ export class LocalDB extends WriteableGraph {
 
   constructor(
     public config: Config,
-    source: Source = new MemorySource()
+    source: Source = new MemorySource(),
+    index: EntryIndex = new EntryIndex(config)
   ) {
     super()
-    const index = new EntryIndex(config)
     const resolver = new EntryResolver(config, index)
     this.#resolver = resolver
     this.index = index
@@ -122,7 +122,7 @@ export class LocalDB extends WriteableGraph {
       from,
       policy
     )
-    tx.apply(mutations)
+    await tx.apply(mutations)
     return tx.toRequest()
   }
 
