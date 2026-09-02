@@ -1,7 +1,7 @@
 import {developmentKeyHeader} from '#/core/Connection.js'
 import {Headers, Request} from '@alinea/iso'
 import {suite} from '@alinea/suite'
-import {forwardDevelopmentCredentials} from './context.js'
+import {forwardDevelopmentCredentials} from './ForwardCredentials.js'
 
 const test = suite(import.meta)
 

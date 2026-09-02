@@ -1,7 +1,7 @@
 import {generatedRelease} from '#/backend/store/GeneratedRelease.js'
 import {Config} from '#/core/Config.js'
-import {developmentKeyHeader, type RequestContext} from '#/core/Connection.js'
-import {Headers} from '@alinea/iso'
+import type {RequestContext} from '#/core/Connection.js'
+import {forwardDevelopmentCredentials} from './ForwardCredentials.js'
 
 export async function requestContext(
   config: Config,
@@ -27,18 +27,4 @@ export async function requestContext(
     handlerUrl: new URL(Config.handlerUrl(config), baseUrl),
     apiKey
   }
-}
-
-export function forwardDevelopmentCredentials(
-  request: Request | undefined,
-  apiKey: string,
-  init?: RequestInit
-): RequestInit {
-  const headers = new Headers(init?.headers)
-  const cookie = request?.headers.get('cookie')
-  const authorization = request?.headers.get('authorization')
-  if (cookie) headers.set('cookie', cookie)
-  if (authorization) headers.set('authorization', authorization)
-  headers.set(developmentKeyHeader, apiKey)
-  return {...init, headers}
 }
