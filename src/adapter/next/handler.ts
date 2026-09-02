@@ -7,7 +7,7 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {generatedSource} from '#/backend/store/GeneratedSource.js'
+import {fetchGeneratedSource} from '#/backend/store/GeneratedSource.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {RequestContext} from '#/core/Connection.js'
@@ -36,7 +36,8 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
         : (context: RequestContext) => new CloudRemote(context, config)
   const remote = (context: RequestContext) => backend(context, config)
   const db = PLazy.from(async () => {
-    const source = await generatedSource
+    const {handlerUrl} = await requestContext(config)
+    const source = await fetchGeneratedSource(handlerUrl)
     const db = new LocalDB(config, source)
     await db.sync()
     return db
