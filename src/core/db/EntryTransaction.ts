@@ -1030,21 +1030,10 @@ export class EntryTransaction {
   }
 
   async #flush(): Promise<void> {
-    const {into, changes} = await this.#tx.compile()
-    const contents = new Map(
-      changes
-        .filter(change => change.op === 'add')
-        .map(change => [change.sha, change.contents] as const)
-    )
-    const incremental = this.#workingTree.diff(into)
+    const {from, into, changes} = await this.#tx.compile(this.#workingTree)
     const batch: ChangesBatch = {
-      ...incremental,
-      changes: incremental.changes.map(change => {
-        if (change.op === 'delete') return change
-        const blob = contents.get(change.sha)
-        assert(blob, `Missing contents for ${change.path}`)
-        return {...change, contents: blob}
-      })
+      fromSha: from.sha,
+      changes
     }
     if (batch.changes.length > 0) {
       await Promise.all([

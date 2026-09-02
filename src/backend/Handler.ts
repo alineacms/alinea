@@ -240,7 +240,7 @@ export function createHandler({
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
         if (forwardMutations && userCtx) {
-          const forwarded = await forwardMutations(request, userCtx)
+          const forwarded = await forwardMutations(request.clone(), userCtx)
           if (forwarded) return forwarded
         }
         const user = expectUser()
@@ -282,7 +282,8 @@ export function createHandler({
       }
 
       if (action === HandleAction.Commit && request.method === 'POST') {
-        if (!context.isDev) throw new HttpError(400, 'Mutations expected')
+        if (!context.isDev)
+          throw new HttpError(400, 'Commits are only accepted in development')
         const developmentKey = request.headers.get(developmentKeyHeader)
         if (!context.apiKey || developmentKey !== context.apiKey)
           throw new HttpError(401, 'Invalid development commit credentials')

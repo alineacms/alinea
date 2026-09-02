@@ -293,6 +293,46 @@ test('forwards authenticated mutations before handling them locally', async () =
   test.not.ok(db.index.findFirst(entry => entry.id === 'forwarded-entry'))
 })
 
+test('handles a mutation locally when forwarding declines after reading it', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  let forwardedMutations: unknown
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    },
+    async forwardMutations(request) {
+      forwardedMutations = await request.json()
+      return undefined
+    }
+  })
+  const mutations = [
+    {
+      op: 'create',
+      id: 'local-entry',
+      type: 'Page',
+      locale: null,
+      data: {title: 'Local'}
+    }
+  ]
+
+  const response = await handle(mutationRequest(mutations), requestContext())
+
+  test.is(response.status, 200)
+  test.equal(forwardedMutations, mutations)
+  test.ok(db.index.findFirst(entry => entry.id === 'local-entry'))
+})
+
 test('runs mutation hooks around a successful commit', async () => {
   const cms = createCMS({
     schema: {Page},
@@ -645,6 +685,10 @@ test('accepts authenticated commits only in development', async () => {
     isDev: false
   })
   test.is(production.status, 400)
+  test.equal(await production.json(), {
+    success: false,
+    error: 'Commits are only accepted in development'
+  })
 
   const withoutUser = createHandler({
     cms,
