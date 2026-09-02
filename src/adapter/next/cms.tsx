@@ -1,3 +1,7 @@
+import {
+  applyPreview,
+  decodePreviewRequest
+} from '#/backend/resolver/ParsePreview.js'
 import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
@@ -60,12 +64,16 @@ export class NextCMS<
     const useLocalDb = !isEdge && !context.isDev
     if (!useLocalDb) return client.resolve(request)
     const db = await this.bundledDb
-    await this.throttle(
-      () => db.syncWith(client),
-      request.disableSync
-        ? Number.POSITIVE_INFINITY
-        : (request.syncInterval ?? this.config.syncInterval)
-    )
+    const syncInterval = request.disableSync
+      ? Number.POSITIVE_INFINITY
+      : (request.syncInterval ?? this.config.syncInterval)
+    if (request.preview) {
+      const preview = await decodePreviewRequest(request.preview)
+      if ('contentHash' in preview && db.sha !== preview.contentHash)
+        await db.syncWith(client)
+      return db.resolve({...request, preview: await applyPreview(db, preview)})
+    }
+    await this.throttle(() => db.syncWith(client), syncInterval)
     return db.resolve(request)
   }
 

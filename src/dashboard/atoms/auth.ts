@@ -68,6 +68,8 @@ export const authAtom = Object.assign(
   atom(
     (get): DashboardAuthState => {
       if (!get(authRequiredAtom)) {
+        const state = get(authState)
+        if (state.status === 'authenticated') return state
         const userData =
           typeof process !== 'undefined' &&
           (process.env.ALINEA_USER as string | undefined)
