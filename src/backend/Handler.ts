@@ -146,10 +146,12 @@ export function createHandler({
         }
       } catch (cause) {
         if (cause instanceof MissingCredentialsError) {
-          const developmentKey = request.headers.get(developmentKeyHeader)
+          const credential = context.isDev
+            ? request.headers.get(developmentKeyHeader)
+            : request.headers.get('authorization')?.slice('Bearer '.length)
           if (!context.apiKey)
             throw new MissingCredentialsError('Missing API key', {cause})
-          if (developmentKey !== context.apiKey)
+          if (credential !== context.apiKey)
             throw new InvalidCredentialsError('Expected matching api key', {
               cause
             })

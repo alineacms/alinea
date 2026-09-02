@@ -181,6 +181,29 @@ test('uses the global sync interval unless overridden or disabled', async () => 
   test.is(syncCalls, 1)
 })
 
+test('allows production route syncs authenticated with the release key', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          throw new MissingCredentialsError('Missing user credentials')
+        }
+      })
+    }
+  })
+  const context = {...requestContext(), isDev: false}
+  const request = resolveRequest({})
+  request.headers.set('authorization', 'Bearer test')
+
+  const response = await handle(request, context)
+
+  test.is(response.status, 200)
+})
+
 test('enriches authenticated user in auth status response', async () => {
   const cms = createCMS({
     schema: {Page},
