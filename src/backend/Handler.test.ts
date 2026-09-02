@@ -240,7 +240,7 @@ test('adds enriched user to commit requests', async () => {
 test('forwards authenticated mutations before handling them locally', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
-  let beforeCreateCalls = 0
+  let beforeCommitCalls = 0
   let forwardedUser: User | undefined
   let forwardedMutations: unknown
   const handle = createHandler({
@@ -265,8 +265,8 @@ test('forwards authenticated mutations before handling them locally', async () =
       forwardedMutations = await request.json()
       return Response.json({sha: 'forwarded'})
     },
-    beforeCreate() {
-      beforeCreateCalls += 1
+    beforeCommit() {
+      beforeCommitCalls += 1
     }
   })
   const mutations = [
@@ -289,7 +289,7 @@ test('forwards authenticated mutations before handling them locally', async () =
     roles: ['admin'],
     sub: 'admin'
   })
-  test.is(beforeCreateCalls, 0)
+  test.is(beforeCommitCalls, 0)
   test.not.ok(db.index.findFirst(entry => entry.id === 'forwarded-entry'))
 })
 
@@ -333,13 +333,14 @@ test('handles a mutation locally when forwarding declines after reading it', asy
   test.ok(db.index.findFirst(entry => entry.id === 'local-entry'))
 })
 
-test('runs mutation hooks around a successful commit', async () => {
+test('runs commit hooks around a successful commit', async () => {
   const cms = createCMS({
     schema: {Page},
     workspaces: {main}
   })
   const db = new LocalDB(cms.config)
   const calls: Array<string> = []
+  const committedShas: Array<string> = []
   const handle = createHandler({
     cms,
     db,
@@ -354,37 +355,12 @@ test('runs mutation hooks around a successful commit', async () => {
         }
       })
     },
-    beforeCreate(entry) {
-      calls.push(`beforeCreate:${entry.data.title}`)
-      return {
-        ...entry,
-        data: {...entry.data, title: 'Created by hook'}
-      }
+    beforeCommit({mutations}) {
+      calls.push(`beforeCommit:${mutations.map(({op}) => op).join(',')}`)
     },
-    afterCreate(entry) {
-      calls.push(`afterCreate:${entry.data.title}`)
-    },
-    beforeUpdate(entry) {
-      calls.push(`beforeUpdate:${entry.data.title}`)
-      return {
-        ...entry,
-        data: {...entry.data, title: 'Updated by hook'}
-      }
-    },
-    afterUpdate(entry) {
-      calls.push(`afterUpdate:${entry.data.title}`)
-    },
-    beforeArchive(entryId) {
-      calls.push(`beforeArchive:${entryId}`)
-    },
-    afterArchive(entryId) {
-      calls.push(`afterArchive:${entryId}`)
-    },
-    beforeRemove(entryId) {
-      calls.push(`beforeRemove:${entryId}`)
-    },
-    afterRemove(entryId) {
-      calls.push(`afterRemove:${entryId}`)
+    afterCommit({mutations, sha}) {
+      calls.push(`afterCommit:${mutations.map(({op}) => op).join(',')}`)
+      committedShas.push(sha)
     }
   })
 
@@ -401,6 +377,7 @@ test('runs mutation hooks around a successful commit', async () => {
     requestContext()
   )
   test.is(createResponse.status, 200)
+  const createResult = (await createResponse.json()) as {sha: string}
 
   const updateResponse = await handle(
     mutationRequest([
@@ -415,35 +392,44 @@ test('runs mutation hooks around a successful commit', async () => {
     requestContext()
   )
   test.is(updateResponse.status, 200)
+  const updateResult = (await updateResponse.json()) as {sha: string}
 
   const archiveResponse = await handle(
     mutationRequest([{op: 'archive', id: 'hook-entry', locale: null}]),
     requestContext()
   )
   test.is(archiveResponse.status, 200)
+  const archiveResult = (await archiveResponse.json()) as {sha: string}
 
   const removeResponse = await handle(
     mutationRequest([{op: 'remove', id: 'hook-entry'}]),
     requestContext()
   )
   test.is(removeResponse.status, 200)
+  const removeResult = (await removeResponse.json()) as {sha: string}
 
   test.equal(calls, [
-    'beforeCreate:Original',
-    'afterCreate:Created by hook',
-    'beforeUpdate:Requested update',
-    'afterUpdate:Updated by hook',
-    'beforeArchive:hook-entry',
-    'afterArchive:hook-entry',
-    'beforeRemove:hook-entry',
-    'afterRemove:hook-entry'
+    'beforeCommit:create',
+    'afterCommit:create',
+    'beforeCommit:update',
+    'afterCommit:update',
+    'beforeCommit:archive',
+    'afterCommit:archive',
+    'beforeCommit:remove',
+    'afterCommit:remove'
+  ])
+  test.equal(committedShas, [
+    createResult.sha,
+    updateResult.sha,
+    archiveResult.sha,
+    removeResult.sha
   ])
 })
 
-test('projects batched hook entries in mutation order', async () => {
+test('runs commit hooks for publish, unpublish and move mutations', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
-  const updates: Array<string> = []
+  const calls: Array<string> = []
   const handle = createHandler({
     cms,
     db,
@@ -458,99 +444,80 @@ test('projects batched hook entries in mutation order', async () => {
         }
       })
     },
-    beforeUpdate(entry) {
-      updates.push(`before:${entry.data.title}`)
+    beforeCommit({mutations}) {
+      calls.push(`before:${mutations.map(({op}) => op).join(',')}`)
     },
-    afterUpdate(entry) {
-      updates.push(`after:${entry.data.title}`)
+    afterCommit({mutations}) {
+      calls.push(`after:${mutations.map(({op}) => op).join(',')}`)
     }
   })
 
-  await handle(
+  const setup = await handle(
     mutationRequest([
       {
         op: 'create',
-        id: 'batch-entry',
+        id: 'move-entry',
         type: 'Page',
         locale: null,
-        data: {title: 'Original'}
-      }
-    ]),
-    requestContext()
-  )
-  const response = await handle(
-    mutationRequest([
-      {
-        op: 'update',
-        id: 'batch-entry',
-        locale: null,
-        status: 'published',
-        set: {title: 'Updated'}
+        data: {title: 'Move entry'}
       },
-      {op: 'archive', id: 'batch-entry', locale: null}
-    ]),
-    requestContext()
-  )
-
-  test.is(response.status, 200)
-  test.equal(updates, ['before:Updated', 'after:Updated'])
-})
-
-test('keeps nested in-place changes returned by before hooks', async () => {
-  const cms = createCMS({schema: {Page}, workspaces: {main}})
-  const db = new LocalDB(cms.config)
-  const handle = createHandler({
-    cms,
-    db,
-    remote(context) {
-      return composeBackend(db, {
-        async verify(): Promise<AuthedContext> {
-          return {
-            ...context,
-            token: 'test',
-            user: {roles: ['admin'], sub: 'admin'}
-          }
-        }
-      })
-    },
-    beforeUpdate(entry) {
-      const nested = entry.data.nested as {value: string}
-      nested.value = 'Changed by hook'
-      return entry
-    }
-  })
-
-  await handle(
-    mutationRequest([
       {
         op: 'create',
-        id: 'nested-entry',
+        id: 'move-target',
         type: 'Page',
         locale: null,
-        data: {title: 'Nested', nested: {value: 'Original'}}
+        data: {title: 'Move target'}
+      },
+      {
+        op: 'create',
+        id: 'draft-entry',
+        type: 'Page',
+        locale: null,
+        status: 'draft',
+        data: {title: 'Draft entry'}
       }
     ]),
     requestContext()
   )
-  const response = await handle(
+  test.is(setup.status, 200)
+  calls.length = 0
+
+  const publish = await handle(
+    mutationRequest([
+      {op: 'publish', id: 'draft-entry', locale: null, status: 'draft'}
+    ]),
+    requestContext()
+  )
+  const unpublish = await handle(
+    mutationRequest([{op: 'unpublish', id: 'draft-entry', locale: null}]),
+    requestContext()
+  )
+  const move = await handle(
     mutationRequest([
       {
-        op: 'update',
-        id: 'nested-entry',
-        locale: null,
-        status: 'published',
-        set: {title: 'Updated'}
+        op: 'move',
+        id: 'move-entry',
+        target: 'move-target',
+        dropPosition: 'after'
       }
     ]),
     requestContext()
   )
-  const entry = db.index.findFirst(entry => entry.id === 'nested-entry')
 
-  test.is(response.status, 200)
-  test.equal(entry?.data.nested, {value: 'Changed by hook'})
+  test.is(publish.status, 200)
+  test.is(unpublish.status, 200)
+  test.is(move.status, 200)
+  test.equal(calls, [
+    'before:publish',
+    'after:publish',
+    'before:unpublish',
+    'after:unpublish',
+    'before:move',
+    'after:move'
+  ])
 })
 
-test('does not report a committed mutation as failed when an after hook throws', async () => {
+test('does not report a committed mutation as failed when afterCommit throws', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
   const handle = createHandler({
@@ -567,7 +534,7 @@ test('does not report a committed mutation as failed when an after hook throws',
         }
       })
     },
-    afterCreate() {
+    afterCommit() {
       throw new Error('After hook failed')
     }
   })
@@ -594,10 +561,62 @@ test('does not report a committed mutation as failed when an after hook throws',
   }
 })
 
+test('does not commit when beforeCommit throws', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  let writes = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          writes += 1
+          return db.write(request)
+        }
+      })
+    },
+    beforeCommit() {
+      throw new Error('Before hook failed')
+    }
+  })
+  const error = console.error
+  console.error = () => {}
+  try {
+    const response = await handle(
+      mutationRequest([
+        {
+          op: 'create',
+          id: 'rejected-entry',
+          type: 'Page',
+          locale: null,
+          data: {title: 'Rejected'}
+        }
+      ]),
+      requestContext()
+    )
+
+    test.is(response.status, 500)
+    test.is(writes, 0)
+    test.not.ok(db.index.findFirst(entry => entry.id === 'rejected-entry'))
+  } finally {
+    console.error = error
+  }
+})
+
 test('retries a forwarded commit conflict by response status', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
   let writes = 0
+  let beforeCommits = 0
+  let afterCommits = 0
   const handle = createHandler({
     cms,
     db,
@@ -617,6 +636,12 @@ test('retries a forwarded commit conflict by response status', async () => {
           return db.write(request)
         }
       })
+    },
+    beforeCommit() {
+      beforeCommits += 1
+    },
+    afterCommit() {
+      afterCommits += 1
     }
   })
 
@@ -635,6 +660,8 @@ test('retries a forwarded commit conflict by response status', async () => {
 
   test.is(response.status, 200)
   test.is(writes, 2)
+  test.is(beforeCommits, 1)
+  test.is(afterCommits, 1)
 })
 
 test('accepts authenticated commits only in development', async () => {

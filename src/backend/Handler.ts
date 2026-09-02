@@ -4,7 +4,6 @@ import {
   BLOB_SEQUENCE_CONTENT_TYPE,
   encodeBlobSequence
 } from '#/core/BlobTransport.js'
-import type {Entry} from '#/core.js'
 import type {CMS} from '#/core/CMS.js'
 import type {
   AuthedContext,
@@ -24,7 +23,6 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import {OverlaySource} from '#/core/source/OverlaySource.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -45,17 +43,19 @@ export interface Handler {
   (request: Request, context: RequestContext): Promise<Response>
 }
 
-export type HookResponse<T = void> = void | T | Promise<T> | Promise<void>
+export type HookResponse = void | Promise<void>
+
+export interface BeforeCommitContext {
+  mutations: readonly Mutation[]
+}
+
+export interface AfterCommitContext extends BeforeCommitContext {
+  sha: string
+}
 
 export interface HandlerHooks {
-  beforeCreate?(entry: Entry): HookResponse<Entry>
-  afterCreate?(entry: Entry): HookResponse
-  beforeUpdate?(entry: Entry): HookResponse<Entry>
-  afterUpdate?(entry: Entry): HookResponse
-  beforeArchive?(entryId: string): HookResponse
-  afterArchive?(entryId: string): HookResponse
-  beforeRemove?(entryId: string): HookResponse
-  afterRemove?(entryId: string): HookResponse
+  beforeCommit?(context: BeforeCommitContext): HookResponse
+  afterCommit?(context: AfterCommitContext): HookResponse
 }
 
 export interface HandlerOptions extends HandlerHooks {
@@ -248,11 +248,11 @@ export function createHandler({
         const policy = await user.policy
         const mutations = prepareMutationIds((await body) as Array<Mutation>)
         await local.syncWith(cnx)
-        const prepared = await runBeforeHooks(local, mutations, policy, hooks)
+        await hooks.beforeCommit?.({mutations: copyMutations(mutations)})
         const attempt = async (retry = 0) => {
           if (retry > 0) await local.syncWith(cnx)
           const request = {
-            ...(await local.request(prepared.mutations, policy)),
+            ...(await local.request(mutations, policy)),
             user: user.claims
           }
           try {
@@ -274,9 +274,12 @@ export function createHandler({
         }
         const sha = await attempt()
         try {
-          await runAfterHooks(prepared, hooks)
+          await hooks.afterCommit?.({
+            mutations: copyMutations(mutations),
+            sha
+          })
         } catch (error) {
-          console.error('Alinea mutation after hook failed', error)
+          console.error('Alinea afterCommit hook failed', error)
         }
         return Response.json({sha})
       }
@@ -442,153 +445,8 @@ function prepareMutationIds(mutations: Array<Mutation>): Array<Mutation> {
   })
 }
 
-interface PreparedMutations {
-  mutations: Array<Mutation>
-  entries: Map<number, Entry>
-}
-
-async function runBeforeHooks(
-  local: LocalDB,
-  mutations: Array<Mutation>,
-  policy: Policy,
-  hooks: HandlerHooks
-): Promise<PreparedMutations> {
-  const needsPreview = mutations.some(
-    mutation =>
-      (mutation.op === 'create' && (hooks.beforeCreate || hooks.afterCreate)) ||
-      (mutation.op === 'update' && (hooks.beforeUpdate || hooks.afterUpdate))
-  )
-  const preview = needsPreview ? await overlayDatabase(local) : undefined
-  const prepared: Array<Mutation> = []
-  const entries = new Map<number, Entry>()
-  for (const [index, mutation] of mutations.entries()) {
-    let preparedMutation: Mutation = mutation
-    switch (mutation.op) {
-      case 'create': {
-        if (hooks.beforeCreate) {
-          const requested = await overlayDatabase(preview!)
-          await applyMutation(requested, mutation, policy)
-          const entry = requireMutationEntry(requested, mutation)
-          const result = await hooks.beforeCreate(copyEntry(entry))
-          if (result) preparedMutation = {...mutation, data: result.data}
-        }
-        break
-      }
-      case 'update': {
-        if (hooks.beforeUpdate) {
-          const requested = await overlayDatabase(preview!)
-          await applyMutation(requested, mutation, policy)
-          const entry = requireMutationEntry(requested, mutation)
-          const result = await hooks.beforeUpdate(copyEntry(entry))
-          if (result)
-            preparedMutation = {
-              ...mutation,
-              set: hookUpdateSet(mutation.set, entry, result)
-            }
-        }
-        break
-      }
-      case 'archive':
-        await hooks.beforeArchive?.(mutation.id)
-        break
-      case 'remove':
-        await hooks.beforeRemove?.(mutation.id)
-        break
-    }
-    prepared.push(preparedMutation)
-    if (preview) {
-      await applyMutation(preview, preparedMutation, policy)
-      if (preparedMutation.op === 'create' || preparedMutation.op === 'update')
-        entries.set(
-          index,
-          copyEntry(requireMutationEntry(preview, preparedMutation))
-        )
-    }
-  }
-  return {mutations: prepared, entries}
-}
-
-async function runAfterHooks(
-  prepared: PreparedMutations,
-  hooks: HandlerHooks
-): Promise<void> {
-  for (const [index, mutation] of prepared.mutations.entries()) {
-    switch (mutation.op) {
-      case 'create':
-        if (hooks.afterCreate)
-          await hooks.afterCreate(copyEntry(prepared.entries.get(index)!))
-        continue
-      case 'update':
-        if (hooks.afterUpdate)
-          await hooks.afterUpdate(copyEntry(prepared.entries.get(index)!))
-        continue
-      case 'archive':
-        await hooks.afterArchive?.(mutation.id)
-        continue
-      case 'remove':
-        await hooks.afterRemove?.(mutation.id)
-        continue
-    }
-  }
-}
-
-async function overlayDatabase(db: LocalDB): Promise<LocalDB> {
-  const tree = await db.source.getTree()
-  if (tree.sha !== db.index.sha)
-    throw new ShaMismatchError(tree.sha, db.index.sha)
-  return new LocalDB(
-    db.config,
-    new OverlaySource(db.source, tree),
-    db.index.clone()
-  )
-}
-
-async function applyMutation(
-  db: LocalDB,
-  mutation: Mutation,
-  policy: Policy
-): Promise<void> {
-  await db.write(await db.request([mutation], policy))
-}
-
-function requireMutationEntry(
-  db: LocalDB,
-  mutation: Extract<Mutation, {op: 'create' | 'update'}>
-): Entry {
-  const status =
-    mutation.op === 'create'
-      ? (mutation.status ?? 'published')
-      : mutation.status
-  const entry = db.index.findFirst(entry => {
-    return (
-      entry.id === mutation.id &&
-      entry.locale === mutation.locale &&
-      entry.status === status
-    )
-  })
-  if (!entry) throw new Error(`Entry not found after ${mutation.op}`)
-  return entry
-}
-
-function copyEntry(entry: Entry): Entry {
-  return {...entry, data: structuredClone(entry.data)}
-}
-
-function hookUpdateSet(
-  requested: Record<string, unknown>,
-  before: Entry,
-  after: Entry
-): Record<string, unknown> {
-  const set = {...requested}
-  const fields = new Set([
-    ...Object.keys(before.data),
-    ...Object.keys(after.data)
-  ])
-  for (const field of fields) {
-    if (Object.is(before.data[field], after.data[field])) continue
-    set[field] = after.data[field] ?? null
-  }
-  return set
+function copyMutations(mutations: readonly Mutation[]): readonly Mutation[] {
+  return structuredClone(mutations)
 }
 
 function parseUser(input: unknown): UserInput {

@@ -3,14 +3,8 @@ import {createHandler} from 'alinea/next'
 
 const handler = createHandler({
   cms,
-  beforeCreate: hook('beforeCreate'),
-  afterCreate: hook('afterCreate'),
-  beforeUpdate: hook('beforeUpdate'),
-  afterUpdate: hook('afterUpdate'),
-  beforeArchive: hook('beforeArchive'),
-  afterArchive: hook('afterArchive'),
-  beforeRemove: hook('beforeRemove'),
-  afterRemove: hook('afterRemove')
+  beforeCommit: hook('beforeCommit'),
+  afterCommit: hook('afterCommit')
 })
 
 export const GET = handler
