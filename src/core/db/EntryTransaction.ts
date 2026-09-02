@@ -992,7 +992,7 @@ export class EntryTransaction {
     return `(${op}) ${title}`
   }
 
-  async apply(mutations: Array<Mutation>): Promise<void> {
+  async apply(mutations: ReadonlyArray<Mutation>): Promise<void> {
     for (const mutation of mutations) {
       switch (mutation.op) {
         case 'create':

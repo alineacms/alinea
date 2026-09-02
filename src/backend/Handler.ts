@@ -43,10 +43,10 @@ export interface Handler {
   (request: Request, context: RequestContext): Promise<Response>
 }
 
-export type HookResponse = void | Promise<void>
+export type HookResponse<T = void> = void | T | Promise<void | T>
 
 export interface BeforeCommitContext {
-  mutations: readonly Mutation[]
+  mutations: ReadonlyArray<Mutation>
 }
 
 export interface AfterCommitContext extends BeforeCommitContext {
@@ -54,7 +54,9 @@ export interface AfterCommitContext extends BeforeCommitContext {
 }
 
 export interface HandlerHooks {
-  beforeCommit?(context: BeforeCommitContext): HookResponse
+  beforeCommit?(
+    context: BeforeCommitContext
+  ): HookResponse<ReadonlyArray<Mutation>>
   afterCommit?(context: AfterCommitContext): HookResponse
 }
 
@@ -229,7 +231,12 @@ export function createHandler({
         const scope = getScope(cms.config)
         const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval)
+          await periodicSync(
+            cnx,
+            query.disableSync
+              ? Number.POSITIVE_INFINITY
+              : (query.syncInterval ?? cms.config.syncInterval)
+          )
         } else {
           const {parse} = await previewParser
           const preview = await parse(query.preview, () => local.syncWith(cnx))
@@ -246,9 +253,12 @@ export function createHandler({
         const user = expectUser()
         expectJson()
         const policy = await user.policy
-        const mutations = prepareMutationIds((await body) as Array<Mutation>)
+        let mutations: ReadonlyArray<Mutation> = prepareMutationIds(
+          (await body) as Array<Mutation>
+        )
         await local.syncWith(cnx)
-        await hooks.beforeCommit?.({mutations: copyMutations(mutations)})
+        const adjusted = await hooks.beforeCommit?.({mutations})
+        if (adjusted) mutations = adjusted
         const attempt = async (retry = 0) => {
           if (retry > 0) await local.syncWith(cnx)
           const request = {
@@ -275,7 +285,7 @@ export function createHandler({
         const sha = await attempt()
         try {
           await hooks.afterCommit?.({
-            mutations: copyMutations(mutations),
+            mutations,
             sha
           })
         } catch (error) {
@@ -443,10 +453,6 @@ function prepareMutationIds(mutations: Array<Mutation>): Array<Mutation> {
         return {...mutation}
     }
   })
-}
-
-function copyMutations(mutations: readonly Mutation[]): readonly Mutation[] {
-  return structuredClone(mutations)
 }
 
 function parseUser(input: unknown): UserInput {

@@ -112,7 +112,7 @@ export class LocalDB extends WriteableGraph {
     )
   }
 
-  async request(mutations: Array<Mutation>, policy?: Policy) {
+  async request(mutations: ReadonlyArray<Mutation>, policy?: Policy) {
     await this.sync()
     const from = await this.source.getTree()
     const tx = new EntryTransaction(

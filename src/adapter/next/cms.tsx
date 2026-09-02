@@ -64,7 +64,12 @@ export class NextCMS<
     const useLocalDb = !isEdge && (isServer || isBuild)
     if (!useLocalDb) return client.resolve(request)
     const db = await this.bundledDb
-    await this.throttle(() => db.syncWith(client), request.syncInterval)
+    await this.throttle(
+      () => db.syncWith(client),
+      request.disableSync
+        ? Number.POSITIVE_INFINITY
+        : (request.syncInterval ?? this.config.syncInterval)
+    )
     return db.resolve(request)
   }
 

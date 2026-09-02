@@ -133,6 +133,54 @@ test('reports user api capability when listUsers exists', async () => {
   })
 })
 
+test('uses the global sync interval unless overridden or disabled', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    syncInterval: 0
+  })
+  const db = new LocalDB(cms.config)
+  const syncWith = db.syncWith.bind(db)
+  let syncCalls = 0
+  db.syncWith = remote => {
+    syncCalls += 1
+    return syncWith(remote)
+  }
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+
+  const globallyConfigured = await handle(resolveRequest({}), requestContext())
+  test.is(globallyConfigured.status, 200)
+  test.is(syncCalls, 1)
+
+  const overridden = await handle(
+    resolveRequest({syncInterval: 3600}),
+    requestContext()
+  )
+  test.is(overridden.status, 200)
+  test.is(syncCalls, 1)
+
+  const disabled = await handle(
+    resolveRequest({disableSync: true, syncInterval: 0}),
+    requestContext()
+  )
+  test.is(disabled.status, 200)
+  test.is(syncCalls, 1)
+})
+
 test('enriches authenticated user in auth status response', async () => {
   const cms = createCMS({
     schema: {Page},
@@ -517,6 +565,59 @@ test('runs commit hooks for publish, unpublish and move mutations', async () => 
   ])
 })
 
+test('commits mutations returned by beforeCommit', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  let committedTitle: unknown
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    },
+    beforeCommit({mutations}) {
+      return mutations.map(mutation =>
+        mutation.op === 'create'
+          ? {
+              ...mutation,
+              data: {...mutation.data, title: 'Adjusted by hook'}
+            }
+          : mutation
+      )
+    },
+    afterCommit({mutations}) {
+      const mutation = mutations[0]
+      if (mutation.op === 'create') committedTitle = mutation.data.title
+    }
+  })
+
+  const response = await handle(
+    mutationRequest([
+      {
+        op: 'create',
+        id: 'adjusted-entry',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Original'}
+      }
+    ]),
+    requestContext()
+  )
+  const entry = db.index.findFirst(entry => entry.id === 'adjusted-entry')
+
+  test.is(response.status, 200)
+  test.is(entry?.data.title, 'Adjusted by hook')
+  test.is(committedTitle, 'Adjusted by hook')
+})
+
 test('does not report a committed mutation as failed when afterCommit throws', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
@@ -814,6 +915,16 @@ function mutationRequest(mutations: Array<unknown>): Request {
       'content-type': 'application/json'
     },
     body: JSON.stringify(mutations)
+  })
+}
+
+function resolveRequest(query: object): Request {
+  return new Request('http://localhost/api?action=resolve', {
+    method: 'POST',
+    headers: {
+      accept: 'application/json'
+    },
+    body: JSON.stringify(query)
   })
 }
 
