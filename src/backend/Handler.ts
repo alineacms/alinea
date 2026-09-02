@@ -27,7 +27,7 @@ import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
-import {createPreviewParser} from './resolver/ParsePreview.js'
+import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
 
@@ -66,10 +66,6 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
-  const previewParser = PLazy.from(async () => {
-    const local = await db
-    return createPreviewParser(local)
-  })
   return async function handle(
     request: Request,
     context: RequestContext
@@ -222,9 +218,10 @@ export function createHandler({
         if (!query.preview) {
           await periodicSync(cnx, query.syncInterval)
         } else {
-          const {parse} = await previewParser
-          const preview = await parse(query.preview, () => local.syncWith(cnx))
-          query.preview = preview
+          const preview = await decodePreviewRequest(query.preview)
+          if ('contentHash' in preview && local.sha !== preview.contentHash)
+            await local.syncWith(cnx)
+          query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
       }
