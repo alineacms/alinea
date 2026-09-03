@@ -1,16 +1,17 @@
 import {TextField} from '#/components.js'
-import type {
-  MediaAltField,
-  MediaAltOptions,
-  MediaAltValue
+import {
+  mediaAltText,
+  type MediaAltField,
+  type MediaAltOptions,
+  type MediaAltValue
 } from '#/core/media/MediaAltField.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {
   useEntryAtoms,
   useField,
   useFieldError,
   useFieldOptions
 } from '#/dashboard/hooks.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {LocalisedFieldTabs} from '#/field/localiser/LocalisedFieldTabs.js'
 import {useAtomValue} from 'jotai'
 import {useState} from 'react'
@@ -32,7 +33,7 @@ export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
       <MediaAltTextField
         error={error}
         options={options}
-        value={mediaAltString(value)}
+        value={mediaAltText(value)}
         onChange={next => setValue(next)}
       />
     )
@@ -49,7 +50,7 @@ export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
         <MediaAltTextField
           error={error}
           options={options}
-          value={mediaAltString(value, locale)}
+          value={mediaAltText(value, locale)}
           onChange={next => {
             setValue(current => mediaAltLocalise(current, locale, next))
           }}
@@ -89,13 +90,6 @@ function MediaAltTextField({
       onChange={onChange}
     />
   )
-}
-
-function mediaAltString(value: MediaAltValue, locale?: string): string {
-  if (typeof value === 'string') return value
-  if (!isRecord(value)) return ''
-  if (locale && typeof value[locale] === 'string') return value[locale]
-  return Object.values(value).find(value => typeof value === 'string') ?? ''
 }
 
 function mediaAltLocalise(

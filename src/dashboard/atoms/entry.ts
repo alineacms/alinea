@@ -10,6 +10,8 @@ import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
+import {mediaAltText} from '#/core/media/MediaAltField.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
@@ -23,6 +25,7 @@ import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {clientAtom, configAtom, graphAtom} from './core.js'
+import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
 import {ReactiveNode} from './ReactiveNode.js'
@@ -240,6 +243,50 @@ export class EntryLocaleAtoms {
       ...(isUntranslated ? {path: undefined} : undefined)
     })
     return new ReactiveNode<object>(value, readOnly)
+  })
+  richTextImages = atom(async get => {
+    const entry = await get(this.selectedEntry)
+    const config = get(configAtom)
+    const type = config.schema[entry.type]
+    assert(type, `Type "${entry.type}" not found in config`)
+    const value = Type.withInitialValue(type, {
+      ...Type.initialValue(type),
+      ...entry.data
+    })
+    const imageIds = Array.from(
+      new Set(
+        Type.references(type, value)
+          .filter(reference => reference.linkType === 'image')
+          .map(reference => reference.targetId)
+      )
+    )
+    if (imageIds.length === 0) return new Map<string, ResolvedEditorImage>()
+    const graph = get(graphAtom)
+    const images = await graph.find({
+      id: {in: imageIds},
+      preferredLocale: this.requestedLocale ?? entry.locale ?? undefined,
+      status: 'preferDraft',
+      select: {
+        id: Entry.id,
+        url: Entry.url,
+        alt: MediaFile.alt
+      }
+    })
+    const baseUrl =
+      Config.baseUrl(config) ??
+      (typeof location === 'undefined' ? undefined : location.href)
+    return new Map(
+      images.map(image => [
+        image.id,
+        {
+          src: URL.parse(image.url, baseUrl)?.href ?? '',
+          alt: mediaAltText(
+            image.alt,
+            this.requestedLocale ?? entry.locale ?? undefined
+          )
+        }
+      ])
+    )
   })
   anchors = atom(async get => {
     const entry = await get(this.selectedEntry)
