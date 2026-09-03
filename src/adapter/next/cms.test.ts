@@ -1,11 +1,14 @@
 import type {LocalDB} from '#/core/db/LocalDB.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {Config} from '#/index.js'
+import {chunkCookieValue} from '#/preview/ChunkCookieValue.js'
+import {PREVIEW_COOKIE_NAME} from '#/preview/PreviewCookies.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
 import PLazy from 'p-lazy'
 
 const phase = process.env.NEXT_PHASE
+let previewCookies: Array<{name: string; value: string}> = []
 
 mock.module('./context.js', () => ({
   requestContext: async () => ({
@@ -21,14 +24,15 @@ mock.module('next/constants.js', () => ({
 }))
 
 mock.module('next/headers.js', () => ({
-  cookies: async () => ({getAll: () => []}),
-  draftMode: async () => ({isEnabled: false})
+  cookies: async () => ({getAll: () => previewCookies}),
+  draftMode: async () => ({isEnabled: true})
 }))
 
 const {NextCMS} = await import('./cms.js')
 
 beforeEach(() => {
   process.env.NEXT_PHASE = 'production-server'
+  previewCookies = []
 })
 
 afterEach(() => {
@@ -55,8 +59,9 @@ test('skips syncing a bundled database for a matching preview content hash', asy
     status: 'draft',
     patch: new Uint8Array()
   })
+  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
-  await cms.resolve({preview: {payload}, syncInterval: 0})
+  await cms.resolve({syncInterval: 0})
 
   expect(syncWith).not.toHaveBeenCalled()
 })
@@ -83,8 +88,9 @@ test('syncs a bundled database for a mismatched preview content hash', async () 
     status: 'draft',
     patch: new Uint8Array()
   })
+  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
-  await cms.resolve({preview: {payload}, syncInterval: 0})
+  await cms.resolve({syncInterval: 0})
 
   expect(syncWith).toHaveBeenCalledTimes(1)
 })
