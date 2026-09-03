@@ -13,6 +13,7 @@ import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
@@ -36,12 +37,15 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
         : (context: RequestContext) => new CloudRemote(context, config)
   const remote = (context: RequestContext) =>
     context.isDev ? createDevRemote(context, config) : backend(context, config)
-  const db = PLazy.from(async () => {
-    const source = await generatedSource
-    const db = new LocalDB(config, source)
-    await db.sync()
-    return db
-  })
+  const span = trace(config, 'alinea.next.handler.db')
+  const db = PLazy.from(() =>
+    span(async () => {
+      const source = await generatedSource
+      const db = new LocalDB(config, source)
+      await db.sync()
+      return db
+    })
+  )
   const handleBackend = createCoreHandler({
     ...options,
     remote,

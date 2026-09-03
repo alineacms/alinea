@@ -12,6 +12,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
 import {Headers} from '@alinea/iso'
@@ -35,11 +36,15 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} = await import('#/backend/store/GeneratedSource.js')
-    const source = await generatedSource
-    const db = new LocalDB(this.config, source)
-    await db.sync()
-    return db
+    const span = trace(this.config, 'alinea.next.cms.db')
+    return span(async () => {
+      const {generatedSource} =
+        await import('#/backend/store/GeneratedSource.js')
+      const source = await generatedSource
+      const db = new LocalDB(this.config, source)
+      await db.sync()
+      return db
+    })
   })
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
@@ -62,16 +67,23 @@ export class NextCMS<
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
     const request = {preview, ...query, status}
     const useLocalDb = !isEdge && !context.isDev
-    if (!useLocalDb) return client.resolve(request)
+    if (!useLocalDb) {
+      const span = trace(this.config, 'alinea.cms.resolve.client')
+      return span(() => client.resolve(request))
+    }
     const db = await this.bundledDb
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
     if (request.preview) {
-      const preview = await decodePreviewRequest(request.preview)
-      if ('contentHash' in preview && db.sha !== preview.contentHash)
-        await db.syncWith(client)
-      return db.resolve({...request, preview: await applyPreview(db, preview)})
+      const decoded = await decodePreviewRequest(request.preview)
+      const mismatched =
+        'contentHash' in decoded && db.sha !== decoded.contentHash
+      if (mismatched) await db.syncWith(client)
+      return db.resolve({
+        ...request,
+        preview: await applyPreview(db, decoded)
+      })
     }
     await this.throttle(() => db.syncWith(client), syncInterval)
     return db.resolve(request)

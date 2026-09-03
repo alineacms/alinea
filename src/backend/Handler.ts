@@ -12,13 +12,13 @@ import type {
   RequestContext
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
-import {createId} from '#/core/Id.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
+import {createId} from '#/core/Id.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -100,7 +100,6 @@ export function createHandler({
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
-
       if (auth) {
         return cnx.authenticate(request, {
           enrichUser(user) {

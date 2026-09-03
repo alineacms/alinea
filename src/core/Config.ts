@@ -6,6 +6,7 @@ import {admin, type Role} from './Role.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
+import type {Tracer} from './Trace.js'
 import {Type} from './Type.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -39,6 +40,9 @@ export interface Config {
   publicDir?: string
   /** Filename of the generated dashboard, defaults to admin.html */
   dashboardFile?: string
+
+  /** Optional application-owned instrumentation for Alinea operations. */
+  tracer?: Tracer
 
   auth?: Auth.View
 }
