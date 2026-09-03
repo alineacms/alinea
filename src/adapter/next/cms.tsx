@@ -49,18 +49,27 @@ export class NextCMS<
   })
   #applyPreview = cache(async () => {
     const context = await requestContext(this.config)
+    const isEdge = process.env.NEXT_RUNTIME === 'edge'
+    const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+    const useLocalDb = !isEdge && (!context.isDev || isBuild)
     const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
-    if (!isDraft) return {context, hasPreview: false, isDraft}
+    if (!isDraft) return {context, hasPreview: false, isDraft, useLocalDb}
 
     const cookie = await cookies()
     const payload = getPreviewPayloadFromCookies(cookie.getAll())
     if (!payload)
-      return {context, hasPreview: false, isDraft, preview: undefined}
+      return {
+        context,
+        hasPreview: false,
+        isDraft,
+        isBuild,
+        preview: undefined,
+        useLocalDb
+      }
 
     let preview: PreviewRequest | undefined = {payload}
-    const isEdge = process.env.NEXT_RUNTIME === 'edge'
-    const useLocalDb = !isEdge && !context.isDev
     if (useLocalDb) {
       const db = await this.bundledDb
       const decoded = await decodePreviewRequest(preview)
@@ -68,14 +77,13 @@ export class NextCMS<
         await db.syncWith(createClient(this.config, context))
       preview = await applyPreviewUpdate(db, decoded)
     }
-    return {context, hasPreview: true, isDraft, preview}
+    return {context, hasPreview: true, isDraft, isBuild, preview, useLocalDb}
   })
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
-    const {context, hasPreview, isDraft, preview} = await this.#applyPreview()
-    const isEdge = process.env.NEXT_RUNTIME === 'edge'
-    const useLocalDb = !isEdge && !context.isDev
+    const {context, hasPreview, isDraft, isBuild, preview, useLocalDb} =
+      await this.#applyPreview()
     if (isDraft && !status) status = 'preferDraft'
     const request = {...query, preview, status}
     const client = createClient(this.config, context)
@@ -88,7 +96,7 @@ export class NextCMS<
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
     if (hasPreview) return db.resolve(request)
-    await this.throttle(() => db.syncWith(client), syncInterval)
+    if (!isBuild) await this.throttle(() => db.syncWith(client), syncInterval)
     return db.resolve(request)
   }
 
