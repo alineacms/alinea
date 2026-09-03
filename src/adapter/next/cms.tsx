@@ -48,7 +48,6 @@ export class NextCMS<
       return db
     })
   })
-  #previewSync: Promise<string> | undefined
   #applyPreview = cache(async () => {
     const context = await requestContext(this.config)
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
@@ -102,12 +101,7 @@ export class NextCMS<
 
     // The target entry is missing or has a different base. Only this case
     // needs the current remote tree before applying the preview again.
-    this.#previewSync ??= db
-      .syncWith(createClient(this.config, context))
-      .finally(() => {
-        this.#previewSync = undefined
-      })
-    await this.#previewSync
+    await db.syncWith(createClient(this.config, context))
     return applyPreviewUpdate(db, decoded)
   }
 

@@ -154,7 +154,21 @@ test('applies a valid preview patch without syncing unrelated tree changes', asy
   const baseText = new TextDecoder().decode(
     JsonLoader.format(config.schema, createRecord(entry, entry.status))
   )
-  const patch = await createFilePatch(baseText, baseText)
+  const previewTitle = 'Updated in preview'
+  const updatedText = new TextDecoder().decode(
+    JsonLoader.format(
+      config.schema,
+      createRecord(
+        {
+          ...entry,
+          title: previewTitle,
+          data: {...entry.data, title: previewTitle}
+        },
+        entry.status
+      )
+    )
+  )
+  const patch = await createFilePatch(baseText, updatedText)
   await db.create({type: Page, set: {title: 'Unrelated entry'}})
   const syncWith = mock(db.syncWith.bind(db))
   db.syncWith = syncWith
@@ -173,50 +187,15 @@ test('applies a valid preview patch without syncing unrelated tree changes', asy
   })
   previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
 
-  await Promise.all([
-    cms.resolve({id: entry.id, select: Entry}),
-    cms.resolve({id: entry.id, select: Entry})
+  const results = await Promise.all([
+    cms.first({id: entry.id, select: Entry}),
+    cms.first({id: entry.id, select: Entry})
   ])
 
   expect(initializations).toBe(1)
   expect(syncWith).not.toHaveBeenCalled()
-})
-
-test('deduplicates fallback preview synchronization', async () => {
-  const contentHash = 'requested-content-hash'
-  const resolve = mock(async (query: GraphQuery) => query)
-  const syncWith = mock(async () => {
-    db.sha = contentHash
-    return contentHash
-  })
-  const db = {
-    sha: 'stale-content-hash',
-    source: {getTree: async () => ({sha: 'stale-content-hash'})},
-    first: mock(async () => undefined),
-    syncWith,
-    resolve
-  }
-  let initializations = 0
-  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
-  cms.bundledDb = PLazy.from(async () => {
-    initializations += 1
-    return db as unknown as LocalDB
-  })
-  const payload = await encodePreviewPayload({
-    locale: null,
-    entryId: 'entry-id',
-    contentHash,
-    status: 'draft',
-    patch: new Uint8Array()
-  })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
-
-  await Promise.all([
-    cms.resolve({syncInterval: 0}),
-    cms.resolve({syncInterval: 0})
+  expect(results.map(result => result?.title)).toEqual([
+    previewTitle,
+    previewTitle
   ])
-
-  expect(initializations).toBe(1)
-  expect(syncWith).toHaveBeenCalledTimes(1)
-  expect(resolve).toHaveBeenCalledTimes(2)
 })
