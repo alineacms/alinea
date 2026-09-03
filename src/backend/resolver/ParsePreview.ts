@@ -28,7 +28,6 @@ export async function applyPreview(
   preview: DecodedPreviewRequest
 ): Promise<PreviewRequest | undefined> {
   if ('entry' in preview) return preview
-  if (local.sha !== preview.contentHash) return
   const span = trace(local.config, 'alinea.preview.apply')
   return span(async () => {
     const entry = await local.first({

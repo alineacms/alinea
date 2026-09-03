@@ -1,5 +1,6 @@
 import {
   applyPreview as applyPreviewUpdate,
+  type DecodedPreviewRequest,
   decodePreviewRequest
 } from '#/backend/resolver/ParsePreview.js'
 import {createThrottledSync} from '#/backend/util/Syncable.js'
@@ -47,6 +48,7 @@ export class NextCMS<
       return db
     })
   })
+  #previewSync: Promise<string> | undefined
   #applyPreview = cache(async () => {
     const context = await requestContext(this.config)
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
@@ -74,12 +76,40 @@ export class NextCMS<
     if (useLocalDb) {
       const db = await this.bundledDb
       const decoded = await decodePreviewRequest(preview)
-      if ('contentHash' in decoded && db.sha !== decoded.contentHash)
-        await db.syncWith(createClient(this.config, context))
-      preview = await applyPreviewUpdate(db, decoded)
+      preview = await this.#prepareLocalPreview(db, decoded, context)
     }
     return {context, hasPreview: true, isDraft, isBuild, preview, useLocalDb}
   })
+
+  async #prepareLocalPreview(
+    db: LocalDB,
+    decoded: DecodedPreviewRequest,
+    context: RequestContext
+  ): Promise<PreviewRequest | undefined> {
+    if ('entry' in decoded) return decoded
+    if (db.sha === decoded.contentHash) return applyPreviewUpdate(db, decoded)
+
+    const source = await db.source.getTree()
+    if (source.sha === decoded.contentHash) {
+      await db.sync()
+      return applyPreviewUpdate(db, decoded)
+    }
+
+    // File patches carry and verify their own base hash. A patch can therefore
+    // be applied safely when only unrelated files changed in the content tree.
+    const applied = await applyPreviewUpdate(db, decoded)
+    if (applied) return applied
+
+    // The target entry is missing or has a different base. Only this case
+    // needs the current remote tree before applying the preview again.
+    this.#previewSync ??= db
+      .syncWith(createClient(this.config, context))
+      .finally(() => {
+        this.#previewSync = undefined
+      })
+    await this.#previewSync
+    return applyPreviewUpdate(db, decoded)
+  }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
