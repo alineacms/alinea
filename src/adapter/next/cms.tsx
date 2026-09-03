@@ -55,7 +55,8 @@ export class NextCMS<
     const useLocalDb = !isEdge && (!context.isDev || isBuild)
     const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
-    if (!isDraft) return {context, hasPreview: false, isDraft, useLocalDb}
+    if (!isDraft)
+      return {context, hasPreview: false, isDraft, isBuild, useLocalDb}
 
     const cookie = await cookies()
     const payload = getPreviewPayloadFromCookies(cookie.getAll())
