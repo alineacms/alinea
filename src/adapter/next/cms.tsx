@@ -1,5 +1,5 @@
 import {
-  applyPreview,
+  applyPreview as applyPreviewUpdate,
   decodePreviewRequest
 } from '#/backend/resolver/ParsePreview.js'
 import {createThrottledSync} from '#/backend/util/Syncable.js'
@@ -17,6 +17,7 @@ import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
 import {Headers} from '@alinea/iso'
 import PLazy from 'p-lazy'
+import {cache} from 'react'
 import {requestContext} from './context.js'
 
 export interface PreviewProps {
@@ -46,27 +47,38 @@ export class NextCMS<
       return db
     })
   })
+  #applyPreview = cache(async () => {
+    const context = await requestContext(this.config)
+    const {cookies, draftMode} = await import('next/headers.js')
+    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
+    if (!isDraft) return {context, hadPreview: false, isDraft}
+
+    const cookie = await cookies()
+    const payload = getPreviewPayloadFromCookies(cookie.getAll())
+    if (!payload)
+      return {context, hasPreview: false, isDraft, preview: undefined}
+
+    let preview: PreviewRequest | undefined = {payload}
+    const isEdge = process.env.NEXT_RUNTIME === 'edge'
+    const useLocalDb = !isEdge && !context.isDev
+    if (useLocalDb) {
+      const db = await this.bundledDb
+      const decoded = await decodePreviewRequest(preview)
+      if ('contentHash' in decoded && db.sha !== decoded.contentHash)
+        await db.syncWith(createClient(this.config, context))
+      preview = await applyPreviewUpdate(db, decoded)
+    }
+    return {context, hasPreview: true, isDraft, preview}
+  })
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
-    const context = await requestContext(this.config)
-    const client = new Client({
-      config: this.config,
-      url: context.handlerUrl.href,
-      applyAuth: init => applyContextAuth(context, init)
-    })
-    let preview: PreviewRequest | undefined
-    const {cookies, draftMode} = await import('next/headers.js')
-    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
-    if (isDraft) {
-      if (!status) status = 'preferDraft'
-      const cookie = await cookies()
-      const payload = getPreviewPayloadFromCookies(cookie.getAll())
-      if (payload) preview = {payload}
-    }
+    const {context, hasPreview, isDraft, preview} = await this.#applyPreview()
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
-    const request = {preview, ...query, status}
     const useLocalDb = !isEdge && !context.isDev
+    if (isDraft && !status) status = 'preferDraft'
+    const request = {...query, preview, status}
+    const client = createClient(this.config, context)
     if (!useLocalDb) {
       const span = trace(this.config, 'alinea.cms.resolve.client')
       return span(() => client.resolve(request))
@@ -75,16 +87,7 @@ export class NextCMS<
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
-    if (request.preview) {
-      const decoded = await decodePreviewRequest(request.preview)
-      const mismatched =
-        'contentHash' in decoded && db.sha !== decoded.contentHash
-      if (mismatched) await db.syncWith(client)
-      return db.resolve({
-        ...request,
-        preview: await applyPreview(db, decoded)
-      })
-    }
+    if (hasPreview) return db.resolve(request)
     await this.throttle(() => db.syncWith(client), syncInterval)
     return db.resolve(request)
   }
@@ -161,6 +164,14 @@ export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
   return new NextCMS(config)
+}
+
+function createClient(config: Config, context: RequestContext) {
+  return new Client({
+    config,
+    url: context.handlerUrl.href,
+    applyAuth: init => applyContextAuth(context, init)
+  })
 }
 
 function applyContextAuth(
