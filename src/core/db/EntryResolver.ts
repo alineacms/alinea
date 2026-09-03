@@ -22,6 +22,7 @@ import {
   hasWorkspace,
   type HasExpr
 } from '#/core/Internal.js'
+import type {PreviewRequest} from '#/core/Preview.js'
 import type {Resolver} from '#/core/Resolver.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {hasExact} from '#/core/util/Checks.js'
@@ -50,6 +51,11 @@ const andFilter = cito
 
 type Interim = any
 
+interface CachedPreviewGraph {
+  baseGraph: EntryGraph
+  previewGraph: EntryGraph
+}
+
 export interface PostContext {
   linkResolver: LinkResolver
 }
@@ -57,6 +63,7 @@ export interface PostContext {
 export class EntryResolver implements Resolver {
   index: EntryIndex
   #scope: Scope
+  #previewGraphs = new WeakMap<PreviewRequest, CachedPreviewGraph>()
 
   constructor(
     public config: Config,
@@ -561,37 +568,43 @@ export class EntryResolver implements Resolver {
   async resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const {preview} = query
-    const previewEntry =
-      preview && 'entry' in preview ? preview.entry : undefined
-    let graph = this.index.graph
-    if (previewEntry)
-      graph = graph.withChanges({
-        fromSha: this.index.tree.sha,
-        changes: [
-          {
-            op: 'add',
-            path: previewEntry.filePath,
-            sha: previewEntry.fileHash,
-            contents: new TextEncoder().encode(
-              JSON.stringify(
-                createRecord(previewEntry, previewEntry.status),
-                null,
-                2
-              )
-            )
-          }
-        ]
-      })
+    const graph = this.#graphFor(query.preview)
     const ctx: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
-      graph: graph,
+      graph,
       searchTerms: Array.isArray(query.search)
         ? query.search.join(' ')
         : query.search
     }
     return this.query(ctx, query as GraphQuery<Projection>).getProcessed()
+  }
+
+  #graphFor(preview: PreviewRequest | undefined): EntryGraph {
+    const baseGraph = this.index.graph
+    if (!preview || !('entry' in preview)) return baseGraph
+    const cached = this.#previewGraphs.get(preview)
+    if (cached?.baseGraph === baseGraph) return cached.previewGraph
+    const previewEntry = preview.entry
+    const previewGraph = baseGraph.withChanges({
+      fromSha: this.index.tree.sha,
+      changes: [
+        {
+          op: 'add',
+          path: previewEntry.filePath,
+          sha: previewEntry.fileHash,
+          contents: new TextEncoder().encode(
+            JSON.stringify(
+              createRecord(previewEntry, previewEntry.status),
+              null,
+              2
+            )
+          )
+        }
+      ]
+    })
+    this.#previewGraphs.set(preview, {baseGraph, previewGraph})
+    return previewGraph
   }
 }
 

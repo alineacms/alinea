@@ -210,6 +210,74 @@ test('preview existing entry', async () => {
   test.is(entry2!.title, 'Chocolate chip preview')
 })
 
+test('reuses a preview graph until the base graph changes', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const entry = await resolver.resolve({
+    id: 'child-1',
+    select: Entry,
+    first: true
+  })
+  const preview = {
+    entry: {
+      ...entry!,
+      fileHash: 'preview',
+      data: {...entry!.data, title: 'Preview title'}
+    }
+  }
+  const base = index.graph
+  const withBaseChanges = base.withChanges
+  let baseBuilds = 0
+  base.withChanges = function (batch) {
+    baseBuilds++
+    return withBaseChanges.call(this, batch)
+  }
+
+  const first = await resolver.resolve({
+    id: entry!.id,
+    select: Entry,
+    first: true,
+    preview
+  })
+  const second = await resolver.resolve({
+    id: entry!.id,
+    select: Entry,
+    first: true,
+    preview
+  })
+
+  test.is(baseBuilds, 1)
+  test.is(first!.title, 'Preview title')
+  test.is(second!.title, 'Preview title')
+
+  const nextBase = withBaseChanges.call(base, {
+    fromSha: index.tree.sha,
+    changes: []
+  })
+  const withNextBaseChanges = nextBase.withChanges
+  let nextBaseBuilds = 0
+  nextBase.withChanges = function (batch) {
+    nextBaseBuilds++
+    return withNextBaseChanges.call(this, batch)
+  }
+  index.graph = nextBase
+
+  const third = await resolver.resolve({
+    id: entry!.id,
+    select: Entry,
+    first: true,
+    preview
+  })
+  await resolver.resolve({
+    id: entry!.id,
+    select: Entry,
+    first: true,
+    preview
+  })
+
+  test.is(nextBaseBuilds, 1)
+  test.is(third!.title, 'Preview title')
+})
+
 const Article = Config.document('Article', {
   fields: {
     title: Field.text('Title'),
