@@ -87,6 +87,20 @@ test('select edges', async () => {
   }
 })
 
+test('select children by depth', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const selectChildren = (depth: number) =>
+    resolver.resolve({
+      id: 'parent',
+      first: true,
+      select: Query.children({depth, select: Query.id})
+    })
+
+  test.equal(await selectChildren(0), [])
+  test.equal(await selectChildren(1.5), ['child-1', 'child-2'])
+  test.equal(await selectChildren(2), ['child-1', 'child-2', 'grand'])
+})
+
 test('select siblings', async () => {
   const siblings = await resolver.resolve({
     first: true,
@@ -274,7 +288,7 @@ const advancedEntries = [
         _anchor: 'details',
         _suffix: '?filter=active'
       },
-      multi: [{_entry: 'child-2'}, {_entry: 'missing'}],
+      multi: [{_entry: 'child-2'}, {_entry: 'parent'}, {_entry: 'missing'}],
       body: [
         {
           _type: 'paragraph',
@@ -633,6 +647,67 @@ test('filter operators and id in queries', async () => {
   test.equal(andRows, ['child-1'])
 })
 
+test('uses graph indexes to narrow common queries', async () => {
+  const {resolver, index} = await createAdvancedResolver()
+  const graph = index.graph
+
+  test.equal(
+    graph.candidateNodes({ids: ['child-2', 'missing']})?.map(node => node.id),
+    ['child-2']
+  )
+  test.equal(
+    graph.candidateNodes({parentIds: ['parent']})?.map(node => node.id),
+    ['child-1', 'child-2']
+  )
+  test.equal(
+    graph.candidateNodes({parentIds: [null]})?.map(node => node.id),
+    ['trans', 'parent', 'image-plain', 'image-i18n']
+  )
+  const childUrl = graph.byId('child-1')!.get(null)!.url
+  test.equal(
+    graph.candidateNodes({urls: [childUrl]})?.map(node => node.id),
+    ['child-1']
+  )
+  test.equal(
+    graph
+      .candidateNodes({
+        workspaces: ['main'],
+        roots: ['pages'],
+        types: ['Article']
+      })
+      ?.map(node => node.id),
+    ['parent', 'child-1', 'child-2', 'grand']
+  )
+
+  test.equal(await resolver.resolve({id: {is: 'child-2'}, select: Query.id}), [
+    'child-2'
+  ])
+  test.equal(await resolver.resolve({parentId: 'parent', select: Query.id}), [
+    'child-1',
+    'child-2'
+  ])
+  test.equal(await resolver.resolve({url: childUrl, select: Query.id}), [
+    'child-1'
+  ])
+  test.equal(
+    await resolver.resolve({
+      workspace: 'main',
+      root: 'pages',
+      type: Article,
+      select: Query.id
+    }),
+    ['parent', 'child-1', 'child-2', 'grand']
+  )
+  test.equal(
+    await resolver.resolve({
+      id: 'child-1',
+      parentId: null,
+      select: Query.id
+    }),
+    []
+  )
+})
+
 test('snippet supports highlight, no matches and validation errors', async () => {
   const {resolver, index} = await createAdvancedResolver()
   const entry = findEntryById(index, 'child-1')
@@ -810,9 +885,9 @@ test('locales, translations and link edges', async () => {
   const linkedMany = await resolver.resolve({
     first: true,
     id: 'child-1',
-    select: Article.multi.find({select: Query.id})
+    select: Article.multi.find({type: Article, select: Query.id})
   })
-  test.equal(linkedMany, ['child-2'])
+  test.equal(linkedMany, ['child-2', 'parent'])
 })
 
 test('direct entry selections resolve unlocalized links from localized entries', async () => {
@@ -964,6 +1039,13 @@ test('direct condition and helper branches', async () => {
     filter: {_id: {is: 'child-1'}}
   } as any)
   test.ok(directFilter.condition?.(entry))
+
+  const unrestricted = await resolver.resolve({select: Query.id})
+  const longLocation = await resolver.resolve({
+    location: ['main', 'pages', 'parent', 'ignored'],
+    select: Query.id
+  })
+  test.equal(longLocation, unrestricted)
 
   test.is(resolver.isSingleResult({} as any), false)
   await resolver.post({linkResolver: {} as any}, [], {

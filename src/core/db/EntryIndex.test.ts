@@ -90,7 +90,7 @@ test('combineConditions combines checks from both conditions', () => {
   }
   const merged = combineConditions(a, b)
   test.is(merged.search, 'from-a')
-  test.equal(merged.nodes, a.nodes)
+  test.equal(Array.from(merged.nodes!), [])
   test.ok(merged.node!(undefined as any))
   test.ok(merged.language!(undefined as any))
   test.ok(merged.entry!(undefined as any))

@@ -3,7 +3,7 @@ import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
-import type {AnyCondition, Filter} from '#/core/Filter.js'
+import type {AnyCondition, Condition, Filter} from '#/core/Filter.js'
 import {
   querySource as queryEdge,
   type AnyQueryResult,
@@ -204,10 +204,12 @@ export class EntryResolver implements Resolver {
       }
       case 'children': {
         const depth = query?.depth ?? 1
+        const self = ctx.graph.byId(entry.id)
         return {
-          entry: e => e.filePath.startsWith(entry.childrenDir),
-          node: node =>
-            node.level > entry.level && node.level <= entry.level + depth
+          nodes: ctx.graph.candidateNodes({
+            ids: descendantIds(self, depth)
+          }),
+          language: language => language.locale === entry.locale
         }
       }
       case 'parents': {
@@ -304,13 +306,7 @@ export class EntryResolver implements Resolver {
         if (name.startsWith('_')) return entryFieldValue(entry, name.slice(1))
         return entry.data[name]
       })
-    const multipleIds =
-      typeof query.id === 'object' && query.id !== null && query.id.in
-    const ids = Array.isArray(multipleIds)
-      ? multipleIds
-      : typeof query.id === 'string'
-        ? [query.id]
-        : undefined
+    const ids = equalityValues(query.id)
     return {
       ids,
       condition(entry: Entry) {
@@ -347,7 +343,9 @@ export class EntryResolver implements Resolver {
     const {ids, condition} = this.condition(ctx, edge)
     const filter: EntryCondition = {
       search: Array.isArray(search) ? search.join(' ') : search,
-      node: node => (ids ? ids.includes(node.id) : true),
+      nodes: preFilter?.nodes
+        ? undefined
+        : this.#candidateNodes(ctx.graph, query, ids),
       entry: condition
     }
     let entries = Array.from(
@@ -456,6 +454,49 @@ export class EntryResolver implements Resolver {
       getUnprocessed,
       getProcessed
     }
+  }
+
+  #candidateNodes(
+    graph: EntryGraph,
+    query: GraphQuery,
+    ids: ReadonlyArray<string> | undefined
+  ): Array<EntryNode> | undefined {
+    const location = Array.isArray(query.location)
+      ? query.location
+      : query.location && this.#scope.locationOf(query.location)
+    const indexedLocation =
+      location && location.length >= 1 && location.length <= 3
+        ? location
+        : undefined
+    const workspaceQuery =
+      isRecord(query.workspace) && hasWorkspace(query.workspace)
+        ? this.#scope.nameOf(query.workspace)
+        : query.workspace
+    const rootQuery =
+      isRecord(query.root) && hasRoot(query.root)
+        ? this.#scope.nameOf(query.root)
+        : query.root
+    const workspaces = intersectValues(
+      equalityValues(workspaceQuery as Condition<string> | undefined),
+      indexedLocation?.[0] ? [indexedLocation[0]] : undefined
+    )
+    const roots = intersectValues(
+      equalityValues(rootQuery as Condition<string> | undefined),
+      indexedLocation?.[1] ? [indexedLocation[1]] : undefined
+    )
+    const types = query.type
+      ? (Array.isArray(query.type) ? query.type : [query.type]).map(
+          type => this.#scope.nameOf(type)!
+        )
+      : undefined
+    return graph.candidateNodes({
+      ids,
+      parentIds: equalityValues(query.parentId),
+      urls: equalityValues(query.url),
+      workspaces,
+      roots,
+      types
+    })
   }
 
   async postField(
@@ -581,6 +622,42 @@ export function statusChecker(status: Status): Check {
 
 interface Check {
   (input: Entry): boolean
+}
+
+function descendantIds(
+  node: EntryNode | undefined,
+  depth: number
+): Array<string> {
+  if (!node || depth <= 0) return []
+  const result: Array<string> = []
+  let level = [node]
+  for (let currentDepth = 1; currentDepth <= depth; currentDepth++) {
+    level = level.flatMap(parent => Array.from(parent.children()))
+    if (level.length === 0) break
+    for (const child of level) result.push(child.id)
+  }
+  return result
+}
+
+function equalityValues<Value>(
+  condition: Condition<Value> | undefined
+): ReadonlyArray<Value> | undefined {
+  if (condition === undefined) return undefined
+  if (typeof condition !== 'object' || condition === null)
+    return [condition as Value]
+  const operations = condition as AnyCondition<Value>
+  if (operations.is !== undefined) return [operations.is]
+  if (Array.isArray(operations.in)) return operations.in
+  return undefined
+}
+
+function intersectValues<Value>(
+  a: ReadonlyArray<Value> | undefined,
+  b: ReadonlyArray<Value> | undefined
+): ReadonlyArray<Value> | undefined {
+  if (!a) return b
+  if (!b) return a
+  return Array.from(new Set(a).intersection(new Set(b)))
 }
 
 function entryChecker(scope: Scope, query: QuerySettings): Check {

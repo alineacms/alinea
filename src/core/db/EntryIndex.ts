@@ -42,13 +42,22 @@ export interface EntryCondition {
   entry?(entry: Entry): boolean
 }
 
+interface EntryNodeQuery {
+  ids?: ReadonlyArray<string>
+  parentIds?: ReadonlyArray<string | null>
+  urls?: ReadonlyArray<string>
+  workspaces?: ReadonlyArray<string>
+  roots?: ReadonlyArray<string>
+  types?: ReadonlyArray<string>
+}
+
 export function combineConditions(
   a: EntryCondition,
   b: EntryCondition
 ): EntryCondition {
   return {
     search: a.search ?? b.search,
-    nodes: a.nodes ?? b.nodes,
+    nodes: combineNodes(a.nodes, b.nodes),
     node(node) {
       return (a.node ? a.node(node) : true) && (b.node ? b.node(node) : true)
     },
@@ -64,6 +73,22 @@ export function combineConditions(
       )
     }
   }
+}
+
+function combineNodes(
+  a: Iterable<EntryNode> | undefined,
+  b: Iterable<EntryNode> | undefined
+): Iterable<EntryNode> | undefined {
+  if (!a) return b
+  if (!b) return a
+  return matchingNodes(b, new Set(a))
+}
+
+function* matchingNodes(
+  nodes: Iterable<EntryNode>,
+  included: ReadonlySet<EntryNode>
+): Generator<EntryNode> {
+  for (const node of nodes) if (included.has(node)) yield node
 }
 
 interface EntryVersionData {
@@ -353,7 +378,16 @@ export class EntryGraph {
   #filesById = new Map<string, Array<string>>()
   #byId = new Map<string, EntryNode>()
   #byDir = new Map<string, string>()
-  #childrenByParentId = new Map<string, Array<EntryNode>>()
+  #nodesBy = {
+    parentId: new Map<string | null, Array<EntryNode>>(),
+    url: new Map<string, Array<EntryNode>>(),
+    workspace: new Map<string, Array<EntryNode>>(),
+    root: new Map<string, Array<EntryNode>>(),
+    type: new Map<string, Array<EntryNode>>(),
+    workspaceRoot: new Map<string, Array<EntryNode>>(),
+    workspaceRootType: new Map<string, Array<EntryNode>>()
+  }
+  #nodeOrder = new Map<EntryNode, number>()
   nodes: Array<EntryNode>
   #singleWorkspace: string | undefined
   #search: MiniSearch<EntrySearchDocument>
@@ -387,16 +421,102 @@ export class EntryGraph {
     this.nodes = [...this.#filesById.keys()]
       .map(file => this.#mkNode(file))
       .sort((a, b) => compareStrings(a.index, b.index))
-    for (const node of this.nodes) {
-      if (!node.parentId) continue
-      const children = this.#childrenByParentId.get(node.parentId) ?? []
-      children.push(node)
-      this.#childrenByParentId.set(node.parentId, children)
+    for (const [order, node] of this.nodes.entries()) {
+      this.#nodeOrder.set(node, order)
+      this.#indexNode(node)
     }
   }
 
   byId(id: string) {
     return this.#byId.get(id)
+  }
+
+  candidateNodes(query: EntryNodeQuery): Array<EntryNode> | undefined {
+    const candidates: Array<Array<EntryNode>> = []
+    const {ids, parentIds, urls, workspaces, roots, types} = query
+    if (ids) {
+      const nodes = ids.flatMap(id => this.byId(id) ?? [])
+      return this.#ordered(nodes).filter(node => this.#matches(node, query))
+    }
+    if (parentIds)
+      candidates.push(this.#fromIndex(this.#nodesBy.parentId, parentIds))
+    if (urls) candidates.push(this.#fromIndex(this.#nodesBy.url, urls))
+
+    if (workspaces && roots && types) {
+      const keys = workspaces.flatMap(workspace =>
+        roots.flatMap(root =>
+          types.map(type => indexKey(workspace, root, type))
+        )
+      )
+      candidates.push(this.#fromIndex(this.#nodesBy.workspaceRootType, keys))
+    } else if (workspaces && roots) {
+      const keys = workspaces.flatMap(workspace =>
+        roots.map(root => indexKey(workspace, root))
+      )
+      candidates.push(this.#fromIndex(this.#nodesBy.workspaceRoot, keys))
+    } else {
+      if (workspaces)
+        candidates.push(this.#fromIndex(this.#nodesBy.workspace, workspaces))
+      if (roots) candidates.push(this.#fromIndex(this.#nodesBy.root, roots))
+      if (types) candidates.push(this.#fromIndex(this.#nodesBy.type, types))
+    }
+
+    if (candidates.length === 0) return undefined
+    candidates.sort((a, b) => a.length - b.length)
+    const [smallest, ...rest] = candidates
+    const intersection = rest.reduce(
+      (result, nodes) => result.intersection(new Set(nodes)),
+      new Set(smallest)
+    )
+    return Array.from(intersection)
+  }
+
+  #matches(node: EntryNode, query: EntryNodeQuery): boolean {
+    const {parentIds, urls, workspaces, roots, types} = query
+    if (parentIds && !parentIds.includes(node.parentId)) return false
+    if (workspaces && !workspaces.includes(node.workspace)) return false
+    if (roots && !roots.includes(node.root)) return false
+    if (types && !types.includes(node.type)) return false
+    if (urls) {
+      const matchesUrl = Array.from(node.values()).some(language =>
+        urls.includes(language.url)
+      )
+      if (!matchesUrl) return false
+    }
+    return true
+  }
+
+  #indexNode(node: EntryNode) {
+    addToIndex(this.#nodesBy.parentId, node.parentId, node)
+    addToIndex(this.#nodesBy.workspace, node.workspace, node)
+    addToIndex(this.#nodesBy.root, node.root, node)
+    addToIndex(this.#nodesBy.type, node.type, node)
+    addToIndex(
+      this.#nodesBy.workspaceRoot,
+      indexKey(node.workspace, node.root),
+      node
+    )
+    addToIndex(
+      this.#nodesBy.workspaceRootType,
+      indexKey(node.workspace, node.root, node.type),
+      node
+    )
+    const urls = new Set(Array.from(node.values(), language => language.url))
+    for (const url of urls) addToIndex(this.#nodesBy.url, url, node)
+  }
+
+  #fromIndex<Key>(
+    index: Map<Key, Array<EntryNode>>,
+    keys: ReadonlyArray<Key>
+  ): Array<EntryNode> {
+    if (keys.length === 1) return [...(index.get(keys[0]) ?? [])]
+    return this.#ordered(keys.flatMap(key => index.get(key) ?? []))
+  }
+
+  #ordered(nodes: Iterable<EntryNode>): Array<EntryNode> {
+    return Array.from(new Set(nodes)).sort(
+      (a, b) => this.#nodeOrder.get(a)! - this.#nodeOrder.get(b)!
+    )
   }
 
   get config() {
@@ -562,12 +682,26 @@ export class EntryGraph {
       this,
       type,
       parent,
-      () => this.#childrenByParentId.get(id) ?? [],
+      () => this.#nodesBy.parentId.get(id) ?? [],
       collection
     )
     this.#byId.set(id, node)
     return node
   }
+}
+
+function addToIndex<Key>(
+  index: Map<Key, Array<EntryNode>>,
+  key: Key,
+  node: EntryNode
+) {
+  const nodes = index.get(key) ?? []
+  nodes.push(node)
+  index.set(key, nodes)
+}
+
+function indexKey(...parts: Array<string>): string {
+  return JSON.stringify(parts)
 }
 
 class VersionParser extends Map<string, EntryVersionData> {
