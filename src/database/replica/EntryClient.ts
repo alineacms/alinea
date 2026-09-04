@@ -5,7 +5,6 @@ import {HttpRangeSource} from './HttpTransport.js'
 import {IndexedDBReplicaCache} from './IndexedDBCache.js'
 import type {ReplicaBootstrap, ReplicaTransport} from './Protocol.js'
 import type {ReplicaState} from './Types.js'
-import type {QueryDependency} from './Dependency.js'
 import {replicaRangeSource} from './InlineBundles.js'
 
 export interface EntryReplicaClientOptions {
@@ -17,20 +16,7 @@ export interface EntryReplicaClientOptions {
 export interface EntryReplicaSyncResult {
   revision: string
   changed: boolean
-  change?: RuntimeReplicaChange
   entryIds: ReadonlySet<string>
-}
-
-export interface TrackedDatabaseResolver {
-  resolver: DatabaseResolver
-  dependencies(): ReadonlySet<QueryDependency>
-}
-
-export interface RuntimeReplicaChange {
-  fromRevision: string
-  toRevision: string
-  records: ReadonlySet<string>
-  dependencies: ReadonlySet<QueryDependency>
 }
 
 /** Owns authenticated state installation and the lazy client read model. */
@@ -41,7 +27,6 @@ export class EntryReplicaClient {
   #bootstrap?: Promise<ReplicaBootstrap>
   #state?: ReplicaState
   #source?: RuntimeEntryStore
-  #cacheKey?: string
   #resolvers = new WeakMap<Config, DatabaseResolver>()
 
   constructor(options: EntryReplicaClientOptions) {
@@ -58,19 +43,24 @@ export class EntryReplicaClient {
   async sync(signal?: AbortSignal): Promise<EntryReplicaSyncResult> {
     const bootstrap = await this.bootstrap()
     const previous = this.#state
-    const cached = previous ?? (await this.#cache.state(bootstrap.cacheKey))
-    const next = await this.#transport.state(cached?.runtime.revision, signal)
+    const stored = previous ?? (await this.#cache.state(bootstrap.cacheKey))
+    const cached = stored?.viewId === bootstrap.viewId ? stored : undefined
+    const next = await this.#transport.state(
+      cached
+        ? {revision: cached.runtime.revision, viewId: cached.viewId}
+        : undefined,
+      signal
+    )
     const state = next ?? cached
     if (!state) throw new Error('Replica state is unavailable')
+    if (state.viewId !== bootstrap.viewId)
+      throw new Error('Replica state does not match the authenticated view')
     if (next) await this.#cache.installState(bootstrap.cacheKey, next)
     const changed = !previous || Boolean(next)
-    const change = previous && next ? runtimeChange(previous, next) : undefined
     const entryIds =
-      change && previous
-        ? changedEntryIds(previous, state, change.records)
-        : new Set<string>()
-    if (changed) this.#install(bootstrap.cacheKey, state)
-    return {revision: state.runtime.revision, changed, change, entryIds}
+      previous && next ? changedEntryIds(previous, next) : new Set<string>()
+    if (changed) this.#install(state)
+    return {revision: state.runtime.revision, changed, entryIds}
   }
 
   resolver(config: Config): DatabaseResolver {
@@ -82,64 +72,47 @@ export class EntryReplicaClient {
     return resolver
   }
 
-  trackedResolver(config: Config): TrackedDatabaseResolver {
-    if (!this.#state) throw new Error('Replica must be synchronized first')
-    if (!this.#cacheKey) throw new Error('Replica cache key is unavailable')
-    return {
-      resolver: new DatabaseResolver(config, this.#source!),
-      dependencies: () => new Set(['revision:*'])
-    }
-  }
-
-  access(recordId: string): 'explore' | 'read' | undefined {
-    return this.#state?.recordAccess[recordId]
-  }
-
   get revision(): string | undefined {
     return this.#state?.runtime.revision
   }
 
-  #install(cacheKey: string, state: ReplicaState): void {
+  #install(state: ReplicaState): void {
     this.#state = state
-    this.#cacheKey = cacheKey
-    this.#source = new RuntimeEntryStore({
-      index: state.runtime,
-      source: replicaRangeSource(
-        state,
-        url => new HttpRangeSource(url, this.#fetch)
-      )
-    })
+    const ranges = replicaRangeSource(
+      state,
+      url => new HttpRangeSource(url, this.#fetch)
+    )
+    if (this.#source) this.#source.install(state.runtime, ranges)
+    else
+      this.#source = new RuntimeEntryStore({
+        index: state.runtime,
+        source: ranges
+      })
     this.#resolvers = new WeakMap()
-  }
-}
-
-function runtimeChange(
-  previous: ReplicaState,
-  next: ReplicaState
-): RuntimeReplicaChange {
-  const records = new Set([
-    ...Object.keys(previous.recordEntries ?? {}),
-    ...Object.keys(next.recordEntries ?? {})
-  ])
-  return {
-    fromRevision: previous.runtime.revision,
-    toRevision: next.runtime.revision,
-    records,
-    dependencies: new Set(['revision:*'])
   }
 }
 
 function changedEntryIds(
   previous: ReplicaState,
-  next: ReplicaState,
-  records: ReadonlySet<string>
+  next: ReplicaState
 ): ReadonlySet<string> {
   const result = new Set<string>()
-  for (const recordId of records) {
-    for (const entryId of previous.recordEntries?.[recordId] ?? [])
-      result.add(entryId)
-    for (const entryId of next.recordEntries?.[recordId] ?? [])
-      result.add(entryId)
+  const previousEntries = new Map(
+    previous.runtime.entries.map(entry => [entry.id, entry])
+  )
+  const nextEntries = new Map(
+    next.runtime.entries.map(entry => [entry.id, entry])
+  )
+  for (const recordId of new Set([
+    ...previousEntries.keys(),
+    ...nextEntries.keys()
+  ])) {
+    const before = previousEntries.get(recordId)
+    const after = nextEntries.get(recordId)
+    if (before && after && JSON.stringify(before) === JSON.stringify(after))
+      continue
+    if (before) result.add(before.entryId)
+    if (after) result.add(after.entryId)
   }
   return result
 }

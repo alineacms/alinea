@@ -26,7 +26,6 @@ test('round trips runtime replica state and frame nonces through JSON', () => {
 
   const state: ReplicaState = {
     viewId: 'editor',
-    recordAccess: {},
     runtime: {
       revision: 'tree-1',
       bundleId: 'release-1',

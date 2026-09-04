@@ -21,7 +21,9 @@ export function bootProd(
         : await loadAuthenticatedConfig(bootstrap.configUrl)
     yield {
       local: false,
-      revision: process.env.ALINEA_BUILD_ID as string,
+      // A named SharedWorker can outlive a tab and an authentication session.
+      // Include the authenticated view so a new session cannot reuse its DB.
+      revision: `${process.env.ALINEA_BUILD_ID}:${bootstrap.user.id}:${bootstrap.viewId}`,
       config: cms.config,
       views,
       handlerUrl,

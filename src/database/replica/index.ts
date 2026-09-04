@@ -1,6 +1,5 @@
 export * from './Bundle.js'
 export * from './Commands.js'
-export * from './Dependency.js'
 export * from './EntryClient.js'
 export * from './IndexedDBCache.js'
 export * from './HttpTransport.js'

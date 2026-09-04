@@ -8,6 +8,10 @@ import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {cms} from '#test/cms.js'
+import {MemoryRangeSource} from '../replica/Bundle.js'
+import type {ReplicaTransport} from '../replica/Protocol.js'
+import {exportRuntimeDatabase} from '../runtime/Exporter.js'
+import {RuntimeEntryStore} from '../runtime/Store.js'
 import {SourceDB} from './SourceDB.js'
 
 describe('SourceDB', () => {
@@ -133,5 +137,50 @@ describe('SourceDB', () => {
     )
     const stored = JSON.parse(new TextDecoder().decode(fixed[1]))
     expect(stored.title).toBe('Home')
+  })
+
+  test('keeps trusted source frames when installing a client projection', async () => {
+    const release = await exportRuntimeDatabase({
+      config: cms.config,
+      source: new FSSource('test/fixtures/demo'),
+      bundleId: 'release',
+      bundleUrl: '/payload.bundle',
+      compression: 'none'
+    })
+    const trusted = new RuntimeEntryStore({
+      index: release.index,
+      source: () => new MemoryRangeSource(release.bundle)
+    })
+    const runtime = new SourceDB(cms.config, trusted)
+    const remote: ReplicaTransport = {
+      async bootstrap() {
+        throw new Error('Not used')
+      },
+      async state() {
+        return {
+          viewId: 'server',
+          runtime: {...release.index, source: undefined}
+        }
+      },
+      async mutate() {
+        throw new Error('Not used')
+      },
+      async command() {
+        throw new Error('Not used')
+      }
+    }
+
+    await runtime.syncReplica(
+      remote,
+      () => new MemoryRangeSource(release.bundle)
+    )
+
+    expect((await runtime.getTree()).sha).toBe(release.index.revision)
+    expect(
+      await runtime.get({
+        type: cms.schema.DemoRecipe,
+        path: 'chocolate-chip'
+      })
+    ).toMatchObject({title: 'Chocolate chip'})
   })
 })

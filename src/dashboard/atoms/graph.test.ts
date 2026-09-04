@@ -94,6 +94,30 @@ test('only invalidates queries reported by replica dependencies', async () => {
   unsubscribeSecond()
 })
 
+test('can invalidate every query without retaining query strings', () => {
+  const store = createStore()
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  const first = queryRevisionAtom('first-query')
+  const second = queryRevisionAtom('second-query')
+  const unsubscribeFirst = store.sub(first, () => {})
+  const unsubscribeSecond = store.sub(second, () => {})
+
+  events.emit(
+    new IndexEvent({
+      op: 'index',
+      sha: 'changed-sha',
+      ids: [],
+      queries: 'all'
+    })
+  )
+
+  expect(store.get(first)).toBe('changed-sha')
+  expect(store.get(second)).toBe('changed-sha')
+  unsubscribeFirst()
+  unsubscribeSecond()
+})
+
 test('summarizes current activity without hiding its history', () => {
   const state = activityState([
     {

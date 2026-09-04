@@ -30,17 +30,12 @@ import {
   type FieldTransaction
 } from '#/database/replica/Operations.js'
 import {getScope} from '#/core/Scope.js'
-import {
-  dependenciesIntersect,
-  type QueryDependency
-} from '#/database/replica/Dependency.js'
 
 export class ReplicaDashboardDB extends WriteableGraph {
   #replica: EntryReplicaClient
   #client: LocalConnection
   #events = new EventDispatcher()
   #transport: HttpReplicaTransport
-  #queryDependencies = new Map<string, ReadonlySet<QueryDependency>>()
 
   constructor(
     public config: Config,
@@ -79,16 +74,12 @@ export class ReplicaDashboardDB extends WriteableGraph {
   }
 
   async resolveSerialized<Query extends GraphQuery>(
-    serialized: string,
+    _serialized: string,
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const tracked = this.#replica.trackedResolver(this.config)
     const result = query.filter
-      ? await this.#resolveEligible(query, tracked.resolver)
-      : await tracked.resolver.resolve(query)
-    const dependencies = new Set(tracked.dependencies())
-    if (query.filter) dependencies.add('revision:*')
-    this.#queryDependencies.set(serialized, dependencies)
+      ? await this.#resolveEligible(query)
+      : await this.#replica.resolver(this.config).resolve(query)
     return result
   }
 
@@ -112,15 +103,14 @@ export class ReplicaDashboardDB extends WriteableGraph {
   async sync(): Promise<string> {
     const result = await this.#replica.sync()
     if (result.changed) {
-      const queries = result.change
-        ? invalidatedReplicaQueries(this.#queryDependencies, result.change)
-        : [...this.#queryDependencies.keys()]
       this.#events.dispatchEvent(
         new IndexEvent({
           op: 'index',
           sha: result.revision,
           ids: [...result.entryIds],
-          queries
+          // Query results may gain an entry that was not present previously.
+          // Until a query-aware delta protocol exists, invalidate all of them.
+          queries: 'all'
         })
       )
     }
@@ -211,17 +201,4 @@ export async function fieldTransactionForUpdates(
 
 function escapePointerSegment(value: string): string {
   return value.replaceAll('~', '~0').replaceAll('/', '~1')
-}
-
-export function invalidatedReplicaQueries(
-  queries: ReadonlyMap<string, ReadonlySet<QueryDependency>>,
-  change: {dependencies: ReadonlySet<QueryDependency>}
-): Array<string> {
-  return [...queries]
-    .filter(
-      ([, dependencies]) =>
-        dependencies.has('revision:*') ||
-        dependenciesIntersect(dependencies, change.dependencies)
-    )
-    .map(([serialized]) => serialized)
 }

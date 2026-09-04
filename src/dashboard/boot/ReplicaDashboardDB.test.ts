@@ -11,7 +11,6 @@ describe('ReplicaDashboardDB', () => {
   test('boots production reads without hydrating LocalDB or EntryIndex', async () => {
     const state: ReplicaState = {
       viewId: 'editor',
-      recordAccess: {},
       runtime: {
         bundleId: 'release-1',
         bundleUrl: '/admin/release/release-1/database.bin',
@@ -26,6 +25,7 @@ describe('ReplicaDashboardDB', () => {
         if (action === 'replicaBootstrap')
           return Response.json({
             user: {id: 'user-1', roles: ['editor']},
+            viewId: 'editor',
             configId: 'config-1',
             configUrl: '/secret/config.js',
             cacheKey: 'site-1',

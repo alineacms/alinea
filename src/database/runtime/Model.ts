@@ -39,15 +39,12 @@ export interface RuntimeFileFingerprint {
 
 export interface RuntimeSourceIndex {
   treeFrame: RuntimeSourceFrame
-  blobs: Readonly<Record<string, RuntimeSourceBlob>>
 }
 
 export interface RuntimeSourceFrame {
   decodeKey: string
   frame: SerializedFrameDescriptor
 }
-
-export interface RuntimeSourceBlob extends RuntimeSourceFrame {}
 
 export interface RuntimeDataFrame {
   filePath: string

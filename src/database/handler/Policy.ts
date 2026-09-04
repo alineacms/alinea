@@ -3,6 +3,7 @@ import type {Graph} from '#/core/Graph.js'
 import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {assert} from '#/core/util/Assert.js'
+import {sha1Hash} from '#/core/source/Utils.js'
 
 /** Runs server-side role functions against the complete runtime graph. */
 export async function evaluateRolePolicy(
@@ -22,6 +23,13 @@ export async function evaluateRolePolicy(
   return result
 }
 
-export function roleFingerprint(roleNames: ReadonlyArray<string>): string {
-  return [...new Set(roleNames)].sort().join('\0')
+export function policyFingerprint(policy: Policy): Promise<string> {
+  const data = policy.data()
+  const stable = {
+    root: data.root,
+    entries: [...data.entries].sort(([left], [right]) =>
+      left.localeCompare(right)
+    )
+  }
+  return sha1Hash(new TextEncoder().encode(JSON.stringify(stable)))
 }

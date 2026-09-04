@@ -34,9 +34,14 @@ import {assert} from '#/core/util/Assert.js'
 import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
 import {unreachable} from '#/core/util/Types.js'
 import {Type} from '#/core/Type.js'
-import {aliasesFromData, aliasUrl} from '#/core/db/EntryAliases.js'
+import {
+  aliasesFromData,
+  aliasUrl,
+  aliasUrlsFromData
+} from '#/core/db/EntryAliases.js'
 import {LinkResolver} from '#/core/db/LinkResolver.js'
 import MiniSearch from 'minisearch'
+import pLimit from 'p-limit'
 import type {EntryCoreRecord, EntrySearchRecord} from '../entry/Model.js'
 import type {EntryStore} from '../entry/Store.js'
 import {filterPredicate} from './Filter.js'
@@ -50,6 +55,8 @@ interface ResolveContext {
   searches: Map<string, EntrySearchRecord>
   entryCores: WeakMap<Entry, EntryCoreRecord>
   previewEntry?: Entry
+  previewBaseCore?: EntryCoreRecord
+  previewCore?: EntryCoreRecord
 }
 
 interface QueryResult {
@@ -64,6 +71,7 @@ export class DatabaseResolver extends Graph implements Resolver {
   #cores: Promise<ReadonlyArray<EntryCoreRecord>>
   #lookup?: CoreLookup
   #searchIndex?: Promise<CoreSearchIndex>
+  #search = pLimit(1)
 
   constructor(config: Config, source: EntryStore) {
     super()
@@ -98,6 +106,13 @@ export class DatabaseResolver extends Graph implements Resolver {
           }
         : requestedPreview
     const cores = await this.#cores
+    const previewBaseCore = preview
+      ? cores.find(core => matchesPreviewEntry(preview, core))
+      : undefined
+    const previewCore =
+      preview && previewBaseCore
+        ? coreFromPreview(previewBaseCore, preview)
+        : undefined
     const context: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
@@ -108,7 +123,9 @@ export class DatabaseResolver extends Graph implements Resolver {
       store: this.#store,
       searches: new Map(),
       entryCores: new WeakMap(),
-      previewEntry: preview
+      previewEntry: preview,
+      previewBaseCore,
+      previewCore
     }
     const result = await this.#query(context, query as GraphQuery<Projection>)
     return result.value as AnyQueryResult<Query>
@@ -145,9 +162,9 @@ export class DatabaseResolver extends Graph implements Resolver {
   ): Promise<QueryResult> {
     const edge = query as EdgeQuery<Projection>
     const structural = this.#coreCondition(context, edge)
-    let narrowed = this.#candidateCores(context, edge, source).filter(
-      structural
-    )
+    let narrowed = this.#candidateCores(context, edge, source)
+      .map(core => this.#previewCore(context, core))
+      .filter(structural)
     if (query.search)
       narrowed = await this.#searchCores(
         context,
@@ -156,7 +173,7 @@ export class DatabaseResolver extends Graph implements Resolver {
       )
     if (this.#canStageOnCore(context, edge))
       return this.#queryFromCores(context, edge, narrowed)
-    if (this.#canStopLoadingAfterPage(context, edge)) {
+    if (this.#canStopLoadingAfterPage(edge)) {
       const found = await this.#loadMatchingPage(context, edge, narrowed)
       const projected = this.#projectionRequiresSearch(this.#projection(query))
         ? await this.#ensureSearch(context, found)
@@ -169,18 +186,11 @@ export class DatabaseResolver extends Graph implements Resolver {
         value: this.#isSingleResult(edge) ? selected[0] : selected
       }
     }
-    let candidates = await this.#loadEntries(
+    const candidates = await this.#loadEntries(
       context,
       narrowed,
       this.#requiresSearchBeforePage(edge)
     )
-    if (context.previewEntry) {
-      candidates = candidates.map(entry =>
-        entry.filePath === context.previewEntry?.filePath
-          ? context.previewEntry
-          : entry
-      )
-    }
     const predicate = this.#condition(context, edge)
     let found = candidates.filter(predicate)
     if (query.groupBy) {
@@ -253,15 +263,38 @@ export class DatabaseResolver extends Graph implements Resolver {
     if (parentIds)
       candidates.push(lookupValues(lookup, lookup.byParentId, parentIds))
     if (urls) candidates.push(lookupValues(lookup, lookup.byUrl, urls))
-    if (query.type) {
-      const types = (Array.isArray(query.type) ? query.type : [query.type]).map(
-        type => this.#scope.nameOf(type as Type)
-      )
-      candidates.push(lookupValues(lookup, lookup.byType, types))
-    }
+    const types = query.type
+      ? (Array.isArray(query.type) ? query.type : [query.type]).map(type =>
+          this.#scope.nameOf(type as Type)
+        )
+      : undefined
+    if (types) candidates.push(lookupValues(lookup, lookup.byType, types))
     if (candidates.length === 0) return source
     candidates.sort((left, right) => left.length - right.length)
-    return candidates[0]
+    const narrowed = candidates[0]
+    const previewBase = context.previewBaseCore
+    const preview = context.previewCore
+    if (
+      !previewBase ||
+      !preview ||
+      narrowed.includes(previewBase) ||
+      (ids && !ids.includes(preview.entryId)) ||
+      (parentIds && !parentIds.includes(preview.parentId)) ||
+      (urls && !urls.includes(preview.url)) ||
+      (types && !types.includes(preview.type))
+    )
+      return narrowed
+    const position = lookup.order.get(previewBase)!
+    const insertAt = narrowed.findIndex(
+      core => lookup.order.get(core)! > position
+    )
+    return insertAt === -1
+      ? [...narrowed, previewBase]
+      : [
+          ...narrowed.slice(0, insertAt),
+          previewBase,
+          ...narrowed.slice(insertAt)
+        ]
   }
 
   #lookupFor(cores: ReadonlyArray<EntryCoreRecord>): CoreLookup {
@@ -319,7 +352,9 @@ export class DatabaseResolver extends Graph implements Resolver {
     let loaded = this.#projectionRequiresData(projection)
       ? await this.#loadEntries(context, found, false)
       : found.map(core => {
-          const entry = entryFromCore(core)
+          const entry = this.#isPreviewCore(context, core)
+            ? context.previewEntry!
+            : entryFromCore(core)
           context.entryCores.set(entry, core)
           return entry
         })
@@ -339,12 +374,32 @@ export class DatabaseResolver extends Graph implements Resolver {
     cores: ReadonlyArray<EntryCoreRecord>,
     includeSearch: boolean
   ): Promise<Array<Entry>> {
-    const [loaded, searches] = await Promise.all([
-      context.store.loadMany(cores),
+    const loaded: Array<Entry | undefined> = new Array(cores.length)
+    const searches: Array<EntrySearchRecord | undefined> = new Array(
+      cores.length
+    )
+    const pendingCores: Array<EntryCoreRecord> = []
+    const pendingPositions: Array<number> = []
+    for (const [position, core] of cores.entries()) {
+      if (this.#isPreviewCore(context, core)) {
+        loaded[position] = context.previewEntry
+        if (includeSearch && context.previewEntry)
+          searches[position] = searchFromPreview(context.previewEntry, core)
+        continue
+      }
+      pendingCores.push(core)
+      pendingPositions.push(position)
+    }
+    const [pendingEntries, pendingSearches] = await Promise.all([
+      context.store.loadMany(pendingCores),
       includeSearch
-        ? context.store.searchMany(cores, 'read')
+        ? context.store.searchMany(pendingCores, 'read')
         : Promise.resolve([])
     ])
+    for (const [index, position] of pendingPositions.entries()) {
+      loaded[position] = pendingEntries[index]
+      searches[position] = pendingSearches[index]
+    }
     const values = cores.map((core, index) => {
       const entry = loaded[index]
       if (!entry) return
@@ -359,12 +414,8 @@ export class DatabaseResolver extends Graph implements Resolver {
     return values.filter((entry): entry is Entry => Boolean(entry))
   }
 
-  #canStopLoadingAfterPage(
-    context: ResolveContext,
-    query: EdgeQuery<Projection>
-  ): boolean {
-    if (context.previewEntry || query.count === true || query.groupBy)
-      return false
+  #canStopLoadingAfterPage(query: EdgeQuery<Projection>): boolean {
+    if (query.count === true || query.groupBy) return false
     if (query.take === undefined && !this.#isSingleResult(query)) return false
     if (!query.orderBy) return true
     const orders = Array.isArray(query.orderBy)
@@ -452,7 +503,6 @@ export class DatabaseResolver extends Graph implements Resolver {
     query: EdgeQuery<Projection>
   ): boolean {
     if (
-      context.previewEntry ||
       (query.filter && !isCoreFilter(query.filter)) ||
       (query.alias !== undefined &&
         context.cores.some(core => core.urlAliases === undefined)) ||
@@ -482,6 +532,17 @@ export class DatabaseResolver extends Graph implements Resolver {
         return false
     }
     return true
+  }
+
+  #previewCore(
+    context: ResolveContext,
+    core: EntryCoreRecord
+  ): EntryCoreRecord {
+    return this.#isPreviewCore(context, core) ? context.previewCore! : core
+  }
+
+  #isPreviewCore(context: ResolveContext, core: EntryCoreRecord): boolean {
+    return context.previewCore?.id === core.id
   }
 
   #isCoreProjection(value: Projection): boolean {
@@ -604,55 +665,41 @@ export class DatabaseResolver extends Graph implements Resolver {
     cores: ReadonlyArray<EntryCoreRecord>,
     search: string
   ): Promise<Array<EntryCoreRecord>> {
-    if (!context.previewEntry) {
-      const cached = await this.#readySearchIndex()
-      const candidates = new Set(cores.map(core => core.id))
-      for (const core of cores) {
-        const record = cached.records.get(core.id)
-        if (record) context.searches.set(core.id, record)
-      }
-      return rankSearchIndex(cached.index, cached.documents, search).filter(
-        core => candidates.has(core.id)
-      )
-    }
-    const records = await context.store.searchMany(cores, 'read')
-    const documents = cores.map((core, index) => {
-      if (
-        context.previewEntry &&
-        context.previewEntry.id === core.entryId &&
-        context.previewEntry.versionStatus === core.versionStatus &&
-        context.previewEntry.locale === core.locale
-      )
-        return {
-          value: core,
-          id: core.id,
-          title: context.previewEntry.title,
-          searchableText: context.previewEntry.searchableText
-        }
-      const record = records[index]
+    const cached = await this.#readySearchIndex()
+    const candidates = new Set(cores.map(core => core.id))
+    for (const core of cores) {
+      if (this.#isPreviewCore(context, core)) continue
+      const record = cached.records.get(core.id)
       if (record) context.searches.set(core.id, record)
-      return record
-        ? {
-            value: core,
-            id: core.id,
-            title: record.title,
-            searchableText: record.searchableText
-          }
-        : undefined
+    }
+    return this.#search(async () => {
+      const preview = context.previewEntry
+      const previewCore = context.previewCore
+      if (!preview || !previewCore)
+        return rankSearchIndex(cached.index, cached.documents, search).filter(
+          core => candidates.has(core.id)
+        )
+
+      const previous = cached.documents.get(previewCore.id)
+      const replacement = {
+        value: previewCore,
+        id: previewCore.id,
+        title: preview.title,
+        searchableText: preview.searchableText
+      }
+      if (previous) cached.index.remove(previous)
+      cached.index.add(replacement)
+      const documents = new Map(cached.documents)
+      documents.set(replacement.id, replacement)
+      try {
+        return rankSearchIndex(cached.index, documents, search).filter(core =>
+          candidates.has(core.id)
+        )
+      } finally {
+        cached.index.remove(replacement)
+        if (previous) cached.index.add(previous)
+      }
     })
-    return rankSearchDocuments(
-      documents.filter(
-        (
-          document
-        ): document is {
-          value: EntryCoreRecord
-          id: string
-          title: string
-          searchableText: string
-        } => Boolean(document)
-      ),
-      search
-    )
   }
 
   #readySearchIndex(): Promise<CoreSearchIndex> {
@@ -795,13 +842,8 @@ export class DatabaseResolver extends Graph implements Resolver {
         )
           return false
       }
-      const isPreviewEntry =
-        context.previewEntry?.id === entry.entryId &&
-        context.previewEntry.versionStatus === entry.versionStatus &&
-        context.previewEntry.locale === entry.locale
       return (
-        structural(entry) &&
-        (isPreviewEntry || !matchesIndexFilter || matchesIndexFilter(entry))
+        structural(entry) && (!matchesIndexFilter || matchesIndexFilter(entry))
       )
     }
   }
@@ -1145,6 +1187,55 @@ function isEntry(value: unknown): value is Entry {
   return isRecord(value) && typeof value.id === 'string' && isRecord(value.data)
 }
 
+function matchesPreviewEntry(preview: Entry, core: EntryCoreRecord): boolean {
+  return (
+    preview.id === core.entryId &&
+    preview.versionStatus === core.versionStatus &&
+    preview.locale === core.locale
+  )
+}
+
+function coreFromPreview(
+  core: EntryCoreRecord,
+  preview: Entry
+): EntryCoreRecord {
+  return {
+    ...core,
+    entryId: preview.id,
+    versionStatus: preview.versionStatus,
+    status: preview.status,
+    active: preview.active,
+    main: preview.main,
+    type: preview.type,
+    title: preview.title,
+    seeded: preview.seeded,
+    workspace: preview.workspace,
+    root: preview.root,
+    locale: preview.locale,
+    level: preview.level,
+    index: preview.index,
+    parentId: preview.parentId,
+    parents: preview.parents,
+    path: preview.path,
+    url: preview.url,
+    urlAliases: aliasUrlsFromData(preview.data)
+  }
+}
+
+function searchFromPreview(
+  preview: Entry,
+  core: EntryCoreRecord
+): EntrySearchRecord {
+  return {
+    kind: 'search',
+    id: `runtime-search:preview:${core.id}`,
+    entryVersionId: core.id,
+    audience: 'read',
+    title: preview.title,
+    searchableText: preview.searchableText
+  }
+}
+
 function isCore(value: unknown): value is EntryCoreRecord {
   return isRecord(value) && value.kind === 'entry'
 }
@@ -1170,8 +1261,10 @@ function extractCoreFilter(value: unknown): Filter | undefined {
 
 function isCoreFilter(value: unknown): boolean {
   if (!isRecord(value)) return false
-  if (isLogicalFilter(value, 'and') || isLogicalFilter(value, 'or'))
+  if (isLogicalFilter(value, 'and'))
     return value.and.every(condition => isCoreFilter(condition))
+  if (isLogicalFilter(value, 'or'))
+    return value.or.every(condition => isCoreFilter(condition))
   return Object.keys(value).every(isCoreFilterField)
 }
 
@@ -1423,14 +1516,6 @@ function createMiniSearch<Value>(
     }))
   )
   return index
-}
-
-function rankSearchDocuments<Value>(
-  source: ReadonlyArray<SearchDocument<Value>>,
-  search: string
-): Array<Value> {
-  const byId = new Map(source.map(document => [document.id, document]))
-  return rankSearchIndex(createMiniSearch(source), byId, search)
 }
 
 function rankSearchIndex<Value>(

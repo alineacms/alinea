@@ -14,7 +14,7 @@ import type {ReplicaTransport} from '../replica/Protocol.js'
 import {exportRuntimeDatabase, exportRuntimeSourceChanges} from './Exporter.js'
 import {RuntimeEntryStore} from './Store.js'
 import {SourceDB} from '../entry/SourceDB.js'
-import {projectRuntimeDatabase} from './Projection.js'
+import {createRuntimeView} from './Projection.js'
 import {requestRuntimeSourceMutations} from '../handler/SourceWriter.js'
 import {runtimeSourcePathResolver} from './Model.js'
 
@@ -155,7 +155,7 @@ describe('runtime database', () => {
       source,
       compression: 'none'
     })
-    const view = projectRuntimeDatabase(release.index, {
+    const view = createRuntimeView(release.index, {
       canRead() {
         return false
       },
@@ -167,7 +167,7 @@ describe('runtime database', () => {
     const resolver = new DatabaseResolver(
       cms.config,
       new RuntimeEntryStore({
-        index: view.index,
+        index: view,
         source: () => ({
           async read() {
             reads++
@@ -183,7 +183,7 @@ describe('runtime database', () => {
     expect(reads).toBe(0)
   })
 
-  test('retains stored status and lazily serves exact source blobs', async () => {
+  test('retains stored status and lazily serves exact source bytes', async () => {
     const source = new FSSource('test/fixtures/demo')
     const release = await exportRuntimeDatabase({
       config: cms.config,
@@ -211,7 +211,6 @@ describe('runtime database', () => {
       release.index.entries
     )(shared)
     const sha = tree.index().get(path)!
-    expect(release.index.source!.blobs[sha]).toBeUndefined()
     const [[loadedSha, actual]] = await Array.fromAsync(store.getBlobs([sha]))
     const [[, expected]] = await Array.fromAsync(source.getBlobs([sha]))
     expect({path, loadedSha, actual: [...actual]}).toEqual({
@@ -283,15 +282,14 @@ describe('runtime database', () => {
     await db.sync()
     const state = {
       viewId: 'server',
-      recordAccess: {},
       runtime: remote.index
     }
     const transport: ReplicaTransport = {
       async bootstrap() {
         throw new Error('Bootstrap is not needed for server synchronization')
       },
-      async state(revision) {
-        return revision === 'tree-2' ? undefined : state
+      async state(cursor) {
+        return cursor?.revision === 'tree-2' ? undefined : state
       },
       async mutate() {
         throw new Error('Not used')

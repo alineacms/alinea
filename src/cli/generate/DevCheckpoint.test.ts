@@ -48,8 +48,7 @@ test('loads only a compatible development checkpoint with an existing payload', 
       treeFrame: {
         decodeKey: base64url.stringify(key, {pad: false}),
         frame: serializeFrame(payload.frames[0])
-      },
-      blobs: {}
+      }
     },
     development: {configHash: 'config', files: {}}
   }

@@ -29,6 +29,26 @@ export async function requestRuntimeSourceMutations(
   policy?: Policy
 ): Promise<CommitRequest> {
   const originalTree = await source.getTree()
+  if (canBatchContentUpdates(mutations)) {
+    const transaction = new EntryTransaction(
+      config,
+      index.revision,
+      new DatabaseResolver(config, store),
+      source,
+      originalTree,
+      policy
+    )
+    await transaction.apply(mutations)
+    const request = await transaction.toRequest()
+    return {
+      ...request,
+      description: withoutBatchDescriptionSuffix(
+        request.description,
+        mutations.length
+      )
+    }
+  }
+
   const workingSource = new OverlaySource(source, originalTree)
   let workingTree = originalTree
   let workingIndex = index
@@ -93,6 +113,38 @@ export async function requestRuntimeSourceMutations(
   }
 }
 
+/**
+ * Content updates to separate entries cannot depend on each other's source
+ * writes. EntryTransaction already tracks URL claims within such a batch.
+ */
+function canBatchContentUpdates(mutations: ReadonlyArray<Mutation>): boolean {
+  if (mutations.length < 2) return false
+  const ids = new Set<string>()
+  return mutations.every(mutation => {
+    if (
+      mutation.op !== 'update' ||
+      'path' in mutation.set ||
+      ids.has(mutation.id)
+    )
+      return false
+    ids.add(mutation.id)
+    return true
+  })
+}
+
+function withoutBatchDescriptionSuffix(description: string, count: number) {
+  const suffix = ` (and ${count - 1} other edits)`
+  const firstLineEnd = description.indexOf('\n')
+  const firstLine = description.slice(
+    0,
+    firstLineEnd === -1 ? undefined : firstLineEnd
+  )
+  if (!firstLine.endsWith(suffix)) return description
+  return `${firstLine.slice(0, -suffix.length)}${
+    firstLineEnd === -1 ? '' : description.slice(firstLineEnd)
+  }`
+}
+
 /** Presents an incrementally reconciled index without mutating the live store. */
 class TransactionEntryStore implements EntryStore {
   readonly revision: string
@@ -116,7 +168,20 @@ class TransactionEntryStore implements EntryStore {
   }
 
   loadMany(cores: ReadonlyArray<EntryCoreRecord>, signal?: AbortSignal) {
-    return Promise.all(cores.map(core => this.load(core, signal)))
+    const groups = this.#groups(cores, 'data')
+    const result = new Array<Awaited<ReturnType<EntryStore['load']>>>(
+      cores.length
+    )
+    return Promise.all(
+      [...groups].map(async ([store, positions]) => {
+        const loaded = await store.loadMany(
+          positions.map(([, core]) => core),
+          signal
+        )
+        for (const [index, [position]] of positions.entries())
+          result[position] = loaded[index]
+      })
+    ).then(() => result)
   }
 
   search(
@@ -132,7 +197,21 @@ class TransactionEntryStore implements EntryStore {
     audience: 'explore' | 'read',
     signal?: AbortSignal
   ) {
-    return Promise.all(cores.map(core => this.search(core, audience, signal)))
+    const groups = this.#groups(cores, 'search')
+    const result = new Array<Awaited<ReturnType<EntryStore['search']>>>(
+      cores.length
+    )
+    return Promise.all(
+      [...groups].map(async ([store, positions]) => {
+        const loaded = await store.searchMany(
+          positions.map(([, core]) => core),
+          audience,
+          signal
+        )
+        for (const [index, [position]] of positions.entries())
+          result[position] = loaded[index]
+      })
+    ).then(() => result)
   }
 
   referencesTo(
@@ -152,5 +231,22 @@ class TransactionEntryStore implements EntryStore {
   #store(core: EntryCoreRecord, frame: 'data' | 'search'): EntryStore {
     const descriptor = (core as RuntimeIndexEntry).frames?.[frame]
     return descriptor?.bundleId === this.bundleId ? this.changed : this.previous
+  }
+
+  #groups(
+    cores: ReadonlyArray<EntryCoreRecord>,
+    frame: 'data' | 'search'
+  ): Map<EntryStore, Array<readonly [number, EntryCoreRecord]>> {
+    const groups = new Map<
+      EntryStore,
+      Array<readonly [number, EntryCoreRecord]>
+    >()
+    for (const [position, core] of cores.entries()) {
+      const store = this.#store(core, frame)
+      const group = groups.get(store) ?? []
+      group.push([position, core])
+      groups.set(store, group)
+    }
+    return groups
   }
 }

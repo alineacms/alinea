@@ -55,7 +55,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
             config,
             configId: environment.configId,
             configUrl: environment.configUrl,
-            cacheKey: `runtime:${generatedRuntimeIndex.bundleId}`,
+            cacheKey: `runtime:${environment.releaseId}:${environment.configId}`,
             runtime: generatedRuntimeIndex,
             graph,
             store: graph.source

@@ -1,12 +1,16 @@
 import type {ByteRangeSource} from './Bundle.js'
 import type {ReplicaCommand, ReplicaCommandResult} from './Commands.js'
 import type {FieldTransaction, FieldTransactionResult} from './Operations.js'
-import type {ReplicaBootstrap, ReplicaTransport} from './Protocol.js'
+import type {
+  ReplicaBootstrap,
+  ReplicaCursor,
+  ReplicaTransport
+} from './Protocol.js'
 import {
   deserializeReplicaState,
   type SerializedReplicaState
 } from './Serialization.js'
-import type {ReplicaState, Revision} from './Types.js'
+import type {ReplicaState} from './Types.js'
 
 export interface HttpReplicaTransportOptions {
   handlerUrl: string | URL
@@ -30,12 +34,14 @@ export class HttpReplicaTransport implements ReplicaTransport {
   }
 
   async state(
-    knownRevision?: Revision,
+    cursor?: ReplicaCursor,
     signal?: AbortSignal
   ): Promise<ReplicaState | undefined> {
     const response = await this.#request('replicaState', {
       signal,
-      params: knownRevision ? {revision: knownRevision} : undefined
+      params: cursor
+        ? {revision: cursor.revision, view: cursor.viewId}
+        : undefined
     })
     if (response.status === 204) return undefined
     await expectOk(response)

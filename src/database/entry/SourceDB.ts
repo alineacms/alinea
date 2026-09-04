@@ -56,6 +56,7 @@ export class SourceDB extends WriteableGraph implements Source {
   #resolver: DatabaseResolver | undefined
   #bundles = new Map<string, MemoryRangeSource>()
   #events = new EventDispatcher()
+  #replicaViewId: string | undefined
   readonly index = this.#events
   #limit = pLimit(1)
 
@@ -117,10 +118,26 @@ export class SourceDB extends WriteableGraph implements Source {
   ): Promise<string> {
     return this.#limit(async () => {
       const runtime = this.#expectRuntime()
-      const state = await remote.state(this.sha)
+      const state = await remote.state(
+        this.#replicaViewId
+          ? {revision: this.sha, viewId: this.#replicaViewId}
+          : undefined
+      )
       if (!state) return this.sha
-      runtime.install(state.runtime, replicaRangeSource(state, ranges))
-      this.refreshRuntime(runtime)
+      this.#replicaViewId = state.viewId
+      const source = replicaRangeSource(state, ranges)
+      if (runtime === this.source && !state.runtime.source) {
+        // A server runtime also owns the trusted Source frames. A client
+        // projection intentionally omits those frames, so install it in a
+        // separate query store instead of removing Source capabilities from
+        // the trusted store.
+        this.refreshRuntime(
+          new RuntimeEntryStore({index: state.runtime, source})
+        )
+      } else {
+        runtime.install(state.runtime, source)
+        this.refreshRuntime(runtime)
+      }
       return this.sha
     })
   }

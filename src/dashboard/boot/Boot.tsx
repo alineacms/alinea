@@ -32,10 +32,12 @@ export async function boot(gen: ConfigGenerator) {
   if (inWorker) {
     loadWorker(gen)
   } else {
+    const initial = await gen.next()
+    if (initial.done) return
     let events: EventTarget
     let worker: DashboardWorker
     try {
-      ;[events, worker] = createSharedWorker()
+      ;[events, worker] = createSharedWorker(initial.value.revision)
     } catch {
       console.warn('Shared worker not supported, falling back to local worker.')
       const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
@@ -49,7 +51,7 @@ export async function boot(gen: ConfigGenerator) {
     else element.parentElement!.replaceChild(into, element)
     const root = createRoot(into)
     let lastRevision: string | undefined
-    for await (const batch of gen) {
+    for await (const batch of prepend(initial.value, gen)) {
       if (batch.local && batch.revision !== lastRevision) {
         const link = document.querySelector(
           'link[href="config.css"]'
@@ -76,11 +78,21 @@ export async function boot(gen: ConfigGenerator) {
   }
 }
 
-function createSharedWorker(): [EventTarget, DashboardWorker] {
+async function* prepend(
+  initial: ConfigBatch,
+  gen: ConfigGenerator
+): ConfigGenerator {
+  yield initial
+  yield* gen
+}
+
+function createSharedWorker(revision: string): [EventTarget, DashboardWorker] {
   const events = new EventDispatcher()
   const worker = new SharedWorker(import.meta.url, {
     type: 'module',
-    name: 'Alinea dashboard'
+    // Shared workers can outlive both tabs and authentication sessions.
+    // The production revision includes the authenticated replica view.
+    name: `Alinea dashboard:${revision}`
   })
   worker.port.addEventListener('message', ({data}) => {
     if (data.type === IndexEvent.type) {

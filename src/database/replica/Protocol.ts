@@ -1,7 +1,7 @@
 import type {FieldTransaction, FieldTransactionResult} from './Operations.js'
 import type {ReplicaCommand, ReplicaCommandResult} from './Commands.js'
 import type {PolicyData} from '#/core/Role.js'
-import type {ReplicaState, Revision} from './Types.js'
+import type {ReplicaState, Revision, ViewId} from './Types.js'
 
 export interface ReplicaUser {
   id: string
@@ -10,11 +10,17 @@ export interface ReplicaUser {
 
 export interface ReplicaBootstrap {
   user: ReplicaUser
+  viewId: ViewId
   configId: string
   configUrl: string
   cacheKey: string
   /** Handler-evaluated ACL. Clients never execute role callbacks. */
   policy: PolicyData
+}
+
+export interface ReplicaCursor {
+  revision: Revision
+  viewId: ViewId
 }
 
 /**
@@ -26,7 +32,7 @@ export interface ReplicaTransport {
   bootstrap(): Promise<ReplicaBootstrap>
 
   state(
-    knownRevision?: Revision,
+    cursor?: ReplicaCursor,
     signal?: AbortSignal
   ): Promise<ReplicaState | undefined>
 

@@ -45,7 +45,10 @@ export class NextCMS<
     const span = trace(this.config, 'alinea.next.cms.db')
     return span(async () => {
       const {createGeneratedRuntimeDB} = await import('./RuntimeDB.js')
-      return createGeneratedRuntimeDB(this.config)
+      const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+      return createGeneratedRuntimeDB(this.config, {
+        productionBuild: process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+      })
     })
   })
   #applyPreview = cache(async () => {

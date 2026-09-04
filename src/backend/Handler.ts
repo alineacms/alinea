@@ -88,6 +88,18 @@ export interface HandlerOptions extends HandlerHooks {
   ): Promise<Response | undefined>
 }
 
+function commitUser(
+  session: AuthenticatedReplicaSession,
+  context?: AuthedContext
+): User {
+  return (
+    context?.user ?? {
+      sub: session.user.id,
+      roles: [...session.user.roles]
+    }
+  )
+}
+
 export function createHandler({
   cms,
   remote = context => new CloudRemote(context, cms.config),
@@ -97,7 +109,10 @@ export function createHandler({
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
-  const replicaWrite = pLimit(1)
+  // Source synchronization and commits must observe one continuous tree
+  // history. SourceDB has its own lock, but replica synchronization operates
+  // directly on the shared Source and therefore belongs in this lock too.
+  const sourceWrite = pLimit(1)
   return async function handle(
     request: Request,
     context: RequestContext
@@ -108,7 +123,7 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
-    async function syncLocal(cnx: RemoteConnection): Promise<string> {
+    async function syncLocalUnlocked(cnx: RemoteConnection): Promise<string> {
       if (replica) {
         const changes = await syncWith(local.source, cnx)
         await updateReplicaFromSource(
@@ -121,6 +136,10 @@ export function createHandler({
         return local.sha
       }
       return local.syncWith(cnx)
+    }
+
+    function syncLocal(cnx: RemoteConnection): Promise<string> {
+      return sourceWrite(() => syncLocalUnlocked(cnx))
     }
 
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
@@ -229,7 +248,7 @@ export function createHandler({
           const session: AuthenticatedReplicaSession = {
             user: {id: 'server', roles: []},
             policy: Policy.ALLOW_ALL,
-            policyFingerprint: 'server'
+            policyFingerprint: 'trusted:server'
           }
           return {service, session}
         }
@@ -254,9 +273,11 @@ export function createHandler({
         expectJson()
         await periodicSync(cnx, cms.config.syncInterval)
         const {service, session} = await expectReplica()
+        const revision = url.searchParams.get('revision')
+        const viewId = url.searchParams.get('view')
         const state = service.state(
           session,
-          url.searchParams.get('revision') ?? undefined
+          revision && viewId ? {revision, viewId} : undefined
         )
         return state
           ? Response.json(serializeReplicaState(state))
@@ -271,11 +292,20 @@ export function createHandler({
         const {service, session} = await expectReplica()
         const scope = getScope(cms.config)
         const query = scope.parse<GraphQuery>(await request.text())
+        const {
+          first: _first,
+          get: _get,
+          count: _count,
+          skip: _skip,
+          take: _take,
+          groupBy: _groupBy,
+          orderBy: _orderBy,
+          select: _select,
+          include: _include,
+          ...candidateQuery
+        } = query
         const eligibilityQuery = {
-          ...query,
-          first: undefined,
-          get: undefined,
-          count: undefined,
+          ...candidateQuery,
           select: Entry.id
         } as GraphQuery
         const ids = await service.graph().resolve(eligibilityQuery)
@@ -284,30 +314,25 @@ export function createHandler({
         for (const record of service.cores()) {
           if (!record.queryable || !candidates.has(record.entryId)) continue
           const resource = entryResource(record)
-          if (
-            session.policy.canRead(resource) ||
-            session.policy.canExplore(resource)
-          )
-            visible.add(record.entryId)
+          // Payload filters run against the trusted graph. Returning an
+          // explore-only id would reveal whether hidden data matched.
+          if (session.policy.canRead(resource)) visible.add(record.entryId)
         }
         return Response.json([...visible])
       }
 
       if (action === HandleAction.ReplicaMutate && request.method === 'POST') {
+        if (forwardMutations && userCtx) {
+          const forwarded = await forwardMutations(request.clone(), userCtx)
+          if (forwarded) return forwarded
+        }
         expectJson()
         const {service, session} = await expectReplica()
         const transaction = parseFieldTransaction(await body)
         return Response.json(
           await service.mutateWith(session, transaction, async () => {
-            return replicaWrite(async () => {
-              const synced = await syncWith(local.source, cnx)
-              await updateReplicaFromSource(
-                service,
-                cms.config,
-                local,
-                context,
-                synced
-              )
+            return sourceWrite(async () => {
+              await syncLocalUnlocked(cnx)
               const prepared = await service.prepareFieldMutation(
                 transaction,
                 session.policy
@@ -317,29 +342,14 @@ export function createHandler({
                   revision: service.revision,
                   conflicts: prepared.conflicts
                 }
-              const preparedRequest = await service.requestSourceMutations(
-                local.source,
+              const sha = await commitMutations(
                 prepared.mutations,
-                session.policy
-              )
-              const changed = await writeSourceMutations(
-                cms.config,
-                local.source,
                 cnx,
-                [...prepared.mutations],
                 session.policy,
-                userCtx!.user,
-                preparedRequest
-              )
-              await updateReplicaFromSource(
-                service,
-                cms.config,
-                local,
-                context,
-                changed
+                commitUser(session, userCtx)
               )
               return {
-                revision: service.revision,
+                revision: sha,
                 conflicts: prepared.conflicts
               }
             })
@@ -348,43 +358,25 @@ export function createHandler({
       }
 
       if (action === HandleAction.ReplicaCommand && request.method === 'POST') {
+        if (forwardMutations && userCtx) {
+          const forwarded = await forwardMutations(request.clone(), userCtx)
+          if (forwarded) return forwarded
+        }
         expectJson()
         const {service, session} = await expectReplica()
         const commands = parseReplicaCommands(await body)
-        return replicaWrite(async () => {
+        return sourceWrite(async () => {
           const mutations = mutationsFromReplicaCommands(commands)
           if (mutations.length === 0)
             return Response.json({revision: service.revision})
-          const synced = await syncWith(local.source, cnx)
-          await updateReplicaFromSource(
-            service,
-            cms.config,
-            local,
-            context,
-            synced
-          )
-          const request = await service.requestSourceMutations(
-            local.source,
+          await syncLocalUnlocked(cnx)
+          const sha = await commitMutations(
             mutations,
-            session.policy
-          )
-          const changed = await writeSourceMutations(
-            cms.config,
-            local.source,
             cnx,
-            mutations,
             session.policy,
-            userCtx!.user,
-            request
+            commitUser(session, userCtx)
           )
-          await updateReplicaFromSource(
-            service,
-            cms.config,
-            local,
-            context,
-            changed
-          )
-          return Response.json({revision: service.revision})
+          return Response.json({revision: sha})
         })
       }
 
@@ -476,56 +468,11 @@ export function createHandler({
         const user = expectUser()
         expectJson()
         const policy = await user.policy
-        let mutations = (await body) as ReadonlyArray<Mutation>
-        await syncLocal(cnx)
-        const adjusted = await hooks.beforeCommit?.({mutations})
-        if (adjusted) mutations = adjusted
-        let changes: ChangesBatch | undefined
-        const attempt = async (retry = 0) => {
-          if (retry > 0) await syncLocal(cnx)
-          const request = {
-            ...(await local.request([...mutations], policy)),
-            user: user.claims
-          }
-          try {
-            let {sha} = await cnx.write(request)
-            if (sha === request.intoSha) {
-              changes = sourceChanges(request)
-              if (replica) await local.source.applyChanges(changes)
-              else await local.write(request)
-            } else {
-              changes = undefined
-              sha = await syncLocal(cnx)
-            }
-            return sha
-          } catch (error) {
-            const isConflict =
-              error instanceof ShaMismatchError ||
-              (error instanceof HttpError && error.code === 409) ||
-              (error instanceof Response && error.status === 409)
-            if (isConflict && retry < 3) return attempt(retry + 1)
-            throw error
-          }
-        }
-        const sha = await attempt()
-        if (replica && changes) {
-          const service = await replica
-          await updateReplicaFromSource(
-            service,
-            cms.config,
-            local,
-            context,
-            changes
-          )
-        }
-        try {
-          await hooks.afterCommit?.({
-            mutations,
-            sha
-          })
-        } catch (error) {
-          console.error('Alinea afterCommit hook failed', error)
-        }
+        const mutations = (await body) as ReadonlyArray<Mutation>
+        const sha = await sourceWrite(async () => {
+          await syncLocalUnlocked(cnx)
+          return commitMutations(mutations, cnx, policy, user.claims)
+        })
         return Response.json({sha})
       }
 
@@ -541,9 +488,12 @@ export function createHandler({
           ...((await body) as CommitRequest),
           user: user.claims
         }
-        let {sha} = await cnx.write(commit)
-        if (sha === commit.intoSha) await local.write(commit)
-        else sha = await local.syncWith(cnx)
+        const sha = await sourceWrite(async () => {
+          const result = await cnx.write(commit)
+          if (result.sha === commit.intoSha) await local.write(commit)
+          else return syncLocalUnlocked(cnx)
+          return result.sha
+        })
         return Response.json({sha})
       }
 
@@ -670,27 +620,63 @@ export function createHandler({
         {status}
       )
     }
-  }
-}
 
-async function writeSourceMutations(
-  config: import('#/core/Config.js').Config,
-  source: import('#/core/source/Source.js').Source,
-  remote: RemoteConnection,
-  mutations: Array<Mutation>,
-  policy: Policy,
-  user: User,
-  prepared?: import('#/core/db/CommitRequest.js').CommitRequest
-): Promise<ChangesBatch> {
-  if (!prepared) throw new Error('Runtime mutation request was not prepared')
-  const request = {...prepared, user}
-  const {sha} = await remote.write(request)
-  if (sha === request.intoSha) {
-    const batch = sourceChanges(request)
-    await source.applyChanges(batch)
-    return batch
+    /** Commit mutations while sourceWrite is held by the caller. */
+    async function commitMutations(
+      requested: ReadonlyArray<Mutation>,
+      cnx: RemoteConnection,
+      policy: Policy,
+      user: User
+    ): Promise<string> {
+      let mutations = requested
+      const adjusted = await hooks.beforeCommit?.({mutations})
+      if (adjusted) mutations = adjusted
+
+      const attempt = async (retry = 0): Promise<string> => {
+        if (retry > 0) await syncLocalUnlocked(cnx)
+        const request = {
+          ...(await local.request([...mutations], policy)),
+          user
+        }
+        try {
+          let {sha} = await cnx.write(request)
+          if (sha === request.intoSha) {
+            const changes = sourceChanges(request)
+            if (replica) {
+              await local.source.applyChanges(changes)
+              await updateReplicaFromSource(
+                await replica,
+                cms.config,
+                local,
+                context,
+                changes
+              )
+            } else {
+              await local.write(request)
+            }
+          } else {
+            sha = await syncLocalUnlocked(cnx)
+          }
+          return sha
+        } catch (error) {
+          const isConflict =
+            error instanceof ShaMismatchError ||
+            (error instanceof HttpError && error.code === 409) ||
+            (error instanceof Response && error.status === 409)
+          if (isConflict && retry < 3) return attempt(retry + 1)
+          throw error
+        }
+      }
+
+      const sha = await attempt()
+      try {
+        await hooks.afterCommit?.({mutations, sha})
+      } catch (error) {
+        console.error('Alinea afterCommit hook failed', error)
+      }
+      return sha
+    }
   }
-  return syncWith(source, remote)
 }
 
 async function updateReplicaFromSource(
@@ -713,8 +699,8 @@ async function updateReplicaFromSource(
     bundleId,
     bundleUrl: replicaBundleUrl(context, bundleId)
   })
-  service.installRuntimeOverlay(runtime.index, bundleId, runtime.bundle)
-  local.refreshRuntime()
+  service.installRuntime(runtime.index, bundleId, runtime.bundle)
+  local.refreshRuntime(service.runtimeStore)
 }
 
 function replicaBundleUrl(context: RequestContext, bundleId: string): string {

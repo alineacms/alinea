@@ -6,7 +6,12 @@ export class IndexEvent extends Event {
 }
 
 export type IndexOp =
-  | {op: 'index'; sha: string; ids: Array<string>; queries?: Array<string>}
+  | {
+      op: 'index'
+      sha: string
+      ids: Array<string>
+      queries?: Array<string> | 'all'
+    }
   | {
       op: 'references'
       scanned: number

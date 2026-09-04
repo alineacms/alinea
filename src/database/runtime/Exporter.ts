@@ -31,8 +31,7 @@ import {
   type RuntimeDatabaseIndex,
   type RuntimeIndexEntry,
   type RuntimeReferenceFrame,
-  type RuntimeSearchFrame,
-  type RuntimeSourceBlob
+  type RuntimeSearchFrame
 } from './Model.js'
 import pLimit from 'p-limit'
 import {
@@ -179,10 +178,6 @@ export async function exportRuntimeSourceChanges(
       }
     }
   })
-  const liveShas = options.tree.shas
-  const blobs: Record<string, RuntimeSourceBlob> = Object.fromEntries(
-    Object.entries(previousSource.blobs).filter(([sha]) => liveShas.has(sha))
-  )
   return {
     index: {
       ...options.previous,
@@ -192,8 +187,7 @@ export async function exportRuntimeSourceChanges(
         treeFrame: {
           decodeKey: sourceTree.decodeKey,
           frame: descriptor(sourceTree.frame)!
-        },
-        blobs
+        }
       },
       development: undefined
     },
@@ -350,12 +344,6 @@ export async function exportRuntimeDatabase(
       )
     )
   )
-  const represented = new Set(prepared.map(item => item.version!.fileHash))
-  const sourceFrames = await prepareSourceFrames(
-    options,
-    source.files,
-    represented
-  )
   const sourceTree = await prepareSourceTreeFrame(
     options,
     source.tree,
@@ -363,7 +351,6 @@ export async function exportRuntimeDatabase(
   )
   const frames = [
     ...prepared.flatMap(item => item.encrypted ?? []),
-    ...sourceFrames.map(item => item.frame),
     sourceTree.frame
   ]
   frames.sort((left, right) => frameOrder(left.id) - frameOrder(right.id))
@@ -394,8 +381,7 @@ export async function exportRuntimeDatabase(
         treeFrame: {
           decodeKey: sourceTree.decodeKey,
           frame: descriptor(sourceTree.frame)!
-        },
-        blobs: sourceBlobs(sourceFrames, descriptors)
+        }
       }
     },
     bundle: packed.contents
@@ -423,56 +409,6 @@ async function prepareSourceTreeFrame(
   }
 }
 
-async function prepareSourceFrames(
-  options: Pick<ExportRuntimeDatabaseOptions, 'bundleId' | 'compression'>,
-  files: ReadonlyMap<string, import('../entry/Source.js').EntrySourceFile>,
-  represented: ReadonlySet<string>
-): Promise<Array<PreparedSourceFrame>> {
-  const blobs = new Map<string, Uint8Array>()
-  for (const file of files.values()) blobs.set(file.sha, file.contents)
-  const shas = [...blobs.keys()].filter(sha => !represented.has(sha))
-  if (shas.length === 0) return []
-  const key = crypto.getRandomValues(new Uint8Array(32))
-  const decodeKey = base64url.stringify(key, {pad: false})
-  const limit = pLimit(32)
-  return Promise.all(
-    shas.map(sha =>
-      limit(async () => {
-        const contents = blobs.get(sha)
-        if (!contents) throw new Error(`Missing source blob "${sha}"`)
-        return {
-          sha,
-          decodeKey,
-          frame: await encryptFrame({
-            bundleId: options.bundleId,
-            id: sourceFrameId(sha),
-            accessClassId: `source:${options.bundleId}`,
-            key,
-            contents,
-            compression: options.compression
-          })
-        }
-      })
-    )
-  )
-}
-
-function sourceBlobs(
-  sources: ReadonlyArray<PreparedSourceFrame>,
-  descriptors: ReadonlyMap<
-    string,
-    import('../replica/Types.js').FrameDescriptor
-  >
-): Record<string, RuntimeSourceBlob> {
-  const blobs: Record<string, RuntimeSourceBlob> = {}
-  for (const source of sources)
-    blobs[source.sha] = {
-      decodeKey: source.decodeKey,
-      frame: serializeFrame(descriptors.get(source.frame.id)!)
-    }
-  return blobs
-}
-
 function dataFrameId(entry: string): string {
   return `data:${entry}`
 }
@@ -483,10 +419,6 @@ function searchFrameId(entry: string): string {
 
 function referenceFrameId(entry: string): string {
   return `references:${entry}`
-}
-
-function sourceFrameId(sha: string): string {
-  return `source:${sha}`
 }
 
 function sourceTreeFrameId(): string {

@@ -126,9 +126,9 @@ source version.
 
 The exact source tree is a server-only, encrypted lazy frame in the payload,
 not part of the boot index. It is opened only by a Source operation. Exact
-source blobs are range-loaded lazily by SHA. Normal entry source bytes are the
-same bytes used by the data frame, so they are not stored twice. The trusted
-server index contains this capability; a policy-filtered browser index omits it.
+entry source bytes are range-loaded lazily by SHA from the same data frames used
+by queries, so they are not stored twice. The trusted server index contains
+this capability; a policy-filtered browser index omits it.
 
 For the generated handler and local server path, the same JSON-compatible value
 is emitted as inline JavaScript and imported with the server bundle. This avoids
@@ -163,7 +163,7 @@ frames. Frames are grouped physically by access pattern:
 [data frame][data frame][data frame] ...
 [search frame][search frame][search frame] ...
 [reference frame][reference frame][reference frame] ...
-[source tree][otherwise-unrepresented source blob frames] ...
+[source tree] ...
 ```
 
 The frame classes are:
@@ -217,9 +217,8 @@ requests without downloading the much larger data section.
 
 Source access returns exact authored bytes rather than reconstructing files from
 normalized data. The source tree maps an entry blob SHA to its data-frame
-position; only blobs not represented by an entry receive a separate server-only
-frame. File paths, hashes, defaults, and authored bytes therefore stay out of
-the startup index while Source semantics remain exact.
+position. File paths, hashes, defaults, and authored bytes therefore stay out
+of the startup index while Source semantics remain exact.
 
 ## Encryption boundary
 
@@ -276,9 +275,12 @@ those bytes are only coalesced while a read is in flight. When synchronization
 replaces a frame, only the old value for that entry and frame class is
 invalidated. Unchanged decoded entries remain hot across index revisions.
 
-The browser persists serialized replica state in IndexedDB. It does not retain a
-second normalized database or cache ciphertext separately; decoded values live
-only in the current worker's ordinary hot cache.
+The browser persists serialized replica state in IndexedDB. Its cache key is
+partitioned by deployment, authenticated user, and policy view; a state from one
+session can therefore never bootstrap another session. The named SharedWorker
+uses the same identity boundary and is replaced when the user or policy view
+changes. It does not retain a second normalized database or cache ciphertext
+separately; decoded values live only in the current worker's ordinary hot cache.
 
 The cache may grow to contain the complete readable database. That is desirable
 for a long-lived server: startup remains cheap and the server becomes faster as
@@ -344,10 +346,12 @@ references must identify related ids before their projections are loaded.
 
 Searchable text is stored in per-entry search frames and is protected by read
 access. On the first full-content search for a view, the runtime loads its
-permitted search frames, creates one MiniSearch instance, and retains it. Later
-entry changes add, replace, or remove only their corresponding MiniSearch
-documents when the search subsystem is already hot. Otherwise those updates are
-deferred until the first search.
+permitted search frames, creates one MiniSearch instance, and retains it for
+that runtime revision. Request-scoped previews temporarily replace only their
+corresponding document. Installing a new runtime revision creates a new
+resolver; decoded unchanged search frames stay hot, but the aggregate
+MiniSearch instance is rebuilt on the next search. Updating that aggregate
+entry by entry across revisions is a later optimization.
 
 MiniSearch can serialize and restore an index with `toJSON`, `loadJSON`, and
 `loadJSONAsync`. An exported aggregate index is not the initial format because
@@ -364,8 +368,9 @@ load or expose full-content search frames.
 Each reference frame contains the outgoing references derived from one entry.
 `referencesFrom` therefore loads at most one reference frame. The first
 `referencesTo` query may load the permitted reference section and construct an
-in-memory reverse map. The reverse map remains hot and is updated entry by entry
-as reference frames change.
+in-memory reverse map. It remains hot for that runtime revision. Installing a
+new revision retains decoded unchanged reference frames, but the next
+`referencesTo` call rebuilds the aggregate reverse map.
 
 This defers global reference work until a feature needs it and avoids a
 persistent reference index in the base JSON. If first-use reference cost proves
@@ -387,7 +392,8 @@ an overlay containing:
 - a replacement data frame when fields changed;
 - a replacement search frame when searchable content changed;
 - a replacement reference frame when outgoing references changed;
-- exact changed source blobs and the updated source tree.
+- replacement data frames, which also preserve exact authored source bytes,
+  and the updated source tree.
 
 Changed ciphertext is appended to a small delta bundle. Frame descriptors can
 point to either the deployed bundle or a delta bundle, so unchanged entries keep
@@ -403,20 +409,39 @@ live decoded overlay
 
 The reconciler retains decoded entries whose frame descriptors did not change.
 Changed entries are encrypted once and decoded lazily if the accepting handler
-queries them again.
+queries them again. The handler retains a small bounded tail of retired delta
+bundles so a query already in flight can finish while a newer revision is being
+installed; older bundles, obsolete loader grants, and settled transaction ids
+are pruned.
 
-Entry-sized live delta bundles are included as ciphertext in the filtered state
-response. This makes them independent of the particular handler instance that
-answered synchronization: another serverless instance does not need the first
-instance's memory in order for the replica to read the change. Receipt and
-storage happen during synchronization, but JSON parsing and decryption remain
-lazy until a query needs the data, search, or reference frame. The large
-immutable base bundle is never included and remains a static range source.
+Entry-sized live delta bundles are compacted and included as ciphertext in the
+filtered state response. Only authorized data, search, and reference frames are
+copied; the source tree stays server-side. This makes entry
+frames independent of the particular handler instance that answered
+synchronization: another serverless instance does not need the first instance's
+memory in order for the replica to read the change. Receipt and storage happen
+during synchronization, but JSON parsing and decryption remain lazy until a
+query needs the data, search, or reference frame. The large immutable base
+bundle is never included and remains a static range source.
 
-### Selective index synchronization
+### Index synchronization
 
-A replica sends its known revision. The handler returns a policy-filtered,
-entry-level patch:
+A replica sends both its known content revision and policy view id. The handler
+returns `204` only when both still match, which prevents an authenticated view
+change from being mistaken for unchanged content.
+
+The current implementation returns a complete filtered index when either value
+changes. This is deliberate: the real 11,000-entry index is roughly 4.5 MB,
+while a
+complete snapshot keeps authorization, additions, removals, and access changes
+atomic and simple. Installing it does not discard hot decoded frames; descriptor
+identity preserves unchanged cached data. The client compares old and new rows
+to report exact changed logical entry ids, while conservatively invalidating its
+observed queries because an added row can affect a result without having been a
+previous dependency.
+
+If measurements show index synchronization bandwidth to be material, the next
+compatible optimization is a policy-filtered entry-level patch:
 
 ```ts
 interface IndexDelta {
@@ -442,11 +467,9 @@ subsystem observes the new descriptors when it is eventually used. Small live
 overlay ciphertext may accompany the state atomically, but a hot data, search,
 or reference subsystem decrypts only the changed frames it actually uses.
 
-For the first implementation, returning a complete filtered index on revision
-change is an acceptable simplification because the index is small and compresses
-well. Entry-level deltas should replace that only when measured synchronization
-frequency or bandwidth justifies them. Payload frames remain selective and lazy
-in either case.
+Payload frames remain selective and lazy in either form. A delta should replace
+the snapshot only when measured synchronization frequency or bandwidth
+justifies the extra retained-history and recovery protocol.
 
 After too many overlays accumulate, the handler can publish a compacted current
 index and bundle. Compaction is background work and is never part of database
@@ -527,20 +550,28 @@ in `@alinea/generated`.
 
 The Next runtime validates that complete binding before opening the generated
 database. Missing variables produce a descriptive error that instructs the user
-to wrap `next.config` with `withAlinea` and rebuild. A release id or payload URL
-that does not match the inline runtime index is treated as a stale build and
-also fails before any payload read.
+to wrap `next.config` with `withAlinea` and rebuild. A payload URL that does not
+match the inline runtime index is treated as a stale build and also fails before
+any payload read.
 
 `with-alinea` places the unique release id in server configuration/environment
-and constructs the public payload URL from it. The release id and generated
-index import must remain server-only so framework bundlers do not expose them in
-unrelated client code. The payload URL is disclosed to an authenticated browser
-only together with its filtered index and permitted decode keys.
+and constructs the public payload URL from it. This deployment release id is
+independent from the index's cryptographic `bundleId`. Reusing a complete runtime
+export preserves `bundleId` because it is authenticated as AES-GCM additional
+data; only its transport `bundleUrl` is rebound to the deployment URL. The
+release id and generated index import must remain server-only so framework
+bundlers do not expose them in unrelated client code. The payload URL is
+disclosed to an authenticated browser only together with its filtered index and
+permitted decode keys.
 
 An `HttpReplicaTransport` or equivalent provides the same logical view to a
 remote server or browser. The handler remains responsible for authentication,
 policy evaluation, synchronization, and mutations, while permitted static
 payload ranges may be read directly from static hosting or a CDN.
+
+The Next server runtime also reads the base payload through that public HTTP URL.
+It does not assume that the deployment exposes `public` as a local filesystem;
+platforms may serve those bytes from a separate static host or CDN.
 
 As a Node deployment optimization, `with-alinea` can emit an exact
 `outputFileTracingIncludes` entry for the generated payload. This lets the
@@ -611,17 +642,17 @@ The branch now implements the consolidated server read path:
   source a second time; seed, fix, or source changes invalidate that reusable
   artifact and take the consolidating export path;
 - the Next.js local database opens the runtime index directly and reads payload
-  byte ranges from the generated file;
+  byte ranges from its public HTTP bundle URL;
 - `SourceDB` can boot directly over the runtime store and implements `Source`
   without reading payload frames;
-- entry data, searchable text, outgoing references, and otherwise-unrepresented
-  source blobs are independently encrypted and range-addressable;
+- entry data, searchable text, and outgoing references are independently
+  encrypted and range-addressable;
 - authored entry JSON is shared by the data and exact-source views instead of
   being duplicated in the bundle;
 - core-only queries and counts read no payload data, projection-only data is
   loaded after pagination, and batch reads coalesce adjacent frames;
-- MiniSearch and the incoming-reference map are built only on first use and are
-  retained; decoded entries and auxiliary objects remain hot;
+- MiniSearch and the incoming-reference map are built only on first use per
+  revision; decoded unchanged entry, search, and reference frames remain hot;
 - preview uses a request-scoped entry value and no longer rebuilds the database;
 - stored and inherited effective statuses remain separate throughout the index,
   preview, query, and Source paths;
@@ -629,14 +660,16 @@ The branch now implements the consolidated server read path:
   filesystem scan from stored fingerprints, skips normalization when unchanged,
   and reconciles all filesystem changes as runtime overlays;
 - dashboard writes run `EntryTransaction` against the ordinary lazy graph and
-  open only payloads selected by its queries;
+  open only payloads selected by its queries; independent content updates share
+  one transaction, while structurally dependent changes use the exact
+  sequential fallback;
 - source synchronization from dashboard writes, GitHub, and the development
   filesystem shares one tree-diff reconciler that parses only changed blobs,
   recomputes hierarchy from lightweight index metadata, and reuses unchanged
   encrypted frames;
-- policy-filtered replica state carries entry-sized live overlay ciphertext, so
-  lazy reads remain valid across handler instances without embedding the large
-  immutable base;
+- policy-filtered replica state carries compact authorized entry-sized live
+  overlay ciphertext, so lazy reads remain valid across handler instances
+  without embedding the large immutable base or server-only source frames;
 - the Next runtime validates the generated environment and reports a missing
   `withAlinea` wrapper or stale release binding before opening payload data.
 
@@ -644,8 +677,9 @@ The dashboard replica and RSC synchronization paths now install the same runtime
 index representation without eagerly opening payload frames. Handler source
 synchronization compares source trees first; an unchanged revision does no
 database work. A changed revision scans the compact index, parses only changed
-source blobs, and emits replacement data, search, reference, and source frames
-only for those files. Structural consequences such as inherited archive status
+source entry blobs, and emits replacement data, search, and reference frames only for
+those files, plus the updated source-tree frame. Structural consequences such
+as inherited archive status
 are recomputed from index metadata without opening unchanged payloads.
 Already-decoded unchanged entries remain hot.
 

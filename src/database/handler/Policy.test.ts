@@ -4,7 +4,7 @@ import {role} from '#/core/Role.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
 import {DatabaseResolver} from '../query/Resolver.js'
-import {evaluateRolePolicy, roleFingerprint} from './Policy.js'
+import {evaluateRolePolicy, policyFingerprint} from './Policy.js'
 import {createRuntimeStore} from '#test/EntryFixture.js'
 
 describe('evaluateRolePolicy', () => {
@@ -33,6 +33,6 @@ describe('evaluateRolePolicy', () => {
 
     expect(policy.canRead({id: 'oi4qtV9YaXNRIUDT2s61Y'})).toBe(true)
     expect(policy.canRead({id: '2cGLQZvsCCxnguLrwCfPDL8uFkm'})).toBe(false)
-    expect(roleFingerprint(['editor', 'admin', 'editor'])).toBe('admin\0editor')
+    expect(await policyFingerprint(policy)).toMatch(/^[0-9a-f]{40}$/)
   })
 })

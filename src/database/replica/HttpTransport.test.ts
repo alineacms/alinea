@@ -7,7 +7,6 @@ describe('HttpReplicaTransport', () => {
   test('loads authenticated bootstrap and deserializes state', async () => {
     const state: ReplicaState = {
       viewId: 'editor',
-      recordAccess: {},
       runtime: {
         bundleId: 'release-1',
         bundleUrl: '/secret/database.bin',
@@ -16,14 +15,21 @@ describe('HttpReplicaTransport', () => {
       }
     }
     const actions: Array<string | null> = []
+    let stateCursor: {revision: string | null; view: string | null} | undefined
     const fetch = Object.assign(
       async function fetch(input: URL | RequestInfo) {
         const url = new URL(String(input))
         const action = url.searchParams.get('action')
         actions.push(action)
+        if (action === 'replicaState')
+          stateCursor = {
+            revision: url.searchParams.get('revision'),
+            view: url.searchParams.get('view')
+          }
         if (action === 'replicaBootstrap')
           return Response.json({
             user: {id: 'user-1', roles: ['editor']},
+            viewId: 'editor',
             configId: 'config-1',
             configUrl: '/secret/config.js',
             cacheKey: 'cache-1',
@@ -42,7 +48,10 @@ describe('HttpReplicaTransport', () => {
     })
 
     expect((await transport.bootstrap()).configId).toBe('config-1')
-    expect(await transport.state()).toEqual(state)
+    expect(
+      await transport.state({revision: 'tree-0', viewId: 'editor'})
+    ).toEqual(state)
+    expect(stateCursor).toEqual({revision: 'tree-0', view: 'editor'})
     expect(await transport.eligible('{"filter":{}}')).toEqual(['entry-a'])
     expect(
       await transport.command([{kind: 'removeEntry', id: 'entry-a'}])

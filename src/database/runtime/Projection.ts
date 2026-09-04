@@ -1,31 +1,21 @@
 import type {EntryAccessPolicy, EntrySyncAccess} from '../entry/Access.js'
-import {selectEntryForSync} from '../entry/Access.js'
+import {entrySyncAccess} from '../entry/Access.js'
 import type {RuntimeDatabaseIndex, RuntimeIndexEntry} from './Model.js'
 
-export interface RuntimeDatabaseView {
-  index: RuntimeDatabaseIndex
-  access: Readonly<Record<string, Exclude<EntrySyncAccess, 'none'>>>
-}
-
-export function projectRuntimeDatabase(
+export function createRuntimeView(
   index: RuntimeDatabaseIndex,
   policy: EntryAccessPolicy
-): RuntimeDatabaseView {
-  const access: Record<string, Exclude<EntrySyncAccess, 'none'>> = {}
+): RuntimeDatabaseIndex {
   const entries = index.entries.flatMap(entry => {
-    const selection = selectEntryForSync(policy, entry)
-    if (selection.access === 'none') return []
-    access[entry.id] = selection.access
-    return [projectEntry(entry, selection.access)]
+    const access = entrySyncAccess(policy, entry)
+    if (access === 'none') return []
+    return [projectEntry(entry, access)]
   })
   return {
-    index: {
-      ...index,
-      entries,
-      source: undefined,
-      development: undefined
-    },
-    access
+    ...index,
+    entries,
+    source: undefined,
+    development: undefined
   }
 }
 

@@ -29,6 +29,22 @@ describe('DatabaseResolver', () => {
       expect((await current.resolve(query)).length).toBeGreaterThan(0)
   })
 
+  test('combines top-level boolean filters', async () => {
+    expect(
+      await current.resolve({
+        filter: {
+          or: [
+            {title: 'Chocolate chip'},
+            {
+              and: [{_type: 'DemoRecipe'}, {title: 'Gingerbread'}]
+            }
+          ]
+        },
+        select: Entry.title
+      })
+    ).toEqual(['Gingerbread', 'Chocolate chip'])
+  })
+
   test('selects fields and nested objects', async () => {
     expect(
       await current.resolve({
@@ -126,6 +142,100 @@ describe('DatabaseResolver', () => {
       title: 'Chocolate chip preview',
       id: 'oi4qtV9YaXNRIUDT2s61Y'
     })
+  })
+
+  test('stages preview core changes without loading candidate payloads', async () => {
+    const entry = await current.resolve({
+      id: 'oi4qtV9YaXNRIUDT2s61Y',
+      select: Entry,
+      first: true
+    })
+    const previewTitle = 'A preview recipe'
+    const previewUrl = '/preview-recipe'
+    const preview = {
+      entry: {
+        ...entry!,
+        fileHash: 'preview',
+        url: previewUrl,
+        data: {...entry!.data, title: previewTitle}
+      }
+    }
+    const tracked = trackingStore(store)
+    const resolver = new DatabaseResolver(cms.config, tracked.store)
+
+    expect(
+      await resolver.resolve({
+        type: DemoRecipe,
+        preview,
+        select: Entry.id
+      })
+    ).toHaveLength(4)
+    expect(
+      await resolver.resolve({
+        filter: {title: previewTitle},
+        preview,
+        select: Entry.id
+      })
+    ).toEqual([entry!.id])
+    expect(
+      await resolver.resolve({
+        filter: {title: entry!.title},
+        preview,
+        select: Entry.id
+      })
+    ).toEqual([])
+    expect(
+      await resolver.resolve({
+        url: previewUrl,
+        preview,
+        select: Entry.id
+      })
+    ).toEqual([entry!.id])
+    expect(
+      await resolver.resolve({
+        url: entry!.url,
+        preview,
+        select: Entry.id
+      })
+    ).toEqual([])
+    expect(
+      await resolver.resolve({
+        type: DemoRecipe,
+        orderBy: {asc: Entry.title},
+        take: 1,
+        preview,
+        select: {id: Entry.id, intro: DemoRecipe.intro}
+      })
+    ).toEqual([{id: entry!.id, intro: entry!.data.intro}])
+    expect(tracked.dataLoads()).toBe(0)
+  })
+
+  test('reuses the hot search index for preview queries', async () => {
+    const entry = await current.resolve({
+      id: 'oi4qtV9YaXNRIUDT2s61Y',
+      select: Entry,
+      first: true
+    })
+    const tracked = trackingStore(store)
+    const resolver = new DatabaseResolver(cms.config, tracked.store)
+    await resolver.resolve({search: 'chocolate', select: Entry.id})
+    const warmLoads = tracked.searchLoads()
+    const preview = {
+      entry: {
+        ...entry!,
+        fileHash: 'preview',
+        data: {...entry!.data, title: 'Quasar recipe'}
+      }
+    }
+
+    expect(
+      await resolver.resolve({
+        search: 'quasar',
+        preview,
+        select: Entry.id
+      })
+    ).toEqual([entry!.id])
+    expect(tracked.searchLoads()).toBe(warmLoads)
   })
 
   test('does not load payloads for index-only projections and counts', async () => {
@@ -274,10 +384,13 @@ describe('DatabaseResolver', () => {
 function trackingStore(source: EntryStore): {
   store: EntryStore
   dataLoads(): number
+  searchLoads(): number
 } {
   let dataLoads = 0
+  let searchLoads = 0
   return {
     dataLoads: () => dataLoads,
+    searchLoads: () => searchLoads,
     store: {
       revision: source.revision,
       cores: signal => source.cores(signal),
@@ -289,9 +402,14 @@ function trackingStore(source: EntryStore): {
         dataLoads += cores.length
         return source.loadMany(cores, signal)
       },
-      search: (core, audience, signal) => source.search(core, audience, signal),
-      searchMany: (cores, audience, signal) =>
-        source.searchMany(cores, audience, signal),
+      search(core, audience, signal) {
+        searchLoads++
+        return source.search(core, audience, signal)
+      },
+      searchMany(cores, audience, signal) {
+        searchLoads += cores.length
+        return source.searchMany(cores, audience, signal)
+      },
       referencesTo: (targetId, signal) => source.referencesTo(targetId, signal),
       referencesFrom: (sourceId, signal) =>
         source.referencesFrom(sourceId, signal)

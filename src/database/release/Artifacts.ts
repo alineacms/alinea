@@ -9,6 +9,7 @@ import {
 export interface BuildEntryReleaseOptions {
   releaseId: string
   configId: string
+  /** Complete single-bundle export whose cryptographic bundle id is retained. */
   runtime?: RuntimeDatabaseExport
 }
 
@@ -38,6 +39,9 @@ export async function buildEntryReleaseArtifacts(
       bundleUrl: payloadUrl,
       source
     }))
+  // bundleId is authenticated as AES-GCM additional data and cannot be
+  // rewritten without re-encrypting every frame. bundleUrl is only a transport
+  // locator, so a complete reused bundle can safely be published at a new URL.
   const runtime =
     generated.index.bundleUrl === payloadUrl
       ? generated

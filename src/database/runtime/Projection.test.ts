@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'bun:test'
 import type {EntryAccessPolicy} from '../entry/Access.js'
 import type {RuntimeDatabaseIndex, RuntimeIndexEntry} from './Model.js'
-import {projectRuntimeDatabase} from './Projection.js'
+import {createRuntimeView} from './Projection.js'
 
 function entry(id: string, parentId: string | null = null): RuntimeIndexEntry {
   return {
@@ -53,17 +53,13 @@ test('projects readable and explorable runtime rows without source access', () =
     }
   }
 
-  const view = projectRuntimeDatabase(index, policy)
+  const view = createRuntimeView(index, policy)
 
-  expect(view.index.source).toBeUndefined()
-  expect(view.index.entries[0].frames?.decodeKey).toBe('key-readable')
-  expect(view.index.entries[1].frames).toBeUndefined()
-  expect(view.index.entries[1]).toMatchObject({
+  expect(view.source).toBeUndefined()
+  expect(view.entries[0].frames?.decodeKey).toBe('key-readable')
+  expect(view.entries[1].frames).toBeUndefined()
+  expect(view.entries[1]).toMatchObject({
     versionStatus: 'published',
     status: 'archived'
-  })
-  expect(view.access).toEqual({
-    'entry:readable': 'read',
-    'entry:explorable': 'explore'
   })
 })

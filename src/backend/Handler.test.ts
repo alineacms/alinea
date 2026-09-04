@@ -16,6 +16,9 @@ import {Config} from '#/index.js'
 import {ReplicaService} from '#/database/handler/Service.js'
 import type {RuntimeDatabaseIndex} from '#/database/runtime/Model.js'
 import {RuntimeEntryStore} from '#/database/runtime/Store.js'
+import {MemoryRangeSource} from '#/database/replica/Bundle.js'
+import {createEntrySource} from '#test/EntryFixture.js'
+import {exportRuntimeDatabase} from '#/database/runtime/Exporter.js'
 import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
@@ -1031,10 +1034,8 @@ test('serves replica bootstrap and state only after authentication', async () =>
     requestContext()
   )
   test.is(bootstrap.status, 200)
-  test.is(
-    (await bootstrap.json()).configUrl,
-    '/admin/config/config-1/client-config.js'
-  )
+  const bootstrapData = await bootstrap.json()
+  test.is(bootstrapData.configUrl, '/admin/config/config-1/client-config.js')
   const state = await handle(
     new Request('http://localhost/api?action=replicaState', {
       headers: {accept: 'application/json'}
@@ -1043,10 +1044,12 @@ test('serves replica bootstrap and state only after authentication', async () =>
   )
   test.is(state.status, 200)
   test.is((await state.json()).runtime.revision, 'tree-1')
+  const unchangedUrl = new URL('http://localhost/api')
+  unchangedUrl.searchParams.set('action', 'replicaState')
+  unchangedUrl.searchParams.set('revision', 'tree-1')
+  unchangedUrl.searchParams.set('view', bootstrapData.viewId)
   const unchanged = await handle(
-    new Request('http://localhost/api?action=replicaState&revision=tree-1', {
-      headers: {accept: 'application/json'}
-    }),
+    new Request(unchangedUrl, {headers: {accept: 'application/json'}}),
     requestContext()
   )
   test.is(unchanged.status, 204)
@@ -1076,8 +1079,26 @@ test('serves replica bootstrap and state only after authentication', async () =>
   )
   test.is(command.status, 200)
   test.is((await command.json()).revision, replica.revision)
-  replica.installRuntimeOverlay(
-    runtime,
+  replica.installRuntime(
+    {
+      ...runtime,
+      revision: 'tree-2',
+      source: {
+        treeFrame: {
+          decodeKey: 'source-key',
+          frame: {
+            id: 'source-tree',
+            accessClassId: 'source',
+            bundleId: 'overlay-1',
+            bundleUrl: '/api?action=replicaBundle&bundle=overlay-1',
+            offset: 0,
+            length: 4,
+            nonce: new Uint8Array(),
+            compression: 'none'
+          }
+        }
+      }
+    },
     'overlay-1',
     new Uint8Array([0, 1, 2, 3])
   )
@@ -1089,6 +1110,168 @@ test('serves replica bootstrap and state only after authentication', async () =>
   )
   test.is(range.status, 206)
   test.equal(new Uint8Array(await range.arrayBuffer()), new Uint8Array([1, 2]))
+})
+
+test('runs commit hooks for replica commands', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    roles: {
+      admin: role('Admin', {
+        permissions(policy) {
+          policy.set({allow: {all: true}})
+        }
+      })
+    }
+  })
+  const db = new SourceDB(cms.config)
+  await db.sync()
+  const runtime = db.runtimeExport!
+  const store = new RuntimeEntryStore({
+    index: runtime.index,
+    source: () => new MemoryRangeSource(runtime.bundle)
+  })
+  const replica = new ReplicaService({
+    config: cms.config,
+    configId: 'config-1',
+    configUrl: '/config.js',
+    cacheKey: 'runtime:test',
+    runtime: runtime.index,
+    store
+  })
+  const calls: Array<string> = []
+  const handle = createHandler({
+    cms,
+    db,
+    replica,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          return {sha: request.intoSha}
+        }
+      })
+    },
+    beforeCommit({mutations}) {
+      calls.push('before')
+      return mutations.map(mutation =>
+        mutation.op === 'create'
+          ? {...mutation, data: {...mutation.data, title: 'From hook'}}
+          : mutation
+      )
+    },
+    afterCommit() {
+      calls.push('after')
+    }
+  })
+  const response = await handle(
+    new Request('http://localhost/api?action=replicaCommand', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify([
+        {
+          kind: 'createEntry',
+          id: 'replica-entry',
+          type: 'Page',
+          locale: null,
+          data: {title: 'Original'}
+        }
+      ])
+    }),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.equal(calls, ['before', 'after'])
+  test.is(
+    (await db.first({id: 'replica-entry', select: Entry}))?.data.title,
+    'From hook'
+  )
+})
+
+test('applies replica eligibility before client-side pagination', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    roles: {
+      admin: role('Admin', {
+        permissions(policy) {
+          policy.set({allow: {all: true}})
+        }
+      })
+    }
+  })
+  const source = await createEntrySource(
+    cms.config,
+    ['one', 'two', 'three'].map((id, index) => ({
+      id,
+      type: 'Page',
+      index: `a${index}`,
+      workspace: 'main',
+      root: 'pages',
+      path: id,
+      data: {title: id}
+    }))
+  )
+  const runtime = await exportRuntimeDatabase({
+    config: cms.config,
+    source,
+    bundleId: 'eligibility',
+    bundleUrl: '/payload.bundle',
+    compression: 'none'
+  })
+  const store = new RuntimeEntryStore({
+    index: runtime.index,
+    source: () => new MemoryRangeSource(runtime.bundle)
+  })
+  const db = new SourceDB(cms.config, source, store)
+  const replica = new ReplicaService({
+    config: cms.config,
+    configId: 'config-1',
+    configUrl: '/config.js',
+    cacheKey: 'runtime:test',
+    runtime: runtime.index,
+    store
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    replica,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const response = await handle(
+    new Request('http://localhost/api?action=replicaEligible', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({skip: 1, take: 1, status: 'all'})
+    }),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.equal(new Set(await response.json()), new Set(['one', 'two', 'three']))
 })
 
 function userRequest(operation: string): Request {

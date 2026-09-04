@@ -8,58 +8,20 @@ export interface EntryAccessPolicy {
   canRead(resource?: Resource): boolean
 }
 
-export interface EntrySyncSelection {
-  access: EntrySyncAccess
-  syncCore: boolean
-  syncReadMetadata: boolean
-  syncPayload: boolean
-  searchAudience: 'none' | 'explore' | 'read'
-}
-
 /**
  * Converts the effective Role policy into the data tiers that may be granted
  * to a client. Explore is enough for picker-safe structural data, never for the
  * entry payload or search text derived from that payload.
  */
-export function selectEntryForSync(
+export function entrySyncAccess(
   policy: EntryAccessPolicy,
   entry: EntryCoreRecord
-): EntrySyncSelection {
-  if (!entry.queryable) {
-    return {
-      access: 'none',
-      syncCore: false,
-      syncReadMetadata: false,
-      syncPayload: false,
-      searchAudience: 'none'
-    }
-  }
+): EntrySyncAccess {
+  if (!entry.queryable) return 'none'
   const resource = entryResource(entry)
-  if (policy.canRead(resource)) {
-    return {
-      access: 'read',
-      syncCore: true,
-      syncReadMetadata: true,
-      syncPayload: true,
-      searchAudience: 'read'
-    }
-  }
-  if (policy.canExplore(resource)) {
-    return {
-      access: 'explore',
-      syncCore: true,
-      syncReadMetadata: false,
-      syncPayload: false,
-      searchAudience: 'explore'
-    }
-  }
-  return {
-    access: 'none',
-    syncCore: false,
-    syncReadMetadata: false,
-    syncPayload: false,
-    searchAudience: 'none'
-  }
+  if (policy.canRead(resource)) return 'read'
+  if (policy.canExplore(resource)) return 'explore'
+  return 'none'
 }
 
 export function entryResource(entry: EntryCoreRecord): Resource {

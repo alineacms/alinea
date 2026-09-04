@@ -166,18 +166,22 @@ export class BundleFrameLoader implements FrameLoader {
       this.#keys.set(accessClassId, importFrameKey(key, ['decrypt']))
   }
 
+  retainGrants(accessClassIds: ReadonlySet<AccessClassId>): void {
+    for (const accessClassId of this.#keys.keys())
+      if (!accessClassIds.has(accessClassId)) this.#keys.delete(accessClassId)
+  }
+
   async load(
     frame: FrameDescriptor,
     signal?: AbortSignal
   ): Promise<Uint8Array> {
-    if (!this.#keys.has(frame.accessClassId))
-      throw new MissingFrameGrantError(frame.accessClassId)
+    const key = this.#key(frame.accessClassId)
     const ciphertext = await this.#source.read(
       frame.offset,
       frame.length,
       signal
     )
-    return this.#decrypt(frame, ciphertext)
+    return this.#decrypt(frame, ciphertext, key)
   }
 
   async loadMany(
@@ -185,9 +189,9 @@ export class BundleFrameLoader implements FrameLoader {
     signal?: AbortSignal
   ): Promise<ReadonlyMap<FrameId, Uint8Array>> {
     signal?.throwIfAborted()
-    for (const frame of frames)
-      if (!this.#keys.has(frame.accessClassId))
-        throw new MissingFrameGrantError(frame.accessClassId)
+    const keys = new Map(
+      frames.map(frame => [frame.id, this.#key(frame.accessClassId)] as const)
+    )
     const ciphertext = new Map<FrameId, Uint8Array>()
     const missing: Array<FrameDescriptor> = []
     missing.push(...frames)
@@ -219,7 +223,10 @@ export class BundleFrameLoader implements FrameLoader {
             const value = ciphertext.get(frame.id)
             if (!value)
               throw new BundleIntegrityError(`Missing frame "${frame.id}"`)
-            return [frame.id, await this.#decrypt(frame, value)] as const
+            return [
+              frame.id,
+              await this.#decrypt(frame, value, keys.get(frame.id)!)
+            ] as const
           })
         )
       )
@@ -228,10 +235,9 @@ export class BundleFrameLoader implements FrameLoader {
 
   async #decrypt(
     frame: FrameDescriptor,
-    ciphertext: Uint8Array
+    ciphertext: Uint8Array,
+    pendingKey: Promise<CryptoKey>
   ): Promise<Uint8Array> {
-    const pendingKey = this.#keys.get(frame.accessClassId)
-    if (!pendingKey) throw new MissingFrameGrantError(frame.accessClassId)
     if (ciphertext.length !== frame.length)
       throw new BundleIntegrityError(`Incomplete frame "${frame.id}"`)
     const key = await pendingKey
@@ -251,6 +257,12 @@ export class BundleFrameLoader implements FrameLoader {
       ciphertext as BufferSource
     )
     return decompress(new Uint8Array(decrypted), frame.compression)
+  }
+
+  #key(accessClassId: AccessClassId): Promise<CryptoKey> {
+    const key = this.#keys.get(accessClassId)
+    if (!key) throw new MissingFrameGrantError(accessClassId)
+    return key
   }
 }
 

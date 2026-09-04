@@ -9,6 +9,7 @@ import {dispense} from './utils.js'
 
 interface IndexState {
   sha?: string
+  queryRevision?: string
   entryRevisions: ReadonlyMap<string, string>
   queryRevisions: ReadonlyMap<string, string>
 }
@@ -31,9 +32,17 @@ const indexStateAtom = Object.assign(
           const entryRevisions = new Map(current.entryRevisions)
           for (const id of data.ids) entryRevisions.set(id, data.sha)
           const queryRevisions = new Map(current.queryRevisions)
-          for (const query of data.queries ?? [])
-            queryRevisions.set(query, data.sha)
-          return {sha: data.sha, entryRevisions, queryRevisions}
+          if (data.queries === 'all') queryRevisions.clear()
+          else
+            for (const query of data.queries ?? [])
+              queryRevisions.set(query, data.sha)
+          return {
+            sha: data.sha,
+            queryRevision:
+              data.queries === 'all' ? data.sha : current.queryRevision,
+            entryRevisions,
+            queryRevisions
+          }
         })
       }
       events.addEventListener(IndexEvent.type, listen)
@@ -56,7 +65,10 @@ export const entryRevisionAtom = dispense((id: string) =>
 )
 
 export const queryRevisionAtom = dispense((query: string) =>
-  selectAtom(indexStateAtom, state => state.queryRevisions.get(query))
+  selectAtom(
+    indexStateAtom,
+    state => state.queryRevisions.get(query) ?? state.queryRevision
+  )
 )
 
 export function trackedQuery<Query extends GraphQuery>(

@@ -109,3 +109,40 @@ test('coalesces adjacent frame reads', async () => {
     ['one', 'two', 'three']
   )
 })
+
+test('finishes an in-flight read after its grant is retired', async () => {
+  const key = new Uint8Array(32).fill(29)
+  const encrypted = await encryptFrame({
+    bundleId: 'release-1',
+    id: 'entry-a',
+    accessClassId: 'editors',
+    key,
+    contents: encoder.encode('Content'),
+    compression: 'none'
+  })
+  const bundle = packEncryptedFrames([encrypted])
+  let release!: () => void
+  const ready = new Promise<void>(resolve => {
+    release = resolve
+  })
+  const loader = new BundleFrameLoader(
+    'release-1',
+    {
+      async read(offset, length) {
+        await ready
+        return bundle.contents.slice(offset, offset + length)
+      }
+    },
+    [{accessClassId: 'editors', key}]
+  )
+
+  const loading = loader.load(bundle.frames[0])
+  loader.retainGrants(new Set())
+  release()
+
+  test.equal(decoder.decode(await loading), 'Content')
+  await test.throws(
+    () => loader.load(bundle.frames[0]),
+    'Missing grant for access class "editors"'
+  )
+})

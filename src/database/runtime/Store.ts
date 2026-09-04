@@ -84,7 +84,19 @@ export class RuntimeEntryStore implements EntryStore, Source {
     }
     const liveData = new Set<string>()
     const liveDecoded = new Set<string>()
+    const liveFrames = new Set<string>()
     const liveKeys = new Set<string>()
+    const liveLoaders = new Map<string, Set<string>>()
+    const retainFrame = (
+      frame: SerializedFrameDescriptor,
+      accessClassId: string
+    ) => {
+      liveFrames.add(frameCacheKey(frame))
+      const key = loaderCacheKey(index, frame)
+      const grants = liveLoaders.get(key) ?? new Set<string>()
+      grants.add(accessClassId)
+      liveLoaders.set(key, grants)
+    }
     for (const entry of index.entries) {
       const frames = entry.frames
       if (!frames) continue
@@ -93,19 +105,37 @@ export class RuntimeEntryStore implements EntryStore, Source {
         const key = frameCacheKey(frames.data)
         liveData.add(key)
         liveDecoded.add(key)
+        retainFrame(frames.data, readAccessClass(entry.id))
       }
-      if (frames.search) liveDecoded.add(frameCacheKey(frames.search))
-      if (frames.references) liveDecoded.add(frameCacheKey(frames.references))
+      if (frames.search) {
+        liveDecoded.add(frameCacheKey(frames.search))
+        retainFrame(frames.search, readAccessClass(entry.id))
+      }
+      if (frames.references) {
+        liveDecoded.add(frameCacheKey(frames.references))
+        retainFrame(frames.references, readAccessClass(entry.id))
+      }
     }
-    for (const source of Object.values(index.source?.blobs ?? {}))
+    if (index.source?.treeFrame) {
+      const source = index.source.treeFrame
       liveKeys.add(source.decodeKey)
-    if (index.source?.treeFrame) liveKeys.add(index.source.treeFrame.decodeKey)
+      const bundleId = source.frame.bundleId ?? index.bundleId
+      retainFrame(source.frame, `source:${bundleId}`)
+    }
     for (const key of this.#entryData.keys())
       if (!liveData.has(key)) this.#entryData.delete(key)
     for (const key of this.#decoded.keys())
       if (!liveDecoded.has(key)) this.#decoded.delete(key)
+    for (const key of this.#pendingBytes.keys())
+      if (!liveFrames.has(key)) this.#pendingBytes.delete(key)
     for (const key of this.#keys.keys())
       if (!liveKeys.has(key)) this.#keys.delete(key)
+    for (const [key, loader] of this.#loaders) {
+      const grants = liveLoaders.get(key)
+      if (!grants) this.#loaders.delete(key)
+      else loader.retainGrants(grants)
+    }
+    if (index.source) this.#sourceOverlay.clear()
   }
 
   async cores(signal?: AbortSignal): Promise<ReadonlyArray<EntryCoreRecord>> {
@@ -143,12 +173,11 @@ export class RuntimeEntryStore implements EntryStore, Source {
     shas: Array<string>
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     const source = this.#index.source
-    if (!source) throw new Error('Runtime index has no source blobs')
+    if (!source) throw new Error('Runtime index has no source metadata')
     const loaded = new Map<string, Uint8Array>()
     const requested: Array<{
       sha: string
       frame: RuntimeFrameRequest
-      sourceData: boolean
     }> = []
     const pending = new Set(shas)
     for (const sha of pending) {
@@ -173,23 +202,11 @@ export class RuntimeEntryStore implements EntryStore, Source {
       if (entry?.frames?.data) {
         requested.push({
           sha,
-          frame: entryFrame(entry, 'data'),
-          sourceData: true
+          frame: entryFrame(entry, 'data')
         })
         continue
       }
-      const blob = source.blobs[sha]
-      assert(blob, `Source blob not found: ${sha}`)
-      requested.push({
-        sha,
-        sourceData: false,
-        frame: {
-          descriptor: blob.frame,
-          decodeKey: blob.decodeKey,
-          id: `source:${sha}`,
-          accessClassId: `source:${blob.frame.bundleId ?? this.#index.bundleId}`
-        }
-      })
+      assert(entry, `Source entry not found: ${sha}`)
     }
     const contents = await this.#loadBytesMany(
       requested.map(item => item.frame)
@@ -197,9 +214,7 @@ export class RuntimeEntryStore implements EntryStore, Source {
     for (const [index, item] of requested.entries())
       loaded.set(
         item.sha,
-        item.sourceData
-          ? decodeRuntimeSourceDataFrame(contents[index]).contents
-          : contents[index]
+        decodeRuntimeSourceDataFrame(contents[index]).contents
       )
     for (const sha of shas) yield [sha, loaded.get(sha)!]
   }
@@ -606,6 +621,13 @@ interface RuntimeFrameRequest {
 
 function frameCacheKey(frame: SerializedFrameDescriptor): string {
   return `${frame.bundleId ?? ''}\0${frame.nonce}`
+}
+
+function loaderCacheKey(
+  index: RuntimeDatabaseIndex,
+  frame: SerializedFrameDescriptor
+): string {
+  return `${frame.bundleId ?? index.bundleId}\0${frame.bundleUrl ?? index.bundleUrl}`
 }
 
 function entryFrame(
