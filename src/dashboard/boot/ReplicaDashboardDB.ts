@@ -58,6 +58,7 @@ export class ReplicaDashboardDB extends WriteableGraph {
   ): Promise<ReplicaDashboardDB> {
     const transport = new HttpReplicaTransport({handlerUrl, fetch})
     const replica = new EntryReplicaClient({
+      config,
       transport,
       cache: new IndexedDBReplicaCache(indexedDB, 'alinea-replica'),
       fetch

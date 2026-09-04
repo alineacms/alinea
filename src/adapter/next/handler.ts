@@ -12,12 +12,10 @@ import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
 import {ReplicaService} from '#/database/handler/Service.js'
-import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
 import {createGeneratedRuntimeDB} from './RuntimeDB.js'
-import {generatedRuntimeIndex} from '#/backend/store/GeneratedRuntime.js'
 import {generatedEnvironment} from './GeneratedEnvironment.js'
 import {trace} from '#/core/Trace.js'
 import {createDevRemote} from './DevRemote.js'
@@ -49,16 +47,16 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       ? PLazy.from(async () => {
           const environment = generatedEnvironment()
           const graph = await db
-          if (!(graph.source instanceof RuntimeEntryStore))
-            throw new Error('Generated runtime DB is missing its entry store')
+          const snapshot = graph.runtimeSnapshot
+          if (!snapshot)
+            throw new Error('Generated runtime DB is missing its snapshot')
           return new ReplicaService({
             config,
             configId: environment.configId,
             configUrl: environment.configUrl,
             cacheKey: `runtime:${environment.releaseId}:${environment.configId}`,
-            runtime: generatedRuntimeIndex,
-            graph,
-            store: graph.source
+            snapshot,
+            graph
           })
         })
       : undefined

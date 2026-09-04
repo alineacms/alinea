@@ -40,6 +40,7 @@ import {
   encodeRuntimeSearchFrame,
   encodeRuntimeSourceTree
 } from './FrameSerialization.js'
+import {createRuntimeDelta, type RuntimeDeltaArtifact} from './Snapshot.js'
 
 export interface ExportRuntimeDatabaseOptions {
   config: Config
@@ -67,7 +68,7 @@ export interface ExportRuntimeSourceChangesOptions {
 /** Reconciles a source tree diff while opening only its added blobs. */
 export async function exportRuntimeSourceChanges(
   options: ExportRuntimeSourceChangesOptions
-): Promise<RuntimeDatabaseExport> {
+): Promise<RuntimeDeltaArtifact> {
   const previousSource = options.previous.source
   assert(previousSource, 'Runtime source changes require source metadata')
   if (options.previous.revision !== options.changes.fromSha)
@@ -178,19 +179,25 @@ export async function exportRuntimeSourceChanges(
       }
     }
   })
-  return {
-    index: {
-      ...options.previous,
-      revision: options.tree.sha,
-      entries,
-      source: {
-        treeFrame: {
-          decodeKey: sourceTree.decodeKey,
-          frame: descriptor(sourceTree.frame)!
-        }
-      },
-      development: undefined
+  const next: RuntimeDatabaseIndex = {
+    ...options.previous,
+    revision: options.tree.sha,
+    entries,
+    source: {
+      treeFrame: {
+        decodeKey: sourceTree.decodeKey,
+        frame: descriptor(sourceTree.frame)!
+      }
     },
+    development: undefined
+  }
+  return {
+    delta: createRuntimeDelta(
+      options.previous,
+      next,
+      options.bundleId,
+      options.bundleUrl
+    ),
     bundle: packed.contents
   }
 }

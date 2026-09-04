@@ -45,8 +45,8 @@ flowchart LR
     github[(GitHub repository)]
   end
 
-  worker <-->|bootstrap, filtered index,<br/>live ciphertext, mutations| handler
-  rsc <-->|trusted index refresh,<br/>live ciphertext| handler
+  worker <-->|bootstrap, filtered snapshot/delta,<br/>live ciphertext, mutations| handler
+  rsc <-->|trusted snapshot/delta,<br/>live ciphertext| handler
   handler <-->|tree, changed blobs, commits| sourceApi
   sourceApi -.->|configured Source adapter| github
 ```
@@ -75,11 +75,11 @@ sequenceDiagram
   G-->>C: Tree and changed blobs
   C-->>H: No change or changed source batch
   Note over H: Diff trees and fetch changed blobs only<br/>Recompute structure from compact index metadata<br/>Encrypt replacement frames only
-  H-->>W: 204 or filtered index + live overlay ciphertext
+  H-->>W: 204, filtered delta, or full snapshot<br/>+ referenced live ciphertext
   W->>P: Range-read unchanged base frames on demand
 
   R->>H: Request state(known revision) with server API key
-  H-->>R: 204 or trusted index + live overlay ciphertext
+  H-->>R: 204, trusted delta, or full snapshot<br/>+ referenced live ciphertext
   R->>P: Read base payload ranges on demand
 
   UI->>W: Edit entry
@@ -90,7 +90,7 @@ sequenceDiagram
   C-->>H: Commit result
   H-->>W: Transaction result
   W->>H: Sync new revision
-  H-->>W: Updated filtered index
+  H-->>W: Filtered delta from the worker's revision
 ```
 
 Important boundaries:
@@ -98,9 +98,14 @@ Important boundaries:
 - The dashboard receives only the policy-filtered index rows and decode keys it
   may read. The RSC route authenticates with the server API key and receives the
   trusted server view.
-- A state response contains index data plus only the encrypted entry-sized live
-  bundles referenced by that authorized view. Their parsing and decryption stay
-  lazy; the large base payload is never included.
+- A state response is either the next entry-level delta or a complete snapshot,
+  plus only the encrypted entry-sized live bundles referenced by that authorized
+  state. Their parsing and decryption stay lazy; the large base payload is never
+  included.
+- The handler retains one logical delta. A replica on its exact base revision
+  and policy view receives that delta; a new, stale, or differently authorized
+  replica receives a complete filtered snapshot. The replica materializes and
+  stores a complete snapshot either way, so reads never traverse delta history.
 - Unchanged base frames come from static hosting. Carrying live ciphertext with
   replica state avoids depending on handler-instance affinity until a later
   deployment or compaction folds those changes into a new base.
@@ -177,11 +182,11 @@ development-only browser path is a possible follow-up optimization.
 
 ## Revision ownership
 
-| State                   | Producer                           | Consumers                       | Transfer behavior                                                      |
-| ----------------------- | ---------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
-| Generated base index    | Build                              | RSC, handler, dashboard replica | Inline server import; filtered over replica state API                  |
-| Generated base payload  | Build                              | RSC and dashboard replica       | Lazy static file or HTTP range reads                                   |
-| Live runtime index      | Handler                            | RSC and dashboard replica       | `204` when unchanged; currently a complete filtered index when changed |
-| Live overlay payload    | Handler                            | RSC and dashboard replica       | Authorized ciphertext travels with state; decoding remains lazy        |
-| Durable source revision | Local Git or hosted source service | Handler and dev server          | Tree comparison followed by changed-blob reads                         |
-| Decoded entries         | Each consuming process             | Queries in that process         | Retained in its local hot cache; never synchronized as objects         |
+| State                   | Producer                           | Consumers                       | Transfer behavior                                                     |
+| ----------------------- | ---------------------------------- | ------------------------------- | --------------------------------------------------------------------- |
+| Generated base index    | Build                              | RSC, handler, dashboard replica | Inline server import; filtered over replica state API                 |
+| Generated base payload  | Build                              | RSC and dashboard replica       | Lazy static file or HTTP range reads                                  |
+| Live runtime snapshot   | Handler                            | RSC and dashboard replica       | `204` unchanged; direct-base delta; otherwise complete filtered state |
+| Live overlay payload    | Handler                            | RSC and dashboard replica       | Authorized ciphertext travels with state; decoding remains lazy       |
+| Durable source revision | Local Git or hosted source service | Handler and dev server          | Tree comparison followed by changed-blob reads                        |
+| Decoded entries         | Each consuming process             | Queries in that process         | Retained in its local hot cache; never synchronized as objects        |

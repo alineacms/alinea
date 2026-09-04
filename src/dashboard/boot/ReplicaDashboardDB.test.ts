@@ -3,13 +3,13 @@ import {Entry} from '#/core.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {cms} from '#test/cms.js'
 import {serializeReplicaState} from '#/database/replica/Serialization.js'
-import type {ReplicaState} from '#/database/replica/Types.js'
+import type {ReplicaSnapshotState} from '#/database/replica/Types.js'
 import {IDBFactory} from 'fake-indexeddb'
 import {ReplicaDashboardDB} from './ReplicaDashboardDB.js'
 
 describe('ReplicaDashboardDB', () => {
   test('boots production reads without hydrating LocalDB or EntryIndex', async () => {
-    const state: ReplicaState = {
+    const state: ReplicaSnapshotState = {
       viewId: 'editor',
       runtime: {
         bundleId: 'release-1',

@@ -1,4 +1,4 @@
-import type {ReplicaState} from './Types.js'
+import type {ReplicaSnapshotState} from './Types.js'
 
 const STATES = 'states'
 
@@ -13,11 +13,14 @@ export class IndexedDBReplicaCache {
     this.#name = name
   }
 
-  async installState(scope: string, state: ReplicaState): Promise<void> {
+  async installState(
+    scope: string,
+    state: ReplicaSnapshotState
+  ): Promise<void> {
     await this.#write(STATES, scope, state)
   }
 
-  state(scope: string): Promise<ReplicaState | undefined> {
+  state(scope: string): Promise<ReplicaSnapshotState | undefined> {
     return this.#read(STATES, scope)
   }
 

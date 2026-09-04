@@ -9,6 +9,7 @@ import type {
   FrameCompression,
   FrameDescriptor,
   FrameId,
+  ReplicaSnapshotState,
   ReplicaState
 } from './Types.js'
 
@@ -23,20 +24,31 @@ export interface SerializedFrameDescriptor {
   bundleUrl?: string
 }
 
-export interface SerializedReplicaState extends Omit<ReplicaState, 'runtime'> {
+export interface SerializedReplicaSnapshot extends Omit<
+  ReplicaSnapshotState,
+  'runtime'
+> {
   runtime: SerializedRuntimeDatabaseIndex
 }
+
+export type SerializedReplicaState =
+  | SerializedReplicaSnapshot
+  | Exclude<ReplicaState, ReplicaSnapshotState>
 
 export function serializeReplicaState(
   state: ReplicaState
 ): SerializedReplicaState {
-  return {...state, runtime: serializeRuntimeDatabaseIndex(state.runtime)}
+  return 'runtime' in state
+    ? {...state, runtime: serializeRuntimeDatabaseIndex(state.runtime)}
+    : state
 }
 
 export function deserializeReplicaState(
   state: SerializedReplicaState
 ): ReplicaState {
-  return {...state, runtime: deserializeRuntimeDatabaseIndex(state.runtime)}
+  return 'runtime' in state
+    ? {...state, runtime: deserializeRuntimeDatabaseIndex(state.runtime)}
+    : state
 }
 
 export function serializeFrame(

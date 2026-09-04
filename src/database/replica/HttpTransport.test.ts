@@ -1,11 +1,11 @@
 import {describe, expect, test} from 'bun:test'
 import {HttpRangeSource, HttpReplicaTransport} from './HttpTransport.js'
 import {serializeReplicaState} from './Serialization.js'
-import type {ReplicaState} from './Types.js'
+import type {ReplicaSnapshotState} from './Types.js'
 
 describe('HttpReplicaTransport', () => {
   test('loads authenticated bootstrap and deserializes state', async () => {
-    const state: ReplicaState = {
+    const state: ReplicaSnapshotState = {
       viewId: 'editor',
       runtime: {
         bundleId: 'release-1',

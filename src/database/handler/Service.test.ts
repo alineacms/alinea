@@ -3,6 +3,7 @@ import {Policy, role} from '#/core/Role.js'
 import {ReplicaService} from './Service.js'
 import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
 import {RuntimeEntryStore} from '../runtime/Store.js'
+import {createRuntimeDelta, RuntimeSnapshot} from '../runtime/Snapshot.js'
 import {base64} from '#/core/util/Encoding.js'
 import {cms} from '#test/cms.js'
 import {FSSource} from '#/core/source/FSSource.js'
@@ -61,15 +62,11 @@ test('projects a runtime replica directly from the generated index', () => {
     configId: 'config-1',
     configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'runtime:release-1',
-    runtime,
-    store: new RuntimeEntryStore({
-      index: runtime,
-      source: () => ({
-        async read() {
-          return new Uint8Array()
-        }
-      })
-    })
+    snapshot: RuntimeSnapshot.open(cms.config, runtime, () => ({
+      async read() {
+        return new Uint8Array()
+      }
+    }))
   })
   const session = {
     user: {id: 'user-1', roles: ['admin']},
@@ -78,9 +75,11 @@ test('projects a runtime replica directly from the generated index', () => {
   }
 
   const state = service.state(session)
+  if (!state || !('runtime' in state))
+    throw new Error('Expected replica snapshot')
 
-  expect(state?.runtime?.source).toBeUndefined()
-  expect(state?.runtime?.entries[0].frames?.decodeKey).toBe('secret')
+  expect(state.runtime.source).toBeUndefined()
+  expect(state.runtime.entries[0].frames?.decodeKey).toBe('secret')
   expect(service.bootstrap(session)).toMatchObject({
     viewId: 'admin',
     cacheKey: '["runtime:release-1","user-1","admin"]'
@@ -122,13 +121,13 @@ test('retries policy evaluation when the runtime changes concurrently', async ()
     configId: 'config-1',
     configUrl: '/config.js',
     cacheKey: 'runtime:release-1',
-    runtime,
-    store
+    snapshot: new RuntimeSnapshot(config, runtime, store)
   })
 
   const pending = service.session({id: 'user-1', roles: ['editor']})
   await Promise.resolve()
-  service.installRuntime(
+  installRuntime(
+    service,
     {...runtime, revision: 'tree-2'},
     'overlay',
     new Uint8Array()
@@ -161,8 +160,7 @@ test('carries live entry overlay ciphertext with the filtered state', () => {
     configId: 'config-1',
     configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'runtime:release-1',
-    runtime,
-    store
+    snapshot: new RuntimeSnapshot(cms.config, runtime, store)
   })
   const entry = {
     kind: 'entry' as const,
@@ -212,24 +210,52 @@ test('carries live entry overlay ciphertext with the filtered state', () => {
     }
   }
   const contents = new Uint8Array([1, 2, 3, 4, 5, 6, 7])
-  service.installRuntime(next, 'overlay', contents)
+  installRuntime(service, next, 'overlay', contents)
 
   const state = service.state({
     user: {id: 'user-1', roles: ['admin']},
     policy: Policy.ALLOW_ALL,
     policyFingerprint: 'admin'
   })
+  if (!state || !('runtime' in state))
+    throw new Error('Expected replica snapshot')
 
-  expect(base64.parse(state!.inlineBundles!.overlay)).toEqual(
+  expect(base64.parse(state.inlineBundles!.overlay)).toEqual(
     new Uint8Array([1, 2, 3])
   )
-  expect(state!.runtime.entries[0].frames!.data).toMatchObject({
+  expect(state.runtime.entries[0].frames!.data).toMatchObject({
     offset: 0,
     length: 3
   })
-  expect(state!.runtime.entries[0].frames!.data!.bundleUrl).toContain(
+  expect(state.runtime.entries[0].frames!.data!.bundleUrl).toContain(
     'inline=tree-2%3Aadmin'
   )
+  const delta = service.state(
+    {
+      user: {id: 'user-1', roles: ['admin']},
+      policy: Policy.ALLOW_ALL,
+      policyFingerprint: 'admin'
+    },
+    {revision: 'tree-1', viewId: 'admin'}
+  )
+  if (!delta || !('delta' in delta)) throw new Error('Expected replica delta')
+  expect(delta.delta.entries).toHaveLength(1)
+  expect(delta.delta.entries[0]).toMatchObject({
+    op: 'set',
+    entry: {entryId: 'page'}
+  })
+  expect(base64.parse(delta.inlineBundles!.overlay)).toEqual(
+    new Uint8Array([1, 2, 3])
+  )
+  const stale = service.state(
+    {
+      user: {id: 'user-1', roles: ['admin']},
+      policy: Policy.ALLOW_ALL,
+      policyFingerprint: 'admin'
+    },
+    {revision: 'tree-0', viewId: 'admin'}
+  )
+  expect(stale && 'runtime' in stale).toBe(true)
   expect(service.bundleSize('overlay')).toBe(contents.length)
 })
 
@@ -281,16 +307,16 @@ test('serves compacted overlay ciphertext without the source tree', async () => 
     configId: 'config-1',
     configUrl: '/config.js',
     cacheKey: 'runtime:release',
-    runtime: release.index,
-    store: serverStore
+    snapshot: new RuntimeSnapshot(cms.config, release.index, serverStore)
   })
-  service.installRuntime(overlay.index, 'overlay', overlay.bundle)
+  service.install(overlay)
 
   const state = service.state({
     user: {id: 'user-1', roles: ['admin']},
     policy: Policy.ALLOW_ALL,
     policyFingerprint: 'admin'
   })!
+  if (!('runtime' in state)) throw new Error('Expected replica snapshot')
   const compacted = base64.parse(state.inlineBundles!.overlay)
   expect(compacted.length).toBeLessThan(overlay.bundle.length)
   const replicaStore = new RuntimeEntryStore({
@@ -323,15 +349,11 @@ test('bounds retired bundles while retaining recent in-flight sources', () => {
     configId: 'config-1',
     configUrl: '/config.js',
     cacheKey: 'runtime:release-1',
-    runtime,
-    store: new RuntimeEntryStore({
-      index: runtime,
-      source: () => ({
-        async read() {
-          return new Uint8Array()
-        }
-      })
-    })
+    snapshot: RuntimeSnapshot.open(cms.config, runtime, () => ({
+      async read() {
+        return new Uint8Array()
+      }
+    }))
   })
   const frame = {
     bundleUrl: '/api?action=replicaBundle&bundle=overlay-1',
@@ -362,7 +384,8 @@ test('bounds retired bundles while retaining recent in-flight sources', () => {
     path: 'page',
     url: '/page'
   }
-  service.installRuntime(
+  installRuntime(
+    service,
     {
       ...runtime,
       revision: 'tree-2',
@@ -379,7 +402,8 @@ test('bounds retired bundles while retaining recent in-flight sources', () => {
     'overlay-1',
     new Uint8Array([1])
   )
-  service.installRuntime(
+  installRuntime(
+    service,
     {
       ...runtime,
       revision: 'tree-3',
@@ -402,7 +426,8 @@ test('bounds retired bundles while retaining recent in-flight sources', () => {
   )
   for (const number of [3, 4]) {
     const bundleId = `overlay-${number}`
-    service.installRuntime(
+    installRuntime(
+      service,
       {
         ...runtime,
         revision: `tree-${number + 1}`,
@@ -443,16 +468,12 @@ test('bounds settled transaction idempotency records without evicting pending wo
     configId: 'config-1',
     configUrl: '/config.js',
     cacheKey: 'runtime:release-1',
-    runtime,
-    transactionCacheSize: 1,
-    store: new RuntimeEntryStore({
-      index: runtime,
-      source: () => ({
-        async read() {
-          return new Uint8Array()
-        }
-      })
-    })
+    snapshot: RuntimeSnapshot.open(cms.config, runtime, () => ({
+      async read() {
+        return new Uint8Array()
+      }
+    })),
+    transactionCacheSize: 1
   })
   const session = {
     user: {id: 'user-1', roles: ['admin']},
@@ -477,3 +498,20 @@ test('bounds settled transaction idempotency records without evicting pending wo
 
   expect(calls).toBe(3)
 })
+
+function installRuntime(
+  service: ReplicaService,
+  next: RuntimeDatabaseIndex,
+  bundleId: string,
+  bundle: Uint8Array
+): void {
+  service.install({
+    delta: createRuntimeDelta(
+      service.snapshot.index,
+      next,
+      bundleId,
+      `/runtime/${bundleId}.bundle`
+    ),
+    bundle
+  })
+}

@@ -41,8 +41,6 @@ export interface RuntimeEntryStoreOptions {
 export class RuntimeEntryStore implements EntryStore, Source {
   #index: RuntimeDatabaseIndex
   #source: ByteRangeSourceFactory
-  #remoteSource?: ByteRangeSourceFactory
-  #baseBundleUrl: string
   #loaders = new Map<string, BundleFrameLoader>()
   #pendingBytes = new Map<string, Promise<Uint8Array>>()
   #entryData = new Map<string, Promise<RuntimeDataFrame>>()
@@ -59,7 +57,6 @@ export class RuntimeEntryStore implements EntryStore, Source {
   constructor(options: RuntimeEntryStoreOptions) {
     this.#index = options.index
     this.#source = options.source
-    this.#baseBundleUrl = options.index.bundleUrl
   }
 
   get revision(): string {
@@ -70,18 +67,28 @@ export class RuntimeEntryStore implements EntryStore, Source {
     return this.#index
   }
 
-  install(
+  rangeSource(url: string) {
+    return this.#source(url)
+  }
+
+  /** Forks the reader for a new snapshot while sharing immutable frame caches. */
+  fork(
     index: RuntimeDatabaseIndex,
-    remoteSource?: ByteRangeSourceFactory
-  ): void {
-    this.#index = index
-    this.#remoteSource = remoteSource ?? this.#remoteSource
-    this.#incoming = undefined
-    if (index.source) {
-      this.#tree = undefined
-      this.#sourceEntries.clear()
-      this.#sourceTreeLoading = undefined
-    }
+    source: ByteRangeSourceFactory = this.#source
+  ): RuntimeEntryStore {
+    const next = new RuntimeEntryStore({index, source})
+    next.#loaders = new Map(this.#loaders)
+    next.#pendingBytes = new Map(this.#pendingBytes)
+    next.#entryData = new Map(this.#entryData)
+    next.#entries = this.#entries
+    next.#decoded = new Map(this.#decoded)
+    next.#keys = new Map(this.#keys)
+    next.#retainSnapshotFrames()
+    return next
+  }
+
+  #retainSnapshotFrames(): void {
+    const index = this.#index
     const liveData = new Set<string>()
     const liveDecoded = new Set<string>()
     const liveFrames = new Set<string>()
@@ -135,7 +142,6 @@ export class RuntimeEntryStore implements EntryStore, Source {
       if (!grants) this.#loaders.delete(key)
       else loader.retainGrants(grants)
     }
-    if (index.source) this.#sourceOverlay.clear()
   }
 
   async cores(signal?: AbortSignal): Promise<ReadonlyArray<EntryCoreRecord>> {
@@ -587,10 +593,7 @@ export class RuntimeEntryStore implements EntryStore, Source {
     const loaderKey = `${bundleId}\0${bundleUrl}`
     let loader = this.#loaders.get(loaderKey)
     if (!loader) {
-      const source =
-        bundleUrl === this.#baseBundleUrl || !this.#remoteSource
-          ? this.#source(bundleUrl)
-          : this.#remoteSource(bundleUrl)
+      const source = this.#source(bundleUrl)
       loader = new BundleFrameLoader(bundleId, source, [])
       this.#loaders.set(loaderKey, loader)
     }

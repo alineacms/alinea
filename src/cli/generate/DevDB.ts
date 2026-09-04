@@ -17,9 +17,12 @@ import {slugify} from '#/core/util/Slugs.js'
 import {SourceDB} from '#/database/entry/SourceDB.js'
 import {requestRuntimeSourceMutations} from '#/database/handler/SourceWriter.js'
 import {FileRangeSource} from '#/database/replica/FileTransport.js'
-import {MemoryRangeSource} from '#/database/replica/Bundle.js'
 import {exportRuntimeSourceChanges} from '#/database/runtime/Exporter.js'
 import type {RuntimeDatabaseIndex} from '#/database/runtime/Model.js'
+import {
+  RuntimeSnapshot,
+  runtimeDeltaEntryIds
+} from '#/database/runtime/Snapshot.js'
 import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 import pLimit from 'p-limit'
 
@@ -44,9 +47,6 @@ export interface WatchFiles {
 export class DevDB extends SourceDB {
   source: CachedFSSource
   #options: DevDBOptions
-  #runtime?: RuntimeEntryStore
-  #runtimeIndex?: RuntimeDatabaseIndex
-  #overlaySources = new Map<string, MemoryRangeSource>()
   #syncLimit = pLimit(1)
   #needsCheckpoint: boolean
 
@@ -72,8 +72,6 @@ export class DevDB extends SourceDB {
     super(options.config, source, runtime)
     this.#options = options
     this.source = source
-    this.#runtime = runtime
-    this.#runtimeIndex = checkpoint?.index
     this.#needsCheckpoint = !checkpoint
   }
 
@@ -81,8 +79,6 @@ export class DevDB extends SourceDB {
     return this.#syncLimit(async () => {
       await this.source.refresh()
       if (await this.#syncRuntime()) return this.sha
-      this.#runtime = undefined
-      this.#runtimeIndex = undefined
       this.#needsCheckpoint = true
       return super.sync()
     })
@@ -101,24 +97,23 @@ export class DevDB extends SourceDB {
       index: checkpoint.index,
       source: () => new FileRangeSource(checkpoint.payloadFile)
     })
-    this.#runtime = runtime
-    this.#runtimeIndex = checkpoint.index
-    this.#overlaySources.clear()
     this.#needsCheckpoint = false
-    this.refreshRuntime(runtime)
+    this.refreshSnapshot(
+      new RuntimeSnapshot(this.config, checkpoint.index, runtime)
+    )
   }
 
   async #syncRuntime(): Promise<boolean> {
-    const runtime = this.#runtime
-    let index = this.#runtimeIndex
-    if (!runtime || !index?.source) return false
+    const current = this.runtimeSnapshot
+    if (!current?.index.source) return false
+    const index = current.index
     const tree = await this.source.getTree()
     if (tree.sha === index.revision) return true
-    const previous = await runtime.getTree()
+    const previous = await current.store.getTree()
     const changes = await bundleContents(this.source, previous.diff(tree))
     const bundleId = `dev-${createId()}`
     const bundleUrl = `alinea:dev-overlay/${bundleId}`
-    const overlay = await exportRuntimeSourceChanges({
+    const artifact = await exportRuntimeSourceChanges({
       config: this.config,
       previous: index,
       tree,
@@ -126,21 +121,12 @@ export class DevDB extends SourceDB {
       bundleId,
       bundleUrl
     })
-    this.#overlaySources.set(bundleUrl, new MemoryRangeSource(overlay.bundle))
     const snapshot = this.source.snapshot()
-    index = {
-      ...overlay.index,
-      development: index.development
-        ? {...index.development, files: snapshot.files}
-        : undefined
-    }
-    runtime.install(index, url => {
-      const source = this.#overlaySources.get(url)
-      assert(source, `Unknown development overlay: ${url}`)
-      return source
-    })
-    this.#runtimeIndex = index
-    this.refreshRuntime(runtime)
+    artifact.delta.development = index.development
+      ? {...index.development, files: snapshot.files}
+      : null
+    const next = current.apply(artifact)
+    this.refreshSnapshot(next, runtimeDeltaEntryIds(artifact.delta))
     return true
   }
 
@@ -177,13 +163,13 @@ export class DevDB extends SourceDB {
     policy = Policy.ALLOW_ALL
   ): Promise<CommitRequest> {
     await this.sync()
-    if (!this.#runtime || !this.#runtimeIndex)
-      return super.request(mutations, policy)
+    const snapshot = this.runtimeSnapshot
+    if (!snapshot) return super.request(mutations, policy)
     return requestRuntimeSourceMutations(
       this.config,
       this.source,
-      this.#runtime,
-      this.#runtimeIndex,
+      snapshot.store,
+      snapshot.index,
       mutations,
       policy
     )

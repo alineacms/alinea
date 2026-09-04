@@ -15,6 +15,10 @@ import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
 import {ReplicaService} from '#/database/handler/Service.js'
 import type {RuntimeDatabaseIndex} from '#/database/runtime/Model.js'
+import {
+  createRuntimeDelta,
+  RuntimeSnapshot
+} from '#/database/runtime/Snapshot.js'
 import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 import {MemoryRangeSource} from '#/database/replica/Bundle.js'
 import {createEntrySource} from '#test/EntryFixture.js'
@@ -999,8 +1003,7 @@ test('serves replica bootstrap and state only after authentication', async () =>
     configId: 'config-1',
     configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'cache-1',
-    runtime,
-    store
+    snapshot: new RuntimeSnapshot(cms.config, runtime, store)
   })
   const handle = createHandler({
     cms,
@@ -1079,29 +1082,34 @@ test('serves replica bootstrap and state only after authentication', async () =>
   )
   test.is(command.status, 200)
   test.is((await command.json()).revision, replica.revision)
-  replica.installRuntime(
-    {
-      ...runtime,
-      revision: 'tree-2',
-      source: {
-        treeFrame: {
-          decodeKey: 'source-key',
-          frame: {
-            id: 'source-tree',
-            accessClassId: 'source',
-            bundleId: 'overlay-1',
-            bundleUrl: '/api?action=replicaBundle&bundle=overlay-1',
-            offset: 0,
-            length: 4,
-            nonce: new Uint8Array(),
-            compression: 'none'
-          }
+  const nextRuntime = {
+    ...runtime,
+    revision: 'tree-2',
+    source: {
+      treeFrame: {
+        decodeKey: 'source-key',
+        frame: {
+          id: 'source-tree',
+          accessClassId: 'source',
+          bundleId: 'overlay-1',
+          bundleUrl: '/api?action=replicaBundle&bundle=overlay-1',
+          offset: 0,
+          length: 4,
+          nonce: new Uint8Array(),
+          compression: 'none'
         }
       }
-    },
-    'overlay-1',
-    new Uint8Array([0, 1, 2, 3])
-  )
+    }
+  }
+  replica.install({
+    delta: createRuntimeDelta(
+      runtime,
+      nextRuntime,
+      'overlay-1',
+      '/api?action=replicaBundle&bundle=overlay-1'
+    ),
+    bundle: new Uint8Array([0, 1, 2, 3])
+  })
   const range = await handle(
     new Request('http://localhost/api?action=replicaBundle&bundle=overlay-1', {
       headers: {range: 'bytes=1-2'}
@@ -1136,8 +1144,7 @@ test('runs commit hooks for replica commands', async () => {
     configId: 'config-1',
     configUrl: '/config.js',
     cacheKey: 'runtime:test',
-    runtime: runtime.index,
-    store
+    snapshot: new RuntimeSnapshot(cms.config, runtime.index, store)
   })
   const calls: Array<string> = []
   const handle = createHandler({
@@ -1239,8 +1246,7 @@ test('applies replica eligibility before client-side pagination', async () => {
     configId: 'config-1',
     configUrl: '/config.js',
     cacheKey: 'runtime:test',
-    runtime: runtime.index,
-    store
+    snapshot: new RuntimeSnapshot(cms.config, runtime.index, store)
   })
   const handle = createHandler({
     cms,

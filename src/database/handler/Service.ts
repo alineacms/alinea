@@ -13,10 +13,17 @@ import type {
   FieldTransaction,
   FieldTransactionResult
 } from '../replica/Operations.js'
-import {DatabaseResolver} from '../query/Resolver.js'
 import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
-import {createRuntimeView} from '../runtime/Projection.js'
-import {RuntimeEntryStore} from '../runtime/Store.js'
+import {
+  createRuntimeDeltaView,
+  createRuntimeView
+} from '../runtime/Projection.js'
+import {
+  RuntimeBundleCatalog,
+  RuntimeSnapshot,
+  type RuntimeDelta,
+  type RuntimeDeltaArtifact
+} from '../runtime/Snapshot.js'
 import {prepareRuntimeFieldMutation} from './Mutation.js'
 import {evaluateRolePolicy, policyFingerprint} from './Policy.js'
 
@@ -32,8 +39,7 @@ export interface ReplicaServiceOptions {
   configId: string
   configUrl: string
   cacheKey: string
-  runtime: RuntimeDatabaseIndex
-  store: RuntimeEntryStore
+  snapshot: RuntimeSnapshot
   graph?: Graph
   transactionCacheSize?: number
 }
@@ -52,40 +58,33 @@ export class ReplicaService {
   #configId: string
   #configUrl: string
   #cacheKey: string
-  #runtime: RuntimeDatabaseIndex
-  #store: RuntimeEntryStore
+  #snapshot: RuntimeSnapshot
+  #latestDelta?: RuntimeDelta
   #graph: Graph
   #config: Config
   #views = new Map<string, ReplicaState>()
   #policies = new Map<string, Promise<CachedPolicy>>()
   #transactions = new Map<string, TransactionCacheEntry>()
   #transactionCacheSize: number
-  #bundles = new Map<string, Uint8Array>()
 
   constructor(options: ReplicaServiceOptions) {
     this.#configId = options.configId
     this.#config = options.config
     this.#configUrl = options.configUrl
     this.#cacheKey = options.cacheKey
-    this.#runtime = options.runtime
-    this.#store = options.store
-    this.#graph =
-      options.graph ?? new DatabaseResolver(options.config, options.store)
+    this.#snapshot = options.snapshot
+    this.#graph = options.graph ?? options.snapshot.resolver
     this.#transactionCacheSize = options.transactionCacheSize ?? 1024
     if (this.#transactionCacheSize < 1)
       throw new Error('Transaction cache size must be positive')
   }
 
   get revision(): string {
-    return this.#runtime.revision
+    return this.#snapshot.index.revision
   }
 
-  get runtimeIndex(): RuntimeDatabaseIndex {
-    return this.#runtime
-  }
-
-  get runtimeStore(): RuntimeEntryStore {
-    return this.#store
+  get snapshot(): RuntimeSnapshot {
+    return this.#snapshot
   }
 
   bootstrap(session: AuthenticatedReplicaSession): ReplicaBootstrap {
@@ -142,10 +141,17 @@ export class ReplicaService {
       cursor.viewId === session.policyFingerprint
     )
       return
-    const cacheKey = `${this.revision}\0${session.policyFingerprint}`
+    const canApplyDelta =
+      cursor?.viewId === session.policyFingerprint &&
+      this.#latestDelta?.fromRevision === cursor.revision
+    const cacheKey = `${this.revision}\0${session.policyFingerprint}\0${
+      canApplyDelta ? cursor.revision : 'snapshot'
+    }`
     let cached = this.#views.get(cacheKey)
     if (!cached) {
-      cached = this.#runtimeState(session)
+      cached = canApplyDelta
+        ? this.#runtimeDelta(session, this.#latestDelta!)
+        : this.#runtimeState(session)
       if (this.#views.size >= ReplicaService.viewCacheLimit)
         this.#views.delete(this.#views.keys().next().value!)
       this.#views.set(cacheKey, cached)
@@ -158,14 +164,14 @@ export class ReplicaService {
   }
 
   cores() {
-    return this.#runtime.entries
+    return this.#snapshot.index.entries
   }
 
   prepareFieldMutation(transaction: FieldTransaction, policy: Policy) {
     return prepareRuntimeFieldMutation(
       this.#config,
-      this.#store,
-      this.#runtime.entries,
+      this.#snapshot.store,
+      this.#snapshot.index.entries,
       transaction,
       policy
     )
@@ -201,60 +207,73 @@ export class ReplicaService {
     }
   }
 
-  installRuntime(
-    index: RuntimeDatabaseIndex,
-    bundleId: string,
-    contents: Uint8Array
-  ): void {
-    this.#bundles.set(bundleId, contents.slice())
-    this.#store.install(index, url => this.#bundleSource(url, bundleId))
-    this.#runtime = index
-    this.#pruneBundles()
-    this.#graph = new DatabaseResolver(this.#config, this.#store)
+  install(artifact: RuntimeDeltaArtifact): void {
+    this.#snapshot = this.#snapshot.apply(artifact, {
+      retainedBundleLimit: ReplicaService.retainedBundleLimit
+    })
+    this.#latestDelta = artifact.delta
+    this.#graph = this.#snapshot.resolver
     this.#views.clear()
     this.#policies.clear()
   }
 
-  #bundleSource(url: string, fallback?: string) {
-    const bundleId =
-      new URL(url, 'http://alinea.local').searchParams.get('bundle') ?? fallback
-    if (!bundleId)
-      throw new Error(`Replica bundle URL has no bundle id: ${url}`)
-    return {
-      read: async (offset: number, length: number) =>
-        this.bundle(bundleId, offset, length)
-    }
-  }
-
   bundle(bundleId: string, offset: number, length: number): Uint8Array {
-    const contents = this.#bundles.get(bundleId)
+    const contents = this.#snapshot.bundles.contents(bundleId)
     if (!contents) throw new Error(`Replica bundle "${bundleId}" was not found`)
     return contents.slice(offset, offset + length)
   }
 
   bundleSize(bundleId: string): number | undefined {
-    return this.#bundles.get(bundleId)?.length
-  }
-
-  #pruneBundles(): void {
-    const live = runtimeBundleIds(this.#runtime)
-    const retired = [...this.#bundles.keys()].filter(
-      bundleId => !live.has(bundleId)
-    )
-    while (retired.length > ReplicaService.retainedBundleLimit)
-      this.#bundles.delete(retired.shift()!)
+    return this.#snapshot.bundles.contents(bundleId)?.length
   }
 
   #runtimeState(session: AuthenticatedReplicaSession): ReplicaState {
-    const view = createRuntimeView(this.#runtime, session.policy)
+    const view = createRuntimeView(this.#snapshot.index, session.policy)
     const compact = compactRuntimeBundles(
       view,
       session.policyFingerprint,
-      this.#bundles
+      this.#snapshot.bundles
     )
     return {
       viewId: session.policyFingerprint,
       runtime: compact.index,
+      ...(Object.keys(compact.bundles).length > 0
+        ? {inlineBundles: compact.bundles}
+        : {})
+    }
+  }
+
+  #runtimeDelta(
+    session: AuthenticatedReplicaSession,
+    delta: RuntimeDelta
+  ): ReplicaState {
+    const view = createRuntimeDeltaView(delta, session.policy)
+    const changedEntries = view.entries.flatMap(change =>
+      change.op === 'set' ? [change.entry] : []
+    )
+    const compact = compactRuntimeBundles(
+      {
+        ...this.#snapshot.index,
+        entries: changedEntries,
+        source: undefined,
+        development: undefined
+      },
+      session.policyFingerprint,
+      this.#snapshot.bundles
+    )
+    const compacted = new Map(
+      compact.index.entries.map(entry => [entry.id, entry])
+    )
+    return {
+      viewId: session.policyFingerprint,
+      delta: {
+        ...view,
+        entries: view.entries.map(change =>
+          change.op === 'set'
+            ? {op: 'set', entry: compacted.get(change.entry.id)!}
+            : change
+        )
+      },
       ...(Object.keys(compact.bundles).length > 0
         ? {inlineBundles: compact.bundles}
         : {})
@@ -272,20 +291,6 @@ interface CachedPolicy {
   fingerprint: string
 }
 
-function runtimeBundleIds(index: RuntimeDatabaseIndex): ReadonlySet<string> {
-  const result = new Set<string>()
-  const add = (frame: {bundleId?: string} | undefined) => {
-    if (frame?.bundleId) result.add(frame.bundleId)
-  }
-  for (const entry of index.entries) {
-    add(entry.frames?.data)
-    add(entry.frames?.search)
-    add(entry.frames?.references)
-  }
-  add(index.source?.treeFrame.frame)
-  return result
-}
-
 type FrameKind = 'data' | 'search' | 'references'
 
 interface CompactFrame {
@@ -299,13 +304,13 @@ interface CompactFrame {
 function compactRuntimeBundles(
   index: RuntimeDatabaseIndex,
   viewId: string,
-  bundles: ReadonlyMap<string, Uint8Array>
+  bundles: RuntimeBundleCatalog
 ): {index: RuntimeDatabaseIndex; bundles: Record<string, string>} {
   const grouped = new Map<string, Array<CompactFrame>>()
   for (const [entry, value] of index.entries.entries()) {
     for (const kind of ['data', 'search', 'references'] as const) {
       const frame = value.frames?.[kind]
-      if (!frame?.bundleId || !bundles.has(frame.bundleId)) continue
+      if (!frame?.bundleId || !bundles.contents(frame.bundleId)) continue
       const group = grouped.get(frame.bundleId) ?? []
       group.push({entry, kind, frame})
       grouped.set(frame.bundleId, group)
@@ -316,7 +321,7 @@ function compactRuntimeBundles(
   const entries = [...index.entries]
   const encoded: Record<string, string> = {}
   for (const [bundleId, frames] of grouped) {
-    const source = bundles.get(bundleId)!
+    const source = bundles.contents(bundleId)!
     const length = frames.reduce((total, {frame}) => total + frame.length, 0)
     const contents = new Uint8Array(length)
     let offset = 0

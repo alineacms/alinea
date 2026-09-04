@@ -43,6 +43,7 @@ import type {FieldTransaction} from '#/database/replica/Operations.js'
 import {serializeReplicaState} from '#/database/replica/Serialization.js'
 import {createId} from '#/core/Id.js'
 import {exportRuntimeSourceChanges} from '#/database/runtime/Exporter.js'
+import {runtimeDeltaEntryIds} from '#/database/runtime/Snapshot.js'
 import {entryResource} from '#/database/entry/Access.js'
 import {
   mutationsFromReplicaCommands,
@@ -688,10 +689,10 @@ async function updateReplicaFromSource(
 ): Promise<void> {
   const source = local.source
   if (changes.changes.length === 0) return
-  const previous = service.runtimeIndex
+  const previous = service.snapshot.index
   const tree = await source.getTree()
   const bundleId = createId()
-  const runtime = await exportRuntimeSourceChanges({
+  const artifact = await exportRuntimeSourceChanges({
     config,
     previous,
     tree,
@@ -699,8 +700,8 @@ async function updateReplicaFromSource(
     bundleId,
     bundleUrl: replicaBundleUrl(context, bundleId)
   })
-  service.installRuntime(runtime.index, bundleId, runtime.bundle)
-  local.refreshRuntime(service.runtimeStore)
+  service.install(artifact)
+  local.refreshSnapshot(service.snapshot, runtimeDeltaEntryIds(artifact.delta))
 }
 
 function replicaBundleUrl(context: RequestContext, bundleId: string): string {

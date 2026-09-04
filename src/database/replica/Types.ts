@@ -1,4 +1,5 @@
 import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
+import type {RuntimeDelta} from '../runtime/Snapshot.js'
 
 export type Revision = string
 export type ViewId = string
@@ -27,9 +28,18 @@ export interface AccessClassGrant {
   key: Uint8Array
 }
 
-export interface ReplicaState {
+export interface ReplicaSnapshotState {
   viewId: ViewId
   runtime: RuntimeDatabaseIndex
   /** Entry-sized live overlay bundles carried with their authorized view. */
   inlineBundles?: Readonly<Record<BundleId, string>>
 }
+
+export interface ReplicaDeltaState {
+  viewId: ViewId
+  delta: RuntimeDelta
+  /** Ciphertext required by the changed rows in this delta. */
+  inlineBundles?: Readonly<Record<BundleId, string>>
+}
+
+export type ReplicaState = ReplicaSnapshotState | ReplicaDeltaState

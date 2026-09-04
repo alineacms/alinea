@@ -5,7 +5,8 @@ format, and replica synchronization code.
 
 The branch implements the consolidated runtime read and source reconciliation
 paths described here. There is one database representation after source input:
-the compact runtime index, lazy payload frames, and entry-level overlays.
+a complete runtime snapshot made from the compact index and lazy payload frame
+store. Entry-level deltas move that snapshot between revisions.
 
 ## Goals
 
@@ -56,9 +57,10 @@ A deployed release consists of two logical artifacts:
 1. a compact JSON-compatible index;
 2. a byte-addressable payload bundle.
 
-Live changes may add delta bundles, but they remain overlays of the same two
-logical artifacts. Periodic deployment or compaction folds the overlays into a
-new immutable base.
+Live changes may add delta bundles, but each accepted delta is immediately
+materialized into the next complete logical snapshot. Reads never search a
+chain of overlays. Periodic deployment or compaction can fold the referenced
+payload bundles into a new immutable base.
 
 ### JSON index
 
@@ -377,16 +379,29 @@ persistent reference index in the base JSON. If first-use reference cost proves
 material in production, references may be exported as a separate aggregate
 frame without changing data-frame or index semantics.
 
-## Synchronization and overlays
+## Snapshots and deltas
 
 See [Database synchronization flows](./SYNC.md) for separate production and
 development diagrams covering the dashboard worker, RSC routes, application
 handler, hosted database, and GitHub-backed sources.
 
-The immutable deployed index and payload bundle form the base revision. Every
-source refresh starts by diffing its tree against the tree stored in the runtime
-index. Only added or changed blobs are fetched and parsed. The reconciler emits
-an overlay containing:
+`RuntimeSnapshot` is the sole installed database state. It owns one complete
+`RuntimeDatabaseIndex`, a bundle catalog, its lazy `RuntimeEntryStore`, and the
+resolver built over that store. The catalog maps each frame URL directly to its
+immutable byte source; callers no longer maintain separate overlay maps or
+fallback chains. Creating or accepting a new revision produces a new snapshot;
+the previous object stays valid for reads already in flight.
+
+`RuntimeDelta` is the transition between two snapshots. It contains the exact
+`fromRevision` and `toRevision`, complete replacement rows for changed or added
+entry versions, tombstones for removed versions, optional source/development
+metadata replacements, and the identity of its payload bundle. Applying one
+validates the base revision and materializes the complete next index. Querying
+the result is therefore independent of delta history.
+
+Every source refresh starts by diffing its tree against the tree stored in the
+runtime snapshot. Only added or changed blobs are fetched and parsed. The
+reconciler emits a delta containing:
 
 - one complete replacement index row, or an entry tombstone;
 - a replacement data frame when fields changed;
@@ -397,14 +412,14 @@ an overlay containing:
 
 Changed ciphertext is appended to a small delta bundle. Frame descriptors can
 point to either the deployed bundle or a delta bundle, so unchanged entries keep
-their original locations and cached bytes. A logical read resolves in this
-order:
+their original locations and cached bytes. Applying the delta forks the lazy
+store while sharing immutable decoded-frame caches. A logical read resolves its
+frame descriptor directly; it does not traverse prior logical snapshots:
 
 ```text
-live decoded overlay
-  -> decoded frame cache
-  -> changed frame in a delta bundle
-  -> frame in the deployed bundle
+decoded frame cache
+  -> descriptor's delta bundle
+  -> descriptor's deployed bundle
 ```
 
 The reconciler retains decoded entries whose frame descriptors did not change.
@@ -424,31 +439,24 @@ during synchronization, but JSON parsing and decryption remain lazy until a
 query needs the data, search, or reference frame. The large immutable base
 bundle is never included and remains a static range source.
 
-### Index synchronization
+### Replica synchronization
 
 A replica sends both its known content revision and policy view id. The handler
 returns `204` only when both still match, which prevents an authenticated view
 change from being mistaken for unchanged content.
 
-The current implementation returns a complete filtered index when either value
-changes. This is deliberate: the real 11,000-entry index is roughly 4.5 MB,
-while a
-complete snapshot keeps authorization, additions, removals, and access changes
-atomic and simple. Installing it does not discard hot decoded frames; descriptor
-identity preserves unchanged cached data. The client compares old and new rows
-to report exact changed logical entry ids, while conservatively invalidating its
-observed queries because an added row can affect a result without having been a
-previous dependency.
-
-If measurements show index synchronization bandwidth to be material, the next
-compatible optimization is a policy-filtered entry-level patch:
+An initial request, changed policy view, or client that missed an intermediate
+revision receives a complete filtered snapshot. If the client has the
+immediately preceding revision under the same policy view, the handler returns a
+policy-filtered entry-level delta:
 
 ```ts
-interface IndexDelta {
+interface RuntimeDelta {
   fromRevision: string
   toRevision: string
-  upserts: ReadonlyArray<IndexEntry>
-  removals: ReadonlyArray<string>
+  entries: ReadonlyArray<
+    {op: 'set'; entry: IndexEntry} | {op: 'remove'; id: string; entryId: string}
+  >
 }
 ```
 
@@ -462,14 +470,17 @@ current views so access changes produce the correct result:
 - an explore-to-read change replaces the row with readable frame descriptors
   and its decode key.
 
-Applying an index delta does not range-read its referenced base frames. A cold
-subsystem observes the new descriptors when it is eventually used. Small live
-overlay ciphertext may accompany the state atomically, but a hot data, search,
-or reference subsystem decrypts only the changed frames it actually uses.
+The client validates `fromRevision`, applies the rows to its complete in-memory
+snapshot, persists that materialized snapshot atomically in IndexedDB, and
+installs the next lazy store. Applying a delta performs no range reads, parsing,
+or decryption of payload fields. Descriptor identity keeps decoded unchanged
+frames hot. Small live ciphertext referenced by changed rows accompanies the
+delta atomically and is retained only while the current snapshot references it.
 
-Payload frames remain selective and lazy in either form. A delta should replace
-the snapshot only when measured synchronization frequency or bandwidth
-justifies the extra retained-history and recovery protocol.
+The handler deliberately retains only the latest logical delta. That covers the
+normal polling path without a journal or conflict protocol; a client that skips
+one or more revisions safely receives a complete filtered snapshot. Payload
+frames remain selective and lazy in either response form.
 
 After too many overlays accumulate, the handler can publish a compacted current
 index and bundle. Compaction is background work and is never part of database
@@ -626,9 +637,12 @@ lets the normal resolver open and cache exactly those frames. A tiny in-request
 URL-claim overlay is retained only so sequential mutations in one request can
 see claims created earlier in that same request.
 
-`SourceDB.sync()` performs seed repair only after an initial build or a real
-source reconciliation. An unchanged revision returns immediately; it must not
-scan every entry merely because a query or mutation calls `sync()`.
+`SourceDB.sync()` checks config-declared seeds only after an initial build or a
+real source reconciliation. An unchanged revision returns immediately; it must
+not scan every entry merely because a query or mutation calls `sync()`.
+Canonical source repair is a separate, explicit `alinea generate --fix`
+operation. It intentionally loads and hashes every entry and is never part of
+boot, reads, ordinary synchronization, or writes.
 
 ## Current implementation
 
@@ -668,13 +682,16 @@ The branch now implements the consolidated server read path:
   recomputes hierarchy from lightweight index metadata, and reuses unchanged
   encrypted frames;
 - policy-filtered replica state carries compact authorized entry-sized live
-  overlay ciphertext, so lazy reads remain valid across handler instances
+  delta ciphertext, so lazy reads remain valid across handler instances
   without embedding the large immutable base or server-only source frames;
+- same-view replicas receive the latest entry-level delta when they hold its
+  direct base revision; initial, stale, and policy-changed replicas receive a
+  complete snapshot and persist the materialized result atomically;
 - the Next runtime validates the generated environment and reports a missing
   `withAlinea` wrapper or stale release binding before opening payload data.
 
 The dashboard replica and RSC synchronization paths now install the same runtime
-index representation without eagerly opening payload frames. Handler source
+snapshot representation without eagerly opening payload frames. Handler source
 synchronization compares source trees first; an unchanged revision does no
 database work. A changed revision scans the compact index, parses only changed
 source entry blobs, and emits replacement data, search, and reference frames only for

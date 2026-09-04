@@ -17,6 +17,7 @@ import {SourceDB} from '../entry/SourceDB.js'
 import {createRuntimeView} from './Projection.js'
 import {requestRuntimeSourceMutations} from '../handler/SourceWriter.js'
 import {runtimeSourcePathResolver} from './Model.js'
+import {applyRuntimeDelta, RuntimeSnapshot} from './Snapshot.js'
 
 describe('runtime database', () => {
   test('opens only the index and range-loads projected entry frames', async () => {
@@ -364,7 +365,6 @@ describe('runtime database', () => {
     })
     expect(overlay.bundle.length).toBeLessThan(release.bundle.length)
     let baseReads = 0
-    let overlayReads = 0
     const store = new RuntimeEntryStore({
       index: release.index,
       source: () => ({
@@ -374,13 +374,12 @@ describe('runtime database', () => {
         }
       })
     })
-    store.install(overlay.index, () => ({
-      async read(offset, length) {
-        overlayReads++
-        return overlay.bundle.slice(offset, offset + length)
-      }
-    }))
-    const resolver = new DatabaseResolver(cms.config, store)
+    const snapshot = new RuntimeSnapshot(
+      cms.config,
+      release.index,
+      store
+    ).apply(overlay)
+    const resolver = snapshot.resolver
 
     expect(
       await resolver.resolve({
@@ -390,7 +389,6 @@ describe('runtime database', () => {
       })
     ).toBe('Overlay title')
     expect(baseReads).toBe(0)
-    expect(overlayReads).toBe(0)
     expect(
       await resolver.resolve({
         id: target.entryId,
@@ -399,7 +397,6 @@ describe('runtime database', () => {
       })
     ).toEqual(expect.any(Array))
     expect(baseReads).toBe(0)
-    expect(overlayReads).toBeGreaterThan(0)
   })
 
   test('keeps stored status separate from inherited effective status', async () => {
@@ -524,7 +521,8 @@ describe('runtime database', () => {
     const previousChild = base.index.entries.find(
       entry => entry.entryId === 'apple'
     )!
-    const child = delta.index.entries.find(entry => entry.entryId === 'apple')!
+    const index = applyRuntimeDelta(base.index, delta.delta)
+    const child = index.entries.find(entry => entry.entryId === 'apple')!
     expect(child).toMatchObject({
       versionStatus: 'published',
       status: 'archived'
@@ -532,8 +530,10 @@ describe('runtime database', () => {
     expect(child.frames).toEqual(previousChild.frames)
     expect(delta.bundle.length).toBeLessThan(base.bundle.length)
 
-    store.install(delta.index, () => new MemoryRangeSource(delta.bundle))
-    const resolver = new DatabaseResolver(cms.config, store)
+    const resolver = new RuntimeSnapshot(cms.config, base.index, store).apply(
+      delta,
+      () => new MemoryRangeSource(delta.bundle)
+    ).resolver
     expect(
       await resolver.resolve({
         id: 'apple',
@@ -616,8 +616,8 @@ describe('runtime database', () => {
       const expected = [...rebuilt.index.entries]
         .map(({frames: _, ...core}) => core)
         .sort((left, right) => left.id.localeCompare(right.id))
-      const actual = incremental.index.entries
-        .map(({frames: _, ...core}) => core)
+      const actual = applyRuntimeDelta(base.index, incremental.delta)
+        .entries.map(({frames: _, ...core}) => core)
         .sort((left, right) => left.id.localeCompare(right.id))
       expect(actual).toEqual(expected)
     })

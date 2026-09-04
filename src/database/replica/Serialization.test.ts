@@ -5,7 +5,8 @@ import {
   serializeFrame,
   serializeReplicaState
 } from './Serialization.js'
-import type {ReplicaState} from './Types.js'
+import type {ReplicaSnapshotState} from './Types.js'
+import {createRuntimeDelta} from '../runtime/Snapshot.js'
 
 test('round trips runtime replica state and frame nonces through JSON', () => {
   const frame = {
@@ -24,7 +25,7 @@ test('round trips runtime replica state and frame nonces through JSON', () => {
     )
   ).toEqual(frame)
 
-  const state: ReplicaState = {
+  const state: ReplicaSnapshotState = {
     viewId: 'editor',
     runtime: {
       revision: 'tree-1',
@@ -38,4 +39,19 @@ test('round trips runtime replica state and frame nonces through JSON', () => {
       JSON.parse(JSON.stringify(serializeReplicaState(state)))
     )
   ).toEqual(state)
+
+  const update = {
+    viewId: 'editor',
+    delta: createRuntimeDelta(
+      state.runtime,
+      {...state.runtime, revision: 'tree-2'},
+      'delta',
+      '/delta.bundle'
+    )
+  }
+  expect(
+    deserializeReplicaState(
+      JSON.parse(JSON.stringify(serializeReplicaState(update)))
+    )
+  ).toEqual(update)
 })

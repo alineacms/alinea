@@ -5,13 +5,14 @@ import {IDBFactory} from 'fake-indexeddb'
 import {EntryReplicaClient} from './EntryClient.js'
 import {IndexedDBReplicaCache} from './IndexedDBCache.js'
 import type {ReplicaTransport} from './Protocol.js'
-import type {ReplicaState} from './Types.js'
+import type {ReplicaSnapshotState, ReplicaState} from './Types.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {exportRuntimeDatabase} from '../runtime/Exporter.js'
+import {createRuntimeDelta} from '../runtime/Snapshot.js'
 
 describe('EntryReplicaClient', () => {
   test('installs authenticated state atomically and keeps the current resolver', async () => {
-    const state: ReplicaState = {
+    const state: ReplicaSnapshotState = {
       viewId: 'editor',
       runtime: {
         bundleId: 'release-1',
@@ -44,7 +45,11 @@ describe('EntryReplicaClient', () => {
       }
     }
     const cache = new IndexedDBReplicaCache(new IDBFactory(), 'entry-client')
-    const client = new EntryReplicaClient({transport, cache})
+    const client = new EntryReplicaClient({
+      config: cms.config,
+      transport,
+      cache
+    })
 
     expect(await client.sync()).toMatchObject({
       revision: 'tree-1',
@@ -71,7 +76,7 @@ describe('EntryReplicaClient', () => {
       source,
       compression: 'none'
     })
-    const state: ReplicaState = {
+    const state: ReplicaSnapshotState = {
       viewId: 'editor',
       runtime: {...release.index, source: undefined}
     }
@@ -106,6 +111,7 @@ describe('EntryReplicaClient', () => {
       })
     }) as typeof globalThis.fetch
     const client = new EntryReplicaClient({
+      config: cms.config,
       transport,
       cache: new IndexedDBReplicaCache(
         new IDBFactory(),
@@ -142,18 +148,26 @@ describe('EntryReplicaClient', () => {
       source,
       compression: 'none'
     })
+    const initial: ReplicaSnapshotState = {
+      viewId: 'editor',
+      runtime: {...release.index, source: undefined}
+    }
+    const nextRuntime = structuredClone(initial.runtime)
+    nextRuntime.revision = 'next-revision'
+    const target = nextRuntime.entries.find(
+      entry => entry.entryId === 'oi4qtV9YaXNRIUDT2s61Y' && entry.main
+    )!
+    target.title = 'Changed without replacing the data frame'
     const states: Array<ReplicaState> = [
+      initial,
       {
         viewId: 'editor',
-        runtime: {...release.index, source: undefined}
-      },
-      {
-        viewId: 'editor',
-        runtime: {
-          ...structuredClone(release.index),
-          revision: 'next-revision',
-          source: undefined
-        }
+        delta: createRuntimeDelta(
+          initial.runtime,
+          nextRuntime,
+          'unused',
+          '/unused.bundle'
+        )
       }
     ]
     const transport: ReplicaTransport = {
@@ -187,6 +201,7 @@ describe('EntryReplicaClient', () => {
       })
     }) as typeof globalThis.fetch
     const client = new EntryReplicaClient({
+      config: cms.config,
       transport,
       cache: new IndexedDBReplicaCache(new IDBFactory(), 'hot-entry-client'),
       fetch
@@ -203,7 +218,11 @@ describe('EntryReplicaClient', () => {
     )
     expect(rangeReads).toBe(1)
 
-    await client.sync()
+    expect(await client.sync()).toMatchObject({
+      revision: 'next-revision',
+      changed: true,
+      entryIds: new Set(['oi4qtV9YaXNRIUDT2s61Y'])
+    })
     expect(await client.resolver(cms.config).resolve(query)).toEqual(
       expect.any(Array)
     )
