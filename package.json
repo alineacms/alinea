@@ -77,8 +77,8 @@
     "esbuild": "^0.28.0"
   },
   "peerDependencies": {
-    "react": "*",
-    "react-dom": "*"
+    "react": ">=19.0.0",
+    "react-dom": ">=19.0.0"
   },
   "devDependencies": {
     "@alinea/styler": "^1.0.3",

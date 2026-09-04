@@ -9,8 +9,8 @@ import {forwardCommand} from './util/ForwardCommand.js'
 const prog = sade('alinea')
 
 const libs = {
-  react: '18.0.0',
-  'react-dom': '18.0.0'
+  react: '19.0.0',
+  'react-dom': '19.0.0'
 }
 
 prog
