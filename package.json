@@ -4,6 +4,9 @@
   "description": "Headless git-based CMS",
   "repository": "github:alineacms/alinea",
   "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "sideEffects": false,
   "type": "module",
   "workspaces": [
