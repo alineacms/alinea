@@ -1,7 +1,7 @@
 import {
+  backendFromOptions,
   type BackendFactory,
-  type BackendOptions,
-  backendFromOptions
+  type BackendOptions
 } from '#/backend/api/CreateBackend.js'
 import {
   createHandler as createCoreHandler,
@@ -9,18 +9,20 @@ import {
 } from '#/backend/Handler.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
+import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
+import {ReplicaService} from '#/database/handler/Service.js'
+import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
-import {ReplicaService} from '#/database/handler/Service.js'
 import {createGeneratedRuntimeDB} from './RuntimeDB.js'
 import {generatedRuntimeIndex} from '#/backend/store/GeneratedRuntime.js'
 import {generatedEnvironment} from './GeneratedEnvironment.js'
-import {RuntimeEntryStore} from '#/database/runtime/Store.js'
+import {trace} from '#/core/Trace.js'
+import {createDevRemote} from './DevRemote.js'
 
 type Handler = (request: Request) => Promise<Response>
-const handlers = new WeakMap<NextCMS, Handler>()
 
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
@@ -29,7 +31,6 @@ export interface NextHandlerOptions extends HandlerHooks {
 
 export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const options = input instanceof NextCMS ? {cms: input} : input
-  if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config
   const backend: BackendFactory =
     typeof options.backend === 'function'
@@ -37,10 +38,12 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       : options.backend
         ? backendFromOptions(options.backend)
         : (context: RequestContext) => new CloudRemote(context, config)
-  const remote = (context: RequestContext) => backend(context, config)
-  const db = PLazy.from(async () => {
-    return createGeneratedRuntimeDB(config)
-  })
+  const remote = (context: RequestContext) =>
+    context.isDev ? createDevRemote(context, config) : backend(context, config)
+  const span = trace(config, 'alinea.next.handler.db')
+  const db = PLazy.from(() =>
+    span(async () => createGeneratedRuntimeDB(config))
+  )
   const replica =
     process.env.NODE_ENV === 'production'
       ? PLazy.from(async () => {
@@ -68,9 +71,9 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const handle: Handler = async request => {
     const url = new URL(request.url)
     const {searchParams} = url
-    const context = await requestContext(config)
-    const handlerPath = config.handlerUrl ?? '/api/cms'
-    if (!url.pathname.startsWith(handlerPath))
+    const context = await requestContext(config, request)
+    const handlerPath = handlerPathname(config, url)
+    if (url.pathname !== handlerPath)
       return new Response(`Expected handler to be served on ${handlerPath}`, {
         status: 400
       })
@@ -79,7 +82,10 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       const previewToken = searchParams.get('preview')
       if (previewToken) {
         const {draftMode} = await import('next/headers')
-        await previews.verify(previewToken)
+        const dm = await draftMode()
+        // The token bootstraps draft mode. Once its cookie is present, the
+        // browser session no longer depends on the short-lived token.
+        if (!dm.isEnabled) await previews.verify(previewToken)
         const source = new URL(request.url)
         // Next.js incorrectly reports 0.0.0.0 as the hostname if the server is
         // listening on all interfaces
@@ -90,7 +96,6 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
         const location = new URL(returnTo, source.origin)
         if (location.origin !== source.origin)
           throw new Error('Invalid preview return origin')
-        const dm = await draftMode()
         dm.enable()
         return new Response('Redirecting...', {
           status: 302,
@@ -103,6 +108,9 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       return new Response('Internal server error', {status: 500})
     }
   }
-  handlers.set(options.cms, handle)
   return handle
+}
+
+export function handlerPathname(config: Config, requestUrl: URL): string {
+  return new URL(Config.handlerUrl(config), requestUrl).pathname
 }

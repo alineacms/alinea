@@ -10,6 +10,8 @@ export interface NumberOptions extends FieldOptions<number | null> {
   help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
+  /** Text displayed when the field is empty */
+  placeholder?: string
   /** A minimum value */
   minValue?: number
   /** A maximum value */

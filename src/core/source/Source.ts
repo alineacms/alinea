@@ -3,9 +3,16 @@ import type {Change, ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {ReadonlyTree, WriteableTree} from './Tree.js'
 
+export interface GetBlobsOptions {
+  signal?: AbortSignal
+}
+
 export interface RemoteSource {
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined>
-  getBlobs(shas: Array<string>): AsyncGenerator<[sha: string, blob: Uint8Array]>
+  getBlobs(
+    shas: ReadonlyArray<string>,
+    options?: GetBlobsOptions
+  ): AsyncIterable<[sha: string, blob: Uint8Array]>
 }
 
 export interface Source extends RemoteSource {
@@ -103,11 +110,11 @@ export class SourceTransaction {
     return this
   }
 
-  async compile() {
+  async compile(previous?: ReadonlyTree) {
     const todo = this.#tasks.splice(0)
     for (const task of todo) await task()
-    const from = this.#from
-    const into = await this.#into.compile()
+    const from = previous ?? this.#from
+    const into = await this.#into.compile(previous)
     const forwards = from.diff(into)
     const fromSource = Array.from(
       new Set(

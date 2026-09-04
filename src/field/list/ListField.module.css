@@ -109,6 +109,11 @@
   outline: none;
 }
 
+.ListFieldTypePicker-item[data-hovered]:not([data-focus-visible]) {
+  background: var(--alinea-muted);
+  color: var(--alinea-fg);
+}
+
 .ListFieldTypePicker-item[data-selected] {
   font-weight: 500;
   background: var(--alinea-selected);

@@ -103,7 +103,35 @@ test('shows the loaded entry title on an overview outside the sidebar tree', asy
   await expect(
     app.page.getByRole('button', {name: 'Back to root'})
   ).toBeVisible()
-  await expect(app.page.getByRole('button', {name: 'Edit entry'})).toBeVisible()
+  const editView = app.page.getByRole('button', {name: 'Edit entry'})
+  await app.page.keyboard.press('Tab')
+  await editView.focus()
+  await expect(app.page.getByRole('tooltip')).toHaveText('Edit view')
+  await editView.click()
+  const overviewView = app.page.getByRole('button', {name: 'Show overview'})
+  await app.page.keyboard.press('Tab')
+  await overviewView.focus()
+  await expect(app.page.getByRole('tooltip')).toHaveText('Overview view')
+})
+
+test('keeps localized children when switching a sidebar entry to overview', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />), {
+    entry: 'localizedStart',
+    routeRoot: 'localized',
+    title: 'Localized start'
+  })
+
+  await app.openEntry('Localized folder')
+  await app.page.getByRole('button', {name: 'Show overview'}).click()
+
+  const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
+  await expect(overview.getByText('No results found')).toHaveCount(0)
+  await expect(
+    overview.getByRole('row', {name: /^Localized child/})
+  ).toBeVisible()
 })
 
 test('expands and collapses an entry with the sidebar chevron', async ({

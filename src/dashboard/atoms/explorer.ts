@@ -586,7 +586,7 @@ export class ExplorerAtoms {
   sort = atom(
     (get): ExplorerSort =>
       get(this.#selectedSort) ?? {
-        sortBy: get(this.isMedia) ? 'title' : 'index',
+        sortBy: 'index',
         direction: 'asc'
       },
     (get, set, sortBy: ExplorerSortBy) => {
@@ -750,6 +750,16 @@ export class ExplorerAtoms {
       const graph = get(graphAtom)
       const sort = get(this.sort)
       const filter = get(this.filter)
+      const orderField =
+        sort.sortBy === 'title'
+          ? Entry.title
+          : sort.sortBy === 'path'
+            ? Entry.path
+            : sort.sortBy === 'size'
+              ? MediaFile.size
+              : sort.sortBy === 'id'
+                ? Entry.id
+                : Entry.index
       const entries = await graph.find(
         trackedQuery(get, {
           workspace: entry.workspace,
@@ -760,19 +770,10 @@ export class ExplorerAtoms {
           type: filter,
           status: 'preferDraft',
           groupBy: Entry.id,
-          orderBy: {
-            [sort.direction]:
-              sort.sortBy === 'title'
-                ? Entry.title
-                : sort.sortBy === 'path'
-                  ? Entry.path
-                  : sort.sortBy === 'size'
-                    ? MediaFile.size
-                    : sort.sortBy === 'id'
-                      ? Entry.id
-                      : Entry.index,
-            caseSensitive: sort.sortBy !== 'id'
-          },
+          orderBy:
+            sort.direction === 'asc'
+              ? {asc: orderField, caseSensitive: sort.sortBy !== 'id'}
+              : {desc: orderField, caseSensitive: sort.sortBy !== 'id'},
           select: {
             active: Entry.active,
             createdAt: Entry.createdAt,
@@ -899,10 +900,9 @@ export class ExplorerAtoms {
             ? undefined
             : selectedSort === undefined && defaultOrderBy !== undefined
               ? defaultOrderBy
-              : {
-                  [sort.direction]: orderField,
-                  caseSensitive: sort.sortBy !== 'id'
-                },
+              : sort.direction === 'asc'
+                ? {asc: orderField, caseSensitive: sort.sortBy !== 'id'}
+                : {desc: orderField, caseSensitive: sort.sortBy !== 'id'},
           select: {
             active: Entry.active,
             createdAt: Entry.createdAt,

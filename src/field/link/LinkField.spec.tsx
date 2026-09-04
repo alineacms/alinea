@@ -63,6 +63,20 @@ test('keeps remove controls visible on single and multiple link rows', async ({
   ).toHaveCount(2)
 })
 
+test('opens single-link settings from the linked row', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+
+  const relatedLink = page.getByRole('list', {name: 'Related link'})
+  await relatedLink.getByRole('button', {name: 'Edit link'}).click()
+
+  const settings = page.getByRole('dialog', {name: 'Link settings'})
+  await expect(settings).toBeVisible()
+  await expect(settings.getByRole('button', {name: 'Open link'})).toBeVisible()
+})
+
 test('switches link picker workspaces and roots', async ({mount, page}) => {
   await mount(<EntryPickerSingle />)
   await page.getByRole('button', {name: 'Pick an entry'}).click()
@@ -147,10 +161,11 @@ test('opens a compact entry picker and selects immediately', async ({
     0
   )
   await expect(picker.getByRole('button', {name: 'Select'})).toHaveCount(0)
+  await expect(picker.getByRole('checkbox')).toHaveCount(0)
 
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home.locator('[role="gridcell"] [role="gridcell"]')).toHaveCount(
-    2
+    1
   )
   await expect
     .poll(() =>

@@ -1,7 +1,6 @@
-import {expect, spyOn, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {SourceDB} from '#/database/entry/SourceDB.js'
-import type {Entry} from '#/core/Entry.js'
+import {SourceDB, SourceDB as LocalDB} from '#/database/entry/SourceDB.js'
+import {Entry} from '#/core/Entry.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
 import {
@@ -9,9 +8,10 @@ import {
   createDashboardStore,
   TestEvents
 } from '#test/DashboardFixture.js'
+import {expect, spyOn, test} from 'bun:test'
 import {atom} from 'jotai'
 import {configAtom, eventsAtom} from './core.js'
-import {EntryAtoms, EntryLocaleAtoms, entryAtoms} from './entry.js'
+import {EntryAtoms, entryAtoms, EntryLocaleAtoms} from './entry.js'
 import {authReady} from './user.js'
 
 test('entryAtoms returns stable entry and locale atom bundles', () => {
@@ -147,6 +147,84 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
   const updatedValue = store.get(updated.value) as Record<string, unknown>
   expect(updated).not.toBe(first)
   expect(updatedValue.payload).toEqual(nextPayload)
+})
+
+test('preloads linked rich text images without changing stored data', async () => {
+  const Page = Config.document('Page', {
+    fields: {body: Field.richText('Body')}
+  })
+  const config = Config.create({
+    schema: {Page},
+    baseUrl: 'http://localhost',
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        mediaUrl: '/media',
+        roots: {
+          pages: Config.root('Pages', {contains: [Page]}),
+          media: Config.media()
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  await db.create({
+    id: 'media-1',
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      location: 'image.jpg',
+      extension: '.jpg',
+      alt: {en: 'Resolved alt text'}
+    }
+  })
+  const created = await db.create({
+    id: 'page-1',
+    type: Page,
+    root: 'pages',
+    set: {
+      title: 'Page',
+      body: [
+        {
+          _type: 'image',
+          _id: 'image-1',
+          _entry: 'media-1',
+          _link: 'image'
+        }
+      ]
+    }
+  })
+  const selectedEntry = await db.get({id: created._id, select: Entry})
+  const entryDataAtom = atom({
+    id: selectedEntry.id,
+    type: selectedEntry.type,
+    parentId: selectedEntry.parentId,
+    workspace: selectedEntry.workspace,
+    root: selectedEntry.root,
+    hasChildren: false,
+    parents: [],
+    entries: [selectedEntry]
+  })
+  const entry = new EntryAtoms(selectedEntry.id, entryDataAtom)
+  const store = createDashboardStore(config, db)
+
+  const images = await store.get(entry.locales(null).richTextImages)
+
+  expect(images.get('media-1')).toEqual({
+    src: 'http://localhost/media/image.jpg',
+    alt: 'Resolved alt text'
+  })
+  expect(selectedEntry.data.body).toEqual([
+    {
+      _type: 'image',
+      _id: 'image-1',
+      _entry: 'media-1',
+      _link: 'image'
+    }
+  ])
 })
 
 test('publishing reconciles transaction-generated media aliases immediately', async () => {

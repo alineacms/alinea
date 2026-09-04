@@ -23,11 +23,14 @@ export interface MediaUrlResolver {
 }
 
 export interface MediaPublicUrlMeta extends Omit<MediaUrlMeta, 'parentPaths'> {
-  entryUrl: string
+  /** @deprecated Pass parentPaths directly when available. */
+  entryUrl?: string
+  parentPaths?: Array<string>
 }
 
 export interface MediaEntryUrlMeta {
-  entryUrl: string
+  defaultUrl: string
+  parentPaths: Array<string>
   path: string
   workspace: string
   root: string
@@ -67,15 +70,15 @@ export namespace MediaLocation {
 
   /** Resolve the public URL used to serve a media entry. */
   export function publicUrl(config: Config, meta: MediaPublicUrlMeta): string {
-    const {entryUrl, ...media} = meta
-    const {location, workspace} = media
+    const {entryUrl, parentPaths, ...media} = meta
+    const {location, workspace} = meta
     const {mediaUrl} = Workspace.data(config.workspaces[workspace])
     if (!mediaUrl) return location
     if (typeof mediaUrl === 'function') {
-      const segments = entryUrl.split('/').filter(Boolean)
       return mediaUrl({
         ...media,
-        parentPaths: segments.slice(0, -1)
+        parentPaths:
+          parentPaths ?? entryUrl?.split('/').filter(Boolean).slice(0, -1) ?? []
       })
     }
     return joinPaths(mediaUrl, location)
@@ -83,14 +86,14 @@ export namespace MediaLocation {
 
   /** Resolve a media entry URL, falling back to its regular entry URL. */
   export function entryUrl(config: Config, meta: MediaEntryUrlMeta): string {
-    const {data, entryUrl, path, root, workspace} = meta
+    const {data, defaultUrl, parentPaths, path, root, workspace} = meta
     const {extension, location} = data
     if (typeof extension !== 'string' || typeof location !== 'string')
-      return entryUrl
+      return defaultUrl
     return publicUrl(config, {
-      entryUrl,
       extension,
       location,
+      parentPaths,
       path,
       root,
       workspace

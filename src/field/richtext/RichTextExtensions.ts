@@ -23,6 +23,7 @@ import HardBreak from '@tiptap/extension-hard-break'
 import Heading from '@tiptap/extension-heading'
 import Highlight from '@tiptap/extension-highlight'
 import HorizontalRule from '@tiptap/extension-horizontal-rule'
+import Image from '@tiptap/extension-image'
 import Italic from '@tiptap/extension-italic'
 import {BulletList, ListItem, OrderedList} from '@tiptap/extension-list'
 import Paragraph from '@tiptap/extension-paragraph'
@@ -45,6 +46,48 @@ import Small from './extensions/Small.js'
 import css from './RichTextExtensions.module.css'
 
 const styles = styler(css)
+
+const ImageWithReferenceAttributes = Image.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      _id: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-id'),
+        renderHTML: attributes =>
+          attributes._id ? {'data-id': attributes._id} : {}
+      },
+      _entry: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-entry'),
+        renderHTML: attributes =>
+          attributes._entry ? {'data-entry': attributes._entry} : {}
+      },
+      _link: {
+        default: null,
+        parseHTML: element => element.getAttribute('data-link'),
+        renderHTML: attributes =>
+          attributes._link ? {'data-link': attributes._link} : {}
+      }
+    }
+  },
+  addNodeView() {
+    const parent = this.parent?.()
+    if (!parent) return null
+    return props => {
+      const view = parent(props)
+      const update = view.update?.bind(view)
+      if (!update) return view
+      const {width, height} = props.node.attrs
+      view.update = (node, decorations, innerDecorations) => {
+        if (node.attrs.width !== width || node.attrs.height !== height)
+          return false
+        return update(node, decorations, innerDecorations)
+      }
+      return view
+    }
+  }
+})
 
 function headingExtension(getEntryAnchors?: () => Iterable<string>) {
   return Heading.extend({
@@ -290,9 +333,10 @@ export const richTextBlockClipboard = Extension.create({
 export const extensions = createExtensions()
 
 export function defaultExtensionConfig(
-  getEntryAnchors?: () => Iterable<string>
+  getEntryAnchors?: () => Iterable<string>,
+  enableImageResize = false
 ) {
-  return createExtensions(getEntryAnchors)
+  return createExtensions(getEntryAnchors, enableImageResize)
 }
 
 export function defaultExtensions(
@@ -350,7 +394,10 @@ export function richTextBlockExtensions(
   )
 }
 
-function createExtensions(getEntryAnchors?: () => Iterable<string>) {
+function createExtensions(
+  getEntryAnchors?: () => Iterable<string>,
+  enableImageResize = false
+) {
   return {
     Document,
     Text,
@@ -374,6 +421,18 @@ function createExtensions(getEntryAnchors?: () => Iterable<string>) {
     }),
     HorizontalRule: HorizontalRule.configure({
       HTMLAttributes: {class: styles.RichTextExtensions.rule()}
+    }),
+    Image: ImageWithReferenceAttributes.configure({
+      HTMLAttributes: {class: styles.RichTextExtensions.image()},
+      resize: enableImageResize
+        ? {
+            enabled: true,
+            directions: ['bottom-right'],
+            minWidth: 80,
+            minHeight: 8,
+            alwaysPreserveAspectRatio: true
+          }
+        : false
     }),
     BulletList: BulletList.configure({
       HTMLAttributes: {class: styles.RichTextExtensions.bulletList()}

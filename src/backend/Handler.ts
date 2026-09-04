@@ -1,6 +1,10 @@
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Entry} from '#/core.js'
+import {
+  BLOB_SEQUENCE_CONTENT_TYPE,
+  encodeBlobSequence
+} from '#/core/BlobTransport.js'
 import type {CMS} from '#/core/CMS.js'
 import type {
   AuthedContext,
@@ -8,6 +12,9 @@ import type {
   RemoteConnection,
   RequestContext
 } from '#/core/Connection.js'
+import {developmentKeyHeader} from '#/core/Connection.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import type {SourceDB} from '#/database/entry/SourceDB.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -25,7 +32,8 @@ import PLazy from 'p-lazy'
 import pLimit from 'p-limit'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
-import {createPreviewParser} from './resolver/ParsePreview.js'
+import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
+import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
 import type {
   AuthenticatedReplicaSession,
@@ -41,7 +49,6 @@ import {
   parseReplicaCommands
 } from '#/database/replica/Commands.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
-import type {Mutation} from '#/core/db/Mutation.js'
 import type {ChangesBatch} from '#/core/source/Change.js'
 
 const PrepareBody = object({
@@ -53,17 +60,21 @@ export interface Handler {
   (request: Request, context: RequestContext): Promise<Response>
 }
 
-export type HookResponse<T = void> = void | T | Promise<T> | Promise<void>
+export type HookResponse<T = void> = void | T | Promise<void | T>
+
+export interface BeforeCommitContext {
+  mutations: ReadonlyArray<Mutation>
+}
+
+export interface AfterCommitContext extends BeforeCommitContext {
+  sha: string
+}
 
 export interface HandlerHooks {
-  beforeCreate?(entry: Entry): HookResponse<Entry>
-  afterCreate?(entry: Entry): HookResponse
-  beforeUpdate?(entry: Entry): HookResponse<Entry>
-  afterUpdate?(entry: Entry): HookResponse
-  beforeArchive?(entryId: string): HookResponse
-  afterArchive?(entryId: string): HookResponse
-  beforeRemove?(entryId: string): HookResponse
-  afterRemove?(entryId: string): HookResponse
+  beforeCommit?(
+    context: BeforeCommitContext
+  ): HookResponse<ReadonlyArray<Mutation>>
+  afterCommit?(context: AfterCommitContext): HookResponse
 }
 
 export interface HandlerOptions extends HandlerHooks {
@@ -71,6 +82,10 @@ export interface HandlerOptions extends HandlerHooks {
   db: SourceDB | Promise<SourceDB>
   remote?: (context: RequestContext) => RemoteConnection
   replica?: ReplicaService | Promise<ReplicaService>
+  forwardMutations?(
+    request: Request,
+    context: AuthedContext
+  ): Promise<Response | undefined>
 }
 
 export function createHandler({
@@ -78,14 +93,11 @@ export function createHandler({
   remote = context => new CloudRemote(context, cms.config),
   db,
   replica,
+  forwardMutations,
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
   const replicaWrite = pLimit(1)
-  const previewParser = PLazy.from(async () => {
-    const local = await db
-    return createPreviewParser(local)
-  })
   return async function handle(
     request: Request,
     context: RequestContext
@@ -124,7 +136,6 @@ export function createHandler({
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
       let trustedServer = false
-
       if (auth) {
         return cnx.authenticate(request, {
           enrichUser(user) {
@@ -166,11 +177,12 @@ export function createHandler({
         }
       } catch (cause) {
         if (cause instanceof MissingCredentialsError) {
-          const authorization = request.headers.get('authorization')
-          const bearer = authorization?.slice('Bearer '.length)
+          const credential = context.isDev
+            ? request.headers.get(developmentKeyHeader)
+            : request.headers.get('authorization')?.slice('Bearer '.length)
           if (!context.apiKey)
             throw new MissingCredentialsError('Missing API key', {cause})
-          if (bearer !== context.apiKey)
+          if (credential !== context.apiKey)
             throw new InvalidCredentialsError('Expected matching api key', {
               cause
             })
@@ -441,25 +453,38 @@ export function createHandler({
         const scope = getScope(cms.config)
         const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval)
+          await periodicSync(
+            cnx,
+            query.disableSync
+              ? Number.POSITIVE_INFINITY
+              : (query.syncInterval ?? cms.config.syncInterval)
+          )
         } else {
-          const {parse} = await previewParser
-          const preview = await parse(query.preview, () => syncLocal(cnx))
-          query.preview = preview
+          const preview = await decodePreviewRequest(query.preview)
+          if ('contentHash' in preview && local.sha !== preview.contentHash)
+            await syncLocal(cnx)
+          query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
+        if (forwardMutations && userCtx) {
+          const forwarded = await forwardMutations(request.clone(), userCtx)
+          if (forwarded) return forwarded
+        }
         const user = expectUser()
         expectJson()
         const policy = await user.policy
-        const mutations = await body
+        let mutations = (await body) as ReadonlyArray<Mutation>
+        await syncLocal(cnx)
+        const adjusted = await hooks.beforeCommit?.({mutations})
+        if (adjusted) mutations = adjusted
         let changes: ChangesBatch | undefined
         const attempt = async (retry = 0) => {
-          await syncLocal(cnx)
+          if (retry > 0) await syncLocal(cnx)
           const request = {
-            ...(await local.request(mutations, policy)),
+            ...(await local.request([...mutations], policy)),
             user: user.claims
           }
           try {
@@ -474,8 +499,11 @@ export function createHandler({
             }
             return sha
           } catch (error) {
-            if (error instanceof ShaMismatchError && retry < 3)
-              return attempt(retry + 1)
+            const isConflict =
+              error instanceof ShaMismatchError ||
+              (error instanceof HttpError && error.code === 409) ||
+              (error instanceof Response && error.status === 409)
+            if (isConflict && retry < 3) return attempt(retry + 1)
             throw error
           }
         }
@@ -490,11 +518,33 @@ export function createHandler({
             changes
           )
         }
+        try {
+          await hooks.afterCommit?.({
+            mutations,
+            sha
+          })
+        } catch (error) {
+          console.error('Alinea afterCommit hook failed', error)
+        }
         return Response.json({sha})
       }
 
       if (action === HandleAction.Commit && request.method === 'POST') {
-        throw new Error('Mutations expected')
+        if (!context.isDev)
+          throw new HttpError(400, 'Commits are only accepted in development')
+        const developmentKey = request.headers.get(developmentKeyHeader)
+        if (!context.apiKey || developmentKey !== context.apiKey)
+          throw new HttpError(401, 'Invalid development commit credentials')
+        const user = expectUser()
+        expectJson()
+        const commit = {
+          ...((await body) as CommitRequest),
+          user: user.claims
+        }
+        let {sha} = await cnx.write(commit)
+        if (sha === commit.intoSha) await local.write(commit)
+        else sha = await local.syncWith(cnx)
+        return Response.json({sha})
       }
 
       // History
@@ -516,33 +566,31 @@ export function createHandler({
         const sha = string(url.searchParams.get('sha'))
         await syncLocal(cnx)
         const tree = await local.getTreeIfDifferent(sha)
-        return Response.json(tree ?? null)
+        return compressResponse(request, Response.json(tree ?? null))
       }
 
       if (action === HandleAction.Blob && request.method === 'POST') {
         const {shas} = object({shas: array(string)})(await body)
         await periodicSync(cnx)
         const tree = await local.source.getTree()
-        const fromLocal = []
-        const fromRemote = []
+        const fromLocal: Array<string> = []
+        const fromRemote: Array<string> = []
         for (const sha of shas) {
           if (tree.hasSha(sha)) fromLocal.push(sha)
           else fromRemote.push(sha)
         }
-        const formData = new FormData()
-        if (fromLocal.length > 0) {
-          const blobs = local.source.getBlobs(fromLocal)
-          for await (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob as BlobPart]))
-          }
+        async function* blobs() {
+          const options = {signal: request.signal}
+          if (fromLocal.length > 0)
+            yield* local.source.getBlobs(fromLocal, options)
+          if (fromRemote.length > 0) yield* cnx.getBlobs(fromRemote, options)
         }
-        if (fromRemote.length > 0) {
-          const blobs = cnx.getBlobs(fromRemote)
-          for await (const [sha, blob] of blobs) {
-            formData.append(sha, new Blob([blob as BlobPart]))
-          }
-        }
-        return new Response(formData)
+        return compressResponse(
+          request,
+          new Response(encodeBlobSequence(blobs()), {
+            headers: {'content-type': BLOB_SEQUENCE_CONTENT_TYPE}
+          })
+        )
       }
 
       // Media

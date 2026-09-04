@@ -9,8 +9,10 @@
 }
 
 .LabelTitle {
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
 }
@@ -57,6 +59,7 @@
   font-style: italic;
   white-space: normal;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .LabelDescription[data-size='small'] {

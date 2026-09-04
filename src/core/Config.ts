@@ -6,6 +6,7 @@ import {admin, type Role} from './Role.js'
 import {Root} from './Root.js'
 import {Schema} from './Schema.js'
 import {getScope} from './Scope.js'
+import type {Tracer} from './Trace.js'
 import {Type} from './Type.js'
 import {isValidIdentifier} from './util/Identifiers.js'
 import {entries, values} from './util/Objects.js'
@@ -40,6 +41,9 @@ export interface Config {
   /** Filename of the generated dashboard, defaults to admin.html */
   dashboardFile?: string
 
+  /** Optional application-owned instrumentation for Alinea operations. */
+  tracer?: Tracer
+
   auth?: Auth.View
 }
 
@@ -55,6 +59,15 @@ export namespace Config {
     if (!result) return result
     if (result.includes('://')) return result
     return `https://${result}`
+  }
+
+  export function handlerUrl(config: Config): string {
+    if (
+      typeof config.handlerUrl !== 'string' ||
+      config.handlerUrl.trim().length === 0
+    )
+      throw new Error('Missing handlerUrl in Alinea config')
+    return config.handlerUrl
   }
 
   export function adminPath(config: Config) {

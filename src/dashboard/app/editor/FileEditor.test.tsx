@@ -46,7 +46,10 @@ test('shows the resolved media URL', () => {
   render(
     <DashboardScopeInternal dashboard={dashboard}>
       <EditorScope editor={editor}>
-        <FileEditor entry={{root: 'media', url: '/guide', workspace: 'main'}} />
+        <FileEditor
+          entry={{root: 'media', url: '/guide', workspace: 'main'}}
+          parentPaths={[]}
+        />
       </EditorScope>
     </DashboardScopeInternal>
   )

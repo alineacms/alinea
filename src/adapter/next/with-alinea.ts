@@ -1,4 +1,7 @@
 import type {NextConfig} from 'next/dist/types.js'
+import {readFileSync} from 'node:fs'
+import {createRequire} from 'node:module'
+import {resolve} from 'node:path'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
@@ -19,12 +22,27 @@ export function createCMS() {
 }
 
 export function withAlinea(config: NextConfig = {}): NextConfig {
-  const settings = resolveGeneratedSettings()
-  const adminPath = settings?.adminPath
+  const settings = resolveGeneratedSettings(config)
+  const configuredAdminPath =
+    config.env?.ALINEA_ADMIN_PATH ?? process.env.ALINEA_ADMIN_PATH
+  const adminPath = configuredAdminPath
+    ? normalizeBasePath(configuredAdminPath)
+    : settings?.adminPath
   if (!adminPath) {
     console.warn(
       'Alinea dashboard environment is unavailable; dashboard routing is disabled. Run Next.js through the Alinea CLI.'
     )
+  }
+  let nextVersion = 15
+  try {
+    // Ducktape this together so we can get the package.json contents regardless
+    // of .cjs, .mjs, compiled .ts or Node version
+    const require = createRequire(resolve('./index.js'))
+    const pkgLocation = require.resolve('next/package.json')
+    const pkg = JSON.parse(readFileSync(pkgLocation, 'utf-8'))
+    nextVersion = Number(pkg.version.split('.')[0])
+  } catch {
+    console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
   const imagesConfig = config.images ?? {}
   const remotePatterns = [
@@ -53,13 +71,34 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ALINEA_RELEASE_URL: `${settings.adminPath}/${settings.releaseId}/payload.bundle`,
         ALINEA_CONFIG_URL: `${settings.adminPath}/config/${settings.configId}/client-config.js`
       }
-    : config.env
+    : adminPath
+      ? {...config.env, ALINEA_ADMIN_PATH: adminPath}
+      : config.env
+  if (nextVersion < 15)
+    return {
+      ...config,
+      experimental: {
+        ...config.experimental,
+        serverComponentsExternalPackages: [
+          ...(config.experimental?.serverComponentsExternalPackages ?? []),
+          '@alinea/generated'
+        ]
+      },
+      images,
+      redirects,
+      rewrites,
+      env
+    }
   return {
     ...config,
+    serverExternalPackages: [
+      ...(config.serverExternalPackages ?? []),
+      '@alinea/generated'
+    ],
     images,
-    env,
     redirects,
-    rewrites
+    rewrites,
+    env
   }
 }
 
@@ -133,10 +172,13 @@ interface ResolvedGeneratedSettings {
   configId: string
 }
 
-function resolveGeneratedSettings(): ResolvedGeneratedSettings | undefined {
-  const adminPath = process.env.ALINEA_ADMIN_PATH
-  const releaseId = process.env.ALINEA_GENERATED_RELEASE
-  const configId = process.env.ALINEA_GENERATED_CONFIG
+function resolveGeneratedSettings(
+  config: NextConfig
+): ResolvedGeneratedSettings | undefined {
+  const environment = {...process.env, ...config.env}
+  const adminPath = environment.ALINEA_ADMIN_PATH
+  const releaseId = environment.ALINEA_GENERATED_RELEASE
+  const configId = environment.ALINEA_GENERATED_CONFIG
   if (adminPath && releaseId && configId)
     return {
       adminPath: normalizeBasePath(adminPath),

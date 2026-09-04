@@ -200,26 +200,35 @@ export namespace router {
       async (request: Request) => {
         const response = await route.handle(request)
         if (response === undefined) return undefined
-        const body = response.body
-        if (!body) return response
-        const isCompressed = response.headers.get('content-encoding')
-        if (isCompressed) return response
-        const accept = request.headers.get('accept-encoding')
-        const method = accept?.includes('gzip')
-          ? 'gzip'
-          : accept?.includes('deflate')
-            ? 'deflate'
-            : undefined
-        if (method === undefined) return response
-        const stream = body.pipeThrough(new CompressionStream(method))
-        const headers = new Headers(response.headers)
-        headers.set('content-encoding', method)
-        headers.delete('content-length')
-        return new Response(stream, {
-          headers,
-          status: response.status
-        })
+        return compressResponse(request, response)
       }
     )
   }
+}
+
+export function compressResponse(
+  request: Request,
+  response: Response
+): Response {
+  const body = response.body
+  if (!body) return response
+  const isCompressed = response.headers.get('content-encoding')
+  if (isCompressed) return response
+  const accept = request.headers.get('accept-encoding')
+  const method = accept?.includes('gzip')
+    ? 'gzip'
+    : accept?.includes('deflate')
+      ? 'deflate'
+      : undefined
+  if (method === undefined) return response
+  const stream = body.pipeThrough(new CompressionStream(method))
+  const headers = new Headers(response.headers)
+  headers.set('content-encoding', method)
+  headers.set('vary', 'accept-encoding')
+  headers.delete('content-length')
+  return new Response(stream, {
+    headers,
+    status: response.status,
+    statusText: response.statusText
+  })
 }

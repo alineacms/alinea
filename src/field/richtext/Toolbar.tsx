@@ -10,6 +10,7 @@ import {
   IcRoundFormatListBulleted,
   IcRoundFormatListNumbered,
   IcRoundHorizontalRule,
+  IcRoundImage,
   IcRoundLink,
   IcRoundQuote,
   IcRoundSubscript,
@@ -34,6 +35,7 @@ import {
 import type {Editor} from '@tiptap/react'
 import type {ComponentType, ReactElement, ReactNode} from 'react'
 import type {PickTextLinkFunc} from './PickTextLink.js'
+import type {PickRichTextImageFunc} from './PickTextLink.js'
 import {currentAnchor} from './extensions/Anchor.js'
 
 export interface RichTextCommand {
@@ -68,9 +70,12 @@ export interface ToolbarConfig {
 export interface RichTextToolbarContext {
   editor: Editor
   focusToggle: (target: EventTarget | null) => void
+  pickImage: PickRichTextImageFunc
   pickLink: PickTextLinkFunc
+  enableImages?: boolean
   enableTables?: boolean
   exec: RichTextCommand
+  handleImage: () => void
   handleLink: () => void
   handleAnchor: () => void
   toolbar: ToolbarConfig
@@ -333,6 +338,17 @@ export const links = {
   }
 } satisfies ToolbarGroup
 
+export const images = {
+  group: {
+    image: {
+      icon: () => <IcRoundImage />,
+      title: 'Image',
+      active: ({editor}) => editor.isActive('image'),
+      onSelect: ({handleImage}) => handleImage()
+    }
+  }
+} satisfies ToolbarGroup
+
 export const anchors = {
   group: {
     anchor: {
@@ -357,26 +373,24 @@ export const inserts = {
   onSelect: ({exec}) => exec().setHorizontalRule().run()
 } satisfies ToolbarButton
 
-export function defaultToolbar(enableTables: boolean): ToolbarConfig {
-  if (!enableTables)
-    return {
-      headings,
-      formatting,
-      alignment,
-      lists,
-      links,
-      anchors,
-      quotes,
-      inserts
-    }
+export interface DefaultToolbarOptions {
+  enableImages?: boolean
+  enableTables?: boolean
+}
+
+export function defaultToolbar({
+  enableImages = false,
+  enableTables = false
+}: DefaultToolbarOptions = {}): ToolbarConfig {
   return {
     headings,
-    tables,
+    ...(enableTables ? {tables} : {}),
     formatting,
     alignment,
     lists,
     links,
     anchors,
+    ...(enableImages ? {images} : {}),
     quotes,
     inserts
   }

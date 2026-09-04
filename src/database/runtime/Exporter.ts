@@ -308,6 +308,7 @@ function parsedRuntimeVersion(
     root: entry.root,
     locale: entry.locale,
     path: entry.path,
+    url: entry.url,
     versionStatus: entry.versionStatus,
     parentDir,
     childrenDir: join(parentDir, entry.path),

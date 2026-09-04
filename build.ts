@@ -393,19 +393,6 @@ function jsEntry({
               platform: 'neutral',
               mainFields: ['module', 'main'],
               jsx: 'automatic',
-              alias: {
-                yjs: `./src/yjs.ts`,
-                // Mistakenly imported because it is used in the JSDocs
-                'y-protocols/awareness': `data:text/javascript,
-                  export const Awareness = undefined
-                `,
-
-                // Used in lib0, polyfill crypto for nodejs
-                'lib0/webcrypto': `data:text/javascript,
-                  import {crypto} from '@alinea/iso'
-                  export const subtle = crypto.subtle
-                  export const getRandomValues = crypto.getRandomValues.bind(crypto)`
-              },
               define: {
                 // See https://github.com/pmndrs/jotai/blob/2188d7557500e59c10415a9e74bb5cfc8a3f9c31/src/react/useSetAtom.ts#L33
                 'import.meta.env.MODE': '"production"'

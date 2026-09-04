@@ -5,7 +5,6 @@ import type {Entry} from '#/core/Entry.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
-import {outcome} from '#/core/Outcome.js'
 import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {useEditor, useField, useFieldValue} from '#/dashboard/hooks.js'
@@ -31,9 +30,10 @@ const metadataFields = type('Metadata', {
 
 export interface FileEditorProps {
   entry: Pick<Entry, 'root' | 'url' | 'workspace'>
+  parentPaths: Array<string>
 }
 
-export function FileEditor({entry}: FileEditorProps) {
+export function FileEditor({entry, parentPaths}: FileEditorProps) {
   const config = useAtomValue(configAtom)
   const location = useFieldValue(MediaFile.location)
   const path = useFieldValue(MediaFile.path)
@@ -51,15 +51,15 @@ export function FileEditor({entry}: FileEditorProps) {
   const [focusPoint = {x: 0.5, y: 0.5}] = useField(MediaFile.focus)
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
   const publicLocation = MediaLocation.publicUrl(config, {
-    entryUrl: entry.url,
     extension,
     location,
+    parentPaths,
     path,
     root: entry.root,
     workspace: entry.workspace
   })
   const baseUrl = Config.baseUrl(config) ?? window.location.href
-  const [liveUrl] = outcome(() => new URL(publicLocation, baseUrl))
+  const liveUrl = URL.parse(publicLocation, baseUrl)
   const parsedBaseUrl = URL.parse(baseUrl)
   const displayedUrl = liveUrl
     ? parsedBaseUrl && liveUrl.origin === parsedBaseUrl.origin
@@ -123,7 +123,11 @@ export function FileEditor({entry}: FileEditorProps) {
                       className={styles.FileEditor.metadata.item({full: true})}
                     >
                       <dt className={styles.FileEditor.metadata.term()}>URL</dt>
-                      <dd className={styles.FileEditor.metadata.value()}>
+                      <dd
+                        className={styles.FileEditor.metadata.value({
+                          link: true
+                        })}
+                      >
                         <a
                           href={liveUrl.href}
                           target="_blank"

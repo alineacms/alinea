@@ -51,6 +51,16 @@ test('page explorers keep their row navigation action', () => {
   expect(explorer.items('en')).not.toBe(explorer.items('fr'))
 })
 
+test('explorers default to index sorting', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'media'},
+    {}
+  )
+  const store = createStore()
+
+  expect(store.get(explorer.sort)).toEqual({sortBy: 'index', direction: 'asc'})
+})
+
 test('uses the locale from its initial location', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages', locale: 'fr'},

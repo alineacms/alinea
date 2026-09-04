@@ -50,7 +50,7 @@
 
 .FileEditor-metadata-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px 40px;
   margin: 0;
 }
@@ -81,7 +81,7 @@
   font-size: 13px;
   line-height: 1.35;
 
-  &:hover {
+  &.is-link:hover {
     text-decoration: underline;
   }
 }

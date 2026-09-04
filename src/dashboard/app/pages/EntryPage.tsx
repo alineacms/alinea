@@ -1,4 +1,4 @@
-import {Button, Icon, Surface} from '#/components.js'
+import {Button, Icon, Surface, Tooltip} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
@@ -11,6 +11,7 @@ import {
   type EntryAtoms,
   type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
+import type {ResolvedEditorImage} from '#/dashboard/atoms/editor.js'
 import {
   Page,
   page,
@@ -27,7 +28,9 @@ import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
-  IcRoundEdit
+  IcRoundEdit,
+  IcRoundCheck,
+  IcRoundSave
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
@@ -73,18 +76,22 @@ export const entryPage = page(async (page, get) => {
       )
     }
     const selectedNode = await get(localeData.selectedNode)
+    const richTextImages = await get(localeData.richTextImages)
     const parentNeedsTranslation = type.customView
       ? false
       : await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
-    const sidebar = await entrySidebar(get, entry, localeData)
+    const isSidebarOpen = get(entrySidebarOpenAtom)
+    const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
     return (
       <EntryEditorContent
         entry={entry}
+        isSidebarOpen={Boolean(sidebar && isSidebarOpen)}
         localeData={localeData}
         node={selectedNode}
         page={page}
         parentNeedsTranslation={parentNeedsTranslation}
+        richTextImages={richTextImages}
         selectedEntry={selectedEntry}
         sidebar={sidebar}
         sourceLocale={sourceLocale}
@@ -173,32 +180,37 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
   const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
+  const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
   return (
-    <Button
-      aria-label={label}
-      appearance="plain"
-      icon={ViewIcon}
-      isDisabled={isPending}
-      size="icon"
-      onPress={() =>
-        setRoute({
-          workspace: page.workspace,
-          root: page.root,
-          entry: page.entry,
-          locale: page.locale ?? undefined,
-          view: nextView
-        })
-      }
-    />
+    <Tooltip delay={300} tooltip={tooltip}>
+      <Button
+        aria-label={label}
+        appearance="plain"
+        icon={ViewIcon}
+        isDisabled={isPending}
+        size="icon"
+        onPress={() =>
+          setRoute({
+            workspace: page.workspace,
+            root: page.root,
+            entry: page.entry,
+            locale: page.locale ?? undefined,
+            view: nextView
+          })
+        }
+      />
+    </Tooltip>
   )
 }
 
 interface EntryEditorContentProps {
   page: Page
   entry: EntryAtoms
+  isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
+  richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: Entry
   sidebar: EntrySidebarProps | undefined
   sourceLocale: string | null
@@ -253,8 +265,10 @@ function EntryOverview({
 function EntryEditorContent({
   page,
   entry,
+  isSidebarOpen,
   localeData,
   parentNeedsTranslation,
+  richTextImages,
   selectedEntry,
   sidebar,
   sourceLocale,
@@ -265,6 +279,7 @@ function EntryEditorContent({
   const hasChildren = useAtomValue(entry.hasChildren)
   const defaultView = useAtomValue(entry.view)
   const sourceLocales = useAtomValue(entry.translationSourceLocales)
+  const parentPaths = useAtomValue(entry.parentPaths)
   const View = type.customView
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
@@ -275,7 +290,7 @@ function EntryEditorContent({
   const reset = useSetAtom(node.reset)
   const [routeBlock, setRouteBlock] = useAtom(routeBlockAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
-  const [isSidebarOpen, setSidebarOpen] = useAtom(entrySidebarOpenAtom)
+  const setSidebarOpen = useSetAtom(entrySidebarOpenAtom)
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
@@ -335,7 +350,7 @@ function EntryEditorContent({
       <>
         <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor entry={selectedEntry} />
+            <FileEditor entry={selectedEntry} parentPaths={parentPaths} />
           </NodeEditor>
         </RailBody>
       </>
@@ -347,6 +362,7 @@ function EntryEditorContent({
       <EntryScope
         entry={entry}
         localeData={localeData}
+        richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
         <View type={type.type} />
@@ -389,10 +405,14 @@ function EntryEditorContent({
               This entry has unsaved changes
             </DashboardModalContent>
             <DashboardModalFooter>
-              <Button onPress={discardAndConfirm} intent="secondary">
+              <Button onPress={discardAndConfirm} appearance="plain">
                 Discard my changes
               </Button>
-              <Button onPress={saveAndConfirm} intent="primary">
+              <Button
+                onPress={saveAndConfirm}
+                intent="primary"
+                icon={mediaDraftsDisabled ? IcRoundCheck : IcRoundSave}
+              >
                 {mediaDraftsDisabled ? 'Publish' : 'Save as draft'}
               </Button>
             </DashboardModalFooter>
@@ -402,6 +422,7 @@ function EntryEditorContent({
       <EntryScope
         entry={entry}
         localeData={localeData}
+        richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
         {mainEditor}

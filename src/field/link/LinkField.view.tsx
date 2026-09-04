@@ -2,6 +2,7 @@ import {
   Button,
   DialogTrigger,
   Icon,
+  Label,
   List,
   ListCreateRow,
   ListDragPreview,
@@ -497,7 +498,8 @@ function LinkPickerAction({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: LinkPickerOptions = {
     condition,
-    initialView: type === 'file' ? 'row' : undefined,
+    initialView:
+      type === 'file' || type === 'image' ? ('card' as const) : undefined,
     initialResultMode: entryPickerResultMode(
       type,
       condition,
@@ -621,7 +623,8 @@ function LinkPickerDialog({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: LinkPickerOptions = {
     condition,
-    initialView: type === 'file' ? 'row' : undefined,
+    initialView:
+      type === 'file' || type === 'image' ? ('card' as const) : undefined,
     initialResultMode: entryPickerResultMode(
       type,
       condition,
@@ -733,8 +736,8 @@ function entryPickerResultMode(
   enableNavigation: boolean | undefined,
   pickChildren: boolean
 ) {
-  return pickChildren ||
-    (type !== 'image' && condition && enableNavigation !== true)
+  if (type === 'file' || type === 'image') return 'browse' as const
+  return pickChildren || (condition && enableNavigation !== true)
     ? ('matches' as const)
     : ('browse' as const)
 }
@@ -987,11 +990,12 @@ function EntryLinkSuffixField({
 }
 
 interface EntryAnchorFieldProps {
+  isDisabled?: boolean
   node: ReactiveNode<LinkFieldRow>
   value: LinkFieldRow
 }
 
-function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
+function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
   const anchor = useAtomValue(node.field('_anchor')) as string | undefined
   const setAnchor = useSetAtom(node.field('_anchor'))
   if (value[Reference.type] !== 'entry') return null
@@ -999,6 +1003,7 @@ function EntryAnchorField({node, value}: EntryAnchorFieldProps) {
     <EntryAnchorFieldInner
       anchor={anchor}
       entryId={value._entry}
+      isDisabled={isDisabled}
       onChange={setAnchor}
     />
   )
@@ -1013,18 +1018,21 @@ function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
 interface EntryAnchorFieldInnerProps {
   anchor?: string
   entryId: string
+  isDisabled?: boolean
   onChange(value: string | undefined): void
 }
 
 function EntryAnchorFieldInner({
   anchor,
   entryId,
+  isDisabled,
   onChange
 }: EntryAnchorFieldInnerProps) {
   const state = useLinkEntryState(entryId)
   const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
+      isDisabled={isDisabled || anchors.length === 0}
       items={anchors}
       label="Anchor"
       onChange={next => onChange(next === null ? undefined : String(next))}
@@ -1343,40 +1351,55 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
     setValue(undefined!)
   }
 
+  const rowContent = (
+    <>
+      {imagePreviewEntryId && (
+        <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+      )}
+      <ListRowDrag>
+        <ListRowBadges>
+          <LinkTypeBadge
+            className={styles.LinkFieldView.type()}
+            picker={picker}
+            type={type}
+            value={value}
+          />
+          <LinkMetaLabel
+            className={styles.LinkFieldView.metaLabel()}
+            node={node}
+            value={value}
+          />
+          <EntryAnchorBadge node={node} value={value} />
+        </ListRowBadges>
+      </ListRowDrag>
+    </>
+  )
+
   return (
     <>
       <ListRow aria-label="Link item 1" first role="listitem">
-        <ListRowHeader first hasFold={false}>
-          {imagePreviewEntryId && (
-            <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+        <ListRowHeader
+          first
+          hasFold={false}
+          className={styles.LinkFieldView.inputHeader()}
+        >
+          {options.readOnly ? (
+            rowContent
+          ) : (
+            <Button
+              aria-label="Edit link"
+              appearance="plain"
+              className={styles.LinkFieldView.rowAction()}
+              onPress={() => setActionsOpen(true)}
+            >
+              {rowContent}
+            </Button>
           )}
-          <ListRowDrag>
-            <ListRowBadges>
-              <LinkTypeBadge
-                className={styles.LinkFieldView.type()}
-                picker={picker}
-                type={type}
-                value={value}
-              />
-              <LinkMetaLabel
-                className={styles.LinkFieldView.metaLabel()}
-                node={node}
-                value={value}
-              />
-              <EntryAnchorBadge node={node} value={value} />
-            </ListRowBadges>
-          </ListRowDrag>
           {!options.readOnly && (
             <ListRowActions>
               <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
                 <LinkSettingsButton />
                 <Popover placement="bottom right">
-                  <ListRowSettings>
-                    <LinkLabelField node={node} value={value} />
-                    <EntryAnchorField node={node} value={value} />
-                    <EntryLinkSuffixField node={node} value={value} />
-                  </ListRowSettings>
-                  <MenuSeparator />
                   <ListRowSettings actions>
                     <LinkRowActions
                       closeActions={closeActions}
@@ -1385,6 +1408,12 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                       type={type}
                       value={value}
                     />
+                  </ListRowSettings>
+                  <MenuSeparator />
+                  <ListRowSettings>
+                    <LinkLabelField node={node} value={value} />
+                    <EntryAnchorField node={node} value={value} />
+                    <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
                 </Popover>
               </DialogTrigger>
@@ -1581,20 +1610,6 @@ function MultipleLinkRow({
               <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
                 <LinkSettingsButton />
                 <Popover placement="bottom right">
-                  <ListRowSettings>
-                    <LinkLabelField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                    <EntryAnchorField node={node} value={value} />
-                    <EntryLinkSuffixField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                  </ListRowSettings>
-                  <MenuSeparator />
                   <ListRowSettings actions>
                     <LinkRowActions
                       closeActions={closeActions}
@@ -1602,6 +1617,24 @@ function MultipleLinkRow({
                       onEdit={() => setEditOpen(true)}
                       picker={picker}
                       type={type}
+                      value={value}
+                    />
+                  </ListRowSettings>
+                  <MenuSeparator />
+                  <ListRowSettings>
+                    <LinkLabelField
+                      isDisabled={readOnly}
+                      node={node}
+                      value={value}
+                    />
+                    <EntryAnchorField
+                      isDisabled={readOnly}
+                      node={node}
+                      value={value}
+                    />
+                    <EntryLinkSuffixField
+                      isDisabled={readOnly}
+                      node={node}
                       value={value}
                     />
                   </ListRowSettings>
@@ -1680,12 +1713,6 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const isEmpty = nodeIsEmpty || !selectedValue
   const hasRows = Boolean(selectedValue)
   const readOnly = Boolean(options.readOnly)
-  const selectedPicker = selectedValue
-    ? (options.pickers[getPickerType(selectedValue[Reference.type])] as
-        | Picker<LinkFieldRow>
-        | undefined)
-    : undefined
-  const showFold = Boolean(selectedPicker?.fields)
   const content = (hasRows || !readOnly) && (
     <List aria-label={options.label || 'Link'}>
       {selectedValue && (
@@ -1696,28 +1723,21 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         />
       )}
       {isEmpty && !readOnly && (
-        <ListCreateRow empty>
+        <ListCreateRow empty className={styles.LinkFieldView.inputHeader()}>
           <SingleLinkCreateActions field={field} />
         </ListCreateRow>
       )}
     </List>
   )
   return (
-    <>
-      <ListLabel
-        aria-label={hasRows ? 'Link selected' : 'No link selected'}
-        expanded
-        hasRows={hasRows}
-        isDisabled
-        description={options.help}
-        shared={options.shared}
-        showFold={showFold}
-        inline={options.inline}
-      >
-        {options.label}
-      </ListLabel>
+    <Label
+      description={options.help}
+      label={options.inline ? undefined : options.label}
+      isRequired={options.required}
+      shared={options.shared}
+    >
       {content}
-    </>
+    </Label>
   )
 }
 

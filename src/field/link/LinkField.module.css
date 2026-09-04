@@ -1,3 +1,7 @@
+.LinkFieldView-inputHeader {
+  min-height: calc(1.5 * var(--alinea-font-size-base) + 16px);
+}
+
 .LinkFieldView-label {
   align-self: stretch;
   display: inline-flex;
@@ -170,6 +174,13 @@
 
 .LinkFieldView-createButton {
   flex-shrink: 0;
+}
+
+.LinkFieldView-rowAction {
+  align-self: stretch;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
 }
 
 .LinkFieldView-rowDropTarget {

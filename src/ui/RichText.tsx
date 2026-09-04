@@ -86,6 +86,22 @@ function nodeElement(
       return <blockquote style={style} />
     case 'horizontalRule':
       return <hr />
+    case 'image': {
+      const src = attributes?.src
+      const alt = attributes?.alt
+      const title = attributes?.title
+      const width = attributes?.width
+      const height = attributes?.height
+      return (
+        <img
+          src={typeof src === 'string' ? src : undefined}
+          alt={typeof alt === 'string' ? alt : ''}
+          title={typeof title === 'string' ? title : undefined}
+          width={numberAttribute(width)}
+          height={numberAttribute(height)}
+        />
+      )
+    }
     case 'hardBreak':
       return <br />
     case 'small':
@@ -243,6 +259,7 @@ interface RichTextElementViews {
   li?: ComponentType<JSX.IntrinsicElements['li']> | ReactElement
   blockquote?: ComponentType<JSX.IntrinsicElements['blockquote']> | ReactElement
   hr?: ComponentType<JSX.IntrinsicElements['hr']> | ReactElement
+  img?: ComponentType<JSX.IntrinsicElements['img']> | ReactElement
   br?: ComponentType<JSX.IntrinsicElements['br']> | ReactElement
   small?: ComponentType<JSX.IntrinsicElements['small']> | ReactElement
   sub?: ComponentType<JSX.IntrinsicElements['sub']> | ReactElement

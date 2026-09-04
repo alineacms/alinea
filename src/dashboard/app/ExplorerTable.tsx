@@ -51,7 +51,7 @@ const explorerTableSelectionColumn: ExplorerTableColumn = {
 const explorerTableTitleColumn: ExplorerTableColumn = {
   id: 'title',
   kind: 'title',
-  width: 220
+  width: 300
 }
 
 const compactExplorerTableTitleColumn: ExplorerTableColumn = {
@@ -139,7 +139,10 @@ function ExplorerTableBreadcrumbs({
   return (
     <span className={styles.ExplorerTable.breadcrumbs()}>
       {entries.length === 0 && rootLabel && (
-        <span className={styles.ExplorerTable.breadcrumb.root()}>
+        <span
+          className={styles.ExplorerTable.breadcrumb.root()}
+          title={rootLabel}
+        >
           {rootLabel}
         </span>
       )}
@@ -178,12 +181,16 @@ function ExplorerTableLoadedBreadcrumb({
   return (
     <>
       {index === 0 && (
-        <span className={styles.ExplorerTable.breadcrumb.root()}>
+        <span
+          className={styles.ExplorerTable.breadcrumb.root()}
+          title={rootLabel}
+        >
           {rootLabel}
         </span>
       )}
       <span
         className={styles.ExplorerTable.breadcrumb.label()}
+        title={label}
       >{`/ ${label}`}</span>
     </>
   )
@@ -489,7 +496,7 @@ export function ExplorerTable({
     page.searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
-    hasSelection && (compact || explorer.showSelectionControls)
+    hasSelection && !compact && explorer.showSelectionControls
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => createExplorerTableColumns({compact, showSelectionControls}),
     [compact, showSelectionControls]

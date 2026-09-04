@@ -2,7 +2,6 @@ import {Config} from '#/core/Config.js'
 import {Entry as EntryExpressions, type Entry} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
-import {createId} from '#/core/Id.js'
 import {getRoot} from '#/core/Internal.js'
 import type {Graph, QuerySettings} from '#/core/Graph.js'
 import {ListRow} from '#/core/ListRow.js'
@@ -154,7 +153,6 @@ const transactionEntrySelection = {
 }
 
 export class EntryTransaction {
-  #checks = [] as [path: string, sha: string][]
   #messages = [] as string[]
   #config: Config
   #graph: Graph
@@ -259,11 +257,12 @@ export class EntryTransaction {
     workspace,
     fromSeed,
     parentId = null,
-    id = createId(),
+    id,
     insertOrder = 'last',
     status = 'published',
     overwrite = false
   }: Op<CreateMutation>) {
+    assert(id, 'Create mutation is missing an id')
     const config = this.#config
     const existingVersions = await this.#versions(id)
     const existing = existingVersions[0]
@@ -310,7 +309,6 @@ export class EntryTransaction {
         entry => entry.main
       )
       assert(parent, `Parent not found: ${parentId}`)
-      this.#checks.push([parent.filePath, parent.fileHash])
       this.#policy.assert(Permission.Create, parent)
     }
     const siblings = await this.#cores({workspace, root, parentId})
@@ -465,7 +463,6 @@ export class EntryTransaction {
           workspace: entry.workspace,
           locale
         })
-    this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
@@ -597,25 +594,18 @@ export class EntryTransaction {
   async #resolvedUrl(candidate: UrlCandidate): Promise<string> {
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
-    const url =
-      candidate.url ??
-      entryUrl(type, {
-        status: 'published',
-        path: candidate.path,
-        parentPaths:
-          candidate.parentPaths ??
-          (await this.#parentPaths(candidate.parentId, candidate.locale)),
-        locale: candidate.locale,
-        workspace: candidate.workspace,
-        root: candidate.root
-      })
-    if (candidate.type !== 'MediaFile') return url
-    return MediaLocation.entryUrl(this.#config, {
-      entryUrl: url,
+    if (candidate.url !== undefined) return candidate.url
+    return entryUrl(type, {
+      config: this.#config,
+      data: candidate.data,
       path: candidate.path,
+      parentPaths:
+        candidate.parentPaths ??
+        (await this.#parentPaths(candidate.parentId, candidate.locale)),
+      locale: candidate.locale,
+      status: 'published',
       workspace: candidate.workspace,
-      root: candidate.root,
-      data: candidate.data
+      root: candidate.root
     })
   }
 
@@ -681,7 +671,6 @@ export class EntryTransaction {
         entry => entry.locale !== locale
       )
       for (const translation of translations) {
-        this.#checks.push([translation.filePath, translation.fileHash])
         const record = createRecord(
           {
             id,
@@ -836,7 +825,6 @@ export class EntryTransaction {
     await this.#assertUniqueUrls({...urlCandidate, data})
     const versions = await this.#sourceVersions(id, locale)
     for (const version of versions) this.#tx.remove(version.filePath)
-    this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path, data}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
@@ -858,7 +846,6 @@ export class EntryTransaction {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
-    this.#checks.push([mainEntry.filePath, mainEntry.fileHash])
     this.#tx.rename(mainEntry.filePath, `${mainEntry.childrenDir}.draft.json`)
     this.#messages.push(this.#reportOp('unpublish', mainEntry.title))
     return this
@@ -873,7 +860,6 @@ export class EntryTransaction {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
-    this.#checks.push([mainEntry.filePath, mainEntry.fileHash])
     this.#tx.rename(
       mainEntry.filePath,
       `${mainEntry.childrenDir}.archived.json`
@@ -1057,7 +1043,6 @@ export class EntryTransaction {
       if (entry.status === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       info = entry
-      this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)
       if (entry.status !== 'draft') {
         this.#tx.remove(entry.childrenDir)
@@ -1132,7 +1117,7 @@ export class EntryTransaction {
     return `(${op}) ${title}`
   }
 
-  async apply(mutations: Array<Mutation>) {
+  async apply(mutations: ReadonlyArray<Mutation>): Promise<void> {
     for (const mutation of mutations) {
       switch (mutation.op) {
         case 'create':
@@ -1174,7 +1159,6 @@ export class EntryTransaction {
       fromSha: from.sha,
       intoSha: into.sha,
       description: this.description(),
-      checks: this.#checks,
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
   }

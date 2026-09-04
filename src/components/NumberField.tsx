@@ -18,9 +18,14 @@ const styles = styler(css)
 export interface NumberFieldProps
   extends Omit<NumberFieldPrimitiveProps, 'children'>, LabelSharedProps {
   steppers?: boolean
+  placeholder?: string
 }
 
-export function NumberField({steppers = true, ...props}: NumberFieldProps) {
+export function NumberField({
+  steppers = true,
+  placeholder,
+  ...props
+}: NumberFieldProps) {
   return (
     <NumberFieldPrimitive
       {...props}
@@ -40,7 +45,10 @@ export function NumberField({steppers = true, ...props}: NumberFieldProps) {
           data-invalid={props.errorMessage ? true : undefined}
           data-steppers={steppers}
         >
-          <Input className={styles.NumberField.input()} />
+          <Input
+            className={styles.NumberField.input()}
+            placeholder={placeholder}
+          />
           {steppers && (
             <div className={styles.NumberField.buttons()}>
               <Button

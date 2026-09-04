@@ -1,5 +1,4 @@
 import type {Change, ChangeFile, ChangesBatch} from '../source/Change.js'
-import type {ReadonlyTree} from '../source/Tree.js'
 import type {User} from '../User.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
 
@@ -66,18 +65,5 @@ export interface CommitRequest {
   user?: User
   fromSha: string
   intoSha: string
-  checks: Array<[path: string, sha: string]>
   changes: Array<CommitChange>
-}
-
-export function checkCommit(tree: ReadonlyTree, request: CommitRequest): void {
-  // If we have the same tree, we're good to go
-  if (tree.sha === request.fromSha) return
-
-  // If not, run checks
-  for (const [path, sha] of request.checks) {
-    const entry = tree.get(path)
-    if (!entry) throw new Error(`Missing entry for ${path}`)
-    if (entry.sha !== sha) throw new Error(`Entry ${path} has changed`)
-  }
 }

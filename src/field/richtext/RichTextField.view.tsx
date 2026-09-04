@@ -99,7 +99,9 @@ export function RichTextFieldView<Blocks extends Schema>({
   const picker = usePickTextLink()
   const anchorPicker = usePickTextAnchor()
   const dashboardEditor = useDashboardEditor()
-  const entryAnchors = rootEditor(dashboardEditor).anchors
+  const rootDashboardEditor = rootEditor(dashboardEditor)
+  const entryAnchors = rootDashboardEditor.anchors
+  const richTextImages = rootDashboardEditor.resolvedImages
   const getEntryAnchors = useCallback(
     () => store.get(entryAnchors).map(anchor => anchor.id),
     [entryAnchors, store]
@@ -109,7 +111,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     const configured = Object.values(
       configureRichTextExtensions(
         options.extensions,
-        defaultExtensionConfig(getEntryAnchors)
+        defaultExtensionConfig(getEntryAnchors, Boolean(options.enableImages))
       )
     )
     const blocks = richTextBlockExtensions(options.schema, hosts)
@@ -119,10 +121,16 @@ export function RichTextFieldView<Blocks extends Schema>({
       ...configured.filter(extension => extension.name !== 'doc'),
       ...blocks
     ]
-  }, [getEntryAnchors, hosts, options.extensions, options.schema])
+  }, [
+    getEntryAnchors,
+    hosts,
+    options.enableImages,
+    options.extensions,
+    options.schema
+  ])
   const content = useMemo(
-    () => editorContent(store.get(fieldNode.value)),
-    [fieldNode, store]
+    () => editorContent(store.get(fieldNode.value), richTextImages),
+    [fieldNode, richTextImages, store]
   )
 
   const resolveBlock = useCallback(
@@ -194,12 +202,12 @@ export function RichTextFieldView<Blocks extends Schema>({
     const current = editorNodes(editor.getJSON(), resolveBlock)
     if (documentKey === documentStructureKey(current)) return
     const documentValue = store.get(fieldNode.value)
-    editor.commands.setContent(editorContent(documentValue), {
+    editor.commands.setContent(editorContent(documentValue, richTextImages), {
       emitUpdate: false
     })
     lastEditorDocument.current = documentKey
     pendingExternalDocument.current = undefined
-  }, [documentKey, editor, fieldNode, resolveBlock, store])
+  }, [documentKey, editor, fieldNode, resolveBlock, richTextImages, store])
 
   const toolbarTarget =
     typeof document === 'undefined'
@@ -307,8 +315,10 @@ export function RichTextFieldView<Blocks extends Schema>({
         ? createPortal(
             <RichTextToolbar
               editor={editor}
+              enableImages={options.enableImages}
               enableTables={options.enableTables}
               ownerId={ownerId}
+              pickImage={picker.pickImage}
               pickLink={picker.pickLink}
               pickAnchor={anchorPicker.pickAnchor}
               getEntryAnchors={getEntryAnchors}
@@ -327,7 +337,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 
 function setEditorReadOnly(editor: Editor, readOnly: boolean) {
   if (editor.isDestroyed) return
-  editor.setEditable(!readOnly, false)
+  editor.setEditable(!readOnly)
   editor.view.dom.contentEditable = readOnly ? 'false' : 'plaintext-only'
 }
 

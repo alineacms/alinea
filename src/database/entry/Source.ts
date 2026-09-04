@@ -45,6 +45,8 @@ export interface ParsedVersion {
   root: string
   locale: string | null
   path: string
+  /** Previously resolved URL when an unchanged runtime entry is reused. */
+  url?: string
   versionStatus: EntryStatus
   parentDir: string
   childrenDir: string
@@ -129,7 +131,7 @@ export function normalizeParsedVersions(
     const parents = parent ? [...parent.parents, parent.entryId] : []
     const entryType = config.schema[first.type]
     assert(entryType, `Unknown entry type "${first.type}"`)
-    const languages = createLanguages(entryType, collection, parent)
+    const languages = createLanguages(config, entryType, collection, parent)
     const node: EntryNode = {
       entryId,
       type: entryType,
@@ -335,6 +337,7 @@ function validateCollection(collection: ReadonlyArray<ParsedVersion>): void {
 }
 
 function createLanguages(
+  config: ConfigDefinition,
   entryType: Type,
   versions: ReadonlyArray<ParsedVersion>,
   parent: EntryNode | null
@@ -382,14 +385,18 @@ function createLanguages(
       parentPaths.unshift(currentLanguage.main.path)
       current = current.parent
     }
-    const url = entryUrl(entryType, {
-      status: main.versionStatus,
-      path: main.path,
-      parentPaths,
-      locale,
-      workspace: main.workspace,
-      root: main.root
-    })
+    const url =
+      main.url ??
+      entryUrl(entryType, {
+        config,
+        data: main.data,
+        status: main.versionStatus,
+        path: main.path,
+        parentPaths,
+        locale,
+        workspace: main.workspace,
+        root: main.root
+      })
     result.set(locale, {
       locale,
       versions: phases,

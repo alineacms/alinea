@@ -1,6 +1,6 @@
 import type {ChangesBatch} from './Change.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
-import type {Source} from './Source.js'
+import type {GetBlobsOptions, Source} from './Source.js'
 import {ReadonlyTree} from './Tree.js'
 
 export class IndexedDBSource implements Source {
@@ -88,7 +88,8 @@ export class IndexedDBSource implements Source {
   }
 
   async *getBlobs(
-    shas: Array<string>
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     if (shas.length === 0) return
     const db = await this.#connect()
@@ -108,6 +109,8 @@ export class IndexedDBSource implements Source {
     ])
     const missing = new Set(shas)
     for (let index = 0; index < keys.length; index++) {
+      if (options.signal?.aborted)
+        throw options.signal.reason ?? new Error('Blob transfer aborted')
       const key = keys[index]
       const value = values[index]
       if (typeof key === 'string' && value !== undefined && missing.delete(key))

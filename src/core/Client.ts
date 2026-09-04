@@ -1,6 +1,10 @@
 import {HandleAction} from '#/backend/HandleAction.js'
 import {type AuthResult, AuthResultType} from '#/cloud/AuthResult.js'
 import {AbortController, fetch, type Response} from '@alinea/iso'
+import {
+  BLOB_SEQUENCE_CONTENT_TYPE,
+  decodeBlobSequence
+} from './BlobTransport.js'
 import type {Config} from './Config.js'
 import type {
   BackendCapabilities,
@@ -18,8 +22,10 @@ import type {AnyQueryResult, GraphQuery} from './Graph.js'
 import {HttpError} from './HttpError.js'
 import {getScope} from './Scope.js'
 import {ReadonlyTree, type Tree} from './source/Tree.js'
+import type {GetBlobsOptions} from './source/Source.js'
 import type {User, UserInput} from './User.js'
 import {base64} from './util/Encoding.js'
+import {isRecord} from './util/Objects.js'
 
 export type AuthenticateRequest = (
   request?: RequestInit
@@ -190,7 +196,8 @@ export class Client implements LocalConnection {
   }
 
   async *getBlobs(
-    shas: Array<string>
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
   ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
     if (shas.length === 0) return
     const response = await this.#request(
@@ -198,21 +205,20 @@ export class Client implements LocalConnection {
       {
         method: 'POST',
         body: JSON.stringify({shas}),
+        signal: options.signal,
         headers: {
           'content-type': 'application/json',
-          accept: 'multipart/form-data'
+          accept: BLOB_SEQUENCE_CONTENT_TYPE
         }
       }
     ).then(response => this.#failOnHttpError<Response>(response, false))
-    const form = await response.formData()
-    for (const [key, value] of form.entries()) {
-      // @ts-ignore - Bun types declare entries wrong
-      if (value instanceof Blob) {
-        const sha = key.slice(0, 40)
-        const blob = new Uint8Array(await value.arrayBuffer())
-        yield [sha, blob]
-      }
-    }
+    const contentType = response.headers.get('content-type')
+    if (!contentType?.includes(BLOB_SEQUENCE_CONTENT_TYPE))
+      throw new Error(
+        `Expected ${BLOB_SEQUENCE_CONTENT_TYPE}, got ${contentType}`
+      )
+    if (!response.body) throw new Error('Missing blob response body')
+    yield* decodeBlobSequence(response.body, options)
   }
 
   // Commit
@@ -270,12 +276,16 @@ export class Client implements LocalConnection {
           ?.includes('application/json')
         let errorMessage: string
         if (isJson) {
-          const body = await res.json()
-          if (res.status === 401 && body.type === AuthResultType.NeedsRefresh) {
+          const body: unknown = await res.json()
+          if (
+            res.status === 401 &&
+            isRecord(body) &&
+            body.type === AuthResultType.NeedsRefresh
+          ) {
             // We'll attempt a single retry if the access token is refreshed
             if (!retry) return this.#request(params, init, true)
           }
-          if ('error' in body && typeof body.error === 'string')
+          if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error
           else errorMessage = JSON.stringify(body, null, 2)
         } else {

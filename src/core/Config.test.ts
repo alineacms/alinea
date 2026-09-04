@@ -41,3 +41,14 @@ test('content dir and file path of multiple workspaces', () => {
     'main/root/file.txt'
   )
 })
+
+test('requires an explicitly configured handler URL', () => {
+  const config = createConfig({
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {source: 'content', roots: {}})
+    }
+  })
+  test.throws(() => Config.handlerUrl(config), 'Missing handlerUrl')
+  test.is(Config.handlerUrl({...config, handlerUrl: '/custom'}), '/custom')
+})

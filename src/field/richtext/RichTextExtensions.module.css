@@ -79,7 +79,7 @@
   cursor: text;
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--alinea-danger) 40%, transparent);
+  text-decoration-color: currentColor;
   text-underline-offset: 0.3em;
   overflow-wrap: break-word;
   word-wrap: break-word;
@@ -170,4 +170,21 @@
 .RichTextExtensions-highlight {
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
+}
+
+.RichTextExtensions-image {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+}
+
+.RichTextExtensions-image ~ :global([data-resize-handle]) {
+  transform: translate(50%, 50%);
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border: 2px solid var(--alinea-bg);
+  border-radius: 50%;
+  background: var(--alinea-primary);
+  cursor: nwse-resize;
 }

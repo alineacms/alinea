@@ -161,6 +161,125 @@ async function createDocumentDb() {
   return db
 }
 
+test('rejects create mutations without an id', async () => {
+  const db = await createEmptyDb()
+  let error: unknown
+
+  try {
+    await db.mutate([
+      {
+        op: 'create',
+        type: 'Page',
+        locale: null,
+        root: 'pages',
+        data: {title: 'Missing id'}
+      }
+    ])
+  } catch (cause) {
+    error = cause
+  }
+
+  test.is((error as Error)?.message, 'Create mutation is missing an id')
+})
+
+test('assigns distinct order indexes to entries created in one batch', async () => {
+  const db = await createEmptyDb()
+
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'batch-entry-0',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 0'}
+    },
+    {
+      op: 'create',
+      id: 'batch-entry-1',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 1'}
+    }
+  ])
+
+  const first = await db.first({id: 'batch-entry-0', select: Entry})
+  const second = await db.first({id: 'batch-entry-1', select: Entry})
+  if (!first || !second) throw new Error('Expected both batch entries')
+  test.ok(first.index !== second.index)
+  test.ok(first.index < second.index)
+})
+
+test('resolves path collisions sequentially within one batch', async () => {
+  const db = await createEmptyDb()
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'batch-path-0',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 0', path: 'first'}
+    },
+    {
+      op: 'create',
+      id: 'batch-path-1',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Entry 1', path: 'second'}
+    }
+  ])
+
+  await db.mutate([
+    {
+      op: 'update',
+      id: 'batch-path-0',
+      locale: null,
+      status: 'published',
+      set: {path: 'same'}
+    },
+    {
+      op: 'update',
+      id: 'batch-path-1',
+      locale: null,
+      status: 'published',
+      set: {path: 'same'}
+    }
+  ])
+
+  const first = await db.first({id: 'batch-path-0', select: Entry})
+  const second = await db.first({id: 'batch-path-1', select: Entry})
+  test.is(first?.path, 'same')
+  test.is(second?.path, 'same-1')
+})
+
+test('allows later mutations to target entries created in the same batch', async () => {
+  const db = await createEmptyDb()
+
+  await db.mutate([
+    {
+      op: 'create',
+      id: 'batch-created',
+      type: 'Page',
+      locale: null,
+      root: 'pages',
+      data: {title: 'Original'}
+    },
+    {
+      op: 'update',
+      id: 'batch-created',
+      locale: null,
+      status: 'published',
+      set: {title: 'Updated'}
+    }
+  ])
+
+  const entry = await db.first({id: 'batch-created', select: Entry})
+  test.is(entry?.title, 'Updated')
+})
+
 function aliasUrls(value: unknown): Array<string> {
   if (!Array.isArray(value)) return []
   return value.flatMap(alias => {
@@ -344,7 +463,7 @@ test('update preserves the previous MediaFile URL as an alias', async () => {
       aliases: Entry.aliases
     }
   })
-  test.is(result.url, '/two')
+  test.is(result.url, '/assets/two.jpg')
   test.equal(aliasUrls(result.aliases), ['/assets/one.jpg'])
 })
 
@@ -479,7 +598,7 @@ test('publish preserves the previous public MediaFile URL as an alias', async ()
       aliases: Entry.aliases
     }
   })
-  test.is(result.url, '/two')
+  test.is(result.url, '/assets/two.png')
   test.equal(aliasUrls(result.aliases), ['/assets/one.jpg'])
 })
 

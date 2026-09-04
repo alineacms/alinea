@@ -10,6 +10,7 @@ interface RequestEvent {
 }
 
 export interface Server {
+  hostname: string
   port: number
   serve(abortController?: AbortController): AsyncIterable<RequestEvent>
   close(): void
@@ -20,9 +21,11 @@ async function startBunServer(
   attempt = 0,
   silent = false
 ): Promise<Server> {
+  const hostname = '127.0.0.1'
   const messages = createEmitter<RequestEvent>()
   try {
     const server = Bun.serve({
+      hostname,
       port,
       fetch(request) {
         const {resolve, promise} = Promise.withResolvers<Response>()
@@ -36,6 +39,7 @@ async function startBunServer(
       }
     })
     return {
+      hostname,
       port,
       close() {
         server.stop()
@@ -69,6 +73,7 @@ async function startNodeServer(
   attempt = 0,
   silent = false
 ): Promise<Server> {
+  const hostname = '127.0.0.1'
   const messages = createEmitter<RequestEvent>()
   function serve(incoming: IncomingMessage, outgoing: ServerResponse) {
     messages.emit({
@@ -83,10 +88,11 @@ async function startNodeServer(
     server.on('error', reject)
     server.on('listening', () => resolve(server))
     server.on('close', () => messages.return())
-    server.listen(port)
+    server.listen(port, hostname)
   })
     .then((server: http.Server): Server => {
       return {
+        hostname,
         port,
         close() {
           server.close()

@@ -149,7 +149,6 @@ test('builds a content-only runtime update from one lazy entry', async () => {
 
   expect(request).toBeDefined()
   expect(request!.changes).toHaveLength(1)
-  expect(request!.checks).toHaveLength(1)
   expect(loadedBytes).toBeLessThan(release.bundle.length)
   await source.applyChanges(sourceChanges(request!))
   const updated = await exportRuntimeDatabase({

@@ -3,7 +3,6 @@ import path from 'node:path'
 import type {BuildOptions} from 'esbuild'
 import {buildEmitter} from '../build/BuildEmitter.js'
 import {buildOptions} from '../build/BuildOptions.js'
-import {externalPlugin} from '../util/ExternalPlugin.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {reportError, reportFatal} from '../util/Report.js'
@@ -21,13 +20,15 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
     target: 'esnext',
     treeShaking: true,
     bundle: true,
+    alias: {'alinea/next': 'alinea/core'},
+    packages: 'external',
     logOverride: {
       'ignored-bare-import': 'silent'
     },
     platform: 'neutral',
     jsx: 'automatic',
     define,
-    plugins: [externalPlugin(rootDir), ignorePlugin],
+    plugins: [ignorePlugin],
     tsconfig: fs.existsSync(tsConfigFile) ? tsConfigFile : undefined
   }
 }

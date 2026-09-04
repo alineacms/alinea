@@ -139,6 +139,14 @@ test('loads sidebar data only when its tab is selected', async () => {
     return references
   })
   nextEntry.incomingReferences = atom(references)
+  const closedSidebar = await entrySidebar(
+    store.get,
+    nextEntry,
+    nextEntry.locales(null),
+    false
+  )
+  expect(closedSidebar?.selectedTab).toBe('references')
+  expect(nextReferenceLoads).toBe(0)
   const nextSidebar = await entrySidebar(
     store.get,
     nextEntry,
@@ -176,4 +184,69 @@ test('loads sidebar data only when its tab is selected', async () => {
       .getByRole('button', {name: 'Previous versions'})
       .getAttribute('aria-expanded')
   ).toBe('true')
+})
+
+test('starts loading a browser preview without blocking the sidebar', async () => {
+  const selectedEntry: Entry = {
+    active: true,
+    childrenDir: 'pages/entry',
+    data: {title: 'Entry'},
+    fileHash: '',
+    filePath: 'pages/entry.json',
+    id: 'entry-id',
+    index: 'a0',
+    level: 0,
+    locale: null,
+    main: true,
+    parentDir: 'pages',
+    parentId: null,
+    parents: [],
+    path: 'entry',
+    root: 'pages',
+    rowHash: '',
+    searchableText: '',
+    seeded: null,
+    status: 'published',
+    title: 'Entry',
+    type: 'Page',
+    url: '/entry',
+    workspace: 'simple'
+  }
+  const entry = new EntryAtoms(
+    selectedEntry.id,
+    atom({
+      id: selectedEntry.id,
+      type: selectedEntry.type,
+      parentId: selectedEntry.parentId,
+      workspace: selectedEntry.workspace,
+      root: selectedEntry.root,
+      hasChildren: false,
+      parents: [],
+      entries: [selectedEntry]
+    } as never)
+  )
+  entry.preview = atom(true)
+  const localeData = entry.locales(null)
+  let resolvePreview = () => {}
+  let previewLoads = 0
+  localeData.previewUrlReady = atom(async () => {
+    previewLoads++
+    await new Promise<void>(resolve => {
+      resolvePreview = resolve
+    })
+    return '/preview'
+  })
+  const store = createStore()
+  store.set(configAtom, cms.config)
+  let sidebar: Awaited<ReturnType<typeof entrySidebar>>
+
+  const loading = entrySidebar(store.get, entry, localeData).then(result => {
+    sidebar = result
+  })
+  await Promise.resolve()
+
+  expect(previewLoads).toBe(1)
+  expect(sidebar!).toBeDefined()
+  resolvePreview()
+  await loading
 })

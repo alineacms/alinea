@@ -54,7 +54,7 @@ async function generatePackage(
   await generateDashboard(
     context,
     cms,
-    config.handlerUrl ?? '/api/cms',
+    Config.handlerUrl(config),
     staticFile,
     generated.configId
   )
@@ -161,10 +161,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     process.env.ALINEA_GENERATED_CONFIG = generated.configId
     process.env.ALINEA_RELEASE_URL = `${adminPath}/${generated.releaseId}/payload.bundle`
     process.env.ALINEA_CONFIG_URL = `${adminPath}/config/${generated.configId}/client-config.js`
+    Config.handlerUrl(cms.config)
     if (cmd === 'build') {
-      const handlerUrl = cms.config.handlerUrl
       const baseUrl = Config.baseUrl(cms.config, 'production')
-      if (handlerUrl && !baseUrl) {
+      if (!baseUrl) {
         reportFatal(
           'No baseUrl was set for the production build in Alinea config'
         )

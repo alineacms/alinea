@@ -35,7 +35,7 @@ export interface ImageLink<InferredFields = undefined> extends EntryReference {
 export namespace ImageLink {
   export const title = Entry.title
   export const alt = MediaFile.alt
-  export const src = MediaFile.location
+  export const src = Entry.url
   export const extension = MediaFile.extension
   export const size = MediaFile.size
   export const hash = MediaFile.hash

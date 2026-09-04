@@ -3,8 +3,6 @@ import {Entry} from '#/core/Entry.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {Filter} from '#/core/Filter.js'
 import type {Graph, Projection} from '#/core/Graph.js'
-import {MediaLocation} from '#/core/media/MediaLocation.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {Label} from '#/core/Label.js'
 import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
@@ -96,67 +94,44 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       const linkIds = [entryId]
       if (!options.selection) return
-      const selection = {
-        ...options.selection,
-        _media: {
-          entryUrl: Entry.url,
-          extension: MediaFile.extension,
-          location: MediaFile.location,
-          path: Entry.path,
-          root: Entry.root,
-          workspace: Entry.workspace
-        }
-      }
-      const [extra] = await loader.resolveLinks(selection, linkIds)
+      const [extra] = await loader.resolveLinks(options.selection, linkIds)
       if (!extra) {
         row[unresolvedEntryMarker] = true
         return
       }
-      const {_media: media, ...selected} = extra
       if (type === 'file') {
-        const {
-          extension,
-          href: _href,
-          root: _root,
-          url,
-          workspace: _workspace,
-          ...rest
-        } = selected
-        const mediaUrl = MediaLocation.publicUrl(loader.resolver.config, media)
+        const {extension, root: _root, workspace: _workspace, ...rest} = extra
         assign(row, rest, {extension})
-        row.href = mediaUrl
-        if (typeof url === 'string') row.url = mediaUrl
         return
       }
       if (type !== 'image') {
-        assign(row, selected)
+        assign(row, extra)
         applyUrlSuffixToRow(row, suffix, anchor)
         return
       }
       const {
         extension,
-        src: _location,
+        src,
         previewUrl,
         filePath,
         alt,
         root: _root,
         workspace: _workspace,
         ...rest
-      } = selected
-      const mediaUrl = MediaLocation.publicUrl(loader.resolver.config, media)
+      } = extra
       const selectedAlt = selectImageAlt(alt, loader, {
-        root: media.root,
-        workspace: media.workspace
+        root: _root,
+        workspace: _workspace
       })
       if (!previewUrl) {
-        assign(row, rest, {extension, src: mediaUrl})
+        assign(row, rest, {extension, src})
         if (typeof selectedAlt === 'string') row.alt = selectedAlt
         return
       }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
       const locationAvailable = loader.includedAtBuild(filePath)
-      row.src = locationAvailable ? mediaUrl : previewUrl
+      row.src = locationAvailable ? src : previewUrl
       row.extension = extension
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
       assign(row, rest)

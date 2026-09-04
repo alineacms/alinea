@@ -4,6 +4,7 @@ import {EntryEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {EditorScope} from '#/dashboard/hooks.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
+import {cms, db} from '#/dashboard/fixture/cms.ts?alinea'
 import {richText} from './RichTextField.js'
 import {
   alignment,
@@ -63,6 +64,15 @@ const body = richText('Body', {
 const entry = type('Entry', {fields: {body}})
 const plainBody = richText('Body', {enableTables: true})
 const plainEntry = type('Plain entry', {fields: {body: plainBody}})
+const imageBody = richText('Body', {enableImages: true})
+const imageEntry = type('Image entry', {fields: {body: imageBody}})
+const readOnlyImageBody = richText('Body', {
+  enableImages: true,
+  readOnly: true
+})
+const readOnlyImageEntry = type('Read-only image entry', {
+  fields: {body: readOnlyImageBody}
+})
 const customBody = richText('Body', {
   enableTables: true,
   extensions: extensions => ({
@@ -122,6 +132,26 @@ export function RichTextPlainStory() {
   )
 }
 
+export function RichTextImageStory() {
+  return (
+    <RichTextFixture
+      initialBody={[paragraph('Insert an image after this paragraph.')]}
+      entryType={imageEntry}
+      withDashboard
+    />
+  )
+}
+
+export function RichTextImageDisabledStory() {
+  return <RichTextFixture initialBody={imageValue} entryType={plainEntry} />
+}
+
+export function RichTextReadOnlyImageStory() {
+  return (
+    <RichTextFixture initialBody={imageValue} entryType={readOnlyImageEntry} />
+  )
+}
+
 export function RichTextLargeStory() {
   return <RichTextFixture initialBody={largeBody} entryType={plainEntry} />
 }
@@ -163,11 +193,18 @@ interface RichTextFixtureProps {
   entryType:
     | typeof entry
     | typeof plainEntry
+    | typeof imageEntry
+    | typeof readOnlyImageEntry
     | typeof customEntry
     | typeof readOnlyEntry
+  withDashboard?: boolean
 }
 
-function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
+function RichTextFixture({
+  initialBody,
+  entryType,
+  withDashboard = false
+}: RichTextFixtureProps) {
   const state = useMemo(() => {
     const node = new ReactiveNode<object>({
       body: structuredClone(initialBody)
@@ -177,10 +214,21 @@ function RichTextFixture({initialBody, entryType}: RichTextFixtureProps) {
       editor: new EntryEditor(entryType, node)
     }
   }, [entryType, initialBody])
-  return (
-    <StoryProvider views={views}>
-      <RichTextFixtureContent editor={state.editor} node={state.node} />
+  const content = (
+    <RichTextFixtureContent editor={state.editor} node={state.node} />
+  )
+  return withDashboard ? (
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.index}
+      graph={db}
+      views={views}
+    >
+      {content}
     </StoryProvider>
+  ) : (
+    <StoryProvider views={views}>{content}</StoryProvider>
   )
 }
 
@@ -231,6 +279,18 @@ const blocksValue = [
     details: [paragraph('Nested details.')]
   },
   paragraph('After the block.')
+]
+
+const imageValue = [
+  paragraph('Text before an existing image.'),
+  {
+    _type: 'image',
+    _id: 'existing-image',
+    _entry: '2V4cZVEDtL1vrIdrk3gqsR3Jc5t',
+    _link: 'image',
+    src: 'http://localhost:3100/landscape.2V4cZVLipKGYEYJTIK1GMBHJMY0.jpg',
+    alt: 'A mountain path through a valley'
+  }
 ]
 
 const largeBody = Array.from({length: 500}, (_, index) =>

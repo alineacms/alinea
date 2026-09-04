@@ -1,3 +1,13 @@
 import type {Expr} from './Expr.js'
 
-export type OrderBy = {asc: Expr<any>} | {desc: Expr<any>}
+export interface AscendingOrder {
+  asc: Expr<any>
+  desc?: never
+}
+
+export interface DescendingOrder {
+  asc?: never
+  desc: Expr<any>
+}
+
+export type OrderBy = AscendingOrder | DescendingOrder
