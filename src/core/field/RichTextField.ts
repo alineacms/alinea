@@ -10,14 +10,16 @@ import {
 } from '../Field.js'
 import {createId} from '../Id.js'
 import type {InferStoredValue} from '../Infer.js'
+import {mediaAltText} from '../media/MediaAltField.js'
+import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
+  type ImageNode,
   LinkMark,
   Mark,
   Node,
   type ElementNode,
-  type TextDoc,
-  type TextNode
+  type TextDoc
 } from '../TextDoc.js'
 import {Type} from '../Type.js'
 import {applyUrlSuffix, createUniqueAnchor} from '../util/Anchors.js'
@@ -30,7 +32,8 @@ export type RichTextMutator<R> = {
 
 const linkInfoFields = {
   id: Entry.id,
-  url: Entry.url
+  url: Entry.url,
+  alt: MediaFile.alt
 }
 
 export class RichTextField<
@@ -304,6 +307,20 @@ function richTextReferences<Blocks>(
       linkType
     })
   })
+  iterImageNodes(doc, (node, index) => {
+    if (typeof node._entry !== 'string') return
+    result.push({
+      targetId: node._entry,
+      fieldPath: referenceFieldPath(
+        typeof node._id === 'string'
+          ? [...path, node._id]
+          : [...path, String(index)]
+      ),
+      fieldLabel: label,
+      linkId: node._id,
+      linkType: 'image'
+    })
+  })
   doc.forEach((row, index) => {
     if (!schema || !Node.isBlock(row)) return
     const type = schema[row[Node.type]]
@@ -336,7 +353,15 @@ async function applyLinkMarks(
     const entryId = mark[LinkMark.entry]
     if (typeof entryId === 'string') links.set(mark, entryId)
   })
-  const linkIds = Array.from(new Set(links.values()))
+  const images = new Map<ImageNode, string>()
+  iterImageNodes(doc, node => {
+    if (node._link === 'image' && typeof node._entry === 'string') {
+      delete node.src
+      delete node.alt
+      images.set(node, node._entry)
+    }
+  })
+  const linkIds = Array.from(new Set([...links.values(), ...images.values()]))
   const entries = await loader.resolveLinks(linkInfoFields, linkIds)
   const info = new Map(entries.map(entry => [entry.id, entry]))
   for (const [mark, entryId] of links) {
@@ -348,6 +373,12 @@ async function applyLinkMarks(
       mark[LinkMark.suffix],
       mark[LinkMark.anchor]
     )
+  }
+  for (const [node, entryId] of images) {
+    const data = info.get(entryId)
+    if (!data) continue
+    node.src = data.url
+    node.alt = mediaAltText(data.alt, loader.locale ?? undefined)
   }
 }
 
@@ -385,6 +416,17 @@ function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
   }
 }
 
+function iterImageNodes(
+  doc: TextDoc<unknown>,
+  fn: (node: ImageNode, index: number) => void
+) {
+  doc.forEach((node, index) => {
+    if (!Node.isElement(node)) return
+    if (node._type === 'image') fn(node as ImageNode, index)
+    if (node.content) iterImageNodes(node.content, fn)
+  })
+}
+
 function iterNodes(
   doc: TextDoc<unknown>,
   fn: (node: Node, path: Array<string>) => void,
@@ -415,8 +457,13 @@ export class RichTextEditor<Blocks = Schema> {
     return this
   }
 
-  addHtml(html: string) {
-    this.doc.push(...parseHTML(html.trim()))
+  addHtml(html: string, options?: ParseHTMLSyncOptions) {
+    this.doc.push(...parseHTML(html.trim(), options))
+    return this
+  }
+
+  async addHtmlAsync(html: string, options?: ParseHTMLAsyncOptions) {
+    this.doc.push(...(await parseHTMLAsync(html.trim(), options)))
     return this
   }
 
@@ -488,56 +535,194 @@ function mapMark(
   }
 }
 
-export function parseHTML(html: string): TextDoc<any> {
-  const doc: TextDoc<any> = []
-  if (typeof html !== 'string') return doc
-  const parents: Array<{tag: string; doc?: TextDoc<any>}> = [
-    {tag: undefined!, doc}
-  ]
-  const markStack: Array<{
-    tag: string
-    mark: Mark
-    doc: TextDoc<any>
-    start: number
-  }> = []
+export interface ParseHTMLTagHandler {
+  (attributes: Record<string, string>): ElementNode | undefined
+}
+
+export interface ParseHTMLMarkHandler {
+  (attributes: Record<string, string>): Mark | undefined
+}
+
+export interface ParseHTMLAsyncTagHandler {
+  (
+    attributes: Record<string, string>
+  ): ElementNode | undefined | PromiseLike<ElementNode | undefined>
+}
+
+export interface ParseHTMLAsyncMarkHandler {
+  (
+    attributes: Record<string, string>
+  ): Mark | undefined | PromiseLike<Mark | undefined>
+}
+
+export interface ParseHTMLSyncOptions {
+  tags?: Record<string, ParseHTMLTagHandler>
+  marks?: Record<string, ParseHTMLMarkHandler>
+}
+
+export interface ParseHTMLAsyncOptions {
+  tags?: Record<string, ParseHTMLAsyncTagHandler>
+  marks?: Record<string, ParseHTMLAsyncMarkHandler>
+}
+
+interface OpenTagToken {
+  type: 'openTag'
+  name: string
+  attributes: Record<string, string>
+}
+
+interface TextToken {
+  type: 'text'
+  text: string
+}
+
+interface CloseTagToken {
+  type: 'closeTag'
+  name: string
+}
+
+type HTMLToken = OpenTagToken | TextToken | CloseTagToken
+
+interface HTMLParent {
+  tag?: string
+  doc?: TextDoc
+}
+
+interface HTMLMarkRange {
+  tag: string
+  mark: Mark
+  doc: TextDoc
+  start: number
+}
+
+interface ParseHTMLState {
+  doc: TextDoc
+  parents: Array<HTMLParent>
+  markStack: Array<HTMLMarkRange>
+}
+
+/**
+ * Parse HTML using handlers that may perform asynchronous work, such as
+ * importing remote images into a media directory.
+ */
+export async function parseHTMLAsync(
+  html: string,
+  options: ParseHTMLAsyncOptions = {}
+): Promise<TextDoc> {
+  const state = createParseHTMLState()
+  if (typeof html !== 'string') return state.doc
+
+  for (const token of tokenizeHTML(html)) {
+    if (token.type === 'text') {
+      processText(state, token.text)
+    } else if (token.type === 'closeTag') {
+      processCloseTag(state, token.name)
+    } else {
+      const tagHandler = options.tags?.[token.name]
+      const markHandler = options.marks?.[token.name]
+      const node = tagHandler
+        ? await tagHandler(token.attributes)
+        : mapNode(token.name, token.attributes)
+      const mark = markHandler
+        ? await markHandler(token.attributes)
+        : mapMark(token.name, token.attributes)
+      processOpenTag(state, token.name, node, mark)
+    }
+  }
+
+  concatTextNodes(state.doc)
+  return state.doc
+}
+
+/** Parse HTML synchronously. Async handlers are only supported by parseHTMLAsync. */
+export function parseHTML(
+  html: string,
+  options: ParseHTMLSyncOptions = {}
+): TextDoc {
+  const state = createParseHTMLState()
+  if (typeof html !== 'string') return state.doc
+
+  for (const token of tokenizeHTML(html)) {
+    if (token.type === 'text') {
+      processText(state, token.text)
+    } else if (token.type === 'closeTag') {
+      processCloseTag(state, token.name)
+    } else {
+      const tagHandler = options.tags?.[token.name]
+      const markHandler = options.marks?.[token.name]
+      const node = tagHandler
+        ? tagHandler(token.attributes)
+        : mapNode(token.name, token.attributes)
+      const mark = markHandler
+        ? markHandler(token.attributes)
+        : mapMark(token.name, token.attributes)
+      processOpenTag(state, token.name, node, mark)
+    }
+  }
+
+  concatTextNodes(state.doc)
+  return state.doc
+}
+
+function tokenizeHTML(html: string): Array<HTMLToken> {
+  const tokens: Array<HTMLToken> = []
   const parser = new Parser({
     onopentag(name, attributes) {
-      const node = mapNode(name, attributes)
-      const mark = mapMark(name, attributes)
-      const parent = parents.at(-1)
-      if (node) {
-        parent?.doc?.push(node)
-        parents.push({tag: name, doc: node?.content})
-      } else if (mark) {
-        const target = parent?.doc
-        if (!target) return
-        markStack.push({
-          tag: name,
-          mark,
-          doc: target,
-          start: target.length
-        })
-      }
+      tokens.push({type: 'openTag', name, attributes})
     },
     ontext(text) {
-      const parent = parents.at(-1)
-      if (parent?.doc === doc && text.trim().length === 0) return
-      parent?.doc?.push({_type: 'text', text})
+      tokens.push({type: 'text', text})
     },
     onclosetag(name) {
-      const parent = parents.at(-1)
-      if (parent?.tag === name) parents.pop()
-      const match = findMark(name, markStack)
-      if (match < 0) return
-      const {mark, doc, start} = markStack[match]
-      for (let i = start; i < doc.length; i++) applyMark(doc[i], mark)
-      markStack.splice(match)
+      tokens.push({type: 'closeTag', name})
     }
   })
   parser.write(html)
   parser.end()
-  concatTextNodes(doc)
-  return doc
+  return tokens
+}
+
+function createParseHTMLState(): ParseHTMLState {
+  const doc: TextDoc = []
+  return {doc, parents: [{doc}], markStack: []}
+}
+
+function processOpenTag(
+  state: ParseHTMLState,
+  name: string,
+  node: ElementNode | undefined,
+  mark: Mark | undefined
+) {
+  const parent = state.parents.at(-1)
+  if (node) {
+    parent?.doc?.push(node)
+    state.parents.push({tag: name, doc: node.content})
+  } else if (mark) {
+    const target = parent?.doc
+    if (!target) return
+    state.markStack.push({
+      tag: name,
+      mark,
+      doc: target,
+      start: target.length
+    })
+  }
+}
+
+function processText(state: ParseHTMLState, text: string) {
+  const parent = state.parents.at(-1)
+  if (parent?.doc === state.doc && text.trim().length === 0) return
+  parent?.doc?.push({_type: 'text', text})
+}
+
+function processCloseTag(state: ParseHTMLState, name: string) {
+  const parent = state.parents.at(-1)
+  if (parent?.tag === name) state.parents.pop()
+  const match = findMark(name, state.markStack)
+  if (match < 0) return
+  const {mark, doc, start} = state.markStack[match]
+  for (let i = start; i < doc.length; i++) applyMark(doc[i], mark)
+  state.markStack.splice(match)
 }
 
 function findMark(tag: string, marks: Array<{tag: string}>) {
@@ -547,15 +732,15 @@ function findMark(tag: string, marks: Array<{tag: string}>) {
   return -1
 }
 
-function applyMark(node: ElementNode | TextNode, mark: Mark) {
-  if (node._type === 'text') {
+function applyMark(node: Node, mark: Mark) {
+  if (Node.isText(node)) {
     const marks: Array<Mark> = node.marks || (node.marks = [])
     if (!marks.some(current => sameMark(current, mark))) marks.unshift(mark)
     return
   }
   if ('content' in node && node.content) {
     for (const child of node.content) {
-      if ('_type' in child) applyMark(child as ElementNode | TextNode, mark)
+      if ('_type' in child) applyMark(child, mark)
     }
   }
 }
@@ -579,7 +764,7 @@ function sameMarks(a?: Array<Mark>, b?: Array<Mark>) {
   return true
 }
 
-function concatTextNodes(doc: TextDoc<any>) {
+function concatTextNodes(doc: TextDoc) {
   for (let i = 0; i < doc.length; i++) {
     const node = doc[i]
     if (!Node.isText(node)) {

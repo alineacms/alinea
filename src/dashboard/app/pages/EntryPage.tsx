@@ -11,6 +11,7 @@ import {
   type EntryAtoms,
   type EntryLocaleAtoms
 } from '#/dashboard/atoms/entry.js'
+import type {ResolvedEditorImage} from '#/dashboard/atoms/editor.js'
 import {
   Page,
   page,
@@ -73,6 +74,7 @@ export const entryPage = page(async (page, get) => {
       )
     }
     const selectedNode = await get(localeData.selectedNode)
+    const richTextImages = await get(localeData.richTextImages)
     const parentNeedsTranslation = type.customView
       ? false
       : await get(localeData.parentNeedsTranslation)
@@ -87,6 +89,7 @@ export const entryPage = page(async (page, get) => {
         node={selectedNode}
         page={page}
         parentNeedsTranslation={parentNeedsTranslation}
+        richTextImages={richTextImages}
         selectedEntry={selectedEntry}
         sidebar={sidebar}
         sourceLocale={sourceLocale}
@@ -205,6 +208,7 @@ interface EntryEditorContentProps {
   isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
+  richTextImages: ReadonlyMap<string, ResolvedEditorImage>
   selectedEntry: Entry
   sidebar: EntrySidebarProps | undefined
   sourceLocale: string | null
@@ -262,6 +266,7 @@ function EntryEditorContent({
   isSidebarOpen,
   localeData,
   parentNeedsTranslation,
+  richTextImages,
   selectedEntry,
   sidebar,
   sourceLocale,
@@ -355,6 +360,7 @@ function EntryEditorContent({
       <EntryScope
         entry={entry}
         localeData={localeData}
+        richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
         <View type={type.type} />
@@ -410,6 +416,7 @@ function EntryEditorContent({
       <EntryScope
         entry={entry}
         localeData={localeData}
+        richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
         {mainEditor}

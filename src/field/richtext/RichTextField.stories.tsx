@@ -2,6 +2,7 @@ import 'alinea/theme.css'
 import type {CSSProperties, ReactNode} from 'react'
 import {
   RichTextEmptyStory,
+  RichTextImageStory,
   RichTextLargeStory,
   RichTextPlainStory,
   RichTextReadOnlyStory,
@@ -33,6 +34,14 @@ export function PlainText() {
   return (
     <StoryFrame>
       <RichTextPlainStory />
+    </StoryFrame>
+  )
+}
+
+export function Images() {
+  return (
+    <StoryFrame>
+      <RichTextImageStory />
     </StoryFrame>
   )
 }
