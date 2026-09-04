@@ -1,8 +1,8 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
 import {createId} from '#/core/Id.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {exportSource} from '#/core/source/SourceExport.js'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import {writeFileIfContentsDiffer} from '../util/FS.js'
 import type {GenerateContext} from './GenerateContext.js'
 
@@ -16,7 +16,6 @@ const packageJson = {
     './package.json': './package.json',
     './config.js': './config.js',
     './release.js': './release.js',
-    './settings.json': './settings.json',
     './source.js': {
       'edge-light': './empty-source.js',
       default: './source.js'

@@ -1,21 +1,24 @@
-import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {
-  applyPreview,
+  applyPreview as applyPreviewUpdate,
+  type DecodedPreviewRequest,
   decodePreviewRequest
 } from '#/backend/resolver/ParsePreview.js'
+import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import type {UploadResponse} from '#/core/Connection.js'
+import type {RequestContext, UploadResponse} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
 import {Headers} from '@alinea/iso'
 import PLazy from 'p-lazy'
+import {cache} from 'react'
 import {requestContext} from './context.js'
 
 export interface PreviewProps {
@@ -35,55 +38,95 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} = await import('#/backend/store/GeneratedSource.js')
-    const source = await generatedSource
-    const db = new LocalDB(this.config, source)
-    await db.sync()
-    return db
+    const span = trace(this.config, 'alinea.next.cms.db')
+    return span(async () => {
+      const {generatedSource} =
+        await import('#/backend/store/GeneratedSource.js')
+      const source = await generatedSource
+      const db = new LocalDB(this.config, source)
+      await db.sync()
+      return db
+    })
   })
+  #applyPreview = cache(async () => {
+    const context = await requestContext(this.config)
+    const isEdge = process.env.NEXT_RUNTIME === 'edge'
+    const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
+    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
+    const useLocalDb = !isEdge && (!context.isDev || isBuild)
+    const {cookies, draftMode} = await import('next/headers.js')
+    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
+    if (!isDraft)
+      return {context, hasPreview: false, isDraft, isBuild, useLocalDb}
+
+    const cookie = await cookies()
+    const payload = getPreviewPayloadFromCookies(cookie.getAll())
+    if (!payload)
+      return {
+        context,
+        hasPreview: false,
+        isDraft,
+        isBuild,
+        preview: undefined,
+        useLocalDb
+      }
+
+    let preview: PreviewRequest | undefined = {payload}
+    if (useLocalDb) {
+      const db = await this.bundledDb
+      const decoded = await decodePreviewRequest(preview)
+      preview = await this.#prepareLocalPreview(db, decoded, context)
+    }
+    return {context, hasPreview: true, isDraft, isBuild, preview, useLocalDb}
+  })
+
+  async #prepareLocalPreview(
+    db: LocalDB,
+    decoded: DecodedPreviewRequest,
+    context: RequestContext
+  ): Promise<PreviewRequest | undefined> {
+    if ('entry' in decoded) return decoded
+    if (db.sha === decoded.contentHash) return applyPreviewUpdate(db, decoded)
+
+    const source = await db.source.getTree()
+    if (source.sha === decoded.contentHash) {
+      await db.sync()
+      return applyPreviewUpdate(db, decoded)
+    }
+
+    // File patches carry and verify their own base hash. A patch can therefore
+    // be applied safely when only unrelated files changed in the content tree.
+    const applied = await applyPreviewUpdate(db, decoded)
+    if (applied) return applied
+
+    // The target entry is missing or has a different base. Only this case
+    // needs the current remote tree before applying the preview again.
+    await db.syncWith(createClient(this.config, context))
+    return applyPreviewUpdate(db, decoded)
+  }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
-    const {handlerUrl, apiKey} = await requestContext(this.config)
-    const client = new Client({
-      config: this.config,
-      url: handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
-        return {...init, headers}
-      }
-    })
-    let preview: PreviewRequest | undefined
-    const {cookies, draftMode} = await import('next/headers.js')
-    const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
-    if (isDraft) {
-      if (!status) status = 'preferDraft'
-      const cookie = await cookies()
-      const payload = getPreviewPayloadFromCookies(cookie.getAll())
-      if (payload) preview = {payload}
+    const {context, hasPreview, isDraft, isBuild, preview, useLocalDb} =
+      await this.#applyPreview()
+    if (isDraft && !status) status = 'preferDraft'
+    const request = {...query, preview, status}
+    const client = createClient(this.config, context)
+    if (!useLocalDb) {
+      const span = trace(this.config, 'alinea.cms.resolve.client')
+      return span(() => client.resolve(request))
     }
-    const {PHASE_PRODUCTION_SERVER, PHASE_PRODUCTION_BUILD} =
-      await import('next/constants.js')
-    const isEdge = process.env.NEXT_RUNTIME === 'edge'
-    const isServer = process.env.NEXT_PHASE === PHASE_PRODUCTION_SERVER
-    const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-    const request = {preview, ...query, status}
-    const useLocalDb = !isEdge && (isServer || isBuild)
-    if (!useLocalDb) return client.resolve(request)
     const db = await this.bundledDb
-    if (request.preview) {
-      const preview = await decodePreviewRequest(request.preview)
-      if ('contentHash' in preview && db.sha !== preview.contentHash)
-        await db.syncWith(client)
-      return db.resolve({...request, preview: await applyPreview(db, preview)})
-    }
-    await this.throttle(() => db.syncWith(client), request.syncInterval)
+    const syncInterval = request.disableSync
+      ? Number.POSITIVE_INFINITY
+      : (request.syncInterval ?? this.config.syncInterval)
+    if (hasPreview) return db.resolve(request)
+    if (!isBuild) await this.throttle(() => db.syncWith(client), syncInterval)
     return db.resolve(request)
   }
 
   async #authenticatedClient() {
-    const {handlerUrl, apiKey} = await requestContext(this.config)
+    const context = await requestContext(this.config)
     const authCookies: Array<[name: string, value: string]> = []
     try {
       const {cookies} = await import('next/headers.js')
@@ -96,16 +139,16 @@ export class NextCMS<
     } catch {}
     return new Client({
       config: this.config,
-      url: handlerUrl.href,
+      url: context.handlerUrl.href,
       applyAuth: init => {
         const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
         if (authCookies.length) {
-          for (const [name, value] of authCookies) {
-            headers.set('Cookie', `${name}=${value}`)
-          }
+          headers.set(
+            'Cookie',
+            authCookies.map(([name, value]) => `${name}=${value}`).join('; ')
+          )
         }
-        return {...init, headers}
+        return applyContextAuth(context, {...init, headers})
       }
     })
   }
@@ -154,4 +197,22 @@ export function createCMS<Definition extends Config>(
   config: Definition
 ): NextCMS<Definition> {
   return new NextCMS(config)
+}
+
+function createClient(config: Config, context: RequestContext) {
+  return new Client({
+    config,
+    url: context.handlerUrl.href,
+    applyAuth: init => applyContextAuth(context, init)
+  })
+}
+
+function applyContextAuth(
+  context: RequestContext,
+  init?: RequestInit
+): RequestInit {
+  if (context.applyAuth) return context.applyAuth(init)
+  const headers = new Headers(init?.headers)
+  headers.set('Authorization', `Bearer ${context.apiKey}`)
+  return {...init, headers}
 }

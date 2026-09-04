@@ -25,6 +25,7 @@ import {ReadonlyTree, type Tree} from './source/Tree.js'
 import type {GetBlobsOptions} from './source/Source.js'
 import type {User, UserInput} from './User.js'
 import {base64} from './util/Encoding.js'
+import {isRecord} from './util/Objects.js'
 
 export type AuthenticateRequest = (
   request?: RequestInit
@@ -275,12 +276,16 @@ export class Client implements LocalConnection {
           ?.includes('application/json')
         let errorMessage: string
         if (isJson) {
-          const body = await res.json()
-          if (res.status === 401 && body.type === AuthResultType.NeedsRefresh) {
+          const body: unknown = await res.json()
+          if (
+            res.status === 401 &&
+            isRecord(body) &&
+            body.type === AuthResultType.NeedsRefresh
+          ) {
             // We'll attempt a single retry if the access token is refreshed
             if (!retry) return this.#request(params, init, true)
           }
-          if ('error' in body && typeof body.error === 'string')
+          if (isRecord(body) && typeof body.error === 'string')
             errorMessage = body.error
           else errorMessage = JSON.stringify(body, null, 2)
         } else {

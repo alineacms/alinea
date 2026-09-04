@@ -2,7 +2,6 @@ import {Config} from '#/core/Config.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
-import {createId} from '#/core/Id.js'
 import {getRoot} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
@@ -21,6 +20,8 @@ import {unreachable} from '#/core/util/Types.js'
 import type {MediaFile} from '../media/MediaTypes.js'
 import {Permission, Policy} from '../Role.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
+import type {ChangesBatch} from '../source/Change.js'
+import {OverlaySource} from '../source/OverlaySource.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
@@ -85,7 +86,6 @@ interface MoveUrlAliasUpdate {
 }
 
 export class EntryTransaction {
-  #checks = [] as [path: string, sha: string][]
   #messages = [] as string[]
   #config: Config
   #index: EntryIndex
@@ -93,6 +93,8 @@ export class EntryTransaction {
   #fileChanges = [] as CommitChange[]
   #policy: Policy
   #urlClaims: Map<string, UrlClaim> | undefined
+  #workingSource: OverlaySource
+  #workingTree: ReadonlyTree
 
   constructor(
     config: Config,
@@ -103,9 +105,11 @@ export class EntryTransaction {
   ) {
     if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
     this.#config = config
-    this.#index = index
+    this.#index = index.clone()
     this.#tx = new SourceTransaction(source, from)
     this.#policy = policy
+    this.#workingSource = new OverlaySource(source, from)
+    this.#workingTree = from
   }
 
   get empty() {
@@ -120,11 +124,12 @@ export class EntryTransaction {
     workspace,
     fromSeed,
     parentId = null,
-    id = createId(),
+    id,
     insertOrder = 'last',
     status = 'published',
     overwrite = false
   }: Op<CreateMutation>) {
+    assert(id, 'Create mutation is missing an id')
     const config = this.#config
     const index = this.#index
     const existing = index.byId(id)
@@ -169,7 +174,6 @@ export class EntryTransaction {
         return entry.id === parentId && entry.locale === locale && entry.main
       })
       assert(parent, `Parent not found: ${parentId}`)
-      this.#checks.push([parent.filePath, parent.fileHash])
       this.#policy.assert(Permission.Create, parent)
     }
     const siblings = Array.from(
@@ -346,7 +350,6 @@ export class EntryTransaction {
           workspace: entry.workspace,
           locale
         })
-    this.#checks.push([entry.filePath, entry.fileHash])
     const childrenDir = paths.join(entry.parentDir, path)
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
@@ -526,7 +529,6 @@ export class EntryTransaction {
         return entry.id === id && entry.locale !== locale
       })
       for (const translation of translations) {
-        this.#checks.push([translation.filePath, translation.fileHash])
         const record = createRecord(
           {
             id,
@@ -680,7 +682,6 @@ export class EntryTransaction {
       for (const [_, version] of versions) {
         this.#tx.remove(version.filePath)
       }
-    this.#checks.push([entry.filePath, entry.fileHash])
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path, data}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
@@ -703,7 +704,6 @@ export class EntryTransaction {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
-    this.#checks.push([mainEntry.filePath, mainEntry.fileHash])
     this.#tx.rename(mainEntry.filePath, `${mainEntry.childrenDir}.draft.json`)
     this.#messages.push(this.#reportOp('unpublish', mainEntry.title))
     return this
@@ -719,7 +719,6 @@ export class EntryTransaction {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
-    this.#checks.push([mainEntry.filePath, mainEntry.fileHash])
     this.#tx.rename(
       mainEntry.filePath,
       `${mainEntry.childrenDir}.archived.json`
@@ -923,7 +922,6 @@ export class EntryTransaction {
       if (entry.status === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       info = entry
-      this.#checks.push([entry.filePath, entry.fileHash])
       this.#tx.remove(entry.filePath)
       if (entry.status !== 'draft') {
         this.#tx.remove(entry.childrenDir)
@@ -994,7 +992,7 @@ export class EntryTransaction {
     return `(${op}) ${title}`
   }
 
-  apply(mutations: Array<Mutation>) {
+  async apply(mutations: ReadonlyArray<Mutation>): Promise<void> {
     for (const mutation of mutations) {
       switch (mutation.op) {
         case 'create':
@@ -1027,7 +1025,24 @@ export class EntryTransaction {
         default:
           unreachable(mutation)
       }
+      await this.#flush()
     }
+  }
+
+  async #flush(): Promise<void> {
+    const {from, into, changes} = await this.#tx.compile(this.#workingTree)
+    const batch: ChangesBatch = {
+      fromSha: from.sha,
+      changes
+    }
+    if (batch.changes.length > 0) {
+      await Promise.all([
+        this.#workingSource.applyChanges(batch),
+        this.#index.indexChanges(batch, into)
+      ])
+    }
+    this.#workingTree = into
+    this.#urlClaims = undefined
   }
 
   async toRequest() {
@@ -1036,7 +1051,6 @@ export class EntryTransaction {
       fromSha: from.sha,
       intoSha: into.sha,
       description: this.description(),
-      checks: this.#checks,
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
   }

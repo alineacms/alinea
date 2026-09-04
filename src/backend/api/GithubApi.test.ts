@@ -72,7 +72,6 @@ test('uses commit request user for co-authored-by trailer', async () => {
       },
       fromSha,
       intoSha,
-      checks: [],
       changes: []
     }
 

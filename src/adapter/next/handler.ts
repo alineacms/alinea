@@ -1,7 +1,7 @@
 import {
+  backendFromOptions,
   type BackendFactory,
-  type BackendOptions,
-  backendFromOptions
+  type BackendOptions
 } from '#/backend/api/CreateBackend.js'
 import {
   createHandler as createCoreHandler,
@@ -10,14 +10,16 @@ import {
 import {generatedSource} from '#/backend/store/GeneratedSource.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
+import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
+import {createDevRemote} from './DevRemote.js'
 
 type Handler = (request: Request) => Promise<Response>
-const handlers = new WeakMap<NextCMS, Handler>()
 
 export interface NextHandlerOptions extends HandlerHooks {
   cms: NextCMS
@@ -26,7 +28,6 @@ export interface NextHandlerOptions extends HandlerHooks {
 
 export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const options = input instanceof NextCMS ? {cms: input} : input
-  if (handlers.has(options.cms)) return handlers.get(options.cms)!
   const config = options.cms.config
   const backend: BackendFactory =
     typeof options.backend === 'function'
@@ -34,13 +35,17 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       : options.backend
         ? backendFromOptions(options.backend)
         : (context: RequestContext) => new CloudRemote(context, config)
-  const remote = (context: RequestContext) => backend(context, config)
-  const db = PLazy.from(async () => {
-    const source = await generatedSource
-    const db = new LocalDB(config, source)
-    await db.sync()
-    return db
-  })
+  const remote = (context: RequestContext) =>
+    context.isDev ? createDevRemote(context, config) : backend(context, config)
+  const span = trace(config, 'alinea.next.handler.db')
+  const db = PLazy.from(() =>
+    span(async () => {
+      const source = await generatedSource
+      const db = new LocalDB(config, source)
+      await db.sync()
+      return db
+    })
+  )
   const handleBackend = createCoreHandler({
     ...options,
     remote,
@@ -49,9 +54,9 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const handle: Handler = async request => {
     const url = new URL(request.url)
     const {searchParams} = url
-    const context = await requestContext(config)
-    const handlerPath = config.handlerUrl ?? '/api/cms'
-    if (!url.pathname.startsWith(handlerPath))
+    const context = await requestContext(config, request)
+    const handlerPath = handlerPathname(config, url)
+    if (url.pathname !== handlerPath)
       return new Response(`Expected handler to be served on ${handlerPath}`, {
         status: 400
       })
@@ -86,6 +91,9 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       return new Response('Internal server error', {status: 500})
     }
   }
-  handlers.set(options.cms, handle)
   return handle
+}
+
+export function handlerPathname(config: Config, requestUrl: URL): string {
+  return new URL(Config.handlerUrl(config), requestUrl).pathname
 }

@@ -1,11 +1,12 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import {type CommitRequest, checkCommit} from '#/core/db/CommitRequest.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
 import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
@@ -74,14 +75,8 @@ export class DevDB extends LocalDB {
 
   async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
-    if (this.sha !== request.fromSha) {
-      const tree = await this.source.getTree()
-
-      // Run checks to see if we can commit anyway. This is still not atomic in
-      // any sense because filesystem changes can happen in between the check
-      // and the commit but it should be good enough for now.
-      checkCommit(tree, request)
-    }
+    if (this.sha !== request.fromSha)
+      throw new ShaMismatchError(request.fromSha, this.sha)
     const {rootDir} = this.#options
     for (const change of request.changes) {
       switch (change.op) {

@@ -6,9 +6,9 @@ export function ensureNode() {
   // @ts-ignore
   if (globalThis.Bun) return
   if (!process.version) return
-  const isValidNode = semver.compare(process.version, '18.0.0', '>=')
+  const isValidNode = semver.compare(process.version, '24.0.0', '>=')
   if (isValidNode) return
-  console.error('Alinea requires Node version 18 or higher')
+  console.error('Alinea requires Node version 24 or higher')
   process.exit(1)
 
   /*

@@ -25,7 +25,7 @@ mock.module('next/headers', () => ({
   })
 }))
 
-const [{createCMS}, {createHandler}] = await Promise.all([
+const [{createCMS}, {createHandler, handlerPathname}] = await Promise.all([
   import('./cms.js'),
   import('./handler.js')
 ])
@@ -44,6 +44,17 @@ const cms = createCMS({
 })
 const handle = createHandler(cms)
 let consoleError: ReturnType<typeof spyOn>
+
+test('uses the exact pathname of an absolute handler URL', () => {
+  const config = {
+    ...cms.config,
+    handlerUrl: 'https://example.com/api/custom'
+  }
+  const expected = handlerPathname(config, new URL('http://localhost/request'))
+
+  expect(expected).toBe('/api/custom')
+  expect('/api/custom-extra').not.toBe(expected)
+})
 
 beforeEach(() => {
   draftEnabled = false

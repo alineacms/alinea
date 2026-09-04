@@ -91,9 +91,10 @@ export interface RequestContext {
   isDev: boolean
   handlerUrl: URL
   apiKey: string
-  user?: User
-  token?: string
+  applyAuth?(init?: RequestInit): RequestInit
 }
+
+export const developmentKeyHeader = 'x-alinea-dev-key'
 
 export interface AuthedContext extends RequestContext {
   user: User

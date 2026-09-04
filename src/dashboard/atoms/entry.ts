@@ -322,7 +322,7 @@ export class EntryLocaleAtoms {
     const config = get(configAtom)
     try {
       const base = new URL(
-        config.handlerUrl ?? '',
+        Config.handlerUrl(config),
         Config.baseUrl(config) ??
           (typeof location === 'undefined' ? 'http://localhost' : location.href)
       )

@@ -3,7 +3,7 @@ import {Entry as EntryExprs, type Entry} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
-import type {AnyCondition, Filter} from '#/core/Filter.js'
+import type {AnyCondition, Condition, Filter} from '#/core/Filter.js'
 import {
   querySource as queryEdge,
   type AnyQueryResult,
@@ -22,6 +22,7 @@ import {
   hasWorkspace,
   type HasExpr
 } from '#/core/Internal.js'
+import type {PreviewRequest} from '#/core/Preview.js'
 import type {Resolver} from '#/core/Resolver.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {hasExact} from '#/core/util/Checks.js'
@@ -50,6 +51,11 @@ const andFilter = cito
 
 type Interim = any
 
+interface CachedPreviewGraph {
+  baseGraph: EntryGraph
+  previewGraph: EntryGraph
+}
+
 export interface PostContext {
   linkResolver: LinkResolver
 }
@@ -57,6 +63,7 @@ export interface PostContext {
 export class EntryResolver implements Resolver {
   index: EntryIndex
   #scope: Scope
+  #previewGraphs = new WeakMap<PreviewRequest, CachedPreviewGraph>()
 
   constructor(
     public config: Config,
@@ -204,10 +211,12 @@ export class EntryResolver implements Resolver {
       }
       case 'children': {
         const depth = query?.depth ?? 1
+        const self = ctx.graph.byId(entry.id)
         return {
-          entry: e => e.filePath.startsWith(entry.childrenDir),
-          node: node =>
-            node.level > entry.level && node.level <= entry.level + depth
+          nodes: ctx.graph.candidateNodes({
+            ids: descendantIds(self, depth)
+          }),
+          language: language => language.locale === entry.locale
         }
       }
       case 'parents': {
@@ -304,13 +313,7 @@ export class EntryResolver implements Resolver {
         if (name.startsWith('_')) return entryFieldValue(entry, name.slice(1))
         return entry.data[name]
       })
-    const multipleIds =
-      typeof query.id === 'object' && query.id !== null && query.id.in
-    const ids = Array.isArray(multipleIds)
-      ? multipleIds
-      : typeof query.id === 'string'
-        ? [query.id]
-        : undefined
+    const ids = equalityValues(query.id)
     return {
       ids,
       condition(entry: Entry) {
@@ -347,7 +350,9 @@ export class EntryResolver implements Resolver {
     const {ids, condition} = this.condition(ctx, edge)
     const filter: EntryCondition = {
       search: Array.isArray(search) ? search.join(' ') : search,
-      node: node => (ids ? ids.includes(node.id) : true),
+      nodes: preFilter?.nodes
+        ? undefined
+        : this.#candidateNodes(ctx.graph, query, ids),
       entry: condition
     }
     let entries = Array.from(
@@ -458,6 +463,49 @@ export class EntryResolver implements Resolver {
     }
   }
 
+  #candidateNodes(
+    graph: EntryGraph,
+    query: GraphQuery,
+    ids: ReadonlyArray<string> | undefined
+  ): Array<EntryNode> | undefined {
+    const location = Array.isArray(query.location)
+      ? query.location
+      : query.location && this.#scope.locationOf(query.location)
+    const indexedLocation =
+      location && location.length >= 1 && location.length <= 3
+        ? location
+        : undefined
+    const workspaceQuery =
+      isRecord(query.workspace) && hasWorkspace(query.workspace)
+        ? this.#scope.nameOf(query.workspace)
+        : query.workspace
+    const rootQuery =
+      isRecord(query.root) && hasRoot(query.root)
+        ? this.#scope.nameOf(query.root)
+        : query.root
+    const workspaces = intersectValues(
+      equalityValues(workspaceQuery as Condition<string> | undefined),
+      indexedLocation?.[0] ? [indexedLocation[0]] : undefined
+    )
+    const roots = intersectValues(
+      equalityValues(rootQuery as Condition<string> | undefined),
+      indexedLocation?.[1] ? [indexedLocation[1]] : undefined
+    )
+    const types = query.type
+      ? (Array.isArray(query.type) ? query.type : [query.type]).map(
+          type => this.#scope.nameOf(type)!
+        )
+      : undefined
+    return graph.candidateNodes({
+      ids,
+      parentIds: equalityValues(query.parentId),
+      urls: equalityValues(query.url),
+      workspaces,
+      roots,
+      types
+    })
+  }
+
   async postField(
     ctx: PostContext,
     interim: Interim,
@@ -520,37 +568,43 @@ export class EntryResolver implements Resolver {
   async resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    const {preview} = query
-    const previewEntry =
-      preview && 'entry' in preview ? preview.entry : undefined
-    let graph = this.index.graph
-    if (previewEntry)
-      graph = graph.withChanges({
-        fromSha: this.index.tree.sha,
-        changes: [
-          {
-            op: 'add',
-            path: previewEntry.filePath,
-            sha: previewEntry.fileHash,
-            contents: new TextEncoder().encode(
-              JSON.stringify(
-                createRecord(previewEntry, previewEntry.status),
-                null,
-                2
-              )
-            )
-          }
-        ]
-      })
+    const graph = this.#graphFor(query.preview)
     const ctx: ResolveContext = {
       status: query.status ?? 'published',
       locale: query.locale,
-      graph: graph,
+      graph,
       searchTerms: Array.isArray(query.search)
         ? query.search.join(' ')
         : query.search
     }
     return this.query(ctx, query as GraphQuery<Projection>).getProcessed()
+  }
+
+  #graphFor(preview: PreviewRequest | undefined): EntryGraph {
+    const baseGraph = this.index.graph
+    if (!preview || !('entry' in preview)) return baseGraph
+    const cached = this.#previewGraphs.get(preview)
+    if (cached?.baseGraph === baseGraph) return cached.previewGraph
+    const previewEntry = preview.entry
+    const previewGraph = baseGraph.withChanges({
+      fromSha: this.index.tree.sha,
+      changes: [
+        {
+          op: 'add',
+          path: previewEntry.filePath,
+          sha: previewEntry.fileHash,
+          contents: new TextEncoder().encode(
+            JSON.stringify(
+              createRecord(previewEntry, previewEntry.status),
+              null,
+              2
+            )
+          )
+        }
+      ]
+    })
+    this.#previewGraphs.set(preview, {baseGraph, previewGraph})
+    return previewGraph
   }
 }
 
@@ -581,6 +635,42 @@ export function statusChecker(status: Status): Check {
 
 interface Check {
   (input: Entry): boolean
+}
+
+function descendantIds(
+  node: EntryNode | undefined,
+  depth: number
+): Array<string> {
+  if (!node || depth <= 0) return []
+  const result: Array<string> = []
+  let level = [node]
+  for (let currentDepth = 1; currentDepth <= depth; currentDepth++) {
+    level = level.flatMap(parent => Array.from(parent.children()))
+    if (level.length === 0) break
+    for (const child of level) result.push(child.id)
+  }
+  return result
+}
+
+function equalityValues<Value>(
+  condition: Condition<Value> | undefined
+): ReadonlyArray<Value> | undefined {
+  if (condition === undefined) return undefined
+  if (typeof condition !== 'object' || condition === null)
+    return [condition as Value]
+  const operations = condition as AnyCondition<Value>
+  if (operations.is !== undefined) return [operations.is]
+  if (Array.isArray(operations.in)) return operations.in
+  return undefined
+}
+
+function intersectValues<Value>(
+  a: ReadonlyArray<Value> | undefined,
+  b: ReadonlyArray<Value> | undefined
+): ReadonlyArray<Value> | undefined {
+  if (!a) return b
+  if (!b) return a
+  return Array.from(new Set(a).intersection(new Set(b)))
 }
 
 function entryChecker(scope: Scope, query: QuerySettings): Check {

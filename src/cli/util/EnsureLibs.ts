@@ -34,6 +34,6 @@ export function ensureLibs(libs: Record<string, string>) {
   for (const [pkg, minVersion] of Object.entries(libs)) {
     ensurePackage(pkg, minVersion)
   }
-  ensurePackage('react', '18.0.0')
-  ensurePackage('react-dom', '18.0.0')
+  ensurePackage('react', '19.0.0')
+  ensurePackage('react-dom', '19.0.0')
 }

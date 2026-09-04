@@ -22,12 +22,13 @@ export function createCMS() {
 }
 
 export function withAlinea(config: NextConfig = {}): NextConfig {
-  const adminPath = resolveAdminPath()
-  if (!adminPath) {
+  const settings = resolveSettings(config)
+  if (!settings) {
     console.warn(
-      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI and deploy @alinea/generated.'
+      'Alinea dashboard settings were not provided; dashboard routing is disabled. Run Next.js through the Alinea CLI.'
     )
   }
+  const adminPath = settings?.adminPath
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
@@ -57,6 +58,12 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const rewrites = adminPath
     ? createRewrites(config, adminPath)
     : config.rewrites
+  const env = settings
+    ? {
+        ...config.env,
+        ALINEA_ADMIN_PATH: settings.adminPath
+      }
+    : config.env
   if (nextVersion < 15)
     return {
       ...config,
@@ -69,7 +76,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
       },
       images,
       redirects,
-      rewrites
+      rewrites,
+      env
     }
   return {
     ...config,
@@ -79,7 +87,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     ],
     images,
     redirects,
-    rewrites
+    rewrites,
+    env
   }
 }
 
@@ -147,20 +156,17 @@ function createRewrites(config: NextConfig, adminPath: string) {
   }
 }
 
-interface GeneratedSettings {
-  adminPath?: unknown
+interface ResolvedSettings {
+  adminPath: string
 }
 
-function resolveAdminPath(): string | undefined {
-  try {
-    const require = createRequire(resolve('./index.js'))
-    const location = require.resolve('@alinea/generated/settings.json')
-    const settings = JSON.parse(
-      readFileSync(location, 'utf-8')
-    ) as GeneratedSettings
-    if (typeof settings.adminPath === 'string' && settings.adminPath)
-      return normalizeBasePath(settings.adminPath)
-  } catch {}
+function resolveSettings(config: NextConfig): ResolvedSettings | undefined {
+  const adminPath =
+    config.env?.ALINEA_ADMIN_PATH ?? process.env.ALINEA_ADMIN_PATH
+  if (!adminPath) return
+  return {
+    adminPath: normalizeBasePath(adminPath)
+  }
 }
 
 function normalizeBasePath(value: string): string {

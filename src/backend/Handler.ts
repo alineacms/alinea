@@ -4,7 +4,6 @@ import {
   BLOB_SEQUENCE_CONTENT_TYPE,
   encodeBlobSequence
 } from '#/core/BlobTransport.js'
-import type {Entry} from '#/core.js'
 import type {CMS} from '#/core/CMS.js'
 import type {
   AuthedContext,
@@ -12,7 +11,10 @@ import type {
   RemoteConnection,
   RequestContext
 } from '#/core/Connection.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
+import {developmentKeyHeader} from '#/core/Connection.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
@@ -40,29 +42,38 @@ export interface Handler {
   (request: Request, context: RequestContext): Promise<Response>
 }
 
-export type HookResponse<T = void> = void | T | Promise<T> | Promise<void>
+export type HookResponse<T = void> = void | T | Promise<void | T>
+
+export interface BeforeCommitContext {
+  mutations: ReadonlyArray<Mutation>
+}
+
+export interface AfterCommitContext extends BeforeCommitContext {
+  sha: string
+}
 
 export interface HandlerHooks {
-  beforeCreate?(entry: Entry): HookResponse<Entry>
-  afterCreate?(entry: Entry): HookResponse
-  beforeUpdate?(entry: Entry): HookResponse<Entry>
-  afterUpdate?(entry: Entry): HookResponse
-  beforeArchive?(entryId: string): HookResponse
-  afterArchive?(entryId: string): HookResponse
-  beforeRemove?(entryId: string): HookResponse
-  afterRemove?(entryId: string): HookResponse
+  beforeCommit?(
+    context: BeforeCommitContext
+  ): HookResponse<ReadonlyArray<Mutation>>
+  afterCommit?(context: AfterCommitContext): HookResponse
 }
 
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
   db: LocalDB | Promise<LocalDB>
   remote?: (context: RequestContext) => RemoteConnection
+  forwardMutations?(
+    request: Request,
+    context: AuthedContext
+  ): Promise<Response | undefined>
 }
 
 export function createHandler({
   cms,
   remote = context => new CloudRemote(context, cms.config),
   db,
+  forwardMutations,
   ...hooks
 }: HandlerOptions): Handler {
   const throttle = createThrottledSync()
@@ -88,7 +99,6 @@ export function createHandler({
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
-
       if (auth) {
         return cnx.authenticate(request, {
           enrichUser(user) {
@@ -130,11 +140,12 @@ export function createHandler({
         }
       } catch (cause) {
         if (cause instanceof MissingCredentialsError) {
-          const authorization = request.headers.get('authorization')
-          const bearer = authorization?.slice('Bearer '.length)
+          const credential = context.isDev
+            ? request.headers.get(developmentKeyHeader)
+            : request.headers.get('authorization')?.slice('Bearer '.length)
           if (!context.apiKey)
             throw new MissingCredentialsError('Missing API key', {cause})
-          if (bearer !== context.apiKey)
+          if (credential !== context.apiKey)
             throw new InvalidCredentialsError('Expected matching api key', {
               cause
             })
@@ -216,7 +227,12 @@ export function createHandler({
         const scope = getScope(cms.config)
         const query = scope.parse<GraphQuery>(raw)
         if (!query.preview) {
-          await periodicSync(cnx, query.syncInterval)
+          await periodicSync(
+            cnx,
+            query.disableSync
+              ? Number.POSITIVE_INFINITY
+              : (query.syncInterval ?? cms.config.syncInterval)
+          )
         } else {
           const preview = await decodePreviewRequest(query.preview)
           if ('contentHash' in preview && local.sha !== preview.contentHash)
@@ -227,12 +243,19 @@ export function createHandler({
       }
 
       if (action === HandleAction.Mutate && request.method === 'POST') {
+        if (forwardMutations && userCtx) {
+          const forwarded = await forwardMutations(request.clone(), userCtx)
+          if (forwarded) return forwarded
+        }
         const user = expectUser()
         expectJson()
         const policy = await user.policy
-        const mutations = await body
+        let mutations = (await body) as ReadonlyArray<Mutation>
+        await local.syncWith(cnx)
+        const adjusted = await hooks.beforeCommit?.({mutations})
+        if (adjusted) mutations = adjusted
         const attempt = async (retry = 0) => {
-          await local.syncWith(cnx)
+          if (retry > 0) await local.syncWith(cnx)
           const request = {
             ...(await local.request(mutations, policy)),
             user: user.claims
@@ -246,16 +269,42 @@ export function createHandler({
             }
             return sha
           } catch (error) {
-            if (error instanceof ShaMismatchError && retry < 3)
-              return attempt(retry + 1)
+            const isConflict =
+              error instanceof ShaMismatchError ||
+              (error instanceof HttpError && error.code === 409) ||
+              (error instanceof Response && error.status === 409)
+            if (isConflict && retry < 3) return attempt(retry + 1)
             throw error
           }
         }
-        return Response.json({sha: await attempt()})
+        const sha = await attempt()
+        try {
+          await hooks.afterCommit?.({
+            mutations,
+            sha
+          })
+        } catch (error) {
+          console.error('Alinea afterCommit hook failed', error)
+        }
+        return Response.json({sha})
       }
 
       if (action === HandleAction.Commit && request.method === 'POST') {
-        throw new Error('Mutations expected')
+        if (!context.isDev)
+          throw new HttpError(400, 'Commits are only accepted in development')
+        const developmentKey = request.headers.get(developmentKeyHeader)
+        if (!context.apiKey || developmentKey !== context.apiKey)
+          throw new HttpError(401, 'Invalid development commit credentials')
+        const user = expectUser()
+        expectJson()
+        const commit = {
+          ...((await body) as CommitRequest),
+          user: user.claims
+        }
+        let {sha} = await cnx.write(commit)
+        if (sha === commit.intoSha) await local.write(commit)
+        else sha = await local.syncWith(cnx)
+        return Response.json({sha})
       }
 
       // History

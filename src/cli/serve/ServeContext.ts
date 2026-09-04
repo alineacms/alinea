@@ -12,4 +12,5 @@ export interface ServeContext {
   production: boolean
   liveReload: LiveReload
   buildId: string
+  apiKey: string
 }

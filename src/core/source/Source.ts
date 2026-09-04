@@ -110,11 +110,11 @@ export class SourceTransaction {
     return this
   }
 
-  async compile() {
+  async compile(previous?: ReadonlyTree) {
     const todo = this.#tasks.splice(0)
     for (const task of todo) await task()
-    const from = this.#from
-    const into = await this.#into.compile()
+    const from = previous ?? this.#from
+    const into = await this.#into.compile(previous)
     const forwards = from.diff(into)
     const fromSource = Array.from(
       new Set(

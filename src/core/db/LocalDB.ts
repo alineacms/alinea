@@ -1,3 +1,4 @@
+import {trace} from '#/core/Trace.js'
 import pLimit from 'p-limit'
 import type {Config} from '../Config.js'
 import type {SyncApi, UploadMetadata, UploadResponse} from '../Connection.js'
@@ -28,10 +29,10 @@ export class LocalDB extends WriteableGraph {
 
   constructor(
     public config: Config,
-    source: Source = new MemorySource()
+    source: Source = new MemorySource(),
+    index: EntryIndex = new EntryIndex(config)
   ) {
     super()
-    const index = new EntryIndex(config)
     const resolver = new EntryResolver(config, index)
     this.#resolver = resolver
     this.index = index
@@ -41,7 +42,8 @@ export class LocalDB extends WriteableGraph {
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    return this.#resolver.resolve(query)
+    const span = trace(this.config, 'alinea.local_db.resolve')
+    return span(() => this.#resolver.resolve(query))
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
@@ -69,24 +71,28 @@ export class LocalDB extends WriteableGraph {
   }
 
   async sync() {
-    return this.index.sync(this.source)
+    const span = trace(this.config, 'alinea.local_db.sync')
+    return span(() => this.index.sync(this.source))
   }
 
   syncWith(remote: SyncApi) {
-    return limit(async () => {
-      const batch = await diff(this.source, remote)
-      const canIndexChanges = this.index.sha === batch.fromSha
-      if (batch.changes.length > 0)
-        await Promise.all([
-          this.source.applyChanges(batch),
-          canIndexChanges ? this.index.indexChanges(batch) : undefined
-        ])
-      if (canIndexChanges) {
-        await this.index.seed(this.source)
-        return this.index.sha
-      }
-      return this.sync()
-    })
+    const span = trace(this.config, 'alinea.local_db.sync_with')
+    return span(() =>
+      limit(async () => {
+        const batch = await diff(this.source, remote)
+        const canIndexChanges = this.index.sha === batch.fromSha
+        if (batch.changes.length > 0)
+          await Promise.all([
+            this.source.applyChanges(batch),
+            canIndexChanges ? this.index.indexChanges(batch) : undefined
+          ])
+        if (canIndexChanges) {
+          await this.index.seed(this.source)
+          return this.index.sha
+        }
+        return this.sync()
+      })
+    )
   }
 
   async logEntries() {
@@ -112,7 +118,7 @@ export class LocalDB extends WriteableGraph {
     )
   }
 
-  async request(mutations: Array<Mutation>, policy?: Policy) {
+  async request(mutations: ReadonlyArray<Mutation>, policy?: Policy) {
     await this.sync()
     const from = await this.source.getTree()
     const tx = new EntryTransaction(
@@ -122,7 +128,7 @@ export class LocalDB extends WriteableGraph {
       from,
       policy
     )
-    tx.apply(mutations)
+    await tx.apply(mutations)
     return tx.toRequest()
   }
 

@@ -5,6 +5,7 @@ import type {ChangesBatch} from '../source/Change.js'
 import {FSSource} from '../source/FSSource.js'
 import {MemorySource} from '../source/MemorySource.js'
 import {type GetBlobsOptions, syncWith} from '../source/Source.js'
+import type {Tracer} from '../Trace.js'
 import {LocalDB} from './LocalDB.js'
 
 const dir = 'test/fixtures/demo'
@@ -139,6 +140,19 @@ test('syncWith indexes the downloaded batch without rereading local blobs', asyn
 
   test.is(local.blobReads, 0)
   test.is(fresh.sha, (await remote.getTree()).sha)
+})
+
+test('traces syncWith at the database boundary', async () => {
+  const spans: Array<string> = []
+  const tracer: Tracer = async (name, run) => {
+    spans.push(name)
+    return run()
+  }
+  const traced = new LocalDB({...cms.config, tracer}, new MemorySource())
+
+  await traced.syncWith(new MemorySource())
+
+  test.equal(spans, ['alinea.local_db.sync_with'])
 })
 
 test('syncWith stores and indexes downloaded changes concurrently', async () => {
