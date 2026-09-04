@@ -7,16 +7,17 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {generatedSource} from '#/backend/store/GeneratedSource.js'
-import {generatedReplica} from '#/backend/store/GeneratedReplica.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {SourceDB} from '#/database/entry/SourceDB.js'
+import {isEntryStore} from '#/database/entry/Store.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
 import {ReplicaService} from '#/database/handler/Service.js'
+import {createGeneratedRuntimeDB} from './RuntimeDB.js'
+import {generatedRuntimeIndex} from '#/backend/store/GeneratedRuntime.js'
+import {generatedEnvironment} from './GeneratedEnvironment.js'
 
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
@@ -38,22 +39,23 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
         : (context: RequestContext) => new CloudRemote(context, config)
   const remote = (context: RequestContext) => backend(context, config)
   const db = PLazy.from(async () => {
-    const source = await generatedSource
-    const db = new SourceDB(config, source)
-    await db.sync()
-    return db
+    return createGeneratedRuntimeDB(config)
   })
   const replica =
     process.env.NODE_ENV === 'production'
       ? PLazy.from(async () => {
-          const release = await generatedReplica(config)
+          const environment = generatedEnvironment()
+          const graph = await db
+          if (!isEntryStore(graph.source))
+            throw new Error('Generated runtime DB is missing its entry store')
           return new ReplicaService({
             config,
-            configId:
-              process.env.ALINEA_GENERATED_CONFIG ?? release.catalog.bundleId,
-            configUrl: process.env.ALINEA_CONFIG_URL ?? '',
-            cacheKey: release.catalog.bundleId,
-            release
+            configId: environment.configId,
+            configUrl: environment.configUrl,
+            cacheKey: `runtime:${generatedRuntimeIndex.bundleId}`,
+            runtime: generatedRuntimeIndex,
+            graph,
+            store: graph.source
           })
         })
       : undefined

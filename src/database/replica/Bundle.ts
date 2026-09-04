@@ -14,6 +14,7 @@ import type {
   FrameDescriptor,
   FrameId
 } from './Types.js'
+import pLimit from 'p-limit'
 
 const encoder = new TextEncoder()
 
@@ -178,18 +179,85 @@ export class BundleFrameLoader implements FrameLoader {
     }
   }
 
+  grant(accessClassId: AccessClassId, key: Uint8Array): void {
+    if (!this.#grants.has(accessClassId))
+      this.#grants.set(accessClassId, key.slice())
+  }
+
   async load(
     frame: FrameDescriptor,
     signal?: AbortSignal
   ): Promise<Uint8Array> {
-    const classKey = this.#grants.get(frame.accessClassId)
-    if (!classKey) throw new MissingFrameGrantError(frame.accessClassId)
+    if (!this.#grants.has(frame.accessClassId))
+      throw new MissingFrameGrantError(frame.accessClassId)
     let ciphertext = await this.#cache?.get(this.#bundleId, frame)
     if (!ciphertext) {
       ciphertext = await this.#source.read(frame.offset, frame.length, signal)
       if (ciphertext.length === frame.length)
         await this.#cache?.put(this.#bundleId, frame, ciphertext)
     }
+    return this.#decrypt(frame, ciphertext)
+  }
+
+  async loadMany(
+    frames: ReadonlyArray<FrameDescriptor>,
+    signal?: AbortSignal
+  ): Promise<ReadonlyMap<FrameId, Uint8Array>> {
+    signal?.throwIfAborted()
+    for (const frame of frames)
+      if (!this.#grants.has(frame.accessClassId))
+        throw new MissingFrameGrantError(frame.accessClassId)
+    const ciphertext = new Map<FrameId, Uint8Array>()
+    const missing: Array<FrameDescriptor> = []
+    await Promise.all(
+      frames.map(async frame => {
+        const cached = await this.#cache?.get(this.#bundleId, frame)
+        if (cached) ciphertext.set(frame.id, cached)
+        else missing.push(frame)
+      })
+    )
+    missing.sort((left, right) => left.offset - right.offset)
+    const readLimit = pLimit(6)
+    await Promise.all(
+      mergeFrameRanges(missing).map(range =>
+        readLimit(async () => {
+          const contents = await this.#source.read(
+            range.offset,
+            range.length,
+            signal
+          )
+          if (contents.length !== range.length)
+            throw new BundleIntegrityError('Incomplete bundle range')
+          for (const frame of range.frames) {
+            const start = frame.offset - range.offset
+            const value = contents.slice(start, start + frame.length)
+            ciphertext.set(frame.id, value)
+            await this.#cache?.put(this.#bundleId, frame, value)
+          }
+        })
+      )
+    )
+    const limit = pLimit(32)
+    return new Map(
+      await Promise.all(
+        frames.map(frame =>
+          limit(async () => {
+            const value = ciphertext.get(frame.id)
+            if (!value)
+              throw new BundleIntegrityError(`Missing frame "${frame.id}"`)
+            return [frame.id, await this.#decrypt(frame, value)] as const
+          })
+        )
+      )
+    )
+  }
+
+  async #decrypt(
+    frame: FrameDescriptor,
+    ciphertext: Uint8Array
+  ): Promise<Uint8Array> {
+    const classKey = this.#grants.get(frame.accessClassId)
+    if (!classKey) throw new MissingFrameGrantError(frame.accessClassId)
     if (ciphertext.length !== frame.length)
       throw new BundleIntegrityError(`Incomplete frame "${frame.id}"`)
     const actualHash = await sha256(ciphertext)
@@ -217,6 +285,35 @@ export class BundleFrameLoader implements FrameLoader {
     )
     return decompress(new Uint8Array(decrypted), frame.compression)
   }
+}
+
+interface FrameRange {
+  offset: number
+  length: number
+  frames: Array<FrameDescriptor>
+}
+
+function mergeFrameRanges(
+  frames: ReadonlyArray<FrameDescriptor>,
+  maximumGap = 16 * 1024
+): Array<FrameRange> {
+  const ranges: Array<FrameRange> = []
+  for (const frame of frames) {
+    const previous = ranges.at(-1)
+    const previousEnd = previous ? previous.offset + previous.length : undefined
+    if (
+      previous &&
+      previousEnd !== undefined &&
+      frame.offset <= previousEnd + maximumGap
+    ) {
+      previous.length =
+        Math.max(previousEnd, frame.offset + frame.length) - previous.offset
+      previous.frames.push(frame)
+    } else {
+      ranges.push({offset: frame.offset, length: frame.length, frames: [frame]})
+    }
+  }
+  return ranges
 }
 
 /** Resolves static base and handler overlay frames from one logical catalog. */

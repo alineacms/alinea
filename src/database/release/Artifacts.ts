@@ -1,26 +1,26 @@
 import type {Config} from '#/core/Config.js'
 import {Config as ConfigUtils} from '#/core/Config.js'
 import type {Source} from '#/core/source/Source.js'
+import type {DatabaseSnapshot} from '../Database.js'
+import type {AlineaDatabaseRecord} from '../entry/Model.js'
 import {buildEntryDatabase} from '../entry/Source.js'
 import {
-  serializeHandlerKeys,
-  serializeReplicaCatalog
-} from '../replica/Serialization.js'
-import {exportEntryRelease, type ReleaseExport} from './Exporter.js'
+  exportRuntimeDatabase,
+  type RuntimeDatabaseExport
+} from '../runtime/Exporter.js'
 
 export interface BuildEntryReleaseOptions {
   releaseId: string
   configId: string
+  snapshot?: DatabaseSnapshot<AlineaDatabaseRecord>
 }
 
 export interface EntryReleaseArtifacts {
-  release: ReleaseExport
-  releasePath: string
-  releaseUrl: string
+  runtime: RuntimeDatabaseExport
+  payloadPath: string
+  payloadUrl: string
   configPath: string
   configUrl: string
-  catalogJson: string
-  handlerKeysJson: string
 }
 
 export async function buildEntryReleaseArtifacts(
@@ -29,27 +29,23 @@ export async function buildEntryReleaseArtifacts(
   options: BuildEntryReleaseOptions
 ): Promise<EntryReleaseArtifacts> {
   const adminPath = ConfigUtils.adminPath(config).replace(/^\/+|\/+$/g, '')
-  const releasePath = `${adminPath}/release/${options.releaseId}`
-  const releaseUrl = `/${releasePath}/database.bin`
+  const payloadPath = `${adminPath}/${options.releaseId}`
+  const payloadUrl = `/${payloadPath}/payload.bundle`
   const configPath = `${adminPath}/config/${options.configId}`
-  const configUrl = `/${configPath}/config.js`
-  const snapshot = await buildEntryDatabase(config, source)
-  const release = await exportEntryRelease({
+  const configUrl = `/${configPath}/client-config.js`
+  const snapshot =
+    options.snapshot ?? (await buildEntryDatabase(config, source))
+  const runtime = await exportRuntimeDatabase({
     bundleId: options.releaseId,
-    bundleUrl: releaseUrl,
-    snapshot
+    bundleUrl: payloadUrl,
+    snapshot,
+    source
   })
   return {
-    release,
-    releasePath,
-    releaseUrl,
+    runtime,
+    payloadPath,
+    payloadUrl,
     configPath,
-    configUrl,
-    catalogJson: JSON.stringify(
-      serializeReplicaCatalog(release.catalog),
-      null,
-      2
-    ),
-    handlerKeysJson: JSON.stringify(serializeHandlerKeys(release.keys), null, 2)
+    configUrl
   }
 }

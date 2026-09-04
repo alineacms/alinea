@@ -134,6 +134,7 @@ function entryFromRecords(
 ): Entry {
   return {
     id: core.entryId,
+    versionStatus: core.versionStatus,
     status: core.versionStatus,
     title: core.title,
     type: core.type,

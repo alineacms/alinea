@@ -138,13 +138,17 @@ export function deserializeHandlerKeys(
   }
 }
 
-function serializeFrame(frame: FrameDescriptor): SerializedFrameDescriptor {
+export function serializeFrame(
+  frame: FrameDescriptor
+): SerializedFrameDescriptor {
   return {
     ...frame,
     nonce: base64url.stringify(frame.nonce, {pad: false})
   }
 }
 
-function deserializeFrame(frame: SerializedFrameDescriptor): FrameDescriptor {
+export function deserializeFrame(
+  frame: SerializedFrameDescriptor
+): FrameDescriptor {
   return {...frame, nonce: base64url.parse(frame.nonce, {loose: true})}
 }

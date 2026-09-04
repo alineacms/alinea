@@ -1,9 +1,4 @@
 import type {NextConfig} from 'next/dist/types.js'
-import {
-  generatedArtifactPath,
-  generatedArtifactsPath
-} from '#/backend/store/GeneratedArtifacts.js'
-import {readFileSync} from 'node:fs'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
@@ -28,7 +23,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   const adminPath = settings?.adminPath
   if (!adminPath) {
     console.warn(
-      'Alinea dashboard settings could not be loaded; dashboard routing is disabled. Run Next.js through the Alinea CLI so .alinea/generated is available.'
+      'Alinea dashboard environment is unavailable; dashboard routing is disabled. Run Next.js through the Alinea CLI.'
     )
   }
   const imagesConfig = config.images ?? {}
@@ -55,20 +50,14 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ALINEA_ADMIN_PATH: settings.adminPath,
         ALINEA_GENERATED_RELEASE: settings.releaseId,
         ALINEA_GENERATED_CONFIG: settings.configId,
-        ALINEA_RELEASE_URL: `${settings.adminPath}/release/${settings.releaseId}/database.bin`,
-        ALINEA_CONFIG_URL: `${settings.adminPath}/config/${settings.configId}/config.js`
+        ALINEA_RELEASE_URL: `${settings.adminPath}/${settings.releaseId}/payload.bundle`,
+        ALINEA_CONFIG_URL: `${settings.adminPath}/config/${settings.configId}/client-config.js`
       }
     : config.env
-  const tracedArtifacts = `${generatedArtifactsPath}/**/*`
-  const outputFileTracingIncludes = {
-    ...config.outputFileTracingIncludes,
-    '/*': [...(config.outputFileTracingIncludes?.['/*'] ?? []), tracedArtifacts]
-  }
   return {
     ...config,
     images,
     env,
-    outputFileTracingIncludes,
     redirects,
     rewrites
   }
@@ -138,12 +127,6 @@ function createRewrites(config: NextConfig, adminPath: string) {
   }
 }
 
-interface GeneratedSettings {
-  adminPath?: unknown
-  releaseId?: unknown
-  configId?: unknown
-}
-
 interface ResolvedGeneratedSettings {
   adminPath: string
   releaseId: string
@@ -151,25 +134,15 @@ interface ResolvedGeneratedSettings {
 }
 
 function resolveGeneratedSettings(): ResolvedGeneratedSettings | undefined {
-  try {
-    const location = generatedArtifactPath('settings.json')
-    const settings = JSON.parse(
-      readFileSync(location, 'utf-8')
-    ) as GeneratedSettings
-    if (
-      typeof settings.adminPath === 'string' &&
-      settings.adminPath &&
-      typeof settings.releaseId === 'string' &&
-      settings.releaseId &&
-      typeof settings.configId === 'string' &&
-      settings.configId
-    )
-      return {
-        adminPath: normalizeBasePath(settings.adminPath),
-        releaseId: settings.releaseId,
-        configId: settings.configId
-      }
-  } catch {}
+  const adminPath = process.env.ALINEA_ADMIN_PATH
+  const releaseId = process.env.ALINEA_GENERATED_RELEASE
+  const configId = process.env.ALINEA_GENERATED_CONFIG
+  if (adminPath && releaseId && configId)
+    return {
+      adminPath: normalizeBasePath(adminPath),
+      releaseId,
+      configId
+    }
 }
 
 function normalizeBasePath(value: string): string {

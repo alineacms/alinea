@@ -27,15 +27,19 @@ import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
-import {diffDatabaseSnapshots} from '#/database/Database.js'
 import {buildEntryDatabase} from '#/database/entry/Source.js'
-import {prepareFieldMutation} from '#/database/handler/Mutation.js'
-import type {ReplicaService} from '#/database/handler/Service.js'
-import {exportEntryReleaseDelta} from '#/database/release/Delta.js'
+import type {
+  AuthenticatedReplicaSession,
+  ReplicaService
+} from '#/database/handler/Service.js'
 import type {FieldTransaction} from '#/database/replica/Operations.js'
 import {serializeReplicaState} from '#/database/replica/Serialization.js'
 import {createId} from '#/core/Id.js'
-import {DatabaseResolver} from '#/database/query/Resolver.js'
+import {
+  exportRuntimeDatabase,
+  exportRuntimeDelta,
+  exportRuntimeEntryOverlay
+} from '#/database/runtime/Exporter.js'
 import {entryResource} from '#/database/entry/Access.js'
 import {isEntryCoreRecord} from '#/database/entry/Model.js'
 import {
@@ -45,6 +49,7 @@ import {
 import {requestSourceMutations} from '#/database/handler/SourceWriter.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {ChangesBatch} from '#/core/source/Change.js'
 
 const PrepareBody = object({
   filename: string,
@@ -98,9 +103,24 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
+    async function syncLocal(cnx: RemoteConnection): Promise<string> {
+      if (replica) {
+        const changes = await syncWith(local.source, cnx)
+        await updateReplicaFromSource(
+          await replica,
+          cms.config,
+          local,
+          context,
+          changes
+        )
+        return local.sha
+      }
+      return local.syncWith(cnx)
+    }
+
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
-      return throttle(() => local.syncWith(cnx), syncInterval)
+      return throttle(() => syncLocal(cnx), syncInterval)
     }
 
     try {
@@ -110,6 +130,7 @@ export function createHandler({
       const auth = params.get('auth')
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
+      let trustedServer = false
 
       if (auth) {
         return cnx.authenticate(request, {
@@ -160,6 +181,7 @@ export function createHandler({
             throw new InvalidCredentialsError('Expected matching api key', {
               cause
             })
+          trustedServer = true
         } else {
           throw cause
         }
@@ -197,9 +219,17 @@ export function createHandler({
 
       const expectReplica = async () => {
         if (!replica) throw new HttpError(404, 'Replica is not configured')
+        const service = await replica
+        if (trustedServer) {
+          const session: AuthenticatedReplicaSession = {
+            user: {id: 'server', roles: []},
+            policy: Policy.ALLOW_ALL,
+            policyFingerprint: 'server'
+          }
+          return {service, session}
+        }
         const user = expectUser()
         const roles = user.claims.roles ?? []
-        const service = await replica
         return {
           service,
           session: await service.session({id: user.claims.sub, roles})
@@ -217,6 +247,7 @@ export function createHandler({
 
       if (action === HandleAction.ReplicaState && request.method === 'GET') {
         expectJson()
+        await periodicSync(cnx, cms.config.syncInterval)
         const {service, session} = await expectReplica()
         const state = service.state(
           session,
@@ -252,15 +283,11 @@ export function createHandler({
           count: undefined,
           select: Entry.id
         } as GraphQuery
-        const ids = await new DatabaseResolver(
-          cms.config,
-          service.release.snapshot
-        ).resolve(eligibilityQuery)
+        const ids = await service.graph().resolve(eligibilityQuery)
         const candidates = new Set(ids as Array<string>)
         const visible = new Set<string>()
-        for (const record of service.release.snapshot.records()) {
-          if (!isEntryCoreRecord(record) || !candidates.has(record.entryId))
-            continue
+        for (const record of service.cores()) {
+          if (!record.queryable || !candidates.has(record.entryId)) continue
           const resource = entryResource(record)
           if (
             session.policy.canRead(resource) ||
@@ -278,39 +305,46 @@ export function createHandler({
         return Response.json(
           await service.mutateWith(session, transaction, async () => {
             return replicaWrite(async () => {
-              await syncWith(local.source, cnx)
+              const synced = await syncWith(local.source, cnx)
               await updateReplicaFromSource(
                 service,
                 cms.config,
-                local.source,
-                context
+                local,
+                context,
+                synced
               )
-              const prepared = await prepareFieldMutation(
-                service.release.snapshot,
+              const prepared = await service.prepareFieldMutation(
                 transaction,
                 session.policy
               )
               if (prepared.mutations.length === 0)
                 return {
-                  revision: service.release.snapshot.revision,
+                  revision: service.revision,
                   conflicts: prepared.conflicts
                 }
-              await writeSourceMutations(
+              const directRequest = await service.requestSourceUpdates(
+                local.source,
+                prepared.mutations,
+                session.policy
+              )
+              const changed = await writeSourceMutations(
                 cms.config,
                 local.source,
                 cnx,
                 [...prepared.mutations],
                 session.policy,
-                userCtx!.user
+                userCtx!.user,
+                directRequest
               )
               await updateReplicaFromSource(
                 service,
                 cms.config,
-                local.source,
-                context
+                local,
+                context,
+                changed
               )
               return {
-                revision: service.release.snapshot.revision,
+                revision: service.revision,
                 conflicts: prepared.conflicts
               }
             })
@@ -324,8 +358,15 @@ export function createHandler({
         const commands = parseReplicaCommands(await body)
         return replicaWrite(async () => {
           const mutations = mutationsFromReplicaCommands(commands)
-          await syncWith(local.source, cnx)
-          await writeSourceMutations(
+          const synced = await syncWith(local.source, cnx)
+          await updateReplicaFromSource(
+            service,
+            cms.config,
+            local,
+            context,
+            synced
+          )
+          const changed = await writeSourceMutations(
             cms.config,
             local.source,
             cnx,
@@ -336,10 +377,11 @@ export function createHandler({
           await updateReplicaFromSource(
             service,
             cms.config,
-            local.source,
-            context
+            local,
+            context,
+            changed
           )
-          return Response.json({revision: service.release.snapshot.revision})
+          return Response.json({revision: service.revision})
         })
       }
 
@@ -411,7 +453,7 @@ export function createHandler({
           await periodicSync(cnx, query.syncInterval)
         } else {
           const {parse} = await previewParser
-          const preview = await parse(query.preview, () => local.syncWith(cnx))
+          const preview = await parse(query.preview, () => syncLocal(cnx))
           query.preview = preview
         }
         return Response.json((await local.resolve(query)) ?? null)
@@ -422,8 +464,9 @@ export function createHandler({
         expectJson()
         const policy = await user.policy
         const mutations = await body
+        let changes: ChangesBatch | undefined
         const attempt = async (retry = 0) => {
-          await local.syncWith(cnx)
+          await syncLocal(cnx)
           const request = {
             ...(await local.request(mutations, policy)),
             user: user.claims
@@ -431,9 +474,12 @@ export function createHandler({
           try {
             let {sha} = await cnx.write(request)
             if (sha === request.intoSha) {
-              await local.write(request)
+              changes = sourceChanges(request)
+              if (replica) await local.source.applyChanges(changes)
+              else await local.write(request)
             } else {
-              sha = await local.syncWith(cnx)
+              changes = undefined
+              sha = await syncLocal(cnx)
             }
             return sha
           } catch (error) {
@@ -443,13 +489,14 @@ export function createHandler({
           }
         }
         const sha = await attempt()
-        if (replica) {
+        if (replica && changes) {
           const service = await replica
           await updateReplicaFromSource(
             service,
             cms.config,
-            local.source,
-            context
+            local,
+            context,
+            changes
           )
         }
         return Response.json({sha})
@@ -476,7 +523,7 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await local.syncWith(cnx)
+        await syncLocal(cnx)
         const tree = await local.getTreeIfDifferent(sha)
         return Response.json(tree ?? null)
       }
@@ -593,48 +640,111 @@ async function writeSourceMutations(
   remote: RemoteConnection,
   mutations: Array<Mutation>,
   policy: Policy,
-  user: User
-): Promise<string> {
+  user: User,
+  prepared?: import('#/core/db/CommitRequest.js').CommitRequest
+): Promise<ChangesBatch> {
   const request = {
-    ...(await requestSourceMutations(config, source, mutations, policy)),
+    ...(prepared ??
+      (await requestSourceMutations(config, source, mutations, policy))),
     user
   }
-  let {sha} = await remote.write(request)
-  if (sha === request.intoSha) await source.applyChanges(sourceChanges(request))
-  else {
-    await syncWith(source, remote)
-    sha = (await source.getTree()).sha
+  const {sha} = await remote.write(request)
+  if (sha === request.intoSha) {
+    const batch = sourceChanges(request)
+    await source.applyChanges(batch)
+    return batch
   }
-  return sha
+  return syncWith(source, remote)
 }
 
 async function updateReplicaFromSource(
   service: ReplicaService,
   config: import('#/core/Config.js').Config,
-  source: import('#/core/source/Source.js').Source,
-  context: RequestContext
+  local: SourceDB,
+  context: RequestContext,
+  changes: ChangesBatch
 ): Promise<void> {
-  const previous = service.release
+  const source = local.source
+  if (changes.changes.length === 0) return
+  const previous = service.runtimeIndex
+  if (previous) {
+    const tree = await source.getTree()
+    let index = previous
+    const overlays: Array<{
+      bundleId: string
+      contents: Uint8Array
+      entry: import('#/database/runtime/Model.js').RuntimeIndexEntry
+      plaintext: Uint8Array
+    }> = []
+    let compatible = true
+    for (const change of changes.changes) {
+      if (
+        change.op !== 'add' ||
+        !change.contents ||
+        !index.entries.some(
+          entry => entry.frames?.read?.filePath === change.path
+        )
+      ) {
+        compatible = false
+        break
+      }
+      const bundleId = createId()
+      const bundleUrl = replicaBundleUrl(context, bundleId)
+      const overlay = await exportRuntimeEntryOverlay({
+        config,
+        index,
+        bundleId,
+        bundleUrl,
+        filePath: change.path,
+        fileHash: change.sha,
+        contents: change.contents,
+        tree
+      })
+      if (!overlay) {
+        compatible = false
+        break
+      }
+      overlays.push({
+        bundleId,
+        contents: overlay.bundle,
+        entry: overlay.entry,
+        plaintext: change.contents
+      })
+      index = overlay.index
+    }
+    if (compatible) {
+      service.installRuntimeOverlays(index, overlays)
+      local.refreshRuntime()
+      return
+    }
+  }
   const snapshot = await buildEntryDatabase(config, source)
-  if (snapshot.revision === previous.snapshot.revision) return
-  const commit = diffDatabaseSnapshots(previous.snapshot, snapshot)
+  if (snapshot.revision === service.revision) return
   const bundleId = createId()
+  const bundleUrl = replicaBundleUrl(context, bundleId)
+  const runtime = await exportRuntimeDatabase({
+    bundleId,
+    bundleUrl,
+    snapshot,
+    source
+  })
+  if (previous) {
+    const delta = exportRuntimeDelta({
+      previous,
+      next: runtime,
+      bundleId,
+      bundleUrl
+    })
+    service.installRuntimeOverlay(delta.index, bundleId, delta.bundle)
+  } else service.installRuntime(runtime.index, bundleId, runtime.bundle)
+  local.refreshRuntime()
+}
+
+function replicaBundleUrl(context: RequestContext, bundleId: string): string {
   const bundleUrl = new URL(context.handlerUrl)
   bundleUrl.searchParams.set('action', HandleAction.ReplicaBundle)
   bundleUrl.searchParams.set('bundle', bundleId)
-  const delta = await exportEntryReleaseDelta({
-    bundleId,
-    bundleUrl: String(bundleUrl),
-    snapshot: commit.snapshot,
-    changes: commit.changes,
-    previousCatalog: previous.catalog,
-    previousKeys: previous.keys
-  })
-  service.installOverlay(
-    {snapshot: commit.snapshot, catalog: delta.catalog, keys: delta.keys},
-    bundleId,
-    delta.overlay.contents
-  )
+  return String(bundleUrl)
 }
 
 function parseFieldTransaction(input: unknown): FieldTransaction {

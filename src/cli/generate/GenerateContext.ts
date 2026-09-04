@@ -6,6 +6,6 @@ export interface GenerateContext {
   configDir: string
   staticDir: string
   quiet: boolean
-  outDir: string
+  bundleDir: string
   fix: boolean
 }

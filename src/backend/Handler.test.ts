@@ -298,7 +298,7 @@ test('serves replica bootstrap and state only after authentication', async () =>
   const replica = new ReplicaService({
     config: cms.config,
     configId: 'config-1',
-    configUrl: '/admin/config/config-1/config.js',
+    configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'cache-1',
     release: {snapshot, catalog: release.catalog, keys: release.keys}
   })
@@ -336,7 +336,7 @@ test('serves replica bootstrap and state only after authentication', async () =>
   test.is(bootstrap.status, 200)
   test.is(
     (await bootstrap.json()).configUrl,
-    '/admin/config/config-1/config.js'
+    '/admin/config/config-1/client-config.js'
   )
   const state = await handle(
     new Request('http://localhost/api?action=replicaState', {
@@ -378,7 +378,7 @@ test('serves replica bootstrap and state only after authentication', async () =>
     requestContext()
   )
   test.is(command.status, 200)
-  test.is((await command.json()).revision, replica.release.snapshot.revision)
+  test.is((await command.json()).revision, replica.revision)
   replica.installOverlay(
     {snapshot, catalog: release.catalog, keys: release.keys},
     'overlay-1',

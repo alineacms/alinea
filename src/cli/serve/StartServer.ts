@@ -58,7 +58,7 @@ async function startBunServer(
         reportWarning(
           `Port ${port} is in use, attempting ${incrementedPort} instead`
         )
-      return startBunServer(incrementedPort, attempt++, silent)
+      return startBunServer(incrementedPort, attempt + 1, silent)
     }
     throw err
   }
@@ -110,7 +110,7 @@ async function startNodeServer(
           reportWarning(
             `Port ${port} is in use, attempting ${incrementedPort} instead`
           )
-        return startNodeServer(incrementedPort, attempt++, silent)
+        return startNodeServer(incrementedPort, attempt + 1, silent)
       }
       throw err
     })

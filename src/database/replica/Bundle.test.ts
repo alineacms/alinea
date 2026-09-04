@@ -68,3 +68,39 @@ test('authenticates ciphertext and frame metadata', async () => {
     'Invalid hash for frame "entry-a"'
   )
 })
+
+test('coalesces adjacent frame reads', async () => {
+  const key = new Uint8Array(32).fill(23)
+  const encrypted = await Promise.all(
+    ['one', 'two', 'three'].map(id =>
+      encryptFrame({
+        bundleId: 'release-1',
+        id,
+        accessClassId: id,
+        key,
+        contents: encoder.encode(id),
+        compression: 'none'
+      })
+    )
+  )
+  const bundle = packEncryptedFrames(encrypted)
+  const reads: Array<{offset: number; length: number}> = []
+  const loader = new BundleFrameLoader(
+    'release-1',
+    {
+      async read(offset, length) {
+        reads.push({offset, length})
+        return bundle.contents.slice(offset, offset + length)
+      }
+    },
+    encrypted.map(frame => ({accessClassId: frame.accessClassId, key}))
+  )
+
+  const loaded = await loader.loadMany(bundle.frames)
+
+  test.equal(reads, [{offset: 0, length: bundle.contents.length}])
+  test.equal(
+    bundle.frames.map(frame => decoder.decode(loaded.get(frame.id))),
+    ['one', 'two', 'three']
+  )
+})

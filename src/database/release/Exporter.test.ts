@@ -35,13 +35,12 @@ describe('exportRelease', () => {
       {releaseId: 'release-secret', configId: 'config-secret'}
     )
 
-    expect(artifacts.releasePath).toBe('admin/release/release-secret')
-    expect(artifacts.releaseUrl).toBe(
-      '/admin/release/release-secret/database.bin'
+    expect(artifacts.payloadPath).toBe('admin/release-secret')
+    expect(artifacts.payloadUrl).toBe('/admin/release-secret/payload.bundle')
+    expect(artifacts.runtime.index.bundleUrl).toBe(artifacts.payloadUrl)
+    expect(artifacts.configUrl).toBe(
+      '/admin/config/config-secret/client-config.js'
     )
-    expect(artifacts.configUrl).toBe('/admin/config/config-secret/config.js')
-    expect(artifacts.catalogJson).toContain('release-secret')
-    expect(artifacts.handlerKeysJson).not.toContain('database.bin')
   })
 
   test('round trips records and ordered index buckets through range frames', async () => {

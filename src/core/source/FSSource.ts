@@ -9,19 +9,37 @@ import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import type {Source} from './Source.js'
+import type {Tree} from './Tree.js'
 import {ReadonlyTree, WriteableTree} from './Tree.js'
 
 const limit = pLimit(1)
 const fileConcurrency = 64
 
+export interface FileFingerprint {
+  mtimeMs: number
+  ctimeMs: number
+  size: number
+}
+
+export interface FSSourceSnapshot {
+  tree: Tree
+  files: Readonly<Record<string, FileFingerprint>>
+}
+
 export class FSSource implements Source {
-  #current: ReadonlyTree = ReadonlyTree.EMPTY
+  #current: ReadonlyTree
   #cwd: string
   #locations = new Map<string, string>()
-  #lastModified = new Map<string, number>()
+  #fingerprints: Map<string, FileFingerprint>
 
-  constructor(cwd: string) {
+  constructor(cwd: string, snapshot?: FSSourceSnapshot) {
     this.#cwd = cwd
+    this.#current = snapshot
+      ? new ReadonlyTree(snapshot.tree)
+      : ReadonlyTree.EMPTY
+    this.#fingerprints = new Map(Object.entries(snapshot?.files ?? {}))
+    for (const [file, sha] of this.#current.fileIndex(''))
+      this.#locations.set(sha, file)
   }
 
   async getTree() {
@@ -36,6 +54,9 @@ export class FSSource implements Source {
         fileLimit(() => this.getFile(current, builder, file))
       )
       await Promise.all(tasks)
+      const live = new Set(files.map(file => file.replaceAll('\\', '/')))
+      for (const file of this.#fingerprints.keys())
+        if (!live.has(file)) this.#fingerprints.delete(file)
       const tree = await builder.compile(current)
       this.#current = tree
       return tree
@@ -53,10 +74,15 @@ export class FSSource implements Source {
       if (isRecord(error) && error.code === 'ENOENT') return
       throw error
     }
-    const previouslyModified = this.#lastModified.get(filePath)
-    if (previouslyModified && stat.mtimeMs === previouslyModified) {
+    const previousFingerprint = this.#fingerprints.get(filePath)
+    const fingerprint = fileFingerprint(stat)
+    if (
+      previousFingerprint &&
+      fingerprintsEqual(previousFingerprint, fingerprint)
+    ) {
       const previous = current.get(filePath)
       if (previous && typeof previous.sha === 'string') {
+        this.#locations.set(previous.sha, filePath)
         builder.add(filePath, previous.sha)
         return
       }
@@ -70,7 +96,7 @@ export class FSSource implements Source {
     }
     const sha = await hashBlob(contents)
     this.#locations.set(sha, filePath)
-    this.#lastModified.set(filePath, stat.mtimeMs)
+    this.#fingerprints.set(filePath, fingerprint)
     builder.add(filePath, sha)
     return [sha, contents] as const
   }
@@ -112,14 +138,21 @@ export class FSSource implements Source {
       )
     })
   }
+
+  snapshot(): FSSourceSnapshot {
+    return {
+      tree: this.#current.toJSON(),
+      files: Object.fromEntries(this.#fingerprints)
+    }
+  }
 }
 
 export class CachedFSSource extends FSSource {
   #tree: Promise<ReadonlyTree> | undefined
   #blobs: Map<string, Uint8Array> = new Map()
 
-  constructor(cwd: string) {
-    super(cwd)
+  constructor(cwd: string, snapshot?: FSSourceSnapshot) {
+    super(cwd, snapshot)
   }
 
   refresh = pDebounce(async () => {
@@ -157,4 +190,19 @@ export class CachedFSSource extends FSSource {
     this.#blobs = new Map(entries)
     yield* entries
   }
+}
+
+function fileFingerprint(stat: Stats): FileFingerprint {
+  return {mtimeMs: stat.mtimeMs, ctimeMs: stat.ctimeMs, size: stat.size}
+}
+
+function fingerprintsEqual(
+  left: FileFingerprint,
+  right: FileFingerprint
+): boolean {
+  return (
+    left.mtimeMs === right.mtimeMs &&
+    left.ctimeMs === right.ctimeMs &&
+    left.size === right.size
+  )
 }

@@ -73,7 +73,7 @@ export async function generateDashboard(
     target: 'esnext',
     treeShaking: true,
     minify: true,
-    outfile: path.join(clientConfigDir, 'config.js'),
+    outfile: path.join(clientConfigDir, 'client-config.js'),
     bundle: true,
     absWorkingDir: configDir,
     stdin: {

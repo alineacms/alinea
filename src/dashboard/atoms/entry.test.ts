@@ -91,6 +91,7 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
     rowHash: '',
     searchableText: '',
     seeded: null,
+    versionStatus: 'published',
     status: 'published',
     title: 'Entry',
     type: 'Page',
@@ -185,8 +186,8 @@ test('publishing reconciles transaction-generated media aliases immediately', as
   store.set(node.field('path'), 'updated')
 
   const mutate = db.mutate.bind(db)
-  let notifyStarted: () => void
-  let releaseSave: () => void
+  let notifyStarted: () => void = () => {}
+  let releaseSave: () => void = () => {}
   const started = new Promise<void>(resolve => {
     notifyStarted = resolve
   })

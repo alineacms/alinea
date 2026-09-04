@@ -33,15 +33,15 @@ function buildConfig(ctx: GenerateContext): BuildOptions {
 }
 
 export async function* compileConfig(ctx: GenerateContext) {
-  const {outDir, configLocation, cmd} = ctx
+  const {bundleDir, configLocation, cmd} = ctx
   const config = buildConfig(ctx)
   const location = path
     .relative(process.cwd(), configLocation)
     .replace(/\\/g, '/')
   const builds = buildEmitter({
     ...config,
-    outdir: outDir,
-    entryPoints: {config: configLocation},
+    outdir: bundleDir,
+    entryPoints: {'server-config': configLocation},
     sourcemap: true
   })
   const halt = (error: Error) => {
@@ -56,7 +56,7 @@ export async function* compileConfig(ctx: GenerateContext) {
       continue
     }
     try {
-      yield await loadCMS(outDir)
+      yield await loadCMS(bundleDir)
     } catch (error: any) {
       const message = 'message' in error ? error.message : error
       halt(new Error(`${message} @ ${location}`, {cause: error}))

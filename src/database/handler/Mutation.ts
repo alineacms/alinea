@@ -1,7 +1,9 @@
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {Entry} from '#/core/Entry.js'
 import type {Policy, Resource} from '#/core/Role.js'
 import type {DatabaseSnapshot} from '../Database.js'
 import {entryResource} from '../entry/Access.js'
+import type {EntryStore} from '../entry/Store.js'
 import {
   type AlineaDatabaseRecord,
   type EntryCoreRecord,
@@ -16,6 +18,7 @@ import {
   type FieldOperation,
   type FieldTransaction
 } from '../replica/Operations.js'
+import type {RuntimeIndexEntry} from '../runtime/Model.js'
 
 export interface PreparedFieldMutation {
   mutations: ReadonlyArray<Mutation>
@@ -37,9 +40,6 @@ export async function prepareFieldMutation(
     else if (isEntryReadRecord(record))
       payloadByVersion.set(record.entryVersionId, record.payloadId)
   }
-  const versionByPayload = new Map(
-    [...payloadByVersion].map(([version, payload]) => [payload, version])
-  )
   const translated: Array<FieldOperation> = []
   const originalRecordIds = new Map<string, string>()
   for (const operation of transaction.operations) {
@@ -53,6 +53,30 @@ export async function prepareFieldMutation(
     translated.push({...operation, recordId: payloadId})
     originalRecordIds.set(payloadId, operation.recordId)
   }
+  return applyPreparedFieldMutation(
+    [...cores.values()],
+    payloads,
+    payloadByVersion,
+    translated,
+    originalRecordIds,
+    transaction,
+    policy
+  )
+}
+
+async function applyPreparedFieldMutation(
+  coreRecords: ReadonlyArray<EntryCoreRecord>,
+  payloads: ReadonlyMap<string, EntryPayloadRecord>,
+  payloadByVersion: ReadonlyMap<string, string>,
+  translated: ReadonlyArray<FieldOperation>,
+  originalRecordIds: ReadonlyMap<string, string>,
+  transaction: FieldTransaction,
+  policy: Policy
+): Promise<PreparedFieldMutation> {
+  const cores = new Map(coreRecords.map(core => [core.id, core]))
+  const versionByPayload = new Map(
+    [...payloadByVersion].map(([version, payload]) => [payload, version])
+  )
   const applied = await applyFieldOperations(
     {...transaction, operations: translated},
     {
@@ -101,6 +125,65 @@ export async function prepareFieldMutation(
       recordId: originalRecordIds.get(conflict.recordId) ?? conflict.recordId
     }))
   }
+}
+
+/** Loads only the runtime entries addressed by a field transaction. */
+export async function prepareRuntimeFieldMutation(
+  store: EntryStore,
+  cores: ReadonlyArray<RuntimeIndexEntry>,
+  transaction: FieldTransaction,
+  policy: Policy
+): Promise<PreparedFieldMutation> {
+  const coreByRecord = new Map<string, RuntimeIndexEntry>()
+  for (const core of cores) {
+    coreByRecord.set(core.id, core)
+    const filePath = core.frames?.read?.filePath
+    if (filePath) coreByRecord.set(`payload:${filePath}`, core)
+  }
+
+  const requestedCores = new Map<string, RuntimeIndexEntry>()
+  for (const operation of transaction.operations) {
+    const core = coreByRecord.get(operation.recordId)
+    if (core) requestedCores.set(core.id, core)
+  }
+  const requested = [...requestedCores.values()]
+  const entries = await store.loadMany(requested)
+  const entryByVersion = new Map<string, Entry>()
+  for (const [index, entry] of entries.entries()) {
+    if (entry) entryByVersion.set(requested[index].id, entry)
+  }
+
+  const payloads = new Map<string, EntryPayloadRecord>()
+  const payloadByVersion = new Map<string, string>()
+  const translated: Array<FieldOperation> = []
+  const originalRecordIds = new Map<string, string>()
+  for (const operation of transaction.operations) {
+    const core = coreByRecord.get(operation.recordId)
+    const entry = core ? entryByVersion.get(core.id) : undefined
+    if (!core || !entry) {
+      translated.push(operation)
+      continue
+    }
+    const payloadId = `payload:${entry.filePath}`
+    payloadByVersion.set(core.id, payloadId)
+    payloads.set(payloadId, {
+      kind: 'payload',
+      id: payloadId,
+      entryVersionId: core.id,
+      data: entry.data
+    })
+    translated.push({...operation, recordId: payloadId})
+    originalRecordIds.set(payloadId, operation.recordId)
+  }
+  return applyPreparedFieldMutation(
+    cores,
+    payloads,
+    payloadByVersion,
+    translated,
+    originalRecordIds,
+    transaction,
+    policy
+  )
 }
 
 function firstField(pointer: string): string | undefined {

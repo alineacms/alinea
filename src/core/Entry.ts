@@ -10,6 +10,9 @@ export const ALT_STATUS: Array<EntryStatus> = ['draft', 'archived']
 
 export interface Entry<Data extends object = Record<string, unknown>> {
   id: string
+  /** Status encoded by this source version. */
+  versionStatus: EntryStatus
+  /** Effective status after inheriting from ancestors. */
   status: EntryStatus
   title: string
   type: string
@@ -40,6 +43,10 @@ export interface EntryAlias {
 
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
+  versionStatus: new Expr<EntryStatus>({
+    type: 'entryField',
+    name: 'versionStatus'
+  }),
   status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
   title: new Expr<string>({type: 'entryField', name: 'title'}),
   type: new Expr<string>({type: 'entryField', name: 'type'}),

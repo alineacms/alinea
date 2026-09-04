@@ -4,6 +4,10 @@ import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import {SourceDB} from '#/database/entry/SourceDB.js'
+import {
+  HttpReplicaTransport,
+  HttpRangeSource
+} from '#/database/replica/HttpTransport.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
@@ -31,24 +35,24 @@ export class NextCMS<
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
-    const {generatedSource} = await import('#/backend/store/GeneratedSource.js')
-    const source = await generatedSource
-    const db = new SourceDB(this.config, source)
-    await db.sync()
-    return db
+    const {createGeneratedRuntimeDB} = await import('./RuntimeDB.js')
+    return createGeneratedRuntimeDB(this.config)
   })
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
     let status = query.status
     const {handlerUrl, apiKey} = await requestContext(this.config)
+    const applyAuth = (init?: RequestInit): RequestInit => {
+      const headers = new Headers(init?.headers)
+      headers.set('Authorization', `Bearer ${apiKey}`)
+      return {...init, headers}
+    }
+    const authenticatedFetch = ((input, init) =>
+      globalThis.fetch(input, applyAuth(init))) as typeof globalThis.fetch
     const client = new Client({
       config: this.config,
       url: handlerUrl.href,
-      applyAuth: init => {
-        const headers = new Headers(init?.headers)
-        headers.set('Authorization', `Bearer ${apiKey}`)
-        return {...init, headers}
-      }
+      applyAuth
     })
     let preview: PreviewRequest | undefined
     const {cookies, draftMode} = await import('next/headers.js')
@@ -68,7 +72,21 @@ export class NextCMS<
     const useLocalDb = !isEdge && (isServer || isBuild)
     if (!useLocalDb) return client.resolve(request)
     const db = await this.bundledDb
-    await this.throttle(() => db.syncWith(client), request.syncInterval)
+    const syncInterval = request.disableSync
+      ? Number.POSITIVE_INFINITY
+      : (request.syncInterval ?? this.config.syncInterval)
+    const replica = new HttpReplicaTransport({
+      handlerUrl,
+      fetch: authenticatedFetch
+    })
+    await this.throttle(
+      () =>
+        db.syncReplica(
+          replica,
+          url => new HttpRangeSource(url, authenticatedFetch)
+        ),
+      syncInterval
+    )
     return db.resolve(request)
   }
 

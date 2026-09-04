@@ -70,9 +70,9 @@ export class EntryLoader {
   ): Promise<Entry | undefined> {
     const read = await this.read(core, signal)
     if (!read) {
-      const search = await this.search(core, 'explore', signal)
       return {
         id: core.entryId,
+        versionStatus: core.versionStatus,
         status: core.status,
         title: core.title,
         type: core.type,
@@ -94,14 +94,14 @@ export class EntryLoader {
         fileHash: '',
         url: core.url,
         data: {},
-        searchableText: search?.searchableText ?? ''
+        searchableText: ''
       }
     }
     const payload = await this.#reader.get(read.payloadId, signal)
     if (!isEntryPayloadRecord(payload)) return undefined
-    const search = await this.search(core, 'read', signal)
     return {
       id: core.entryId,
+      versionStatus: core.versionStatus,
       status: core.status,
       title: core.title,
       type: core.type,
@@ -123,7 +123,7 @@ export class EntryLoader {
       fileHash: read.fileHash,
       url: core.url,
       data: payload.data,
-      searchableText: search?.searchableText ?? ''
+      searchableText: ''
     }
   }
 }

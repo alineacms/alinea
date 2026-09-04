@@ -25,10 +25,7 @@ const main = Config.workspace('Main', {
     })
   }
 })
-const cms = createCMS({
-  schema: {Page},
-  workspaces: {main}
-})
+const cms = createCMS({schema: {Page}, workspaces: {main}} as never)
 
 test('seed multiple languages', async () => {
   const db = new SourceDB(cms.config)

@@ -24,38 +24,56 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {requestSourceMutations} from '../handler/SourceWriter.js'
 import {DatabaseResolver} from '../query/Resolver.js'
+import type {ByteRangeSourceFactory} from '../replica/Bundle.js'
+import type {ReplicaTransport} from '../replica/Protocol.js'
+import {replicaRangeSource} from '../replica/InlineBundles.js'
+import {RuntimeEntryStore} from '../runtime/Store.js'
 import {
   diffDatabaseSnapshots,
   type DatabaseCommit,
   type DatabaseSnapshot
 } from '../Database.js'
 import {SourceEntryDatabase} from './Source.js'
+import {isEntryStore, type EntryStore} from './Store.js'
 import type {AlineaDatabaseRecord} from './Model.js'
 import {fixSource, seedSource} from './SourceRepair.js'
 import pLimit from 'p-limit'
 
 /** Mutable source graph backed by the normalized database and query engine. */
-export class SourceDB extends WriteableGraph {
+export class SourceDB extends WriteableGraph implements Source {
   source: Source
+  #entryStore: EntryStore | undefined
   #database: SourceEntryDatabase | undefined
   #resolver: DatabaseResolver | undefined
   #events = new EventDispatcher()
+  readonly index = this.#events
   #limit = pLimit(1)
+  #revision = ReadonlyTree.EMPTY.sha
 
   constructor(
     public config: Config,
-    source: Source = new MemorySource()
+    source: Source = new MemorySource(),
+    entryStore?: EntryStore
   ) {
     super()
     this.source = source
+    this.#entryStore = entryStore ?? (isEntryStore(source) ? source : undefined)
+    if (this.#entryStore) {
+      this.#resolver = new DatabaseResolver(config, this.#entryStore)
+      this.#revision = this.#entryStore.revision
+    }
   }
 
   get loaded(): boolean {
-    return Boolean(this.#database)
+    return Boolean(this.#resolver)
   }
 
   get sha(): string {
-    return this.#database?.snapshot.revision ?? ReadonlyTree.EMPTY.sha
+    return this.#database?.snapshot.revision ?? this.#revision
+  }
+
+  get normalizedSnapshot(): DatabaseSnapshot<AlineaDatabaseRecord> | undefined {
+    return this.#database?.snapshot
   }
 
   async resolve<Query extends GraphQuery>(
@@ -80,6 +98,41 @@ export class SourceDB extends WriteableGraph {
     return this.#limit(async () => {
       await syncSourceWith(this.source, remote)
       return this.#syncUnlocked()
+    })
+  }
+
+  syncReplica(
+    remote: ReplicaTransport,
+    ranges: ByteRangeSourceFactory
+  ): Promise<string> {
+    return this.#limit(async () => {
+      if (!(this.#entryStore instanceof RuntimeEntryStore))
+        throw new Error('Replica sync requires a runtime entry store')
+      const state = await remote.state(this.sha)
+      if (!state) return this.sha
+      if (!state.runtime)
+        throw new Error('Replica state does not contain a runtime index')
+      this.#entryStore.install(state.runtime, replicaRangeSource(state, ranges))
+      this.refreshRuntime()
+      return this.sha
+    })
+  }
+
+  refreshRuntime(store?: RuntimeEntryStore): void {
+    const runtime = store ?? this.#entryStore
+    if (!(runtime instanceof RuntimeEntryStore)) return
+    this.#entryStore = runtime
+    this.#database = undefined
+    this.#revision = runtime.revision
+    this.#resolver = new DatabaseResolver(this.config, runtime)
+    void runtime.cores().then(cores => {
+      this.#events.dispatchEvent(
+        new IndexEvent({
+          op: 'index',
+          sha: this.sha,
+          ids: [...new Set(cores.map(entry => entry.entryId))]
+        })
+      )
     })
   }
 
@@ -123,6 +176,10 @@ export class SourceDB extends WriteableGraph {
 
   applyChanges(batch: ChangesBatch): Promise<void> {
     return this.source.applyChanges(batch)
+  }
+
+  getTree(): Promise<ReadonlyTree> {
+    return this.source.getTree()
   }
 
   getTreeIfDifferent(sha: string) {
@@ -190,11 +247,17 @@ export class SourceDB extends WriteableGraph {
 
   async #syncUnlocked(): Promise<string> {
     const previous = this.#database?.snapshot
+    if (!this.#database && this.#resolver) {
+      const tree = await this.source.getTree()
+      if (tree.sha === this.#revision) return this.sha
+    }
     if (!this.#database) {
       this.#database = await SourceEntryDatabase.load(this.config, this.source)
     } else await this.#database.sync(this.source)
+    this.#entryStore = undefined
     this.#database = await seedSource(this.config, this.source, this.#database)
     const current = this.#database.snapshot
+    this.#revision = current.revision
     if (previous?.revision === current.revision) return this.sha
     this.#resolver = new DatabaseResolver(this.config, current)
     const commit = previous

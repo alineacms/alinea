@@ -45,6 +45,10 @@ export interface ReplicaState {
   recordAccess: Readonly<Record<RecordId, 'explore' | 'read'>>
   /** Logical entries affected by each granted record, for exact UI invalidation. */
   recordEntries?: Readonly<Record<RecordId, ReadonlyArray<string>>>
+  /** Consolidated runtime view. Legacy normalized replicas omit this field. */
+  runtime?: RuntimeDatabaseIndex
+  /** Entry-sized live overlay bundles carried with their authorized view. */
+  inlineBundles?: Readonly<Record<BundleId, string>>
 }
 
 export interface RecordReference<Metadata = Record<string, unknown>> {
@@ -61,3 +65,4 @@ export interface IndexBucket<Metadata = Record<string, unknown>> {
     metadata: Metadata
   }>
 }
+import type {RuntimeDatabaseIndex} from '../runtime/Model.js'

@@ -6,7 +6,9 @@ import {
   TrackedDatabaseReader
 } from '../Reader.js'
 import type {AlineaDatabaseRecord} from '../entry/Model.js'
+import type {EntryStore} from '../entry/Store.js'
 import {DatabaseResolver} from '../query/Resolver.js'
+import {RuntimeEntryStore} from '../runtime/Store.js'
 import {CatalogFrameLoader} from './Bundle.js'
 import {diffCatalogs, type ReplicaChangeSet} from './Catalog.js'
 import {HttpRangeSource} from './HttpTransport.js'
@@ -15,6 +17,7 @@ import {IndexedDBReplicaCache} from './IndexedDBCache.js'
 import type {ReplicaBootstrap, ReplicaTransport} from './Protocol.js'
 import type {ReplicaState} from './Types.js'
 import type {QueryDependency} from './Dependency.js'
+import {replicaRangeSource} from './InlineBundles.js'
 
 export interface EntryReplicaClientOptions {
   transport: ReplicaTransport
@@ -41,7 +44,7 @@ export class EntryReplicaClient {
   #fetch: typeof globalThis.fetch
   #bootstrap?: Promise<ReplicaBootstrap>
   #state?: ReplicaState
-  #reader?: DatabaseReader<AlineaDatabaseRecord>
+  #source?: DatabaseReader<AlineaDatabaseRecord> | EntryStore
   #cacheKey?: string
   #resolvers = new WeakMap<Config, DatabaseResolver>()
 
@@ -67,7 +70,9 @@ export class EntryReplicaClient {
     const changed = !previous || Boolean(next)
     const change =
       previous && next
-        ? diffCatalogs(previous.catalog, next.catalog)
+        ? previous.runtime && next.runtime
+          ? runtimeChange(previous, next)
+          : diffCatalogs(previous.catalog, next.catalog)
         : undefined
     const entryIds =
       change && previous
@@ -78,10 +83,10 @@ export class EntryReplicaClient {
   }
 
   resolver(config: Config): DatabaseResolver {
-    if (!this.#reader) throw new Error('Replica must be synchronized first')
+    if (!this.#source) throw new Error('Replica must be synchronized first')
     const cached = this.#resolvers.get(config)
     if (cached) return cached
-    const resolver = new DatabaseResolver(config, this.#reader)
+    const resolver = new DatabaseResolver(config, this.#source)
     this.#resolvers.set(config, resolver)
     return resolver
   }
@@ -89,6 +94,11 @@ export class EntryReplicaClient {
   trackedResolver(config: Config): TrackedDatabaseResolver {
     if (!this.#state) throw new Error('Replica must be synchronized first')
     if (!this.#cacheKey) throw new Error('Replica cache key is unavailable')
+    if (this.#state.runtime)
+      return {
+        resolver: new DatabaseResolver(config, this.#source!),
+        dependencies: () => new Set(['revision:*'])
+      }
     const tracked = new TrackedDatabaseReader(
       this.#readerForState(this.#state, this.#cacheKey).reader
     )
@@ -107,10 +117,17 @@ export class EntryReplicaClient {
   }
 
   #install(cacheKey: string, state: ReplicaState): void {
-    const tracked = this.#readerForState(state, cacheKey)
     this.#state = state
     this.#cacheKey = cacheKey
-    this.#reader = tracked.reader
+    this.#source = state.runtime
+      ? new RuntimeEntryStore({
+          index: state.runtime,
+          source: replicaRangeSource(
+            state,
+            url => new HttpRangeSource(url, this.#fetch)
+          )
+        })
+      : this.#readerForState(state, cacheKey).reader
     this.#resolvers = new WeakMap()
   }
 
@@ -138,6 +155,23 @@ export class EntryReplicaClient {
       `${cacheKey}\0${state.viewId}`
     )
     return {reader}
+  }
+}
+
+function runtimeChange(
+  previous: ReplicaState,
+  next: ReplicaState
+): ReplicaChangeSet {
+  const records = new Set([
+    ...Object.keys(previous.recordEntries ?? {}),
+    ...Object.keys(next.recordEntries ?? {})
+  ])
+  return {
+    fromRevision: previous.catalog.revision,
+    toRevision: next.catalog.revision,
+    records,
+    indexes: new Set(),
+    dependencies: new Set(['revision:*'])
   }
 }
 

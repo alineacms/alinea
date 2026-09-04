@@ -1,11 +1,11 @@
-import {generatedRelease} from '#/backend/store/GeneratedRelease.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
+import {generatedEnvironment} from './GeneratedEnvironment.js'
 
 export async function requestContext(config: Config): Promise<RequestContext> {
-  const apiKey =
-    process.env.ALINEA_API_KEY ||
-    (process.env.NODE_ENV === 'development' ? 'dev' : await generatedRelease)
+  const generated =
+    process.env.NODE_ENV === 'development' ? undefined : generatedEnvironment()
+  const apiKey = process.env.ALINEA_API_KEY || generated?.releaseId || 'dev'
   const dev = process.env.ALINEA_DEV_SERVER
   if (dev) return {isDev: true, handlerUrl: new URL('/api', dev), apiKey}
   const nodeEnv = process.env.NODE_ENV

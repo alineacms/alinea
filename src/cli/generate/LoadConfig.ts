@@ -5,7 +5,7 @@ import {pathToFileURL} from 'node:url'
 
 export async function loadCMS(outDir: string): Promise<CMS> {
   const unique = Date.now()
-  const genConfigFile = path.join(outDir, 'config.js')
+  const genConfigFile = path.join(outDir, 'server-config.js')
   // Passing a unique identifier makes sure we don't receive the same module
   // from the registry. Unfortunately this also means each config module will
   // remain in memory.

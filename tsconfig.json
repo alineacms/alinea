@@ -24,7 +24,8 @@
       "#test/*": ["./test/*"],
       // Required for bun to resolve this package to source during runtime
       "alinea": ["./src/index.ts"],
-      "alinea/*": ["./src/*"]
+      "alinea/*": ["./src/*"],
+      "@alinea/generated/runtime-index.js": ["./src/backend/store/EmptyRuntimeIndex.ts"]
     }
   },
   "exclude": ["apps"]

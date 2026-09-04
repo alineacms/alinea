@@ -19,7 +19,9 @@ describe('source entry database', () => {
     expect(current).not.toHaveLength(0)
     expect(new Set(current.map(entry => entry.id)).size).toBe(current.length)
     for (const entry of current) {
-      expect(cms.config.schema[entry.type]).toBeDefined()
+      expect(
+        cms.config.schema[entry.type as keyof typeof cms.config.schema]
+      ).toBeDefined()
       expect(entry.parents.at(-1) ?? null).toBe(entry.parentId)
       for (const reference of snapshot.scan(
         referencesBySource,
@@ -128,6 +130,15 @@ describe('source entry database', () => {
       const current = await query.find({status})
       expect(current.every(entry => matchesStatus(entry, status))).toBe(true)
     }
+
+    const snapshot = await buildEntryDatabase(cms.config, source)
+    const child = [...snapshot.records()].find(
+      record => record.kind === 'entry' && record.entryId === 'child'
+    )
+    expect(child).toMatchObject({
+      versionStatus: 'published',
+      status: 'archived'
+    })
   })
 })
 

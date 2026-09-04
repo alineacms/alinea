@@ -2,9 +2,11 @@ import {describe, expect, test} from 'bun:test'
 import {Policy} from '#/core/Role.js'
 import {DatabaseSnapshot} from '../Database.js'
 import {entryDatabaseSchema} from '../entry/Indexes.js'
-import type {AlineaDatabaseRecord} from '../entry/Model.js'
+import type {AlineaDatabaseRecord, EntryCoreRecord} from '../entry/Model.js'
+import {ReaderEntryStore} from '../entry/Store.js'
 import {hashFieldValue} from '../replica/Operations.js'
-import {prepareFieldMutation} from './Mutation.js'
+import type {RuntimeIndexEntry} from '../runtime/Model.js'
+import {prepareFieldMutation, prepareRuntimeFieldMutation} from './Mutation.js'
 
 const records: Array<AlineaDatabaseRecord> = [
   {
@@ -92,5 +94,57 @@ describe('prepareFieldMutation', () => {
     expect(prepared.conflicts).toHaveLength(1)
     expect(prepared.conflicts[0].recordId).toBe('entry:page')
     expect(prepared.conflicts[0].path).toBe('/body')
+  })
+
+  test('loads the addressed runtime entry without a normalized fallback', async () => {
+    const snapshot = new DatabaseSnapshot({
+      schema: entryDatabaseSchema,
+      revision: 'tree-1',
+      records
+    })
+    const core: RuntimeIndexEntry = {
+      ...(records[0] as EntryCoreRecord),
+      frames: {
+        decodeKey: 'unused',
+        read: {
+          filePath: 'pages/page.json',
+          parentDir: 'pages',
+          childrenDir: 'pages/page',
+          rowHash: 'row',
+          fileHash: 'file'
+        }
+      }
+    }
+    const prepared = await prepareRuntimeFieldMutation(
+      new ReaderEntryStore(snapshot),
+      [core],
+      {
+        id: 'tx-runtime',
+        baseRevision: 'tree-1',
+        operations: [
+          {
+            kind: 'set',
+            recordId: 'payload:pages/page.json',
+            path: '/title',
+            baseHash: await hashFieldValue('Before'),
+            value: 'After'
+          }
+        ]
+      },
+      Policy.ALLOW_ALL
+    )
+
+    expect(prepared).toEqual({
+      mutations: [
+        {
+          op: 'update',
+          id: 'page',
+          locale: null,
+          status: 'published',
+          set: {title: 'After'}
+        }
+      ],
+      conflicts: []
+    })
   })
 })

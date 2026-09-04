@@ -1,34 +1,37 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import {expect, test} from 'bun:test'
 import {copyStaticFiles} from './CopyStaticFiles.js'
 
-test('writes private generated artifacts without creating a package', async () => {
+test('writes the generated ESM package and empty runtime index', async () => {
   const outDir = await fs.mkdtemp(path.join(os.tmpdir(), 'alinea-generated-'))
+  const bundleDir = path.join(outDir, 'node_modules/@alinea/generated')
   try {
-    await copyStaticFiles(
-      {
-        cmd: 'build',
-        wasmCache: false,
-        rootDir: outDir,
-        configLocation: path.join(outDir, 'cms.ts'),
-        configDir: outDir,
-        staticDir: outDir,
-        quiet: true,
-        outDir,
-        fix: false
-      },
-      {releaseId: 'release-id', configId: 'config-id'}
-    )
+    await copyStaticFiles({
+      cmd: 'build',
+      wasmCache: false,
+      rootDir: outDir,
+      configLocation: path.join(outDir, 'cms.ts'),
+      configDir: outDir,
+      staticDir: outDir,
+      quiet: true,
+      bundleDir,
+      fix: false
+    })
 
-    const settings = JSON.parse(
-      await fs.readFile(path.join(outDir, 'release-meta.json'), 'utf8')
+    expect(await exists(path.join(bundleDir, 'runtime-index.js'))).toBe(true)
+    expect(await exists(path.join(bundleDir, 'package.json'))).toBe(true)
+    const packageJson = JSON.parse(
+      await fs.readFile(path.join(bundleDir, 'package.json'), 'utf8')
     )
-    expect(settings.releaseId).toBe('release-id')
-    expect(settings.configId).toBe('config-id')
-    expect(await exists(path.join(outDir, 'source.json'))).toBe(true)
-    expect(await exists(path.join(outDir, 'source.js'))).toBe(false)
-    expect(await exists(path.join(outDir, 'package.json'))).toBe(false)
+    expect(packageJson).toMatchObject({
+      name: '@alinea/generated',
+      type: 'module',
+      exports: {
+        './server-config.js': './server-config.js'
+      }
+    })
   } finally {
     await fs.rm(outDir, {recursive: true, force: true})
   }

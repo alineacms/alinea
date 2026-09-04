@@ -67,7 +67,12 @@ export async function serve(options: ServeOptions): Promise<void> {
           process.stdout.write(header + details + footer)
           options.onAfterGenerate?.({
             ALINEA_DEV_SERVER: url,
-            ALINEA_ADMIN_PATH: Config.adminPath(config)
+            ALINEA_ADMIN_PATH: Config.adminPath(config),
+            ALINEA_GENERATED_RELEASE:
+              process.env.ALINEA_GENERATED_RELEASE ?? '',
+            ALINEA_GENERATED_CONFIG: process.env.ALINEA_GENERATED_CONFIG ?? '',
+            ALINEA_RELEASE_URL: process.env.ALINEA_RELEASE_URL ?? '',
+            ALINEA_CONFIG_URL: process.env.ALINEA_CONFIG_URL ?? ''
           })
         })
       }

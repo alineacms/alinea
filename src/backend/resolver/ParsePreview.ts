@@ -33,7 +33,7 @@ export function createPreviewParser(
       const baseText = decoder.decode(
         JsonLoader.format(
           local.config.schema,
-          createRecord(entry, entry.status)
+          createRecord(entry, entry.versionStatus)
         )
       )
       let updatedText: string
@@ -52,7 +52,7 @@ export function createPreviewParser(
           data,
           path: entry.path
         },
-        entry.status
+        entry.versionStatus
       )
       return {entry: patched}
     }

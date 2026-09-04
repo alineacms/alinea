@@ -8,7 +8,13 @@ import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {DemoRecipes} from '#test/schema/DemoRecipes.js'
 import {type DatabaseReader, SnapshotDatabaseReader} from '../Reader.js'
 import type {DatabaseIndex, IndexedRecord} from '../SecondaryIndex.js'
-import type {AlineaDatabaseRecord} from '../entry/Model.js'
+import type {Entry as EntryValue} from '#/core/Entry.js'
+import type {
+  AlineaDatabaseRecord,
+  EntryCoreRecord,
+  EntrySearchRecord
+} from '../entry/Model.js'
+import type {EntryStore} from '../entry/Store.js'
 import {buildEntryDatabase} from '../entry/Source.js'
 import {DatabaseResolver} from './Resolver.js'
 
@@ -140,9 +146,18 @@ describe('DatabaseResolver', () => {
       title: 'Chocolate chip preview',
       id: 'oi4qtV9YaXNRIUDT2s61Y'
     })
+    expect(
+      await current.resolve({
+        ...query,
+        filter: {title: 'Chocolate chip preview'} as never
+      })
+    ).toEqual({
+      title: 'Chocolate chip preview',
+      id: 'oi4qtV9YaXNRIUDT2s61Y'
+    })
   })
 
-  test('narrows structural candidates before loading payloads', async () => {
+  test('resolves an index-only projection without loading payloads', async () => {
     const base = new SnapshotDatabaseReader(database)
     const requested: Array<string> = []
     const reader: DatabaseReader<AlineaDatabaseRecord> = {
@@ -165,10 +180,213 @@ describe('DatabaseResolver', () => {
       select: Entry.id,
       first: true
     })
+    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
+  })
+
+  test('pages index candidates before loading projected payloads', async () => {
+    const base = new SnapshotDatabaseReader(database)
+    const requested: Array<string> = []
+    const reader: DatabaseReader<AlineaDatabaseRecord> = {
+      revision: base.revision,
+      get(id, signal) {
+        requested.push(id)
+        return base.get(id, signal)
+      },
+      scan<Metadata>(
+        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
+        key: string,
+        signal?: AbortSignal
+      ): AsyncIterable<IndexedRecord<Metadata>> {
+        return base.scan(index, key, signal)
+      }
+    }
+    const resolver = new DatabaseResolver(cms.config, reader)
+    const result = await resolver.resolve({
+      type: DemoRecipe,
+      orderBy: {asc: Entry.title},
+      take: 1,
+      select: {title: Entry.title, intro: DemoRecipe.intro}
+    })
+    expect(result).toEqual([
+      {title: 'Chocolate chip', intro: expect.any(Array)}
+    ])
     expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(1)
   })
 
-  test('searches dedicated search frames before loading matching payloads', async () => {
+  test('counts index candidates without loading payloads', async () => {
+    const base = new SnapshotDatabaseReader(database)
+    const requested: Array<string> = []
+    const reader: DatabaseReader<AlineaDatabaseRecord> = {
+      revision: base.revision,
+      get(id, signal) {
+        requested.push(id)
+        return base.get(id, signal)
+      },
+      scan<Metadata>(
+        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
+        key: string,
+        signal?: AbortSignal
+      ): AsyncIterable<IndexedRecord<Metadata>> {
+        return base.scan(index, key, signal)
+      }
+    }
+    const resolver = new DatabaseResolver(cms.config, reader)
+    const count = await resolver.resolve({type: DemoRecipe, count: true})
+    expect(count).toBeGreaterThan(0)
+    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
+  })
+
+  test('evaluates entry metadata filters on the index', async () => {
+    const base = new SnapshotDatabaseReader(database)
+    const requested: Array<string> = []
+    const reader: DatabaseReader<AlineaDatabaseRecord> = {
+      revision: base.revision,
+      get(id, signal) {
+        requested.push(id)
+        return base.get(id, signal)
+      },
+      scan<Metadata>(
+        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
+        key: string,
+        signal?: AbortSignal
+      ): AsyncIterable<IndexedRecord<Metadata>> {
+        return base.scan(index, key, signal)
+      }
+    }
+    const resolver = new DatabaseResolver(cms.config, reader)
+
+    expect(
+      await resolver.resolve({
+        filter: {_type: 'DemoRecipe'},
+        select: Entry.id
+      })
+    ).toHaveLength(4)
+    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
+  })
+
+  test('uses index conjuncts before loading data filters', async () => {
+    const base = new SnapshotDatabaseReader(database)
+    const requested: Array<string> = []
+    const reader: DatabaseReader<AlineaDatabaseRecord> = {
+      revision: base.revision,
+      get(id, signal) {
+        requested.push(id)
+        return base.get(id, signal)
+      },
+      scan<Metadata>(
+        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
+        key: string,
+        signal?: AbortSignal
+      ): AsyncIterable<IndexedRecord<Metadata>> {
+        return base.scan(index, key, signal)
+      }
+    }
+    const resolver = new DatabaseResolver(cms.config, reader)
+
+    expect(
+      await resolver.resolve({
+        filter: {
+          and: [
+            {_type: 'DemoRecipe'},
+            {intro: {includes: {_type: 'paragraph'}}}
+          ]
+        },
+        select: Entry.id
+      })
+    ).toHaveLength(4)
+    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(4)
+  })
+
+  test('stops loading data frames after a filtered page is full', async () => {
+    const cores: Array<EntryCoreRecord> = Array.from(
+      {length: 100},
+      (_, index) => ({
+        kind: 'entry',
+        id: `entry:test/${index}.json`,
+        queryable: true,
+        entryId: `entry-${index}`,
+        versionStatus: 'published',
+        status: 'published',
+        active: true,
+        main: true,
+        type: 'DemoRecipe',
+        title: `Entry ${index}`,
+        seeded: null,
+        workspace: 'demo',
+        root: 'pages',
+        locale: null,
+        level: 0,
+        index: String(index).padStart(3, '0'),
+        parentId: null,
+        parents: [],
+        path: `entry-${index}`,
+        url: `/entry-${index}`
+      })
+    )
+    let loaded = 0
+    function toEntry(core: EntryCoreRecord): EntryValue {
+      return {
+        id: core.entryId,
+        versionStatus: core.versionStatus,
+        status: core.status,
+        title: core.title,
+        type: core.type,
+        seeded: core.seeded,
+        workspace: core.workspace,
+        root: core.root,
+        level: core.level,
+        filePath: `${core.path}.json`,
+        parentDir: 'pages',
+        childrenDir: `pages/${core.path}`,
+        index: core.index,
+        parentId: core.parentId,
+        parents: [...core.parents],
+        locale: core.locale,
+        rowHash: core.id,
+        active: core.active,
+        main: core.main,
+        path: core.path,
+        fileHash: core.id,
+        url: core.url,
+        data: {match: Number(core.index) % 10 === 0},
+        searchableText: ''
+      }
+    }
+    const store: EntryStore = {
+      revision: 'test',
+      async cores() {
+        return cores
+      },
+      async load(core) {
+        loaded++
+        return toEntry(core)
+      },
+      async loadMany(items) {
+        loaded += items.length
+        return items.map(toEntry)
+      },
+      async search() {
+        return undefined
+      },
+      async searchMany(items) {
+        return new Array<EntrySearchRecord | undefined>(items.length)
+      },
+      async *referencesTo() {},
+      async *referencesFrom() {}
+    }
+    const resolver = new DatabaseResolver(cms.config, store)
+
+    expect(
+      await resolver.resolve({
+        filter: {match: true} as never,
+        take: 2,
+        select: Entry.id
+      })
+    ).toEqual(['entry-0', 'entry-10'])
+    expect(loaded).toBe(16)
+  })
+
+  test('searches dedicated search frames without loading result payloads', async () => {
     const base = new SnapshotDatabaseReader(database)
     const requested: Array<string> = []
     const reader: DatabaseReader<AlineaDatabaseRecord> = {
@@ -191,9 +409,7 @@ describe('DatabaseResolver', () => {
       select: Entry.id
     })
 
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(
-      result.length
-    )
+    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
     expect(result.length).toBeLessThan(database.size)
   })
 

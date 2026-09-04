@@ -29,6 +29,7 @@ test('loads sidebar data only when its tab is selected', async () => {
     rowHash: '',
     searchableText: '',
     seeded: null,
+    versionStatus: 'published',
     status: 'published',
     title: 'Entry',
     type: 'Page',

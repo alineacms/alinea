@@ -95,3 +95,25 @@ test('cached source invalidates its tree after applying changes', async () => {
     await rm(dir, {recursive: true, force: true})
   }
 })
+
+test('a filesystem snapshot avoids rereading unchanged files', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-fs-source-'))
+  try {
+    await writeFile(join(dir, 'hello.txt'), 'Hello')
+    const first = new FSSource(dir)
+    const expected = await first.getTree()
+    const readFile = spyOn(fs, 'readFile')
+    try {
+      const restored = new FSSource(dir, first.snapshot())
+
+      const tree = await restored.getTree()
+
+      test.is(tree.sha, expected.sha)
+      test.is(readFile.mock.calls.length, 0)
+    } finally {
+      readFile.mockRestore()
+    }
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
+})
