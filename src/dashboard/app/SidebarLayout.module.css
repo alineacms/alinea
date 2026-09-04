@@ -1,0 +1,15 @@
+.SidebarLayout {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+
+  /* Allotment's public theming variables. */
+  --focus-border: var(--alinea-border-accent);
+  --separator-border: var(--alinea-border);
+}
+
+.SidebarLayout-content {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+}

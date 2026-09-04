@@ -19,6 +19,25 @@ const themeStorageAtom = atomWithStorage<DashboardTheme>(
   undefined
 )
 
+const mobileMediaQuery = '(max-width: 768px)'
+
+export const dashboardMobileAtom = atom(
+  typeof window !== 'undefined' &&
+    (window.matchMedia?.(mobileMediaQuery).matches ?? false)
+)
+
+dashboardMobileAtom.onMount = setMobile => {
+  const media = window.matchMedia?.(mobileMediaQuery)
+  if (!media) return
+  const update = () => setMobile(media.matches)
+  update()
+  media.addEventListener('change', update)
+  return () => media.removeEventListener('change', update)
+}
+
+export const navigationSidebarWidthAtom = atom(320)
+export const entrySidebarWidthAtom = atom(320)
+
 export const entrySidebarOpenAtom = atom(
   typeof window === 'undefined' ||
     !window.matchMedia?.('(max-width: 768px)').matches

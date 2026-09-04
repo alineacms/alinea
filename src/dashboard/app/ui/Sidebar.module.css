@@ -1,5 +1,5 @@
 .Sidebar {
-  width: 320px;
+  width: 100%;
   flex-shrink: 0;
   min-width: 0;
 }

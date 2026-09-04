@@ -9,6 +9,7 @@ import {DashboardScope} from '../hooks.js'
 import {IcRoundAdd} from '../icons.js'
 import {AppShell, AppShellContent, AppShellInner} from './AppShell.js'
 import {SidebarTree} from './SidebarTree.js'
+import {SidebarLayout} from './SidebarLayout.js'
 import {WorkspaceMenu} from './WorkspaceMenu.js'
 import {WorkspaceRoots} from './WorkspaceRoots.js'
 import {CreateEntry} from './modals/CreateEntry.js'
@@ -38,19 +39,25 @@ export function DashboardLayout({
         <AppShellInner>
           <WorkspaceRoots canManageMembers={canManageMembers} page={page} />
           <AppShellContent>
-            <Sidebar className={styles.DashboardLayout.sidebar()}>
-              <SidebarHeader>
-                <WorkspaceMenu
-                  canManageMembers={canManageMembers}
-                  page={page}
-                  root={root}
-                  workspace={workspace}
-                />
-              </SidebarHeader>
-              <SidebarTree page={page} root={root} />
-              <SidebarCreateEntryButton root={root} />
-            </Sidebar>
-            {children}
+            <SidebarLayout
+              side="left"
+              sidebar={
+                <Sidebar>
+                  <SidebarHeader>
+                    <WorkspaceMenu
+                      canManageMembers={canManageMembers}
+                      page={page}
+                      root={root}
+                      workspace={workspace}
+                    />
+                  </SidebarHeader>
+                  <SidebarTree page={page} root={root} />
+                  <SidebarCreateEntryButton root={root} />
+                </Sidebar>
+              }
+            >
+              {children}
+            </SidebarLayout>
           </AppShellContent>
         </AppShellInner>
       </AppShell>

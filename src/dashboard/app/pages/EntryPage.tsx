@@ -43,6 +43,7 @@ import {
 } from './../EntrySidebar.js'
 import {EntryTranslationBanner} from './../EntryTranslationBanner.js'
 import {Explorer} from './../Explorer.js'
+import {SidebarLayout} from '../SidebarLayout.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -425,10 +426,18 @@ function EntryEditorContent({
         richTextImages={richTextImages}
         selectedEntry={selectedEntry}
       >
-        {mainEditor}
-        {sidebar && isSidebarOpen && (
-          <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
-        )}
+        <SidebarLayout
+          side="right"
+          visible={Boolean(sidebar && isSidebarOpen)}
+          sidebar={
+            sidebar &&
+            isSidebarOpen && (
+              <EntrySidebar {...sidebar} onOpenChange={setSidebarOpen} />
+            )
+          }
+        >
+          {mainEditor}
+        </SidebarLayout>
       </EntryScope>
     </>
   )

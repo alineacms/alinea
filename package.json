@@ -126,6 +126,7 @@
     "@types/react-dom": "^18.2.6",
     "@typescript/analyze-trace": "^0.9.1",
     "@vitejs/plugin-react": "^6.0.1",
+    "allotment": "^1.20.5",
     "cito": "^0.3.3",
     "color2k": "^1.2.4",
     "comlink": "^4.4.2",
