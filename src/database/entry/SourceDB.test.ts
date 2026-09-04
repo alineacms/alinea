@@ -29,6 +29,15 @@ describe('SourceDB', () => {
     expect(recipes.every(recipe => recipe.id && recipe.title)).toBe(true)
   })
 
+  test('retains an unchanged full runtime export for release output', async () => {
+    const runtime = db.runtimeExport
+    expect(runtime).toBeDefined()
+
+    await db.sync()
+
+    expect(db.runtimeExport).toBe(runtime)
+  })
+
   test('writes through runtime source transactions', async () => {
     const recipe = await db.get({
       type: cms.schema.DemoRecipe,
@@ -41,6 +50,7 @@ describe('SourceDB', () => {
     })
     expect(updated.title).toBe('Chocolate Chip Cookies')
     expect(db.sha).not.toBe('')
+    expect(db.runtimeExport).toBeUndefined()
   })
 
   test('emits exact logical ids after a write', async () => {

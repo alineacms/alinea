@@ -16,6 +16,7 @@ import {RuntimeEntryStore} from './Store.js'
 import {SourceDB} from '../entry/SourceDB.js'
 import {projectRuntimeDatabase} from './Projection.js'
 import {requestRuntimeSourceMutations} from '../handler/SourceWriter.js'
+import {runtimeSourcePathResolver} from './Model.js'
 
 describe('runtime database', () => {
   test('opens only the index and range-loads projected entry frames', async () => {
@@ -121,17 +122,15 @@ describe('runtime database', () => {
       source,
       compression: 'none'
     })
-    const runtime = new DatabaseResolver(
-      cms.config,
-      new RuntimeEntryStore({
-        index: release.index,
-        source: () => ({
-          async read(offset, length) {
-            return release.bundle.slice(offset, offset + length)
-          }
-        })
+    const store = new RuntimeEntryStore({
+      index: release.index,
+      source: () => ({
+        async read(offset, length) {
+          return release.bundle.slice(offset, offset + length)
+        }
       })
-    )
+    })
+    const runtime = new DatabaseResolver(cms.config, store)
     const query = {
       status: 'all' as const,
       orderBy: {asc: Entry.index},
@@ -143,6 +142,8 @@ describe('runtime database', () => {
     expect(entries.every(entry => Object.keys(entry.data).length > 0)).toBe(
       true
     )
+    const core = release.index.entries[0]
+    expect(await store.load(core)).toBe(await store.load(core))
   })
 
   test('searches discovery-safe index text for explore-only entries', async () => {
@@ -203,15 +204,14 @@ describe('runtime database', () => {
     })
 
     const tree = await store.getTree()
-    expect(ranges).toHaveLength(0)
-    const shared = release.index.entries.find(entry =>
-      Boolean(entry.frames?.read?.fileHash)
-    )!
-    const path = shared.frames!.read!.filePath
+    expect(ranges).toHaveLength(1)
+    const shared = release.index.entries.find(entry => entry.frames?.data)!
+    const path = runtimeSourcePathResolver(
+      cms.config,
+      release.index.entries
+    )(shared)
     const sha = tree.index().get(path)!
-    expect(release.index.source!.blobs[sha].frame.id).toBe(
-      shared.frames!.data!.id
-    )
+    expect(release.index.source!.blobs[sha]).toBeUndefined()
     const [[loadedSha, actual]] = await Array.fromAsync(store.getBlobs([sha]))
     const [[, expected]] = await Array.fromAsync(source.getBlobs([sha]))
     expect({path, loadedSha, actual: [...actual]}).toEqual({
@@ -219,7 +219,7 @@ describe('runtime database', () => {
       loadedSha: sha,
       actual: [...expected]
     })
-    expect(ranges).toHaveLength(1)
+    expect(ranges).toHaveLength(2)
   })
 
   test('boots SourceDB from the runtime index without reading payloads', async () => {
@@ -333,7 +333,10 @@ describe('runtime database', () => {
     const target = release.index.entries.find(
       entry => entry.entryId === 'oi4qtV9YaXNRIUDT2s61Y' && entry.main
     )!
-    const filePath = target.frames!.read!.filePath
+    const filePath = runtimeSourcePathResolver(
+      cms.config,
+      release.index.entries
+    )(target)
     const tree = await source.getTree()
     const previousSha = tree.index().get(filePath)!
     const [[, previousContents]] = await Array.fromAsync(

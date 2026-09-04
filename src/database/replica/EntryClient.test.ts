@@ -15,12 +15,10 @@ describe('EntryReplicaClient', () => {
       viewId: 'editor',
       recordAccess: {},
       runtime: {
-        version: 1,
         bundleId: 'release-1',
         bundleUrl: 'https://example.com/database.bin',
         revision: 'tree-1',
-        entries: [],
-        children: {}
+        entries: []
       }
     }
     let stateCalls = 0

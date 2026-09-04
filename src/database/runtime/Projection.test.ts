@@ -28,12 +28,9 @@ function entry(id: string, parentId: string | null = null): RuntimeIndexEntry {
     frames: {
       decodeKey: `key-${id}`,
       data: {
-        id: `data:${id}`,
-        accessClassId: `read:${id}`,
         offset: 0,
         length: 1,
         nonce: '',
-        cipherHash: id,
         compression: 'none'
       }
     }
@@ -42,16 +39,10 @@ function entry(id: string, parentId: string | null = null): RuntimeIndexEntry {
 
 test('projects readable and explorable runtime rows without source access', () => {
   const index: RuntimeDatabaseIndex = {
-    version: 1,
     revision: 'revision',
     bundleId: 'bundle',
     bundleUrl: '/payload.bundle',
-    entries: [entry('readable'), entry('explorable', 'readable')],
-    children: {},
-    source: {
-      tree: {sha: 'tree', entries: []},
-      blobs: {}
-    }
+    entries: [entry('readable'), entry('explorable', 'readable')]
   }
   const policy: EntryAccessPolicy = {
     canRead(resource) {
@@ -75,5 +66,4 @@ test('projects readable and explorable runtime rows without source access', () =
     'entry:readable': 'read',
     'entry:explorable': 'explore'
   })
-  expect(view.index.children.readable).toEqual(['entry:explorable'])
 })

@@ -8,7 +8,6 @@ import {cms} from '#test/cms.js'
 
 test('projects a runtime replica directly from the generated index', () => {
   const runtime: RuntimeDatabaseIndex = {
-    version: 1,
     revision: 'tree-1',
     bundleId: 'release-1',
     bundleUrl: '/admin/release-1/payload.bundle',
@@ -37,19 +36,14 @@ test('projects a runtime replica directly from the generated index', () => {
         frames: {
           decodeKey: 'secret',
           data: {
-            id: 'data:example',
-            accessClassId: 'read:example',
             offset: 0,
             length: 1,
             nonce: '',
-            cipherHash: 'cipher',
             compression: 'none'
           }
         }
       }
-    ],
-    children: {},
-    source: {tree: {sha: 'tree-1', entries: []}, blobs: {}}
+    ]
   }
   const service = new ReplicaService({
     config: cms.config,
@@ -81,12 +75,10 @@ test('projects a runtime replica directly from the generated index', () => {
 
 test('carries live entry overlay ciphertext with the filtered state', () => {
   const runtime: RuntimeDatabaseIndex = {
-    version: 1,
     revision: 'tree-1',
     bundleId: 'release-1',
     bundleUrl: '/admin/release-1/payload.bundle',
-    entries: [],
-    children: {}
+    entries: []
   }
   const store = new RuntimeEntryStore({
     index: runtime,
@@ -128,14 +120,11 @@ test('carries live entry overlay ciphertext with the filtered state', () => {
     frames: {
       decodeKey: 'unused',
       data: {
-        id: 'data:page',
         bundleId: 'overlay',
         bundleUrl: '/api?action=replicaBundle&bundle=overlay',
-        accessClassId: 'read:page',
         offset: 0,
         length: 3,
         nonce: '',
-        cipherHash: 'cipher',
         compression: 'none' as const
       }
     }

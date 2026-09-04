@@ -25,6 +25,8 @@ export interface EntryCoreRecord {
   parents: ReadonlyArray<string>
   path: string
   url: string
+  /** Read-protected URL claims available to core-only server queries. */
+  urlAliases?: ReadonlyArray<string>
 }
 
 export interface EntryPayloadRecord {

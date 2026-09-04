@@ -63,9 +63,14 @@ test('authenticates ciphertext and frame metadata', async () => {
     [{accessClassId: 'editors', key}]
   )
 
-  await test.throws(
-    () => loader.load(bundle.frames[0]),
-    'Invalid hash for frame "entry-a"'
+  await test.throws(() => loader.load(bundle.frames[0]))
+  const metadataLoader = new BundleFrameLoader(
+    'release-1',
+    new MemoryRangeSource(bundle.contents),
+    [{accessClassId: 'editors', key}]
+  )
+  await test.throws(() =>
+    metadataLoader.load({...bundle.frames[0], id: 'entry-b'})
   )
 })
 

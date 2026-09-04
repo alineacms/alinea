@@ -13,13 +13,17 @@ Opening a database must be cheap. A cold server should load only a compact JSON
 index and must not parse, decrypt, normalize, or index all entry fields. Work on
 the large payload corpus happens only when a query asks for it.
 
-For a representative large project:
+For the 11,374-entry imec project used to verify this branch:
 
-- the complete index is less than 2 MB of JSON;
+- the pathless packed index is 4,466,356 bytes of JSON;
 - the entry fields are approximately 70 MB before JavaScript object overhead;
-- there are approximately 11,000 entries;
-- the current RSC path can take almost ten seconds to parse source data,
+- the previous RSC path can take almost ten seconds to parse source data,
   normalize entries, and construct its in-memory graph.
+
+On the same project Node imports the generated index module and constructs the
+database in roughly 41 ms, then answers an index-only page in roughly 3 ms
+without reading the payload. These numbers are development-machine benchmarks,
+not API guarantees; the scaling boundary is the important part.
 
 The new read path must have these properties:
 
@@ -40,9 +44,9 @@ The new read path must have these properties:
 - encryption protects the complete read-only representation of an entry. It is
   not performed independently for every field.
 
-Simplicity is an explicit goal. The initial design uses JSON, linear scans over
-the compact index, entry-level frames, and entry-level synchronization patches.
-More elaborate binary formats and persistent secondary indexes should be added
+Simplicity is an explicit goal. The design uses JSON, a small transient
+structural lookup, entry-level frames, and entry-level synchronization patches.
+More elaborate binary formats and persistent content indexes should be added
 only if measurements of the real read path require them.
 
 ## Logical artifacts
@@ -67,15 +71,13 @@ are equivalent to:
 
 ```ts
 interface DatabaseIndex {
-  version: number
   revision: string
-  sourceTree: Tree
-  entries: ReadonlyArray<IndexEntry>
-  children: Record<string, ReadonlyArray<string>>
+  entries: ReadonlyArray<PackedIndexEntry>
+  sourceTreeFrame: FrameDescriptor
 }
 
 interface IndexEntry {
-  key: string
+  // Physical id is derived from id + locale + versionStatus.
   id: string
   // Status encoded by the source filename. Never inherited.
   versionStatus: 'draft' | 'published' | 'archived'
@@ -85,12 +87,13 @@ interface IndexEntry {
   main: boolean
   type: string
   title: string
-  workspace: string
-  root: string
+  // Workspace/root are references into separate shared string tables.
+  workspace: number
+  root: number
   locale: string | null
   level: number
   index: string
-  parentId: string | null
+  // parentId and level are derived from this chain.
   parents: ReadonlyArray<string>
   path: string
   url: string
@@ -103,13 +106,15 @@ interface IndexEntry {
 }
 ```
 
-The index is emitted in its runtime-ready shape. Opening its serialized form is
-a file read and `JSON.parse`; importing its generated server form uses the same
-value directly. Neither path requires another pass that constructs maps, graph
-objects, or database records. The entries array is already in deterministic
-scan order, and `children` supports graph traversal. At the current 11,000-entry
-scale, occasional linear lookup is cheaper at boot than eagerly constructing
-additional maps; a measured lookup bottleneck can justify a lazy map later.
+The wire representation is compact JSON: entries and frame descriptors are
+tuples, repeated type, locale, workspace, and root strings use shared tables,
+and queryable, active, main, source status, and effective status share a bit
+mask. Opening it requires `JSON.parse` plus one small linear expansion into the
+semantic rows the resolver scans. It does not parse entry fields or construct a
+second database. On imec, native JSON decode is substantially faster than
+MicroCBOR for this hot startup artifact; MicroCBOR is reserved for lazy frames.
+There is no children table or eager secondary index. Parent traversal uses
+`parentId` and `parents`.
 
 `versionStatus` and `status` are intentionally different. For example, a
 published child beneath an archived parent has `versionStatus: 'published'`
@@ -119,11 +124,11 @@ Archiving a parent must not rewrite its descendants on disk. Re-publishing the
 parent therefore restores every descendant to the state encoded by its own
 source version.
 
-The index also retains the exact source tree manifest. It is structural data,
-not entry payload, and lets the database implement `Source` without opening all
-source files. Exact source blobs are range-loaded lazily from the payload bundle
-by SHA. The trusted server index contains their descriptors and key; a
-policy-filtered browser index omits this server-only source capability.
+The exact source tree is a server-only, encrypted lazy frame in the payload,
+not part of the boot index. It is opened only by a Source operation. Exact
+source blobs are range-loaded lazily by SHA. Normal entry source bytes are the
+same bytes used by the data frame, so they are not stored twice. The trusted
+server index contains this capability; a policy-filtered browser index omits it.
 
 For the generated handler and local server path, the same JSON-compatible value
 is emitted as inline JavaScript and imported with the server bundle. This avoids
@@ -131,11 +136,12 @@ shipping `source.json`, locating a private runtime file, and rebuilding the
 normalized database. Browser replicas receive the serialized, policy-filtered
 form from the authenticated handler.
 
-The initial implementation deliberately has no persisted indexes by type,
-location, URL, field value, or ordering expression. Scanning 11,000 compact
-index rows is acceptable and keeps generation, synchronization, preview, and
-query execution easy to reason about. A measured hot path may justify a specific
-additional lookup later.
+The implementation deliberately has no persisted indexes by type, location,
+URL, field value, or ordering expression. The resolver creates a small
+in-memory lookup by entry id, parent id, URL, and type only when a query first
+needs one. This keeps boot index-only, avoids repeated full scans for routed
+pages and links, and is discarded with the resolver when a new index is
+installed. Content conditions and ordering expressions remain unindexed.
 
 Servers and trusted handlers may receive the complete index. A client receives
 a policy-filtered view:
@@ -151,20 +157,23 @@ entry.
 ### Payload bundle
 
 The payload bundle is a concatenation of independently compressed and encrypted
-JSON frames. Frames are grouped physically by access pattern:
+frames. Frames are grouped physically by access pattern:
 
 ```text
 [data frame][data frame][data frame] ...
 [search frame][search frame][search frame] ...
 [reference frame][reference frame][reference frame] ...
-[source blob frame][source blob frame][source blob frame] ...
+[source tree][otherwise-unrepresented source blob frames] ...
 ```
 
 The frame classes are:
 
 ```ts
 interface DataFrame {
-  data: Readonly<Record<string, unknown>>
+  filePath: string
+  fileHash: string
+  defaults?: Readonly<Record<string, unknown>>
+  authoredJson: Uint8Array
 }
 
 interface SearchFrame {
@@ -184,9 +193,9 @@ interface ReferenceFrame {
   }>
 }
 
-interface SourceBlobFrame {
-  sha: string
-  contents: Uint8Array
+interface SourceTreeFrame {
+  tree: Tree
+  entryPositionBySha: ReadonlyMap<string, number>
 }
 ```
 
@@ -194,24 +203,23 @@ Each entry version has at most one frame of each class. The frames share the
 entry's read grant but use distinct frame identities and AES-GCM nonces. Reading
 one frame never requires decrypting or decoding its neighbours.
 
-JSON is the default encoding for every frame. Native `JSON.parse` was faster
-than MicroCBOR in the synthetic evaluation, and entry-sized frames make complete
-decode cheap. Gzip may be applied before encryption when its transfer savings
-justify decompression. The bundle format must retain explicit encoding and
-compression versions so they can change in a later release.
+Data frames retain the exact authored JSON bytes. A small MicroCBOR tuple wraps
+those bytes with source-only metadata; the JSON is parsed only when the entry is
+actually requested. Search, reference, and source-tree frames also use compact
+MicroCBOR tuples because they are lazy and benefit from the smaller transfer.
+Gzip may be applied before encryption. The current runtime has one data-frame
+format rather than compatibility branches for formats that were never released.
+The frame descriptor records only the compression choice needed to decode it.
 
 Grouping frames by class allows a range loader to merge adjacent reads. A search
 over many permitted entries can fetch most of the search section in one or a few
 requests without downloading the much larger data section.
 
-Source blob frames retain the exact authored bytes rather than reconstructing
-files from normalized entry data. Exact bytes are required because the Source
-tree addresses blobs by hash and may contain files that are not entry payloads.
-For a normal entry file, those same authored JSON bytes are also its data frame;
-the index supplies the derived read metadata needed to turn them into an
-`Entry`. This avoids storing the large payload corpus twice. Only source blobs
-that are not represented by an entry data frame receive a separate, server-only
-frame. Boot and API semantics do not depend on this physical deduplication.
+Source access returns exact authored bytes rather than reconstructing files from
+normalized data. The source tree maps an entry blob SHA to its data-frame
+position; only blobs not represented by an entry receive a separate server-only
+frame. File paths, hashes, defaults, and authored bytes therefore stay out of
+the startup index while Source semantics remain exact.
 
 ## Encryption boundary
 
@@ -223,6 +231,13 @@ Per-entry keys are retained because read permissions can differ per entry. The
 handler includes a key only in a filtered index view that grants read access to
 that entry. Explore access alone never grants a payload key.
 
+Each random 256-bit entry key is imported directly as an AES-GCM key and reused
+for that entry's data, search, and reference frames. Every frame has a random
+96-bit nonce, and its release, frame, access-class, and compression identities
+are authenticated as additional data. There is no per-frame HKDF: it added CPU
+to payload-heavy cold queries without strengthening this already random,
+entry-scoped key boundary.
+
 Editor operations may continue to address field paths and carry field hashes
 for authorization, conflict detection, and merging. That mutation protocol does
 not determine the storage boundary. After accepting operations, the handler
@@ -230,31 +245,32 @@ serializes and encrypts a complete replacement frame for each changed class.
 
 Already disclosed plaintext cannot be revoked from a client. A new payload
 revision uses a new descriptor and may rotate its decode key. AES-GCM
-authenticates the encrypted frame; frame hashes provide stable cache identity
-and corruption detection.
+authenticates the encrypted frame; descriptor identity keys the decoded cache,
+so encrypted bytes are not retained in a second ciphertext cache.
 
 ## Cold and hot operation
 
 At cold boot a server:
 
 1. reads and parses the deployed JSON index;
-2. obtains and applies index patches newer than the deployed revision;
+2. expands its packed tuples into lightweight semantic rows;
 3. installs payload frame locators without downloading their bytes;
-4. begins serving queries.
+4. begins serving queries and checks remote revision only when synchronization
+   is required.
 
 It does not import the complete source export, normalize entries, construct a
 second graph, build MiniSearch, build a reverse reference map, or open payload
 frames.
 
 The database itself implements `Source`. Its source view and query view share
-the same immutable release and live overlay. `getTree` returns the inline tree;
-`getBlobs` lazily opens only requested source frames; `applyChanges` advances
-the source tree and blob overlay, after which the shared reconciler installs the
-affected index rows and replacement frames. Callers do not need a second
-generated source object beside the database.
+the same immutable release and live overlay. `getTree` lazily opens the source
+tree frame; `getTreeIfDifferent` compares the known revision without doing so;
+`getBlobs` opens only requested entry/source frames. `applyChanges` advances the
+source and the shared reconciler installs affected rows and replacement frames.
+Callers do not need a second generated source object beside the database.
 
 Decoded entries and parsed search/reference frames remain cached by entry key
-and frame hash. Concurrent requests for the same frame share one promise. The
+and descriptor identity. Concurrent requests for the same frame share one promise. The
 server does not also retain encrypted or decrypted byte buffers after parsing;
 those bytes are only coalesced while a read is in flight. When synchronization
 replaces a frame, only the old value for that entry and frame class is
@@ -455,8 +471,9 @@ whose inherited structural values actually change.
 
 Development reuses the same index and payload as a persistent checkpoint
 instead of rebuilding the database from every source file on each process
-start. The checkpoint is valid only when its runtime format and compiled config
-fingerprint match the current process.
+start. The checkpoint is reused only when its generated index has the current
+shape and its compiled config fingerprint matches the current process. There
+are no readers for earlier unreleased runtime formats.
 
 The startup sequence is:
 
@@ -471,7 +488,7 @@ The startup sequence is:
    removals, moves, status changes, and ordinary content edits;
 6. reuse every unchanged frame and retain the new runtime index in memory.
 
-The first process without a compatible checkpoint performs a full development
+The first process without a valid checkpoint performs a full development
 build. Later filesystem differences remain in-memory overlays regardless of
 whether they are content or structural changes. The fingerprints are only a
 scan accelerator. Source hashes remain the identity and correctness boundary,
@@ -570,11 +587,17 @@ removed rather than retained as compatibility fallbacks. Initial artifact
 generation still has to parse the complete source once; that is build work, not
 request-time database boot.
 
-`EntryTransaction` reads the existing compact runtime rows directly. It lazily
-groups only logical ids touched by a write and receives decoded payloads only
-for entries the requested mutations can inspect or rewrite. It does not first
-manufacture a parallel array of `Entry` objects or expose another persistent
-database/index abstraction.
+`EntryTransaction` is asynchronous and queries the same runtime-backed `Graph`
+used for reads. There is no `TransactionLookup`, `TransactionPayload`, preload
+planner, or transaction-specific index. Structural transaction queries select
+core fields and remain index-only; a query that needs source bytes or entry data
+lets the normal resolver open and cache exactly those frames. A tiny in-request
+URL-claim overlay is retained only so sequential mutations in one request can
+see claims created earlier in that same request.
+
+`SourceDB.sync()` performs seed repair only after an initial build or a real
+source reconciliation. An unchanged revision returns immediately; it must not
+scan every entry merely because a query or mutation calls `sync()`.
 
 ## Current implementation
 
@@ -583,6 +606,10 @@ The branch now implements the consolidated server read path:
 - generation emits an inline runtime index through
   `@alinea/generated/runtime-index.js` and a public
   `/admin/$releaseId/payload.bundle`;
+- a clean build writes the complete runtime artifact already produced by its
+  initial database sync instead of parsing, compressing, and encrypting the
+  source a second time; seed, fix, or source changes invalidate that reusable
+  artifact and take the consolidating export path;
 - the Next.js local database opens the runtime index directly and reads payload
   byte ranges from the generated file;
 - `SourceDB` can boot directly over the runtime store and implements `Source`
@@ -601,8 +628,8 @@ The branch now implements the consolidated server read path:
 - development opens a config-compatible generated checkpoint, seeds its
   filesystem scan from stored fingerprints, skips normalization when unchanged,
   and reconciles all filesystem changes as runtime overlays;
-- dashboard writes construct `EntryTransaction` over the compact runtime index
-  and open only payloads needed by the requested mutation;
+- dashboard writes run `EntryTransaction` against the ordinary lazy graph and
+  open only payloads selected by its queries;
 - source synchronization from dashboard writes, GitHub, and the development
   filesystem shares one tree-diff reconciler that parses only changed blobs,
   recomputes hierarchy from lightweight index metadata, and reuses unchanged

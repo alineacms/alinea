@@ -286,12 +286,10 @@ test('serves replica bootstrap and state only after authentication', async () =>
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new SourceDB(cms.config)
   const runtime: RuntimeDatabaseIndex = {
-    version: 1,
     revision: 'tree-1',
     bundleId: 'release-1',
     bundleUrl: '/admin/release/release-1/database.bin',
-    entries: [],
-    children: {}
+    entries: []
   }
   const store = new RuntimeEntryStore({
     index: runtime,

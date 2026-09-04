@@ -34,7 +34,7 @@ export async function copyStaticFiles(
   await fs.mkdir(bundleDir, {recursive: true})
   const runtimeIndex = path.join(bundleDir, 'runtime-index.js')
   const emptyRuntimeIndex =
-    'export default {version:1,revision:"",bundleId:"",bundleUrl:"",entries:[],children:{}}'
+    'export default {revision:"",bundleId:"",bundleUrl:"",entries:[]}'
   const writes = [
     fs.writeFile(
       path.join(bundleDir, 'package.json'),

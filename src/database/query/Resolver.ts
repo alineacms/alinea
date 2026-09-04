@@ -62,6 +62,7 @@ export class DatabaseResolver extends Graph implements Resolver {
   #scope: Scope
   #store: EntryStore
   #cores: Promise<ReadonlyArray<EntryCoreRecord>>
+  #lookup?: CoreLookup
   #searchIndex?: Promise<CoreSearchIndex>
 
   constructor(config: Config, source: EntryStore) {
@@ -144,7 +145,9 @@ export class DatabaseResolver extends Graph implements Resolver {
   ): Promise<QueryResult> {
     const edge = query as EdgeQuery<Projection>
     const structural = this.#coreCondition(context, edge)
-    let narrowed = source.filter(structural)
+    let narrowed = this.#candidateCores(context, edge, source).filter(
+      structural
+    )
     if (query.search)
       narrowed = await this.#searchCores(
         context,
@@ -193,17 +196,25 @@ export class DatabaseResolver extends Graph implements Resolver {
       const orders = Array.isArray(query.orderBy)
         ? query.orderBy
         : [query.orderBy]
-      found.sort((left, right) => {
-        for (const order of orders) {
+      const ordered = found.map(entry => ({
+        entry,
+        values: orders.map(order => {
           const expression = order.asc ?? order.desc
-          if (!expression) continue
-          const a = this.#expr(context, left, expression)
-          const b = this.#expr(context, right, expression)
-          const compared = compareValues(a, b, order.caseSensitive)
+          return expression ? this.#expr(context, entry, expression) : undefined
+        })
+      }))
+      ordered.sort((left, right) => {
+        for (const [position, order] of orders.entries()) {
+          const compared = compareValues(
+            left.values[position],
+            right.values[position],
+            order.caseSensitive
+          )
           if (compared !== 0) return order.asc ? compared : -compared
         }
         return 0
       })
+      found = ordered.map(item => item.entry)
     } else if (edge.edge === 'parents') {
       found.sort((left, right) => left.level - right.level)
     }
@@ -224,6 +235,37 @@ export class DatabaseResolver extends Graph implements Resolver {
       entries: found,
       value: single ? selected[0] : selected
     }
+  }
+
+  #candidateCores(
+    context: ResolveContext,
+    query: EdgeQuery<Projection>,
+    source: ReadonlyArray<EntryCoreRecord>
+  ): ReadonlyArray<EntryCoreRecord> {
+    if (source !== context.cores) return source
+    const ids = equalityValues(query.id)
+    const parentIds = equalityValues(query.parentId)
+    const urls = equalityValues(query.url)
+    if (!ids && !parentIds && !urls && !query.type) return source
+    const lookup = this.#lookupFor(context.cores)
+    const candidates: Array<ReadonlyArray<EntryCoreRecord>> = []
+    if (ids) candidates.push(lookupValues(lookup, lookup.byId, ids))
+    if (parentIds)
+      candidates.push(lookupValues(lookup, lookup.byParentId, parentIds))
+    if (urls) candidates.push(lookupValues(lookup, lookup.byUrl, urls))
+    if (query.type) {
+      const types = (Array.isArray(query.type) ? query.type : [query.type]).map(
+        type => this.#scope.nameOf(type as Type)
+      )
+      candidates.push(lookupValues(lookup, lookup.byType, types))
+    }
+    if (candidates.length === 0) return source
+    candidates.sort((left, right) => left.length - right.length)
+    return candidates[0]
+  }
+
+  #lookupFor(cores: ReadonlyArray<EntryCoreRecord>): CoreLookup {
+    return (this.#lookup ??= createCoreLookup(cores))
   }
 
   async #queryFromCores(
@@ -412,7 +454,8 @@ export class DatabaseResolver extends Graph implements Resolver {
     if (
       context.previewEntry ||
       (query.filter && !isCoreFilter(query.filter)) ||
-      query.alias !== undefined ||
+      (query.alias !== undefined &&
+        context.cores.some(core => core.urlAliases === undefined)) ||
       query.createdAt !== undefined ||
       query.updatedAt !== undefined
     )
@@ -732,10 +775,16 @@ export class DatabaseResolver extends Graph implements Resolver {
       ? filterPredicate(indexFilter, coreFilterField)
       : undefined
     return entry => {
-      if (!entry.queryable) return false
+      if (!entry.queryable && !query.includeHiddenVersions) return false
       if (!matchesCoreStatus(entry, context.status)) return false
       if (location && !matchesCoreLocation(entry, location)) return false
       if (typeNames && !typeNames.includes(entry.type)) return false
+      if (
+        query.alias !== undefined &&
+        entry.urlAliases !== undefined &&
+        !entry.urlAliases.includes(query.alias)
+      )
+        return false
       if (query.edge !== 'translations') {
         if (locale !== undefined && !matchesCoreLocale(entry, locale, false))
           return false
@@ -816,31 +865,26 @@ export class DatabaseResolver extends Graph implements Resolver {
     entry: Entry,
     query: EdgeQuery<Projection>
   ): Promise<ReadonlyArray<EntryCoreRecord>> {
-    const all = context.cores
+    const lookup = this.#lookupFor(context.cores)
     const sameLocale = (core: EntryCoreRecord) => core.locale === entry.locale
     switch (query.edge) {
       case 'parent':
         return entry.parentId
-          ? all.filter(
-              core => core.entryId === entry.parentId && sameLocale(core)
+          ? lookupValues(lookup, lookup.byId, [entry.parentId]).filter(
+              sameLocale
             )
           : []
       case 'siblings':
-        return all.filter(
+        return lookupValues(lookup, lookup.byParentId, [entry.parentId]).filter(
           core =>
-            core.parentId === entry.parentId &&
             core.workspace === entry.workspace &&
             core.root === entry.root &&
             sameLocale(core) &&
             (query.includeSelf || core.entryId !== entry.id)
         )
       case 'translations':
-        return all
-          .filter(
-            core =>
-              core.entryId === entry.id &&
-              (query.includeSelf || core.locale !== entry.locale)
-          )
+        return lookupValues(lookup, lookup.byId, [entry.id])
+          .filter(core => query.includeSelf || core.locale !== entry.locale)
           .sort((left, right) => {
             const root = this.config.workspaces[entry.workspace]?.[entry.root]
             const locales =
@@ -853,24 +897,18 @@ export class DatabaseResolver extends Graph implements Resolver {
           })
       case 'children': {
         const depth = query.depth ?? 1
-        return all.filter(
-          core =>
-            core.parents.includes(entry.id) &&
-            core.level > entry.level &&
-            core.level <= entry.level + depth
-        )
+        return descendantsFromLookup(lookup, entry.id, depth)
       }
       case 'parents': {
-        const ids = new Set(entry.parents.slice(-(query.depth ?? Infinity)))
-        return all.filter(core => ids.has(core.entryId) && sameLocale(core))
+        const ids = entry.parents.slice(-(query.depth ?? Infinity))
+        return lookupValues(lookup, lookup.byId, ids).filter(sameLocale)
       }
       case 'next':
       case 'previous': {
         const direction = query.edge === 'next' ? 1 : -1
         const siblings = uniqueNodes(
-          all.filter(
+          lookupValues(lookup, lookup.byParentId, [entry.parentId]).filter(
             core =>
-              core.parentId === entry.parentId &&
               core.workspace === entry.workspace &&
               core.root === entry.root &&
               sameLocale(core)
@@ -884,8 +922,8 @@ export class DatabaseResolver extends Graph implements Resolver {
           )
         const target = siblings[0]
         return target
-          ? all.filter(
-              core => core.entryId === target.entryId && sameLocale(core)
+          ? lookupValues(lookup, lookup.byId, [target.entryId]).filter(
+              sameLocale
             )
           : []
       }
@@ -900,17 +938,17 @@ export class DatabaseResolver extends Graph implements Resolver {
               )
             : []
         )
-        return all.filter(core => ids.has(core.entryId))
+        return lookupValues(lookup, lookup.byId, ids)
       }
       case 'entrySingle': {
         const value = this.#field(entry, query.field)
         const id = isRecord(value) ? value._entry : undefined
         return typeof id === 'string'
-          ? all.filter(core => core.entryId === id)
+          ? lookupValues(lookup, lookup.byId, [id])
           : []
       }
       default:
-        return all
+        return context.cores
     }
   }
 
@@ -1197,6 +1235,95 @@ function matchesCoreLocale(
   return entry.locale === locale
 }
 
+type CoreBucket = EntryCoreRecord | Array<EntryCoreRecord>
+
+interface CoreLookup {
+  byId: Map<string, CoreBucket>
+  byParentId: Map<string | null, CoreBucket>
+  byUrl: Map<string, CoreBucket>
+  byType: Map<string, CoreBucket>
+  order: WeakMap<EntryCoreRecord, number>
+}
+
+function createCoreLookup(cores: ReadonlyArray<EntryCoreRecord>): CoreLookup {
+  const lookup: CoreLookup = {
+    byId: new Map(),
+    byParentId: new Map(),
+    byUrl: new Map(),
+    byType: new Map(),
+    order: new WeakMap()
+  }
+  for (const [position, core] of cores.entries()) {
+    addToLookup(lookup.byId, core.entryId, core)
+    addToLookup(lookup.byParentId, core.parentId, core)
+    addToLookup(lookup.byUrl, core.url, core)
+    addToLookup(lookup.byType, core.type, core)
+    lookup.order.set(core, position)
+  }
+  return lookup
+}
+
+function addToLookup<Key>(
+  lookup: Map<Key, CoreBucket>,
+  key: Key,
+  core: EntryCoreRecord
+): void {
+  const current = lookup.get(key)
+  if (!current) lookup.set(key, core)
+  else if (Array.isArray(current)) current.push(core)
+  else lookup.set(key, [current, core])
+}
+
+function lookupValues<Key>(
+  lookup: CoreLookup,
+  index: ReadonlyMap<Key, CoreBucket>,
+  keys: Iterable<Key>
+): Array<EntryCoreRecord> {
+  const uniqueKeys = [...new Set(keys)]
+  if (uniqueKeys.length === 1) {
+    const bucket = index.get(uniqueKeys[0])
+    if (!bucket) return []
+    return Array.isArray(bucket) ? bucket : [bucket]
+  }
+  const result: Array<EntryCoreRecord> = []
+  for (const key of uniqueKeys) {
+    const bucket = index.get(key)
+    if (!bucket) continue
+    if (Array.isArray(bucket)) result.push(...bucket)
+    else result.push(bucket)
+  }
+  return result.sort(
+    (left, right) => lookup.order.get(left)! - lookup.order.get(right)!
+  )
+}
+
+function descendantsFromLookup(
+  lookup: CoreLookup,
+  entryId: string,
+  depth: number
+): Array<EntryCoreRecord> {
+  if (depth <= 0) return []
+  const result: Array<EntryCoreRecord> = []
+  let parents = [entryId]
+  for (let level = 0; level < depth && parents.length > 0; level++) {
+    const children = lookupValues(lookup, lookup.byParentId, parents)
+    result.push(...children)
+    parents = [...new Set(children.map(child => child.entryId))]
+  }
+  return result.sort(
+    (left, right) => lookup.order.get(left)! - lookup.order.get(right)!
+  )
+}
+
+function equalityValues<Value>(condition: unknown): Array<Value> | undefined {
+  if (condition === undefined) return
+  if (!isRecord(condition)) return [condition as Value]
+  if (condition.is !== undefined) return [condition.is as Value]
+  return Array.isArray(condition.in)
+    ? (condition.in as Array<Value>)
+    : undefined
+}
+
 function uniqueNodes(
   cores: ReadonlyArray<EntryCoreRecord>
 ): Array<EntryCoreRecord> {
@@ -1218,10 +1345,12 @@ function compareValues(
   if (typeof left === 'string' && typeof right === 'string')
     return caseSensitive
       ? compareStrings(left, right)
-      : left.localeCompare(right, undefined, {numeric: true})
+      : numericCollator.compare(left, right)
   if (typeof left === 'number' && typeof right === 'number') return left - right
   return 0
 }
+
+const numericCollator = new Intl.Collator(undefined, {numeric: true})
 
 const coreFieldNames = new Set([
   'id',

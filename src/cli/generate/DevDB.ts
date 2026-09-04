@@ -12,6 +12,7 @@ import {getWorkspace} from '#/core/Internal.js'
 import {Policy} from '#/core/Role.js'
 import {CachedFSSource, type FSSourceSnapshot} from '#/core/source/FSSource.js'
 import {bundleContents} from '#/core/source/Source.js'
+import type {Tree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
 import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
@@ -28,6 +29,7 @@ import pLimit from 'p-limit'
 export interface DevDBCheckpoint {
   index: RuntimeDatabaseIndex
   payloadFile: string
+  sourceTree?: Tree
 }
 
 export interface DevDBOptions {
@@ -54,9 +56,9 @@ export class DevDB extends SourceDB {
   constructor(options: DevDBOptions) {
     const checkpoint = options.checkpoint
     const sourceSnapshot: FSSourceSnapshot | undefined =
-      checkpoint?.index.source && checkpoint.index.development
+      checkpoint?.sourceTree && checkpoint.index.development
         ? {
-            tree: checkpoint.index.source.tree,
+            tree: checkpoint.sourceTree,
             files: checkpoint.index.development.files
           }
         : undefined

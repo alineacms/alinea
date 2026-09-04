@@ -5,7 +5,6 @@ import {
   DecompressionStream,
   Response
 } from '@alinea/iso'
-import {bytesToHex} from '#/core/source/Utils.js'
 import type {
   AccessClassGrant,
   AccessClassId,
@@ -17,6 +16,7 @@ import type {
 import pLimit from 'p-limit'
 
 const encoder = new TextEncoder()
+const encryptionKeys = new WeakMap<Uint8Array, Promise<CryptoKey>>()
 
 export interface EncryptFrameOptions {
   bundleId: BundleId
@@ -31,7 +31,6 @@ export interface EncryptedFrame {
   id: FrameId
   accessClassId: AccessClassId
   nonce: Uint8Array
-  cipherHash: string
   compression: FrameCompression
   ciphertext: Uint8Array
 }
@@ -88,9 +87,12 @@ export async function encryptFrame(
   const compression = options.compression ?? 'gzip'
   const compressed = await compress(options.contents, compression)
   const nonce = crypto.getRandomValues(new Uint8Array(12))
-  const key = await deriveFrameKey(options.key, options.bundleId, options.id, [
-    'encrypt'
-  ])
+  let imported = encryptionKeys.get(options.key)
+  if (!imported) {
+    imported = importFrameKey(options.key, ['encrypt'])
+    encryptionKeys.set(options.key, imported)
+  }
+  const key = await imported
   const additionalData = frameAdditionalData(
     options.bundleId,
     options.id,
@@ -111,7 +113,6 @@ export async function encryptFrame(
     id: options.id,
     accessClassId: options.accessClassId,
     nonce,
-    cipherHash: await sha256(ciphertext),
     compression,
     ciphertext
   }
@@ -138,7 +139,6 @@ export function packEncryptedFrames(
       offset,
       length: frame.ciphertext.length,
       nonce: frame.nonce.slice(),
-      cipherHash: frame.cipherHash,
       compression: frame.compression
     })
     offset += frame.ciphertext.length
@@ -149,7 +149,7 @@ export function packEncryptedFrames(
 export class BundleFrameLoader implements FrameLoader {
   #bundleId: BundleId
   #source: ByteRangeSource
-  #grants = new Map<AccessClassId, Uint8Array>()
+  #keys = new Map<AccessClassId, Promise<CryptoKey>>()
 
   constructor(
     bundleId: BundleId,
@@ -158,21 +158,19 @@ export class BundleFrameLoader implements FrameLoader {
   ) {
     this.#bundleId = bundleId
     this.#source = source
-    for (const grant of grants) {
-      this.#grants.set(grant.accessClassId, grant.key.slice())
-    }
+    for (const grant of grants) this.grant(grant.accessClassId, grant.key)
   }
 
   grant(accessClassId: AccessClassId, key: Uint8Array): void {
-    if (!this.#grants.has(accessClassId))
-      this.#grants.set(accessClassId, key.slice())
+    if (!this.#keys.has(accessClassId))
+      this.#keys.set(accessClassId, importFrameKey(key, ['decrypt']))
   }
 
   async load(
     frame: FrameDescriptor,
     signal?: AbortSignal
   ): Promise<Uint8Array> {
-    if (!this.#grants.has(frame.accessClassId))
+    if (!this.#keys.has(frame.accessClassId))
       throw new MissingFrameGrantError(frame.accessClassId)
     const ciphertext = await this.#source.read(
       frame.offset,
@@ -188,7 +186,7 @@ export class BundleFrameLoader implements FrameLoader {
   ): Promise<ReadonlyMap<FrameId, Uint8Array>> {
     signal?.throwIfAborted()
     for (const frame of frames)
-      if (!this.#grants.has(frame.accessClassId))
+      if (!this.#keys.has(frame.accessClassId))
         throw new MissingFrameGrantError(frame.accessClassId)
     const ciphertext = new Map<FrameId, Uint8Array>()
     const missing: Array<FrameDescriptor> = []
@@ -232,17 +230,11 @@ export class BundleFrameLoader implements FrameLoader {
     frame: FrameDescriptor,
     ciphertext: Uint8Array
   ): Promise<Uint8Array> {
-    const classKey = this.#grants.get(frame.accessClassId)
-    if (!classKey) throw new MissingFrameGrantError(frame.accessClassId)
+    const pendingKey = this.#keys.get(frame.accessClassId)
+    if (!pendingKey) throw new MissingFrameGrantError(frame.accessClassId)
     if (ciphertext.length !== frame.length)
       throw new BundleIntegrityError(`Incomplete frame "${frame.id}"`)
-    const actualHash = await sha256(ciphertext)
-    if (actualHash !== frame.cipherHash) {
-      throw new BundleIntegrityError(`Invalid hash for frame "${frame.id}"`)
-    }
-    const key = await deriveFrameKey(classKey, this.#bundleId, frame.id, [
-      'decrypt'
-    ])
+    const key = await pendingKey
     const additionalData = frameAdditionalData(
       this.#bundleId,
       frame.id,
@@ -291,28 +283,14 @@ function mergeFrameRanges(
   return ranges
 }
 
-async function deriveFrameKey(
-  classKey: Uint8Array,
-  bundleId: BundleId,
-  frameId: FrameId,
+function importFrameKey(
+  key: Uint8Array,
   usages: KeyUsage[]
 ): Promise<CryptoKey> {
-  const material = await crypto.subtle.importKey(
+  return crypto.subtle.importKey(
     'raw',
-    classKey as BufferSource,
-    'HKDF',
-    false,
-    ['deriveKey']
-  )
-  return crypto.subtle.deriveKey(
-    {
-      name: 'HKDF',
-      hash: 'SHA-256',
-      salt: encoder.encode(`alinea-replica:${bundleId}`) as BufferSource,
-      info: encoder.encode(`frame:${frameId}`) as BufferSource
-    },
-    material,
-    {name: 'AES-GCM', length: 256},
+    key as BufferSource,
+    'AES-GCM',
     false,
     usages
   )
@@ -327,11 +305,6 @@ function frameAdditionalData(
   return encoder.encode(
     `alinea-replica-frame\0${bundleId}\0${frameId}\0${accessClassId}\0${compression}`
   )
-}
-
-async function sha256(contents: Uint8Array): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', contents as BufferSource)
-  return bytesToHex(new Uint8Array(digest))
 }
 
 async function compress(

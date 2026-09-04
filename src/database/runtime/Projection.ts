@@ -22,7 +22,6 @@ export function projectRuntimeDatabase(
     index: {
       ...index,
       entries,
-      children: projectChildren(entries),
       source: undefined,
       development: undefined
     },
@@ -35,19 +34,6 @@ function projectEntry(
   access: Exclude<EntrySyncAccess, 'none'>
 ): RuntimeIndexEntry {
   if (access === 'read') return entry
-  const {frames: _frames, ...explorable} = entry
+  const {frames: _frames, urlAliases: _urlAliases, ...explorable} = entry
   return explorable
-}
-
-function projectChildren(
-  entries: ReadonlyArray<RuntimeIndexEntry>
-): Record<string, ReadonlyArray<string>> {
-  const visible = new Set(entries.map(entry => entry.entryId))
-  const children: Record<string, Array<string>> = {}
-  for (const entry of entries) {
-    const key =
-      entry.parentId && visible.has(entry.parentId) ? entry.parentId : ''
-    ;(children[key] ??= []).push(entry.id)
-  }
-  return children
 }

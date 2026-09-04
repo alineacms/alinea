@@ -36,9 +36,13 @@ import type {ReplicaTransport} from '../replica/Protocol.js'
 import {replicaRangeSource} from '../replica/InlineBundles.js'
 import {
   exportRuntimeDatabase,
-  exportRuntimeSourceChanges
+  exportRuntimeSourceChanges,
+  type RuntimeDatabaseExport
 } from '../runtime/Exporter.js'
-import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
+import {
+  runtimeSourcePathResolver,
+  type RuntimeDatabaseIndex
+} from '../runtime/Model.js'
 import {RuntimeEntryStore} from '../runtime/Store.js'
 import {fixSource, seedSource} from './SourceRepair.js'
 import pLimit from 'p-limit'
@@ -48,6 +52,7 @@ export class SourceDB extends WriteableGraph implements Source {
   source: Source
   #runtime: RuntimeEntryStore | undefined
   #index: RuntimeDatabaseIndex | undefined
+  #runtimeExport: RuntimeDatabaseExport | undefined
   #resolver: DatabaseResolver | undefined
   #bundles = new Map<string, MemoryRangeSource>()
   #events = new EventDispatcher()
@@ -63,7 +68,7 @@ export class SourceDB extends WriteableGraph implements Source {
     this.source = source
     const initial =
       runtime ?? (source instanceof RuntimeEntryStore ? source : undefined)
-    if (initial) this.refreshRuntime(initial)
+    if (initial) this.#installRuntime(initial)
   }
 
   get loaded(): boolean {
@@ -76,6 +81,11 @@ export class SourceDB extends WriteableGraph implements Source {
 
   get runtimeIndex(): RuntimeDatabaseIndex | undefined {
     return this.#index
+  }
+
+  /** Complete single-bundle export produced by the latest full reconciliation. */
+  get runtimeExport(): RuntimeDatabaseExport | undefined {
+    return this.#runtimeExport
   }
 
   async resolve<Query extends GraphQuery>(
@@ -117,9 +127,8 @@ export class SourceDB extends WriteableGraph implements Source {
 
   refreshRuntime(store = this.#runtime): void {
     if (!store) return
-    this.#runtime = store
-    this.#index = store.index
-    this.#resolver = new DatabaseResolver(this.config, store)
+    this.#runtimeExport = undefined
+    this.#installRuntime(store)
     this.#dispatchIndex(store.index.entries.map(entry => entry.entryId))
   }
 
@@ -167,6 +176,7 @@ export class SourceDB extends WriteableGraph implements Source {
   }
 
   applyChanges(batch: ChangesBatch): Promise<void> {
+    this.#runtimeExport = undefined
     return this.source.applyChanges(batch)
   }
 
@@ -238,7 +248,8 @@ export class SourceDB extends WriteableGraph implements Source {
   }
 
   async #syncUnlocked(): Promise<string> {
-    await this.#reconcile()
+    const reconciled = await this.#reconcile()
+    if (!reconciled) return this.sha
     let seeded: ChangesBatch | undefined
     while (
       (seeded = await seedSource(
@@ -252,16 +263,17 @@ export class SourceDB extends WriteableGraph implements Source {
     return this.sha
   }
 
-  async #reconcile(knownChanges?: ChangesBatch): Promise<void> {
+  async #reconcile(knownChanges?: ChangesBatch): Promise<boolean> {
     const bundleId = createId()
     const bundleUrl = `alinea:runtime/${bundleId}`
     const runtime = this.#runtime
     const index = this.#index
+    const complete = !(runtime && index?.source)
     const previous = index?.entries
     let artifact
     if (runtime && index?.source) {
-      const tree = await this.source.getTree()
-      if (tree.sha === index.revision) return
+      const tree = await this.source.getTreeIfDifferent(index.revision)
+      if (!tree) return false
       artifact = await exportRuntimeSourceChanges({
         config: this.config,
         previous: index,
@@ -283,6 +295,7 @@ export class SourceDB extends WriteableGraph implements Source {
         bundleUrl
       })
     }
+    this.#runtimeExport = complete ? artifact : undefined
     this.#bundles.set(bundleUrl, new MemoryRangeSource(artifact.bundle))
     if (runtime) runtime.install(artifact.index, this.#rangeSource)
     else
@@ -294,9 +307,15 @@ export class SourceDB extends WriteableGraph implements Source {
     this.#resolver = new DatabaseResolver(this.config, this.#expectRuntime())
     this.#dispatchIndex(
       knownChanges && previous
-        ? changedEntryIds(previous, artifact.index.entries, knownChanges)
+        ? changedEntryIds(
+            this.config,
+            previous,
+            artifact.index.entries,
+            knownChanges
+          )
         : artifact.index.entries.map(entry => entry.entryId)
     )
+    return true
   }
 
   #rangeSource = (url: string) => {
@@ -315,6 +334,12 @@ export class SourceDB extends WriteableGraph implements Source {
     return this.#index
   }
 
+  #installRuntime(store: RuntimeEntryStore): void {
+    this.#runtime = store
+    this.#index = store.index
+    this.#resolver = new DatabaseResolver(this.config, store)
+  }
+
   #dispatchIndex(entryIds: ReadonlyArray<string>): void {
     this.#events.dispatchEvent(
       new IndexEvent({
@@ -327,14 +352,22 @@ export class SourceDB extends WriteableGraph implements Source {
 }
 
 function changedEntryIds(
+  config: Config,
   previous: ReadonlyArray<import('../runtime/Model.js').RuntimeIndexEntry>,
   next: ReadonlyArray<import('../runtime/Model.js').RuntimeIndexEntry>,
   changes: ChangesBatch
 ): Array<string> {
   const paths = new Set(changes.changes.map(change => change.path))
-  return [...previous, ...next].flatMap(entry =>
-    entry.frames?.read && paths.has(entry.frames.read.filePath)
-      ? [entry.entryId]
-      : []
-  )
+  const previousPath = runtimeSourcePathResolver(config, previous)
+  const nextPath = runtimeSourcePathResolver(config, next)
+  return [
+    ...previous.flatMap(entry =>
+      entry.frames?.data && paths.has(previousPath(entry))
+        ? [entry.entryId]
+        : []
+    ),
+    ...next.flatMap(entry =>
+      entry.frames?.data && paths.has(nextPath(entry)) ? [entry.entryId] : []
+    )
+  ]
 }

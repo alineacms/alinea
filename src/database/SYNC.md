@@ -157,13 +157,13 @@ flowchart LR
   api -.->|when ALINEA_CLOUD_URL is set| cloud
 ```
 
-On startup, the dev server opens the last compatible generated index and
+On startup, the dev server opens the last current-shape generated index and
 payload as a checkpoint. It then compares the checkpoint's exact source tree to
 the working tree. An unchanged tree needs no entry reads or normalization;
 changed files become the same in-memory entry overlays used by the production
 handler. Additions, deletions, moves, and status changes are reconciled without
-opening unchanged payloads. Only a missing or config-incompatible checkpoint
-requires a full build. Filesystem fingerprints persisted
+opening unchanged payloads. Only a missing, stale-shape, or config-mismatched
+checkpoint requires a full build. Filesystem fingerprints persisted
 alongside the development checkpoint let this comparison stat unchanged files
 without rereading and hashing their contents.
 

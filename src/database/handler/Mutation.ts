@@ -10,7 +10,10 @@ import {
   type FieldOperation,
   type FieldTransaction
 } from '../replica/Operations.js'
-import type {RuntimeIndexEntry} from '../runtime/Model.js'
+import {
+  runtimeSourcePathResolver,
+  type RuntimeIndexEntry
+} from '../runtime/Model.js'
 
 export interface PreparedFieldMutation {
   mutations: ReadonlyArray<Mutation>
@@ -82,15 +85,17 @@ async function applyPreparedFieldMutation(
 
 /** Loads only the runtime entries addressed by a field transaction. */
 export async function prepareRuntimeFieldMutation(
+  config: Config,
   store: EntryStore,
   cores: ReadonlyArray<RuntimeIndexEntry>,
   transaction: FieldTransaction,
   policy: Policy
 ): Promise<PreparedFieldMutation> {
+  const sourcePath = runtimeSourcePathResolver(config, cores)
   const coreByRecord = new Map<string, RuntimeIndexEntry>()
   for (const core of cores) {
     coreByRecord.set(core.id, core)
-    const filePath = core.frames?.read?.filePath
+    const filePath = core.frames?.data ? sourcePath(core) : undefined
     if (filePath) coreByRecord.set(`payload:${filePath}`, core)
   }
 
@@ -144,3 +149,4 @@ function firstField(pointer: string): string | undefined {
   const [field] = pointer.slice(1).split('/')
   return field?.replaceAll('~1', '/').replaceAll('~0', '~')
 }
+import type {Config} from '#/core/Config.js'

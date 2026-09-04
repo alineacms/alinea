@@ -13,12 +13,10 @@ describe('ReplicaDashboardDB', () => {
       viewId: 'editor',
       recordAccess: {},
       runtime: {
-        version: 1,
         bundleId: 'release-1',
         bundleUrl: '/admin/release/release-1/database.bin',
         revision: 'tree-1',
-        entries: [],
-        children: {}
+        entries: []
       }
     }
     let commandBody: unknown

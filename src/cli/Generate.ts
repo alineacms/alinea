@@ -3,6 +3,7 @@ import {Config} from '#/core/Config.js'
 import {createId} from '#/core/Id.js'
 import {genEffect} from '#/core/util/Async.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
+import {serializeRuntimeDatabaseIndex} from '#/database/runtime/Serialization.js'
 import {basename, join} from '#/core/util/Paths.js'
 import * as fsp from 'node:fs/promises'
 import {createRequire} from 'node:module'
@@ -113,7 +114,8 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   async function writeRelease(db: DevDB, cms: CMS, configHash: string) {
     const artifacts = await buildEntryReleaseArtifacts(cms.config, db.source, {
       releaseId: generated.releaseId,
-      configId: generated.configId
+      configId: generated.configId,
+      runtime: db.runtimeExport
     })
     const publicDir = path.join(rootDir, cms.config.publicDir ?? 'public')
     const payloadDir = path.join(publicDir, artifacts.payloadPath)
@@ -139,7 +141,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       ),
       fsp.writeFile(
         path.join(context.bundleDir, 'runtime-index.js'),
-        `export default ${JSON.stringify(runtimeIndex)}`
+        runtimeIndexModule(runtimeIndex)
       )
     ])
     if (cmd === 'dev')
@@ -228,4 +230,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       }
     }
   }
+}
+
+function runtimeIndexModule(
+  index: import('#/database/runtime/Model.js').RuntimeDatabaseIndex
+): string {
+  const json = JSON.stringify(serializeRuntimeDatabaseIndex(index))
+  return `import {deserializeRuntimeDatabaseIndex as decode} from "alinea/database/runtime/Serialization"\nexport default decode(JSON.parse(${JSON.stringify(json)}))`
 }

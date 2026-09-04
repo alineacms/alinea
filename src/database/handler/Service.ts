@@ -122,6 +122,7 @@ export class ReplicaService {
 
   prepareFieldMutation(transaction: FieldTransaction, policy: Policy) {
     return prepareRuntimeFieldMutation(
+      this.#config,
       this.#store,
       this.#runtime.entries,
       transaction,

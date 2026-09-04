@@ -3,10 +3,12 @@ import {parseRecord} from '#/core/EntryRecord.js'
 import type {ChangesBatch} from '#/core/source/Change.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {Source} from '#/core/source/Source.js'
-import {ReadonlyTree} from '#/core/source/Tree.js'
+import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {base64url} from '#/core/util/Encoding.js'
+import {dirname, join} from '#/core/util/Paths.js'
 import type {EntryCoreRecord, EntrySearchRecord} from '../entry/Model.js'
+import {readAccessClass} from '../entry/Release.js'
 import type {EntryLinkReference, EntryStore} from '../entry/Store.js'
 import {
   BundleFrameLoader,
@@ -24,6 +26,12 @@ import type {
   RuntimeReferenceFrame,
   RuntimeSearchFrame
 } from './Model.js'
+import {
+  decodeRuntimeReferenceFrame,
+  decodeRuntimeSearchFrame,
+  decodeRuntimeSourceDataFrame,
+  decodeRuntimeSourceTree
+} from './FrameSerialization.js'
 
 export interface RuntimeEntryStoreOptions {
   index: RuntimeDatabaseIndex
@@ -38,11 +46,14 @@ export class RuntimeEntryStore implements EntryStore, Source {
   #loaders = new Map<string, BundleFrameLoader>()
   #pendingBytes = new Map<string, Promise<Uint8Array>>()
   #entryData = new Map<string, Promise<RuntimeDataFrame>>()
+  #entries = new WeakMap<EntryCoreRecord, Promise<Entry | undefined>>()
   #decoded = new Map<string, Promise<unknown>>()
   #keys = new Map<string, Uint8Array>()
   #incoming?: Promise<ReadonlyMap<string, ReadonlyArray<EntryLinkReference>>>
   #decoder = new TextDecoder()
   #tree?: ReadonlyTree
+  #sourceEntries = new Map<string, number>()
+  #sourceTreeLoading?: Promise<ReadonlyTree>
   #sourceOverlay = new Map<string, Uint8Array>()
 
   constructor(options: RuntimeEntryStoreOptions) {
@@ -66,7 +77,11 @@ export class RuntimeEntryStore implements EntryStore, Source {
     this.#index = index
     this.#remoteSource = remoteSource ?? this.#remoteSource
     this.#incoming = undefined
-    if (index.source) this.#tree = undefined
+    if (index.source) {
+      this.#tree = undefined
+      this.#sourceEntries.clear()
+      this.#sourceTreeLoading = undefined
+    }
     const liveData = new Set<string>()
     const liveDecoded = new Set<string>()
     const liveKeys = new Set<string>()
@@ -84,6 +99,7 @@ export class RuntimeEntryStore implements EntryStore, Source {
     }
     for (const source of Object.values(index.source?.blobs ?? {}))
       liveKeys.add(source.decodeKey)
+    if (index.source?.treeFrame) liveKeys.add(index.source.treeFrame.decodeKey)
     for (const key of this.#entryData.keys())
       if (!liveData.has(key)) this.#entryData.delete(key)
     for (const key of this.#decoded.keys())
@@ -98,15 +114,27 @@ export class RuntimeEntryStore implements EntryStore, Source {
   }
 
   async getTree(): Promise<ReadonlyTree> {
-    if (!this.#tree) {
+    if (this.#tree) return this.#tree
+    this.#sourceTreeLoading ??= (async () => {
       const source = this.#index.source
       if (!source) throw new Error('Runtime index has no source tree')
-      this.#tree = new ReadonlyTree(source.tree)
-    }
-    return this.#tree
+      const bundleId = source.treeFrame.frame.bundleId ?? this.#index.bundleId
+      const contents = await this.#loadBytes({
+        descriptor: source.treeFrame.frame,
+        decodeKey: source.treeFrame.decodeKey,
+        id: 'source:tree',
+        accessClassId: `source:${bundleId}`
+      })
+      const decoded = decodeRuntimeSourceTree(contents)
+      this.#tree = decoded.tree
+      this.#sourceEntries = new Map(decoded.entries)
+      return this.#tree
+    })()
+    return this.#sourceTreeLoading
   }
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
+    if (this.revision === sha) return undefined
     const tree = await this.getTree()
     return tree.sha === sha ? undefined : tree
   }
@@ -117,25 +145,62 @@ export class RuntimeEntryStore implements EntryStore, Source {
     const source = this.#index.source
     if (!source) throw new Error('Runtime index has no source blobs')
     const loaded = new Map<string, Uint8Array>()
-    const requested: Array<{sha: string; frame: RuntimeFrameRequest}> = []
-    for (const sha of shas) {
+    const requested: Array<{
+      sha: string
+      frame: RuntimeFrameRequest
+      sourceData: boolean
+    }> = []
+    const pending = new Set(shas)
+    for (const sha of pending) {
       const overlay = this.#sourceOverlay.get(sha)
-      if (overlay) {
-        loaded.set(sha, overlay)
+      if (!overlay) continue
+      loaded.set(sha, overlay)
+      pending.delete(sha)
+    }
+    if (pending.size > 0) await this.getTree()
+    const entries = new Map<string, RuntimeIndexEntry>()
+    for (const sha of pending) {
+      const position = this.#sourceEntries.get(sha)
+      const entry =
+        position === undefined ? undefined : this.#index.entries[position]
+      if (!entry) continue
+      entries.set(sha, entry)
+      pending.delete(sha)
+    }
+    for (const sha of shas) {
+      if (loaded.has(sha)) continue
+      const entry = entries.get(sha)
+      if (entry?.frames?.data) {
+        requested.push({
+          sha,
+          frame: entryFrame(entry, 'data'),
+          sourceData: true
+        })
         continue
       }
       const blob = source.blobs[sha]
       assert(blob, `Source blob not found: ${sha}`)
       requested.push({
         sha,
-        frame: {descriptor: blob.frame, decodeKey: blob.decodeKey}
+        sourceData: false,
+        frame: {
+          descriptor: blob.frame,
+          decodeKey: blob.decodeKey,
+          id: `source:${sha}`,
+          accessClassId: `source:${blob.frame.bundleId ?? this.#index.bundleId}`
+        }
       })
     }
     const contents = await this.#loadBytesMany(
       requested.map(item => item.frame)
     )
     for (const [index, item] of requested.entries())
-      loaded.set(item.sha, contents[index])
+      loaded.set(
+        item.sha,
+        item.sourceData
+          ? decodeRuntimeSourceDataFrame(contents[index]).contents
+          : contents[index]
+      )
     for (const sha of shas) yield [sha, loaded.get(sha)!]
   }
 
@@ -158,19 +223,9 @@ export class RuntimeEntryStore implements EntryStore, Source {
     core: EntryCoreRecord,
     signal?: AbortSignal
   ): Promise<Entry | undefined> {
-    const entry = core as RuntimeIndexEntry
-    const data = entry.frames?.data
-    if (!data) return Promise.resolve(exploreEntry(entry))
-    const cacheKey = frameCacheKey(data)
-    let pending = this.#entryData.get(cacheKey)
-    if (!pending) {
-      pending = this.#loadBytes(data, entry.frames!.decodeKey, signal).then(
-        contents => this.#dataFromContents(entry, contents)
-      )
-      this.#entryData.set(cacheKey, pending)
-      void pending.catch(() => this.#entryData.delete(cacheKey))
-    }
-    return pending.then(frame => readEntry(entry, frame))
+    const cached = this.#entries.get(core)
+    if (cached) return cached
+    return this.loadMany([core], signal).then(entries => entries[0])
   }
 
   async loadMany(
@@ -183,17 +238,26 @@ export class RuntimeEntryStore implements EntryStore, Source {
     const positions: Array<number> = []
     for (const [position, core] of cores.entries()) {
       const entry = core as RuntimeIndexEntry
+      const loaded = this.#entries.get(core)
+      if (loaded) {
+        values[position] = loaded
+        continue
+      }
       const descriptor = entry.frames?.data
       if (!descriptor) {
-        values[position] = exploreEntry(entry)
+        const pending = Promise.resolve(exploreEntry(entry))
+        this.#entries.set(core, pending)
+        values[position] = pending
         continue
       }
       const cached = this.#entryData.get(frameCacheKey(descriptor))
       if (cached) {
-        values[position] = cached.then(frame => readEntry(entry, frame))
+        const pending = cached.then(frame => readEntry(entry, frame))
+        this.#cacheEntry(core, pending)
+        values[position] = pending
         continue
       }
-      requests.push({descriptor, decodeKey: entry.frames!.decodeKey})
+      requests.push(entryFrame(entry, 'data'))
       positions.push(position)
     }
     const frames = this.#loadBytesMany(requests, signal)
@@ -207,9 +271,19 @@ export class RuntimeEntryStore implements EntryStore, Source {
       void pending.catch(() =>
         this.#entryData.delete(frameCacheKey(descriptor))
       )
-      values[position] = pending.then(frame => readEntry(entry, frame))
+      const loaded = pending.then(frame => readEntry(entry, frame))
+      this.#cacheEntry(entry, loaded)
+      values[position] = loaded
     }
     return Promise.all(values.map(value => Promise.resolve(value)))
+  }
+
+  #cacheEntry(
+    core: EntryCoreRecord,
+    pending: Promise<Entry | undefined>
+  ): void {
+    this.#entries.set(core, pending)
+    void pending.catch(() => this.#entries.delete(core))
   }
 
   async search(
@@ -221,9 +295,9 @@ export class RuntimeEntryStore implements EntryStore, Source {
     if (audience === 'explore') return exploreSearch(entry)
     const descriptor = entry.frames?.search
     if (!descriptor) return exploreSearch(entry)
-    const frame = await this.#frame<RuntimeSearchFrame>(
-      descriptor,
-      entry.frames!.decodeKey,
+    const frame = await this.#frame(
+      entryFrame(entry, 'search'),
+      decodeRuntimeSearchFrame,
       signal
     )
     return {
@@ -253,10 +327,14 @@ export class RuntimeEntryStore implements EntryStore, Source {
         values[position] = exploreSearch(entry)
         continue
       }
-      requests.push({descriptor, decodeKey: entry.frames!.decodeKey})
+      requests.push(entryFrame(entry, 'search'))
       positions.push(position)
     }
-    const frames = await this.#frames<RuntimeSearchFrame>(requests, signal)
+    const frames = await this.#frames(
+      requests,
+      decodeRuntimeSearchFrame,
+      signal
+    )
     for (const [index, frame] of frames.entries()) {
       const position = positions[index]
       const core = cores[position]
@@ -296,11 +374,11 @@ export class RuntimeEntryStore implements EntryStore, Source {
     entries: ReadonlyArray<RuntimeIndexEntry>,
     signal?: AbortSignal
   ): Promise<Array<ReadonlyArray<EntryLinkReference>>> {
-    const frames = await this.#frames<RuntimeReferenceFrame>(
+    const frames = await this.#frames(
       entries.map(entry => ({
-        descriptor: entry.frames!.references!,
-        decodeKey: entry.frames!.decodeKey
+        ...entryFrame(entry, 'references')
       })),
+      decodeRuntimeReferenceFrame,
       signal
     )
     return frames.map((frame, index) =>
@@ -343,14 +421,14 @@ export class RuntimeEntryStore implements EntryStore, Source {
   }
 
   #frame<Value>(
-    serialized: SerializedFrameDescriptor,
-    decodeKey: string,
+    request: RuntimeFrameRequest,
+    decode: (contents: Uint8Array) => Value,
     signal?: AbortSignal
   ): Promise<Value> {
-    const cacheKey = `${serialized.id}\0${serialized.cipherHash}`
+    const cacheKey = frameCacheKey(request.descriptor)
     let pending = this.#decoded.get(cacheKey) as Promise<Value> | undefined
     if (!pending) {
-      pending = this.#decode<Value>(serialized, decodeKey, signal)
+      pending = this.#decode(request, decode, signal)
       this.#decoded.set(cacheKey, pending)
       void pending.catch(() => this.#decoded.delete(cacheKey))
     }
@@ -359,6 +437,7 @@ export class RuntimeEntryStore implements EntryStore, Source {
 
   async #frames<Value>(
     requests: ReadonlyArray<RuntimeFrameRequest>,
+    decode: (contents: Uint8Array) => Value,
     signal?: AbortSignal
   ): Promise<Array<Value>> {
     const values = new Array<Promise<Value> | Value>(requests.length)
@@ -377,7 +456,7 @@ export class RuntimeEntryStore implements EntryStore, Source {
     const contents = await this.#loadBytesMany(missing, signal)
     for (const [index, bytes] of contents.entries()) {
       const position = positions[index]
-      const value = JSON.parse(this.#decoder.decode(bytes)) as Value
+      const value = decode(bytes)
       values[position] = value
       this.#decoded.set(
         frameCacheKey(requests[position].descriptor),
@@ -399,7 +478,9 @@ export class RuntimeEntryStore implements EntryStore, Source {
     for (const [position, request] of requests.entries()) {
       const {loader, frame} = this.#prepareFrame(
         request.descriptor,
-        request.decodeKey
+        request.decodeKey,
+        request.id,
+        request.accessClassId
       )
       const group = groups.get(loader) ?? []
       group.push({position, frame})
@@ -422,39 +503,41 @@ export class RuntimeEntryStore implements EntryStore, Source {
   }
 
   async #decode<Value>(
-    serialized: SerializedFrameDescriptor,
-    decodeKey: string,
+    request: RuntimeFrameRequest,
+    decode: (contents: Uint8Array) => Value,
     signal?: AbortSignal
   ): Promise<Value> {
-    const contents = await this.#loadBytes(serialized, decodeKey, signal)
-    return JSON.parse(this.#decoder.decode(contents)) as Value
+    const contents = await this.#loadBytes(request, signal)
+    return decode(contents)
   }
 
   #dataFromContents(
     entry: RuntimeIndexEntry,
     contents: Uint8Array
   ): RuntimeDataFrame {
-    if (entry.frames?.dataFormat === 'source') {
-      const read = entry.frames.read
-      assert(read, `Entry "${entry.id}" is missing read metadata`)
-      const {data} = parseRecord(JSON.parse(this.#decoder.decode(contents)))
-      return {
-        ...read,
-        data: {path: entry.path, ...read.dataDefaults, ...data}
-      }
+    const source = decodeRuntimeSourceDataFrame(contents)
+    const {data} = parseRecord(
+      JSON.parse(this.#decoder.decode(source.contents))
+    )
+    const parentDir = runtimeParentDirFromPath(source.filePath)
+    return {
+      filePath: source.filePath,
+      parentDir,
+      childrenDir: runtimeChildrenDirFromPath(parentDir, entry.path),
+      rowHash: source.fileHash,
+      fileHash: source.fileHash,
+      data: {path: entry.path, ...source.dataDefaults, ...data}
     }
-    return JSON.parse(this.#decoder.decode(contents)) as RuntimeDataFrame
   }
 
   #loadBytes(
-    serialized: SerializedFrameDescriptor,
-    decodeKey: string,
+    request: RuntimeFrameRequest,
     signal?: AbortSignal
   ): Promise<Uint8Array> {
-    const cacheKey = frameCacheKey(serialized)
+    const cacheKey = frameCacheKey(request.descriptor)
     let pending = this.#pendingBytes.get(cacheKey)
     if (!pending) {
-      pending = this.#readBytes(serialized, decodeKey, signal)
+      pending = this.#readBytes(request, signal)
       this.#pendingBytes.set(cacheKey, pending)
       void pending.then(
         () => this.#pendingBytes.delete(cacheKey),
@@ -465,19 +548,25 @@ export class RuntimeEntryStore implements EntryStore, Source {
   }
 
   async #readBytes(
-    serialized: SerializedFrameDescriptor,
-    decodeKey: string,
+    request: RuntimeFrameRequest,
     signal?: AbortSignal
   ): Promise<Uint8Array> {
-    const {loader, frame} = this.#prepareFrame(serialized, decodeKey)
+    const {loader, frame} = this.#prepareFrame(
+      request.descriptor,
+      request.decodeKey,
+      request.id,
+      request.accessClassId
+    )
     return loader.load(frame, signal)
   }
 
   #prepareFrame(
     serialized: SerializedFrameDescriptor,
-    decodeKey: string
+    decodeKey: string,
+    id: string,
+    accessClassId: string
   ): {loader: BundleFrameLoader; frame: FrameDescriptor} {
-    const frame = deserializeFrame(serialized)
+    const frame = deserializeFrame(serialized, id, accessClassId)
     const bundleId = frame.bundleId ?? this.#index.bundleId
     const bundleUrl = frame.bundleUrl ?? this.#index.bundleUrl
     const loaderKey = `${bundleId}\0${bundleUrl}`
@@ -500,13 +589,38 @@ export class RuntimeEntryStore implements EntryStore, Source {
   }
 }
 
+function runtimeParentDirFromPath(filePath: string): string {
+  return dirname(filePath)
+}
+
+function runtimeChildrenDirFromPath(parentDir: string, path: string): string {
+  return join(parentDir, path)
+}
+
 interface RuntimeFrameRequest {
   descriptor: SerializedFrameDescriptor
   decodeKey: string
+  id: string
+  accessClassId: string
 }
 
 function frameCacheKey(frame: SerializedFrameDescriptor): string {
-  return `${frame.id}\0${frame.cipherHash}`
+  return `${frame.bundleId ?? ''}\0${frame.nonce}`
+}
+
+function entryFrame(
+  entry: RuntimeIndexEntry,
+  kind: 'data' | 'search' | 'references'
+): RuntimeFrameRequest {
+  const frames = entry.frames
+  const descriptor = frames?.[kind]
+  assert(frames && descriptor, `Entry "${entry.id}" has no ${kind} frame`)
+  return {
+    descriptor,
+    decodeKey: frames.decodeKey,
+    id: `${kind}:${entry.id}`,
+    accessClassId: readAccessClass(entry.id)
+  }
 }
 
 function exploreSearch(entry: RuntimeIndexEntry): EntrySearchRecord {

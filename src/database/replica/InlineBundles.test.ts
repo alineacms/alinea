@@ -9,12 +9,10 @@ test('serves an inline live bundle without calling the range fallback', async ()
     viewId: 'view',
     recordAccess: {},
     runtime: {
-      version: 1,
       revision: 'tree',
       bundleId: 'base',
       bundleUrl: '/base.bundle',
-      entries: [],
-      children: {}
+      entries: []
     },
     inlineBundles: {overlay: base64.stringify(contents)}
   }

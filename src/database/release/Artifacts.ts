@@ -9,6 +9,7 @@ import {
 export interface BuildEntryReleaseOptions {
   releaseId: string
   configId: string
+  runtime?: RuntimeDatabaseExport
 }
 
 export interface EntryReleaseArtifacts {
@@ -29,12 +30,21 @@ export async function buildEntryReleaseArtifacts(
   const payloadUrl = `/${payloadPath}/payload.bundle`
   const configPath = `${adminPath}/config/${options.configId}`
   const configUrl = `/${configPath}/client-config.js`
-  const runtime = await exportRuntimeDatabase({
-    config,
-    bundleId: options.releaseId,
-    bundleUrl: payloadUrl,
-    source
-  })
+  const generated =
+    options.runtime ??
+    (await exportRuntimeDatabase({
+      config,
+      bundleId: options.releaseId,
+      bundleUrl: payloadUrl,
+      source
+    }))
+  const runtime =
+    generated.index.bundleUrl === payloadUrl
+      ? generated
+      : {
+          ...generated,
+          index: {...generated.index, bundleUrl: payloadUrl}
+        }
   return {
     runtime,
     payloadPath,

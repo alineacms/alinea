@@ -9,12 +9,10 @@ describe('HttpReplicaTransport', () => {
       viewId: 'editor',
       recordAccess: {},
       runtime: {
-        version: 1,
         bundleId: 'release-1',
         bundleUrl: '/secret/database.bin',
         revision: 'tree-1',
-        entries: [],
-        children: {}
+        entries: []
       }
     }
     const actions: Array<string | null> = []

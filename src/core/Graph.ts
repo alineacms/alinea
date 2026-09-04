@@ -167,6 +167,8 @@ export type Status =
   | 'all'
 
 export declare class QuerySettings {
+  /** Include non-queryable physical versions. Internal database use only. */
+  includeHiddenVersions?: boolean
   /** Find a single entry or null */
   first?: true
   /** Find a single entry */

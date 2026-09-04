@@ -18,7 +18,6 @@ export interface FrameDescriptor {
   offset: number
   length: number
   nonce: Uint8Array
-  cipherHash: ContentHash
   compression: FrameCompression
 }
 

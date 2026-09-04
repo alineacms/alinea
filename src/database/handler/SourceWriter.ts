@@ -5,10 +5,10 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {Policy} from '#/core/Role.js'
 import type {Source} from '#/core/source/Source.js'
 import type {EntryStore} from '../entry/Store.js'
+import {DatabaseResolver} from '../query/Resolver.js'
 import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
-import {loadTransactionPayloads} from '../runtime/TransactionPayloads.js'
 
-/** Builds source commits from the runtime index with mutation-scoped payloads. */
+/** Builds source commits through the same lazy graph used for reads. */
 export async function requestRuntimeSourceMutations(
   config: Config,
   source: Source,
@@ -18,16 +18,14 @@ export async function requestRuntimeSourceMutations(
   policy?: Policy
 ): Promise<CommitRequest> {
   const tree = await source.getTree()
-  const loaded = await loadTransactionPayloads(index, store, mutations)
   const transaction = new EntryTransaction(
     config,
     index.revision,
-    index.entries,
-    loaded,
+    new DatabaseResolver(config, store),
     source,
     tree,
     policy
   )
-  transaction.apply([...mutations])
+  await transaction.apply([...mutations])
   return transaction.toRequest()
 }

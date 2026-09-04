@@ -1,6 +1,7 @@
 import {Config, type Config as ConfigDefinition} from '#/core/Config.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {parseRecord} from '#/core/EntryRecord.js'
+import {aliasUrlsFromData} from '#/core/db/EntryAliases.js'
 import {getRoot} from '#/core/Internal.js'
 import {Page} from '#/core/Page.js'
 import {Schema} from '#/core/Schema.js'
@@ -427,7 +428,8 @@ function coreRecord(
     parentId: node.parent?.entryId ?? null,
     parents: node.parents,
     path: version.path,
-    url: language.url
+    url: language.url,
+    urlAliases: aliasUrlsFromData(version.data)
   }
 }
 

@@ -1,5 +1,11 @@
 import {expect, test} from 'bun:test'
+import {ReadonlyTree} from '#/core/source/Tree.js'
+import {base64url} from '#/core/util/Encoding.js'
+import {encryptFrame, packEncryptedFrames} from '#/database/replica/Bundle.js'
+import {serializeFrame} from '#/database/replica/Serialization.js'
+import {encodeRuntimeSourceTree} from '#/database/runtime/FrameSerialization.js'
 import type {RuntimeDatabaseIndex} from '#/database/runtime/Model.js'
+import {serializeRuntimeDatabaseIndex} from '#/database/runtime/Serialization.js'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -22,14 +28,29 @@ test('loads only a compatible development checkpoint with an existing payload', 
     bundleDir,
     fix: false
   }
+  const tree = ReadonlyTree.EMPTY
+  const key = new Uint8Array(32).fill(7)
+  const encrypted = await encryptFrame({
+    bundleId: 'release',
+    id: 'source:tree',
+    accessClassId: 'source:release',
+    key,
+    contents: encodeRuntimeSourceTree(tree, new Map()),
+    compression: 'none'
+  })
+  const payload = packEncryptedFrames([encrypted])
   const index: RuntimeDatabaseIndex = {
-    version: 1,
-    revision: 'tree',
+    revision: tree.sha,
     bundleId: 'release',
     bundleUrl: '/admin/release/payload.bundle',
     entries: [],
-    children: {},
-    source: {tree: {sha: 'tree', entries: []}, blobs: {}},
+    source: {
+      treeFrame: {
+        decodeKey: base64url.stringify(key, {pad: false}),
+        frame: serializeFrame(payload.frames[0])
+      },
+      blobs: {}
+    },
     development: {configHash: 'config', files: {}}
   }
   try {
@@ -37,13 +58,17 @@ test('loads only a compatible development checkpoint with an existing payload', 
     await fs.mkdir(path.dirname(payloadFile), {recursive: true})
     await fs.writeFile(
       path.join(bundleDir, 'runtime-index.js'),
-      `export default ${JSON.stringify(index)}`
+      `import {deserializeRuntimeDatabaseIndex as decode} from "alinea/database/runtime/Serialization"\nexport default decode(JSON.parse(${JSON.stringify(JSON.stringify(serializeRuntimeDatabaseIndex(index)))}))`
     )
-    await fs.writeFile(payloadFile, '')
+    await fs.writeFile(payloadFile, payload.contents)
 
     expect(
       await loadDevCheckpoint(context, {publicDir: 'public'} as never, 'config')
-    ).toEqual({index, payloadFile})
+    ).toEqual({
+      index,
+      payloadFile,
+      sourceTree: expect.objectContaining({sha: tree.sha, entries: []})
+    })
     expect(
       await loadDevCheckpoint(
         context,
