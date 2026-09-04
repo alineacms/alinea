@@ -496,7 +496,7 @@ export function ExplorerTable({
     page.searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
-    hasSelection && (compact || explorer.showSelectionControls)
+    hasSelection && !compact && explorer.showSelectionControls
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => createExplorerTableColumns({compact, showSelectionControls}),
     [compact, showSelectionControls]

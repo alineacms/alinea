@@ -16,13 +16,17 @@ export function NumberFieldView({field}: NumberFieldViewProps) {
       errorMessage={error}
       isDisabled={options.readOnly}
       isRequired={options.required}
-      label={options.label}
+      aria-label={options.inline ? options.label : undefined}
+      label={options.inline ? undefined : options.label}
+      placeholder={
+        options.placeholder ?? (options.inline ? options.label : undefined)
+      }
       shared={options.shared}
       maxValue={options.maxValue}
       minValue={options.minValue}
       onChange={next => setValue(Number.isNaN(next) ? null : next)}
       step={options.step || 1}
-      value={typeof value === 'number' ? value : 0}
+      value={typeof value === 'number' ? value : Number.NaN}
     />
   )
 }

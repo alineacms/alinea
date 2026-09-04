@@ -1,4 +1,4 @@
-import {Button, Dialog, Popover} from '#/components.js'
+import {Button, Dialog, Popover, Tooltip} from '#/components.js'
 import {
   createExplorerAtoms,
   type DashboardEntry,
@@ -20,7 +20,7 @@ import {
   type RefObject
 } from 'react'
 import type {Selection} from 'react-aria-components'
-import {IcRoundOpenInNew} from '../icons.js'
+import {IcRoundOpenInFull} from '../icons.js'
 import {ExplorerBody, ExplorerHeader, ExplorerSearch} from './Explorer.js'
 import {
   ExplorerModal,
@@ -280,13 +280,15 @@ function LinkPickerCompact({
           onEntryAction={commitEntry}
           page={page}
         />
-        <Button
-          aria-label="Expand entry picker"
-          appearance="plain"
-          icon={IcRoundOpenInNew}
-          size="icon-nav"
-          onPress={openExpanded}
-        />
+        <Tooltip tooltip="Expand entry picker">
+          <Button
+            aria-label="Expand entry picker"
+            appearance="plain"
+            icon={IcRoundOpenInFull}
+            size="icon-nav"
+            onPress={openExpanded}
+          />
+        </Tooltip>
       </div>
       <ExplorerBody
         compactTable

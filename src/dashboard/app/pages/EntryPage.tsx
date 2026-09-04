@@ -28,7 +28,9 @@ import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
   IcOutlineViewList,
-  IcRoundEdit
+  IcRoundEdit,
+  IcRoundCheck,
+  IcRoundSave
 } from '../../icons.js'
 import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
@@ -403,10 +405,14 @@ function EntryEditorContent({
               This entry has unsaved changes
             </DashboardModalContent>
             <DashboardModalFooter>
-              <Button onPress={discardAndConfirm} intent="secondary">
+              <Button onPress={discardAndConfirm} appearance="plain">
                 Discard my changes
               </Button>
-              <Button onPress={saveAndConfirm} intent="primary">
+              <Button
+                onPress={saveAndConfirm}
+                intent="primary"
+                icon={mediaDraftsDisabled ? IcRoundCheck : IcRoundSave}
+              >
                 {mediaDraftsDisabled ? 'Publish' : 'Save as draft'}
               </Button>
             </DashboardModalFooter>

@@ -56,10 +56,13 @@ export function SelectFieldView<
       isDisabled={options.readOnly}
       isRequired={options.required}
       items={items}
-      label={options.label}
+      aria-label={options.inline ? options.label : undefined}
+      label={options.inline ? undefined : options.label}
       shared={options.shared}
       onSelectionChange={handleSelectionChange}
-      placeholder={options.placeholder}
+      placeholder={
+        options.placeholder ?? (options.inline ? options.label : undefined)
+      }
       selectedKey={value}
     >
       {item => <SelectItem id={item.id}>{item.label}</SelectItem>}
@@ -110,23 +113,27 @@ export function MultipleSelectFieldView<KeyType extends string>({
       isDisabled={options.readOnly}
       isRequired={options.required}
       items={items}
-      label={options.label}
+      aria-label={options.inline ? options.label : undefined}
+      label={options.inline ? undefined : options.label}
       shared={options.shared}
       onItemCleared={handleItemCleared}
       onItemInserted={handleItemInserted}
-      placeholder={options.placeholder}
+      placeholder={
+        options.placeholder ?? (options.inline ? options.label : undefined)
+      }
       selectedKeys={value}
     />
   )
 }
 
 interface SelectFieldMultipleViewProps<KeyType extends string> {
+  'aria-label'?: string
   description?: ReactNode
   errorMessage?: string
   isDisabled?: boolean
   isRequired?: boolean
   items: Array<SelectItemData<KeyType>>
-  label: ReactNode
+  label?: ReactNode
   shared?: boolean
   onItemCleared: (key: Key) => void
   onItemInserted: (key: Key) => void

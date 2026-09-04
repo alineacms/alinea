@@ -1,3 +1,7 @@
+.LinkFieldView-inputHeader {
+  min-height: calc(1.5 * var(--alinea-font-size-base) + 16px);
+}
+
 .LinkFieldView-label {
   align-self: stretch;
   display: inline-flex;

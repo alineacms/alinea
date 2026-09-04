@@ -1378,7 +1378,11 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
   return (
     <>
       <ListRow aria-label="Link item 1" first role="listitem">
-        <ListRowHeader first hasFold={false}>
+        <ListRowHeader
+          first
+          hasFold={false}
+          className={styles.LinkFieldView.inputHeader()}
+        >
           {options.readOnly ? (
             rowContent
           ) : (
@@ -1719,7 +1723,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
         />
       )}
       {isEmpty && !readOnly && (
-        <ListCreateRow empty>
+        <ListCreateRow empty className={styles.LinkFieldView.inputHeader()}>
           <SingleLinkCreateActions field={field} />
         </ListCreateRow>
       )}
@@ -1729,6 +1733,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
     <Label
       description={options.help}
       label={options.inline ? undefined : options.label}
+      isRequired={options.required}
       shared={options.shared}
     >
       {content}

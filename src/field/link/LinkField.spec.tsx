@@ -161,10 +161,11 @@ test('opens a compact entry picker and selects immediately', async ({
     0
   )
   await expect(picker.getByRole('button', {name: 'Select'})).toHaveCount(0)
+  await expect(picker.getByRole('checkbox')).toHaveCount(0)
 
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home.locator('[role="gridcell"] [role="gridcell"]')).toHaveCount(
-    2
+    1
   )
   await expect
     .poll(() =>

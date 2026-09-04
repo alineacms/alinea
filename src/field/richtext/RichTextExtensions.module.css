@@ -79,7 +79,7 @@
   cursor: text;
   color: inherit;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--alinea-danger) 40%, transparent);
+  text-decoration-color: currentColor;
   text-underline-offset: 0.3em;
   overflow-wrap: break-word;
   word-wrap: break-word;

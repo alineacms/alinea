@@ -62,6 +62,8 @@
       display: flex;
       flex-direction: column;
       border-left: 1px solid var(--alinea-border);
+      border-radius: 0 7px 7px 0;
+      overflow: hidden;
 
       .NumberField-button {
         flex-grow: 1;
@@ -78,10 +80,10 @@
         cursor: pointer;
 
         &[data-slot='increment'] {
-          border-top-right-radius: 4px;
+          border-top-right-radius: 7px;
         }
         &[data-slot='decrement'] {
-          border-bottom-right-radius: 4px;
+          border-bottom-right-radius: 7px;
         }
 
         &:hover {

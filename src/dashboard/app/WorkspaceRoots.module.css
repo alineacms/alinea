@@ -49,6 +49,10 @@
   width: 100%;
 }
 
+.WorkspaceRoots-rootButton[data-hovered] {
+  background: var(--alinea-button-hovered);
+}
+
 .WorkspaceRoots-profile-popover {
   min-width: 260px;
   padding: 0;

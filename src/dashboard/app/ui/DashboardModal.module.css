@@ -65,7 +65,7 @@
 .DashboardModalDialog {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   overflow: visible;
   height: 100%;
   padding: 0;
@@ -98,7 +98,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 8px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--alinea-border);
 }
 
 .DashboardModalCloseButton {
@@ -111,7 +112,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--alinea-border);
 }
 
 .DashboardModalContent {
