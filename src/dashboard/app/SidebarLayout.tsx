@@ -1,7 +1,7 @@
 import {styler} from '@alinea/styler'
 import {Allotment, LayoutPriority, type AllotmentHandle} from 'allotment'
 import {useAtom, useAtomValue} from 'jotai'
-import {useLayoutEffect, useRef, type ReactNode} from 'react'
+import {useRef, type ReactNode} from 'react'
 import {
   dashboardMobileAtom,
   entrySidebarWidthAtom,
@@ -30,25 +30,7 @@ export function SidebarLayout({
   )
   const container = useRef<HTMLDivElement>(null)
   const allotment = useRef<AllotmentHandle>(null)
-  const ready = useRef(false)
   const sidebarVisible = visible && (side === 'right' || !isMobile)
-
-  useLayoutEffect(() => {
-    const element = container.current
-    if (!element || isMobile || !visible) return
-    function restoreWidth() {
-      if (!element || !ready.current) return
-      const remaining = element.clientWidth - width
-      allotment.current?.resize(
-        side === 'left' ? [width, remaining] : [remaining, width]
-      )
-    }
-    // Restore the requested width when returning from mobile or when a
-    // previously constrained container has room for the sidebar again.
-    const observer = new ResizeObserver(restoreWidth)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [isMobile, side, visible, width])
 
   function saveWidth(sizes: number[]) {
     const size = sizes[side === 'left' ? 0 : 1]
@@ -82,9 +64,6 @@ export function SidebarLayout({
       <Allotment
         ref={allotment}
         proportionalLayout={false}
-        onChange={sizes => {
-          ready.current = sizes.length === 2
-        }}
         onDragEnd={saveWidth}
         onReset={resetWidth}
       >
