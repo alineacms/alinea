@@ -5,7 +5,6 @@ export enum HandleAction {
   Resolve = 'resolve',
   ReplicaBootstrap = 'replicaBootstrap',
   ReplicaState = 'replicaState',
-  ReplicaObject = 'replicaObject',
   ReplicaMutate = 'replicaMutate',
   ReplicaCommand = 'replicaCommand',
   ReplicaBundle = 'replicaBundle',

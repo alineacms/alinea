@@ -1,17 +1,9 @@
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {Entry} from '#/core/Entry.js'
 import type {Policy, Resource} from '#/core/Role.js'
-import type {DatabaseSnapshot} from '../Database.js'
 import {entryResource} from '../entry/Access.js'
 import type {EntryStore} from '../entry/Store.js'
-import {
-  type AlineaDatabaseRecord,
-  type EntryCoreRecord,
-  type EntryPayloadRecord,
-  isEntryCoreRecord,
-  isEntryPayloadRecord,
-  isEntryReadRecord
-} from '../entry/Model.js'
+import {type EntryCoreRecord, type EntryPayloadRecord} from '../entry/Model.js'
 import {
   applyFieldOperations,
   type FieldConflict,
@@ -23,45 +15,6 @@ import type {RuntimeIndexEntry} from '../runtime/Model.js'
 export interface PreparedFieldMutation {
   mutations: ReadonlyArray<Mutation>
   conflicts: ReadonlyArray<FieldConflict>
-}
-
-/** Validates field hashes and translates accepted paths to existing cloud writes. */
-export async function prepareFieldMutation(
-  snapshot: DatabaseSnapshot<AlineaDatabaseRecord>,
-  transaction: FieldTransaction,
-  policy: Policy
-): Promise<PreparedFieldMutation> {
-  const cores = new Map<string, EntryCoreRecord>()
-  const payloads = new Map<string, EntryPayloadRecord>()
-  const payloadByVersion = new Map<string, string>()
-  for (const record of snapshot.records()) {
-    if (isEntryCoreRecord(record)) cores.set(record.id, record)
-    else if (isEntryPayloadRecord(record)) payloads.set(record.id, record)
-    else if (isEntryReadRecord(record))
-      payloadByVersion.set(record.entryVersionId, record.payloadId)
-  }
-  const translated: Array<FieldOperation> = []
-  const originalRecordIds = new Map<string, string>()
-  for (const operation of transaction.operations) {
-    const payloadId = isEntryCoreRecord(snapshot.get(operation.recordId))
-      ? payloadByVersion.get(operation.recordId)
-      : operation.recordId
-    if (!payloadId) {
-      translated.push(operation)
-      continue
-    }
-    translated.push({...operation, recordId: payloadId})
-    originalRecordIds.set(payloadId, operation.recordId)
-  }
-  return applyPreparedFieldMutation(
-    [...cores.values()],
-    payloads,
-    payloadByVersion,
-    translated,
-    originalRecordIds,
-    transaction,
-    policy
-  )
 }
 
 async function applyPreparedFieldMutation(

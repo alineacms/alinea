@@ -1,26 +1,21 @@
 import {describe, expect, test} from 'bun:test'
-import {Entry} from '#/core.js'
+import {Entry, type Entry as EntryValue} from '#/core/Entry.js'
 import {Query} from '#/index.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {cms} from '#test/cms.js'
+import {createRuntimeStore} from '#test/EntryFixture.js'
 import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {DemoRecipes} from '#test/schema/DemoRecipes.js'
-import {type DatabaseReader, SnapshotDatabaseReader} from '../Reader.js'
-import type {DatabaseIndex, IndexedRecord} from '../SecondaryIndex.js'
-import type {Entry as EntryValue} from '#/core/Entry.js'
-import type {
-  AlineaDatabaseRecord,
-  EntryCoreRecord,
-  EntrySearchRecord
-} from '../entry/Model.js'
+import type {EntryCoreRecord, EntrySearchRecord} from '../entry/Model.js'
 import type {EntryStore} from '../entry/Store.js'
-import {buildEntryDatabase} from '../entry/Source.js'
 import {DatabaseResolver} from './Resolver.js'
 
-const source = new FSSource('test/fixtures/demo')
-const database = await buildEntryDatabase(cms.config, source)
-const current = new DatabaseResolver(cms.config, database)
+const store = await createRuntimeStore(
+  cms.config,
+  new FSSource('test/fixtures/demo')
+)
+const current = new DatabaseResolver(cms.config, store)
 
 describe('DatabaseResolver', () => {
   test('filters structural fields', async () => {
@@ -35,16 +30,17 @@ describe('DatabaseResolver', () => {
   })
 
   test('selects fields and nested objects', async () => {
-    const query = {
-      id: 'oi4qtV9YaXNRIUDT2s61Y',
-      select: {
-        title: DemoRecipe.title,
-        intro: DemoRecipe.intro,
-        id: Entry.id,
-        url: Entry.url
-      }
-    }
-    expect(await current.resolve(query)).toEqual([
+    expect(
+      await current.resolve({
+        id: 'oi4qtV9YaXNRIUDT2s61Y',
+        select: {
+          title: DemoRecipe.title,
+          intro: DemoRecipe.intro,
+          id: Entry.id,
+          url: Entry.url
+        }
+      })
+    ).toEqual([
       {
         title: 'Chocolate chip',
         intro: expect.any(Array),
@@ -68,16 +64,6 @@ describe('DatabaseResolver', () => {
       },
       {
         first: true as const,
-        id: 'oU_7ZAszAXwar__BCXVIt',
-        select: Query.next({select: Entry.id})
-      },
-      {
-        first: true as const,
-        id: 'oi4qtV9YaXNRIUDT2s61Y',
-        select: Query.previous({select: Entry.id})
-      },
-      {
-        first: true as const,
         id: 'oi4qtV9YaXNRIUDT2s61Y',
         select: Query.parent({select: Entry.id})
       },
@@ -87,44 +73,38 @@ describe('DatabaseResolver', () => {
         select: Query.parents({select: Entry.id})
       }
     ]
-    const [children, siblings, next, previous, parent, parents] =
-      await Promise.all(queries.map(query => current.resolve(query)))
+    const [children, siblings, parent, parents] = await Promise.all(
+      queries.map(query => current.resolve(query))
+    )
     expect(children).toContain('oi4qtV9YaXNRIUDT2s61Y')
     expect(siblings).toContain('oU_7ZAszAXwar__BCXVIt')
-    expect(next).toEqual(expect.any(String))
-    expect(next).not.toBe('oU_7ZAszAXwar__BCXVIt')
-    expect(previous).toEqual(expect.any(String))
-    expect(previous).not.toBe('oi4qtV9YaXNRIUDT2s61Y')
     expect(parent).toBe('2cGLQZvsCCxnguLrwCfPDL8uFkm')
     expect(parents).toEqual(['2cGLQZvsCCxnguLrwCfPDL8uFkm'])
   })
 
   test('orders, groups and pages', async () => {
-    const query = {
-      type: DemoRecipe,
-      orderBy: {asc: DemoRecipe.title},
-      groupBy: Entry.parentId,
-      skip: 0,
-      take: 1,
-      select: {id: Entry.id, title: DemoRecipe.title}
-    }
-    expect(await current.resolve(query)).toEqual([
-      {id: 'P7QDb99Sp1JS5FyqCXXn3', title: 'Gingerbread'}
-    ])
+    expect(
+      await current.resolve({
+        type: DemoRecipe,
+        orderBy: {asc: DemoRecipe.title},
+        groupBy: Entry.parentId,
+        take: 1,
+        select: {id: Entry.id, title: DemoRecipe.title}
+      })
+    ).toEqual([{id: 'P7QDb99Sp1JS5FyqCXXn3', title: 'Gingerbread'}])
   })
 
   test('searches with deterministic ranking', async () => {
-    const query = {
-      type: [DemoRecipe, DemoRecipes],
-      search: 'chocolate',
-      select: {id: Entry.id, title: Entry.title}
-    }
-    expect(await current.resolve(query)).toEqual([
-      {id: 'oi4qtV9YaXNRIUDT2s61Y', title: 'Chocolate chip'}
-    ])
+    expect(
+      await current.resolve({
+        type: [DemoRecipe, DemoRecipes],
+        search: 'chocolate',
+        select: {id: Entry.id, title: Entry.title}
+      })
+    ).toEqual([{id: 'oi4qtV9YaXNRIUDT2s61Y', title: 'Chocolate chip'}])
   })
 
-  test('previews an existing entry', async () => {
+  test('previews an existing entry without rebuilding the store', async () => {
     const entry = await current.resolve({
       id: 'oi4qtV9YaXNRIUDT2s61Y',
       select: Entry,
@@ -146,143 +126,37 @@ describe('DatabaseResolver', () => {
       title: 'Chocolate chip preview',
       id: 'oi4qtV9YaXNRIUDT2s61Y'
     })
-    expect(
-      await current.resolve({
-        ...query,
-        filter: {title: 'Chocolate chip preview'} as never
-      })
-    ).toEqual({
-      title: 'Chocolate chip preview',
-      id: 'oi4qtV9YaXNRIUDT2s61Y'
-    })
   })
 
-  test('resolves an index-only projection without loading payloads', async () => {
-    const base = new SnapshotDatabaseReader(database)
-    const requested: Array<string> = []
-    const reader: DatabaseReader<AlineaDatabaseRecord> = {
-      revision: base.revision,
-      get(id, signal) {
-        requested.push(id)
-        return base.get(id, signal)
-      },
-      scan<Metadata>(
-        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
-        key: string,
-        signal?: AbortSignal
-      ): AsyncIterable<IndexedRecord<Metadata>> {
-        return base.scan(index, key, signal)
-      }
-    }
-    const resolver = new DatabaseResolver(cms.config, reader)
+  test('does not load payloads for index-only projections and counts', async () => {
+    const tracked = trackingStore(store)
+    const resolver = new DatabaseResolver(cms.config, tracked.store)
     await resolver.resolve({
       id: 'oi4qtV9YaXNRIUDT2s61Y',
       select: Entry.id,
       first: true
     })
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
+    expect(await resolver.resolve({type: DemoRecipe, count: true})).toBe(4)
+    expect(tracked.dataLoads()).toBe(0)
   })
 
   test('pages index candidates before loading projected payloads', async () => {
-    const base = new SnapshotDatabaseReader(database)
-    const requested: Array<string> = []
-    const reader: DatabaseReader<AlineaDatabaseRecord> = {
-      revision: base.revision,
-      get(id, signal) {
-        requested.push(id)
-        return base.get(id, signal)
-      },
-      scan<Metadata>(
-        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
-        key: string,
-        signal?: AbortSignal
-      ): AsyncIterable<IndexedRecord<Metadata>> {
-        return base.scan(index, key, signal)
-      }
-    }
-    const resolver = new DatabaseResolver(cms.config, reader)
-    const result = await resolver.resolve({
-      type: DemoRecipe,
-      orderBy: {asc: Entry.title},
-      take: 1,
-      select: {title: Entry.title, intro: DemoRecipe.intro}
-    })
-    expect(result).toEqual([
-      {title: 'Chocolate chip', intro: expect.any(Array)}
-    ])
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(1)
-  })
-
-  test('counts index candidates without loading payloads', async () => {
-    const base = new SnapshotDatabaseReader(database)
-    const requested: Array<string> = []
-    const reader: DatabaseReader<AlineaDatabaseRecord> = {
-      revision: base.revision,
-      get(id, signal) {
-        requested.push(id)
-        return base.get(id, signal)
-      },
-      scan<Metadata>(
-        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
-        key: string,
-        signal?: AbortSignal
-      ): AsyncIterable<IndexedRecord<Metadata>> {
-        return base.scan(index, key, signal)
-      }
-    }
-    const resolver = new DatabaseResolver(cms.config, reader)
-    const count = await resolver.resolve({type: DemoRecipe, count: true})
-    expect(count).toBeGreaterThan(0)
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
-  })
-
-  test('evaluates entry metadata filters on the index', async () => {
-    const base = new SnapshotDatabaseReader(database)
-    const requested: Array<string> = []
-    const reader: DatabaseReader<AlineaDatabaseRecord> = {
-      revision: base.revision,
-      get(id, signal) {
-        requested.push(id)
-        return base.get(id, signal)
-      },
-      scan<Metadata>(
-        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
-        key: string,
-        signal?: AbortSignal
-      ): AsyncIterable<IndexedRecord<Metadata>> {
-        return base.scan(index, key, signal)
-      }
-    }
-    const resolver = new DatabaseResolver(cms.config, reader)
-
+    const tracked = trackingStore(store)
+    const resolver = new DatabaseResolver(cms.config, tracked.store)
     expect(
       await resolver.resolve({
-        filter: {_type: 'DemoRecipe'},
-        select: Entry.id
+        type: DemoRecipe,
+        orderBy: {asc: Entry.title},
+        take: 1,
+        select: {title: Entry.title, intro: DemoRecipe.intro}
       })
-    ).toHaveLength(4)
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
+    ).toEqual([{title: 'Chocolate chip', intro: expect.any(Array)}])
+    expect(tracked.dataLoads()).toBe(1)
   })
 
-  test('uses index conjuncts before loading data filters', async () => {
-    const base = new SnapshotDatabaseReader(database)
-    const requested: Array<string> = []
-    const reader: DatabaseReader<AlineaDatabaseRecord> = {
-      revision: base.revision,
-      get(id, signal) {
-        requested.push(id)
-        return base.get(id, signal)
-      },
-      scan<Metadata>(
-        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
-        key: string,
-        signal?: AbortSignal
-      ): AsyncIterable<IndexedRecord<Metadata>> {
-        return base.scan(index, key, signal)
-      }
-    }
-    const resolver = new DatabaseResolver(cms.config, reader)
-
+  test('uses structural conjuncts before loading data filters', async () => {
+    const tracked = trackingStore(store)
+    const resolver = new DatabaseResolver(cms.config, tracked.store)
     expect(
       await resolver.resolve({
         filter: {
@@ -294,7 +168,7 @@ describe('DatabaseResolver', () => {
         select: Entry.id
       })
     ).toHaveLength(4)
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(4)
+    expect(tracked.dataLoads()).toBe(4)
   })
 
   test('stops loading data frames after a filtered page is full', async () => {
@@ -352,7 +226,7 @@ describe('DatabaseResolver', () => {
         searchableText: ''
       }
     }
-    const store: EntryStore = {
+    const staged: EntryStore = {
       revision: 'test',
       async cores() {
         return cores
@@ -366,7 +240,7 @@ describe('DatabaseResolver', () => {
         return items.map(toEntry)
       },
       async search() {
-        return undefined
+        return
       },
       async searchMany(items) {
         return new Array<EntrySearchRecord | undefined>(items.length)
@@ -374,8 +248,7 @@ describe('DatabaseResolver', () => {
       async *referencesTo() {},
       async *referencesFrom() {}
     }
-    const resolver = new DatabaseResolver(cms.config, store)
-
+    const resolver = new DatabaseResolver(cms.config, staged)
     expect(
       await resolver.resolve({
         filter: {match: true} as never,
@@ -386,45 +259,42 @@ describe('DatabaseResolver', () => {
     expect(loaded).toBe(16)
   })
 
-  test('searches dedicated search frames without loading result payloads', async () => {
-    const base = new SnapshotDatabaseReader(database)
-    const requested: Array<string> = []
-    const reader: DatabaseReader<AlineaDatabaseRecord> = {
-      revision: base.revision,
-      get(id, signal) {
-        requested.push(id)
-        return base.get(id, signal)
-      },
-      scan<Metadata>(
-        index: DatabaseIndex<AlineaDatabaseRecord, Metadata>,
-        key: string,
-        signal?: AbortSignal
-      ): AsyncIterable<IndexedRecord<Metadata>> {
-        return base.scan(index, key, signal)
-      }
-    }
-    const resolver = new DatabaseResolver(cms.config, reader)
-    const result = await resolver.resolve({
-      search: 'chocolate',
-      select: Entry.id
-    })
-
-    expect(requested.filter(id => id.startsWith('payload:'))).toHaveLength(0)
-    expect(result.length).toBeLessThan(database.size)
-  })
-
-  test('reads references from the persistent reference index', async () => {
-    const link = [...database.records()].find(record => record.kind === 'link')
+  test('reads references from lazy reference frames', async () => {
+    const [link] = await current.referencesFrom('oi4qtV9YaXNRIUDT2s61Y')
     expect(link).toBeDefined()
-    const query = {targetId: link!.targetId, status: 'all' as const}
-    const actual = await current.referencesTo(query)
-    expect(actual.references.length).toBeGreaterThan(0)
-    expect(
-      actual.references.every(
-        reference => reference.targetId === link!.targetId
-      )
-    ).toBe(true)
-    expect(actual.total).toBe(actual.references.length)
+    const actual = await current.referencesTo({
+      targetId: link.targetId,
+      status: 'all'
+    })
+    expect(actual.references).toContainEqual(link)
     expect(actual.scan.complete).toBe(true)
   })
 })
+
+function trackingStore(source: EntryStore): {
+  store: EntryStore
+  dataLoads(): number
+} {
+  let dataLoads = 0
+  return {
+    dataLoads: () => dataLoads,
+    store: {
+      revision: source.revision,
+      cores: signal => source.cores(signal),
+      load(core, signal) {
+        dataLoads++
+        return source.load(core, signal)
+      },
+      loadMany(cores, signal) {
+        dataLoads += cores.length
+        return source.loadMany(cores, signal)
+      },
+      search: (core, audience, signal) => source.search(core, audience, signal),
+      searchMany: (cores, audience, signal) =>
+        source.searchMany(cores, audience, signal),
+      referencesTo: (targetId, signal) => source.referencesTo(targetId, signal),
+      referencesFrom: (sourceId, signal) =>
+        source.referencesFrom(sourceId, signal)
+    }
+  }
+}

@@ -27,7 +27,6 @@ import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
 import {createPreviewParser} from './resolver/ParsePreview.js'
 import {createThrottledSync} from './util/Syncable.js'
-import {buildEntryDatabase} from '#/database/entry/Source.js'
 import type {
   AuthenticatedReplicaSession,
   ReplicaService
@@ -35,18 +34,12 @@ import type {
 import type {FieldTransaction} from '#/database/replica/Operations.js'
 import {serializeReplicaState} from '#/database/replica/Serialization.js'
 import {createId} from '#/core/Id.js'
-import {
-  exportRuntimeDatabase,
-  exportRuntimeDelta,
-  exportRuntimeEntryOverlay
-} from '#/database/runtime/Exporter.js'
+import {exportRuntimeSourceChanges} from '#/database/runtime/Exporter.js'
 import {entryResource} from '#/database/entry/Access.js'
-import {isEntryCoreRecord} from '#/database/entry/Model.js'
 import {
   mutationsFromReplicaCommands,
   parseReplicaCommands
 } from '#/database/replica/Commands.js'
-import {requestSourceMutations} from '#/database/handler/SourceWriter.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {ChangesBatch} from '#/core/source/Change.js'
@@ -258,16 +251,6 @@ export function createHandler({
           : new Response(null, {status: 204})
       }
 
-      if (action === HandleAction.ReplicaObject && request.method === 'GET') {
-        expectJson()
-        const {service, session} = await expectReplica()
-        const id = string(url.searchParams.get('id'))
-        const record = service.object(session, id)
-        return record
-          ? Response.json(record)
-          : new Response(null, {status: 404})
-      }
-
       if (
         action === HandleAction.ReplicaEligible &&
         request.method === 'POST'
@@ -322,7 +305,7 @@ export function createHandler({
                   revision: service.revision,
                   conflicts: prepared.conflicts
                 }
-              const directRequest = await service.requestSourceUpdates(
+              const preparedRequest = await service.requestSourceMutations(
                 local.source,
                 prepared.mutations,
                 session.policy
@@ -334,7 +317,7 @@ export function createHandler({
                 [...prepared.mutations],
                 session.policy,
                 userCtx!.user,
-                directRequest
+                preparedRequest
               )
               await updateReplicaFromSource(
                 service,
@@ -358,6 +341,8 @@ export function createHandler({
         const commands = parseReplicaCommands(await body)
         return replicaWrite(async () => {
           const mutations = mutationsFromReplicaCommands(commands)
+          if (mutations.length === 0)
+            return Response.json({revision: service.revision})
           const synced = await syncWith(local.source, cnx)
           await updateReplicaFromSource(
             service,
@@ -366,13 +351,19 @@ export function createHandler({
             context,
             synced
           )
+          const request = await service.requestSourceMutations(
+            local.source,
+            mutations,
+            session.policy
+          )
           const changed = await writeSourceMutations(
             cms.config,
             local.source,
             cnx,
             mutations,
             session.policy,
-            userCtx!.user
+            userCtx!.user,
+            request
           )
           await updateReplicaFromSource(
             service,
@@ -643,11 +634,8 @@ async function writeSourceMutations(
   user: User,
   prepared?: import('#/core/db/CommitRequest.js').CommitRequest
 ): Promise<ChangesBatch> {
-  const request = {
-    ...(prepared ??
-      (await requestSourceMutations(config, source, mutations, policy))),
-    user
-  }
+  if (!prepared) throw new Error('Runtime mutation request was not prepared')
+  const request = {...prepared, user}
   const {sha} = await remote.write(request)
   if (sha === request.intoSha) {
     const batch = sourceChanges(request)
@@ -667,76 +655,17 @@ async function updateReplicaFromSource(
   const source = local.source
   if (changes.changes.length === 0) return
   const previous = service.runtimeIndex
-  if (previous) {
-    const tree = await source.getTree()
-    let index = previous
-    const overlays: Array<{
-      bundleId: string
-      contents: Uint8Array
-      entry: import('#/database/runtime/Model.js').RuntimeIndexEntry
-      plaintext: Uint8Array
-    }> = []
-    let compatible = true
-    for (const change of changes.changes) {
-      if (
-        change.op !== 'add' ||
-        !change.contents ||
-        !index.entries.some(
-          entry => entry.frames?.read?.filePath === change.path
-        )
-      ) {
-        compatible = false
-        break
-      }
-      const bundleId = createId()
-      const bundleUrl = replicaBundleUrl(context, bundleId)
-      const overlay = await exportRuntimeEntryOverlay({
-        config,
-        index,
-        bundleId,
-        bundleUrl,
-        filePath: change.path,
-        fileHash: change.sha,
-        contents: change.contents,
-        tree
-      })
-      if (!overlay) {
-        compatible = false
-        break
-      }
-      overlays.push({
-        bundleId,
-        contents: overlay.bundle,
-        entry: overlay.entry,
-        plaintext: change.contents
-      })
-      index = overlay.index
-    }
-    if (compatible) {
-      service.installRuntimeOverlays(index, overlays)
-      local.refreshRuntime()
-      return
-    }
-  }
-  const snapshot = await buildEntryDatabase(config, source)
-  if (snapshot.revision === service.revision) return
+  const tree = await source.getTree()
   const bundleId = createId()
-  const bundleUrl = replicaBundleUrl(context, bundleId)
-  const runtime = await exportRuntimeDatabase({
+  const runtime = await exportRuntimeSourceChanges({
+    config,
+    previous,
+    tree,
+    changes,
     bundleId,
-    bundleUrl,
-    snapshot,
-    source
+    bundleUrl: replicaBundleUrl(context, bundleId)
   })
-  if (previous) {
-    const delta = exportRuntimeDelta({
-      previous,
-      next: runtime,
-      bundleId,
-      bundleUrl
-    })
-    service.installRuntimeOverlay(delta.index, bundleId, delta.bundle)
-  } else service.installRuntime(runtime.index, bundleId, runtime.bundle)
+  service.installRuntimeOverlay(runtime.index, bundleId, runtime.bundle)
   local.refreshRuntime()
 }
 

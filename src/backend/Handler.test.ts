@@ -11,10 +11,9 @@ import {SourceDB} from '#/database/entry/SourceDB.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
-import {DatabaseSnapshot} from '#/database/Database.js'
-import {entryDatabaseSchema} from '#/database/entry/Indexes.js'
 import {ReplicaService} from '#/database/handler/Service.js'
-import {exportEntryRelease} from '#/database/release/Exporter.js'
+import type {RuntimeDatabaseIndex} from '#/database/runtime/Model.js'
+import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 import {suite} from '@alinea/suite'
 
 const test = suite(import.meta)
@@ -286,21 +285,29 @@ test('rejects oversized uploads before preparing a remote upload', async () => {
 test('serves replica bootstrap and state only after authentication', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new SourceDB(cms.config)
-  const snapshot = new DatabaseSnapshot({
-    schema: entryDatabaseSchema,
-    revision: 'tree-1'
-  })
-  const release = await exportEntryRelease({
+  const runtime: RuntimeDatabaseIndex = {
+    version: 1,
+    revision: 'tree-1',
     bundleId: 'release-1',
     bundleUrl: '/admin/release/release-1/database.bin',
-    snapshot
+    entries: [],
+    children: {}
+  }
+  const store = new RuntimeEntryStore({
+    index: runtime,
+    source: () => ({
+      async read() {
+        return new Uint8Array()
+      }
+    })
   })
   const replica = new ReplicaService({
     config: cms.config,
     configId: 'config-1',
     configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'cache-1',
-    release: {snapshot, catalog: release.catalog, keys: release.keys}
+    runtime,
+    store
   })
   const handle = createHandler({
     cms,
@@ -345,7 +352,7 @@ test('serves replica bootstrap and state only after authentication', async () =>
     requestContext()
   )
   test.is(state.status, 200)
-  test.is((await state.json()).catalog.revision, 'tree-1')
+  test.is((await state.json()).runtime.revision, 'tree-1')
   const unchanged = await handle(
     new Request('http://localhost/api?action=replicaState&revision=tree-1', {
       headers: {accept: 'application/json'}
@@ -379,8 +386,8 @@ test('serves replica bootstrap and state only after authentication', async () =>
   )
   test.is(command.status, 200)
   test.is((await command.json()).revision, replica.revision)
-  replica.installOverlay(
-    {snapshot, catalog: release.catalog, keys: release.keys},
+  replica.installRuntimeOverlay(
+    runtime,
     'overlay-1',
     new Uint8Array([0, 1, 2, 3])
   )

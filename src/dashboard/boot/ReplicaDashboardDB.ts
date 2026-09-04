@@ -20,7 +20,6 @@ import {
   type EntryWrite
 } from '#/core/db/EntryWrite.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import type {AlineaDatabaseRecord} from '#/database/entry/Model.js'
 import {EntryReplicaClient} from '#/database/replica/EntryClient.js'
 import {HttpReplicaTransport} from '#/database/replica/HttpTransport.js'
 import {IndexedDBReplicaCache} from '#/database/replica/IndexedDBCache.js'
@@ -65,10 +64,7 @@ export class ReplicaDashboardDB extends WriteableGraph {
     const transport = new HttpReplicaTransport({handlerUrl, fetch})
     const replica = new EntryReplicaClient({
       transport,
-      cache: new IndexedDBReplicaCache<AlineaDatabaseRecord>(
-        indexedDB,
-        'alinea-replica'
-      ),
+      cache: new IndexedDBReplicaCache(indexedDB, 'alinea-replica'),
       fetch
     })
     await replica.sync()

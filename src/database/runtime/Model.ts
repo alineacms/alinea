@@ -55,6 +55,8 @@ export interface RuntimeReadMetadata {
   rowHash: string
   fileHash: string
   dataDefaults?: Readonly<Record<string, unknown>>
+  /** Read-protected URL claims used to validate writes without opening data. */
+  urlAliases?: ReadonlyArray<string>
 }
 
 export interface RuntimeDataFrame {

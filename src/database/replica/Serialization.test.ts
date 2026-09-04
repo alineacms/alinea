@@ -1,50 +1,41 @@
-import {describe, expect, test} from 'bun:test'
+import {expect, test} from 'bun:test'
 import {
-  deserializeHandlerKeys,
+  deserializeFrame,
   deserializeReplicaState,
-  serializeHandlerKeys,
+  serializeFrame,
   serializeReplicaState
 } from './Serialization.js'
 import type {ReplicaState} from './Types.js'
 
-describe('replica wire serialization', () => {
-  test('round trips catalog nonces and authenticated grants through JSON', () => {
-    const frame = {
-      id: 'record-a',
-      accessClassId: 'read-a',
-      offset: 1,
-      length: 2,
-      nonce: new Uint8Array([1, 2, 3]),
-      cipherHash: 'hash',
-      compression: 'gzip' as const
-    }
-    const state: ReplicaState = {
-      viewId: 'editor',
-      catalog: {
-        version: 1,
-        bundleId: 'release-1',
-        bundleUrl: '/secret/database.bin',
-        revision: 'tree-1',
-        records: {a: frame},
-        indexes: {all: [frame]}
-      },
-      grants: [{accessClassId: 'read-a', key: new Uint8Array([4, 5, 6])}],
-      recordAccess: {a: 'read'}
-    }
-    const encoded = JSON.parse(JSON.stringify(serializeReplicaState(state)))
+test('round trips runtime replica state and frame nonces through JSON', () => {
+  const frame = {
+    id: 'entry-a',
+    accessClassId: 'read-a',
+    offset: 1,
+    length: 2,
+    nonce: new Uint8Array([1, 2, 3]),
+    cipherHash: 'hash',
+    compression: 'gzip' as const
+  }
+  expect(
+    deserializeFrame(JSON.parse(JSON.stringify(serializeFrame(frame))))
+  ).toEqual(frame)
 
-    expect(deserializeReplicaState(encoded)).toEqual(state)
-  })
-
-  test('round trips the server-only key catalog through JSON', () => {
-    const keys = {
-      version: 1 as const,
-      bundleId: 'release-1',
+  const state: ReplicaState = {
+    viewId: 'editor',
+    recordAccess: {},
+    runtime: {
+      version: 1,
       revision: 'tree-1',
-      accessClasses: {read: new Uint8Array([7, 8, 9])}
+      bundleId: 'release-1',
+      bundleUrl: '/payload.bundle',
+      entries: [],
+      children: {}
     }
-    const encoded = JSON.parse(JSON.stringify(serializeHandlerKeys(keys)))
-
-    expect(deserializeHandlerKeys(encoded)).toEqual(keys)
-  })
+  }
+  expect(
+    deserializeReplicaState(
+      JSON.parse(JSON.stringify(serializeReplicaState(state)))
+    )
+  ).toEqual(state)
 })

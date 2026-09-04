@@ -4,8 +4,10 @@ import type {EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
-import {buildEntryDatabase} from '#/database/entry/Source.js'
 import {DatabaseResolver} from '#/database/query/Resolver.js'
+import {MemoryRangeSource} from '#/database/replica/Bundle.js'
+import {exportRuntimeDatabase} from '#/database/runtime/Exporter.js'
+import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 
 export interface EntryFixtureEntry {
   id: string
@@ -24,6 +26,7 @@ export interface EntryFixtureEntry {
 
 export interface DatabaseResolverFixture {
   source: MemorySource
+  store: RuntimeEntryStore
   resolver: DatabaseResolver
 }
 
@@ -124,7 +127,24 @@ export async function createDatabaseResolver(
   entries: Array<EntryFixtureEntry>
 ): Promise<DatabaseResolverFixture> {
   const source = await createEntrySource(config, entries)
-  const database = await buildEntryDatabase(config, source)
-  const resolver = new DatabaseResolver(config, database)
-  return {source, resolver}
+  const store = await createRuntimeStore(config, source)
+  const resolver = new DatabaseResolver(config, store)
+  return {source, store, resolver}
+}
+
+export async function createRuntimeStore(
+  config: Config,
+  source: MemorySource | import('#/core/source/Source.js').Source
+): Promise<RuntimeEntryStore> {
+  const release = await exportRuntimeDatabase({
+    config,
+    source,
+    bundleId: 'fixture',
+    bundleUrl: 'memory:fixture',
+    compression: 'none'
+  })
+  return new RuntimeEntryStore({
+    index: release.index,
+    source: () => new MemoryRangeSource(release.bundle)
+  })
 }

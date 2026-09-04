@@ -4,19 +4,14 @@ import {Policy} from '#/core/Role.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {cms} from '#test/cms.js'
 import {createEntrySource} from '#test/EntryFixture.js'
-import {buildEntryDatabase} from '../entry/Source.js'
-import {EntryQueryEngine} from '../entry/Query.js'
 import {MemoryRangeSource} from '../replica/Bundle.js'
 import {exportRuntimeDatabase} from '../runtime/Exporter.js'
 import {RuntimeEntryStore} from '../runtime/Store.js'
-import {
-  requestRuntimeSourceUpdates,
-  requestSourceMutations
-} from './SourceWriter.js'
+import {requestRuntimeSourceMutations} from './SourceWriter.js'
 
 describe('requestSourceMutations', () => {
   for (const [name, mutation] of cases()) {
-    test(`writes normalized source changes for ${name}`, async () => {
+    test(`writes runtime source changes for ${name}`, async () => {
       const source = await createEntrySource(cms.config, [
         {
           id: 'recipes',
@@ -45,15 +40,35 @@ describe('requestSourceMutations', () => {
           data: {title: 'Draft'}
         }
       ])
-      const request = await requestSourceMutations(cms.config, source, [
-        mutation
-      ])
+      const release = await exportRuntimeDatabase({
+        config: cms.config,
+        source,
+        bundleId: 'base',
+        bundleUrl: '/base.bundle',
+        compression: 'none'
+      })
+      const store = new RuntimeEntryStore({
+        index: release.index,
+        source: () => new MemoryRangeSource(release.bundle)
+      })
+      const request = await requestRuntimeSourceMutations(
+        cms.config,
+        source,
+        store,
+        release.index,
+        [mutation],
+        Policy.ALLOW_ALL
+      )
       expect(request.changes.length).toBeGreaterThan(0)
       await source.applyChanges(sourceChanges(request))
-      const query = new EntryQueryEngine(
-        await buildEntryDatabase(cms.config, source)
-      )
-      const entries = await query.find({status: 'all'})
+      const updated = await exportRuntimeDatabase({
+        config: cms.config,
+        source,
+        bundleId: 'updated',
+        bundleUrl: '/updated.bundle',
+        compression: 'none'
+      })
+      const entries = updated.index.entries
       if (name === 'update')
         expect(entries.find(entry => entry.entryId === 'apple')?.title).toBe(
           'Green apple'
@@ -97,24 +112,29 @@ test('builds a content-only runtime update from one lazy entry', async () => {
       data: {title: 'Apple'}
     }
   ])
-  const snapshot = await buildEntryDatabase(cms.config, source)
   const release = await exportRuntimeDatabase({
+    config: cms.config,
     bundleId: 'runtime',
     bundleUrl: '/payload.bundle',
-    snapshot,
     source,
     compression: 'none'
   })
+  let loadedBytes = 0
   const store = new RuntimeEntryStore({
     index: release.index,
-    source: () => new MemoryRangeSource(release.bundle)
+    source: () => ({
+      async read(offset, length) {
+        loadedBytes += length
+        return release.bundle.slice(offset, offset + length)
+      }
+    })
   })
 
-  const request = await requestRuntimeSourceUpdates(
+  const request = await requestRuntimeSourceMutations(
     cms.config,
     source,
     store,
-    release.index.entries,
+    release.index,
     [
       {
         op: 'update',
@@ -130,17 +150,21 @@ test('builds a content-only runtime update from one lazy entry', async () => {
   expect(request).toBeDefined()
   expect(request!.changes).toHaveLength(1)
   expect(request!.checks).toHaveLength(1)
+  expect(loadedBytes).toBeLessThan(release.bundle.length)
   await source.applyChanges(sourceChanges(request!))
-  const query = new EntryQueryEngine(
-    await buildEntryDatabase(cms.config, source)
-  )
+  const updated = await exportRuntimeDatabase({
+    config: cms.config,
+    source,
+    bundleId: 'updated',
+    bundleUrl: '/updated.bundle',
+    compression: 'none'
+  })
   expect(
-    (await query.find({status: 'all'})).find(entry => entry.entryId === 'apple')
-      ?.title
+    updated.index.entries.find(entry => entry.entryId === 'apple')?.title
   ).toBe('Green apple')
 })
 
-test('keeps path updates on the structural fallback', async () => {
+test('builds path updates from the lazy runtime index', async () => {
   const source = await createEntrySource(cms.config, [
     {
       id: 'recipes',
@@ -151,11 +175,10 @@ test('keeps path updates on the structural fallback', async () => {
       data: {title: 'Recipes'}
     }
   ])
-  const snapshot = await buildEntryDatabase(cms.config, source)
   const release = await exportRuntimeDatabase({
+    config: cms.config,
     bundleId: 'runtime',
     bundleUrl: '/payload.bundle',
-    snapshot,
     source,
     compression: 'none'
   })
@@ -164,24 +187,23 @@ test('keeps path updates on the structural fallback', async () => {
     source: () => new MemoryRangeSource(release.bundle)
   })
 
-  expect(
-    await requestRuntimeSourceUpdates(
-      cms.config,
-      source,
-      store,
-      release.index.entries,
-      [
-        {
-          op: 'update',
-          id: 'recipes',
-          locale: null,
-          status: 'published',
-          set: {path: 'new-path'}
-        }
-      ],
-      Policy.ALLOW_ALL
-    )
-  ).toBeUndefined()
+  const request = await requestRuntimeSourceMutations(
+    cms.config,
+    source,
+    store,
+    release.index,
+    [
+      {
+        op: 'update',
+        id: 'recipes',
+        locale: null,
+        status: 'published',
+        set: {path: 'new-path'}
+      }
+    ],
+    Policy.ALLOW_ALL
+  )
+  expect(request.changes.length).toBeGreaterThan(0)
 })
 
 function cases(): ReadonlyArray<readonly [string, Mutation]> {

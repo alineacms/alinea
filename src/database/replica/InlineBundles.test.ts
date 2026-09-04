@@ -7,15 +7,6 @@ test('serves an inline live bundle without calling the range fallback', async ()
   const contents = new Uint8Array([1, 2, 3, 4])
   const state: ReplicaState = {
     viewId: 'view',
-    catalog: {
-      version: 1,
-      revision: 'tree',
-      bundleId: 'base',
-      bundleUrl: '/base.bundle',
-      records: {},
-      indexes: {}
-    },
-    grants: [],
     recordAccess: {},
     runtime: {
       version: 1,

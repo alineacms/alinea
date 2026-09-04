@@ -6,9 +6,8 @@ import type {Source} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {base64url} from '#/core/util/Encoding.js'
-import type {EntryLinkReference} from '../entry/Indexes.js'
 import type {EntryCoreRecord, EntrySearchRecord} from '../entry/Model.js'
-import type {EntryStore} from '../entry/Store.js'
+import type {EntryLinkReference, EntryStore} from '../entry/Store.js'
 import {
   BundleFrameLoader,
   type ByteRangeSourceFactory
@@ -38,7 +37,7 @@ export class RuntimeEntryStore implements EntryStore, Source {
   #baseBundleUrl: string
   #loaders = new Map<string, BundleFrameLoader>()
   #pendingBytes = new Map<string, Promise<Uint8Array>>()
-  #entries = new Map<string, Promise<Entry>>()
+  #entryData = new Map<string, Promise<RuntimeDataFrame>>()
   #decoded = new Map<string, Promise<unknown>>()
   #keys = new Map<string, Uint8Array>()
   #incoming?: Promise<ReadonlyMap<string, ReadonlyArray<EntryLinkReference>>>
@@ -85,21 +84,12 @@ export class RuntimeEntryStore implements EntryStore, Source {
     }
     for (const source of Object.values(index.source?.blobs ?? {}))
       liveKeys.add(source.decodeKey)
-    for (const key of this.#entries.keys())
-      if (!liveData.has(key)) this.#entries.delete(key)
+    for (const key of this.#entryData.keys())
+      if (!liveData.has(key)) this.#entryData.delete(key)
     for (const key of this.#decoded.keys())
       if (!liveDecoded.has(key)) this.#decoded.delete(key)
     for (const key of this.#keys.keys())
       if (!liveKeys.has(key)) this.#keys.delete(key)
-  }
-
-  prime(entry: RuntimeIndexEntry, contents: Uint8Array): void {
-    const descriptor = entry.frames?.data
-    if (!descriptor) return
-    this.#entries.set(
-      frameCacheKey(descriptor),
-      Promise.resolve(this.#entryFromData(entry, contents))
-    )
   }
 
   async cores(signal?: AbortSignal): Promise<ReadonlyArray<EntryCoreRecord>> {
@@ -172,15 +162,15 @@ export class RuntimeEntryStore implements EntryStore, Source {
     const data = entry.frames?.data
     if (!data) return Promise.resolve(exploreEntry(entry))
     const cacheKey = frameCacheKey(data)
-    let pending = this.#entries.get(cacheKey)
+    let pending = this.#entryData.get(cacheKey)
     if (!pending) {
       pending = this.#loadBytes(data, entry.frames!.decodeKey, signal).then(
-        contents => this.#entryFromData(entry, contents)
+        contents => this.#dataFromContents(entry, contents)
       )
-      this.#entries.set(cacheKey, pending)
-      void pending.catch(() => this.#entries.delete(cacheKey))
+      this.#entryData.set(cacheKey, pending)
+      void pending.catch(() => this.#entryData.delete(cacheKey))
     }
-    return pending
+    return pending.then(frame => readEntry(entry, frame))
   }
 
   async loadMany(
@@ -198,9 +188,9 @@ export class RuntimeEntryStore implements EntryStore, Source {
         values[position] = exploreEntry(entry)
         continue
       }
-      const cached = this.#entries.get(frameCacheKey(descriptor))
+      const cached = this.#entryData.get(frameCacheKey(descriptor))
       if (cached) {
-        values[position] = cached
+        values[position] = cached.then(frame => readEntry(entry, frame))
         continue
       }
       requests.push({descriptor, decodeKey: entry.frames!.decodeKey})
@@ -209,15 +199,15 @@ export class RuntimeEntryStore implements EntryStore, Source {
     const frames = this.#loadBytesMany(requests, signal)
     for (const [index, position] of positions.entries()) {
       const descriptor = requests[index].descriptor
+      const entry = cores[position] as RuntimeIndexEntry
       const pending = frames.then(contents =>
-        this.#entryFromData(
-          cores[position] as RuntimeIndexEntry,
-          contents[index]
-        )
+        this.#dataFromContents(entry, contents[index])
       )
-      this.#entries.set(frameCacheKey(descriptor), pending)
-      void pending.catch(() => this.#entries.delete(frameCacheKey(descriptor)))
-      values[position] = pending
+      this.#entryData.set(frameCacheKey(descriptor), pending)
+      void pending.catch(() =>
+        this.#entryData.delete(frameCacheKey(descriptor))
+      )
+      values[position] = pending.then(frame => readEntry(entry, frame))
     }
     return Promise.all(values.map(value => Promise.resolve(value)))
   }
@@ -440,18 +430,20 @@ export class RuntimeEntryStore implements EntryStore, Source {
     return JSON.parse(this.#decoder.decode(contents)) as Value
   }
 
-  #entryFromData(entry: RuntimeIndexEntry, contents: Uint8Array): Entry {
+  #dataFromContents(
+    entry: RuntimeIndexEntry,
+    contents: Uint8Array
+  ): RuntimeDataFrame {
     if (entry.frames?.dataFormat === 'source') {
       const read = entry.frames.read
       assert(read, `Entry "${entry.id}" is missing read metadata`)
       const {data} = parseRecord(JSON.parse(this.#decoder.decode(contents)))
-      return readEntry(entry, {
+      return {
         ...read,
         data: {path: entry.path, ...read.dataDefaults, ...data}
-      })
+      }
     }
-    const frame = JSON.parse(this.#decoder.decode(contents)) as RuntimeDataFrame
-    return readEntry(entry, frame)
+    return JSON.parse(this.#decoder.decode(contents)) as RuntimeDataFrame
   }
 
   #loadBytes(

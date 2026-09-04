@@ -5,27 +5,25 @@ import {cms} from '#test/cms.js'
 import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
-import {buildEntryDatabase} from '../entry/Source.js'
+import {sourceChanges} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {Policy} from '#/core/Role.js'
 import {DatabaseResolver} from '../query/Resolver.js'
 import {MemoryRangeSource, type ByteRangeSource} from '../replica/Bundle.js'
 import type {ReplicaTransport} from '../replica/Protocol.js'
-import {
-  exportRuntimeDatabase,
-  exportRuntimeDelta,
-  exportRuntimeEntryOverlay
-} from './Exporter.js'
+import {exportRuntimeDatabase, exportRuntimeSourceChanges} from './Exporter.js'
 import {RuntimeEntryStore} from './Store.js'
 import {SourceDB} from '../entry/SourceDB.js'
 import {projectRuntimeDatabase} from './Projection.js'
+import {requestRuntimeSourceMutations} from '../handler/SourceWriter.js'
 
 describe('runtime database', () => {
   test('opens only the index and range-loads projected entry frames', async () => {
     const sourceFiles = new FSSource('test/fixtures/demo')
-    const snapshot = await buildEntryDatabase(cms.config, sourceFiles)
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/admin/release/payload.bundle',
-      snapshot,
       source: sourceFiles,
       compression: 'none'
     })
@@ -73,14 +71,12 @@ describe('runtime database', () => {
   })
 
   test('preserves search and reference query semantics', async () => {
-    const snapshot = await buildEntryDatabase(
-      cms.config,
-      new FSSource('test/fixtures/demo')
-    )
+    const sourceFiles = new FSSource('test/fixtures/demo')
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/payload.bundle',
-      snapshot,
+      source: sourceFiles,
       compression: 'none'
     })
     const ranges: Array<{offset: number; length: number}> = []
@@ -100,7 +96,7 @@ describe('runtime database', () => {
     ).toContain('oi4qtV9YaXNRIUDT2s61Y')
     expect(ranges).toHaveLength(1)
 
-    const link = [...snapshot.records()].find(record => record.kind === 'link')
+    const [link] = await resolver.referencesFrom('oi4qtV9YaXNRIUDT2s61Y')
     expect(link).toBeDefined()
     expect(
       (await resolver.referencesTo({targetId: link!.targetId, status: 'all'}))
@@ -108,21 +104,20 @@ describe('runtime database', () => {
     ).toContainEqual(
       expect.objectContaining({
         targetId: link!.targetId,
-        sourceId: link!.sourceEntryId
+        sourceId: link!.sourceId
       })
     )
-    expect(await resolver.referencesFrom(link!.sourceEntryId)).toContainEqual(
+    expect(await resolver.referencesFrom(link!.sourceId)).toContainEqual(
       expect.objectContaining({targetId: link!.targetId})
     )
   })
 
-  test('matches normalized entries when data comes from source frames', async () => {
+  test('loads complete entries from source frames', async () => {
     const source = new FSSource('test/fixtures/demo')
-    const snapshot = await buildEntryDatabase(cms.config, source)
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/payload.bundle',
-      snapshot,
       source,
       compression: 'none'
     })
@@ -137,24 +132,25 @@ describe('runtime database', () => {
         })
       })
     )
-    const normalized = new DatabaseResolver(cms.config, snapshot)
     const query = {
       status: 'all' as const,
       orderBy: {asc: Entry.index},
       select: Entry
     }
 
-    expect(await runtime.resolve(query)).toEqual(
-      await normalized.resolve(query)
+    const entries = await runtime.resolve(query)
+    expect(entries.length).toBe(release.index.entries.length)
+    expect(entries.every(entry => Object.keys(entry.data).length > 0)).toBe(
+      true
     )
   })
 
   test('searches discovery-safe index text for explore-only entries', async () => {
     const source = new FSSource('test/fixtures/demo')
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/payload.bundle',
-      snapshot: await buildEntryDatabase(cms.config, source),
       source,
       compression: 'none'
     })
@@ -188,11 +184,10 @@ describe('runtime database', () => {
 
   test('retains stored status and lazily serves exact source blobs', async () => {
     const source = new FSSource('test/fixtures/demo')
-    const snapshot = await buildEntryDatabase(cms.config, source)
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/payload.bundle',
-      snapshot,
       source,
       compression: 'none'
     })
@@ -229,11 +224,10 @@ describe('runtime database', () => {
 
   test('boots SourceDB from the runtime index without reading payloads', async () => {
     const source = new FSSource('test/fixtures/demo')
-    const snapshot = await buildEntryDatabase(cms.config, source)
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/payload.bundle',
-      snapshot,
       source,
       compression: 'none'
     })
@@ -258,19 +252,18 @@ describe('runtime database', () => {
 
   test('installs a remote replica index without opening its payload', async () => {
     const source = new FSSource('test/fixtures/demo')
-    const snapshot = await buildEntryDatabase(cms.config, source)
     const base = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'base',
       bundleUrl: '/admin/base/payload.bundle',
-      snapshot,
       source,
       compression: 'none'
     })
     const remote = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'remote',
       bundleUrl:
         'https://example.com/api/cms?action=replicaBundle&bundle=remote',
-      snapshot,
       source,
       compression: 'none'
     })
@@ -290,15 +283,6 @@ describe('runtime database', () => {
     await db.sync()
     const state = {
       viewId: 'server',
-      catalog: {
-        version: 1 as const,
-        bundleId: 'remote',
-        bundleUrl: remote.index.bundleUrl,
-        revision: 'tree-2',
-        records: {},
-        indexes: {}
-      },
-      grants: [],
       recordAccess: {},
       runtime: remote.index
     }
@@ -337,13 +321,12 @@ describe('runtime database', () => {
     expect(remoteReads).toBeGreaterThan(0)
   })
 
-  test('exports a one-entry overlay without reading the base payload', async () => {
+  test('reconciles one changed entry without reading the base payload', async () => {
     const source = new FSSource('test/fixtures/demo')
-    const snapshot = await buildEntryDatabase(cms.config, source)
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'base',
       bundleUrl: '/admin/base/payload.bundle',
-      snapshot,
       source,
       compression: 'none'
     })
@@ -364,20 +347,21 @@ describe('runtime database', () => {
       fromSha: tree.sha,
       changes: [{op: 'add', path: filePath, sha, contents}]
     })
-    const overlay = await exportRuntimeEntryOverlay({
+    const changes = {
+      fromSha: tree.sha,
+      changes: [{op: 'add' as const, path: filePath, sha, contents}]
+    }
+    const overlay = await exportRuntimeSourceChanges({
       config: cms.config,
-      index: release.index,
+      previous: release.index,
+      tree: nextTree,
+      changes,
       bundleId: 'overlay',
       bundleUrl:
         'https://example.com/api/cms?action=replicaBundle&bundle=overlay',
-      filePath,
-      fileHash: sha,
-      contents,
-      tree: nextTree,
       compression: 'none'
     })
-    expect(overlay).toBeDefined()
-    expect(overlay!.bundle.length).toBeLessThan(release.bundle.length)
+    expect(overlay.bundle.length).toBeLessThan(release.bundle.length)
     let baseReads = 0
     let overlayReads = 0
     const store = new RuntimeEntryStore({
@@ -389,10 +373,10 @@ describe('runtime database', () => {
         }
       })
     })
-    store.install(overlay!.index, () => ({
+    store.install(overlay.index, () => ({
       async read(offset, length) {
         overlayReads++
-        return overlay!.bundle.slice(offset, offset + length)
+        return overlay.bundle.slice(offset, offset + length)
       }
     }))
     const resolver = new DatabaseResolver(cms.config, store)
@@ -438,9 +422,9 @@ describe('runtime database', () => {
       }
     ])
     const release = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'release',
       bundleUrl: '/payload.bundle',
-      snapshot: await buildEntryDatabase(cms.config, source),
       source,
       compression: 'none'
     })
@@ -472,8 +456,8 @@ describe('runtime database', () => {
     ).toEqual({versionStatus: 'published', status: 'archived'})
   })
 
-  test('packs a structural rebuild as changed frames over the existing base', async () => {
-    const entries = [
+  test('reconciles an archived subtree without rebuilding unchanged payloads', async () => {
+    const source = await createEntrySource(cms.config, [
       {
         id: 'recipes',
         type: 'DemoRecipes',
@@ -489,63 +473,182 @@ describe('runtime database', () => {
         path: 'apple',
         data: {title: 'Apple', intro: []}
       }
-    ]
-    const baseSource = await createEntrySource(cms.config, entries)
-    const nextSource = await createEntrySource(cms.config, [
-      ...entries,
-      {
-        id: 'pear',
-        type: 'DemoRecipe',
-        index: 'c',
-        parentPaths: ['recipes'],
-        path: 'pear',
-        data: {title: 'Pear', intro: []}
-      }
     ])
     const base = await exportRuntimeDatabase({
+      config: cms.config,
       bundleId: 'base',
       bundleUrl: '/base.bundle',
-      snapshot: await buildEntryDatabase(cms.config, baseSource),
-      source: baseSource,
+      source,
       compression: 'none'
     })
-    const full = await exportRuntimeDatabase({
-      bundleId: 'delta',
-      bundleUrl: '/full.bundle',
-      snapshot: await buildEntryDatabase(cms.config, nextSource),
-      source: nextSource,
-      compression: 'none'
-    })
-    const delta = exportRuntimeDelta({
-      previous: base.index,
-      next: full,
-      bundleId: 'delta',
-      bundleUrl: '/api?bundle=delta'
-    })
-    const previousApple = base.index.entries.find(
-      entry => entry.entryId === 'apple'
-    )!
-    const nextApple = delta.index.entries.find(
-      entry => entry.entryId === 'apple'
-    )!
-    const pear = delta.index.entries.find(entry => entry.entryId === 'pear')!
-
-    expect(delta.bundle.length).toBeLessThan(full.bundle.length)
-    expect(nextApple.frames?.data).toEqual(previousApple.frames?.data)
-    expect(pear.frames?.data?.bundleId).toBe('delta')
-
+    let payloadReads = 0
     const store = new RuntimeEntryStore({
       index: base.index,
-      source: () => new MemoryRangeSource(base.bundle)
+      source: () => ({
+        async read(offset, length) {
+          payloadReads++
+          return base.bundle.slice(offset, offset + length)
+        }
+      })
     })
+    const warmResolver = new DatabaseResolver(cms.config, store)
+    expect(
+      await warmResolver.resolve({
+        id: 'apple',
+        first: true,
+        select: DemoRecipe.intro
+      })
+    ).toEqual([])
+    const readsAfterWarm = payloadReads
+    const request = await requestRuntimeSourceMutations(
+      cms.config,
+      source,
+      store,
+      base.index,
+      [{op: 'archive', id: 'recipes', locale: null}],
+      Policy.ALLOW_ALL
+    )
+    expect(payloadReads).toBe(readsAfterWarm)
+    const changes = sourceChanges(request)
+    await source.applyChanges(changes)
+    const delta = await exportRuntimeSourceChanges({
+      config: cms.config,
+      previous: base.index,
+      tree: await source.getTree(),
+      changes,
+      bundleId: 'delta',
+      bundleUrl: '/delta.bundle',
+      compression: 'none'
+    })
+    const previousChild = base.index.entries.find(
+      entry => entry.entryId === 'apple'
+    )!
+    const child = delta.index.entries.find(entry => entry.entryId === 'apple')!
+    expect(child).toMatchObject({
+      versionStatus: 'published',
+      status: 'archived'
+    })
+    expect(child.frames).toEqual(previousChild.frames)
+    expect(delta.bundle.length).toBeLessThan(base.bundle.length)
+
     store.install(delta.index, () => new MemoryRangeSource(delta.bundle))
     const resolver = new DatabaseResolver(cms.config, store)
     expect(
       await resolver.resolve({
-        id: 'pear',
-        select: DemoRecipe.intro,
-        first: true
+        id: 'apple',
+        status: 'all',
+        first: true,
+        select: {
+          versionStatus: Entry.versionStatus,
+          status: Entry.status,
+          intro: DemoRecipe.intro
+        }
       })
-    ).toEqual([])
+    ).toEqual({versionStatus: 'published', status: 'archived', intro: []})
+    expect(payloadReads).toBe(readsAfterWarm)
   })
+
+  for (const [name, mutation] of structuralMutations()) {
+    test(`matches full normalization after incremental ${name}`, async () => {
+      const source = await createEntrySource(cms.config, [
+        {
+          id: 'recipes',
+          type: 'DemoRecipes',
+          index: 'a1',
+          path: 'recipes',
+          data: {title: 'Recipes'}
+        },
+        {
+          id: 'apple',
+          type: 'DemoRecipe',
+          index: 'a2',
+          parentPaths: ['recipes'],
+          path: 'apple',
+          data: {title: 'Apple', intro: []}
+        },
+        {
+          id: 'draft',
+          type: 'DemoRecipes',
+          index: 'a3',
+          path: 'draft',
+          status: 'draft',
+          data: {title: 'Draft'}
+        }
+      ])
+      const base = await exportRuntimeDatabase({
+        config: cms.config,
+        bundleId: 'base',
+        bundleUrl: '/base.bundle',
+        source,
+        compression: 'none'
+      })
+      const store = new RuntimeEntryStore({
+        index: base.index,
+        source: () => new MemoryRangeSource(base.bundle)
+      })
+      const request = await requestRuntimeSourceMutations(
+        cms.config,
+        source,
+        store,
+        base.index,
+        [mutation],
+        Policy.ALLOW_ALL
+      )
+      const changes = sourceChanges(request)
+      await source.applyChanges(changes)
+      const incremental = await exportRuntimeSourceChanges({
+        config: cms.config,
+        previous: base.index,
+        tree: await source.getTree(),
+        changes,
+        bundleId: 'delta',
+        bundleUrl: '/delta.bundle',
+        compression: 'none'
+      })
+      const rebuilt = await exportRuntimeDatabase({
+        config: cms.config,
+        bundleId: 'expected',
+        bundleUrl: '/expected.bundle',
+        source,
+        compression: 'none'
+      })
+      const expected = [...rebuilt.index.entries]
+        .map(({frames: _, ...core}) => core)
+        .sort((left, right) => left.id.localeCompare(right.id))
+      const actual = incremental.index.entries
+        .map(({frames: _, ...core}) => core)
+        .sort((left, right) => left.id.localeCompare(right.id))
+      expect(actual).toEqual(expected)
+    })
+  }
 })
+
+function structuralMutations(): ReadonlyArray<readonly [string, Mutation]> {
+  return [
+    [
+      'create',
+      {
+        op: 'create',
+        id: 'pear',
+        type: 'DemoRecipe',
+        locale: null,
+        root: 'pages',
+        workspace: 'demo',
+        parentId: 'recipes',
+        data: {title: 'Pear', path: 'pear', intro: []}
+      }
+    ],
+    [
+      'move',
+      {
+        op: 'move',
+        id: 'apple',
+        target: 'pages',
+        targetType: 'root',
+        dropPosition: 'on'
+      }
+    ],
+    ['remove', {op: 'remove', id: 'apple'}],
+    ['publish', {op: 'publish', id: 'draft', locale: null, status: 'draft'}]
+  ]
+}

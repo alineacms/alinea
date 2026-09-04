@@ -57,19 +57,6 @@ export interface ByteRangeSourceFactory {
   (url: string): ByteRangeSource
 }
 
-export interface CiphertextCache {
-  get(
-    bundleId: BundleId,
-    frame: FrameDescriptor
-  ): Promise<Uint8Array | undefined>
-  put(
-    bundleId: BundleId,
-    frame: FrameDescriptor,
-    ciphertext: Uint8Array
-  ): Promise<void>
-  delete(bundleId: BundleId, frame: FrameDescriptor): Promise<void>
-}
-
 export class MissingFrameGrantError extends Error {
   constructor(accessClassId: AccessClassId) {
     super(`Missing grant for access class "${accessClassId}"`)
@@ -162,18 +149,15 @@ export function packEncryptedFrames(
 export class BundleFrameLoader implements FrameLoader {
   #bundleId: BundleId
   #source: ByteRangeSource
-  #cache?: CiphertextCache
   #grants = new Map<AccessClassId, Uint8Array>()
 
   constructor(
     bundleId: BundleId,
     source: ByteRangeSource,
-    grants: Iterable<AccessClassGrant>,
-    cache?: CiphertextCache
+    grants: Iterable<AccessClassGrant>
   ) {
     this.#bundleId = bundleId
     this.#source = source
-    this.#cache = cache
     for (const grant of grants) {
       this.#grants.set(grant.accessClassId, grant.key.slice())
     }
@@ -190,12 +174,11 @@ export class BundleFrameLoader implements FrameLoader {
   ): Promise<Uint8Array> {
     if (!this.#grants.has(frame.accessClassId))
       throw new MissingFrameGrantError(frame.accessClassId)
-    let ciphertext = await this.#cache?.get(this.#bundleId, frame)
-    if (!ciphertext) {
-      ciphertext = await this.#source.read(frame.offset, frame.length, signal)
-      if (ciphertext.length === frame.length)
-        await this.#cache?.put(this.#bundleId, frame, ciphertext)
-    }
+    const ciphertext = await this.#source.read(
+      frame.offset,
+      frame.length,
+      signal
+    )
     return this.#decrypt(frame, ciphertext)
   }
 
@@ -209,13 +192,7 @@ export class BundleFrameLoader implements FrameLoader {
         throw new MissingFrameGrantError(frame.accessClassId)
     const ciphertext = new Map<FrameId, Uint8Array>()
     const missing: Array<FrameDescriptor> = []
-    await Promise.all(
-      frames.map(async frame => {
-        const cached = await this.#cache?.get(this.#bundleId, frame)
-        if (cached) ciphertext.set(frame.id, cached)
-        else missing.push(frame)
-      })
-    )
+    missing.push(...frames)
     missing.sort((left, right) => left.offset - right.offset)
     const readLimit = pLimit(6)
     await Promise.all(
@@ -232,7 +209,6 @@ export class BundleFrameLoader implements FrameLoader {
             const start = frame.offset - range.offset
             const value = contents.slice(start, start + frame.length)
             ciphertext.set(frame.id, value)
-            await this.#cache?.put(this.#bundleId, frame, value)
           }
         })
       )
@@ -262,7 +238,6 @@ export class BundleFrameLoader implements FrameLoader {
       throw new BundleIntegrityError(`Incomplete frame "${frame.id}"`)
     const actualHash = await sha256(ciphertext)
     if (actualHash !== frame.cipherHash) {
-      await this.#cache?.delete(this.#bundleId, frame)
       throw new BundleIntegrityError(`Invalid hash for frame "${frame.id}"`)
     }
     const key = await deriveFrameKey(classKey, this.#bundleId, frame.id, [
@@ -314,70 +289,6 @@ function mergeFrameRanges(
     }
   }
   return ranges
-}
-
-/** Resolves static base and handler overlay frames from one logical catalog. */
-export class CatalogFrameLoader implements FrameLoader {
-  #catalogBundleId: BundleId
-  #catalogBundleUrl: string
-  #source: ByteRangeSourceFactory
-  #grants: ReadonlyArray<AccessClassGrant>
-  #cache?: CiphertextCache
-  #loaders = new Map<string, BundleFrameLoader>()
-
-  constructor(
-    bundleId: BundleId,
-    bundleUrl: string,
-    source: ByteRangeSourceFactory,
-    grants: ReadonlyArray<AccessClassGrant>,
-    cache?: CiphertextCache
-  ) {
-    this.#catalogBundleId = bundleId
-    this.#catalogBundleUrl = bundleUrl
-    this.#source = source
-    this.#grants = grants
-    this.#cache = cache
-  }
-
-  load(frame: FrameDescriptor, signal?: AbortSignal): Promise<Uint8Array> {
-    const bundleId = frame.bundleId ?? this.#catalogBundleId
-    const bundleUrl = frame.bundleUrl ?? this.#catalogBundleUrl
-    const key = `${bundleId}\0${bundleUrl}`
-    let loader = this.#loaders.get(key)
-    if (!loader) {
-      loader = new BundleFrameLoader(
-        bundleId,
-        this.#source(bundleUrl),
-        this.#grants,
-        this.#cache
-      )
-      this.#loaders.set(key, loader)
-    }
-    return loader.load(frame, signal)
-  }
-}
-
-export class CachedFrameLoader implements FrameLoader {
-  #source: FrameLoader
-  #cache = new Map<string, Promise<Uint8Array>>()
-
-  constructor(source: FrameLoader) {
-    this.#source = source
-  }
-
-  load(frame: FrameDescriptor, signal?: AbortSignal): Promise<Uint8Array> {
-    signal?.throwIfAborted()
-    const key = `${frame.id}:${frame.cipherHash}`
-    let pending = this.#cache.get(key)
-    if (!pending) {
-      pending = this.#source.load(frame).catch(error => {
-        this.#cache.delete(key)
-        throw error
-      })
-      this.#cache.set(key, pending)
-    }
-    return signal ? abortable(pending, signal) : pending
-  }
 }
 
 async function deriveFrameKey(
@@ -443,25 +354,4 @@ async function decompress(
     .stream()
     .pipeThrough(new DecompressionStream(compression))
   return new Uint8Array(await new Response(stream).arrayBuffer())
-}
-
-function abortable<Value>(
-  promise: Promise<Value>,
-  signal: AbortSignal
-): Promise<Value> {
-  if (signal.aborted) return Promise.reject(signal.reason)
-  return new Promise((resolve, reject) => {
-    const abort = () => reject(signal.reason)
-    signal.addEventListener('abort', abort, {once: true})
-    promise.then(
-      value => {
-        signal.removeEventListener('abort', abort)
-        resolve(value)
-      },
-      error => {
-        signal.removeEventListener('abort', abort)
-        reject(error)
-      }
-    )
-  })
 }

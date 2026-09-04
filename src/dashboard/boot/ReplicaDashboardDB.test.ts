@@ -11,16 +11,15 @@ describe('ReplicaDashboardDB', () => {
   test('boots production reads without hydrating LocalDB or EntryIndex', async () => {
     const state: ReplicaState = {
       viewId: 'editor',
-      catalog: {
+      recordAccess: {},
+      runtime: {
         version: 1,
         bundleId: 'release-1',
         bundleUrl: '/admin/release/release-1/database.bin',
         revision: 'tree-1',
-        records: {},
-        indexes: {}
-      },
-      grants: [],
-      recordAccess: {}
+        entries: [],
+        children: {}
+      }
     }
     let commandBody: unknown
     const fetch = Object.assign(

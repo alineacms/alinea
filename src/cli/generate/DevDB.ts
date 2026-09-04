@@ -1,23 +1,26 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import {type CommitRequest, checkCommit} from '#/core/db/CommitRequest.js'
+import {
+  type CommitRequest,
+  checkCommit,
+  sourceChanges
+} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
+import {Policy} from '#/core/Role.js'
 import {CachedFSSource, type FSSourceSnapshot} from '#/core/source/FSSource.js'
-import {ReadonlyTree} from '#/core/source/Tree.js'
-import {accumulate} from '#/core/util/Async.js'
+import {bundleContents} from '#/core/source/Source.js'
 import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
 import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {SourceDB} from '#/database/entry/SourceDB.js'
+import {requestRuntimeSourceMutations} from '#/database/handler/SourceWriter.js'
 import {FileRangeSource} from '#/database/replica/FileTransport.js'
 import {MemoryRangeSource} from '#/database/replica/Bundle.js'
-import {
-  exportRuntimeEntryOverlay,
-  type RuntimeEntryOverlayExport
-} from '#/database/runtime/Exporter.js'
+import {exportRuntimeSourceChanges} from '#/database/runtime/Exporter.js'
 import type {RuntimeDatabaseIndex} from '#/database/runtime/Model.js'
 import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 import pLimit from 'p-limit'
@@ -112,54 +115,22 @@ export class DevDB extends SourceDB {
     if (!runtime || !index?.source) return false
     const tree = await this.source.getTree()
     if (tree.sha === index.revision) return true
-    const previous = new ReadonlyTree(index.source.tree)
-    const batch = previous.diff(tree)
-    const changes = batch.changes
-    const entries = index.entries
-    if (
-      changes.some(
-        change =>
-          change.op !== 'add' ||
-          !previous.has(change.path) ||
-          !entries.some(entry => entry.frames?.read?.filePath === change.path)
-      )
-    )
-      return false
-    const blobs = new Map(
-      await accumulate(this.source.getBlobs(changes.map(change => change.sha)))
-    )
-    const overlays: Array<{
-      url: string
-      result: RuntimeEntryOverlayExport
-      plaintext: Uint8Array
-    }> = []
-    for (const change of changes) {
-      const bundleId = `dev-${createId()}`
-      const bundleUrl = `alinea:dev-overlay/${bundleId}`
-      const contents = blobs.get(change.sha)
-      if (!contents) return false
-      const overlay = await exportRuntimeEntryOverlay({
-        config: this.config,
-        index,
-        bundleId,
-        bundleUrl,
-        filePath: change.path,
-        fileHash: change.sha,
-        contents,
-        tree
-      })
-      if (!overlay) return false
-      overlays.push({url: bundleUrl, result: overlay, plaintext: contents})
-      index = overlay.index
-    }
-    for (const overlay of overlays)
-      this.#overlaySources.set(
-        overlay.url,
-        new MemoryRangeSource(overlay.result.bundle)
-      )
+    const previous = await runtime.getTree()
+    const changes = await bundleContents(this.source, previous.diff(tree))
+    const bundleId = `dev-${createId()}`
+    const bundleUrl = `alinea:dev-overlay/${bundleId}`
+    const overlay = await exportRuntimeSourceChanges({
+      config: this.config,
+      previous: index,
+      tree,
+      changes,
+      bundleId,
+      bundleUrl
+    })
+    this.#overlaySources.set(bundleUrl, new MemoryRangeSource(overlay.bundle))
     const snapshot = this.source.snapshot()
     index = {
-      ...index,
+      ...overlay.index,
       development: index.development
         ? {...index.development, files: snapshot.files}
         : undefined
@@ -169,8 +140,6 @@ export class DevDB extends SourceDB {
       assert(source, `Unknown development overlay: ${url}`)
       return source
     })
-    for (const overlay of overlays)
-      runtime.prime(overlay.result.entry, overlay.plaintext)
     this.#runtimeIndex = index
     this.refreshRuntime(runtime)
     return true
@@ -204,6 +173,23 @@ export class DevDB extends SourceDB {
     return mediaDirs.some(dir => contains(join(rootDir, dir), file))
   }
 
+  async request(
+    mutations: Array<Mutation>,
+    policy = Policy.ALLOW_ALL
+  ): Promise<CommitRequest> {
+    await this.sync()
+    if (!this.#runtime || !this.#runtimeIndex)
+      return super.request(mutations, policy)
+    return requestRuntimeSourceMutations(
+      this.config,
+      this.source,
+      this.#runtime,
+      this.#runtimeIndex,
+      mutations,
+      policy
+    )
+  }
+
   async write(request: CommitRequest): Promise<{sha: string}> {
     if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha) {
@@ -229,7 +215,8 @@ export class DevDB extends SourceDB {
         }
       }
     }
-    return super.write(request)
+    await this.source.applyChanges(sourceChanges(request))
+    return {sha: await this.sync()}
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {

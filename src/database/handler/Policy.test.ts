@@ -3,9 +3,9 @@ import {Entry} from '#/core.js'
 import {role} from '#/core/Role.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
-import {buildEntryDatabase} from '../entry/Source.js'
 import {DatabaseResolver} from '../query/Resolver.js'
 import {evaluateRolePolicy, roleFingerprint} from './Policy.js'
+import {createRuntimeStore} from '#test/EntryFixture.js'
 
 describe('evaluateRolePolicy', () => {
   test('runs graph-backed JavaScript roles only on the complete handler graph', async () => {
@@ -24,11 +24,11 @@ describe('evaluateRolePolicy', () => {
       }
     })
     const config = {...cms.config, roles: {editor}}
-    const snapshot = await buildEntryDatabase(
+    const store = await createRuntimeStore(
       config,
       new FSSource('test/fixtures/demo')
     )
-    const graph = new DatabaseResolver(config, snapshot)
+    const graph = new DatabaseResolver(config, store)
     const policy = await evaluateRolePolicy(config, graph, ['editor'])
 
     expect(policy.canRead({id: 'oi4qtV9YaXNRIUDT2s61Y'})).toBe(true)

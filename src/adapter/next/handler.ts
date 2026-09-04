@@ -10,7 +10,6 @@ import {
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {isEntryStore} from '#/database/entry/Store.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
@@ -18,6 +17,7 @@ import {ReplicaService} from '#/database/handler/Service.js'
 import {createGeneratedRuntimeDB} from './RuntimeDB.js'
 import {generatedRuntimeIndex} from '#/backend/store/GeneratedRuntime.js'
 import {generatedEnvironment} from './GeneratedEnvironment.js'
+import {RuntimeEntryStore} from '#/database/runtime/Store.js'
 
 type Handler = (request: Request) => Promise<Response>
 const handlers = new WeakMap<NextCMS, Handler>()
@@ -46,7 +46,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
       ? PLazy.from(async () => {
           const environment = generatedEnvironment()
           const graph = await db
-          if (!isEntryStore(graph.source))
+          if (!(graph.source instanceof RuntimeEntryStore))
             throw new Error('Generated runtime DB is missing its entry store')
           return new ReplicaService({
             config,

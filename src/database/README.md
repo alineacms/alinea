@@ -3,10 +3,9 @@
 This directory contains Alinea's database, query resolver, encrypted release
 format, and replica synchronization code.
 
-The branch implements the consolidated runtime read path described here. The
-remaining migration work is confined to structural write fallbacks and the
-development browser's legacy Source cache; those boundaries are called out in
-the current implementation section.
+The branch implements the consolidated runtime read and source reconciliation
+paths described here. There is one database representation after source input:
+the compact runtime index, lazy payload frames, and entry-level overlays.
 
 ## Goals
 
@@ -32,8 +31,8 @@ The new read path must have these properties:
   ordering, grouping, search, references, and final projection;
 - decoded data may remain in memory for the lifetime of a server process, so a
   naturally warmed server can eventually answer every query from memory;
-- previews and mutations replace individual entries and never clone or rebuild
-  the complete database;
+- previews and mutations replace only affected entries and never clone or
+  rebuild the complete payload database;
 - deployed data remains immutable while live changes are represented by small
   entry-level overlays;
 - clients receive only the index rows and decode keys allowed by their effective
@@ -249,9 +248,10 @@ frames.
 
 The database itself implements `Source`. Its source view and query view share
 the same immutable release and live overlay. `getTree` returns the inline tree;
-`getBlobs` lazily opens only requested source frames; `applyChanges` updates the
-source tree, blob overlay, affected index rows, and replacement frames. Callers
-do not need a second generated source object beside the database.
+`getBlobs` lazily opens only requested source frames; `applyChanges` advances
+the source tree and blob overlay, after which the shared reconciler installs the
+affected index rows and replacement frames. Callers do not need a second
+generated source object beside the database.
 
 Decoded entries and parsed search/reference frames remain cached by entry key
 and frame hash. Concurrent requests for the same frame share one promise. The
@@ -260,10 +260,9 @@ those bytes are only coalesced while a read is in flight. When synchronization
 replaces a frame, only the old value for that entry and frame class is
 invalidated. Unchanged decoded entries remain hot across index revisions.
 
-The legacy browser replica has an optional IndexedDB ciphertext cache so static
-ranges can survive page reloads without storing plaintext. That transport-level
-offline cache is not used by the server runtime and is not required by this
-format.
+The browser persists serialized replica state in IndexedDB. It does not retain a
+second normalized database or cache ciphertext separately; decoded values live
+only in the current worker's ordinary hot cache.
 
 The cache may grow to contain the complete readable database. That is desirable
 for a long-lived server: startup remains cheap and the server becomes faster as
@@ -363,8 +362,10 @@ See [Database synchronization flows](./SYNC.md) for separate production and
 development diagrams covering the dashboard worker, RSC routes, application
 handler, hosted database, and GitHub-backed sources.
 
-The immutable deployed index and payload bundle form the base revision. A live
-mutation produces an entry-level overlay containing:
+The immutable deployed index and payload bundle form the base revision. Every
+source refresh starts by diffing its tree against the tree stored in the runtime
+index. Only added or changed blobs are fetched and parsed. The reconciler emits
+an overlay containing:
 
 - one complete replacement index row, or an entry tombstone;
 - a replacement data frame when fields changed;
@@ -384,10 +385,9 @@ live decoded overlay
   -> frame in the deployed bundle
 ```
 
-The handler that accepted a mutation installs its plaintext directly into the
-hot entry cache together with the index overlay; it does not fetch and decrypt
-its own output. It serializes and encrypts the replacement frames once for
-other processes and clients.
+The reconciler retains decoded entries whose frame descriptors did not change.
+Changed entries are encrypted once and decoded lazily if the accepting handler
+queries them again.
 
 Entry-sized live delta bundles are included as ciphertext in the filtered state
 response. This makes them independent of the particular handler instance that
@@ -467,17 +467,17 @@ The startup sequence is:
 3. list and stat the working tree, reading and hashing only files whose size,
    modification time, or change time differ;
 4. return immediately when the source tree hash is unchanged;
-5. turn in-place entry edits into runtime row/frame overlays;
-6. fall back to a full source rebuild for additions, removals, moves, config
-   changes, or edits that affect structure, then replace the checkpoint.
+5. feed the tree diff through the runtime reconciler, including additions,
+   removals, moves, status changes, and ordinary content edits;
+6. reuse every unchanged frame and retain the new runtime index in memory.
 
-The first implementation writes a fresh checkpoint after a required full
-development build. Content-only differences from that checkpoint remain
-in-memory overlays; a later structural fallback replaces the checkpoint. The
-fingerprints are only a scan accelerator. Source hashes remain the identity and
-correctness boundary, and production artifacts do not depend on local
-timestamps. A later background compaction may fold many development overlays
-into a new payload, but compaction must never delay startup. See
+The first process without a compatible checkpoint performs a full development
+build. Later filesystem differences remain in-memory overlays regardless of
+whether they are content or structural changes. The fingerprints are only a
+scan accelerator. Source hashes remain the identity and correctness boundary,
+and production artifacts do not depend on local timestamps. A later background
+compaction may fold many development overlays into a new payload, but
+compaction must never delay startup. See
 [Database synchronization flows](./SYNC.md#development) for the process
 boundaries.
 
@@ -561,40 +561,20 @@ The primary assertions concern scaling:
   reverse-reference map;
 - a sync must preserve cached decoded frames whose hashes did not change.
 
-## Migration plan
+## Runtime-only cutover
 
-The migration should keep behavioural query tests passing while replacing the
-storage path in small slices:
+The server, handler, replica, preview, and mutation paths now share the runtime
+index and frame store. The previous normalized database, reader, release,
+replica catalog, projection, and synchronization representations have been
+removed rather than retained as compatibility fallbacks. Initial artifact
+generation still has to parse the complete source once; that is build work, not
+request-time database boot.
 
-1. **Query staging**
-   - distinguish index-resident expressions from data expressions;
-   - paginate before loading projection-only data;
-   - avoid data loads entirely for index-only projections and counts;
-   - add an explicit batch-loading contract.
-2. **Runtime index**
-   - define and export the runtime JSON index;
-   - open it directly in the next adapter's `localdb`;
-   - stop constructing all `EntryCoreRecord` objects through individual frame
-     reads at server boot.
-3. **Payload frame consolidation**
-   - emit one JSON data, search, and reference frame per entry version;
-   - reduce encryption classes to explore visibility and complete entry read;
-   - add grouped range coalescing and shared in-flight/decoded caches.
-4. **Lazy search and references**
-   - create and retain MiniSearch on first full-content search;
-   - create and retain the reverse-reference map on first incoming-reference
-     query;
-   - update hot structures entry by entry after synchronization.
-5. **Entry-level overlays**
-   - replace record and index-bucket deltas with complete index-row upserts,
-     tombstones, and replacement content frames;
-   - let handlers install their decoded mutation results directly;
-   - compact overlay bundles only in background work.
-6. **Preview and cutover**
-   - represent preview as the same request-scoped entry overlay;
-   - switch RSC, handler, and client read paths to the consolidated format;
-   - remove the normalized-record release representation after parity and
-     performance verification.
+`EntryTransaction` reads the existing compact runtime rows directly. It lazily
+groups only logical ids touched by a write and receives decoded payloads only
+for entries the requested mutations can inspect or rewrite. It does not first
+manufacture a parallel array of `Entry` objects or expose another persistent
+database/index abstraction.
 
 ## Current implementation
 
@@ -620,10 +600,13 @@ The branch now implements the consolidated server read path:
   preview, query, and Source paths;
 - development opens a config-compatible generated checkpoint, seeds its
   filesystem scan from stored fingerprints, skips normalization when unchanged,
-  and converts in-place content edits to runtime overlays;
-- content-only dashboard field writes build their source commit from the
-  addressed lazy entries and then publish entry overlays, without loading the
-  complete Source database;
+  and reconciles all filesystem changes as runtime overlays;
+- dashboard writes construct `EntryTransaction` over the compact runtime index
+  and open only payloads needed by the requested mutation;
+- source synchronization from dashboard writes, GitHub, and the development
+  filesystem shares one tree-diff reconciler that parses only changed blobs,
+  recomputes hierarchy from lightweight index metadata, and reuses unchanged
+  encrypted frames;
 - policy-filtered replica state carries entry-sized live overlay ciphertext, so
   lazy reads remain valid across handler instances without embedding the large
   immutable base;
@@ -633,25 +616,15 @@ The branch now implements the consolidated server read path:
 The dashboard replica and RSC synchronization paths now install the same runtime
 index representation without eagerly opening payload frames. Handler source
 synchronization compares source trees first; an unchanged revision does no
-database rebuild, while a single in-place entry edit replaces one index row and
-emits only its replacement data, search, reference, and source frames. The
-shared handler runtime store is updated in place so already-decoded unchanged
-entries remain hot.
+database work. A changed revision scans the compact index, parses only changed
+source blobs, and emits replacement data, search, reference, and source frames
+only for those files. Structural consequences such as inherited archive status
+are recomputed from index metadata without opening unchanged payloads.
+Already-decoded unchanged entries remain hot.
 
-Structural and multi-file mutations still use the normalized transaction path
-as a compatibility fallback before exporting a replacement runtime index. Path
-updates, localized shared-field propagation, and media URL changes deliberately
-join that fallback until their entry-level graph effects are represented
-directly. This work occurs on those writes rather than at process boot or
-ordinary replica sync. The browser worker's development-only IndexedDB
-`SourceDB` also still normalizes its cached Source during dashboard startup; it
-is independent of the newly checkpointed dev-server boot.
-
-The structural fallback still performs full normalization and frame encryption
-in temporary memory. Its exported result is then reduced against the current
-runtime index: unchanged frame descriptors are retained and only new or changed
-frames are packed into the live delta carried by replica state. This makes the
-result instance-safe and avoids transferring a full replacement payload, but
-removing the temporary full CPU/memory pass remains the principal write-path
-optimization. Exceptionally large live deltas may later justify shared object
-storage rather than embedding their ciphertext in state.
+There is no normalized transaction, database-reader, or legacy replica fallback
+left. An initial build or a development browser starting only from its cached
+raw Source must still parse all source files to create the runtime artifacts;
+once a runtime checkpoint is available, consumers install it without opening
+payload frames. Exceptionally large live deltas may later justify shared object
+storage rather than embedding their ciphertext in replica state.

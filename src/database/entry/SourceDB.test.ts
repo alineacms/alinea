@@ -20,7 +20,7 @@ describe('SourceDB', () => {
     await db.sync()
   })
 
-  test('queries through the normalized resolver', async () => {
+  test('queries through the runtime resolver', async () => {
     const recipes = await db.find({
       type: cms.schema.DemoRecipe,
       select: {id: Entry.id, title: Entry.title}
@@ -29,7 +29,7 @@ describe('SourceDB', () => {
     expect(recipes.every(recipe => recipe.id && recipe.title)).toBe(true)
   })
 
-  test('writes through normalized source transactions', async () => {
+  test('writes through runtime source transactions', async () => {
     const recipe = await db.get({
       type: cms.schema.DemoRecipe,
       path: 'chocolate-chip'

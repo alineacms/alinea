@@ -1,35 +1,31 @@
 import {crypto} from '@alinea/iso'
 import type {Config} from '#/core/Config.js'
 import {parseRecord} from '#/core/EntryRecord.js'
+import {aliasUrlsFromData} from '#/core/db/EntryAliases.js'
 import {base64url} from '#/core/util/Encoding.js'
-import {accumulate} from '#/core/util/Async.js'
+import type {ChangesBatch} from '#/core/source/Change.js'
 import type {Source} from '#/core/source/Source.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {Type} from '#/core/Type.js'
-import type {DatabaseSnapshot} from '../Database.js'
-import {allEntries} from '../entry/Indexes.js'
-import type {
-  AlineaDatabaseRecord,
-  EntryCoreRecord,
-  EntryLinkRecord,
-  EntryPayloadRecord,
-  EntryReadRecord,
-  EntrySearchRecord
-} from '../entry/Model.js'
+import {assert} from '#/core/util/Assert.js'
+import type {EntryCoreRecord} from '../entry/Model.js'
 import {readAccessClass} from '../entry/Release.js'
+import {
+  entrySeeds,
+  loadParsedVersions,
+  normalizeParsedVersions,
+  parseVersion,
+  type ParsedVersion
+} from '../entry/Source.js'
 import {
   encryptFrame,
   packEncryptedFrames,
   type EncryptedFrame
 } from '../replica/Bundle.js'
-import {
-  serializeFrame,
-  type SerializedFrameDescriptor
-} from '../replica/Serialization.js'
+import {serializeFrame} from '../replica/Serialization.js'
 import type {FrameCompression} from '../replica/Types.js'
 import type {
   RuntimeDatabaseIndex,
-  RuntimeDataFrame,
   RuntimeIndexEntry,
   RuntimeReadMetadata,
   RuntimeReferenceFrame,
@@ -41,10 +37,10 @@ import pLimit from 'p-limit'
 const encoder = new TextEncoder()
 
 export interface ExportRuntimeDatabaseOptions {
+  config: Config
   bundleId: string
   bundleUrl: string
-  snapshot: DatabaseSnapshot<AlineaDatabaseRecord>
-  source?: Source
+  source: Source
   compression?: FrameCompression
 }
 
@@ -53,243 +49,240 @@ export interface RuntimeDatabaseExport {
   bundle: Uint8Array
 }
 
-export interface RuntimeEntryOverlayExport extends RuntimeDatabaseExport {
-  entry: RuntimeIndexEntry
-}
-
-export interface ExportRuntimeDeltaOptions {
-  previous: RuntimeDatabaseIndex
-  next: RuntimeDatabaseExport
-  bundleId: string
-  bundleUrl: string
-}
-
-/** Reuses unchanged frames and packs only changed full-export frames. */
-export function exportRuntimeDelta(
-  options: ExportRuntimeDeltaOptions
-): RuntimeDatabaseExport {
-  if (options.next.index.bundleId !== options.bundleId)
-    throw new Error('Runtime delta must retain its encrypted bundle id')
-  const previousEntries = new Map(
-    options.previous.entries.map(entry => [entry.id, entry])
-  )
-  const relocated = new Map<string, SerializedFrameDescriptor>()
-  const chunks: Array<Uint8Array> = []
-  let offset = 0
-  function relocate(frame: SerializedFrameDescriptor) {
-    const key = `${frame.id}\0${frame.cipherHash}`
-    const cached = relocated.get(key)
-    if (cached) return cached
-    const contents = options.next.bundle.slice(
-      frame.offset,
-      frame.offset + frame.length
-    )
-    const descriptor = {
-      ...frame,
-      bundleId: options.bundleId,
-      bundleUrl: options.bundleUrl,
-      offset
-    }
-    relocated.set(key, descriptor)
-    chunks.push(contents)
-    offset += contents.length
-    return descriptor
-  }
-  const entries = options.next.index.entries.map(entry => {
-    const previous = previousEntries.get(entry.id)
-    if (previous && reusableEntryFrames(previous, entry))
-      return {...entry, frames: previous.frames}
-    const frames = entry.frames
-    if (!frames) return entry
-    return {
-      ...entry,
-      frames: {
-        ...frames,
-        data: frames.data && relocate(frames.data),
-        search: frames.search && relocate(frames.search),
-        references: frames.references && relocate(frames.references)
-      }
-    }
-  })
-  const previousBlobs = options.previous.source?.blobs ?? {}
-  const source = options.next.index.source
-  const blobs = source
-    ? Object.fromEntries(
-        Object.entries(source.blobs).map(([sha, blob]) => {
-          const previous = previousBlobs[sha]
-          return [
-            sha,
-            previous ?? {...blob, frame: relocate(blob.frame)}
-          ] as const
-        })
-      )
-    : undefined
-  const bundle = new Uint8Array(offset)
-  let position = 0
-  for (const chunk of chunks) {
-    bundle.set(chunk, position)
-    position += chunk.length
-  }
-  return {
-    index: {
-      ...options.next.index,
-      bundleId: options.previous.bundleId,
-      bundleUrl: options.previous.bundleUrl,
-      entries,
-      source: source ? {...source, blobs: blobs!} : undefined
-    },
-    bundle
-  }
-}
-
-export interface ExportRuntimeEntryOverlayOptions {
+export interface ExportRuntimeSourceChangesOptions {
   config: Config
-  index: RuntimeDatabaseIndex
+  previous: RuntimeDatabaseIndex
+  tree: ReadonlyTree
+  changes: ChangesBatch
   bundleId: string
   bundleUrl: string
-  filePath: string
-  fileHash: string
-  contents: Uint8Array
-  tree: ReadonlyTree
   compression?: FrameCompression
 }
 
-/** Replaces one non-structural entry without reading any other payload. */
-export async function exportRuntimeEntryOverlay(
-  options: ExportRuntimeEntryOverlayOptions
-): Promise<RuntimeEntryOverlayExport | undefined> {
-  const previous = options.index.entries.find(
-    entry => entry.frames?.read?.filePath === options.filePath
+/** Reconciles a source tree diff while opening only its added blobs. */
+export async function exportRuntimeSourceChanges(
+  options: ExportRuntimeSourceChangesOptions
+): Promise<RuntimeDatabaseExport> {
+  if (options.previous.revision !== options.changes.fromSha)
+    throw new Error(
+      `Runtime source diff starts at ${options.changes.fromSha}, expected ${options.previous.revision}`
+    )
+  const changed = new Map(
+    options.changes.changes.map(change => [change.path, change])
   )
-  const read = previous?.frames?.read
-  if (!previous || !read) return
-  const {meta, data: stored} = parseRecord(
-    JSON.parse(new TextDecoder().decode(options.contents))
-  )
-  if (
-    meta.id !== previous.entryId ||
-    meta.type !== previous.type ||
-    meta.index !== previous.index
-  )
-    return
-  const entryType = options.config.schema[previous.type]
-  if (!entryType) return
-  const data: Record<string, unknown> = {
-    path: previous.path,
-    ...read.dataDefaults,
-    ...stored
+  const seeds = entrySeeds(options.config)
+  const parsed: Array<ParsedVersion> = []
+  for (const entry of options.previous.entries) {
+    const read = entry.frames?.read
+    if (!read || changed.has(read.filePath)) continue
+    parsed.push(parsedRuntimeVersion(entry))
   }
-  if (data.path !== previous.path) return
-  const title = data.title
-  if (typeof title !== 'string') return
+  for (const change of options.changes.changes) {
+    if (change.op === 'delete') continue
+    if (!change.contents)
+      throw new Error(`Missing changed source contents for "${change.path}"`)
+    parsed.push(
+      parseVersion(
+        options.config,
+        change.path,
+        {sha: change.sha, contents: change.contents},
+        seeds
+      )
+    )
+  }
+
+  const previousByPath = new Map(
+    options.previous.entries.flatMap(entry => {
+      const path = entry.frames?.read?.filePath
+      return path ? [[path, entry] as const] : []
+    })
+  )
+  const additions = new Map(
+    options.changes.changes.flatMap(change =>
+      change.op === 'add' && change.contents
+        ? [[change.path, change.contents] as const]
+        : []
+    )
+  )
+  const normalized = normalizeParsedVersions(options.config, parsed)
+  const prepared = await Promise.all(
+    normalized.map(async ({core, version}) => {
+      const contents = additions.get(version.filePath)
+      if (!contents) {
+        const previous = previousByPath.get(version.filePath)
+        if (!previous)
+          throw new Error(`Runtime entry not found for "${version.filePath}"`)
+        return {entry: {...core, frames: previous.frames}}
+      }
+      return prepareRuntimeSourceEntry(options, core, version, contents)
+    })
+  )
+  const encrypted = prepared.flatMap(item => item.encrypted ?? [])
+  encrypted.sort((left, right) => frameOrder(left.id) - frameOrder(right.id))
+  const packed = packEncryptedFrames(encrypted)
+  const descriptors = new Map(packed.frames.map(frame => [frame.id, frame]))
+  const descriptor = (frame: EncryptedFrame | undefined) => {
+    if (!frame) return undefined
+    const packedFrame = descriptors.get(frame.id)
+    assert(packedFrame, `Missing packed frame "${frame.id}"`)
+    return {
+      ...serializeFrame(packedFrame),
+      bundleId: options.bundleId,
+      bundleUrl: options.bundleUrl
+    }
+  }
+  const entries = prepared.map(item => {
+    if (!item.decodeKey) return item.entry
+    return {
+      ...item.entry,
+      frames: {
+        decodeKey: item.decodeKey,
+        data: descriptor(item.data),
+        dataFormat: 'source' as const,
+        read: item.read,
+        search: descriptor(item.search),
+        references: descriptor(item.references)
+      }
+    }
+  })
+  const liveShas = options.tree.shas
+  const blobs: Record<string, RuntimeSourceBlob> = Object.fromEntries(
+    Object.entries(options.previous.source?.blobs ?? {}).filter(([sha]) =>
+      liveShas.has(sha)
+    )
+  )
+  for (const item of prepared) {
+    if (!item.decodeKey || !item.data || !item.version) continue
+    const frame = descriptor(item.data)
+    assert(frame)
+    blobs[item.version.fileHash] = {decodeKey: item.decodeKey, frame}
+  }
+  return {
+    index: {
+      ...options.previous,
+      revision: options.tree.sha,
+      entries,
+      children: childrenOf(entries),
+      source: options.previous.source
+        ? {tree: options.tree.toJSON(), blobs}
+        : undefined,
+      development: undefined
+    },
+    bundle: packed.contents
+  }
+}
+
+interface PreparedRuntimeSourceChange {
+  entry: RuntimeIndexEntry
+  version?: ParsedVersion
+  decodeKey?: string
+  read?: RuntimeReadMetadata
+  data?: EncryptedFrame
+  search?: EncryptedFrame
+  references?: EncryptedFrame
+  encrypted?: Array<EncryptedFrame>
+}
+
+async function prepareRuntimeSourceEntry(
+  options: Pick<
+    ExportRuntimeDatabaseOptions,
+    'config' | 'bundleId' | 'compression'
+  >,
+  core: EntryCoreRecord,
+  version: ParsedVersion,
+  contents: Uint8Array
+): Promise<PreparedRuntimeSourceChange> {
+  const type = options.config.schema[core.type]
+  assert(type, `Unknown entry type "${core.type}"`)
   const key = crypto.getRandomValues(new Uint8Array(32))
   const decodeKey = base64url.stringify(key, {pad: false})
-  const accessClassId = readAccessClass(previous.id)
-  const encrypt = (id: string, contents: Uint8Array) =>
+  const encrypt = (id: string, value: Uint8Array) =>
     encryptFrame({
       bundleId: options.bundleId,
       id,
-      accessClassId,
+      accessClassId: readAccessClass(core.id),
       key,
-      contents,
+      contents: value,
       compression: options.compression
     })
-  const references = Type.references(entryType, data)
-  const [dataFrame, searchFrame, referenceFrame] = await Promise.all([
-    encrypt(dataFrameId(previous.id), options.contents),
-    encrypt(
-      searchFrameId(previous.id),
-      encoder.encode(
-        JSON.stringify({
-          title,
-          searchableText: Type.searchableText(entryType, data)
-        } satisfies RuntimeSearchFrame)
-      )
-    ),
-    references.length > 0
+  const references = core.queryable ? Type.references(type, version.data) : []
+  const [data, search, referenceFrame] = await Promise.all([
+    encrypt(dataFrameId(core.id), contents),
+    core.queryable
       ? encrypt(
-          referenceFrameId(previous.id),
+          searchFrameId(core.id),
           encoder.encode(
             JSON.stringify({
-              sourceFilePath: options.filePath,
+              title: core.title,
+              searchableText: version.searchableText
+            } satisfies RuntimeSearchFrame)
+          )
+        )
+      : undefined,
+    references.length > 0
+      ? encrypt(
+          referenceFrameId(core.id),
+          encoder.encode(
+            JSON.stringify({
+              sourceFilePath: version.filePath,
               references
             } satisfies RuntimeReferenceFrame)
           )
         )
       : undefined
   ])
-  const frames = [dataFrame, searchFrame, referenceFrame].filter(
-    (frame): frame is EncryptedFrame => Boolean(frame)
+  const {data: stored} = parseRecord(
+    JSON.parse(new TextDecoder().decode(contents))
   )
-  frames.sort((left, right) => frameOrder(left.id) - frameOrder(right.id))
-  const packed = packEncryptedFrames(frames)
-  const descriptors = new Map(packed.frames.map(frame => [frame.id, frame]))
-  const descriptor = (id: string) => {
-    const frame = descriptors.get(id)
-    return frame
-      ? {
-          ...serializeFrame(frame),
-          bundleId: options.bundleId,
-          bundleUrl: options.bundleUrl
-        }
-      : undefined
-  }
-  const updated: RuntimeIndexEntry = {
-    ...previous,
-    title,
-    frames: {
-      decodeKey,
-      data: descriptor(dataFrame.id),
-      dataFormat: 'source',
-      read: {
-        ...read,
-        rowHash: options.fileHash,
-        fileHash: options.fileHash
-      },
-      search: descriptor(searchFrame.id),
-      references: referenceFrame && descriptor(referenceFrame.id)
-    }
-  }
-  const source = options.index.source
-  const tree = options.tree.toJSON()
-  const liveShas = new Set(options.tree.shas)
-  const blobs = source
-    ? Object.fromEntries(
-        Object.entries(source.blobs).filter(([sha]) => liveShas.has(sha))
-      )
-    : {}
-  blobs[options.fileHash] = {
-    decodeKey,
-    frame: updated.frames!.data!
+  const defaults = Object.fromEntries(
+    Object.entries(version.data).filter(
+      ([name]) => name !== 'path' && !(name in stored)
+    )
+  )
+  const read: RuntimeReadMetadata = {
+    filePath: version.filePath,
+    parentDir: version.parentDir,
+    childrenDir: version.childrenDir,
+    rowHash: version.fileHash,
+    fileHash: version.fileHash,
+    dataDefaults: Object.keys(defaults).length > 0 ? defaults : undefined,
+    urlAliases: aliasUrlsFromData(version.data)
   }
   return {
-    index: {
-      ...options.index,
-      revision: options.tree.sha,
-      entries: options.index.entries.map(entry =>
-        entry.id === updated.id ? updated : entry
-      ),
-      source: source ? {tree, blobs} : undefined
-    },
-    bundle: packed.contents,
-    entry: updated
+    entry: core,
+    version,
+    decodeKey,
+    read,
+    data,
+    search,
+    references: referenceFrame,
+    encrypted: [data, search, referenceFrame].filter(
+      (frame): frame is EncryptedFrame => Boolean(frame)
+    )
   }
 }
 
-interface PreparedEntry {
-  core: EntryCoreRecord
-  decodeKey?: string
-  data?: EncryptedFrame
-  dataFormat?: 'runtime' | 'source'
-  read?: RuntimeReadMetadata
-  sourceSha?: string
-  search?: EncryptedFrame
-  references?: EncryptedFrame
-}
-
-interface LoadedSource {
-  tree: import('#/core/source/Tree.js').Tree
-  blobs: ReadonlyMap<string, Uint8Array>
+function parsedRuntimeVersion(entry: RuntimeIndexEntry): ParsedVersion {
+  const read = entry.frames?.read
+  assert(read, `Runtime entry "${entry.id}" has no source metadata`)
+  return {
+    filePath: read.filePath,
+    fileHash: read.fileHash,
+    entryId: entry.entryId,
+    type: entry.type,
+    index: entry.index,
+    data: {title: entry.title},
+    searchableText: '',
+    seeded: entry.seeded,
+    workspace: entry.workspace,
+    root: entry.root,
+    locale: entry.locale,
+    path: entry.path,
+    versionStatus: entry.versionStatus,
+    parentDir: read.parentDir,
+    childrenDir: read.childrenDir,
+    level: entry.level
+  }
 }
 
 interface PreparedSourceFrame {
@@ -301,125 +294,76 @@ interface PreparedSourceFrame {
 export async function exportRuntimeDatabase(
   options: ExportRuntimeDatabaseOptions
 ): Promise<RuntimeDatabaseExport> {
-  const reads = new Map<string, EntryReadRecord>()
-  const payloads = new Map<string, EntryPayloadRecord>()
-  const searches = new Map<string, EntrySearchRecord>()
-  const references = new Map<string, Array<EntryLinkRecord>>()
-  for (const record of options.snapshot.records()) {
-    switch (record.kind) {
-      case 'entryRead':
-        reads.set(record.entryVersionId, record)
-        break
-      case 'payload':
-        payloads.set(record.id, record)
-        break
-      case 'search':
-        if (record.audience === 'read')
-          searches.set(record.entryVersionId, record)
-        break
-      case 'link': {
-        const items = references.get(record.sourceVersionId) ?? []
-        items.push(record)
-        references.set(record.sourceVersionId, items)
-        break
-      }
-    }
-  }
-
-  const cores = options.snapshot
-    .scan(allEntries, 'all')
-    .map(reference => options.snapshot.get(reference.id))
-    .filter((record): record is EntryCoreRecord => record?.kind === 'entry')
+  const source = await loadParsedVersions(options.config, options.source)
+  const normalized = normalizeParsedVersions(options.config, source.versions)
   const limit = pLimit(32)
-  const source = await loadSource(options.source)
   const prepared = await Promise.all(
-    cores.map(core =>
+    normalized.map(({core, version}) =>
       limit(() =>
-        prepareEntry(
+        prepareRuntimeSourceEntry(
           options,
           core,
-          reads.get(core.id),
-          payloads,
-          searches.get(core.id),
-          references.get(core.id) ?? [],
-          source?.blobs
+          version,
+          source.files.get(version.filePath)!.contents
         )
       )
     )
   )
-  const representedSource = new Set(
-    prepared.flatMap(entry => (entry.sourceSha ? [entry.sourceSha] : []))
-  )
+  const represented = new Set(prepared.map(item => item.version!.fileHash))
   const sourceFrames = await prepareSourceFrames(
     options,
-    source,
-    representedSource
+    source.files,
+    represented
   )
   const frames = [
-    ...prepared.flatMap(entry =>
-      [entry.data, entry.search, entry.references].filter(
-        (frame): frame is EncryptedFrame => Boolean(frame)
-      )
-    ),
-    ...sourceFrames.map(source => source.frame)
+    ...prepared.flatMap(item => item.encrypted ?? []),
+    ...sourceFrames.map(item => item.frame)
   ]
   frames.sort((left, right) => frameOrder(left.id) - frameOrder(right.id))
   const packed = packEncryptedFrames(frames)
   const descriptors = new Map(packed.frames.map(frame => [frame.id, frame]))
-  const entries: Array<RuntimeIndexEntry> = prepared.map(entry => {
-    const data = descriptors.get(dataFrameId(entry.core.id))
-    const search = descriptors.get(searchFrameId(entry.core.id))
-    const reference = descriptors.get(referenceFrameId(entry.core.id))
-    const hasFrames = data || search || reference
+  const descriptor = (frame: EncryptedFrame | undefined) =>
+    frame ? serializeFrame(descriptors.get(frame.id)!) : undefined
+  const entries: Array<RuntimeIndexEntry> = prepared.map(item => {
     return {
-      ...entry.core,
-      frames:
-        hasFrames && entry.decodeKey
-          ? {
-              decodeKey: entry.decodeKey,
-              data: data && serializeFrame(data),
-              dataFormat: entry.dataFormat,
-              read: entry.read,
-              search: search && serializeFrame(search),
-              references: reference && serializeFrame(reference)
-            }
-          : undefined
+      ...item.entry,
+      frames: item.decodeKey
+        ? {
+            decodeKey: item.decodeKey,
+            data: descriptor(item.data),
+            dataFormat: 'source' as const,
+            read: item.read,
+            search: descriptor(item.search),
+            references: descriptor(item.references)
+          }
+        : undefined
     }
   })
   return {
     index: {
       version: 1,
-      revision: options.snapshot.revision,
+      revision: source.tree.sha,
       bundleId: options.bundleId,
       bundleUrl: options.bundleUrl,
       entries,
       children: childrenOf(entries),
-      source: source
-        ? {
-            tree: source.tree,
-            blobs: sourceBlobs(prepared, sourceFrames, descriptors)
-          }
-        : undefined
+      source: {
+        tree: source.tree.toJSON(),
+        blobs: sourceBlobs(prepared, sourceFrames, descriptors)
+      }
     },
     bundle: packed.contents
   }
 }
 
-async function loadSource(source?: Source): Promise<LoadedSource | undefined> {
-  if (!source) return
-  const tree = await source.getTree()
-  const shas = [...tree.shas]
-  const blobs = new Map(await accumulate(source.getBlobs(shas)))
-  return {tree: tree.toJSON(), blobs}
-}
-
 async function prepareSourceFrames(
-  options: ExportRuntimeDatabaseOptions,
-  source: LoadedSource | undefined,
+  options: Pick<ExportRuntimeDatabaseOptions, 'bundleId' | 'compression'>,
+  files: ReadonlyMap<string, import('../entry/Source.js').EntrySourceFile>,
   represented: ReadonlySet<string>
 ): Promise<Array<PreparedSourceFrame>> {
-  if (!source) return []
-  const shas = [...source.blobs.keys()].filter(sha => !represented.has(sha))
+  const blobs = new Map<string, Uint8Array>()
+  for (const file of files.values()) blobs.set(file.sha, file.contents)
+  const shas = [...blobs.keys()].filter(sha => !represented.has(sha))
   if (shas.length === 0) return []
   const key = crypto.getRandomValues(new Uint8Array(32))
   const decodeKey = base64url.stringify(key, {pad: false})
@@ -427,7 +371,7 @@ async function prepareSourceFrames(
   return Promise.all(
     shas.map(sha =>
       limit(async () => {
-        const contents = source.blobs.get(sha)
+        const contents = blobs.get(sha)
         if (!contents) throw new Error(`Missing source blob "${sha}"`)
         return {
           sha,
@@ -446,116 +390,8 @@ async function prepareSourceFrames(
   )
 }
 
-async function prepareEntry(
-  options: ExportRuntimeDatabaseOptions,
-  core: EntryCoreRecord,
-  read: EntryReadRecord | undefined,
-  payloads: ReadonlyMap<string, EntryPayloadRecord>,
-  search: EntrySearchRecord | undefined,
-  references: ReadonlyArray<EntryLinkRecord>,
-  sourceBlobs: ReadonlyMap<string, Uint8Array> | undefined
-): Promise<PreparedEntry> {
-  const payload = read ? payloads.get(read.payloadId) : undefined
-  if (!payload && !search && references.length === 0) return {core}
-  const key = crypto.getRandomValues(new Uint8Array(32))
-  const accessClassId = readAccessClass(core.id)
-  const frame = (id: string, contents: Uint8Array) =>
-    encryptFrame({
-      bundleId: options.bundleId,
-      id,
-      accessClassId,
-      key,
-      contents,
-      compression: options.compression
-    })
-  const dataValue: RuntimeDataFrame | undefined =
-    read && payload
-      ? {
-          filePath: read.filePath,
-          parentDir: read.parentDir,
-          childrenDir: read.childrenDir,
-          rowHash: read.rowHash,
-          fileHash: read.fileHash,
-          data: payload.data
-        }
-      : undefined
-  const sourceContents = read ? sourceBlobs?.get(read.fileHash) : undefined
-  const searchValue: RuntimeSearchFrame | undefined = search
-    ? {title: search.title, searchableText: search.searchableText}
-    : undefined
-  const referenceValue: RuntimeReferenceFrame | undefined =
-    references.length > 0
-      ? {
-          sourceFilePath: references[0].sourceFilePath,
-          references: references.map(reference => ({
-            targetId: reference.targetId,
-            fieldPath: reference.fieldPath,
-            fieldLabel: reference.fieldLabel,
-            linkId: reference.linkId,
-            linkType: reference.linkType
-          }))
-        }
-      : undefined
-  const [data, searchFrame, referenceFrame] = await Promise.all([
-    dataValue
-      ? frame(
-          dataFrameId(core.id),
-          sourceContents ?? encoder.encode(JSON.stringify(dataValue))
-        )
-      : undefined,
-    searchValue
-      ? frame(
-          searchFrameId(core.id),
-          encoder.encode(JSON.stringify(searchValue))
-        )
-      : undefined,
-    referenceValue
-      ? frame(
-          referenceFrameId(core.id),
-          encoder.encode(JSON.stringify(referenceValue))
-        )
-      : undefined
-  ])
-  return {
-    core,
-    decodeKey: base64url.stringify(key, {pad: false}),
-    data,
-    dataFormat: sourceContents ? 'source' : 'runtime',
-    read:
-      sourceContents && read && payload
-        ? readMetadata(read, sourceContents, payload.data)
-        : undefined,
-    sourceSha: sourceContents ? read?.fileHash : undefined,
-    search: searchFrame,
-    references: referenceFrame
-  }
-}
-
-function readMetadata(
-  read: EntryReadRecord,
-  source: Uint8Array,
-  data: Readonly<Record<string, unknown>>
-): RuntimeReadMetadata {
-  const {data: stored} = parseRecord(
-    JSON.parse(new TextDecoder().decode(source))
-  )
-  const defaults = Object.fromEntries(
-    Object.entries(data).filter(
-      ([name]) => name !== 'path' && !(name in stored)
-    )
-  )
-  return {
-    filePath: read.filePath,
-    parentDir: read.parentDir,
-    childrenDir: read.childrenDir,
-    rowHash: read.rowHash,
-    fileHash: read.fileHash,
-    dataDefaults: Object.keys(defaults).length > 0 ? defaults : undefined
-  }
-}
-
 function sourceBlobs(
-  entries: ReadonlyArray<PreparedEntry>,
+  entries: ReadonlyArray<PreparedRuntimeSourceChange>,
   sources: ReadonlyArray<PreparedSourceFrame>,
   descriptors: ReadonlyMap<
     string,
@@ -564,8 +400,8 @@ function sourceBlobs(
 ): Record<string, RuntimeSourceBlob> {
   const blobs: Record<string, RuntimeSourceBlob> = {}
   for (const entry of entries) {
-    if (!entry.sourceSha || !entry.decodeKey || !entry.data) continue
-    blobs[entry.sourceSha] = {
+    if (!entry.version || !entry.decodeKey || !entry.data) continue
+    blobs[entry.version.fileHash] = {
       decodeKey: entry.decodeKey,
       frame: serializeFrame(descriptors.get(entry.data.id)!)
     }
@@ -610,17 +446,4 @@ function frameOrder(id: string): number {
   if (id.startsWith('search:')) return 1
   if (id.startsWith('references:')) return 2
   return 3
-}
-
-function reusableEntryFrames(
-  previous: RuntimeIndexEntry,
-  next: RuntimeIndexEntry
-): boolean {
-  const previousRead = previous.frames?.read
-  const nextRead = next.frames?.read
-  if (!previousRead || !nextRead) return !previous.frames && !next.frames
-  return (
-    previousRead.fileHash === nextRead.fileHash &&
-    previousRead.filePath === nextRead.filePath
-  )
 }

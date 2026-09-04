@@ -84,7 +84,7 @@ export class DashboardWorker extends EventDispatcher {
       return remote(() => this.#syncReplica(db))
     // The source is IndexedDB: if it has data, we can boot from cache.
     const sourceTree = await db.source.getTree()
-    // The normalized snapshot is in-memory and starts empty for every worker.
+    // The runtime index is rebuilt from cached source only when it is absent.
     if (!db.loaded && !sourceTree.isEmpty) await db.sync()
     // Always schedule a remote freshness check, but do not block boot if local
     // data was enough to build the index.

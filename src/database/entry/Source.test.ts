@@ -1,39 +1,29 @@
 import {describe, expect, test} from 'bun:test'
-import {cms} from '#test/cms.js'
-import {createEntrySource} from '#test/EntryFixture.js'
+import {Entry} from '#/core/Entry.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {FSSource} from '#/core/source/FSSource.js'
-import {EntryQueryEngine} from './Query.js'
-import {referencesBySource} from './Indexes.js'
-import {SourceEntryDatabase, buildEntryDatabase} from './Source.js'
+import {cms} from '#test/cms.js'
+import {createEntrySource, createRuntimeStore} from '#test/EntryFixture.js'
+import {DatabaseResolver} from '../query/Resolver.js'
+import {loadParsedVersions, normalizeParsedVersions} from './Source.js'
 
-const fixtureDirectory = 'test/fixtures/demo'
+describe('source normalization', () => {
+  test('produces runtime structural rows from the current fixture', async () => {
+    const source = new FSSource('test/fixtures/demo')
+    const parsed = await loadParsedVersions(cms.config, source)
+    const current = normalizeParsedVersions(cms.config, parsed.versions)
 
-describe('source entry database', () => {
-  test('normalizes the current fixture into structural and reference records', async () => {
-    const source = new FSSource(fixtureDirectory)
-    const snapshot = await buildEntryDatabase(cms.config, source)
-    const current = await new EntryQueryEngine(snapshot).find({
-      status: 'all'
-    })
     expect(current).not.toHaveLength(0)
-    expect(new Set(current.map(entry => entry.id)).size).toBe(current.length)
-    for (const entry of current) {
+    expect(new Set(current.map(item => item.core.id)).size).toBe(current.length)
+    for (const {core} of current) {
       expect(
-        cms.config.schema[entry.type as keyof typeof cms.config.schema]
+        cms.config.schema[core.type as keyof typeof cms.config.schema]
       ).toBeDefined()
-      expect(entry.parents.at(-1) ?? null).toBe(entry.parentId)
-      for (const reference of snapshot.scan(
-        referencesBySource,
-        entry.entryId
-      )) {
-        expect(reference.metadata.sourceEntryId).toBe(entry.entryId)
-        expect(reference.metadata.targetId).not.toBe('')
-      }
+      expect(core.parents.at(-1) ?? null).toBe(core.parentId)
     }
   })
 
-  test('fetches changed source blobs and emits exact database buckets', async () => {
+  test('reads changed source bytes into the next normalization', async () => {
     const source = await createEntrySource(cms.config, [
       {
         id: 'recipes',
@@ -43,7 +33,6 @@ describe('source entry database', () => {
         data: {title: 'Recipes'}
       }
     ])
-    const database = await SourceEntryDatabase.load(cms.config, source)
     const tree = await source.getTree()
     const path = 'pages/recipes.json'
     const leaf = tree.getLeaf(path)
@@ -57,25 +46,9 @@ describe('source entry database', () => {
       changes: [{op: 'add', path, sha, contents}]
     })
 
-    const commit = await database.sync(source)
-    expect(commit).toBeDefined()
-    expect([...commit!.changes.records].sort()).toEqual(
-      [
-        `entry:${path}`,
-        `entry-read:${path}`,
-        `payload:${path}`,
-        `search:explore:${path}`,
-        `search:read:${path}`
-      ].sort()
-    )
-    expect(commit!.changes.indexes).toEqual([
-      {index: 'search.audience', key: 'explore'},
-      {index: 'search.audience', key: 'read'}
-    ])
-    const [updated] = await new EntryQueryEngine(database.snapshot).find({
-      id: 'recipes'
-    })
-    expect(updated.title).toBe('Updated recipes')
+    const parsed = await loadParsedVersions(cms.config, source)
+    const [updated] = normalizeParsedVersions(cms.config, parsed.versions)
+    expect(updated.core.title).toBe('Updated recipes')
   })
 
   test('matches status preference and inherited parent status', async () => {
@@ -114,9 +87,8 @@ describe('source entry database', () => {
         data: {title: 'Child'}
       }
     ])
-    const query = new EntryQueryEngine(
-      await buildEntryDatabase(cms.config, source)
-    )
+    const store = await createRuntimeStore(cms.config, source)
+    const resolver = new DatabaseResolver(cms.config, store)
     const statuses = [
       'published',
       'draft',
@@ -127,15 +99,13 @@ describe('source entry database', () => {
     ] as const
 
     for (const status of statuses) {
-      const current = await query.find({status})
+      const current = await resolver.resolve({status, select: Entry})
       expect(current.every(entry => matchesStatus(entry, status))).toBe(true)
     }
 
-    const snapshot = await buildEntryDatabase(cms.config, source)
-    const child = [...snapshot.records()].find(
-      record => record.kind === 'entry' && record.entryId === 'child'
-    )
-    expect(child).toMatchObject({
+    expect(
+      store.index.entries.find(entry => entry.entryId === 'child')
+    ).toMatchObject({
       versionStatus: 'published',
       status: 'archived'
     })

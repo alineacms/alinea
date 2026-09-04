@@ -28,3 +28,14 @@ export function aliasUrl(value: unknown): string | undefined {
   const trimmed = url.trim()
   return trimmed.length > 0 ? trimmed : undefined
 }
+
+export function aliasUrlsFromData(
+  data: Readonly<Record<string, unknown>>
+): Array<string> {
+  const result = new Set<string>()
+  for (const alias of aliasesFromData(data) ?? []) {
+    const url = aliasUrl(alias)
+    if (url) result.add(url)
+  }
+  return [...result]
+}

@@ -17,7 +17,7 @@ flowchart LR
   subgraph browser[Dashboard client]
     dashboard[Dashboard UI]
     worker[Dashboard worker<br/>ReplicaDashboardDB]
-    browserCache[(IndexedDB replica state<br/>and decoded cache)]
+    browserCache[(IndexedDB serialized<br/>replica state)]
     dashboard --> worker
     worker <--> browserCache
   end
@@ -74,7 +74,7 @@ sequenceDiagram
   C->>G: Read configured source revision
   G-->>C: Tree and changed blobs
   C-->>H: No change or changed source batch
-  Note over H: No change does not rebuild the runtime DB<br/>A simple entry edit becomes one overlay<br/>Structural changes currently use the compatibility rebuild
+  Note over H: Diff trees and fetch changed blobs only<br/>Recompute structure from compact index metadata<br/>Encrypt replacement frames only
   H-->>W: 204 or filtered index + live overlay ciphertext
   W->>P: Range-read unchanged base frames on demand
 
@@ -109,8 +109,8 @@ Important boundaries:
 - A hosted database can use GitHub as its configured durable `Source`; the
   handler talks to the hosted source API rather than to GitHub directly.
 - Live overlays are instance-independent because their ciphertext travels with
-  replica state. Structural writes still use a temporary compatibility rebuild,
-  but unchanged frames are removed before its changed-frame delta is sent.
+  replica state. Content and structural changes use the same tree-diff
+  reconciler and retain unchanged frame descriptors.
 
 ## Development
 
@@ -161,17 +161,19 @@ On startup, the dev server opens the last compatible generated index and
 payload as a checkpoint. It then compares the checkpoint's exact source tree to
 the working tree. An unchanged tree needs no entry reads or normalization;
 changed files become the same in-memory entry overlays used by the production
-handler. An addition, deletion, move, or config incompatibility falls back to a
-full rebuild and writes a fresh checkpoint. Filesystem fingerprints persisted
+handler. Additions, deletions, moves, and status changes are reconciled without
+opening unchanged payloads. Only a missing or config-incompatible checkpoint
+requires a full build. Filesystem fingerprints persisted
 alongside the development checkpoint let this comparison stat unchanged files
 without rereading and hashing their contents.
 
 On a config or content rebuild, the dev server either asks the dashboard to
 refetch database state or reloads the browser when the client bundle changed.
-The browser worker may independently boot from its IndexedDB Source cache. That
-browser-side development cache currently still normalizes source entries
-eagerly; reusing the runtime replica there is a separate follow-up from making
-the dev server itself start cheaply.
+The browser worker may independently boot from its IndexedDB Source cache. If
+that raw Source is all it has, it parses those files once to produce the same
+runtime index and frames used everywhere else; it does not construct or retain a
+second normalized database. Persisting the runtime checkpoint in this
+development-only browser path is a possible follow-up optimization.
 
 ## Revision ownership
 

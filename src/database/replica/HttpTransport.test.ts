@@ -7,16 +7,15 @@ describe('HttpReplicaTransport', () => {
   test('loads authenticated bootstrap and deserializes state', async () => {
     const state: ReplicaState = {
       viewId: 'editor',
-      catalog: {
+      recordAccess: {},
+      runtime: {
         version: 1,
         bundleId: 'release-1',
         bundleUrl: '/secret/database.bin',
         revision: 'tree-1',
-        records: {},
-        indexes: {}
-      },
-      grants: [{accessClassId: 'read', key: new Uint8Array([1, 2, 3])}],
-      recordAccess: {}
+        entries: [],
+        children: {}
+      }
     }
     const actions: Array<string | null> = []
     const fetch = Object.assign(

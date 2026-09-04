@@ -113,8 +113,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   async function writeRelease(db: DevDB, cms: CMS, configHash: string) {
     const artifacts = await buildEntryReleaseArtifacts(cms.config, db.source, {
       releaseId: generated.releaseId,
-      configId: generated.configId,
-      snapshot: db.normalizedSnapshot
+      configId: generated.configId
     })
     const publicDir = path.join(rootDir, cms.config.publicDir ?? 'public')
     const payloadDir = path.join(publicDir, artifacts.payloadPath)

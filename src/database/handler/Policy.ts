@@ -4,7 +4,7 @@ import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {assert} from '#/core/util/Assert.js'
 
-/** Runs server-side role functions against the complete normalized graph. */
+/** Runs server-side role functions against the complete runtime graph. */
 export async function evaluateRolePolicy(
   config: Config,
   graph: Graph,

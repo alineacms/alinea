@@ -4,28 +4,15 @@ import {parseRecord} from '#/core/EntryRecord.js'
 import {getRoot} from '#/core/Internal.js'
 import {Page} from '#/core/Page.js'
 import {Schema} from '#/core/Schema.js'
-import type {EntryReferenceTarget} from '#/core/db/EntryReference.js'
-import {bundleContents, type Source} from '#/core/source/Source.js'
+import type {Source} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {compareStrings} from '#/core/source/Utils.js'
 import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryInfo, entryUrl} from '#/core/util/EntryFilenames.js'
 import {entries} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
-import {
-  DatabaseSnapshot,
-  type DatabaseChange,
-  type DatabaseCommit
-} from '../Database.js'
-import {entryDatabaseSchema} from './Indexes.js'
-import type {
-  AlineaDatabaseRecord,
-  EntryCoreRecord,
-  EntryLinkRecord,
-  EntryPayloadRecord,
-  EntryReadRecord,
-  EntrySearchRecord
-} from './Model.js'
+import type {EntryCoreRecord} from './Model.js'
 
 export interface EntrySourceFile {
   sha: string
@@ -44,7 +31,7 @@ export interface EntrySeed {
   data: Record<string, unknown>
 }
 
-interface ParsedVersion {
+export interface ParsedVersion {
   filePath: string
   fileHash: string
   entryId: string
@@ -81,89 +68,33 @@ interface EntryNode {
   languages: ReadonlyMap<string | null, EntryLanguage>
 }
 
-export class SourceEntryDatabase {
-  #config: ConfigDefinition
-  #tree: ReadonlyTree
-  #files: Map<string, EntrySourceFile>
-  #records: Map<string, AlineaDatabaseRecord>
-  #snapshot: DatabaseSnapshot<AlineaDatabaseRecord>
-
-  constructor(
-    config: ConfigDefinition,
-    tree: ReadonlyTree,
-    files: Map<string, EntrySourceFile>
-  ) {
-    this.#config = config
-    this.#tree = tree
-    this.#files = files
-    this.#records = recordMap(normalizeEntryRecords(config, files))
-    this.#snapshot = new DatabaseSnapshot({
-      schema: entryDatabaseSchema,
-      revision: tree.sha,
-      records: this.#records.values()
-    })
-  }
-
-  static async load(
-    config: ConfigDefinition,
-    source: Source
-  ): Promise<SourceEntryDatabase> {
-    const tree = await source.getTree()
-    const files = await loadSourceFiles(source, tree)
-    return new SourceEntryDatabase(config, tree, files)
-  }
-
-  get tree(): ReadonlyTree {
-    return this.#tree
-  }
-
-  get snapshot(): DatabaseSnapshot<AlineaDatabaseRecord> {
-    return this.#snapshot
-  }
-
-  async sync(
-    source: Source
-  ): Promise<DatabaseCommit<AlineaDatabaseRecord> | undefined> {
-    const remote = await source.getTreeIfDifferent(this.#tree.sha)
-    if (!remote) return undefined
-    const batch = await bundleContents(source, this.#tree.diff(remote))
-    const files = new Map(this.#files)
-    for (const change of batch.changes) {
-      if (change.op === 'delete') {
-        files.delete(change.path)
-      } else {
-        assert(change.contents, `Missing contents for ${change.path}`)
-        files.set(change.path, {sha: change.sha, contents: change.contents})
-      }
-    }
-    const nextRecords = recordMap(normalizeEntryRecords(this.#config, files))
-    const commit = this.#snapshot.apply(
-      remote.sha,
-      diffRecords(this.#records, nextRecords)
-    )
-    this.#tree = remote
-    this.#files = files
-    this.#records = nextRecords
-    this.#snapshot = commit.snapshot
-    return commit
-  }
-}
-
-export async function buildEntryDatabase(
+export async function loadParsedVersions(
   config: ConfigDefinition,
   source: Source
-): Promise<DatabaseSnapshot<AlineaDatabaseRecord>> {
-  return (await SourceEntryDatabase.load(config, source)).snapshot
-}
-
-export function normalizeEntryRecords(
-  config: ConfigDefinition,
+): Promise<{
+  tree: ReadonlyTree
   files: ReadonlyMap<string, EntrySourceFile>
-): ReadonlyArray<AlineaDatabaseRecord> {
+  versions: ReadonlyArray<ParsedVersion>
+}> {
+  const tree = await source.getTree()
+  const files = await loadSourceFiles(source, tree)
   const seeds = entrySeeds(config)
   const versions = [...files].map(([filePath, file]) =>
     parseVersion(config, filePath, file, seeds)
   )
+  return {tree, files, versions}
+}
+
+export interface NormalizedParsedVersion {
+  core: EntryCoreRecord
+  version: ParsedVersion
+}
+
+/** Recomputes hierarchy and inherited state without requiring source IO. */
+export function normalizeParsedVersions(
+  config: ConfigDefinition,
+  versions: ReadonlyArray<ParsedVersion>
+): ReadonlyArray<NormalizedParsedVersion> {
   const grouped = new Map<string, Array<ParsedVersion>>()
   const byDirectory = new Map<string, string>()
   for (const version of versions) {
@@ -213,33 +144,36 @@ export function normalizeEntryRecords(
 
   for (const entryId of grouped.keys()) createNode(entryId)
 
-  const records: Array<AlineaDatabaseRecord> = []
+  const result: Array<NormalizedParsedVersion> = []
   for (const node of nodes.values()) {
     for (const language of node.languages.values()) {
       for (const version of language.versions.values()) {
         const queryable =
           language.inheritedStatus === undefined || version === language.active
         const core = coreRecord(node, language, version, queryable)
-        records.push(
-          core,
-          readRecord(core, version),
-          payloadRecord(core, version)
-        )
-        if (!queryable) continue
-        records.push(
-          searchRecord(core, version, 'explore'),
-          searchRecord(core, version, 'read')
-        )
-        const references = Type.references(node.type, version.data)
-        records.push(
-          ...references.map((target, index) =>
-            linkRecord(core, version, target, index)
-          )
-        )
+        result.push({core, version})
       }
     }
   }
-  return records
+  result.sort(
+    (left, right) =>
+      compareStrings(left.core.index, right.core.index) ||
+      compareStrings(left.core.locale ?? '', right.core.locale ?? '') ||
+      statusOrder(left.core.versionStatus) -
+        statusOrder(right.core.versionStatus)
+  )
+  return result
+}
+
+function statusOrder(status: EntryStatus): number {
+  switch (status) {
+    case 'draft':
+      return 0
+    case 'published':
+      return 1
+    case 'archived':
+      return 2
+  }
 }
 
 async function loadSourceFiles(
@@ -260,7 +194,7 @@ async function loadSourceFiles(
   return files
 }
 
-function parseVersion(
+export function parseVersion(
   config: ConfigDefinition,
   filePath: string,
   file: EntrySourceFile,
@@ -497,112 +431,6 @@ function coreRecord(
   }
 }
 
-function readRecord(
-  core: EntryCoreRecord,
-  version: ParsedVersion
-): EntryReadRecord {
-  return {
-    kind: 'entryRead',
-    id: readRecordId(version.filePath),
-    entryVersionId: core.id,
-    filePath: version.filePath,
-    parentDir: version.parentDir,
-    childrenDir: version.childrenDir,
-    rowHash: version.fileHash,
-    fileHash: version.fileHash,
-    payloadId: payloadRecordId(version.filePath),
-    searchId: searchRecordId('read', version.filePath)
-  }
-}
-
-function payloadRecord(
-  core: EntryCoreRecord,
-  version: ParsedVersion
-): EntryPayloadRecord {
-  return {
-    kind: 'payload',
-    id: payloadRecordId(version.filePath),
-    entryVersionId: core.id,
-    data: version.data
-  }
-}
-
-function searchRecord(
-  core: EntryCoreRecord,
-  version: ParsedVersion,
-  audience: 'explore' | 'read'
-): EntrySearchRecord {
-  return {
-    kind: 'search',
-    id: searchRecordId(audience, version.filePath),
-    entryVersionId: core.id,
-    audience,
-    title: core.title,
-    searchableText:
-      audience === 'read'
-        ? version.searchableText
-        : `${core.title} ${core.path} ${core.url}`
-  }
-}
-
-function linkRecord(
-  core: EntryCoreRecord,
-  version: ParsedVersion,
-  target: EntryReferenceTarget,
-  index: number
-): EntryLinkRecord {
-  return {
-    kind: 'link',
-    id: `link:${version.filePath}:${index}`,
-    ...target,
-    sourceEntryId: core.entryId,
-    sourceVersionId: core.id,
-    sourceFilePath: version.filePath,
-    sourceType: core.type,
-    sourceLocale: core.locale,
-    sourceStatus: core.status,
-    sourceActive: core.active,
-    sourceMain: core.main
-  }
-}
-
 function coreRecordId(filePath: string): string {
   return `entry:${filePath}`
-}
-
-function readRecordId(filePath: string): string {
-  return `entry-read:${filePath}`
-}
-
-function payloadRecordId(filePath: string): string {
-  return `payload:${filePath}`
-}
-
-function searchRecordId(
-  audience: 'explore' | 'read',
-  filePath: string
-): string {
-  return `search:${audience}:${filePath}`
-}
-
-function recordMap(
-  records: ReadonlyArray<AlineaDatabaseRecord>
-): Map<string, AlineaDatabaseRecord> {
-  return new Map(records.map(record => [record.id, record]))
-}
-
-function diffRecords(
-  previous: ReadonlyMap<string, AlineaDatabaseRecord>,
-  next: ReadonlyMap<string, AlineaDatabaseRecord>
-): Array<DatabaseChange<AlineaDatabaseRecord>> {
-  const changes: Array<DatabaseChange<AlineaDatabaseRecord>> = []
-  const ids = new Set([...previous.keys(), ...next.keys()])
-  for (const id of ids) {
-    const before = previous.get(id)
-    const after = next.get(id)
-    if (!after) changes.push({op: 'delete', id})
-    else if (!before || JSON.stringify(before) !== JSON.stringify(after))
-      changes.push({op: 'put', record: after})
-  }
-  return changes
 }

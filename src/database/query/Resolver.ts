@@ -37,18 +37,8 @@ import {Type} from '#/core/Type.js'
 import {aliasesFromData, aliasUrl} from '#/core/db/EntryAliases.js'
 import {LinkResolver} from '#/core/db/LinkResolver.js'
 import MiniSearch from 'minisearch'
-import type {DatabaseSnapshot} from '../Database.js'
-import type {DatabaseReader} from '../Reader.js'
-import type {
-  AlineaDatabaseRecord,
-  EntryCoreRecord,
-  EntrySearchRecord
-} from '../entry/Model.js'
-import {
-  isEntryStore,
-  ReaderEntryStore,
-  type EntryStore
-} from '../entry/Store.js'
+import type {EntryCoreRecord, EntrySearchRecord} from '../entry/Model.js'
+import type {EntryStore} from '../entry/Store.js'
 import {filterPredicate} from './Filter.js'
 
 interface ResolveContext {
@@ -74,17 +64,11 @@ export class DatabaseResolver extends Graph implements Resolver {
   #cores: Promise<ReadonlyArray<EntryCoreRecord>>
   #searchIndex?: Promise<CoreSearchIndex>
 
-  constructor(
-    config: Config,
-    source:
-      | DatabaseReader<AlineaDatabaseRecord>
-      | DatabaseSnapshot<AlineaDatabaseRecord>
-      | EntryStore
-  ) {
+  constructor(config: Config, source: EntryStore) {
     super()
     this.config = config
     this.#scope = getScope(config)
-    this.#store = isEntryStore(source) ? source : new ReaderEntryStore(source)
+    this.#store = source
     this.#cores = this.#store.cores()
   }
 

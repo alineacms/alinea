@@ -1,6 +1,4 @@
 export * from './Deltas.js'
-export * from './EntryProjection.js'
 export * from './Mutation.js'
 export * from './Policy.js'
-export * from './Projection.js'
 export * from './Service.js'

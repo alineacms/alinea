@@ -4,6 +4,7 @@ import {ReplicaService} from './Service.js'
 import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
 import {RuntimeEntryStore} from '../runtime/Store.js'
 import {base64} from '#/core/util/Encoding.js'
+import {cms} from '#test/cms.js'
 
 test('projects a runtime replica directly from the generated index', () => {
   const runtime: RuntimeDatabaseIndex = {
@@ -51,10 +52,19 @@ test('projects a runtime replica directly from the generated index', () => {
     source: {tree: {sha: 'tree-1', entries: []}, blobs: {}}
   }
   const service = new ReplicaService({
+    config: cms.config,
     configId: 'config-1',
     configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'runtime:release-1',
-    runtime
+    runtime,
+    store: new RuntimeEntryStore({
+      index: runtime,
+      source: () => ({
+        async read() {
+          return new Uint8Array()
+        }
+      })
+    })
   })
   const session = {
     user: {id: 'user-1', roles: ['admin']},
@@ -87,6 +97,7 @@ test('carries live entry overlay ciphertext with the filtered state', () => {
     })
   })
   const service = new ReplicaService({
+    config: cms.config,
     configId: 'config-1',
     configUrl: '/admin/config/config-1/client-config.js',
     cacheKey: 'runtime:release-1',
@@ -131,7 +142,7 @@ test('carries live entry overlay ciphertext with the filtered state', () => {
   }
   const next = {...runtime, revision: 'tree-2', entries: [entry]}
   const contents = new Uint8Array([1, 2, 3])
-  service.installRuntimeOverlays(next, [{bundleId: 'overlay', contents}])
+  service.installRuntimeOverlay(next, 'overlay', contents)
 
   const state = service.state({
     user: {id: 'user-1', roles: ['admin']},

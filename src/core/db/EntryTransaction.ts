@@ -22,11 +22,12 @@ import type {MediaFile} from '../media/MediaTypes.js'
 import {Permission, Policy} from '../Role.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
 import type {Source} from '../source/Source.js'
+import {compareStrings} from '../source/Utils.js'
 import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
-import {aliasesFromData, aliasUrl} from './EntryAliases.js'
+import {aliasUrlsFromData, aliasUrl} from './EntryAliases.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
   ArchiveMutation,
@@ -65,9 +66,45 @@ interface UrlCandidate {
   url?: string
 }
 
-interface UrlClaim {
+export interface EntryTransactionUrlClaim {
   id: string
+  workspace: string
+  root: string
   url: string
+}
+
+export interface EntryTransactionRow {
+  /** Stable id of this physical entry version. */
+  id: string
+  /** Logical id shared by statuses and locales. */
+  entryId: string
+  queryable: boolean
+  versionStatus: EntryStatus
+  status: EntryStatus
+  active: boolean
+  main: boolean
+  type: string
+  title: string
+  seeded: string | null
+  workspace: string
+  root: string
+  locale: string | null
+  level: number
+  index: string
+  parentId: string | null
+  parents: ReadonlyArray<string>
+  path: string
+  url: string
+  frames?: {
+    read?: {
+      filePath: string
+      parentDir: string
+      childrenDir: string
+      rowHash: string
+      fileHash: string
+      urlAliases?: ReadonlyArray<string>
+    }
+  }
 }
 
 interface MoveTarget {
@@ -83,7 +120,7 @@ interface MoveUrlAliasUpdate {
   filePath: string
 }
 
-export interface EntryTransactionLanguage extends Iterable<
+interface EntryTransactionLanguage extends Iterable<
   readonly [EntryStatus, EntryTransactionVersion]
 > {
   readonly main: EntryTransactionVersion
@@ -92,7 +129,7 @@ export interface EntryTransactionLanguage extends Iterable<
   has(status: EntryStatus): boolean
 }
 
-export interface EntryTransactionVersion extends Pick<
+interface EntryTransactionVersion extends Pick<
   Entry,
   | 'id'
   | 'status'
@@ -114,7 +151,7 @@ export interface EntryTransactionVersion extends Pick<
   | 'searchableText'
 > {}
 
-export interface EntryTransactionNode {
+interface EntryTransactionNode {
   readonly id: string
   readonly index: string
   readonly parentId: string | null
@@ -126,33 +163,207 @@ export interface EntryTransactionNode {
   keys(): IterableIterator<string | null>
 }
 
-export interface EntryTransactionIndex {
+interface EntryTransactionLookup {
   readonly sha: string
   byId(id: string): EntryTransactionNode | undefined
   findFirst(filter: (entry: Entry) => boolean): Entry | undefined
   findMany(filter: (entry: Entry) => boolean): Iterable<Entry>
+  urlClaims(): Iterable<EntryTransactionUrlClaim>
+}
+
+class TransactionLanguage
+  extends Map<EntryStatus, Entry>
+  implements EntryTransactionLanguage
+{
+  readonly main: Entry
+  readonly path: string
+  readonly seeded: string | null
+
+  constructor(entries: ReadonlyArray<Entry>) {
+    super(entries.map(entry => [entry.status, entry]))
+    const main = entries.find(entry => entry.main)
+    if (!main) throw new Error('Entry language is missing its main version')
+    this.main = main
+    this.path = main.path
+    this.seeded = main.seeded
+  }
+}
+
+class TransactionNode
+  extends Map<string | null, EntryTransactionLanguage>
+  implements EntryTransactionNode
+{
+  readonly id: string
+  readonly index: string
+  readonly parentId: string | null
+  readonly workspace: string
+  readonly root: string
+  readonly type: string
+  parent: TransactionNode | null = null
+
+  constructor(entries: ReadonlyArray<Entry>) {
+    super()
+    const first = entries[0]
+    if (!first) throw new Error('Entry node is missing versions')
+    this.id = first.id
+    this.index = first.index
+    this.parentId = first.parentId
+    this.workspace = first.workspace
+    this.root = first.root
+    this.type = first.type
+    const languages = new Map<string | null, Array<Entry>>()
+    for (const entry of entries) {
+      const language = languages.get(entry.locale) ?? []
+      language.push(entry)
+      languages.set(entry.locale, language)
+    }
+    for (const [locale, language] of languages)
+      this.set(locale, new TransactionLanguage(language))
+  }
+}
+
+class TransactionLookup implements EntryTransactionLookup {
+  readonly sha: string
+  #rows: ReadonlyArray<EntryTransactionRow>
+  #loaded: ReadonlyMap<string, Entry>
+  #nodes = new Map<string, TransactionNode | null>()
+
+  constructor(
+    sha: string,
+    rows: ReadonlyArray<EntryTransactionRow>,
+    loaded: ReadonlyMap<string, Entry>
+  ) {
+    this.sha = sha
+    this.#rows = rows
+    this.#loaded = loaded
+  }
+
+  byId(id: string): TransactionNode | undefined {
+    const cached = this.#nodes.get(id)
+    if (cached !== undefined) return cached ?? undefined
+    const versions = this.#rows
+      .filter(row => row.entryId === id)
+      .map(row => this.#entry(row, row.versionStatus))
+      .sort(compareTransactionEntries)
+    if (versions.length === 0) {
+      this.#nodes.set(id, null)
+      return undefined
+    }
+    const node = new TransactionNode(versions)
+    this.#nodes.set(id, node)
+    node.parent = node.parentId ? (this.byId(node.parentId) ?? null) : null
+    return node
+  }
+
+  findFirst(filter: (entry: Entry) => boolean): Entry | undefined {
+    for (const row of this.#rows) {
+      if (!row.queryable) continue
+      const entry = this.#entry(row, row.status)
+      if (filter(entry)) return entry
+    }
+  }
+
+  *findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
+    for (const row of this.#rows) {
+      if (!row.queryable) continue
+      const entry = this.#entry(row, row.status)
+      if (filter(entry)) yield entry
+    }
+  }
+
+  *urlClaims(): Iterable<EntryTransactionUrlClaim> {
+    for (const row of this.#rows) {
+      if (!row.queryable || row.status !== 'published') continue
+      yield {
+        id: row.entryId,
+        workspace: row.workspace,
+        root: row.root,
+        url: row.url
+      }
+      for (const url of row.frames?.read?.urlAliases ?? [])
+        yield {
+          id: row.entryId,
+          workspace: row.workspace,
+          root: row.root,
+          url
+        }
+    }
+  }
+
+  #entry(row: EntryTransactionRow, status: EntryStatus): Entry {
+    const loaded = this.#loaded.get(row.id)
+    if (loaded?.status === status) return loaded
+    const read = row.frames?.read
+    return {
+      id: row.entryId,
+      versionStatus: row.versionStatus,
+      status,
+      title: row.title,
+      type: row.type,
+      seeded: row.seeded,
+      workspace: row.workspace,
+      root: row.root,
+      level: row.level,
+      filePath: read?.filePath ?? loaded?.filePath ?? '',
+      parentDir: read?.parentDir ?? loaded?.parentDir ?? '',
+      childrenDir: read?.childrenDir ?? loaded?.childrenDir ?? '',
+      index: row.index,
+      parentId: row.parentId,
+      parents: [...row.parents],
+      locale: row.locale,
+      rowHash: read?.rowHash ?? loaded?.rowHash ?? '',
+      active: row.active,
+      main: row.main,
+      path: row.path,
+      fileHash: read?.fileHash ?? loaded?.fileHash ?? '',
+      url: row.url,
+      data: loaded?.data ?? {},
+      searchableText: loaded?.searchableText ?? ''
+    }
+  }
+}
+
+function compareTransactionEntries(left: Entry, right: Entry): number {
+  return (
+    compareStrings(left.index, right.index) ||
+    compareStrings(left.locale ?? '', right.locale ?? '') ||
+    transactionStatusOrder(left.status) - transactionStatusOrder(right.status)
+  )
+}
+
+function transactionStatusOrder(status: EntryStatus): number {
+  switch (status) {
+    case 'draft':
+      return 0
+    case 'published':
+      return 1
+    case 'archived':
+      return 2
+  }
 }
 
 export class EntryTransaction {
   #checks = [] as [path: string, sha: string][]
   #messages = [] as string[]
   #config: Config
-  #index: EntryTransactionIndex
+  #index: EntryTransactionLookup
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
   #policy: Policy
-  #urlClaims: Map<string, UrlClaim> | undefined
+  #urlClaims: Map<string, EntryTransactionUrlClaim> | undefined
 
   constructor(
     config: Config,
-    index: EntryTransactionIndex,
+    sha: string,
+    rows: ReadonlyArray<EntryTransactionRow>,
+    loaded: ReadonlyMap<string, Entry>,
     source: Source,
     from: ReadonlyTree,
     policy = Policy.ALLOW_ALL
   ) {
-    if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
+    if (sha !== from.sha) throw new ShaMismatchError(sha, from.sha)
     this.#config = config
-    this.#index = index
+    this.#index = new TransactionLookup(sha, rows, loaded)
     this.#tx = new SourceTransaction(source, from)
     this.#policy = policy
   }
@@ -474,6 +685,8 @@ export class EntryTransaction {
     for (const url of urls) {
       claims.set(this.#urlClaimKey(candidate.workspace, candidate.root, url), {
         id: candidate.id,
+        workspace: candidate.workspace,
+        root: candidate.root,
         url
       })
     }
@@ -543,21 +756,14 @@ export class EntryTransaction {
     return result
   }
 
-  #getUrlClaims(): Map<string, UrlClaim> {
+  #getUrlClaims(): Map<string, EntryTransactionUrlClaim> {
     if (this.#urlClaims) return this.#urlClaims
-    const claims = new Map<string, UrlClaim>()
-    for (const entry of this.#index.findMany(entry => {
-      return entry.status === 'published'
-    })) {
-      for (const url of [
-        this.#resolvedUrl(entry),
-        ...aliasUrlsFromData(entry.data)
-      ]) {
-        claims.set(this.#urlClaimKey(entry.workspace, entry.root, url), {
-          id: entry.id,
-          url
-        })
-      }
+    const claims = new Map<string, EntryTransactionUrlClaim>()
+    for (const claim of this.#index.urlClaims()) {
+      claims.set(
+        this.#urlClaimKey(claim.workspace, claim.root, claim.url),
+        claim
+      )
     }
     this.#urlClaims = claims
     return claims
@@ -1096,15 +1302,6 @@ export class EntryTransaction {
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
   }
-}
-
-function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
-  const result = new Set<string>()
-  for (const alias of aliasesFromData(data) ?? []) {
-    const url = aliasUrl(alias)
-    if (url) result.add(url)
-  }
-  return Array.from(result)
 }
 
 function dataWithUrlAlias(

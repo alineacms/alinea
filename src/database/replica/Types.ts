@@ -27,42 +27,14 @@ export interface AccessClassGrant {
   key: Uint8Array
 }
 
-export interface ReplicaCatalog {
-  version: 1
-  bundleId: BundleId
-  bundleUrl: string
-  revision: Revision
-  records: Readonly<Record<RecordId, FrameDescriptor>>
-  /** One bucket may contain several independently granted fragments. */
-  indexes: Readonly<Record<IndexKey, ReadonlyArray<FrameDescriptor>>>
-}
-
 export interface ReplicaState {
   viewId: ViewId
-  catalog: ReplicaCatalog
-  grants: ReadonlyArray<AccessClassGrant>
   /** Effective access for synchronized core records, computed by the handler. */
   recordAccess: Readonly<Record<RecordId, 'explore' | 'read'>>
   /** Logical entries affected by each granted record, for exact UI invalidation. */
   recordEntries?: Readonly<Record<RecordId, ReadonlyArray<string>>>
-  /** Consolidated runtime view. Legacy normalized replicas omit this field. */
-  runtime?: RuntimeDatabaseIndex
+  runtime: RuntimeDatabaseIndex
   /** Entry-sized live overlay bundles carried with their authorized view. */
   inlineBundles?: Readonly<Record<BundleId, string>>
-}
-
-export interface RecordReference<Metadata = Record<string, unknown>> {
-  id: RecordId
-  frame: FrameDescriptor
-  order: ReadonlyArray<boolean | number | string | null>
-  metadata: Metadata
-}
-
-export interface IndexBucket<Metadata = Record<string, unknown>> {
-  records: ReadonlyArray<{
-    id: RecordId
-    order?: ReadonlyArray<boolean | number | string | null>
-    metadata: Metadata
-  }>
 }
 import type {RuntimeDatabaseIndex} from '../runtime/Model.js'
