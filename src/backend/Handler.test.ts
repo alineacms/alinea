@@ -641,6 +641,74 @@ test('commits mutations returned by beforeCommit', async () => {
   test.is(committedTitle, 'Adjusted by hook')
 })
 
+test('rejects create mutations without an id', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  let beforeCommitCalls = 0
+  let writes = 0
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async write(request) {
+          writes += 1
+          return db.write(request)
+        }
+      })
+    },
+    beforeCommit({mutations}) {
+      beforeCommitCalls += 1
+      return mutations.map(mutation => {
+        if (mutation.op !== 'create') return mutation
+        const {id: _id, ...withoutId} = mutation
+        return withoutId
+      })
+    }
+  })
+  const error = console.error
+  console.error = () => {}
+  try {
+    const missingFromRequest = await handle(
+      mutationRequest([
+        {
+          op: 'create',
+          type: 'Page',
+          locale: null,
+          data: {title: 'Missing from request'}
+        }
+      ]),
+      requestContext()
+    )
+    const removedByHook = await handle(
+      mutationRequest([
+        {
+          op: 'create',
+          id: 'removed-by-hook',
+          type: 'Page',
+          locale: null,
+          data: {title: 'Removed by hook'}
+        }
+      ]),
+      requestContext()
+    )
+
+    test.is(missingFromRequest.status, 500)
+    test.is(removedByHook.status, 500)
+    test.is(beforeCommitCalls, 2)
+    test.is(writes, 0)
+  } finally {
+    console.error = error
+  }
+})
+
 test('does not report a committed mutation as failed when afterCommit throws', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)

@@ -161,6 +161,27 @@ async function createDocumentDb() {
   return db
 }
 
+test('rejects create mutations without an id', async () => {
+  const db = await createEmptyDb()
+  let error: unknown
+
+  try {
+    await db.mutate([
+      {
+        op: 'create',
+        type: 'Page',
+        locale: null,
+        root: 'pages',
+        data: {title: 'Missing id'}
+      }
+    ])
+  } catch (cause) {
+    error = cause
+  }
+
+  test.is((error as Error)?.message, 'Create mutation is missing an id')
+})
+
 test('assigns distinct order indexes to entries created in one batch', async () => {
   const db = await createEmptyDb()
 

@@ -18,7 +18,6 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
-import {createId} from '#/core/Id.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -251,9 +250,7 @@ export function createHandler({
         const user = expectUser()
         expectJson()
         const policy = await user.policy
-        let mutations: ReadonlyArray<Mutation> = prepareMutationIds(
-          (await body) as Array<Mutation>
-        )
+        let mutations = (await body) as ReadonlyArray<Mutation>
         await local.syncWith(cnx)
         const adjusted = await hooks.beforeCommit?.({mutations})
         if (adjusted) mutations = adjusted
@@ -434,23 +431,6 @@ export function createHandler({
       )
     }
   }
-}
-
-function prepareMutationIds(mutations: Array<Mutation>): Array<Mutation> {
-  return mutations.map(mutation => {
-    switch (mutation.op) {
-      case 'create':
-        return {
-          ...mutation,
-          id: mutation.id ?? createId(),
-          data: {...mutation.data}
-        }
-      case 'update':
-        return {...mutation, set: {...mutation.set}}
-      default:
-        return {...mutation}
-    }
-  })
 }
 
 function parseUser(input: unknown): UserInput {

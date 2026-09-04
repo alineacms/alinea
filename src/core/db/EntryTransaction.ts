@@ -2,7 +2,6 @@ import {Config} from '#/core/Config.js'
 import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
-import {createId} from '#/core/Id.js'
 import {getRoot} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
@@ -125,11 +124,12 @@ export class EntryTransaction {
     workspace,
     fromSeed,
     parentId = null,
-    id = createId(),
+    id,
     insertOrder = 'last',
     status = 'published',
     overwrite = false
   }: Op<CreateMutation>) {
+    assert(id, 'Create mutation is missing an id')
     const config = this.#config
     const index = this.#index
     const existing = index.byId(id)

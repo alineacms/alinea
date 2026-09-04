@@ -1,5 +1,3 @@
-import path from 'node:path'
-import {fetch, Headers, Request, type Response} from '@alinea/iso'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {createHandler} from '#/backend/Handler.js'
 import {gitUser} from '#/backend/util/ExecGit.js'
@@ -9,7 +7,9 @@ import {Config} from '#/core/Config.js'
 import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import {createId} from '#/core/Id.js'
+import {fetch, Headers, Request, type Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
+import path from 'node:path'
 import {generate} from '../Generate.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
@@ -188,8 +188,11 @@ async function forwardMutation(
   const origin = forwardedRequestOrigin(request)
   if (!origin) return
   const source = new URL(request.url)
-  const target = new URL(Config.handlerUrl(cms.config), origin)
-  target.search = source.search
+  const target = forwardedHandlerUrl(
+    Config.handlerUrl(cms.config),
+    origin,
+    source.search
+  )
   const headers = new Headers(request.headers)
   for (const name of hopByHopHeaders) headers.delete(name)
   headers.set(developmentKeyHeader, apiKey)
@@ -201,6 +204,17 @@ async function forwardMutation(
     duplex: 'half'
   }
   return fetch(new Request(target, init))
+}
+
+function forwardedHandlerUrl(
+  handlerUrl: string,
+  origin: string,
+  search: string
+): URL {
+  const pathname = new URL(handlerUrl, origin).pathname
+  const target = new URL(pathname, origin)
+  target.search = search
+  return target
 }
 
 const hopByHopHeaders = [
