@@ -7,15 +7,18 @@ import {
   type TextDoc,
   TextNode
 } from '#/core/TextDoc.js'
+import {entries, fromEntries} from '#/core/util/Objects.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {
+  cloneElement,
   type ComponentType,
   type CSSProperties,
   Fragment,
   isValidElement,
   type JSX,
   type ReactElement,
-  type ReactNode
+  type ReactNode,
+  type TableHTMLAttributes
 } from 'react'
 
 type Attributes = Record<string, unknown>
@@ -39,19 +42,30 @@ function textContent(doc: TextDoc): string {
   }, '')
 }
 
-interface TableProps {
-  children?: ReactNode
-}
+interface TableProps extends TableHTMLAttributes<HTMLTableElement> {}
 
-function Table({children}: TableProps) {
+function Table({children, ...props}: TableProps) {
   return (
-    <table>
+    <table {...props}>
       <tbody>{children}</tbody>
     </table>
   )
 }
 
 function nodeElement(
+  type: string,
+  attributes: Attributes | undefined,
+  content?: TextDoc
+): ReactElement | undefined {
+  const element = defaultNodeElement(type, attributes, content)
+  if (!element || !attributes) return element
+  const dataAttributes = fromEntries(
+    entries(attributes).filter(([key]) => key.startsWith('data-'))
+  )
+  return cloneElement(element, dataAttributes)
+}
+
+function defaultNodeElement(
   type: string,
   attributes: Attributes | undefined,
   content?: TextDoc

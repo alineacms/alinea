@@ -6,6 +6,52 @@ import {RichText, type RichTextProps} from './RichText.js'
 
 afterEach(cleanup)
 
+test('RichText forwards data attributes to HTML and custom views', () => {
+  const doc = [
+    {
+      _type: 'bulletList',
+      'data-checklist': true,
+      checklist: true,
+      content: [
+        {
+          _type: 'listItem',
+          content: [
+            {
+              _type: 'paragraph',
+              'data-background': false,
+              content: [{_type: 'text', text: 'Item'}]
+            }
+          ]
+        }
+      ]
+    },
+    {_type: 'table', 'data-layout': 'wide', content: []}
+  ] satisfies TextDoc
+  interface ListProps extends ComponentPropsWithoutRef<'ul'> {
+    'data-checklist'?: boolean
+  }
+  let checklist: unknown
+  function List(props: ListProps) {
+    checklist = props['data-checklist']
+    return <ul {...props} />
+  }
+  const {container, rerender} = render(<RichText doc={doc} ul={List} />)
+  expect(checklist).toBe(true)
+  expect(screen.getByRole('list').getAttribute('data-checklist')).toBe('true')
+  expect(screen.getByRole('list').hasAttribute('checklist')).toBe(false)
+  expect(screen.getByText('Item').getAttribute('data-background')).toBe('false')
+  expect(container.querySelector('table')?.getAttribute('data-layout')).toBe(
+    'wide'
+  )
+
+  rerender(<RichText doc={doc} ul={<ul data-checklist="override" />} />)
+  expect(screen.getByRole('list').getAttribute('data-checklist')).toBe(
+    'override'
+  )
+  rerender(<RichText doc={doc} />)
+  expect(screen.getByRole('list').getAttribute('data-checklist')).toBe('true')
+})
+
 test('RichText renders paragraphs, headings, lists, quotes and rules', () => {
   const doc = [
     {
