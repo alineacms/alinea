@@ -14,7 +14,6 @@ import {
   ListRowBody,
   ListRowDrag,
   ListRowDragHandle,
-  ListRowFooter,
   ListRowHeader,
   ListRowMeta,
   ListRowSettings,
@@ -31,7 +30,6 @@ import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {Badge} from '#/dashboard/app/Badge.js'
-import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
@@ -555,7 +553,6 @@ function ListFieldRow({
     | undefined
   const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
   const customLabel = customLabelValue ?? ''
-  const value = useAtomValue(row.value) as Record<string, unknown>
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))
   const moveListRow = useSetAtom(list.move)
@@ -676,15 +673,6 @@ function ListFieldRow({
             <ListRowBody>
               <NodeEditor node={row as ReactiveNode<object>} type={type} />
             </ListRowBody>
-          )}
-          {!expanded && (
-            <ListRowFooter>
-              <CompactRecordFields
-                fields={Type.fields(type)}
-                layout="footer"
-                value={value}
-              />
-            </ListRowFooter>
           )}
         </ComponentListRow>
       </div>

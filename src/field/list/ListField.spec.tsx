@@ -24,3 +24,21 @@ test('keeps the remove control visible beside block row actions', async ({
     'Quote item 1'
   )
 })
+
+test('collapsed lists keep only row headers and restore editors when expanded', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  const hero = page
+    .getByRole('list', {name: 'Sections'})
+    .getByRole('listitem')
+    .first()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+  await page.getByRole('button', {name: 'Collapse all items'}).first().click()
+  await expect(hero.getByRole('textbox')).toHaveCount(0)
+  await expect(hero.getByText('Heading', {exact: true})).toHaveCount(0)
+  expect((await hero.boundingBox())!.height).toBeLessThan(80)
+  await page.getByRole('button', {name: 'Expand all items'}).first().click()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+})
