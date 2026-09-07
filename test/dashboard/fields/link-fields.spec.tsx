@@ -343,9 +343,10 @@ test('adds the same entry to a multiple link field more than once', async ({
       name: 'Pick a link',
       exact: true
     })
-    const alpha = picker.getByRole('checkbox', {name: 'Select Alpha'})
-    await expect(alpha).not.toBeChecked()
-    await alpha.locator('xpath=ancestor::label').click()
+    const alpha = picker.getByRole('row', {name: /^Alpha /})
+    await expect(alpha).toBeVisible()
+    await expect(alpha).not.toHaveAttribute('aria-selected', 'true')
+    await alpha.click()
     await expect(picker).toBeHidden()
   }
 
