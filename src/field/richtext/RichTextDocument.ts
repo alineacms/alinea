@@ -6,13 +6,40 @@ import {
   TextNode,
   type TextDoc
 } from '#/core/TextDoc.js'
-import type {JSONContent} from '@tiptap/core'
+import {
+  getRenderedAttributes,
+  type Editor,
+  type JSONContent
+} from '@tiptap/core'
+import type {Node as ProseMirrorNode} from '@tiptap/pm/model'
 import {
   blockAttributes,
   decodeBlockValue,
   richTextBlockValueAttribute
 } from './RichTextBlockValue.js'
 import {isRecord} from '#/core/util/Objects.js'
+
+/** Include data attributes produced by custom extensions in the stored document. */
+export function editorDocument(editor: Editor): JSONContent {
+  function serialize(node: ProseMirrorNode): JSONContent {
+    const content: JSONContent = node.toJSON()
+    if (!node.isText) {
+      const dataAttributes = Object.fromEntries(
+        Object.entries(
+          getRenderedAttributes(node, editor.extensionManager.attributes)
+        ).filter(([key, value]) => key.startsWith('data-') && value != null)
+      )
+      if (Object.keys(dataAttributes).length)
+        content.attrs = {...content.attrs, ...dataAttributes}
+      if (node.childCount) {
+        content.content = []
+        node.forEach(child => content.content!.push(serialize(child)))
+      }
+    }
+    return content
+  }
+  return serialize(editor.state.doc)
+}
 
 export function editorContent(
   nodes: TextDoc,

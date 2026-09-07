@@ -40,7 +40,7 @@ import {
   type RichTextBlockHost,
   RichTextBlockHosts
 } from './RichTextBlockHost.js'
-import {editorContent, editorNodes} from './RichTextDocument.js'
+import {editorContent, editorDocument, editorNodes} from './RichTextDocument.js'
 import {
   defaultExtensionConfig,
   richTextBlockClipboard,
@@ -167,7 +167,7 @@ export function RichTextFieldView<Blocks extends Schema>({
       // traversal cannot safely inspect nested ProseMirror-owned DOM.
       setEditorReadOnly(editor, readOnly)
       lastEditorDocument.current = documentStructureKey(
-        editorNodes(editor.getJSON(), resolveBlock)
+        editorNodes(editorDocument(editor), resolveBlock)
       )
     },
     onFocus({editor}) {
@@ -176,7 +176,7 @@ export function RichTextFieldView<Blocks extends Schema>({
     },
     onUpdate({editor, transaction}) {
       if (!transaction.docChanged) return
-      const next = editorNodes(editor.getJSON(), resolveBlock)
+      const next = editorNodes(editorDocument(editor), resolveBlock)
       const nextKey = documentStructureKey(next)
       if (
         pendingExternalDocument.current &&
@@ -199,7 +199,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 
   useEffect(() => {
     if (!editor) return
-    const current = editorNodes(editor.getJSON(), resolveBlock)
+    const current = editorNodes(editorDocument(editor), resolveBlock)
     if (documentKey === documentStructureKey(current)) return
     const documentValue = store.get(fieldNode.value)
     editor.commands.setContent(editorContent(documentValue, richTextImages), {
