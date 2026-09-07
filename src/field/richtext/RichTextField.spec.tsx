@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/experimental-ct-react'
 import type {Locator, Page} from 'playwright'
 import {
   RichTextCustomToolbarStory,
+  RichTextInlineStory,
   RichTextImageDisabledStory,
   RichTextImageStory,
   RichTextImportedListStory,
@@ -1341,4 +1342,24 @@ test('undoes and redoes text changes', async ({mount, page}) => {
   await expect(segment).not.toContainText('Changed')
   await page.keyboard.press('ControlOrMeta+Shift+z')
   await expect(segment).toContainText('Changed')
+})
+
+test('inline rich text hides its label and shows an empty placeholder', async ({
+  mount,
+  page
+}) => {
+  await mount(<RichTextInlineStory />)
+  const editor = page.locator('.ProseMirror')
+  await expect(page.getByText('Body', {exact: true})).toHaveCount(0)
+  await expect(page.getByText('*', {exact: true})).toHaveCount(0)
+  await expect(editor.locator('[data-placeholder="Description"]')).toBeVisible()
+  await expect(page.getByTestId('value')).toHaveText('[]')
+  await expect(page.getByRole('status')).toHaveText('false')
+  await editor.fill('Inline content')
+  await expect(editor.locator('[data-placeholder="Description"]')).toHaveCount(
+    0
+  )
+  await editor.fill('')
+  await expect(editor.locator('[data-placeholder="Description"]')).toBeVisible()
+  await expect(page.getByTestId('value')).toHaveText('[]')
 })

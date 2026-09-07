@@ -336,3 +336,11 @@ function importedListItem(label: string, description: string) {
     ]
   }
 }
+
+const inlineEntry = type('Inline entry', {
+  fields: {body: richText('Body', {inline: true, required: true})}
+})
+
+export function RichTextInlineStory() {
+  return <RichTextFixture initialBody={[]} entryType={inlineEntry} />
+}

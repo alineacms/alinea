@@ -39,6 +39,8 @@ export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
   help?: ReactNode
   /** Display a minimal version */
   inline?: boolean
+  /** Text shown when the editor is empty */
+  placeholder?: string
   /** Index the text value of this field */
   searchable?: boolean
   /** Enable inserting and editing tables */

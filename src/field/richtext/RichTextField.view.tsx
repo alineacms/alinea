@@ -20,6 +20,7 @@ import {PickTextLink, usePickTextLink} from './PickTextLink.js'
 import styler from '@alinea/styler'
 import type {AnyExtension, Editor} from '@tiptap/core'
 import {EditorContent, useEditor} from '@tiptap/react'
+import {Placeholder} from '@tiptap/extensions'
 import {useAtomValue, useSetAtom, useStore} from 'jotai'
 import {
   useCallback,
@@ -109,10 +110,17 @@ export function RichTextFieldView<Blocks extends Schema>({
   const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
   const extensions = useMemo<Array<AnyExtension>>(() => {
     const configured = Object.values(
-      configureRichTextExtensions(
-        options.extensions,
-        defaultExtensionConfig(getEntryAnchors, Boolean(options.enableImages))
-      )
+      configureRichTextExtensions(options.extensions, {
+        ...defaultExtensionConfig(
+          getEntryAnchors,
+          Boolean(options.enableImages)
+        ),
+        Placeholder: Placeholder.configure({
+          placeholder:
+            options.placeholder ?? (options.inline ? 'Description' : ''),
+          emptyEditorClass: css['RichTextFieldView-empty']
+        })
+      })
     )
     const blocks = richTextBlockExtensions(options.schema, hosts)
     return [
@@ -126,6 +134,8 @@ export function RichTextFieldView<Blocks extends Schema>({
     hosts,
     options.enableImages,
     options.extensions,
+    options.inline,
+    options.placeholder,
     options.schema
   ])
   const content = useMemo(
@@ -266,8 +276,8 @@ export function RichTextFieldView<Blocks extends Schema>({
       <Label
         description={options.help}
         errorMessage={error}
-        isRequired={options.required}
-        label={options.label}
+        isRequired={!options.inline && options.required}
+        label={options.inline ? undefined : options.label}
         shared={options.shared}
       >
         <div

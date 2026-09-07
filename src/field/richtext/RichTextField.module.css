@@ -7,6 +7,14 @@
   transition-property: border-color, outline-color, background-color;
 }
 
+.RichTextFieldView-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--alinea-fg-muted);
+  pointer-events: none;
+}
+
 .RichTextFieldView:hover {
   border-color: var(--alinea-border-hover);
   outline-color: var(--alinea-ring-subtle);

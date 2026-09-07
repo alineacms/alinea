@@ -47,7 +47,9 @@ export function editorContent(
 ): JSONContent {
   return {
     type: 'doc',
-    content: nodes.map(node => nodeToContent(node, images))
+    content: nodes.length
+      ? nodes.map(node => nodeToContent(node, images))
+      : [{type: 'paragraph'}]
   }
 }
 

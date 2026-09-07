@@ -262,3 +262,9 @@ test('normalizes the editor empty paragraph to an empty field value', () => {
     []
   )
 })
+
+test('gives an empty editor a paragraph without changing its stored value', () => {
+  const content = editorContent([])
+  test.equal(content, {type: 'doc', content: [{type: 'paragraph'}]})
+  test.equal(editorNodes(content), [])
+})
