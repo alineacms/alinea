@@ -53,6 +53,11 @@ function ExternalLinkPickerDialog({
   const initialUrl = initialValue?.url ?? ''
   const initialTitle = initialValue?.title ?? ''
   const [url, setUrl] = useState(initialUrl)
+  const parsedUrl = url.trim() ? URL.parse(url, 'https://example.com') : null
+  const urlError =
+    url && !parsedUrl
+      ? 'Enter a valid URL, for example https://example.com'
+      : undefined
   const [title, setTitle] = useState(initialTitle)
   const [openInNewTab, setOpenInNewTab] = useState(
     initialValue?.target !== '_self'
@@ -61,10 +66,9 @@ function ExternalLinkPickerDialog({
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     event.stopPropagation()
-    const normalizedUrl = URL.parse(url) ? url : `https://${url}`
-    if (!URL.parse(normalizedUrl)) return
+    if (!parsedUrl) return
     onConfirm({
-      url: normalizedUrl,
+      url,
       title,
       target: openInNewTab ? '_blank' : '_self'
     })
@@ -86,7 +90,14 @@ function ExternalLinkPickerDialog({
           <DashboardModalCloseButton />
         </DashboardModalFormHeader>
         <DashboardModalFormBody>
-          <TextField label="URL" value={url} onChange={setUrl} isRequired />
+          <TextField
+            label="URL"
+            value={url}
+            onChange={setUrl}
+            errorMessage={urlError}
+            isInvalid={Boolean(urlError)}
+            isRequired
+          />
           <TextField
             label="Label"
             value={title}
