@@ -2,6 +2,8 @@ export interface ListRow {
   _id: string
   _type: string
   _index: string
+  _anchor?: string
+  _label?: string
 }
 
 export namespace ListRow {
