@@ -33,7 +33,7 @@ export function LabelHeader({
   asLabel,
   ...props
 }: LabelProps) {
-  const hasLabel = label || isRequired
+  const hasLabel = label
   const hasTitle = hasLabel || icon
   return (
     <header className={styles.LabelHeader()}>
@@ -64,7 +64,7 @@ export function LabelTitle({
   return (
     <div className={styles.LabelTitle()}>
       {icon && <LabelIcon icon={icon} />}
-      {(label || isRequired) && (
+      {label && (
         <LabelLabel
           {...props}
           asLabel={asLabel}
@@ -186,7 +186,7 @@ export function Label({
   asLabel,
   ...props
 }: LabelProps) {
-  const hasLabel = label || isRequired
+  const hasLabel = label
   const hasTitle = hasLabel || icon
   const hasHeader = hasTitle || description
   if (!hasHeader && !errorMessage && !children) return null
