@@ -1,12 +1,12 @@
 import {Config} from '#/core/Config.js'
 import {LocalConnection} from '#/core/Connection.js'
-import {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import {WritableGraph} from '#/core/db/WritableGraph.js'
 import {atom, useStore} from 'jotai'
 import {ComponentType} from 'react'
 import {AppProps} from '../App.js'
 import {requiredAtom} from './utils.js'
 
-export const graphAtom = requiredAtom<WriteableGraph>('graph')
+export const graphAtom = requiredAtom<WritableGraph>('graph')
 export const eventsAtom = requiredAtom<EventTarget>('events')
 export const configAtom = requiredAtom<Config>('config')
 export const clientAtom = requiredAtom<LocalConnection>('client')

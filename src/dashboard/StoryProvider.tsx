@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
@@ -29,7 +29,7 @@ export interface StoryProviderProps {
   client?: LocalConnection
   config?: Config
   events?: EventTarget
-  graph?: WriteableGraph
+  graph?: WritableGraph
   views?: Record<string, ComponentType>
 }
 

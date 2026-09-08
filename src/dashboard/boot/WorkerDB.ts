@@ -12,11 +12,11 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import {WriteableGraph} from '#/core/db/WriteableGraph.js'
-import type {DashboardWorker} from './DashboardWorker.js'
+import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Activity} from './ActivityEvent.js'
+import type {DashboardWorker} from './DashboardWorker.js'
 
-export class WorkerDB extends WriteableGraph {
+export class WorkerDB extends WritableGraph {
   #worker: DashboardWorker
   #client: Connection
 

@@ -1,5 +1,5 @@
 import {createCMS} from '#/core.js'
-import {Policy, WriteablePolicy} from '#/core/Role.js'
+import {Policy, WritablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {create, move, update} from '#/core/db/Operation.js'
@@ -59,7 +59,7 @@ test('enforce field update permissions', async () => {
   })
   await db.mutate(await createSubPage.task(db))
 
-  const policy = new WriteablePolicy(getScope(cms.config))
+  const policy = new WritablePolicy(getScope(cms.config))
   policy.allowAll()
   policy.set({field: SubPage.x, deny: {update: true}})
 
@@ -101,7 +101,7 @@ test('enforce reorder permissions', async () => {
     set: {title: 'B'}
   })
 
-  const policy = new WriteablePolicy(getScope(cms.config))
+  const policy = new WritablePolicy(getScope(cms.config))
   policy.allowAll()
   policy.set({id: childA._id, deny: {reorder: true}})
 
@@ -133,7 +133,7 @@ test('enforce move permissions', async () => {
     set: {title: 'Child'}
   })
 
-  const policy = new WriteablePolicy(getScope(cms.config))
+  const policy = new WritablePolicy(getScope(cms.config))
   policy.allowAll()
   policy.set({id: child._id, deny: {move: true}})
 

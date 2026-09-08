@@ -14,10 +14,10 @@ import {basename, extname} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
 import {Workspace} from '../Workspace.js'
 import type {Mutation} from './Mutation.js'
-import type {WriteableGraph} from './WriteableGraph.js'
+import type {WritableGraph} from './WritableGraph.js'
 
 type Awaitable<T> = T | Promise<T>
-type Task = (graph: WriteableGraph) => Awaitable<Array<Mutation>>
+type Task = (graph: WritableGraph) => Awaitable<Array<Mutation>>
 
 export class Operation {
   constructor(public task: Task) {}

@@ -1,8 +1,7 @@
-import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
-import {WriteablePolicy} from '#/core/Role.js'
+import {WritablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
@@ -10,10 +9,11 @@ import {Config, Field, Query} from '#/index.js'
 import {
   createDashboardAtomFixture,
   createDashboardStore,
-  DashboardTestPage,
   dashboardTestConfig,
+  DashboardTestPage,
   TestEvents
 } from '#test/DashboardFixture.js'
+import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
 import type {Key} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
@@ -440,7 +440,7 @@ test('entry data loads by id without loading its child level', async () => {
 test('unreadable children do not make a tree item expandable', async () => {
   const {child, config, parent, store} = await createDashboardAtomFixture()
   await store.get(authReady)
-  const policy = new WriteablePolicy(getScope(config))
+  const policy = new WritablePolicy(getScope(config))
     .allowAll()
     .set({id: child._id, deny: {read: true}})
   store.set(preloadUserPolicyAtom, localUser, policy)

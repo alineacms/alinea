@@ -2,7 +2,7 @@ import {root, type, workspace} from '#/config.js'
 import {Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 import {createConfig} from './Config.js'
-import {Policy, role, WriteablePolicy} from './Role.js'
+import {Policy, role, WritablePolicy} from './Role.js'
 import {getScope} from './Scope.js'
 
 const test = suite(import.meta)
@@ -43,7 +43,7 @@ const b = {id: 'b', parents: ['a']}
 const c = {id: 'c', parents: ['a', 'b']}
 
 test('root', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   await admin.permissions(policy, undefined!)
   test.ok(policy.canAll(a))
 })
@@ -61,7 +61,7 @@ const editB = role('Edit B', {
 })
 
 test('editB', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   await editB.permissions(policy, undefined!)
   test.ok(policy.canRead(b))
   test.ok(policy.canUpdate(b))
@@ -87,7 +87,7 @@ const explicitDeny = role('Explicit Deny', {
 })
 
 test('explicitDeny', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   await explicitDeny.permissions(policy, undefined!)
 
   test.ok(policy.canRead(a))
@@ -97,7 +97,7 @@ test('explicitDeny', async () => {
 })
 
 test('admin permissions', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   await admin.permissions(policy, undefined!)
 
   test.ok(policy.canCreate(a))
@@ -114,7 +114,7 @@ test('admin permissions', async () => {
 })
 
 test('editB negative checks', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   await editB.permissions(policy, undefined!)
 
   // Should not have permissions other than read/update on b and c
@@ -128,7 +128,7 @@ test('editB negative checks', async () => {
 })
 
 test('manage members permission', () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   policy.set({
     allow: {
       manageMembers: true
@@ -140,7 +140,7 @@ test('manage members permission', () => {
 })
 
 test('explicitDeny negative checks', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   await explicitDeny.permissions(policy, undefined!)
 
   // Should have all permissions except read on c
@@ -156,7 +156,7 @@ test('explicitDeny negative checks', async () => {
 })
 
 test('inheritance logic', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   // Simulate direct permission on a
   policy.set({id: a.id, allow: {read: true}})
   // b should inherit from a
@@ -170,7 +170,7 @@ test('inheritance logic', async () => {
 })
 
 test('deny overrides allow', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   policy.allowAll()
   policy.set({id: a.id, deny: {delete: true}})
   test.not.ok(policy.canDelete(a))
@@ -179,7 +179,7 @@ test('deny overrides allow', async () => {
 })
 
 test('default deny', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   // No permissions applied
   test.not.ok(policy.canRead(a))
   test.not.ok(policy.canCreate(a))
@@ -208,7 +208,7 @@ test('blank policy', () => {
 })
 
 test('Policy.from creates a copy', async () => {
-  const policy1 = new WriteablePolicy(scope)
+  const policy1 = new WritablePolicy(scope)
   policy1.set({id: a.id, allow: {read: true}})
   const policy2 = Policy.from(policy1)
   test.ok(policy2.canRead(a))
@@ -218,8 +218,8 @@ test('Policy.from creates a copy', async () => {
 })
 
 test('Policy.concat merges permissions', async () => {
-  const p1 = new WriteablePolicy(scope)
-  const p2 = new WriteablePolicy(scope)
+  const p1 = new WritablePolicy(scope)
+  const p2 = new WritablePolicy(scope)
   p1.set({id: a.id, allow: {read: true}})
   p2.set({id: a.id, allow: {update: true}})
   const merged = p1.concat(p2)
@@ -227,8 +227,8 @@ test('Policy.concat merges permissions', async () => {
   test.ok(merged.canUpdate(a))
 })
 
-test('WriteablePolicy.applyWorkspace, applyRoot, applyType', async () => {
-  const policy = new WriteablePolicy(scope)
+test('WritablePolicy.applyWorkspace, applyRoot, applyType', async () => {
+  const policy = new WritablePolicy(scope)
   // Use string as dummy resource for workspace/root/type
   policy.set({workspace: workspace1, allow: {read: true}})
   test.ok(policy.canRead({workspace: 'workspace1'}))
@@ -241,7 +241,7 @@ test('WriteablePolicy.applyWorkspace, applyRoot, applyType', async () => {
 })
 
 test('field permissions inherit from type and can be denied', () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   policy.set({type: type1, allow: {update: true}})
   policy.set({field: type1.title, deny: {update: true}})
   test.not.ok(policy.canUpdate({type: 'type1', field: 'title'}))
@@ -249,15 +249,15 @@ test('field permissions inherit from type and can be denied', () => {
 })
 
 test('field permissions support explicit grant mode', () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   policy.set({type: type1, grant: 'explicit', allow: {read: true}})
   policy.set({field: type1.title, allow: {read: true}})
   test.ok(policy.canRead({type: 'type1', field: 'title'}))
   test.not.ok(policy.canRead({type: 'type1', field: 'body'}))
 })
 
-test('WriteablePolicy chaining', async () => {
-  const policy = new WriteablePolicy(scope)
+test('WritablePolicy chaining', async () => {
+  const policy = new WritablePolicy(scope)
   policy
     .set({id: a.id, allow: {read: true}})
     .set({id: a.id, allow: {update: true}})
@@ -272,8 +272,8 @@ test('role factory returns correct label and config', () => {
   test.ok(typeof r.permissions === 'function')
 })
 
-test('WriteablePolicy.applyAll merges with allowAll', () => {
-  const policy = new WriteablePolicy(scope)
+test('WritablePolicy.applyAll merges with allowAll', () => {
+  const policy = new WritablePolicy(scope)
   policy.allowAll()
   policy.set({deny: {read: true}})
   test.not.ok(policy.canRead(a))
@@ -281,7 +281,7 @@ test('WriteablePolicy.applyAll merges with allowAll', () => {
 })
 
 test('locale permissions', async () => {
-  const policy = new WriteablePolicy(scope)
+  const policy = new WritablePolicy(scope)
   policy.set({locale: 'en', allow: {read: true}})
   test.ok(policy.canRead({locale: 'en'}))
   test.not.ok(policy.canRead({locale: 'fr'}))

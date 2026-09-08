@@ -18,11 +18,11 @@ import type {
 import {EntryResolver} from './EntryResolver.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {Mutation} from './Mutation.js'
-import {WriteableGraph} from './WriteableGraph.js'
+import {WritableGraph} from './WritableGraph.js'
 
 const limit = pLimit(1)
 
-export class LocalDB extends WriteableGraph {
+export class LocalDB extends WritableGraph {
   public index: EntryIndex
   source: Source
   #resolver: EntryResolver

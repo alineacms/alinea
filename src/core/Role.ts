@@ -314,7 +314,7 @@ export class Policy {
   }
 }
 
-export class WriteablePolicy extends Policy {
+export class WritablePolicy extends Policy {
   #scope: Scope
   constructor(scope: Scope) {
     super()
@@ -350,7 +350,7 @@ export class WriteablePolicy extends Policy {
 
 export interface RoleOptions {
   description?: string
-  permissions(policy: WriteablePolicy, graph: Graph): void | Promise<void>
+  permissions(policy: WritablePolicy, graph: Graph): void | Promise<void>
 }
 
 export interface Role extends RoleOptions {

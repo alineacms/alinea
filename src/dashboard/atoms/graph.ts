@@ -1,5 +1,5 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import {atom} from 'jotai'
 import {selectAtom} from 'jotai/utils'
 import {eventsAtom, graphAtom} from './core.js'
@@ -63,13 +63,13 @@ interface GraphWithSha {
 }
 
 function readGraphSha(
-  graph: WriteableGraph
+  graph: WritableGraph
 ): string | Promise<string> | undefined {
   return (graph as Partial<GraphWithSha>).sha
 }
 
 function isSyncableGraph(
-  graph: WriteableGraph
-): graph is WriteableGraph & SyncableGraph {
+  graph: WritableGraph
+): graph is WritableGraph & SyncableGraph {
   return typeof (graph as Partial<SyncableGraph>).sync === 'function'
 }

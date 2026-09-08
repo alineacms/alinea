@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Entry as EntryRecord} from '#/core/Entry.js'
 import type {Field} from '#/core/Field.js'
 import type {PreviewMetadata} from '#/core/Preview.js'
@@ -41,9 +41,9 @@ import {
 } from './atoms/editor.js'
 import type {EntryAtoms, EntryLocaleAtoms} from './atoms/entry.js'
 import type {Page} from './atoms/nav.js'
-import type {RootAtoms} from './atoms/root.js'
-import type {ReactiveNode} from './atoms/ReactiveNode.js'
 import {previewMetadataAtom} from './atoms/preview.js'
+import type {ReactiveNode} from './atoms/ReactiveNode.js'
+import type {RootAtoms} from './atoms/root.js'
 import {policyAtom, userAtom} from './atoms/user.js'
 
 interface EntryContextValue {
@@ -59,7 +59,7 @@ export interface DashboardOptions {
 }
 
 export interface Dashboard {
-  graph: WriteableGraph
+  graph: WritableGraph
   config: Config
   events: EventTarget
   client: LocalConnection
@@ -148,7 +148,7 @@ export function useUser(): User | null {
 /**
  * Returns the dashboard graph database for direct read queries.
  */
-export function useGraph(): WriteableGraph {
+export function useGraph(): WritableGraph {
   return useAtomValue(graphAtom)
 }
 

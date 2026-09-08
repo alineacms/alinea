@@ -1,6 +1,6 @@
 import {type Config, createConfig} from './Config.js'
 import type {PreviewRequest} from './Preview.js'
-import {WriteableGraph} from './db/WriteableGraph.js'
+import {WritableGraph} from './db/WritableGraph.js'
 
 export interface ConnectionContext {
   apiKey?: string
@@ -10,7 +10,7 @@ export interface ConnectionContext {
 
 export abstract class CMS<
   Definition extends Config = Config
-> extends WriteableGraph {
+> extends WritableGraph {
   config: Definition
 
   constructor(config: Definition) {

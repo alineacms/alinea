@@ -1,17 +1,17 @@
-import type {Infer} from '#/index.js'
 import type {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
+import type {Infer} from '#/index.js'
 import type {UploadMetadata, UploadResponse} from '../Connection.js'
-import type {
-  EntryReferenceQuery,
-  EntryReferenceResult
-} from './EntryReference.js'
 import {Entry} from '../Entry.js'
 import type {EntryFields} from '../EntryFields.js'
 import {Graph, type InferProjection, type Projection} from '../Graph.js'
 import {MediaFile} from '../media/MediaTypes.js'
-import {Policy, WriteablePolicy} from '../Role.js'
+import {Policy, WritablePolicy} from '../Role.js'
 import {getScope} from '../Scope.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from './EntryReference.js'
 import type {Mutation} from './Mutation.js'
 import {
   ArchiveOperation,
@@ -34,7 +34,7 @@ import {
   type UploadQuery
 } from './Operation.js'
 
-export abstract class WriteableGraph extends Graph {
+export abstract class WritableGraph extends Graph {
   abstract mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   abstract prepareUpload(
     file: string,
@@ -142,7 +142,7 @@ export abstract class WriteableGraph extends Graph {
     for (const name of forRoles) {
       const role = roles[name]
       assert(role, `Role ${name} not found in config`)
-      const policy = new WriteablePolicy(getScope(this.config))
+      const policy = new WritablePolicy(getScope(this.config))
       await role.permissions(policy, this)
       result = result.concat(policy)
     }

@@ -1,7 +1,7 @@
 import {ProgressCircle} from '#/components.js'
 import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import {styler} from '@alinea/styler'
 import {
   atom,
@@ -21,9 +21,9 @@ import {
 import css from './App.module.css'
 import {AccessDenied} from './app/AccessDenied.js'
 import {AuthView} from './app/AuthView.js'
+import {DashboardErrorBoundary} from './app/DashboardErrorBoundary.js'
 import {DashboardLayout} from './app/DashboardLayout.js'
 import {DashboardMeta} from './app/DashboardMeta.js'
-import {DashboardErrorBoundary} from './app/DashboardErrorBoundary.js'
 import {entryPage} from './app/pages/EntryPage.js'
 import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
@@ -37,13 +37,13 @@ import {pageAtom, type Page} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
 import {authReady, canManageMembersAtom} from './atoms/user.js'
 import {atomWithPending} from './atoms/utils.js'
-import {DashboardModelScope, type Dashboard} from './hooks.js'
 import './global.css'
+import {DashboardModelScope, type Dashboard} from './hooks.js'
 
 const styles = styler(css)
 
 export interface AppProps {
-  graph: WriteableGraph
+  graph: WritableGraph
   events: EventTarget
   config: Config
   client: LocalConnection

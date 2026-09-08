@@ -1,5 +1,5 @@
 import type {UploadProgress} from '#/core/db/Operation.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import {atom} from 'jotai'
 import {startTransition} from 'react'
 import {
@@ -52,7 +52,7 @@ export const activityAtom = Object.assign(
     },
     (get, set) => {
       const events = get(eventsAtom)
-      const source = get(graphAtom) as WriteableGraph & Partial<ActivitySource>
+      const source = get(graphAtom) as WritableGraph & Partial<ActivitySource>
       let active = true
 
       function update(activities: Array<Activity>) {
@@ -81,12 +81,12 @@ export const activityAtom = Object.assign(
 )
 
 export const retryActivityAtom = atom(null, async get => {
-  const graph = get(graphAtom) as WriteableGraph & Partial<ActivityRetry>
+  const graph = get(graphAtom) as WritableGraph & Partial<ActivityRetry>
   if (graph.retryActivity) await graph.retryActivity()
 })
 
 export const discardActivityAtom = atom(null, async (get, set) => {
-  const graph = get(graphAtom) as WriteableGraph & Partial<ActivityDiscard>
+  const graph = get(graphAtom) as WritableGraph & Partial<ActivityDiscard>
   if (graph.discardActivity) await graph.discardActivity()
   set(uploadActivityAtom, current =>
     current.map(activity =>
