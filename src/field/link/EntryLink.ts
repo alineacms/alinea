@@ -71,7 +71,10 @@ export namespace entry {
     label: Label,
     options: WithoutLabel<EntryOptions<Fields>> = {}
   ) {
-    return createLinks<EntryReference & ListRow, EntryRow<Fields>>(label, {
+    return createLinks<
+      EntryReference & ListRow & InferStoredValue<Fields>,
+      EntryRow<Fields>
+    >(label, {
       ...options,
       isEntryField: true,
       pickers: {

@@ -42,11 +42,16 @@ export type InferStoredValue<T> =
       ? StoredValue
       : T extends Record<string, Type>
         ? StoredList<T>
-        : {}
+        : T extends object
+          ? StoredRow<T>
+          : {}
 
 export type Infer<T> = InferQueryValue<T>
 
 export namespace Infer {
+  /** Stored content for creation and editing, before links are resolved. */
+  export type Stored<T> = InferStoredValue<T>
+
   export type Entry<
     T extends Type,
     TypeName extends string = string
