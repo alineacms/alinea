@@ -38,12 +38,14 @@ export interface TreeItemContentProps extends Omit<
   children?: ReactNode
   disableDragging?: boolean
   icon?: IconProps['icon']
+  iconHref?: string
   suffix?: ReactNode
 }
 
 export const TreeItemContent = memo(function TreeItemContent({
   disableDragging,
   icon,
+  iconHref,
   suffix,
   children
 }: TreeItemContentProps) {
@@ -84,7 +86,18 @@ export const TreeItemContent = memo(function TreeItemContent({
           </div>
           {icon && (
             <span data-slot="icon">
-              <Icon icon={icon} />
+              {iconHref ? (
+                <a
+                  aria-hidden
+                  className={styles.TreeItem.iconLink()}
+                  href={iconHref}
+                  tabIndex={-1}
+                >
+                  <Icon icon={icon} />
+                </a>
+              ) : (
+                <Icon icon={icon} />
+              )}
             </span>
           )}
           <span data-slot="label">{children}</span>
@@ -102,6 +115,7 @@ export interface TreeItemProps extends Partial<
   disableDragging?: boolean
   title: string
   icon?: IconProps['icon']
+  iconHref?: string
   label?: ReactNode
   suffix?: ReactNode
 }
@@ -110,6 +124,7 @@ export function TreeItem({
   disableDragging,
   title,
   icon,
+  iconHref,
   label,
   suffix,
   children,
@@ -127,6 +142,7 @@ export function TreeItem({
       <TreeItemContent
         disableDragging={disableDragging}
         icon={icon}
+        iconHref={iconHref}
         suffix={suffix}
       >
         {label ?? title}

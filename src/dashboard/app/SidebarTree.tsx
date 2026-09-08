@@ -116,6 +116,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   const isArchived = rowStatus?.status === 'archived'
   const isUnpublished = rowStatus?.status === 'unpublished'
   const isUntranslated = displayStatus?.status === 'untranslated'
+  const link = entryLink?.(data)
   return (
     <TreeItem
       id={item.id}
@@ -123,6 +124,7 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
       title={data.title}
       hasChildItems={data.hasChildren}
       icon={configuredIcon ?? (data.hasChildren ? LucideFolder : LucideFile)}
+      iconHref={link ? dashboardHref(link.href) : undefined}
       className={styles.SidebarTree.item({
         archived: isArchived,
         parentSelected: selectedAncestor !== undefined,
@@ -144,11 +146,8 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
         ) : undefined
       }
       label={
-        entryLink ? (
-          <SidebarTreeEntryLink
-            href={entryLink(data).href}
-            title={data.title}
-          />
+        link ? (
+          <SidebarTreeEntryLink href={link.href} title={data.title} />
         ) : (
           data.title
         )
@@ -174,12 +173,13 @@ function documentPath(): string {
     : `${window.location.pathname}${window.location.search}`
 }
 
+function dashboardHref(href: string): string {
+  return `${documentPath()}#${href}`
+}
+
 function SidebarTreeEntryLink({href, title}: SidebarTreeEntryLinkProps) {
   return (
-    <a
-      className={styles.SidebarTree.entryLink()}
-      href={`${documentPath()}#${href}`}
-    >
+    <a className={styles.SidebarTree.entryLink()} href={dashboardHref(href)}>
       {title}
     </a>
   )

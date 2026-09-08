@@ -199,6 +199,11 @@
   height: 16px;
 }
 
+.TreeItem-iconLink {
+  display: flex;
+  color: inherit;
+}
+
 .TreeItem-dragHandle {
   margin-left: auto;
   background: transparent;
