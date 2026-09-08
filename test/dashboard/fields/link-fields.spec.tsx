@@ -335,10 +335,10 @@ test('adds the same entry to a multiple link field more than once', async ({
   mount
 }) => {
   const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
-  const field = app.page.getByRole('list', {name: 'Repeated pages'})
+  const field = app.page.getByRole('list', {name: 'Duplicate pages'})
 
   async function addAlpha() {
-    await field.getByRole('button', {name: 'Repeated pages'}).click()
+    await field.getByRole('button', {name: 'Duplicate pages'}).click()
     const picker = app.page.getByRole('dialog', {
       name: 'Pick a link',
       exact: true

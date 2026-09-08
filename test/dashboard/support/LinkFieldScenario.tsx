@@ -57,6 +57,10 @@ const ScenarioPage = Config.document('Page', {
     relatedPages: Field.entry.multiple('Repeated pages', {
       location: {workspace: 'main', root: 'pages'}
     }),
+    duplicatePages: Field.entry.multiple('Duplicate pages', {
+      allowDuplicates: true,
+      location: {workspace: 'main', root: 'pages'}
+    }),
     navigablePage: Field.entry('Navigable page', {
       condition: {_id: dashboardScenarioIds.child},
       enableNavigation: true
