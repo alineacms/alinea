@@ -783,6 +783,17 @@ test('seed creates multiple entries against a cached filesystem source', async (
     test.is(homeEntries.length, 2)
     test.is(homeEntries[0].id, homeEntries[1].id)
 
+    for (const entry of seeded) {
+      const expectedTitle = entry.path === 'home' ? 'Home' : 'Child'
+      test.is(entry.title, expectedTitle)
+      const tree = await source.getTree()
+      const sha = tree.getLeaf(entry.filePath).sha
+      for await (const [, blob] of source.getBlobs([sha])) {
+        const record = JSON.parse(new TextDecoder().decode(blob))
+        test.is('title' in record, false)
+      }
+    }
+
     await index.seed(source)
     test.is(Array.from(index.filter({})).length, 4)
   } finally {

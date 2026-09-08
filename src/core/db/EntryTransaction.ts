@@ -289,6 +289,8 @@ export class EntryTransaction {
       {id, type, index: newIndex, path, seeded, data, title},
       status
     )
+    // Seed titles stay in config until explicitly written by an editor.
+    if (fromSeed && data.title === undefined) delete record.title
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
     this.#tx.add(filePath, contents)
     this.#messages.push(this.#reportOp('create', title))
