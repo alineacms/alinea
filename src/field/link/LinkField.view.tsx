@@ -498,6 +498,7 @@ function LinkPickerAction({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: LinkPickerOptions = {
     condition,
+    enableNavigation: options.enableNavigation,
     initialView:
       type === 'file' || type === 'image' ? ('card' as const) : undefined,
     initialResultMode: entryPickerResultMode(
@@ -623,6 +624,7 @@ function LinkPickerDialog({
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
   const pickerProps: LinkPickerOptions = {
     condition,
+    enableNavigation: options.enableNavigation,
     initialView:
       type === 'file' || type === 'image' ? ('card' as const) : undefined,
     initialResultMode: entryPickerResultMode(

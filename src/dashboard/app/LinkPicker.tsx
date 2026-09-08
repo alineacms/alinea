@@ -331,6 +331,7 @@ function LinkPickerExpanded({
         <ExplorerModal>
           <ExplorerHeader
             autoFocusSearch
+            canBrowse={options.enableNavigation !== false}
             controls={<DashboardModalCloseButton />}
             explorer={explorer}
             navigate

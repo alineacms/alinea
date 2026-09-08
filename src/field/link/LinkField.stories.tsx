@@ -92,6 +92,7 @@ const filteredEntryType = type('Filtered entry', {
   fields: {
     relatedEntry: entry('Filtered entry', {
       condition: {_type: 'Page'},
+      enableNavigation: false,
       location: {workspace: 'simple', root: 'pages'}
     })
   }

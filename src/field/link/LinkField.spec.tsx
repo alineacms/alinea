@@ -196,6 +196,7 @@ test('keeps static picker conditions outside an entry scope', async ({
     name: 'Explorer results'
   })
   await expect(resultModes.getByRole('radio', {name: 'Filtered'})).toBeChecked()
+  await expect(resultModes.getByRole('radio', {name: 'Browse'})).toBeDisabled()
 })
 
 test('keeps picker copy for generic link fields', async ({mount, page}) => {

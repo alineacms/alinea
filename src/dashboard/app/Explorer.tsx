@@ -73,6 +73,7 @@ export interface ExplorerHeaderEntry {
 }
 
 export interface ExplorerHeaderProps {
+  canBrowse?: boolean
   autoFocusSearch?: boolean
   controls?: ReactNode
   explorer: DashboardExplorer
@@ -252,18 +253,24 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
 }
 
 interface ExplorerResultModeProps {
+  canBrowse: boolean
   explorer: DashboardExplorer
   page: ExplorerReadyPage
 }
 
-function ExplorerResultMode({explorer, page}: ExplorerResultModeProps) {
+function ExplorerResultMode({
+  canBrowse: navigationEnabled,
+  explorer,
+  page
+}: ExplorerResultModeProps) {
   const resultMode = page.resultMode
   const setResultMode = useSetAtom(explorer.resultMode)
   const search = useAtomValue(explorer.search)
   const [, startTransition] = useTransition()
   const canShowFiltered =
     explorer.pickChildren || explorer.hasCondition || Boolean(search.trim())
-  const canBrowse = !explorer.pickChildren && !search.trim()
+  const canBrowse =
+    navigationEnabled && !explorer.pickChildren && !search.trim()
   return (
     <ToggleButtonGroup
       aria-label="Explorer results"
@@ -830,6 +837,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
 }
 
 export function ExplorerHeader({
+  canBrowse = true,
   autoFocusSearch,
   controls,
   explorer,
@@ -869,7 +877,11 @@ export function ExplorerHeader({
             className={styles.ExplorerHeader.location()}
             role="group"
           >
-            <ExplorerResultMode explorer={explorer} page={page} />
+            <ExplorerResultMode
+              canBrowse={canBrowse}
+              explorer={explorer}
+              page={page}
+            />
             {!page.searchesEverything && (
               <ExplorerLocationMenu
                 explorer={explorer}
