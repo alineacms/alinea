@@ -2,6 +2,7 @@ import type {EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {atomWithPending} from '#/dashboard/atoms/utils.js'
 import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {useMemo} from 'react'
 import {EntrySidebarBrowserPreview} from './EntrySidebarPreview.js'
 
 const node = new ReactiveNode({title: 'Original title'})
@@ -58,12 +59,31 @@ function RefreshPreviewUrlButton() {
   return <button onClick={() => refresh()}>Refresh preview URL</button>
 }
 
-export function EntrySidebarPreviewStory() {
+interface EntrySidebarPreviewStoryProps {
+  previewUrl?: string
+  entryId?: string
+}
+
+export function EntrySidebarPreviewStory({
+  previewUrl,
+  entryId
+}: EntrySidebarPreviewStoryProps) {
+  const previewData = useMemo(
+    () =>
+      previewUrl
+        ? {
+            ...localeData,
+            entryId,
+            previewUrlState: atom([false, previewUrl] as const)
+          }
+        : localeData,
+    [previewUrl, entryId]
+  )
   return (
     <>
       <PreviewTitleField />
       <RefreshPreviewUrlButton />
-      <EntrySidebarBrowserPreview localeData={localeData} />
+      <EntrySidebarBrowserPreview localeData={previewData} />
     </>
   )
 }

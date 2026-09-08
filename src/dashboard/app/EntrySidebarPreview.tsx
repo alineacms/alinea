@@ -170,6 +170,7 @@ export function EntrySidebarBrowserPreview({
   const iframe = useRef<HTMLIFrameElement>(null)
   const previewPayload = useRef<string>()
   const hasPreviewListener = useRef(false)
+  const previewWindows = useRef(new Set<Window>())
   const [frameVersion, setFrameVersion] = useState(0)
   const [loading, setLoading] = useState(true)
   const targetOrigin = useMemo(() => {
@@ -187,23 +188,43 @@ export function EntrySidebarBrowserPreview({
   }, [previewUrl])
 
   useEffect(() => {
+    const windows = previewWindows.current
+    previewPayload.current = undefined
+    function disconnect() {
+      if (targetOrigin)
+        for (const previewWindow of windows) {
+          if (!previewWindow.closed)
+            previewWindow.postMessage(
+              {action: PreviewAction.Disconnect},
+              targetOrigin
+            )
+        }
+      windows.clear()
+    }
+    window.addEventListener('pagehide', disconnect)
+    return () => {
+      window.removeEventListener('pagehide', disconnect)
+      disconnect()
+    }
+  }, [localeData, previewUrl, targetOrigin])
+
+  useEffect(() => {
     if (!targetOrigin) return
     function handleMessage(event: MessageEvent<PreviewMessage>) {
       if (event.origin !== targetOrigin) return
-      if (event.source !== iframe.current?.contentWindow) return
+      const source = event.source as Window | null
+      const isFrame = source === iframe.current?.contentWindow
+      if (!source || (!isFrame && !previewWindows.current.has(source))) return
       if (!event.data || typeof event.data !== 'object') return
       if (event.data.action === PreviewAction.Ping) {
-        hasPreviewListener.current = true
-        iframe.current?.contentWindow?.postMessage(
-          {action: PreviewAction.Pong},
-          targetOrigin
-        )
+        if (isFrame) hasPreviewListener.current = true
+        source.postMessage({action: PreviewAction.Pong}, targetOrigin)
         if (previewPayload.current)
-          iframe.current?.contentWindow?.postMessage(
+          source.postMessage(
             {action: PreviewAction.Preview, payload: previewPayload.current},
             targetOrigin
           )
-      } else if (event.data.action === PreviewAction.Meta) {
+      } else if (isFrame && event.data.action === PreviewAction.Meta) {
         setMetadata(event.data)
       }
     }
@@ -218,11 +239,14 @@ export function EntrySidebarBrowserPreview({
       void updatePreviewPayload().then(payload => {
         if (cancelled) return
         previewPayload.current = payload
-        if (!payload || !targetOrigin || !hasPreviewListener.current) return
-        iframe.current?.contentWindow?.postMessage(
-          {action: PreviewAction.Preview, payload},
-          targetOrigin
-        )
+        if (!payload || !targetOrigin) return
+        const message = {action: PreviewAction.Preview, payload}
+        if (hasPreviewListener.current)
+          iframe.current?.contentWindow?.postMessage(message, targetOrigin)
+        for (const previewWindow of previewWindows.current) {
+          if (previewWindow.closed) previewWindows.current.delete(previewWindow)
+          else previewWindow.postMessage(message, targetOrigin)
+        }
       })
     }, 250)
     return () => {
@@ -230,8 +254,9 @@ export function EntrySidebarBrowserPreview({
       clearTimeout(timeout)
     }
   }, [
-    localeData.updatePreviewPayload,
+    localeData,
     payloadSignal,
+    previewUrl,
     targetOrigin,
     updatePreviewPayload
   ])
@@ -255,8 +280,11 @@ export function EntrySidebarBrowserPreview({
 
   function openPreview() {
     if (!previewUrl || typeof window === 'undefined') return
-    const href = `${previewUrl}${previewUrl.includes('?') ? '&' : '?'}full`
-    window.open(href, '_blank', 'noopener,noreferrer')
+    const href = new URL(previewUrl, location.href)
+    href.searchParams.set('full', '')
+    // Keep the opener so previews on other origins can connect via postMessage.
+    const previewWindow = window.open(href.href, '_blank')
+    if (previewWindow) previewWindows.current.add(previewWindow)
   }
 
   return (

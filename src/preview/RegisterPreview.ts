@@ -8,21 +8,41 @@ export interface PreviewApi {
 
 export function registerPreview(api: PreviewApi) {
   if (typeof window === 'undefined') return
+  const host: Window | null =
+    window.parent !== window ? window.parent : window.opener
+  if (!host) return
+  let hostOrigin: string | undefined
   let observer: MutationObserver | null = null
-  if (window.location !== window.parent.location) {
-    window.parent.postMessage({action: PreviewAction.Ping}, '*')
-    addEventListener('message', handleMessage)
-    console.info('[Alinea preview listener attached]')
-  }
+  // Closing the CMS can prevent its final disconnect message from arriving.
+  const checkHost = window.setInterval(() => {
+    if (host.closed) disconnect()
+  }, 1000)
+  addEventListener('message', handleMessage)
+  host.postMessage({action: PreviewAction.Ping}, '*')
+  console.info('[Alinea preview listener attached]')
   return () => {
+    clearInterval(checkHost)
     if (observer) observer.disconnect()
     removeEventListener('message', handleMessage)
   }
 
+  function disconnect() {
+    clearInterval(checkHost)
+    observer?.disconnect()
+    observer = null
+    api.setIsPreviewing(false)
+    removeEventListener('message', handleMessage)
+  }
+
   function handleMessage(event: MessageEvent<PreviewMessage>) {
+    if (event.source !== host) return
+    if (hostOrigin && event.origin !== hostOrigin) return
     if (!event.data || typeof event.data !== 'object') return
     const message = event.data as PreviewMessage
     switch (message.action) {
+      case PreviewAction.Disconnect:
+        disconnect()
+        return
       case PreviewAction.Preview:
         console.info('[Alinea preview received]')
         api.preview(message)
@@ -37,10 +57,12 @@ export function registerPreview(api: PreviewApi) {
         console.info('[Alinea preview next received]')
         return history.forward()
       case PreviewAction.Pong:
+        hostOrigin = event.origin
         console.info('[Alinea preview pong received]')
         api.setIsPreviewing(true)
         try {
           fetchAndSendMetadata()
+          observer?.disconnect()
           observer = new MutationObserver(fetchAndSendMetadata)
           observer.observe(document.head, {childList: true})
           console.info('[Alinea meta data sent to parent]')
@@ -49,11 +71,12 @@ export function registerPreview(api: PreviewApi) {
         }
     }
   }
-}
 
-function fetchAndSendMetadata() {
-  const meta = fetchMetadataFromDocument()
-  window.parent.postMessage({action: PreviewAction.Meta, ...meta}, '*')
+  function fetchAndSendMetadata() {
+    if (!host || !hostOrigin) return
+    const meta = fetchMetadataFromDocument()
+    host.postMessage({action: PreviewAction.Meta, ...meta}, hostOrigin)
+  }
 }
 function fetchMetadataFromDocument(): PreviewMetadata {
   return {

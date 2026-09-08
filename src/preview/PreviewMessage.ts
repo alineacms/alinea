@@ -3,6 +3,7 @@ import type {PreviewMetadata, PreviewPayload} from '#/core/Preview.js'
 export enum PreviewAction {
   Ping = '[alinea-ping]',
   Pong = '[alinea-pong]',
+  Disconnect = '[alinea-disconnect]',
   Reload = '[alinea-reload]',
   Refetch = '[alinea-refetch]',
   Previous = '[alinea-previous]',
@@ -14,6 +15,7 @@ export enum PreviewAction {
 export type PreviewMessage =
   | {action: PreviewAction.Ping}
   | {action: PreviewAction.Pong}
+  | {action: PreviewAction.Disconnect}
   | {action: PreviewAction.Reload}
   | {action: PreviewAction.Refetch}
   | {action: PreviewAction.Previous}

@@ -2,7 +2,7 @@ import type {DOMAttributes} from 'react'
 
 export function registerPreviewWidget() {
   if (customElements.get('alinea-preview')) return
-  const observedAttributes = ['adminUrl', 'editUrl', 'livePreview']
+  const observedAttributes = ['adminurl', 'editurl', 'livepreview']
   const template = `
     <div class="previews">
       <div class="inner">
@@ -144,15 +144,19 @@ export function registerPreviewWidget() {
       this.#disconnect()
     }
 
-    setAttribute(name: string, value: string | null) {
+    attributeChangedCallback(
+      name: string,
+      _oldValue: string | null,
+      value: string | null
+    ) {
       switch (name) {
-        case 'adminUrl':
+        case 'adminurl':
           if (this.#adminButton) this.#adminButton.href = value ?? ''
           return
-        case 'editUrl':
+        case 'editurl':
           if (this.#editButton) this.#editButton.href = value ?? ''
           return
-        case 'livePreview':
+        case 'livepreview':
           this.#previews?.classList.toggle('is-loading', value === 'loading')
           this.#previews?.classList.toggle(
             'is-connected',
@@ -161,14 +165,6 @@ export function registerPreviewWidget() {
           this.#previews?.classList.toggle('is-warning', value === 'warning')
           return
       }
-    }
-
-    attributeChangedCallback(
-      name: string,
-      oldValue: string | null,
-      newValue: string | null
-    ) {
-      this.setAttribute(name, newValue)
     }
 
     connectedCallback() {
@@ -186,11 +182,7 @@ export function registerPreviewWidget() {
       this.#editButton = previews.querySelector('#btn-edit')!
 
       for (const attr of AlineaPreview.observedAttributes)
-        this.setAttribute(attr, this.getAttribute(attr))
-
-      this.attributeChangedCallback = (name, oldValue, newValue) => {
-        this.setAttribute(name, newValue)
-      }
+        this.attributeChangedCallback(attr, null, this.getAttribute(attr))
 
       let xPosition = 0.5
       previews.addEventListener('mousedown', startDrag)
