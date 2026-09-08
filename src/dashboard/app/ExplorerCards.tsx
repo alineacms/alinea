@@ -2,7 +2,7 @@ import {Checkbox, Icon, Surface} from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom, useStore} from 'jotai'
+import {useAtom, useAtomValue, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
 import {Fragment, memo, startTransition, useMemo} from 'react'
@@ -13,7 +13,6 @@ import {
   type GridLayoutOptions,
   GridList,
   GridListItem,
-  type Key,
   Virtualizer
 } from 'react-aria-components'
 import {
@@ -45,6 +44,7 @@ interface ExplorerCardItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   explorer: DashboardExplorer
+  locale: string | null
   includeWorkspace: boolean
   showSelectionControls: boolean
 }
@@ -53,6 +53,7 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   breadcrumbs,
   entry,
   explorer,
+  locale,
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardItemProps) {
@@ -71,6 +72,8 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       breadcrumbs={breadcrumbs}
       entry={entry}
       data={data}
+      explorer={explorer}
+      locale={locale}
       isSelectable={isSelectable}
       includeWorkspace={includeWorkspace}
       showSelectionControls={showSelectionControls}
@@ -126,6 +129,8 @@ interface ExplorerCardLoadedItemProps {
   breadcrumbs: boolean
   entry: DashboardEntry
   data: DashboardEntryData
+  explorer: DashboardExplorer
+  locale: string | null
   isSelectable: boolean
   includeWorkspace: boolean
   showSelectionControls: boolean
@@ -135,6 +140,8 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   breadcrumbs,
   entry,
   data,
+  explorer,
+  locale,
   isSelectable,
   includeWorkspace,
   showSelectionControls
@@ -143,6 +150,11 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   const icon = useAtomValue(data.icon)
   const type = useAtomValue(data.type)
   const canOpen = useAtomValue(data.canOpen)
+  const performAction = useSetAtom(explorer.onAction)
+  const hasAction = explorer.hasRowAction || (!isSelectable && canOpen)
+  function onAction() {
+    startTransition(() => performAction(entry, locale))
+  }
   const info = useAtomValue(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
@@ -158,6 +170,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
     <GridListItem
       id={entry.id}
       textValue={label}
+      onAction={hasAction ? onAction : undefined}
       className={styles.ExplorerCards.item()}
       isDisabled={!isSelectable}
     >
@@ -341,26 +354,9 @@ export function ExplorerCards({
   locale
 }: ExplorerCardsProps) {
   const [selected, setSelected] = useAtom(explorer.selection)
-  const performAction = useSetAtom(explorer.onAction)
-  const store = useStore()
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls = hasSelection && explorer.showSelectionControls
-  function onItemAction(key: Key) {
-    const entry = items.find(item => item.id === String(key))
-    if (!entry) return
-    if (!explorer.hasRowAction) {
-      const {data} = store.get(entry.data)
-      const canOpen =
-        !store.get(explorer.isSelectable(entry)) &&
-        data !== undefined &&
-        store.get(data.canOpen)
-      if (!canOpen) return
-      startTransition(() => performAction(entry, locale))
-      return
-    }
-    performAction(entry, locale)
-  }
   return (
     <div
       aria-label="Explorer card results"
@@ -379,7 +375,6 @@ export function ExplorerCards({
           dragAndDropHooks={dragAndDropHooks}
           selectedKeys={hasSelection ? selected : undefined}
           onSelectionChange={hasSelection ? setSelected : undefined}
-          onAction={onItemAction}
           renderEmptyState={renderEmptyState}
           style={{display: 'block', width: '100%', height: '100%'}}
         >
@@ -392,6 +387,7 @@ export function ExplorerCards({
               }
               entry={item}
               explorer={explorer}
+              locale={locale}
               includeWorkspace={page.searchesEverything}
               showSelectionControls={showSelectionControls}
             />

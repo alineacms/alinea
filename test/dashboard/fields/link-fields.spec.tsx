@@ -356,6 +356,38 @@ test('adds the same entry to a multiple link field more than once', async ({
   await expect(field.getByText('Alpha', {exact: true})).toHaveCount(2)
 })
 
+test('toggles multiple links by clicking cards before using a checkbox', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />))
+  const field = app.page.getByRole('list', {name: 'Repeated pages'})
+  await field.getByRole('button', {name: 'Repeated pages'}).click()
+  const picker = await expandLinkPicker(app.page)
+  await picker
+    .getByRole('radiogroup', {name: 'Explorer view'})
+    .getByRole('radio', {name: 'Card view'})
+    .click()
+
+  const cards = picker.getByRole('grid', {name: 'Explorer entries'})
+  const alpha = cards.getByRole('checkbox', {name: 'Select Alpha'})
+  const beta = cards.getByRole('checkbox', {name: 'Select Beta'})
+  await cards.getByText('Alpha', {exact: true}).click()
+  await expect(alpha).toBeChecked()
+  await cards.getByText('Beta', {exact: true}).click()
+  await expect(alpha).toBeChecked()
+  await expect(beta).toBeChecked()
+  await cards.getByText('Alpha', {exact: true}).click()
+  await expect(alpha).not.toBeChecked()
+  await expect(beta).toBeChecked()
+  await alpha.locator('xpath=ancestor::label').click()
+  await expect(alpha).toBeChecked()
+  await expect(beta).toBeChecked()
+  await picker.getByRole('button', {name: 'Select', exact: true}).click()
+  await expect(field).toContainText('Alpha')
+  await expect(field).toContainText('Beta')
+})
+
 test('opens pickChildren at the children of the edited entry', async ({
   dashboard,
   mount
@@ -952,10 +984,10 @@ test('selects existing images and files', async ({dashboard, mount}) => {
       )
     )
     .toBe('false')
-  await imagePicker
-    .getByRole('checkbox', {name: 'Select Existing image'})
-    .locator('xpath=ancestor::label')
-    .click()
+  await imagePicker.getByText('Existing image', {exact: true}).click()
+  await expect(
+    imagePicker.getByRole('checkbox', {name: 'Select Existing image'})
+  ).toBeChecked()
   await imagePicker.getByRole('button', {name: 'Select'}).click()
   await expect(imageField).toContainText('Existing image')
 
@@ -977,10 +1009,10 @@ test('selects existing images and files', async ({dashboard, mount}) => {
   await expect(
     filePicker.getByRole('switch', {name: 'All locations'})
   ).toBeDisabled()
-  await filePicker
-    .getByRole('checkbox', {name: 'Select Existing file'})
-    .locator('xpath=ancestor::label')
-    .click()
+  await filePicker.getByText('Existing file', {exact: true}).click()
+  await expect(
+    filePicker.getByRole('checkbox', {name: 'Select Existing file'})
+  ).toBeChecked()
   await filePicker.getByRole('button', {name: 'Select'}).click()
   await expect(fileField).toContainText('Existing file')
 })
