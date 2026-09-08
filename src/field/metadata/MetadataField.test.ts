@@ -130,6 +130,7 @@ test('metadata fields can be initialized deeply before editing', () => {
 test('metadata audit fields use custom display fields', () => {
   const fields = Field.options(Article.metadata).fields
 
+  test.is(Article.metadata.aliases, fields.aliases)
   test.ok(fields.createdAt instanceof MetadataTimestampField)
   test.ok(fields.updatedAt instanceof MetadataTimestampField)
   test.ok(fields.createdBy instanceof MetadataUserField)

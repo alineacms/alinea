@@ -67,6 +67,8 @@ export class MetadataField extends RecordField<
   {label: string; fields: Type<MetadataFields>}
 > {}
 
+export interface MetadataField extends MetadataFields {}
+
 export class MetadataTimestampField extends ScalarField<
   number | null,
   MetadataTimestampOptions
@@ -77,7 +79,7 @@ export class MetadataUserField extends ScalarField<
   MetadataUserOptions
 > {}
 
-export function metadata(label = 'Metadata') {
+export function metadata(label = 'Metadata'): MetadataField {
   const fields = type('Fields', {
     fields: {
       title: text('Title'),
@@ -107,7 +109,7 @@ export function metadata(label = 'Metadata') {
       updatedBy: user('Updated by')
     }
   })
-  return new MetadataField(fields, {
+  const result = new MetadataField(fields, {
     options: {
       label,
       fields
@@ -129,6 +131,7 @@ export function metadata(label = 'Metadata') {
       ) as unknown as Metadata
     }
   })
+  return Object.assign(result, fields)
 }
 
 function timestamp(label: string): MetadataTimestampField {

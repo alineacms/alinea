@@ -5,6 +5,7 @@ import type {Field} from './Field.js'
 import type {InferProjection} from './Graph.js'
 import type {ListRow} from './ListRow.js'
 import type {Type} from './Type.js'
+import type {RecordField} from './field/RecordField.js'
 
 type QueryList<T> = Expand<
   UnionOfValues<{
@@ -33,6 +34,19 @@ export type StoredRow<Definition> = {
   [K in keyof Definition as Definition[K] extends Field<any>
     ? K
     : never]: Definition[K] extends Field<infer T> ? T : never
+}
+
+type CreateInputValue<T> =
+  T extends RecordField<infer Row, infer _Options>
+    ? Partial<Row>
+    : T extends Field<infer StoredValue>
+      ? StoredValue
+      : never
+
+export type CreateInputRow<Definition> = {
+  [K in keyof Definition as Definition[K] extends Field
+    ? K
+    : never]: CreateInputValue<Definition[K]>
 }
 
 export type InferStoredValue<T> =

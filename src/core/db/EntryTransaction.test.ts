@@ -3,7 +3,7 @@ import {ListRow} from '#/core/ListRow.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {MetadataAlias} from '#/field/metadata/MetadataAliases.js'
-import {Config, Field} from '#/index.js'
+import {Config, Edit, Field} from '#/index.js'
 import {createEntryIndex} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
 import {TestDB} from './TestDB.js'
@@ -129,6 +129,35 @@ function mediaFileData(title: string, path: string, aliases: Array<string>) {
     hash: `${path}-hash`
   }
 }
+
+test('create fills document metadata defaults around explicit values', async () => {
+  const db = await createDocumentDb()
+  const aliases = Edit.list(DocumentPage.metadata.aliases)
+    .add('alias', {url: '/previous'})
+    .value()
+  const entry = await db.create({
+    type: DocumentPage,
+    set: {
+      title: 'Document',
+      metadata: {aliases}
+    }
+  })
+
+  test.equal(entry.metadata, {
+    title: '',
+    description: '',
+    aliases,
+    openGraph: {
+      image: null,
+      title: '',
+      description: ''
+    },
+    createdAt: null,
+    createdBy: {name: '', email: ''},
+    updatedAt: null,
+    updatedBy: {name: '', email: ''}
+  })
+})
 
 async function createDb() {
   const {source} = await createEntryIndex(cms.config, [

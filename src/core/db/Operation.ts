@@ -1,8 +1,9 @@
 import type {Config} from '../Config.js'
 import type {EntryStatus} from '../Entry.js'
+import {Field} from '../Field.js'
 import {HttpError} from '../HttpError.js'
 import {createId} from '../Id.js'
-import type {StoredRow} from '../Infer.js'
+import type {CreateInputRow, StoredRow} from '../Infer.js'
 import type {ImagePreviewDetails} from '../media/CreatePreview.js'
 import {isImage} from '../media/IsImage.js'
 import {MediaLocation} from '../media/MediaLocation.js'
@@ -10,6 +11,7 @@ import {assertUploadSize} from '../media/UploadLimits.js'
 import {Schema} from '../Schema.js'
 import {Type} from '../Type.js'
 import {createFileHash} from '../util/ContentHash.js'
+import {keys} from '../util/Objects.js'
 import {basename, extname} from '../util/Paths.js'
 import {slugify} from '../util/Slugs.js'
 import {Workspace} from '../Workspace.js'
@@ -31,7 +33,7 @@ export interface CreateQuery<Fields> {
   parentId?: string | null
   locale?: string | null
   status?: 'draft' | 'published' | 'archived'
-  set: Partial<StoredRow<Fields>>
+  set: Partial<CreateInputRow<Fields>>
   insertOrder?: 'first' | 'last'
   overwrite?: boolean
 }
@@ -56,7 +58,7 @@ export class CreateOp<Fields> extends Operation {
           locale: op.locale ?? null,
           parentId: op.parentId ?? null,
           type: typeName(config, op.type),
-          data: op.set ?? {},
+          data: initializeSet(op.type, op.set),
           insertOrder: op.insertOrder,
           status: op.status,
           overwrite: op.overwrite,
@@ -67,6 +69,18 @@ export class CreateOp<Fields> extends Operation {
     })
     this.id = op.id ?? createId()
   }
+}
+
+function initializeSet<Fields>(
+  type: Type<Fields>,
+  set: Partial<CreateInputRow<Fields>>
+): Record<string, unknown> {
+  const result = {...set} as Record<string, unknown>
+  for (const key of keys(result)) {
+    const field = Type.field(type, key)
+    if (field) result[key] = Field.withInitialValue(field, result[key])
+  }
+  return result
 }
 
 export class DeleteOp extends Operation {
