@@ -127,7 +127,7 @@ class TreeBase<Node extends TreeBase<Node>> {
     }).flat()
   }
 
-  equals(other: ReadonlyTree | WriteableTree): boolean {
+  equals(other: ReadonlyTree | WritableTree): boolean {
     if (other instanceof ReadonlyTree) return this.sha === other.sha
     const canCompare = this.sha && other.sha
     if (canCompare && this.sha === other.sha) return true
@@ -184,8 +184,8 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
     return this.#shas.has(sha)
   }
 
-  clone(): WriteableTree {
-    return new WriteableTree({
+  clone(): WritableTree {
+    return new WritableTree({
       sha: this.sha,
       entries: this.entries
     })
@@ -268,18 +268,18 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   }
 }
 
-export class WriteableTree extends TreeBase<WriteableTree> {
+export class WritableTree extends TreeBase<WritableTree> {
   constructor({sha, entries}: Tree = {sha: EMPTY_TREE_SHA, entries: []}) {
     super(sha)
     for (const entry of entries) {
       this.nodes.set(
         entry.name,
-        entry.entries ? new WriteableTree(entry as EntryNode) : new Leaf(entry)
+        entry.entries ? new WritableTree(entry as EntryNode) : new Leaf(entry)
       )
     }
   }
 
-  add(path: string, input: {clone(): WriteableTree | Leaf} | string): void {
+  add(path: string, input: {clone(): WritableTree | Leaf} | string): void {
     this.sha = undefined
     const [name, rest] = splitPath(path)
     if (rest) {
@@ -297,14 +297,14 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     }
   }
 
-  #makeNode(segment: string): WriteableTree {
+  #makeNode(segment: string): WritableTree {
     this.sha = undefined
-    if (!this.nodes.has(segment)) this.nodes.set(segment, new WriteableTree())
+    if (!this.nodes.has(segment)) this.nodes.set(segment, new WritableTree())
     return this.getNode(segment)
   }
 
   #getNode(segment: string) {
-    return this.nodes.get(segment) as WriteableTree | undefined
+    return this.nodes.get(segment) as WritableTree | undefined
   }
 
   remove(path: string): boolean {
@@ -387,8 +387,8 @@ export class WriteableTree extends TreeBase<WriteableTree> {
     return new ReadonlyTree(await this.#getTree(previous))
   }
 
-  clone(): WriteableTree {
-    const result = new WriteableTree()
+  clone(): WritableTree {
+    const result = new WritableTree()
     for (const [name, entry] of this.nodes) result.add(name, entry.clone())
     result.sha = this.sha
     return result

@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {CachedFSSource, FSSource} from './FSSource.js'
 import {hashBlob} from './GitUtils.js'
-import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {ReadonlyTree, WritableTree} from './Tree.js'
 
 const test = suite(import.meta)
 
@@ -34,7 +34,7 @@ test('filesystem reads have bounded concurrency without omitting files', async (
 
       async getFile(
         current: ReadonlyTree,
-        builder: WriteableTree,
+        builder: WritableTree,
         file: string
       ) {
         this.activeReads++
@@ -231,7 +231,7 @@ test('cached source retries a failed tree refresh', async () => {
 
       async getFile(
         current: ReadonlyTree,
-        builder: WriteableTree,
+        builder: WritableTree,
         file: string
       ) {
         if (this.fail) {

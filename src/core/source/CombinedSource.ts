@@ -2,12 +2,12 @@ import {assert} from '../util/Assert.js'
 import {entries, keys} from '../util/Objects.js'
 import type {Change, ChangesBatch} from './Change.js'
 import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {ReadonlyTree, WritableTree} from './Tree.js'
 import {splitPath} from './Utils.js'
 
 export class CombinedSource implements Source {
   #only: Source | undefined
-  #builder = new WriteableTree()
+  #builder = new WritableTree()
   #shas = new Map<string, string>()
   #sources: Record<string, Source>
 

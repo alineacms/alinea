@@ -9,7 +9,7 @@ import {mapConcurrent} from '../util/Async.js'
 import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {ReadonlyTree, WritableTree} from './Tree.js'
 
 const limit = pLimit(1)
 const fileConcurrency = 64
@@ -34,7 +34,7 @@ export class FSSource implements Source {
   async getTree() {
     return limit(async () => {
       const current = this.#current
-      const builder = new WriteableTree()
+      const builder = new WritableTree()
       const files = await fs.readdir(this.#cwd, {
         recursive: true
       })
@@ -50,7 +50,7 @@ export class FSSource implements Source {
     })
   }
 
-  async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
+  async getFile(current: ReadonlyTree, builder: WritableTree, file: string) {
     const filePath = file.replaceAll('\\', '/')
     const fullPath = path.join(this.#cwd, filePath)
     let stat: Stats
@@ -173,7 +173,7 @@ export class CachedFSSource extends FSSource {
     this.#tree = undefined
   }
 
-  async getFile(current: ReadonlyTree, builder: WriteableTree, file: string) {
+  async getFile(current: ReadonlyTree, builder: WritableTree, file: string) {
     const result = await super.getFile(current, builder, file)
     if (result) this.#blobs?.set(result[0], result[1])
     return result

@@ -1,12 +1,11 @@
-import {suite} from '@alinea/suite'
 import treeExample from '#test/fixtures/exampleTree.json' with {type: 'json'}
-import {ShaMismatchError} from './ShaMismatchError.js'
-import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {suite} from '@alinea/suite'
+import {ReadonlyTree, WritableTree} from './Tree.js'
 
 const test = suite(import.meta)
 
 test('construct tree', async () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   tree.add('file.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   tree.add('subdir/deeper/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
@@ -22,7 +21,7 @@ test('construct tree', async () => {
 })
 
 test('example tree', async () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   for (const entry of treeExample.tree) {
     if (entry.type === 'blob') {
       tree.add(entry.path, entry.sha)
@@ -43,7 +42,7 @@ test('init from flat', async () => {
 })
 
 test('mutate tree', async () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   tree.add('file.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   tree.add('subdir/deeper/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
@@ -65,7 +64,7 @@ test('mutate tree', async () => {
 })
 
 test('rename paths', async () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   tree.add('file.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   tree.add('subdir/deeper/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
@@ -76,7 +75,7 @@ test('rename paths', async () => {
 })
 
 test('diff trees', async () => {
-  const tree1 = new WriteableTree()
+  const tree1 = new WritableTree()
   tree1.add('file.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree1.add('subdir/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   tree1.add('subdir/deeper/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
@@ -113,7 +112,7 @@ test('diff trees', async () => {
 
 test('diff pre-existing tree', async () => {
   const tree = ReadonlyTree.fromFlat(treeExample)
-  const empty = new WriteableTree()
+  const empty = new WritableTree()
   const emptyReadonly = await empty.compile()
   const changes = emptyReadonly.diff(tree)
   empty.applyChanges(changes)
@@ -123,7 +122,7 @@ test('diff pre-existing tree', async () => {
 
 test('ignore empty dirs', async () => {
   const empty = ReadonlyTree.EMPTY
-  const withEmpty = new WriteableTree()
+  const withEmpty = new WritableTree()
   test.ok(empty.equals(withEmpty))
   withEmpty.add('dir1', empty)
   withEmpty.add('dir2', empty)
@@ -132,7 +131,7 @@ test('ignore empty dirs', async () => {
 })
 
 test('tree iteration and index', () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   tree.add('root.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree.add('dir/file.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
 
@@ -154,7 +153,7 @@ test('tree iteration and index', () => {
 })
 
 test('readonly helpers and changes', async () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   tree.add('root.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   tree.add('nested/a.txt', 'dffd6021bb2bd5b0af676290809ec3a53191dd81')
   const readonly = await tree.compile()
@@ -195,7 +194,7 @@ test('readonly helpers and changes', async () => {
 })
 
 test('applyChanges sha mismatch', async () => {
-  const tree = new WriteableTree()
+  const tree = new WritableTree()
   tree.add('root.txt', 'e69de29bb2d1d6434b8b29ae775ad8c2e48c5391')
   await tree.getSha()
   test.throws(() => {

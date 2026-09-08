@@ -1,7 +1,7 @@
 import {accumulate} from '../util/Async.js'
 import type {Change, ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
-import type {ReadonlyTree, WriteableTree} from './Tree.js'
+import type {ReadonlyTree, WritableTree} from './Tree.js'
 
 export interface GetBlobsOptions {
   signal?: AbortSignal
@@ -76,7 +76,7 @@ export async function transaction(source: Source): Promise<SourceTransaction> {
 export class SourceTransaction {
   #source: Source
   #from: ReadonlyTree
-  #into: WriteableTree
+  #into: WritableTree
   #blobs = new Map<string, Uint8Array>()
   #tasks = Array<() => void | Promise<void>>()
 
