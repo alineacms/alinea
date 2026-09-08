@@ -18,13 +18,7 @@ export function aliasesFromData(
 }
 
 export function aliasUrl(value: unknown): string | undefined {
-  const url =
-    typeof value === 'string'
-      ? value
-      : isRecord(value) && typeof value.url === 'string'
-        ? value.url
-        : undefined
-  if (url === undefined) return undefined
-  const trimmed = url.trim()
-  return trimmed.length > 0 ? trimmed : undefined
+  return isRecord(value) && typeof value.url === 'string'
+    ? value.url
+    : undefined
 }

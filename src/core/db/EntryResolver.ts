@@ -722,14 +722,14 @@ function valueAtPath(value: unknown, path: Array<string>): unknown {
   return current
 }
 
-function aliasChecker(alias: string): Check {
-  return entry => {
+function aliasChecker(alias: Condition<string>): Check {
+  return filterChecker({aliases: {includes: {url: alias}}}, (entry: Entry) => {
     const aliases = aliasesFromData(entry.data) ?? []
-    for (const row of aliases) {
-      if (aliasUrl(row) === alias) return true
-    }
-    return false
-  }
+    return aliases.flatMap(row => {
+      const url = aliasUrl(row)
+      return url === undefined ? [] : [{url}]
+    })
+  })
 }
 
 function typeChecker(type: Array<string> | string): Check {

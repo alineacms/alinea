@@ -8,6 +8,7 @@ import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {DemoRecipes} from '#test/schema/DemoRecipes.js'
 import {suite} from '@alinea/suite'
 import {Expr} from '../Expr.js'
+import type {Condition} from '../Filter.js'
 import type {GraphQuery} from '../Graph.js'
 import {getScope} from '../Scope.js'
 import {FSSource} from '../source/FSSource.js'
@@ -573,6 +574,55 @@ test('filters by metadata URL alias', async () => {
   })
 
   test.is(result, 'child-2')
+})
+
+test('matches alias row URLs without trimming', async () => {
+  const {resolver} = await createEntryResolver(advancedCms.config, [
+    {
+      id: 'spaced-alias',
+      type: 'Article',
+      index: 'a1',
+      data: {metadata: {aliases: [{url: ' /old-url '}]}}
+    },
+    {
+      id: 'string-alias',
+      type: 'Article',
+      index: 'a2',
+      data: {metadata: {aliases: ['/old-url']}}
+    }
+  ])
+  test.equal(await resolver.resolve({alias: ' /old-url ', select: Entry.id}), [
+    'spaced-alias'
+  ])
+  test.equal(await resolver.resolve({alias: '/old-url', select: Entry.id}), [])
+})
+
+test('filters URL aliases with string conditions', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const cases: Array<[Condition<string>, Array<string>]> = [
+    [{is: '/old-beta'}, ['child-2']],
+    [{in: ['/old-alpha', '/old-beta']}, ['child-1', 'child-2']],
+    [{startsWith: '/old-plain'}, ['image-plain']],
+    [{isNot: '/old-beta'}, ['child-1', 'image-plain']],
+    [{notIn: ['/old-alpha', '/old-beta']}, ['image-plain']],
+    [{gte: '/old-alpha', lt: '/old-plain'}, ['child-1', 'child-2']],
+    [{startsWith: '/missing'}, []],
+    [{in: []}, []]
+  ]
+  for (const [alias, expected] of cases) {
+    const result = await resolver.resolve({alias, select: Entry.id})
+    test.equal(result.sort(), expected)
+  }
+})
+
+test('combines alias conditions with other query filters', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    alias: {startsWith: '/old-'},
+    id: 'child-2',
+    select: Entry.id
+  })
+  test.equal(result, ['child-2'])
 })
 
 test('projects MediaFile URL aliases as entry shortcuts', async () => {

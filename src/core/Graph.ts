@@ -182,7 +182,7 @@ export declare class QuerySettings {
   /** Filter by url */
   url?: Condition<string>
   /** Filter by a metadata URL alias */
-  alias?: string
+  alias?: Condition<string>
   /** Filter by metadata created timestamp */
   createdAt?: Condition<number | null>
   /** Filter by metadata updated timestamp */
