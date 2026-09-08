@@ -25,6 +25,11 @@ import type {ReactNode} from 'react'
 
 /** Optional settings to configure a link field */
 export interface LinkFieldOptions<Value> extends FieldOptions<Value> {
+  /**
+   * Allow the same entry to be linked more than once.
+   * Defaults to false for entry fields and true for generic link fields.
+   */
+  allowDuplicates?: boolean
   /** Width of the field in the dashboard UI (0-1) */
   width?: number
   /** Add instructional text to a field */

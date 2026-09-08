@@ -496,7 +496,9 @@ export function ExplorerTable({
     page.searchesEverything
   const hasSelection = selectionMode !== 'none'
   const showSelectionControls =
-    hasSelection && !compact && explorer.showSelectionControls
+    hasSelection &&
+    explorer.showSelectionControls &&
+    (!compact || selectionMode === 'multiple')
   const columns = useMemo<Array<ExplorerTableColumn>>(
     () => createExplorerTableColumns({compact, showSelectionControls}),
     [compact, showSelectionControls]
@@ -513,7 +515,7 @@ export function ExplorerTable({
 
   return (
     <div className={styles.ExplorerTable.viewport({compact})}>
-      <Surface className={styles.ExplorerTable.surface()}>
+      <Surface className={styles.ExplorerTable.surface({compact})}>
         <Virtualizer
           layout={ListLayout}
           layoutOptions={explorerTableLayoutOptions}

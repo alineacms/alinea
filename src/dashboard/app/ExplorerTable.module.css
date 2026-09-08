@@ -17,6 +17,10 @@
   height: 100%;
   width: 100%;
   overflow: hidden;
+
+  &.is-compact {
+    border-radius: 0;
+  }
 }
 
 .ExplorerTable {

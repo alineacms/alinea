@@ -75,6 +75,7 @@ export namespace entry {
       EntryReference & ListRow & InferStoredValue<Fields>,
       EntryRow<Fields>
     >(label, {
+      allowDuplicates: false,
       ...options,
       isEntryField: true,
       pickers: {

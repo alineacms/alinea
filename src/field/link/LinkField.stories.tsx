@@ -84,6 +84,9 @@ const pageType = type('Page', {
         note: text('Note', {multiline: true})
       },
       initialValue: [entryLink, externalLink, childEntryLink]
+    }),
+    relatedEntries: entry.multiple('Related entries', {
+      initialValue: [entryLink]
     })
   }
 })
@@ -123,7 +126,10 @@ export function Example() {
   const resources = Field.isField(pageType.resources)
     ? pageType.resources
     : null
-  if (!relatedLink || !heroImage || !resources) return null
+  const relatedEntries = Field.isField(pageType.relatedEntries)
+    ? pageType.relatedEntries
+    : null
+  if (!relatedLink || !heroImage || !resources || !relatedEntries) return null
   return (
     <StoryProvider
       client={db}
@@ -139,6 +145,7 @@ export function Example() {
             field={heroImage as unknown as LinkField<LinkRow, unknown>}
           />
           <MultipleLinksFieldView field={resources} />
+          <MultipleLinksFieldView field={relatedEntries} />
         </div>
       </EditorScope>
     </StoryProvider>

@@ -53,6 +53,7 @@ export namespace link {
     options: WithoutLabel<LinkOptions<Fields, Array<LinkRow>>> = {}
   ): LinksField<LinkRow, Link<Type.Infer<Fields>>> {
     return createLinks<LinkRow, Link<Type.Infer<Fields>>>(label, {
+      allowDuplicates: true,
       ...options,
       pickers: {
         entry: entryPicker<EntryReference, Fields>({

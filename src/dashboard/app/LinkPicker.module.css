@@ -29,3 +29,19 @@
   padding: 8px;
   border-bottom: 1px solid var(--alinea-border);
 }
+
+.LinkPickerCompact-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px;
+  border-top: 1px solid var(--alinea-border);
+}
+
+.LinkPickerCompact-selection {
+  color: var(--alinea-fg-muted);
+  font-size: 13px;
+  line-height: 20px;
+}

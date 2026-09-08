@@ -369,6 +369,7 @@ interface StandardFieldActionProps {
 }
 
 interface LinkPickerActionProps {
+  allowDuplicates?: boolean
   anchorRef?: RefObject<Element | null>
   ariaLabel?: string
   buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
@@ -432,6 +433,7 @@ function initialFields(picker: Picker<LinkFieldRow>) {
 }
 
 function LinkPickerAction({
+  allowDuplicates = false,
   anchorRef,
   ariaLabel,
   buttonAppearance = 'plain',
@@ -496,6 +498,7 @@ function LinkPickerAction({
   const location = childLocation ?? resolved.location ?? fallbackLocation
   const condition = resolved.condition
   const handlesMultiple = Boolean(onPickMany && picker.handlesMultiple)
+  const selectsMultiple = handlesMultiple && !allowDuplicates
   const pickerProps: LinkPickerOptions = {
     condition,
     enableNavigation: options.enableNavigation,
@@ -517,13 +520,16 @@ function LinkPickerAction({
     limitLocations: options.limitLocations,
     nestedNavigation: !pickingChildren,
     pickChildren: pickingChildren,
-    preselect: false,
-    selectionMode: handlesMultiple ? 'multiple' : 'single',
-    selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
+    preselect: selectsMultiple,
+    selectionMode: selectsMultiple ? 'multiple' : 'single',
+    selectionBehavior: selectsMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
-    onConfirm(selection: Array<string>) {
-      const links = selection.map(entryId =>
-        createEntryLink(type, entryId, picker)
+    onConfirm(entryIds: Array<string>) {
+      const existing = allowDuplicates ? [] : selection
+      const links = entryIds.map(
+        entryId =>
+          existing?.find(row => '_entry' in row && row._entry === entryId) ??
+          createEntryLink(type, entryId, picker)
       )
       if (onPickMany) return onPickMany(links)
       const [link] = links
@@ -856,6 +862,7 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
     <div className={styles.LinkFieldView.create()} ref={anchorRef}>
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
+          allowDuplicates={options.allowDuplicates}
           anchorRef={anchorRef}
           buttonSize="small"
           className={styles.LinkFieldView.createButton()}
@@ -864,7 +871,18 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
             setValue(links => [...(links ?? []), link])
           }}
           onPickMany={picked =>
-            setValue(links => [...(links ?? []), ...picked])
+            setValue(value => {
+              const current = value ?? []
+              if (options.allowDuplicates) return [...current, ...picked]
+              const pickedIds = new Set(picked.map(row => row._id))
+              const currentIds = new Set(current.map(row => row._id))
+              return [
+                ...current.filter(
+                  row => row._type !== type || pickedIds.has(row._id)
+                ),
+                ...picked.filter(row => !currentIds.has(row._id))
+              ]
+            })
           }
           picker={picker as Picker<LinkFieldRow>}
           selection={links.filter(row => row._type === type)}

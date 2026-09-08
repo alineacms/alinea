@@ -250,10 +250,17 @@ function LinkPickerCompact({
   onExpand
 }: LinkPickerCompactProps) {
   const popover = useDashboardModal()
+  const selection = useAtomValue(explorer.selection)
   const setSelection = useSetAtom(explorer.selection)
+  const selectsMultiple = explorer.selectionMode === 'multiple'
+  const selectedItems = selection === 'all' ? 0 : selection.size
 
   function commitSelection(selection: Selection) {
-    if (selection === 'all' || selection.size === 0) return
+    if (
+      selection === 'all' ||
+      (selection.size === 0 && explorer.selectionMode !== 'multiple')
+    )
+      return
     startTransition(() => {
       onCommit?.([...selection].map(String))
       popover.close()
@@ -261,9 +268,17 @@ function LinkPickerCompact({
   }
 
   function commitEntry(entry: DashboardEntry) {
-    const selection = new Set([entry.id])
-    setSelection(selection)
-    commitSelection(selection)
+    if (selectsMultiple) {
+      const nextSelection =
+        selection === 'all' ? new Set<string>() : new Set(selection)
+      if (nextSelection.has(entry.id)) nextSelection.delete(entry.id)
+      else nextSelection.add(entry.id)
+      setSelection(nextSelection)
+      return
+    }
+    const nextSelection = new Set([entry.id])
+    setSelection(nextSelection)
+    commitSelection(nextSelection)
   }
 
   function openExpanded() {
@@ -293,9 +308,19 @@ function LinkPickerCompact({
       <ExplorerBody
         compactTable
         explorer={explorer}
-        onSelectionChange={commitSelection}
+        onSelectionChange={selectsMultiple ? undefined : commitSelection}
         page={page}
       />
+      {selectsMultiple && (
+        <div className={styles.LinkPickerCompact.footer()}>
+          <span className={styles.LinkPickerCompact.selection()}>
+            {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
+          </span>
+          <Button intent="primary" onPress={() => commitSelection(selection)}>
+            Select
+          </Button>
+        </div>
+      )}
     </Dialog>
   )
 }
