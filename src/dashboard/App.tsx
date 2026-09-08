@@ -76,7 +76,15 @@ const authenticatedAtom = atom(async get => {
     />
   )
 
-  if (page.type === 'users' && canManageMembers) {
+  if (page.type === 'users') {
+    if (!canManageMembers) {
+      return (
+        <>
+          {meta('No user management access')}
+          <AccessDenied canManageMembers={false} scope="users" />
+        </>
+      )
+    }
     const content = await usersPage(page, get)
     return (
       <>

@@ -7,15 +7,29 @@ import css from './AccessDenied.module.css'
 
 const styles = styler(css)
 
+const copy = {
+  root: {
+    title: 'No root access',
+    message: 'Your current roles do not grant permission to read any root.'
+  },
+  users: {
+    title: 'No user management access',
+    message: 'Your current roles do not grant permission to manage users.'
+  },
+  workspace: {
+    title: 'No workspace access',
+    message: 'Your current roles do not grant permission to read any workspace.'
+  }
+}
+
 export interface AccessDeniedProps {
   canManageMembers: boolean
-  scope: 'root' | 'workspace'
+  scope: keyof typeof copy
 }
 
 export function AccessDenied({canManageMembers, scope}: AccessDeniedProps) {
   const setRoute = useSetAtom(routeAtom)
-  const title = scope === 'workspace' ? 'No workspace access' : 'No root access'
-  const target = scope === 'workspace' ? 'workspace' : 'root'
+  const {title, message} = copy[scope]
   return (
     <AppShell>
       <AppShellInner>
@@ -23,9 +37,7 @@ export function AccessDenied({canManageMembers, scope}: AccessDeniedProps) {
           <div className={styles.AccessDenied()}>
             <Surface className={styles.AccessDenied.card()}>
               <h1 className={styles.AccessDenied.title()}>{title}</h1>
-              <p className={styles.AccessDenied.message()}>
-                Your current roles do not grant permission to read any {target}.
-              </p>
+              <p className={styles.AccessDenied.message()}>{message}</p>
               {canManageMembers && (
                 <Button
                   appearance="plain"

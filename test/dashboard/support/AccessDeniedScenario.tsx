@@ -1,4 +1,4 @@
-import {Policy} from '#/core/Role.js'
+import {Permission, Policy} from '#/core/Role.js'
 import {App} from '#/dashboard/App.js'
 import {Config, Field} from '#/index.js'
 import {views} from '#/field/views.js'
@@ -20,15 +20,32 @@ const config = Config.create({
   }
 })
 
-async function createAccessDeniedScenario() {
+async function createAccessDeniedScenario(policy: Policy) {
   const db = new LocalDB(config)
   await db.sync()
-  db.createPolicy = async () => Policy.ALLOW_NONE
+  db.createPolicy = async () => policy
   return {client: createTestConnection(db), db}
 }
 
 export function AccessDeniedScenario() {
-  const [scenario] = useState(createAccessDeniedScenario)
+  const [scenario] = useState(() => createAccessDeniedScenario(Policy.ALLOW_NONE))
+  const {client, db} = use(scenario)
+  return (
+    <App
+      client={client}
+      config={config}
+      events={db.index}
+      graph={db}
+      local
+      views={views}
+    />
+  )
+}
+
+export function UserAccessDeniedScenario() {
+  const [scenario] = useState(() =>
+    createAccessDeniedScenario(new Policy(Permission.Read))
+  )
   const {client, db} = use(scenario)
   return (
     <App
