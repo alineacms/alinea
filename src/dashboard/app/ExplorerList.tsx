@@ -91,7 +91,7 @@ export function ExplorerList({
   onSelectionChange,
   page
 }: ExplorerListProps) {
-  const showResults = useAtomValueRaw(explorer.showResults)
+  const showResults = explorer.mode !== 'search' || Boolean(page.search.trim())
   const getItems = useSetAtom(explorer.getItems)
   const getDropOperation = useSetAtom(explorer.getDropOperation)
   const dropOnItem = useSetAtom(explorer.onItemDrop)

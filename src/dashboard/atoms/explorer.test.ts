@@ -156,6 +156,25 @@ test('workspace search includes all locales and unlocalized roots', async () => 
   )
 })
 
+test('ready pages snapshot the search that produced their items', async () => {
+  const {store} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages'},
+    {mode: 'search'}
+  )
+
+  const idlePage = await store.get(explorer.pageReady)
+  expect(idlePage.search).toBe('')
+  expect(idlePage.items).toEqual([])
+
+  store.set(explorer.search, 'Parent')
+
+  const searchPage = await store.get(explorer.pageReady)
+  expect(searchPage.search).toBe('Parent')
+  expect(searchPage.items.map(item => item.title)).toContain('Parent draft')
+})
+
 test('search temporarily overrides the preferred result mode', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},

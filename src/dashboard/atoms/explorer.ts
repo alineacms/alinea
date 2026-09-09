@@ -97,7 +97,6 @@ export interface ExplorerOptions {
   condition?: Filter<EntryFields>
   defaultOrderBy?: Atom<OrderBy | Array<OrderBy> | undefined>
   enableNavigation?: boolean
-  hideResultsUntilSearch?: boolean
   initialView?: ExplorerView
   initialResultMode?: ExplorerResultMode
   initialSearchScope?: 'workspace' | 'everything'
@@ -148,6 +147,7 @@ export interface ExplorerReadyPage {
   location: ExplorerLocation
   root: ExplorerRootData
   resultMode: ExplorerResultMode
+  search: string
   searchScope: 'workspace' | 'everything'
   searchesEverything: boolean
   view: ExplorerView
@@ -325,7 +325,6 @@ export class ExplorerAtoms {
   readonly hasRowAction
   readonly mode: 'browse' | 'search'
   readonly hasSelection
-  readonly hideResultsUntilSearch
   readonly linkedKeys: ReadonlySet<Key>
   readonly searchDepth
   readonly supportsInlineExpansion
@@ -401,8 +400,6 @@ export class ExplorerAtoms {
     this.autoSelectFirstItem =
       options.autoSelectFirstItem ?? this.mode === 'search'
     this.hasSelection = this.selectionMode !== 'none'
-    this.hideResultsUntilSearch =
-      options.hideResultsUntilSearch ?? this.mode === 'search'
     this.searchDepth =
       options.searchDepth ?? (this.mode === 'search' ? 'all' : 'current')
     this.linkedKeys = new Set<Key>(options.initialSelection)
@@ -536,6 +533,7 @@ export class ExplorerAtoms {
     this.pageReady = atom(async get => {
       const locale = get(this.selectedLocale)
       const location = get(this.location)
+      const search = get(this.search)
       const resultMode = get(this.resultMode)
       const searchScope = get(this.searchScope)
       const searchesEverything = get(this.searchesEverything)
@@ -565,6 +563,7 @@ export class ExplorerAtoms {
         location,
         resultMode,
         root,
+        search,
         searchScope,
         searchesEverything,
         view
@@ -573,9 +572,6 @@ export class ExplorerAtoms {
     this.page = unwrap(this.pageReady, previous => previous)
   }
 
-  showResults = atom(get => {
-    return !this.hideResultsUntilSearch || Boolean(get(this.search).trim())
-  })
   isMedia = atom(get =>
     Boolean(this.#options.rootData && get(this.#options.rootData).isMediaRoot)
   )
@@ -847,7 +843,7 @@ export class ExplorerAtoms {
           : location.root
       if (!searchesEverything && !location.root && this.rootScope === 'current')
         return []
-      if (this.hideResultsUntilSearch && !search) return []
+      if (this.mode === 'search' && !search) return []
       const graph = get(graphAtom)
       const sort = get(this.sort)
       const selectedSort = get(this.#selectedSort)

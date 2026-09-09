@@ -212,7 +212,7 @@ export function ExplorerSearch({
       autoFocus={autoFocus}
       className={styles.Explorer.search()}
       hasIcon
-      isPending={isPending}
+      isPending={isPending || inputValue !== page.search}
       placeholder="Search..."
       value={inputValue}
       onChange={onSearchChange}

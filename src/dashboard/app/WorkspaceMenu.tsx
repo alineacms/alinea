@@ -181,7 +181,6 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
         autoSelectFirstItem: true,
         breadcrumbs: true,
         enableNavigation: true,
-        hideResultsUntilSearch: true,
         initialSearchScope,
         mode: 'search',
         rootData: root.data,
