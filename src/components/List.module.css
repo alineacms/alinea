@@ -181,6 +181,7 @@
 
 .ListLabel {
   color: var(--alinea-fg-muted);
+  flex-wrap: wrap;
   min-height: auto;
   padding-block: 0;
   margin-left: -8px;

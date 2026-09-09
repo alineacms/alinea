@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
   GlobalSearchStory,
+  LocalizedGlobalSearchStory,
   SingleWorkspaceAvatarStory
 } from './WorkspaceMenu.stories.js'
 
@@ -37,8 +38,24 @@ test('global search starts in the current workspace and can expand to everything
     })
     .toBe(true)
 
+  await search.fill('About')
+  await expect(page.getByText('About', {exact: true})).toBeVisible()
+
   await everything.press('Space')
   await expect(everything).toBeChecked()
   await search.fill('Checklist')
   await expect(page.getByText('Checklist', {exact: true})).toBeVisible()
+})
+
+test('global search includes localized entries', async ({mount, page}) => {
+  await mount(<LocalizedGlobalSearchStory />)
+  await page.getByRole('button', {name: 'Search entries'}).click()
+
+  const search = page.getByRole('searchbox', {name: 'Search'})
+  await search.fill('A propos')
+
+  const result = page.getByText('A propos', {exact: true})
+  await expect(result).toBeVisible()
+  await result.click()
+  await expect.poll(() => new URL(page.url()).hash).toContain('/pages:fr/')
 })

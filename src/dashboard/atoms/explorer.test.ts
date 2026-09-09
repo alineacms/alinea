@@ -1,4 +1,9 @@
-import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
+import {
+  createDashboardAtomFixture,
+  createDashboardStore
+} from '#test/DashboardFixture.js'
+import {LocalDB} from '#/core/db/LocalDB.js'
+import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
@@ -92,6 +97,63 @@ test('all-workspace search is opt-in and defaults to the current workspace', () 
   expect(store.get(explorer.resultMode)).toBe('browse')
   expect(store.get(explorer.searchScope)).toBe('everything')
   expect(store.get(explorer.searchesEverything)).toBe(false)
+})
+
+test('workspace search includes all locales and unlocalized roots', async () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {
+          pages: Config.root('Pages', {
+            contains: ['Page'],
+            i18n: {locales: ['en', 'fr']}
+          }),
+          media: Config.root('Media', {contains: ['Page']})
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.create({
+    type: Page,
+    root: 'pages',
+    locale: 'en',
+    set: {title: 'Shared result'}
+  })
+  await db.create({
+    type: Page,
+    root: 'pages',
+    locale: 'fr',
+    set: {title: 'Shared result'}
+  })
+  await db.create({
+    type: Page,
+    root: 'media',
+    set: {title: 'Shared result'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(authReady)
+  const explorer = createExplorerAtoms(
+    {workspace: 'main', root: 'pages', locale: 'en'},
+    {allowAllWorkspaces: true, mode: 'search'}
+  )
+  store.set(explorer.search, 'Shared result')
+
+  const items = await store.get(explorer.itemsReady('en'))
+
+  expect(items).toHaveLength(3)
+  expect(items.map(item => [item.root, item.locale])).toEqual(
+    expect.arrayContaining([
+      ['pages', 'en'],
+      ['pages', 'fr'],
+      ['media', null]
+    ])
+  )
 })
 
 test('search temporarily overrides the preferred result mode', () => {

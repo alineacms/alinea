@@ -199,7 +199,7 @@ export const pageAtom = atom((get): Page => {
   const pageType =
     route.page === 'splash' && workspaces.length === 1 ? 'entry' : route.page
   const workspace =
-    pageType !== 'entry'
+    pageType === 'splash'
       ? undefined
       : route.workspace && workspaces.includes(route.workspace)
         ? route.workspace

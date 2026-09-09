@@ -46,7 +46,7 @@ export class DashboardDriver {
 
   async openProfile(): Promise<void> {
     await this.page.getByRole('button', {name: 'Local user'}).click()
-    await expect(this.page.getByText('Theme', {exact: true})).toBeVisible()
+    await expect(this.page.getByText('Appearance', {exact: true})).toBeVisible()
   }
 
   async openUsers(): Promise<void> {

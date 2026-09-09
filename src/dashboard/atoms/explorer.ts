@@ -836,6 +836,8 @@ export class ExplorerAtoms {
       const location = get(this.location)
       const search = get(this.search).trim()
       const searchesEverything = get(this.searchesEverything)
+      const searchesMultipleRoots =
+        searchesEverything || this.rootScope === 'workspace'
       const resultMode = get(this.resultMode)
       const workspace = searchesEverything ? undefined : location.workspace
       const root = searchesEverything
@@ -883,7 +885,7 @@ export class ExplorerAtoms {
             : searchesEverything
               ? null
               : (location.parentId ?? null),
-        locale: searchesEverything ? undefined : locale,
+        locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
         filter: filterSelectable ? this.#options.condition : undefined,
         type: filter,

@@ -2,8 +2,6 @@ import {Button, Icon, Menu, MenuItem, Surface} from '#/components.js'
 import {Entry, type EntryAuditUser} from '#/core/Entry.js'
 import {timestampFromId} from '#/core/Id.js'
 import {getRoot, getType} from '#/core/Internal.js'
-import {isImage} from '#/core/media/IsImage.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {configAtom, graphAtom} from '#/dashboard/atoms/core.js'
 import {shaAtom} from '#/dashboard/atoms/graph.js'
@@ -58,9 +56,7 @@ interface RecentEntryCandidate {
 }
 
 interface RecentEntry extends RecentEntryCandidate {
-  averageColor?: string
   icon: ComponentType
-  preview?: string
 }
 
 interface WorkspaceSummary {
@@ -136,33 +132,11 @@ export async function splashPage(get: Getter): Promise<ReactNode> {
         .filter((entry): entry is RecentEntryCandidate => Boolean(entry))
         .sort((a, b) => b.changedAt - a.changedAt)
         .slice(0, recentEntryCount)
-      const mediaIds = recentEntries
-        .filter(entry => entry.type === 'MediaFile')
-        .map(entry => entry.id)
-      const mediaEntries = mediaIds.length
-        ? await graph.find({
-            id: {in: mediaIds},
-            status: 'preferDraft',
-            groupBy: Entry.id,
-            select: {
-              averageColor: MediaFile.averageColor,
-              extension: MediaFile.extension,
-              id: Entry.id,
-              preview: MediaFile.preview
-            }
-          })
-        : []
-      const mediaById = new Map(mediaEntries.map(entry => [entry.id, entry]))
       const entries = recentEntries.map(entry => {
-        const media = mediaById.get(entry.id)
         const type = config.schema[entry.type]
-        const preview =
-          media?.preview && isImage(media.extension) ? media.preview : undefined
         return {
           ...entry,
-          averageColor: media?.averageColor,
-          icon: type ? (getType(type).icon ?? LucideFile) : LucideFile,
-          preview
+          icon: type ? (getType(type).icon ?? LucideFile) : LucideFile
         }
       })
       return {
@@ -395,22 +369,11 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
             >
               <span className={styles.SplashPage.entry.content()}>
                 <span className={styles.SplashPage.entry.primary()}>
-                  <span
-                    className={styles.SplashPage.entry.visual()}
-                    style={{backgroundColor: entry.averageColor}}
-                  >
-                    {entry.preview ? (
-                      <img
-                        alt=""
-                        className={styles.SplashPage.entry.visual.image()}
-                        src={entry.preview}
-                      />
-                    ) : (
-                      <Icon
-                        className={styles.SplashPage.entry.visual.icon()}
-                        icon={entry.icon}
-                      />
-                    )}
+                  <span className={styles.SplashPage.entry.visual()}>
+                    <Icon
+                      className={styles.SplashPage.entry.visual.icon()}
+                      icon={entry.icon}
+                    />
                   </span>
                   <span className={styles.SplashPage.entry.title()}>
                     <span title={entry.title}>{entry.title}</span>

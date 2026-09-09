@@ -56,3 +56,13 @@ test('shows the splash for multiple readable workspaces', () => {
     root: undefined
   })
 })
+
+test('keeps workspace context on the users page', () => {
+  const store = dashboardStore(2)
+  store.set(routeAtom, {browser: true, route: {page: 'users'}})
+
+  expect(store.get(pageAtom)).toMatchObject({
+    type: 'users',
+    workspace: 'main'
+  })
+})
