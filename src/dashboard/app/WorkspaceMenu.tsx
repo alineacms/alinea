@@ -122,8 +122,26 @@ interface WorkspaceAvatarMenuProps {
 
 export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
   const workspace = useAtomValueRaw(workspaceAtom(page.workspace!))
+  const workspaces = useAtomValueRaw(workspacesAtom)
   const setRoute = useSetAtom(routeAtom)
   const setExplorerLocale = useSetAtom(root.explorer.selectedLocale)
+  const avatar = (
+    <WorkspaceAvatar
+      color={workspace.color}
+      icon={workspace.icon}
+      size="small"
+    />
+  )
+  if (workspaces.length <= 1) {
+    return (
+      <div
+        className={styles.WorkspaceMenu.avatarTrigger()}
+        aria-label={workspace.label}
+      >
+        {avatar}
+      </div>
+    )
+  }
   function showWorkspaces() {
     setExplorerLocale(page.locale)
     setRoute({page: 'splash'})
@@ -136,11 +154,7 @@ export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
       aria-label="Back to workspaces"
       onPress={showWorkspaces}
     >
-      <WorkspaceAvatar
-        color={workspace.color}
-        icon={workspace.icon}
-        size="small"
-      />
+      {avatar}
     </Button>
   )
 }

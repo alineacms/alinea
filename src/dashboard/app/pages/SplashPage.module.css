@@ -354,6 +354,13 @@
   font-size: 16px;
 }
 
+@media (hover: none), (pointer: coarse) {
+  .SplashPage-card-footer {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
 @media (max-width: 1100px) {
   .SplashPage-grid {
     column-count: 1;
