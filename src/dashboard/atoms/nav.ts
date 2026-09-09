@@ -15,7 +15,7 @@ export const routeGuardAtom = atom<Atom<boolean> | null>(null)
 export const routeBlockAtom = atom<RouteBlock | null>(null)
 
 export interface DashboardRoute {
-  page?: 'entry' | 'users'
+  page?: 'splash' | 'entry' | 'users'
   workspace?: string
   root?: string
   entry?: string
@@ -24,10 +24,13 @@ export interface DashboardRoute {
 }
 
 interface ResolvedDashboardRoute extends DashboardRoute {
-  page: 'entry' | 'users'
+  page: 'splash' | 'entry' | 'users'
 }
 
 export const nav = {
+  splash() {
+    return '/'
+  },
   users() {
     return '/users'
   },
@@ -49,7 +52,8 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
   const [action, workspace, rootPart = '', entry] = path
     .split('/')
     .slice(1) as Array<string | undefined>
-  const page = action === 'users' ? 'users' : 'entry'
+  const page =
+    action === 'users' ? 'users' : action === 'entry' ? 'entry' : 'splash'
   const [root, locale] = rootPart.split(':')
   const view = new URLSearchParams(search).get('view')
   return {
@@ -67,6 +71,7 @@ function routeFromHash(hash: string): ResolvedDashboardRoute {
 
 function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
   if (update.page === 'users') return {page: 'users'}
+  if (update.page === 'splash') return {page: 'splash'}
   return {
     page: 'entry',
     workspace: update.workspace,
@@ -78,15 +83,17 @@ function routeFromUpdate(update: DashboardRoute): ResolvedDashboardRoute {
 }
 
 function hashFromRoute(route: ResolvedDashboardRoute) {
-  return route.page === 'users'
-    ? `#${nav.users()}`
-    : `#${nav.entry(
-        route.workspace,
-        route.root,
-        route.entry,
-        route.locale,
-        route.view
-      )}`
+  return route.page === 'splash'
+    ? `#${nav.splash()}`
+    : route.page === 'users'
+      ? `#${nav.users()}`
+      : `#${nav.entry(
+          route.workspace,
+          route.root,
+          route.entry,
+          route.locale,
+          route.view
+        )}`
 }
 
 const locationAtom = atomWithLocation({
@@ -175,7 +182,7 @@ export const routeAtom = Object.assign(
 )
 
 export interface Page {
-  type: 'users' | 'entry'
+  type: 'splash' | 'users' | 'entry'
   workspace: string | undefined
   root: string | undefined
   requestedRoot?: string
@@ -189,10 +196,14 @@ export const pageAtom = atom((get): Page => {
   const config = get(configAtom)
   const policy = get(policyAtom)
   const workspaces = get(workspacesAtom)
+  const pageType =
+    route.page === 'splash' && workspaces.length === 1 ? 'entry' : route.page
   const workspace =
-    route.workspace && workspaces.includes(route.workspace)
-      ? route.workspace
-      : workspaces[0]
+    pageType !== 'entry'
+      ? undefined
+      : route.workspace && workspaces.includes(route.workspace)
+        ? route.workspace
+        : workspaces[0]
   const workspaceConfig = workspace ? get(workspaceAtom(workspace)) : undefined
   const roots = workspaceConfig
     ? Object.keys(workspaceConfig.roots).filter(root =>
@@ -207,7 +218,7 @@ export const pageAtom = atom((get): Page => {
       ? route.locale
       : (i18n?.locales[0] ?? null)
   return {
-    type: route.page,
+    type: pageType,
     workspace,
     root,
     requestedRoot: route.root,

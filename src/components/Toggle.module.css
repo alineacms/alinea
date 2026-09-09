@@ -28,6 +28,27 @@
       font-size: 12px;
     }
   }
+
+  &[data-variant='icon-small'] {
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+
+    .ToggleButton {
+      width: 26px;
+      min-height: 26px;
+      padding: 0;
+      border-radius: 6px;
+
+      [data-slot='icon'] {
+        width: 14px;
+        height: 14px;
+        font-size: 14px;
+      }
+    }
+  }
 }
 
 .ToggleButton {
@@ -49,6 +70,9 @@
   font-weight: 550;
   outline: none;
   white-space: nowrap;
+  transition:
+    color 0.25s ease-out,
+    background-color 0.25s ease-out;
 
   svg,
   [data-slot='icon'] {

@@ -55,8 +55,9 @@
 
 .WorkspaceRoots-profile-popover {
   min-width: 260px;
-  padding: 0;
+  padding: 4px;
   margin: 0;
+  font-size: var(--alinea-font-size-base);
   list-style: none;
 }
 
@@ -68,65 +69,84 @@
 .WorkspaceRoots-profile-popover-user,
 .WorkspaceRoots-profile-popover-item {
   display: flex;
-  justify-content: space-between;
+  min-height: 38px;
   align-items: center;
-  gap: 16px;
-  padding: 8px 16px;
-  font-size: 14px;
+  gap: 9px;
+  padding: 3px 8px;
+  font-size: inherit;
 }
 
-.WorkspaceRoots-profile-popover-user,
-.WorkspaceRoots-profile-popover-item:not(:last-child) {
-  border-bottom: 1px solid var(--alinea-border);
+.WorkspaceRoots-profile-popover-user {
+  color: var(--alinea-fg);
+  font-weight: 400;
+}
+
+.WorkspaceRoots-profile-popover-item {
+  justify-content: space-between;
+  color: var(--alinea-fg-muted);
+  font-weight: 400;
 }
 
 .WorkspaceRoots-profile-popover-user-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  font-size: 16px;
 }
 
 .WorkspaceRoots-profile-popover-user-title {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .WorkspaceRoots-profile-popover-item-label {
   margin: 0;
-}
-
-.WorkspaceRoots-profile-popover-themeOptions {
-  display: flex;
-  gap: 8px;
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 400;
+  line-height: 24px;
 }
 
 .WorkspaceRoots-profile-popover-action {
   display: flex;
-  padding: 4px;
-  font-size: 14px;
-}
-
-.WorkspaceRoots-profile-popover-action:first-of-type {
-  border-top: 1px solid var(--alinea-border);
+  padding: 0;
+  font-size: inherit;
 }
 
 .WorkspaceRoots-profile-popover-action-button {
   width: 100%;
+  min-height: 38px;
   justify-content: flex-start;
-  gap: 8px;
-  border-radius: 4px;
-  font-weight: 500;
+  gap: 9px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 400;
+
+  &[data-appearance='plain'] {
+    --alinea-button-default-plain-color: var(--alinea-fg-muted);
+  }
+
+  &[data-hovered] {
+    --alinea-button-default-plain-color: var(--alinea-fg);
+  }
+}
+
+.WorkspaceRoots-profile-popover-action-icon {
+  flex-shrink: 0;
+  font-size: 16px;
 }
 
 .WorkspaceRoots-profile-popover-action-label {
   min-width: 0;
   overflow: hidden;
+  color: inherit;
+  font-size: var(--alinea-font-size-base);
+  font-weight: 400;
+  line-height: 24px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

@@ -8,12 +8,8 @@ import {
   Tooltip
 } from '#/components.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
-import {rootAtoms} from '#/dashboard/atoms/root.js'
-import {
-  canLogoutAtom,
-  logoutAtom,
-  themeAtom
-} from '#/dashboard/atoms/dashboard.js'
+import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import {canLogoutAtom, logoutAtom} from '#/dashboard/atoms/dashboard.js'
 import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {workspaceAtom} from '#/dashboard/atoms/config.js'
@@ -22,18 +18,15 @@ import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useUser} from '#/dashboard/hooks.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValue, useSetAtom} from 'jotai'
 import {
   IcBaselineAccountCircle,
   IcOutlineSettings,
-  IcRoundBrightness2,
-  IcRoundDesktopWindows,
   IcRoundLogout,
-  IcRoundMoreHoriz,
-  IcRoundUnfoldMore,
-  IcRoundWbSunny
+  IcRoundUnfoldMore
 } from '../icons.js'
 import {ActivityStatus} from './ActivityStatus.js'
+import {AppearanceToggle} from './AppearanceToggle.js'
 import {WorkspaceAvatarMenu} from './WorkspaceMenu.js'
 import css from './WorkspaceRoots.module.css'
 
@@ -42,9 +35,14 @@ const styles = styler(css)
 export interface WorkspaceRootsProps {
   canManageMembers: boolean
   page: Page
+  root: RootAtoms
 }
 
-export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
+export function WorkspaceRoots({
+  canManageMembers,
+  page,
+  root: currentRoot
+}: WorkspaceRootsProps) {
   const policy = useAtomValue(policyAtom)
   const workspace = page.workspace!
   const settings = useAtomValue(workspaceAtom(workspace))
@@ -54,7 +52,7 @@ export function WorkspaceRoots({canManageMembers, page}: WorkspaceRootsProps) {
   return (
     <aside className={styles.WorkspaceRoots()} aria-label="Workspace roots">
       <div className={styles.WorkspaceRoots.workspace()}>
-        <WorkspaceAvatarMenu page={page} />
+        <WorkspaceAvatarMenu page={page} root={currentRoot} />
       </div>
       <nav className={styles.WorkspaceRoots.roots()}>
         {roots.map(root => (
@@ -99,7 +97,10 @@ function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
   )
 }
 
-interface WorkspaceProfileMenuProps extends WorkspaceRootsProps {}
+interface WorkspaceProfileMenuProps {
+  canManageMembers: boolean
+  page: Page
+}
 
 function WorkspaceProfileMenu({
   canManageMembers,
@@ -109,7 +110,6 @@ function WorkspaceProfileMenu({
   const config = useAtomValue(configAtom)
   const isLocal = useAtomValue(localAtom)
   const canLogout = useAtomValue(canLogoutAtom)
-  const [theme, setTheme] = useAtom(themeAtom)
   const setUserRoles = useSetAtom(setUserRolesAtom)
   const setRoute = useSetAtom(routeAtom)
   const logout = useSetAtom(logoutAtom)
@@ -147,45 +147,41 @@ function WorkspaceProfileMenu({
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
           <li className={styles.WorkspaceRoots.profile.popover.user()}>
-            <span className={styles.WorkspaceRoots.profile.popover.user.icon()}>
-              <IcBaselineAccountCircle />
-            </span>
+            <Icon
+              icon={IcBaselineAccountCircle}
+              className={styles.WorkspaceRoots.profile.popover.user.icon()}
+            />
             <span
               className={styles.WorkspaceRoots.profile.popover.user.title()}
             >
               {userName}
             </span>
-            <IcRoundMoreHoriz />
           </li>
+          {canManageMembers && (
+            <li className={styles.WorkspaceRoots.profile.popover.action()}>
+              <Button
+                appearance="plain"
+                aria-label="Manage users"
+                className={styles.WorkspaceRoots.profile.popover.action.button()}
+                onPress={() => setRoute({page: 'users'})}
+              >
+                <Icon
+                  icon={IcOutlineSettings}
+                  className={styles.WorkspaceRoots.profile.popover.action.icon()}
+                />
+                <span
+                  className={styles.WorkspaceRoots.profile.popover.action.label()}
+                >
+                  Manage users
+                </span>
+              </Button>
+            </li>
+          )}
           <li className={styles.WorkspaceRoots.profile.popover.item()}>
             <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
-              Theme
+              Appearance
             </p>
-            <div
-              className={styles.WorkspaceRoots.profile.popover.themeOptions()}
-            >
-              <Button
-                size="icon"
-                appearance={theme === 'system' ? 'active' : 'outline'}
-                icon={IcRoundDesktopWindows}
-                aria-label="Use system theme"
-                onPress={() => setTheme('system')}
-              />
-              <Button
-                size="icon"
-                appearance={theme === 'light' ? 'active' : 'outline'}
-                icon={IcRoundWbSunny}
-                aria-label="Use light theme"
-                onPress={() => setTheme('light')}
-              />
-              <Button
-                size="icon"
-                appearance={theme === 'dark' ? 'active' : 'outline'}
-                icon={IcRoundBrightness2}
-                aria-label="Use dark theme"
-                onPress={() => setTheme('dark')}
-              />
-            </div>
+            <AppearanceToggle />
           </li>
           {isLocal && roleEntries.length > 0 && (
             <li className={styles.WorkspaceRoots.profile.popover.item()}>
@@ -225,28 +221,14 @@ function WorkspaceProfileMenu({
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
                 onPress={logout}
               >
-                <Icon icon={IcRoundLogout} />
+                <Icon
+                  icon={IcRoundLogout}
+                  className={styles.WorkspaceRoots.profile.popover.action.icon()}
+                />
                 <span
                   className={styles.WorkspaceRoots.profile.popover.action.label()}
                 >
                   Logout
-                </span>
-              </Button>
-            </li>
-          )}
-          {canManageMembers && (
-            <li className={styles.WorkspaceRoots.profile.popover.action()}>
-              <Button
-                appearance="plain"
-                aria-label="Manage users"
-                className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onPress={() => setRoute({page: 'users'})}
-              >
-                <Icon icon={IcOutlineSettings} />
-                <span
-                  className={styles.WorkspaceRoots.profile.popover.action.label()}
-                >
-                  Manage users
                 </span>
               </Button>
             </li>

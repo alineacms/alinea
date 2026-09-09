@@ -1,10 +1,17 @@
 import {createCMS} from '#/core.js'
 import {Config, Field} from '#/index.js'
 import {
+  IcOutlineFolder,
   IcOutlineGridView,
+  IcOutlineSettings,
+  IcRoundDescription,
   IcRoundHistory,
+  IcRoundImage,
+  IcRoundLanguage,
+  IcRoundPublic,
   IcRoundTranslate,
-  MiLayers
+  MiLayers,
+  LucideFolder
 } from '../icons.js'
 
 const Page = Config.document('Page', {
@@ -219,6 +226,50 @@ const statuses = Config.workspace('Statuses', {
   }
 })
 
+const manyRoots = Config.workspace('Many roots', {
+  source: 'content/manyRoots',
+  icon: LucideFolder,
+  roots: {
+    pages: Config.root('Pages', {
+      contains: ['Page', 'Folder'],
+      openByDefault: true
+    }),
+    articles: Config.root('Articles', {
+      contains: ['Page', 'Folder'],
+      icon: IcRoundDescription
+    }),
+    documentation: Config.root('Documentation', {
+      contains: ['Page', 'Folder'],
+      icon: IcOutlineFolder
+    }),
+    campaigns: Config.root('Campaigns', {
+      contains: ['Page', 'Folder'],
+      icon: IcRoundPublic
+    }),
+    translations: Config.root('Translations', {
+      contains: ['Page', 'Folder'],
+      icon: IcRoundLanguage
+    }),
+    archive: Config.root('Archive', {
+      contains: ['Page', 'Folder'],
+      icon: IcRoundHistory
+    }),
+    settings: Config.root('Settings', {
+      contains: ['Page', 'Folder'],
+      icon: IcOutlineSettings
+    }),
+    brandAssets: Config.root('Brand assets', {
+      contains: ['Page', 'Folder'],
+      icon: IcRoundImage
+    }),
+    nestedContent: Config.root('Nested content', {
+      contains: ['Page', 'Folder'],
+      icon: MiLayers
+    }),
+    media: Config.media()
+  }
+})
+
 export const cms = createCMS({
   enableDrafts: true,
   schema: {Page, Folder},
@@ -227,6 +278,7 @@ export const cms = createCMS({
     nested,
     many,
     i18n,
-    statuses
+    statuses,
+    manyRoots
   }
 })

@@ -14,6 +14,11 @@
   flex-shrink: 0;
 }
 
+.WorkspaceMenu-avatar-large {
+  width: 32px;
+  height: 32px;
+}
+
 .WorkspaceMenu-avatar-logo {
   width: 100%;
   height: 100%;

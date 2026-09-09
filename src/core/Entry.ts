@@ -38,6 +38,11 @@ export interface EntryAlias {
   url: string
 }
 
+export interface EntryAuditUser {
+  email: string
+  name: string
+}
+
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
   status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
@@ -70,9 +75,19 @@ export const Entry = {
     name: 'createdAt',
     path: ['metadata']
   }),
+  createdBy: new Expr<EntryAuditUser | null>({
+    type: 'entryField',
+    name: 'createdBy',
+    path: ['metadata']
+  }),
   updatedAt: new Expr<number | null>({
     type: 'entryField',
     name: 'updatedAt',
+    path: ['metadata']
+  }),
+  updatedBy: new Expr<EntryAuditUser | null>({
+    type: 'entryField',
+    name: 'updatedBy',
     path: ['metadata']
   }),
   data: new Expr<Record<string, any>>({type: 'entryField', name: 'data'}),

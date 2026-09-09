@@ -43,7 +43,7 @@ interface WorkspaceMenuProps {
 interface WorkspaceAvatarProps {
   color: string
   icon?: ComponentType
-  size?: 'default' | 'small'
+  size?: 'default' | 'large' | 'small'
 }
 
 interface WorkspaceSelectorMenuProps {
@@ -117,38 +117,46 @@ function WorkspaceSelectorMenu({
 
 interface WorkspaceAvatarMenuProps {
   page: Page
+  root: RootAtoms
 }
 
-export function WorkspaceAvatarMenu({page}: WorkspaceAvatarMenuProps) {
+export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
   const workspace = useAtomValue(workspaceAtom(page.workspace!))
+  const setRoute = useSetAtom(routeAtom)
+  const setExplorerLocale = useSetAtom(root.explorer.selectedLocale)
+  function showWorkspaces() {
+    setExplorerLocale(page.locale)
+    setRoute({page: 'splash'})
+  }
   return (
-    <WorkspaceSelectorMenu
-      page={page}
-      ariaLabel="Workspace"
-      popoverProps={{placement: 'right top', offset: 16}}
-      label={
-        <Button
-          size="icon-nav"
-          appearance="plain"
-          className={styles.WorkspaceMenu.avatarTrigger()}
-          aria-label={workspace.label}
-        >
-          <WorkspaceAvatar
-            color={workspace.color}
-            icon={workspace.icon}
-            size="small"
-          />
-        </Button>
-      }
-    />
+    <Button
+      size="icon-nav"
+      appearance="plain"
+      className={styles.WorkspaceMenu.avatarTrigger()}
+      aria-label="Back to workspaces"
+      onPress={showWorkspaces}
+    >
+      <WorkspaceAvatar
+        color={workspace.color}
+        icon={workspace.icon}
+        size="small"
+      />
+    </Button>
   )
 }
 
 interface SearchPopupProps {
+  initialSearchScope?: 'everything' | 'workspace'
   root: RootAtoms
 }
 
-function SearchPopup({root}: SearchPopupProps) {
+interface GlobalSearchProps {
+  children: ReactNode
+  initialSearchScope?: 'everything' | 'workspace'
+  root: RootAtoms
+}
+
+function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
   const modal = useDashboardModal()
   const setRoute = useSetAtom(routeAtom)
   const [explorer] = useState(() =>
@@ -160,6 +168,7 @@ function SearchPopup({root}: SearchPopupProps) {
         breadcrumbs: true,
         enableNavigation: true,
         hideResultsUntilSearch: true,
+        initialSearchScope,
         mode: 'search',
         rootData: root.data,
         searchDepth: 'all',
@@ -202,6 +211,31 @@ function SearchPopup({root}: SearchPopupProps) {
   )
 }
 
+export function GlobalSearch({
+  children,
+  initialSearchScope,
+  root
+}: GlobalSearchProps) {
+  return (
+    <DialogTrigger>
+      {children}
+      <DashboardModal size="explorer">
+        <Suspense
+          fallback={
+            <DashboardModalDialog
+              aria-label="Search entries"
+              variant="explorer"
+              isLoading
+            />
+          }
+        >
+          <SearchPopup initialSearchScope={initialSearchScope} root={root} />
+        </Suspense>
+      </DashboardModal>
+    </DialogTrigger>
+  )
+}
+
 export function WorkspaceMenu({
   canManageMembers,
   page,
@@ -234,7 +268,7 @@ export function WorkspaceMenu({
   return (
     <div className={styles.WorkspaceMenu.parent()}>
       {menu}
-      <DialogTrigger>
+      <GlobalSearch root={root}>
         <Button
           size="icon"
           appearance="plain"
@@ -243,20 +277,7 @@ export function WorkspaceMenu({
         >
           <IconComp icon={IcRoundSearch} data-slot="icon" />
         </Button>
-        <DashboardModal size="explorer">
-          <Suspense
-            fallback={
-              <DashboardModalDialog
-                aria-label="Search entries"
-                variant="explorer"
-                isLoading
-              />
-            }
-          >
-            <SearchPopup root={root} />
-          </Suspense>
-        </DashboardModal>
-      </DialogTrigger>
+      </GlobalSearch>
     </div>
   )
 }

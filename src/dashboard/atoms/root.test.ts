@@ -124,6 +124,13 @@ test('root explorers follow route locales and keep media unlocalized', async () 
     'French child'
   ])
 
+  // Preserve the rendered explorer locale while an async replacement page loads.
+  store.set(root.explorer.selectedLocale, 'fr')
+  store.set(routeAtom, {browser: true, route: {page: 'splash'}})
+  expect(store.get(root.children('french-root-entry').selectedLocale)).toBe(
+    'fr'
+  )
+
   store.set(routeAtom, {
     browser: true,
     route: {page: 'entry', workspace, root: 'pages', locale: 'en'}
