@@ -107,3 +107,43 @@ test('closing a worker graph rejects a pending hydration query without waiting f
     db.close()
   }
 })
+
+test('owned query ports await cleanup and forward logout purge before release', async () => {
+  const db = await wasmDatabase()
+  await EntryRuntime.createSchema(db, 'empty')
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  const purges: Array<boolean> = []
+  const runtime = Object.assign(new EntryRuntime(config, db), {
+    async close(purge = false) {
+      purges.push(purge)
+      started.resolve()
+      await resume.promise
+      await db.close()
+    }
+  })
+  const {port1, port2} = new MessageChannel()
+  expose(new QueryWorker(runtime, {owned: true}), port1)
+  const graph = new WorkerGraph(config, wrap<QueryWorker>(port2))
+  try {
+    const closing = graph.close(true)
+    await started.promise
+    let complete = false
+    const repeated = graph.close().then(() => {
+      complete = true
+    })
+    await Promise.resolve()
+    expect(complete).toBe(false)
+    await expect(graph.refresh()).rejects.toThrow('closed')
+    await expect(graph.bootstrap()).rejects.toThrow('closed')
+    resume.resolve()
+    await closing
+    await repeated
+    expect(purges).toEqual([true])
+  } finally {
+    resume.resolve()
+    await graph.close()
+    port1.close()
+    port2.close()
+  }
+})

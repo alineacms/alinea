@@ -11,6 +11,8 @@ import {authorizedIndex} from '#/database/handler/Policy.js'
 import {packFrames} from '#/database/replica/Transport.js'
 import {entryVersionId} from '#/database/entry/Schema.js'
 import {config, entry, replicaIdentity} from './sqlite-browser/config.js'
+import {base64} from '#/core/util/Encoding.js'
+import type {PayloadBatchRequest} from '#/database/replica/PayloadBatch.js'
 
 using sqlite = new Database(':memory:')
 const db = connect(sqlite)
@@ -68,7 +70,11 @@ const grants = bundle.locations.map((location, i) => ({
 const ranges: Array<string> = []
 
 const build = await Bun.build({
-  entrypoints: ['test/sqlite-browser/main.ts', 'test/sqlite-browser/worker.ts'],
+  entrypoints: [
+    'test/sqlite-browser/main.ts',
+    'test/sqlite-browser/worker.ts',
+    'test/sqlite-browser/owned-worker.ts'
+  ],
   target: 'browser',
   format: 'esm',
   conditions: ['alinea-src', 'browser'],
@@ -99,7 +105,56 @@ try {
         contentType: 'text/html',
         body: '<!doctype html><title>SQLite worker test</title>'
       })
-    else if (path === '/grants') {
+    else if (path === '/replica' || path === '/advance') {
+      assert.equal(route.request().headers().authorization, 'Bearer fixture')
+      assert.equal(route.request().method(), 'POST')
+      if (path === '/advance') {
+        await runtime.apply({
+          fromRevision: 'r1',
+          toRevision: 'r2',
+          entries: [{entry: entry('a', 'Updated a'), payloadId: 'a'}]
+        })
+        await route.fulfill({status: 204})
+      } else {
+        const view = await authorizedIndex(runtime, ['reader'])
+        const identity = {...replicaIdentity, viewId: view.viewId}
+        const action = new URL(route.request().url()).searchParams.get('action')
+        if (action === 'replicaIndex') {
+          await route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({version: 1, identity, ...view})
+          })
+        } else {
+          assert.equal(action, 'replicaPayloads')
+          const request = route.request().postDataJSON() as PayloadBatchRequest
+          assert.deepEqual(request.identity, identity)
+          const grants = await service.issue(
+            ['reader'],
+            {revision: request.revision, viewId: request.identity.viewId},
+            request.requests
+          )
+          const frames = await Promise.all(
+            grants.map(async ({descriptor, key}) => ({
+              descriptor: {
+                ...descriptor,
+                nonce: base64.stringify(descriptor.nonce)
+              },
+              key: base64.stringify(key),
+              ciphertext: base64.stringify(await store.ciphertext(descriptor))
+            }))
+          )
+          await route.fulfill({
+            contentType: 'application/json',
+            body: JSON.stringify({
+              version: 1,
+              identity,
+              revision: view.revision,
+              frames
+            })
+          })
+        }
+      }
+    } else if (path === '/grants') {
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify(grants)
@@ -138,8 +193,18 @@ try {
   }, '/main.js')
   assert.deepEqual(result, {loads: ['a'], deliveries: 2, closed: true})
   assert.deepEqual(ranges, [`bytes=0-${frames[0].ciphertext.length - 1}`])
+  const owned = await page.evaluate(async path => {
+    const {runOwned} = await import(path)
+    return Promise.race([
+      runOwned(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Owned worker timed out')), 15000)
+      )
+    ])
+  }, '/main.js')
+  assert.deepEqual(owned, {deliveries: 2, closed: true})
   console.log(
-    'Chromium SQLite worker: encrypted range hydration, ciphertext reuse after restart, Graph queries and live subscriptions passed'
+    'Chromium SQLite workers: encrypted range hydration, authenticated bootstrap, live refresh, Graph queries and logout purge passed'
   )
 } finally {
   await browser.close()

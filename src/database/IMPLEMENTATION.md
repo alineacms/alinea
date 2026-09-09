@@ -578,6 +578,19 @@ fetches the full authorized index and opens a replacement in-memory DB; incremen
 tree/delta reconciliation, polling/push scheduling, worker-port ownership and the
 dashboard cutover remain unfinished.
 
+The query-port boundary now accepts a subscribable Graph rather than requiring a
+concrete EntryRuntime. `QueryWorker.connect` creates an owned LiveReplica inside
+the worker; the existing constructor still supports borrowed graphs shared by
+independent ports. WorkerGraph forwards bootstrap/refresh and logout purge, rejects
+pending reads on close, waits for owned cleanup and releases its proxy afterward.
+Repeated closes await the same cleanup; a borrowed port never closes its shared
+database. The Chromium fixture now runs a separate owned Web Worker through
+authenticated bootstrap, lazy field hydration, live refresh, Graph expressions
+across Comlink, and IndexedDB purge on logout, alongside the earlier range/restart
+fixture. Unit tests verify pending close/cleanup and borrowed-port independence.
+The dashboard still uses its legacy worker; wiring this owner into its mutation,
+activity and page-atom lifecycle is unfinished.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

@@ -8,6 +8,63 @@ import {
 } from '#/database/replica/Frame.js'
 import {config, entry, Page} from './config.js'
 import type {api} from './worker.js'
+import type {api as ownedApi} from './owned-worker.js'
+import {ReplicaCache} from '#/database/browser/ReplicaCache.js'
+
+export async function runOwned() {
+  const worker = new Worker(new URL('./owned-worker.js', import.meta.url), {
+    type: 'module'
+  })
+  const remote = wrap<typeof ownedApi>(worker)
+  let graph: WorkerGraph | undefined
+  try {
+    graph = new WorkerGraph(config, await remote.queries())
+    const bootstrap = await graph.bootstrap()
+    check(await graph.find({select: Entry.id}), ['a', 'b'])
+    check(await graph.find({id: 'a', select: Page.title}), ['Payload a'])
+    const values: Array<unknown> = []
+    const initial = Promise.withResolvers<void>()
+    const changed = Promise.withResolvers<void>()
+    const stop = await graph.subscribe(
+      {select: Entry.title},
+      {
+        next(value) {
+          values.push(value)
+          if (values.length === 1) initial.resolve()
+          else changed.resolve()
+        },
+        error(error) {
+          initial.reject(error)
+          changed.reject(error)
+        }
+      }
+    )
+    await initial.promise
+    const advance = await fetch('/advance', {
+      method: 'POST',
+      headers: {authorization: 'Bearer fixture'}
+    })
+    check(advance.status, 204)
+    check(await graph.refresh(), true)
+    await changed.promise
+    check(values, [
+      ['a', 'b'],
+      ['Updated a', 'b']
+    ])
+    check(await graph.find({id: 'a', select: Page.title}), ['Payload a'])
+    check((await graph.bootstrap()).revision, 'r2')
+    await stop()
+    await graph.close(true)
+    const cache = await ReplicaCache.open(indexedDB, bootstrap.identity)
+    check(await cache.snapshot(), {revision: undefined, entries: []})
+    cache.close()
+    return {deliveries: values.length, closed: true}
+  } finally {
+    await graph?.close()
+    remote[releaseProxy]()
+    worker.terminate()
+  }
+}
 
 function check(actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) !== JSON.stringify(expected))
