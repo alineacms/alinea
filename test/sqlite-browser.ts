@@ -16,7 +16,7 @@ const assets = new Map(
     build.outputs.map(
       async output =>
         [
-          new URL(output.path, 'http://alinea.test/').pathname,
+          new URL(output.path, 'https://alinea.test/').pathname,
           await output.text()
         ] as const
     )
@@ -27,7 +27,7 @@ try {
   const page = await browser.newPage()
   page.on('console', message => console.log(message.text()))
   page.on('pageerror', error => console.error(error))
-  await page.route('http://alinea.test/**', async route => {
+  await page.route('https://alinea.test/**', async route => {
     const path = new URL(route.request().url()).pathname
     if (path === '/')
       await route.fulfill({
@@ -40,7 +40,7 @@ try {
       await route.fulfill({contentType: 'text/javascript', body})
     }
   })
-  await page.goto('http://alinea.test/')
+  await page.goto('https://alinea.test/')
   const result = await page.evaluate(async path => {
     const {run} = await import(path)
     return Promise.race([

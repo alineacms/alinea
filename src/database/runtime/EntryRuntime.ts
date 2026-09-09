@@ -490,7 +490,7 @@ export class EntryRuntime extends Graph {
   }
 }
 
-function validateSource(value: unknown): EntrySource | undefined {
+export function validateSource(value: unknown): EntrySource | undefined {
   if (value === undefined) return undefined
   if (!isRecord(value)) throw new Error('Invalid entry source metadata')
   const result: EntrySource = {}

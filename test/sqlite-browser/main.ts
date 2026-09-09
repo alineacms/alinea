@@ -1,6 +1,11 @@
 import {wrap, releaseProxy} from 'comlink'
 import {Entry} from '#/core/Entry.js'
 import {WorkerGraph} from '#/database/browser/WorkerGraph.js'
+import {
+  createFrameKey,
+  encryptFrame,
+  decryptFrame
+} from '#/database/replica/Frame.js'
 import {config, entry, Page} from './config.js'
 import type {api} from './worker.js'
 
@@ -12,6 +17,40 @@ function check(actual: unknown, expected: unknown) {
 }
 
 export async function run() {
+  const frameIdentity = {
+    project: 'test',
+    namespace: 'main',
+    epoch: 'epoch',
+    schemaId: 'schema',
+    configId: 'config',
+    releaseId: 'release',
+    versionId: 'a',
+    payloadId: 'payload',
+    kind: 'data' as const
+  }
+  const key = createFrameKey()
+  const bytes = new TextEncoder().encode('Encrypted browser payload')
+  const encrypted = await encryptFrame(frameIdentity, bytes, key)
+  const decoded = await decryptFrame(
+    frameIdentity,
+    encrypted.descriptor,
+    encrypted.ciphertext,
+    key
+  )
+  check(new TextDecoder().decode(decoded), 'Encrypted browser payload')
+  encrypted.ciphertext[0] ^= 1
+  let rejected = false
+  try {
+    await decryptFrame(
+      frameIdentity,
+      encrypted.descriptor,
+      encrypted.ciphertext,
+      key
+    )
+  } catch {
+    rejected = true
+  }
+  check(rejected, true)
   const worker = new Worker(new URL('./worker.js', import.meta.url), {
     type: 'module'
   })

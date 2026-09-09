@@ -45,6 +45,22 @@ interface State {
   revision?: string
 }
 
+function cacheName(identity: ReplicaIdentity): string {
+  const binding = [
+    identity.project,
+    identity.namespace,
+    identity.epoch,
+    identity.schemaId,
+    identity.configId,
+    identity.principal,
+    identity.viewId,
+    identity.releaseId
+  ]
+  if (binding.some(value => typeof value !== 'string' || !value))
+    throw new Error('Incomplete replica identity')
+  return `alinea-replica-2:${JSON.stringify(binding)}`
+}
+
 function result<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
@@ -68,19 +84,7 @@ export class ReplicaCache {
     factory: IDBFactory,
     identity: ReplicaIdentity
   ): Promise<ReplicaCache> {
-    const binding = [
-      identity.project,
-      identity.namespace,
-      identity.epoch,
-      identity.schemaId,
-      identity.configId,
-      identity.principal,
-      identity.viewId,
-      identity.releaseId
-    ]
-    if (binding.some(value => typeof value !== 'string' || !value))
-      throw new Error('Incomplete replica identity')
-    const name = `alinea-replica-2:${JSON.stringify(binding)}`
+    const name = cacheName(identity)
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const request = factory.open(name, 1)
       let blocked = false
@@ -115,12 +119,24 @@ export class ReplicaCache {
     }
   }
 
+  matches(identity: ReplicaIdentity): boolean {
+    return this.#db.name === cacheName(identity)
+  }
+
   async #transaction<T>(
     mode: IDBTransactionMode,
-    run: (tx: IDBTransaction) => Promise<T>
+    run: (tx: IDBTransaction) => Promise<T>,
+    signal?: AbortSignal
   ): Promise<T> {
     if (this.#closed) throw new Error('Replica cache is closed')
+    signal?.throwIfAborted()
     const tx = this.#db.transaction(['state', 'entries', 'frames'], mode)
+    const abort = () => {
+      try {
+        tx.abort()
+      } catch {}
+    }
+    signal?.addEventListener('abort', abort, {once: true})
     const done = new Promise<void>((resolve, reject) => {
       tx.oncomplete = () => resolve()
       tx.onabort = () =>
@@ -131,13 +147,17 @@ export class ReplicaCache {
     try {
       const value = await run(tx)
       await done
+      signal?.throwIfAborted()
       return value
     } catch (error) {
       try {
         tx.abort()
       } catch {}
       await done.catch(() => {})
+      signal?.throwIfAborted()
       throw error
+    } finally {
+      signal?.removeEventListener('abort', abort)
     }
   }
 
@@ -226,41 +246,46 @@ export class ReplicaCache {
 
   putFrames(
     revision: string,
-    frames: ReadonlyArray<CachedFrame>
+    frames: ReadonlyArray<CachedFrame>,
+    signal?: AbortSignal
   ): Promise<void> {
-    return this.#transaction('readwrite', async tx => {
-      const state = await this.#state(tx)
-      if (state.revision !== revision)
-        throw new Error('Stale replica payload response')
-      const changed = new Set<string>()
-      for (const frame of frames) {
-        if (changed.has(frame.versionId))
-          throw new Error('Duplicate cached frame')
-        changed.add(frame.versionId)
-        const entry = await result<CachedEntry | undefined>(
-          tx.objectStore('entries').get(frame.versionId)
-        )
-        if (
-          !entry?.payloadId ||
-          entry.payloadId !== frame.payloadId ||
-          !(entry.permissions & Permission.Read)
-        )
-          throw new Error('Cached frame does not match a readable descriptor')
-        if (
-          !(frame.ciphertext instanceof Uint8Array) ||
-          !frame.ciphertext.byteLength
-        )
-          throw new Error('Missing encrypted frame bytes')
-        tx.objectStore('frames').put(
-          {
-            versionId: frame.versionId,
-            payloadId: frame.payloadId,
-            ciphertext: frame.ciphertext
-          },
-          frame.versionId
-        )
-      }
-    })
+    return this.#transaction(
+      'readwrite',
+      async tx => {
+        const state = await this.#state(tx)
+        if (state.revision !== revision)
+          throw new Error('Stale replica payload response')
+        const changed = new Set<string>()
+        for (const frame of frames) {
+          if (changed.has(frame.versionId))
+            throw new Error('Duplicate cached frame')
+          changed.add(frame.versionId)
+          const entry = await result<CachedEntry | undefined>(
+            tx.objectStore('entries').get(frame.versionId)
+          )
+          if (
+            !entry?.payloadId ||
+            entry.payloadId !== frame.payloadId ||
+            !(entry.permissions & Permission.Read)
+          )
+            throw new Error('Cached frame does not match a readable descriptor')
+          if (
+            !(frame.ciphertext instanceof Uint8Array) ||
+            !frame.ciphertext.byteLength
+          )
+            throw new Error('Missing encrypted frame bytes')
+          tx.objectStore('frames').put(
+            {
+              versionId: frame.versionId,
+              payloadId: frame.payloadId,
+              ciphertext: frame.ciphertext
+            },
+            frame.versionId
+          )
+        }
+      },
+      signal
+    )
   }
 
   getFrames(

@@ -21,6 +21,29 @@ const identity: ReplicaIdentity = {
 }
 const a = entryVersionId('a', null, 'published')
 const b = entryVersionId('b', null, 'published')
+
+test('aborting an in-flight ciphertext transaction prevents installation', async () => {
+  const cache = await ReplicaCache.open(new IDBFactory(), identity)
+  try {
+    await cache.apply({
+      fromRevision: undefined,
+      toRevision: 'r1',
+      entries: [row('a')]
+    })
+    const controller = new AbortController()
+    const request = {
+      versionId: a,
+      payloadId: 'a',
+      ciphertext: new Uint8Array([1])
+    }
+    const pending = cache.putFrames('r1', [request], controller.signal)
+    controller.abort(new Error('Revoked'))
+    await expect(pending).rejects.toThrow('Revoked')
+    expect(await cache.getFrames([request])).toEqual([])
+  } finally {
+    cache.close()
+  }
+})
 function row(id: string, payloadId = id): CachedEntry {
   return {
     entry: entry(id),

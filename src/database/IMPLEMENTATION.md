@@ -78,6 +78,28 @@ grant with a denied field fails closed until view-specific filtered payloads exi
 These are policy compilation building blocks, not yet production authorization
 endpoints or authenticated encrypted-frame delivery.
 
+`replica/Frame.ts` adapts independent AES-256-GCM framing with random keys/nonces
+and an unambiguous, versioned authenticated identity: project, namespace, epoch,
+schema/config, release, entry version, payload identity/class, compression, and
+lengths. Decode checks the expected handler binding, exact encrypted size, and
+bounded declared plaintext size; gzip collection cancels on overflow or revocation.
+Native Compression/DecompressionStream is used because the older Bun wrapper in
+`@alinea/iso` does not handle cancellation safely. Unit tests cover each identity
+dimension, tampering, wrong keys, mutable input capture, producer length errors,
+and cancellation. Chromium also verifies compressed framing and tamper rejection.
+
+`browser/PayloadLoader.ts` connects authenticated data-frame grants to runtime
+hydration, with six bounded concurrent fetch/decode tasks and in-flight deduplication.
+It validates the complete request batch before fetching, checks cache identity,
+authenticates cached frames, and refetches corrupted cached ciphertext once. Only
+validated ciphertext is persisted; keys and decoded entry data stay in memory.
+Close clears keys and aborts pending transport/decode/cache installation. Revision
+CAS prevents stale downloads from installing after an index delta. WASM runtime
+tests cover index-only reads, selected-field decryption, metadata, and ciphertext
+reuse without network. This is not yet the production transport: handler grant
+issuance, view-filtered payload generation, bundle/range manifests and coalescing,
+and full browser boot/sync integration are still required.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,
