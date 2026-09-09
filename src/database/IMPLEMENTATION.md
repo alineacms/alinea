@@ -482,8 +482,21 @@ immutable-generation path as remote catch-up. Replaying the current target is a
 no-op; an intervening remote generation rejects the stale handoff. No source or
 media write happens here, and this is not a durable mutation receipt. Tests cover
 validation failure without publication, restart reuse, races with remote sync,
-and blob-stream leases through sync/close/cancellation. Production handler wiring
-and its portable runtime path remain unfinished.
+and blob-stream leases through sync/close/cancellation.
+
+The Next Node handler now shares the CMS replica through `ReplicaDatabase`, a
+Graph adapter that prepares SQL mutations but only caches commits accepted by the
+remote source. The handler's source contract only requires read access, and SQL
+previews use the replica's single-lease preview/catch-up path. Legacy preview
+fallbacks also fail closed when patches cannot apply. An adapter integration test
+covers API-key reads, rejection of API-key-only mutations, authenticated source
+writes, hooks, updated SQL queries and isolated previews. The Edge handler still
+uses its explicit legacy path until a portable SQLite owner is available; this
+is unfinished integration, not the target architecture.
+The real webpack/Turbopack fixture now routes its authenticated Edge query through
+the actual Node handler. Cache conflicts after a successful authority write trigger
+catch-up only, outside the authority-conflict retry loop; an integration race test
+verifies that an intervening remote edit does not resubmit the accepted mutation.
 
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.

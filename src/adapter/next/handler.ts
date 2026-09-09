@@ -13,6 +13,7 @@ import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import {ReplicaDatabase} from '#/database/handler/ReplicaDatabase.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -40,6 +41,9 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
+      if (process.env.NEXT_RUNTIME !== 'edge')
+        return new ReplicaDatabase(await options.cms.bundledDb)
+      // Temporary Edge handler path until the portable SQLite owner is wired.
       const source = await generatedSource
       const db = new LocalDB(config, source)
       await db.sync()

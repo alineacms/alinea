@@ -15,10 +15,10 @@ import type {
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {WritableGraph} from '#/core/db/WritableGraph.js'
-import type {Source} from '#/core/source/Source.js'
+import type {RemoteSource, Source} from '#/core/source/Source.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
@@ -63,7 +63,11 @@ export interface HandlerHooks {
 
 export interface HandlerDatabase extends WritableGraph {
   readonly sha: string
-  readonly source: Source
+  readonly source: Pick<Source, 'getTree' | 'getBlobs'>
+  resolvePreview?<Query extends GraphQuery>(
+    query: Query,
+    remote: RemoteSource
+  ): Promise<AnyQueryResult<Query>>
   syncWith(remote: SyncApi): Promise<string>
   getTreeIfDifferent(sha: string): ReturnType<Source['getTreeIfDifferent']>
   request(
@@ -248,10 +252,16 @@ export function createHandler({
               : (query.syncInterval ?? cms.config.syncInterval)
           )
         } else {
+          if (local.resolvePreview)
+            return Response.json(
+              (await local.resolvePreview(query, cnx)) ?? null
+            )
           const preview = await decodePreviewRequest(query.preview)
           if ('contentHash' in preview && local.sha !== preview.contentHash)
             await local.syncWith(cnx)
           query.preview = await applyPreview(local, preview)
+          if (!query.preview)
+            throw new Error('Preview patch could not be applied')
         }
         return Response.json((await local.resolve(query)) ?? null)
       }
@@ -274,14 +284,9 @@ export function createHandler({
             ...(await local.request(mutations, policy)),
             user: user.claims
           }
+          let sha: string
           try {
-            let {sha} = await cnx.write(request)
-            if (sha === request.intoSha) {
-              await local.write(request)
-            } else {
-              sha = await local.syncWith(cnx)
-            }
-            return sha
+            sha = (await cnx.write(request)).sha
           } catch (error) {
             const isConflict =
               error instanceof ShaMismatchError ||
@@ -290,6 +295,16 @@ export function createHandler({
             if (isConflict && retry < 3) return attempt(retry + 1)
             throw error
           }
+          if (sha !== request.intoSha) return local.syncWith(cnx)
+          try {
+            await local.write(request)
+          } catch (error) {
+            // The authority has accepted this mutation already. A newer cache
+            // generation needs catch-up, never another mutation submission.
+            if (!(error instanceof ShaMismatchError)) throw error
+            return local.syncWith(cnx)
+          }
+          return sha
         }
         const sha = await attempt()
         try {

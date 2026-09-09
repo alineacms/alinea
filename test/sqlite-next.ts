@@ -138,9 +138,14 @@ export default withAlinea({output: 'standalone', distDir: 'custom-next', outputF
   await writeFile(
     join(project, 'app/read.js'),
     `import {openDatabase, openReplica} from '@alinea/generated/database.js';
-import {createCMS} from 'alinea/next';
+import {createCMS, createHandler} from 'alinea/next';
 import {mkdtemp, readdir, rm} from 'node:fs/promises'; import {tmpdir} from 'node:os'; import {join} from 'node:path';
-const cms = createCMS({schema: {}, workspaces: {}, handlerUrl: '/api/cms', baseUrl: 'https://example.invalid'});
+const cms = createCMS({schema: {}, workspaces: {}, handlerUrl: '/api/content', baseUrl: 'https://example.invalid'});
+export const handle = createHandler({cms, backend: context => ({
+  async verify(request) { if (request.headers.get('authorization') !== 'Bearer fixture-key') throw new Response('Unauthorized', {status: 401}); return {...context, token: 'fixture', user: {sub: 'fixture', roles: []}}; },
+  async enrichUser(user) { return user; },
+  async getTreeIfDifferent() { return undefined; }
+})});
 export async function read() {
   const config = {schema: {}, workspaces: {}};
   const db = await openDatabase(config);
@@ -162,8 +167,8 @@ export async function read() {
   )
   await writeFile(
     join(project, 'app/api/content/route.js'),
-    `import {read} from '../../read.js'; export const runtime = 'nodejs'; export const dynamic = 'force-dynamic'; export async function GET() { return Response.json({count: await read()}) }
-export async function POST(request) { if (request.headers.get('authorization') !== 'Bearer fixture-key') return new Response('Unauthorized', {status: 401}); return Response.json(await read()); }`
+    `import {read, handle} from '../../read.js'; export const runtime = 'nodejs'; export const dynamic = 'force-dynamic'; export async function GET() { return Response.json({count: await read()}) }
+export const POST = handle;`
   )
   await writeFile(
     join(project, 'app/api/edge/route.js'),
