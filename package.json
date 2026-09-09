@@ -74,6 +74,7 @@
   },
   "dependencies": {
     "@alinea/iso": "^0.3.3",
+    "@alinea/sqlite-wasm": "^0.1.18",
     "esbuild": "^0.28.0"
   },
   "peerDependencies": {
@@ -124,6 +125,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^18.2.13",
     "@types/react-dom": "^18.2.6",
+    "@types/sql.js": "1.4.4",
     "@typescript/analyze-trace": "^0.9.1",
     "@vitejs/plugin-react": "^6.0.1",
     "allotment": "^1.20.5",

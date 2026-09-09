@@ -17,6 +17,20 @@ namespaces from retained snapshots, reuse blobs on rename, and verify rollback,
 stale writes, and cancellation. This is trusted source storage, not a browser
 authorization boundary. Snapshot retention/GC and production dev wiring remain.
 
+`driver/WasmDatabase.ts` restores `@alinea/sqlite-wasm` through Rado's SQL.js
+driver. Tests run the actual WASM binary against native-built checkpoints,
+Graph projections/relations/grouping, lazy payload caching, live invalidation,
+transaction rollback, and batched binary source reads. The adapter copies blob
+columns before SQLite advances the statement: this package returns borrowed WASM
+memory, and an unadapted batched read demonstrably overwrites earlier blob results.
+SQL.js types are pinned to the implemented API (newer types require `updateHook`).
+The installed binary reports SQLite 3.46.1 and a direct FTS5 create/insert/search
+probe succeeds. These tests currently run WASM under Bun, not a browser worker.
+The optional input is a complete database copy into WASM memory, not page-lazy
+file access; it must never be used to ship private server checkpoints to clients.
+Permission-scoped replica transport, browser persistence, worker integration,
+and vector extension capabilities remain separate gates.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,
