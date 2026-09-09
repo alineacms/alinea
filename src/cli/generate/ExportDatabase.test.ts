@@ -1,4 +1,16 @@
-import {expect, test} from 'bun:test'
+import {expect, spyOn, test} from 'bun:test'
+import {Database} from 'bun:sqlite'
+import {connect} from 'rado/driver/bun-sqlite'
+import {Config, Field} from '#/index.js'
+import {Entry} from '#/core/Entry.js'
+import {EntryGraph, VersionParser} from '#/core/db/EntryIndex.js'
+import {importSource} from '#/core/source/SourceExport.js'
+import {NodeReplica} from '#/database/driver/NodeReplica.js'
+import {openCheckpoint} from '#/database/runtime/Checkpoint.js'
+import {FrameStore} from '#/database/release/FrameStore.js'
+import {entryVersionId} from '#/database/entry/Schema.js'
+import {decryptFrame} from '#/database/replica/Frame.js'
+import {createEntryResolver} from '#test/EntryFixture.js'
 import {execFile} from 'node:child_process'
 import {
   mkdtemp,
@@ -16,6 +28,128 @@ import {createRequire} from 'node:module'
 import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
 import {exportDatabase} from './ExportDatabase.js'
+
+test('release export captures one generation and rebinds frames without source normalization', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-captured-release-'))
+  const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
+  const config = {
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  }
+  const identity = {
+    project: 'project',
+    namespace: 'main',
+    epoch: '1',
+    schemaId: 'schema',
+    configId: 'config',
+    releaseId: 'cache'
+  }
+  const initial = await createEntryResolver(config, [
+    {id: 'a', type: 'Page', index: 'a', title: 'Captured'}
+  ])
+  const changed = await createEntryResolver(config, [
+    {id: 'a', type: 'Page', index: 'a', title: 'Later'}
+  ])
+  const replica = await NodeReplica.open(
+    {config, directory: join(directory, 'cache'), identity},
+    initial.source
+  )
+  let restore = () => {}
+  try {
+    const occupied = join(directory, 'occupied')
+    await writeFile(occupied, 'keep')
+    await expect(replica.captureCheckpoint(occupied)).rejects.toThrow()
+    expect(await readFile(occupied, 'utf8')).toBe('keep')
+    const release = {...identity, releaseId: 'deployment'}
+    await expect(
+      exportDatabase(
+        config,
+        replica,
+        directory,
+        {...release, configId: 'wrong'},
+        join(directory, 'public')
+      )
+    ).rejects.toThrow('configId mismatch')
+    expect(await replica.first({select: Entry.title})).toBe('Captured')
+    const capturedSource = {
+      async captureCheckpoint(file: string) {
+        const capture = await replica.captureCheckpoint(file)
+        await replica.sync(changed.source)
+        expect(await replica.first({select: Entry.title})).toBe('Later')
+        await replica.close()
+        const graph = spyOn(EntryGraph, 'fromParsed').mockImplementation(() => {
+          throw new Error('Unexpected release normalization')
+        })
+        const parser = spyOn(
+          VersionParser.prototype,
+          'parse'
+        ).mockImplementation(() => {
+          throw new Error('Unexpected release parsing')
+        })
+        restore = () => {
+          graph.mockRestore()
+          parser.mockRestore()
+        }
+        return capture
+      }
+    }
+    await exportDatabase(
+      config,
+      capturedSource,
+      directory,
+      release,
+      join(directory, 'public')
+    )
+    const loader = await import(
+      pathToFileURL(join(directory, 'database.js')).href
+    )
+    using sqlite = new Database(loader.databasePath, {readonly: true})
+    const db = connect(sqlite)
+    const {runtime, descriptor} = await openCheckpoint(config, db, release)
+    expect(await runtime.first({select: Entry.title})).toBe('Captured')
+    expect(descriptor.sourceSha).toBe((await initial.source.getTree()).sha)
+    const sourceModule = await import(
+      pathToFileURL(join(directory, 'source.js')).href
+    )
+    const legacy = await importSource(sourceModule.source)
+    expect((await legacy.getTree()).sha).toBe(descriptor.sourceSha)
+    const row = (await runtime.indexSnapshot()).entries[0]
+    const frame = {
+      ...release,
+      versionId: entryVersionId('a', null, 'published'),
+      payloadId: row.payloadId!,
+      kind: 'data' as const
+    }
+    const store = new FrameStore(db)
+    const grant = await store.grant(frame)
+    const decoded = JSON.parse(
+      new TextDecoder().decode(
+        await decryptFrame(
+          frame,
+          grant.descriptor,
+          await store.ciphertext(frame),
+          grant.key
+        )
+      )
+    )
+    expect(decoded.data.title).toBe('Captured')
+    await expect(
+      store.grant({...frame, releaseId: identity.releaseId})
+    ).rejects.toThrow('Missing release')
+    await expect(
+      replica.captureCheckpoint(join(directory, 'closed'))
+    ).rejects.toThrow('closed')
+  } finally {
+    restore()
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
 
 test('rebuilds switch one loader while retained readers and failed builds keep their checkpoint', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-rebuild-'))
@@ -98,7 +232,8 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
     expect((await readdir(directory)).sort()).toEqual([
       'checkpoints',
       'database.js',
-      'public'
+      'public',
+      'source.js'
     ])
     const {nodeFileTrace} = createRequire(import.meta.url)(
       'next/dist/compiled/@vercel/nft'

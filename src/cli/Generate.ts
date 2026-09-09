@@ -1,6 +1,5 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import {exportSource} from '#/core/source/SourceExport.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
@@ -100,12 +99,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
-    const exported = await exportSource(db.source)
-    const data = JSON.stringify(exported, null, 2)
-    await fsp.writeFile(
-      join(context.outDir, 'source.js'),
-      `export const source = ${data}`
-    )
     const configId = await hashBlob(
       await fsp.readFile(join(context.outDir, 'config.js'))
     )
@@ -117,7 +110,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     )
     const size = await exportDatabase(
       db.config,
-      db.source,
+      db,
       context.outDir,
       identity,
       path.join(

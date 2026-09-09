@@ -119,6 +119,14 @@ export async function buildFrames(
   binding: FrameBinding
 ): Promise<void> {
   await FrameStore.createSchema(db)
+  await populateFrames(db, binding)
+}
+
+/** Fill an existing empty frame store from complete, normalized SQL payloads. */
+export async function populateFrames(
+  db: Database,
+  binding: FrameBinding
+): Promise<void> {
   await db.transaction(
     async tx => {
       const missing = await tx

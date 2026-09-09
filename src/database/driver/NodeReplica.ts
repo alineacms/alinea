@@ -54,6 +54,15 @@ export interface NodeReplicaOptions {
   identity: CheckpointIdentity
 }
 
+export interface CheckpointCapture {
+  identity: CheckpointIdentity
+  revision: string
+}
+
+export interface CheckpointSource {
+  captureCheckpoint(destination: string): Promise<CheckpointCapture>
+}
+
 const identityKeys = [
   'project',
   'namespace',
@@ -211,6 +220,18 @@ export class NodeReplica extends Graph {
     return this.#read(snapshot =>
       entryReferencesTo(nodeDatabase(snapshot.sqlite), query)
     )
+  }
+
+  /** Copy one leased immutable generation, never overwrite a caller's file. */
+  captureCheckpoint(destination: string): Promise<CheckpointCapture> {
+    return this.#read(async snapshot => {
+      await copyFile(
+        join(this.#options.directory, snapshot.file),
+        destination,
+        constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE
+      )
+      return {identity: {...snapshot.identity}, revision: snapshot.revision}
+    })
   }
 
   async #read<T>(read: (snapshot: Snapshot) => Promise<T>): Promise<T> {

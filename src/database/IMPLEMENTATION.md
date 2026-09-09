@@ -218,8 +218,22 @@ disable EntryIndex synchronization, seed and mutation readers, and exercise
 snapshot replacement, source deletion, restart reuse and closed-owner rejection.
 The HTTP handler depends on a Graph/source/commit interface instead of the
 concrete LocalDB class. Existing production adapters still use LocalDB; this does
-not claim their cutover. Release export also still builds its own immutable
-checkpoint from source rather than reusing the ready generation cache.
+not claim their cutover.
+
+Release export now captures a leased immutable NodeReplica generation into its
+private staging directory (exclusive destination, opportunistic filesystem
+clone). It validates configuration/namespace/schema and source revision, replaces
+the copied frame store with fresh release-bound keys/ciphertext, and updates the
+release descriptor without parsing source records or reconstructing EntryGraph.
+The temporary legacy source module is exported from the same SQL source snapshot
+and stored beside the immutable checkpoint. Its separate compatibility loader
+and the database loader are individually atomic pointers, not a joint atomic
+switch; production legacy-adapter removal is still required. Tests advance and
+close the working owner after capture, forbid parsing/normalization during
+export, verify the retained revision and decrypted data, reject scope mismatch
+and destination overwrite, and retain existing relocation/NFT and failed-build
+checks. Copy cost, retained source history and fresh frame encryption remain
+explicit build costs, not an incremental normalization claim.
 
 Private checkpoint format 7 adds `alinea_entry_reference`, keyed by authored
 version and reference ordinal with an indexed target ID. Build and reconciliation

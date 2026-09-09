@@ -71,6 +71,12 @@ export class DevDB extends WritableGraph {
     return this.source.getTreeIfDifferent(sha)
   }
 
+  captureCheckpoint(destination: string) {
+    if (this.#closed || !this.#replica)
+      throw new Error('Dev database is not ready')
+    return this.#replica.captureCheckpoint(destination)
+  }
+
   async #syncSource() {
     if (this.#closed) throw new Error('Dev database is closed')
     await this.source.refresh()
