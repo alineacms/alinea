@@ -122,7 +122,9 @@ export class DevDB extends LocalDB {
 
   referencesTo(query: EntryReferenceQuery) {
     if (!this.#options.replica) return super.referencesTo(query)
-    return this.#legacy(() => super.referencesTo(query))
+    if (this.#closed || !this.#replica)
+      return Promise.reject(new Error('Dev database is not ready'))
+    return this.#replica.referencesTo(query)
   }
 
   // Explicit temporary boundary, not a fallback for failed SQL queries.

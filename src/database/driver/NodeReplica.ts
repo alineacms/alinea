@@ -3,6 +3,10 @@ import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
 import type {Policy} from '#/core/Role.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {randomUUID} from 'node:crypto'
@@ -22,6 +26,7 @@ import {buildDatabase} from '../runtime/BuildDatabase.js'
 import {openCheckpoint, type CheckpointIdentity} from '../runtime/Checkpoint.js'
 import type {EntryRuntime, QueryObserver} from '../runtime/EntryRuntime.js'
 import {reconcileDatabase} from '../runtime/ReconcileDatabase.js'
+import {entryReferencesTo} from '../runtime/EntryReferences.js'
 import {nodeDatabase} from './NodeDatabase.js'
 
 interface Snapshot {
@@ -168,12 +173,22 @@ export class NodeReplica extends Graph {
   async resolve<const Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
+    return this.#read(snapshot => snapshot.runtime.resolve(query))
+  }
+
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.#read(snapshot =>
+      entryReferencesTo(nodeDatabase(snapshot.sqlite), query)
+    )
+  }
+
+  async #read<T>(read: (snapshot: Snapshot) => Promise<T>): Promise<T> {
     if (this.#closed || !this.#current)
       throw new Error('SQLite replica is closed or not ready')
     const snapshot = this.#current
     snapshot.readers++
     try {
-      return await snapshot.runtime.resolve(query)
+      return await read(snapshot)
     } finally {
       snapshot.readers--
       if (snapshot.retired && !snapshot.readers) snapshot.sqlite.close()

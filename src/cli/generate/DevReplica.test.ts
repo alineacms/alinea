@@ -354,6 +354,9 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
         restarted
       )
       expect(await restarted.find({select: Entry.title})).toEqual(['Updated'])
+      expect(
+        (await restarted.referencesTo({targetId: 'a'})).scan.complete
+      ).toBe(true)
       expect(parsing).not.toHaveBeenCalled()
       expect(
         await readFile(join(replica.directory, 'current.json'), 'utf8')

@@ -207,11 +207,24 @@ effects reject a stale filesystem revision even while an older SQL snapshot
 is still being served. Watcher/config teardown closes the owner and prevents late
 cache emissions. Integration tests exercise filesystem-backed Graph updates, live
 results, restart reuse and watcher shutdown. This is an explicit intermediate
-cutover: `LocalDB` still supplies references, fixes and previews, with its index
+cutover: `LocalDB` still supplies fixes and previews, with its index
 materialized only when one of those explicit paths is requested. Ordinary dev
 startup, seeding, reads and writes no longer build that index. An unchanged restart
 test verifies zero source-record parsing. There is no catch-all query fallback;
 SQL replacements for those remaining legacy operations are still required.
+
+Private checkpoint format 7 adds `alinea_entry_reference`, keyed by authored
+version and reference ordinal with an indexed target ID. Build and reconciliation
+use the existing field reference extractors and commit reference replacements or
+removals with the source/index/payload transaction. Unchanged payload references
+are retained; status, visibility and locale filtering join current structural
+rows. `NodeReplica.referencesTo` leases the immutable snapshot, and dev reference
+lookups no longer materialize the JS index or parse source records on restart.
+Tests compare all status/locale modes, duplicate and media links, hidden versions,
+reconciliation, removal and rollback after extraction failure. Queries still work
+with no resident entry payloads. This is a complete private checkpoint index, not
+a browser authorization boundary: permission-scoped reference frames and sparse
+browser coverage remain to be implemented.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID

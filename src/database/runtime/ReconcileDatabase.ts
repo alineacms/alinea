@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import {bundleContents, type RemoteSource} from '#/core/source/Source.js'
-import {eq, type Database} from 'rado'
+import {eq, inArray, type Database} from 'rado'
 import {entryIndexRow} from '../entry/Schema.js'
 import {FrameStore} from '../release/FrameStore.js'
 import {SqlSource} from '../source/SqlSource.js'
@@ -11,6 +11,7 @@ import {
 } from './Checkpoint.js'
 import {EntryRuntime, type EntryReplacement} from './EntryRuntime.js'
 import {normalizeSource} from './NormalizeSource.js'
+import {EntryReferenceTable, replaceEntryReferences} from './EntryReferences.js'
 
 /** Reconcile an exclusively owned writable checkpoint copy, never a published
  * release or a connection serving live queries. The owner swaps readers only
@@ -62,6 +63,8 @@ export async function reconcileDatabase(
             ? {entry: row.entry, payloadId: row.payloadId}
             : row
         )
+        if (before?.payloadId !== row.payloadId)
+          await replaceEntryReferences(config, tx, row)
         const frame = {
           ...identity,
           versionId: index.versionId,
@@ -82,6 +85,16 @@ export async function reconcileDatabase(
         entries: changed,
         removedVersionIds: [...remaining.keys()]
       })
+      const removed = [...remaining.keys()]
+      for (let offset = 0; offset < removed.length; offset += 100)
+        await tx
+          .delete(EntryReferenceTable)
+          .where(
+            inArray(
+              EntryReferenceTable.versionId,
+              removed.slice(offset, offset + 100)
+            )
+          )
       await tx
         .update(CheckpointTable)
         .set({sourceSha: revision})
