@@ -561,6 +561,23 @@ path, no payload fetch for index-only reads, invalid authority/content, chunked
 response limits and cancellation before or during bootstrap. Generation refresh,
 live-query ownership, incremental deltas and dashboard integration remain open.
 
+`LiveReplica` now provides a stable Graph/subscription facade over browser session
+generations. Refreshes coalesce; an unchanged identity/revision keeps its ready
+session. Content updates prepare every active subscription (including ones added
+during preparation) before publishing the new generation and retiring the old.
+Late old reads retry against the published generation, and late observer results
+are suppressed. Permission-view changes invalidate the old view before preparing
+the replacement. Authentication/binding rejection removes the ready view, whereas
+an offline refresh preserves it. Close aborts pending preparation and drains all
+owned sessions; logout purges every cache identity touched by the owner, including
+a candidate cancelled during startup. A stale payload cursor closes its old
+session without purging a newer revision's shared cache. Tests exercise ready
+swaps, subscriptions added mid-refresh, policy changes, offline/auth behavior,
+close during hydration, logout and stale-session cache isolation. Refresh currently
+fetches the full authorized index and opens a replacement in-memory DB; incremental
+tree/delta reconciliation, polling/push scheduling, worker-port ownership and the
+dashboard cutover remain unfinished.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

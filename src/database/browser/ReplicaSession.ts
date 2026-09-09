@@ -10,7 +10,7 @@ import {
   HttpPayloadLoader,
   type HttpPayloadLoaderOptions
 } from './HttpPayloadLoader.js'
-import {ReplicaCache} from './ReplicaCache.js'
+import {ReplicaCache, type ReplicaIdentity} from './ReplicaCache.js'
 import {fetchBootstrap, type FetchBootstrapOptions} from './FetchBootstrap.js'
 
 export interface ReplicaSessionOptions extends Omit<
@@ -62,7 +62,9 @@ export class ReplicaSession extends Graph {
       cache,
       onInvalidated: error => {
         // Gate new reads synchronously; cleanup drains already-running queries.
-        void this.close(true).catch(() => {})
+        // A stale revision may already have a newer session sharing this cache.
+        // Do not erase its index/ciphertext; definitive denial/logout still purge.
+        void this.close(error.code !== 409).catch(() => {})
         options.onInvalidated?.(error)
       }
     })
@@ -133,6 +135,16 @@ export class ReplicaSession extends Graph {
   get bootstrap(): IndexBootstrap {
     if (this.#closed) throw new Error('Replica session closed')
     return structuredClone(this.#view)
+  }
+
+  get identity(): ReplicaIdentity {
+    if (this.#closed) throw new Error('Replica session closed')
+    return {...this.#view.identity}
+  }
+
+  get revision(): string {
+    if (this.#closed) throw new Error('Replica session closed')
+    return this.#view.revision
   }
 
   resolve<Query extends GraphQuery>(

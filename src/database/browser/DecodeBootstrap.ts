@@ -1,6 +1,7 @@
 import {array, boolean, number, object, string} from 'cito'
 import type {EntryStatus} from '#/core/Entry.js'
 import {Permission} from '#/core/Role.js'
+import {HttpError} from '#/core/HttpError.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {entryIndexRow, entryVersionId} from '../entry/Schema.js'
 import type {IndexBootstrap} from '../replica/Bootstrap.js'
@@ -68,7 +69,7 @@ export function decodeBootstrap(
       input.length > 4096 ||
       (expected[key] !== undefined && expected[key] !== input)
     )
-      throw new Error('Replica bootstrap identity mismatch')
+      throw new HttpError(403, 'Replica bootstrap identity mismatch')
     identity[key] = input
   }
   const seen = new Set<string>()
