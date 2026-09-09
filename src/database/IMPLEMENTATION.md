@@ -12,9 +12,10 @@ browser hydration/subscriptions, and remaining gates below are still outstanding
 
 `entry/Schema.ts` and `query/` now define separate structural/data tables and
 compile basic entry queries into Rado SQL with stage-specific data dependencies.
-Tests compare ten supported queries against the current resolver on the demo
+Tests compare supported queries against the current resolver on the demo
 corpus, distinguish JSON primitive types and missing/null values, and verify an
-index-only query runs without a payload table. Relations, search, grouping,
+index-only query runs without a payload table. Grouping ranks matching identities
+before ordering/pagination and preserves JSON primitive distinctions. Relations, search,
 aliases, natural collation, and production integration remain.
 
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
@@ -22,8 +23,8 @@ hydration before content filtering or after structural pagination, and conservat
 live-query invalidation. Superseded payload responses are discarded. This runtime
 is not yet wired into Graph, browser transport, permissions, or dashboard atoms.
 
-Verification so far: eighteen database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (59 combined).
+Verification so far: twenty database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (61 combined).
 The repository type check reports missing `allotment` in
 `src/dashboard/app/SidebarLayout.tsx`; no database type errors were reported.
 

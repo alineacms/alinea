@@ -107,6 +107,40 @@ test('data predicates hydrate candidates before limiting and do not confuse miss
   expect(await runtime.resolve({updatedAt: null, count: true})).toBe(0)
 })
 
+test('grouped counts hydrate membership and paginate groups rather than rows', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  let loads = 0
+  const runtime = new EntryRuntime(config, db, {
+    async load(requests) {
+      loads += requests.length
+      return requests.map(request => ({
+        ...request,
+        data: {metadata: {updatedAt: 7}}
+      }))
+    }
+  })
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: ['a', 'b', 'c'].map(id => replacement(id))
+  })
+  expect(await runtime.resolve({groupBy: Entry.updatedAt, count: true})).toBe(1)
+  expect(loads).toBe(3)
+  expect(
+    await runtime.resolve({groupBy: Entry.updatedAt, count: true, skip: 1})
+  ).toBe(0)
+  expect(
+    await runtime.resolve({
+      groupBy: Entry.updatedAt,
+      select: Entry.id,
+      orderBy: {desc: Entry.id}
+    })
+  ).toEqual(['a'])
+  expect(loads).toBe(3)
+})
+
 test('a delta during hydration discards the old payload and retries the new revision', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)

@@ -178,6 +178,11 @@ test('SQL compilation agrees with the existing resolver on the real demo corpus'
       select: Entry.id
     },
     {status: 'archived', select: Entry.id},
+    {groupBy: Entry.type, select: Entry.id},
+    {groupBy: DemoRecipe.title, type: DemoRecipe, select: Entry.id},
+    {select: Entry.id, skip: 1},
+    {select: Entry.id, take: 0},
+    {groupBy: Entry.type, select: Entry.id, skip: 1, take: 0},
     {filter: {_id: {notIn: ['oi4qtV9YaXNRIUDT2s61Y']}}, select: Entry.id}
   ]
   for (const query of cases) {
@@ -185,4 +190,42 @@ test('SQL compilation agrees with the existing resolver on the real demo corpus'
     const plan = compileEntryQuery(cms.config, query)
     expect(await plan.rows.all(db)).toEqual(expected)
   }
+})
+
+test('SQL grouping preserves primitive types and picks representatives before sorting', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable, EntryDataTable)
+  const values = [undefined, null, false, 0, '0', 0, null, {}, {}, [], []]
+  for (const [index, value] of values.entries()) {
+    const id = String(index).padStart(2, '0')
+    const row = entryIndexRow(entry(id, {ordinal: index}))
+    await db.insert(EntryIndexTable).values(row)
+    await db.insert(EntryDataTable).values({
+      versionId: row.versionId,
+      payloadId: id,
+      data: value === undefined ? {} : {title: value}
+    })
+  }
+  const plan = compileEntryQuery(config, {
+    groupBy: Page.title,
+    select: Entry.id,
+    orderBy: {desc: Entry.id},
+    skip: 1,
+    take: 8
+  })
+  expect(plan.membershipData).toBe(true)
+  expect(await plan.rows.all(db)).toEqual([
+    '09',
+    '08',
+    '07',
+    '04',
+    '03',
+    '02',
+    '01',
+    '00'
+  ])
+  expect(() => compileEntryQuery(config, {groupBy: [Page.title]})).toThrow(
+    'groupBy must be a single field'
+  )
 })

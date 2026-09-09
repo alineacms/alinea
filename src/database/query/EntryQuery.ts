@@ -13,6 +13,7 @@ import {
   Builder,
   desc,
   eq,
+  inArray,
   isNull,
   or,
   sql,
@@ -90,6 +91,33 @@ class Expressions {
     }
   }
 
+  grouping(expression: Expr): Array<HasSql> {
+    const internal = getExpr(expression)
+    let field: QueryField
+    if (internal.type === 'entryField') {
+      field =
+        internal.name === 'data'
+          ? this.data([])
+          : this.index(internal.name, internal.path)
+    } else if (internal.type === 'field') {
+      const name = this.#scope.nameOf(expression)
+      if (!name)
+        throw new Error('Field expression is not in the configured schema')
+      field = this.data([name])
+    } else return [this.expr(expression)]
+    if (!field.jsonType) return [field.value]
+    const kind = field.jsonType
+    // Match Map's primitive keys: numbers share one type, null and missing do
+    // not, and independently decoded objects/arrays are distinct identities.
+    return [
+      sql`case when ${kind} in ('integer', 'real', 'number') then 'number'
+        when ${kind} in ('true', 'false', 'boolean') then 'boolean'
+        else ${kind} end`,
+      sql`case when ${kind} in ('object', 'array')
+        then ${EntryIndexTable.versionId} else ${field.value} end`
+    ]
+  }
+
   projection(value: unknown): SelectionInput {
     if (isRecord(value) && hasExpr(value)) return this.expr(value as Expr, true)
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
@@ -103,15 +131,9 @@ class Expressions {
 }
 
 export function compileEntryQuery(config: Config, query: GraphQuery) {
-  if (
-    query.preview ||
-    query.search ||
-    query.groupBy ||
-    query.alias ||
-    'edge' in query
-  )
+  if (query.preview || query.search || query.alias || 'edge' in query)
     throw new Error(
-      'SQL preview, search, grouping, aliases and relations require their dedicated query stages'
+      'SQL preview, search, aliases and relations require their dedicated query stages'
     )
   const scope = getScope(config)
   const membership = new Expressions(scope)
@@ -176,6 +198,11 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
       content.push(compileCondition(membership.index(key), query[key]))
   if (query.filter !== undefined)
     content.push(compileFilter(query.filter, name => membership.field(name)))
+  if (Array.isArray(query.groupBy))
+    throw new Error('groupBy must be a single field')
+  const grouping = query.groupBy
+    ? membership.grouping(query.groupBy)
+    : undefined
   const ordering: Array<HasSql> = []
   if (query.orderBy) {
     for (const order of Array.isArray(query.orderBy)
@@ -214,6 +241,31 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
   ] as const)
     if (value !== undefined && (!Number.isSafeInteger(value) || value < 0))
       throw new Error(`${key} must be a non-negative integer`)
+  // Graph picks the first source-ordered match in each group before ordering
+  // or pagination. Rank identities, not projected values, to preserve that rule.
+  let grouped: Sql<boolean> | undefined
+  if (grouping) {
+    let ranked = builder
+      .select({
+        versionId: EntryIndexTable.versionId,
+        rank: sql<number>`row_number() over (partition by ${sql.join(grouping, sql`, `)}
+        order by ${EntryIndexTable.index}, ${EntryIndexTable.ordinal}, ${EntryIndexTable.versionId})`
+      })
+      .from(EntryIndexTable)
+      .where(sql.value(true))
+    if (membership.dataRequired)
+      ranked = ranked.leftJoin(
+        EntryDataTable,
+        eq(EntryIndexTable.versionId, EntryDataTable.versionId)
+      )
+    const matches = ranked
+      .where(and(...structural, ...content))
+      .as('group_matches')
+    grouped = inArray(
+      EntryIndexTable.versionId,
+      builder.select(matches.versionId).from(matches).where(eq(matches.rank, 1))
+    )
+  }
   function selectRows(selection: SelectionInput, data: boolean) {
     let rows = builder
       .select(selection)
@@ -224,11 +276,16 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
         EntryDataTable,
         eq(EntryIndexTable.versionId, EntryDataTable.versionId)
       )
-    rows = rows.where(and(...structural, ...content)).orderBy(...ordering)
+    rows = rows
+      .where(and(...structural, ...content, ...(grouped ? [grouped] : [])))
+      .orderBy(...ordering)
     if (query.skip) rows = rows.offset(query.skip)
-    if (query.take !== undefined) rows = rows.limit(query.take)
-    if (!query.count && (query.first || query.get))
-      rows = rows.limit(query.take === 0 ? 0 : 1)
+    if (query.take) rows = rows.limit(query.take)
+    else if (query.skip)
+      // SQLite requires a LIMIT with OFFSET. This is also accepted by the
+      // other drivers and covers every safely representable Graph row count.
+      rows = rows.limit(Number.MAX_SAFE_INTEGER)
+    if (!query.count && (query.first || query.get)) rows = rows.limit(1)
     return rows
   }
 
