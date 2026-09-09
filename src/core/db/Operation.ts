@@ -227,8 +227,10 @@ export class UploadOperation extends Operation {
       const body = Array.isArray(file) ? file[1] : await file.arrayBuffer()
       const contentType =
         file instanceof Blob ? file.type : 'application/octet-stream'
-      const extension = extname(fileName)
-      const path = slugify(basename(fileName, extension))
+      const originalExtension = extname(fileName)
+      const title = basename(fileName, originalExtension)
+      const extension = originalExtension.toLowerCase()
+      const path = slugify(title)
       const uploadLocation = MediaLocation.storagePath(
         db.config,
         workspace,
@@ -245,7 +247,6 @@ export class UploadOperation extends Operation {
       await sendUpload(info.url, info.method ?? 'POST', contentType, body, {
         onProgress: query.onProgress
       })
-      const title = basename(fileName, extension)
       const hash = await createFileHash(new Uint8Array(body))
       const fileLocation = MediaLocation.entryLocation(
         db.config,
