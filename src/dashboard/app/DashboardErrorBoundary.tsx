@@ -1,4 +1,4 @@
-import {Icon, Surface} from '#/components.js'
+import {Button, Icon, Surface} from '#/components.js'
 import {MissingEntryError} from '#/dashboard/atoms/entry.js'
 import {routeAtom, routeGuardAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
@@ -48,7 +48,7 @@ function DashboardRouteErrorBoundary({
   }, [error, route, setRoute, setRouteGuard])
   if (didCatch && error instanceof MissingEntryError) return null
   if (didCatch) {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = errorMessage(error)
     return (
       <div className={styles.DashboardErrorBoundary()}>
         <Surface className={styles.DashboardErrorBoundary.card()}>
@@ -61,9 +61,24 @@ function DashboardRouteErrorBoundary({
           <pre className={styles.DashboardErrorBoundary.message()}>
             {message}
           </pre>
+          <div className={styles.DashboardErrorBoundary.actions()}>
+            <Button intent="primary" onPress={reloadDashboard}>
+              Reload dashboard
+            </Button>
+          </div>
         </Surface>
       </div>
     )
   }
   return <ErrorBoundary>{children}</ErrorBoundary>
+}
+
+function errorMessage(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  if (!(error.cause instanceof Error)) return error.message
+  return `${error.message}\nCaused by: ${error.cause.message}`
+}
+
+function reloadDashboard() {
+  window.location.reload()
 }
