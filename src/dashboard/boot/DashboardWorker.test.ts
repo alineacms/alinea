@@ -185,6 +185,44 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
   ).toMatchObject({title: 'Chocolate chip'})
 })
 
+test('retries a failed initial load for the same revision', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let unavailable = true
+  const client: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      if (unavailable) throw new Error('Remote unavailable')
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  const failedDB = Promise.resolve(worker.db).catch((error: unknown) => error)
+
+  await expect(
+    worker.load('retry-initial-load', cms.config, client)
+  ).rejects.toThrow('Remote unavailable')
+  expect(await failedDB).toEqual(
+    expect.objectContaining({message: 'Failed to load database'})
+  )
+
+  unavailable = false
+  const retriedDB = worker.db
+  await worker.load('retry-initial-load', cms.config, client)
+
+  expect(await retriedDB).toBe(await worker.db)
+  expect(
+    await (
+      await worker.db
+    ).get({
+      type: cms.schema.DemoRecipe,
+      path: 'chocolate-chip'
+    })
+  ).toMatchObject({title: 'Chocolate chip'})
+})
+
 test('retrying failed mutations clears the preceding fetch failure', async () => {
   const {db, original, setUnavailable, worker} =
     await createFailedMutationFixture()

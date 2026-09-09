@@ -1,5 +1,5 @@
 import type {RootData} from '#/core/Root.js'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import {useDashboardContext} from '../hooks.js'
 
 export interface DashboardRoot extends RootData {
@@ -11,5 +11,5 @@ export interface DashboardRoot extends RootData {
  */
 export function useRoot(): DashboardRoot {
   const {root} = useDashboardContext()
-  return {name: root.key, ...useAtomValue(root.data)}
+  return {name: root.key, ...useAtomValueRaw(root.data)}
 }

@@ -225,6 +225,62 @@ test('uploads use the mediaDir of the selected workspace', async () => {
   ])
 })
 
+test('uploads normalize only the filename extension', async () => {
+  const cases = [
+    {
+      fileName: 'photo.jpg',
+      title: 'photo',
+      path: 'photo.jpg',
+      extension: '.jpg'
+    },
+    {
+      fileName: 'Photo.JPG',
+      title: 'Photo',
+      path: 'photo.jpg',
+      extension: '.jpg'
+    },
+    {
+      fileName: 'Logo.PnG',
+      title: 'Logo',
+      path: 'logo.png',
+      extension: '.png'
+    },
+    {
+      fileName: 'Researcher.Photo.JPG',
+      title: 'Researcher.Photo',
+      path: 'researcher-photo.jpg',
+      extension: '.jpg'
+    },
+    {
+      fileName: 'README',
+      title: 'README',
+      path: 'readme',
+      extension: ''
+    }
+  ]
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+
+  try {
+    for (const expected of cases) {
+      const db = new DB(cmsWithMediaDir().config)
+      const upload = await db.upload({
+        file: new File(['example'], expected.fileName)
+      })
+
+      test.equal(db.preparedFiles, [expected.path])
+      test.is(upload.location, `${expected.path}_upload-1`)
+      test.is(upload.title, expected.title)
+      test.is(upload.extension, expected.extension)
+    }
+  } finally {
+    globalThis.fetch = fetch
+  }
+})
+
 test('uploads reject files over maxUploadSize before upload', async () => {
   const cms = cmsWithMediaDir(undefined, undefined, 3)
   const db = new DB(cms.config)

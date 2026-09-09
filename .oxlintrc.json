@@ -7,6 +7,18 @@
   },
   "rules": {
     "no-unused-vars": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "jotai",
+            "importNames": ["useAtomValue"],
+            "message": "Use useAtomValueRaw so async values remain visible to TypeScript."
+          }
+        ]
+      }
+    ],
     "import/namespace": "off",
     "react-you-might-not-need-an-effect/no-derived-state": "warn",
     "react-you-might-not-need-an-effect/no-chain-state-updates": "warn",

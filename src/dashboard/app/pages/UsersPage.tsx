@@ -19,7 +19,7 @@ import {
 } from '#/components.js'
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
-import {atom, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent, type Key} from 'react'
 import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
@@ -149,7 +149,7 @@ export const usersPage = page(page => {
 })
 
 export function UsersPage() {
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const [usersState] = useAtom(usersAtom)
   const [query, setQuery] = useState('')
   const [editingUser, setEditingUser] = useState<User>()
@@ -480,7 +480,7 @@ interface UserModalProps {
 }
 
 function UserModal({user}: UserModalProps) {
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const saveUser = useSetAtom(usersAtom)
   const modal = useDashboardModal()
   const isEditing = user !== undefined

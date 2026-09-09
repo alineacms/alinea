@@ -1,7 +1,7 @@
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {act, cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
-import {Provider, useAtom, useAtomValue} from 'jotai'
+import {Provider, useAtom, useAtomValueRaw} from 'jotai'
 import {useEffect} from 'react'
 import {appAtom} from '../App.js'
 import {
@@ -20,13 +20,13 @@ import {
 afterEach(cleanup)
 
 function AppSubscription() {
-  useAtomValue(appAtom)
+  useAtomValueRaw(appAtom)
   return null
 }
 
 function ActivityPendingSubscription() {
-  const [appPending] = useAtomValue(appAtom)
-  const activity = useAtomValue(activityAtom)
+  const [appPending] = useAtomValueRaw(appAtom)
+  const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
   const pending =
     appPending || activity.isFetchingUpdates || activity.isMutating

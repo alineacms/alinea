@@ -2,7 +2,11 @@ import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
-import type {RemoteConnection, RequestContext} from '#/core/Connection.js'
+import type {
+  AuthOptions,
+  RemoteConnection,
+  RequestContext
+} from '#/core/Connection.js'
 import type {Config} from '#/core/Config.js'
 
 export function createDevRemote(
@@ -15,8 +19,19 @@ export function createDevRemote(
     applyAuth: context.applyAuth
   })
   const auth = {
-    async authenticate(): Promise<Response> {
-      return Response.json({type: AuthResultType.Authenticated})
+    async authenticate(
+      _request: Request,
+      options: AuthOptions
+    ): Promise<Response> {
+      const user = await client.user()
+      if (!user)
+        throw new MissingCredentialsError(
+          'Missing forwarded development authentication'
+        )
+      return Response.json({
+        type: AuthResultType.Authenticated,
+        ...(await options.authenticated(user))
+      })
     },
     async verify() {
       const user = await client.user()

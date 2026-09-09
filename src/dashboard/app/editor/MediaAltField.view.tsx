@@ -13,7 +13,7 @@ import {
   useFieldOptions
 } from '#/dashboard/hooks.js'
 import {LocalisedFieldTabs} from '#/field/localiser/LocalisedFieldTabs.js'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import {useState} from 'react'
 
 export interface MediaAltFieldViewProps {
@@ -22,7 +22,7 @@ export interface MediaAltFieldViewProps {
 
 export function MediaAltFieldView({field}: MediaAltFieldViewProps) {
   const {entry} = useEntryAtoms()
-  const i18n = useAtomValue(entry.mediaI18n)
+  const i18n = useAtomValueRaw(entry.mediaI18n)
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field)
   const error = useFieldError(field)

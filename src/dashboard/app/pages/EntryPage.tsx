@@ -22,8 +22,8 @@ import {
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
-import {useEffect, useLayoutEffect, useRef, useTransition} from 'react'
+import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {useEffect, useLayoutEffect, useRef} from 'react'
 import {EntryScope} from '../../hooks.js'
 import {
   IcBaselineErrorOutline,
@@ -110,7 +110,7 @@ interface MissingEntryProps {
 
 function MissingEntry({page}: MissingEntryProps) {
   assert(page.workspace && page.root && page.entry)
-  const root = useAtomValue(rootAtoms(page.workspace, page.root).data)
+  const root = useAtomValueRaw(rootAtoms(page.workspace, page.root).data)
   const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel
@@ -175,10 +175,9 @@ interface EntryViewToggleProps {
 }
 
 function EntryViewToggle({entry, page}: EntryViewToggleProps) {
-  const entryView = useAtomValue(entry.view)
+  const entryView = useAtomValueRaw(entry.view)
   const view = page.view ?? entryView
   const setRoute = useSetAtom(routeAtom)
-  const [isPending, startTransition] = useTransition()
   const nextView = view === 'overview' ? 'edit' : 'overview'
   const label = nextView === 'overview' ? 'Show overview' : 'Edit entry'
   const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
@@ -189,7 +188,6 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
         aria-label={label}
         appearance="plain"
         icon={ViewIcon}
-        isDisabled={isPending}
         size="icon"
         onPress={() =>
           setRoute({
@@ -275,12 +273,12 @@ function EntryEditorContent({
   sourceLocale,
   node
 }: EntryEditorContentProps) {
-  const typeName = useAtomValue(entry.type)
-  const type = useAtomValue(typeAtoms(typeName))
-  const hasChildren = useAtomValue(entry.hasChildren)
-  const defaultView = useAtomValue(entry.view)
-  const sourceLocales = useAtomValue(entry.translationSourceLocales)
-  const parentPaths = useAtomValue(entry.parentPaths)
+  const typeName = useAtomValueRaw(entry.type)
+  const type = useAtomValueRaw(typeAtoms(typeName))
+  const hasChildren = useAtomValueRaw(entry.hasChildren)
+  const defaultView = useAtomValueRaw(entry.view)
+  const sourceLocales = useAtomValueRaw(entry.translationSourceLocales)
+  const parentPaths = useAtomValueRaw(entry.parentPaths)
   const View = type.customView
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale

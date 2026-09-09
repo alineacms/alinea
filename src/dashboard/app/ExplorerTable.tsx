@@ -1,6 +1,6 @@
 import {Checkbox, FoldIcon, Icon, Surface} from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {startTransition, useMemo} from 'react'
 import {
@@ -161,7 +161,7 @@ interface ExplorerTableBreadcrumbProps {
 }
 
 function ExplorerTableBreadcrumb({entry, index}: ExplorerTableBreadcrumbProps) {
-  const {data} = useAtomValue(entry.data)
+  const {data} = useAtomValueRaw(entry.data)
   if (!data) return null
   return <ExplorerTableLoadedBreadcrumb data={data} index={index} />
 }
@@ -175,9 +175,9 @@ function ExplorerTableLoadedBreadcrumb({
   data,
   index
 }: ExplorerTableLoadedBreadcrumbProps) {
-  const label = useAtomValue(data.label)
-  const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.label)
+  const label = useAtomValueRaw(data.label)
+  const root = useAtomValueRaw(data.root)
+  const rootLabel = useAtomValueRaw(root.label)
   return (
     <>
       {index === 0 && (
@@ -310,7 +310,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
     hasChildren,
     label
   } = props
-  const isExpanded = useAtomValue(
+  const isExpanded = useAtomValueRaw(
     useMemo(() => explorer.isExpanded(entry), [explorer, entry])
   )
   const onAction = useSetAtom(explorer.onAction)
@@ -380,7 +380,7 @@ function ExplorerTableDisplayRow(props: ExplorerTableDisplayRowProps) {
 }
 
 function ExplorerTableChildren(props: ExplorerTableDisplayRowProps) {
-  const children = useAtomValue(
+  const children = useAtomValueRaw(
     useMemo(
       () => props.explorer.children(props.entry, props.locale),
       [props.entry, props.explorer, props.locale]
@@ -428,14 +428,14 @@ function ExplorerTableLoadedRow({
   explorer,
   ...props
 }: ExplorerTableLoadedRowProps) {
-  const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.label)
-  const label = useAtomValue(data.label)
-  const configuredIcon = useAtomValue(data.icon)
-  const hasChildren = useAtomValue(data.hasChildren)
-  const cells = useAtomValue(data.overviewCells)
-  const parents = useAtomValue(data.parents)
-  const isSelectable = useAtomValue(
+  const root = useAtomValueRaw(data.root)
+  const rootLabel = useAtomValueRaw(root.label)
+  const label = useAtomValueRaw(data.label)
+  const configuredIcon = useAtomValueRaw(data.icon)
+  const hasChildren = useAtomValueRaw(data.hasChildren)
+  const cells = useAtomValueRaw(data.overviewCells)
+  const parents = useAtomValueRaw(data.parents)
+  const isSelectable = useAtomValueRaw(
     useMemo(() => explorer.isSelectable(props.entry), [explorer, props.entry])
   )
   return (
@@ -458,7 +458,7 @@ function ExplorerTableLoadedRow({
 }
 
 function ExplorerTableRow(props: ExplorerTableRowProps) {
-  const {data, pending} = useAtomValue(props.entry.data)
+  const {data, pending} = useAtomValueRaw(props.entry.data)
   if (pending || !data) return <ExplorerTableLoadingRow {...props} />
   return <ExplorerTableLoadedRow {...props} data={data} />
 }
@@ -487,7 +487,7 @@ export function ExplorerTable({
   const [selected, setSelected] = useAtom(explorer.selection)
   const [expandedKeys, setExpandedKeys] = useAtom(explorer.expandedKeys)
   const selectionMode = explorer.selectionMode
-  const search = useAtomValue(explorer.search)
+  const search = useAtomValueRaw(explorer.search)
   const isSearching = Boolean(search.trim())
   const breadcrumbs =
     explorer.breadcrumbs ||

@@ -29,6 +29,7 @@ export default function NextPreviews({
   if (root) entryParams.set('root', root)
   const editUrl = new URL(`#/edit?${entryParams}`, adminUrl)
   const {isPreviewing} = usePreview({
+    hostOrigin: adminUrl.origin,
     async preview(update) {
       if (!update) return
       const success = await setPreviewCookies(update.payload)

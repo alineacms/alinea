@@ -1,3 +1,4 @@
+import {BasicAuth} from '#/backend/api/BasicAuth.js'
 import {composeBackend} from '#/backend/api/CreateBackend.js'
 import {MissingCredentialsError} from '#/backend/Auth.js'
 import {createHandler} from '#/backend/Handler.js'
@@ -204,7 +205,7 @@ test('allows production route syncs authenticated with the release key', async (
   test.is(response.status, 200)
 })
 
-test('enriches authenticated user in auth status response', async () => {
+test('includes capabilities with the enriched auth status user', async () => {
   const cms = createCMS({
     schema: {Page},
     workspaces: {main}
@@ -217,7 +218,7 @@ test('enriches authenticated user in auth status response', async () => {
       return composeBackend({
         async authenticate(
           _request: Request,
-          options?: AuthOptions
+          options: AuthOptions
         ): Promise<Response> {
           const user = {
             email: 'ada@example.com',
@@ -226,7 +227,7 @@ test('enriches authenticated user in auth status response', async () => {
           }
           return Response.json({
             type: AuthResultType.Authenticated,
-            user: options?.enrichUser ? await options.enrichUser(user) : user
+            ...(await options.authenticated(user))
           })
         },
         async enrichUser(user: User): Promise<User> {
@@ -241,11 +242,45 @@ test('enriches authenticated user in auth status response', async () => {
   test.is(response.status, 200)
   test.equal(await response.json(), {
     type: AuthResultType.Authenticated,
+    capabilities: {users: false},
     user: {
       email: 'ada@example.com',
       roles: ['admin'],
       sub: 'ada@example.com'
     }
+  })
+})
+
+test('reports capability failures as server errors during auth', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(
+        new BasicAuth(context, () => ({
+          email: 'ada@example.com',
+          roles: ['admin'],
+          sub: 'ada@example.com'
+        })),
+        {
+          async capabilities() {
+            throw new Error('Capabilities unavailable')
+          }
+        }
+      )
+    }
+  })
+  const request = authStatusRequest()
+  request.headers.set('authorization', 'Basic YWRhOnRlc3Q=')
+
+  const response = await handle(request, requestContext())
+
+  test.is(response.status, 500)
+  test.equal(await response.json(), {
+    success: false,
+    error: 'Failed to complete authentication'
   })
 })
 

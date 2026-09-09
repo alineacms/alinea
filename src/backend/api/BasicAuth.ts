@@ -31,27 +31,25 @@ export class BasicAuth implements AuthApi {
 
   async authenticate(
     request: Request,
-    options?: AuthOptions
+    options: AuthOptions
   ): Promise<Response> {
+    let verified: AuthedContext
     try {
-      const verified = await this.verify(request)
-      const url = new URL(request.url)
-      const action = url.searchParams.get('auth')
-      switch (action) {
-        case AuthAction.Status: {
-          const user = options?.enrichUser
-            ? await options.enrichUser(verified.user)
-            : verified.user
-          return Response.json({
-            type: AuthResultType.Authenticated,
-            user
-          })
-        }
-        default:
-          return new Response('Bad request', {status: 400})
-      }
+      verified = await this.verify(request)
     } catch {
       return unauthorized()
+    }
+    const url = new URL(request.url)
+    const action = url.searchParams.get('auth')
+    switch (action) {
+      case AuthAction.Status: {
+        return Response.json({
+          type: AuthResultType.Authenticated,
+          ...(await options.authenticated(verified.user))
+        })
+      }
+      default:
+        return new Response('Bad request', {status: 400})
     }
   }
 

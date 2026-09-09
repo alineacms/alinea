@@ -15,7 +15,7 @@ import type {Page} from '#/dashboard/atoms/nav.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
 import {Button as AriaButton} from 'react-aria-components'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
@@ -80,7 +80,7 @@ function WorkspaceSelectorMenu({
   popoverProps
 }: WorkspaceSelectorMenuProps) {
   const setRoute = useSetAtom(routeAtom)
-  const workspaces = useAtomValue(workspacesAtom)
+  const workspaces = useAtomValueRaw(workspacesAtom)
   if (workspaces.length <= 1 && !includeUsersLink) return label
   return (
     <Menu
@@ -121,7 +121,7 @@ interface WorkspaceAvatarMenuProps {
 }
 
 export function WorkspaceAvatarMenu({page, root}: WorkspaceAvatarMenuProps) {
-  const workspace = useAtomValue(workspaceAtom(page.workspace!))
+  const workspace = useAtomValueRaw(workspaceAtom(page.workspace!))
   const setRoute = useSetAtom(routeAtom)
   const setExplorerLocale = useSetAtom(root.explorer.selectedLocale)
   function showWorkspaces() {
@@ -185,7 +185,7 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
       }
     )
   )
-  const explorerPage = useAtomValue(explorer.page)
+  const explorerPage = useAtomValueRaw(explorer.page)
   if (!explorerPage)
     return (
       <DashboardModalDialog
@@ -242,7 +242,7 @@ export function WorkspaceMenu({
   root,
   workspace
 }: WorkspaceMenuProps) {
-  const workspaces = useAtomValue(workspacesAtom)
+  const workspaces = useAtomValueRaw(workspacesAtom)
   const menu =
     workspaces.length > 1 ? (
       <WorkspaceSelectorMenu
@@ -287,7 +287,7 @@ interface WorkspaceItemProps {
 }
 
 function WorkspaceItem({workspace}: WorkspaceItemProps) {
-  const data = useAtomValue(workspaceAtom(workspace))
+  const data = useAtomValueRaw(workspaceAtom(workspace))
   return (
     <MenuItem key={workspace} id={workspace} textValue={data.label}>
       {data.label}

@@ -20,7 +20,7 @@ import {check} from '#/field/check.js'
 import {code} from '#/field/code.js'
 import {select} from '#/field/select.js'
 import {text} from '#/field/text/TextField.js'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {views} from '../views.js'
 
@@ -240,8 +240,8 @@ interface RichTextFixtureContentProps {
 function RichTextFixtureContent({editor, node}: RichTextFixtureContentProps) {
   const field = editor.field('body')
   if (!field) throw new Error('Body field not found')
-  const value = useAtomValue(field.value)
-  const dirty = useAtomValue(node.isDirty)
+  const value = useAtomValueRaw(field.value)
+  const dirty = useAtomValueRaw(node.isDirty)
   const reset = useSetAtom(node.reset)
   const replace = useSetAtom(field.value)
   return (

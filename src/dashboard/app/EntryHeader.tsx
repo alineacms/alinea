@@ -15,7 +15,7 @@ import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {ComponentType, useState, useTransition, type ReactNode} from 'react'
 import {
   IcOutlineArchive,
@@ -153,18 +153,18 @@ export function EntryHeader({
   parentNeedsTranslation,
   selectedEntry
 }: EntryHeaderProps) {
-  const config = useAtomValue(configAtom)
-  const policy = useAtomValue(policyAtom)
-  const route = useAtomValue(routeAtom)
+  const config = useAtomValueRaw(configAtom)
+  const policy = useAtomValueRaw(policyAtom)
+  const route = useAtomValueRaw(routeAtom)
   const setRoute = useSetAtom(routeAtom)
-  const versions = useAtomValue(localeData.versions)
-  const untranslated = useAtomValue(localeData.untranslated)
-  const typeName = useAtomValue(entry.type)
-  const parentId = useAtomValue(entry.parentId)
-  const workspace = useAtomValue(entry.workspace)
-  const root = useAtomValue(entry.root)
-  const canPublishParents = useAtomValue(entry.canPublishParents)
-  const isParentUnpublished = useAtomValue(entry.parentUnpublished)
+  const versions = useAtomValueRaw(localeData.versions)
+  const untranslated = useAtomValueRaw(localeData.untranslated)
+  const typeName = useAtomValueRaw(entry.type)
+  const parentId = useAtomValueRaw(entry.parentId)
+  const workspace = useAtomValueRaw(entry.workspace)
+  const root = useAtomValueRaw(entry.root)
+  const canPublishParents = useAtomValueRaw(entry.canPublishParents)
+  const isParentUnpublished = useAtomValueRaw(entry.parentUnpublished)
   const [selectedVersion, setSelectedVersion] = useAtom(
     localeData.selectedVersion
   )
@@ -179,8 +179,8 @@ export function EntryHeader({
   const deleteEntry = useSetAtom(localeData.deleteEntry)
   const replaceFile = useSetAtom(localeData.replaceFile)
   const reset = useSetAtom(node.reset)
-  const isDirty = useAtomValue(node.isDirty)
-  const activity = useAtomValue(activityAtom)
+  const isDirty = useAtomValueRaw(node.isDirty)
+  const activity = useAtomValueRaw(activityAtom)
   const activeVersion = Array.from(versions.values()).find(
     version => version.active
   )

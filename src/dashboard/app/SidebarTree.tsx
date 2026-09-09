@@ -10,7 +10,7 @@ import type {
 import styler from '@alinea/styler'
 import {
   useAtom,
-  useAtomValue,
+  useAtomValueRaw,
   useSetAtom,
   type Atom,
   type WritableAtom
@@ -98,8 +98,8 @@ export const SidebarTreeItem = memo(function SidebarTreeItem({
   selectedItem,
   tree
 }: SidebarTreeItemProps) {
-  const data = useAtomValue(tree.item(item.id))
-  const configuredIcon = useAtomValue(typeAtoms(data.type)).icon
+  const data = useAtomValueRaw(tree.item(item.id))
+  const configuredIcon = useAtomValueRaw(typeAtoms(data.type)).icon
   const displayStatus = sidebarStatus(data, locale)
   const selectedAncestor =
     selectedItem && data.parents.includes(selectedItem.id)
@@ -200,15 +200,15 @@ export const SidebarTree = memo(function SidebarTree({
 }: SidebarTreeProps) {
   const {locale} = page
   const tree = root.tree(locale)
-  const snapshot = useAtomValue(tree.snapshot)
-  const selectedItem = useAtomValue(tree.selectedItem)
-  const label = useAtomValue(root.label)
-  const icon = useAtomValue(root.icon)
-  const i18n = useAtomValue(root.i18n)
+  const snapshot = useAtomValueRaw(tree.snapshot)
+  const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const label = useAtomValueRaw(root.label)
+  const icon = useAtomValueRaw(root.icon)
+  const i18n = useAtomValueRaw(root.i18n)
   const setRoute = useSetAtom(routeAtom)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const [collapsed, setCollapsed] = useAtom(tree.collapsedKeys)
-  const dragDisabled = useAtomValue(root.dragDisabled)
+  const dragDisabled = useAtomValueRaw(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const getDropOperation = useSetAtom(root.getDropOperation)
   const drop = useSetAtom(root.onDrop)
@@ -354,13 +354,13 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   tree
 }: SidebarTreeExplorerProps) {
   const [locale, setLocale] = useAtom(selectedLocale)
-  const label = useAtomValue(root.label)
-  const icon = useAtomValue(root.icon)
-  const i18n = useAtomValue(root.i18n)
+  const label = useAtomValueRaw(root.label)
+  const icon = useAtomValueRaw(root.icon)
+  const i18n = useAtomValueRaw(root.i18n)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
-  const snapshot = useAtomValue(tree.snapshot)
-  const selectedItem = useAtomValue(tree.selectedItem)
-  const dragDisabled = useAtomValue(root.dragDisabled)
+  const snapshot = useAtomValueRaw(tree.snapshot)
+  const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const dragDisabled = useAtomValueRaw(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
   const getDropOperation = useSetAtom(root.getDropOperation)
   const drop = useSetAtom(root.onDrop)

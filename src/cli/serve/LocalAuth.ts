@@ -11,7 +11,7 @@ export class LocalAuth implements AuthApi {
   }
 
   async authenticate(): Promise<Response> {
-    return new Response('ok')
+    throw new Error('Local authentication is not supported')
   }
 
   async verify(request: Request): Promise<AuthedContext> {

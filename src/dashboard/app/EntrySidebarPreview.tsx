@@ -4,7 +4,7 @@ import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   IcRoundArrowBack,
@@ -27,7 +27,7 @@ export function EntrySidebarPreview({
   entry,
   localeData
 }: EntrySidebarPreviewProps) {
-  const preview = useAtomValue(entry.preview)
+  const preview = useAtomValueRaw(entry.preview)
   if (!preview)
     return (
       <EntrySidebarPreviewMessage title="No preview">
@@ -50,7 +50,7 @@ function EntrySidebarComponentPreview({
   localeData,
   preview: Component
 }: EntrySidebarComponentPreviewProps) {
-  const previewEntry = useAtomValue(localeData.previewEntry)
+  const previewEntry = useAtomValueRaw(localeData.previewEntry)
   if (!previewEntry)
     return (
       <EntrySidebarPreviewMessage title="Preview unavailable">
@@ -155,12 +155,12 @@ export interface EntrySidebarBrowserPreviewProps {
 export function EntrySidebarBrowserPreview({
   localeData
 }: EntrySidebarBrowserPreviewProps) {
-  const [previewUrlPending, previewUrl] = useAtomValue(
+  const [previewUrlPending, previewUrl] = useAtomValueRaw(
     localeData.previewUrlState
   )
   const retryPreviewUrl = useSetAtom(localeData.retryPreviewUrl)
   const payloadSignalAtom = localeData.previewPayloadSignal
-  const payloadSignal = useAtomValue(
+  const payloadSignal = useAtomValueRaw(
     payloadSignalAtom ?? emptyPayloadSignalAtom
   )
   const updatePreviewPayload = useSetAtom(

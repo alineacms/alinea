@@ -315,14 +315,15 @@ export class DashboardWorker extends EventTarget {
       return
     }
     this.#currentRevision = revision
-    const db = new LocalDB(config, this.#source)
+    const nextLoad = this.#nextLoad
     try {
+      const db = new LocalDB(config, this.#source)
       if (this.#defer) this.#defer()
       const cacheReady = await this.#syncLocalIndex(db)
       if (!cacheReady) await remote(() => this.#syncWithClient(db, client))
       this.#localDB = db
       this.#localClient = client
-      this.#nextLoad.resolve({db, client})
+      nextLoad.resolve({db, client})
       const listen = (event: Event) => {
         if (event instanceof IndexEvent)
           this.dispatchEvent(new IndexEvent(event.data))
@@ -333,7 +334,9 @@ export class DashboardWorker extends EventTarget {
       }
       this.#startSyncing(cacheReady)
     } catch (cause) {
-      this.#nextLoad.reject(new Error('Failed to load database', {cause}))
+      this.#currentRevision = undefined
+      this.#nextLoad = trigger()
+      nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
     }
   }

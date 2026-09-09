@@ -1,7 +1,6 @@
 import type {UploadProgress} from '#/core/db/Operation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import {atom} from 'jotai'
-import {startTransition} from 'react'
 import {
   type Activity,
   ActivityEvent,
@@ -56,7 +55,7 @@ export const activityAtom = Object.assign(
       let active = true
 
       function update(activities: Array<Activity>) {
-        startTransition(() => set(activityValueAtom, activities))
+        set(activityValueAtom, activities)
       }
 
       function listen(event: Event) {

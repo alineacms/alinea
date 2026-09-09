@@ -2,7 +2,7 @@ import {Checkbox, Icon, Surface} from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
 import styler from '@alinea/styler'
 import {Size} from '@react-stately/virtualizer'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, ReactNode} from 'react'
 import {Fragment, memo, startTransition, useMemo} from 'react'
@@ -57,8 +57,8 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardItemProps) {
-  const {data} = useAtomValue(entry.data)
-  const isSelectable = useAtomValue(explorer.isSelectable(entry))
+  const {data} = useAtomValueRaw(entry.data)
+  const isSelectable = useAtomValueRaw(explorer.isSelectable(entry))
   if (!data)
     return (
       <ExplorerCardLoadingItem
@@ -146,16 +146,16 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   includeWorkspace,
   showSelectionControls
 }: ExplorerCardLoadedItemProps) {
-  const label = useAtomValue(data.label)
-  const icon = useAtomValue(data.icon)
-  const type = useAtomValue(data.type)
-  const canOpen = useAtomValue(data.canOpen)
+  const label = useAtomValueRaw(data.label)
+  const icon = useAtomValueRaw(data.icon)
+  const type = useAtomValueRaw(data.type)
+  const canOpen = useAtomValueRaw(data.canOpen)
   const performAction = useSetAtom(explorer.onAction)
   const hasAction = explorer.hasRowAction || (!isSelectable && canOpen)
   function onAction() {
     startTransition(() => performAction(entry, locale))
   }
-  const info = useAtomValue(
+  const info = useAtomValueRaw(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
   const location = breadcrumbs ? (
@@ -216,10 +216,10 @@ function ExplorerCardLocation({
   entry,
   includeWorkspace
 }: ExplorerCardLocationProps) {
-  const config = useAtomValue(configAtom)
-  const parents = useAtomValue(data.parents)
-  const root = useAtomValue(data.root)
-  const rootLabel = useAtomValue(root.label)
+  const config = useAtomValueRaw(configAtom)
+  const parents = useAtomValueRaw(data.parents)
+  const root = useAtomValueRaw(data.root)
+  const rootLabel = useAtomValueRaw(root.label)
   const workspace = config.workspaces[entry.workspace]
   const workspaceLabel = workspace
     ? getWorkspace(workspace).label
@@ -322,7 +322,7 @@ interface ExplorerCardParentProps {
 }
 
 function ExplorerCardParent({parent}: ExplorerCardParentProps) {
-  const {data} = useAtomValue(parent.data)
+  const {data} = useAtomValueRaw(parent.data)
   if (!data) return null
   return <ExplorerCardLoadedParent parent={data} />
 }
@@ -332,7 +332,7 @@ interface ExplorerCardLoadedParentProps {
 }
 
 function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
-  const label = useAtomValue(parent.label)
+  const label = useAtomValueRaw(parent.label)
   return <Fragment>{label}</Fragment>
 }
 

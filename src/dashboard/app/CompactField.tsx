@@ -3,7 +3,7 @@ import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {viewsAtom} from '#/dashboard/atoms/core.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue} from 'jotai'
+import {atom, useAtomValueRaw} from 'jotai'
 import type {ComponentType, ReactNode} from 'react'
 import {useMemo} from 'react'
 import {Badge} from './Badge.js'
@@ -29,7 +29,7 @@ export function CompactField({field, value}: CompactFieldProps) {
       ),
     [customView]
   )
-  const ResolvedView = useAtomValue(resolvedViewAtom)
+  const ResolvedView = useAtomValueRaw(resolvedViewAtom)
   if (typeof customView === 'function') return customView({field, value})
   if (ResolvedView) return <ResolvedView field={field} value={value} />
   return <CompactFieldFallback field={field} value={value} />

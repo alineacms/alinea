@@ -37,3 +37,8 @@
   font-size: 0.9em;
   white-space: pre-line;
 }
+
+.DashboardErrorBoundary-actions {
+  display: flex;
+  justify-content: flex-end;
+}

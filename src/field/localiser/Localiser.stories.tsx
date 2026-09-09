@@ -5,7 +5,7 @@ import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {localiser} from '#/field/localiser.js'
 import {text} from '#/field/text.js'
 import '#/theme.css'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import type {CSSProperties} from 'react'
 import {views} from '../views'
 
@@ -54,7 +54,7 @@ interface ValuePreviewProps {
 }
 
 function ValuePreview({node}: ValuePreviewProps) {
-  const value = useAtomValue(node.value)
+  const value = useAtomValueRaw(node.value)
   return <pre style={previewStyle}>{JSON.stringify(value, null, 2)}</pre>
 }
 

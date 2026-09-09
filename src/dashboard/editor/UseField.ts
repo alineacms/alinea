@@ -1,6 +1,6 @@
 import {Field, type FieldOptions} from '#/core/Field.js'
 import {assert} from '#/core/util/Assert.js'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {EditorField} from '../atoms/editor.js'
 import {useEditor} from '../hooks.js'
 
@@ -59,7 +59,7 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
 ): Options & FieldOptions<StoredValue> {
   const info = useFieldInfo(field)
-  return useAtomValue(info.options) as Options & FieldOptions<StoredValue>
+  return useAtomValueRaw(info.options) as Options & FieldOptions<StoredValue>
 }
 
 /**
@@ -69,7 +69,7 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
 ): string | undefined {
   const info = useFieldInfo(field)
-  return useAtomValue(info.error)
+  return useAtomValueRaw(info.error)
 }
 
 /**
@@ -79,7 +79,7 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options> | string
 ): StoredValue {
   const info = useFieldInfo(field)
-  return useAtomValue(info.value) as StoredValue
+  return useAtomValueRaw(info.value) as StoredValue
 }
 
 /**

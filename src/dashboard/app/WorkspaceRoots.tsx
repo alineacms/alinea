@@ -18,7 +18,7 @@ import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useUser} from '#/dashboard/hooks.js'
 import styler from '@alinea/styler'
 import type {Key} from '@react-types/shared'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   IcBaselineAccountCircle,
   IcOutlineSettings,
@@ -43,9 +43,9 @@ export function WorkspaceRoots({
   page,
   root: currentRoot
 }: WorkspaceRootsProps) {
-  const policy = useAtomValue(policyAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const workspace = page.workspace!
-  const settings = useAtomValue(workspaceAtom(workspace))
+  const settings = useAtomValueRaw(workspaceAtom(workspace))
   const roots = Object.keys(settings.roots)
     .filter(key => policy.canRead({workspace, root: key}))
     .map(key => rootAtoms(workspace, key))
@@ -73,8 +73,8 @@ interface WorkspaceRootButtonProps {
 }
 
 function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
-  const icon = useAtomValue(root.icon)
-  const label = useAtomValue(root.label)
+  const icon = useAtomValueRaw(root.icon)
+  const label = useAtomValueRaw(root.label)
   const setRoute = useSetAtom(routeAtom)
   const selected = page.root === root.key
   return (
@@ -107,9 +107,9 @@ function WorkspaceProfileMenu({
   page
 }: WorkspaceProfileMenuProps) {
   const user = useUser()
-  const config = useAtomValue(configAtom)
-  const isLocal = useAtomValue(localAtom)
-  const canLogout = useAtomValue(canLogoutAtom)
+  const config = useAtomValueRaw(configAtom)
+  const isLocal = useAtomValueRaw(localAtom)
+  const canLogout = useAtomValueRaw(canLogoutAtom)
   const setUserRoles = useSetAtom(setUserRolesAtom)
   const setRoute = useSetAtom(routeAtom)
   const logout = useSetAtom(logoutAtom)

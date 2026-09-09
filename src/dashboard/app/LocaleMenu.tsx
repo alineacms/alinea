@@ -1,8 +1,7 @@
 import {Icon, Menu, MenuItem} from '#/components.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
-import {useTransition} from 'react'
+import {useAtomValueRaw} from 'jotai'
 import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
 import css from './LocaleMenu.module.css'
@@ -57,15 +56,14 @@ function LocaleLabel({locale}: LocaleLabelProps) {
 }
 
 export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
-  const i18n = useAtomValue(root.i18n)
-  const [isPending, startTransition] = useTransition()
+  const i18n = useAtomValueRaw(root.i18n)
   if (!i18n || i18n.locales.length === 0) return null
   const activeLocale = locale ?? i18n.locales[0]
   if (!activeLocale) return null
   return (
     <Menu
       label={
-        <Button className={styles.LocaleMenu.trigger()} isDisabled={isPending}>
+        <Button className={styles.LocaleMenu.trigger()}>
           <LocaleLabel locale={activeLocale} />
           <Icon
             icon={IcRoundUnfoldMore}

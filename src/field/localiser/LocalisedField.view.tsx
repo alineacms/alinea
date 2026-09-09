@@ -6,7 +6,7 @@ import {useFieldNode} from '#/dashboard/hooks.js'
 import {type LocalisedField} from '#/field/localiser.js'
 import styler from '@alinea/styler'
 import {atom, useAtom} from 'jotai'
-import {atomFamily} from 'jotai/utils'
+import {atomFamily} from 'jotai-family'
 import {useMemo} from 'react'
 import css from './LocalisedField.module.css'
 
