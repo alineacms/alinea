@@ -35,6 +35,26 @@ import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
 import type {IndexBootstrap} from '#/database/replica/Bootstrap.js'
+import type {
+  PayloadBatch,
+  PayloadBatchRequest
+} from '#/database/replica/PayloadBatch.js'
+import {readBody} from '#/core/util/ReadBody.js'
+
+const PayloadRequestBody = object({
+  identity: object({
+    project: string,
+    namespace: string,
+    epoch: string,
+    schemaId: string,
+    configId: string,
+    releaseId: string,
+    principal: string,
+    viewId: string
+  }),
+  revision: string,
+  requests: array(object({versionId: string, payloadId: string}))
+})
 
 const PrepareBody = object({
   filename: string,
@@ -69,6 +89,11 @@ export interface HandlerDatabase extends WritableGraph {
     principal: string,
     roles: ReadonlyArray<string>
   ): Promise<IndexBootstrap>
+  payloads?(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ): Promise<PayloadBatch>
   resolvePreview?<Query extends GraphQuery>(
     query: Query,
     remote: RemoteSource
@@ -218,6 +243,53 @@ export function createHandler({
         await local.syncWith(cnx)
         const bootstrap = await local.bootstrap(claims.sub, claims.roles ?? [])
         return Response.json(bootstrap, {
+          headers: {
+            'Cache-Control': 'private, no-store',
+            Vary: 'Cookie, Authorization'
+          }
+        })
+      }
+
+      if (
+        action === HandleAction.ReplicaPayloads &&
+        request.method === 'POST'
+      ) {
+        const {claims} = expectUser()
+        expectJson()
+        if (!claims.sub) throw new HttpError(401, 'Missing replica principal')
+        if (!local.payloads)
+          throw new HttpError(501, 'SQLite replica unavailable')
+        if (
+          !request.headers.get('content-type')?.includes('application/json') ||
+          !request.body
+        )
+          throw new HttpError(400, 'Expected JSON')
+        let bytes: Uint8Array
+        try {
+          bytes = await readBody(request.body, 64 * 1024, request.signal)
+        } catch {
+          throw new HttpError(
+            413,
+            'Payload request exceeds byte limit or was aborted'
+          )
+        }
+        let input: PayloadBatchRequest
+        try {
+          input = PayloadRequestBody(
+            JSON.parse(new TextDecoder().decode(bytes))
+          )
+        } catch {
+          throw new HttpError(400, 'Invalid payload request')
+        }
+        if (input.requests.length > 100)
+          throw new HttpError(413, 'Too many payload grant requests')
+        await local.syncWith(cnx)
+        const payloads = await local.payloads(
+          claims.sub,
+          claims.roles ?? [],
+          input
+        )
+        return Response.json(payloads, {
           headers: {
             'Cache-Control': 'private, no-store',
             Vary: 'Cookie, Authorization'

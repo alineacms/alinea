@@ -507,7 +507,22 @@ no-store. One replica lease binds graph-backed role evaluation, row projection
 and identity even through concurrent sync/close. Tests cover that lease, hidden
 rows, forged roles/principals, policy-only revocation, and absence of payload data.
 This is currently a full filtered index response; dashboard consumption, tree
-deltas, grant HTTP transport and filtered-field payloads remain unfinished.
+deltas and filtered-field payloads remain unfinished.
+
+`POST ?action=replicaPayloads` now delivers lazy encrypted data frames through the
+authenticated handler, including live frames without published bundle locations.
+The request carries the complete bootstrap identity/revision and at most 100
+version/payload pairs. The handler bounds actual request bytes (64 KiB), catches
+up, verifies session principal and deployment binding, and reevaluates the current
+policy view before reading any keys. A single immutable lease covers grants and
+ciphertext; the batch is capped at 32 MiB of ciphertext before reading frame bytes.
+The base64 wire envelope includes keys only in a private, no-store response; only
+ciphertext may enter browser persistence. Integration tests decrypt authorized
+payloads and reject API-key-only access, foreign principals/releases, unreadable
+entries, duplicate/oversized/malformed requests and policy/content-stale cursors.
+Browser wire validation/loading, filtered-field frames and CDN optimization remain
+unfinished. Mixed field-read policies still fail closed rather than grant an
+unfiltered frame.
 
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.

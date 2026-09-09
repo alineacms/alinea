@@ -1,5 +1,6 @@
 import {fetch, type Response} from '@alinea/iso'
 import {concatUint8Arrays} from '#/core/source/Utils.js'
+import {readBody} from '#/core/util/ReadBody.js'
 import {
   frameIdentityKey,
   validateFrameDescriptor,
@@ -151,36 +152,6 @@ export class HttpRangeSource {
     } finally {
       if (!consumed) await response.body?.cancel().catch(() => {})
     }
-  }
-}
-
-async function readBody(
-  body: ReadableStream<Uint8Array>,
-  maximum: number,
-  signal?: AbortSignal
-): Promise<Uint8Array> {
-  const reader = body.getReader()
-  const chunks: Array<Uint8Array> = []
-  let length = 0
-  const abort = () => {
-    void reader.cancel(signal?.reason).catch(() => {})
-  }
-  signal?.addEventListener('abort', abort, {once: true})
-  try {
-    for (;;) {
-      signal?.throwIfAborted()
-      const chunk = await reader.read()
-      signal?.throwIfAborted()
-      if (chunk.done) return concatUint8Arrays(chunks)
-      length += chunk.value.length
-      if (length > maximum)
-        throw new Error('Bundle response exceeds byte limit')
-      chunks.push(chunk.value)
-    }
-  } finally {
-    signal?.removeEventListener('abort', abort)
-    await reader.cancel().catch(() => {})
-    reader.releaseLock()
   }
 }
 

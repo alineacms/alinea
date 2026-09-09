@@ -1,4 +1,5 @@
 import {Permission} from '#/core/Role.js'
+import {HttpError} from '#/core/HttpError.js'
 import {entryVersionId} from '../entry/Schema.js'
 import type {EntryRuntime, PayloadRequest} from '../runtime/EntryRuntime.js'
 import type {FrameBinding, FrameGrant} from '../replica/Frame.js'
@@ -83,13 +84,13 @@ export class GrantService {
     requests = requests.map(request => ({...request}))
     return this.#runtime.readConsistent(async () => {
       if (requests.length > 100)
-        throw new Error('Too many payload grant requests')
+        throw new HttpError(413, 'Too many payload grant requests')
       const requested = new Set(requests.map(request => request.versionId))
       if (requested.size !== requests.length)
-        throw new Error('Duplicate payload grant request')
+        throw new HttpError(400, 'Duplicate payload grant request')
       const view = await authorizedIndex(this.#runtime, roles)
       if (view.revision !== cursor.revision || view.viewId !== cursor.viewId)
-        throw new Error('Stale payload grant cursor')
+        throw new HttpError(409, 'Stale payload grant cursor')
       const rows = new Map(
         view.entries.map(row => [
           entryVersionId(
@@ -109,7 +110,7 @@ export class GrantService {
           !row.payloadId ||
           row.payloadId !== request.payloadId
         )
-          throw new Error('Payload read denied')
+          throw new HttpError(403, 'Payload read denied')
       }
       return Promise.all(
         requests.map(request =>

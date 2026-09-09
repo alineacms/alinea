@@ -8,6 +8,7 @@ import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import type {NodeReplica} from '../driver/NodeReplica.js'
+import type {PayloadBatchRequest} from '../replica/PayloadBatch.js'
 
 /** Handler Graph backed by a replica. Only the remote source can accept writes;
  * write() acknowledges those accepted changes in the local cache.
@@ -50,6 +51,14 @@ export class ReplicaDatabase extends WritableGraph implements HandlerDatabase {
 
   bootstrap(principal: string, roles: ReadonlyArray<string>) {
     return this.replica.bootstrap(principal, roles)
+  }
+
+  payloads(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ) {
+    return this.replica.payloads(principal, roles, request)
   }
 
   async syncWith(remote: RemoteSource) {

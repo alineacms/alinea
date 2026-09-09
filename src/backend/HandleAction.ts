@@ -13,5 +13,6 @@ export enum HandleAction {
   Tree = 'tree',
   Commit = 'commit',
   Blob = 'blob',
-  ReplicaIndex = 'replicaIndex'
+  ReplicaIndex = 'replicaIndex',
+  ReplicaPayloads = 'replicaPayloads'
 }

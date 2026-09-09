@@ -11,6 +11,9 @@ import {MissingCredentialsError} from '#/backend/Auth.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {Entry} from '#/core/Entry.js'
 import {getScope} from '#/core/Scope.js'
+import {base64} from '#/core/util/Encoding.js'
+import {decryptFrame} from '#/database/replica/Frame.js'
+import {entryVersionId} from '#/database/entry/Schema.js'
 
 const apiKey = 'preview-secret'
 let draftEnabled = false
@@ -157,7 +160,117 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
     expect(view.entries[0]).not.toHaveProperty('data')
     expect(view.entries[0]).not.toHaveProperty('source')
     expect(view.entries[0].entry).not.toHaveProperty('data')
+    const payloadRequest = {
+      identity: view.identity,
+      revision: view.revision,
+      requests: [
+        {
+          versionId: entryVersionId('a', null, 'published'),
+          payloadId: view.entries[0].payloadId
+        }
+      ]
+    }
+    expect(
+      (await handler(request('replicaPayloads', payloadRequest))).status
+    ).toBe(401)
+    const payload = await handler(
+      request('replicaPayloads', payloadRequest, 'user')
+    )
+    expect(payload.status).toBe(200)
+    expect(payload.headers.get('cache-control')).toBe('private, no-store')
+    const encoded = await payload.json()
+    expect(encoded.identity).toEqual(view.identity)
+    expect(encoded.revision).toBe(view.revision)
+    expect(encoded.frames).toHaveLength(1)
+    const frame = encoded.frames[0]
+    const descriptor = {
+      ...frame.descriptor,
+      nonce: base64.parse(frame.descriptor.nonce)
+    }
+    const plaintext = await decryptFrame(
+      {...view.identity, ...payloadRequest.requests[0], kind: 'data'},
+      descriptor,
+      base64.parse(frame.ciphertext),
+      base64.parse(frame.key)
+    )
+    expect(JSON.parse(new TextDecoder().decode(plaintext)).data.title).toBe(
+      'Original'
+    )
+    expect(
+      (
+        await handler(
+          request(
+            'replicaPayloads',
+            {
+              ...payloadRequest,
+              identity: {...view.identity, releaseId: 'another-release'}
+            },
+            'user'
+          )
+        )
+      ).status
+    ).toBe(409)
+    expect(
+      (
+        await handler(
+          request(
+            'replicaPayloads',
+            {
+              ...payloadRequest,
+              identity: {...view.identity, principal: 'someone-else'}
+            },
+            'user'
+          )
+        )
+      ).status
+    ).toBe(409)
+    expect(
+      (
+        await handler(
+          request(
+            'replicaPayloads',
+            {
+              ...payloadRequest,
+              requests: [...payloadRequest.requests, ...payloadRequest.requests]
+            },
+            'user'
+          )
+        )
+      ).status
+    ).toBe(400)
+    expect(
+      (
+        await handler(
+          request(
+            'replicaPayloads',
+            {
+              ...payloadRequest,
+              requests: [{versionId: 'hidden', payloadId: 'hidden'}]
+            },
+            'user'
+          )
+        )
+      ).status
+    ).toBe(403)
+    expect(
+      (await handler(request('replicaPayloads', {malformed: true}, 'user')))
+        .status
+    ).toBe(400)
+    expect(
+      (
+        await handler(
+          request(
+            'replicaPayloads',
+            {...payloadRequest, padding: 'x'.repeat(65536)},
+            'user'
+          )
+        )
+      ).status
+    ).toBe(413)
     userRoles = []
+    expect(
+      (await handler(request('replicaPayloads', payloadRequest, 'user'))).status
+    ).toBe(409)
     const revoked = await (
       await handler(request('replicaIndex', {roles: ['admin']}, 'user'))
     ).json()
@@ -179,6 +292,9 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
     const result = await handler(request('mutate', mutations, 'user'))
     expect(result.status).toBe(200)
     expect(await result.json()).toEqual({sha: replica.revision})
+    expect(
+      (await handler(request('replicaPayloads', payloadRequest, 'user'))).status
+    ).toBe(409)
     expect(writes).toBe(1)
     expect(events).toEqual(['before', 'remote', 'after'])
     expect(await replica.first({id: 'a', select: Entry.title})).toBe('Updated')

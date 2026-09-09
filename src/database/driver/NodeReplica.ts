@@ -41,6 +41,15 @@ import {NodeOverlay} from './NodeOverlay.js'
 import {SqlSource} from '../source/SqlSource.js'
 import {authorizedIndex} from '../handler/Policy.js'
 import type {IndexBootstrap} from '../replica/Bootstrap.js'
+import {GrantService} from '../handler/Grants.js'
+import {FrameStore} from '../release/FrameStore.js'
+import {
+  payloadBatchLimit,
+  type PayloadBatch,
+  type PayloadBatchRequest
+} from '../replica/PayloadBatch.js'
+import {base64} from '#/core/util/Encoding.js'
+import {HttpError} from '#/core/HttpError.js'
 
 interface Snapshot {
   path: string
@@ -298,6 +307,66 @@ export class NodeReplica extends Graph {
     return this.#read(snapshot =>
       this.#source(snapshot).getTreeIfDifferent(sha)
     )
+  }
+
+  payloads(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ): Promise<PayloadBatch> {
+    roles = [...roles]
+    request = structuredClone(request)
+    return this.#read(async snapshot => {
+      if (
+        !principal ||
+        request.identity.principal !== principal ||
+        !identityKeys.every(
+          key => request.identity[key] === snapshot.identity[key]
+        )
+      )
+        throw new HttpError(409, 'Replica identity mismatch')
+      const frames = new FrameStore(nodeDatabase(snapshot.sqlite))
+      const service = new GrantService(
+        snapshot.runtime,
+        frames,
+        snapshot.identity
+      )
+      const grants = await service.issue(
+        roles,
+        {
+          revision: request.revision,
+          viewId: request.identity.viewId
+        },
+        request.requests
+      )
+      if (
+        grants.reduce(
+          (size, grant) => size + grant.descriptor.ciphertextLength,
+          0
+        ) > payloadBatchLimit
+      )
+        throw new HttpError(413, 'Payload batch exceeds byte limit')
+      const encoded: PayloadBatch['frames'] = []
+      for (const {descriptor, key} of grants) {
+        const ciphertext = await frames.ciphertext(descriptor)
+        if (ciphertext.byteLength !== descriptor.ciphertextLength)
+          throw new Error('Stored frame length mismatch')
+        encoded.push({
+          descriptor: {
+            ...descriptor,
+            nonce: base64.stringify(descriptor.nonce)
+          },
+          key: base64.stringify(key),
+          ciphertext: base64.stringify(ciphertext)
+        })
+      }
+      return {
+        version: 1,
+        identity: request.identity,
+        revision: request.revision,
+        frames: encoded
+      }
+    })
   }
 
   async *getBlobs(
