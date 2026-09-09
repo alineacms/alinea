@@ -283,6 +283,18 @@ No preview publishes files or changes the source revision. Dev routing remains
 on its explicit legacy path until structural previews and complete overlay search
 are available; the SQL snapshot path currently rejects those unsupported cases.
 
+Overlay FTS investigation ruled out replacing FTS shadow tables with views (the
+installed SQLite rejects dropping the protected shadow tables). The ranking path
+now has tested read-only primitives in `query/FtsStatistics`: decode documented
+FTS5 corpus/document token counts and reproduce the configured weighted BM25
+formula. Native and WASM tests compare scores directly with SQLite for multiple
+phrases and common terms, exercise attached databases, empty documents and
+multi-byte sizes, and reject malformed records. See SQLite's
+[FTS5 storage and ranking documentation](https://sqlite.org/fts5.html).
+This avoids reading document text or changing private FTS tables; combined
+base/overlay postings, corpus adjustments, snippets and query compilation are
+still required before enabling overlay search.
+
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
 collection operations. Numeric array offsets are rejected; collection operations
