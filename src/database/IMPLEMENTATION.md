@@ -207,7 +207,7 @@ effects reject a stale mutation-index revision even while an older SQL snapshot
 is still being served. Watcher/config teardown closes the owner and prevents late
 cache emissions. Integration tests exercise filesystem-backed Graph updates, live
 results, restart reuse and watcher shutdown. This is an explicit intermediate
-cutover: `LocalDB` still supplies seeding, references, fixes and previews, and its
+cutover: `LocalDB` still supplies references, fixes and previews, and its
 JS index still starts before SQL. Consequently startup is not yet SQL-only.
 Previews and normalization/seed boot replacement
 must remove those remaining JS dependencies; there is no catch-all query fallback.
@@ -247,6 +247,18 @@ mutation reader during a real dev Graph update, verify unchanged published state
 during preparation, and close an owner during a pending request. Per-operation
 reconciliation still rebuilds the transient normalizer graph; removing that cost,
 scratch-copy costs and seed/reference boot dependencies remains cutover work.
+
+`runtime/SeedDatabase` now discovers missing configured pages through structural
+Graph reads. Dev sync applies each yielded seed through the SQL mutation reader
+and filesystem authority before considering the next seed. It preserves nested
+parents, shared IDs across locales, config-only default titles and renamed seed
+identities. Tests disable JS seeding, create four localized parent/child entries,
+rename a parent, edit it again, and verify repeat sync/restart does not duplicate
+seeds or republish an unchanged checkpoint. Normalization now resolves retained
+seed markers when a renamed entry or descendant no longer has its configured
+physical path. Dev startup still builds the legacy index for preview/reference/fix
+consumers, but no longer calls its seeding algorithm. Seed-marker lookups currently
+scan structural rows in the root; direct indexed seed lookups remain an optimization.
 
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,

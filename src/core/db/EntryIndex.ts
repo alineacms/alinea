@@ -634,8 +634,15 @@ export class EntryGraph {
     const [path, status] = entryInfo(fileName)
     const parentDir = segments.slice(0, -1).join('/')
     const childrenDir = `${parentDir}/${path}`
-    const seed = this.#seeds.get(childrenDir)
-    const data: Record<string, unknown> = {path, ...seed?.data, ...version.data}
+    const seedRoot = segments.slice(0, this.#singleWorkspace ? 1 : 2).join('/')
+    const seed =
+      this.#seeds.get(childrenDir) ??
+      (version.seeded
+        ? this.#seeds.get(getNodePath(`${seedRoot}${version.seeded}`))
+        : undefined)
+    // A renamed seed (including descendants moved with it) retains config
+    // defaults, but its physical path must not revert to the configured path.
+    const data: Record<string, unknown> = {...seed?.data, path, ...version.data}
     let segmentIndex = 0
     const workspace = this.#singleWorkspace ?? segments[segmentIndex++]
     const workspaceConfig = this.#config.workspaces[workspace]
@@ -1074,7 +1081,7 @@ interface Seed {
   data: Record<string, any>
 }
 
-function entrySeeds(config: Config): Map<string, Seed> {
+export function entrySeeds(config: Config): Map<string, Seed> {
   const result = new Map<string, Seed>()
   const typeNames = Schema.typeNames(config.schema)
   for (const [workspaceName, workspace] of entries(config.workspaces)) {

@@ -1,7 +1,7 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Policy} from '#/core/Role.js'
@@ -17,6 +17,7 @@ import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
 import {NodeReplica} from '#/database/driver/NodeReplica.js'
 import type {CheckpointIdentity} from '#/database/runtime/Checkpoint.js'
 import type {QueryObserver} from '#/database/runtime/EntryRuntime.js'
+import {seedDatabase} from '#/database/runtime/SeedDatabase.js'
 import pLimit from 'p-limit'
 
 export interface DevDBOptions {
@@ -52,20 +53,30 @@ export class DevDB extends LocalDB {
     return this.#sync(async () => {
       if (this.#closed) throw new Error('Dev database is closed')
       await this.source.refresh()
-      const sha = await super.sync()
-      if (this.#options.replica) {
-        this.#replica ??= await NodeReplica.open(
-          {config: this.config, ...this.#options.replica},
-          this.source
+      if (!this.#options.replica) return super.sync()
+      this.#replica ??= await NodeReplica.open(
+        {config: this.config, ...this.#options.replica},
+        this.source
+      )
+      await this.#replica.sync(this.source)
+      for await (const mutation of seedDatabase(this.config, this.#replica)) {
+        const request = await this.#replica.request(
+          [mutation],
+          Policy.ALLOW_ALL
         )
+        if (this.#closed) throw new Error('Dev database is closed')
+        await this.source.applyChanges(sourceChanges(request))
         await this.#replica.sync(this.source)
-        if (this.#closed) {
-          await this.#replica.close()
-          throw new Error('Dev database is closed')
-        }
-        if (this.#replica.revision !== sha)
-          throw new Error('Dev query and mutation revisions differ')
       }
+      if (this.#closed) {
+        await this.#replica.close()
+        throw new Error('Dev database is closed')
+      }
+      // Legacy preview/reference/fix consumers still need this index until
+      // their cutover, but seeding and mutation planning now read SQL.
+      const sha = await this.index.syncWith(this.source)
+      if (this.#replica.revision !== sha)
+        throw new Error('Dev query and mutation revisions differ')
       return sha
     })
   }
