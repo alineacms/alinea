@@ -524,6 +524,20 @@ Browser wire validation/loading, filtered-field frames and CDN optimization rema
 unfinished. Mixed field-read policies still fail closed rather than grant an
 unfiltered frame.
 
+`HttpPayloadLoader` now connects this endpoint to the existing lazy SQL loader.
+It captures one replica identity/revision, deduplicates overlapping version/payload
+loads, limits HTTP concurrency to six, disables fetch caching/redirects and bounds
+streamed response bytes. Complete envelope validation checks principal/view/release,
+revision, exact requested membership, frame class, descriptor sizes and base64
+lengths before decryption or persistence. Grant keys are copied into the short-lived
+decrypting loader and cleared on completion/close. Authorization/stale-cursor
+responses close the loader and notify the owning session to discard its SQL view.
+Tests cover lazy WASM hydration, ciphertext-only IndexedDB persistence, malformed
+envelopes, session invalidation, late responses after close, and the actual Node
+handler-to-browser-loader path. This initial inline transport requests one frame
+per deduplicated load; grant batching/CDN reuse and the dashboard/session owner
+are still unfinished.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 
