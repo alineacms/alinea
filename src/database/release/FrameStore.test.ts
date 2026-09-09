@@ -43,7 +43,14 @@ test('release frame generation rejects sparse entry data without publishing part
 test('built frames reopen from a private checkpoint with stable keys and independently readable ciphertext', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-frames-'))
   const path = join(directory, 'release.sqlite')
-  const identity = {configId: 'config', namespace: 'main', releaseId: 'release'}
+  const identity = {
+    project: 'project',
+    epoch: 'epoch',
+    schemaId: 'schema',
+    configId: 'config',
+    namespace: 'main',
+    releaseId: 'release'
+  }
   const binding = {
     ...identity,
     project: 'project',
@@ -72,7 +79,6 @@ test('built frames reopen from a private checkpoint with stable keys and indepen
         ),
         payloadId: first.payloadId!
       }
-      await buildFrames(db, binding)
       const store = new FrameStore(db)
       originalKey = (await store.grant({...binding, ...request, kind: 'data'}))
         .key

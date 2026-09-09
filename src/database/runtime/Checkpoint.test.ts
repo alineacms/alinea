@@ -21,6 +21,9 @@ import {buildDatabase} from './BuildDatabase.js'
 import {CheckpointTable, openCheckpoint} from './Checkpoint.js'
 
 const identity = {
+  project: 'project',
+  epoch: 'epoch',
+  schemaId: 'schema',
   configId: 'test-config-v1',
   namespace: 'main',
   releaseId: 'release-1'
@@ -57,7 +60,14 @@ test('builds and reopens a raw SQL checkpoint without source reads or normalizat
       expect(readBlobs).not.toHaveBeenCalled()
       expect(materialize).not.toHaveBeenCalled()
       expect(normalize).not.toHaveBeenCalled()
-      for (const key of ['configId', 'namespace', 'releaseId'] as const)
+      for (const key of [
+        'project',
+        'epoch',
+        'schemaId',
+        'configId',
+        'namespace',
+        'releaseId'
+      ] as const)
         await expect(
           openCheckpoint(cms.config, db, {...identity, [key]: 'different'})
         ).rejects.toThrow(`${key} mismatch`)

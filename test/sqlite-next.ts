@@ -68,11 +68,20 @@ try {
   const {source} = await createEntryResolver(config, [
     {id: 'private-entry', type: 'Page', index: 'a', title: privateMarker}
   ])
-  await exportDatabase(config, source, generated, {
-    configId: 'integration',
-    namespace: 'preview/test',
-    releaseId: 'test-release'
-  })
+  await exportDatabase(
+    config,
+    source,
+    generated,
+    {
+      project: 'project',
+      epoch: 'epoch',
+      schemaId: 'schema',
+      configId: 'integration',
+      namespace: 'preview/test',
+      releaseId: 'test-release'
+    },
+    join(project, 'public', '_alinea', 'payloads')
+  )
   const bundled = await Bun.build({
     entrypoints: [join(root, 'src/adapter/next/with-alinea.ts')],
     target: 'node',

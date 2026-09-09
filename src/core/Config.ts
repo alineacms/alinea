@@ -20,6 +20,14 @@ export interface Config {
   /** A record containing workspace configurations */
   workspaces: Record<string, Workspace>
 
+  /** Stable synchronization identity; defaults use the production URL and deployment branch. */
+  replica?: {
+    project?: string
+    namespace?: string
+    /** Bump when replacing/resetting the source history. Defaults to "1". */
+    epoch?: string
+  }
+
   /** A record containing roles */
   roles?: Record<string, Role>
 

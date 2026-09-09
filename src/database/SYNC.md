@@ -24,6 +24,24 @@ silently change where content is owned.
 These are opaque identities, not sortable strings. Git commit IDs and content
 hashes cannot establish which revision is newer by lexical comparison.
 
+Current builds accept optional `config.replica` identity settings:
+
+```ts
+replica: {project: 'my-project', namespace: 'content-main', epoch: '1'}
+```
+
+Absent overrides, the production base URL identifies the project (a local config
+file path is used for URL-less development), namespace comes from
+`VERCEL_GIT_COMMIT_REF`, then `CF_PAGES_BRANCH`, then `main`, and epoch defaults
+to `1`. Set an explicit project ID if domains move or the production URL itself
+varies per deployment. Namespace labels the configured content source; it does
+not check out a Git branch or redirect source reads. An explicit namespace must
+match the source configuration. Bump the epoch when resetting/replacing source
+history; automatic provider history-reset detection is still outstanding.
+Every build gets a fresh release ID; all identity components are stored in the
+private checkpoint and checked on reopen. These defaults do not enable implicit
+cross-release cache reuse or change public rendering into live-content mode.
+
 Conceptual cursor and delta envelopes:
 
 ```ts

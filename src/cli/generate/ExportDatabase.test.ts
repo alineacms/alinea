@@ -15,6 +15,9 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
   const relocated = `${directory}-relocated`
   try {
     const identity = {
+      project: 'project',
+      epoch: 'epoch',
+      schemaId: 'schema',
       configId: 'config-1',
       releaseId: 'release-1',
       namespace: 'main'
@@ -23,11 +26,13 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
       cms.config,
       new FSSource('test/fixtures/demo'),
       directory,
-      identity
+      identity,
+      join(directory, 'public')
     )
     expect(size).toBeGreaterThan(0)
     expect((await readdir(directory)).sort()).toEqual([
       'database.js',
+      'public',
       'release.sqlite'
     ])
     const {nodeFileTrace} = createRequire(import.meta.url)(
@@ -52,7 +57,7 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
       import {DatabaseSync} from 'node:sqlite';
       const loader = await import(${JSON.stringify(pathToFileURL(join(relocated, 'database.js')).href)});
       const db = new DatabaseSync(loader.databasePath, {readOnly: true});
-      console.log(JSON.stringify({identity: loader.identity, check: db.prepare('pragma integrity_check').get(), count: db.prepare('select count(*) as count from alinea_entry_index').get()}));
+      console.log(JSON.stringify({identity: loader.identity, payloadBasePath: loader.payloadBasePath, check: db.prepare('pragma integrity_check').get(), count: db.prepare('select count(*) as count from alinea_entry_index').get(), frames: db.prepare('select count(*) as count from alinea_release_frame').get(), locations: db.prepare('select count(*) as count from alinea_release_frame_location').get()}));
       db.close();
     `
     ])
@@ -60,6 +65,12 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
     expect(result.identity).toEqual(identity)
     expect(result.check).toEqual({integrity_check: 'ok'})
     expect(result.count.count).toBeGreaterThan(0)
+    expect(result.frames.count).toBe(result.count.count)
+    expect(result.locations.count).toBe(result.count.count)
+    expect(result.payloadBasePath).toBe('/_alinea/payloads/')
+    const publicFiles = await readdir(join(relocated, 'public'))
+    expect(publicFiles.length).toBeGreaterThan(0)
+    for (const file of publicFiles) expect(file).toMatch(/^[a-f0-9]{64}\.bin$/)
   } finally {
     await rm(directory, {recursive: true, force: true})
     await rm(relocated, {recursive: true, force: true})

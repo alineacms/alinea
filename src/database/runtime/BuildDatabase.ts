@@ -13,6 +13,7 @@ import {
   type CheckpointIdentity
 } from './Checkpoint.js'
 import {EntryRuntime, type EntryReplacement} from './EntryRuntime.js'
+import {buildFrames} from '../release/FrameStore.js'
 
 /** Populate a fresh private database. Publish/close the file only after success.
  * The existing normalizer is build-only; opening a checkpoint never imports it.
@@ -23,7 +24,20 @@ export async function buildDatabase(
   remote: RemoteSource,
   identity: CheckpointIdentity
 ): Promise<void> {
-  if (!identity.configId || !identity.namespace || !identity.releaseId)
+  if (
+    (
+      [
+        'project',
+        'epoch',
+        'schemaId',
+        'configId',
+        'namespace',
+        'releaseId'
+      ] as const
+    ).some(
+      key => typeof identity[key] !== 'string' || identity[key].length === 0
+    )
+  )
     throw new Error('A complete checkpoint identity is required')
   await SqlSource.createSchema(db)
   await EntryRuntime.createSchema(db, 'uninitialized')
@@ -54,6 +68,7 @@ export async function buildDatabase(
         toRevision: index.sha,
         entries
       })
+      await buildFrames(tx, identity)
       await tx.insert(CheckpointTable).values({
         id: 1,
         format: checkpointFormat,

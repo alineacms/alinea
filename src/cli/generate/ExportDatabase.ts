@@ -6,20 +6,24 @@ import {mkdtemp, rename, rm, stat, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {DatabaseSync} from 'node:sqlite'
 import {nodeDatabase} from '#/database/driver/NodeDatabase.js'
+import {exportFrameBundles} from './ExportFrameBundles.js'
 
-/** Write into the private generated package, never the application's public dir. */
+/** Keep SQLite and keys private; publish only encrypted frames to the public dir. */
 export async function exportDatabase(
   config: Config,
   source: RemoteSource,
   outDir: string,
-  identity: CheckpointIdentity
+  identity: CheckpointIdentity,
+  publicDirectory: string
 ): Promise<number> {
   const temporary = await mkdtemp(join(outDir, '.checkpoint-'))
   const location = join(temporary, 'release.sqlite')
   try {
     const sqlite = new DatabaseSync(location)
     try {
-      await buildDatabase(config, nodeDatabase(sqlite), source, identity)
+      const db = nodeDatabase(sqlite)
+      await buildDatabase(config, db, source, identity)
+      await exportFrameBundles(db, publicDirectory)
       sqlite.exec('PRAGMA wal_checkpoint(TRUNCATE)')
       sqlite.exec('PRAGMA journal_mode=DELETE')
     } finally {
@@ -28,6 +32,7 @@ export async function exportDatabase(
     const loader = `import {fileURLToPath} from 'node:url'
 export const databasePath = fileURLToPath(new URL('./release.sqlite', import.meta.url))
 export const identity = ${JSON.stringify(identity)}
+export const payloadBasePath = '/_alinea/payloads/'
 `
     await writeFile(join(temporary, 'database.js'), loader)
     const size = (await stat(location)).size

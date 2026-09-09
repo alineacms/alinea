@@ -126,9 +126,8 @@ cursors and every requested read identity before looking up any key. A commit
 overlapping key lookup invalidates the result. Policy-only changes invalidate old
 cursors even when the source revision is unchanged. The Chromium fixture now
 uses this SQL frame store and grant service for its controlled grant endpoint.
-CLI frame-generation/publication integration still needs the durable project/epoch
-binding; the authenticated production router and filtered-field payload path are
-not wired yet. FrameStore/GrantService do not themselves authenticate a session.
+The authenticated production router and filtered-field payload path are not wired
+yet. FrameStore/GrantService do not themselves authenticate a session.
 
 `cli/generate/ExportFrameBundles.ts` publishes ciphertext in content-addressed
 files, targeting bounded bundles while reading one frame at a time. Completed
@@ -141,8 +140,18 @@ ciphertext may remain after failure/repacking; retention/GC is intentionally sep
 under a trusted configured base URL, rejecting unpublished frames. Tests decrypt
 the exact generated file ranges, reuse immutable files without rewriting them,
 and verify failed publication preserves the previous manifest and conflicting files.
-The main Generate/exportDatabase orchestration still needs the final durable
-project/epoch binding before automatically producing and exposing these bundles.
+The main Generate/exportDatabase orchestration now invokes frame generation and
+publication. Optional `config.replica` settings supply project, namespace and epoch;
+defaults use production URL/local config identity, provider branch metadata and
+epoch 1. Namespaces label sources, not Git checkout instructions; epoch reset
+detection remains manual. Checkpoint format 3 stores/validates all frame identity
+components. BuildDatabase generates frames in the same transaction as normalized
+rows and the checkpoint. ExportDatabase publishes public ciphertext under
+`/_alinea/payloads/` before closing/publishing the private SQLite file and loader.
+The loader exports that public base path, not keys or the private frame manifest.
+Tests verify complete frame/location coverage and raw Node reopening. Both real
+Next fixture variants are rerun for this path. Atomic loader/file generation
+switching and production handler/dashboard consumption still need integration.
 
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
@@ -182,7 +191,7 @@ before ordering/pagination and preserves JSON primitive distinctions. Alias
 projections merge both storage locations, URL alias predicates ignore malformed
 rows, and nested array `includes` compiles to scoped SQL existence checks. Page
 locations use a resident source-root segment rather than the URL slug. The
-checkpoint format is now 2 for that structural schema addition. Search,
+checkpoint format is now 3, including complete release identity. Search,
 natural collation, and production integration remain.
 
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload

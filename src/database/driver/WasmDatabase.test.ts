@@ -48,7 +48,14 @@ test('WASM opens a native SQLite checkpoint and executes the same Graph queries'
   const index = new EntryIndex(cms.config)
   await index.syncWith(source)
   const resolver = new EntryResolver(cms.config, index)
-  const identity = {configId: 'wasm-test', namespace: 'main', releaseId: 'r1'}
+  const identity = {
+    project: 'project',
+    epoch: 'epoch',
+    schemaId: 'schema',
+    configId: 'wasm-test',
+    namespace: 'main',
+    releaseId: 'r1'
+  }
   using native = new Database(':memory:')
   await buildDatabase(cms.config, connect(native), source, identity)
   const db = await wasmDatabase(native.serialize())
