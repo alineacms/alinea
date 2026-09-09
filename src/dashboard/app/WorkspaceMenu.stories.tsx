@@ -26,6 +26,28 @@ export function GlobalSearchStory() {
   )
 }
 
+export function LocalizedGlobalSearchStory() {
+  const workspace = getWorkspace(cms.config.workspaces.i18n)
+  const page = {
+    type: 'entry' as const,
+    workspace: 'i18n',
+    root: 'pages',
+    entry: undefined,
+    locale: 'en',
+    view: undefined
+  }
+  return (
+    <StoryProvider client={db} config={cms.config} events={db.index} graph={db}>
+      <WorkspaceMenu
+        canManageMembers={false}
+        page={page}
+        root={rootAtoms('i18n', 'pages')}
+        workspace={{...workspace, name: 'i18n'}}
+      />
+    </StoryProvider>
+  )
+}
+
 export default {
   title: 'Dashboard / WorkspaceMenu'
 }
