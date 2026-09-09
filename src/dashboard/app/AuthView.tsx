@@ -22,17 +22,17 @@ export interface AuthViewProps {
 
 export function AuthView({auth: authState = authAtom}: AuthViewProps) {
   const [auth, setAuth] = useAtom(authState)
+  const isLoading =
+    auth.status === 'loading' ||
+    auth.status === 'redirecting' ||
+    auth.status === 'authenticated'
 
-  if (auth.status === 'loading' || auth.status === 'redirecting') {
+  if (isLoading) {
     return <AuthViewLoader />
   }
 
   if (auth.status === 'error') {
     throw auth.error
-  }
-
-  if (auth.status === 'authenticated') {
-    return null
   }
 
   if (auth.status === 'missingHandler') {
@@ -84,7 +84,7 @@ function AuthViewLoader() {
     <div className={styles.AuthView()}>
       <div className={styles.AuthView.panel()}>
         <div className={styles.AuthView.loader()}>
-          <ProgressCircle isIndeterminate aria-label="Checking sign in" />
+          <ProgressCircle isIndeterminate aria-label="Loading" />
         </div>
       </div>
     </div>
