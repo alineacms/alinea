@@ -10,7 +10,12 @@ import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
 import {Field, Config as ConfigBuilder} from '#/index.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
-import {entryVersionId, type IndexedEntry} from '../entry/Schema.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
+import {
+  entryVersionId,
+  entrySource,
+  type IndexedEntry
+} from '../entry/Schema.js'
 import {
   EntryRuntime,
   type EntryReplacement,
@@ -18,6 +23,91 @@ import {
 } from './EntryRuntime.js'
 
 const config: Config = {schema: {}, workspaces: {}}
+
+test('image fields lazily load file metadata and retain alt fallback and build URL selection', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {image: Field.image('Image')}
+  })
+  const config: Config = {
+    schema: {Page, MediaFile},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: ConfigBuilder.root('Pages', {contains: ['Page']}),
+          media: ConfigBuilder.media({
+            i18n: {locales: ['de', 'fr', 'en'], fallback: () => ['fr', 'en']}
+          })
+        }
+      })
+    }
+  }
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const loads: Array<string> = []
+  let built = false
+  const runtime = new EntryRuntime(config, db, {
+    includedAtBuild(filePath) {
+      return built && filePath === 'content/media/image.json'
+    },
+    async load(requests) {
+      loads.push(...requests.map(request => request.payloadId))
+      return requests.map(request =>
+        request.payloadId === 'page:page'
+          ? {
+              ...request,
+              data: {image: {_id: 'hero', _type: 'image', _entry: 'image'}}
+            }
+          : {
+              ...request,
+              source: {filePath: 'content/media/image.json'},
+              data: {
+                extension: 'jpg',
+                previewUrl: '/preview.jpg',
+                alt: {fr: 'Français', en: 'English'},
+                size: 12,
+                width: 4,
+                height: 3,
+                hash: 'hash',
+                averageColor: 'red',
+                thumbHash: 'thumb',
+                focus: {x: 0.5, y: 0.5}
+              }
+            }
+      )
+    }
+  })
+  const page = replacement('page')
+  page.entry.locale = 'de'
+  const media = replacement('image')
+  Object.assign(media.entry, {
+    type: 'MediaFile',
+    root: 'media',
+    url: '/image.jpg'
+  })
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: [page, media]
+  })
+  expect(await runtime.resolve({id: 'page', select: Entry.id})).toEqual([
+    'page'
+  ])
+  expect(loads).toEqual([])
+  expect(await runtime.resolve({id: 'page', select: Page.image})).toMatchObject(
+    [{src: '/preview.jpg', alt: 'Français', width: 4, height: 3}]
+  )
+  expect(loads).toEqual(['page:page', 'image:image'])
+  built = true
+  expect(await runtime.resolve({id: 'page', select: Page.image})).toMatchObject(
+    [{src: '/image.jpg', alt: 'Français'}]
+  )
+  expect(await runtime.resolve({id: 'image', select: Entry.filePath})).toEqual([
+    'content/media/image.json'
+  ])
+  expect(loads).toEqual(['page:page', 'image:image'])
+})
 
 test('SQL entry-link queries agree with the existing Graph resolver', async () => {
   const Page = ConfigBuilder.document('Page', {
@@ -68,6 +158,7 @@ test('SQL entry-link queries agree with the existing Graph resolver', async () =
     entries.push({
       entry: {...entry, versionStatus: entry.status, ordinal: entries.length},
       payloadId: entry.rowHash,
+      source: entrySource(entry),
       data: entry.data
     })
   await runtime.apply({fromRevision: 'empty', toRevision: 'r1', entries})
@@ -286,6 +377,13 @@ test('hydrates projection after pagination and retains unchanged data across del
     entries: ['a', 'b', 'c'].map(id => replacement(id))
   })
   expect(await runtime.resolve({select: Entry.id, take: 1})).toEqual(['a'])
+  expect(await runtime.find({select: Entry.id, take: 1})).toEqual(['a'])
+  expect(await runtime.get({id: 'b', select: Entry.title})).toBe('b')
+  expect(await runtime.first({id: 'missing', select: Entry.id})).toBeNull()
+  expect(await runtime.count({select: Entry.id})).toBe(3)
+  await expect(runtime.get({id: 'missing', select: Entry.id})).rejects.toThrow(
+    'Entry not found'
+  )
   expect(loaded).toEqual([])
   expect(await runtime.resolve({select: Entry.data, skip: 1, take: 1})).toEqual(
     [{value: 'b:b'}]

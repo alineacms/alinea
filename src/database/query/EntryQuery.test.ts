@@ -10,6 +10,7 @@ import {
   EntryDataTable,
   EntryIndexTable,
   entryIndexRow,
+  entrySource,
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from './EntryQuery.js'
@@ -161,11 +162,13 @@ test('SQL compilation agrees with the existing resolver on the real demo corpus'
     await db.insert(EntryDataTable).values({
       versionId: row.versionId,
       payloadId: entry.fileHash,
+      source: entrySource(entry),
       data: entry.data
     })
   }
   const cases: Array<GraphQuery<unknown, typeof DemoRecipe>> = [
     {select: Entry.id},
+    {select: Entry},
     {id: 'oi4qtV9YaXNRIUDT2s61Y', select: Entry.id},
     {type: DemoRecipe, select: DemoRecipe.title},
     {location: cms.workspaces.demo.media, select: Entry.id},

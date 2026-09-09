@@ -54,8 +54,26 @@ export const EntryIndexTable = table(
 export const EntryDataTable = table('alinea_entry_data', {
   versionId: column.varchar(undefined, {length: 255}).primaryKey(),
   payloadId: column.varchar(undefined, {length: 255}).notNull(),
-  data: column.json<Record<string, unknown>>().notNull()
+  data: column.json<Record<string, unknown>>().notNull(),
+  source: column.json<EntrySource>()
 })
+
+export const sourceFields = [
+  'filePath',
+  'fileHash',
+  'parentDir',
+  'childrenDir',
+  'searchableText'
+] as const
+
+/** Normalized source metadata travels with the authorized entry payload. */
+export interface EntrySource extends Partial<
+  Pick<Entry, (typeof sourceFields)[number]>
+> {}
+
+export function entrySource(entry: Entry): EntrySource {
+  return Object.fromEntries(sourceFields.map(name => [name, entry[name]]))
+}
 
 export interface IndexedEntry extends Omit<
   Entry,

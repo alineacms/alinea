@@ -1,5 +1,11 @@
 import type {Config} from '#/core/Config.js'
-import type {GraphQuery, Projection, InferProjection} from '#/core/Graph.js'
+import {
+  Graph,
+  type AnyQueryResult,
+  type GraphQuery,
+  type Projection,
+  type InferProjection
+} from '#/core/Graph.js'
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -9,6 +15,8 @@ import {
   EntryDataTable,
   EntryIndexTable,
   entryIndexRow,
+  sourceFields,
+  type EntrySource,
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from '../query/EntryQuery.js'
@@ -33,6 +41,7 @@ export interface PayloadRequest {
 
 export interface LoadedPayload extends PayloadRequest {
   data: Record<string, unknown>
+  source?: EntrySource
 }
 
 export interface EntryReplacement {
@@ -40,6 +49,7 @@ export interface EntryReplacement {
   /** Omitted for an explore-only entry. */
   payloadId?: string
   data?: Record<string, unknown>
+  source?: EntrySource
 }
 
 export interface EntryDelta {
@@ -62,7 +72,7 @@ export interface QueryObserver {
 }
 
 /** Owns one local replica connection. All access goes through its statement queue. */
-export class EntryRuntime {
+export class EntryRuntime extends Graph {
   #db: Database
   #config: Config
   #options: RuntimeOptions
@@ -71,9 +81,14 @@ export class EntryRuntime {
   #listeners = new Set<() => void>()
 
   constructor(config: Config, db: Database, options: RuntimeOptions = {}) {
+    super()
     this.#config = config
     this.#db = db
     this.#options = options
+  }
+
+  get config(): Config {
+    return this.#config
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {
@@ -104,6 +119,8 @@ export class EntryRuntime {
             changed.add(row.versionId)
             if (replacement.data && !replacement.payloadId)
               throw new Error('Entry data requires a payload identity')
+            if (replacement.source !== undefined && !replacement.data)
+              throw new Error('Source metadata must accompany entry data')
             const existing = await tx
               .select()
               .from(Payload)
@@ -131,7 +148,8 @@ export class EntryRuntime {
                 await tx.insert(EntryDataTable).values({
                   versionId: row.versionId,
                   payloadId: replacement.payloadId,
-                  data: replacement.data
+                  data: replacement.data,
+                  source: validateSource(replacement.source)
                 })
             }
           }
@@ -220,6 +238,7 @@ export class EntryRuntime {
       const payload = returned.get(request.versionId)
       if (payload?.payloadId !== request.payloadId || !isRecord(payload.data))
         throw new Error(`Incomplete payload response for ${request.versionId}`)
+      validateSource(payload.source)
     }
     await this.#exclusive(async () => {
       if (this.#generation !== generation) return
@@ -232,7 +251,8 @@ export class EntryRuntime {
             await tx.insert(EntryDataTable).values({
               versionId: request.versionId,
               payloadId: request.payloadId,
-              data: returned.get(request.versionId)!.data
+              data: returned.get(request.versionId)!.data,
+              source: validateSource(returned.get(request.versionId)!.source)
             })
           }
         },
@@ -241,10 +261,15 @@ export class EntryRuntime {
     })
   }
 
-  async resolve(query: GraphQuery): Promise<unknown> {
+  async resolve<const Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
     for (;;) {
       try {
-        return await this.#resolve(query, this.#generation)
+        return (await this.#resolve(
+          query,
+          this.#generation
+        )) as AnyQueryResult<Query>
       } catch (error) {
         if (error !== superseded) throw error
       }
@@ -412,4 +437,18 @@ export class EntryRuntime {
       this.#listeners.delete(invalidate)
     }
   }
+}
+
+function validateSource(value: unknown): EntrySource | undefined {
+  if (value === undefined) return undefined
+  if (!isRecord(value)) throw new Error('Invalid entry source metadata')
+  const result: EntrySource = {}
+  for (const name of sourceFields) {
+    const field = value[name]
+    if (field === undefined) continue
+    if (typeof field !== 'string')
+      throw new Error(`Invalid entry source field: ${name}`)
+    result[name] = field
+  }
+  return result
 }

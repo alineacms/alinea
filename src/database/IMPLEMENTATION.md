@@ -21,7 +21,9 @@ aliases, natural collation, and production integration remain.
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
 hydration before content filtering or after structural pagination, and conservative
 live-query invalidation. Superseded payload responses are discarded. This runtime
-is not yet wired into Graph, browser transport, permissions, or dashboard atoms.
+implements the typed Graph query interface, but is not yet wired into production
+connections, browser transport, permissions, or dashboard atoms. Mutations remain
+on the existing backend pending the writable-runtime cutover.
 Structural relation projections (parents, children, siblings, neighboring entries,
 translations) now compile membership to SQL and resolve nested selections at one
 revision, retrying the whole projection if a delta arrives during hydration.
@@ -35,12 +37,15 @@ resolving target membership. Nine link queries match the existing Graph resolver
 lazy-loading tests verify unlocalized targets and selected-target-only hydration.
 Field postprocessors now depend on a backend-neutral link loader. SQL selections
 invoke the existing field query-value hooks at the same runtime revision; direct
-entry-link selections and URL suffixes match the existing resolver. Image/source
-metadata projections and broader field parity still need coverage.
+entry-link selections and URL suffixes match the existing resolver. Source metadata
+is stored alongside lazy payloads rather than in the resident index. Full `Entry`
+projections match the demo resolver; an image test verifies localized alt fallback,
+preview/build URL selection, and lazy metadata hydration. Broader field parity
+still needs coverage.
 
-Verification so far: twenty-five database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (66 combined).
-Including the existing rich-text field suite gives 77 passing tests.
+Verification so far: twenty-six database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (67 combined).
+Including the existing rich-text field suite gives 78 passing tests.
 The latest repository TypeScript check also passes.
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
