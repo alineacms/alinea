@@ -81,6 +81,10 @@ export async function openDatabase(config) {
   const {NodeCheckpoint} = await import('alinea/database/driver/NodeCheckpoint')
   return NodeCheckpoint.open(config, databasePath, identity)
 }
+export async function openReplica(config, directory) {
+  const {NodeReplica} = await import('alinea/database/driver/NodeReplica')
+  return NodeReplica.open({config, directory, identity}, {checkpoint: databasePath})
+}
 `
     await writeFile(join(temporary, 'database.js'), loader)
     await writeFile(join(temporary, 'source.js'), sourceModule)

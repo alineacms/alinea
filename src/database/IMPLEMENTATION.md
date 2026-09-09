@@ -443,6 +443,17 @@ adapter and need the subsequent catch-up cutover. The real Next standalone
 fixture now calls this generated Graph opener rather than hand-written SQLite
 queries. Package declaration generation also required explicit named Graph/edge
 return types on query helpers, avoiding inferred leakage of an internal symbol.
+
+The live-replica bootstrap now accepts a packaged checkpoint directly. Initial
+reads and unchanged syncs use that file in place; the first real delta forks an
+exclusive working file, opportunistically cloning it before SQL reconciliation.
+Packaged-baseline cache reuse requires the exact release identity as well as the
+normal configuration/namespace/epoch checks, unlike dev restart reuse. Tests
+verify zero cold parsing/copy files, previews over the packaged path, one changed
+record parsed during catch-up, unchanged packaged bytes, same-release restart
+reuse, and isolation from another deployment's cached revision. The generated
+loader exposes `openReplica(config, directory)` for this path. Wiring that owner
+into Next's live request/preview lifecycle remains the next adapter step.
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

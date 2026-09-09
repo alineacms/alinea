@@ -40,6 +40,91 @@ async function fixture(title: string) {
   ])
 }
 
+test('packaged baselines open without copying or parsing and fork only for live deltas', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-packaged-replica-'))
+  const packaged = join(directory, 'release.sqlite')
+  const baseline = await fixture('Bundled')
+  const updated = await fixture('Live')
+  const builder = await NodeReplica.open(
+    {config, identity, directory: join(directory, 'builder')},
+    baseline.source
+  )
+  await builder.captureCheckpoint(packaged)
+  await builder.close()
+  const options = {config, identity, directory: join(directory, 'working')}
+  const parse = spyOn(VersionParser.prototype, 'parse')
+  let working: NodeReplica | undefined
+  try {
+    const before = await readFile(packaged)
+    working = await NodeReplica.open(options, {checkpoint: packaged})
+    expect(await working.first({id: 'a', select: Entry.title})).toBe('Bundled')
+    expect(parse).not.toHaveBeenCalled()
+    expect(await readdir(options.directory)).toEqual([])
+    expect(await working.sync(baseline.source)).toBe(false)
+    expect(parse).not.toHaveBeenCalled()
+    expect(await readdir(options.directory)).toEqual([])
+    const entry = await working.get({id: 'a', select: Entry})
+    expect(
+      await working.first({
+        id: 'a',
+        select: Entry.title,
+        preview: {
+          entry: {
+            ...entry,
+            fileHash: 'preview',
+            data: {...entry.data, title: 'Preview'}
+          }
+        }
+      })
+    ).toBe('Preview')
+    expect(await readdir(options.directory)).toEqual([])
+    parse.mockClear()
+    expect(await working.sync(updated.source)).toBe(true)
+    expect(parse).toHaveBeenCalledTimes(1)
+    expect(await working.first({id: 'a', select: Entry.title})).toBe('Live')
+    expect(await readFile(packaged)).toEqual(before)
+    const pointer = await readFile(
+      join(options.directory, 'current.json'),
+      'utf8'
+    )
+    await working.close()
+    working = await NodeReplica.open(options, {checkpoint: packaged})
+    expect(await working.first({id: 'a', select: Entry.title})).toBe('Live')
+    await expect(
+      NodeReplica.open(
+        {...options, identity: {...identity, releaseId: 'different'}},
+        {checkpoint: packaged}
+      )
+    ).rejects.toThrow('releaseId mismatch')
+    expect(
+      await readFile(join(options.directory, 'current.json'), 'utf8')
+    ).toBe(pointer)
+    const otherBuilder = await NodeReplica.open(
+      {
+        config,
+        identity: {...identity, releaseId: 'different'},
+        directory: join(directory, 'other-builder')
+      },
+      baseline.source
+    )
+    const otherPackage = join(directory, 'other-release.sqlite')
+    await otherBuilder.captureCheckpoint(otherPackage)
+    await otherBuilder.close()
+    await working.close()
+    working = await NodeReplica.open(
+      {...options, identity: {...identity, releaseId: 'different'}},
+      {checkpoint: otherPackage}
+    )
+    expect(await working.first({id: 'a', select: Entry.title})).toBe('Bundled')
+    expect(await readFile(packaged)).toEqual(before)
+  } finally {
+    parse.mockRestore()
+    await working?.close()
+    await builder.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
 test('Node mutation preparation cleans scratch files and preserves the published snapshot until source commit', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-node-mutation-'))
   const baseline = await fixture('Original')

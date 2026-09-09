@@ -38,7 +38,7 @@ import {nodeDatabase} from './NodeDatabase.js'
 import {NodeOverlay} from './NodeOverlay.js'
 
 interface Snapshot {
-  file: string
+  path: string
   identity: CheckpointIdentity
   revision: string
   runtime: EntryRuntime
@@ -99,7 +99,7 @@ export class NodeReplica extends Graph {
 
   static async open(
     options: NodeReplicaOptions,
-    source: RemoteSource
+    source: RemoteSource | {checkpoint: string}
   ): Promise<NodeReplica> {
     const replica = new NodeReplica(options)
     const {directory, identity: expected} = replica.#options
@@ -128,19 +128,28 @@ export class NodeReplica extends Graph {
           )
         )
           throw new Error('Invalid SQLite replica cache identity')
-        // A release is retained across dev restarts, but never across config,
-        // schema, namespace, project or source-history epoch changes.
+        // Dev restarts may retain a release. Packaged baselines additionally
+        // bind cache reuse to the deployment release, not just its schema/scope.
         if (
           identityKeys.every(
-            key => key === 'releaseId' || identity[key] === expected[key]
+            key =>
+              (!('checkpoint' in source) && key === 'releaseId') ||
+              identity[key] === expected[key]
           )
         )
           replica.#current = await replica.#openSnapshot(
-            pointer.file,
+            join(directory, pointer.file),
             identity as unknown as CheckpointIdentity
           )
       }
-      if (!replica.#current) await replica.sync(source)
+      if (!replica.#current) {
+        if ('checkpoint' in source)
+          replica.#current = await replica.#openSnapshot(
+            resolvePath(source.checkpoint),
+            expected
+          )
+        else await replica.sync(source)
+      }
       return replica
     } catch (error) {
       await replica.close()
@@ -155,10 +164,10 @@ export class NodeReplica extends Graph {
   }
 
   async #openSnapshot(
-    file: string,
+    path: string,
     identity: CheckpointIdentity
   ): Promise<Snapshot> {
-    const sqlite = new DatabaseSync(join(this.#options.directory, file), {
+    const sqlite = new DatabaseSync(path, {
       readOnly: true
     })
     try {
@@ -168,7 +177,7 @@ export class NodeReplica extends Graph {
         identity
       )
       return {
-        file,
+        path,
         identity,
         revision: descriptor.sourceSha,
         runtime,
@@ -204,7 +213,7 @@ export class NodeReplica extends Graph {
       )
       const overlay = await NodeOverlay.open(
         this.config,
-        join(this.#options.directory, snapshot.file),
+        snapshot.path,
         snapshot.identity,
         normalized.entries
       )
@@ -226,7 +235,7 @@ export class NodeReplica extends Graph {
   captureCheckpoint(destination: string): Promise<CheckpointCapture> {
     return this.#read(async snapshot => {
       await copyFile(
-        join(this.#options.directory, snapshot.file),
+        snapshot.path,
         destination,
         constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE
       )
@@ -293,11 +302,7 @@ export class NodeReplica extends Graph {
     const scratch = join(directory, `.mutation-${randomUUID()}.sqlite`)
     try {
       // Reflink where available; other filesystems fall back to a file copy.
-      await copyFile(
-        join(directory, snapshot.file),
-        scratch,
-        constants.COPYFILE_FICLONE
-      )
+      await copyFile(snapshot.path, scratch, constants.COPYFILE_FICLONE)
       if (this.#closed) throw new Error('SQLite replica is closed')
       const sqlite = new DatabaseSync(scratch)
       try {
@@ -337,7 +342,12 @@ export class NodeReplica extends Graph {
     const pointer = join(directory, `.pointer-${id}.json`)
     let next: Snapshot | undefined
     try {
-      if (previous) await copyFile(join(directory, previous.file), pending)
+      if (previous)
+        await copyFile(
+          previous.path,
+          pending,
+          constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE
+        )
       else await writeFile(pending, new Uint8Array(), {flag: 'wx', mode: 0o600})
       const sqlite = new DatabaseSync(pending)
       try {
@@ -359,7 +369,7 @@ export class NodeReplica extends Graph {
         sqlite.close()
       }
       await rename(pending, join(directory, file))
-      next = await this.#openSnapshot(file, identity)
+      next = await this.#openSnapshot(join(directory, file), identity)
       await writeFile(pointer, JSON.stringify({file, identity}))
       if (this.#closed) throw new Error('SQLite replica is closed')
       await rename(pointer, join(directory, 'current.json'))

@@ -110,8 +110,21 @@ export default withAlinea({output: 'standalone', distDir: 'custom-next', outputF
   )
   await writeFile(
     join(project, 'app/read.js'),
-    `import {openDatabase} from '@alinea/generated/database.js';
-export async function read() { const db = await openDatabase({schema: {}, workspaces: {}}); try { return await db.count({}) } finally { db.close() } }`
+    `import {openDatabase, openReplica} from '@alinea/generated/database.js';
+import {mkdtemp, readdir, rm} from 'node:fs/promises'; import {tmpdir} from 'node:os'; import {join} from 'node:path';
+export async function read() {
+  const config = {schema: {}, workspaces: {}};
+  const db = await openDatabase(config);
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-next-live-'));
+  let live;
+  try {
+    const count = await db.count({});
+    live = await openReplica(config, directory);
+    if (await live.count({}) !== count) throw new Error('Live baseline differs');
+    if ((await readdir(directory)).length) throw new Error('Cold baseline copied');
+    return count;
+  } finally { db.close(); await live?.close(); await rm(directory, {recursive: true, force: true}); }
+}`
   )
   await writeFile(
     join(project, 'app/page.js'),
