@@ -51,7 +51,8 @@ export const api = {
         delta.fromRevision === 'empty' ? undefined : delta.fromRevision,
       entries: delta.entries.map(row => ({
         ...row,
-        permissions: Permission.Explore | Permission.Read
+        permissions: Permission.Explore | Permission.Read,
+        fields: {title: Permission.Explore | Permission.Read}
       }))
     })
     await runtime.apply(delta)

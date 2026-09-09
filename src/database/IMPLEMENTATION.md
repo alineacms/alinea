@@ -64,6 +64,20 @@ decryption, cache-to-runtime recovery orchestration, and dashboard wiring remain
 The cache is not an authorization authority: open it only after authentication,
 and authenticate cached ciphertext against its descriptor before decoding it.
 
+`handler/Policy.ts` evaluates configured role functions against the trusted SQL
+Graph and exports structural authorized rows with effective entry/field action
+masks. Masks use `Policy.check`, including denials, rather than packed allow flags.
+No explore grant means no exported row; explore without read omits the payload
+identity. Policy fingerprints include denied/field rules in canonical order and
+use a domain-separated SHA-256 digest. Compound policy evaluation/index export
+retries if a runtime commit overlaps it, including content-dependent role queries.
+The index snapshot reads structural/manifests only, without hydration. Compiled
+field masks now survive IndexedDB restore (cache format 2); mutation enforcement
+must still reevaluate the policy independently on the handler. A whole-entry read
+grant with a denied field fails closed until view-specific filtered payloads exist.
+These are policy compilation building blocks, not yet production authorization
+endpoints or authenticated encrypted-frame delivery.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,

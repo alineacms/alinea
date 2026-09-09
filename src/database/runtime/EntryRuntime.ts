@@ -103,6 +103,45 @@ export class EntryRuntime extends Graph {
     })
   }
 
+  /** Retry a read-only compound operation if any local commit overlaps it. */
+  async readConsistent<T>(read: () => Promise<T>): Promise<T> {
+    for (;;) {
+      const generation = this.#generation
+      try {
+        const value = await read()
+        if (generation === this.#generation) return value
+      } catch (error) {
+        if (generation === this.#generation) throw error
+      }
+    }
+  }
+
+  /** Trusted index export: no payload hydration or source-tree materialization. */
+  indexSnapshot(): Promise<{
+    revision: string
+    entries: Array<EntryReplacement>
+  }> {
+    return this.#exclusive(async () => {
+      const revision = await this.#db
+        .select(Meta.revision)
+        .from(Meta)
+        .where(eq(Meta.id, 1))
+        .get()
+      if (revision == null) throw new Error('Missing replica revision')
+      const rows = await this.#db
+        .select({entry: EntryIndexTable, payloadId: Payload.payloadId})
+        .from(EntryIndexTable)
+        .leftJoin(Payload, eq(Payload.versionId, EntryIndexTable.versionId))
+      return {
+        revision,
+        entries: rows.map(({entry, payloadId}) => {
+          if (!entry) throw new Error('Missing indexed entry')
+          return {entry, payloadId: payloadId ?? undefined}
+        })
+      }
+    })
+  }
+
   static async createSchema(db: Database, revision: string): Promise<void> {
     await db.create(EntryIndexTable, EntryDataTable, Payload, Meta)
     await db.insert(Meta).values({id: 1, revision})

@@ -156,6 +156,11 @@ export interface Resource {
   locale?: string | null
 }
 
+export interface PolicyData {
+  root: number
+  entries: Array<[string, number]>
+}
+
 export class ACL extends Map<string, number> {
   root = Permission.None
   constructor(acl?: ACL) {
@@ -193,6 +198,11 @@ export class Policy {
 
   equals(that: Policy): boolean {
     return this.acl.equals(that.acl)
+  }
+
+  /** A detached policy snapshot for trusted-server fingerprints, not client grants. */
+  data(): PolicyData {
+    return {root: this.acl.root, entries: Array.from(this.acl)}
   }
 
   concat(that: Policy): Policy {
