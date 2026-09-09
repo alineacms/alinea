@@ -1,6 +1,8 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import {exportSource} from '#/core/source/SourceExport.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
+import {createId} from '#/core/Id.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
 import * as fsp from 'node:fs/promises'
@@ -10,6 +12,7 @@ import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
 import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {DevDB} from './generate/DevDB.js'
+import {exportDatabase} from './generate/ExportDatabase.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
 import {generateDashboard} from './generate/GenerateDashboard.js'
@@ -103,7 +106,18 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       join(context.outDir, 'source.js'),
       `export const source = ${data}`
     )
-    return data.length
+    const configId = await hashBlob(
+      await fsp.readFile(join(context.outDir, 'config.js'))
+    )
+    const size = await exportDatabase(db.config, db.source, context.outDir, {
+      configId,
+      namespace:
+        process.env.VERCEL_GIT_COMMIT_REF ??
+        process.env.CF_PAGES_BRANCH ??
+        'main',
+      releaseId: createId()
+    })
+    return size
   }
   for await (const cms of builds) {
     Config.handlerUrl(cms.config)

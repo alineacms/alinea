@@ -26,7 +26,18 @@ materialization, or normalization. Source-status identity is preserved separatel
 from effective inherited status; inactive authored versions remain in source
 storage even when Graph intentionally excludes them from its effective rows.
 The initial build currently reuses the existing normalizer; incremental normalized
-checkpoint updates and CLI/dev/NFT integration remain outstanding.
+checkpoint updates, production query cutover, and dev integration remain outstanding.
+
+Build generation now additionally writes a closed private `release.sqlite` and a
+module-relative `database.js` loader. Node can open the relocated artifact read-only,
+and the installed Next NFT tracer discovers the SQLite file from that loader.
+`withAlinea` merges exact artifact includes, supports route scoping, resolves hoisted
+symlinks, and preserves existing tracing mappings. Browser/edge package exports
+reject this private native artifact. The old source export remains temporarily
+until the query/backend cutover; it is not the intended final runtime path.
+Real Next standalone deployment and public/client-bundle exclusion tests still
+need to run. Configuration fingerprinting also needs the final normalizer/config
+dependency contract before dev-cache reuse is enabled.
 
 `entry/Schema.ts` and `query/` now define separate structural/data tables and
 compile basic entry queries into Rado SQL with stage-specific data dependencies.
@@ -65,6 +76,8 @@ Verification so far: thirty-two database tests and `bun lint` pass; the existing
 resolver's 41 tests also pass (73 combined).
 Including the existing rich-text field suite gives 84 passing tests.
 The latest repository TypeScript check also passes.
+The Next adapter and native artifact export checks add fourteen passing tests
+(98 in the expanded targeted suite).
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
 before implementing. Complete each gate before expanding the cutover. No
@@ -111,8 +124,7 @@ actual native driver and `@alinea/sqlite-wasm` package API, SQLite version,
 compile options, FTS support, initialization cost, and persistence options.
 No package upgrade or extension choice is implied by historical compatibility.
 
-`withAlinea` currently externalizes `@alinea/generated` but does not configure
-tracing includes. Merge exact generated artifact paths into
+`withAlinea` now externalizes `@alinea/generated` and merges exact generated artifact paths into
 `outputFileTracingIncludes`, preserving user mappings, configured `distDir`, and
 tracing root. Resolve actual generated package paths, including hoisted/symlinked
 monorepo installations. Native add-ons or WASM assets need their own verified

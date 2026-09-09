@@ -16,6 +16,12 @@ const packageJson = {
     './package.json': './package.json',
     './config.js': './config.js',
     './release.js': './release.js',
+    './database.js': {
+      'edge-light': './empty-database.js',
+      worker: './empty-database.js',
+      browser: './empty-database.js',
+      default: './database.js'
+    },
     './source.js': {
       'edge-light': './empty-source.js',
       default: './source.js'
@@ -39,6 +45,10 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.writeFile(
     path.join(outDir, 'empty-source.js'),
     `export const source = ${JSON.stringify(emptySource, null, 2)}`
+  )
+  await fs.writeFile(
+    path.join(outDir, 'empty-database.js'),
+    `throw new Error('The private SQLite checkpoint is only available in Node server runtimes')\n`
   )
   await fs.writeFile(
     path.join(outDir, 'source.js'),

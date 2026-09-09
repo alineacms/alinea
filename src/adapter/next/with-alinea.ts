@@ -2,6 +2,7 @@ import type {NextConfig} from 'next/dist/types.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
+import {databaseTracing} from './database-tracing.js'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
@@ -13,6 +14,8 @@ export interface WithAlineaOptions {
    * @default '/admin'
    */
   adminPath?: string
+  /** Node route globs that need the private database; defaults to all routes. */
+  databaseRoutes?: Array<string>
 }
 
 export function createCMS() {
@@ -21,7 +24,18 @@ export function createCMS() {
   )
 }
 
-export function withAlinea(config: NextConfig = {}): NextConfig {
+export function withAlinea(
+  config: NextConfig = {},
+  options: WithAlineaOptions = {}
+): NextConfig {
+  config = {
+    ...config,
+    outputFileTracingIncludes: databaseTracing(
+      config,
+      process.cwd(),
+      options.databaseRoutes
+    )
+  }
   const settings = resolveSettings(config)
   if (!settings) {
     console.warn(
