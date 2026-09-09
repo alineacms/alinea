@@ -10,6 +10,9 @@ import {
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from '../query/EntryQuery.js'
+import type {RelationSource} from '../query/Relation.js'
+
+const superseded = Symbol('superseded query')
 
 const Meta = table('alinea_replica_state', {
   id: column.integer().primaryKey(),
@@ -236,40 +239,91 @@ export class EntryRuntime {
   }
 
   async resolve(query: GraphQuery): Promise<unknown> {
-    const plan = compileEntryQuery(this.#config, query)
     for (;;) {
-      const generation = this.#generation
-      if (plan.membershipData) {
-        const candidates = await this.#exclusive(async () =>
-          plan.candidates.all(this.#db)
-        )
-        await this.#hydrate(candidates, generation)
+      try {
+        return await this.#resolve(query, this.#generation)
+      } catch (error) {
+        if (error !== superseded) throw error
       }
-      if (this.#generation !== generation) continue
-      if (plan.projectionData) {
-        const selected = await this.#exclusive(async () =>
-          plan.identities.all(this.#db)
-        )
-        await this.#hydrate(selected as Array<string>, generation)
-      }
-      const result = await this.#exclusive(async () => {
-        if (this.#generation !== generation) return {retry: true as const}
-        if (plan.count) {
-          const total = await this.#db
-            .select(count())
-            .from(plan.identities.as('matches'))
-            .get()
-          return {retry: false as const, value: total}
-        }
-        const rows = await plan.rows.all(this.#db)
-        if (query.get && !rows.length) throw new Error('Entry not found')
-        return {
-          retry: false as const,
-          value: plan.single ? (rows[0] ?? null) : rows
-        }
-      })
-      if (!result.retry) return result.value
     }
+  }
+
+  async #resolve(
+    query: GraphQuery,
+    generation: number,
+    source?: RelationSource
+  ): Promise<unknown> {
+    if (this.#generation !== generation) throw superseded
+    const plan = compileEntryQuery(this.#config, query, source)
+    if (plan.membershipData) {
+      const candidates = await this.#exclusive(async () =>
+        plan.candidates.all(this.#db)
+      )
+      await this.#hydrate(candidates, generation)
+    }
+    if (this.#generation !== generation) throw superseded
+    if (plan.projectionData) {
+      const selected = await this.#exclusive(async () =>
+        plan.identities.all(this.#db)
+      )
+      await this.#hydrate(selected as Array<string>, generation)
+    }
+    const result = await this.#exclusive(async () => {
+      if (this.#generation !== generation) throw superseded
+      if (plan.count) {
+        const total = await this.#db
+          .select(count())
+          .from(plan.identities.as('matches'))
+          .get()
+        return {count: total, rows: []}
+      }
+      const rows = await plan.rows.all(this.#db)
+      if (!source && query.get && !rows.length)
+        throw new Error('Entry not found')
+      return {count: undefined, rows}
+    })
+    if (plan.count) return result.count
+    const rows: Array<unknown> = []
+    for (const row of result.rows) {
+      if (!plan.relations.length) {
+        rows.push(row)
+        continue
+      }
+      const projected = row as {value: unknown; source: RelationSource}
+      let value = projected.value
+      for (const relation of plan.relations) {
+        const related = await this.#resolve(
+          {
+            ...relation.query,
+            status: query.status ?? 'published'
+          },
+          generation,
+          projected.source
+        )
+        if (!relation.path.length) value = related
+        else {
+          let target = value
+          for (const key of relation.path.slice(0, -1)) {
+            if (!isRecord(target))
+              throw new Error('Invalid relation projection path')
+            target = target[key]
+          }
+          if (!isRecord(target))
+            throw new Error('Invalid relation projection target')
+          Object.defineProperty(target, relation.path.at(-1)!, {
+            value: related,
+            enumerable: true,
+            configurable: true,
+            writable: true
+          })
+        }
+      }
+      rows.push(value)
+    }
+    if (this.#generation !== generation) throw superseded
+    // Graph's nested projection stage returns undefined for an absent single
+    // relation; only the public top-level first/get stage normalizes absence.
+    return plan.single ? (source ? rows[0] : (rows[0] ?? null)) : rows
   }
 
   /** Conservative commit invalidation includes rows outside the current result. */

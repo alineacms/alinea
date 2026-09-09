@@ -15,16 +15,23 @@ compile basic entry queries into Rado SQL with stage-specific data dependencies.
 Tests compare supported queries against the current resolver on the demo
 corpus, distinguish JSON primitive types and missing/null values, and verify an
 index-only query runs without a payload table. Grouping ranks matching identities
-before ordering/pagination and preserves JSON primitive distinctions. Relations, search,
+before ordering/pagination and preserves JSON primitive distinctions. Link relations, search,
 aliases, natural collation, and production integration remain.
 
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
 hydration before content filtering or after structural pagination, and conservative
 live-query invalidation. Superseded payload responses are discarded. This runtime
 is not yet wired into Graph, browser transport, permissions, or dashboard atoms.
+Structural relation projections (parents, children, siblings, neighboring entries,
+translations) now compile membership to SQL and resolve nested selections at one
+revision, retrying the whole projection if a delta arrives during hydration.
+Eleven nested-query cases agree with the existing Graph resolver on the demo
+corpus; separate tests cover locale boundaries and nested hydration races.
+Relation queries currently execute per selected source row; batched relation
+execution and link-field postprocessing remain necessary before production cutover.
 
-Verification so far: twenty database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (61 combined).
+Verification so far: twenty-three database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (64 combined).
 The repository type check reports missing `allotment` in
 `src/dashboard/app/SidebarLayout.tsx`; no database type errors were reported.
 

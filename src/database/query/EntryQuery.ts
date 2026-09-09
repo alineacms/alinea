@@ -2,7 +2,7 @@ import type {Config} from '#/core/Config.js'
 import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {EdgeQuery, GraphQuery} from '#/core/Graph.js'
 import {getExpr, hasExpr, hasRoot, hasWorkspace} from '#/core/Internal.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import type {Type} from '#/core/Type.js'
@@ -31,11 +31,23 @@ import {
   type QueryField
 } from './Condition.js'
 
+import {
+  relationCondition,
+  relationSource,
+  type RelationSource
+} from './Relation.js'
+
 const builder = new Builder()
+
+interface RelationProjection {
+  path: Array<string>
+  query: EdgeQuery
+}
 
 /** A compilation is scoped to a single SQL stage and records its payload needs. */
 class Expressions {
   dataRequired = false
+  relations: Array<RelationProjection> = []
   #scope: Scope
 
   constructor(scope: Scope) {
@@ -118,26 +130,37 @@ class Expressions {
     ]
   }
 
-  projection(value: unknown): SelectionInput {
+  projection(value: unknown, path: Array<string> = []): SelectionInput {
     if (isRecord(value) && hasExpr(value)) return this.expr(value as Expr, true)
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
-    if ('edge' in value)
-      throw new Error('SQL relation projections are not implemented yet')
+    if ('edge' in value) {
+      this.relations.push({path, query: value as unknown as EdgeQuery})
+      return sql.value(null)
+    }
     const result: SelectionRecord = {}
     for (const [key, nested] of Object.entries(value))
-      result[key] = this.projection(nested)
+      result[key] = this.projection(nested, [...path, key])
     return result
   }
 }
 
-export function compileEntryQuery(config: Config, query: GraphQuery) {
-  if (query.preview || query.search || query.alias || 'edge' in query)
+export function compileEntryQuery(
+  config: Config,
+  query: GraphQuery,
+  source?: RelationSource
+) {
+  if (query.preview || query.search || query.alias)
     throw new Error(
       'SQL preview, search, aliases and relations require their dedicated query stages'
     )
   const scope = getScope(config)
   const membership = new Expressions(scope)
   const structural: Array<Sql<boolean>> = []
+  const edge = 'edge' in query ? (query as EdgeQuery) : undefined
+  if (edge) {
+    if (!source) throw new Error('A relation query requires a source entry')
+    structural.push(relationCondition(edge, source))
+  }
   const status = query.status ?? 'published'
   structural.push(
     status === 'all'
@@ -160,7 +183,7 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
     if (value !== undefined)
       structural.push(compileCondition(membership.index(key), value))
   }
-  if (query.locale !== undefined)
+  if (query.locale !== undefined && edge?.edge !== 'translations')
     structural.push(
       compileCondition(
         membership.index('locale'),
@@ -215,7 +238,8 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
       // dialect capability; do not silently substitute locale collation here.
       ordering.push(asc(isNull(value)), order.asc ? asc(value) : desc(value))
     }
-  } else ordering.push(asc(EntryIndexTable.index))
+  } else if (edge?.edge === 'parents') ordering.push(asc(EntryIndexTable.level))
+  else ordering.push(asc(EntryIndexTable.index))
   ordering.push(
     asc(EntryIndexTable.index),
     asc(EntryIndexTable.ordinal),
@@ -285,7 +309,7 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
       // SQLite requires a LIMIT with OFFSET. This is also accepted by the
       // other drivers and covers every safely representable Graph row count.
       rows = rows.limit(Number.MAX_SAFE_INTEGER)
-    if (!query.count && (query.first || query.get)) rows = rows.limit(1)
+    if (!query.count && single) rows = rows.limit(1)
     return rows
   }
 
@@ -294,9 +318,18 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
     .select(EntryIndexTable.versionId)
     .from(EntryIndexTable)
     .where(and(...structural))
+  const single = Boolean(
+    query.first ||
+    query.get ||
+    edge?.edge === 'parent' ||
+    edge?.edge === 'next' ||
+    edge?.edge === 'previous'
+  )
   return {
     rows: selectRows(
-      selection,
+      projection.relations.length
+        ? {value: selection, source: relationSource}
+        : selection,
       membership.dataRequired || projection.dataRequired
     ),
     identities: selectRows(EntryIndexTable.versionId, membership.dataRequired),
@@ -304,6 +337,7 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
     membershipData: membership.dataRequired,
     projectionData: projection.dataRequired,
     count: query.count === true,
-    single: Boolean(query.first || query.get)
+    single,
+    relations: projection.relations
   }
 }

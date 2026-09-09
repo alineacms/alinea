@@ -3,6 +3,11 @@ import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
+import type {GraphQuery} from '#/core/Graph.js'
+import {EntryIndex} from '#/core/db/EntryIndex.js'
+import {EntryResolver} from '#/core/db/EntryResolver.js'
+import {FSSource} from '#/core/source/FSSource.js'
+import {cms} from '#test/cms.js'
 import {entryVersionId, type IndexedEntry} from '../entry/Schema.js'
 import {
   EntryRuntime,
@@ -11,6 +16,70 @@ import {
 } from './EntryRuntime.js'
 
 const config: Config = {schema: {}, workspaces: {}}
+
+test('nested structural relations agree with Graph on the demo corpus', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const index = new EntryIndex(cms.config)
+  await index.syncWith(new FSSource('test/fixtures/demo'))
+  const resolver = new EntryResolver(cms.config, index)
+  const runtime = new EntryRuntime(cms.config, db)
+  const entries: Array<EntryReplacement> = []
+  for (const entry of index.filter({}))
+    entries.push({
+      entry: {...entry, versionStatus: entry.status, ordinal: entries.length},
+      payloadId: entry.rowHash,
+      data: entry.data
+    })
+  await runtime.apply({fromRevision: 'empty', toRevision: 'r1', entries})
+  const cases: Array<GraphQuery> = [
+    {select: {id: Entry.id, children: {edge: 'children', select: Entry.id}}},
+    {
+      select: {
+        id: Entry.id,
+        children: {edge: 'children', depth: 3, select: Entry.id}
+      }
+    },
+    {select: {id: Entry.id, parents: {edge: 'parents', select: Entry.id}}},
+    {
+      select: {
+        id: Entry.id,
+        parents: {edge: 'parents', depth: 1, select: Entry.id}
+      }
+    },
+    {select: {id: Entry.id, siblings: {edge: 'siblings', select: Entry.id}}},
+    {
+      select: {
+        id: Entry.id,
+        siblings: {edge: 'siblings', includeSelf: true, select: Entry.id}
+      }
+    },
+    {
+      select: {
+        id: Entry.id,
+        translations: {
+          edge: 'translations',
+          includeSelf: true,
+          select: Entry.id
+        }
+      }
+    },
+    {select: {id: Entry.id, parent: {edge: 'parent', select: Entry.id}}},
+    {select: {id: Entry.id, next: {edge: 'next', select: Entry.id}}},
+    {select: {id: Entry.id, previous: {edge: 'previous', select: Entry.id}}},
+    {
+      select: {
+        children: {
+          edge: 'children',
+          select: {id: Entry.id, parents: {edge: 'parents', count: true}}
+        }
+      }
+    }
+  ]
+  for (const query of cases)
+    expect(await runtime.resolve(query)).toEqual(await resolver.resolve(query))
+})
 
 function replacement(id: string, title = id): EntryReplacement {
   const entry: IndexedEntry = {
@@ -176,6 +245,84 @@ test('a delta during hydration discards the old payload and retries the new revi
     }
   ])
   expect(await result).toEqual([{title: 'new'}])
+})
+
+test('nested hydration retries the entire projection after a delta', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const started = deferred<void>()
+  const pending = deferred<void>()
+  const loaded: Array<string> = []
+  const runtime = new EntryRuntime(config, db, {
+    async load(requests) {
+      loaded.push(...requests.map(request => request.payloadId))
+      started.resolve()
+      await pending.promise
+      return requests.map(request => ({...request, data: {child: true}}))
+    }
+  })
+  const child = replacement('child')
+  Object.assign(child.entry, {
+    parentId: 'parent',
+    parents: ['parent'],
+    level: 1
+  })
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: [replacement('parent', 'old'), child, replacement('unrelated')]
+  })
+  const result = runtime.resolve({
+    id: 'parent',
+    select: {
+      title: Entry.title,
+      nested: {children: {edge: 'children', select: Entry.data}}
+    }
+  })
+  await started.promise
+  await runtime.apply({
+    fromRevision: 'r1',
+    toRevision: 'r2',
+    entries: [replacement('parent', 'new')]
+  })
+  pending.resolve()
+  expect(await result).toEqual([
+    {title: 'new', nested: {children: [{child: true}]}}
+  ])
+  expect(loaded).toEqual(['child:child', 'child:child'])
+})
+
+test('relations preserve locale boundaries and translations include null locales', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const runtime = new EntryRuntime(config, db)
+  const entries: Array<EntryReplacement> = []
+  for (const locale of [null, 'en', 'nl']) {
+    const parent = replacement('parent')
+    const child = replacement('child')
+    Object.assign(parent.entry, {locale, ordinal: entries.length})
+    Object.assign(child.entry, {
+      locale,
+      ordinal: entries.length + 1,
+      parentId: 'parent',
+      parents: ['parent'],
+      level: 1
+    })
+    entries.push(parent, child)
+  }
+  await runtime.apply({fromRevision: 'empty', toRevision: 'r1', entries})
+  expect(
+    await runtime.resolve({
+      id: 'parent',
+      locale: 'en',
+      select: {
+        children: {edge: 'children', select: Entry.locale},
+        translations: {edge: 'translations', select: Entry.locale}
+      }
+    })
+  ).toEqual([{children: ['en'], translations: [null, 'nl']}])
 })
 
 test('a revoked in-flight payload failure retries the current revision', async () => {
