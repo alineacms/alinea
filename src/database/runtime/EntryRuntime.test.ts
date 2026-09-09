@@ -43,8 +43,17 @@ test('SQL entry-link queries agree with the existing Graph resolver', async () =
       type: 'Page',
       index: 'a',
       data: {
-        single: {_entry: 'a'},
-        many: [{_entry: 'b'}, {_entry: 'a'}, {_entry: 'b'}, {_entry: 'missing'}]
+        single: {
+          _type: 'entry',
+          _id: 'single',
+          _entry: 'a',
+          _suffix: '?view=full#part'
+        },
+        many: ['b', 'a', 'b', 'missing'].map((_entry, index) => ({
+          _type: 'entry',
+          _id: String(index),
+          _entry
+        }))
       }
     },
     {id: 'a', type: 'Page', index: 'b'},
@@ -63,6 +72,9 @@ test('SQL entry-link queries agree with the existing Graph resolver', async () =
     })
   await runtime.apply({fromRevision: 'empty', toRevision: 'r1', entries})
   const selections = [
+    Page.single,
+    Page.many,
+    {single: Page.single, many: Page.many},
     Page.single.first({select: Entry.id}),
     Page.many.find({select: Entry.id}),
     Page.many.find({select: Entry.id, skip: 1, take: 1}),

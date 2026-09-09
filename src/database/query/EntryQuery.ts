@@ -2,8 +2,15 @@ import type {Config} from '#/core/Config.js'
 import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
+import type {Field} from '#/core/Field.js'
 import type {EdgeQuery, GraphQuery} from '#/core/Graph.js'
-import {getExpr, hasExpr, hasRoot, hasWorkspace} from '#/core/Internal.js'
+import {
+  getExpr,
+  hasExpr,
+  hasField,
+  hasRoot,
+  hasWorkspace
+} from '#/core/Internal.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import type {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -14,9 +21,11 @@ import {
   desc,
   eq,
   exists,
+  inArray,
   isNull,
   or,
   sql,
+  when,
   type HasSql,
   type SelectionInput,
   type SelectionRecord,
@@ -45,10 +54,16 @@ interface RelationProjection {
   query: EdgeQuery
 }
 
+interface FieldProjection {
+  path: Array<string>
+  field: Field
+}
+
 /** A compilation is scoped to a single SQL stage and records its payload needs. */
 class Expressions {
   dataRequired = false
   relations: Array<RelationProjection> = []
+  fields: Array<FieldProjection> = []
   #scope: Scope
 
   constructor(scope: Scope) {
@@ -123,16 +138,23 @@ class Expressions {
     // Match Map's primitive keys: numbers share one type, null and missing do
     // not, and independently decoded objects/arrays are distinct identities.
     return [
-      sql`case when ${kind} in ('integer', 'real', 'number') then 'number'
-        when ${kind} in ('true', 'false', 'boolean') then 'boolean'
-        else ${kind} end`,
-      sql`case when ${kind} in ('object', 'array')
-        then ${EntryIndexTable.versionId} else ${field.value} end`
+      when<string | null>(
+        [inArray(kind, ['integer', 'real', 'number']), 'number'],
+        [inArray(kind, ['true', 'false', 'boolean']), 'boolean'],
+        kind
+      ),
+      when<unknown>(
+        [inArray(kind, ['object', 'array']), EntryIndexTable.versionId],
+        field.value
+      )
     ]
   }
 
   projection(value: unknown, path: Array<string> = []): SelectionInput {
-    if (isRecord(value) && hasExpr(value)) return this.expr(value as Expr, true)
+    if (isRecord(value) && hasExpr(value)) {
+      if (hasField(value)) this.fields.push({path, field: value as Field})
+      return this.expr(value as Expr, true)
+    }
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
     if ('edge' in value) {
       this.relations.push({path, query: value as unknown as EdgeQuery})
@@ -359,11 +381,16 @@ export function compileEntryQuery(
       membership.dataRequired || projection.dataRequired
     ),
     identities: selectRows(EntryIndexTable.versionId, membership.dataRequired),
+    contextRows: selectRows(
+      {value: selection, source: relationSource},
+      membership.dataRequired || projection.dataRequired
+    ),
     candidates,
     membershipData: membership.dataRequired,
     projectionData: projection.dataRequired,
     count: query.count === true,
     single,
-    relations: projection.relations
+    relations: projection.relations,
+    fields: projection.fields
   }
 }

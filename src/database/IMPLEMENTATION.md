@@ -28,14 +28,19 @@ revision, retrying the whole projection if a delta arrives during hydration.
 Eleven nested-query cases agree with the existing Graph resolver on the demo
 corpus; separate tests cover locale boundaries and nested hydration races.
 Relation queries currently execute per selected source row; batched relation
-execution and link-field postprocessing remain necessary before production cutover.
+execution remains necessary before production cutover.
 Explicit single/multiple entry-link relations now expand stored references to SQL
 rows, preserving authored order and duplicates, and hydrate source link data before
 resolving target membership. Nine link queries match the existing Graph resolver;
 lazy-loading tests verify unlocalized targets and selected-target-only hydration.
+Field postprocessors now depend on a backend-neutral link loader. SQL selections
+invoke the existing field query-value hooks at the same runtime revision; direct
+entry-link selections and URL suffixes match the existing resolver. Image/source
+metadata projections and broader field parity still need coverage.
 
 Verification so far: twenty-five database tests and `bun lint` pass; the existing
 resolver's 41 tests also pass (66 combined).
+Including the existing rich-text field suite gives 77 passing tests.
 The latest repository TypeScript check also passes.
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)

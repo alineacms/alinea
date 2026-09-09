@@ -5,6 +5,7 @@ import {
   Builder,
   desc,
   eq,
+  exists,
   gt,
   inArray,
   isNull,
@@ -13,6 +14,7 @@ import {
   ne,
   not,
   sql,
+  when,
   type Sql
 } from 'rado'
 import {EntryDataTable, EntryIndexTable as entry} from '../entry/Schema.js'
@@ -49,17 +51,24 @@ export function linkRelation(
     .from(EntryDataTable)
     .where(eq(EntryDataTable.versionId, source.versionId))
   const value = sql`(${payload})`
-  const array = sql.universal({
-    sqlite: multiple
-      ? sql`case when json_type(${value}) = 'array' then ${value} else '[]' end`
-      : sql`case when json_type(${value}) = 'object' then json_array(json(${value})) else '[]' end`,
-    postgres: multiple
-      ? sql`case when jsonb_typeof(${value}::jsonb) = 'array' then ${value}::jsonb else '[]'::jsonb end`
-      : sql`case when jsonb_typeof(${value}::jsonb) = 'object' then jsonb_build_array(${value}::jsonb) else '[]'::jsonb end`,
-    mysql: multiple
-      ? sql`case when json_type(${value}) = 'ARRAY' then ${value} else json_array() end`
-      : sql`case when json_type(${value}) = 'OBJECT' then json_array(${value}) else json_array() end`
+  const kind = sql.universal<string>({
+    sqlite: sql`json_type(${value})`,
+    postgres: sql`jsonb_typeof(${value}::jsonb)`,
+    mysql: sql`lower(json_type(${value}))`
   })
+  const asArray = sql.universal({
+    sqlite: multiple ? value : sql`json_array(json(${value}))`,
+    postgres: multiple
+      ? sql`${value}::jsonb`
+      : sql`jsonb_build_array(${value}::jsonb)`,
+    mysql: multiple ? value : sql`json_array(${value})`
+  })
+  const empty = sql.universal({
+    sqlite: sql.value('[]'),
+    postgres: sql`'[]'::jsonb`,
+    mysql: sql`json_array()`
+  })
+  const array = when([eq(kind, multiple ? 'array' : 'object'), asArray], empty)
   return {
     target: sql.universal({
       sqlite: sql`(select json_extract(value, '$._entry') as id, key as ordinal from json_each(${array}) where type = 'object') as alinea_link`,
@@ -111,7 +120,12 @@ export function relationCondition(
       if (depth <= 0) return sql.value(false)
       if (depth === 1) return and(eq(entry.parentId, source.id), locale)
       const ancestor = sql.universal<boolean>({
-        sqlite: sql`exists (select 1 from json_each(${entry.parents}) where value = ${source.id})`,
+        sqlite: exists(
+          new Builder()
+            .select(sql.value(1))
+            .from(sql`json_each(${entry.parents})`)
+            .where(eq(sql`value`, source.id))
+        ),
         postgres: sql`${entry.parents}::jsonb @> ${JSON.stringify([source.id])}::jsonb`,
         mysql: sql`json_contains(${entry.parents}, ${JSON.stringify(source.id)})`
       })

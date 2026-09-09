@@ -1,5 +1,7 @@
 import type {Config} from '#/core/Config.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {GraphQuery, Projection, InferProjection} from '#/core/Graph.js'
+import {Field} from '#/core/Field.js'
+import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database, eq, inArray, table} from 'rado'
 import * as column from 'rado/universal/columns'
@@ -48,6 +50,7 @@ export interface EntryDelta {
 }
 
 export interface RuntimeOptions {
+  includedAtBuild?(filePath: string): boolean
   load?(
     requests: ReadonlyArray<PayloadRequest>
   ): Promise<ReadonlyArray<LoadedPayload>>
@@ -285,7 +288,11 @@ export class EntryRuntime {
           .get()
         return {count: total, rows: []}
       }
-      const rows = await plan.rows.all(this.#db)
+      const rows = await (
+        plan.fields.length || plan.relations.length
+          ? plan.contextRows
+          : plan.rows
+      ).all(this.#db)
       if (!source && query.get && !rows.length)
         throw new Error('Entry not found')
       return {count: undefined, rows}
@@ -293,12 +300,60 @@ export class EntryRuntime {
     if (plan.count) return result.count
     const rows: Array<unknown> = []
     for (const row of result.rows) {
-      if (!plan.relations.length) {
+      if (!plan.relations.length && !plan.fields.length) {
         rows.push(row)
         continue
       }
       const projected = row as {value: unknown; source: RelationSource}
       let value = projected.value
+      const runtime = this
+      const loader: LinkResolver = {
+        resolver: {config: this.#config},
+        locale: projected.source.locale,
+        includedAtBuild(filePath) {
+          return runtime.#options.includedAtBuild?.(filePath) ?? false
+        },
+        async resolveLinks<P extends Projection>(
+          projection: P,
+          ids: ReadonlyArray<string>
+        ): Promise<Array<InferProjection<P>>> {
+          return (await runtime.#resolve(
+            {
+              select: projection,
+              id: {in: ids},
+              status: query.status ?? 'published',
+              preferredLocale: projected.source.locale ?? undefined
+            },
+            generation
+          )) as Array<InferProjection<P>>
+        }
+      }
+      for (const selected of plan.fields) {
+        if (!selected.path.length)
+          value = await Field.queryValue(selected.field, value, loader)
+        else {
+          let target = value
+          for (const key of selected.path.slice(0, -1)) {
+            if (!isRecord(target))
+              throw new Error('Invalid field projection path')
+            target = target[key]
+          }
+          if (!isRecord(target))
+            throw new Error('Invalid field projection target')
+          const key = selected.path.at(-1)!
+          const processed = await Field.queryValue(
+            selected.field,
+            target[key],
+            loader
+          )
+          Object.defineProperty(target, key, {
+            value: processed,
+            enumerable: true,
+            configurable: true,
+            writable: true
+          })
+        }
+      }
       for (const relation of plan.relations) {
         const related = await this.#resolve(
           {

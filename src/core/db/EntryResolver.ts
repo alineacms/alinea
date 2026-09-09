@@ -42,7 +42,7 @@ import {
   type EntryIndex,
   type EntryNode
 } from './EntryIndex.js'
-import {LinkResolver} from './LinkResolver.js'
+import {IndexedLinkResolver, type LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
 const andFilter = cito
@@ -430,7 +430,7 @@ export class EntryResolver implements Resolver {
       if (isSingle) {
         const entry = entries[0]
         if (results[0]) {
-          const linkResolver = new LinkResolver(this, ctx, entry.locale)
+          const linkResolver = new IndexedLinkResolver(this, ctx, entry.locale)
           return (await this.postRow({linkResolver}, results[0], asEdge)) as any
         }
         return results[0] as any
@@ -440,7 +440,7 @@ export class EntryResolver implements Resolver {
           results
             .map((result, index) => {
               if (!result) return
-              const linkResolver = new LinkResolver(
+              const linkResolver = new IndexedLinkResolver(
                 this,
                 ctx,
                 entries[index].locale
