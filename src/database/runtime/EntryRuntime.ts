@@ -61,6 +61,8 @@ export interface EntryDelta {
 }
 
 export interface RuntimeOptions {
+  /** Disable search when the backing view cannot provide a complete FTS index. */
+  search?: boolean
   includedAtBuild?(filePath: string): boolean | Promise<boolean>
   load?(
     requests: ReadonlyArray<PayloadRequest>
@@ -334,6 +336,8 @@ export class EntryRuntime extends Graph {
     generation: number,
     source?: RelationSource
   ): Promise<unknown> {
+    if (query.search && this.#options.search === false)
+      throw new Error('Search is not supported by this database view')
     if (this.#generation !== generation) throw superseded
     const link =
       'edge' in query &&

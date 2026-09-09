@@ -236,6 +236,19 @@ record without changing its content, and verifies a second fix leaves the source
 revision unchanged. Previews are now the only remaining dev operation that
 materializes the legacy JS index.
 
+`driver/NodeOverlay` now provides a request-local storage prototype: a fresh
+in-memory SQLite database attaches the immutable checkpoint read-only and uses
+TEMP views to merge complete changed versions with untouched base rows. A mask
+handles replacements and removals across index/data/payload tables. Nested Graph
+queries share the same view, and in-flight reads retain their connection across
+close. Tests interleave two overlays, query nested children and data predicates,
+check identity failures and conflicting masks, and verify the original file is
+byte-for-byte unchanged with no copy files or source reconstruction. This is not
+yet the public preview implementation: callers currently supply normalized rows,
+and search explicitly rejects because base/overlay FTS ranking and snippets still
+need a complete strategy. Preview input normalization, payload patches and dev
+routing remain required before removing the legacy preview path.
+
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
 collection operations. Numeric array offsets are rejected; collection operations
