@@ -100,6 +100,21 @@ reuse without network. This is not yet the production transport: handler grant
 issuance, view-filtered payload generation, bundle/range manifests and coalescing,
 and full browser boot/sync integration are still required.
 
+`replica/Transport.ts` now packs bounded ciphertext bundles and resolves scoped
+frame locations through exact HTTP byte ranges. The reader checks status,
+Content-Range bounds, declared/actual lengths, transfer encoding, and streaming
+byte limits; malformed/oversized bodies are cancelled. Public ciphertext requests
+omit credentials and reject redirects. An explicit bounded 200-response fallback
+supports hosts without Range; it is disabled by default. The default fetch is
+bound to the global receiver, as required in actual browser workers.
+The Chromium fixture now generates encrypted frames outside the browser, serves
+test grants and a range endpoint, and drives the real PayloadLoader/SQL worker.
+It verifies exactly one frame range is requested, no unrelated payload is fetched,
+and after terminating/restarting the worker a new grant plus persisted ciphertext
+can hydrate the field without another bundle request. This is a controlled test
+grant endpoint, not production authentication. Nearby-range coalescing, generated
+bundle publication, handler issuance and full live transport remain outstanding.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,

@@ -61,6 +61,10 @@ function additionalData(frame: FrameDescriptor): Uint8Array<ArrayBuffer> {
   )
 }
 
+export function frameIdentityKey(identity: FrameIdentity): string {
+  return JSON.stringify(identityData(identity))
+}
+
 function size(value: number, maximum: number): void {
   if (
     !Number.isSafeInteger(maximum) ||

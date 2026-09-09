@@ -155,7 +155,7 @@ export async function run() {
       ])
       check(await reopened.loads(), [])
       check(await restored.find({id: 'a', select: Page.title}), ['Payload a'])
-      check(await reopened.loads(), ['a'])
+      check(await reopened.loads(), [])
       await restored.close()
     } finally {
       reopened[releaseProxy]()

@@ -1,6 +1,18 @@
 import {type} from '#/core/Type.js'
 import {text} from '#/field/text/TextField.js'
 import type {IndexedEntry} from '#/database/entry/Schema.js'
+import type {ReplicaIdentity} from '#/database/browser/ReplicaCache.js'
+
+export const replicaIdentity: ReplicaIdentity = {
+  project: 'browser-fixture',
+  namespace: 'main',
+  epoch: 'epoch',
+  schemaId: 'schema',
+  configId: 'config',
+  principal: 'fixture-user',
+  viewId: 'view',
+  releaseId: 'release'
+}
 
 export const Page = type('Page', {fields: {title: text('Title')}})
 export const config = {schema: {Page}, workspaces: {}}
