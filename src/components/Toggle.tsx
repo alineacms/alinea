@@ -10,7 +10,7 @@ import css from './Toggle.module.css'
 const styles = styler(css)
 
 export interface ToggleButtonGroupProps extends ToggleButtonGroupPrimitiveProps {
-  variant?: 'compact' | 'enclosed'
+  variant?: 'compact' | 'enclosed' | 'icon-small'
 }
 
 export function ToggleButtonGroup({

@@ -5,7 +5,7 @@ test('applies and persists the selected theme', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
   await app.openProfile()
-  await app.page.getByRole('button', {name: 'Use dark theme'}).click()
+  await app.page.getByRole('radio', {name: 'Use dark theme'}).click()
   await expect(app.page.locator('html')).toHaveAttribute('data-theme', 'dark')
   await expect
     .poll(() =>
@@ -13,6 +13,6 @@ test('applies and persists the selected theme', async ({dashboard, mount}) => {
     )
     .toBe('"dark"')
 
-  await app.page.getByRole('button', {name: 'Use system theme'}).click()
+  await app.page.getByRole('radio', {name: 'Use system theme'}).click()
   await expect(app.page.locator('html')).not.toHaveAttribute('data-theme')
 })

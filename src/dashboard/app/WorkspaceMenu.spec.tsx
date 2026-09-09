@@ -1,8 +1,18 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
   GlobalSearchStory,
-  LocalizedGlobalSearchStory
+  LocalizedGlobalSearchStory,
+  SingleWorkspaceAvatarStory
 } from './WorkspaceMenu.stories.js'
+
+test('single workspace avatar is not interactive', async ({mount, page}) => {
+  await mount(<SingleWorkspaceAvatarStory />)
+
+  await expect(
+    page.getByRole('button', {name: 'Back to workspaces'})
+  ).toHaveCount(0)
+  await expect(page.getByLabel('Simple')).toBeVisible()
+})
 
 test('global search starts in the current workspace and can expand to everything', async ({
   mount,

@@ -194,6 +194,14 @@ export function validateId(id: string): boolean {
   }
 }
 
+export function timestampFromId(id: string): number | undefined {
+  try {
+    return parse(id).ts.getTime()
+  } catch {
+    return undefined
+  }
+}
+
 export function createId() {
   return generate()
 }

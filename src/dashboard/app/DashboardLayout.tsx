@@ -37,7 +37,11 @@ export function DashboardLayout({
     <DashboardScope value={{page, root, workspace}}>
       <AppShell>
         <AppShellInner>
-          <WorkspaceRoots canManageMembers={canManageMembers} page={page} />
+          <WorkspaceRoots
+            canManageMembers={canManageMembers}
+            page={page}
+            root={root}
+          />
           <AppShellContent>
             <SidebarLayout
               side="left"

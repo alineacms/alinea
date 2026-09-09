@@ -25,12 +25,13 @@ import {DashboardLayout} from './app/DashboardLayout.js'
 import {DashboardMeta} from './app/DashboardMeta.js'
 import {DashboardErrorBoundary} from './app/DashboardErrorBoundary.js'
 import {entryPage} from './app/pages/EntryPage.js'
+import {splashPage} from './app/pages/SplashPage.js'
 import {MissingRoot, rootPage} from './app/pages/RootPage.js'
 import {usersPage} from './app/pages/UsersPage.js'
 import {Rail} from './app/ui/Rail.js'
 import {activityAtom, activityPendingAtom} from './atoms/activity.js'
 import {authAtom} from './atoms/auth.js'
-import {workspaceAtom} from './atoms/config.js'
+import {workspaceAtom, workspacesAtom} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
 import {pageAtom, type Page} from './atoms/nav.js'
@@ -68,10 +69,11 @@ const authenticatedAtom = atom(async get => {
   const page = get(pageAtom)
   const {entry, workspace, root} = page
   const workspaceData = workspace ? get(workspaceAtom(workspace)) : undefined
-  const meta = (label: string): ReactNode => (
+  const meta = (label: string, plain = false): ReactNode => (
     <DashboardMeta
-      color={workspaceData?.color ?? '#7c3aed'}
+      color={plain ? '#6b7280' : (workspaceData?.color ?? '#7c3aed')}
       icon={workspaceData?.icon}
+      plain={plain}
       title={dashboardTitle(workspaceData?.label ?? 'Alinea', label)}
     />
   )
@@ -90,6 +92,23 @@ const authenticatedAtom = atom(async get => {
       <>
         {meta('Users')}
         {content}
+      </>
+    )
+  }
+
+  if (page.type === 'splash') {
+    if (get(workspacesAtom).length === 0) {
+      return (
+        <>
+          {meta('No workspace access')}
+          <AccessDenied canManageMembers={canManageMembers} scope="workspace" />
+        </>
+      )
+    }
+    return (
+      <>
+        {meta('Workspaces', true)}
+        {await splashPage(get)}
       </>
     )
   }

@@ -14,14 +14,21 @@
   flex-shrink: 0;
 }
 
+.WorkspaceMenu-avatar-large {
+  width: 32px;
+  height: 32px;
+}
+
 .WorkspaceMenu-avatar-logo {
   width: 100%;
   height: 100%;
 }
 
 .WorkspaceMenu-avatarTrigger {
+  display: flex;
   width: 32px;
   height: 32px;
+  align-items: center;
   padding: 0;
   justify-content: center;
 }
