@@ -35,8 +35,15 @@ and the installed Next NFT tracer discovers the SQLite file from that loader.
 symlinks, and preserves existing tracing mappings. Browser/edge package exports
 reject this private native artifact. The old source export remains temporarily
 until the query/backend cutover; it is not the intended final runtime path.
-Real Next standalone deployment and public/client-bundle exclusion tests still
-need to run. Configuration fingerprinting also needs the final normalizer/config
+`bun test/sqlite-next.ts` and its `--turbopack` variant build a real Next 16 fixture
+with a custom distDir, trace both an RSC page and a Node route, and run the relocated
+standalone output after deleting the fixture source. Both query the bundled SQLite
+file successfully. The fixture also verifies that an unrelated route does not
+receive the database and that private test data/SQLite files are absent from static
+client assets. Relocation must preserve relative symlinks (including Turbopack's
+external-package aliases). These checks exercise the native artifact path, not yet
+the production CMS adapter or Cloudflare runtime.
+Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 
 `entry/Schema.ts` and `query/` now define separate structural/data tables and
@@ -78,6 +85,8 @@ Including the existing rich-text field suite gives 84 passing tests.
 The latest repository TypeScript check also passes.
 The Next adapter and native artifact export checks add fourteen passing tests
 (98 in the expanded targeted suite).
+The explicit standalone integration fixture passes with Next 16.2.10 under both
+webpack and Turbopack; it requires permission to bind a temporary localhost port.
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
 before implementing. Complete each gate before expanding the cutover. No
