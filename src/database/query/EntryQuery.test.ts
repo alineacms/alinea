@@ -19,6 +19,7 @@ import {EntryResolver} from '#/core/db/EntryResolver.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
 import {DemoRecipe} from '#test/schema/DemoRecipe.js'
+import {aliasesFromData} from '#/core/db/EntryAliases.js'
 
 const Page = type('Page', {fields: {title: text('Title')}})
 const config: Config = {schema: {Page}, workspaces: {}}
@@ -231,4 +232,86 @@ test('SQL grouping preserves primitive types and picks representatives before so
   expect(() => compileEntryQuery(config, {groupBy: [Page.title]})).toThrow(
     'groupBy must be a single field'
   )
+})
+
+test('SQL alias projections combine both locations and alias filters ignore non-URL rows', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable, EntryDataTable)
+  const data = [
+    {},
+    {aliases: []},
+    {metadata: {aliases: [{url: '/old'}, null]}},
+    {
+      aliases: ['legacy', {url: ' /spaced '}, false],
+      metadata: {aliases: [{url: '/nested'}, {url: 12}]}
+    },
+    {aliases: null, metadata: {aliases: 'not an array'}}
+  ]
+  for (const [index, payload] of data.entries()) {
+    const row = entryIndexRow(entry(String(index)))
+    await db.insert(EntryIndexTable).values(row)
+    await db.insert(EntryDataTable).values({
+      versionId: row.versionId,
+      payloadId: String(index),
+      data: payload
+    })
+  }
+  expect(
+    await compileEntryQuery(config, {select: Entry.aliases}).rows.all(db)
+  ).toEqual(data.map(aliasesFromData))
+  for (const [alias, expected] of [
+    ['/old', ['2']],
+    ['/nested', ['3']],
+    ['/spaced', []],
+    [' /spaced ', ['3']],
+    ['', []]
+  ] as const)
+    expect(
+      await compileEntryQuery(config, {alias, select: Entry.id}).rows.all(db)
+    ).toEqual([...expected])
+  expect(
+    await compileEntryQuery(config, {
+      alias: {isNot: '/old'},
+      select: Entry.id
+    }).rows.all(db)
+  ).toEqual(['3'])
+  expect(
+    await compileEntryQuery(config, {
+      alias: {startsWith: '/n'},
+      select: Entry.id
+    }).rows.all(db)
+  ).toEqual(['3'])
+})
+
+test('page locations use the physical source root and remain index-only', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  await db.insert(EntryIndexTable).values([
+    entryIndexRow(entry('parent', {path: 'different-slug'})),
+    entryIndexRow({
+      ...entry('child', {level: 1, parentId: 'parent', parents: ['parent']}),
+      parentDir: 'pages/physical'
+    }),
+    entryIndexRow({
+      ...entry('grand', {
+        level: 2,
+        parentId: 'child',
+        parents: ['parent', 'child']
+      }),
+      parentDir: 'pages/physical/child'
+    })
+  ])
+  const query = (location: Array<string>) =>
+    compileEntryQuery(config, {location, select: Entry.id}).rows.all(db)
+  expect(await query(['main', 'pages', 'physical'])).toEqual(['child', 'grand'])
+  expect(await query(['main', 'pages', 'different-slug'])).toEqual([])
+  expect(await query(['main', 'pages', ''])).toEqual([])
+  expect(await query(['', 'pages'])).toEqual([])
+  expect(await query(['ignored', 'four', 'part', 'location'])).toEqual([
+    'child',
+    'grand',
+    'parent'
+  ])
 })

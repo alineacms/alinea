@@ -4,7 +4,7 @@ import * as column from 'rado/universal/columns'
 import {SqlSource} from '../source/SqlSource.js'
 import {EntryRuntime} from './EntryRuntime.js'
 
-export const checkpointFormat = 1
+export const checkpointFormat = 2
 export const CheckpointTable = table('alinea_checkpoint', {
   id: column.integer().primaryKey(),
   format: column.integer().notNull(),

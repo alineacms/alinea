@@ -427,6 +427,38 @@ test('data predicates hydrate candidates before limiting and do not confuse miss
   expect(await runtime.resolve({updatedAt: null, count: true})).toBe(0)
 })
 
+test('alias membership hydrates structural candidates before pagination', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const loaded: Array<string> = []
+  const runtime = new EntryRuntime(config, db, {
+    async load(requests) {
+      loaded.push(...requests.map(request => request.payloadId))
+      return requests.map(request => ({
+        ...request,
+        data: {
+          aliases: [{url: request.payloadId === 'b:b' ? '/target' : '/other'}],
+          metadata: {aliases: [{url: '/shared'}]}
+        }
+      }))
+    }
+  })
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: ['a', 'b', 'c'].map(id => replacement(id))
+  })
+  expect(
+    await runtime.find({alias: '/target', select: Entry.id, take: 1})
+  ).toEqual(['b'])
+  expect(loaded.sort()).toEqual(['a:a', 'b:b', 'c:c'])
+  expect(await runtime.find({alias: '/target', select: Entry.aliases})).toEqual(
+    [[{url: '/target'}, {url: '/shared'}]]
+  )
+  expect(loaded).toHaveLength(3)
+})
+
 test('grouped counts hydrate membership and paginate groups rather than rows', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)

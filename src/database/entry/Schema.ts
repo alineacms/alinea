@@ -29,6 +29,7 @@ export const EntryIndexTable = table(
     title: column.text().notNull(),
     workspace: column.varchar(undefined, {length: 255}).notNull(),
     root: column.varchar(undefined, {length: 255}).notNull(),
+    sourceRoot: column.varchar(undefined, {length: 255}),
     parentId: column.varchar(undefined, {length: 128}),
     parents: column.json<Array<string>>().notNull(),
     level: column.integer().notNull(),
@@ -87,9 +88,13 @@ export interface IndexedEntry extends Omit<
   versionStatus: EntryStatus
   /** Stable source insertion order for equal fractional positions. */
   ordinal?: number
+  /** First source-directory segment below the content root (not the URL slug). */
+  sourceRoot?: string | null
 }
 
-export function entryIndexRow(entry: IndexedEntry) {
+export function entryIndexRow(
+  entry: IndexedEntry & Partial<Pick<Entry, 'parentDir'>>
+) {
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
     id: entry.id,
@@ -100,6 +105,9 @@ export function entryIndexRow(entry: IndexedEntry) {
     title: entry.title,
     workspace: entry.workspace,
     root: entry.root,
+    sourceRoot:
+      entry.sourceRoot ??
+      (entry.level > 0 ? entry.parentDir?.split('/').at(-entry.level) : null),
     parentId: entry.parentId,
     parents: entry.parents,
     level: entry.level,

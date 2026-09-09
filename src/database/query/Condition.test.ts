@@ -61,3 +61,29 @@ test('nested predicates and literal prefixes compile to parameterized SQL', asyn
   expect(await query({title: "'; drop table documents; --"})).toEqual([3])
   expect(await query({})).toEqual([1, 2, 3])
 })
+
+test('nested SQL includes uses independent array scopes and rejects scalar containers', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(Documents)
+  await db.insert(Documents).values([
+    {id: 1, data: {items: [{url: '/one', children: [{title: 'match'}]}]}},
+    {id: 2, data: {items: [{url: '/two', children: [{title: 'miss'}]}]}},
+    {id: 3, data: {items: 'not json'}},
+    {id: 4, data: {items: [null, 'plain', 1, false]}}
+  ])
+  const query = (filter: unknown) =>
+    db
+      .select(Documents.id)
+      .from(Documents)
+      .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
+      .orderBy(Documents.id)
+  expect(
+    await query({items: {includes: {children: {includes: {title: 'match'}}}}})
+  ).toEqual([1])
+  expect(await query({items: {includes: {url: {startsWith: '/t'}}}})).toEqual([
+    2
+  ])
+  expect(await query({items: {includes: {}}})).toEqual([1, 2, 4])
+  expect(await query({items: {includes: {url: null}}})).toEqual([])
+})

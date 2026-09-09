@@ -1,15 +1,19 @@
 import {isRecord} from '#/core/util/Objects.js'
 import {
   and,
+  Builder,
   eq,
+  exists,
   gt,
   gte,
   isNull,
+  inArray,
   lt,
   lte,
   not,
   or,
   sql,
+  when,
   type HasSql,
   type Sql
 } from 'rado'
@@ -93,7 +97,8 @@ function truth(condition: HasSql<boolean>): Sql<boolean> {
 
 export function compileCondition(
   field: QueryField,
-  condition: unknown
+  condition: unknown,
+  depth = 0
 ): Sql<boolean> {
   if (condition === undefined) return sql.value(true)
   if (!isRecord(condition)) return equals(field, condition)
@@ -133,20 +138,37 @@ export function compileCondition(
         const values = Array.isArray(value) ? value : [value]
         clauses.push(
           values.length
-            ? or(...values.map(item => compileCondition(field, item)))
+            ? or(...values.map(item => compileCondition(field, item, depth)))
             : sql.value(false)
         )
         break
       }
       case 'has':
-        clauses.push(compileFilter(value, name => field.child(name)))
+        clauses.push(compileFilter(value, name => field.child(name), depth))
+        break
+      case 'includes':
+        clauses.push(
+          arrayIncludes(
+            field,
+            item => compileFilter(value, name => item.child(name), depth + 1),
+            depth
+          )
+        )
         break
       case 'startsWith': {
         if (typeof value !== 'string')
           throw new Error('startsWith requires a string')
+        if (value === '') break
         // Unlike LIKE, percent and underscore are literal characters here.
         clauses.push(
-          truth(sql`substr(${field.value}, 1, ${[...value].length}) = ${value}`)
+          and(
+            field.jsonType
+              ? inArray(field.jsonType, ['text', 'string'])
+              : sql.value(true),
+            truth(
+              sql`substr(${field.value}, 1, ${[...value].length}) = ${value}`
+            )
+          )
         )
         break
       }
@@ -159,7 +181,8 @@ export function compileCondition(
 
 export function compileFilter(
   filter: unknown,
-  field: (name: string) => QueryField
+  field: (name: string) => QueryField,
+  depth = 0
 ): Sql<boolean> {
   if (!isRecord(filter)) throw new Error('A query filter must be an object')
   const keys = Object.keys(filter)
@@ -169,12 +192,44 @@ export function compileFilter(
     if (!Array.isArray(values)) throw new Error(`${operator} requires an array`)
     const clauses = values
       .filter(value => value !== undefined)
-      .map(value => compileFilter(value, field))
+      .map(value => compileFilter(value, field, depth))
     if (!clauses.length) return sql.value(operator === 'and')
     return operator === 'and' ? and(...clauses) : or(...clauses)
   }
   const clauses = Object.entries(filter)
     .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => compileCondition(field(name), value))
+    .map(([name, value]) => compileCondition(field(name), value, depth))
   return clauses.length ? and(...clauses) : sql.value(true)
+}
+
+export function arrayIncludes(
+  field: QueryField,
+  predicate: (item: QueryField) => Sql<boolean>,
+  depth = 0
+): Sql<boolean> {
+  const alias = sql.identifier(`alinea_item_${depth}`)
+  const array = when(
+    [eq(field.jsonType ?? sql.value(null), 'array'), field.value],
+    '[]'
+  )
+  const target = sql.universal({
+    sqlite: sql`json_each(${array}) as ${alias}`,
+    postgres: sql`jsonb_array_elements((${array})::jsonb) as ${alias}(value)`,
+    mysql: sql`json_table(${array}, '$[*]' columns (value json path '$')) as ${alias}`
+  })
+  const value = sql.universal({
+    // json_each exposes scalar strings as SQL text, which is not valid JSON.
+    sqlite: when(
+      [inArray(sql`${alias}.type`, ['object', 'array']), sql`${alias}.value`],
+      '{}'
+    ),
+    postgres: sql`${alias}.value`,
+    mysql: sql`${alias}.value`
+  })
+  return exists(
+    new Builder()
+      .select(sql.value(1))
+      .from(target)
+      .where(predicate(jsonField(value)))
+  )
 }

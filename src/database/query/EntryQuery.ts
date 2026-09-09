@@ -34,11 +34,13 @@ import {
 import {EntryDataTable, EntryIndexTable, sourceFields} from '../entry/Schema.js'
 import {
   columnField,
+  arrayIncludes,
   compileCondition,
   compileFilter,
   jsonField,
   type QueryField
 } from './Condition.js'
+import {aliasesField} from './Aliases.js'
 
 import {
   linkRelation,
@@ -76,6 +78,10 @@ class Expressions {
   }
 
   index(name: string, path?: Array<string>): QueryField {
+    if (name === 'aliases') {
+      this.dataRequired = true
+      return aliasesField(EntryDataTable.data)
+    }
     if (path) return this.data([...path, name])
     if (sourceFields.some(field => field === name)) {
       this.dataRequired = true
@@ -176,9 +182,9 @@ export function compileEntryQuery(
   query: GraphQuery,
   source?: RelationSource
 ) {
-  if (query.preview || query.search || query.alias)
+  if (query.preview || query.search)
     throw new Error(
-      'SQL preview, search, aliases and relations require their dedicated query stages'
+      'SQL preview and search require their dedicated query stages'
     )
   const scope = getScope(config)
   const membership = new Expressions(scope)
@@ -242,13 +248,24 @@ export function compileEntryQuery(
   const location = Array.isArray(query.location)
     ? query.location
     : query.location && scope.locationOf(query.location)
-  if (location) {
-    if (location.length > 2)
-      throw new Error('SQL page locations require a hierarchy query stage')
-    if (location[0]) structural.push(eq(EntryIndexTable.workspace, location[0]))
-    if (location[1]) structural.push(eq(EntryIndexTable.root, location[1]))
+  if (location && location.length >= 1 && location.length <= 3) {
+    structural.push(eq(EntryIndexTable.workspace, location[0]))
+    if (location.length >= 2)
+      structural.push(eq(EntryIndexTable.root, location[1]))
+    if (location.length === 3)
+      structural.push(eq(EntryIndexTable.sourceRoot, location[2]))
   }
   const content: Array<Sql<boolean>> = []
+  if (query.alias !== undefined)
+    content.push(
+      arrayIncludes(membership.index('aliases'), item => {
+        const url = item.child('url')
+        return and(
+          inArray(url.jsonType!, ['text', 'string']),
+          compileCondition(url, query.alias)
+        )
+      })
+    )
   for (const key of ['createdAt', 'updatedAt'] as const)
     if (query[key] !== undefined)
       content.push(compileCondition(membership.index(key), query[key]))

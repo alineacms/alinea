@@ -51,8 +51,12 @@ compile basic entry queries into Rado SQL with stage-specific data dependencies.
 Tests compare supported queries against the current resolver on the demo
 corpus, distinguish JSON primitive types and missing/null values, and verify an
 index-only query runs without a payload table. Grouping ranks matching identities
-before ordering/pagination and preserves JSON primitive distinctions. Search,
-aliases, natural collation, and production integration remain.
+before ordering/pagination and preserves JSON primitive distinctions. Alias
+projections merge both storage locations, URL alias predicates ignore malformed
+rows, and nested array `includes` compiles to scoped SQL existence checks. Page
+locations use a resident source-root segment rather than the URL slug. The
+checkpoint format is now 2 for that structural schema addition. Search,
+natural collation, and production integration remain.
 
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
 hydration before content filtering or after structural pagination, and conservative
@@ -79,12 +83,12 @@ projections match the demo resolver; an image test verifies localized alt fallba
 preview/build URL selection, and lazy metadata hydration. Broader field parity
 still needs coverage.
 
-Verification so far: thirty-two database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (73 combined).
-Including the existing rich-text field suite gives 84 passing tests.
+Verification so far: thirty-six database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (77 combined).
+Including the existing rich-text field suite gives 88 passing tests.
 The latest repository TypeScript check also passes.
 The Next adapter and native artifact export checks add fourteen passing tests
-(98 in the expanded targeted suite).
+(102 in the expanded targeted suite).
 The explicit standalone integration fixture passes with Next 16.2.10 under both
 webpack and Turbopack; it requires permission to bind a temporary localhost port.
 
