@@ -25,11 +25,26 @@ columns before SQLite advances the statement: this package returns borrowed WASM
 memory, and an unadapted batched read demonstrably overwrites earlier blob results.
 SQL.js types are pinned to the implemented API (newer types require `updateHook`).
 The installed binary reports SQLite 3.46.1 and a direct FTS5 create/insert/search
-probe succeeds. These tests currently run WASM under Bun, not a browser worker.
+probe succeeds. Driver unit tests run WASM under Bun; the browser check below
+also exercises the binary in Chromium.
 The optional input is a complete database copy into WASM memory, not page-lazy
 file access; it must never be used to ship private server checkpoints to clients.
 Permission-scoped replica transport, browser persistence, worker integration,
 and vector extension capabilities remain separate gates.
+
+`browser/QueryWorker.ts` and `browser/WorkerGraph.ts` now provide a per-port
+Comlink query bridge using the existing config-scoped Graph serialization.
+Subscriptions return explicit async cleanup; closing a client suppresses late
+results, rejects pending hydration reads, and releases observers without closing
+other clients' ports. The worker owner still owns the runtime/connection lifecycle.
+`bun test/sqlite-browser.ts` bundles and runs the actual WASM runtime in a Chromium
+module worker: structural queries fetch no payloads, field projections lazily load
+and reuse data, live updates cross the port, unsubscribe stops delivery, errors
+survive serialization, and closed clients reject new queries. The endpoint is
+exposed before asynchronous initialization, with methods awaiting readiness, to
+avoid dropping early worker messages. This is not yet the dashboard cutover:
+permission-scoped transport/persistence and the writable runtime must be connected
+before replacing the existing worker and its Graph mutation API.
 
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
