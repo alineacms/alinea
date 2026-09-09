@@ -353,6 +353,18 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
     await db.close()
     await expect(db.find({select: Entry.id})).rejects.toThrow('closed')
     const restarted = new DevDB(options)
+    const restartedIndex = spyOn(
+      restarted.index,
+      'syncWith'
+    ).mockImplementation(() => {
+      throw new Error('Unexpected JS indexing after restart')
+    })
+    const restartedResolver = spyOn(
+      EntryResolver.prototype,
+      'resolve'
+    ).mockImplementation(() => {
+      throw new Error('Unexpected JS preview resolver')
+    })
     const parsing = spyOn(VersionParser.prototype, 'parse')
     const indexing = fillCache(restarted)
     try {
@@ -367,11 +379,12 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
       expect(
         await readFile(join(replica.directory, 'current.json'), 'utf8')
       ).toBe(pointer)
-      // Only the remaining preview path materializes the legacy index.
+      // Previews parse only the supplied record and never start the JS index.
       const entry = await restarted.get({id: 'a', select: Entry})
       expect(
         await restarted.first({
           id: 'a',
+          search: 'preview',
           select: Entry.title,
           preview: {
             entry: {
@@ -382,7 +395,24 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
           }
         })
       ).toBe('Preview')
-      expect(parsing).toHaveBeenCalled()
+      expect(parsing).toHaveBeenCalledTimes(1)
+      expect(
+        await restarted.first({
+          id: 'new',
+          status: 'all',
+          select: Entry.title,
+          preview: {
+            entry: {
+              ...entry,
+              id: 'new',
+              filePath: 'pages/new.json',
+              fileHash: 'new-preview',
+              data: {...entry.data, title: 'New'}
+            }
+          }
+        })
+      ).toBe('New')
+      expect(await restarted.count({id: 'new', status: 'all'})).toBe(0)
       expect(
         (await restarted.referencesTo({targetId: 'a'})).scan.complete
       ).toBe(true)
@@ -396,6 +426,8 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
     } finally {
       indexing.return()
       parsing.mockRestore()
+      restartedIndex.mockRestore()
+      restartedResolver.mockRestore()
       await restarted.close()
     }
   } finally {

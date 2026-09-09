@@ -206,12 +206,12 @@ before returning, and the served revision follows the ready SQL snapshot. Media
 effects reject a stale filesystem revision even while an older SQL snapshot
 is still being served. Watcher/config teardown closes the owner and prevents late
 cache emissions. Integration tests exercise filesystem-backed Graph updates, live
-results, restart reuse and watcher shutdown. This is an explicit intermediate
-cutover: `LocalDB` still supplies previews, with its index
-materialized only when one of those explicit paths is requested. Ordinary dev
-startup, seeding, reads and writes no longer build that index. An unchanged restart
-test verifies zero source-record parsing. There is no catch-all query fallback;
-SQL replacements for those remaining legacy operations are still required.
+results, restart reuse and watcher shutdown. SQL-configured dev startup, seeding,
+reads, writes, fixes, references and previews no longer build the legacy index.
+An unchanged restart test verifies zero source-record parsing. Preview routing
+now uses the leased snapshot and request-local overlay described below; there is
+no catch-all query fallback. Build-only callers without a replica still use the
+existing LocalDB path and remain a separate cutover task.
 
 Private checkpoint format 7 adds `alinea_entry_reference`, keyed by authored
 version and reference ordinal with an indexed target ID. Build and reconciliation
@@ -233,8 +233,7 @@ snapshot under its update queue; dev commits the resulting request through the
 filesystem authority. It is intentionally full-content maintenance, not a startup
 scan. The integration test disables JS indexing, normalizes a compact source
 record without changing its content, and verifies a second fix leaves the source
-revision unchanged. Previews are now the only remaining dev operation that
-materializes the legacy JS index.
+revision unchanged.
 
 `driver/NodeOverlay` now provides a request-local storage prototype: a fresh
 in-memory SQLite database attaches the immutable checkpoint read-only and uses
@@ -245,7 +244,7 @@ close. Tests interleave two overlays, query nested children and data predicates,
 check identity failures and conflicting masks, and verify the original file is
 byte-for-byte unchanged with no copy files or source reconstruction. Callers
 supply normalized rows; the snapshot owner's preview adapter and merged search
-integration are described below. Dev routing remains separate.
+integration are described below.
 
 `runtime/NormalizePreview` now normalizes existing-entry data previews from the
 edited identity's authored versions and ancestors, read directly from the private
@@ -255,8 +254,7 @@ returned for the attached overlay; original ordinals and untouched base rows are
 retained. Tests compare full Graph results and nested children across all status
 modes under published/archived ancestors, with 100 unrelated entries present. A
 child edit reads three records, a root edit one, and each parses only the supplied
-preview record. New-identity support is described below; dev routing remains a
-separate unfinished stage.
+preview record. New-identity and translation support are described below.
 
 New authored versions of an existing identity (for example a draft or archived
 version) now use a recursive structural query to include descendants as well as
@@ -286,9 +284,15 @@ rows keep theirs. Tests compare all status modes and nested children with Graph,
 cover empty checkpoints and published/draft/archived inserts, and verify one parse
 and only affected source records with 100 unrelated entries. Exact-file and
 cross-status directory collisions reject, as do noncanonical source paths and
-attempts to move an existing identity by adding it at another directory. Adding
-a new locale to an existing identity still needs its own normalization support
-before the dev preview cutover.
+attempts to move an existing locale by adding it at another directory.
+
+New translations reuse all authored versions of the identity and its ancestors,
+and include the physical destination parent and subtree. Graph consistency checks
+validate workspace/root/type/order and matching parent identities; mismatched
+same-locale paths and unrelated destination parents reject. A new locale appends
+within the identity's reserved ordinal slots, preserving grouping with existing
+locales and versions. Tests compare all status/locale modes, localized parent
+paths, inherited archive status and newly adopted children against Graph.
 
 The snapshot owner's preview path now connects decoding, revision checks, Graph-
 based patch application, bounded normalization and the attached row overlay.
@@ -297,9 +301,11 @@ wire format without a JS index. Encoded requests must match the leased source
 revision; invalid patches reject. Tests run two distinct entry previews using the
 same marker alongside a patch preview and a normal query, and hold a preview
 across a base swap and owner close while nested reads retain the original view.
-No preview publishes files or changes the source revision. Dev routing remains
-on its explicit legacy path until structural previews are available; the SQL
-snapshot path currently rejects those unsupported cases.
+No preview publishes files or changes the source revision. SQL-configured DevDB
+now routes previews through this same owner and removes its legacy indexing
+boundary. The restart integration test makes both the old index and resolver
+throw, then verifies edited/search and new-entry previews, isolation from normal
+reads, and only one supplied-record parse for the first preview.
 
 Overlay FTS investigation ruled out replacing FTS shadow tables with views (the
 installed SQLite rejects dropping the protected shadow tables). The ranking path
@@ -328,8 +334,8 @@ version identities through the explicitly qualified source tables. Native Graph
 tests compare a rebuilt reference corpus for ranking, snippets, pagination,
 counts, grouping, ordering, filters and concurrent nested searches, with more
 than one batch of matched identities. Revision-bound snapshot previews can now
-search their edited view. Structural preview support and dev cutover remain
-pending; browser overlay FTS still requires a compatible storage strategy.
+search their edited view, including through DevDB. Browser overlay FTS still
+requires a compatible storage strategy.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID

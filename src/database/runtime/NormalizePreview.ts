@@ -64,42 +64,42 @@ export async function normalizeEntryPreview(
     ?.entry
   if (owner && owner.id !== preview.id)
     throw new Error('Preview source directory belongs to another entry')
-  const target = found?.entry ?? owner
-  if (
-    !target &&
+  const target =
+    found?.entry ??
+    owner ??
     (await selectTarget().where(eq(EntryIndexTable.id, preview.id)).get())
-  )
-    throw new Error('Preview source version is not in this checkpoint')
+      ?.entry
   if (!config.schema[preview.type])
     throw new Error(`Unknown preview type: ${preview.type}`)
-  const parent = !target
+  const parent = isNew
     ? (
         await selectTarget()
           .where(eq(storedDir, dirname(preview.filePath)))
           .get()
       )?.entry
     : undefined
-  const related = inArray(
-    EntryIndexTable.id,
-    target
-      ? [target.id, ...target.parents]
-      : parent
-        ? [parent.id, ...parent.parents]
-        : []
-  )
+  const related = inArray(EntryIndexTable.id, [
+    ...new Set([
+      ...(target ? [target.id, ...target.parents] : []),
+      ...(parent ? [parent.id, ...parent.parents] : [])
+    ])
+  ])
   const prefix = `${childrenDir}/`
-  const descendants = target
-    ? sql<boolean>`${EntryIndexTable.id} in (
+  const descendants = or(
+    target
+      ? sql<boolean>`${EntryIndexTable.id} in (
     with recursive affected(id) as (
       select ${target.id} union
       select child.id from alinea_entry_index as child join affected on child.parentId = affected.id
     ) select id from affected
   )`
-    : sql<boolean>`${EntryIndexTable.id} in (
+      : sql.value(false),
+    sql<boolean>`${EntryIndexTable.id} in (
     select indexed.id from alinea_entry_index as indexed
     join alinea_entry_data as data on data.versionId = indexed.versionId
     where substr(json_extract(data.source, '$.childrenDir'), 1, ${prefix.length}) = ${prefix}
   )`
+  )
   const rows = await db
     .select({
       entry: EntryIndexTable,
@@ -142,18 +142,19 @@ export async function normalizeEntryPreview(
     const before = previous.get(entry.filePath)
     if (!before?.entry && entry.filePath !== preview.filePath)
       throw new Error('Unexpected version in preview normalization')
-    const ordinal =
-      before?.entry?.ordinal ??
-      newOrdinal ??
-      Math.max(
-        ...rows
-          .filter(
-            row =>
-              row.entry?.id === entry.id &&
-              row.entry.locale === (entry.locale?.toLowerCase() ?? null)
+    let ordinal = before?.entry?.ordinal ?? newOrdinal
+    if (ordinal === undefined) {
+      const identityRows = rows.filter(row => row.entry?.id === entry.id)
+      const localeRows = identityRows.filter(
+        row => row.entry?.locale === (entry.locale?.toLowerCase() ?? null)
+      )
+      ordinal =
+        Math.max(
+          ...(localeRows.length ? localeRows : identityRows).map(
+            row => row.entry!.ordinal
           )
-          .map(row => row.entry!.ordinal)
-      ) + 1
+        ) + 1
+    }
     if (!Number.isSafeInteger(ordinal))
       throw new Error('Missing preview ordering slot')
     const source = entrySource(entry)

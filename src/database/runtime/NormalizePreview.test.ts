@@ -418,7 +418,7 @@ test.each(['published', 'draft', 'archived'] as const)(
         ).rejects.toThrow('directory belongs to another entry')
         await expect(
           normalizeEntryPreview(config, db, {...entry, id: 'neighbor'})
-        ).rejects.toThrow('not in this checkpoint')
+        ).rejects.toThrow('Mismatched')
       }
       const empty = await createEntryResolver(config, [])
       const inserted = await createEntryResolver(config, [
@@ -454,6 +454,158 @@ test.each(['published', 'draft', 'archived'] as const)(
         )
       } finally {
         overlay.close()
+      }
+    } finally {
+      await rm(directory, {recursive: true, force: true})
+    }
+  }
+)
+
+test.each(['published', 'draft', 'archived'] as const)(
+  'new %s translations retain identity grouping and localized parent inheritance',
+  async status => {
+    const localized = {
+      ...config,
+      workspaces: {
+        main: Config.workspace('Main', {
+          source: 'content',
+          roots: {pages: Config.root('Pages', {i18n: {locales: ['en', 'de']}})}
+        })
+      }
+    }
+    const directory = await mkdtemp(
+      join(tmpdir(), 'alinea-preview-translation-')
+    )
+    try {
+      for (const nested of [false, true]) {
+        const parents = nested
+          ? [
+              {
+                id: 'parent',
+                type: 'Page',
+                index: 'a',
+                path: 'parent',
+                locale: 'en'
+              },
+              {
+                id: 'parent',
+                type: 'Page',
+                index: 'a',
+                path: 'eltern',
+                locale: 'de',
+                status: 'archived' as const
+              }
+            ]
+          : []
+        const enParents = nested ? ['parent'] : []
+        const deParents = nested ? ['eltern'] : []
+        const fixture = await createEntryResolver(localized, [
+          ...parents,
+          {
+            id: 'edited',
+            type: 'Page',
+            index: 'b',
+            path: 'original',
+            locale: 'en',
+            parentPaths: enParents
+          },
+          {
+            id: 'child',
+            type: 'Page',
+            index: 'c',
+            locale: 'en',
+            parentPaths: [...enParents, 'original']
+          },
+          {
+            id: 'orphan',
+            type: 'Page',
+            index: 'd',
+            locale: 'de',
+            parentPaths: [...deParents, 'ubersetzt']
+          },
+          {id: 'neighbor', type: 'Page', index: 'b', locale: 'de'},
+          {id: 'other-parent', type: 'Page', index: 'z', locale: 'de'}
+        ])
+        const inserted = await createEntryResolver(localized, [
+          ...parents,
+          {
+            id: 'edited',
+            type: 'Page',
+            index: 'b',
+            path: 'ubersetzt',
+            title: 'Translated',
+            locale: 'de',
+            parentPaths: deParents,
+            status
+          }
+        ])
+        const entry = inserted.index.findFirst(entry => entry.id === 'edited')!
+        const file = join(directory, `${nested}.sqlite`)
+        {
+          using sqlite = new Database(file)
+          await buildDatabase(
+            localized,
+            connect(sqlite),
+            fixture.source,
+            identity
+          )
+        }
+        using sqlite = new Database(file, {readonly: true})
+        const db = connect(sqlite)
+        const normalized = await normalizeEntryPreview(localized, db, entry)
+        expect(normalized.scanned).toBe(nested ? 5 : 3)
+        expect(new Set(normalized.entries.map(row => row.entry.id))).toEqual(
+          new Set(['edited', 'orphan'])
+        )
+        const overlay = await NodeOverlay.open(
+          localized,
+          file,
+          identity,
+          normalized.entries
+        )
+        try {
+          for (const status of [
+            'all',
+            'published',
+            'draft',
+            'archived',
+            'preferDraft',
+            'preferPublished'
+          ] as const) {
+            for (const locale of [undefined, 'en', 'de']) {
+              const query = {status, locale, select: Entry}
+              expect(await overlay.find(query)).toEqual(
+                await fixture.resolver.find({...query, preview: {entry}})
+              )
+            }
+          }
+          const query = {
+            id: 'edited',
+            locale: 'de',
+            status: 'all' as const,
+            select: {
+              title: Entry.title,
+              children: children({status: 'all', select: Entry})
+            }
+          }
+          expect(await overlay.find(query)).toEqual(
+            await fixture.resolver.find({...query, preview: {entry}})
+          )
+        } finally {
+          overlay.close()
+        }
+        await expect(
+          normalizeEntryPreview(localized, db, {
+            ...entry,
+            filePath: `pages/de/other-parent/ubersetzt.${status}.json`
+          })
+        ).rejects.toThrow('matching parents')
+        await expect(
+          normalizeEntryPreview(localized, db, {
+            ...entry,
+            filePath: 'pages/en/moved.json'
+          })
+        ).rejects.toThrow('Mismatched')
       }
     } finally {
       await rm(directory, {recursive: true, force: true})

@@ -81,10 +81,7 @@ export class DevDB extends LocalDB {
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     if (this.#closed) return Promise.reject(new Error('Dev database is closed'))
-    // Explicit migration boundary: request-local previews still use the old
-    // normalizer until SQL overlays replace that path. No catch-all fallback.
     if (!this.#options.replica) return super.resolve(query)
-    if (query.preview) return this.#legacy(() => super.resolve(query))
     if (!this.#replica)
       return Promise.reject(new Error('Dev database is not ready'))
     return this.#replica.resolve(query)
@@ -126,15 +123,6 @@ export class DevDB extends LocalDB {
     if (this.#closed || !this.#replica)
       return Promise.reject(new Error('Dev database is not ready'))
     return this.#replica.referencesTo(query)
-  }
-
-  // Explicit temporary boundary, not a fallback for failed SQL queries.
-  #legacy<T>(read: () => Promise<T>): Promise<T> {
-    return this.#sync(async () => {
-      if (this.#closed) throw new Error('Dev database is closed')
-      await this.index.syncWith(this.source)
-      return read()
-    })
   }
 
   async request(mutations: ReadonlyArray<Mutation>, policy = Policy.ALLOW_ALL) {
