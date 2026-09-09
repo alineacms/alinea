@@ -4,7 +4,7 @@ import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {previewMetadataAtom} from '#/dashboard/atoms/preview.js'
 import {PreviewAction, type PreviewMessage} from '#/preview/PreviewMessage.js'
 import {styler} from '@alinea/styler'
-import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useAtomValueRawSync, useSetAtom} from 'jotai'
 import {useEffect, useMemo, useRef, useState} from 'react'
 import {
   IcRoundArrowBack,
@@ -155,7 +155,7 @@ export interface EntrySidebarBrowserPreviewProps {
 export function EntrySidebarBrowserPreview({
   localeData
 }: EntrySidebarBrowserPreviewProps) {
-  const [previewUrlPending, previewUrl] = useAtomValueRaw(
+  const [previewUrlPending, previewUrl] = useAtomValueRawSync(
     localeData.previewUrlState
   )
   const retryPreviewUrl = useSetAtom(localeData.retryPreviewUrl)

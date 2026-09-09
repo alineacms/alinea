@@ -13,7 +13,6 @@ import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   Suspense,
-  startTransition,
   useMemo,
   useState,
   type ReactNode,
@@ -261,10 +260,8 @@ function LinkPickerCompact({
       (selection.size === 0 && explorer.selectionMode !== 'multiple')
     )
       return
-    startTransition(() => {
-      onCommit?.([...selection].map(String))
-      popover.close()
-    })
+    onCommit?.([...selection].map(String))
+    popover.close()
   }
 
   function commitEntry(entry: DashboardEntry) {
@@ -344,10 +341,8 @@ function LinkPickerExpanded({
   const selectedItems = selection === 'all' ? 0 : selection.size
 
   function onSubmit() {
-    startTransition(() => {
-      onConfirm()
-      modal.close()
-    })
+    onConfirm()
+    modal.close()
   }
 
   return (
