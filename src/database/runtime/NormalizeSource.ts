@@ -5,6 +5,7 @@ import {
   type EntryVersionData
 } from '#/core/db/EntryIndex.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
+import {compareStrings} from '#/core/source/Utils.js'
 import {entryInfo} from '#/core/util/EntryFilenames.js'
 import {basename} from '#/core/util/Paths.js'
 import {inArray, table, type Database} from 'rado'
@@ -28,7 +29,9 @@ export async function normalizeSource(
   source: SqlSource
 ) {
   const tree = await source.getTree()
-  const files = [...tree].filter(([, node]) => node.type !== 'tree')
+  const files = [...tree]
+    .filter(([, node]) => node.type !== 'tree')
+    .sort(([a], [b]) => compareStrings(a, b))
   const shas = [...new Set(files.map(([, node]) => node.sha))]
   const parser = new VersionParser()
   let parsed = 0
@@ -54,6 +57,19 @@ export async function normalizeSource(
     versions.set(path, record)
   }
   const graph = EntryGraph.fromParsed(config, versions)
+  // Tie order is source identity order, independent of the editable sort key.
+  // Keep each identity's locale/version group together, as EntryGraph does.
+  const sourceOrder = new Map<string, number>()
+  for (const version of versions.values())
+    if (!sourceOrder.has(version.id))
+      sourceOrder.set(version.id, sourceOrder.size)
+  const ordinals = new Map<string, number>()
+  const nodes = [...graph.nodes].sort(
+    (a, b) => sourceOrder.get(a.id)! - sourceOrder.get(b.id)!
+  )
+  for (const node of nodes)
+    for (const entry of node.filter({includeHiddenVersions: true}))
+      ordinals.set(entry.filePath, ordinals.size * entryOrdinalStep)
   const entries: Array<EntryReplacement> = []
   const visible = new Set(Array.from(graph.filter({}), entry => entry.filePath))
   for (const entry of graph.filter({includeHiddenVersions: true})) {
@@ -66,7 +82,7 @@ export async function normalizeSource(
       entry: {
         ...entry,
         versionStatus,
-        ordinal: entries.length * entryOrdinalStep,
+        ordinal: ordinals.get(entry.filePath)!,
         visible: visible.has(entry.filePath)
       },
       payloadId,

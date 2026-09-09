@@ -100,7 +100,7 @@ export async function entryReferencesTo(
     .from(reference)
     .innerJoin(entry, eq(entry.versionId, reference.versionId))
     .where(and(...conditions))
-    .orderBy(asc(entry.ordinal), asc(reference.ordinal))
+    .orderBy(asc(entry.index), asc(entry.ordinal), asc(reference.ordinal))
   const scanned =
     (await db
       .select(count())

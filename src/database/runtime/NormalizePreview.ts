@@ -65,10 +65,8 @@ export async function normalizeEntryPreview(
     )?.entry
   if (!target)
     throw new Error('Preview source version is not in this checkpoint')
-  if (target.type !== preview.type || target.index !== preview.index)
-    throw new Error(
-      `Structural preview changes require their dedicated normalization stage (${target.type}/${target.index} → ${preview.type}/${preview.index})`
-    )
+  if (!config.schema[preview.type])
+    throw new Error(`Unknown preview type: ${preview.type}`)
   const related = inArray(EntryIndexTable.id, [target.id, ...target.parents])
   const descendants = sql<boolean>`${EntryIndexTable.id} in (
     with recursive affected(id) as (

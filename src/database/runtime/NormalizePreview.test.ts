@@ -19,8 +19,14 @@ const Page = Config.document('Page', {
     return `/${parentPaths.join('/')}/${path}/${data.title}`
   }
 })
+const Other = Config.document('Other', {
+  fields: {title: Field.text('Title')},
+  entryUrl({path}) {
+    return `/other/${path}`
+  }
+})
 const config = {
-  schema: {Page},
+  schema: {Page, Other},
   workspaces: {
     main: Config.workspace('Main', {
       source: 'content',
@@ -148,12 +154,6 @@ test.each(['published', 'archived'] as const)(
           overlay.close()
         }
         await expect(
-          normalizeEntryPreview(config, db, {
-            ...preview.entry,
-            index: 'different'
-          })
-        ).rejects.toThrow('Structural preview')
-        await expect(
           normalizeEntryPreview(config, db, {...preview.entry, id: 'missing'})
         ).rejects.toThrow('belongs to another entry')
       }
@@ -214,3 +214,83 @@ test.each(['published', 'archived'] as const)(
     }
   }
 )
+
+test('type and order previews preserve source-order ties without loading siblings or descendants', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-preview-structure-'))
+  const file = join(directory, 'baseline.sqlite')
+  const fixture = await createEntryResolver(config, [
+    {id: 'first', type: 'Page', index: 'z', title: 'First'},
+    {id: 'last', type: 'Page', index: 'a', title: 'Last'},
+    {id: 'parent', type: 'Page', index: 'b', title: 'Parent'},
+    {
+      id: 'child',
+      type: 'Page',
+      index: 'c',
+      parentPaths: ['parent'],
+      title: 'Child'
+    },
+    {id: 'versions', type: 'Page', index: 'v', title: 'Published'},
+    {id: 'versions', type: 'Page', index: 'v', title: 'Draft', status: 'draft'}
+  ])
+  try {
+    {
+      using sqlite = new Database(file)
+      await buildDatabase(config, connect(sqlite), fixture.source, identity)
+    }
+    using sqlite = new Database(file, {readonly: true})
+    const db = connect(sqlite)
+    for (const id of ['first', 'last', 'parent', 'child']) {
+      const original = fixture.index.findFirst(entry => entry.id === id)!
+      for (const type of ['Page', 'Other']) {
+        for (const index of ['a', 'b', 'z']) {
+          const entry = {
+            ...original,
+            type,
+            index,
+            fileHash: `${id}-${type}-${index}`
+          }
+          const normalized = await normalizeEntryPreview(config, db, entry)
+          expect(normalized.scanned).toBe(id === 'child' ? 2 : 1)
+          expect(normalized.entries.every(row => row.entry.id === id)).toBe(
+            true
+          )
+          const overlay = await NodeOverlay.open(
+            config,
+            file,
+            identity,
+            normalized.entries
+          )
+          try {
+            for (const status of ['all', 'published', 'preferDraft'] as const) {
+              const query = {status, select: Entry}
+              expect(await overlay.find(query)).toEqual(
+                await fixture.resolver.find({...query, preview: {entry}})
+              )
+            }
+            const query = {
+              id: 'parent',
+              select: {url: Entry.url, children: children({select: Entry})}
+            }
+            expect(await overlay.find(query)).toEqual(
+              await fixture.resolver.find({...query, preview: {entry}})
+            )
+          } finally {
+            overlay.close()
+          }
+        }
+      }
+    }
+    const original = fixture.index.findFirst(entry => entry.id === 'versions')!
+    await expect(
+      normalizeEntryPreview(config, db, {...original, index: 'a'})
+    ).rejects.toThrow('Mismatched index')
+    await expect(
+      normalizeEntryPreview(config, db, {...original, type: 'Other'})
+    ).rejects.toThrow('Mismatched types')
+    await expect(
+      normalizeEntryPreview(config, db, {...original, type: 'Missing'})
+    ).rejects.toThrow('Unknown preview type')
+  } finally {
+    await rm(directory, {recursive: true, force: true})
+  }
+})

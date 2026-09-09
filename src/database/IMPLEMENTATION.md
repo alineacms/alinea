@@ -255,7 +255,7 @@ returned for the attached overlay; original ordinals and untouched base rows are
 retained. Tests compare full Graph results and nested children across all status
 modes under published/archived ancestors, with 100 unrelated entries present. A
 child edit reads three records, a root edit one, and each parses only the supplied
-preview record. New identities, type/order changes and dev routing remain
+preview record. New identities and dev routing remain
 separate unfinished preview stages; unsupported inputs
 are rejected explicitly instead of producing a partial preview.
 
@@ -267,8 +267,18 @@ ordinals to reserve integer insertion slots for these request-local versions;
 tests include an unrelated entry with the same order key. Existing source paths
 cannot be claimed by another identity, and new versions must share the existing
 physical entry directory. Tests compare added draft/archive versions under both
-published and archived ancestors across all status modes. New entry identities,
-type/order edits remain unsupported preview cases.
+published and archived ancestors across all status modes. New entry identities
+remain an unsupported preview case.
+
+Type and order previews now use the same bounded normalization. The existing
+authored-version consistency checks reject changing only one of several versions
+to an incompatible type/order; unknown types also reject explicitly. Tests cover
+custom type URLs, ancestors and children, and moving entries onto occupied sort
+keys without loading unrelated records. Checkpoint format 9 assigns tie ordinals
+by flattened source-path identity order, not by the editable sort key, retaining
+each identity's locale/version grouping. This keeps tie placement correct when a
+preview changes an entry's key. Source files are sorted before reconstruction,
+avoiding traversal-dependent placement of a parent after its child directory.
 
 The snapshot owner's preview path now connects decoding, revision checks, Graph-
 based patch application, bounded normalization and the attached row overlay.
