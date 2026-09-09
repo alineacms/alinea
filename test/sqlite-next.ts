@@ -110,16 +110,16 @@ export default withAlinea({output: 'standalone', distDir: 'custom-next', outputF
   )
   await writeFile(
     join(project, 'app/read.js'),
-    `import {DatabaseSync} from 'node:sqlite'; import {databasePath} from '@alinea/generated/database.js';
-export function read() { const db = new DatabaseSync(databasePath, {readOnly: true}); try { return db.prepare('select count(*) as count from alinea_entry_index').get().count } finally { db.close() } }`
+    `import {openDatabase} from '@alinea/generated/database.js';
+export async function read() { const db = await openDatabase({schema: {}, workspaces: {}}); try { return await db.count({}) } finally { db.close() } }`
   )
   await writeFile(
     join(project, 'app/page.js'),
-    `import {read} from './read.js'; import Client from './client.js'; export const dynamic = 'force-dynamic'; export default function Page() { return <main>Entries: {read()}<Client/></main> }`
+    `import {read} from './read.js'; import Client from './client.js'; export const dynamic = 'force-dynamic'; export default async function Page() { return <main>Entries: {await read()}<Client/></main> }`
   )
   await writeFile(
     join(project, 'app/api/content/route.js'),
-    `import {read} from '../../read.js'; export const runtime = 'nodejs'; export const dynamic = 'force-dynamic'; export function GET() { return Response.json({count: read()}) }`
+    `import {read} from '../../read.js'; export const runtime = 'nodejs'; export const dynamic = 'force-dynamic'; export async function GET() { return Response.json({count: await read()}) }`
   )
   await writeFile(
     join(project, 'app/unrelated/page.js'),

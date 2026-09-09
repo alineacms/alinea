@@ -2,7 +2,7 @@ import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {Config} from '#/index.js'
 import {createFilePatch} from '#/core/source/FilePatch.js'
 import {chunkCookieValue} from '#/preview/ChunkCookieValue.js'
@@ -42,6 +42,27 @@ beforeEach(() => {
 afterEach(() => {
   if (phase === undefined) delete process.env.NEXT_PHASE
   else process.env.NEXT_PHASE = phase
+})
+
+test('production build queries use the pinned SQLite graph without initializing LocalDB', async () => {
+  process.env.NEXT_PHASE = 'production-build'
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+  const legacy = mock(async () => {
+    throw new Error('Unexpected legacy build database')
+  })
+  cms.bundledDb = PLazy.from(legacy)
+  const resolve = mock(async () => ['sql'])
+  cms.buildDb = PLazy.from(async () => ({resolve}) as unknown as Graph)
+  expect(await cms.find({select: Entry.id})).toEqual(['sql'])
+  expect(resolve).toHaveBeenCalledTimes(1)
+  expect(legacy).not.toHaveBeenCalled()
+  cms.buildDb = PLazy.from(async () => {
+    throw new Error('Broken checkpoint')
+  })
+  await expect(cms.find({select: Entry.id})).rejects.toThrow(
+    'Broken checkpoint'
+  )
+  expect(legacy).not.toHaveBeenCalled()
 })
 
 test('skips syncing a bundled database for a matching preview content hash', async () => {

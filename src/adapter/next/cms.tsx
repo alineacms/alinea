@@ -10,7 +10,7 @@ import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
 import {trace} from '#/core/Trace.js'
@@ -35,6 +35,16 @@ export class NextCMS<
   }
 
   throttle = createThrottledSync()
+  buildDb: Promise<Graph> = PLazy.from(async () => {
+    if (process.env.NEXT_RUNTIME === 'edge')
+      throw new Error(
+        'Bundled SQLite is not supported in Edge runtime environments.'
+      )
+    // The generated package's browser/edge conditions exclude its native driver.
+    // @ts-ignore generated at build time
+    const {openDatabase} = await import('@alinea/generated/database.js')
+    return openDatabase(this.config)
+  })
   bundledDb = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
@@ -116,6 +126,7 @@ export class NextCMS<
       const span = trace(this.config, 'alinea.cms.resolve.client')
       return span(() => client.resolve(request))
     }
+    if (isBuild && !hasPreview) return (await this.buildDb).resolve(request)
     const db = await this.bundledDb
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY

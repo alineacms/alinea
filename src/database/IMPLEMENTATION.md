@@ -430,7 +430,19 @@ file successfully. The fixture also verifies that an unrelated route does not
 receive the database and that private test data/SQLite files are absent from static
 client assets. Relocation must preserve relative symlinks (including Turbopack's
 external-package aliases). These checks exercise the native artifact path, not yet
-the production CMS adapter or Cloudflare runtime.
+the complete production CMS adapter or Cloudflare runtime.
+
+`driver/NodeCheckpoint` now opens deployment-pinned Graph reads directly on the
+read-only artifact, with descriptor validation and leases for pending asynchronous
+projections. It does not copy the database, parse source or synchronize it. The
+generated Node loader exposes `openDatabase(config)` through the packaged native
+driver. NextCMS uses that Graph for build-phase queries without preview cookies;
+tests forbid legacy initialization and verify checkpoint failures do not fall
+back. Live production reads and preview preparation still use the existing
+adapter and need the subsequent catch-up cutover. The real Next standalone
+fixture now calls this generated Graph opener rather than hand-written SQLite
+queries. Package declaration generation also required explicit named Graph/edge
+return types on query helpers, avoiding inferred leakage of an internal symbol.
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

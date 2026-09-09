@@ -77,6 +77,10 @@ export async function exportDatabase(
 export const databasePath = fileURLToPath(new URL('./${generation}/release.sqlite', import.meta.url))
 export const identity = ${JSON.stringify(identity)}
 export const payloadBasePath = '/_alinea/payloads/'
+export async function openDatabase(config) {
+  const {NodeCheckpoint} = await import('alinea/database/driver/NodeCheckpoint')
+  return NodeCheckpoint.open(config, databasePath, identity)
+}
 `
     await writeFile(join(temporary, 'database.js'), loader)
     await writeFile(join(temporary, 'source.js'), sourceModule)
