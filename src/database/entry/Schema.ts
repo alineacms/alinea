@@ -2,6 +2,9 @@ import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {index, table} from 'rado'
 import * as column from 'rado/universal/columns'
 
+/** Leave integer insertion slots for request-local authored versions. */
+export const entryOrdinalStep = 1024
+
 export function entryVersionId(
   id: string,
   locale: string | null,

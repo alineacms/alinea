@@ -257,9 +257,20 @@ returned for the attached overlay; original ordinals and untouched base rows are
 retained. Tests compare full Graph results and nested children across all status
 modes under published/archived ancestors, with 100 unrelated entries present. A
 child edit reads three records, a root edit one, and each parses only the supplied
-preview record. New source versions, identity/type/order changes, payload patches,
+preview record. New identities, type/order changes,
 FTS and dev routing remain separate unfinished preview stages; unsupported inputs
 are rejected explicitly instead of producing a partial preview.
+
+New authored versions of an existing identity (for example a draft or archived
+version) now use a recursive structural query to include descendants as well as
+ancestors. Normalization updates their inherited status/visibility in the overlay
+without touching unrelated rows. Private checkpoint format 8 spaces source
+ordinals to reserve integer insertion slots for these request-local versions;
+tests include an unrelated entry with the same order key. Existing source paths
+cannot be claimed by another identity, and new versions must share the existing
+physical entry directory. Tests compare added draft/archive versions under both
+published and archived ancestors across all status modes. New entry identities,
+type/order edits and complete FTS remain unsupported preview cases.
 
 The snapshot owner's preview path now connects decoding, revision checks, Graph-
 based patch application, bounded normalization and the attached row overlay.

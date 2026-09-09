@@ -5,7 +5,7 @@ import {SqlSource} from '../source/SqlSource.js'
 import {EntryRuntime} from './EntryRuntime.js'
 import type {FrameBinding} from '../replica/Frame.js'
 
-export const checkpointFormat = 7
+export const checkpointFormat = 8
 export const CheckpointTable = table('alinea_checkpoint', {
   id: column.integer().primaryKey(),
   format: column.integer().notNull(),

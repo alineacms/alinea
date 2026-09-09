@@ -75,7 +75,7 @@ test.each(['published', 'archived'] as const)(
       ...Array.from({length: 100}, (_, index) => ({
         id: `unrelated-${index}`,
         type: 'Page',
-        index: 'd',
+        index: index === 0 ? 'b' : 'd',
         title: `Unrelated ${index}`
       }))
     ])
@@ -155,7 +155,59 @@ test.each(['published', 'archived'] as const)(
         ).rejects.toThrow('Structural preview')
         await expect(
           normalizeEntryPreview(config, db, {...preview.entry, id: 'missing'})
-        ).rejects.toThrow('not in this checkpoint')
+        ).rejects.toThrow('belongs to another entry')
+      }
+      for (const [id, status] of [
+        ['edited', 'archived'],
+        ['ancestor', 'draft']
+      ] as const) {
+        const original = Array.from(
+          fixture.index.filter({includeHiddenVersions: true})
+        ).find(entry => entry.id === id)!
+        const preview = {
+          entry: {
+            ...original,
+            status,
+            filePath: `${original.childrenDir}.${status}.json`,
+            fileHash: `added-${id}-${status}-${ancestorStatus}`,
+            data: {...original.data, title: `Added ${status}`}
+          }
+        }
+        using sqlite = new Database(file, {readonly: true})
+        const normalized = await normalizeEntryPreview(
+          config,
+          connect(sqlite),
+          preview.entry
+        )
+        expect(normalized.scanned).toBe(4)
+        expect(
+          normalized.entries.some(
+            row => row.source?.filePath === preview.entry.filePath
+          )
+        ).toBe(true)
+        const overlay = await NodeOverlay.open(
+          config,
+          file,
+          identity,
+          normalized.entries
+        )
+        try {
+          for (const status of [
+            'all',
+            'published',
+            'draft',
+            'archived',
+            'preferDraft',
+            'preferPublished'
+          ] as const) {
+            const query = {status, select: Entry}
+            expect(await overlay.find(query)).toEqual(
+              await fixture.resolver.find({...query, preview})
+            )
+          }
+        } finally {
+          overlay.close()
+        }
       }
     } finally {
       await rm(directory, {recursive: true, force: true})

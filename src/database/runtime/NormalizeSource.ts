@@ -9,7 +9,7 @@ import {entryInfo} from '#/core/util/EntryFilenames.js'
 import {basename} from '#/core/util/Paths.js'
 import {inArray, table, type Database} from 'rado'
 import * as column from 'rado/universal/columns'
-import {entrySource} from '../entry/Schema.js'
+import {entrySource, entryOrdinalStep} from '../entry/Schema.js'
 import type {SqlSource} from '../source/SqlSource.js'
 import type {EntryReplacement} from './EntryRuntime.js'
 
@@ -66,7 +66,7 @@ export async function normalizeSource(
       entry: {
         ...entry,
         versionStatus,
-        ordinal: entries.length,
+        ordinal: entries.length * entryOrdinalStep,
         visible: visible.has(entry.filePath)
       },
       payloadId,
