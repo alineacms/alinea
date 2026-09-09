@@ -9,7 +9,8 @@ and [implementation](./IMPLEMENTATION.md) for the sequence of work.
 
 Alinea should query a relational database through Rado, using SQLite as its
 default embedded storage format and `@alinea/sqlite-wasm` for browser replicas.
-Retain Alinea's public query API and translate it into SQL. Preserve the
+Retain Alinea's public Graph API for both querying and mutations. Translate
+queries into SQL and route existing mutations through the new runtime. Preserve the
 `sync-engine` work on incremental source reconciliation, compiled permissions,
 lazy payloads, entry-level replication, and field-level mutations.
 
@@ -45,8 +46,10 @@ Prefer a clean cutover. Historical code supplies useful algorithms and behavior
 tests; it does not require retaining old storage formats, internal class APIs,
 generated modules, replica protocols, or parallel resolvers. Refactor the Tree,
 Source, and query boundaries together when that simplifies the implementation.
-Preserve intended content/query behavior, with deliberate API changes documented
-when needed, rather than preserving every historical implementation detail.
+The public Graph querying and mutation API is a compatibility boundary: preserve
+its signatures, expression shapes, and observable behavior. Internal refactoring
+does not authorize Graph API changes. Preserve authored content and query/mutation
+semantics rather than every historical implementation detail.
 
 Use one current internal format. Incompatible dev databases and browser caches
 can be discarded and rebuilt from durable source; no migration framework or

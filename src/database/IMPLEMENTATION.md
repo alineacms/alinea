@@ -15,21 +15,27 @@ compile basic entry queries into Rado SQL with stage-specific data dependencies.
 Tests compare ten supported queries against the current resolver on the demo
 corpus, distinguish JSON primitive types and missing/null values, and verify an
 index-only query runs without a payload table. Relations, search, grouping,
-aliases, natural collation, lazy execution, and production integration remain.
+aliases, natural collation, and production integration remain.
 
-Verification so far: eleven database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass.
+`runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
+hydration before content filtering or after structural pagination, and conservative
+live-query invalidation. Superseded payload responses are discarded. This runtime
+is not yet wired into Graph, browser transport, permissions, or dashboard atoms.
+
+Verification so far: eighteen database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (59 combined).
 The repository type check reports missing `allotment` in
-`src/dashboard/app/SidebarLayout.tsx`; no SQL Tree type errors were reported.
+`src/dashboard/app/SidebarLayout.tsx`; no database type errors were reported.
 
-Status: planning only. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
+Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
 before implementing. Complete each gate before expanding the cutover. No
 production performance or platform compatibility claim has been verified by
 these documents.
 
 Implement one current format and one final runtime path. Refactor internal APIs
 freely and use historical code as a reference rather than retaining compatibility
-wrappers. Unsupported checkpoints rebuild from source; old generated artifacts
+wrappers. The public Graph querying and mutation API must stay: preserve its
+signatures and behavior, and verify both against the new runtime. Unsupported checkpoints rebuild from source; old generated artifacts
 and wire protocols do not need migration paths. Restrict platform/version testing
 to the support scope chosen for this cutover, not every historical Alinea target.
 

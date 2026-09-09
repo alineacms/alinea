@@ -208,26 +208,29 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
           ...(isRecord(query.include) ? query.include : {})
         }
       )
-  let rows = builder
-    .select(selection)
-    .from(EntryIndexTable)
-    .where(sql.value(true))
-  if (membership.dataRequired || projection.dataRequired)
-    rows = rows.leftJoin(
-      EntryDataTable,
-      eq(EntryIndexTable.versionId, EntryDataTable.versionId)
-    )
-  rows = rows.where(and(...structural, ...content)).orderBy(...ordering)
   for (const [key, value] of [
     ['skip', query.skip],
     ['take', query.take]
   ] as const)
     if (value !== undefined && (!Number.isSafeInteger(value) || value < 0))
       throw new Error(`${key} must be a non-negative integer`)
-  if (query.skip) rows = rows.offset(query.skip)
-  if (query.take !== undefined) rows = rows.limit(query.take)
-  if (!query.count && (query.first || query.get))
-    rows = rows.limit(query.take === 0 ? 0 : 1)
+  function selectRows(selection: SelectionInput, data: boolean) {
+    let rows = builder
+      .select(selection)
+      .from(EntryIndexTable)
+      .where(sql.value(true))
+    if (data)
+      rows = rows.leftJoin(
+        EntryDataTable,
+        eq(EntryIndexTable.versionId, EntryDataTable.versionId)
+      )
+    rows = rows.where(and(...structural, ...content)).orderBy(...ordering)
+    if (query.skip) rows = rows.offset(query.skip)
+    if (query.take !== undefined) rows = rows.limit(query.take)
+    if (!query.count && (query.first || query.get))
+      rows = rows.limit(query.take === 0 ? 0 : 1)
+    return rows
+  }
 
   // A conservative superset for hydration before content predicates or sorting.
   const candidates = builder
@@ -235,7 +238,11 @@ export function compileEntryQuery(config: Config, query: GraphQuery) {
     .from(EntryIndexTable)
     .where(and(...structural))
   return {
-    rows,
+    rows: selectRows(
+      selection,
+      membership.dataRequired || projection.dataRequired
+    ),
+    identities: selectRows(EntryIndexTable.versionId, membership.dataRequired),
     candidates,
     membershipData: membership.dataRequired,
     projectionData: projection.dataRequired,
