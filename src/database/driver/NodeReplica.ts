@@ -6,13 +6,14 @@ import {
 import type {DecodedEntryPreview} from '#/backend/resolver/ParsePreview.js'
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
-import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
-import type {RemoteSource} from '#/core/source/Source.js'
+import type {GetBlobsOptions, RemoteSource} from '#/core/source/Source.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {randomUUID} from 'node:crypto'
@@ -37,6 +38,7 @@ import {fixDatabase} from '../runtime/FixDatabase.js'
 import {normalizeEntryPreview} from '../runtime/NormalizePreview.js'
 import {nodeDatabase} from './NodeDatabase.js'
 import {NodeOverlay} from './NodeOverlay.js'
+import {SqlSource} from '../source/SqlSource.js'
 
 interface Snapshot {
   path: string
@@ -264,6 +266,85 @@ export class NodeReplica extends Graph {
     return this.#read(snapshot =>
       entryReferencesTo(nodeDatabase(snapshot.sqlite), query)
     )
+  }
+
+  getTree() {
+    return this.#read(snapshot => this.#source(snapshot).getTree())
+  }
+
+  getTreeIfDifferent(sha: string) {
+    return this.#read(snapshot =>
+      this.#source(snapshot).getTreeIfDifferent(sha)
+    )
+  }
+
+  async *getBlobs(
+    shas: ReadonlyArray<string>,
+    options?: GetBlobsOptions
+  ): AsyncGenerator<[string, Uint8Array]> {
+    if (this.#closed || !this.#current)
+      throw new Error('SQLite replica is closed or not ready')
+    const snapshot = this.#current
+    snapshot.readers++
+    try {
+      yield* this.#source(snapshot).getBlobs(shas, options)
+    } finally {
+      snapshot.readers--
+      if (snapshot.retired && !snapshot.readers) snapshot.sqlite.close()
+    }
+  }
+
+  #source(snapshot: Snapshot) {
+    return new SqlSource(
+      nodeDatabase(snapshot.sqlite),
+      snapshot.identity.namespace
+    )
+  }
+
+  /** Cache an already accepted source commit. This is not a source write or a
+   * durable retry receipt; a moved cache head requires remote catch-up instead.
+   */
+  acceptCommit(request: CommitRequest): Promise<{sha: string}> {
+    if (this.#closed)
+      return Promise.reject(new Error('SQLite replica is closed'))
+    const update = this.#updates.then(() =>
+      this.#read(async snapshot => {
+        if (snapshot.revision === request.intoSha)
+          return {sha: snapshot.revision}
+        if (snapshot.revision !== request.fromSha)
+          throw new ShaMismatchError(request.fromSha, snapshot.revision)
+        const source = this.#source(snapshot)
+        const batch = sourceChanges(request)
+        const blobs = new Map<string, Uint8Array>()
+        for (const change of batch.changes) {
+          if (change.op === 'delete') continue
+          if (
+            !change.contents ||
+            (await hashBlob(change.contents)) !== change.sha
+          )
+            throw new Error('Commit blob hash mismatch')
+          blobs.set(change.sha, change.contents)
+        }
+        const tree = await (await source.getTree()).withChanges(batch)
+        if (tree.sha !== request.intoSha)
+          throw new Error('Commit target revision mismatch')
+        await this.#sync({
+          getTreeIfDifferent: async sha =>
+            sha === tree.sha ? undefined : tree,
+          async *getBlobs(shas, options) {
+            for (const sha of shas) {
+              options?.signal?.throwIfAborted()
+              const contents = blobs.get(sha)
+              if (contents) yield [sha, contents]
+              else yield* source.getBlobs([sha], options)
+            }
+          }
+        })
+        return {sha: request.intoSha}
+      })
+    )
+    this.#updates = update.catch(() => {})
+    return update
   }
 
   /** Copy one leased immutable generation, never overwrite a caller's file. */

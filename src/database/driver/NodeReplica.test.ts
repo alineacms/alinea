@@ -40,6 +40,133 @@ async function fixture(title: string) {
   ])
 }
 
+test('accepted commits atomically advance the SQL cache without writing the source', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-accepted-commit-'))
+  const baseline = await fixture('Original')
+  const options = {directory, config, identity}
+  let replica = await NodeReplica.open(options, baseline.source)
+  try {
+    const request = await replica.request(
+      [
+        {
+          op: 'update',
+          id: 'a',
+          locale: null,
+          status: 'published',
+          set: {title: 'Accepted'}
+        }
+      ],
+      Policy.ALLOW_ALL
+    )
+    const pointer = await readFile(join(directory, 'current.json'), 'utf8')
+    const corrupt = structuredClone(request)
+    const added = corrupt.changes.find(change => change.op === 'addContent')!
+    if (added.op === 'addContent') added.contents += 'invalid'
+    await expect(replica.acceptCommit(corrupt)).rejects.toThrow(
+      'blob hash mismatch'
+    )
+    await expect(
+      replica.acceptCommit({...request, intoSha: 'invalid'})
+    ).rejects.toThrow('target revision mismatch')
+    await expect(
+      replica.acceptCommit({...request, fromSha: 'stale'})
+    ).rejects.toThrow('SHA mismatch')
+    expect(await readFile(join(directory, 'current.json'), 'utf8')).toBe(
+      pointer
+    )
+    expect(await replica.first({id: 'a', select: Entry.title})).toBe('Original')
+    expect(await replica.acceptCommit(request)).toEqual({sha: request.intoSha})
+    const acceptedPointer = await readFile(
+      join(directory, 'current.json'),
+      'utf8'
+    )
+    expect(await replica.acceptCommit(request)).toEqual({sha: request.intoSha})
+    expect(await readFile(join(directory, 'current.json'), 'utf8')).toBe(
+      acceptedPointer
+    )
+    expect(await replica.first({id: 'a', select: Entry.title})).toBe('Accepted')
+    expect((await baseline.source.getTree()).sha).toBe(request.fromSha)
+    expect((await replica.getTree()).sha).toBe(request.intoSha)
+    expect(await replica.getTreeIfDifferent(request.intoSha)).toBeUndefined()
+    await replica.close()
+    replica = await NodeReplica.open(options, baseline.source)
+    expect(replica.revision).toBe(request.intoSha)
+    expect(await replica.first({id: 'a', select: Entry.title})).toBe('Accepted')
+    await replica.close()
+    await expect(replica.acceptCommit(request)).rejects.toThrow('closed')
+  } finally {
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
+test('source blob streams retain their generation across sync, close and cancellation', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-source-lease-'))
+  const baseline = await fixture('Original')
+  const updated = await fixture('Updated')
+  const replica = await NodeReplica.open(
+    {directory, config, identity},
+    baseline.source
+  )
+  try {
+    const tree = await baseline.source.getTree()
+    const shas = [...new Set(tree.index().values())]
+    const expected = await Array.fromAsync(baseline.source.getBlobs(shas))
+    const stream = replica.getBlobs(shas)
+    const first = await stream.next()
+    expect(first.value).toEqual(expected[0])
+    await replica.sync(updated.source)
+    const controller = new AbortController()
+    const cancelled = replica.getBlobs(shas, {signal: controller.signal})
+    // Lease the current snapshot before retiring it.
+    await cancelled.next()
+    await replica.close()
+    expect([first.value, ...(await Array.fromAsync(stream))]).toEqual(expected)
+    controller.abort()
+    await expect(cancelled.next()).rejects.toThrow()
+    await expect(replica.getTree()).rejects.toThrow('closed')
+    await expect(replica.getBlobs(shas).next()).rejects.toThrow('closed')
+  } finally {
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
+test('an accepted commit cannot overwrite a newer queued remote snapshot', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-commit-race-'))
+  const baseline = await fixture('Original')
+  const newer = await fixture('Newer remote revision')
+  const replica = await NodeReplica.open(
+    {directory, config, identity},
+    baseline.source
+  )
+  try {
+    const request = await replica.request(
+      [
+        {
+          op: 'update',
+          id: 'a',
+          locale: null,
+          status: 'published',
+          set: {title: 'Earlier commit'}
+        }
+      ],
+      Policy.ALLOW_ALL
+    )
+    const sync = replica.sync(newer.source)
+    const commit = replica.acceptCommit(request)
+    await expect(commit).rejects.toThrow('SHA mismatch')
+    expect(await sync).toBe(true)
+    expect(replica.revision).toBe((await newer.source.getTree()).sha)
+    expect(await replica.first({id: 'a', select: Entry.title})).toBe(
+      'Newer remote revision'
+    )
+  } finally {
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
 test('packaged baselines open without copying or parsing and fork only for live deltas', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-packaged-replica-'))
   const packaged = join(directory, 'release.sqlite')

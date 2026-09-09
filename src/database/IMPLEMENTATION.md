@@ -474,6 +474,17 @@ package in isolation and invokes NextCMS from the relocated deployment, includin
 an authenticated Edge-to-Node query. The production HTTP handler's own legacy
 database, permission-scoped browser bootstrap/deltas, and Cloudflare deployment
 remain separate unfinished integration work.
+
+The Node replica now exposes leased source tree/blob reads and `acceptCommit`
+for the handler's post-authority cache handoff. It validates the exact base,
+content hashes and resulting tree revision, then publishes via the same serialized
+immutable-generation path as remote catch-up. Replaying the current target is a
+no-op; an intervening remote generation rejects the stale handoff. No source or
+media write happens here, and this is not a durable mutation receipt. Tests cover
+validation failure without publication, restart reuse, races with remote sync,
+and blob-stream leases through sync/close/cancellation. Production handler wiring
+and its portable runtime path remain unfinished.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 
