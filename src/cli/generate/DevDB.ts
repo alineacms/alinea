@@ -1,14 +1,15 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from '#/core/Config.js'
-import type {UploadResponse} from '#/core/Connection.js'
+import type {SyncApi, UploadResponse} from '#/core/Connection.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {Policy} from '#/core/Role.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
+import {syncWith} from '#/core/source/Source.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {assert} from '#/core/util/Assert.js'
@@ -26,8 +27,8 @@ export interface DevDBOptions {
   config: Config
   rootDir: string
   dashboardUrl: string | undefined
-  /** Dev SQL cache. Build-only callers still use the normalization index. */
-  replica?: {directory: string; identity: CheckpointIdentity}
+  /** Private SQL cache, isolated between build and dev commands. */
+  replica: {directory: string; identity: CheckpointIdentity}
 }
 
 export interface WatchFiles {
@@ -35,7 +36,8 @@ export interface WatchFiles {
   dirs: Array<string>
 }
 
-export class DevDB extends LocalDB {
+export class DevDB extends WritableGraph {
+  readonly config: Config
   source: CachedFSSource
   #options: DevDBOptions
   #replica?: NodeReplica
@@ -46,7 +48,8 @@ export class DevDB extends LocalDB {
     const source = new CachedFSSource(
       join(options.rootDir, Config.contentDir(options.config))
     )
-    super(options.config, source)
+    super()
+    this.config = options.config
     this.#options = options
     this.source = source
   }
@@ -55,10 +58,22 @@ export class DevDB extends LocalDB {
     return this.#sync(() => this.#syncSource())
   }
 
+  syncWith(remote: SyncApi): Promise<string> {
+    return this.#sync(async () => {
+      if (this.#closed) throw new Error('Dev database is closed')
+      await this.source.refresh()
+      await syncWith(this.source, remote)
+      return this.#syncSource()
+    })
+  }
+
+  getTreeIfDifferent(sha: string) {
+    return this.source.getTreeIfDifferent(sha)
+  }
+
   async #syncSource() {
     if (this.#closed) throw new Error('Dev database is closed')
     await this.source.refresh()
-    if (!this.#options.replica) return super.sync()
     this.#replica ??= await NodeReplica.open(
       {config: this.config, ...this.#options.replica},
       this.source
@@ -81,14 +96,12 @@ export class DevDB extends LocalDB {
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     if (this.#closed) return Promise.reject(new Error('Dev database is closed'))
-    if (!this.#options.replica) return super.resolve(query)
     if (!this.#replica)
       return Promise.reject(new Error('Dev database is not ready'))
     return this.#replica.resolve(query)
   }
 
   get sha(): string {
-    if (!this.#options.replica) return super.sha
     if (this.#closed || !this.#replica)
       throw new Error('Dev database is not ready')
     return this.#replica.revision
@@ -110,7 +123,6 @@ export class DevDB extends LocalDB {
   }
 
   async fix() {
-    if (!this.#options.replica) return this.index.fix(this.source)
     await this.#sync(async () => {
       await this.#syncSource()
       const request = await this.#replica!.requestFix()
@@ -119,7 +131,6 @@ export class DevDB extends LocalDB {
   }
 
   referencesTo(query: EntryReferenceQuery) {
-    if (!this.#options.replica) return super.referencesTo(query)
     if (this.#closed || !this.#replica)
       return Promise.reject(new Error('Dev database is not ready'))
     return this.#replica.referencesTo(query)
@@ -127,7 +138,6 @@ export class DevDB extends LocalDB {
 
   async request(mutations: ReadonlyArray<Mutation>, policy = Policy.ALLOW_ALL) {
     if (this.#closed) throw new Error('Dev database is closed')
-    if (!this.#options.replica) return super.request(mutations, policy)
     await this.sync()
     if (!this.#replica) throw new Error('Dev database is not ready')
     return this.#replica.request(mutations, policy)
@@ -162,34 +172,33 @@ export class DevDB extends LocalDB {
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
-    if (!this.#options.replica) return this.#write(request)
     return this.#sync(() => this.#write(request))
+  }
+
+  async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+    return this.write(await this.request(mutations))
   }
 
   async #write(request: CommitRequest): Promise<{sha: string}> {
     if (this.#closed) throw new Error('Dev database is closed')
-    if (this.#options.replica) {
-      await this.source.refresh()
-      const tree = await this.source.getTree()
-      const sourceSha = tree.sha
-      if (sourceSha === request.intoSha) return {sha: await this.#syncSource()}
-      if (sourceSha !== request.fromSha)
-        throw new ShaMismatchError(request.fromSha, sourceSha)
-      const batch = sourceChanges(request)
-      for (const change of batch.changes)
-        if (
-          change.op === 'add' &&
-          (!change.contents || (await hashBlob(change.contents)) !== change.sha)
-        )
-          throw new Error('Commit blob hash mismatch')
-      if ((await tree.withChanges(batch)).sha !== request.intoSha)
-        throw new Error('Commit target revision mismatch')
-    }
+    await this.source.refresh()
+    const tree = await this.source.getTree()
+    const sourceSha = tree.sha
+    if (sourceSha === request.intoSha) return {sha: await this.#syncSource()}
+    if (sourceSha !== request.fromSha)
+      throw new ShaMismatchError(request.fromSha, sourceSha)
+    const batch = sourceChanges(request)
+    for (const change of batch.changes)
+      if (
+        change.op === 'add' &&
+        (!change.contents || (await hashBlob(change.contents)) !== change.sha)
+      )
+        throw new Error('Commit blob hash mismatch')
+    if ((await tree.withChanges(batch)).sha !== request.intoSha)
+      throw new Error('Commit target revision mismatch')
     if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha)
       throw new ShaMismatchError(request.fromSha, this.sha)
-    if (!this.#options.replica && this.index.sha !== request.fromSha)
-      throw new ShaMismatchError(request.fromSha, this.index.sha)
     const {rootDir} = this.#options
     for (const change of request.changes) {
       switch (change.op) {
@@ -205,7 +214,6 @@ export class DevDB extends LocalDB {
         }
       }
     }
-    if (!this.#options.replica) return super.write(request)
     await this.source.applyChanges(sourceChanges(request))
     return {sha: await this.#syncSource()}
   }

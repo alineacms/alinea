@@ -200,7 +200,8 @@ are retained, and this cache is not a cross-process mutation authority. Copy cos
 retention and an attached-overlay comparison remain scale gates. Publishing new
 frame locations and production query cutover remain outstanding.
 
-The CLI dev path now passes a config-bound private cache into `DevDB`. Ordinary
+The CLI build and dev paths now pass a config-bound private cache into `DevDB`,
+using separate build/dev directories. Ordinary
 Graph queries and subscriptions use `NodeReplica`; source writes reconcile SQL
 before returning, and the served revision follows the ready SQL snapshot. Media
 effects reject a stale filesystem revision even while an older SQL snapshot
@@ -210,8 +211,15 @@ results, restart reuse and watcher shutdown. SQL-configured dev startup, seeding
 reads, writes, fixes, references and previews no longer build the legacy index.
 An unchanged restart test verifies zero source-record parsing. Preview routing
 now uses the leased snapshot and request-local overlay described below; there is
-no catch-all query fallback. Build-only callers without a replica still use the
-existing LocalDB path and remain a separate cutover task.
+no catch-all query fallback. `DevDB` now extends WritableGraph directly, requires
+a SQLite cache and has no legacy index/resolver instance. Its remote source-sync
+adapter serializes filesystem updates and reconciles SQL before returning. Tests
+disable EntryIndex synchronization, seed and mutation readers, and exercise
+snapshot replacement, source deletion, restart reuse and closed-owner rejection.
+The HTTP handler depends on a Graph/source/commit interface instead of the
+concrete LocalDB class. Existing production adapters still use LocalDB; this does
+not claim their cutover. Release export also still builds its own immutable
+checkpoint from source rather than reusing the ready generation cache.
 
 Private checkpoint format 7 adds `alinea_entry_reference`, keyed by authored
 version and reference ordinal with an indexed target ID. Build and reconciliation

@@ -161,20 +161,15 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       config: cms.config,
       rootDir,
       dashboardUrl: await options.dashboardUrl,
-      replica:
-        cmd === 'dev'
-          ? {
-              directory: path.join(context.outDir, 'dev-database'),
-              identity: releaseIdentity(
-                cms.config,
-                await hashBlob(
-                  await fsp.readFile(join(context.outDir, 'config.js'))
-                ),
-                context.configLocation,
-                process.env
-              )
-            }
-          : undefined
+      replica: {
+        directory: path.join(context.outDir, `${cmd}-database`),
+        identity: releaseIdentity(
+          cms.config,
+          await hashBlob(await fsp.readFile(join(context.outDir, 'config.js'))),
+          context.configLocation,
+          process.env
+        )
+      }
     })
     try {
       indexing = fillCache(db, context.fix)

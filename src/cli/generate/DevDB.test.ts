@@ -27,7 +27,22 @@ test('rejects stale commits before removing media files', async () => {
         })
       }
     })
-    const db = new DevDB({config, rootDir, dashboardUrl: undefined})
+    const db = new DevDB({
+      config,
+      rootDir,
+      dashboardUrl: undefined,
+      replica: {
+        directory: join(rootDir, 'cache'),
+        identity: {
+          project: 'project',
+          namespace: 'main',
+          epoch: '1',
+          schemaId: 'schema',
+          configId: 'config',
+          releaseId: 'release'
+        }
+      }
+    })
     await db.sync()
     const request: CommitRequest = {
       description: 'Stale media removal',
@@ -38,6 +53,7 @@ test('rejects stale commits before removing media files', async () => {
 
     await test.throws(() => db.write(request), 'SHA mismatch')
     test.is(await readFile(mediaFile, 'utf8'), 'media')
+    await db.close()
   } finally {
     await rm(rootDir, {recursive: true, force: true})
   }

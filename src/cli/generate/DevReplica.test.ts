@@ -8,8 +8,72 @@ import {Entry} from '#/core/Entry.js'
 import {EntryResolver} from '#/core/db/EntryResolver.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {DevDB} from './DevDB.js'
-import {VersionParser} from '#/core/db/EntryIndex.js'
+import {EntryIndex, VersionParser} from '#/core/db/EntryIndex.js'
 import {fillCache} from './FillCache.js'
+
+test('filesystem SQL databases synchronize remote snapshots without a LocalDB index', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-build-sync-'))
+  await mkdir(join(rootDir, 'content'))
+  const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
+  const config = {
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  }
+  const first = await createEntryResolver(config, [
+    {id: 'a', type: 'Page', index: 'a', title: 'Before'}
+  ])
+  const second = await createEntryResolver(config, [
+    {id: 'b', type: 'Page', index: 'b', title: 'After'}
+  ])
+  const db = new DevDB({
+    config,
+    rootDir,
+    dashboardUrl: undefined,
+    replica: {
+      directory: join(rootDir, 'build-database'),
+      identity: {
+        project: 'project',
+        namespace: 'main',
+        epoch: '1',
+        schemaId: 'schema',
+        configId: 'config',
+        releaseId: 'release'
+      }
+    }
+  })
+  const legacy = spyOn(EntryIndex.prototype, 'syncWith').mockImplementation(
+    () => {
+      throw new Error('Unexpected legacy synchronization')
+    }
+  )
+  try {
+    expect('index' in db).toBe(false)
+    await db.syncWith(first.source)
+    expect(await db.find({select: Entry.title})).toEqual(['Before'])
+    expect(db.sha).toBe((await first.source.getTree()).sha)
+    expect(await db.getTreeIfDifferent(db.sha)).toBeUndefined()
+    await db.syncWith(second.source)
+    expect(await db.find({select: Entry.title})).toEqual(['After'])
+    expect(db.sha).toBe((await second.source.getTree()).sha)
+    expect(
+      await readFile(join(rootDir, 'content/pages/b.json'), 'utf8')
+    ).toContain('After')
+    await expect(
+      readFile(join(rootDir, 'content/pages/a.json'))
+    ).rejects.toThrow()
+    await db.close()
+    await expect(db.syncWith(first.source)).rejects.toThrow('closed')
+  } finally {
+    legacy.mockRestore()
+    await db.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
+})
 
 test('SQL dev writes serialize source commits and reject stale or malformed requests before media effects', async () => {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-writes-'))
@@ -148,10 +212,15 @@ test('SQL dev seeding preserves localized identities and config-only defaults wi
     }
   }
   const db = new DevDB(options)
-  const legacySeed = spyOn(db.index, 'seed').mockImplementation(() => {
-    throw new Error('Unexpected JS seeding')
-  })
-  const legacyIndex = spyOn(db.index, 'syncWith').mockImplementation(() => {
+  const legacySeed = spyOn(EntryIndex.prototype, 'seed').mockImplementation(
+    () => {
+      throw new Error('Unexpected JS seeding')
+    }
+  )
+  const legacyIndex = spyOn(
+    EntryIndex.prototype,
+    'syncWith'
+  ).mockImplementation(() => {
     throw new Error('Unexpected JS indexing')
   })
   try {
@@ -272,7 +341,10 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
   }
   const options = {config, rootDir, dashboardUrl: undefined, replica}
   const db = new DevDB(options)
-  const legacyIndex = spyOn(db.index, 'syncWith').mockImplementation(() => {
+  const legacyIndex = spyOn(
+    EntryIndex.prototype,
+    'syncWith'
+  ).mockImplementation(() => {
     throw new Error('Unexpected JS indexing')
   })
   try {
@@ -304,11 +376,12 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
       }
     )
     expect(await initial.promise).toEqual(['Original'])
-    const oldMutations = spyOn(db.index, 'mutationReader').mockImplementation(
-      () => {
-        throw new Error('Unexpected JS mutation reader')
-      }
-    )
+    const oldMutations = spyOn(
+      EntryIndex.prototype,
+      'mutationReader'
+    ).mockImplementation(() => {
+      throw new Error('Unexpected JS mutation reader')
+    })
     try {
       const result = await db.update({
         type: Page,
@@ -354,7 +427,7 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
     await expect(db.find({select: Entry.id})).rejects.toThrow('closed')
     const restarted = new DevDB(options)
     const restartedIndex = spyOn(
-      restarted.index,
+      EntryIndex.prototype,
       'syncWith'
     ).mockImplementation(() => {
       throw new Error('Unexpected JS indexing after restart')

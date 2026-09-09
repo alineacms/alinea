@@ -43,7 +43,15 @@ function requestContext(request: Request): RequestContext {
 const local = new DevDB({
   config: cms.config,
   rootDir: fixtureDir,
-  dashboardUrl: `http://localhost:${port}`
+  dashboardUrl: `http://localhost:${port}`,
+  replica: {
+    directory: path.join(rootDir, 'node_modules/.cache/alinea-self-hosted'),
+    identity: {
+      project: 'self-hosted', namespace: 'main', epoch: '1', schemaId: 'fixture',
+      // This harness loads source config directly: rebuild after each restart.
+      configId: crypto.randomUUID(), releaseId: 'fixture'
+    }
+  }
 })
 await local.sync()
 

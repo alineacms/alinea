@@ -9,11 +9,13 @@ import type {
   AuthedContext,
   DraftTransport,
   RemoteConnection,
+  SyncApi,
   RequestContext
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
+import type {Source} from '#/core/source/Source.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -59,9 +61,21 @@ export interface HandlerHooks {
   afterCommit?(context: AfterCommitContext): HookResponse
 }
 
+export interface HandlerDatabase extends WritableGraph {
+  readonly sha: string
+  readonly source: Source
+  syncWith(remote: SyncApi): Promise<string>
+  getTreeIfDifferent(sha: string): ReturnType<Source['getTreeIfDifferent']>
+  request(
+    mutations: ReadonlyArray<Mutation>,
+    policy?: Policy
+  ): Promise<CommitRequest>
+  write(request: CommitRequest): Promise<{sha: string}>
+}
+
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
-  db: LocalDB | Promise<LocalDB>
+  db: HandlerDatabase | Promise<HandlerDatabase>
   remote?: (context: RequestContext) => RemoteConnection
   forwardMutations?(
     request: Request,
