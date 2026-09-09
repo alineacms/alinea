@@ -291,9 +291,19 @@ formula. Native and WASM tests compare scores directly with SQLite for multiple
 phrases and common terms, exercise attached databases, empty documents and
 multi-byte sizes, and reject malformed records. See SQLite's
 [FTS5 storage and ranking documentation](https://sqlite.org/fts5.html).
-This avoids reading document text or changing private FTS tables; combined
-base/overlay postings, corpus adjustments, snippets and query compilation are
-still required before enabling overlay search.
+`query/MergedFts` now merges base and overlay vocabulary postings, excluding
+replaced/deleted base rows and adjusting corpus statistics before scoring. SQLite
+tokenization preserves accent folding and phrase positions; indexed term ranges
+avoid scanning document text. Native tests compare the complete match set and
+numeric ranks with a freshly rebuilt reference index, including overlapping
+prefixes, duplicate terms, replacements and deletions. The corresponding WASM
+gate remains explicitly skipped: the installed 0.1.18 binary reports "out of
+memory" when creating TEMP FTS/vocabulary tables. This is a native overlay
+primitive, not a claimed browser capability. Query-plan/snippet integration and
+dev preview cutover are still pending.
+
+This avoids reading document text or changing private FTS tables; snippets and
+query compilation are still required before enabling overlay search.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID

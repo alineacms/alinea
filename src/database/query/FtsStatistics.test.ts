@@ -85,7 +85,7 @@ for (const driver of ['native', 'wasm'] as const) {
         documents: 19,
         tokens: 39
       })
-      await db.run(sql`attach database ${':memory:'} as alinea_base`)
+      await db.run(sql`attach database ${''} as alinea_base`)
       await db.run(
         sql`create virtual table alinea_base.alinea_entry_search using fts5(title, body)`
       )
