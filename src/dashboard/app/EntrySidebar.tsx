@@ -24,7 +24,7 @@ import {typeAtoms} from '#/dashboard/atoms/config.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
-import {atom, type Getter, useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, type Getter, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {type ComponentType, type ReactNode} from 'react'
 import {
   IcOutlineDrafts,
@@ -102,8 +102,8 @@ export function EntrySidebar({
   previousVersionsOpen,
   onOpenChange
 }: EntrySidebarProps) {
-  const typeName = useAtomValue(entry.type)
-  const type = useAtomValue(typeAtoms(typeName)).type
+  const typeName = useAtomValueRaw(entry.type)
+  const type = useAtomValueRaw(typeAtoms(typeName)).type
   const setSelectedTab = useSetAtom(entrySidebarTabAtom)
   const isMediaFile = type === MediaFile
   const isMediaLibrary = type === MediaLibrary
@@ -173,7 +173,7 @@ function EntrySidebarHistory({
   localeData,
   previousVersionsOpen
 }: EntrySidebarHistoryProps) {
-  const statuses = useAtomValue(localeData.availableStatuses)
+  const statuses = useAtomValueRaw(localeData.availableStatuses)
   const setPreviousVersionsOpen = useSetAtom(entry.previousVersionsOpen)
   return (
     <div className={styles.EntrySidebar.history()}>
@@ -216,7 +216,7 @@ interface EntrySidebarPreviousVersionsProps {
 function EntrySidebarPreviousVersions({
   localeData
 }: EntrySidebarPreviousVersionsProps) {
-  const history = useAtomValue(localeData.history)
+  const history = useAtomValueRaw(localeData.history)
   if (history.length === 0)
     return (
       <List aria-label="Previous versions" empty>
@@ -249,10 +249,10 @@ function EntrySidebarStatusItem({
   localeData,
   status
 }: EntrySidebarStatusItemProps) {
-  const typeName = useAtomValue(entry.type)
-  const type = useAtomValue(typeAtoms(typeName)).type
-  const versions = useAtomValue(localeData.versions)
-  const currentlyEditing = useAtomValue(localeData.currentlyEditing)
+  const typeName = useAtomValueRaw(entry.type)
+  const type = useAtomValueRaw(typeAtoms(typeName)).type
+  const versions = useAtomValueRaw(localeData.versions)
+  const currentlyEditing = useAtomValueRaw(localeData.currentlyEditing)
   const [selectedVersion, setSelectedVersion] = useAtom(
     localeData.selectedVersion
   )

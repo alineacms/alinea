@@ -4,7 +4,7 @@ import {Section} from '#/core/Section.js'
 import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import {memo, type PropsWithChildren} from 'react'
 import type {EditorNode} from '../atoms/editor.js'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
@@ -50,7 +50,7 @@ interface FormSectionProps {
 }
 
 const FormSection = memo(function FormSection({section}: FormSectionProps) {
-  const View = useAtomValue(section.view)
+  const View = useAtomValueRaw(section.view)
   if (View) return <View section={section.section} />
   return <EditFields fields={Section.definition(section.section)} />
 })

@@ -9,7 +9,7 @@ import {base64} from '#/core/util/Encoding.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import {useEditor, useField, useFieldValue} from '#/dashboard/hooks.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import prettyBytes from 'pretty-bytes'
 import {useMemo, useState} from 'react'
 import {thumbHashToDataURL} from 'thumbhash'
@@ -34,7 +34,7 @@ export interface FileEditorProps {
 }
 
 export function FileEditor({entry, parentPaths}: FileEditorProps) {
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const location = useFieldValue(MediaFile.location)
   const path = useFieldValue(MediaFile.path)
   const extension = useFieldValue(MediaFile.extension)

@@ -24,7 +24,7 @@ import {
   IcRoundMoreHoriz
 } from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import {memo, useMemo, useState} from 'react'
 import css from './RichTextBlock.module.css'
 
@@ -138,7 +138,7 @@ interface ReadOnlyBlockEditorProps {
 }
 
 function ReadOnlyBlockEditor({node, type}: ReadOnlyBlockEditorProps) {
-  const value = useAtomValue(node.value)
+  const value = useAtomValueRaw(node.value)
   const readOnlyNode = useMemo(
     () => new ReactiveNode<object>(value, true),
     [value]

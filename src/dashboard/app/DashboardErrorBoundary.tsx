@@ -2,7 +2,7 @@ import {Button, Icon, Surface} from '#/components.js'
 import {MissingEntryError} from '#/dashboard/atoms/entry.js'
 import {routeAtom, routeGuardAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {useEffect, useRef, type PropsWithChildren} from 'react'
 import useErrorBoundary from 'use-error-boundary'
 import {IcRoundWarning} from '../icons.js'
@@ -11,7 +11,7 @@ import css from './DashboardErrorBoundary.module.css'
 const styles = styler(css)
 
 export function DashboardErrorBoundary({children}: PropsWithChildren) {
-  const route = useAtomValue(routeAtom)
+  const route = useAtomValueRaw(routeAtom)
   const routeKey = JSON.stringify(route)
   return (
     <DashboardRouteErrorBoundary routeKey={routeKey}>
@@ -29,7 +29,7 @@ function DashboardRouteErrorBoundary({
   routeKey
 }: DashboardRouteErrorBoundaryProps) {
   const {ErrorBoundary, didCatch, error, reset} = useErrorBoundary()
-  const route = useAtomValue(routeAtom)
+  const route = useAtomValueRaw(routeAtom)
   const setRoute = useSetAtom(routeAtom)
   const setRouteGuard = useSetAtom(routeGuardAtom)
   const previousRouteKey = useRef(routeKey)

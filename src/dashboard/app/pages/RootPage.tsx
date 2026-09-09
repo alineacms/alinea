@@ -8,7 +8,7 @@ import {
   type RootViewProps
 } from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ComponentType} from 'react'
 import {Explorer} from '../Explorer.js'
 import {CreateEntryButton} from '../DashboardLayout.js'
@@ -85,7 +85,7 @@ export interface MissingRootProps {
 }
 
 export function MissingRoot({page, requestedRoot, root}: MissingRootProps) {
-  const label = useAtomValue(root.label)
+  const label = useAtomValueRaw(root.label)
   const setRoute = useSetAtom(routeAtom)
   return (
     <NotFoundPanel

@@ -3,7 +3,7 @@ import type {WorkspaceInternal} from '#/core/Workspace.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import type {PropsWithChildren} from 'react'
 import {DashboardScope} from '../hooks.js'
 import {IcRoundAdd} from '../icons.js'
@@ -86,7 +86,7 @@ export function CreateEntryButton({
   root,
   toolbar = false
 }: CreateEntryButtonProps) {
-  const canCreate = useAtomValue(root.canCreate)
+  const canCreate = useAtomValueRaw(root.canCreate)
   if (!canCreate) return null
   return (
     <DialogTrigger>

@@ -8,7 +8,7 @@ import {
   createStore,
   Provider,
   useAtom,
-  useAtomValue,
+  useAtomValueRaw,
   type Getter
 } from 'jotai'
 import {
@@ -202,8 +202,8 @@ export function App(props: AppProps) {
 
 function DashboardApp(props: AppProps): ReactNode {
   useInitAtoms(props)
-  const [appPending, app] = useAtomValue(appAtom)
-  const activity = useAtomValue(activityAtom)
+  const [appPending, app] = useAtomValueRaw(appAtom)
+  const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
   const pending =
     appPending || activity.isFetchingUpdates || activity.isMutating

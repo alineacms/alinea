@@ -21,7 +21,7 @@ import styler from '@alinea/styler'
 import type {AnyExtension, Editor} from '@tiptap/core'
 import {EditorContent, useEditor} from '@tiptap/react'
 import {Placeholder} from '@tiptap/extensions'
-import {useAtomValue, useSetAtom, useStore} from 'jotai'
+import {useAtomValueRaw, useSetAtom, useStore} from 'jotai'
 import {
   useCallback,
   useEffect,
@@ -73,7 +73,7 @@ export function RichTextFieldView<Blocks extends Schema>({
   const error = useFieldError(field)
   const fieldNode = useFieldNode<TextDoc>(field)
   const store = useStore()
-  const {blocks, structure} = useAtomValue(
+  const {blocks, structure} = useAtomValueRaw(
     useMemo(() => richTextStructureAtom(fieldNode), [fieldNode])
   )
   const blocksById = useMemo(
@@ -433,7 +433,7 @@ function RichTextBlockSnapshot({
   host,
   node
 }: RichTextBlockSnapshotProps) {
-  const value = useAtomValue(node.value)
+  const value = useAtomValueRaw(node.value)
 
   // oxlint-disable react-you-might-not-need-an-effect/no-event-handler, react-you-might-not-need-an-effect/no-pass-data-to-parent -- Synchronize the Jotai block value to TipTap's external editor store.
   useEffect(() => {

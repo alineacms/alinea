@@ -28,7 +28,7 @@ import {
 import {link as createLink, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import styler from '@alinea/styler'
-import {useAtomValue, type WritableAtom} from 'jotai'
+import {useAtomValueRaw, type WritableAtom} from 'jotai'
 import {
   useCallback,
   useMemo,
@@ -146,8 +146,8 @@ export function PickTextLink({picker}: PickTextLinkProps) {
 }
 
 function PickRichTextImage({picker}: PickTextLinkProps) {
-  const config = useAtomValue(configAtom)
-  const graph = useAtomValue(graphAtom)
+  const config = useAtomValueRaw(configAtom)
+  const graph = useAtomValueRaw(graphAtom)
   const locale = useDashboardContext().page.locale ?? undefined
   const confirming = useRef(false)
   const initialEntry = imageReferenceEntryId(picker.options.link)
@@ -244,7 +244,7 @@ function PickTextLinkForm({picker}: PickTextLinkProps) {
     () => createLinkEditor(referenceToLinkRow(options.link)),
     [options.link]
   )
-  const link = useAtomValue(linkEditor.value)
+  const link = useAtomValueRaw(linkEditor.value)
   const [title, setTitle] = useState(options.title ?? '')
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {

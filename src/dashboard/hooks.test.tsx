@@ -3,7 +3,7 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {afterEach, expect, test} from 'bun:test'
-import {useAtomValue} from 'jotai'
+import {useAtomValueRaw} from 'jotai'
 import {EntryEditor} from './atoms/editor.js'
 import {ReactiveNode} from './atoms/ReactiveNode.js'
 import {configAtom} from './atoms/core.js'
@@ -44,7 +44,7 @@ test('useField applies a functional update once', () => {
 
 function DashboardIdentity({expected}: {expected: object}) {
   const dashboard = useDashboard()
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   return (
     <span>
       {dashboard === expected ? 'same' : 'different'}:

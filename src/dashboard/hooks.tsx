@@ -14,7 +14,7 @@ import {
   createStore,
   Provider,
   useAtom,
-  useAtomValue,
+  useAtomValueRaw,
   useSetAtom
 } from 'jotai'
 import type {
@@ -135,28 +135,28 @@ export function useDashboard(): Dashboard {
  * Returns the active dashboard policy.
  */
 export function usePolicy() {
-  return useAtomValue(policyAtom)
+  return useAtomValueRaw(policyAtom)
 }
 
 /**
  * Returns the authenticated dashboard user, or null when no user is active.
  */
 export function useUser(): User | null {
-  return useAtomValue(userAtom)
+  return useAtomValueRaw(userAtom)
 }
 
 /**
  * Returns the dashboard graph database for direct read queries.
  */
 export function useGraph(): WriteableGraph {
-  return useAtomValue(graphAtom)
+  return useAtomValueRaw(graphAtom)
 }
 
 /**
  * Returns metadata reported by the active browser preview, when available.
  */
 export function usePreviewMetadata(): PreviewMetadata | undefined {
-  return useAtomValue(previewMetadataAtom)
+  return useAtomValueRaw(previewMetadataAtom)
 }
 
 export interface EditorScopeProps {
@@ -243,7 +243,7 @@ function useFieldInfo(field: Field) {
 export function useNodeEditor(node: EditorNode, type: Type) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
-  const policy = useAtomValue(scope ? policyAtom : noPolicyAtom)
+  const policy = useAtomValueRaw(scope ? policyAtom : noPolicyAtom)
   const activeVersion = scope?.selectedEntry
   const editor = useMemo(() => {
     return new EntryEditor(
@@ -264,7 +264,10 @@ export function useNodeEditor(node: EditorNode, type: Type) {
 export function useFieldNode<Value>(field: Field): ReactiveNode<Value> {
   const key = useFieldKey(field)
   const editor = useEditor()
-  const nodes = useAtomValue(editor.node.nodes) as Record<string, ReactiveNode>
+  const nodes = useAtomValueRaw(editor.node.nodes) as Record<
+    string,
+    ReactiveNode
+  >
   assert(nodes[key], `Node not found for field key: ${key}`)
   return nodes[key] as ReactiveNode<Value>
 }
@@ -276,7 +279,7 @@ export function useFieldValue<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): StoredValue {
   const node = useFieldNode<StoredValue>(field)
-  return useAtomValue(node.value) as StoredValue
+  return useAtomValueRaw(node.value) as StoredValue
 }
 
 /**
@@ -286,7 +289,7 @@ export function useField<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): [StoredValue, Dispatch<SetStateAction<StoredValue>>] {
   const info = useFieldInfo(field)
-  const value = useAtomValue(info.value) as StoredValue
+  const value = useAtomValueRaw(info.value) as StoredValue
   const setValue = useSetAtom(info.value) as Dispatch<
     SetStateAction<StoredValue>
   >
@@ -320,7 +323,7 @@ export function useFieldOptions<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
   const info = useFieldInfo(field)
-  return useAtomValue(info.options) as Options
+  return useAtomValueRaw(info.options) as Options
 }
 
 /**
@@ -330,7 +333,7 @@ export function useFieldError<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ): string | undefined {
   const info = useFieldInfo(field)
-  return useAtomValue(info.error)
+  return useAtomValueRaw(info.error)
 }
 
 /**
@@ -340,7 +343,7 @@ export function useFieldView<StoredValue, QueryValue, Mutator, Options>(
   field: Field<StoredValue, QueryValue, Mutator, Options>
 ) {
   const info = useFieldInfo(field)
-  return useAtomValue(info.view)
+  return useAtomValueRaw(info.view)
 }
 
 /**
@@ -350,7 +353,7 @@ export function useSiblingFieldValue(key: string) {
   const editor = useEditor()
   const info = editor.field(key)
   assert(info, `Field not found: ${key}`)
-  return useAtomValue(info.value)
+  return useAtomValueRaw(info.value)
 }
 
 /**
@@ -389,5 +392,5 @@ export function useNodes<Value extends object>(
   node: ReactiveNode<Value>
 ): Record<string, ReactiveNode>
 export function useNodes<Value>(node: ReactiveNode<Value>): unknown {
-  return useAtomValue(node.nodes)
+  return useAtomValueRaw(node.nodes)
 }

@@ -52,7 +52,7 @@ import {
 import {ListOptions} from '#/field/list.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {ComponentType} from 'react'
 import {
@@ -121,7 +121,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const nodes = useNodes(list) as Array<ReactiveNode<ListValue>>
   const pushRow = useSetAtom(list.push)
   const insertRow = useSetAtom(list.insert)
-  const pasted = useAtomValue(copyAtom)
+  const pasted = useAtomValueRaw(copyAtom)
   const schemaEntries = useMemo(
     () => Object.entries(options.schema),
     [options.schema]
@@ -149,7 +149,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
       }),
     [list]
   )
-  const rowIds = useAtomValue(rowIdsAtom)
+  const rowIds = useAtomValueRaw(rowIdsAtom)
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {
@@ -546,12 +546,14 @@ function ListFieldRow({
   onDropIndicatorChange,
   addBetweenRow
 }: ListFieldRowProps) {
-  const itemId = useAtomValue(row.field('_id')) as string
-  const typeName = useAtomValue(row.field('_type')) as string
-  const customLabelValue = useAtomValue(row.field('_label')) as
+  const itemId = useAtomValueRaw(row.field('_id')) as string
+  const typeName = useAtomValueRaw(row.field('_type')) as string
+  const customLabelValue = useAtomValueRaw(row.field('_label')) as
     | string
     | undefined
-  const anchorValue = useAtomValue(row.field('_anchor')) as string | undefined
+  const anchorValue = useAtomValueRaw(row.field('_anchor')) as
+    | string
+    | undefined
   const customLabel = customLabelValue ?? ''
   const setCustomLabel = useSetAtom(row.field('_label'))
   const setAnchor = useSetAtom(row.field('_anchor'))

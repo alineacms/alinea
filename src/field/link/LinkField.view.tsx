@@ -71,7 +71,7 @@ import {type LinkRow as LinkFieldRow} from '#/field/link.js'
 import {LinkField, LinksField} from '#/field/link/LinkField.js'
 import type {EditorLocation, EntryPickerOptions} from '#/picker/entry.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {
   ComponentPropsWithoutRef,
@@ -102,7 +102,7 @@ interface LinkRowProps {
 }
 
 function LinkRow({hasFields, node}: LinkRowProps) {
-  const type = useAtomValue(node.field('_type')) as string | undefined
+  const type = useAtomValueRaw(node.field('_type')) as string | undefined
   return (
     <>
       {type && type !== 'image' && (
@@ -121,7 +121,7 @@ function LinkRow({hasFields, node}: LinkRowProps) {
 }
 
 function LinkRowText({node}: LinkRowProps) {
-  const type = useAtomValue(node.field('_type')) as string | undefined
+  const type = useAtomValueRaw(node.field('_type')) as string | undefined
   if (type === 'entry' || type === 'image' || type === 'file')
     return <EntryRowLayer node={node} textOnly />
   if (type === 'url') return <UrlRow node={node} textOnly />
@@ -157,8 +157,8 @@ interface RowLayerProps {
 }
 
 function EntryRowLayer({hasFields, node, textOnly}: RowLayerProps) {
-  const entryId = useAtomValue(node.field('_entry')) as string | undefined
-  const type = useAtomValue(node.field('_type')) as string | undefined
+  const entryId = useAtomValueRaw(node.field('_entry')) as string | undefined
+  const type = useAtomValueRaw(node.field('_type')) as string | undefined
   if (!entryId) return null
   return (
     <EntryRow
@@ -208,7 +208,7 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
 }
 
 function useLinkEntryState(entryId: string) {
-  return useAtomValue(linkEntryAtoms(entryId))
+  return useAtomValueRaw(linkEntryAtoms(entryId))
 }
 
 interface EntryLoadingRowProps {
@@ -326,8 +326,8 @@ function EntryRowImage({entry, hasFields}: EntryRowImageProps) {
 }
 
 function UrlRow({node, textOnly}: RowLayerProps) {
-  const title = useAtomValue(node.field('_title')) as string | undefined
-  const url = useAtomValue(node.field('_url')) as string | undefined
+  const title = useAtomValueRaw(node.field('_title')) as string | undefined
+  const url = useAtomValueRaw(node.field('_url')) as string | undefined
   return (
     <span className={styles.LinkFieldView.label()}>
       <span className={styles.LinkFieldView.title()}>
@@ -450,7 +450,7 @@ function LinkPickerAction({
   value
 }: LinkPickerActionProps) {
   const currentEntry = useEntry()
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const selectedWorkspace = currentEntry?.workspace
   const selectedRoot = currentEntry?.root
   const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
@@ -584,7 +584,7 @@ function LinkPickerDialog({
   value
 }: LinkPickerDialogProps) {
   const currentEntry = useEntry()
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const selectedWorkspace = currentEntry?.workspace
   const selectedRoot = currentEntry?.root
   const selectedMediaRoot = mediaRoot(config, selectedWorkspace)
@@ -723,7 +723,7 @@ function useResolvedEntryPickerOptions(
     })
     return unwrap(resolved, previous => previous ?? initialValue)
   }, [conditionOption, entry, locationOption, type])
-  return useAtomValue(resolvedAtom)
+  return useAtomValueRaw(resolvedAtom)
 }
 
 function entryPickerSearchScope(
@@ -963,7 +963,9 @@ interface LinkLabelFieldProps {
 }
 
 function LinkLabelField({isDisabled, node, value}: LinkLabelFieldProps) {
-  const customLabel = useAtomValue(node.field('_label')) as string | undefined
+  const customLabel = useAtomValueRaw(node.field('_label')) as
+    | string
+    | undefined
   const setCustomLabel = useSetAtom(node.field('_label'))
   if ('_entry' in value) {
     return (
@@ -995,7 +997,7 @@ function EntryLinkSuffixField({
   node,
   value
 }: EntryLinkSuffixFieldProps) {
-  const suffix = useAtomValue(node.field('_suffix')) as string | undefined
+  const suffix = useAtomValueRaw(node.field('_suffix')) as string | undefined
   const setSuffix = useSetAtom(node.field('_suffix'))
   if (value[Reference.type] !== 'entry') return null
   return (
@@ -1016,7 +1018,7 @@ interface EntryAnchorFieldProps {
 }
 
 function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
-  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
   const setAnchor = useSetAtom(node.field('_anchor'))
   if (value[Reference.type] !== 'entry') return null
   return (
@@ -1030,7 +1032,7 @@ function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
 }
 
 function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
-  const anchor = useAtomValue(node.field('_anchor')) as string | undefined
+  const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
   if (value[Reference.type] !== 'entry' || !anchor) return null
   return <Badge size="small">#{anchor}</Badge>
 }
@@ -1081,7 +1083,9 @@ interface LinkMetaLabelProps {
 }
 
 function LinkMetaLabel({className, node, value}: LinkMetaLabelProps) {
-  const customLabel = useAtomValue(node.field('_label')) as string | undefined
+  const customLabel = useAtomValueRaw(node.field('_label')) as
+    | string
+    | undefined
   if ('_entry' in value) {
     return (
       <EntryLinkMetaLabel
@@ -1203,7 +1207,7 @@ function EntryLinkTypeBadge({
   ...props
 }: EntryLinkTypeBadgeProps) {
   const state = useLinkEntryState(entryId)
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const entry = state.state === 'hasData' ? state.data : undefined
   const type = entry ? config.schema[entry.type] : undefined
   if (!type) {
@@ -1728,7 +1732,7 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const [value] = useField(field)
   const options = useFieldOptions(field)
   const node = useFieldNode(field)
-  const nodeIsEmpty = useAtomValue(node.isEmpty)
+  const nodeIsEmpty = useAtomValueRaw(node.isEmpty)
   const selectedValue = isLinkFieldRow(value) ? value : undefined
   const isEmpty = nodeIsEmpty || !selectedValue
   const hasRows = Boolean(selectedValue)
@@ -1791,7 +1795,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
       }),
     [list]
   )
-  const rowIds = useAtomValue(rowIdsAtom)
+  const rowIds = useAtomValueRaw(rowIdsAtom)
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {

@@ -1,7 +1,7 @@
 import {Button, Icon} from '#/components.js'
 import {assert} from '#/core/util/Assert.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   isFileDropItem,
   useDragAndDrop
@@ -29,9 +29,9 @@ interface EmptyResultsProps {
 }
 
 function EmptyResults({explorer, page, root}: EmptyResultsProps) {
-  const icon = useAtomValue(root?.icon ?? fallbackEmptyIcon)
+  const icon = useAtomValueRaw(root?.icon ?? fallbackEmptyIcon)
   const setSearchScope = useSetAtom(explorer.searchScope)
-  const canSearchEverything = useAtomValue(explorer.canSearchEverything)
+  const canSearchEverything = useAtomValueRaw(explorer.canSearchEverything)
   const canSearchAll =
     canSearchEverything &&
     page.searchScope === 'workspace' &&
@@ -91,18 +91,18 @@ export function ExplorerList({
   onSelectionChange,
   page
 }: ExplorerListProps) {
-  const showResults = useAtomValue(explorer.showResults)
+  const showResults = useAtomValueRaw(explorer.showResults)
   const getItems = useSetAtom(explorer.getItems)
   const getDropOperation = useSetAtom(explorer.getDropOperation)
   const dropOnItem = useSetAtom(explorer.onItemDrop)
-  const requestedLocation = useAtomValue(explorer.location)
-  const selectedLocale = useAtomValue(explorer.selectedLocale)
+  const requestedLocation = useAtomValueRaw(explorer.location)
+  const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
   const locationIsPending = explorerPageIsPending(
     page,
     requestedLocation,
     selectedLocale
   )
-  const canUpload = useAtomValue(explorer.canUpload)
+  const canUpload = useAtomValueRaw(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes:

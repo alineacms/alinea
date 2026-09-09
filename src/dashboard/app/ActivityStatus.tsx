@@ -15,7 +15,7 @@ import {
   type PopoverProps
 } from '#/components.js'
 import styler from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   useEffect,
   useRef,
@@ -72,8 +72,8 @@ export function ActivityStatus({
   openOnFail = false,
   placement = 'right'
 }: ActivityStatusProps) {
-  const [appPending] = useAtomValue(appAtom)
-  const activity = useAtomValue(activityAtom)
+  const [appPending] = useAtomValueRaw(appAtom)
+  const activity = useAtomValueRaw(activityAtom)
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
@@ -89,7 +89,7 @@ export function ActivityStatus({
     appPending,
     activity.isMutating
   )
-  const showSpinner = useAtomValue(activityPendingAtom)
+  const showSpinner = useAtomValueRaw(activityPendingAtom)
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
   const visibleActivityLabel =
     activityLabel ?? (showSpinner ? lastActivityLabel.current : undefined)

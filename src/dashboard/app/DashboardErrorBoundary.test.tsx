@@ -1,6 +1,6 @@
 import {act, cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, spyOn, test} from 'bun:test'
-import {createStore, Provider, useAtomValue} from 'jotai'
+import {createStore, Provider, useAtomValueRaw} from 'jotai'
 import type {ReactNode} from 'react'
 import {MissingEntryError} from '../atoms/entry.js'
 import {routeAtom} from '../atoms/nav.js'
@@ -23,13 +23,13 @@ function FailedDatabase({cause}: FailedDatabaseProps): ReactNode {
 }
 
 function RouteDashboard() {
-  const route = useAtomValue(routeAtom)
+  const route = useAtomValueRaw(routeAtom)
   if (route.entry === 'broken') return <BrokenDashboard />
   return <p>Dashboard recovered</p>
 }
 
 function MissingEntryDashboard() {
-  const route = useAtomValue(routeAtom)
+  const route = useAtomValueRaw(routeAtom)
   if (route.entry === 'child') throw new MissingEntryError('child')
   return <p>Root</p>
 }

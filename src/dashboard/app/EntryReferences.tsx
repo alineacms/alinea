@@ -19,7 +19,7 @@ import type {
 } from '#/dashboard/atoms/entry.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import {styler} from '@alinea/styler'
-import {useAtomValue, useSetAtom} from 'jotai'
+import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {IcRoundImage, IcRoundInsertDriveFile, IcRoundLink} from '../icons.js'
 import css from './EntryReferences.module.css'
 
@@ -31,9 +31,9 @@ export interface EntryReferencesProps {
 }
 
 export function EntryReferences({entry, localeData}: EntryReferencesProps) {
-  const data = useAtomValue(entry.incomingReferences)
-  const config = useAtomValue(configAtom)
-  const typeName = useAtomValue(entry.type)
+  const data = useAtomValueRaw(entry.incomingReferences)
+  const config = useAtomValueRaw(configAtom)
+  const typeName = useAtomValueRaw(entry.type)
   const setRoute = useSetAtom(routeAtom)
   if (!data) return null
   const type = config.schema[typeName]

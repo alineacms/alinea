@@ -20,7 +20,7 @@ import {entry as entryField} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
 import {EntryReference} from '#/picker/entry/EntryReference.js'
 import styler from '@alinea/styler'
-import {atom, useAtomValue, useSetAtom, type WritableAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
 import {
   Suspense,
   useMemo,
@@ -114,12 +114,12 @@ function CreateEntryForm() {
   const modal = useDashboardModal()
   const {page, root} = useDashboardContext()
   const createEntry = useSetAtom(createEntryAtom)
-  const config = useAtomValue(configAtom).schema
-  const policy = useAtomValue(policyAtom)
+  const config = useAtomValueRaw(configAtom).schema
+  const policy = useAtomValueRaw(policyAtom)
   const {locale} = page
   const tree = root.tree(locale)
-  const selectedItem = useAtomValue(tree.selectedItem)
-  const rootData = useAtomValue(root.data)
+  const selectedItem = useAtomValueRaw(tree.selectedItem)
+  const rootData = useAtomValueRaw(root.data)
   const initialParentId = useMemo(() => {
     if (!page.entry || !selectedItem) return undefined
     const type = config[selectedItem.type]
@@ -154,7 +154,7 @@ function CreateEntryForm() {
       initialParentId ? entryReference(initialParentId, 'parent') : null
     )
   }, [containerTypes, initialParentId, root.key, root.workspace])
-  const parentValue = useAtomValue(parent.value)
+  const parentValue = useAtomValueRaw(parent.value)
   const parentId = entryIdOf(parentValue)
   const parentItemAtom = useMemo(
     () =>
@@ -164,7 +164,7 @@ function CreateEntryForm() {
       }),
     [parent.value, tree]
   )
-  const parentItem = useAtomValue(parentItemAtom)
+  const parentItem = useAtomValueRaw(parentItemAtom)
   const parentType = parentItem ? config[parentItem.type] : undefined
   const allowed = parentType
     ? Schema.contained(config, Type.contains(parentType))
@@ -194,7 +194,7 @@ function CreateEntryForm() {
     }) as LinkField<EntryReference, unknown>
     return createLinkEditor('copyFrom', field)
   }, [root.key, root.workspace, selectedType])
-  const copyFromValue = useAtomValue(copyFrom.value)
+  const copyFromValue = useAtomValueRaw(copyFrom.value)
   const copyFromId = entryIdOf(copyFromValue)
   const showInsertOrder = parentType
     ? Type.insertOrder(parentType) === 'free'

@@ -1,7 +1,7 @@
 import type {EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {atomWithPending} from '#/dashboard/atoms/utils.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useMemo} from 'react'
 import {EntrySidebarBrowserPreview} from './EntrySidebarPreview.js'
 
@@ -40,7 +40,7 @@ const refreshPreviewUrl = atom(null, (_get, set) => {
 
 function PreviewTitleField() {
   const titleField = node.field('title')
-  const value = useAtomValue(titleField)
+  const value = useAtomValueRaw(titleField)
   const setValue = useSetAtom(titleField)
   return (
     <label>

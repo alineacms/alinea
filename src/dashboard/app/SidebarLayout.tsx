@@ -1,6 +1,6 @@
 import {styler} from '@alinea/styler'
 import {Allotment, LayoutPriority, type AllotmentHandle} from 'allotment'
-import {useAtom, useAtomValue} from 'jotai'
+import {useAtom, useAtomValueRaw} from 'jotai'
 import {useRef, type ReactNode} from 'react'
 import {
   dashboardMobileAtom,
@@ -24,7 +24,7 @@ export function SidebarLayout({
   side,
   visible = true
 }: SidebarLayoutProps) {
-  const isMobile = useAtomValue(dashboardMobileAtom)
+  const isMobile = useAtomValueRaw(dashboardMobileAtom)
   const [width, setWidth] = useAtom(
     side === 'left' ? navigationSidebarWidthAtom : entrySidebarWidthAtom
   )

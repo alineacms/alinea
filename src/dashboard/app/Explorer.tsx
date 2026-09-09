@@ -15,7 +15,7 @@ import {ViewToggle} from '#/dashboard/app/ViewToggle.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import styler from '@alinea/styler'
-import {useAtom, useAtomValue, useSetAtom} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   useEffect,
   useMemo,
@@ -124,7 +124,7 @@ export function ExplorerSearch({
 }: ExplorerSearchProps) {
   const items = page.items
   const [selection, setSelection] = useAtom(explorer.selection)
-  const search = useAtomValue(explorer.search)
+  const search = useAtomValueRaw(explorer.search)
   const setSearch = useSetAtom(explorer.search)
   const performAction = useSetAtom(explorer.onAction)
   const [inputValue, setInputValue] = useState(search)
@@ -230,7 +230,7 @@ function ExplorerSearchScope({explorer, page}: ExplorerSearchScopeProps) {
   const searchScope = page.searchScope
   const setSearchScope = useSetAtom(explorer.searchScope)
   const resultMode = page.resultMode
-  const canSearchEverything = useAtomValue(explorer.canSearchEverything)
+  const canSearchEverything = useAtomValueRaw(explorer.canSearchEverything)
   const [, startTransition] = useTransition()
   if (!explorer.allowAllWorkspaces) return null
   const isDisabled =
@@ -265,7 +265,7 @@ function ExplorerResultMode({
 }: ExplorerResultModeProps) {
   const resultMode = page.resultMode
   const setResultMode = useSetAtom(explorer.resultMode)
-  const search = useAtomValue(explorer.search)
+  const search = useAtomValueRaw(explorer.search)
   const [, startTransition] = useTransition()
   const canShowFiltered =
     explorer.pickChildren || explorer.hasCondition || Boolean(search.trim())
@@ -304,8 +304,8 @@ function ExplorerHeaderLoadedParentMain({
   explorer,
   titleControls
 }: ExplorerHeaderLoadedParentMainProps) {
-  const label = useAtomValue(data.label)
-  const parents = useAtomValue(data.parents)
+  const label = useAtomValueRaw(data.label)
+  const parents = useAtomValueRaw(data.parents)
   const setLocation = useSetAtom(explorer.location)
   const parent = parents.at(-1)
   return (
@@ -331,7 +331,7 @@ function ExplorerHeaderMain({
   page,
   titleControls
 }: ExplorerHeaderMainProps) {
-  const parent = useAtomValue(explorer.parent(page.location, page.locale))
+  const parent = useAtomValueRaw(explorer.parent(page.location, page.locale))
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
@@ -376,7 +376,7 @@ function ExplorerLocationParents({
   lockNavigation,
   parent
 }: ExplorerLocationParentsProps) {
-  const {data} = useAtomValue(parent.data)
+  const {data} = useAtomValueRaw(parent.data)
   if (!data) return null
   return (
     <ExplorerLoadedLocationParents
@@ -401,7 +401,7 @@ function ExplorerLoadedLocationParents({
   lockNavigation,
   parent
 }: ExplorerLoadedLocationParentsProps) {
-  const parents = useAtomValue(data.parents)
+  const parents = useAtomValueRaw(data.parents)
   return [...parents, parent].map((entry, index, entries) => (
     <ExplorerLocationParent
       current={index === entries.length - 1}
@@ -426,7 +426,7 @@ function ExplorerLocationParent({
   explorer,
   lockNavigation
 }: ExplorerLocationParentProps) {
-  const {data} = useAtomValue(entry.data)
+  const {data} = useAtomValueRaw(entry.data)
   if (!data) return null
   return (
     <ExplorerLoadedLocationParent
@@ -454,7 +454,7 @@ function ExplorerLoadedLocationParent({
   explorer,
   lockNavigation
 }: ExplorerLoadedLocationParentProps) {
-  const label = useAtomValue(data.label)
+  const label = useAtomValueRaw(data.label)
   const setLocation = useSetAtom(explorer.location)
   return (
     <>
@@ -494,13 +494,13 @@ function ExplorerLocationMenu({
   lockNavigation = false,
   page
 }: ExplorerLocationMenuProps) {
-  const config = useAtomValue(configAtom)
+  const config = useAtomValueRaw(configAtom)
   const location = page.location
-  const policy = useAtomValue(policyAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const selectedLocale = page.locale
   const setSelectedLocale = useSetAtom(explorer.selectedLocale)
   const setLocation = useSetAtom(explorer.location)
-  const parent = useAtomValue(explorer.parent(location, selectedLocale))
+  const parent = useAtomValueRaw(explorer.parent(location, selectedLocale))
   const configuredLocations = explorer.limitLocations?.length
     ? explorer.limitLocations
     : Object.entries(config.workspaces).flatMap(([workspace, value]) =>
@@ -676,7 +676,7 @@ function ExplorerHeaderParentMain({
   parent,
   titleControls
 }: ExplorerHeaderParentMainProps) {
-  const {data} = useAtomValue(parent.data)
+  const {data} = useAtomValueRaw(parent.data)
   if (!data) return null
   return (
     <ExplorerHeaderLoadedParentMain
@@ -789,15 +789,15 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
   const [, setView] = useAtom(explorer.view)
   const [sort, setSort] = useAtom(explorer.sort)
   const [selectedFilter, toggleFilter] = useAtom(explorer.filter)
-  const requestedLocation = useAtomValue(explorer.location)
-  const selectedLocale = useAtomValue(explorer.selectedLocale)
+  const requestedLocation = useAtomValueRaw(explorer.location)
+  const selectedLocale = useAtomValueRaw(explorer.selectedLocale)
   const locationIsPending = explorerPageIsPending(
     page,
     requestedLocation,
     selectedLocale
   )
-  const canUpload = useAtomValue(explorer.canUpload)
-  const uploads = useAtomValue(explorer.uploadsInCurrentFolder)
+  const canUpload = useAtomValueRaw(explorer.canUpload)
+  const uploads = useAtomValueRaw(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
   const uploadCount = uploads.length
   const uploadLabel =
@@ -923,7 +923,7 @@ export function Explorer({
   page: loadedPage,
   titleControls
 }: ExplorerProps) {
-  const resolvedPage = useAtomValue(explorer.page)
+  const resolvedPage = useAtomValueRaw(explorer.page)
   const page = resolvedPage ?? loadedPage
   return (
     <>

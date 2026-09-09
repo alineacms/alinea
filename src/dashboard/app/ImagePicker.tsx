@@ -9,7 +9,7 @@ import {
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useDashboardContext} from '#/dashboard/hooks.js'
-import {atom, useAtomValue, useSetAtom} from 'jotai'
+import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {Suspense, startTransition, useMemo, type ReactNode} from 'react'
 import {ExplorerHeader} from './Explorer.js'
 import {
@@ -62,7 +62,7 @@ interface ExplorerModalProps {
 function ImagePickerModalContent({label, options}: ExplorerModalProps) {
   const modal = useDashboardModal()
   const {page, root, workspace} = useDashboardContext()
-  const policy = useAtomValue(policyAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const mediaRoot = Object.entries(workspace.roots).find(
     ([key, value]) =>
       policy.canRead({workspace: root.workspace, root: key}) &&
@@ -73,7 +73,7 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     root: mediaRoot ?? root.key
   }
   const pickerRoot = rootAtoms(location.workspace, location.root ?? root.key)
-  const pickerI18n = useAtomValue(pickerRoot.i18n)
+  const pickerI18n = useAtomValueRaw(pickerRoot.i18n)
   const initialLocale = normalizePickerLocale(
     location.locale ?? options.selectedLocale ?? page.locale,
     pickerI18n?.locales ?? []
@@ -108,9 +108,9 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
     return {explorer, tree}
   }, [explorerIdentity])
   // oxlint-enable react-hooks/exhaustive-deps
-  const explorerPage = useAtomValue(explorer.page)
+  const explorerPage = useAtomValueRaw(explorer.page)
   const onConfirm = useSetAtom(explorer.onConfirm)
-  const selection = useAtomValue(explorer.selection)
+  const selection = useAtomValueRaw(explorer.selection)
   const selectedItems = selection === 'all' ? 0 : selection.size
 
   if (!explorerPage)
