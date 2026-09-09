@@ -11,6 +11,7 @@ import {
   type HttpPayloadLoaderOptions
 } from './HttpPayloadLoader.js'
 import {ReplicaCache} from './ReplicaCache.js'
+import {fetchBootstrap, type FetchBootstrapOptions} from './FetchBootstrap.js'
 
 export interface ReplicaSessionOptions extends Omit<
   HttpPayloadLoaderOptions,
@@ -20,8 +21,13 @@ export interface ReplicaSessionOptions extends Omit<
   bootstrap: unknown
   expected: ExpectedReplica
   indexedDB?: IDBFactory
+  /** Cancels startup only; close() controls the lifetime of a ready session. */
+  signal?: AbortSignal
   onInvalidated?(error: Error): void
 }
+
+export interface ConnectReplicaOptions
+  extends Omit<ReplicaSessionOptions, 'bootstrap'>, FetchBootstrapOptions {}
 
 /** One authenticated in-memory Graph generation; never opens SQL from cached bytes. */
 export class ReplicaSession extends Graph {
@@ -66,13 +72,17 @@ export class ReplicaSession extends Graph {
   }
 
   static async open(options: ReplicaSessionOptions): Promise<ReplicaSession> {
+    const {signal} = options
+    signal?.throwIfAborted()
     const view = decodeBootstrap(options.bootstrap, options.expected)
     const db = await wasmDatabase()
     let cache: ReplicaCache | undefined
     let session: ReplicaSession | undefined
     try {
+      signal?.throwIfAborted()
       if (options.indexedDB) {
         cache = await ReplicaCache.open(options.indexedDB, view.identity)
+        signal?.throwIfAborted()
         const previous = await cache.snapshot()
         if (previous.revision !== view.revision) {
           const present = new Set(
@@ -92,6 +102,7 @@ export class ReplicaSession extends Graph {
           })
         }
       }
+      signal?.throwIfAborted()
       await EntryRuntime.createSchema(db, '')
       session = new ReplicaSession(options, view, db, cache)
       await session.#runtime.apply({
@@ -99,6 +110,7 @@ export class ReplicaSession extends Graph {
         toRevision: view.revision,
         entries: view.entries
       })
+      signal?.throwIfAborted()
       return session
     } catch (error) {
       if (session) await session.close()
@@ -108,6 +120,14 @@ export class ReplicaSession extends Graph {
       }
       throw error
     }
+  }
+
+  static async connect(
+    options: ConnectReplicaOptions
+  ): Promise<ReplicaSession> {
+    const captured = {...options, expected: {...options.expected}}
+    const bootstrap = await fetchBootstrap(captured)
+    return ReplicaSession.open({...captured, bootstrap})
   }
 
   get bootstrap(): IndexBootstrap {

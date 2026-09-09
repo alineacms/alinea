@@ -548,8 +548,18 @@ new and late query results immediately, aborts loaders and drains pending reads
 before closing SQLite. Revocation closes and purges the cache; logout can also
 purge an already ordinarily closed session. Tests cover lazy hydration, reopen,
 strict bootstrap filtering, revocation, cache purge and the actual Node handler
-bootstrap/payload-to-WASM session path. Bootstrap HTTP acquisition, generation
-refresh/live-query ownership and dashboard integration remain unfinished.
+bootstrap/payload-to-WASM session path. Generation refresh/live-query ownership
+and dashboard integration remain unfinished.
+
+`ReplicaSession.connect` now obtains that bootstrap through authenticated HTTP
+before allocating its ready Graph. The bounded fetch requires a 200 JSON response,
+disables caching/redirects, captures the expected identity before awaiting I/O,
+and cancels rejected or over-limit bodies. Startup cancellation is checked through
+WASM/cache initialization and closes partially opened resources; it does not own
+the lifetime of an already-ready session. Tests cover the handler-to-session HTTP
+path, no payload fetch for index-only reads, invalid authority/content, chunked
+response limits and cancellation before or during bootstrap. Generation refresh,
+live-query ownership, incremental deltas and dashboard integration remain open.
 
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.

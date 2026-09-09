@@ -14,6 +14,7 @@ import {createFrameKey, encryptFrame} from '../replica/Frame.js'
 import {decodeBootstrap} from './DecodeBootstrap.js'
 import {ReplicaCache} from './ReplicaCache.js'
 import {ReplicaSession} from './ReplicaSession.js'
+import {fetchBootstrap} from './FetchBootstrap.js'
 
 async function fixture() {
   const {versionId, ...indexed} = entryIndexRow(entry('a'))
@@ -200,4 +201,132 @@ test('closing during a payload fetch gates new reads and drains the late result'
   await expect(pending).rejects.toThrow()
   await closing
   expect(closed).toBe(true)
+})
+
+test('connect authenticates bootstrap before opening a queryable lazy session', async () => {
+  const {bootstrap, response} = await fixture()
+  const calls: Array<string> = []
+  const session = await ReplicaSession.connect({
+    config,
+    expected: identity,
+    url: 'https://example.com/api',
+    applyAuth(init) {
+      const headers = new Headers(init.headers)
+      headers.set('authorization', 'Bearer user')
+      return {...init, headers}
+    },
+    async fetch(url, init) {
+      const action = new URL(url).searchParams.get('action')!
+      calls.push(action)
+      expect(init.method).toBe('POST')
+      expect(init.cache).toBe('no-store')
+      expect(init.redirect).toBe('error')
+      expect(new Headers(init.headers).get('authorization')).toBe('Bearer user')
+      return Response.json(action === 'replicaIndex' ? bootstrap : response)
+    }
+  })
+  try {
+    expect(calls).toEqual(['replicaIndex'])
+    expect(await session.find({select: Entry.id})).toEqual(['a'])
+    expect(calls).toEqual(['replicaIndex'])
+    expect(await session.find({select: Page.title})).toEqual([
+      'Private payload'
+    ])
+    expect(calls).toEqual(['replicaIndex', 'replicaPayloads'])
+  } finally {
+    await session.close()
+  }
+})
+
+test('bootstrap requests fail closed on auth, malformed and oversized responses', async () => {
+  const {bootstrap} = await fixture()
+  for (const response of [
+    new Response(null, {status: 401}),
+    new Response('invalid', {headers: {'content-type': 'application/json'}}),
+    Response.json({...bootstrap, identity: {...identity, namespace: 'wrong'}}),
+    new Response('{}', {headers: {'content-type': 'text/html'}})
+  ]) {
+    await expect(
+      ReplicaSession.connect({
+        config,
+        expected: identity,
+        url: 'https://example.com/api',
+        async fetch() {
+          return response
+        }
+      })
+    ).rejects.toThrow()
+  }
+  let cancelled = false
+  await expect(
+    fetchBootstrap({
+      expected: identity,
+      url: 'https://example.com/api',
+      maximumBytes: 8,
+      async fetch() {
+        return new Response(
+          new ReadableStream({
+            pull(controller) {
+              controller.enqueue(new Uint8Array(9))
+            },
+            cancel() {
+              cancelled = true
+            }
+          }),
+          {headers: {'content-type': 'application/json'}}
+        )
+      }
+    })
+  ).rejects.toThrow('byte limit')
+  expect(cancelled).toBe(true)
+})
+
+test('bootstrap cancellation stops pending streams and refuses late responses', async () => {
+  const {bootstrap} = await fixture()
+  const abort = new AbortController()
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  let cancelled = false
+  const pending = ReplicaSession.connect({
+    config,
+    expected: identity,
+    url: 'https://example.com/api',
+    signal: abort.signal,
+    async fetch() {
+      started.resolve()
+      await resume.promise
+      return new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(
+              new TextEncoder().encode(JSON.stringify(bootstrap))
+            )
+          },
+          cancel() {
+            cancelled = true
+          }
+        }),
+        {headers: {'content-type': 'application/json'}}
+      )
+    }
+  })
+  await started.promise
+  abort.abort(new Error('Cancelled startup'))
+  resume.resolve()
+  await expect(pending).rejects.toThrow('Cancelled startup')
+  expect(cancelled).toBe(true)
+  let calls = 0
+  await expect(
+    ReplicaSession.connect({
+      config,
+      expected: identity,
+      url: 'https://example.com/api',
+      signal: abort.signal,
+      async fetch() {
+        calls++
+        return Response.json(bootstrap)
+      }
+    })
+  ).rejects.toThrow('Cancelled startup')
+  expect(calls).toBe(0)
 })

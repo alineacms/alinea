@@ -197,10 +197,9 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
     expect(JSON.parse(new TextDecoder().decode(plaintext)).data.title).toBe(
       'Original'
     )
-    const browserSession = await ReplicaSession.open({
+    const browserSession = await ReplicaSession.connect({
       url: 'https://example.com/api/cms',
       config: localCms.config,
-      bootstrap: view,
       expected: {project: 'project', namespace: 'main', principal: 'editor'},
       applyAuth(init) {
         const headers = new Headers(init.headers)
