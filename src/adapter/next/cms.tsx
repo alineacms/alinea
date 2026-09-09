@@ -1,16 +1,11 @@
-import {
-  applyPreview as applyPreviewUpdate,
-  type DecodedPreviewRequest,
-  decodePreviewRequest
-} from '#/backend/resolver/ParsePreview.js'
 import {createThrottledSync} from '#/backend/util/Syncable.js'
 import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import type {NodeReplica} from '#/database/driver/NodeReplica.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import type {Graph, GraphQuery} from '#/core/Graph.js'
+import type {Graph, GraphQuery, AnyQueryResult} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
 import {trace} from '#/core/Trace.js'
@@ -45,17 +40,16 @@ export class NextCMS<
     const {openDatabase} = await import('@alinea/generated/database.js')
     return openDatabase(this.config)
   })
-  bundledDb = PLazy.from(async () => {
+  bundledDb: Promise<NodeReplica> = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
-      throw new Error('Local DB is not supported in Edge runtime environments.')
+      throw new Error(
+        'Bundled SQLite is not supported in Edge runtime environments.'
+      )
     const span = trace(this.config, 'alinea.next.cms.db')
     return span(async () => {
-      const {generatedSource} =
-        await import('#/backend/store/GeneratedSource.js')
-      const source = await generatedSource
-      const db = new LocalDB(this.config, source)
-      await db.sync()
-      return db
+      // @ts-ignore generated at build time, native implementation excluded on edge
+      const {openReplica} = await import('@alinea/generated/database.js')
+      return openReplica(this.config)
     })
   })
   #applyPreview = cache(async () => {
@@ -67,73 +61,36 @@ export class NextCMS<
     const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft)
-      return {context, hasPreview: false, isDraft, isBuild, useLocalDb}
+      return {context, isDraft, isBuild, useLocalDb, preview: undefined}
 
     const cookie = await cookies()
     const payload = getPreviewPayloadFromCookies(cookie.getAll())
-    if (!payload)
-      return {
-        context,
-        hasPreview: false,
-        isDraft,
-        isBuild,
-        preview: undefined,
-        useLocalDb
-      }
-
-    let preview: PreviewRequest | undefined = {payload}
-    if (useLocalDb) {
-      const db = await this.bundledDb
-      const decoded = await decodePreviewRequest(preview)
-      preview = await this.#prepareLocalPreview(db, decoded, context)
-    }
-    return {context, hasPreview: true, isDraft, isBuild, preview, useLocalDb}
+    const preview: PreviewRequest | undefined = payload ? {payload} : undefined
+    return {context, isDraft, isBuild, preview, useLocalDb}
   })
 
-  async #prepareLocalPreview(
-    db: LocalDB,
-    decoded: DecodedPreviewRequest,
-    context: RequestContext
-  ): Promise<PreviewRequest | undefined> {
-    if ('entry' in decoded) return decoded
-    if (db.sha === decoded.contentHash) return applyPreviewUpdate(db, decoded)
-
-    const source = await db.source.getTree()
-    if (source.sha === decoded.contentHash) {
-      await db.sync()
-      return applyPreviewUpdate(db, decoded)
-    }
-
-    // File patches carry and verify their own base hash. A patch can therefore
-    // be applied safely when only unrelated files changed in the content tree.
-    const applied = await applyPreviewUpdate(db, decoded)
-    if (applied) return applied
-
-    // The target entry is missing or has a different base. Only this case
-    // needs the current remote tree before applying the preview again.
-    await db.syncWith(createClient(this.config, context))
-    return applyPreviewUpdate(db, decoded)
-  }
-
-  async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
+  async resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
     let status = query.status
-    const {context, hasPreview, isDraft, isBuild, preview, useLocalDb} =
+    const {context, isDraft, isBuild, preview, useLocalDb} =
       await this.#applyPreview()
     if (isDraft && !status) status = 'preferDraft'
-    const request = {...query, preview, status}
+    const request = {...query, preview: preview ?? query.preview, status}
     const client = createClient(this.config, context)
     if (!useLocalDb) {
       const span = trace(this.config, 'alinea.cms.resolve.client')
-      return span(() => client.resolve(request))
+      return span(() => client.resolve<Query>(request))
     }
-    if (isBuild && !hasPreview) return (await this.buildDb).resolve(request)
+    if (isBuild && !request.preview)
+      return (await this.buildDb).resolve<Query>(request)
     const db = await this.bundledDb
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
-    if (hasPreview) return db.resolve(request)
-    if (!isBuild) await this.throttle(() => db.syncWith(client), syncInterval)
-    return db.resolve(request)
+    if (request.preview) return db.resolvePreview<Query>(request, client)
+    if (!isBuild) await this.throttle(() => db.sync(client), syncInterval)
+    return db.resolve<Query>(request)
   }
 
   async #authenticatedClient() {

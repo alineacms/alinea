@@ -83,7 +83,22 @@ export async function openDatabase(config) {
 }
 export async function openReplica(config, directory) {
   const {NodeReplica} = await import('alinea/database/driver/NodeReplica')
-  return NodeReplica.open({config, directory, identity}, {checkpoint: databasePath})
+  const owned = !directory
+  if (!directory) {
+    const {mkdtemp} = await import('node:fs/promises')
+    const {tmpdir} = await import('node:os')
+    const {join} = await import('node:path')
+    directory = await mkdtemp(join(tmpdir(), 'alinea-live-'))
+  }
+  try {
+    return await NodeReplica.open({config, directory, identity}, {checkpoint: databasePath})
+  } catch (error) {
+    if (owned) {
+      const {rm} = await import('node:fs/promises')
+      await rm(directory, {recursive: true, force: true})
+    }
+    throw error
+  }
 }
 `
     await writeFile(join(temporary, 'database.js'), loader)

@@ -11,6 +11,8 @@ import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {children} from '#/query.js'
 import {NodeReplica} from './NodeReplica.js'
+import {EntryRuntime} from '../runtime/EntryRuntime.js'
+import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
 
 const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
 const config = {
@@ -150,6 +152,86 @@ test('SQL snapshot previews accept entry and revision-bound patch inputs without
     } finally {
       release.resolve()
       processing.mockRestore()
+    }
+  } finally {
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
+test('live patch verification and nested queries retain one snapshot across sync and close', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-live-preview-'))
+  const initial = await createEntryResolver(config, [
+    {id: 'a', type: 'Page', index: 'a', title: 'Original'},
+    {id: 'child', type: 'Page', index: 'b', parentPaths: ['a'], title: 'Child'}
+  ])
+  const changed = await createEntryResolver(config, [
+    {id: 'a', type: 'Page', index: 'a', title: 'Later'},
+    {
+      id: 'child',
+      type: 'Page',
+      index: 'b',
+      parentPaths: ['a'],
+      title: 'Later child'
+    }
+  ])
+  const replica = await NodeReplica.open(
+    {config, directory, identity},
+    initial.source
+  )
+  try {
+    const entry = await replica.get({id: 'a', select: Entry})
+    const edited = {...entry, data: {...entry.data, title: 'Preview'}}
+    const patch = await createFilePatch(
+      JSON.stringify(createRecord(entry, entry.status), null, 2),
+      JSON.stringify(createRecord(edited, entry.status), null, 2)
+    )
+    const payload = await encodePreviewPayload({
+      entryId: 'a',
+      locale: null,
+      status: 'published',
+      contentHash: replica.revision,
+      patch
+    })
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    const resolve = EntryRuntime.prototype.resolve
+    let held = false
+    const reading = spyOn(EntryRuntime.prototype, 'resolve').mockImplementation(
+      async function <Query extends GraphQuery>(
+        this: EntryRuntime,
+        query: Query
+      ): Promise<AnyQueryResult<Query>> {
+        const value = await resolve.bind(this)<Query>(query)
+        if (!held && query.select === Entry && query.id === 'a') {
+          held = true
+          started.resolve()
+          await release.promise
+        }
+        return value
+      }
+    )
+    try {
+      const pending = replica.resolvePreview(
+        {
+          id: 'a',
+          get: true,
+          preview: {payload},
+          select: {
+            title: Entry.title,
+            children: children({select: Entry.title})
+          }
+        },
+        changed.source
+      )
+      await started.promise
+      await replica.sync(changed.source)
+      await replica.close()
+      release.resolve()
+      expect(await pending).toEqual({title: 'Preview', children: ['Child']})
+    } finally {
+      release.resolve()
+      reading.mockRestore()
     }
   } finally {
     await replica.close()

@@ -3,6 +3,7 @@ import {
   applyPreview,
   decodePreviewRequest
 } from '#/backend/resolver/ParsePreview.js'
+import type {DecodedEntryPreview} from '#/backend/resolver/ParsePreview.js'
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
@@ -206,23 +207,57 @@ export class NodeReplica extends Graph {
         throw new ShaMismatchError(decoded.contentHash, snapshot.revision)
       const preview = await applyPreview(snapshot.runtime, decoded)
       if (!preview) throw new Error('Preview patch could not be applied')
-      const normalized = await normalizeEntryPreview(
-        this.config,
-        nodeDatabase(snapshot.sqlite),
-        preview.entry
-      )
-      const overlay = await NodeOverlay.open(
-        this.config,
-        snapshot.path,
-        snapshot.identity,
-        normalized.entries
-      )
-      try {
-        return await overlay.resolve<Query>({...query, preview: undefined})
-      } finally {
-        overlay.close()
-      }
+      return this.#resolvePreview(snapshot, query, preview)
     })
+  }
+
+  /** A file patch may survive unrelated tree changes. Verify and query on one
+   * lease; fetch the remote tree once only if the required base is unavailable.
+   */
+  async resolvePreview<Query extends GraphQuery>(
+    query: Query,
+    source: RemoteSource
+  ): Promise<AnyQueryResult<Query>> {
+    if (!query.preview) return this.resolve(query)
+    const decoded = await decodePreviewRequest(query.preview)
+    for (let attempt = 0; ; attempt++) {
+      const result = await this.#read(async snapshot => {
+        const preview = await applyPreview(snapshot.runtime, decoded)
+        if (!preview) return {revision: snapshot.revision}
+        return {value: await this.#resolvePreview(snapshot, query, preview)}
+      })
+      if ('value' in result) return result.value!
+      if (
+        attempt ||
+        !('contentHash' in decoded) ||
+        result.revision === decoded.contentHash
+      )
+        throw new Error('Preview patch could not be applied')
+      await this.sync(source)
+    }
+  }
+
+  async #resolvePreview<Query extends GraphQuery>(
+    snapshot: Snapshot,
+    query: Query,
+    preview: DecodedEntryPreview
+  ): Promise<AnyQueryResult<Query>> {
+    const normalized = await normalizeEntryPreview(
+      this.config,
+      nodeDatabase(snapshot.sqlite),
+      preview.entry
+    )
+    const overlay = await NodeOverlay.open(
+      this.config,
+      snapshot.path,
+      snapshot.identity,
+      normalized.entries
+    )
+    try {
+      return await overlay.resolve<Query>({...query, preview: undefined})
+    } finally {
+      overlay.close()
+    }
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {

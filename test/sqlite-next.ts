@@ -40,9 +40,20 @@ async function files(directory: string): Promise<Array<string>> {
 try {
   const generated = join(project, 'node_modules/@alinea/generated')
   await mkdir(generated, {recursive: true})
+  // Install the built package into this fixture so its generated-module imports
+  // resolve beside it, not through the repository's development symlink.
+  const installed = join(project, 'node_modules/alinea')
+  await mkdir(installed)
+  await cp(join(root, 'dist'), join(installed, 'dist'), {recursive: true})
+  await cp(join(root, 'package.json'), join(installed, 'package.json'))
   await writeFile(
     join(project, 'package.json'),
     JSON.stringify({name: 'sqlite-next-fixture', private: true, type: 'module'})
+  )
+  // Do not inherit the repository's source-only package aliases in Turbopack.
+  await writeFile(
+    join(project, 'jsconfig.json'),
+    JSON.stringify({compilerOptions: {}})
   )
   await writeFile(
     join(generated, 'package.json'),
@@ -51,9 +62,24 @@ try {
       type: 'module',
       exports: {
         './package.json': './package.json',
-        './database.js': './database.js'
+        './database.js': {
+          'edge-light': './empty-database.js',
+          worker: './empty-database.js',
+          browser: './empty-database.js',
+          default: './database.js'
+        },
+        './release.js': './release.js',
+        './source.js': './source.js'
       }
     })
+  )
+  await writeFile(
+    join(generated, 'release.js'),
+    `export const release = 'fixture-key'`
+  )
+  await writeFile(
+    join(generated, 'empty-database.js'),
+    `throw new Error('Private SQLite is unavailable on edge')`
   )
   const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
   const config = {
@@ -99,6 +125,7 @@ try {
 export default withAlinea({output: 'standalone', distDir: 'custom-next', outputFileTracingRoot: ${JSON.stringify(root)}, env: {ALINEA_ADMIN_PATH: '/admin'}, experimental: {cpus: 1}}, {databaseRoutes: ['/api/content']});`
   )
   await mkdir(join(project, 'app/api/content'), {recursive: true})
+  await mkdir(join(project, 'app/api/edge'), {recursive: true})
   await mkdir(join(project, 'app/unrelated'), {recursive: true})
   await writeFile(
     join(project, 'app/layout.js'),
@@ -111,7 +138,9 @@ export default withAlinea({output: 'standalone', distDir: 'custom-next', outputF
   await writeFile(
     join(project, 'app/read.js'),
     `import {openDatabase, openReplica} from '@alinea/generated/database.js';
+import {createCMS} from 'alinea/next';
 import {mkdtemp, readdir, rm} from 'node:fs/promises'; import {tmpdir} from 'node:os'; import {join} from 'node:path';
+const cms = createCMS({schema: {}, workspaces: {}, handlerUrl: '/api/cms', baseUrl: 'https://example.invalid'});
 export async function read() {
   const config = {schema: {}, workspaces: {}};
   const db = await openDatabase(config);
@@ -122,6 +151,7 @@ export async function read() {
     live = await openReplica(config, directory);
     if (await live.count({}) !== count) throw new Error('Live baseline differs');
     if ((await readdir(directory)).length) throw new Error('Cold baseline copied');
+    if (await cms.count({disableSync: true}) !== count) throw new Error('NextCMS differs');
     return count;
   } finally { db.close(); await live?.close(); await rm(directory, {recursive: true, force: true}); }
 }`
@@ -132,7 +162,14 @@ export async function read() {
   )
   await writeFile(
     join(project, 'app/api/content/route.js'),
-    `import {read} from '../../read.js'; export const runtime = 'nodejs'; export const dynamic = 'force-dynamic'; export async function GET() { return Response.json({count: await read()}) }`
+    `import {read} from '../../read.js'; export const runtime = 'nodejs'; export const dynamic = 'force-dynamic'; export async function GET() { return Response.json({count: await read()}) }
+export async function POST(request) { if (request.headers.get('authorization') !== 'Bearer fixture-key') return new Response('Unauthorized', {status: 401}); return Response.json(await read()); }`
+  )
+  await writeFile(
+    join(project, 'app/api/edge/route.js'),
+    `import {createCMS} from 'alinea/next';
+export const runtime = 'edge'; export const dynamic = 'force-dynamic';
+export async function GET(request) { const cms = createCMS({schema: {}, workspaces: {}, baseUrl: new URL(request.url).origin, handlerUrl: '/api/content'}); return Response.json({count: await cms.count({})}); }`
   )
   await writeFile(
     join(project, 'app/unrelated/page.js'),
@@ -200,9 +237,16 @@ export async function read() {
   await new Promise<void>((resolve, reject) =>
     probe.close(error => (error ? reject(error) : resolve()))
   )
+  const runtimeTemporary = join(relocated, 'runtime-tmp')
+  await mkdir(runtimeTemporary)
   server = spawn('node', [join(app, 'server.js')], {
     cwd: relocated,
-    env: {...process.env, HOSTNAME: '127.0.0.1', PORT: String(port)},
+    env: {
+      ...process.env,
+      HOSTNAME: '127.0.0.1',
+      PORT: String(port),
+      TMPDIR: runtimeTemporary
+    },
     stdio: ['ignore', 'pipe', 'pipe']
   })
   const ready = new Promise<void>((resolve, reject) => {
@@ -230,13 +274,18 @@ export async function read() {
   })
   assert.equal(response.status, 200)
   assert.deepEqual(await response.json(), {count: 1})
+  const edge = await fetch(`http://127.0.0.1:${port}/api/edge`, {
+    signal: AbortSignal.timeout(15000)
+  })
+  assert.equal(edge.status, 200)
+  assert.deepEqual(await edge.json(), {count: 1})
   const page = await fetch(`http://127.0.0.1:${port}/`, {
     signal: AbortSignal.timeout(15000)
   })
   assert.equal(page.status, 200)
   assert((await page.text()).includes('Entries:'))
   console.log(
-    'Verified: Node page/route traces, private client boundary, and relocated standalone SQLite reads.'
+    'Verified: Node traces, private client boundary, relocated NextCMS SQLite reads and authenticated Edge fallback.'
   )
 } finally {
   if (server) {

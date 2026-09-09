@@ -438,8 +438,7 @@ projections. It does not copy the database, parse source or synchronize it. The
 generated Node loader exposes `openDatabase(config)` through the packaged native
 driver. NextCMS uses that Graph for build-phase queries without preview cookies;
 tests forbid legacy initialization and verify checkpoint failures do not fall
-back. Live production reads and preview preparation still use the existing
-adapter and need the subsequent catch-up cutover. The real Next standalone
+back. The real Next standalone
 fixture now calls this generated Graph opener rather than hand-written SQLite
 queries. Package declaration generation also required explicit named Graph/edge
 return types on query helpers, avoiding inferred leakage of an internal symbol.
@@ -452,8 +451,29 @@ normal configuration/namespace/epoch checks, unlike dev restart reuse. Tests
 verify zero cold parsing/copy files, previews over the packaged path, one changed
 record parsed during catch-up, unchanged packaged bytes, same-release restart
 reuse, and isolation from another deployment's cached revision. The generated
-loader exposes `openReplica(config, directory)` for this path. Wiring that owner
-into Next's live request/preview lifecycle remains the next adapter step.
+loader exposes `openReplica(config, directory)` for this path.
+
+NextCMS now uses the SQLite replica for live Node reads and previews as well as
+the pinned reader for builds. Configured sync intervals and disableSync retain
+their behavior; explicit query previews are no longer lost when there is no
+preview cookie. The default live owner uses a fresh process-local temporary
+directory, avoiding shared cross-process writable caches. Failed opens remove
+their temporary directory; successful-owner generation retention/GC remains a
+separate lifecycle task. Native opening stays inside the generated package's
+Node export; Edge/dev client routes still use the HTTP Graph API. Mutations and
+uploads still forward through the authenticated client.
+
+Live preview patch verification, normalization and nested queries now share one
+snapshot lease. A valid per-file patch may apply across unrelated tree changes;
+an unavailable base allows one remote catch-up attempt, while an invalid patch
+against the current revision fails immediately. Failure never silently removes
+the preview. Tests cover normal catch-up, disabled sync, cookie/direct previews,
+concurrent reads, missing/invalid patch bases and a sync/close between base lookup
+and preview querying. The real webpack/Turbopack fixture now installs the built
+package in isolation and invokes NextCMS from the relocated deployment, including
+an authenticated Edge-to-Node query. The production HTTP handler's own legacy
+database, permission-scoped browser bootstrap/deltas, and Cloudflare deployment
+remain separate unfinished integration work.
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 
