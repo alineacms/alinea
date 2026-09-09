@@ -207,6 +207,22 @@ and previews, and its JS index still starts before SQL. Consequently startup is
 not yet SQL-only. SQL mutations, previews and normalization/seed boot replacement
 must remove those remaining JS dependencies; there is no catch-all query fallback.
 
+`replica/Operations` now implements detached, all-or-nothing field CAS with
+canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
+collection operations. Numeric array offsets are rejected; collection operations
+still require the entire collection hash, not automatic independent-item merging.
+`handler/SqlFieldWriter` is a SQL-authoritative content writer, not a Git/cache
+adapter: trusted role checks, source/derived-row/frame changes and a principal-
+scoped request-digest receipt commit in one transaction. Reopened receipts dedupe
+successful retries, reject changed bodies and never bypass current authorization.
+Before/after source roots are retained for future delivery. Tests cover independent
+stale edits, whole-transaction conflicts, reopened retries, revocation and rollback.
+Writes require read/update rights and publish rights for published versions;
+path/metadata/aliases and derived structural changes are rejected pending the
+structural stage. Full Graph mutation routing, Git-carried durable receipts,
+outbox delivery, concurrent-connection retry policy and production authority
+configuration remain outstanding; dev writes still use the existing Git/FS path.
+
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,
 and the installed Next NFT tracer discovers the SQLite file from that loader.
