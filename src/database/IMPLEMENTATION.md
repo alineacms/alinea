@@ -10,6 +10,13 @@ raw SQLite file read-only. This is a foundation, not an integrated runtime: the
 full entry compiler, source/Tree API integration, generation/NFT, dev boot,
 browser hydration/subscriptions, and remaining gates below are still outstanding.
 
+`source/SqlSource.ts` now implements the existing Source protocol over persistent
+SQL trees/blobs and namespace-specific heads. Blob hashes and exact-base writes
+are checked transactionally. Tests reopen a raw file read-only, fork isolated
+namespaces from retained snapshots, reuse blobs on rename, and verify rollback,
+stale writes, and cancellation. This is trusted source storage, not a browser
+authorization boundary. Snapshot retention/GC and production dev wiring remain.
+
 `entry/Schema.ts` and `query/` now define separate structural/data tables and
 compile basic entry queries into Rado SQL with stage-specific data dependencies.
 Tests compare supported queries against the current resolver on the demo
@@ -43,9 +50,9 @@ projections match the demo resolver; an image test verifies localized alt fallba
 preview/build URL selection, and lazy metadata hydration. Broader field parity
 still needs coverage.
 
-Verification so far: twenty-six database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (67 combined).
-Including the existing rich-text field suite gives 78 passing tests.
+Verification so far: twenty-nine database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (70 combined).
+Including the existing rich-text field suite gives 81 passing tests.
 The latest repository TypeScript check also passes.
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
