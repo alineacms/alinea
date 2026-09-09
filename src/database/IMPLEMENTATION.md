@@ -255,9 +255,8 @@ returned for the attached overlay; original ordinals and untouched base rows are
 retained. Tests compare full Graph results and nested children across all status
 modes under published/archived ancestors, with 100 unrelated entries present. A
 child edit reads three records, a root edit one, and each parses only the supplied
-preview record. New identities and dev routing remain
-separate unfinished preview stages; unsupported inputs
-are rejected explicitly instead of producing a partial preview.
+preview record. New-identity support is described below; dev routing remains a
+separate unfinished stage.
 
 New authored versions of an existing identity (for example a draft or archived
 version) now use a recursive structural query to include descendants as well as
@@ -267,8 +266,7 @@ ordinals to reserve integer insertion slots for these request-local versions;
 tests include an unrelated entry with the same order key. Existing source paths
 cannot be claimed by another identity, and new versions must share the existing
 physical entry directory. Tests compare added draft/archive versions under both
-published and archived ancestors across all status modes. New entry identities
-remain an unsupported preview case.
+published and archived ancestors across all status modes.
 
 Type and order previews now use the same bounded normalization. The existing
 authored-version consistency checks reject changing only one of several versions
@@ -279,6 +277,18 @@ by flattened source-path identity order, not by the editable sort key, retaining
 each identity's locale/version grouping. This keeps tie placement correct when a
 preview changes an entry's key. Source files are sorted before reconstruction,
 avoiding traversal-dependent placement of a parent after its child directory.
+
+New-identity previews now load the physical parent's ancestors and existing
+versions under the new directory. This correctly adopts previously orphaned
+children and recomputes their inherited status, paths and URLs, without loading
+unrelated payloads. New identities append a request-local tie ordinal; existing
+rows keep theirs. Tests compare all status modes and nested children with Graph,
+cover empty checkpoints and published/draft/archived inserts, and verify one parse
+and only affected source records with 100 unrelated entries. Exact-file and
+cross-status directory collisions reject, as do noncanonical source paths and
+attempts to move an existing identity by adding it at another directory. Adding
+a new locale to an existing identity still needs its own normalization support
+before the dev preview cutover.
 
 The snapshot owner's preview path now connects decoding, revision checks, Graph-
 based patch application, bounded normalization and the attached row overlay.

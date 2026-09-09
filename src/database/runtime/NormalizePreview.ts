@@ -9,21 +9,24 @@ import {
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {entryInfo} from '#/core/util/EntryFilenames.js'
 import {basename, dirname, join} from '#/core/util/Paths.js'
-import {and, asc, eq, inArray, or, sql, type Database} from 'rado'
+import {asc, eq, inArray, max, or, sql, type Database} from 'rado'
 import {
   EntryIndexTable,
   EntryDataTable,
+  entryOrdinalStep,
   entryIndexRow,
   entrySource
 } from '../entry/Schema.js'
 import {SourceRecordTable} from './NormalizeSource.js'
 import type {EntryReplacement} from './EntryRuntime.js'
 
-/** Existing-identity preview normalization. The caller owns a consistent
+/** Request-local preview normalization. The caller owns a consistent
  * trusted checkpoint read. Only ancestors and the edited identity's versions
  * are reconstructed. Existing data edits cannot alter physical parent paths or
  * inherited status, so descendant payloads are not needed either. Adding a new
  * authored version also reconstructs descendants whose visibility may change.
+ * A new identity includes its physical subtree, adopting previously orphaned
+ * descendants without loading unrelated payloads.
  */
 export async function normalizeEntryPreview(
   config: Config,
@@ -32,10 +35,19 @@ export async function normalizeEntryPreview(
 ) {
   const filePath = sql<string>`json_extract(${EntryDataTable.source}, '$.filePath')`
   const fileHash = sql<string>`json_extract(${EntryDataTable.source}, '$.fileHash')`
-  if (!preview.filePath.endsWith('.json'))
+  if (
+    !preview.filePath.endsWith('.json') ||
+    preview.filePath.includes('\\') ||
+    preview.filePath.includes('\0') ||
+    preview.filePath
+      .split('/')
+      .some(part => !part || part === '.' || part === '..')
+  )
     throw new Error('Invalid preview source path')
   const [path] = entryInfo(basename(preview.filePath, '.json'))
+  if (!path) throw new Error('Invalid preview source path')
   const childrenDir = join(dirname(preview.filePath), path)
+  const storedDir = sql<string>`json_extract(${EntryDataTable.source}, '$.childrenDir')`
   const selectTarget = () =>
     db
       .select({entry: EntryIndexTable})
@@ -48,31 +60,45 @@ export async function normalizeEntryPreview(
   if (found?.entry && found.entry.id !== preview.id)
     throw new Error('Preview source path belongs to another entry')
   const isNew = !found?.entry
-  const target =
-    found?.entry ??
-    (
-      await selectTarget()
-        .where(
-          and(
-            eq(EntryIndexTable.id, preview.id),
-            eq(
-              sql<string>`json_extract(${EntryDataTable.source}, '$.childrenDir')`,
-              childrenDir
-            )
-          )
-        )
-        .get()
-    )?.entry
-  if (!target)
+  const owner = (await selectTarget().where(eq(storedDir, childrenDir)).get())
+    ?.entry
+  if (owner && owner.id !== preview.id)
+    throw new Error('Preview source directory belongs to another entry')
+  const target = found?.entry ?? owner
+  if (
+    !target &&
+    (await selectTarget().where(eq(EntryIndexTable.id, preview.id)).get())
+  )
     throw new Error('Preview source version is not in this checkpoint')
   if (!config.schema[preview.type])
     throw new Error(`Unknown preview type: ${preview.type}`)
-  const related = inArray(EntryIndexTable.id, [target.id, ...target.parents])
-  const descendants = sql<boolean>`${EntryIndexTable.id} in (
+  const parent = !target
+    ? (
+        await selectTarget()
+          .where(eq(storedDir, dirname(preview.filePath)))
+          .get()
+      )?.entry
+    : undefined
+  const related = inArray(
+    EntryIndexTable.id,
+    target
+      ? [target.id, ...target.parents]
+      : parent
+        ? [parent.id, ...parent.parents]
+        : []
+  )
+  const prefix = `${childrenDir}/`
+  const descendants = target
+    ? sql<boolean>`${EntryIndexTable.id} in (
     with recursive affected(id) as (
       select ${target.id} union
       select child.id from alinea_entry_index as child join affected on child.parentId = affected.id
     ) select id from affected
+  )`
+    : sql<boolean>`${EntryIndexTable.id} in (
+    select indexed.id from alinea_entry_index as indexed
+    join alinea_entry_data as data on data.versionId = indexed.versionId
+    where substr(json_extract(data.source, '$.childrenDir'), 1, ${prefix.length}) = ${prefix}
   )`
   const rows = await db
     .select({
@@ -106,12 +132,19 @@ export async function normalizeEntryPreview(
   const graph = EntryGraph.fromParsed(config, versions)
   const visible = new Set(Array.from(graph.filter({}), entry => entry.filePath))
   const entries: Array<EntryReplacement> = []
+  const newOrdinal = !target
+    ? ((await db
+        .select(max(EntryIndexTable.ordinal))
+        .from(EntryIndexTable)
+        .get()) ?? -entryOrdinalStep) + entryOrdinalStep
+    : undefined
   for (const entry of graph.filter({includeHiddenVersions: true})) {
     const before = previous.get(entry.filePath)
     if (!before?.entry && entry.filePath !== preview.filePath)
       throw new Error('Unexpected version in preview normalization')
     const ordinal =
       before?.entry?.ordinal ??
+      newOrdinal ??
       Math.max(
         ...rows
           .filter(

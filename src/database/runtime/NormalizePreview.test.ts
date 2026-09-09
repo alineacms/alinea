@@ -294,3 +294,169 @@ test('type and order previews preserve source-order ties without loading sibling
     await rm(directory, {recursive: true, force: true})
   }
 })
+
+test.each(['published', 'draft', 'archived'] as const)(
+  'new %s identity previews inherit parents and adopt only their physical subtree',
+  async authoredStatus => {
+    const directory = await mkdtemp(join(tmpdir(), 'alinea-preview-new-'))
+    try {
+      for (const nested of [false, true]) {
+        const file = join(directory, `${nested}.sqlite`)
+        const parent = {
+          id: 'parent',
+          type: 'Page',
+          index: 'a',
+          title: 'Parent',
+          status: 'archived' as const
+        }
+        const parentPaths = nested ? ['parent'] : []
+        const fixture = await createEntryResolver(config, [
+          ...(nested ? [parent] : []),
+          {
+            id: 'child',
+            type: 'Page',
+            index: 'b',
+            parentPaths: [...parentPaths, 'new'],
+            title: 'Child'
+          },
+          {
+            id: 'grandchild',
+            type: 'Page',
+            index: 'c',
+            parentPaths: [...parentPaths, 'new', 'child'],
+            title: 'Grandchild'
+          },
+          {
+            id: 'neighbor',
+            type: 'Page',
+            index: 'b',
+            parentPaths: [...parentPaths, 'newish'],
+            title: 'Neighbor'
+          },
+          ...Array.from({length: 100}, (_, index) => ({
+            id: `unrelated${index}`,
+            type: 'Page',
+            index: 'b',
+            title: 'Unrelated'
+          }))
+        ])
+        const inserted = await createEntryResolver(config, [
+          ...(nested ? [parent] : []),
+          {
+            id: 'new',
+            type: 'Page',
+            index: 'b',
+            parentPaths,
+            title: 'New',
+            status: authoredStatus
+          }
+        ])
+        const entry = inserted.index.findFirst(entry => entry.id === 'new')!
+        {
+          using sqlite = new Database(file)
+          await buildDatabase(config, connect(sqlite), fixture.source, identity)
+        }
+        using sqlite = new Database(file, {readonly: true})
+        const db = connect(sqlite)
+        const parse = spyOn(VersionParser.prototype, 'parse')
+        let normalized
+        try {
+          normalized = await normalizeEntryPreview(config, db, entry)
+          expect(parse).toHaveBeenCalledTimes(1)
+          expect(normalized.scanned).toBe(nested ? 3 : 2)
+          expect(new Set(normalized.entries.map(row => row.entry.id))).toEqual(
+            new Set(['new', 'child', 'grandchild'])
+          )
+        } finally {
+          parse.mockRestore()
+        }
+        const overlay = await NodeOverlay.open(
+          config,
+          file,
+          identity,
+          normalized.entries
+        )
+        try {
+          for (const status of [
+            'all',
+            'published',
+            'draft',
+            'archived',
+            'preferDraft',
+            'preferPublished'
+          ] as const) {
+            const query = {status, select: Entry}
+            expect(await overlay.find(query)).toEqual(
+              await fixture.resolver.find({...query, preview: {entry}})
+            )
+          }
+          const query = {
+            id: 'new',
+            status: 'all' as const,
+            select: {
+              url: Entry.url,
+              children: children({status: 'all', depth: 2, select: Entry})
+            }
+          }
+          expect(await overlay.find(query)).toEqual(
+            await fixture.resolver.find({...query, preview: {entry}})
+          )
+        } finally {
+          overlay.close()
+        }
+        await expect(
+          normalizeEntryPreview(config, db, {...entry, filePath: '../new.json'})
+        ).rejects.toThrow('Invalid preview source path')
+        const neighbor = fixture.index.findFirst(
+          entry => entry.id === 'neighbor'
+        )!
+        await expect(
+          normalizeEntryPreview(config, db, {
+            ...entry,
+            filePath: `${neighbor.childrenDir}.draft.json`
+          })
+        ).rejects.toThrow('directory belongs to another entry')
+        await expect(
+          normalizeEntryPreview(config, db, {...entry, id: 'neighbor'})
+        ).rejects.toThrow('not in this checkpoint')
+      }
+      const empty = await createEntryResolver(config, [])
+      const inserted = await createEntryResolver(config, [
+        {id: 'new', type: 'Page', index: 'a', status: authoredStatus}
+      ])
+      const entry = inserted.index.findFirst(entry => entry.id === 'new')!
+      const file = join(directory, 'empty.sqlite')
+      {
+        using sqlite = new Database(file)
+        await buildDatabase(config, connect(sqlite), empty.source, identity)
+      }
+      using sqlite = new Database(file, {readonly: true})
+      const normalized = await normalizeEntryPreview(
+        config,
+        connect(sqlite),
+        entry
+      )
+      expect(normalized.scanned).toBe(0)
+      expect(normalized.entries[0].entry.ordinal).toBe(0)
+      const overlay = await NodeOverlay.open(
+        config,
+        file,
+        identity,
+        normalized.entries
+      )
+      try {
+        expect(await overlay.find({status: 'all', select: Entry})).toEqual(
+          await empty.resolver.find({
+            status: 'all',
+            select: Entry,
+            preview: {entry}
+          })
+        )
+      } finally {
+        overlay.close()
+      }
+    } finally {
+      await rm(directory, {recursive: true, force: true})
+    }
+  }
+)
