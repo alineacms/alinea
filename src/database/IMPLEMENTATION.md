@@ -249,6 +249,18 @@ and search explicitly rejects because base/overlay FTS ranking and snippets stil
 need a complete strategy. Preview input normalization, payload patches and dev
 routing remain required before removing the legacy preview path.
 
+`runtime/NormalizePreview` now normalizes existing-entry data previews from the
+edited identity's authored versions and ancestors, read directly from the private
+parsed-record cache. Fixed physical paths and authored statuses mean these data
+edits do not require reconstructing descendants. Only changed normalized rows are
+returned for the attached overlay; original ordinals and untouched base rows are
+retained. Tests compare full Graph results and nested children across all status
+modes under published/archived ancestors, with 100 unrelated entries present. A
+child edit reads three records, a root edit one, and each parses only the supplied
+preview record. New source versions, identity/type/order changes, payload patches,
+FTS and dev routing remain separate unfinished preview stages; unsupported inputs
+are rejected explicitly instead of producing a partial preview.
+
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
 collection operations. Numeric array offsets are rejected; collection operations
