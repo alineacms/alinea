@@ -60,7 +60,7 @@ export interface EntryDelta {
 }
 
 export interface RuntimeOptions {
-  includedAtBuild?(filePath: string): boolean
+  includedAtBuild?(filePath: string): boolean | Promise<boolean>
   load?(
     requests: ReadonlyArray<PayloadRequest>
   ): Promise<ReadonlyArray<LoadedPayload>>
@@ -89,6 +89,18 @@ export class EntryRuntime extends Graph {
 
   get config(): Config {
     return this.#config
+  }
+
+  getRevision(): Promise<string> {
+    return this.#exclusive(async () => {
+      const revision = await this.#db
+        .select(Meta.revision)
+        .from(Meta)
+        .where(eq(Meta.id, 1))
+        .get()
+      if (revision == null) throw new Error('Missing replica revision')
+      return revision
+    })
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {

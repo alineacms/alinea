@@ -17,6 +17,17 @@ namespaces from retained snapshots, reuse blobs on rename, and verify rollback,
 stale writes, and cancellation. This is trusted source storage, not a browser
 authorization boundary. Snapshot retention/GC and production dev wiring remain.
 
+`runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
+snapshot and build-time normalization. Source heads, normalized rows, and the
+checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,
+config/release/namespace identity and matching source/runtime revisions on open.
+Reopen tests query the raw file read-only without calling blob reads, whole-tree
+materialization, or normalization. Source-status identity is preserved separately
+from effective inherited status; inactive authored versions remain in source
+storage even when Graph intentionally excludes them from its effective rows.
+The initial build currently reuses the existing normalizer; incremental normalized
+checkpoint updates and CLI/dev/NFT integration remain outstanding.
+
 `entry/Schema.ts` and `query/` now define separate structural/data tables and
 compile basic entry queries into Rado SQL with stage-specific data dependencies.
 Tests compare supported queries against the current resolver on the demo
@@ -50,9 +61,9 @@ projections match the demo resolver; an image test verifies localized alt fallba
 preview/build URL selection, and lazy metadata hydration. Broader field parity
 still needs coverage.
 
-Verification so far: twenty-nine database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (70 combined).
-Including the existing rich-text field suite gives 81 passing tests.
+Verification so far: thirty-two database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (73 combined).
+Including the existing rich-text field suite gives 84 passing tests.
 The latest repository TypeScript check also passes.
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)

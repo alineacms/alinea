@@ -6,7 +6,7 @@ import type {EntryResolver, ResolveContext} from './EntryResolver.js'
 export interface LinkResolver {
   resolver: {config: Config}
   locale: string | null
-  includedAtBuild(filePath: string): boolean
+  includedAtBuild(filePath: string): boolean | Promise<boolean>
   resolveLinks<P extends Projection>(
     projection: P,
     entryIds: ReadonlyArray<string>

@@ -130,7 +130,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       // If the DB was built with this entry in it we can assume the location
       // is ready to use, otherwise use the preview url
-      const locationAvailable = loader.includedAtBuild(filePath)
+      const locationAvailable = await loader.includedAtBuild(filePath)
       row.src = locationAvailable ? src : previewUrl
       row.extension = extension
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
