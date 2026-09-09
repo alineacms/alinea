@@ -91,7 +91,7 @@ function* matchingNodes(
   for (const node of nodes) if (included.has(node)) yield node
 }
 
-interface EntryVersionData {
+export interface EntryVersionData {
   id: string
   type: string
   index: string
@@ -392,6 +392,11 @@ export class EntryGraph {
   #singleWorkspace: string | undefined
   #search: MiniSearch<EntrySearchDocument>
   #seeds: Map<string, Seed>
+
+  /** Build-time reconstruction from trusted, config-bound parsed SQL records. */
+  static fromParsed(config: Config, versions: Map<string, EntryVersionData>) {
+    return new EntryGraph(config, versions, entrySeeds(config))
+  }
 
   constructor(
     config: Config,
@@ -704,7 +709,7 @@ function indexKey(...parts: Array<string>): string {
   return JSON.stringify(parts)
 }
 
-class VersionParser extends Map<string, EntryVersionData> {
+export class VersionParser extends Map<string, EntryVersionData> {
   parse(sha: string, blob: Uint8Array): EntryVersionData {
     if (super.has(sha)) return super.get(sha)!
     const decoder = new TextDecoder()

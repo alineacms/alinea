@@ -47,6 +47,16 @@ export class FrameStore {
     await db.create(FrameTable, FrameLocationTable)
   }
 
+  /** Trusted build deduplication; do not expose private frame membership. */
+  async has(identity: FrameIdentity): Promise<boolean> {
+    const id = await this.#db
+      .select(FrameTable.id)
+      .from(FrameTable)
+      .where(eq(FrameTable.id, await storageId(identity)))
+      .get()
+    return id != null
+  }
+
   async location(
     identity: FrameIdentity
   ): Promise<{bundle: string; offset: number}> {

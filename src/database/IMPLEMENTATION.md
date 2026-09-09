@@ -144,7 +144,7 @@ The main Generate/exportDatabase orchestration now invokes frame generation and
 publication. Optional `config.replica` settings supply project, namespace and epoch;
 defaults use production URL/local config identity, provider branch metadata and
 epoch 1. Namespaces label sources, not Git checkout instructions; epoch reset
-detection remains manual. Checkpoint format 4 stores/validates all frame identity
+detection remains manual. Checkpoint format 5 stores/validates all frame identity
 components. BuildDatabase generates frames in the same transaction as normalized
 rows and the checkpoint. ExportDatabase publishes public ciphertext under
 `/_alinea/payloads/` before closing/publishing the private SQLite file and loader.
@@ -172,8 +172,20 @@ Reopen tests query the raw file read-only without calling blob reads, whole-tree
 materialization, or normalization. Source-status identity is preserved separately
 from effective inherited status; inactive authored versions remain in source
 storage even when Graph intentionally excludes them from its effective rows.
-The initial build currently reuses the existing normalizer; incremental normalized
-checkpoint updates, production query cutover, and dev integration remain outstanding.
+The initial build reuses the existing normalizer transiently, not as the runtime
+query store. `NormalizeSource` persists parsed authored records by blob hash,
+including versions hidden by inherited status. `ReconcileDatabase` updates an
+exclusively owned writable checkpoint copy: fetch remote differences before the
+transaction, reuse cached parsing, normalize, replace changed rows and append only
+missing immutable frames, then advance source/runtime/checkpoint revisions together.
+No-change reconciliation skips normalization entirely. Tests cover one-blob edits,
+preserved unrelated SQL rows and keys, unarchiving hidden versions, reverting to
+cached source records/frames, and rollback without changing the published baseline.
+The normalizer still reconstructs a transient whole graph and hashes all effective
+payloads; affected-subgraph normalization and stable ordinals for insert/delete
+remain scale gates. Live connections must not call this offline reconciliation
+function. Dev connection ownership, reader swaps, publishing new frame locations,
+production query cutover and actual dev-server integration remain outstanding.
 
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,
@@ -202,7 +214,7 @@ before ordering/pagination and preserves JSON primitive distinctions. Alias
 projections merge both storage locations, URL alias predicates ignore malformed
 rows, and nested array `includes` compiles to scoped SQL existence checks. Page
 locations use a resident source-root segment rather than the URL slug. The
-checkpoint format is now 4, including complete release identity and derived FTS.
+checkpoint format is now 5, including release identity, derived FTS and parsed source records.
 Natural collation, previews, and production integration remain.
 
 `query/Search.ts` restores SQLite FTS5 through the existing Graph search/snippet
