@@ -25,6 +25,13 @@ export const FrameTable = table('alinea_release_frame', {
   ciphertext: column.blob().notNull()
 })
 
+/** Private manifest: public files contain ciphertext, never this entry mapping. */
+export const FrameLocationTable = table('alinea_release_frame_location', {
+  id: column.varchar(undefined, {length: 64}).primaryKey(),
+  bundle: column.varchar(undefined, {length: 64}).notNull(),
+  offset: column.integer().notNull()
+})
+
 function storageId(identity: FrameIdentity): Promise<string> {
   return sha256Hash(new TextEncoder().encode(frameIdentityKey(identity)))
 }
@@ -37,7 +44,22 @@ export class FrameStore {
   }
 
   static async createSchema(db: Database): Promise<void> {
-    await db.create(FrameTable)
+    await db.create(FrameTable, FrameLocationTable)
+  }
+
+  async location(
+    identity: FrameIdentity
+  ): Promise<{bundle: string; offset: number}> {
+    const row = await this.#db
+      .select({
+        bundle: FrameLocationTable.bundle,
+        offset: FrameLocationTable.offset
+      })
+      .from(FrameLocationTable)
+      .where(eq(FrameLocationTable.id, await storageId(identity)))
+      .get()
+    if (!row) throw new Error('Release frame has not been published')
+    return row
   }
 
   /** Append one immutable frame. Reusing its identity is an error, never a key overwrite. */

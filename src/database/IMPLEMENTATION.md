@@ -130,6 +130,20 @@ CLI frame-generation/publication integration still needs the durable project/epo
 binding; the authenticated production router and filtered-field payload path are
 not wired yet. FrameStore/GrantService do not themselves authenticate a session.
 
+`cli/generate/ExportFrameBundles.ts` publishes ciphertext in content-addressed
+files, targeting bounded bundles while reading one frame at a time. Completed
+temporary files are linked into their final names without overwriting existing
+artifacts; existing files must match their hash. No keys or entry mapping are
+selected for public output. The private frame-location manifest commits only after
+all files exist and rolls back to its prior state on failure. Completed unreferenced
+ciphertext may remain after failure/repacking; retention/GC is intentionally separate.
+`GrantService.published` combines authorized keys with the committed public locations
+under a trusted configured base URL, rejecting unpublished frames. Tests decrypt
+the exact generated file ranges, reuse immutable files without rewriting them,
+and verify failed publication preserves the previous manifest and conflicting files.
+The main Generate/exportDatabase orchestration still needs the final durable
+project/epoch binding before automatically producing and exposing these bundles.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,

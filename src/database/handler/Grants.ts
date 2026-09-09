@@ -10,6 +10,11 @@ export interface GrantCursor {
   viewId: string
 }
 
+export interface PublishedGrant extends FrameGrant {
+  url: string
+  offset: number
+}
+
 /** Internal handler service: roles come from the verified session, never a request body. */
 export class GrantService {
   #runtime: EntryRuntime
@@ -24,6 +29,47 @@ export class GrantService {
     this.#runtime = runtime
     this.#frames = frames
     this.#binding = {...binding}
+  }
+
+  /** The bundle base URL is trusted handler configuration, not a caller-supplied URL. */
+  async published(
+    roles: ReadonlyArray<string>,
+    cursor: GrantCursor,
+    requests: ReadonlyArray<PayloadRequest>,
+    baseUrl: string
+  ): Promise<Array<PublishedGrant>> {
+    const base = new URL(baseUrl)
+    if (
+      !['http:', 'https:'].includes(base.protocol) ||
+      base.username ||
+      base.password ||
+      !base.pathname.endsWith('/') ||
+      base.search ||
+      base.hash
+    )
+      throw new Error('Invalid public bundle base URL')
+    roles = [...roles]
+    cursor = {...cursor}
+    requests = requests.map(request => ({...request}))
+    return this.#runtime.readConsistent(async () => {
+      const grants = await this.issue(roles, cursor, requests)
+      return Promise.all(
+        grants.map(async grant => {
+          const location = await this.#frames.location(grant.descriptor)
+          if (
+            !/^[a-f0-9]{64}$/.test(location.bundle) ||
+            !Number.isSafeInteger(location.offset) ||
+            location.offset < 0
+          )
+            throw new Error('Invalid published frame location')
+          return {
+            ...grant,
+            url: new URL(`${location.bundle}.bin`, base).href,
+            offset: location.offset
+          }
+        })
+      )
+    })
   }
 
   issue(
