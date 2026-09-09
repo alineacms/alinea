@@ -46,6 +46,24 @@ avoid dropping early worker messages. This is not yet the dashboard cutover:
 permission-scoped transport/persistence and the writable runtime must be connected
 before replacing the existing worker and its Graph mutation API.
 
+`browser/ReplicaCache.ts` adds incremental IndexedDB persistence for structural
+rows with compiled permissions and sparse opaque encrypted frame bytes. Its
+partition includes project, namespace, epoch, schema/config, principal, policy
+view, and release. Deltas compare the exact current revision and atomically update
+rows, frame eviction, and revision; unchanged payload identities retain ciphertext.
+Explore-only rows cannot retain readable descriptors. The cache whitelists index
+columns rather than persisting entry data or a WASM database export. Purging writes
+a new generation marker before closing, so already-open handles in other tabs
+cannot repopulate the old generation. Concurrent-writer, rollback, partition,
+revocation, and reopen tests use IndexedDB's transaction semantics.
+The Chromium fixture now commits the index before its in-memory install, terminates
+the original worker, and restores a new WASM index from IndexedDB without loading
+payloads. Plaintext hydration remains memory-only. This fixture supplies trusted
+test grants; production policy compilation, authenticated frame descriptors and
+decryption, cache-to-runtime recovery orchestration, and dashboard wiring remain.
+The cache is not an authorization authority: open it only after authentication,
+and authenticate cached ciphertext against its descriptor before decoding it.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,

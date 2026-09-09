@@ -16,6 +16,13 @@ export async function run() {
     type: 'module'
   })
   const remote = wrap<typeof api>(worker)
+  let running = true
+  function terminate() {
+    if (!running) return
+    running = false
+    remote[releaseProxy]()
+    worker.terminate()
+  }
   worker.addEventListener('error', event =>
     console.error('Worker failed:', event.message)
   )
@@ -96,9 +103,27 @@ export async function run() {
       closed = true
     }
     check(closed, true)
-    return {loads: await remote.loads(), deliveries, closed}
+    const loads = await remote.loads()
+    terminate()
+    const reloaded = new Worker(new URL('./worker.js', import.meta.url), {
+      type: 'module'
+    })
+    const reopened = wrap<typeof api>(reloaded)
+    try {
+      const restored = new WorkerGraph(config, await reopened.queries())
+      check(await restored.find({id: 'a', select: Entry.title}), [
+        'Unsubscribed'
+      ])
+      check(await reopened.loads(), [])
+      check(await restored.find({id: 'a', select: Page.title}), ['Payload a'])
+      check(await reopened.loads(), ['a'])
+      await restored.close()
+    } finally {
+      reopened[releaseProxy]()
+      reloaded.terminate()
+    }
+    return {loads, deliveries, closed}
   } finally {
-    remote[releaseProxy]()
-    worker.terminate()
+    terminate()
   }
 }
