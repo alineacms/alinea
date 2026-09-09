@@ -11,11 +11,18 @@ import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
 import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
+import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
+import {NodeReplica} from '#/database/driver/NodeReplica.js'
+import type {CheckpointIdentity} from '#/database/runtime/Checkpoint.js'
+import type {QueryObserver} from '#/database/runtime/EntryRuntime.js'
+import pLimit from 'p-limit'
 
 export interface DevDBOptions {
   config: Config
   rootDir: string
   dashboardUrl: string | undefined
+  /** Dev SQL cache. Build-only callers still use the normalization index. */
+  replica?: {directory: string; identity: CheckpointIdentity}
 }
 
 export interface WatchFiles {
@@ -26,6 +33,9 @@ export interface WatchFiles {
 export class DevDB extends LocalDB {
   source: CachedFSSource
   #options: DevDBOptions
+  #replica?: NodeReplica
+  #sync = pLimit(1)
+  #closed = false
 
   constructor(options: DevDBOptions) {
     const source = new CachedFSSource(
@@ -37,12 +47,64 @@ export class DevDB extends LocalDB {
   }
 
   async sync() {
-    await this.source.refresh()
-    return super.sync()
+    return this.#sync(async () => {
+      if (this.#closed) throw new Error('Dev database is closed')
+      await this.source.refresh()
+      const sha = await super.sync()
+      if (this.#options.replica) {
+        this.#replica ??= await NodeReplica.open(
+          {config: this.config, ...this.#options.replica},
+          this.source
+        )
+        await this.#replica.sync(this.source)
+        if (this.#closed) {
+          await this.#replica.close()
+          throw new Error('Dev database is closed')
+        }
+        if (this.#replica.revision !== sha)
+          throw new Error('Dev query and mutation revisions differ')
+      }
+      return sha
+    })
+  }
+
+  resolve<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    if (this.#closed) return Promise.reject(new Error('Dev database is closed'))
+    // Explicit migration boundary: request-local previews still use the old
+    // normalizer until SQL overlays replace that path. No catch-all fallback.
+    if (!this.#options.replica || query.preview) return super.resolve(query)
+    if (!this.#replica)
+      return Promise.reject(new Error('Dev database is not ready'))
+    return this.#replica.resolve(query)
+  }
+
+  get sha(): string {
+    if (!this.#options.replica) return super.sha
+    if (this.#closed || !this.#replica)
+      throw new Error('Dev database is not ready')
+    return this.#replica.revision
+  }
+
+  subscribe(query: GraphQuery, observer: QueryObserver): () => void {
+    if (this.#closed || !this.#replica)
+      throw new Error('Dev database is not ready')
+    return this.#replica.subscribe(query, observer)
+  }
+
+  async close(): Promise<void> {
+    this.#closed = true
+    await this.#replica?.close()
+    // Drain a startup/sync already in progress, including its newly opened owner.
+    await this.#sync(async () => {
+      await this.#replica?.close()
+    })
   }
 
   async fix() {
     await this.index.fix(this.source)
+    if (this.#options.replica) await this.sync()
   }
 
   async watchFiles() {
@@ -74,9 +136,14 @@ export class DevDB extends LocalDB {
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
+    if (this.#closed) throw new Error('Dev database is closed')
     if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha)
       throw new ShaMismatchError(request.fromSha, this.sha)
+    // A different mutation may already have advanced the source/index while
+    // its SQL replacement is still being prepared. Reject before media effects.
+    if (this.index.sha !== request.fromSha)
+      throw new ShaMismatchError(request.fromSha, this.index.sha)
     const {rootDir} = this.#options
     for (const change of request.changes) {
       switch (change.op) {

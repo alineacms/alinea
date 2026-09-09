@@ -12,12 +12,21 @@ export function fillCache(db: DevDB, fix?: boolean): Emitter<DevDB> {
 
   const results = createEmitter<DevDB>({
     onReturn() {
+      canceled = true
       stopWatching()
+      void db.close().catch(reportError)
     }
   })
 
   const limit = pLimit(1)
-  const run = () => limit(cache).then(results.emit, reportError)
+  const run = () =>
+    limit(async () => {
+      if (canceled) return
+      const db = await cache()
+      if (!canceled) results.emit(db)
+    }).catch(error => {
+      if (!canceled) reportError(error)
+    })
 
   const cache = async () => {
     await db.sync()

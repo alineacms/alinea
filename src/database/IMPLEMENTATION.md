@@ -193,8 +193,19 @@ cover restoration, config mismatch, failed updates, malformed cache paths, swaps
 during nested reads, subscriptions and close during source lookup. Disk generations
 are retained, and this cache is not a cross-process mutation authority. Copy cost,
 retention and an attached-overlay comparison remain scale gates. Publishing new
-frame locations, production query cutover and wiring this owner into the actual
-dev-server mutation lifecycle remain outstanding.
+frame locations and production query cutover remain outstanding.
+
+The CLI dev path now passes a config-bound private cache into `DevDB`. Ordinary
+Graph queries and subscriptions use `NodeReplica`; source writes reconcile SQL
+before returning, and the served revision follows the ready SQL snapshot. Media
+effects reject a stale mutation-index revision even while an older SQL snapshot
+is still being served. Watcher/config teardown closes the owner and prevents late
+cache emissions. Integration tests exercise filesystem-backed Graph updates, live
+results, restart reuse and watcher shutdown. This is an explicit intermediate
+cutover: `LocalDB` still supplies mutation compilation, seeding, references, fixes
+and previews, and its JS index still starts before SQL. Consequently startup is
+not yet SQL-only. SQL mutations, previews and normalization/seed boot replacement
+must remove those remaining JS dependencies; there is no catch-all query fallback.
 
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,

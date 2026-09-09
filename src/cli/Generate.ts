@@ -160,7 +160,21 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     const db = new DevDB({
       config: cms.config,
       rootDir,
-      dashboardUrl: await options.dashboardUrl
+      dashboardUrl: await options.dashboardUrl,
+      replica:
+        cmd === 'dev'
+          ? {
+              directory: path.join(context.outDir, 'dev-database'),
+              identity: releaseIdentity(
+                cms.config,
+                await hashBlob(
+                  await fsp.readFile(join(context.outDir, 'config.js'))
+                ),
+                context.configLocation,
+                process.env
+              )
+            }
+          : undefined
     })
     try {
       indexing = fillCache(db, context.fix)
