@@ -9,12 +9,17 @@ import type {ReadonlyTree} from './source/Tree.js'
 import type {User, UserInput} from './User.js'
 
 export interface AuthApi {
-  authenticate(request: Request, options?: AuthOptions): Promise<Response>
+  authenticate(request: Request, options: AuthOptions): Promise<Response>
   verify(request: Request): Promise<AuthedContext>
 }
 
 export interface AuthOptions {
-  enrichUser?(user: User): Promise<User>
+  authenticated(user: User): Promise<AuthenticatedUser>
+}
+
+export interface AuthenticatedUser {
+  user: User
+  capabilities: BackendCapabilities
 }
 
 export interface UserApi {
@@ -30,7 +35,7 @@ export interface BackendCapabilities {
 }
 
 export interface CapabilitiesApi {
-  capabilities?(): Promise<BackendCapabilities>
+  capabilities(): Promise<BackendCapabilities>
 }
 
 export interface RemoteConnection
@@ -41,7 +46,6 @@ export interface BrowserConnection extends Connection {
 }
 
 export interface LocalConnection extends Connection, CapabilitiesApi {
-  capabilities(): Promise<BackendCapabilities>
   mutate(mutations: Array<Mutation>): Promise<{sha: string}>
   previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(

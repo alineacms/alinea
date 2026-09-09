@@ -1,5 +1,6 @@
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
+import type {BackendCapabilities} from '#/core/Connection.js'
 import {localUser, User} from '#/core/User.js'
 import {atom} from 'jotai'
 import {alineaDevAtom, clientAtom, localAtom} from './core.js'
@@ -36,6 +37,7 @@ export interface DashboardAuthError {
 export interface DashboardAuthAuthenticated {
   status: 'authenticated'
   user: User
+  capabilities?: BackendCapabilities
 }
 
 export type DashboardAuthState =
@@ -119,7 +121,11 @@ export const authAtom = Object.assign(
                 () => set(authAtom, {type: 'check'})
               )
             )
-            set(authState, {status: 'authenticated', user: result.user})
+            set(authState, {
+              status: 'authenticated',
+              user: result.user,
+              capabilities: result.capabilities
+            })
             return
           case AuthResultType.UnAuthenticated:
             set(authState, {status: 'redirecting'})

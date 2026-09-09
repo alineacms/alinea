@@ -66,7 +66,10 @@ export const authReady = atom(async get => {
 })
 
 export const canManageMembersAtom = atom(async get => {
-  const capabilities = await get(clientAtom).capabilities()
+  const auth = get(authAtom)
+  if (auth.status !== 'authenticated') return false
+  const capabilities =
+    auth.capabilities ?? (await get(clientAtom).capabilities())
   if (!capabilities.users) return false
   const policy = await get(policyResult)
   return policy.canManageMembers()

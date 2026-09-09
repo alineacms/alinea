@@ -132,7 +132,7 @@ export class OAuth2 implements AuthApi {
 
   async authenticate(
     request: Request,
-    options?: AuthOptions
+    options: AuthOptions
   ): Promise<Response> {
     try {
       const url = new URL(request.url)
@@ -143,12 +143,9 @@ export class OAuth2 implements AuthApi {
           const [ctx, err] = await outcome(this.verify(request))
           if (err instanceof Response) return err
           if (ctx) {
-            const user = options?.enrichUser
-              ? await options.enrichUser(ctx.user)
-              : ctx.user
             return Response.json({
               type: AuthResultType.Authenticated,
-              user
+              ...(await options.authenticated(ctx.user))
             })
           }
           const codeVerifier = await generateCodeVerifier()

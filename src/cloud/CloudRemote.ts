@@ -55,6 +55,10 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     this.#config = config
   }
 
+  async capabilities() {
+    return {users: false}
+  }
+
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     const ctx = this.#context
     return parseOutcome<Tree | null>(
@@ -124,7 +128,7 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
     })
   }
 
-  async authenticate(request: Request, options?: AuthOptions) {
+  async authenticate(request: Request, options: AuthOptions) {
     const ctx = this.#context
     const config = this.#config
     const url = new URL(request.url)

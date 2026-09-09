@@ -100,9 +100,19 @@ export function createHandler({
       let cnx = remote(context)
       let userCtx: AuthedContext | undefined
       if (auth) {
-        return cnx.authenticate(request, {
-          enrichUser(user) {
-            return cnx.enrichUser(user)
+        return await cnx.authenticate(request, {
+          async authenticated(user) {
+            try {
+              return {
+                user: await cnx.enrichUser(user),
+                capabilities: await cnx.capabilities()
+              }
+            } catch (cause) {
+              if (cause instanceof HttpError) throw cause
+              throw new HttpError(500, 'Failed to complete authentication', {
+                cause
+              })
+            }
           }
         })
       }
@@ -117,12 +127,7 @@ export function createHandler({
 
       if (action === HandleAction.Capabilities && request.method === 'GET') {
         expectJson()
-        const capabilities = cnx.capabilities
-        return Response.json(
-          capabilities
-            ? await capabilities()
-            : {users: typeof cnx.listUsers === 'function'}
-        )
+        return Response.json(await cnx.capabilities())
       }
 
       if (action === HandleAction.Upload && request.method === 'GET') {
