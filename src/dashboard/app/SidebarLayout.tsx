@@ -53,7 +53,6 @@ export function SidebarLayout({
       maxSize={isMobile ? Infinity : side === 'left' ? 480 : 640}
       preferredSize={width}
       priority={LayoutPriority.Low}
-      visible={sidebarVisible}
     >
       {sidebar}
     </Allotment.Pane>
@@ -63,11 +62,18 @@ export function SidebarLayout({
     <div ref={container} className={styles.SidebarLayout()} data-side={side}>
       <Allotment
         ref={allotment}
+        defaultSizes={
+          sidebarVisible
+            ? side === 'left'
+              ? [width, 500]
+              : [200, width]
+            : [500]
+        }
         proportionalLayout={false}
         onDragEnd={saveWidth}
         onReset={resetWidth}
       >
-        {side === 'left' && sidebarPane}
+        {sidebarVisible && side === 'left' && sidebarPane}
         <Allotment.Pane
           key="content"
           minSize={isMobile ? 0 : side === 'left' ? 500 : 200}
@@ -76,7 +82,7 @@ export function SidebarLayout({
         >
           <div className={styles.SidebarLayout.content()}>{children}</div>
         </Allotment.Pane>
-        {side === 'right' && sidebarPane}
+        {sidebarVisible && side === 'right' && sidebarPane}
       </Allotment>
     </div>
   )

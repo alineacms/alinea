@@ -54,7 +54,7 @@ test('resizes both sidebars and preserves widths through navigation and toggling
     .getByRole('button', {name: 'Close entry sidebar'})
     .first()
     .click()
-  await expect(right).toBeHidden()
+  await expect(divider(app.page, 'right')).toHaveCount(0)
   await app.page.getByRole('button', {name: 'Open entry sidebar'}).click()
   await expect.poll(() => width(right)).toBe(400)
 
@@ -77,6 +77,29 @@ test('resizes both sidebars and preserves widths through navigation and toggling
     .toBe(true)
 })
 
+test('restores the saved sidebar width after navigating away and back while closed', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
+  const right = pane(app.page, 'right')
+  await expect.poll(() => width(right)).toBe(320)
+  await drag(app.page, divider(app.page, 'right'), -80)
+  await expect.poll(() => width(right)).toBe(400)
+  await app.page
+    .getByRole('button', {name: 'Close entry sidebar'})
+    .first()
+    .click()
+  await expect(divider(app.page, 'right')).toHaveCount(0)
+  await app.page.getByRole('button', {name: 'Back to root'}).click()
+  await expect(app.page.locator('[data-side="right"]')).toHaveCount(0)
+  await app.openEntry('Alpha')
+  await expect(divider(app.page, 'right')).toHaveCount(0)
+  await app.page.getByRole('button', {name: 'Open entry sidebar'}).click()
+  await expect.poll(() => width(right)).toBe(400)
+  await expect(app.page.getByRole('tablist', {name: 'Entry sidebar'})).toBeVisible()
+})
+
 test('keeps mobile panels usable and the editor mounted across breakpoints', async ({
   dashboard,
   mount
@@ -86,7 +109,7 @@ test('keeps mobile panels usable and the editor mounted across breakpoints', asy
     element.dataset.resizingMarker = 'preserved'
   })
   await app.page.setViewportSize({width: 390, height: 844})
-  await expect(pane(app.page, 'left')).toBeHidden()
+  await expect(divider(app.page, 'left')).toHaveCount(0)
   await expect.poll(() => width(pane(app.page, 'right'))).toBe(390)
   await app.page.getByRole('button', {name: 'Close entry sidebar'}).click()
   await expect(app.field('Title')).toBeVisible()
@@ -152,8 +175,8 @@ test('opens on mobile and keeps panels usable after desktop constraints', async 
 }) => {
   await page.setViewportSize({width: 390, height: 844})
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
-  await expect(pane(page, 'left')).toBeHidden()
-  await expect(pane(page, 'right')).toBeHidden()
+  await expect(divider(page, 'left')).toHaveCount(0)
+  await expect(divider(page, 'right')).toHaveCount(0)
   await expect(app.field('Title')).toBeVisible()
   await page.getByRole('button', {name: 'Open entry sidebar'}).click()
   await expect.poll(() => width(pane(page, 'right'))).toBe(390)
