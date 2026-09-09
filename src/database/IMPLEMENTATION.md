@@ -15,7 +15,7 @@ compile basic entry queries into Rado SQL with stage-specific data dependencies.
 Tests compare supported queries against the current resolver on the demo
 corpus, distinguish JSON primitive types and missing/null values, and verify an
 index-only query runs without a payload table. Grouping ranks matching identities
-before ordering/pagination and preserves JSON primitive distinctions. Link relations, search,
+before ordering/pagination and preserves JSON primitive distinctions. Search,
 aliases, natural collation, and production integration remain.
 
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
@@ -29,11 +29,14 @@ Eleven nested-query cases agree with the existing Graph resolver on the demo
 corpus; separate tests cover locale boundaries and nested hydration races.
 Relation queries currently execute per selected source row; batched relation
 execution and link-field postprocessing remain necessary before production cutover.
+Explicit single/multiple entry-link relations now expand stored references to SQL
+rows, preserving authored order and duplicates, and hydrate source link data before
+resolving target membership. Nine link queries match the existing Graph resolver;
+lazy-loading tests verify unlocalized targets and selected-target-only hydration.
 
-Verification so far: twenty-three database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (64 combined).
-The repository type check reports missing `allotment` in
-`src/dashboard/app/SidebarLayout.tsx`; no database type errors were reported.
+Verification so far: twenty-five database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass (66 combined).
+The latest repository TypeScript check also passes.
 
 Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
 before implementing. Complete each gate before expanding the cutover. No

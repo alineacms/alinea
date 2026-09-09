@@ -13,7 +13,7 @@ import {
   Builder,
   desc,
   eq,
-  inArray,
+  exists,
   isNull,
   or,
   sql,
@@ -32,6 +32,7 @@ import {
 } from './Condition.js'
 
 import {
+  linkRelation,
   relationCondition,
   relationSource,
   type RelationSource
@@ -157,9 +158,15 @@ export function compileEntryQuery(
   const membership = new Expressions(scope)
   const structural: Array<Sql<boolean>> = []
   const edge = 'edge' in query ? (query as EdgeQuery) : undefined
+  const link = edge?.edge === 'entrySingle' || edge?.edge === 'entryMultiple'
+  let links: ReturnType<typeof linkRelation> | undefined
   if (edge) {
     if (!source) throw new Error('A relation query requires a source entry')
-    structural.push(relationCondition(edge, source))
+    if (link) {
+      const name = scope.nameOf(edge.field)
+      if (!name) throw new Error('Link field is not in the configured schema')
+      links = linkRelation(source, name, edge.edge === 'entryMultiple')
+    } else structural.push(relationCondition(edge, source))
   }
   const status = query.status ?? 'published'
   structural.push(
@@ -238,10 +245,11 @@ export function compileEntryQuery(
       // dialect capability; do not silently substitute locale collation here.
       ordering.push(asc(isNull(value)), order.asc ? asc(value) : desc(value))
     }
-  } else if (edge?.edge === 'parents') ordering.push(asc(EntryIndexTable.level))
+  } else if (links) ordering.push(asc(links.ordinal))
+  else if (edge?.edge === 'parents') ordering.push(asc(EntryIndexTable.level))
   else ordering.push(asc(EntryIndexTable.index))
   ordering.push(
-    asc(EntryIndexTable.index),
+    links ? asc(links.ordinal) : asc(EntryIndexTable.index),
     asc(EntryIndexTable.ordinal),
     asc(EntryIndexTable.versionId)
   )
@@ -272,11 +280,14 @@ export function compileEntryQuery(
     let ranked = builder
       .select({
         versionId: EntryIndexTable.versionId,
+        linkOrdinal: links?.ordinal ?? sql.value(0),
         rank: sql<number>`row_number() over (partition by ${sql.join(grouping, sql`, `)}
-        order by ${EntryIndexTable.index}, ${EntryIndexTable.ordinal}, ${EntryIndexTable.versionId})`
+        order by ${links?.ordinal ?? EntryIndexTable.index}, ${EntryIndexTable.ordinal}, ${EntryIndexTable.versionId})`
       })
       .from(EntryIndexTable)
       .where(sql.value(true))
+    if (links)
+      ranked = ranked.innerJoin(links.target, eq(EntryIndexTable.id, links.id))
     if (membership.dataRequired)
       ranked = ranked.leftJoin(
         EntryDataTable,
@@ -285,9 +296,17 @@ export function compileEntryQuery(
     const matches = ranked
       .where(and(...structural, ...content))
       .as('group_matches')
-    grouped = inArray(
-      EntryIndexTable.versionId,
-      builder.select(matches.versionId).from(matches).where(eq(matches.rank, 1))
+    grouped = exists(
+      builder
+        .select(sql.value(1))
+        .from(matches)
+        .where(
+          and(
+            eq(matches.rank, 1),
+            eq(matches.versionId, EntryIndexTable.versionId),
+            links ? eq(matches.linkOrdinal, links.ordinal) : sql.value(true)
+          )
+        )
     )
   }
   function selectRows(selection: SelectionInput, data: boolean) {
@@ -295,6 +314,8 @@ export function compileEntryQuery(
       .select(selection)
       .from(EntryIndexTable)
       .where(sql.value(true))
+    if (links)
+      rows = rows.innerJoin(links.target, eq(EntryIndexTable.id, links.id))
     if (data)
       rows = rows.leftJoin(
         EntryDataTable,
@@ -314,10 +335,15 @@ export function compileEntryQuery(
   }
 
   // A conservative superset for hydration before content predicates or sorting.
-  const candidates = builder
+  let candidates = builder
     .select(EntryIndexTable.versionId)
     .from(EntryIndexTable)
     .where(and(...structural))
+  if (links)
+    candidates = candidates.innerJoin(
+      links.target,
+      eq(EntryIndexTable.id, links.id)
+    )
   const single = Boolean(
     query.first ||
     query.get ||

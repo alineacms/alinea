@@ -188,7 +188,7 @@ export class EntryRuntime {
     generation: number
   ): Promise<void> {
     const requests = await this.#exclusive(async () =>
-      this.#generation === generation ? this.#missing(ids) : []
+      this.#generation === generation ? this.#missing([...new Set(ids)]) : []
     )
     if (!requests.length) return
     if (!this.#options.load)
@@ -254,6 +254,14 @@ export class EntryRuntime {
     source?: RelationSource
   ): Promise<unknown> {
     if (this.#generation !== generation) throw superseded
+    const link =
+      'edge' in query &&
+      (query.edge === 'entrySingle' || query.edge === 'entryMultiple')
+    if (link && source) {
+      await this.#hydrate([source.versionId], generation)
+      if (this.#generation !== generation) throw superseded
+      query = {preferredLocale: source.locale ?? undefined, ...query}
+    }
     const plan = compileEntryQuery(this.#config, query, source)
     if (plan.membershipData) {
       const candidates = await this.#exclusive(async () =>

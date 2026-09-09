@@ -8,6 +8,8 @@ import {EntryIndex} from '#/core/db/EntryIndex.js'
 import {EntryResolver} from '#/core/db/EntryResolver.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
+import {Field, Config as ConfigBuilder} from '#/index.js'
+import {createEntryResolver} from '#test/EntryFixture.js'
 import {entryVersionId, type IndexedEntry} from '../entry/Schema.js'
 import {
   EntryRuntime,
@@ -16,6 +18,145 @@ import {
 } from './EntryRuntime.js'
 
 const config: Config = {schema: {}, workspaces: {}}
+
+test('SQL entry-link queries agree with the existing Graph resolver', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {
+      single: Field.entry('Single'),
+      many: Field.entry.multiple('Many')
+    }
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: ConfigBuilder.root('Pages', {contains: ['Page']})
+        }
+      })
+    }
+  }
+  const {resolver, index} = await createEntryResolver(config, [
+    {
+      id: 'source',
+      type: 'Page',
+      index: 'a',
+      data: {
+        single: {_entry: 'a'},
+        many: [{_entry: 'b'}, {_entry: 'a'}, {_entry: 'b'}, {_entry: 'missing'}]
+      }
+    },
+    {id: 'a', type: 'Page', index: 'b'},
+    {id: 'b', type: 'Page', index: 'c'}
+  ])
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const runtime = new EntryRuntime(config, db)
+  const entries: Array<EntryReplacement> = []
+  for (const entry of index.filter({}))
+    entries.push({
+      entry: {...entry, versionStatus: entry.status, ordinal: entries.length},
+      payloadId: entry.rowHash,
+      data: entry.data
+    })
+  await runtime.apply({fromRevision: 'empty', toRevision: 'r1', entries})
+  const selections = [
+    Page.single.first({select: Entry.id}),
+    Page.many.find({select: Entry.id}),
+    Page.many.find({select: Entry.id, skip: 1, take: 1}),
+    Page.many.find({select: Entry.id, groupBy: Entry.id}),
+    Page.many.find({select: Entry.id, orderBy: {asc: Entry.level}}),
+    Page.many.find({select: Entry.id, orderBy: {asc: Entry.id}}),
+    Page.many.find({count: true}),
+    Page.many.find({count: true, groupBy: Entry.id}),
+    Page.many.find({select: Entry.id, id: 'a'})
+  ]
+  for (const select of selections) {
+    const query = {id: 'source', select}
+    expect(await runtime.resolve(query)).toEqual(await resolver.resolve(query))
+  }
+})
+
+test('link relations hydrate source references and preserve duplicates, order and locale fallback', async () => {
+  const Page = ConfigBuilder.type('Page', {
+    fields: {
+      single: Field.entry('Single'),
+      many: Field.entry.multiple('Many')
+    }
+  })
+  const config: Config = {schema: {Page}, workspaces: {}}
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const loads: Array<string> = []
+  const runtime = new EntryRuntime(config, db, {
+    async load(requests) {
+      loads.push(...requests.map(request => request.payloadId))
+      return requests.map(request => ({
+        ...request,
+        data:
+          request.payloadId === 'source:source'
+            ? {
+                single: {_entry: 'a'},
+                many: [
+                  {_entry: 'b'},
+                  {_entry: 'a'},
+                  {_entry: 'b'},
+                  {_entry: 'missing'}
+                ]
+              }
+            : {value: request.payloadId}
+      }))
+    }
+  })
+  const source = replacement('source')
+  source.entry.locale = 'en'
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: [
+      source,
+      replacement('a'),
+      replacement('b'),
+      replacement('unrelated')
+    ]
+  })
+  expect(
+    await runtime.resolve({
+      id: 'source',
+      select: Page.many.find({select: Entry.id})
+    })
+  ).toEqual([['b', 'a', 'b']])
+  expect(loads).toEqual(['source:source'])
+  expect(
+    await runtime.resolve({
+      id: 'source',
+      select: Page.single.first({select: Entry.id})
+    })
+  ).toEqual(['a'])
+  expect(
+    await runtime.resolve({
+      id: 'source',
+      select: Page.many.find({select: Entry.data, take: 1})
+    })
+  ).toEqual([[{value: 'b:b'}]])
+  expect(loads).toEqual(['source:source', 'b:b'])
+  expect(
+    await runtime.resolve({
+      id: 'source',
+      select: Page.many.find({select: Entry.id, groupBy: Entry.id})
+    })
+  ).toEqual([['b', 'a']])
+  expect(
+    await runtime.resolve({
+      id: 'source',
+      select: Page.many.find({select: Entry.data})
+    })
+  ).toEqual([[{value: 'b:b'}, {value: 'a:a'}, {value: 'b:b'}]])
+  expect(loads).toEqual(['source:source', 'b:b', 'a:a'])
+})
 
 test('nested structural relations agree with Graph on the demo corpus', async () => {
   using sqlite = new Database(':memory:')

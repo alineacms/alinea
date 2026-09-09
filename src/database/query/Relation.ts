@@ -15,9 +15,11 @@ import {
   sql,
   type Sql
 } from 'rado'
-import {EntryIndexTable as entry} from '../entry/Schema.js'
+import {EntryDataTable, EntryIndexTable as entry} from '../entry/Schema.js'
+import {jsonField} from './Condition.js'
 
 export interface RelationSource {
+  versionId: string
   id: string
   locale: string | null
   parentId: string | null
@@ -27,12 +29,46 @@ export interface RelationSource {
 }
 
 export const relationSource = {
+  versionId: entry.versionId,
   id: entry.id,
   locale: entry.locale,
   parentId: entry.parentId,
   parents: entry.parents,
   level: entry.level,
   index: entry.index
+}
+
+/** Expand the stored references as SQL rows, retaining list order and duplicates. */
+export function linkRelation(
+  source: RelationSource,
+  field: string,
+  multiple: boolean
+) {
+  const payload = new Builder()
+    .select(jsonField(EntryDataTable.data, [field]).selection!)
+    .from(EntryDataTable)
+    .where(eq(EntryDataTable.versionId, source.versionId))
+  const value = sql`(${payload})`
+  const array = sql.universal({
+    sqlite: multiple
+      ? sql`case when json_type(${value}) = 'array' then ${value} else '[]' end`
+      : sql`case when json_type(${value}) = 'object' then json_array(json(${value})) else '[]' end`,
+    postgres: multiple
+      ? sql`case when jsonb_typeof(${value}::jsonb) = 'array' then ${value}::jsonb else '[]'::jsonb end`
+      : sql`case when jsonb_typeof(${value}::jsonb) = 'object' then jsonb_build_array(${value}::jsonb) else '[]'::jsonb end`,
+    mysql: multiple
+      ? sql`case when json_type(${value}) = 'ARRAY' then ${value} else json_array() end`
+      : sql`case when json_type(${value}) = 'OBJECT' then json_array(${value}) else json_array() end`
+  })
+  return {
+    target: sql.universal({
+      sqlite: sql`(select json_extract(value, '$._entry') as id, key as ordinal from json_each(${array}) where type = 'object') as alinea_link`,
+      postgres: sql`(select value ->> '_entry' as id, ordinality as ordinal from jsonb_array_elements(${array}) with ordinality) as alinea_link`,
+      mysql: sql`json_table(${array}, '$[*]' columns (id varchar(128) path '$._entry', ordinal for ordinality)) as alinea_link`
+    }),
+    id: sql<string>`alinea_link.id`,
+    ordinal: sql<number>`alinea_link.ordinal`
+  }
 }
 
 /** Restrict related identities in SQL before the query's own filters/paging. */
