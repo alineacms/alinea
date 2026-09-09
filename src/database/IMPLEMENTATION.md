@@ -203,14 +203,15 @@ frame locations and production query cutover remain outstanding.
 The CLI dev path now passes a config-bound private cache into `DevDB`. Ordinary
 Graph queries and subscriptions use `NodeReplica`; source writes reconcile SQL
 before returning, and the served revision follows the ready SQL snapshot. Media
-effects reject a stale mutation-index revision even while an older SQL snapshot
+effects reject a stale filesystem revision even while an older SQL snapshot
 is still being served. Watcher/config teardown closes the owner and prevents late
 cache emissions. Integration tests exercise filesystem-backed Graph updates, live
 results, restart reuse and watcher shutdown. This is an explicit intermediate
-cutover: `LocalDB` still supplies references, fixes and previews, and its
-JS index still starts before SQL. Consequently startup is not yet SQL-only.
-Previews and normalization/seed boot replacement
-must remove those remaining JS dependencies; there is no catch-all query fallback.
+cutover: `LocalDB` still supplies references, fixes and previews, with its index
+materialized only when one of those explicit paths is requested. Ordinary dev
+startup, seeding, reads and writes no longer build that index. An unchanged restart
+test verifies zero source-record parsing. There is no catch-all query fallback;
+SQL replacements for those remaining legacy operations are still required.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
@@ -256,9 +257,18 @@ identities. Tests disable JS seeding, create four localized parent/child entries
 rename a parent, edit it again, and verify repeat sync/restart does not duplicate
 seeds or republish an unchanged checkpoint. Normalization now resolves retained
 seed markers when a renamed entry or descendant no longer has its configured
-physical path. Dev startup still builds the legacy index for preview/reference/fix
-consumers, but no longer calls its seeding algorithm. Seed-marker lookups currently
+physical path. Dev startup no longer builds the legacy index or calls its seeding
+algorithm. Seed-marker lookups currently
 scan structural rows in the root; direct indexed seed lookups remain an optimization.
+
+Dev writes and sync now share one owner queue. Before media effects, SQL-mode
+writes refresh and compare the filesystem source revision, validate added blob
+hashes and the proposed target tree, then commit the source and reconcile SQL.
+Tests submit two requests with the same base revision and verify one commits while
+the stale one cannot remove media; malformed blob/target hashes are also rejected
+before effects. This is per-instance serialization, not cross-process filesystem
+locking or atomic media/content delivery. Those durable authority guarantees still
+require the later source receipt/outbox work.
 
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,

@@ -8,8 +8,102 @@ import {Entry} from '#/core/Entry.js'
 import {EntryResolver} from '#/core/db/EntryResolver.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {DevDB} from './DevDB.js'
-import {ReadonlyTree} from '#/core/source/Tree.js'
+import {VersionParser} from '#/core/db/EntryIndex.js'
 import {fillCache} from './FillCache.js'
+
+test('SQL dev writes serialize source commits and reject stale or malformed requests before media effects', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-writes-'))
+  const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
+  const config = {
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        mediaDir: 'public/media',
+        roots: {pages: Config.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  await mkdir(join(rootDir, 'content'), {recursive: true})
+  await mkdir(join(rootDir, 'public/media'), {recursive: true})
+  const media = join(rootDir, 'public/media/keep.txt')
+  await writeFile(media, 'keep')
+  const db = new DevDB({
+    config,
+    rootDir,
+    dashboardUrl: undefined,
+    replica: {
+      directory: join(rootDir, 'private-cache'),
+      identity: {
+        project: 'project',
+        namespace: 'main',
+        epoch: '1',
+        schemaId: 'schema',
+        configId: 'config',
+        releaseId: 'release'
+      }
+    }
+  })
+  try {
+    await db.sync()
+    await db.mutate([
+      {
+        op: 'create',
+        id: 'a',
+        type: 'Page',
+        locale: null,
+        root: 'pages',
+        data: {title: 'Original'}
+      }
+    ])
+    const first = await db.request([
+      {
+        op: 'update',
+        id: 'a',
+        locale: null,
+        status: 'published',
+        set: {title: 'First'}
+      }
+    ])
+    const second = await db.request([
+      {
+        op: 'update',
+        id: 'a',
+        locale: null,
+        status: 'published',
+        set: {title: 'Second'}
+      }
+    ])
+    second.changes.push({op: 'removeFile', location: 'public/media/keep.txt'})
+    await expect(db.write({...second, intoSha: 'invalid'})).rejects.toThrow(
+      'target revision mismatch'
+    )
+    await expect(
+      db.write({
+        ...second,
+        changes: second.changes.map(change =>
+          change.op === 'addContent'
+            ? {...change, contents: `${change.contents}\n`}
+            : change
+        )
+      })
+    ).rejects.toThrow('blob hash mismatch')
+    expect(await readFile(media, 'utf8')).toBe('keep')
+    const results = await Promise.allSettled([
+      db.write(first),
+      db.write(second)
+    ])
+    expect(results[0].status).toBe('fulfilled')
+    expect(results[1].status).toBe('rejected')
+    expect(await db.first({id: 'a', select: Entry.title})).toBe('First')
+    expect(db.sha).toBe(first.intoSha)
+    expect(await readFile(media, 'utf8')).toBe('keep')
+    expect(await db.write(first)).toEqual({sha: first.intoSha})
+  } finally {
+    await db.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
+})
 
 test('SQL dev seeding preserves localized identities and config-only defaults without the JS seed path', async () => {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-seeds-'))
@@ -56,6 +150,9 @@ test('SQL dev seeding preserves localized identities and config-only defaults wi
   const db = new DevDB(options)
   const legacySeed = spyOn(db.index, 'seed').mockImplementation(() => {
     throw new Error('Unexpected JS seeding')
+  })
+  const legacyIndex = spyOn(db.index, 'syncWith').mockImplementation(() => {
+    throw new Error('Unexpected JS indexing')
   })
   try {
     await db.sync()
@@ -134,6 +231,7 @@ test('SQL dev seeding preserves localized identities and config-only defaults wi
     }
   } finally {
     legacySeed.mockRestore()
+    legacyIndex.mockRestore()
     await db.close()
     await rm(rootDir, {recursive: true, force: true})
   }
@@ -174,6 +272,9 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
   }
   const options = {config, rootDir, dashboardUrl: undefined, replica}
   const db = new DevDB(options)
+  const legacyIndex = spyOn(db.index, 'syncWith').mockImplementation(() => {
+    throw new Error('Unexpected JS indexing')
+  })
   try {
     await db.sync()
     const oldResolve = spyOn(
@@ -222,8 +323,9 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
     expect(await db.find({search: 'updat', select: Entry.id})).toEqual(['a'])
     expect(db.sha).toBe((await db.source.getTree()).sha)
     const servedRevision = db.sha
-    const mutationTree = db.index.tree
-    db.index.tree = ReadonlyTree.EMPTY
+    const contentFile = join(rootDir, 'content/pages/a.json')
+    const content = await readFile(contentFile, 'utf8')
+    await writeFile(contentFile, `${content}\n`)
     try {
       await expect(
         db.write({
@@ -234,7 +336,8 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
         })
       ).rejects.toThrow('SHA mismatch')
     } finally {
-      db.index.tree = mutationTree
+      await writeFile(contentFile, content)
+      await db.sync()
     }
     stop()
     const pointer = await readFile(
@@ -244,20 +347,50 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
     await db.close()
     await expect(db.find({select: Entry.id})).rejects.toThrow('closed')
     const restarted = new DevDB(options)
+    const parsing = spyOn(VersionParser.prototype, 'parse')
     const indexing = fillCache(restarted)
     try {
       expect((await indexing[Symbol.asyncIterator]().next()).value).toBe(
         restarted
       )
       expect(await restarted.find({select: Entry.title})).toEqual(['Updated'])
+      expect(parsing).not.toHaveBeenCalled()
       expect(
         await readFile(join(replica.directory, 'current.json'), 'utf8')
       ).toBe(pointer)
+      // These explicit legacy paths materialize their index only when requested.
+      const entry = await restarted.get({id: 'a', select: Entry})
+      expect(
+        await restarted.first({
+          id: 'a',
+          select: Entry.title,
+          preview: {
+            entry: {
+              ...entry,
+              fileHash: 'preview',
+              data: {...entry.data, title: 'Preview'}
+            }
+          }
+        })
+      ).toBe('Preview')
+      expect(parsing).toHaveBeenCalled()
+      expect(
+        (await restarted.referencesTo({targetId: 'a'})).scan.complete
+      ).toBe(true)
+      expect(await restarted.first({id: 'a', select: Entry.title})).toBe(
+        'Updated'
+      )
+      await restarted.fix()
+      expect(await restarted.first({id: 'a', select: Entry.title})).toBe(
+        'Updated'
+      )
     } finally {
       indexing.return()
+      parsing.mockRestore()
       await restarted.close()
     }
   } finally {
+    legacyIndex.mockRestore()
     await db.close()
     await rm(rootDir, {recursive: true, force: true})
   }

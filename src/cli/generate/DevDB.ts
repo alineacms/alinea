@@ -4,10 +4,12 @@ import type {UploadResponse} from '#/core/Connection.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {Policy} from '#/core/Role.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
@@ -50,35 +52,29 @@ export class DevDB extends LocalDB {
   }
 
   async sync() {
-    return this.#sync(async () => {
+    return this.#sync(() => this.#syncSource())
+  }
+
+  async #syncSource() {
+    if (this.#closed) throw new Error('Dev database is closed')
+    await this.source.refresh()
+    if (!this.#options.replica) return super.sync()
+    this.#replica ??= await NodeReplica.open(
+      {config: this.config, ...this.#options.replica},
+      this.source
+    )
+    await this.#replica.sync(this.source)
+    for await (const mutation of seedDatabase(this.config, this.#replica)) {
+      const request = await this.#replica.request([mutation], Policy.ALLOW_ALL)
       if (this.#closed) throw new Error('Dev database is closed')
-      await this.source.refresh()
-      if (!this.#options.replica) return super.sync()
-      this.#replica ??= await NodeReplica.open(
-        {config: this.config, ...this.#options.replica},
-        this.source
-      )
+      await this.source.applyChanges(sourceChanges(request))
       await this.#replica.sync(this.source)
-      for await (const mutation of seedDatabase(this.config, this.#replica)) {
-        const request = await this.#replica.request(
-          [mutation],
-          Policy.ALLOW_ALL
-        )
-        if (this.#closed) throw new Error('Dev database is closed')
-        await this.source.applyChanges(sourceChanges(request))
-        await this.#replica.sync(this.source)
-      }
-      if (this.#closed) {
-        await this.#replica.close()
-        throw new Error('Dev database is closed')
-      }
-      // Legacy preview/reference/fix consumers still need this index until
-      // their cutover, but seeding and mutation planning now read SQL.
-      const sha = await this.index.syncWith(this.source)
-      if (this.#replica.revision !== sha)
-        throw new Error('Dev query and mutation revisions differ')
-      return sha
-    })
+    }
+    if (this.#closed) {
+      await this.#replica.close()
+      throw new Error('Dev database is closed')
+    }
+    return this.#replica.revision
   }
 
   resolve<Query extends GraphQuery>(
@@ -87,7 +83,8 @@ export class DevDB extends LocalDB {
     if (this.#closed) return Promise.reject(new Error('Dev database is closed'))
     // Explicit migration boundary: request-local previews still use the old
     // normalizer until SQL overlays replace that path. No catch-all fallback.
-    if (!this.#options.replica || query.preview) return super.resolve(query)
+    if (!this.#options.replica) return super.resolve(query)
+    if (query.preview) return this.#legacy(() => super.resolve(query))
     if (!this.#replica)
       return Promise.reject(new Error('Dev database is not ready'))
     return this.#replica.resolve(query)
@@ -116,8 +113,25 @@ export class DevDB extends LocalDB {
   }
 
   async fix() {
-    await this.index.fix(this.source)
-    if (this.#options.replica) await this.sync()
+    if (!this.#options.replica) return this.index.fix(this.source)
+    await this.#legacy(async () => {
+      await this.index.fix(this.source)
+      await this.#syncSource()
+    })
+  }
+
+  referencesTo(query: EntryReferenceQuery) {
+    if (!this.#options.replica) return super.referencesTo(query)
+    return this.#legacy(() => super.referencesTo(query))
+  }
+
+  // Explicit temporary boundary, not a fallback for failed SQL queries.
+  #legacy<T>(read: () => Promise<T>): Promise<T> {
+    return this.#sync(async () => {
+      if (this.#closed) throw new Error('Dev database is closed')
+      await this.index.syncWith(this.source)
+      return read()
+    })
   }
 
   async request(mutations: ReadonlyArray<Mutation>, policy = Policy.ALLOW_ALL) {
@@ -157,13 +171,33 @@ export class DevDB extends LocalDB {
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
+    if (!this.#options.replica) return this.#write(request)
+    return this.#sync(() => this.#write(request))
+  }
+
+  async #write(request: CommitRequest): Promise<{sha: string}> {
     if (this.#closed) throw new Error('Dev database is closed')
+    if (this.#options.replica) {
+      await this.source.refresh()
+      const tree = await this.source.getTree()
+      const sourceSha = tree.sha
+      if (sourceSha === request.intoSha) return {sha: await this.#syncSource()}
+      if (sourceSha !== request.fromSha)
+        throw new ShaMismatchError(request.fromSha, sourceSha)
+      const batch = sourceChanges(request)
+      for (const change of batch.changes)
+        if (
+          change.op === 'add' &&
+          (!change.contents || (await hashBlob(change.contents)) !== change.sha)
+        )
+          throw new Error('Commit blob hash mismatch')
+      if ((await tree.withChanges(batch)).sha !== request.intoSha)
+        throw new Error('Commit target revision mismatch')
+    }
     if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha)
       throw new ShaMismatchError(request.fromSha, this.sha)
-    // A different mutation may already have advanced the source/index while
-    // its SQL replacement is still being prepared. Reject before media effects.
-    if (this.index.sha !== request.fromSha)
+    if (!this.#options.replica && this.index.sha !== request.fromSha)
       throw new ShaMismatchError(request.fromSha, this.index.sha)
     const {rootDir} = this.#options
     for (const change of request.changes) {
@@ -180,7 +214,9 @@ export class DevDB extends LocalDB {
         }
       }
     }
-    return super.write(request)
+    if (!this.#options.replica) return super.write(request)
+    await this.source.applyChanges(sourceChanges(request))
+    return {sha: await this.#syncSource()}
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {
