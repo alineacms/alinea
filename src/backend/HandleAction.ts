@@ -12,5 +12,6 @@ export enum HandleAction {
   Upload = 'upload',
   Tree = 'tree',
   Commit = 'commit',
-  Blob = 'blob'
+  Blob = 'blob',
+  ReplicaIndex = 'replicaIndex'
 }

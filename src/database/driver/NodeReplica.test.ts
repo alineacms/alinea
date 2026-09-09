@@ -9,7 +9,7 @@ import {VersionParser} from '#/core/db/EntryIndex.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {NodeReplica} from './NodeReplica.js'
 import {children} from '#/query.js'
-import {Policy} from '#/core/Role.js'
+import {Policy, role} from '#/core/Role.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {EntryRuntime} from '../runtime/EntryRuntime.js'
 import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
@@ -39,6 +39,62 @@ async function fixture(title: string) {
     {id: 'b', type: 'Page', index: 'b', title: 'Child', parentPaths: ['a']}
   ])
 }
+
+test('authenticated index bootstrap binds policy, rows and identity to one leased snapshot', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-index-bootstrap-'))
+  const baseline = await fixture('Original')
+  const updated = await fixture('Updated')
+  const queried = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  const scoped = {
+    ...config,
+    roles: {
+      reader: role('Reader', {
+        async permissions(policy, graph) {
+          const title = await graph.first({id: 'a', select: Entry.title})
+          queried.resolve()
+          await resume.promise
+          if (title === 'Original')
+            policy.set(
+              {id: 'a', allow: {explore: true, read: true}},
+              {id: 'b', deny: {explore: true}}
+            )
+        }
+      })
+    }
+  }
+  const replica = await NodeReplica.open(
+    {directory, config: scoped, identity},
+    baseline.source
+  )
+  try {
+    const roles = ['reader']
+    const pending = replica.bootstrap('user', roles)
+    roles.length = 0
+    await queried.promise
+    await replica.sync(updated.source)
+    await replica.close()
+    resume.resolve()
+    const view = await pending
+    expect(view.identity).toEqual({
+      ...identity,
+      principal: 'user',
+      viewId: expect.any(String)
+    })
+    expect(view.revision).toBe((await baseline.source.getTree()).sha)
+    expect(view.entries.map(row => row.entry.id)).toEqual(['a'])
+    expect(view.entries[0].entry.title).toBe('Original')
+    expect(view.entries[0]).not.toHaveProperty('data')
+    await expect(replica.bootstrap('user', ['reader'])).rejects.toThrow(
+      'closed'
+    )
+    await expect(replica.bootstrap('', [])).rejects.toThrow('principal')
+  } finally {
+    resume.resolve()
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
 
 test('accepted commits atomically advance the SQL cache without writing the source', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-accepted-commit-'))

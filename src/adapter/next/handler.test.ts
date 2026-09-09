@@ -78,6 +78,7 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
   )
   localCms.bundledDb = Promise.resolve(replica)
   let writes = 0
+  let userRoles = ['admin']
   let advanceAfterCommit = false
   const events: Array<string> = []
   const handler = createHandler({
@@ -90,7 +91,7 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
           return {
             ...context,
             token: 'test',
-            user: {sub: 'editor', roles: ['admin']}
+            user: {sub: 'editor', roles: userRoles}
           }
         },
         async write(request) {
@@ -137,6 +138,33 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
     const read = await handler(request('resolve', query))
     expect(read.status).toBe(200)
     expect(await read.json()).toBe('Original')
+    expect((await handler(request('replicaIndex', {}))).status).toBe(401)
+    const bootstrap = await handler(
+      request('replicaIndex', {principal: 'forged', roles: []}, 'user')
+    )
+    expect(bootstrap.status).toBe(200)
+    expect(bootstrap.headers.get('cache-control')).toBe('private, no-store')
+    expect(bootstrap.headers.get('vary')).toBe('Cookie, Authorization')
+    const view = await bootstrap.json()
+    expect(view.version).toBe(1)
+    expect(view.identity.principal).toBe('editor')
+    expect(view.identity.namespace).toBe('main')
+    expect(view.revision).toBe(replica.revision)
+    expect(
+      view.entries.map((row: {entry: {id: string}}) => row.entry.id)
+    ).toEqual(['a'])
+    expect(view.entries[0].payloadId).toBeString()
+    expect(view.entries[0]).not.toHaveProperty('data')
+    expect(view.entries[0]).not.toHaveProperty('source')
+    expect(view.entries[0].entry).not.toHaveProperty('data')
+    userRoles = []
+    const revoked = await (
+      await handler(request('replicaIndex', {roles: ['admin']}, 'user'))
+    ).json()
+    expect(revoked.revision).toBe(view.revision)
+    expect(revoked.identity.viewId).not.toBe(view.identity.viewId)
+    expect(revoked.entries).toEqual([])
+    userRoles = ['admin']
     const mutations = [
       {
         op: 'update',

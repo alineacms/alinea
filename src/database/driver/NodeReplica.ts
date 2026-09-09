@@ -39,6 +39,8 @@ import {normalizeEntryPreview} from '../runtime/NormalizePreview.js'
 import {nodeDatabase} from './NodeDatabase.js'
 import {NodeOverlay} from './NodeOverlay.js'
 import {SqlSource} from '../source/SqlSource.js'
+import {authorizedIndex} from '../handler/Policy.js'
+import type {IndexBootstrap} from '../replica/Bootstrap.js'
 
 interface Snapshot {
   path: string
@@ -270,6 +272,26 @@ export class NodeReplica extends Graph {
 
   getTree() {
     return this.#read(snapshot => this.#source(snapshot).getTree())
+  }
+
+  /** Principal and roles must come from a verified, enriched handler session. */
+  bootstrap(
+    principal: string,
+    roles: ReadonlyArray<string>
+  ): Promise<IndexBootstrap> {
+    if (!principal)
+      return Promise.reject(new Error('Missing replica principal'))
+    roles = [...roles]
+    return this.#read(async snapshot => {
+      const view = await authorizedIndex(snapshot.runtime, roles)
+      return {
+        version: 1,
+        identity: {...snapshot.identity, principal, viewId: view.viewId},
+        revision: view.revision,
+        permissions: view.permissions,
+        entries: view.entries
+      }
+    })
   }
 
   getTreeIfDifferent(sha: string) {

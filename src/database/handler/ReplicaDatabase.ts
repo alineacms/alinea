@@ -48,6 +48,10 @@ export class ReplicaDatabase extends WritableGraph implements HandlerDatabase {
     return this.replica.getTreeIfDifferent(sha)
   }
 
+  bootstrap(principal: string, roles: ReadonlyArray<string>) {
+    return this.replica.bootstrap(principal, roles)
+  }
+
   async syncWith(remote: RemoteSource) {
     await this.replica.sync(remote)
     return this.sha

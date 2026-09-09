@@ -284,6 +284,24 @@ export async function GET(request) { const cms = createCMS({schema: {}, workspac
   })
   assert.equal(edge.status, 200)
   assert.deepEqual(await edge.json(), {count: 1})
+  const bootstrap = await fetch(
+    `http://127.0.0.1:${port}/api/content?action=replicaIndex`,
+    {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        authorization: 'Bearer fixture-key'
+      },
+      signal: AbortSignal.timeout(15000)
+    }
+  )
+  assert.equal(bootstrap.status, 200)
+  assert.equal(bootstrap.headers.get('cache-control'), 'private, no-store')
+  const view = await bootstrap.json()
+  assert.equal(view.version, 1)
+  assert.equal(view.identity.principal, 'fixture')
+  assert.equal(view.identity.namespace, 'preview/test')
+  assert.deepEqual(view.entries, []) // This verified session has no roles.
   const page = await fetch(`http://127.0.0.1:${port}/`, {
     signal: AbortSignal.timeout(15000)
   })

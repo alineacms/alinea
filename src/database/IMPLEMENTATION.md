@@ -498,6 +498,17 @@ the actual Node handler. Cache conflicts after a successful authority write trig
 catch-up only, outside the authority-conflict retry loop; an integration race test
 verifies that an intervening remote edit does not resubmit the accepted mutation.
 
+Authenticated Node handlers expose `POST ?action=replicaIndex` as the first browser
+bootstrap boundary. API keys alone cannot obtain this user view. The handler
+catches up before evaluating verified/enriched session roles, ignores caller
+identity/roles, and emits a versioned index with full replica identity, policy
+view ID, revision and compiled row/field permissions. Responses are private and
+no-store. One replica lease binds graph-backed role evaluation, row projection
+and identity even through concurrent sync/close. Tests cover that lease, hidden
+rows, forged roles/principals, policy-only revocation, and absence of payload data.
+This is currently a full filtered index response; dashboard consumption, tree
+deltas, grant HTTP transport and filtered-field payloads remain unfinished.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

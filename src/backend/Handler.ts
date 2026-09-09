@@ -34,6 +34,7 @@ import {HandleAction} from './HandleAction.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
+import type {IndexBootstrap} from '#/database/replica/Bootstrap.js'
 
 const PrepareBody = object({
   filename: string,
@@ -64,6 +65,10 @@ export interface HandlerHooks {
 export interface HandlerDatabase extends WritableGraph {
   readonly sha: string
   readonly source: Pick<Source, 'getTree' | 'getBlobs'>
+  bootstrap?(
+    principal: string,
+    roles: ReadonlyArray<string>
+  ): Promise<IndexBootstrap>
   resolvePreview?<Query extends GraphQuery>(
     query: Query,
     remote: RemoteSource
@@ -201,6 +206,24 @@ export function createHandler({
         if (!isJson) throw new Response('Expected JSON', {status: 400})
         return request.json()
       })
+
+      if (action === HandleAction.ReplicaIndex && request.method === 'POST') {
+        const {claims} = expectUser()
+        expectJson()
+        if (!claims.sub) throw new HttpError(401, 'Missing replica principal')
+        if (!local.bootstrap)
+          throw new HttpError(501, 'SQLite replica unavailable')
+        // Unlike periodic public reads, a session bootstrap always catches up
+        // before evaluating graph-backed roles. Caller-supplied roles are ignored.
+        await local.syncWith(cnx)
+        const bootstrap = await local.bootstrap(claims.sub, claims.roles ?? [])
+        return Response.json(bootstrap, {
+          headers: {
+            'Cache-Control': 'private, no-store',
+            Vary: 'Cookie, Authorization'
+          }
+        })
+      }
 
       if (action === HandleAction.User) {
         const user = expectUser()
