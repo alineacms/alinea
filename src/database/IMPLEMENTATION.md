@@ -261,6 +261,17 @@ preview record. New source versions, identity/type/order changes, payload patche
 FTS and dev routing remain separate unfinished preview stages; unsupported inputs
 are rejected explicitly instead of producing a partial preview.
 
+The snapshot owner's preview path now connects decoding, revision checks, Graph-
+based patch application, bounded normalization and the attached row overlay.
+`applyPreview` depends on Graph rather than LocalDB, so it can apply the existing
+wire format without a JS index. Encoded requests must match the leased source
+revision; invalid patches reject. Tests run two distinct entry previews using the
+same marker alongside a patch preview and a normal query, and hold a preview
+across a base swap and owner close while nested reads retain the original view.
+No preview publishes files or changes the source revision. Dev routing remains
+on its explicit legacy path until structural previews and complete overlay search
+are available; the SQL snapshot path currently rejects those unsupported cases.
+
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
 collection operations. Numeric array offsets are rejected; collection operations

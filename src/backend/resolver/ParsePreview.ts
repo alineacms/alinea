@@ -1,5 +1,5 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {Graph} from '#/core/Graph.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {PreviewRequest, PreviewUpdate} from '#/core/Preview.js'
@@ -24,9 +24,9 @@ export async function decodePreviewRequest(
 }
 
 export async function applyPreview(
-  local: LocalDB,
+  local: Graph,
   preview: DecodedPreviewRequest
-): Promise<PreviewRequest | undefined> {
+): Promise<DecodedEntryPreview | undefined> {
   if ('entry' in preview) return preview
   const span = trace(local.config, 'alinea.preview.apply')
   return span(async () => {

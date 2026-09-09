@@ -1,4 +1,8 @@
 import type {Config} from '#/core/Config.js'
+import {
+  applyPreview,
+  decodePreviewRequest
+} from '#/backend/resolver/ParsePreview.js'
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
@@ -8,6 +12,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import type {RemoteSource} from '#/core/source/Source.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {randomUUID} from 'node:crypto'
 import {constants} from 'node:fs'
@@ -28,7 +33,9 @@ import type {EntryRuntime, QueryObserver} from '../runtime/EntryRuntime.js'
 import {reconcileDatabase} from '../runtime/ReconcileDatabase.js'
 import {entryReferencesTo} from '../runtime/EntryReferences.js'
 import {fixDatabase} from '../runtime/FixDatabase.js'
+import {normalizeEntryPreview} from '../runtime/NormalizePreview.js'
 import {nodeDatabase} from './NodeDatabase.js'
+import {NodeOverlay} from './NodeOverlay.js'
 
 interface Snapshot {
   file: string
@@ -174,7 +181,30 @@ export class NodeReplica extends Graph {
   async resolve<const Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    return this.#read(snapshot => snapshot.runtime.resolve(query))
+    return this.#read(async snapshot => {
+      if (!query.preview) return snapshot.runtime.resolve(query)
+      const decoded = await decodePreviewRequest(query.preview)
+      if ('contentHash' in decoded && decoded.contentHash !== snapshot.revision)
+        throw new ShaMismatchError(decoded.contentHash, snapshot.revision)
+      const preview = await applyPreview(snapshot.runtime, decoded)
+      if (!preview) throw new Error('Preview patch could not be applied')
+      const normalized = await normalizeEntryPreview(
+        this.config,
+        nodeDatabase(snapshot.sqlite),
+        preview.entry
+      )
+      const overlay = await NodeOverlay.open(
+        this.config,
+        join(this.#options.directory, snapshot.file),
+        snapshot.identity,
+        normalized.entries
+      )
+      try {
+        return await overlay.resolve<Query>({...query, preview: undefined})
+      } finally {
+        overlay.close()
+      }
+    })
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
