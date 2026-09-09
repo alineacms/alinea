@@ -325,6 +325,12 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
     const servedRevision = db.sha
     const contentFile = join(rootDir, 'content/pages/a.json')
     const content = await readFile(contentFile, 'utf8')
+    await writeFile(contentFile, JSON.stringify(JSON.parse(content)))
+    await db.fix()
+    expect(await readFile(contentFile, 'utf8')).toBe(content)
+    const fixedRevision = db.sha
+    await db.fix()
+    expect(db.sha).toBe(fixedRevision)
     await writeFile(contentFile, `${content}\n`)
     try {
       await expect(
@@ -361,7 +367,7 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
       expect(
         await readFile(join(replica.directory, 'current.json'), 'utf8')
       ).toBe(pointer)
-      // These explicit legacy paths materialize their index only when requested.
+      // Only the remaining preview path materializes the legacy index.
       const entry = await restarted.get({id: 'a', select: Entry})
       expect(
         await restarted.first({

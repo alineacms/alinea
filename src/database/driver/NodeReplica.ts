@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
-import type {Policy} from '#/core/Role.js'
+import {Policy} from '#/core/Role.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {
@@ -27,6 +27,7 @@ import {openCheckpoint, type CheckpointIdentity} from '../runtime/Checkpoint.js'
 import type {EntryRuntime, QueryObserver} from '../runtime/EntryRuntime.js'
 import {reconcileDatabase} from '../runtime/ReconcileDatabase.js'
 import {entryReferencesTo} from '../runtime/EntryReferences.js'
+import {fixDatabase} from '../runtime/FixDatabase.js'
 import {nodeDatabase} from './NodeDatabase.js'
 
 interface Snapshot {
@@ -214,6 +215,18 @@ export class NodeReplica extends Graph {
     if (this.#closed)
       return Promise.reject(new Error('SQLite replica is closed'))
     const request = this.#updates.then(() => this.#request(mutations, policy))
+    this.#updates = request.catch(() => {})
+    return request
+  }
+
+  requestFix(): Promise<CommitRequest> {
+    if (this.#closed)
+      return Promise.reject(new Error('SQLite replica is closed'))
+    const request = this.#updates.then(() =>
+      this.#read(async snapshot =>
+        this.#request(await fixDatabase(snapshot.runtime), Policy.ALLOW_ALL)
+      )
+    )
     this.#updates = request.catch(() => {})
     return request
   }

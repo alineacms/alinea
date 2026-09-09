@@ -114,9 +114,10 @@ export class DevDB extends LocalDB {
 
   async fix() {
     if (!this.#options.replica) return this.index.fix(this.source)
-    await this.#legacy(async () => {
-      await this.index.fix(this.source)
+    await this.#sync(async () => {
       await this.#syncSource()
+      const request = await this.#replica!.requestFix()
+      await this.#write(request)
     })
   }
 

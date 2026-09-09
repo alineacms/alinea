@@ -207,7 +207,7 @@ effects reject a stale filesystem revision even while an older SQL snapshot
 is still being served. Watcher/config teardown closes the owner and prevents late
 cache emissions. Integration tests exercise filesystem-backed Graph updates, live
 results, restart reuse and watcher shutdown. This is an explicit intermediate
-cutover: `LocalDB` still supplies fixes and previews, with its index
+cutover: `LocalDB` still supplies previews, with its index
 materialized only when one of those explicit paths is requested. Ordinary dev
 startup, seeding, reads and writes no longer build that index. An unchanged restart
 test verifies zero source-record parsing. There is no catch-all query fallback;
@@ -225,6 +225,16 @@ reconciliation, removal and rollback after extraction failure. Queries still wor
 with no resident entry payloads. This is a complete private checkpoint index, not
 a browser authorization boundary: permission-scoped reference frames and sparse
 browser coverage remain to be implemented.
+
+Explicit dev content fixes now use `runtime/FixDatabase` to compare SQL Graph
+entry values with their authored blob hashes and prepare updates through the same
+SQL mutation compiler. `NodeReplica.requestFix` keeps planning on one leased
+snapshot under its update queue; dev commits the resulting request through the
+filesystem authority. It is intentionally full-content maintenance, not a startup
+scan. The integration test disables JS indexing, normalizes a compact source
+record without changing its content, and verifies a second fix leaves the source
+revision unchanged. Previews are now the only remaining dev operation that
+materializes the legacy JS index.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
