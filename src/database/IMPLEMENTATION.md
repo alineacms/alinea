@@ -184,8 +184,17 @@ cached source records/frames, and rollback without changing the published baseli
 The normalizer still reconstructs a transient whole graph and hashes all effective
 payloads; affected-subgraph normalization and stable ordinals for insert/delete
 remain scale gates. Live connections must not call this offline reconciliation
-function. Dev connection ownership, reader swaps, publishing new frame locations,
-production query cutover and actual dev-server integration remain outstanding.
+function. `driver/NodeReplica` provides the writable-copy ownership baseline:
+restore a compatible private cache without parsing, reconcile a separate file,
+validate/open it read-only, atomically switch the restart pointer and notify live
+queries. Per-query leases keep old connections open across async projections and
+nested reads; close prevents new work without invalidating active readers. Tests
+cover restoration, config mismatch, failed updates, malformed cache paths, swaps
+during nested reads, subscriptions and close during source lookup. Disk generations
+are retained, and this cache is not a cross-process mutation authority. Copy cost,
+retention and an attached-overlay comparison remain scale gates. Publishing new
+frame locations, production query cutover and wiring this owner into the actual
+dev-server mutation lifecycle remain outstanding.
 
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,
