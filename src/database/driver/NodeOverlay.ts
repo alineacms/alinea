@@ -5,6 +5,7 @@ import {DatabaseSync} from 'node:sqlite'
 import {pathToFileURL} from 'node:url'
 import {sql} from 'rado'
 import {entryIndexRow} from '../entry/Schema.js'
+import {overlaySearch} from '../query/OverlaySearch.js'
 import {openCheckpoint, type CheckpointIdentity} from '../runtime/Checkpoint.js'
 import {EntryRuntime, type EntryReplacement} from '../runtime/EntryRuntime.js'
 import {SqlSource} from '../source/SqlSource.js'
@@ -12,7 +13,7 @@ import {nodeDatabase} from './NodeDatabase.js'
 
 /** Request-local row overlay over a trusted immutable checkpoint. No file copy
  * or whole-corpus normalization. Callers must supply complete normalized changed
- * versions; preview normalization and merged FTS are separate stages.
+ * versions; search merges immutable base and changed-row FTS postings.
  */
 export class NodeOverlay extends Graph {
   #sqlite: DatabaseSync
@@ -54,7 +55,7 @@ export class NodeOverlay extends Graph {
         throw new Error('Overlay cannot replace and remove the same version')
       await EntryRuntime.createSchema(db, descriptor.sourceSha)
       const runtime = new EntryRuntime(config, db, {
-        search: false,
+        search: overlaySearch(db),
         async includedAtBuild(path) {
           return Boolean(await tree.get(path))
         }

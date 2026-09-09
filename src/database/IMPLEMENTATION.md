@@ -243,11 +243,9 @@ handles replacements and removals across index/data/payload tables. Nested Graph
 queries share the same view, and in-flight reads retain their connection across
 close. Tests interleave two overlays, query nested children and data predicates,
 check identity failures and conflicting masks, and verify the original file is
-byte-for-byte unchanged with no copy files or source reconstruction. This is not
-yet the public preview implementation: callers currently supply normalized rows,
-and search explicitly rejects because base/overlay FTS ranking and snippets still
-need a complete strategy. Preview input normalization, payload patches and dev
-routing remain required before removing the legacy preview path.
+byte-for-byte unchanged with no copy files or source reconstruction. Callers
+supply normalized rows; the snapshot owner's preview adapter and merged search
+integration are described below. Dev routing remains separate.
 
 `runtime/NormalizePreview` now normalizes existing-entry data previews from the
 edited identity's authored versions and ancestors, read directly from the private
@@ -257,8 +255,8 @@ returned for the attached overlay; original ordinals and untouched base rows are
 retained. Tests compare full Graph results and nested children across all status
 modes under published/archived ancestors, with 100 unrelated entries present. A
 child edit reads three records, a root edit one, and each parses only the supplied
-preview record. New identities, type/order changes,
-FTS and dev routing remain separate unfinished preview stages; unsupported inputs
+preview record. New identities, type/order changes and dev routing remain
+separate unfinished preview stages; unsupported inputs
 are rejected explicitly instead of producing a partial preview.
 
 New authored versions of an existing identity (for example a draft or archived
@@ -270,7 +268,7 @@ tests include an unrelated entry with the same order key. Existing source paths
 cannot be claimed by another identity, and new versions must share the existing
 physical entry directory. Tests compare added draft/archive versions under both
 published and archived ancestors across all status modes. New entry identities,
-type/order edits and complete FTS remain unsupported preview cases.
+type/order edits remain unsupported preview cases.
 
 The snapshot owner's preview path now connects decoding, revision checks, Graph-
 based patch application, bounded normalization and the attached row overlay.
@@ -280,8 +278,8 @@ revision; invalid patches reject. Tests run two distinct entry previews using th
 same marker alongside a patch preview and a normal query, and hold a preview
 across a base swap and owner close while nested reads retain the original view.
 No preview publishes files or changes the source revision. Dev routing remains
-on its explicit legacy path until structural previews and complete overlay search
-are available; the SQL snapshot path currently rejects those unsupported cases.
+on its explicit legacy path until structural previews are available; the SQL
+snapshot path currently rejects those unsupported cases.
 
 Overlay FTS investigation ruled out replacing FTS shadow tables with views (the
 installed SQLite rejects dropping the protected shadow tables). The ranking path
@@ -299,11 +297,19 @@ numeric ranks with a freshly rebuilt reference index, including overlapping
 prefixes, duplicate terms, replacements and deletions. The corresponding WASM
 gate remains explicitly skipped: the installed 0.1.18 binary reports "out of
 memory" when creating TEMP FTS/vocabulary tables. This is a native overlay
-primitive, not a claimed browser capability. Query-plan/snippet integration and
-dev preview cutover are still pending.
+primitive, not a claimed browser capability.
 
-This avoids reading document text or changing private FTS tables; snippets and
-query compilation are still required before enabling overlay search.
+`query/OverlaySearch` now connects these matches to the existing Graph compiler
+through a queued search-plan provider. Each immutable overlay caches query-scoped
+version/rank rows; nested and concurrent searches cannot overwrite one another.
+Snippets read the matched document from its original base or overlay FTS index.
+The merged data view's missing implicit rowids do not matter: search resolves
+version identities through the explicitly qualified source tables. Native Graph
+tests compare a rebuilt reference corpus for ranking, snippets, pagination,
+counts, grouping, ordering, filters and concurrent nested searches, with more
+than one batch of matched identities. Revision-bound snapshot previews can now
+search their edited view. Structural preview support and dev cutover remain
+pending; browser overlay FTS still requires a compatible storage strategy.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID

@@ -20,7 +20,7 @@ import {
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from '../query/EntryQuery.js'
-import {createSearch} from '../query/Search.js'
+import {createSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 
 const superseded = Symbol('superseded query')
@@ -61,8 +61,8 @@ export interface EntryDelta {
 }
 
 export interface RuntimeOptions {
-  /** Disable search when the backing view cannot provide a complete FTS index. */
-  search?: boolean
+  /** Prepare a complete search plan under the connection's statement queue. */
+  search?(input: GraphQuery['search']): Promise<SearchQuery | undefined>
   includedAtBuild?(filePath: string): boolean | Promise<boolean>
   load?(
     requests: ReadonlyArray<PayloadRequest>
@@ -336,8 +336,6 @@ export class EntryRuntime extends Graph {
     generation: number,
     source?: RelationSource
   ): Promise<unknown> {
-    if (query.search && this.#options.search === false)
-      throw new Error('Search is not supported by this database view')
     if (this.#generation !== generation) throw superseded
     const link =
       'edge' in query &&
@@ -347,7 +345,10 @@ export class EntryRuntime extends Graph {
       if (this.#generation !== generation) throw superseded
       query = {preferredLocale: source.locale ?? undefined, ...query}
     }
-    const plan = compileEntryQuery(this.#config, query, source)
+    const search = this.#options.search
+      ? await this.#exclusive(() => this.#options.search!(query.search))
+      : undefined
+    const plan = compileEntryQuery(this.#config, query, source, search)
     if (plan.membershipData) {
       const candidates = await this.#exclusive(async () =>
         plan.candidates.all(this.#db)

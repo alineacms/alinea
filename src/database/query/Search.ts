@@ -1,5 +1,17 @@
-import {sql, type Database, type HasSql} from 'rado'
+import {sql, type Database, type HasSql, type Sql} from 'rado'
 import {EntryIndexTable} from '../entry/Schema.js'
+
+export interface SearchQuery {
+  needsPayloads: boolean
+  condition: Sql<boolean>
+  rank: Sql<number>
+  snippet(
+    start: HasSql,
+    end: HasSql,
+    cutOff: HasSql,
+    limit: HasSql
+  ): Sql<string>
+}
 
 /** SQLite capability: keep the private/local FTS index transactionally derived
  * from resident, readable payloads. Other drivers need their own search adapter.
@@ -29,12 +41,19 @@ export async function createSearch(db: Database): Promise<void> {
   end`)
 }
 
-export function searchQuery(input: string | Array<string> | undefined) {
+export function searchTokens(input: string | Array<string> | undefined) {
   const text = Array.isArray(input) ? input.join(' ') : input
   if (!text) return undefined
+  return text.match(/[\p{L}\p{N}\p{M}]+/gu) ?? []
+}
+
+export function searchQuery(
+  input: string | Array<string> | undefined
+): SearchQuery | undefined {
+  const tokens = searchTokens(input)
+  if (!tokens) return undefined
   // Quote individual tokens and bind the entire expression: user text cannot
   // inject FTS operators, column selectors, quotes or SQL syntax.
-  const tokens = text.match(/[\p{L}\p{N}\p{M}]+/gu) ?? []
   const terms = tokens.map(term => `"${term}"*`).join(' AND ')
   const match = sql`alinea_entry_search match ${terms}`
   const identity = sql`rowid = (

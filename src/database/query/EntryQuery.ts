@@ -207,12 +207,12 @@ class Expressions {
 export function compileEntryQuery(
   config: Config,
   query: GraphQuery,
-  source?: RelationSource
+  source?: RelationSource,
+  search = searchQuery(query.search)
 ) {
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const search = searchQuery(query.search)
   const membership = new Expressions(scope, search)
   const structural: Array<Sql<boolean>> = []
   if (!query[internalSourceVersions])

@@ -104,9 +104,9 @@ test('SQL snapshot previews accept entry and revision-bound patch inputs without
     await expect(replica.find({preview: {payload: invalid}})).rejects.toThrow(
       'could not be applied'
     )
-    await expect(
-      replica.find({preview: first, search: 'Left'})
-    ).rejects.toThrow('Search is not supported')
+    expect(
+      await replica.find({preview: first, search: 'Left', select: Entry.id})
+    ).toEqual(['a'])
     expect(await replica.first({id: 'a', select: Entry.title})).toBe('Original')
     const started = Promise.withResolvers<void>()
     const release = Promise.withResolvers<void>()
