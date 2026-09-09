@@ -57,6 +57,7 @@ test('builds and reopens a raw SQL checkpoint without source reads or normalizat
       expect(descriptor.sourceSha).toBe(index.sha)
       expect(await runtime.find({select: Entry})).toEqual(expected)
       expect(await runtime.count({select: Entry.id})).toBe(expected.length)
+      expect(await runtime.count({search: 'cookie'})).toBeGreaterThan(0)
       expect(readBlobs).not.toHaveBeenCalled()
       expect(materialize).not.toHaveBeenCalled()
       expect(normalize).not.toHaveBeenCalled()

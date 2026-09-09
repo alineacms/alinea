@@ -20,6 +20,7 @@ import {
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from '../query/EntryQuery.js'
+import {createSearch} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 
 const superseded = Symbol('superseded query')
@@ -144,6 +145,7 @@ export class EntryRuntime extends Graph {
 
   static async createSchema(db: Database, revision: string): Promise<void> {
     await db.create(EntryIndexTable, EntryDataTable, Payload, Meta)
+    await createSearch(db)
     await db.insert(Meta).values({id: 1, revision})
   }
 

@@ -41,6 +41,7 @@ import {
   type QueryField
 } from './Condition.js'
 import {aliasesField} from './Aliases.js'
+import {searchQuery} from './Search.js'
 
 import {
   linkRelation,
@@ -67,9 +68,11 @@ class Expressions {
   relations: Array<RelationProjection> = []
   fields: Array<FieldProjection> = []
   #scope: Scope
+  #search: ReturnType<typeof searchQuery>
 
-  constructor(scope: Scope) {
+  constructor(scope: Scope, search?: ReturnType<typeof searchQuery>) {
     this.#scope = scope
+    this.#search = search
   }
 
   data(path: Array<string>): QueryField {
@@ -124,8 +127,31 @@ class Expressions {
       }
       case 'value':
         return sql.value(internal.value)
-      case 'call':
-        throw new Error(`Unsupported SQL function: ${internal.method}`)
+      case 'call': {
+        if (internal.method !== 'snippet')
+          throw new Error(`Unsupported SQL function: ${internal.method}`)
+        if (!this.#search)
+          throw new Error('Snippet method requires search terms to be provided')
+        const [start, end, cutOff, limit] = internal.args
+        if (!start || !end || !cutOff || !limit)
+          throw new Error('Snippet requires four arguments')
+        const value = getExpr(limit)
+        if (
+          value.type !== 'value' ||
+          !Number.isInteger(value.value) ||
+          typeof value.value !== 'number' ||
+          value.value <= 0 ||
+          value.value > 64
+        )
+          throw new Error('Snippet limit must be an integer from 1 to 64')
+        this.dataRequired ||= this.#search.needsPayloads
+        return this.#search.snippet(
+          this.expr(start),
+          this.expr(end),
+          this.expr(cutOff),
+          this.expr(limit)
+        )
+      }
     }
   }
 
@@ -182,12 +208,11 @@ export function compileEntryQuery(
   query: GraphQuery,
   source?: RelationSource
 ) {
-  if (query.preview || query.search)
-    throw new Error(
-      'SQL preview and search require their dedicated query stages'
-    )
+  if (query.preview)
+    throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope)
+  const search = searchQuery(query.search)
+  const membership = new Expressions(scope, search)
   const structural: Array<Sql<boolean>> = []
   const edge = 'edge' in query ? (query as EdgeQuery) : undefined
   const link = edge?.edge === 'entrySingle' || edge?.edge === 'entryMultiple'
@@ -256,6 +281,10 @@ export function compileEntryQuery(
       structural.push(eq(EntryIndexTable.sourceRoot, location[2]))
   }
   const content: Array<Sql<boolean>> = []
+  if (search) {
+    content.push(search.condition)
+    membership.dataRequired = search.needsPayloads
+  }
   if (query.alias !== undefined)
     content.push(
       arrayIncludes(membership.index('aliases'), item => {
@@ -288,7 +317,8 @@ export function compileEntryQuery(
       // dialect capability; do not silently substitute locale collation here.
       ordering.push(asc(isNull(value)), order.asc ? asc(value) : desc(value))
     }
-  } else if (links) ordering.push(asc(links.ordinal))
+  } else if (search) ordering.push(asc(search.rank))
+  else if (links) ordering.push(asc(links.ordinal))
   else if (edge?.edge === 'parents') ordering.push(asc(EntryIndexTable.level))
   else ordering.push(asc(EntryIndexTable.index))
   ordering.push(
@@ -297,7 +327,7 @@ export function compileEntryQuery(
     asc(EntryIndexTable.versionId)
   )
 
-  const projection = new Expressions(scope)
+  const projection = new Expressions(scope, search)
   const types = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -325,7 +355,7 @@ export function compileEntryQuery(
         versionId: EntryIndexTable.versionId,
         linkOrdinal: links?.ordinal ?? sql.value(0),
         rank: sql<number>`row_number() over (partition by ${sql.join(grouping, sql`, `)}
-        order by ${links?.ordinal ?? EntryIndexTable.index}, ${EntryIndexTable.ordinal}, ${EntryIndexTable.versionId})`
+        order by ${search?.rank ?? links?.ordinal ?? EntryIndexTable.index}, ${EntryIndexTable.ordinal}, ${EntryIndexTable.versionId})`
       })
       .from(EntryIndexTable)
       .where(sql.value(true))

@@ -144,7 +144,7 @@ The main Generate/exportDatabase orchestration now invokes frame generation and
 publication. Optional `config.replica` settings supply project, namespace and epoch;
 defaults use production URL/local config identity, provider branch metadata and
 epoch 1. Namespaces label sources, not Git checkout instructions; epoch reset
-detection remains manual. Checkpoint format 3 stores/validates all frame identity
+detection remains manual. Checkpoint format 4 stores/validates all frame identity
 components. BuildDatabase generates frames in the same transaction as normalized
 rows and the checkpoint. ExportDatabase publishes public ciphertext under
 `/_alinea/payloads/` before closing/publishing the private SQLite file and loader.
@@ -202,8 +202,21 @@ before ordering/pagination and preserves JSON primitive distinctions. Alias
 projections merge both storage locations, URL alias predicates ignore malformed
 rows, and nested array `includes` compiles to scoped SQL existence checks. Page
 locations use a resident source-root segment rather than the URL slug. The
-checkpoint format is now 3, including complete release identity. Search,
-natural collation, and production integration remain.
+checkpoint format is now 4, including complete release identity and derived FTS.
+Natural collation, previews, and production integration remain.
+
+`query/Search.ts` restores SQLite FTS5 through the existing Graph search/snippet
+API: quoted AND-prefix terms, accent folding, title-weighted BM25, SQL snippets,
+grouping before pagination, and explicit order overrides. This intentionally uses
+FTS semantics, not MiniSearch's fuzzy matching or identical scores/highlighting.
+Transactional insert/delete triggers keep search synchronized with runtime row
+replacement, hydration, title changes, revocation and rollback, using payload rowids
+instead of scanning unindexed version keys. Native and WASM tests cover these paths.
+Other SQL dialects need explicit search adapters; ordinary queries remain portable.
+Browser search currently hydrates every structurally eligible payload before
+returning results and fails closed if any required payload is unreadable. Separate
+lazy search frames, explore-only safe-title search, query-plan scale gates and
+dedicated search coverage remain outstanding. Structural queries still hydrate none.
 
 `runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
 hydration before content filtering or after structural pagination, and conservative
