@@ -538,6 +538,19 @@ handler-to-browser-loader path. This initial inline transport requests one frame
 per deduplicated load; grant batching/CDN reuse and the dashboard/session owner
 are still unfinished.
 
+`ReplicaSession` now owns one authenticated browser Graph generation: it validates
+the bootstrap's authority binding, status/structural fields and permission masks,
+explicitly projects structural columns, then builds an in-memory WASM database.
+SQLite rows always come from the fresh authenticated bootstrap, never cached rows.
+An optional identity-scoped IndexedDB cache retains only index/ciphertext; a fresh
+session still obtains fresh grants before decrypting cached frames. Close gates
+new and late query results immediately, aborts loaders and drains pending reads
+before closing SQLite. Revocation closes and purges the cache; logout can also
+purge an already ordinarily closed session. Tests cover lazy hydration, reopen,
+strict bootstrap filtering, revocation, cache purge and the actual Node handler
+bootstrap/payload-to-WASM session path. Bootstrap HTTP acquisition, generation
+refresh/live-query ownership and dashboard integration remain unfinished.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

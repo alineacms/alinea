@@ -14,7 +14,7 @@ import {getScope} from '#/core/Scope.js'
 import {base64} from '#/core/util/Encoding.js'
 import {decryptFrame} from '#/database/replica/Frame.js'
 import {entryVersionId} from '#/database/entry/Schema.js'
-import {HttpPayloadLoader} from '#/database/browser/HttpPayloadLoader.js'
+import {ReplicaSession} from '#/database/browser/ReplicaSession.js'
 
 const apiKey = 'preview-secret'
 let draftEnabled = false
@@ -197,10 +197,11 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
     expect(JSON.parse(new TextDecoder().decode(plaintext)).data.title).toBe(
       'Original'
     )
-    const browserLoader = new HttpPayloadLoader({
+    const browserSession = await ReplicaSession.open({
       url: 'https://example.com/api/cms',
-      identity: view.identity,
-      revision: view.revision,
+      config: localCms.config,
+      bootstrap: view,
+      expected: {project: 'project', namespace: 'main', principal: 'editor'},
       applyAuth(init) {
         const headers = new Headers(init.headers)
         headers.set('authorization', 'Bearer user')
@@ -211,10 +212,10 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
       }
     })
     try {
-      const [loaded] = await browserLoader.load(payloadRequest.requests)
+      const loaded = await browserSession.get({id: 'a', select: Entry})
       expect(loaded.data.title).toBe('Original')
     } finally {
-      browserLoader.close()
+      await browserSession.close()
     }
     expect(
       (
