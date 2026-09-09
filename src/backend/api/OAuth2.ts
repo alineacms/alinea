@@ -71,10 +71,10 @@ export interface OAuth2Options {
   revocationEndpoint?: string
 
   /**
-   * Extra claims to validate, such as `iss` or `aud`,
+   * Validate provider-specific claims, including `iss` and `aud`.
    * If the claims are invalid, an error should be thrown.
    */
-  validateClaims?(claims: JWTPayload): void
+  validateClaims(claims: JWTPayload): void | Promise<void>
 }
 
 const COOKIE_VERIFIER = 'alinea.cv'
@@ -86,9 +86,13 @@ export class OAuth2 implements AuthApi {
   #config: Config
   #client: OAuth2Client
   #jwks: Promise<Array<JsonWebKey & {kid: string}>>
-  #validateClaims?: OAuth2Options['validateClaims']
+  #validateClaims: OAuth2Options['validateClaims']
 
   constructor(context: RequestContext, config: Config, options: OAuth2Options) {
+    assert(
+      typeof options.validateClaims === 'function',
+      'OAuth2 validateClaims is required'
+    )
     this.#context = context
     this.#config = config
     this.#validateClaims = options.validateClaims
@@ -244,7 +248,7 @@ export class OAuth2 implements AuthApi {
         throw new MissingCredentialsError('Missing access token cookie')
       const key = selectKey(jwks, accessToken)
       const user = await verify<JWTPayload & User>(accessToken, key)
-      this.#validateClaims?.(user)
+      await this.#validateClaims(user)
       assert(user.exp, 'Missing exp claim in access token')
       const expiresSoon = user.exp - Math.floor(Date.now() / 1000) < 30
       if (expiresSoon && refreshToken)
@@ -267,7 +271,7 @@ export class OAuth2 implements AuthApi {
           cause: [cause, error]
         })
       })
-      this.#validateClaims?.(user)
+      await this.#validateClaims(user)
       // Respond with 401 and instruct the client to retry request
       throw Response.json(
         {type: AuthResultType.NeedsRefresh},
