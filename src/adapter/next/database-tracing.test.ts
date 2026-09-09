@@ -4,6 +4,10 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {databaseTracing} from './database-tracing.js'
 
+const checkpoint =
+  'checkpoints/00000000-0000-4000-8000-000000000000/release.sqlite'
+const loader = `export const databasePath = fileURLToPath(new URL('./${checkpoint}', import.meta.url))`
+
 test('merges exact private artifacts without changing route mappings or distDir', async () => {
   const project = await mkdtemp(join(tmpdir(), 'alinea-traces-'))
   try {
@@ -23,12 +27,13 @@ test('merges exact private artifacts without changing route mappings or distDir'
         '/other': ['other.bin']
       }
     }
+    await writeFile(join(generated, 'database.js'), loader)
     const result = databaseTracing(config, project, ['/api/content'])
     expect(result).toEqual({
       '/api/content': [
         'private/existing.json',
         'node_modules/[@]alinea/generated/database.js',
-        'node_modules/[@]alinea/generated/release.sqlite'
+        `node_modules/[@]alinea/generated/${checkpoint}`
       ],
       '/other': ['other.bin']
     })
@@ -41,6 +46,15 @@ test('merges exact private artifacts without changing route mappings or distDir'
       ])
     ).toEqual(result)
     expect(databaseTracing(config, project, [])).toBe(
+      config.outputFileTracingIncludes
+    )
+    await writeFile(
+      join(generated, 'database.js'),
+      "export const databasePath = fileURLToPath(new URL('../outside.sqlite', import.meta.url))"
+    )
+    expect(() => databaseTracing(config, project)).toThrow('Invalid generated')
+    await rm(join(generated, 'database.js'))
+    expect(databaseTracing(config, project)).toBe(
       config.outputFileTracingIncludes
     )
   } finally {
@@ -68,10 +82,11 @@ test('resolves hoisted symlinks and rejects an explicitly excluding tracing root
       join(root, 'node_modules/@alinea/generated'),
       'dir'
     )
+    await writeFile(join(generated, 'database.js'), loader)
     expect(databaseTracing({outputFileTracingRoot: root}, project)).toEqual({
       '/*': [
         '../../packages/generated/database.js',
-        '../../packages/generated/release.sqlite'
+        `../../packages/generated/${checkpoint}`
       ]
     })
     expect(() =>

@@ -150,8 +150,19 @@ rows and the checkpoint. ExportDatabase publishes public ciphertext under
 `/_alinea/payloads/` before closing/publishing the private SQLite file and loader.
 The loader exports that public base path, not keys or the private frame manifest.
 Tests verify complete frame/location coverage and raw Node reopening. Both real
-Next fixture variants are rerun for this path. Atomic loader/file generation
-switching and production handler/dashboard consumption still need integration.
+Next fixture variants pass for this path. Production handler/dashboard consumption
+still needs integration.
+
+Private files now live in immutable `checkpoints/<uuid>/release.sqlite` generations.
+Publication closes the database, installs its generation, then atomically renames
+the single `database.js` pointer. Failed builds leave the old pointer intact;
+already loaded modules retain their matching database and identity after rebuilds.
+Tests exercise failed publication and retained old readers. `withAlinea` reads the
+literal generated path without executing the loader and includes only that
+generation, rejecting malformed paths. Run generation before the Next build;
+concurrent rebuilds during a framework trace are not coordinated by this mechanism.
+Old/orphaned generations remain available; retention and garbage collection must
+respect active readers. Atomic visibility here does not claim power-loss durability.
 
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
@@ -260,7 +271,7 @@ and at least one supported non-SQLite driver before claiming universality.
 
 ## 2. Prove raw SQLite packaging and file tracing
 
-Generate a closed, consistent `@alinea/generated/release.sqlite` plus private
+Generate a closed, consistent `@alinea/generated/checkpoints/<uuid>/release.sqlite` plus private
 manifest. Checkpoint any build-time WAL before packaging; the file must be
 self-contained and open read-only without requiring adjacent writable files.
 Validate manifest/schema compatibility without hashing or scanning the whole

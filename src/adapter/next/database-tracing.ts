@@ -1,5 +1,5 @@
 import type {NextConfig} from 'next/dist/types.js'
-import {existsSync, realpathSync} from 'node:fs'
+import {existsSync, readFileSync, realpathSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {dirname, isAbsolute, join, relative, resolve, sep} from 'node:path'
 
@@ -37,7 +37,13 @@ export function databaseTracing(
         'The generated Alinea database is outside outputFileTracingRoot; include its package in the tracing root'
       )
   }
-  const artifacts = ['database.js', 'release.sqlite'].map(file =>
+  const loaderPath = join(packageDir, 'database.js')
+  if (!existsSync(loaderPath)) return config.outputFileTracingIncludes
+  const checkpoint = readFileSync(loaderPath, 'utf8').match(
+    /new URL\('\.\/(checkpoints\/[a-f0-9-]{36}\/release\.sqlite)', import\.meta\.url\)/
+  )?.[1]
+  if (!checkpoint) throw new Error('Invalid generated Alinea database loader')
+  const artifacts = ['database.js', checkpoint].map(file =>
     relative(projectDir, join(packageDir!, file))
       .split(sep)
       .join('/')
