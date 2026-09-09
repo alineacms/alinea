@@ -1,0 +1,63 @@
+import {expect, test} from 'bun:test'
+import {Database} from 'bun:sqlite'
+import {connect} from 'rado/driver/bun-sqlite'
+import {table} from 'rado'
+import * as column from 'rado/universal/columns'
+import {compileFilter, jsonField} from './Condition.js'
+
+const Documents = table('documents', {
+  id: column.integer().primaryKey(),
+  data: column.json<Record<string, unknown>>().notNull()
+})
+
+test('SQL JSON predicates preserve missing/null and primitive types', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(Documents)
+  await db.insert(Documents).values([
+    {id: 1, data: {}},
+    {id: 2, data: {value: null}},
+    {id: 3, data: {value: false}},
+    {id: 4, data: {value: 0}},
+    {id: 5, data: {value: '0'}}
+  ])
+  async function matching(filter: unknown) {
+    return db
+      .select(Documents.id)
+      .from(Documents)
+      .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
+      .orderBy(Documents.id)
+  }
+  expect(await matching({value: null})).toEqual([2])
+  expect(await matching({value: false})).toEqual([3])
+  expect(await matching({value: 0})).toEqual([4])
+  expect(await matching({value: '0'})).toEqual([5])
+  expect(await matching({value: {isNot: null}})).toEqual([1, 3, 4, 5])
+  expect(await matching({value: {in: [null, 0]}})).toEqual([2, 4])
+  expect(await matching({value: {notIn: [null, 0]}})).toEqual([1, 3, 5])
+  expect(await matching({or: []})).toEqual([])
+  expect(await matching({and: []})).toEqual([1, 2, 3, 4, 5])
+})
+
+test('nested predicates and literal prefixes compile to parameterized SQL', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(Documents)
+  await db.insert(Documents).values([
+    {id: 1, data: {title: '100%_real', nested: {score: 8}}},
+    {id: 2, data: {title: '100XXreal', nested: {score: 2}}},
+    {id: 3, data: {title: "'; drop table documents; --", nested: {score: 9}}}
+  ])
+  const query = (filter: unknown) =>
+    db
+      .select(Documents.id)
+      .from(Documents)
+      .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
+  expect(
+    await query({
+      and: [{title: {startsWith: '100%_'}}, {nested: {has: {score: {gte: 8}}}}]
+    })
+  ).toEqual([1])
+  expect(await query({title: "'; drop table documents; --"})).toEqual([3])
+  expect(await query({})).toEqual([1, 2, 3])
+})

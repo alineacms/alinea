@@ -7,10 +7,18 @@ equal subtrees when diffing, and applies file changes by rehashing affected
 directories and ancestors. Tests cover snapshots across connections, mode-only
 changes, file/directory replacement, exact-base preconditions, and reopening a
 raw SQLite file read-only. This is a foundation, not an integrated runtime: the
-entry schema/compiler, source/Tree API integration, generation/NFT, dev boot,
+full entry compiler, source/Tree API integration, generation/NFT, dev boot,
 browser hydration/subscriptions, and remaining gates below are still outstanding.
 
-Verification so far: five targeted SQL Tree tests and `bun lint` pass.
+`entry/Schema.ts` and `query/` now define separate structural/data tables and
+compile basic entry queries into Rado SQL with stage-specific data dependencies.
+Tests compare ten supported queries against the current resolver on the demo
+corpus, distinguish JSON primitive types and missing/null values, and verify an
+index-only query runs without a payload table. Relations, search, grouping,
+aliases, natural collation, lazy execution, and production integration remain.
+
+Verification so far: eleven database tests and `bun lint` pass; the existing
+resolver's 41 tests also pass.
 The repository type check reports missing `allotment` in
 `src/dashboard/app/SidebarLayout.tsx`; no SQL Tree type errors were reported.
 
