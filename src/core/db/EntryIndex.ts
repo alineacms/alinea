@@ -25,7 +25,8 @@ import type {
   EntryReferenceResult
 } from './EntryReference.js'
 import {EntryReferenceIndex} from './EntryReferenceIndex.js'
-import {EntryTransaction} from './EntryTransaction.js'
+import {EntryTransaction, type MutationReader} from './EntryTransaction.js'
+import {EntryResolver} from './EntryResolver.js'
 import {IndexEvent} from './IndexEvent.js'
 
 export interface EntryFilter {
@@ -995,18 +996,17 @@ export class EntryIndex extends EventTarget {
             if (from) id = from.id
           }
           const tx = await this.transaction(source)
-          const request = await tx
-            .create({
-              id,
-              parentId: parentNode?.id ?? null,
-              locale,
-              type,
-              workspace,
-              root,
-              fromSeed: seedPath,
-              data: {path}
-            })
-            .toRequest()
+          await tx.create({
+            id,
+            parentId: parentNode?.id ?? null,
+            locale,
+            type,
+            workspace,
+            root,
+            fromSeed: seedPath,
+            data: {path}
+          })
+          const request = await tx.toRequest()
           const contentChanges = sourceChanges(request)
           if (contentChanges.changes.length) {
             await this.indexChanges(contentChanges)
@@ -1028,7 +1028,7 @@ export class EntryIndex extends EventTarget {
       const sha = await hashBlob(contents)
       const leaf = tree.getLeaf(entry.filePath)
       if (sha !== leaf.sha) {
-        tx.update({
+        await tx.update({
           id: entry.id,
           set: entry.data,
           locale: entry.locale,
@@ -1043,7 +1043,25 @@ export class EntryIndex extends EventTarget {
   }
   async transaction(source: Source) {
     const from = await source.getTree()
-    return new EntryTransaction(this.#config, this, source, from)
+    return new EntryTransaction(
+      this.#config,
+      this.mutationReader(),
+      source,
+      from
+    )
+  }
+
+  mutationReader(): MutationReader {
+    const index = this.clone()
+    const graph = new EntryResolver(this.#config, index)
+    return {
+      revision: index.sha,
+      graph,
+      async advance(batch, tree) {
+        await index.indexChanges(batch, tree)
+        return graph
+      }
+    }
   }
 }
 

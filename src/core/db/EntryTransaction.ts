@@ -1,8 +1,16 @@
 import {Config} from '#/core/Config.js'
-import type {Entry, EntryStatus} from '#/core/Entry.js'
+import {
+  Entry as EntryExpressions,
+  type Entry,
+  type EntryStatus
+} from '#/core/Entry.js'
+import {Expr} from '#/core/Expr.js'
+import {getRoot, internalSourceVersions} from '#/core/Internal.js'
+import type {ChangesBatch} from '../source/Change.js'
+import {OverlaySource} from '../source/OverlaySource.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
-import {getRoot} from '#/core/Internal.js'
+import type {Graph, QuerySettings} from '#/core/Graph.js'
 import {ListRow} from '#/core/ListRow.js'
 import {Type} from '#/core/Type.js'
 import {ListEditor} from '#/core/field/ListField.js'
@@ -17,18 +25,14 @@ import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
 import * as paths from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {unreachable} from '#/core/util/Types.js'
-import type {MediaFile} from '../media/MediaTypes.js'
 import {Permission, Policy} from '../Role.js'
 import {ShaMismatchError} from '../source/ShaMismatchError.js'
-import type {ChangesBatch} from '../source/Change.js'
-import {OverlaySource} from '../source/OverlaySource.js'
 import type {Source} from '../source/Source.js'
 import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
-import {aliasesFromData, aliasUrl} from './EntryAliases.js'
-import type {EntryIndex} from './EntryIndex.js'
+import {aliasUrlsFromData, aliasUrl} from './EntryAliases.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
   ArchiveMutation,
@@ -67,8 +71,10 @@ interface UrlCandidate {
   url?: string
 }
 
-interface UrlClaim {
+interface EntryTransactionUrlClaim {
   id: string
+  workspace: string
+  root: string
   url: string
 }
 
@@ -85,38 +91,163 @@ interface MoveUrlAliasUpdate {
   filePath: string
 }
 
+interface TransactionCore extends Pick<
+  Entry,
+  | 'id'
+  | 'status'
+  | 'title'
+  | 'type'
+  | 'seeded'
+  | 'workspace'
+  | 'root'
+  | 'level'
+  | 'index'
+  | 'parentId'
+  | 'parents'
+  | 'locale'
+  | 'active'
+  | 'main'
+  | 'path'
+  | 'url'
+> {
+  versionStatus: EntryStatus
+}
+
+interface MutationEntry extends Entry {
+  versionStatus: EntryStatus
+}
+const versionStatus = new Expr<EntryStatus>({
+  type: 'entryField',
+  name: 'versionStatus'
+})
+
+const transactionCoreSelection = {
+  id: EntryExpressions.id,
+  versionStatus,
+  status: EntryExpressions.status,
+  title: EntryExpressions.title,
+  type: EntryExpressions.type,
+  seeded: EntryExpressions.seeded,
+  workspace: EntryExpressions.workspace,
+  root: EntryExpressions.root,
+  level: EntryExpressions.level,
+  index: EntryExpressions.index,
+  parentId: EntryExpressions.parentId,
+  parents: EntryExpressions.parents,
+  locale: EntryExpressions.locale,
+  active: EntryExpressions.active,
+  main: EntryExpressions.main,
+  path: EntryExpressions.path,
+  url: EntryExpressions.url
+}
+
+const transactionEntrySelection = {
+  id: EntryExpressions.id,
+  versionStatus,
+  status: EntryExpressions.status,
+  title: EntryExpressions.title,
+  type: EntryExpressions.type,
+  seeded: EntryExpressions.seeded,
+  workspace: EntryExpressions.workspace,
+  root: EntryExpressions.root,
+  level: EntryExpressions.level,
+  filePath: EntryExpressions.filePath,
+  parentDir: EntryExpressions.parentDir,
+  childrenDir: EntryExpressions.childrenDir,
+  index: EntryExpressions.index,
+  parentId: EntryExpressions.parentId,
+  parents: EntryExpressions.parents,
+  locale: EntryExpressions.locale,
+  rowHash: EntryExpressions.rowHash,
+  active: EntryExpressions.active,
+  main: EntryExpressions.main,
+  path: EntryExpressions.path,
+  fileHash: EntryExpressions.fileHash,
+  url: EntryExpressions.url,
+  data: EntryExpressions.data
+}
+
+/** A private working Graph, advanced after each operation in a mutation batch.
+ * Advancing must not publish changes to the authoritative source or live readers.
+ */
+export interface MutationReader {
+  revision: string
+  graph: Graph
+  advance(batch: ChangesBatch, tree: ReadonlyTree): Promise<Graph>
+}
+
 export class EntryTransaction {
   #messages = [] as string[]
   #config: Config
-  #index: EntryIndex
+  #graph: Graph
+  #advance: MutationReader['advance']
+  #workingSource: OverlaySource
+  #workingTree: ReadonlyTree
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
   #policy: Policy
-  #urlClaims: Map<string, UrlClaim> | undefined
-  #workingSource: OverlaySource
-  #workingTree: ReadonlyTree
+  #changedUrlClaimOwners = new Set<string>()
+  #urlClaimUpdates = new Map<string, EntryTransactionUrlClaim>()
 
   constructor(
     config: Config,
-    index: EntryIndex,
+    reader: MutationReader,
     source: Source,
     from: ReadonlyTree,
     policy = Policy.ALLOW_ALL
   ) {
-    if (index.sha !== from.sha) throw new ShaMismatchError(index.sha, from.sha)
+    if (reader.revision !== from.sha)
+      throw new ShaMismatchError(reader.revision, from.sha)
     this.#config = config
-    this.#index = index.clone()
-    this.#tx = new SourceTransaction(source, from)
-    this.#policy = policy
+    this.#graph = reader.graph
+    this.#advance = reader.advance.bind(reader)
     this.#workingSource = new OverlaySource(source, from)
     this.#workingTree = from
+    this.#tx = new SourceTransaction(source, from)
+    this.#policy = policy
   }
 
   get empty() {
     return this.#messages.length === 0
   }
 
-  create({
+  async #entries(
+    query: QuerySettings,
+    includeHiddenVersions = false
+  ): Promise<Array<MutationEntry>> {
+    const found = await this.#graph.find({
+      ...query,
+      status: query.status ?? 'all',
+      [internalSourceVersions]: includeHiddenVersions,
+      select: transactionEntrySelection
+    })
+    return found.map(entry => ({...entry, searchableText: ''}))
+  }
+
+  #cores(query: QuerySettings): Promise<Array<TransactionCore>> {
+    return this.#graph.find({
+      ...query,
+      status: query.status ?? 'all',
+      select: transactionCoreSelection
+    })
+  }
+
+  async #versions(
+    id: string,
+    locale?: string | null
+  ): Promise<Array<MutationEntry>> {
+    const versions = await this.#entries({id, locale}, true)
+    return versions.map(entry => ({...entry, status: entry.versionStatus}))
+  }
+
+  async #sourceVersions(
+    id: string,
+    locale: string | null
+  ): Promise<Array<MutationEntry>> {
+    return this.#versions(id, locale)
+  }
+
+  async create({
     locale,
     type,
     data,
@@ -131,8 +262,10 @@ export class EntryTransaction {
   }: Op<CreateMutation>) {
     assert(id, 'Create mutation is missing an id')
     const config = this.#config
-    const index = this.#index
-    const existing = index.byId(id)
+    const existingVersions = await this.#versions(id)
+    const existing = existingVersions[0]
+    const language = existingVersions.filter(entry => entry.locale === locale)
+    const existingMain = language.find(entry => entry.main)
     if (existing) {
       parentId = existing.parentId
       if (!workspace) workspace = existing.workspace
@@ -170,30 +303,22 @@ export class EntryTransaction {
     else assert(locale === null, 'Invalid locale')
     let parent: Entry | undefined
     if (parentId) {
-      parent = index.findFirst(entry => {
-        return entry.id === parentId && entry.locale === locale && entry.main
-      })
+      parent = (await this.#entries({id: parentId, locale})).find(
+        entry => entry.main
+      )
       assert(parent, `Parent not found: ${parentId}`)
       this.#policy.assert(Permission.Create, parent)
     }
-    const siblings = Array.from(
-      index.findMany(entry => {
-        return (
-          entry.root === root &&
-          entry.workspace === workspace &&
-          entry.parentId === parentId
-        )
-      })
-    )
+    const siblings = await this.#cores({workspace, root, parentId})
     assert(typeof data === 'object', 'Invalid data')
     const title = data.title ?? data.path
     assert(typeof title === 'string', 'Missing title')
     let path = slugify(typeof data.path === 'string' ? data.path : title)
     assert(path.length > 0, 'Invalid path')
-    const existingPath = existing?.get(locale)?.path
+    const existingPath = existingMain?.path
     const hasSamePath = existingPath === path
     if (!hasSamePath)
-      path = this.#getAvailablePath({
+      path = await this.#getAvailablePath({
         id,
         path,
         parentId,
@@ -204,10 +329,12 @@ export class EntryTransaction {
     // Path changes are only carried out when the entry is published
     if (status !== 'published' && existingPath) path = existingPath
     if (existingPath && !hasSamePath && status === 'published') {
-      this.#rename(existing!.id, locale, path)
+      await this.#rename(existing!.id, locale, path)
     }
     if (overwrite && existing?.type === 'MediaFile') {
-      const prev = existing.get(null)?.main
+      const prev = existingVersions.find(
+        entry => entry.locale === null && entry.main
+      )
       assert(prev, 'Previous entry not found')
       const prevLocation = prev.data.location
       if (prevLocation !== data.location)
@@ -226,7 +353,7 @@ export class EntryTransaction {
       parentDir,
       `${path}${status === 'published' ? '' : `.${status}`}.json`
     )
-    const hasSameVersion = existing?.get(locale)?.has(status as EntryStatus)
+    const hasSameVersion = language.some(entry => entry.status === status)
     const warnDuplicate = !overwrite && hasSameVersion
     assert(!warnDuplicate, `Cannot create duplicate entry with id ${id}`)
     let newIndex: string
@@ -234,11 +361,7 @@ export class EntryTransaction {
       newIndex = existing.index
       if (status === 'published') {
         // Remove all different versions of the entry
-        const versions = index.byId(id)?.get(locale)
-        if (versions)
-          for (const [status, version] of versions) {
-            this.#tx.remove(version.filePath)
-          }
+        for (const version of language) this.#tx.remove(version.filePath)
       }
     } else {
       const previous =
@@ -251,13 +374,9 @@ export class EntryTransaction {
     }
     if (locale !== null && status === 'published') {
       // Start from other locales if found
-      const from = index.findFirst(entry => {
-        return (
-          entry.id === id &&
-          entry.locale !== locale &&
-          entry.status === 'published'
-        )
-      })
+      const from = existingVersions.find(
+        entry => entry.locale !== locale && entry.status === 'published'
+      )
       if (from) {
         const typeInstance = this.#config.schema[type]
         assert(typeInstance, `Type not found: ${type}`)
@@ -276,15 +395,15 @@ export class EntryTransaction {
         locale,
         data
       }
-      data = this.#dataWithPreviousUrlAlias(
+      data = await this.#dataWithPreviousUrlAlias(
         urlCandidate,
-        this.#publishedEntry(id, locale)
+        await this.#publishedEntry(id, locale)
       )
-      if (locale !== null) this.#persistSharedFields(id, locale, type, data)
-      this.#assertUniqueUrls({...urlCandidate, data})
+      if (locale !== null)
+        await this.#persistSharedFields(id, locale, type, data)
+      await this.#assertUniqueUrls({...urlCandidate, data})
     }
-    const seeds = existing?.get(locale)
-    const seeded = fromSeed ?? seeds?.seeded ?? null
+    const seeded = fromSeed ?? existingMain?.seeded ?? null
     const record = createRecord(
       {id, type, index: newIndex, path, seeded, data, title},
       status
@@ -297,11 +416,8 @@ export class EntryTransaction {
     return this
   }
 
-  #rename(entryId: string, locale: string | null, path: string) {
-    const index = this.#index
-    const versions = index.findMany(entry => {
-      return entry.id === entryId && entry.locale === locale
-    })
+  async #rename(entryId: string, locale: string | null, path: string) {
+    const versions = await this.#entries({id: entryId, locale})
     for (const version of versions) {
       const name =
         version.status === 'published' ? path : `${path}.${version.status}`
@@ -312,13 +428,8 @@ export class EntryTransaction {
     }
   }
 
-  update({id, locale, status, set}: Op<UpdateMutation>) {
-    const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id && entry.locale === locale && entry.status === status
-      )
-    })
+  async update({id, locale, status, set}: Op<UpdateMutation>) {
+    const entry = (await this.#entries({id, locale, status}))[0]
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Update, entry)
     for (const key of keys(set)) {
@@ -344,7 +455,7 @@ export class EntryTransaction {
     const lockPath = entry.status !== 'published' && !entry.main
     const path = lockPath
       ? entry.path
-      : this.#getAvailablePath({
+      : await this.#getAvailablePath({
           id,
           path: desiredPath,
           parentId: entry.parentId,
@@ -356,7 +467,7 @@ export class EntryTransaction {
     const filePath = `${childrenDir}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     if (entry.status === 'published') {
       this.#policy.assert(Permission.Publish, entry)
-      if (filePath !== entry.filePath) this.#rename(id, locale, path)
+      if (filePath !== entry.filePath) await this.#rename(id, locale, path)
       const urlCandidate = {
         id,
         type: entry.type,
@@ -367,10 +478,10 @@ export class EntryTransaction {
         locale,
         data
       }
-      data = this.#dataWithPreviousUrlAlias(urlCandidate, entry)
+      data = await this.#dataWithPreviousUrlAlias(urlCandidate, entry)
       if (locale !== null)
-        this.#persistSharedFields(id, locale, entry.type, data)
-      this.#assertUniqueUrls({...urlCandidate, data})
+        await this.#persistSharedFields(id, locale, entry.type, data)
+      await this.#assertUniqueUrls({...urlCandidate, data})
     }
     const record = createRecord(
       {
@@ -390,31 +501,64 @@ export class EntryTransaction {
     return this
   }
 
-  #getAvailablePath(target: PathCandidate) {
-    const conflictingPaths = Array.from(
-      this.#index.findMany(entry => {
-        return (
+  async #getAvailablePath(target: PathCandidate) {
+    const conflictingPaths = (
+      await this.#cores({
+        parentId: target.parentId,
+        workspace: target.workspace,
+        root: target.root,
+        locale: target.locale
+      })
+    )
+      .filter(
+        entry =>
           entry.id !== target.id &&
-          entry.parentId === target.parentId &&
-          entry.workspace === target.workspace &&
-          entry.root === target.root &&
-          entry.locale === target.locale &&
           (entry.path === target.path ||
             entry.path.startsWith(`${target.path}-`))
-        )
-      })
-    ).map(entry => entry.path)
+      )
+      .map(entry => entry.path)
     const suffix = pathSuffix(target.path, conflictingPaths)
     if (suffix !== undefined) return `${target.path}-${suffix}`
     return target.path
   }
 
-  #assertUniqueUrls(candidate: UrlCandidate) {
-    const claims = this.#getUrlClaims()
-    const urls = this.#candidateUrls(candidate)
+  async #assertUniqueUrls(candidate: UrlCandidate) {
+    const urls = await this.#candidateUrls(candidate)
     for (const url of urls) {
       const key = this.#urlClaimKey(candidate.workspace, candidate.root, url)
-      const existing = claims.get(key)
+      const updated = this.#urlClaimUpdates.get(key)
+      const storedEntry =
+        (
+          await this.#entries({
+            workspace: candidate.workspace,
+            root: candidate.root,
+            status: 'published',
+            url,
+            take: 1
+          })
+        )[0] ??
+        (
+          await this.#entries({
+            workspace: candidate.workspace,
+            root: candidate.root,
+            status: 'published',
+            alias: url,
+            take: 1
+          })
+        )[0]
+      const stored = storedEntry
+        ? {
+            id: storedEntry.id,
+            workspace: candidate.workspace,
+            root: candidate.root,
+            url
+          }
+        : undefined
+      const existing =
+        updated ??
+        (stored && !this.#changedUrlClaimOwners.has(stored.id)
+          ? stored
+          : undefined)
       if (existing && existing.id !== candidate.id) {
         throw new EntryUrlConflictError({
           url,
@@ -424,112 +568,108 @@ export class EntryTransaction {
         })
       }
     }
-    for (const [key, claim] of claims) {
-      if (claim.id === candidate.id) claims.delete(key)
-    }
+    this.#changedUrlClaimOwners.add(candidate.id)
+    for (const [key, claim] of this.#urlClaimUpdates)
+      if (claim.id === candidate.id) this.#urlClaimUpdates.delete(key)
     for (const url of urls) {
-      claims.set(this.#urlClaimKey(candidate.workspace, candidate.root, url), {
-        id: candidate.id,
-        url
-      })
+      this.#urlClaimUpdates.set(
+        this.#urlClaimKey(candidate.workspace, candidate.root, url),
+        {
+          id: candidate.id,
+          workspace: candidate.workspace,
+          root: candidate.root,
+          url
+        }
+      )
     }
   }
 
-  #candidateUrls(candidate: UrlCandidate): Array<string> {
-    return [this.#resolvedUrl(candidate), ...aliasUrlsFromData(candidate.data)]
+  async #candidateUrls(candidate: UrlCandidate): Promise<Array<string>> {
+    return [
+      await this.#resolvedUrl(candidate),
+      ...aliasUrlsFromData(candidate.data)
+    ]
   }
 
-  #resolvedUrl(candidate: UrlCandidate): string {
+  async #resolvedUrl(candidate: UrlCandidate): Promise<string> {
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
     if (candidate.url !== undefined) return candidate.url
     return entryUrl(type, {
       config: this.#config,
+      data: candidate.data,
       path: candidate.path,
       parentPaths:
         candidate.parentPaths ??
-        this.#parentPaths(candidate.parentId, candidate.locale),
+        (await this.#parentPaths(candidate.parentId, candidate.locale)),
       locale: candidate.locale,
       status: 'published',
       workspace: candidate.workspace,
-      root: candidate.root,
-      data: candidate.data
+      root: candidate.root
     })
   }
 
-  #dataWithPreviousUrlAlias(
+  async #dataWithPreviousUrlAlias(
     candidate: UrlCandidate,
     previousEntry: Entry | undefined
-  ): Record<string, unknown> {
+  ): Promise<Record<string, unknown>> {
     if (!previousEntry) return candidate.data
-    const previousUrl = this.#resolvedUrl(previousEntry)
-    const currentUrl = this.#resolvedUrl(candidate)
+    const previousUrl = await this.#resolvedUrl(previousEntry)
+    const currentUrl = await this.#resolvedUrl(candidate)
     if (previousUrl === currentUrl) return candidate.data
     const type = this.#config.schema[candidate.type]
     assert(type, `Type not found: ${candidate.type}`)
     return dataWithUrlAlias(type, candidate.data, previousUrl, currentUrl)
   }
 
-  #publishedEntry(id: string, locale: string | null): Entry | undefined {
-    return this.#index.findFirst(entry => {
-      return (
-        entry.id === id &&
-        entry.locale === locale &&
-        entry.status === 'published'
-      )
+  async #publishedEntry(
+    id: string,
+    locale: string | null
+  ): Promise<Entry | undefined> {
+    return (await this.#entries({id, locale, status: 'published'}))[0]
+  }
+
+  async #parentPaths(
+    parentId: string | null,
+    locale: string | null
+  ): Promise<Array<string>> {
+    if (!parentId) return []
+    const parent = (
+      await this.#cores({id: parentId, locale, [internalSourceVersions]: true})
+    ).find(entry => entry.main)
+    assert(parent, `Missing parent language node`)
+    const ancestorEntries = await this.#cores({
+      id: {in: parent.parents},
+      locale,
+      [internalSourceVersions]: true
     })
-  }
-
-  #parentPaths(parentId: string | null, locale: string | null): Array<string> {
-    const result = Array<string>()
-    let current = parentId ? this.#index.byId(parentId) : undefined
-    while (current) {
-      const language = current.get(locale)
-      assert(language, `Missing parent language node`)
-      result.unshift(language.main.path)
-      current = current.parent ?? undefined
-    }
-    return result
-  }
-
-  #getUrlClaims(): Map<string, UrlClaim> {
-    if (this.#urlClaims) return this.#urlClaims
-    const claims = new Map<string, UrlClaim>()
-    for (const entry of this.#index.findMany(entry => {
-      return entry.status === 'published'
-    })) {
-      for (const url of [
-        this.#resolvedUrl(entry),
-        ...aliasUrlsFromData(entry.data)
-      ]) {
-        claims.set(this.#urlClaimKey(entry.workspace, entry.root, url), {
-          id: entry.id,
-          url
-        })
-      }
-    }
-    this.#urlClaims = claims
-    return claims
+    const ancestors = parent.parents.map(id => {
+      const ancestor = ancestorEntries.find(
+        entry => entry.id === id && entry.main
+      )
+      assert(ancestor, `Missing parent language node`)
+      return ancestor.path
+    })
+    return ancestors.concat(parent.path)
   }
 
   #urlClaimKey(workspace: string, root: string, url: string) {
     return `${workspace}\0${root}\0${url}`
   }
 
-  #persistSharedFields(
+  async #persistSharedFields(
     id: string,
     locale: string,
     type: string,
     data: Record<string, unknown>
   ) {
-    const index = this.#index
     const typeInstance = this.#config.schema[type]
     assert(type, `Type not found: ${type}`)
     const shared = Type.sharedData(typeInstance, data)
     if (shared) {
-      const translations = index.findMany(entry => {
-        return entry.id === id && entry.locale !== locale
-      })
+      const translations = (await this.#entries({id})).filter(
+        entry => entry.locale !== locale
+      )
       for (const translation of translations) {
         const record = createRecord(
           {
@@ -553,15 +693,20 @@ export class EntryTransaction {
     }
   }
 
-  #moveUrlAliasUpdates(target: MoveTarget): Array<MoveUrlAliasUpdate> {
+  async #moveUrlAliasUpdates(
+    target: MoveTarget
+  ): Promise<Array<MoveUrlAliasUpdate>> {
     const updates = Array<MoveUrlAliasUpdate>()
-    for (const entry of this.#index.findMany(entry => {
-      return (
-        entry.status === 'published' &&
-        (entry.id === target.id || entry.parents.includes(target.id))
-      )
-    })) {
-      const parentPaths = this.#movedParentPaths(entry, target)
+    const matchingCores = (await this.#cores({status: 'published'})).filter(
+      entry => entry.id === target.id || entry.parents.includes(target.id)
+    )
+    const ids = [...new Set(matchingCores.map(entry => entry.id))]
+    const entries =
+      ids.length > 0
+        ? await this.#entries({id: {in: ids}, status: 'published'})
+        : []
+    for (const entry of entries) {
+      const parentPaths = await this.#movedParentPaths(entry, target)
       const candidate = {
         id: entry.id,
         type: entry.type,
@@ -573,30 +718,39 @@ export class EntryTransaction {
         locale: entry.locale,
         data: entry.data
       }
-      const data = this.#dataWithPreviousUrlAlias(candidate, entry)
-      this.#assertUniqueUrls({...candidate, data})
+      const data = await this.#dataWithPreviousUrlAlias(candidate, entry)
+      await this.#assertUniqueUrls({...candidate, data})
       updates.push({
         entry,
         data,
-        filePath: this.#movedFilePath(entry, target)
+        filePath: await this.#movedFilePath(entry, target)
       })
     }
     return updates
   }
 
-  #movedParentPaths(entry: Entry, target: MoveTarget): Array<string> {
-    const moved = this.#index.byId(target.id)
-    assert(moved, `Entry not found: ${target.id}`)
-    const movedLanguage = moved.get(entry.locale)
+  async #movedParentPaths(
+    entry: Entry,
+    target: MoveTarget
+  ): Promise<Array<string>> {
+    const movedLanguage = (await this.#versions(target.id, entry.locale)).find(
+      version => version.main
+    )
     assert(movedLanguage, `Missing moved entry language node`)
-    const newParentPaths = this.#parentPaths(target.parentId, entry.locale)
+    const newParentPaths = await this.#parentPaths(
+      target.parentId,
+      entry.locale
+    )
     if (entry.id === target.id) return newParentPaths
 
-    const currentParentPaths = this.#parentPaths(entry.parentId, entry.locale)
-    const oldPrefix = this.#parentPaths(moved.parentId, entry.locale).concat(
-      movedLanguage.main.path
+    const currentParentPaths = await this.#parentPaths(
+      entry.parentId,
+      entry.locale
     )
-    const newPrefix = newParentPaths.concat(movedLanguage.main.path)
+    const oldPrefix = (
+      await this.#parentPaths(movedLanguage.parentId, entry.locale)
+    ).concat(movedLanguage.path)
+    const newPrefix = newParentPaths.concat(movedLanguage.path)
     assert(
       startsWithSegments(currentParentPaths, oldPrefix),
       `Moved child is outside moved entry path`
@@ -604,18 +758,13 @@ export class EntryTransaction {
     return newPrefix.concat(currentParentPaths.slice(oldPrefix.length))
   }
 
-  #movedFilePath(entry: Entry, target: MoveTarget): string {
-    const moved = this.#index.byId(target.id)
-    assert(moved, `Entry not found: ${target.id}`)
-    const movedLanguage = moved.get(entry.locale)
+  async #movedFilePath(entry: Entry, target: MoveTarget): Promise<string> {
+    const movedLanguage = (await this.#versions(target.id, entry.locale)).find(
+      version => version.main
+    )
     assert(movedLanguage, `Missing moved entry language node`)
     const parent = target.parentId
-      ? this.#index.findFirst(parentEntry => {
-          return (
-            parentEntry.id === target.parentId &&
-            parentEntry.locale === entry.locale
-          )
-        })
+      ? (await this.#entries({id: target.parentId, locale: entry.locale}))[0]
       : undefined
     const parentDir = parent
       ? parent.childrenDir
@@ -625,11 +774,11 @@ export class EntryTransaction {
           target.root,
           entry.locale
         )
-    const nextPrefix = paths.join(parentDir, movedLanguage.main.path)
+    const nextPrefix = paths.join(parentDir, movedLanguage.path)
     if (entry.id === target.id) {
       return `${nextPrefix}${entry.status === 'published' ? '' : `.${entry.status}`}.json`
     }
-    const previousPrefix = movedLanguage.main.childrenDir
+    const previousPrefix = movedLanguage.childrenDir
     assert(
       entry.filePath === previousPrefix ||
         entry.filePath.startsWith(`${previousPrefix}/`),
@@ -641,19 +790,14 @@ export class EntryTransaction {
     return paths.join(nextPrefix, suffix)
   }
 
-  publish({id, locale, status}: Op<PublishMutation>) {
-    const index = this.#index
-    const entry = index.findFirst(entry => {
-      return (
-        entry.id === id && entry.locale === locale && entry.status === status
-      )
-    })
+  async publish({id, locale, status}: Op<PublishMutation>) {
+    const entry = (await this.#entries({id, locale, status}))[0]
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Publish, entry)
     const pathChange = entry.data.path && entry.data.path !== entry.path
     let path = slugify((entry.data.path as string) ?? entry.path)
     let data = entry.data
-    path = this.#getAvailablePath({
+    path = await this.#getAvailablePath({
       id,
       path,
       parentId: entry.parentId,
@@ -672,18 +816,15 @@ export class EntryTransaction {
       locale,
       data
     }
-    data = this.#dataWithPreviousUrlAlias(
+    data = await this.#dataWithPreviousUrlAlias(
       urlCandidate,
-      this.#publishedEntry(id, locale)
+      await this.#publishedEntry(id, locale)
     )
     if (entry.locale !== null)
-      this.#persistSharedFields(id, entry.locale, entry.type, data)
-    this.#assertUniqueUrls({...urlCandidate, data})
-    const versions = index.byId(id)?.get(locale)
-    if (versions)
-      for (const [_, version] of versions) {
-        this.#tx.remove(version.filePath)
-      }
+      await this.#persistSharedFields(id, entry.locale, entry.type, data)
+    await this.#assertUniqueUrls({...urlCandidate, data})
+    const versions = await this.#sourceVersions(id, locale)
+    for (const version of versions) this.#tx.remove(version.filePath)
     this.#tx.remove(entry.filePath)
     const record = createRecord({...entry, path, data}, 'published')
     const contents = new TextEncoder().encode(JSON.stringify(record, null, 2))
@@ -696,13 +837,12 @@ export class EntryTransaction {
     return this
   }
 
-  unpublish({id, locale}: Op<UnpublishMutation>) {
-    const index = this.#index
-    const versions = index.byId(id)?.get(locale)
-    const mainEntry = versions?.main
+  async unpublish({id, locale}: Op<UnpublishMutation>) {
+    const versions = await this.#sourceVersions(id, locale)
+    const mainEntry = versions.find(entry => entry.main)
     assert(mainEntry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Publish, mainEntry)
-    for (const [_, version] of versions) {
+    for (const version of versions) {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
@@ -711,13 +851,12 @@ export class EntryTransaction {
     return this
   }
 
-  archive({id, locale}: Op<ArchiveMutation>) {
-    const index = this.#index
-    const versions = index.byId(id)?.get(locale)
-    const mainEntry = versions?.main
+  async archive({id, locale}: Op<ArchiveMutation>) {
+    const versions = await this.#sourceVersions(id, locale)
+    const mainEntry = versions.find(entry => entry.main)
     assert(mainEntry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Archive, mainEntry)
-    for (const [_, version] of versions) {
+    for (const version of versions) {
       if (version === mainEntry) continue
       this.#tx.remove(version.filePath)
     }
@@ -729,17 +868,14 @@ export class EntryTransaction {
     return this
   }
 
-  move({id, target, dropPosition, targetType}: Op<MoveMutation>) {
-    const index = this.#index
+  async move({id, target, dropPosition, targetType}: Op<MoveMutation>) {
     targetType ??= 'entry'
-    const entries = Array.from(index.findMany(entry => entry.id === id))
+    const entries = await this.#entries({id})
     assert(entries.length > 0, `Entry not found: ${id}`)
     const targetEntry =
       targetType === 'root'
         ? undefined
-        : index.findFirst(entry => {
-            return entry.id === target
-          })
+        : (await this.#entries({id: target, take: 1}))[0]
     assert(targetType === 'root' || targetEntry, `Target not found: ${target}`)
     assert(
       targetType === 'entry' || dropPosition === 'on',
@@ -762,15 +898,8 @@ export class EntryTransaction {
     if (action === Permission.Move && parentId === null) {
       this.#policy.assert(Permission.Move, {workspace, root})
     }
-    const siblingList = Array.from(
-      index.findMany(entry => {
-        return (
-          entry.workspace === workspace &&
-          entry.root === root &&
-          entry.parentId === parentId &&
-          entry.id !== id
-        )
-      })
+    const siblingList = (await this.#cores({workspace, root, parentId})).filter(
+      entry => entry.id !== id
     )
     let insertIndex = siblingList.length
     if (targetType !== 'root') {
@@ -794,7 +923,7 @@ export class EntryTransaction {
     })
     let newIndex: string
     if (hasDuplicates) {
-      const self = index.findFirst(entry => entry.id === id)
+      const self = entries[0]
       assert(self, `Entry not found: ${id}`)
       siblingList.splice(insertIndex, 0, self)
       for (const sibling of siblingList) {
@@ -803,26 +932,23 @@ export class EntryTransaction {
       const newKeys = generateNKeysBetween(null, null, siblingList.length)
       for (const [i, key] of newKeys.entries()) {
         const id = siblingList[i].id
-        const node = index.byId(id)
-        assert(node)
-        for (const locale of node.keys()) {
-          for (const [_, version] of node.get(locale)!) {
-            const record = createRecord(
-              {
-                id,
-                type: version.type,
-                index: key,
-                path: version.path,
-                seeded: version.seeded,
-                data: version.data
-              },
-              version.status
-            )
-            const contents = new TextEncoder().encode(
-              JSON.stringify(record, null, 2)
-            )
-            this.#tx.add(version.filePath, contents)
-          }
+        const versions = await this.#versions(id)
+        for (const version of versions) {
+          const record = createRecord(
+            {
+              id,
+              type: version.type,
+              index: key,
+              path: version.path,
+              seeded: version.seeded,
+              data: version.data
+            },
+            version.status
+          )
+          const contents = new TextEncoder().encode(
+            JSON.stringify(record, null, 2)
+          )
+          this.#tx.add(version.filePath, contents)
         }
       }
       newIndex = newKeys[insertIndex]
@@ -834,7 +960,7 @@ export class EntryTransaction {
     }
     const moveUrlAliasUpdates =
       action === Permission.Move
-        ? this.#moveUrlAliasUpdates({id, parentId, workspace, root})
+        ? await this.#moveUrlAliasUpdates({id, parentId, workspace, root})
         : []
     const moveUrlAliasData = new Map(
       moveUrlAliasUpdates.map(update => [update.entry.filePath, update.data])
@@ -843,9 +969,7 @@ export class EntryTransaction {
     for (const entry of entries) {
       info = entry
       const parent = parentId
-        ? index.findFirst(e => {
-            return e.id === parentId && e.locale === entry.locale
-          })
+        ? (await this.#entries({id: parentId, locale: entry.locale}))[0]
         : undefined
 
       if (action === Permission.Move && parentId) {
@@ -912,15 +1036,10 @@ export class EntryTransaction {
     return this
   }
 
-  remove({id, locale, status}: Op<RemoveMutation>) {
-    const index = this.#index
-    const entries = index.findMany(entry => {
-      const matchesStatus = status === undefined || entry.status === status
-      const matchesLocale = locale === undefined || entry.locale === locale
-      return entry.id === id && matchesLocale && matchesStatus
-    })
+  async remove({id, locale, status}: Op<RemoveMutation>) {
+    const found = await this.#entries({id, locale, status})
     let info: Entry | undefined
-    for (const entry of entries) {
+    for (const entry of found) {
       if (entry.status === 'published')
         assert(!entry.seeded, `Cannot remove seeded entry ${entry.filePath}`)
       info = entry
@@ -930,14 +1049,18 @@ export class EntryTransaction {
       }
       if (entry.type === 'MediaLibrary') {
         // Find all files within children
-        const files = index.findMany(f => {
-          return (
-            f.workspace === entry.workspace &&
-            f.root === entry.root &&
-            f.filePath.startsWith(entry.childrenDir) &&
-            f.type === 'MediaFile'
-          )
-        })
+        const fileCores = (
+          await this.#cores({
+            workspace: entry.workspace,
+            root: entry.root
+          })
+        ).filter(
+          candidate =>
+            candidate.type === 'MediaFile' &&
+            candidate.parents.includes(entry.id)
+        )
+        const ids = [...new Set(fileCores.map(file => file.id))]
+        const files = ids.length > 0 ? await this.#entries({id: {in: ids}}) : []
         for (const file of files) {
           this.removeFile({
             location: MediaLocation.storagePath(
@@ -949,11 +1072,13 @@ export class EntryTransaction {
         }
       }
       if (entry.type === 'MediaFile') {
+        const location = entry.data.location
+        assert(typeof location === 'string', 'Media location is missing')
         this.removeFile({
           location: MediaLocation.storagePath(
             this.#config,
             entry.workspace,
-            (<Entry<MediaFile>>entry).data.location
+            location
           )
         })
       }
@@ -998,25 +1123,25 @@ export class EntryTransaction {
     for (const mutation of mutations) {
       switch (mutation.op) {
         case 'create':
-          this.create(mutation)
+          await this.create(mutation)
           break
         case 'update':
-          this.update(mutation)
+          await this.update(mutation)
           break
         case 'publish':
-          this.publish(mutation)
+          await this.publish(mutation)
           break
         case 'unpublish':
-          this.unpublish(mutation)
+          await this.unpublish(mutation)
           break
         case 'archive':
-          this.archive(mutation)
+          await this.archive(mutation)
           break
         case 'move':
-          this.move(mutation)
+          await this.move(mutation)
           break
         case 'remove':
-          this.remove(mutation)
+          await this.remove(mutation)
           break
         case 'removeFile':
           this.removeFile(mutation)
@@ -1033,18 +1158,14 @@ export class EntryTransaction {
 
   async #flush(): Promise<void> {
     const {from, into, changes} = await this.#tx.compile(this.#workingTree)
-    const batch: ChangesBatch = {
-      fromSha: from.sha,
-      changes
-    }
-    if (batch.changes.length > 0) {
-      await Promise.all([
-        this.#workingSource.applyChanges(batch),
-        this.#index.indexChanges(batch, into)
-      ])
+    const batch = {fromSha: from.sha, changes}
+    if (changes.length) {
+      await this.#workingSource.applyChanges(batch)
+      this.#graph = await this.#advance(batch, into)
     }
     this.#workingTree = into
-    this.#urlClaims = undefined
+    this.#changedUrlClaimOwners.clear()
+    this.#urlClaimUpdates.clear()
   }
 
   async toRequest() {
@@ -1056,15 +1177,6 @@ export class EntryTransaction {
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
   }
-}
-
-function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
-  const result = new Set<string>()
-  for (const alias of aliasesFromData(data) ?? []) {
-    const url = aliasUrl(alias)
-    if (url) result.add(url)
-  }
-  return Array.from(result)
 }
 
 function dataWithUrlAlias(

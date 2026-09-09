@@ -228,6 +228,19 @@ structural stage. Full Graph mutation routing, Git-carried durable receipts,
 outbox delivery, concurrent-connection retry policy and production authority
 configuration remain outstanding; dev writes still use the existing Git/FS path.
 
+`EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
+directly reading an `EntryIndex`. The legacy adapter retains sequential batch
+semantics, while `handler/SqlMutationRequest` prepares the same source commit
+request through SQL queries. It advances an exclusively owned writable connection
+inside a transaction, then rolls back all intermediate source, index, payload and
+frame changes before returning. This is preparation only: the Git/FS authority
+still has to accept the request against its exact source revision. Tests compare
+rename, publish, unpublish, archive, move, remove and create-then-update requests,
+and verify rollback on successful preparation and failed later operations.
+This adapter is not yet wired into dev mutations. Per-operation reconciliation
+still rebuilds the transient normalizer graph; removing that cost, seed/reference
+boot dependencies and the writable-connection requirement remains cutover work.
+
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,
 and the installed Next NFT tracer discovers the SQLite file from that loader.

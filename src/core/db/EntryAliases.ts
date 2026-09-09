@@ -22,3 +22,16 @@ export function aliasUrl(value: unknown): string | undefined {
     ? value.url
     : undefined
 }
+
+export function aliasUrlsFromData(
+  data: Readonly<Record<string, unknown>>
+): Array<string> {
+  return [
+    ...new Set(
+      (aliasesFromData(data) ?? []).flatMap(alias => {
+        const url = aliasUrl(alias)
+        return url === undefined ? [] : [url]
+      })
+    )
+  ]
+}

@@ -26,7 +26,12 @@ export class EntryDB extends LocalDB {
     mutations: Array<Mutation>
   ): Promise<{sha: string; remote: Promise<string>}> {
     const from = await this.source.getTree()
-    const tx = new EntryTransaction(this.config, this.index, this.source, from)
+    const tx = new EntryTransaction(
+      this.config,
+      this.index.mutationReader(),
+      this.source,
+      from
+    )
     await tx.apply(mutations)
     const request = await tx.toRequest()
     const contentChanges = sourceChanges(request)

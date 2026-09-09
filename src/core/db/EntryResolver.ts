@@ -5,6 +5,7 @@ import type {Expr} from '#/core/Expr.js'
 import {Field} from '#/core/Field.js'
 import type {AnyCondition, Condition, Filter} from '#/core/Filter.js'
 import {
+  Graph,
   querySource as queryEdge,
   type AnyQueryResult,
   type Edge,
@@ -24,7 +25,8 @@ import {
   type HasExpr
 } from '#/core/Internal.js'
 import type {PreviewRequest} from '#/core/Preview.js'
-import type {Resolver} from '#/core/Resolver.js'
+import {entryInfo} from '../util/EntryFilenames.js'
+import {basename} from '../util/Paths.js'
 import {getScope, type Scope} from '#/core/Scope.js'
 import {hasExact} from '#/core/util/Checks.js'
 import {entries, fromEntries, isRecord} from '#/core/util/Objects.js'
@@ -61,7 +63,7 @@ export interface PostContext {
   linkResolver: LinkResolver
 }
 
-export class EntryResolver implements Resolver {
+export class EntryResolver extends Graph {
   index: EntryIndex
   #scope: Scope
   #previewGraphs = new WeakMap<PreviewRequest, CachedPreviewGraph>()
@@ -70,6 +72,7 @@ export class EntryResolver implements Resolver {
     public config: Config,
     index: EntryIndex
   ) {
+    super()
     this.#scope = getScope(config)
     this.index = index
   }
@@ -704,6 +707,8 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
 }
 
 function entryFieldValue(entry: Entry, name: string, path?: Array<string>) {
+  if (name === 'versionStatus' && !path)
+    return entryInfo(basename(entry.filePath, '.json'))[1]
   if (name === 'aliases') return aliasesFromData(entry.data)
   if (path) return valueAtPath(entry.data, [...path, name])
   const expr = EntryExprs[name as keyof typeof EntryExprs]

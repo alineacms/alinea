@@ -123,7 +123,7 @@ export class LocalDB extends WritableGraph {
     const from = await this.source.getTree()
     const tx = new EntryTransaction(
       this.config,
-      this.index,
+      this.index.mutationReader(),
       this.source,
       from,
       policy
