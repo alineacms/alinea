@@ -111,6 +111,31 @@ test('policy fingerprints are detached, order independent and include denied fie
   expect(compiledPermissions(Policy.ALLOW_NONE)).toBe(Permission.None)
 })
 
+test('suppressed authored versions remain private and do not enter browser policy views', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const reader = role('Reader', {
+    permissions(policy) {
+      policy.allowAll()
+    }
+  })
+  const runtime = new EntryRuntime({...config, roles: {reader}}, db)
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: [
+      {entry: entry('a'), payloadId: 'a'},
+      {entry: {...entry('b'), visible: false}, payloadId: 'hidden'}
+    ]
+  })
+  expect(
+    (await authorizedIndex(runtime, ['reader'])).entries.map(
+      row => row.entry.id
+    )
+  ).toEqual(['a'])
+})
+
 test('field read denials cannot accidentally issue whole-entry payload grants', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)

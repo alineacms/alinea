@@ -16,6 +16,7 @@ import {
 } from '#/core/Graph.js'
 import {
   getExpr,
+  internalSourceVersions,
   hasExpr,
   hasField,
   hasRoot,
@@ -349,6 +350,7 @@ export class EntryResolver implements Resolver {
     const {skip, take, orderBy, groupBy, search, count} = query
     const {ids, condition} = this.condition(ctx, edge)
     const filter: EntryCondition = {
+      includeHiddenVersions: query[internalSourceVersions],
       search: Array.isArray(search) ? search.join(' ') : search,
       nodes: preFilter?.nodes
         ? undefined

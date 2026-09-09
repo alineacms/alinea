@@ -6,6 +6,7 @@ import type {Field} from '#/core/Field.js'
 import type {EdgeQuery, GraphQuery} from '#/core/Graph.js'
 import {
   getExpr,
+  internalSourceVersions,
   hasExpr,
   hasField,
   hasRoot,
@@ -214,6 +215,8 @@ export function compileEntryQuery(
   const search = searchQuery(query.search)
   const membership = new Expressions(scope, search)
   const structural: Array<Sql<boolean>> = []
+  if (!query[internalSourceVersions])
+    structural.push(eq(EntryIndexTable.visible, true))
   const edge = 'edge' in query ? (query as EdgeQuery) : undefined
   const link = edge?.edge === 'entrySingle' || edge?.edge === 'entryMultiple'
   let links: ReturnType<typeof linkRelation> | undefined

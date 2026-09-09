@@ -144,7 +144,7 @@ The main Generate/exportDatabase orchestration now invokes frame generation and
 publication. Optional `config.replica` settings supply project, namespace and epoch;
 defaults use production URL/local config identity, provider branch metadata and
 epoch 1. Namespaces label sources, not Git checkout instructions; epoch reset
-detection remains manual. Checkpoint format 5 stores/validates all frame identity
+detection remains manual. Checkpoint format 6 stores/validates all frame identity
 components. BuildDatabase generates frames in the same transaction as normalized
 rows and the checkpoint. ExportDatabase publishes public ciphertext under
 `/_alinea/payloads/` before closing/publishing the private SQLite file and loader.
@@ -171,7 +171,12 @@ config/release/namespace identity and matching source/runtime revisions on open.
 Reopen tests query the raw file read-only without calling blob reads, whole-tree
 materialization, or normalization. Source-status identity is preserved separately
 from effective inherited status; inactive authored versions remain in source
-storage even when Graph intentionally excludes them from its effective rows.
+storage and private query rows even when Graph excludes them from normal results.
+The resident `visible` flag distinguishes effective rows from suppressed authored
+versions. Trusted mutation reads opt in through `internalSourceVersions`, a symbol
+that JSON Graph transport cannot carry; normal SQL/JS queries remain unchanged,
+and browser policy views omit suppressed versions. Tests compare both query modes
+under inherited archive status and verify serialization cannot enable the opt-in.
 The initial build reuses the existing normalizer transiently, not as the runtime
 query store. `NormalizeSource` persists parsed authored records by blob hash,
 including versions hidden by inherited status. `ReconcileDatabase` updates an
@@ -250,7 +255,7 @@ before ordering/pagination and preserves JSON primitive distinctions. Alias
 projections merge both storage locations, URL alias predicates ignore malformed
 rows, and nested array `includes` compiles to scoped SQL existence checks. Page
 locations use a resident source-root segment rather than the URL slug. The
-checkpoint format is now 5, including release identity, derived FTS and parsed source records.
+checkpoint format is now 6, including release identity, derived FTS, parsed source records and authored-version visibility.
 Natural collation, previews, and production integration remain.
 
 `query/Search.ts` restores SQLite FTS5 through the existing Graph search/snippet

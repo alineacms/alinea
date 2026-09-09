@@ -55,14 +55,20 @@ export async function normalizeSource(
   }
   const graph = EntryGraph.fromParsed(config, versions)
   const entries: Array<EntryReplacement> = []
-  for (const entry of graph.filter({})) {
+  const visible = new Set(Array.from(graph.filter({}), entry => entry.filePath))
+  for (const entry of graph.filter({includeHiddenVersions: true})) {
     const source = entrySource(entry)
     const [, versionStatus] = entryInfo(basename(entry.filePath, '.json'))
     const payloadId = await hashBlob(
       new TextEncoder().encode(JSON.stringify({data: entry.data, source}))
     )
     entries.push({
-      entry: {...entry, versionStatus, ordinal: entries.length},
+      entry: {
+        ...entry,
+        versionStatus,
+        ordinal: entries.length,
+        visible: visible.has(entry.filePath)
+      },
       payloadId,
       data: entry.data,
       source

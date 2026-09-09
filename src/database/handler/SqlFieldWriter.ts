@@ -54,6 +54,7 @@ const structuralColumns = [
   'url',
   'active',
   'main',
+  'visible',
   'seeded'
 ] as const
 

@@ -5,6 +5,7 @@ import type {Expr} from './Expr.js'
 import type {Condition, Filter} from './Filter.js'
 import type {Infer, StoredRow} from './Infer.js'
 import type {HasField} from './Internal.js'
+import {internalSourceVersions} from './Internal.js'
 import type {OrderBy} from './OrderBy.js'
 import type {Page} from './Page.js'
 import type {PreviewRequest} from './Preview.js'
@@ -166,6 +167,8 @@ export type Status =
   | 'all'
 
 export declare class QuerySettings {
+  /** Include suppressed authored versions for trusted, non-serialized mutation reads. */
+  [internalSourceVersions]?: boolean
   /** Find a single entry or null */
   first?: true
   /** Find a single entry */

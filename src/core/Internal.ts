@@ -4,6 +4,9 @@ import type {RootInternal} from './Root.js'
 import type {TypeInternal} from './Type.js'
 import type {WorkspaceInternal} from './Workspace.js'
 
+/** Trusted local mutation reads only; JSON Graph transport cannot carry this key. */
+export const internalSourceVersions = Symbol.for('@alinea.SourceVersions')
+
 // The choice of types over interfaces is to work around
 // microsoft/TypeScript#15300
 // Where an extern class is used this is to work around

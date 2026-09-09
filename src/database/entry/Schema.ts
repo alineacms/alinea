@@ -39,6 +39,7 @@ export const EntryIndexTable = table(
     url: column.varchar(undefined, {length: 1024}).notNull(),
     active: column.boolean().notNull(),
     main: column.boolean().notNull(),
+    visible: column.boolean().notNull(),
     seeded: column.text(),
     rowHash: column.varchar(undefined, {length: 128}).notNull()
   },
@@ -86,6 +87,8 @@ export interface IndexedEntry extends Omit<
   | 'childrenDir'
 > {
   versionStatus: EntryStatus
+  /** False for authored versions suppressed by inherited status in normal queries. */
+  visible?: boolean
   /** Stable source insertion order for equal fractional positions. */
   ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
@@ -117,6 +120,7 @@ export function entryIndexRow(
     url: entry.url,
     active: entry.active,
     main: entry.main,
+    visible: entry.visible ?? true,
     seeded: entry.seeded,
     rowHash: entry.rowHash
   }

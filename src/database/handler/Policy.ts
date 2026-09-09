@@ -65,6 +65,7 @@ export function authorizedIndex(
     const snapshot = await runtime.indexSnapshot()
     const entries: Array<AuthorizedEntry> = []
     for (const replacement of snapshot.entries) {
+      if (replacement.entry.visible === false) continue
       const {versionId: _, ...entry} = entryIndexRow(replacement.entry)
       const permissions = compiledPermissions(policy, entry)
       if (!(permissions & Permission.Explore)) continue

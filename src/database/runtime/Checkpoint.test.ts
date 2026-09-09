@@ -7,6 +7,9 @@ import {connect} from 'rado/driver/bun-sqlite'
 import {eq} from 'rado'
 import {Config, Field} from '#/index.js'
 import {Entry} from '#/core/Entry.js'
+import {internalSourceVersions} from '#/core/Internal.js'
+import {getScope} from '#/core/Scope.js'
+import type {GraphQuery} from '#/core/Graph.js'
 import {EntryIndex} from '#/core/db/EntryIndex.js'
 import {EntryResolver} from '#/core/db/EntryResolver.js'
 import {FSSource} from '#/core/source/FSSource.js'
@@ -122,12 +125,30 @@ test('checkpoint queries preserve inherited status and retain inactive authored 
   const versions = await db
     .select({
       source: EntryIndexTable.versionStatus,
-      effective: EntryIndexTable.status
+      effective: EntryIndexTable.status,
+      visible: EntryIndexTable.visible
     })
     .from(EntryIndexTable)
     .where(eq(EntryIndexTable.id, 'child'))
     .orderBy(EntryIndexTable.versionStatus)
-  expect(versions).toEqual([{source: 'draft', effective: 'archived'}])
+  expect(versions).toEqual([
+    {source: 'draft', effective: 'archived', visible: true},
+    {source: 'published', effective: 'archived', visible: false}
+  ])
+  const hiddenQuery = {
+    status: 'all' as const,
+    [internalSourceVersions]: true,
+    select: Entry
+  }
+  expect(await runtime.find(hiddenQuery)).toEqual(
+    await resolver.resolve(hiddenQuery)
+  )
+  expect(await runtime.count({...hiddenQuery, id: 'child'})).toBe(2)
+  const scope = getScope(config)
+  const transported = scope.parse<GraphQuery>(scope.stringify(hiddenQuery))
+  expect(
+    await runtime.resolve({...transported, id: 'child', count: true})
+  ).toBe(1)
   const tree = await new SqlSource(db, identity.namespace).getSqlTree()
   expect(await tree.get('pages/parent/child.json')).toBeDefined()
   expect(await tree.get('pages/parent/child.draft.json')).toBeDefined()
