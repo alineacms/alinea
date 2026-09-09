@@ -1,5 +1,5 @@
 import {expect, spyOn, test} from 'bun:test'
-import {mkdtemp, readFile, rm, writeFile} from 'node:fs/promises'
+import {mkdtemp, readFile, readdir, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {Config, Field as Fields} from '#/index.js'
@@ -9,6 +9,10 @@ import {VersionParser} from '#/core/db/EntryIndex.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {NodeReplica} from './NodeReplica.js'
 import {children} from '#/query.js'
+import {Policy} from '#/core/Role.js'
+import {sourceChanges} from '#/core/db/CommitRequest.js'
+import {EntryRuntime} from '../runtime/EntryRuntime.js'
+import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
 
 const Page = Config.document('Page', {fields: {title: Fields.text('Title')}})
 const config = {
@@ -35,6 +39,153 @@ async function fixture(title: string) {
     {id: 'b', type: 'Page', index: 'b', title: 'Child', parentPaths: ['a']}
   ])
 }
+
+test('Node mutation preparation cleans scratch files and preserves the published snapshot until source commit', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-node-mutation-'))
+  const baseline = await fixture('Original')
+  const replica = await NodeReplica.open(
+    {directory, config, identity},
+    baseline.source
+  )
+  try {
+    const files = (await readdir(directory)).sort()
+    const pointer = await readFile(join(directory, 'current.json'), 'utf8')
+    const request = await replica.request(
+      [
+        {
+          op: 'update',
+          id: 'a',
+          locale: null,
+          status: 'published',
+          set: {title: 'Updated'}
+        }
+      ],
+      Policy.ALLOW_ALL
+    )
+    expect(replica.revision).toBe(request.fromSha)
+    expect(await replica.find({id: 'a', select: Entry.title})).toEqual([
+      'Original'
+    ])
+    expect(await readFile(join(directory, 'current.json'), 'utf8')).toBe(
+      pointer
+    )
+    expect((await readdir(directory)).sort()).toEqual(files)
+    await expect(
+      replica.request(
+        [
+          {
+            op: 'update',
+            id: 'a',
+            locale: null,
+            status: 'published',
+            set: {title: 'Denied'}
+          }
+        ],
+        Policy.ALLOW_NONE
+      )
+    ).rejects.toThrow()
+    expect((await readdir(directory)).sort()).toEqual(files)
+    await expect(
+      replica.request(
+        [
+          {
+            op: 'update',
+            id: 'missing',
+            locale: null,
+            status: 'published',
+            set: {title: 'Invalid'}
+          }
+        ],
+        Policy.ALLOW_ALL
+      )
+    ).rejects.toThrow('Entry not found')
+    expect((await readdir(directory)).sort()).toEqual(files)
+    await baseline.source.applyChanges(sourceChanges(request))
+    await replica.sync(baseline.source)
+    expect(replica.revision).toBe(request.intoSha)
+    expect(await replica.find({id: 'a', select: Entry.title})).toEqual([
+      'Updated'
+    ])
+    await replica.close()
+    await expect(replica.request([], Policy.ALLOW_ALL)).rejects.toThrow(
+      'closed'
+    )
+  } finally {
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
+test('closing a replica drains in-flight preparation without returning a request or publishing it', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-node-mutation-close-'))
+  const baseline = await fixture('Original')
+  const replica = await NodeReplica.open(
+    {directory, config, identity},
+    baseline.source
+  )
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  const resolve = EntryRuntime.prototype.resolve
+  let hold = true
+  const resolving = spyOn(EntryRuntime.prototype, 'resolve').mockImplementation(
+    async function <Query extends GraphQuery>(
+      this: EntryRuntime,
+      query: Query
+    ): Promise<AnyQueryResult<Query>> {
+      if (hold) {
+        hold = false
+        started.resolve()
+        await resume.promise
+      }
+      return resolve.bind(this)<Query>(query)
+    }
+  )
+  try {
+    const files = (await readdir(directory)).sort()
+    const pending = replica
+      .request(
+        [
+          {
+            op: 'update',
+            id: 'a',
+            locale: null,
+            status: 'published',
+            set: {title: 'Updated'}
+          }
+        ],
+        Policy.ALLOW_ALL
+      )
+      .then(
+        () => 'returned',
+        error => String(error)
+      )
+    await started.promise
+    expect(await replica.find({id: 'a', select: Entry.title})).toEqual([
+      'Original'
+    ])
+    const closing = replica.close()
+    resume.resolve()
+    expect(await pending).toContain('closed')
+    await closing
+    expect((await readdir(directory)).sort()).toEqual(files)
+    const reopened = await NodeReplica.open(
+      {directory, config, identity},
+      baseline.source
+    )
+    try {
+      expect(await reopened.find({id: 'a', select: Entry.title})).toEqual([
+        'Original'
+      ])
+    } finally {
+      await reopened.close()
+    }
+  } finally {
+    resume.resolve()
+    resolving.mockRestore()
+    await replica.close()
+    await rm(directory, {recursive: true, force: true})
+  }
+})
 
 test('Node replica restores its cache without parsing and publishes only validated replacements', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-node-replica-'))

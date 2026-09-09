@@ -74,12 +74,21 @@ test('dev queries use SQLite, writes reconcile before returning and restarts reu
       }
     )
     expect(await initial.promise).toEqual(['Original'])
-    const result = await db.update({
-      type: Page,
-      id: 'a',
-      set: {title: 'Updated'}
-    })
-    expect(result.title).toBe('Updated')
+    const oldMutations = spyOn(db.index, 'mutationReader').mockImplementation(
+      () => {
+        throw new Error('Unexpected JS mutation reader')
+      }
+    )
+    try {
+      const result = await db.update({
+        type: Page,
+        id: 'a',
+        set: {title: 'Updated'}
+      })
+      expect(result.title).toBe('Updated')
+    } finally {
+      oldMutations.mockRestore()
+    }
     expect(await changed.promise).toEqual(['Updated'])
     expect(await db.find({search: 'updat', select: Entry.id})).toEqual(['a'])
     expect(db.sha).toBe((await db.source.getTree()).sha)

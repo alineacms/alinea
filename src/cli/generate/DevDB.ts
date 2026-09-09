@@ -3,6 +3,8 @@ import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {Policy} from '#/core/Role.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
@@ -105,6 +107,14 @@ export class DevDB extends LocalDB {
   async fix() {
     await this.index.fix(this.source)
     if (this.#options.replica) await this.sync()
+  }
+
+  async request(mutations: ReadonlyArray<Mutation>, policy = Policy.ALLOW_ALL) {
+    if (this.#closed) throw new Error('Dev database is closed')
+    if (!this.#options.replica) return super.request(mutations, policy)
+    await this.sync()
+    if (!this.#replica) throw new Error('Dev database is not ready')
+    return this.#replica.request(mutations, policy)
   }
 
   async watchFiles() {

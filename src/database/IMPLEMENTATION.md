@@ -207,9 +207,9 @@ effects reject a stale mutation-index revision even while an older SQL snapshot
 is still being served. Watcher/config teardown closes the owner and prevents late
 cache emissions. Integration tests exercise filesystem-backed Graph updates, live
 results, restart reuse and watcher shutdown. This is an explicit intermediate
-cutover: `LocalDB` still supplies mutation compilation, seeding, references, fixes
-and previews, and its JS index still starts before SQL. Consequently startup is
-not yet SQL-only. SQL mutations, previews and normalization/seed boot replacement
+cutover: `LocalDB` still supplies seeding, references, fixes and previews, and its
+JS index still starts before SQL. Consequently startup is not yet SQL-only.
+Previews and normalization/seed boot replacement
 must remove those remaining JS dependencies; there is no catch-all query fallback.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
@@ -237,9 +237,16 @@ frame changes before returning. This is preparation only: the Git/FS authority
 still has to accept the request against its exact source revision. Tests compare
 rename, publish, unpublish, archive, move, remove and create-then-update requests,
 and verify rollback on successful preparation and failed later operations.
-This adapter is not yet wired into dev mutations. Per-operation reconciliation
-still rebuilds the transient normalizer graph; removing that cost, seed/reference
-boot dependencies and the writable-connection requirement remains cutover work.
+Dev mutations now use this adapter through `NodeReplica.request`: a private
+scratch copy (reflink where supported) supplies the writable connection, never a
+published reader file. Preparation shares the owner's update queue and cleans
+scratch files on success, denial, failure and close. It neither publishes a
+snapshot nor notifies live queries. The existing filesystem commit remains
+authoritative and reconciles SQL before acknowledgement. Tests disable the legacy
+mutation reader during a real dev Graph update, verify unchanged published state
+during preparation, and close an owner during a pending request. Per-operation
+reconciliation still rebuilds the transient normalizer graph; removing that cost,
+scratch-copy costs and seed/reference boot dependencies remains cutover work.
 
 Build generation now additionally writes a closed private `release.sqlite` and a
 module-relative `database.js` loader. Node can open the relocated artifact read-only,

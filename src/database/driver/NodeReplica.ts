@@ -1,8 +1,12 @@
 import type {Config} from '#/core/Config.js'
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
+import type {Policy} from '#/core/Role.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {randomUUID} from 'node:crypto'
+import {constants} from 'node:fs'
 import {
   copyFile,
   mkdir,
@@ -13,6 +17,7 @@ import {
 } from 'node:fs/promises'
 import {join, resolve as resolvePath} from 'node:path'
 import {DatabaseSync} from 'node:sqlite'
+import {sqlMutationRequest} from '../handler/SqlMutationRequest.js'
 import {buildDatabase} from '../runtime/BuildDatabase.js'
 import {openCheckpoint, type CheckpointIdentity} from '../runtime/Checkpoint.js'
 import type {EntryRuntime, QueryObserver} from '../runtime/EntryRuntime.js'
@@ -182,6 +187,60 @@ export class NodeReplica extends Graph {
     const update = this.#updates.then(() => this.#sync(source))
     this.#updates = update.catch(() => {})
     return update
+  }
+
+  /** Prepare against a private scratch copy, never the published reader file.
+   * The request still needs an exact-revision commit at the source authority.
+   */
+  request(
+    mutations: ReadonlyArray<Mutation>,
+    policy: Policy
+  ): Promise<CommitRequest> {
+    if (this.#closed)
+      return Promise.reject(new Error('SQLite replica is closed'))
+    const request = this.#updates.then(() => this.#request(mutations, policy))
+    this.#updates = request.catch(() => {})
+    return request
+  }
+
+  async #request(
+    mutations: ReadonlyArray<Mutation>,
+    policy: Policy
+  ): Promise<CommitRequest> {
+    if (this.#closed || !this.#current)
+      throw new Error('SQLite replica is closed or not ready')
+    const {directory, config} = this.#options
+    const snapshot = this.#current
+    const scratch = join(directory, `.mutation-${randomUUID()}.sqlite`)
+    try {
+      // Reflink where available; other filesystems fall back to a file copy.
+      await copyFile(
+        join(directory, snapshot.file),
+        scratch,
+        constants.COPYFILE_FICLONE
+      )
+      if (this.#closed) throw new Error('SQLite replica is closed')
+      const sqlite = new DatabaseSync(scratch)
+      try {
+        const request = await sqlMutationRequest(
+          config,
+          nodeDatabase(sqlite),
+          snapshot.identity,
+          mutations,
+          policy
+        )
+        if (this.#closed) throw new Error('SQLite replica is closed')
+        return request
+      } finally {
+        sqlite.close()
+      }
+    } finally {
+      await Promise.all(
+        ['', '-journal', '-wal', '-shm'].map(suffix =>
+          rm(`${scratch}${suffix}`, {force: true})
+        )
+      )
+    }
   }
 
   async #sync(source: RemoteSource): Promise<boolean> {
