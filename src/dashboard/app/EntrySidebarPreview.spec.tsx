@@ -33,7 +33,7 @@ for (const previewUrl of [
           preview.registerPreview({
             async preview({payload}) { document.body.textContent = payload },
             setIsPreviewing(value) { document.body.dataset.connected = String(value) }
-          })
+          }, new URL(document.referrer).origin)
         </script>
       `
       })

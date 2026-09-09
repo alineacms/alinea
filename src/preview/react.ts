@@ -1,17 +1,25 @@
 import {useEffect, useRef, useState} from 'react'
 import {type PreviewApi, registerPreview} from './RegisterPreview.js'
 
-export function usePreview(api: Omit<PreviewApi, 'setIsPreviewing'>) {
+export interface UsePreviewOptions {
+  hostOrigin: string
+  preview: PreviewApi['preview']
+}
+
+export function usePreview(options: UsePreviewOptions) {
   const [isPreviewing, setIsPreviewing] = useState(false)
-  const apiRef = useRef(api)
-  apiRef.current = api
+  const previewRef = useRef(options.preview)
+  previewRef.current = options.preview
   useEffect(() => {
-    return registerPreview({
-      preview(update) {
-        return apiRef.current.preview(update)
+    return registerPreview(
+      {
+        preview(update) {
+          return previewRef.current(update)
+        },
+        setIsPreviewing
       },
-      setIsPreviewing
-    })
-  }, [])
+      options.hostOrigin
+    )
+  }, [options.hostOrigin])
   return {isPreviewing}
 }

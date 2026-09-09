@@ -6,19 +6,18 @@ export interface PreviewApi {
   setIsPreviewing(isPreviewing: boolean): void
 }
 
-export function registerPreview(api: PreviewApi) {
+export function registerPreview(api: PreviewApi, hostOrigin: string) {
   if (typeof window === 'undefined') return
   const host: Window | null =
     window.parent !== window ? window.parent : window.opener
   if (!host) return
-  let hostOrigin: string | undefined
   let observer: MutationObserver | null = null
   // Closing the CMS can prevent its final disconnect message from arriving.
   const checkHost = window.setInterval(() => {
     if (host.closed) disconnect()
   }, 1000)
   addEventListener('message', handleMessage)
-  host.postMessage({action: PreviewAction.Ping}, '*')
+  host.postMessage({action: PreviewAction.Ping}, hostOrigin)
   console.info('[Alinea preview listener attached]')
   return () => {
     clearInterval(checkHost)
@@ -36,7 +35,7 @@ export function registerPreview(api: PreviewApi) {
 
   function handleMessage(event: MessageEvent<PreviewMessage>) {
     if (event.source !== host) return
-    if (hostOrigin && event.origin !== hostOrigin) return
+    if (event.origin !== hostOrigin) return
     if (!event.data || typeof event.data !== 'object') return
     const message = event.data as PreviewMessage
     switch (message.action) {
@@ -57,7 +56,6 @@ export function registerPreview(api: PreviewApi) {
         console.info('[Alinea preview next received]')
         return history.forward()
       case PreviewAction.Pong:
-        hostOrigin = event.origin
         console.info('[Alinea preview pong received]')
         api.setIsPreviewing(true)
         try {
@@ -73,7 +71,7 @@ export function registerPreview(api: PreviewApi) {
   }
 
   function fetchAndSendMetadata() {
-    if (!host || !hostOrigin) return
+    if (!host) return
     const meta = fetchMetadataFromDocument()
     host.postMessage({action: PreviewAction.Meta, ...meta}, hostOrigin)
   }
