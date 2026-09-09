@@ -20,6 +20,16 @@ export interface FrameDescriptor extends FrameIdentity {
   ciphertextLength: number
 }
 
+export interface FrameBinding extends Omit<
+  FrameIdentity,
+  'versionId' | 'payloadId' | 'kind'
+> {}
+
+export interface FrameGrant {
+  descriptor: FrameDescriptor
+  key: Uint8Array
+}
+
 export interface FrameLimits {
   plaintext: number
   ciphertext: number

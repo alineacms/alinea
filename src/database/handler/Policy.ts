@@ -2,8 +2,7 @@ import type {Config} from '#/core/Config.js'
 import type {Graph} from '#/core/Graph.js'
 import {Permission, Policy, WritablePolicy, type Resource} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
-import {compareStrings, bytesToHex} from '#/core/source/Utils.js'
-import {crypto} from '@alinea/iso'
+import {compareStrings, sha256Hash} from '#/core/source/Utils.js'
 import type {IndexedEntry} from '../entry/Schema.js'
 import {entryIndexRow} from '../entry/Schema.js'
 import type {EntryRuntime} from '../runtime/EntryRuntime.js'
@@ -42,9 +41,7 @@ export async function policyFingerprint(policy: Policy): Promise<string> {
   const bytes = new TextEncoder().encode(
     JSON.stringify(['alinea.policy.v1', data])
   )
-  return bytesToHex(
-    new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))
-  )
+  return sha256Hash(bytes)
 }
 
 export function compiledPermissions(

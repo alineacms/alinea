@@ -115,6 +115,21 @@ can hydrate the field without another bundle request. This is a controlled test
 grant endpoint, not production authentication. Nearby-range coalescing, generated
 bundle publication, handler issuance and full live transport remain outstanding.
 
+`release/FrameStore.ts` generates encrypted data frames from normalized SQL rows
+in keyset batches and persists immutable descriptors, private keys and ciphertext
+in the trusted database. It rejects sparse entry data before generating frames;
+duplicate identities never overwrite a key. Grant lookup selects only metadata
+and keys; ciphertext lookup never selects keys. Raw-file reopen tests retain keys
+and successfully decrypt the persisted frames without source parsing.
+`handler/Grants.ts` re-evaluates trusted-session roles, verifies revision/view
+cursors and every requested read identity before looking up any key. A commit
+overlapping key lookup invalidates the result. Policy-only changes invalidate old
+cursors even when the source revision is unchanged. The Chromium fixture now
+uses this SQL frame store and grant service for its controlled grant endpoint.
+CLI frame-generation/publication integration still needs the durable project/epoch
+binding; the authenticated production router and filtered-field payload path are
+not wired yet. FrameStore/GrantService do not themselves authenticate a session.
+
 `runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
 snapshot and build-time normalization. Source heads, normalized rows, and the
 checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,

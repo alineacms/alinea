@@ -4,7 +4,8 @@ import {
   decryptFrame,
   validateFrameDescriptor,
   type FrameDescriptor,
-  type FrameLimits
+  type FrameLimits,
+  type FrameGrant
 } from '../replica/Frame.js'
 import {
   validateSource,
@@ -13,15 +14,10 @@ import {
 } from '../runtime/EntryRuntime.js'
 import type {ReplicaCache, ReplicaIdentity} from './ReplicaCache.js'
 
-export interface PayloadGrant {
-  descriptor: FrameDescriptor
-  key: Uint8Array
-}
-
 export interface PayloadLoaderOptions {
   identity: ReplicaIdentity
   revision: string
-  grants: ReadonlyArray<PayloadGrant>
+  grants: ReadonlyArray<FrameGrant>
   cache?: ReplicaCache
   limits?: FrameLimits
   /** Transport must bound reads to the descriptor's exact ciphertext length. */
@@ -31,7 +27,7 @@ export interface PayloadLoaderOptions {
 /** One authenticated replica generation's grants; keys and plaintext stay in memory. */
 export class PayloadLoader {
   #options: PayloadLoaderOptions
-  #grants = new Map<string, PayloadGrant>()
+  #grants = new Map<string, FrameGrant>()
   #pending = new Map<string, Promise<LoadedPayload>>()
   #abort = new AbortController()
   #limit = pLimit(6)
@@ -97,7 +93,7 @@ export class PayloadLoader {
     )
   }
 
-  async #load(grant: PayloadGrant): Promise<LoadedPayload> {
+  async #load(grant: FrameGrant): Promise<LoadedPayload> {
     const {descriptor, key} = grant
     const {identity, cache, revision, read, limits} = this.#options
     const {signal} = this.#abort

@@ -15,6 +15,12 @@ export async function sha1Hash(data: Uint8Array): Promise<string> {
   return bytesToHex(await sha1Bytes(data))
 }
 
+export async function sha256Hash(data: Uint8Array): Promise<string> {
+  return bytesToHex(
+    new Uint8Array(await crypto.subtle.digest('SHA-256', data as BufferSource))
+  )
+}
+
 /**
  * Concatenates multiple Uint8Arrays into a single Uint8Array.
  */

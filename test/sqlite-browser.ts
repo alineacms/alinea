@@ -1,28 +1,59 @@
 /** Run explicitly with `bun test/sqlite-browser.ts`; requires installed Chromium. */
 import assert from 'node:assert/strict'
 import {chromium} from 'playwright'
-import {createFrameKey, encryptFrame} from '#/database/replica/Frame.js'
+import {Database} from 'bun:sqlite'
+import {connect} from 'rado/driver/bun-sqlite'
+import {role} from '#/core/Role.js'
+import {EntryRuntime} from '#/database/runtime/EntryRuntime.js'
+import {FrameStore, buildFrames} from '#/database/release/FrameStore.js'
+import {GrantService} from '#/database/handler/Grants.js'
+import {authorizedIndex} from '#/database/handler/Policy.js'
 import {packFrames} from '#/database/replica/Transport.js'
 import {entryVersionId} from '#/database/entry/Schema.js'
-import {replicaIdentity} from './sqlite-browser/config.js'
+import {config, entry, replicaIdentity} from './sqlite-browser/config.js'
 
+using sqlite = new Database(':memory:')
+const db = connect(sqlite)
+await EntryRuntime.createSchema(db, 'empty')
+const runtime = new EntryRuntime(
+  {
+    ...config,
+    roles: {
+      reader: role('Reader', {
+        permissions(policy) {
+          policy.allowAll()
+        }
+      })
+    }
+  },
+  db
+)
+await runtime.apply({
+  fromRevision: 'empty',
+  toRevision: 'r1',
+  entries: ['a', 'b'].map(id => ({
+    entry: entry(id),
+    payloadId: id,
+    data: {title: `Payload ${id}`}
+  }))
+})
+await buildFrames(db, replicaIdentity)
+const store = new FrameStore(db)
+const service = new GrantService(runtime, store, replicaIdentity)
+const view = await authorizedIndex(runtime, ['reader'])
+const issued = await service.issue(
+  ['reader'],
+  view,
+  ['a', 'b'].map(id => ({
+    versionId: entryVersionId(id, null, 'published'),
+    payloadId: id
+  }))
+)
 const frames = await Promise.all(
-  ['a', 'b'].map(async id => {
-    const key = createFrameKey()
-    const frame = await encryptFrame(
-      {
-        ...replicaIdentity,
-        versionId: entryVersionId(id, null, 'published'),
-        payloadId: id,
-        kind: 'data'
-      },
-      new TextEncoder().encode(
-        JSON.stringify({data: {title: `Payload ${id}`}})
-      ),
-      key
-    )
-    return {...frame, key}
-  })
+  issued.map(async grant => ({
+    ...grant,
+    ciphertext: await store.ciphertext(grant.descriptor)
+  }))
 )
 const bundle = packFrames(frames)
 const grants = bundle.locations.map((location, i) => ({
