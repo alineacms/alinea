@@ -275,11 +275,24 @@ export class EntryLocaleAtoms {
     const version = get(this.selectedVersion)
     const entry = await get(this.selectedEntry)
     const isUntranslated = get(this.untranslated)
+    const config = get(configAtom)
     if (!version || (version.type === 'status' && entry.active)) {
       const editing = get(this.currentlyEditing)
-      if (editing) return editing
+      if (editing) {
+        if (get(editing.isDirty) || !(editing instanceof EditorNode))
+          return editing
+        const baseline = get(editing.baseline)
+        if (
+          baseline.config === config &&
+          baseline.entry.id === entry.id &&
+          baseline.entry.locale === entry.locale &&
+          baseline.entry.status === entry.status &&
+          baseline.entry.fileHash === entry.fileHash &&
+          baseline.entry.rowHash === entry.rowHash
+        )
+          return editing
+      }
     }
-    const config = get(configAtom)
     const type = config.schema[entry.type]
     assert(type, `Type "${entry.type}" not found in config`)
     const policy = get(policyAtom)

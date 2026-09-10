@@ -130,7 +130,6 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
   expect(retained).toBe(first)
 
   const nextPayload = {updated: true}
-  store.set(entry.locales(null).currentlyEditing, undefined)
   store.set(entryDataAtom, {
     ...entryData,
     entries: [
@@ -146,6 +145,27 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
   const updatedValue = store.get(updated.value) as Record<string, unknown>
   expect(updated).not.toBe(first)
   expect(updatedValue.payload).toEqual(nextPayload)
+
+  store.set(entry.locales(null).currentlyEditing, updated)
+  store.set(updated.field('title'), 'Unsaved local edit')
+  store.set(entryDataAtom, {
+    ...entryData,
+    entries: [
+      {
+        ...selectedEntry,
+        title: 'Remote title',
+        fileHash: 'remote',
+        rowHash: 'remote',
+        data: {...selectedEntry.data, title: 'Remote title'}
+      }
+    ]
+  })
+  expect(await store.get(selectedNode)).toBe(updated)
+  expect(store.get(updated.value)).toMatchObject({title: 'Unsaved local edit'})
+  store.set(updated.reset)
+  const reset = await store.get(selectedNode)
+  expect(reset).not.toBe(updated)
+  expect(store.get(reset.value)).toMatchObject({title: 'Remote title'})
 })
 
 test('preloads linked rich text images without changing stored data', async () => {

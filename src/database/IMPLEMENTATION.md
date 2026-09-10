@@ -652,8 +652,7 @@ the legacy path until CloudRemote supports durable receipt lookup.
 
 Unit tests cover config/principal binding and cancellation during startup. The
 Chromium fixture exercises delayed config loading, the dedicated host/factory,
-authenticated bootstrap, lazy Graph reads and logout cleanup. This is not yet a
-full generated dev dashboard edit/restart smoke test.
+authenticated bootstrap, lazy Graph reads and logout cleanup.
 
 Dedicated worker errors/message decoding failures now fail the local Graph
 immediately: pending reads and subscription setup reject, live observers receive
@@ -672,7 +671,26 @@ shutdown, ordinary draft retention, and cache-scope isolation. The Chromium test
 crashes an actual dedicated worker during lazy hydration and verifies rejection,
 live-query error delivery, and logout purge of an older release's resident index.
 An error-free but unresponsive worker is detected on shutdown, not by a general
-query watchdog; full generated-dashboard lifecycle coverage remains outstanding.
+query watchdog; production authentication/revocation lifecycle coverage remains
+outstanding.
+
+`bun test/sqlite-dev.ts` now installs the built package in an isolated temporary
+project and runs its real generated development dashboard in Chromium. It checks
+the dedicated worker and authenticated index/payload requests, edits and saves a
+draft through the public Graph handler, verifies the saved JSON on disk, stops
+the actual Node server, and restarts on the same origin with existing databases
+and browser storage. It then edits source externally and changes a config field
+label: source refresh reuses the worker, while config reload replaces it and
+renders the updated editor. The fixture resolves Node's real executable to avoid
+version-manager wrappers leaving a server behind after termination.
+
+This integration test exposed and now covers two UI fixes. Clean editing nodes
+are replaced when their source/row hashes or identity change; dirty nodes keep
+their values and original mutation baseline, and resetting them reveals the
+current source. The async page boundary still owns readiness. Config stylesheet
+reload also recognizes the previously revisioned CSS URL rather than assuming
+the initial unversioned link still exists. Unit tests retain independent-field
+conflict guards and cover clean refresh, dirty preservation and reset behavior.
 
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch

@@ -58,13 +58,17 @@ export async function boot(gen: ConfigGenerator) {
     let lastRevision: string | undefined
     for await (const batch of gen) {
       if (batch.local && batch.revision !== lastRevision) {
-        const link = document.querySelector(
-          'link[href="config.css"]'
-        ) as HTMLLinkElement
-        const copy = link.cloneNode() as HTMLLinkElement
-        copy.href = `config.css?${batch.revision}`
-        copy.onload = () => link.remove()
-        link.after(copy)
+        const link = Array.from(
+          document.querySelectorAll<HTMLLinkElement>(
+            'link[href="config.css"], link[href^="config.css?"]'
+          )
+        ).at(-1)
+        if (link) {
+          const copy = link.cloneNode() as HTMLLinkElement
+          copy.href = `config.css?${batch.revision}`
+          copy.onload = () => link.remove()
+          link.after(copy)
+        }
       }
       if (batch.local) {
         if (batch.revision !== lastRevision) {
