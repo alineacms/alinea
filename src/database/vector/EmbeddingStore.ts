@@ -1,4 +1,14 @@
-import {and, eq, inArray, index, sql, table, type Database} from 'rado'
+import {
+  and,
+  asc,
+  eq,
+  inArray,
+  index,
+  isNull,
+  sql,
+  table,
+  type Database
+} from 'rado'
 import * as column from 'rado/universal/columns'
 import pLimit from 'p-limit'
 import {createId} from '#/core/Id.js'
@@ -10,6 +20,7 @@ import {
   encodeEmbedding,
   validateEmbedding,
   validateEmbeddingOwner,
+  ObsoleteEmbeddingJobError,
   type EmbeddingPublication,
   type EmbeddingTarget,
   type EmbeddingJob,
@@ -143,6 +154,44 @@ export class EmbeddingStore {
         .where(eq(Manifest.id, id))
         .get()
       return manifest ? structuredClone(manifest) : undefined
+    })
+  }
+
+  /** Durable pending work, limited to published chunk sets in one model space. */
+  pending(spaceId: string, limit = 128): Promise<Array<EmbeddingJob>> {
+    if (
+      !/^[a-f0-9]{64}$/.test(spaceId) ||
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      limit > 1024
+    )
+      throw new Error('Invalid embedding work batch')
+    return this.#run(async () => {
+      const rows = await this.db
+        .select({manifest: Manifest, jobs: Publication.jobs})
+        .from(Manifest)
+        .innerJoin(
+          Publication,
+          and(
+            eq(Manifest.ownerVersionId, Publication.ownerVersionId),
+            eq(Manifest.slot, Publication.slot),
+            eq(Manifest.spaceId, Publication.spaceId)
+          )
+        )
+        .where(and(eq(Manifest.spaceId, spaceId), isNull(Manifest.payloadId)))
+        .orderBy(asc(Manifest.id))
+        .limit(limit)
+      return rows.map(({manifest, jobs}) => {
+        if (
+          !jobs.some(
+            job =>
+              job.id === manifest.id && job.generation === manifest.generation
+          )
+        )
+          throw new Error('Invalid embedding publication')
+        const {id, generation, spaceId, target} = manifest
+        return {id, generation, spaceId, target}
+      })
     })
   }
 
@@ -353,15 +402,19 @@ export class EmbeddingStore {
   /** A stale or removed job is rejected, including source A → B → A changes. */
   install(
     input: EmbeddingJob,
-    values: ReadonlyArray<number>
+    values: ReadonlyArray<number>,
+    signal?: AbortSignal
   ): Promise<boolean> {
+    signal?.throwIfAborted()
     const job = structuredClone(input)
     validateEmbedding(job.target)
     const bytes = encodeEmbedding(job.target.space, values)
     return this.#run(async () => {
       const payloadId = await sha256Hash(bytes)
+      signal?.throwIfAborted()
       return this.db.transaction(
         async tx => {
+          signal?.throwIfAborted()
           const current = await tx
             .select()
             .from(Manifest)
@@ -373,7 +426,7 @@ export class EmbeddingStore {
             current.spaceId !== job.spaceId ||
             canonicalJson(current.target) !== canonicalJson(job.target)
           )
-            throw new Error('Obsolete embedding job')
+            throw new ObsoleteEmbeddingJobError()
           if (current.payloadId) {
             if (current.payloadId !== payloadId)
               throw new Error(
@@ -381,6 +434,7 @@ export class EmbeddingStore {
               )
             return false
           }
+          signal?.throwIfAborted()
           const stored = await tx
             .select(Payload.id)
             .from(Payload)
@@ -395,6 +449,7 @@ export class EmbeddingStore {
             .update(State)
             .set({revision: createId()})
             .where(eq(State.id, 1))
+          signal?.throwIfAborted()
           return true
         },
         {async: true}
@@ -417,7 +472,7 @@ export class EmbeddingStore {
         current.spaceId !== job.spaceId ||
         canonicalJson(current.target) !== canonicalJson(job.target)
       )
-        throw new Error('Obsolete embedding job')
+        throw new ObsoleteEmbeddingJobError()
       if (!current.payloadId) return
       const bytes = await this.db
         .select(Payload.bytes)

@@ -1222,7 +1222,7 @@ without `vec_version()` or `vss_version()` (and without `pragma_function_list`).
 Node 24.16.0 reports SQLite 3.53.0 and no registered `vec_%`/`vector_%` functions.
 No vector extension is assumed or required for this store. It is not yet wired
 into source reconciliation, runtime revision publication, authorization-filtered
-manifests, encrypted browser transport, embedding providers or Graph search.
+manifests, encrypted browser transport, configured embedding providers or Graph search.
 Obsolete private payload retention/GC also remains open. Do not expose this
 trusted store directly as a browser API or ship its private checkpoint to clients.
 
@@ -1280,6 +1280,28 @@ competing preparations and transaction rollback using an injected publication
 failure. A built Node SQLite publication/search smoke test also passed. The
 source reconciliation/provider pipeline must still supply complete, current input
 sets; this store cannot independently discover missing extraction output.
+
+`vector/EmbeddingRunner` adds explicit, opt-in background batches over durable
+pending jobs in complete published owner sets. A runner selects only its declared
+model space, bounds concurrent provider calls, and keeps failed jobs pending for
+explicit retry or restart. Inputs are detached and bounded to 8 MiB; their SHA-256
+identity binds canonical media type and actual normalized bytes, not a mutable
+URL. Loaders must resolve the exact immutable owner payload/chunk. A changed input
+never reaches the provider, and obsolete generations cannot install late output.
+Providers must return the expected space identity; installation checks dimensions,
+encoding and metric constraints as before.
+
+Closing aborts queued work and cooperative in-flight calls, drains actual provider
+calls, and prevents cancelled installation from committing. Providers that ignore
+cancellation can delay shutdown. Native/WASM tests cover concurrency, model-space
+isolation, unpublished-job exclusion, input mismatch, failed-job restart, late
+results after owner replacement, and cancellation with pending work preserved.
+The built runner also passed a Node SQLite publication/completion smoke test.
+This is an internal runner, not provider configuration or a scheduler: no network
+calls, automatic retry policy, distributed provider lease or source reconciliation
+are added. Multiple runners can duplicate provider work; generation checks protect
+installation, not billing. A failed first batch requires caller policy before
+advancing to later work. Runtime derived-revision publication remains separate.
 
 Add embedding manifests, content/model identity, background job completion,
 invalidation, chunk ownership, permission filtering, and lazy vector payloads.

@@ -39,6 +39,12 @@ export interface EmbeddingManifest extends EmbeddingJob {
   payloadId: string | null
 }
 
+export class ObsoleteEmbeddingJobError extends Error {
+  constructor() {
+    super('Obsolete embedding job')
+  }
+}
+
 export function validateEmbedding(target: EmbeddingTarget): void {
   validateEmbeddingOwner(target)
   if (
@@ -57,10 +63,10 @@ export function validateEmbeddingOwner(target: EmbeddingOwner): void {
       throw new Error('Invalid embedding identity')
   if (!['entry', 'image', 'document'].includes(owner.kind))
     throw new Error('Invalid embedding source')
-  validateSpace(space)
+  validateEmbeddingSpace(space)
 }
 
-function validateSpace(space: EmbeddingSpace): void {
+export function validateEmbeddingSpace(space: EmbeddingSpace): void {
   for (const value of [
     space.provider,
     space.model,
@@ -87,7 +93,7 @@ export function encodeEmbedding(
   space: EmbeddingSpace,
   values: ReadonlyArray<number>
 ): Uint8Array {
-  validateSpace(space)
+  validateEmbeddingSpace(space)
   if (values.length !== space.dimensions)
     throw new Error('Embedding dimension mismatch')
   const bytes = new Uint8Array(values.length * 4)
@@ -112,7 +118,7 @@ export function decodeEmbedding(
   space: EmbeddingSpace,
   bytes: Uint8Array
 ): Array<number> {
-  validateSpace(space)
+  validateEmbeddingSpace(space)
   if (bytes.byteLength !== space.dimensions * 4)
     throw new Error('Embedding byte length mismatch')
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
