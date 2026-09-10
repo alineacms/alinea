@@ -59,6 +59,7 @@ function comparableRequest(request: CommitRequest) {
   return {
     fromSha: request.fromSha,
     description: request.description,
+    authorization: request.authorization,
     changes: request.changes.map(change => {
       if (change.op !== 'addContent') return change
       // Alias row IDs are generated independently by each preparation.
@@ -95,6 +96,7 @@ for (const [name, mutation] of cases) {
     expect(comparableRequest(request)).toEqual(
       comparableRequest(await legacy.toRequest())
     )
+    expect(request.authorization!.length).toBeGreaterThan(0)
     expect(
       (await openCheckpoint(config, db, identity)).descriptor.sourceSha
     ).toBe(request.fromSha)

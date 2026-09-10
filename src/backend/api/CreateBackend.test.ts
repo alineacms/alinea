@@ -51,4 +51,27 @@ test('composes backend parts into a connection', async () => {
   const connection = backend(context, config)
   test.is((await connection.write({} as never)).sha, 'sha')
   test.is((await connection.prepareUpload('file.jpg')).entryId, 'entry')
+  test.is(connection.receipt, undefined)
+})
+
+test('composes optional receipt lookup with the authority receiver intact', async () => {
+  const authority = {
+    sha: 'accepted',
+    async receipt() {
+      return {sha: this.sha, authorization: []}
+    }
+  }
+  const connection = createBackend(authority)(context, config)
+  test.equal(
+    await connection.receipt!('user', {
+      id: 'id',
+      namespace: 'main',
+      epoch: 'epoch',
+      digest: 'digest'
+    }),
+    {
+      sha: 'accepted',
+      authorization: []
+    }
+  )
 })

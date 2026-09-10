@@ -1,6 +1,7 @@
 import type {Change, ChangeFile, ChangesBatch} from '../source/Change.js'
 import type {User} from '../User.js'
 import type {RemoveFileMutation, UploadFileMutation} from './Mutation.js'
+import type {MutationPermission} from './MutationAuthorization.js'
 
 export interface AddContent extends ChangeFile {
   op: 'addContent'
@@ -68,6 +69,8 @@ export interface CommitRequest {
   changes: Array<CommitChange>
   /** Trusted caller supplies a digest of the original, authorized transaction. */
   transaction?: CommitTransaction
+  /** Exact permission checks performed by trusted mutation preparation. */
+  authorization?: Array<MutationPermission>
 }
 
 export interface CommitTransaction {
@@ -75,4 +78,9 @@ export interface CommitTransaction {
   namespace: string
   epoch: string
   digest: string
+}
+
+export interface CommitReceipt {
+  sha: string
+  authorization: Array<MutationPermission>
 }

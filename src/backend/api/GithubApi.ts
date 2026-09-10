@@ -7,7 +7,12 @@ import type {
 } from '#/core/Connection.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import {HttpError} from '#/core/HttpError.js'
-import type {CommitChange, CommitRequest} from '#/core/db/CommitRequest.js'
+import type {
+  CommitChange,
+  CommitReceipt,
+  CommitRequest,
+  CommitTransaction
+} from '#/core/db/CommitRequest.js'
 import {
   GithubSource,
   type GithubSourceOptions,
@@ -17,7 +22,12 @@ import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {join} from '#/core/util/Paths.js'
-import {gitReceipt, readGitReceipt, type GitReceipt} from './GitReceipt.js'
+import {
+  gitReceipt,
+  gitReceiptKey,
+  readGitReceipt,
+  type GitReceipt
+} from './GitReceipt.js'
 
 export interface GithubOptions extends GithubSourceOptions {}
 
@@ -43,7 +53,8 @@ export class GithubApi
         currentCommit,
         false
       )
-      if (previous !== undefined) return readGitReceipt(previous, receipt)
+      if (previous !== undefined)
+        return {sha: readGitReceipt(previous, receipt).sha}
     }
     const currentSha = await this.shaAt(currentCommit)
 
@@ -68,6 +79,17 @@ export class GithubApi
 
   async revisions(file: string): Promise<Array<Revision>> {
     return this.#getFileCommitHistory(file)
+  }
+
+  /** Trusted handler reauthorizes the returned footprint before acknowledging. */
+  async receipt(
+    principal: string,
+    transaction: CommitTransaction
+  ): Promise<CommitReceipt | undefined> {
+    const key = await gitReceiptKey(this.#options, principal, transaction)
+    const head = await this.#getLatestCommitOid()
+    const text = await this.#getFileContentAtCommit(key.path, head, false)
+    return text === undefined ? undefined : readGitReceipt(text, key)
   }
 
   async revisionData(

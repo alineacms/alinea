@@ -32,6 +32,7 @@ import {SourceTransaction} from '../source/Source.js'
 import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
+import {MutationAuthorization} from './MutationAuthorization.js'
 import {aliasUrlsFromData, aliasUrl} from './EntryAliases.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
@@ -185,7 +186,7 @@ export class EntryTransaction {
   #workingTree: ReadonlyTree
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
-  #policy: Policy
+  #policy: MutationAuthorization
   #changedUrlClaimOwners = new Set<string>()
   #urlClaimUpdates = new Map<string, EntryTransactionUrlClaim>()
 
@@ -204,7 +205,7 @@ export class EntryTransaction {
     this.#workingSource = new OverlaySource(source, from)
     this.#workingTree = from
     this.#tx = new SourceTransaction(source, from)
-    this.#policy = policy
+    this.#policy = new MutationAuthorization(policy)
   }
 
   get empty() {
@@ -1174,7 +1175,8 @@ export class EntryTransaction {
       fromSha: from.sha,
       intoSha: into.sha,
       description: this.description(),
-      changes: this.#fileChanges.concat(commitChanges(changes))
+      changes: this.#fileChanges.concat(commitChanges(changes)),
+      authorization: this.#policy.snapshot()
     }
   }
 }

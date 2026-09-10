@@ -1,5 +1,9 @@
 import type {Request, Response} from '@alinea/iso'
-import type {CommitRequest} from './db/CommitRequest.js'
+import type {
+  CommitReceipt,
+  CommitRequest,
+  CommitTransaction
+} from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
@@ -60,6 +64,10 @@ export interface SyncApi {
 
 export interface CommitApi {
   write(request: CommitRequest): Promise<{sha: string}>
+  receipt?(
+    principal: string,
+    transaction: CommitTransaction
+  ): Promise<CommitReceipt | undefined>
 }
 
 export interface HistoryApi {

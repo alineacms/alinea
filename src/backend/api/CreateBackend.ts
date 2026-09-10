@@ -112,6 +112,7 @@ export function composeBackend(
     getTreeIfDifferent: call('getTreeIfDifferent'),
     getBlobs: call('getBlobs'),
     write: call('write'),
+    receipt: hasMethod('receipt') ? call('receipt') : undefined,
     revisions: call('revisions'),
     revisionData: call('revisionData'),
     getDraft: call('getDraft'),

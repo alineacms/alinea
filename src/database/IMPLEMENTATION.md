@@ -392,6 +392,20 @@ requires a new epoch; automatic epoch management and receipt retention remain
 unfinished. Repositories indexing their root or `.alinea` cannot enable this
 layout. No live GitHub repository has been mutated to verify the prototype.
 
+Mutation preparation now records and deduplicates the exact successful permission
+assertions (including fields, ancestors, destination and publication checks) in
+`CommitRequest.authorization`. Only `Resource` routing keys are copied; source
+payloads and mutable entry objects are not retained. SQL/legacy preparation parity
+tests compare the footprints as well as content changes. Git receipt format 2
+requires this footprint. Optional `CommitApi.receipt` reads a principal-scoped
+receipt at a pinned Git head without preparing or resubmitting the mutation; backend
+composition preserves the optional method. `authorizeMutationReceipt` validates
+the full saved footprint before asserting it against a fresh trusted policy, so
+deleted entries can be checked without replay and revoked field/ancestor grants
+are not implicitly accepted. This helper is not an authorization endpoint: Graph
+handler routing must still bind identity/digest, evaluate current roles and invoke
+it before returning an acknowledgement. Public mutation transport is unchanged.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

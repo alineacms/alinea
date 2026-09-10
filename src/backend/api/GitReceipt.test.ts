@@ -1,6 +1,8 @@
 import {afterEach, expect, test} from 'bun:test'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {Permission, Policy} from '#/core/Role.js'
+import {authorizeMutationReceipt} from '#/core/db/MutationAuthorization.js'
 import {GithubApi, type GithubOptions} from './GithubApi.js'
 import {gitReceipt} from './GitReceipt.js'
 
@@ -13,6 +15,12 @@ const options: GithubOptions = {
   contentDir: 'content'
 }
 const request: CommitRequest = {
+  authorization: [
+    {
+      permission: Permission.Update,
+      resource: {id: 'entry', type: 'Page', field: 'title'}
+    }
+  ],
   description: 'Edit',
   fromSha: 'before',
   intoSha: 'after',
@@ -113,6 +121,23 @@ test('Git receipt recovers a lost commit response in a fresh adapter', async () 
   expect(source.writes).toBe(1)
   expect(source.files.size).toBe(2)
   expect(await new GithubApi(options).write(request)).toEqual({sha: 'after'})
+  const receipt = await new GithubApi(options).receipt(
+    'user',
+    request.transaction!
+  )
+  expect(receipt).toEqual({
+    sha: 'after',
+    authorization: request.authorization!
+  })
+  expect(() =>
+    authorizeMutationReceipt(Policy.ALLOW_ALL, receipt!.authorization)
+  ).not.toThrow()
+  expect(() =>
+    authorizeMutationReceipt(Policy.ALLOW_NONE, receipt!.authorization)
+  ).toThrow('Permission denied')
+  expect(
+    await new GithubApi(options).receipt('other-user', request.transaction!)
+  ).toBeUndefined()
   expect(source.writes).toBe(1)
   await expect(
     new GithubApi(options).write({
@@ -183,6 +208,20 @@ test('corrupt Git receipts fail closed and mutations cannot delete receipt stora
     'Invalid durable Git receipt'
   )
   expect(source.writes).toBe(0)
+  source.files.set(
+    receipt.path,
+    JSON.stringify({
+      version: 2,
+      digest: request.transaction!.digest,
+      sha: 'after'
+    })
+  )
+  await expect(
+    new GithubApi(options).receipt('user', request.transaction!)
+  ).rejects.toThrow('Invalid durable Git receipt permissions')
+  await expect(
+    new GithubApi(options).write({...request, authorization: undefined})
+  ).rejects.toThrow('Invalid mutation permissions')
   await expect(
     new GithubApi(options).write({
       ...request,
