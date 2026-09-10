@@ -3,6 +3,7 @@ import {Permission} from '#/core/Role.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {entryIndexRow, type IndexedEntry} from '../entry/Schema.js'
 import type {PayloadRequest} from '../runtime/EntryRuntime.js'
+import {idbResult as result, idbTransaction} from './IndexedDB.js'
 
 /** Supplied only after the handler has authenticated the complete replica binding. */
 export interface ReplicaIdentity {
@@ -59,13 +60,6 @@ function cacheName(identity: ReplicaIdentity): string {
   if (binding.some(value => typeof value !== 'string' || !value))
     throw new Error('Incomplete replica identity')
   return `alinea-replica-2:${JSON.stringify(binding)}`
-}
-
-function result<T>(request: IDBRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
 }
 
 /** Incremental authorized-index/ciphertext cache, never a plaintext SQLite export. */
@@ -129,36 +123,13 @@ export class ReplicaCache {
     signal?: AbortSignal
   ): Promise<T> {
     if (this.#closed) throw new Error('Replica cache is closed')
-    signal?.throwIfAborted()
-    const tx = this.#db.transaction(['state', 'entries', 'frames'], mode)
-    const abort = () => {
-      try {
-        tx.abort()
-      } catch {}
-    }
-    signal?.addEventListener('abort', abort, {once: true})
-    const done = new Promise<void>((resolve, reject) => {
-      tx.oncomplete = () => resolve()
-      tx.onabort = () =>
-        reject(tx.error ?? new Error('Replica cache transaction aborted'))
-    })
-    // Requests may reject before run() finishes handling their errors.
-    void done.catch(() => {})
-    try {
-      const value = await run(tx)
-      await done
-      signal?.throwIfAborted()
-      return value
-    } catch (error) {
-      try {
-        tx.abort()
-      } catch {}
-      await done.catch(() => {})
-      signal?.throwIfAborted()
-      throw error
-    } finally {
-      signal?.removeEventListener('abort', abort)
-    }
+    return idbTransaction(
+      this.#db,
+      ['state', 'entries', 'frames'],
+      mode,
+      run,
+      signal
+    )
   }
 
   async #state(tx: IDBTransaction): Promise<State> {

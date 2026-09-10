@@ -70,6 +70,43 @@ export async function runOwned() {
   }
 }
 
+export async function runPending() {
+  for (const action of ['save', 'restore', 'empty'] as const) {
+    const worker = new Worker(new URL('./owned-worker.js', import.meta.url), {
+      type: 'module'
+    })
+    const remote = wrap<typeof ownedApi>(worker)
+    try {
+      const rows = await remote.pending(action)
+      check(
+        rows,
+        action === 'empty'
+          ? []
+          : [
+              {
+                id: 'pending-test',
+                acceptedSha: 'accepted-revision',
+                mutations: [
+                  {
+                    id: 'a',
+                    locale: null,
+                    op: 'update',
+                    set: {title: 'Unsaved browser draft'},
+                    status: 'draft'
+                  }
+                ]
+              }
+            ]
+      )
+    } finally {
+      await remote.close()
+      remote[releaseProxy]()
+      worker.terminate()
+    }
+  }
+  return true
+}
+
 function check(actual: unknown, expected: unknown) {
   if (JSON.stringify(actual) !== JSON.stringify(expected))
     throw new Error(

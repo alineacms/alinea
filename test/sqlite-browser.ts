@@ -203,8 +203,15 @@ try {
     ])
   }, '/main.js')
   assert.deepEqual(owned, {deliveries: 2, closed: true})
+  assert.equal(
+    await page.evaluate(async path => {
+      const {runPending} = await import(path)
+      return runPending()
+    }, '/main.js'),
+    true
+  )
   console.log(
-    'Chromium SQLite workers: encrypted range hydration, authenticated bootstrap, live refresh, Graph queries and logout purge passed'
+    'Chromium SQLite workers: encrypted hydration, authenticated bootstrap, live Graph queries, pending-edit restart and logout purge passed'
   )
 } finally {
   await browser.close()

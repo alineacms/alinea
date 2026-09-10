@@ -422,6 +422,25 @@ tests cover restart/lost-response recovery, changed bodies, revoked roles,
 principal isolation, deleted entries, internal conflicts and loaded identity
 precedence. The dashboard queue does not yet opt in or persist pending IDs.
 
+`browser/PendingMutations` now supplies the separate durable intent store for that
+queue. It partitions authenticated project/namespace/epoch/principal and exact
+handler endpoint, while retaining each edit's base revision/schema/config so a
+replacement deployment cannot silently reinterpret pending work. JSON mutation
+bodies and accepted-source acknowledgements are AES-GCM encrypted using a
+persisted non-extractable device CryptoKey; IDs/digests/order remain metadata.
+This protects local draft values from plaintext storage, not from hostile
+same-origin JavaScript, which can use the stored key. It is separate from the
+replicated-content ciphertext cache and does not persist content grant keys.
+Transactions deduplicate IDs, reject changed bodies/context, retain acceptance
+across reopen, bound queue size, and support explicit remove/purge. Generation
+checks make purge invalidate other handles and reject plaintext completing after
+logout. Shared IndexedDB request/transaction helpers now also serve ReplicaCache.
+Fake-IndexedDB tests cover races, limits, isolation, tampering and late decryption;
+the Chromium fixture persists/reopens the CryptoKey and accepted edit across
+terminated workers, then verifies purge in a third worker. No scheduler submits
+these records yet: authenticated dashboard ownership, schema/base conflict checks,
+retry scheduling and logout integration remain required for the browser cutover.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit
