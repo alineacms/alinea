@@ -2,7 +2,14 @@ import * as fsp from 'node:fs/promises'
 import type {ReferenceRequest} from '#/database/replica/ReferenceBatch.js'
 import {Config} from '#/core/Config.js'
 import type {SyncApi, UploadResponse} from '#/core/Connection.js'
-import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
+import {
+  sourceChanges,
+  type CommitRequest,
+  type CommitTransaction,
+  type CommitReceipt
+} from '#/core/db/CommitRequest.js'
+import {HttpError} from '#/core/HttpError.js'
+import {DevReceipts} from './DevReceipts.js'
 import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
@@ -15,7 +22,7 @@ import {diff} from '#/core/source/Source.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {assert} from '#/core/util/Assert.js'
-import {keys, values} from '#/core/util/Objects.js'
+import {keys, values, isRecord} from '#/core/util/Objects.js'
 import {basename, contains, dirname, extname, join} from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
@@ -50,6 +57,7 @@ export class DevDB extends WritableGraph {
   #replica?: NodeReplica
   #sync = pLimit(1)
   #closed = false
+  #receipts?: DevReceipts
 
   constructor(options: DevDBOptions) {
     const source = new CachedFSSource(
@@ -69,6 +77,7 @@ export class DevDB extends WritableGraph {
     return this.#sync(async () => {
       if (this.#closed) throw new Error('Dev database is closed')
       await this.source.refresh()
+      await this.#recoverReceipts()
       const batch = await diff(this.source, remote)
       if (this.#closed) throw new Error('Dev database is closed')
       await this.source.applyChanges(batch)
@@ -89,6 +98,7 @@ export class DevDB extends WritableGraph {
   async #syncSource() {
     if (this.#closed) throw new Error('Dev database is closed')
     await this.source.refresh()
+    await this.#recoverReceipts()
     this.#replica ??= await NodeReplica.open(
       {config: this.config, ...this.#options.replica},
       this.source
@@ -169,6 +179,8 @@ export class DevDB extends WritableGraph {
     // Drain a startup/sync already in progress, including its newly opened owner.
     await this.#sync(async () => {
       await this.#replica?.close()
+      this.#receipts?.close()
+      this.#receipts = undefined
     })
   }
 
@@ -227,7 +239,81 @@ export class DevDB extends WritableGraph {
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
+    request = structuredClone(request)
     return this.#sync(() => this.#write(request))
+  }
+
+  async #receiptStore(create = false): Promise<DevReceipts | undefined> {
+    if (this.#receipts) return this.#receipts
+    const path = join(
+      this.#options.rootDir,
+      '.alinea',
+      'local',
+      'receipts.sqlite'
+    )
+    if (!create) {
+      try {
+        await fsp.access(path)
+      } catch (error) {
+        if (isRecord(error) && error.code === 'ENOENT') return
+        throw error
+      }
+    }
+    if (
+      contains(
+        join(this.#options.rootDir, Config.contentDir(this.config)),
+        path
+      )
+    )
+      throw new HttpError(
+        409,
+        'Filesystem receipt storage must be outside the content directory'
+      )
+    return (this.#receipts = await DevReceipts.open(
+      path,
+      this.#options.replica.identity.project
+    ))
+  }
+
+  #checkTransaction(transaction: CommitTransaction): void {
+    const {namespace, epoch} = this.#options.replica.identity
+    if (transaction.namespace !== namespace || transaction.epoch !== epoch)
+      throw new HttpError(409, 'Filesystem transaction scope mismatch')
+  }
+
+  async #recoverReceipts(): Promise<void> {
+    const receipts = await this.#receiptStore()
+    if (!receipts) return
+    await receipts.recover(
+      (await this.source.getTree()).sha,
+      async locations => {
+        for (const location of locations) {
+          const file = join(this.#options.rootDir, location)
+          if (!this.isInMediaLocation(file)) return false
+          try {
+            await fsp.stat(file)
+            return false
+          } catch (error) {
+            if (!isRecord(error) || error.code !== 'ENOENT') throw error
+          }
+        }
+        return true
+      }
+    )
+  }
+
+  receipt(
+    principal: string,
+    transaction: CommitTransaction
+  ): Promise<CommitReceipt | undefined> {
+    transaction = {...transaction}
+    return this.#sync(async () => {
+      if (this.#closed) throw new Error('Dev database is closed')
+      this.#checkTransaction(transaction)
+      await this.source.refresh()
+      await this.#recoverReceipts()
+      return (await this.#receiptStore())?.receipt(principal, transaction)
+    })
   }
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
@@ -237,9 +323,21 @@ export class DevDB extends WritableGraph {
   async #write(request: CommitRequest): Promise<{sha: string}> {
     if (this.#closed) throw new Error('Dev database is closed')
     await this.source.refresh()
+    await this.#recoverReceipts()
+    if (request.transaction) {
+      this.#checkTransaction(request.transaction)
+      const accepted = await (
+        await this.#receiptStore()
+      )?.receipt(request.user?.sub ?? '', request.transaction)
+      if (accepted) return {sha: accepted.sha}
+    }
+    const receipts = await this.#receiptStore(Boolean(request.transaction))
+    await receipts?.assertAvailable()
+    await this.source.refresh()
     const tree = await this.source.getTree()
     const sourceSha = tree.sha
-    if (sourceSha === request.intoSha) return {sha: await this.#syncSource()}
+    if (!request.transaction && sourceSha === request.intoSha)
+      return {sha: await this.#syncSource()}
     if (sourceSha !== request.fromSha)
       throw new ShaMismatchError(request.fromSha, sourceSha)
     const batch = sourceChanges(request)
@@ -251,10 +349,19 @@ export class DevDB extends WritableGraph {
         throw new Error('Commit blob hash mismatch')
     if ((await tree.withChanges(batch)).sha !== request.intoSha)
       throw new Error('Commit target revision mismatch')
-    if (this.sha === request.intoSha) return {sha: this.sha}
     if (this.sha !== request.fromSha)
       throw new ShaMismatchError(request.fromSha, this.sha)
     const {rootDir} = this.#options
+    // Validate every media path before a prepared receipt or any file effect.
+    for (const change of request.changes)
+      if (change.op === 'removeFile')
+        assert(
+          this.isInMediaLocation(join(rootDir, change.location)),
+          `Invalid media location: ${change.location}`
+        )
+    const key = request.transaction
+      ? await receipts!.prepare(request)
+      : undefined
     for (const change of request.changes) {
       switch (change.op) {
         // Uploaded files will be put in the right folder by the server
@@ -270,7 +377,12 @@ export class DevDB extends WritableGraph {
       }
     }
     await this.source.applyChanges(sourceChanges(request))
-    return {sha: await this.#syncSource()}
+    await this.source.refresh()
+    if ((await this.source.getTree()).sha !== request.intoSha)
+      throw new Error('Filesystem commit did not reach its target revision')
+    if (key) await receipts!.accept(key)
+    const sha = await this.#syncSource()
+    return {sha: key ? request.intoSha : sha}
   }
 
   async prepareUpload(file: string): Promise<UploadResponse> {

@@ -620,6 +620,29 @@ actual esbuild define serialization. The legacy worker still boots until local
 filesystem receipt support is available; enabling the durable queue beforehand
 would make dev mutations fail the handler's required receipt capability check.
 
+DevDB now exposes filesystem transaction receipts through the existing backend
+composition and handler retry route. A private SQLite journal in
+`.alinea/local/receipts.sqlite` stores principal/project/namespace/epoch/ID-scoped
+digests, accepted target revisions and authorization footprints. It is separate
+from disposable generated checkpoints, uses full-synchronous SQLite commits,
+and its reserved local directory is Git-ignored. Request values are detached
+before entering the write queue. The journal prepares before file effects and
+records acceptance only after the source is reread at the intended target.
+Known accepted retries do not reapply source changes or rerun handler hooks, even
+after restart or later source edits; acknowledgements preserve the original SHA.
+
+Startup can recover an interrupted acceptance marker only when the complete
+target revision and requested media removals are present. A partial/ambiguous
+filesystem update remains prepared and blocks normalization/new writes with an
+explicit recovery error; it is never silently replayed. Tests cover restart,
+later source edits, ID/digest and scope mismatches, interrupted file/marker writes,
+and a real dev-handler response-loss retry. This is not an atomic filesystem
+transaction or a power-loss proof: file fsync/rollback tooling, explicit partial
+recovery UX and multi-process filesystem write locking remain required. Receipt
+storage must be outside indexed content; configurations indexing the project
+root need a separate private-directory arrangement before durable dev writes
+can be enabled there. Automatic epoch changes after journal deletion remain open.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit
