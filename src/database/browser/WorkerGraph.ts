@@ -1,6 +1,10 @@
 import {proxy, releaseProxy, type Remote} from 'comlink'
 import type {Config} from '#/core/Config.js'
-import {Graph, type AnyQueryResult, type GraphQuery} from '#/core/Graph.js'
+import {type AnyQueryResult, type GraphQuery} from '#/core/Graph.js'
+import {WritableGraph} from '#/core/db/WritableGraph.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import type {MutationContext} from '#/core/db/MutationContext.js'
+import type {UploadMetadata} from '#/core/Connection.js'
 import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
 import type {QueryWorker} from './QueryWorker.js'
@@ -8,7 +12,7 @@ import type {IndexBootstrap} from '../replica/Bootstrap.js'
 import {CompiledPolicy} from './CompiledPolicy.js'
 
 /** Keeps Graph expressions in their config scope when crossing a worker port. */
-export class WorkerGraph extends Graph {
+export class WorkerGraph extends WritableGraph {
   #worker: Remote<QueryWorker>
   #closed = false
   #pending = new Set<() => void>()
@@ -20,6 +24,36 @@ export class WorkerGraph extends Graph {
   ) {
     super()
     this.#worker = worker
+  }
+
+  async mutationContext(): Promise<MutationContext> {
+    this.#assertOpen()
+    return this.#read(this.#worker.mutationContext())
+  }
+
+  async mutate(mutations: Array<Mutation>, expected?: MutationContext) {
+    this.#assertOpen()
+    return this.#read(this.#worker.mutate(mutations, expected))
+  }
+
+  async pendingMutations() {
+    this.#assertOpen()
+    return this.#read(this.#worker.pendingMutations())
+  }
+
+  async retryMutations(): Promise<void> {
+    this.#assertOpen()
+    await this.#read(this.#worker.retryMutations())
+  }
+
+  async discardMutation(id: string): Promise<void> {
+    this.#assertOpen()
+    await this.#read(this.#worker.discardMutation(id))
+  }
+
+  async prepareUpload(file: string, metadata?: UploadMetadata) {
+    this.#assertOpen()
+    return this.#read(this.#worker.prepareUpload(file, metadata))
   }
 
   async resolve<const Query extends GraphQuery>(

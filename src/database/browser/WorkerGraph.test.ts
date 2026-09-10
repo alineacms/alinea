@@ -38,6 +38,8 @@ test('separate query ports preserve Graph scope and close subscriptions independ
     expect(await a.graph.find({type: Page, select: Page.title})).toEqual([
       'Field title'
     ])
+    const readOnlyError = await a.graph.mutate([]).catch(error => error)
+    expect(readOnlyError.message).toContain('read-only')
     const first = Promise.withResolvers<unknown>()
     let deliveries = 0
     const stop = await a.graph.subscribe(

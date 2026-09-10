@@ -10,6 +10,13 @@ import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
 import type {IndexBootstrap} from '../replica/Bootstrap.js'
 import type {ConnectReplicaOptions} from './ReplicaSession.js'
+import {
+  WritableReplica,
+  type WritableReplicaOptions
+} from './WritableReplica.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import type {MutationContext} from '#/core/db/MutationContext.js'
+import type {UploadMetadata} from '#/core/Connection.js'
 
 export interface QueryGraph extends Graph {
   subscribe(query: GraphQuery, observer: QueryObserver): () => void
@@ -35,6 +42,54 @@ export class QueryWorker {
   static async connect(options: ConnectReplicaOptions): Promise<QueryWorker> {
     const {LiveReplica} = await import('./LiveReplica.js')
     return new QueryWorker(await LiveReplica.connect(options), {owned: true})
+  }
+
+  static async connectWritable(
+    options: WritableReplicaOptions
+  ): Promise<QueryWorker> {
+    return new QueryWorker(await WritableReplica.connect(options), {
+      owned: true
+    })
+  }
+
+  #writable(): WritableReplica {
+    if (this.#closed) throw new Error('Query worker is closed')
+    const runtime = this.#runtime
+    if (!(runtime instanceof WritableReplica))
+      throw new Error('Query graph is read-only')
+    return runtime
+  }
+
+  mutationContext(): MutationContext {
+    return this.#writable().mutationContext()
+  }
+
+  async mutate(mutations: Array<Mutation>, expected?: MutationContext) {
+    const result = await this.#writable().mutate(mutations, expected)
+    if (this.#closed) throw new Error('Query worker is closed')
+    return result
+  }
+
+  async pendingMutations() {
+    const result = await this.#writable().pendingMutations()
+    if (this.#closed) throw new Error('Query worker is closed')
+    return result
+  }
+
+  async retryMutations(): Promise<void> {
+    await this.#writable().retryMutations()
+    if (this.#closed) throw new Error('Query worker is closed')
+  }
+
+  async discardMutation(id: string): Promise<void> {
+    await this.#writable().discardMutation(id)
+    if (this.#closed) throw new Error('Query worker is closed')
+  }
+
+  async prepareUpload(file: string, metadata?: UploadMetadata) {
+    const result = await this.#writable().prepareUpload(file, metadata)
+    if (this.#closed) throw new Error('Query worker is closed')
+    return result
   }
 
   bootstrap(): IndexBootstrap {

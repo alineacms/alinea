@@ -517,6 +517,23 @@ principal, discard and shutdown races. This scheduler is not yet the dashboard
 worker, and its read-after-write guarantee depends on authoritative source sync,
 not revision equality (newer accepted content may already supersede the write).
 
+`browser/WritableReplica` owns that queue and a live SQLite replica behind the
+public WritableGraph API. It constructs reads and writes from the same endpoint
+and authentication options, exposes compiled policy/live subscriptions, and
+awaits ready authoritative reads before resolving a save. Pending recovery is
+explicit on reopen; startup never silently submits restored edits. Queue and
+replica shutdown run together so transport, refresh and durable-store cleanup
+drain without waiting on one another. Logout purge must be requested before close.
+`QueryWorker.connectWritable` and `WorkerGraph` carry mutations, captured context,
+pending/retry/discard and upload preparation across the port. Read-only query
+workers reject those write operations. `WritableGraph.commit` captures available
+context before asynchronous operation preparation; callers can also capture a
+context at authoring time and pass it to mutate. Real SQLite/frame and MessagePort
+tests cover save/read ordering, restart receipt recovery, rejected stale context,
+refresh-only retry and logout. Dashboard boot/activity/index events, reference
+queries and editor-lifetime structural context still need wiring before replacing
+the old DashboardWorker; this is not yet a completed dashboard cutover.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

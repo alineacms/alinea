@@ -38,7 +38,7 @@ export interface ClientOptions {
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
-  fetch?: typeof fetch
+  fetch?: (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>
 }
 
 export class Client implements LocalConnection {

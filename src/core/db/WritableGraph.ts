@@ -13,6 +13,7 @@ import type {
   EntryReferenceResult
 } from './EntryReference.js'
 import type {Mutation} from './Mutation.js'
+import type {MutationContext} from './MutationContext.js'
 import {
   ArchiveOperation,
   type ArchiveQuery,
@@ -35,7 +36,16 @@ import {
 } from './Operation.js'
 
 export abstract class WritableGraph extends Graph {
-  abstract mutate(mutations: Array<Mutation>): Promise<{sha: string}>
+  abstract mutate(
+    mutations: Array<Mutation>,
+    expected?: MutationContext
+  ): Promise<{sha: string}>
+  mutationContext():
+    | MutationContext
+    | undefined
+    | Promise<MutationContext | undefined> {
+    return undefined
+  }
   abstract prepareUpload(
     file: string,
     metadata?: UploadMetadata
@@ -132,8 +142,9 @@ export abstract class WritableGraph extends Graph {
   }
 
   async commit(...operations: Array<Operation>) {
+    const expected = await this.mutationContext()
     const mutations = await Promise.all(operations.map(op => op.task(this)))
-    await this.mutate(mutations.flat())
+    await this.mutate(mutations.flat(), expected)
   }
 
   async createPolicy(forRoles: Array<string>): Promise<Policy> {
