@@ -1,0 +1,812 @@
+{
+  "metadata": {
+    "projectCommit": "9d6ab92a4afb6f34af3f1d6d35b0cff7303e2b7b",
+    "sqliteCommit": "3bc133eb",
+    "syncCommit": "303001ad6951ee02c29a8330c76d49bc2226a726",
+    "installed": "alinea@8381726 with imec patches/alinea-pr-554.patch",
+    "runtime": "Bun 1.4.0, macOS arm64",
+    "warmups": 5,
+    "samples": 30,
+    "trial": 2,
+    "notes": "Resolver microbenchmark. SQLite populated from installed normalized rows; sync-engine exports same content independently. WASM runs under Bun, not a browser. Setup paths differ; not a cold-start or memory comparison."
+  },
+  "engines": [
+    {
+      "engine": "installed",
+      "trial": "2",
+      "moduleMs": 53.021083000000004,
+      "setup": {
+        "sourceTreeMs": 248.870167,
+        "rows": 11374,
+        "dataBytes": 61486398,
+        "totalMs": 762.826667
+      },
+      "results": [
+        {
+          "name": "imec-navigation-roots",
+          "firstMs": 1.5550419999999576,
+          "medianMs": 0.10362500000007913,
+          "p95Ms": 0.13324999999997544,
+          "count": 14,
+          "bytes": 1170,
+          "hash": "6d173581b267bd754aad8ad54b925955b2b7cdd395b19cd45d42de37a568ad4f"
+        },
+        {
+          "name": "imec-navigation-home",
+          "firstMs": 0.11308299999996052,
+          "medianMs": 0.005915999999956512,
+          "p95Ms": 0.013082999999937783,
+          "count": 1,
+          "bytes": 28,
+          "hash": "f0d89fa8cb3c3007d9fda34183d3bbbad4b930f91b3c087ba60544c627791405"
+        },
+        {
+          "name": "imec-navigation-nested",
+          "firstMs": 0.6870420000000195,
+          "medianMs": 0.1527090000000726,
+          "p95Ms": 0.19858300000009876,
+          "count": 1,
+          "bytes": 5041,
+          "hash": "481e08b77081445ca3fcd251bd4e7a57120e0a1ffed60a12820358f7eba48e07"
+        },
+        {
+          "name": "imec-article-cards",
+          "firstMs": 15.296500000000037,
+          "medianMs": 12.591666999999916,
+          "p95Ms": 17.725499999999897,
+          "count": 15,
+          "bytes": 7949,
+          "hash": "763f6c683324b26244405a08c3c12a95273a2b355732ce9e60297c29ab5de1d5"
+        },
+        {
+          "name": "id-card",
+          "firstMs": 0.09545800000000781,
+          "medianMs": 0.0050420000000030996,
+          "p95Ms": 0.019292000000177723,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "url-card",
+          "firstMs": 0.04908300000010968,
+          "medianMs": 0.004124999999930878,
+          "p95Ms": 0.005499999999983629,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "page-20",
+          "firstMs": 116.0534590000002,
+          "medianMs": 101.79608299999973,
+          "p95Ms": 124.04358300000058,
+          "count": 20,
+          "bytes": 2619,
+          "hash": "a293b41b21092dc61a5dfbdfaa04ecee31848cfc04108a4e04c3a6fc8ec86f9a"
+        },
+        {
+          "name": "deep-page-20",
+          "firstMs": 128.07837500000005,
+          "medianMs": 122.00562499999978,
+          "p95Ms": 147.6815829999996,
+          "count": 20,
+          "bytes": 3507,
+          "hash": "7076b0c0532e265ace94a4f775732154d8448f78abe81d101618bc67a8f8f0c4"
+        },
+        {
+          "name": "type-page-20",
+          "firstMs": 3.419499999999971,
+          "medianMs": 3.3122500000008586,
+          "p95Ms": 9.64075000000048,
+          "count": 20,
+          "bytes": 2571,
+          "hash": "56dbc5fc40adea61a6c13acc0f652d3cc5f321ba587d28f16ebc398fb41574c3"
+        },
+        {
+          "name": "children",
+          "firstMs": 0.8545420000009472,
+          "medianMs": 0.24208399999952235,
+          "p95Ms": 0.2632499999999709,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "9699f13d27508cccea59bf86e7c5c703c4748c66322adc65d1e08a0cb638af0c"
+        },
+        {
+          "name": "all-ids",
+          "firstMs": 109.71554199999991,
+          "medianMs": 107.78070800000023,
+          "p95Ms": 116.96312500000022,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "d452f82e45400bd68aa04a85e7d2625e72f6955c2ab90e17abf5302b2d9d652a"
+        },
+        {
+          "name": "content-filter",
+          "firstMs": 0.5915000000004511,
+          "medianMs": 0.23883399999976973,
+          "p95Ms": 0.2538330000006681,
+          "count": 20,
+          "bytes": 2322,
+          "hash": "e74a189be0e2fcd569df715d00298ad270b476c187dd61bbc872e08b5fb80bdd"
+        },
+        {
+          "name": "full-entry",
+          "firstMs": 0.22191700000075798,
+          "medianMs": 0.010874999999941792,
+          "p95Ms": 0.018000000000029104,
+          "count": 1,
+          "bytes": 12394,
+          "hash": "6e00fa6d1adfb0d0e90efa2620f5d39c3888e832f42b74691f52256850ee983e"
+        },
+        {
+          "name": "full-page-20",
+          "firstMs": 3.619834000000992,
+          "medianMs": 3.436208999999508,
+          "p95Ms": 3.632917000000816,
+          "count": 20,
+          "bytes": 185574,
+          "hash": "2796f7b392310896c29aa7192d2104345337fe618281180827bee4d41a4a5b82"
+        },
+        {
+          "name": "page-20-binary",
+          "firstMs": 11.058791999999812,
+          "medianMs": 5.806833999999071,
+          "p95Ms": 8.526583000000755,
+          "count": 20,
+          "bytes": 3201,
+          "hash": "626175520dc95c138cbc3fd40087f9b74f37980c82bd75803fb4e756f0438e9a"
+        },
+        {
+          "name": "deep-page-20-binary",
+          "firstMs": 7.706458000000566,
+          "medianMs": 5.63433299999997,
+          "p95Ms": 6.952457999999751,
+          "count": 20,
+          "bytes": 2834,
+          "hash": "724fc0b5d67bbf753bea8b1af55b626bff5398479ceb345a6e6382c866151cd7"
+        },
+        {
+          "name": "type-page-20-binary",
+          "firstMs": 0.2622080000001006,
+          "medianMs": 0.20449999999982538,
+          "p95Ms": 0.21900000000096043,
+          "count": 20,
+          "bytes": 2566,
+          "hash": "f0df44046a57d6e335384503b2275ab1161bd66682be63cf10b9fbb9be5aba56"
+        },
+        {
+          "name": "children-binary",
+          "firstMs": 0.08204099999966274,
+          "medianMs": 0.05029199999989942,
+          "p95Ms": 0.05966699999953562,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "ab652a83c65c2388224d6d8de7fcadb68495e0ea303328aabadd41969290c1ef"
+        },
+        {
+          "name": "all-ids-binary",
+          "firstMs": 9.482582999999067,
+          "medianMs": 7.79058299999997,
+          "p95Ms": 9.284625000000233,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "8a7a6b2f7c51d96ba9cc34f4993ab33effc7f6f5148fbb6601302ee99b84a6a2"
+        },
+        {
+          "name": "content-filter-binary",
+          "firstMs": 0.23712499999965075,
+          "medianMs": 0.08095800000046438,
+          "p95Ms": 0.08787500000107684,
+          "count": 20,
+          "bytes": 2391,
+          "hash": "fa8f4dc31866c77f1ecbdfa12422f470721e23bc1f1aeb5955c6e8c53082fa5f"
+        },
+        {
+          "name": "full-page-20-binary",
+          "firstMs": 0.4755409999997937,
+          "medianMs": 0.29170800000065356,
+          "p95Ms": 0.320292000000336,
+          "count": 20,
+          "bytes": 191981,
+          "hash": "bb9e4e7ae51d13d3570dc034121b3314c5c1e9e0633546fd2b2ac10b271ce60c"
+        }
+      ]
+    },
+    {
+      "engine": "sync",
+      "trial": "2",
+      "moduleMs": 57.75375,
+      "setup": {
+        "sourceTreeMs": 268.801458,
+        "storeConstructionMs": 0.6836249999998927,
+        "bundleBytes": 101248133,
+        "indexBytes": 10295118,
+        "totalMs": 1104.065042
+      },
+      "results": [
+        {
+          "name": "imec-navigation-roots",
+          "firstMs": 4.912917000000107,
+          "medianMs": 0.28241700000012315,
+          "p95Ms": 0.6473750000000109,
+          "count": 14,
+          "bytes": 1170,
+          "hash": "6d173581b267bd754aad8ad54b925955b2b7cdd395b19cd45d42de37a568ad4f"
+        },
+        {
+          "name": "imec-navigation-home",
+          "firstMs": 4.834041999999954,
+          "medianMs": 0.004916999999977634,
+          "p95Ms": 0.008417000000008557,
+          "count": 1,
+          "bytes": 28,
+          "hash": "f0d89fa8cb3c3007d9fda34183d3bbbad4b930f91b3c087ba60544c627791405"
+        },
+        {
+          "name": "imec-navigation-nested",
+          "firstMs": 2.160374999999931,
+          "medianMs": 0.12649999999985084,
+          "p95Ms": 0.14970900000002985,
+          "count": 1,
+          "bytes": 5041,
+          "hash": "1b47b159d23afd88178203ca683f6fb7e268c4968988fa28c6c0156b0fe8eb85"
+        },
+        {
+          "name": "imec-article-cards",
+          "firstMs": 59.44462499999986,
+          "medianMs": 2.2024999999998727,
+          "p95Ms": 2.549624999999878,
+          "count": 15,
+          "bytes": 8013,
+          "hash": "786b32d04d122334ee3dfcd91dc444779088f7cae6906be62880ba5bf6092c32"
+        },
+        {
+          "name": "id-card",
+          "firstMs": 0.09045799999989868,
+          "medianMs": 0.00254199999994853,
+          "p95Ms": 0.005666999999903055,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "url-card",
+          "firstMs": 0.03691600000001927,
+          "medianMs": 0.002624999999852662,
+          "p95Ms": 0.010166000000026543,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "page-20",
+          "firstMs": 11.42595799999981,
+          "medianMs": 8.509874999999965,
+          "p95Ms": 9.550457999999935,
+          "count": 20,
+          "bytes": 2619,
+          "hash": "a293b41b21092dc61a5dfbdfaa04ecee31848cfc04108a4e04c3a6fc8ec86f9a"
+        },
+        {
+          "name": "deep-page-20",
+          "firstMs": 8.49520799999982,
+          "medianMs": 8.482916999999816,
+          "p95Ms": 32.70470799999998,
+          "count": 20,
+          "bytes": 3507,
+          "hash": "7076b0c0532e265ace94a4f775732154d8448f78abe81d101618bc67a8f8f0c4"
+        },
+        {
+          "name": "type-page-20",
+          "firstMs": 0.360374999999749,
+          "medianMs": 0.2953330000000278,
+          "p95Ms": 0.5881250000002183,
+          "count": 20,
+          "bytes": 2571,
+          "hash": "56dbc5fc40adea61a6c13acc0f652d3cc5f321ba587d28f16ebc398fb41574c3"
+        },
+        {
+          "name": "children",
+          "firstMs": 0.06933299999991505,
+          "medianMs": 0.027999999999792635,
+          "p95Ms": 0.032708000000184256,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "9699f13d27508cccea59bf86e7c5c703c4748c66322adc65d1e08a0cb638af0c"
+        },
+        {
+          "name": "all-ids",
+          "firstMs": 10.594749999999749,
+          "medianMs": 8.400292000000263,
+          "p95Ms": 14.332874999999603,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "d452f82e45400bd68aa04a85e7d2625e72f6955c2ab90e17abf5302b2d9d652a"
+        },
+        {
+          "name": "content-filter",
+          "firstMs": 0.28079200000001947,
+          "medianMs": 0.05670800000007148,
+          "p95Ms": 0.06437499999992724,
+          "count": 20,
+          "bytes": 2322,
+          "hash": "e74a189be0e2fcd569df715d00298ad270b476c187dd61bbc872e08b5fb80bdd"
+        },
+        {
+          "name": "full-entry",
+          "firstMs": 0.4942080000000715,
+          "medianMs": 0.013166000000182976,
+          "p95Ms": 0.018832999999631284,
+          "count": 1,
+          "bytes": 12394,
+          "hash": "6e00fa6d1adfb0d0e90efa2620f5d39c3888e832f42b74691f52256850ee983e"
+        },
+        {
+          "name": "full-page-20",
+          "firstMs": 1.4254169999999249,
+          "medianMs": 0.3625409999999647,
+          "p95Ms": 0.4364999999997963,
+          "count": 20,
+          "bytes": 185574,
+          "hash": "2796f7b392310896c29aa7192d2104345337fe618281180827bee4d41a4a5b82"
+        },
+        {
+          "name": "page-20-binary",
+          "firstMs": 7.430582999999842,
+          "medianMs": 4.410957999999937,
+          "p95Ms": 4.911207999999988,
+          "count": 20,
+          "bytes": 3201,
+          "hash": "626175520dc95c138cbc3fd40087f9b74f37980c82bd75803fb4e756f0438e9a"
+        },
+        {
+          "name": "deep-page-20-binary",
+          "firstMs": 4.30141599999979,
+          "medianMs": 4.382917000000361,
+          "p95Ms": 4.457040999999663,
+          "count": 20,
+          "bytes": 2834,
+          "hash": "724fc0b5d67bbf753bea8b1af55b626bff5398479ceb345a6e6382c866151cd7"
+        },
+        {
+          "name": "type-page-20-binary",
+          "firstMs": 0.1884170000002996,
+          "medianMs": 0.14695799999981318,
+          "p95Ms": 0.15675000000010186,
+          "count": 20,
+          "bytes": 2566,
+          "hash": "f0df44046a57d6e335384503b2275ab1161bd66682be63cf10b9fbb9be5aba56"
+        },
+        {
+          "name": "children-binary",
+          "firstMs": 0.039834000000155356,
+          "medianMs": 0.017166999999972177,
+          "p95Ms": 0.018332999999984168,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "ab652a83c65c2388224d6d8de7fcadb68495e0ea303328aabadd41969290c1ef"
+        },
+        {
+          "name": "all-ids-binary",
+          "firstMs": 5.090832999999748,
+          "medianMs": 4.518916999999874,
+          "p95Ms": 4.647000000000389,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "8a7a6b2f7c51d96ba9cc34f4993ab33effc7f6f5148fbb6601302ee99b84a6a2"
+        },
+        {
+          "name": "content-filter-binary",
+          "firstMs": 0.1172500000002401,
+          "medianMs": 0.03479199999992488,
+          "p95Ms": 0.03945800000019517,
+          "count": 20,
+          "bytes": 2391,
+          "hash": "fa8f4dc31866c77f1ecbdfa12422f470721e23bc1f1aeb5955c6e8c53082fa5f"
+        },
+        {
+          "name": "full-page-20-binary",
+          "firstMs": 0.6810409999998228,
+          "medianMs": 0.22550000000001091,
+          "p95Ms": 0.24083400000017718,
+          "count": 20,
+          "bytes": 191981,
+          "hash": "bb9e4e7ae51d13d3570dc034121b3314c5c1e9e0633546fd2b2ac10b271ce60c"
+        }
+      ]
+    },
+    {
+      "engine": "sqlite",
+      "trial": "2",
+      "moduleMs": 52.425083,
+      "setup": {
+        "materializeMs": 2071.69625,
+        "reopenMs": 0.7815420000001723,
+        "databaseBytes": 132546560,
+        "totalMs": 2080.883292
+      },
+      "results": [
+        {
+          "name": "imec-navigation-roots",
+          "firstMs": 3.6003749999999854,
+          "medianMs": 0.33404200000040873,
+          "p95Ms": 0.38104199999997945,
+          "count": 14,
+          "bytes": 1170,
+          "hash": "6d173581b267bd754aad8ad54b925955b2b7cdd395b19cd45d42de37a568ad4f"
+        },
+        {
+          "name": "imec-navigation-home",
+          "firstMs": 0.23487500000010186,
+          "medianMs": 0.06312499999967258,
+          "p95Ms": 0.07529199999999037,
+          "count": 1,
+          "bytes": 28,
+          "hash": "f0d89fa8cb3c3007d9fda34183d3bbbad4b930f91b3c087ba60544c627791405"
+        },
+        {
+          "name": "imec-navigation-nested",
+          "firstMs": 1.8276670000000195,
+          "medianMs": 0.7367500000000291,
+          "p95Ms": 0.8172079999999369,
+          "count": 1,
+          "bytes": 5041,
+          "hash": "481e08b77081445ca3fcd251bd4e7a57120e0a1ffed60a12820358f7eba48e07"
+        },
+        {
+          "name": "imec-article-cards",
+          "error": "A query filter must be an object"
+        },
+        {
+          "name": "id-card",
+          "firstMs": 0.09500000000025466,
+          "medianMs": 0.025916999999935797,
+          "p95Ms": 0.032709000000068045,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "url-card",
+          "firstMs": 0.05116700000007768,
+          "medianMs": 0.02412499999991269,
+          "p95Ms": 0.02787499999976717,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "page-20",
+          "firstMs": 2.6047499999999673,
+          "medianMs": 1.120708000000377,
+          "p95Ms": 1.1755000000002838,
+          "count": 20,
+          "bytes": 3201,
+          "hash": "626175520dc95c138cbc3fd40087f9b74f37980c82bd75803fb4e756f0438e9a"
+        },
+        {
+          "name": "deep-page-20",
+          "firstMs": 8.956666999999925,
+          "medianMs": 8.2981249999998,
+          "p95Ms": 8.409833999999591,
+          "count": 20,
+          "bytes": 2834,
+          "hash": "724fc0b5d67bbf753bea8b1af55b626bff5398479ceb345a6e6382c866151cd7"
+        },
+        {
+          "name": "type-page-20",
+          "firstMs": 0.18895900000006804,
+          "medianMs": 0.11566700000003038,
+          "p95Ms": 0.12429199999996854,
+          "count": 20,
+          "bytes": 2566,
+          "hash": "f0df44046a57d6e335384503b2275ab1161bd66682be63cf10b9fbb9be5aba56"
+        },
+        {
+          "name": "children",
+          "firstMs": 0.07420799999999872,
+          "medianMs": 0.044957999999951426,
+          "p95Ms": 0.05587500000001455,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "ab652a83c65c2388224d6d8de7fcadb68495e0ea303328aabadd41969290c1ef"
+        },
+        {
+          "name": "all-ids",
+          "firstMs": 4.644250000000284,
+          "medianMs": 4.219374999999673,
+          "p95Ms": 4.281041000000187,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "8a7a6b2f7c51d96ba9cc34f4993ab33effc7f6f5148fbb6601302ee99b84a6a2"
+        },
+        {
+          "name": "content-filter",
+          "firstMs": 5.760041999999885,
+          "medianMs": 4.019916000000194,
+          "p95Ms": 4.276582999999846,
+          "count": 20,
+          "bytes": 2391,
+          "hash": "fa8f4dc31866c77f1ecbdfa12422f470721e23bc1f1aeb5955c6e8c53082fa5f"
+        },
+        {
+          "name": "full-entry",
+          "firstMs": 0.47258300000021336,
+          "medianMs": 0.17508299999963128,
+          "p95Ms": 0.19316600000001927,
+          "count": 1,
+          "bytes": 12394,
+          "hash": "6e00fa6d1adfb0d0e90efa2620f5d39c3888e832f42b74691f52256850ee983e"
+        },
+        {
+          "name": "full-page-20",
+          "firstMs": 1.8870830000000751,
+          "medianMs": 1.569250000000011,
+          "p95Ms": 1.785541999999623,
+          "count": 20,
+          "bytes": 191981,
+          "hash": "bb9e4e7ae51d13d3570dc034121b3314c5c1e9e0633546fd2b2ac10b271ce60c"
+        },
+        {
+          "name": "page-20-binary",
+          "firstMs": 2.2319579999998496,
+          "medianMs": 1.1132920000000013,
+          "p95Ms": 1.162499999999909,
+          "count": 20,
+          "bytes": 3201,
+          "hash": "626175520dc95c138cbc3fd40087f9b74f37980c82bd75803fb4e756f0438e9a"
+        },
+        {
+          "name": "deep-page-20-binary",
+          "firstMs": 8.498667000000296,
+          "medianMs": 8.313458000000082,
+          "p95Ms": 8.501040999999987,
+          "count": 20,
+          "bytes": 2834,
+          "hash": "724fc0b5d67bbf753bea8b1af55b626bff5398479ceb345a6e6382c866151cd7"
+        },
+        {
+          "name": "type-page-20-binary",
+          "firstMs": 0.17258399999991525,
+          "medianMs": 0.11616599999979371,
+          "p95Ms": 0.12345800000002782,
+          "count": 20,
+          "bytes": 2566,
+          "hash": "f0df44046a57d6e335384503b2275ab1161bd66682be63cf10b9fbb9be5aba56"
+        },
+        {
+          "name": "children-binary",
+          "firstMs": 0.07137499999998909,
+          "medianMs": 0.04608300000018062,
+          "p95Ms": 0.05449999999973443,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "ab652a83c65c2388224d6d8de7fcadb68495e0ea303328aabadd41969290c1ef"
+        },
+        {
+          "name": "all-ids-binary",
+          "firstMs": 4.6597499999998035,
+          "medianMs": 4.238791999999648,
+          "p95Ms": 4.497791999999663,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "8a7a6b2f7c51d96ba9cc34f4993ab33effc7f6f5148fbb6601302ee99b84a6a2"
+        },
+        {
+          "name": "content-filter-binary",
+          "firstMs": 5.178457999999864,
+          "medianMs": 3.943917000000056,
+          "p95Ms": 4.511417000000165,
+          "count": 20,
+          "bytes": 2391,
+          "hash": "fa8f4dc31866c77f1ecbdfa12422f470721e23bc1f1aeb5955c6e8c53082fa5f"
+        },
+        {
+          "name": "full-page-20-binary",
+          "firstMs": 1.7872500000003129,
+          "medianMs": 1.539708000000246,
+          "p95Ms": 1.687832999999955,
+          "count": 20,
+          "bytes": 191981,
+          "hash": "bb9e4e7ae51d13d3570dc034121b3314c5c1e9e0633546fd2b2ac10b271ce60c"
+        }
+      ]
+    },
+    {
+      "engine": "wasm",
+      "trial": "2",
+      "moduleMs": 52.96525,
+      "setup": {
+        "fullFileReadAndOpenMs": 41.96437499999999,
+        "totalMs": 136.90520800000002
+      },
+      "results": [
+        {
+          "name": "imec-navigation-roots",
+          "firstMs": 16.956874999999997,
+          "medianMs": 0.8182500000000061,
+          "p95Ms": 1.5181249999999977,
+          "count": 14,
+          "bytes": 1170,
+          "hash": "6d173581b267bd754aad8ad54b925955b2b7cdd395b19cd45d42de37a568ad4f"
+        },
+        {
+          "name": "imec-navigation-home",
+          "firstMs": 0.2649160000000279,
+          "medianMs": 0.09429099999999835,
+          "p95Ms": 0.28966700000000856,
+          "count": 1,
+          "bytes": 28,
+          "hash": "f0d89fa8cb3c3007d9fda34183d3bbbad4b930f91b3c087ba60544c627791405"
+        },
+        {
+          "name": "imec-navigation-nested",
+          "firstMs": 2.680999999999983,
+          "medianMs": 1.1259580000000255,
+          "p95Ms": 1.786375000000021,
+          "count": 1,
+          "bytes": 5041,
+          "hash": "481e08b77081445ca3fcd251bd4e7a57120e0a1ffed60a12820358f7eba48e07"
+        },
+        {
+          "name": "imec-article-cards",
+          "error": "A query filter must be an object"
+        },
+        {
+          "name": "id-card",
+          "firstMs": 0.07204200000001038,
+          "medianMs": 0.03100000000000591,
+          "p95Ms": 0.1548750000000041,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "url-card",
+          "firstMs": 0.05483299999997371,
+          "medianMs": 0.06666699999999537,
+          "p95Ms": 0.08537499999999909,
+          "count": 1,
+          "bytes": 97,
+          "hash": "6237bf39418c391f4e38f6d38e46ec6433b1b72e007424fb8519692e556481f1"
+        },
+        {
+          "name": "page-20",
+          "firstMs": 2.623583999999994,
+          "medianMs": 1.7967500000000314,
+          "p95Ms": 1.9614590000000476,
+          "count": 20,
+          "bytes": 3201,
+          "hash": "626175520dc95c138cbc3fd40087f9b74f37980c82bd75803fb4e756f0438e9a"
+        },
+        {
+          "name": "deep-page-20",
+          "firstMs": 12.590125,
+          "medianMs": 10.266875000000027,
+          "p95Ms": 10.668458999999984,
+          "count": 20,
+          "bytes": 2834,
+          "hash": "724fc0b5d67bbf753bea8b1af55b626bff5398479ceb345a6e6382c866151cd7"
+        },
+        {
+          "name": "type-page-20",
+          "firstMs": 0.25683300000002873,
+          "medianMs": 0.1495830000000069,
+          "p95Ms": 0.1800420000000713,
+          "count": 20,
+          "bytes": 2566,
+          "hash": "f0df44046a57d6e335384503b2275ab1161bd66682be63cf10b9fbb9be5aba56"
+        },
+        {
+          "name": "children",
+          "firstMs": 0.12695799999994506,
+          "medianMs": 0.0773340000000644,
+          "p95Ms": 0.08991600000001654,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "ab652a83c65c2388224d6d8de7fcadb68495e0ea303328aabadd41969290c1ef"
+        },
+        {
+          "name": "all-ids",
+          "firstMs": 7.656833000000006,
+          "medianMs": 7.262499999999932,
+          "p95Ms": 7.814874999999915,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "8a7a6b2f7c51d96ba9cc34f4993ab33effc7f6f5148fbb6601302ee99b84a6a2"
+        },
+        {
+          "name": "content-filter",
+          "firstMs": 6.909667000000127,
+          "medianMs": 5.736250000000155,
+          "p95Ms": 6.236374999999953,
+          "count": 20,
+          "bytes": 2391,
+          "hash": "fa8f4dc31866c77f1ecbdfa12422f470721e23bc1f1aeb5955c6e8c53082fa5f"
+        },
+        {
+          "name": "full-entry",
+          "firstMs": 0.5629999999998745,
+          "medianMs": 0.23204199999986486,
+          "p95Ms": 0.35445900000013353,
+          "count": 1,
+          "bytes": 12394,
+          "hash": "6e00fa6d1adfb0d0e90efa2620f5d39c3888e832f42b74691f52256850ee983e"
+        },
+        {
+          "name": "full-page-20",
+          "firstMs": 2.7978749999999764,
+          "medianMs": 2.0556249999999636,
+          "p95Ms": 2.2339999999999236,
+          "count": 20,
+          "bytes": 191981,
+          "hash": "bb9e4e7ae51d13d3570dc034121b3314c5c1e9e0633546fd2b2ac10b271ce60c"
+        },
+        {
+          "name": "page-20-binary",
+          "firstMs": 1.9939999999999145,
+          "medianMs": 1.7715829999999642,
+          "p95Ms": 1.870290999999952,
+          "count": 20,
+          "bytes": 3201,
+          "hash": "626175520dc95c138cbc3fd40087f9b74f37980c82bd75803fb4e756f0438e9a"
+        },
+        {
+          "name": "deep-page-20-binary",
+          "firstMs": 10.301375000000007,
+          "medianMs": 10.107250000000022,
+          "p95Ms": 10.272500000000036,
+          "count": 20,
+          "bytes": 2834,
+          "hash": "724fc0b5d67bbf753bea8b1af55b626bff5398479ceb345a6e6382c866151cd7"
+        },
+        {
+          "name": "type-page-20-binary",
+          "firstMs": 0.2203340000000935,
+          "medianMs": 0.14720799999986411,
+          "p95Ms": 0.2649579999999787,
+          "count": 20,
+          "bytes": 2566,
+          "hash": "f0df44046a57d6e335384503b2275ab1161bd66682be63cf10b9fbb9be5aba56"
+        },
+        {
+          "name": "children-binary",
+          "firstMs": 0.094333000000006,
+          "medianMs": 0.065166999999974,
+          "p95Ms": 0.07175000000006548,
+          "count": 50,
+          "bytes": 4899,
+          "hash": "ab652a83c65c2388224d6d8de7fcadb68495e0ea303328aabadd41969290c1ef"
+        },
+        {
+          "name": "all-ids-binary",
+          "firstMs": 6.814791999999898,
+          "medianMs": 7.151041999999961,
+          "p95Ms": 7.3651669999999285,
+          "count": 11373,
+          "bytes": 341191,
+          "hash": "8a7a6b2f7c51d96ba9cc34f4993ab33effc7f6f5148fbb6601302ee99b84a6a2"
+        },
+        {
+          "name": "content-filter-binary",
+          "firstMs": 6.396750000000111,
+          "medianMs": 5.662041000000045,
+          "p95Ms": 5.884540999999899,
+          "count": 20,
+          "bytes": 2391,
+          "hash": "fa8f4dc31866c77f1ecbdfa12422f470721e23bc1f1aeb5955c6e8c53082fa5f"
+        },
+        {
+          "name": "full-page-20-binary",
+          "firstMs": 2.3362919999999576,
+          "medianMs": 2.0336669999996957,
+          "p95Ms": 2.2531670000003032,
+          "count": 20,
+          "bytes": 191981,
+          "hash": "bb9e4e7ae51d13d3570dc034121b3314c5c1e9e0633546fd2b2ac10b271ce60c"
+        }
+      ]
+    }
+  ]
+}
