@@ -40,6 +40,12 @@ import {
 } from './UpdatePrecondition.js'
 import {hashFieldValue} from '../util/Json.js'
 import {HttpError} from '../HttpError.js'
+import type {User} from '../User.js'
+import {
+  MetadataField,
+  metadataWithAudit,
+  metadataAuditKeys
+} from '#/field/metadata/MetadataField.js'
 import {aliasUrlsFromData, aliasUrl} from './EntryAliases.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
@@ -194,6 +200,7 @@ export class EntryTransaction {
   #tx: SourceTransaction
   #fileChanges = [] as CommitChange[]
   #policy: MutationAuthorization
+  #user?: User
   #changedUrlClaimOwners = new Set<string>()
   #urlClaimUpdates = new Map<string, EntryTransactionUrlClaim>()
 
@@ -202,7 +209,8 @@ export class EntryTransaction {
     reader: MutationReader,
     source: Source,
     from: ReadonlyTree,
-    policy = Policy.ALLOW_ALL
+    policy = Policy.ALLOW_ALL,
+    user?: User
   ) {
     if (reader.revision !== from.sha)
       throw new ShaMismatchError(reader.revision, from.sha)
@@ -213,6 +221,7 @@ export class EntryTransaction {
     this.#workingTree = from
     this.#tx = new SourceTransaction(source, from)
     this.#policy = new MutationAuthorization(policy)
+    this.#user = user ? structuredClone(user) : undefined
   }
 
   get empty() {
@@ -436,8 +445,20 @@ export class EntryTransaction {
     }
   }
 
-  async update({id, locale, status, set, precondition}: Op<UpdateMutation>) {
+  async update({
+    id,
+    locale,
+    status,
+    set,
+    precondition,
+    audit
+  }: Op<UpdateMutation>) {
     const expected = readUpdatePrecondition(set, precondition)
+    if (
+      audit !== undefined &&
+      (!expected || !['update', 'publish'].includes(audit))
+    )
+      throw new HttpError(400, 'Audit stamping requires a guarded update')
     if (expected) set = structuredClone(set)
     const entry = (await this.#entries({id, locale, status}))[0]
     assert(entry, `Entry not found: ${id}`)
@@ -462,6 +483,27 @@ export class EntryTransaction {
       })
     )
     let data = {...entry.data, ...fieldUpdates}
+    if (audit) {
+      if (
+        !(
+          Type.fields(this.#config.schema[entry.type]).metadata instanceof
+          MetadataField
+        )
+      )
+        throw new HttpError(400, 'Audit metadata is not configured')
+      const auditData = metadataWithAudit({
+        action: audit,
+        user: this.#user,
+        now: new Date(),
+        value: entry.data.metadata
+      })
+      data.metadata = {
+        ...(isRecord(data.metadata) ? data.metadata : {}),
+        ...Object.fromEntries(
+          metadataAuditKeys.map(key => [key, auditData[key]])
+        )
+      }
+    }
     const desiredPath = slugify(
       (data.path as string) ?? entry.data.path ?? entry.path
     )

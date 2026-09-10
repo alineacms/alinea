@@ -5,6 +5,8 @@ import type {
   EntryReferenceScan
 } from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
+import {updatePrecondition} from '#/core/db/UpdatePrecondition.js'
+import {canonicalJson} from '#/core/util/Json.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {FieldBeforeSaveAction} from '#/core/Field.js'
@@ -18,11 +20,15 @@ import {createFilePatch} from '#/core/source/FilePatch.js'
 import {Type, type EntryDefaultView} from '#/core/Type.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
-import {entries} from '#/core/util/Objects.js'
+import {entries, isRecord} from '#/core/util/Objects.js'
+import {
+  MetadataField,
+  metadataAuditKeys
+} from '#/field/metadata/MetadataField.js'
 import {join} from '#/core/util/Paths.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
-import {Atom, atom, Getter} from 'jotai'
+import {Atom, atom, Getter, type Setter} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import {clientAtom, configAtom, graphAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
@@ -110,6 +116,49 @@ function prepareData(
       now: new Date()
     })
   }
+}
+
+class EditorNode extends ReactiveNode<object> {
+  readonly baseline
+  constructor(
+    value: Record<string, unknown>,
+    entry: Entry,
+    readOnly: boolean,
+    guarded: boolean,
+    config: Config
+  ) {
+    super(value, readOnly)
+    this.baseline = atom({
+      entry: structuredClone(entry),
+      value: structuredClone(value),
+      guarded,
+      config
+    })
+  }
+}
+
+/** Update semantics clear missing fields to null, but ignore unchanged defaults. */
+function editedFields(
+  base: Record<string, unknown>,
+  next: Record<string, unknown>
+) {
+  return Object.fromEntries(
+    [...new Set([...Object.keys(base), ...Object.keys(next)])]
+      .filter(
+        key =>
+          canonicalJson(base[key] ?? null) !== canonicalJson(next[key] ?? null)
+      )
+      .map(key => [key, next[key] ?? null])
+  )
+}
+
+function withoutAudit(value: unknown): unknown {
+  if (!isRecord(value)) return value
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([key]) => !metadataAuditKeys.some(audit => audit === key)
+    )
+  )
 }
 
 export class EntryLocaleAtoms {
@@ -242,7 +291,13 @@ export class EntryLocaleAtoms {
       ...entry.data,
       ...(isUntranslated ? {path: undefined} : undefined)
     })
-    return new ReactiveNode<object>(value, readOnly)
+    return new EditorNode(
+      value,
+      entry,
+      readOnly,
+      !isUntranslated && version?.type !== 'history',
+      config
+    )
   })
   richTextImages = atom(async get => {
     const entry = await get(this.selectedEntry)
@@ -377,44 +432,31 @@ export class EntryLocaleAtoms {
     })
   })
 
-  saveDraft = atom(null, async (get, set, node: ReactiveNode<object>) => {
-    const dataState = get(this.entry.data)
-    const {id, type} = dataState
-    const policy = get(policyAtom)
-    const config = get(configAtom)
-    const typeConfig = config.schema[type]
-    assert(typeConfig, `Type "${type}" not found in config`)
-    const activeEntry = dataState.entries.find(entry => {
-      return entry.locale === this.requestedLocale && entry.active
-    })
-    assert(activeEntry, `No active entry for locale "${this.requestedLocale}"`)
-    const graph = get(graphAtom)
-    const {checkpoint, data} = prepareData(
-      get,
-      node,
-      typeConfig,
-      'update',
-      get(userAtom)
-    )
-    policy.assert(Permission.Update, activeEntry)
-    const saved = await graph.create({
-      type: typeConfig,
-      id,
-      locale: this.requestedLocale,
-      status: 'draft',
-      set: data,
-      overwrite: true,
-      select: Entry.data
-    })
-    set(node.rebase, {checkpoint, saved})
-  })
+  saveDraft = atom(null, (get, set, node: ReactiveNode<object>) =>
+    this.#saveEdits(get, set, node, 'draft')
+  )
 
-  publishEdits = atom(null, async (get, set, node: ReactiveNode<object>) => {
+  publishEdits = atom(null, (get, set, node: ReactiveNode<object>) =>
+    this.#saveEdits(get, set, node, 'published')
+  )
+
+  async #saveEdits(
+    get: Getter,
+    set: Setter,
+    node: ReactiveNode<object>,
+    status: 'draft' | 'published'
+  ) {
+    assert(node instanceof EditorNode, 'Missing editor mutation baseline')
+    const baseline = get(node.baseline)
     const dataState = get(this.entry.data)
     const {id, type} = dataState
     const policy = get(policyAtom)
     const config = get(configAtom)
     const typeConfig = config.schema[type]
+    assert(
+      baseline.config === config,
+      'Editor configuration changed; reopen this entry before saving'
+    )
     assert(typeConfig, `Type "${type}" not found in config`)
     const activeEntry = dataState.entries.find(entry => {
       return entry.locale === this.requestedLocale && entry.active
@@ -425,23 +467,87 @@ export class EntryLocaleAtoms {
       get,
       node,
       typeConfig,
-      'publish',
+      status === 'draft' ? 'update' : 'publish',
       get(userAtom)
     )
-    policy.assert(Permission.Publish, activeEntry)
-    const saved = await graph.create({
-      type: typeConfig,
-      id,
-      locale: this.requestedLocale,
-      status: 'published',
-      set: data,
-      overwrite: true,
-      select: Entry.data
+    policy.assert(
+      status === 'draft' ? Permission.Update : Permission.Publish,
+      activeEntry
+    )
+    assert(
+      baseline.entry.id === id &&
+        baseline.entry.locale === this.requestedLocale,
+      'Editor baseline belongs to another entry'
+    )
+    const changes = editedFields(baseline.value, data)
+    const audit =
+      Type.fields(typeConfig).metadata instanceof MetadataField
+        ? status === 'draft'
+          ? 'update'
+          : 'publish'
+        : undefined
+    if (
+      audit &&
+      canonicalJson(withoutAudit(baseline.value.metadata) ?? null) ===
+        canonicalJson(withoutAudit(data.metadata) ?? null)
+    )
+      delete changes.metadata
+    const sameVersion =
+      baseline.guarded &&
+      baseline.entry.status === status &&
+      !(type === 'MediaFile' && Object.hasOwn(changes, 'location'))
+    let saved: Entry
+    if (sameVersion) {
+      if (Object.keys(changes).length) {
+        const precondition = await updatePrecondition(
+          {...baseline.entry, versionStatus: baseline.entry.status},
+          baseline.entry.data,
+          changes
+        )
+        await graph.mutate([
+          {
+            op: 'update',
+            id,
+            locale: this.requestedLocale,
+            status,
+            set: changes,
+            precondition,
+            ...(audit ? {audit} : {})
+          }
+        ])
+      }
+      saved = await graph.get({
+        id,
+        locale: this.requestedLocale,
+        status,
+        select: Entry
+      })
+    } else {
+      saved = await graph.create({
+        type: typeConfig,
+        id,
+        locale: this.requestedLocale,
+        status,
+        set: data,
+        overwrite: true,
+        select: Entry
+      })
+    }
+    const value = Type.withInitialValue(typeConfig, {
+      ...Type.initialValue(typeConfig),
+      ...saved.data
     })
-    set(node.rebase, {checkpoint, saved})
-  })
+    set(node.rebase, {checkpoint, saved: value})
+    set(node.baseline, {
+      entry: structuredClone(saved),
+      value: structuredClone(value),
+      guarded: true,
+      config
+    })
+  }
 
   saveTranslation = atom(null, async (get, set, node: ReactiveNode<object>) => {
+    assert(node instanceof EditorNode, 'Missing editor mutation baseline')
     assert(
       this.requestedLocale,
       `Cannot translate entry "${this.entry.id}" without a locale`
@@ -465,6 +571,10 @@ export class EntryLocaleAtoms {
     }
     const config = get(configAtom)
     const type = config.schema[dataState.type]
+    assert(
+      get(node.baseline).config === config,
+      'Editor configuration changed; reopen this entry before saving'
+    )
     assert(type, `Type "${dataState.type}" not found in config`)
     const {checkpoint, data} = prepareData(
       get,
@@ -481,9 +591,19 @@ export class EntryLocaleAtoms {
       locale: this.requestedLocale,
       status: config.enableDrafts ? 'draft' : 'published',
       set: data,
-      select: Entry.data
+      select: Entry
     })
-    set(node.rebase, {checkpoint, saved})
+    const value = Type.withInitialValue(type, {
+      ...Type.initialValue(type),
+      ...saved.data
+    })
+    set(node.rebase, {checkpoint, saved: value})
+    set(node.baseline, {
+      entry: structuredClone(saved),
+      value: structuredClone(value),
+      guarded: true,
+      config
+    })
   })
 
   #activeEntry(get: Getter) {

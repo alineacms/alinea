@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import type {User} from '#/core/User.js'
 import {
   applyPreview,
   decodePreviewRequest
@@ -482,11 +483,15 @@ export class NodeReplica extends Graph {
    */
   request(
     mutations: ReadonlyArray<Mutation>,
-    policy: Policy
+    policy: Policy,
+    user?: User
   ): Promise<CommitRequest> {
     if (this.#closed)
       return Promise.reject(new Error('SQLite replica is closed'))
-    const request = this.#updates.then(() => this.#request(mutations, policy))
+    user = user ? structuredClone(user) : undefined
+    const request = this.#updates.then(() =>
+      this.#request(mutations, policy, user)
+    )
     this.#updates = request.catch(() => {})
     return request
   }
@@ -505,7 +510,8 @@ export class NodeReplica extends Graph {
 
   async #request(
     mutations: ReadonlyArray<Mutation>,
-    policy: Policy
+    policy: Policy,
+    user?: User
   ): Promise<CommitRequest> {
     if (this.#closed || !this.#current)
       throw new Error('SQLite replica is closed or not ready')
@@ -523,7 +529,8 @@ export class NodeReplica extends Graph {
           nodeDatabase(sqlite),
           snapshot.identity,
           mutations,
-          policy
+          policy,
+          user
         )
         if (this.#closed) throw new Error('SQLite replica is closed')
         return request

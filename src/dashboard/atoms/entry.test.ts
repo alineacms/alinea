@@ -298,3 +298,111 @@ test('publishing reconciles transaction-generated media aliases immediately', as
   })
   expect(store.get(node.isDirty)).toBeFalse()
 })
+
+test("editor saves guard the originally loaded fields and preserve another editor's independent changes", async () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title'), summary: Field.text('Summary')}
+  })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const created = await db.create({
+    type: Page,
+    set: {title: 'Original', summary: 'Original summary'}
+  })
+  async function editor() {
+    const store = createDashboardStore(config, db)
+    await store.get(authReady)
+    const locale = (await store.get(entryAtoms(created._id))).locales(null)
+    const node = await store.get(locale.selectedNode)
+    store.set(locale.currentlyEditing, node)
+    return {store, locale, node}
+  }
+  const [one, two, stale] = await Promise.all([editor(), editor(), editor()])
+  one.store.set(one.node.field('title'), 'First editor')
+  two.store.set(two.node.field('summary'), 'Second editor')
+  stale.store.set(stale.node.field('title'), 'Stale editor')
+  using mutate = spyOn(db, 'mutate')
+  await one.store.set(one.locale.publishEdits, one.node)
+  await two.store.set(two.locale.publishEdits, two.node)
+  expect(mutate.mock.calls[0][0]).toEqual([
+    expect.objectContaining({
+      op: 'update',
+      set: {title: 'First editor'},
+      precondition: expect.objectContaining({
+        fields: {title: expect.any(String)}
+      })
+    })
+  ])
+  expect(mutate.mock.calls[1][0]).toEqual([
+    expect.objectContaining({
+      op: 'update',
+      set: {summary: 'Second editor'},
+      precondition: expect.objectContaining({
+        fields: {summary: expect.any(String)}
+      })
+    })
+  ])
+  expect(await db.get({id: created._id, select: Entry.data})).toMatchObject({
+    title: 'First editor',
+    summary: 'Second editor'
+  })
+  expect(two.store.get(two.node.value)).toMatchObject({
+    title: 'First editor',
+    summary: 'Second editor'
+  })
+  await expect(
+    stale.store.set(stale.locale.publishEdits, stale.node)
+  ).rejects.toThrow('Field changed while editing')
+  expect(stale.store.get(stale.node.isDirty)).toBeTrue()
+  expect(stale.store.get(stale.node.value)).toMatchObject({
+    title: 'Stale editor'
+  })
+  // A successful save advances only this editor's baseline for its next change.
+  two.store.set(two.node.field('summary'), 'Second save')
+  await two.store.set(two.locale.publishEdits, two.node)
+  expect(await db.get({id: created._id, select: Entry.data})).toMatchObject({
+    title: 'First editor',
+    summary: 'Second save'
+  })
+  two.store.set(two.node.field('summary'), 'Not submitted')
+  two.store.set(configAtom, {...config})
+  const calls = mutate.mock.calls.length
+  await expect(
+    two.store.set(two.locale.publishEdits, two.node)
+  ).rejects.toThrow('Editor configuration changed')
+  expect(mutate.mock.calls).toHaveLength(calls)
+  expect(two.store.get(two.node.isDirty)).toBeTrue()
+})
+
+test('draft creation remains structural and subsequent edits target the captured draft', async () => {
+  const {db, parent, store} = await createDashboardAtomFixture()
+  await store.get(authReady)
+  const locale = (await store.get(entryAtoms(parent._id))).locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  store.set(node.field('title'), 'Draft one')
+  using mutate = spyOn(db, 'mutate')
+  await store.set(locale.saveDraft, node)
+  store.set(node.field('title'), 'Draft two')
+  await store.set(locale.saveDraft, node)
+  expect(mutate.mock.calls.at(-1)![0]).toEqual([
+    expect.objectContaining({
+      op: 'update',
+      status: 'draft',
+      set: {title: 'Draft two'},
+      precondition: expect.any(Object)
+    })
+  ])
+  expect(
+    await db.get({id: parent._id, status: 'draft', select: Entry.title})
+  ).toBe('Draft two')
+})

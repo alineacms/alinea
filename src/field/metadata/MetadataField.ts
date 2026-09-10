@@ -155,12 +155,19 @@ function user(label: string): MetadataUserField {
   })
 }
 
-function metadataWithAudit({
+export const metadataAuditKeys = [
+  'createdAt',
+  'createdBy',
+  'updatedAt',
+  'updatedBy'
+] as const
+
+export function metadataWithAudit({
   action,
   now,
   user,
   value
-}: FieldBeforeSaveContext<Metadata>) {
+}: Omit<FieldBeforeSaveContext<Metadata>, 'value'> & {value: unknown}) {
   const source: Record<string, unknown> = isRecord(value) ? value : {}
   const timestamp = Math.floor(now.getTime() / 1000)
   const actor = metadataAuditUser(user)

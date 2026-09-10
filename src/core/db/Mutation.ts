@@ -34,6 +34,8 @@ export interface UpdateMutation {
   status: EntryStatus
   set: Record<string, unknown>
   precondition?: UpdatePrecondition
+  /** Stamp built-in audit fields from the trusted preparation context. */
+  audit?: 'update' | 'publish'
 }
 
 export interface RemoveMutation {

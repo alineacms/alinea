@@ -6,6 +6,7 @@ import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
@@ -174,11 +175,16 @@ export class DevDB extends WritableGraph {
     return this.#replica.referencesTo(query)
   }
 
-  async request(mutations: ReadonlyArray<Mutation>, policy = Policy.ALLOW_ALL) {
+  async request(
+    mutations: ReadonlyArray<Mutation>,
+    policy = Policy.ALLOW_ALL,
+    user?: User
+  ) {
+    user = user ? structuredClone(user) : undefined
     if (this.#closed) throw new Error('Dev database is closed')
     await this.sync()
     if (!this.#replica) throw new Error('Dev database is not ready')
-    return this.#replica.request(mutations, policy)
+    return this.#replica.request(mutations, policy, user)
   }
 
   async watchFiles() {

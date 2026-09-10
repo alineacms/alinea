@@ -5,6 +5,7 @@ import type {SyncApi, UploadMetadata, UploadResponse} from '../Connection.js'
 import {Entry} from '../Entry.js'
 import type {AnyQueryResult, GraphQuery} from '../Graph.js'
 import type {Policy} from '../Role.js'
+import type {User} from '../User.js'
 import type {ChangesBatch} from '../source/Change.js'
 import {MemorySource} from '../source/MemorySource.js'
 import type {GetBlobsOptions} from '../source/Source.js'
@@ -118,7 +119,12 @@ export class LocalDB extends WritableGraph {
     )
   }
 
-  async request(mutations: ReadonlyArray<Mutation>, policy?: Policy) {
+  async request(
+    mutations: ReadonlyArray<Mutation>,
+    policy?: Policy,
+    user?: User
+  ) {
+    user = user ? structuredClone(user) : undefined
     await this.sync()
     const from = await this.source.getTree()
     const tx = new EntryTransaction(
@@ -126,7 +132,8 @@ export class LocalDB extends WritableGraph {
       this.index.mutationReader(),
       this.source,
       from,
-      policy
+      policy,
+      user
     )
     await tx.apply(mutations)
     return tx.toRequest()

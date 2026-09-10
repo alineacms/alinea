@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {EntryTransaction} from '#/core/db/EntryTransaction.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -20,8 +21,10 @@ export async function sqlMutationRequest(
   db: Database,
   identity: CheckpointIdentity,
   mutations: ReadonlyArray<Mutation>,
-  policy: Policy
+  policy: Policy,
+  user?: User
 ): Promise<CommitRequest> {
+  user = user ? structuredClone(user) : undefined
   const prepared = new Error('Roll back mutation preparation')
   let request: CommitRequest | undefined
   try {
@@ -44,7 +47,8 @@ export async function sqlMutationRequest(
           reader,
           source,
           await source.getTree(),
-          policy
+          policy,
+          user
         )
         await transaction.apply(mutations)
         request = await transaction.toRequest()

@@ -28,6 +28,7 @@ function configuration(localized = false) {
       Page: Config.document('Page', {
         fields: {
           title: Field.text('Title'),
+          metadata: Field.metadata(),
           summary: Field.text('Summary'),
           shared: Field.text('Shared', {shared: true})
         }
@@ -73,6 +74,7 @@ test('SQL guarded updates merge independently, record read checks and roll back 
     }
   }
   const first = await mutation({title: 'First'})
+  first.audit = 'publish'
   const second = await mutation({summary: 'Second'})
   await expect(
     sqlMutationRequest(
@@ -88,7 +90,13 @@ test('SQL guarded updates merge independently, record read checks and roll back 
     db,
     identity,
     [first],
-    Policy.ALLOW_ALL
+    Policy.ALLOW_ALL,
+    {
+      sub: 'sql-user',
+      name: 'SQL verified actor',
+      email: 'sql@example.com',
+      roles: []
+    }
   )
   expect(request.authorization).toContainEqual(
     expect.objectContaining({
@@ -115,7 +123,10 @@ test('SQL guarded updates merge independently, record read checks and roll back 
   const {runtime} = await openCheckpoint(config, db, identity)
   expect(await runtime.get({id: 'a', select: Entry.data})).toMatchObject({
     title: 'First',
-    summary: 'Second'
+    summary: 'Second',
+    metadata: {
+      createdBy: {name: 'SQL verified actor', email: 'sql@example.com'}
+    }
   })
 })
 

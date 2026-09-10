@@ -6,6 +6,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
+import type {User} from '#/core/User.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import type {NodeReplica} from '../driver/NodeReplica.js'
 import type {PayloadBatchRequest} from '../replica/PayloadBatch.js'
@@ -70,8 +71,12 @@ export class ReplicaDatabase extends WritableGraph implements HandlerDatabase {
     return this.sha
   }
 
-  request(mutations: ReadonlyArray<Mutation>, policy = Policy.ALLOW_ALL) {
-    return this.replica.request(mutations, policy)
+  request(
+    mutations: ReadonlyArray<Mutation>,
+    policy = Policy.ALLOW_ALL,
+    user?: User
+  ) {
+    return this.replica.request(mutations, policy, user)
   }
 
   write(request: CommitRequest) {

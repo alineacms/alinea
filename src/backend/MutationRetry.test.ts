@@ -48,6 +48,7 @@ function fixture(
     conflictBeforeAcceptance: false,
     beforePrepare: undefined as ((db: LocalDB) => Promise<void>) | undefined,
     principal: 'user',
+    name: 'Verified user',
     roles: ['admin'],
     lastTransaction: undefined as CommitTransaction | undefined
   }
@@ -85,7 +86,12 @@ function fixture(
             return {
               ...ctx,
               token: 'token',
-              user: {sub: state.principal, roles: state.roles}
+              user: {
+                sub: state.principal,
+                roles: state.roles,
+                name: state.name,
+                email: 'verified@example.com'
+              }
             }
           },
           receipt: supported
@@ -405,4 +411,74 @@ test('context-bound field edits merge independent changes and reject same-field 
   await expect(
     f.client.mutate([second], 'after-move', expected)
   ).rejects.toThrow('structure changed')
+})
+
+test('guarded audit stamping uses the verified actor, preserves creation history and does not introduce cross-field conflicts', async () => {
+  const f = fixture(true, {namespace: 'preview', epoch: '1'})
+  await f.client.mutate(create, 'create-audit')
+  const original = f.authority.index.findFirst(entry => entry.id === 'entry')!
+  const expected: MutationContext = {
+    project: 'project',
+    namespace: 'preview',
+    epoch: '1',
+    principal: 'user',
+    schemaId: 'schema',
+    configId: 'config',
+    baseRevision: f.authority.sha
+  }
+  async function update(
+    set: Record<string, unknown>,
+    entry = original
+  ): Promise<Mutation> {
+    return {
+      op: 'update',
+      id: 'entry',
+      locale: null,
+      status: 'published',
+      set,
+      audit: 'publish',
+      precondition: await updatePrecondition(
+        {...entry, versionStatus: entry.status},
+        entry.data,
+        set
+      )
+    }
+  }
+  await f.client.mutate(
+    [await update({title: 'Audited'})],
+    'audit-one',
+    expected
+  )
+  f.state.name = 'Renamed verified user'
+  await f.client.mutate(
+    [await update({summary: 'Independent'})],
+    'audit-two',
+    expected
+  )
+  let current = f.authority.index.findFirst(entry => entry.id === 'entry')!
+  expect(current.data.metadata).toMatchObject({
+    createdBy: {name: 'Verified user', email: 'verified@example.com'},
+    updatedBy: {name: 'Renamed verified user', email: 'verified@example.com'}
+  })
+  const forged = await update(
+    {
+      metadata: {
+        title: 'SEO title',
+        createdAt: 1,
+        createdBy: {name: 'Forged', email: 'fake'},
+        updatedAt: 1
+      }
+    },
+    current
+  )
+  const accepted = await f.client.mutate([forged], 'audit-forgery')
+  current = f.authority.index.findFirst(entry => entry.id === 'entry')!
+  expect(current.data.metadata).toMatchObject({
+    title: 'SEO title',
+    createdBy: {name: 'Verified user'},
+    updatedBy: {name: 'Renamed verified user'}
+  })
+  f.state.name = 'Another name'
+  expect(await f.client.mutate([forged], 'audit-forgery')).toEqual(accepted)
+  expect(f.authority.sha).toBe(accepted.sha)
 })

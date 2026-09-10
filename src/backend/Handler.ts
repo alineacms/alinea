@@ -118,7 +118,8 @@ export interface HandlerDatabase extends WritableGraph {
   getTreeIfDifferent(sha: string): ReturnType<Source['getTreeIfDifferent']>
   request(
     mutations: ReadonlyArray<Mutation>,
-    policy?: Policy
+    policy?: Policy,
+    user?: User
   ): Promise<CommitRequest>
   write(request: CommitRequest): Promise<{sha: string}>
 }
@@ -476,7 +477,7 @@ export function createHandler({
           if (expected && expected.baseRevision !== local.sha && !rebase)
             throw new HttpError(409, 'Pending mutation base revision changed')
           const request = {
-            ...(await local.request(mutations, policy)),
+            ...(await local.request(mutations, policy, user.claims)),
             user: user.claims,
             ...(transaction ? {transaction} : {})
           }

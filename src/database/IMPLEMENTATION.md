@@ -476,6 +476,30 @@ untouched shared values over a translation's newer source data. Whole collection
 still use one field hash; stable-item operation routing and dashboard generation
 of these preconditions remain outstanding.
 
+Dashboard editor nodes now retain their loaded entry and initialized form baseline
+in a Jotai atom, independent of subsequent index refreshes. Same-version saves
+diff only changed top-level fields and build guards from that original raw entry;
+they no longer replace every field via create/overwrite. Successful saves refresh
+the baseline and rebase edits typed while saving onto the returned ready entry;
+conflicts keep the form dirty. Config replacement rejects the old form rather
+than reinterpreting it. Draft creation, version transitions, history restoration
+and media-file replacement still use structural creation semantics. Translation
+creation advances the node to its new locale/version baseline.
+
+Automatic metadata audits are excluded from the user's field diff when no actual
+metadata was edited. Guarded updates request an audit action instead: mutation
+preparation receives a detached trusted user from the handler and stamps the
+built-in audit keys against current stored metadata after the user-field checks.
+Client-provided audit actors/timestamps cannot replace those stamps or existing
+creation history on this path. This avoids updatedAt becoming a shared conflict
+for every otherwise independent edit. Local optimistic preparation without an
+authenticated user is provisional; the authority stamps its verified actor.
+Editor, HTTP and SQL tests cover independent loaded forms, stale same-field
+errors, advanced baselines, in-flight typing, normalized media aliases and audit
+actor/creation-history preservation. SQL worker/queue cutover, durable submission,
+captured whole-revision context for structural editor actions and atomic ready
+state publication remain required.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit
