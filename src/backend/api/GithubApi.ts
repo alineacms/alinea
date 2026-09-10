@@ -17,6 +17,7 @@ import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
 import {join} from '#/core/util/Paths.js'
+import {gitReceipt, readGitReceipt, type GitReceipt} from './GitReceipt.js'
 
 export interface GithubOptions extends GithubSourceOptions {}
 
@@ -33,7 +34,17 @@ export class GithubApi
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
+    request = structuredClone(request)
+    const receipt = await gitReceipt(this.#options, request)
     const currentCommit = await this.#getLatestCommitOid()
+    if (receipt) {
+      const previous = await this.#getFileContentAtCommit(
+        receipt.path,
+        currentCommit,
+        false
+      )
+      if (previous !== undefined) return readGitReceipt(previous, receipt)
+    }
     const currentSha = await this.shaAt(currentCommit)
 
     if (currentSha !== request.fromSha)
@@ -48,7 +59,8 @@ export class GithubApi
     const newCommit = await this.#applyChangesToRepo(
       currentCommit,
       request.changes,
-      commitMessage
+      commitMessage,
+      receipt
     )
 
     return {sha: await this.shaAt(newCommit)}
@@ -185,7 +197,8 @@ export class GithubApi
 
   async #getFileContentAtCommit(
     file: string,
-    ref: string
+    ref: string,
+    relative = true
   ): Promise<string | undefined> {
     const {owner, repo, authToken, rootDir} = this.#options
     const result = await this.#graphQL(
@@ -198,7 +211,11 @@ export class GithubApi
         }
       }
     }`,
-      {owner, repo, expression: `${ref}:${join(rootDir, file)}`},
+      {
+        owner,
+        repo,
+        expression: `${ref}:${relative ? join(rootDir, file) : file}`
+      },
       authToken
     )
     return result.data.repository.object?.text
@@ -207,9 +224,22 @@ export class GithubApi
   async #applyChangesToRepo(
     expectedHeadOid: string,
     changes: Array<CommitChange>,
-    commitMessage: string
+    commitMessage: string,
+    receipt?: GitReceipt
   ): Promise<string> {
     const {additions, deletions} = await this.#processChanges(changes)
+    if (
+      [...additions, ...deletions].some(
+        change =>
+          change.path === '.alinea' ||
+          change.path === '.alinea/receipts' ||
+          change.path.startsWith('.alinea/receipts/')
+      )
+    )
+      throw new HttpError(400, 'Mutation targets reserved Git receipt storage')
+    if (receipt) {
+      additions.push({path: receipt.path, contents: btoa(receipt.contents)})
+    }
     const {owner, repo, branch, authToken} = this.#options
     return this.#graphQL(
       `mutation CreateCommitOnBranch($input: CreateCommitOnBranchInput!) {

@@ -371,9 +371,26 @@ Before/after source roots are retained for future delivery. Tests cover independ
 stale edits, whole-transaction conflicts, reopened retries, revocation and rollback.
 Writes require read/update rights and publish rights for published versions;
 path/metadata/aliases and derived structural changes are rejected pending the
-structural stage. Full Graph mutation routing, Git-carried durable receipts,
+structural stage. Full Graph mutation routing, production Git receipt integration,
 outbox delivery, concurrent-connection retry policy and production authority
 configuration remain outstanding; dev writes still use the existing Git/FS path.
+
+`GithubApi.write` now supports opt-in source-carried transaction receipts. The
+trusted caller supplies namespace, epoch, transaction ID and the digest of the
+original authorized request. A hashed path binds these to repository, branch,
+content location and authenticated principal; it exposes neither principal nor
+transaction ID. The receipt and content changes share the existing expected-head
+Git commit, outside the content tree in `.alinea/receipts`. A fresh adapter checks
+the receipt at a pinned head before checking the old content SHA, recovering a
+lost response without another write. Changed digests and corrupt receipts fail
+closed; content/media mutations cannot target receipt storage. Mocked transport
+tests cover lost responses, restarted adapters, concurrent CAS and identity
+isolation. The caller must still reauthorize every retry and compute the digest
+itself; this is not yet wired through browser Graph requests. Receipts retain the
+prepared target content SHA, not a journal/outbox. Force-push/receipt deletion
+requires a new epoch; automatic epoch management and receipt retention remain
+unfinished. Repositories indexing their root or `.alinea` cannot enable this
+layout. No live GitHub repository has been mutated to verify the prototype.
 
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch

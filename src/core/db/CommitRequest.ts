@@ -66,4 +66,13 @@ export interface CommitRequest {
   fromSha: string
   intoSha: string
   changes: Array<CommitChange>
+  /** Trusted caller supplies a digest of the original, authorized transaction. */
+  transaction?: CommitTransaction
+}
+
+export interface CommitTransaction {
+  id: string
+  namespace: string
+  epoch: string
+  digest: string
 }
