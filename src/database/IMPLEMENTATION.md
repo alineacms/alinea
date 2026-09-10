@@ -1221,7 +1221,7 @@ Capability probes on the current binaries found SQLite 3.46.1 in Alinea WASM,
 without `vec_version()` or `vss_version()` (and without `pragma_function_list`).
 Node 24.16.0 reports SQLite 3.53.0 and no registered `vec_%`/`vector_%` functions.
 No vector extension is assumed or required for this store. Text source preparation
-is now wired into build/reconciliation (below). Runtime revision publication,
+is now wired into build/reconciliation (below). Browser revision publication,
 encrypted browser transport, configured embedding providers and Graph search are
 not yet wired.
 Obsolete private payload retention/GC also remains open. Do not expose this
@@ -1329,9 +1329,45 @@ reconciliation or unrelated transactions concurrently on that connection, and do
 not mutate a published immutable release to install provider output. Native/WASM
 tests exercise build → provider completion → edit/delete → reconcile, unchanged
 vector retention, empty/undeclared slots, source rollback and native-built jobs
-reopened and completed in WASM. A managed background owner, provider adapters,
-derived-generation publication and media extraction remain to be connected.
+reopened and completed in WASM. Automatic background scheduling, provider adapters,
+browser derived-generation publication and media extraction remain to be connected.
 The built package also passed a Node SQLite build/completion/reconciliation smoke.
+
+`NodeReplica.runEmbeddings(provider, {limit, concurrency})` now owns an explicit
+background batch. It leases/copies an immutable checkpoint into private scratch
+storage, releases the lease, and runs providers outside the source-update queue.
+Source sync and Graph reads continue while providers wait. Completed vectors are
+then replayed by exact job generation into a fresh copy of the latest source head,
+not published by swapping in the potentially stale provider snapshot. Changed or
+deleted owners are skipped as obsolete; unrelated current completions are retained.
+Only a successful complete merge advances the on-disk generation pointer. Failed,
+empty or entirely obsolete batches do not publish a replacement. Existing reader
+files are never modified, and provider scratch files are removed on completion.
+
+The Node replica exposes `embeddingRevision()` separately from its source revision;
+successful completion notifies its local subscriptions even when content is
+unchanged. Restart restores both data and derived revision from the committed
+checkpoint. One batch runs per replica at a time; a second explicit call rejects
+rather than silently sharing a different provider's result. Close cancels the
+cooperative provider runner and drains background work and scratch cleanup. Tests
+cover concurrent source changes, unchanged-reader bytes, retained current vectors,
+restart, local subscription invalidation, provider failure/retry, full obsolescence,
+injected merge failure after a partial scratch update, and shutdown.
+The built package passed the concurrent-source/completion/restart scenario on
+Node's actual SQLite driver as well.
+The generated dev fixture passed after an isolated retry. Its first run timed out
+at the replacement config's textbox while showing `Loading dashboard`; boot,
+save, restart and external source refresh had passed. This intermittent reload
+failure remains unresolved and must be diagnosed before the final cutover gate;
+a successful retry is not evidence that the reload race has been fixed.
+
+This is a Node-owned explicit batch API, not an automatic remote scheduler. The
+application still supplies the provider implementation server-side; no network
+provider adapter or credentials are shipped into dashboard configuration. There is
+no cross-process provider lease, managed Cloud/edge runner, browser vector revision
+stream, public Graph vector method or old-generation garbage collector yet. Disk
+pointer publication remains a restart-cache mechanism, not a durable provider
+receipt or a distributed source transaction.
 
 For example, add this to the CMS configuration (provider implementation is supplied
 separately to `EmbeddingRunner`, not serialized into dashboard configuration):
