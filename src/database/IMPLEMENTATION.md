@@ -1201,6 +1201,31 @@ Interleave two previews and a normal read and verify complete isolation.
 
 ## 7. Optional vectors and linked database capabilities
 
+`vector/EmbeddingStore` now provides an opt-in, private Rado storage prototype
+using ordinary manifest, payload and derived-revision tables. Entry/image/document
+owner versions, named slots, chunks, source hashes and complete embedding-space
+descriptors are bound to generation-tagged jobs. Reconciliation can replace or
+remove a target before a background job completes; stale completions are rejected,
+including source A → B → A and model changes. Repeating the same completion is
+idempotent, while differing output under the same completed job is rejected.
+Completion advances the store's derived revision without changing its source hash.
+
+Manifest reads do not access the vector table. Lazy payload reads verify SHA-256
+identity and decode bounded, finite float32 little-endian vectors with explicit
+dimension/metric checks. A cosine vector cannot be zero. Tests cover all owner
+kinds on Bun native SQLite and Alinea WASM, stale/deleted jobs, lazy reads, detached
+values, a native-built checkpoint reopened in WASM and corrupt payload rejection.
+A separate smoke run verified the built store with Node's actual SQLite driver.
+
+Capability probes on the current binaries found SQLite 3.46.1 in Alinea WASM,
+without `vec_version()` or `vss_version()` (and without `pragma_function_list`).
+Node 24.16.0 reports SQLite 3.53.0 and no registered `vec_%`/`vector_%` functions.
+No vector extension is assumed or required for this store. It is not yet wired
+into source reconciliation, runtime revision publication, authorization-filtered
+manifests, encrypted browser transport, embedding providers or Graph search.
+Obsolete private payload retention/GC also remains open. Do not expose this
+trusted store directly as a browser API or ship its private checkpoint to clients.
+
 Add embedding manifests, content/model identity, background job completion,
 invalidation, chunk ownership, permission filtering, and lazy vector payloads.
 Start with an exact-search correctness baseline and a capability interface. Verify
