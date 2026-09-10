@@ -591,6 +591,17 @@ fixture. Unit tests verify pending close/cleanup and borrowed-port independence.
 The dashboard still uses its legacy worker; wiring this owner into its mutation,
 activity and page-atom lifecycle is unfinished.
 
+DevDB now exposes the same authenticated index/payload boundary through its ready
+SQLite replica, so the development handler can serve the browser owner rather
+than requiring the legacy source transport. An integration test runs the core
+handler against a filesystem-backed DevDB, opens a lazy browser LiveReplica,
+edits an authored file, refreshes the SQL view and observes policy-only revocation.
+The dev sync path also rechecks close after remote diff/blob I/O and before
+applying filesystem changes; a shutdown race test proves the pending remote tree
+cannot replace local content after close. The dashboard cutover still needs to
+replace browser role evaluation with compiled policy state and route its queued
+mutations/activity acknowledgements through the new owner.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 

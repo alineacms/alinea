@@ -9,7 +9,7 @@ import {Policy} from '#/core/Role.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
-import {syncWith} from '#/core/source/Source.js'
+import {diff} from '#/core/source/Source.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {assert} from '#/core/util/Assert.js'
@@ -21,6 +21,11 @@ import {NodeReplica} from '#/database/driver/NodeReplica.js'
 import type {CheckpointIdentity} from '#/database/runtime/Checkpoint.js'
 import type {QueryObserver} from '#/database/runtime/EntryRuntime.js'
 import {seedDatabase} from '#/database/runtime/SeedDatabase.js'
+import type {IndexBootstrap} from '#/database/replica/Bootstrap.js'
+import type {
+  PayloadBatch,
+  PayloadBatchRequest
+} from '#/database/replica/PayloadBatch.js'
 import pLimit from 'p-limit'
 
 export interface DevDBOptions {
@@ -62,7 +67,9 @@ export class DevDB extends WritableGraph {
     return this.#sync(async () => {
       if (this.#closed) throw new Error('Dev database is closed')
       await this.source.refresh()
-      await syncWith(this.source, remote)
+      const batch = await diff(this.source, remote)
+      if (this.#closed) throw new Error('Dev database is closed')
+      await this.source.applyChanges(batch)
       return this.#syncSource()
     })
   }
@@ -111,6 +118,25 @@ export class DevDB extends WritableGraph {
     if (this.#closed || !this.#replica)
       throw new Error('Dev database is not ready')
     return this.#replica.revision
+  }
+
+  bootstrap(
+    principal: string,
+    roles: ReadonlyArray<string>
+  ): Promise<IndexBootstrap> {
+    if (this.#closed || !this.#replica)
+      return Promise.reject(new Error('Dev database is not ready'))
+    return this.#replica.bootstrap(principal, roles)
+  }
+
+  payloads(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ): Promise<PayloadBatch> {
+    if (this.#closed || !this.#replica)
+      return Promise.reject(new Error('Dev database is not ready'))
+    return this.#replica.payloads(principal, roles, request)
   }
 
   subscribe(query: GraphQuery, observer: QueryObserver): () => void {

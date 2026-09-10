@@ -10,6 +10,10 @@ import {createEntryResolver} from '#test/EntryFixture.js'
 import {DevDB} from './DevDB.js'
 import {EntryIndex, VersionParser} from '#/core/db/EntryIndex.js'
 import {fillCache} from './FillCache.js'
+import {createHandler} from '#/backend/Handler.js'
+import {composeBackend} from '#/backend/api/CreateBackend.js'
+import {LiveReplica} from '#/database/browser/LiveReplica.js'
+import {role} from '#/core/Role.js'
 
 test('filesystem SQL databases synchronize remote snapshots without a LocalDB index', async () => {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-build-sync-'))
@@ -70,6 +74,123 @@ test('filesystem SQL databases synchronize remote snapshots without a LocalDB in
     await expect(db.syncWith(first.source)).rejects.toThrow('closed')
   } finally {
     legacy.mockRestore()
+    await db.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
+})
+
+test('development handlers serve authenticated lazy browser replicas across filesystem edits', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-browser-'))
+  await mkdir(join(rootDir, 'content'))
+  const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages')}
+      })
+    },
+    roles: {
+      reader: role('Reader', {
+        permissions(policy) {
+          policy.allowAll()
+        }
+      })
+    }
+  })
+  const db = new DevDB({
+    config: cms.config,
+    rootDir,
+    dashboardUrl: undefined,
+    replica: {
+      directory: join(rootDir, 'dev-database'),
+      identity: {
+        project: 'project',
+        namespace: 'main',
+        epoch: '1',
+        schemaId: 'schema',
+        configId: 'config',
+        releaseId: 'release'
+      }
+    }
+  })
+  const context = {
+    apiKey: 'dev',
+    handlerUrl: new URL('http://localhost/api'),
+    isDev: true
+  }
+  let roles = ['reader']
+  const handler = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify() {
+          return {...context, token: 'dev', user: {sub: 'developer', roles}}
+        },
+        async enrichUser(user) {
+          return user
+        }
+      })
+    }
+  })
+  let browser: LiveReplica | undefined
+  try {
+    await expect(db.bootstrap('developer', roles)).rejects.toThrow('not ready')
+    const source = await createEntryResolver(cms.config, [
+      {id: 'a', type: 'Page', index: 'a', title: 'Before'}
+    ])
+    await db.syncWith(source.source)
+    browser = await LiveReplica.connect({
+      config: cms.config,
+      expected: {project: 'project', namespace: 'main', principal: 'developer'},
+      url: context.handlerUrl.href,
+      fetch(url, init) {
+        return handler(new Request(url, init), context)
+      }
+    })
+    expect(await browser.find({select: Entry.id})).toEqual(['a'])
+    expect(await browser.find({select: Page.title})).toEqual(['Before'])
+    const file = join(rootDir, 'content/pages/a.json')
+    const contents = JSON.parse(await readFile(file, 'utf8'))
+    await writeFile(file, JSON.stringify({...contents, title: 'After'}))
+    expect(await browser.refresh()).toBe(true)
+    expect(await browser.find({select: Page.title})).toEqual(['After'])
+    expect(browser.bootstrap.revision).toBe(db.sha)
+    roles = []
+    expect(await browser.refresh()).toBe(true)
+    expect(await browser.find({select: Entry.id})).toEqual([])
+    await browser.close(true)
+    const target = await createEntryResolver(cms.config, [
+      {id: 'b', type: 'Page', index: 'b', title: 'Must not write'}
+    ])
+    const started = Promise.withResolvers<void>()
+    const resume = Promise.withResolvers<void>()
+    const syncing = db.syncWith({
+      async getTreeIfDifferent(sha) {
+        started.resolve()
+        await resume.promise
+        return target.source.getTreeIfDifferent(sha)
+      },
+      getBlobs(shas, options) {
+        return target.source.getBlobs(shas, options)
+      }
+    })
+    await started.promise
+    const closing = db.close()
+    resume.resolve()
+    await expect(syncing).rejects.toThrow('closed')
+    await closing
+    expect(await readFile(file, 'utf8')).toContain('After')
+    await expect(
+      readFile(join(rootDir, 'content/pages/b.json'))
+    ).rejects.toThrow()
+    await expect(db.bootstrap('developer', ['reader'])).rejects.toThrow(
+      'not ready'
+    )
+  } finally {
+    await browser?.close(true)
     await db.close()
     await rm(rootDir, {recursive: true, force: true})
   }
