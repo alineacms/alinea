@@ -1,4 +1,5 @@
 import type {EntryStatus} from '../Entry.js'
+import type {UpdatePrecondition} from './UpdatePrecondition.js'
 
 export type Mutation =
   | CreateMutation
@@ -32,6 +33,7 @@ export interface UpdateMutation {
   locale: string | null
   status: EntryStatus
   set: Record<string, unknown>
+  precondition?: UpdatePrecondition
 }
 
 export interface RemoveMutation {

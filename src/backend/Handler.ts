@@ -23,9 +23,10 @@ import {
 } from '#/core/db/MutationContext.js'
 import type {CommitRequest, CommitTransaction} from '#/core/db/CommitRequest.js'
 import {authorizeMutationReceipt} from '#/core/db/MutationAuthorization.js'
+import {canRebaseUpdates} from '#/core/db/UpdatePrecondition.js'
 import {replicaScope} from '#/core/ReplicaScope.js'
 import {sha256Hash} from '#/core/source/Utils.js'
-import {canonicalJson} from '#/database/replica/Operations.js'
+import {canonicalJson} from '#/core/util/Json.js'
 import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {RemoteSource, Source} from '#/core/source/Source.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -460,13 +461,20 @@ export function createHandler({
               409,
               'Pending mutation schema or configuration changed'
             )
-          if (expected && expected.baseRevision !== local.sha)
+          if (
+            expected &&
+            expected.baseRevision !== local.sha &&
+            !canRebaseUpdates(mutations)
+          )
             throw new HttpError(409, 'Pending mutation base revision changed')
           if (!prepared) {
             const adjusted = await hooks.beforeCommit?.({mutations})
             if (adjusted) mutations = adjusted
             prepared = true
           }
+          const rebase = canRebaseUpdates(mutations)
+          if (expected && expected.baseRevision !== local.sha && !rebase)
+            throw new HttpError(409, 'Pending mutation base revision changed')
           const request = {
             ...(await local.request(mutations, policy)),
             user: user.claims,
@@ -474,7 +482,7 @@ export function createHandler({
           }
           // Preparation may await hooks/queries while another cache generation
           // becomes current. Compare its pinned source base as well.
-          if (expected && request.fromSha !== expected.baseRevision)
+          if (expected && request.fromSha !== expected.baseRevision && !rebase)
             throw new HttpError(409, 'Pending mutation base revision changed')
           let sha: string
           try {

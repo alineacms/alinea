@@ -33,6 +33,13 @@ import type {ReadonlyTree} from '../source/Tree.js'
 import {assert} from '../util/Assert.js'
 import {type CommitChange, commitChanges} from './CommitRequest.js'
 import {MutationAuthorization} from './MutationAuthorization.js'
+import {
+  readUpdatePrecondition,
+  assertUpdatePrecondition,
+  type UpdatePrecondition
+} from './UpdatePrecondition.js'
+import {hashFieldValue} from '../util/Json.js'
+import {HttpError} from '../HttpError.js'
 import {aliasUrlsFromData, aliasUrl} from './EntryAliases.js'
 import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import type {
@@ -429,10 +436,13 @@ export class EntryTransaction {
     }
   }
 
-  async update({id, locale, status, set}: Op<UpdateMutation>) {
+  async update({id, locale, status, set, precondition}: Op<UpdateMutation>) {
+    const expected = readUpdatePrecondition(set, precondition)
+    if (expected) set = structuredClone(set)
     const entry = (await this.#entries({id, locale, status}))[0]
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Update, entry)
+    if (expected) this.#policy.assert(Permission.Read, entry)
     for (const key of keys(set)) {
       this.#policy.assert(Permission.Update, {
         workspace: entry.workspace,
@@ -443,7 +453,9 @@ export class EntryTransaction {
         locale: entry.locale,
         field: key
       })
+      if (expected) this.#policy.assert(Permission.Read, {...entry, field: key})
     }
+    if (expected) await assertUpdatePrecondition(expected, entry, entry.data)
     const fieldUpdates = fromEntries(
       entries(set).map(([key, value]) => {
         return [key, value ?? null]
@@ -481,7 +493,14 @@ export class EntryTransaction {
       }
       data = await this.#dataWithPreviousUrlAlias(urlCandidate, entry)
       if (locale !== null)
-        await this.#persistSharedFields(id, locale, entry.type, data)
+        await this.#persistSharedFields(
+          id,
+          locale,
+          entry.type,
+          data,
+          keys(set),
+          expected
+        )
       await this.#assertUniqueUrls({...urlCandidate, data})
     }
     const record = createRecord(
@@ -662,16 +681,49 @@ export class EntryTransaction {
     id: string,
     locale: string,
     type: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    changedFields?: ReadonlyArray<string>,
+    expected?: UpdatePrecondition
   ) {
     const typeInstance = this.#config.schema[type]
     assert(type, `Type not found: ${type}`)
     const shared = Type.sharedData(typeInstance, data)
     if (shared) {
+      if (changedFields)
+        for (const key of keys(shared)) {
+          if (!changedFields.includes(key)) delete shared[key]
+        }
+      if (!keys(shared).length) return
       const translations = (await this.#entries({id})).filter(
         entry => entry.locale !== locale
       )
       for (const translation of translations) {
+        let changed = false
+        for (const key of keys(shared)) {
+          const resource = {...translation, field: key}
+          if (expected) {
+            this.#policy.assert(Permission.Read, resource)
+            if (
+              (await hashFieldValue(translation.data[key])) !==
+              expected.fields[key]
+            )
+              throw new HttpError(
+                409,
+                `Shared field changed while editing: ${key}`
+              )
+          }
+          if (
+            (await hashFieldValue(translation.data[key])) ===
+            (await hashFieldValue(shared[key]))
+          )
+            continue
+          changed = true
+          this.#policy.assert(Permission.Update, resource)
+        }
+        if (!changed) continue
+        this.#policy.assert(Permission.Update, translation)
+        if (translation.status === 'published')
+          this.#policy.assert(Permission.Publish, translation)
         const record = createRecord(
           {
             id,

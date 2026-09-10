@@ -457,6 +457,25 @@ source races during preparation/commit. This is the conservative structural/full
 revision guard; per-field Graph preconditions must still allow safe independent
 field edits before the concurrent-editor cutover is complete.
 
+Graph `UpdateMutation.precondition` now carries exact hashes for every changed
+top-level field plus a routing/lifecycle hash (version, status, parent/location,
+order, URL and active/main state). Shared canonical JSON/field hashing lives in
+core utilities and retains the SQL field-operation hash format. Preparation
+requires read/update access to guarded fields, compares hashes before staging
+changes, and records those reads in durable authorization footprints. A context-
+bound batch containing only fully guarded non-structural updates can advance
+past its old whole-source revision; each source-CAS retry reruns the actual field
+checks against the refreshed state. Unguarded, structural and mixed batches keep
+exact-base behavior. Hooks cannot strip guards or add structural effects and
+silently retain the rebase exemption. HTTP and native SQL tests cover independent
+updates, same-field/structural conflicts, receipt retry and all-or-nothing batch
+rollback. Updates now propagate only touched shared fields to translations;
+guarded propagation checks each target's field hash/read access, and shared writes
+require target update/publication rights. Unrelated localized edits no longer copy
+untouched shared values over a translation's newer source data. Whole collections
+still use one field hash; stable-item operation routing and dashboard generation
+of these preconditions remain outstanding.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

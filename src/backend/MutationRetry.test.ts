@@ -6,8 +6,9 @@ import {LocalDB} from '#/core/db/LocalDB.js'
 import type {CommitReceipt, CommitTransaction} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
+import {updatePrecondition} from '#/core/db/UpdatePrecondition.js'
 import {HttpError} from '#/core/HttpError.js'
-import {Config} from '#/index.js'
+import {Config, Field} from '#/index.js'
 import {composeBackend} from './api/CreateBackend.js'
 import {createHandler} from './Handler.js'
 
@@ -23,7 +24,11 @@ function fixture(
 ) {
   const cms = createCMS({
     replica: {namespace: 'configured-branch', epoch: 'reset-2'},
-    schema: {Page: Config.document('Page', {fields: {}})},
+    schema: {
+      Page: Config.document('Page', {
+        fields: {title: Field.text('Title'), summary: Field.text('Summary')}
+      })
+    },
     workspaces: {
       main: Config.workspace('Main', {
         source: 'content',
@@ -334,4 +339,70 @@ test('source races during preparation or authority CAS never silently rebase a c
       f.authority.index.findFirst(entry => entry.id === 'other')
     ).toBeDefined()
   }
+})
+
+test('context-bound field edits merge independent changes and reject same-field or structural conflicts', async () => {
+  const f = fixture(true, {namespace: 'preview', epoch: '1'})
+  await f.client.mutate(create, 'create')
+  const entry = f.authority.index.findFirst(entry => entry.id === 'entry')!
+  const expected: MutationContext = {
+    project: 'project',
+    namespace: 'preview',
+    epoch: '1',
+    principal: 'user',
+    schemaId: 'schema',
+    configId: 'config',
+    baseRevision: f.authority.sha
+  }
+  const title = {title: 'Editor one'}
+  const summary = {summary: 'Editor two'}
+  const structure = {...entry, versionStatus: entry.status}
+  const first: Mutation = {
+    op: 'update',
+    id: entry.id,
+    locale: null,
+    status: entry.status,
+    set: title,
+    precondition: await updatePrecondition(structure, entry.data, title)
+  }
+  const second: Mutation = {
+    op: 'update',
+    id: entry.id,
+    locale: null,
+    status: entry.status,
+    set: summary,
+    precondition: await updatePrecondition(structure, entry.data, summary)
+  }
+  await f.client.mutate([first], 'first', expected)
+  const accepted = await f.client.mutate([second], 'second', expected)
+  expect(
+    f.authority.index.findFirst(entry => entry.id === 'entry')!.data
+  ).toMatchObject({...title, ...summary})
+  f.restart()
+  expect(await f.client.mutate([second], 'second', expected)).toEqual(accepted)
+  await expect(
+    f.client.mutate([first], 'same-field', expected)
+  ).rejects.toThrow('Field changed while editing')
+  await expect(
+    f.client.mutate(
+      [{...second, precondition: undefined}],
+      'unguarded',
+      expected
+    )
+  ).rejects.toThrow('base revision changed')
+  await f.client.mutate(
+    [
+      {
+        op: 'update',
+        id: entry.id,
+        locale: null,
+        status: entry.status,
+        set: {path: 'moved'}
+      }
+    ],
+    'move-path'
+  )
+  await expect(
+    f.client.mutate([second], 'after-move', expected)
+  ).rejects.toThrow('structure changed')
 })
