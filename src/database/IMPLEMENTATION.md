@@ -721,6 +721,15 @@ startup stall has not been conclusively tied to the teardown error; retain the
 stress fixture and diagnostics as a final-cutover gate rather than treating one
 successful run as proof that every reload race is eliminated.
 
+`ReplicaGraph.sync()` now waits for the authentication attempt already in progress
+before synchronizing. A dev source refetch received during worker startup therefore
+does not fail immediately as unauthenticated and disappear into the boot loop's
+refetch error handler. The wait captures the authentication generation: replacement
+or shutdown cannot redirect that request into another principal's session. Unit
+tests cover delayed startup followed by exactly one refresh, replacement while
+waiting, and startup failure without an implicit reconnect. Calls before any
+authentication attempt still fail rather than opening an unauthenticated database.
+
 This integration test exposed and now covers two UI fixes. Clean editing nodes
 are replaced when their source/row hashes or identity change; dirty nodes keep
 their values and original mutation baseline, and resetting them reveals the

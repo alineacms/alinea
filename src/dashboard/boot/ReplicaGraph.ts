@@ -203,7 +203,13 @@ export class ReplicaGraph extends WritableGraph {
   get sha() {
     return this.#read(session => session.sha)
   }
-  sync() {
+  async sync() {
+    // Dev refetches may arrive while the replacement worker is opening. Wait
+    // for that exact authentication attempt; never refresh a replacement user.
+    const generation = this.#generation
+    await this.#connecting
+    if (generation !== this.#generation)
+      throw new Error('Dashboard replica session changed')
     return this.#read(session => session.sync())
   }
   activities(): Promise<Array<Activity>> {

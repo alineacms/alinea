@@ -43,6 +43,103 @@ class Session extends WritableGraph {
   }
 }
 
+test('a source refresh during authentication waits for the worker before synchronizing', async () => {
+  const session = new Session(),
+    started = Promise.withResolvers<void>(),
+    resume = Promise.withResolvers<void>()
+  const graph = new ReplicaGraph({
+    config,
+    pollInterval: 0,
+    async connect() {
+      started.resolve()
+      await resume.promise
+      return session
+    }
+  })
+  try {
+    await expect(graph.sync()).rejects.toThrow('not authenticated')
+    const opening = graph.authenticate({sub: 'user'})
+    await started.promise
+    const refreshing = graph.sync()
+    expect(session.syncs).toBe(0)
+    resume.resolve()
+    await opening
+    expect(await refreshing).toBe('ready')
+    expect(session.syncs).toBe(1)
+  } finally {
+    resume.resolve()
+    await graph.close()
+  }
+})
+
+test('a queued startup refresh cannot cross into a replacement principal', async () => {
+  const old = new Session(),
+    next = new Session()
+  const started = Promise.withResolvers<void>(),
+    resume = Promise.withResolvers<void>()
+  const graph = new ReplicaGraph({
+    config,
+    pollInterval: 0,
+    async connect(principal) {
+      if (principal === 'old') {
+        started.resolve()
+        await resume.promise
+        return old
+      }
+      return next
+    }
+  })
+  try {
+    const opening = graph
+      .authenticate({sub: 'old'})
+      .catch(error => error as Error)
+    await started.promise
+    const refreshing = graph.sync().catch(error => error as Error)
+    const replacement = graph.authenticate({sub: 'new'})
+    resume.resolve()
+    await replacement
+    expect(await opening).toBeInstanceOf(Error)
+    expect(await refreshing).toBeInstanceOf(Error)
+    expect(old.syncs).toBe(0)
+    expect(next.syncs).toBe(0)
+    expect(await graph.sync()).toBe('ready')
+    expect(next.syncs).toBe(1)
+  } finally {
+    resume.resolve()
+    await graph.close()
+  }
+})
+
+test('failed worker startup rejects a waiting refresh without creating another session', async () => {
+  const started = Promise.withResolvers<void>(),
+    resume = Promise.withResolvers<void>()
+  let calls = 0
+  const graph = new ReplicaGraph({
+    config,
+    pollInterval: 0,
+    async connect() {
+      calls++
+      started.resolve()
+      await resume.promise
+      throw new Error('Startup failed')
+    }
+  })
+  try {
+    const opening = graph
+      .authenticate({sub: 'user'})
+      .catch(error => error as Error)
+    await started.promise
+    const refreshing = graph.sync().catch(error => error as Error)
+    resume.resolve()
+    expect(((await opening) as Error).message).toBe('Startup failed')
+    expect(((await refreshing) as Error).message).toBe('Startup failed')
+    expect(calls).toBe(1)
+  } finally {
+    resume.resolve()
+    await graph.close()
+  }
+})
+
 test('dashboard replica starts only after authentication and retires the previous principal', async () => {
   const first = new Session()
   const second = new Session()
