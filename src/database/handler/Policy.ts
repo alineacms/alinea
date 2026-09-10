@@ -57,6 +57,11 @@ export function authorizedIndex(
 ) {
   return runtime.readConsistent(async () => {
     const policy = await evaluateRolePolicy(runtime.config, runtime, roles)
+    const scopePolicy = policy.data()
+    if (scopePolicy.entries.some(([key]) => key.startsWith('Field.')))
+      throw new Error(
+        'Field-level permissions are not supported by SQLite replicas'
+      )
     const snapshot = await runtime.indexSnapshot()
     const entries: Array<AuthorizedEntry> = []
     for (const replacement of snapshot.entries) {
@@ -64,14 +69,7 @@ export function authorizedIndex(
       const {versionId: _, ...entry} = entryIndexRow(replacement.entry)
       const permissions = compiledPermissions(policy, entry)
       if (!(permissions & Permission.Explore)) continue
-      const fieldPermissions = Object.keys(
-        runtime.config.schema[entry.type] ?? {}
-      ).map(field => compiledPermissions(policy, {...entry, field}))
       const read = Boolean(permissions & Permission.Read)
-      if (fieldPermissions.some(bits => bits !== permissions))
-        throw new Error(
-          'Field-level permissions are not supported by SQLite replicas'
-        )
       entries.push({
         entry,
         permissions,
@@ -85,7 +83,6 @@ export function authorizedIndex(
     const visibleIds = new Set(
       entries.flatMap(({entry}) => [entry.id, ...entry.parents])
     )
-    const scopePolicy = policy.data()
     scopePolicy.entries = scopePolicy.entries.filter(
       ([key]) => !key.startsWith('Entry.') || visibleIds.has(key.slice(6))
     )
