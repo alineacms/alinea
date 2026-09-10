@@ -71,6 +71,10 @@ test('payload batches enforce their aggregate byte budget before fetching cipher
   )
   const ciphertext = spyOn(FrameStore.prototype, 'ciphertext')
   try {
+    const binding = await replica.identity()
+    expect(binding).toEqual(identity)
+    binding.namespace = 'caller-mutation'
+    expect((await replica.identity()).namespace).toBe(identity.namespace)
     const view = await replica.bootstrap('user', ['reader'])
     await expect(
       replica.payloads('user', ['reader'], {
@@ -91,6 +95,7 @@ test('payload batches enforce their aggregate byte budget before fetching cipher
     grant.mockRestore()
     ciphertext.mockRestore()
     await replica.close()
+    await expect(replica.identity()).rejects.toThrow()
     await rm(directory, {recursive: true, force: true})
   }
 })

@@ -46,7 +46,10 @@ export interface BrowserConnection extends Connection {
 
 export interface LocalConnection extends Connection, CapabilitiesApi {
   capabilities(): Promise<BackendCapabilities>
-  mutate(mutations: Array<Mutation>): Promise<{sha: string}>
+  mutate(
+    mutations: Array<Mutation>,
+    transactionId?: string
+  ): Promise<{sha: string}>
   previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(
     query: Query
@@ -103,6 +106,7 @@ export interface RequestContext {
 }
 
 export const developmentKeyHeader = 'x-alinea-dev-key'
+export const transactionIdHeader = 'x-alinea-transaction-id'
 
 export interface AuthedContext extends RequestContext {
   user: User

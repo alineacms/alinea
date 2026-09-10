@@ -111,6 +111,10 @@ export class NodeReplica extends Graph {
     return this.#options.config
   }
 
+  identity(): Promise<CheckpointIdentity> {
+    return this.#read(async snapshot => ({...snapshot.identity}))
+  }
+
   static async open(
     options: NodeReplicaOptions,
     source: RemoteSource | {checkpoint: string}

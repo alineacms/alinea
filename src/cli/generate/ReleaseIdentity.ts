@@ -1,5 +1,6 @@
 import {Config} from '#/core/Config.js'
 import {createId} from '#/core/Id.js'
+import {replicaScope} from '#/core/ReplicaScope.js'
 import {
   checkpointFormat,
   type CheckpointIdentity
@@ -16,12 +17,7 @@ export function releaseIdentity(
     config.replica?.project ??
     Config.baseUrl(config, 'production') ??
     `local:${configLocation}`
-  const namespace =
-    config.replica?.namespace ??
-    env.VERCEL_GIT_COMMIT_REF ??
-    env.CF_PAGES_BRANCH ??
-    'main'
-  const epoch = config.replica?.epoch ?? '1'
+  const {namespace, epoch} = replicaScope(config, env)
   if (
     ![project, namespace, epoch, configId].every(
       value => typeof value === 'string' && value.length > 0

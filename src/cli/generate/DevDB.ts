@@ -120,6 +120,12 @@ export class DevDB extends WritableGraph {
     return this.#replica.revision
   }
 
+  replicaIdentity(): Promise<CheckpointIdentity> {
+    if (this.#closed || !this.#replica)
+      return Promise.reject(new Error('Dev database is not ready'))
+    return this.#replica.identity()
+  }
+
   bootstrap(
     principal: string,
     roles: ReadonlyArray<string>

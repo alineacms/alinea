@@ -12,8 +12,12 @@ import type {
   SyncApi,
   RequestContext
 } from '#/core/Connection.js'
-import {developmentKeyHeader} from '#/core/Connection.js'
-import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {developmentKeyHeader, transactionIdHeader} from '#/core/Connection.js'
+import type {CommitRequest, CommitTransaction} from '#/core/db/CommitRequest.js'
+import {authorizeMutationReceipt} from '#/core/db/MutationAuthorization.js'
+import {replicaScope} from '#/core/ReplicaScope.js'
+import {sha256Hash} from '#/core/source/Utils.js'
+import {canonicalJson} from '#/database/replica/Operations.js'
 import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {RemoteSource, Source} from '#/core/source/Source.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -85,6 +89,7 @@ export interface HandlerHooks {
 export interface HandlerDatabase extends WritableGraph {
   readonly sha: string
   readonly source: Pick<Source, 'getTree' | 'getBlobs'>
+  replicaIdentity?(): Promise<{namespace: string; epoch: string}>
   bootstrap?(
     principal: string,
     roles: ReadonlyArray<string>
@@ -368,16 +373,59 @@ export function createHandler({
         }
         const user = expectUser()
         expectJson()
-        const policy = await user.policy
         let mutations = (await body) as ReadonlyArray<Mutation>
+        const transactionId = request.headers.get(transactionIdHeader)
+        let transaction: CommitTransaction | undefined
+        if (transactionId !== null) {
+          if (
+            !transactionId ||
+            transactionId.length > 4096 ||
+            !Array.isArray(mutations)
+          )
+            throw new HttpError(400, 'Invalid mutation transaction')
+          if (!cnx.receipt)
+            throw new HttpError(
+              501,
+              'Backend does not support durable mutation retries'
+            )
+        }
         await local.syncWith(cnx)
-        const adjusted = await hooks.beforeCommit?.({mutations})
-        if (adjusted) mutations = adjusted
+        if (transactionId !== null) {
+          const {namespace, epoch} = local.replicaIdentity
+            ? await local.replicaIdentity()
+            : replicaScope(cms.config, process.env)
+          transaction = {
+            id: transactionId,
+            namespace,
+            epoch,
+            digest: await sha256Hash(
+              new TextEncoder().encode(canonicalJson(mutations))
+            )
+          }
+        }
+        let prepared = false
         const attempt = async (retry = 0) => {
           if (retry > 0) await local.syncWith(cnx)
+          const policy = user.claims.roles
+            ? await local.createPolicy(user.claims.roles)
+            : Policy.ALLOW_NONE
+          if (transaction) {
+            const receipt = await cnx.receipt!(user.claims.sub, transaction)
+            if (receipt) {
+              authorizeMutationReceipt(policy, receipt.authorization)
+              await local.syncWith(cnx)
+              return {sha: receipt.sha, replayed: true}
+            }
+          }
+          if (!prepared) {
+            const adjusted = await hooks.beforeCommit?.({mutations})
+            if (adjusted) mutations = adjusted
+            prepared = true
+          }
           const request = {
             ...(await local.request(mutations, policy)),
-            user: user.claims
+            user: user.claims,
+            ...(transaction ? {transaction} : {})
           }
           let sha: string
           try {
@@ -390,23 +438,25 @@ export function createHandler({
             if (isConflict && retry < 3) return attempt(retry + 1)
             throw error
           }
-          if (sha !== request.intoSha) return local.syncWith(cnx)
+          if (sha !== request.intoSha)
+            return {sha: await local.syncWith(cnx), replayed: false}
           try {
             await local.write(request)
           } catch (error) {
             // The authority has accepted this mutation already. A newer cache
             // generation needs catch-up, never another mutation submission.
             if (!(error instanceof ShaMismatchError)) throw error
-            return local.syncWith(cnx)
+            return {sha: await local.syncWith(cnx), replayed: false}
           }
-          return sha
+          return {sha, replayed: false}
         }
-        const sha = await attempt()
+        const {sha, replayed} = await attempt()
         try {
-          await hooks.afterCommit?.({
-            mutations,
-            sha
-          })
+          if (!replayed)
+            await hooks.afterCommit?.({
+              mutations,
+              sha
+            })
         } catch (error) {
           console.error('Alinea afterCommit hook failed', error)
         }

@@ -28,6 +28,10 @@ export class ReplicaDatabase extends WritableGraph implements HandlerDatabase {
     return this.replica
   }
 
+  replicaIdentity() {
+    return this.replica.identity()
+  }
+
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

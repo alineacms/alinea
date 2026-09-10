@@ -13,7 +13,7 @@ const fixtureConnection = createTestConnection(db)
 
 const sourceMutate = db.mutate.bind(db)
 
-db.mutate = async (...args) => {
+db.mutate = async (...args: Parameters<typeof sourceMutate>) => {
   console.log('Mutate called with', args)
   return sourceMutate(...args)
 }

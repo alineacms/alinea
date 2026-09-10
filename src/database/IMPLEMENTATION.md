@@ -404,7 +404,23 @@ the full saved footprint before asserting it against a fresh trusted policy, so
 deleted entries can be checked without replay and revoked field/ancestor grants
 are not implicitly accepted. This helper is not an authorization endpoint: Graph
 handler routing must still bind identity/digest, evaluate current roles and invoke
-it before returning an acknowledgement. Public mutation transport is unchanged.
+it before returning an acknowledgement.
+
+The Graph mutation HTTP route now accepts an opt-in `x-alinea-transaction-id`
+header (`Client.mutate(mutations, transactionId)`). It computes the digest from
+the original JSON mutations, takes namespace/epoch from the loaded SQL replica
+(or shared config/hosting scope resolution for the remaining non-SQL adapter),
+and uses only the verified/enriched principal. Backends without receipt lookup
+reject opt-in requests instead of silently claiming retry safety. After source
+sync it evaluates roles anew, checks a receipt before preparing mutations, and
+reauthorizes every saved check before acknowledging a replay. Internal conflict
+retries also repeat this lookup and policy evaluation. Accepted creates/deletes
+can therefore recover without requiring the pre-edit entry state. Hooks are not
+rerun for acknowledged receipts; afterCommit remains best-effort and needs the
+planned durable outbox to survive a crash after source acceptance. HTTP-client
+tests cover restart/lost-response recovery, changed bodies, revoked roles,
+principal isolation, deleted entries, internal conflicts and loaded identity
+precedence. The dashboard queue does not yet opt in or persist pending IDs.
 
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch

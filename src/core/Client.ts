@@ -6,6 +6,7 @@ import {
   decodeBlobSequence
 } from './BlobTransport.js'
 import type {Config} from './Config.js'
+import {transactionIdHeader} from './Connection.js'
 import type {
   BackendCapabilities,
   DraftTransport,
@@ -36,6 +37,7 @@ export interface ClientOptions {
   url: string
   applyAuth?: AuthenticateRequest
   unauthorized?: () => void
+  fetch?: typeof fetch
 }
 
 export class Client implements LocalConnection {
@@ -153,10 +155,20 @@ export class Client implements LocalConnection {
     ).then<AnyQueryResult<Query>>(this.#failOnHttpError)
   }
 
-  mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+  mutate(
+    mutations: Array<Mutation>,
+    transactionId?: string
+  ): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
-      {method: 'POST', body: JSON.stringify(mutations)}
+      {
+        method: 'POST',
+        body: JSON.stringify(mutations),
+        headers:
+          transactionId === undefined
+            ? undefined
+            : {[transactionIdHeader]: transactionId}
+      }
     ).then<{sha: string}>(this.#failOnHttpError)
   }
 
@@ -255,11 +267,16 @@ export class Client implements LocalConnection {
     init: RequestInit = {},
     retry = false
   ): Promise<Response> {
-    const {url, applyAuth = v => v, unauthorized} = this.#options
+    const {
+      url,
+      applyAuth = v => v,
+      unauthorized,
+      fetch: requestFetch = fetch
+    } = this.#options
     const controller = new AbortController()
     const signal = controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
-    const promise = fetch(location, {
+    const promise = requestFetch(location, {
       ...applyAuth(init),
       signal
     })
