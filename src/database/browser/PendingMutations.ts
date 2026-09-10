@@ -3,7 +3,7 @@ import {createId} from '#/core/Id.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {sha256Hash} from '#/core/source/Utils.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {canonicalJson} from '../replica/Operations.js'
+import {canonicalJson} from '#/core/util/Json.js'
 import {idbResult, idbTransaction} from './IndexedDB.js'
 
 /** Caller must obtain this binding from an authenticated replica, not a URL alone. */
