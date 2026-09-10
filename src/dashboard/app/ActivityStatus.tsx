@@ -31,7 +31,7 @@ import {
   retryActivityAtom
 } from '../atoms/activity.js'
 import {routeAtom} from '../atoms/nav.js'
-import type {Activity} from '../boot/ActivityEvent.js'
+import type {Activity} from '#/core/db/ActivityEvent.js'
 import {IcRoundCheck, IcRoundHistory, IcRoundWarning} from '../icons.js'
 import css from './ActivityStatus.module.css'
 
@@ -178,7 +178,7 @@ export function ActivityStatus({
         <div className={styles.ActivityStatus.popover()}>
           <div className={styles.ActivityStatus.popover.header()}>
             <h2 className={styles.ActivityStatus.popover.title()}>Activity</h2>
-            {activity.hasFailed && (
+            {(activity.hasFailed || activity.hasBlocked) && (
               <div className={styles.ActivityStatus.popover.actions()}>
                 {activity.canDiscard && (
                   <Button

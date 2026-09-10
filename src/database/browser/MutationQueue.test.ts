@@ -209,3 +209,60 @@ test('close during refresh retains acceptance and prevents late intent removal',
   expect(state.calls).toHaveLength(1)
   await reopened.queue.close({purge: true})
 })
+
+test('activity snapshots remain readable during submission and detach from queue state', async () => {
+  const state = await setup()
+  await state.queue.enqueue(input)
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  state.client.mutate = async () => {
+    started.resolve()
+    await resume.promise
+    return {sha: 'accepted'}
+  }
+  const flushing = state.queue.flush()
+  await started.promise
+  const activity = state.queue.activities()
+  expect(activity[0].status).toBe('running')
+  activity[0].status = 'discarded'
+  expect(state.queue.activities()[0].status).toBe('running')
+  expect(JSON.stringify(activity)).not.toContain('Edited')
+  resume.resolve()
+  await flushing
+  expect(state.queue.activities()[0].status).toBe('succeeded')
+  await state.queue.close({purge: true})
+})
+
+test('retry dismisses activity removed by another owner without claiming another write', async () => {
+  const state = await setup()
+  await state.queue.enqueue(input)
+  const other = await state.open()
+  await other.queue.discard(input.id)
+  await state.queue.flush()
+  expect(state.calls).toHaveLength(0)
+  expect(state.queue.activities()[0].status).toBe('cancelled')
+  await other.queue.close()
+  await state.queue.close({purge: true})
+})
+
+test('a save waiting for the submission lock cannot implicitly retry a newly failed edit', async () => {
+  const state = await setup()
+  await state.queue.enqueue(input)
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  state.client.mutate = async () => {
+    started.resolve()
+    await resume.promise
+    throw new Error('Offline')
+  }
+  const flushing = state.queue.flush().catch(error => error)
+  await started.promise
+  const queued = state.queue
+    .enqueue({...input, id: 'later'}, {requireReady: true})
+    .catch(error => error)
+  resume.resolve()
+  expect((await flushing).message).toContain('Offline')
+  expect((await queued).message).toContain('pending edits')
+  expect((await state.queue.list()).map(row => row.id)).toEqual(['edit'])
+  await state.queue.close({purge: true})
+})

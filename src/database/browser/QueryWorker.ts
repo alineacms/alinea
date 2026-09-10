@@ -18,6 +18,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import type {UploadMetadata} from '#/core/Connection.js'
 import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
+import {ActivityEvent, type Activity} from '#/core/db/ActivityEvent.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
@@ -92,6 +93,51 @@ export class QueryWorker {
     const result = await this.#writable().pendingMutations()
     if (this.#closed) throw new Error('Query worker is closed')
     return result
+  }
+
+  async activities(): Promise<Array<Activity>> {
+    const result = await this.#writable().activities()
+    if (this.#closed) throw new Error('Query worker is closed')
+    return result
+  }
+
+  async retryActivity(): Promise<void> {
+    await this.#writable().retryActivity()
+    if (this.#closed) throw new Error('Query worker is closed')
+  }
+
+  async discardActivity(): Promise<void> {
+    await this.#writable().discardActivity()
+    if (this.#closed) throw new Error('Query worker is closed')
+  }
+
+  listenActivity(
+    observer: Remote<{next(activities: Array<Activity>): void} & ProxyMarked>
+  ) {
+    let runtime: WritableReplica
+    try {
+      runtime = this.#writable()
+    } catch (error) {
+      observer[releaseProxy]()
+      throw error
+    }
+    let active = true
+    const stop = () => {
+      if (!active) return
+      active = false
+      runtime.events.removeEventListener(ActivityEvent.type, listen)
+      this.#subscriptions.delete(stop)
+      observer[releaseProxy]()
+    }
+    const listen = (event: Event) => {
+      if (active && event instanceof ActivityEvent)
+        void observer.next(event.activities).catch(stop)
+    }
+    runtime.events.addEventListener(ActivityEvent.type, listen)
+    this.#subscriptions.add(stop)
+    // activities() supplies initial state; do not race an async replay against
+    // newer streamed events on another MessagePort.
+    return proxy(stop)
   }
 
   async retryMutations(): Promise<void> {

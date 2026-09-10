@@ -20,7 +20,7 @@ import {
   ActivityEvent,
   type ActivityOperation,
   type ActivityTarget
-} from './ActivityEvent.js'
+} from '#/core/db/ActivityEvent.js'
 
 const remote = pLimit(1)
 const syncInterval = 120_000

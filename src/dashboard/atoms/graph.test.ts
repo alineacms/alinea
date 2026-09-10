@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {ActivityEvent, type Activity} from '#/core/db/ActivityEvent.js'
 import {createStore} from 'jotai'
 import {activityState} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
@@ -195,4 +196,32 @@ test('hydrates activity after a worker action already started', async () => {
   expect(store.get(activityAtom).isFetchingUpdates).toBe(true)
 
   unsubscribe()
+})
+
+test('restored blocked mutations expose retry/discard and a late snapshot cannot replace newer events', async () => {
+  const restored: Activity = {
+    id: 'restored',
+    type: 'mutation',
+    status: 'blocked',
+    operations: [],
+    startedAt: 1
+  }
+  expect(activityState([restored])).toMatchObject({
+    hasBlocked: true,
+    canRetry: true,
+    canDiscard: true,
+    isMutating: false
+  })
+  const {db, store} = await createDashboardAtomFixture()
+  const snapshot = Promise.withResolvers<Array<Activity>>()
+  Object.assign(db, {activities: () => snapshot.promise})
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  const stop = store.sub(activityAtom, () => {})
+  events.emit(new ActivityEvent([{...restored, status: 'succeeded'}]))
+  snapshot.resolve([restored])
+  await snapshot.promise
+  await Promise.resolve()
+  expect(store.get(activityAtom).items[0].status).toBe('succeeded')
+  stop()
 })

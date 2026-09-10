@@ -9,6 +9,7 @@ import {decodeMutationContext} from '#/core/db/MutationContext.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Operation} from '#/core/db/Operation.js'
 import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
+import {ActivityEvent, type Activity} from '#/core/db/ActivityEvent.js'
 import {base64} from '#/core/util/Encoding.js'
 import {
   config,
@@ -195,9 +196,13 @@ test('writable Graph recovers a lost response after restart without another auth
   await graph.close()
   const reopened = await WritableReplica.connect(source.options)
   expect(source.submissions).toBe(1)
-  await reopened.retryMutations()
+  expect((await reopened.activities())[0].status).toBe('blocked')
+  await expect(reopened.mutate(mutations)).rejects.toThrow('pending edits')
+  expect(source.submissions).toBe(1)
+  await reopened.retryActivity()
   expect(source.submissions).toBe(2)
   expect(source.writes).toBe(1)
+  expect((await reopened.activities())[0].status).toBe('succeeded')
   expect(source.contexts[0]).toEqual(source.contexts[1])
   expect(await reopened.find({select: Entry.title})).toEqual(['After'])
   await reopened.close(true)
@@ -264,6 +269,14 @@ test('public writable Graph operations retain query scope across the worker port
   expose(worker, port1)
   const graph = new WorkerGraph(config, wrap<QueryWorker>(port2))
   const events: Array<IndexOp> = []
+  const activities: Array<Array<Activity>> = []
+  const finished = Promise.withResolvers<void>()
+  graph.events.addEventListener(ActivityEvent.type, event => {
+    if (event instanceof ActivityEvent) {
+      activities.push(event.activities)
+      if (event.activities[0]?.status === 'succeeded') finished.resolve()
+    }
+  })
   const initial = Promise.withResolvers<void>()
   const updated = Promise.withResolvers<void>()
   graph.events.addEventListener(IndexEvent.type, event => {
@@ -276,6 +289,7 @@ test('public writable Graph operations retain query scope across the worker port
   })
   try {
     await graph.listenIndex()
+    await graph.listenActivity()
     await initial.promise
     expect(events).toEqual([{op: 'index', sha: 'base', ids: ['a']}])
     const context = await graph.mutationContext()
@@ -287,6 +301,14 @@ test('public writable Graph operations retain query scope across the worker port
     })
     expect(result.title).toBe('After')
     await updated.promise
+    await finished.promise
+    expect(activities.map(items => items[0].status)).toEqual([
+      'pending',
+      'running',
+      'succeeded'
+    ])
+    expect(JSON.stringify(activities)).not.toContain('After')
+    expect((await graph.activities())[0].status).toBe('succeeded')
     expect(events.at(-1)).toEqual({op: 'index', sha: 'accepted', ids: ['a']})
     expect(await graph.sha).toBe('accepted')
     expect(await graph.find({type: Page, select: Page.title})).toEqual([

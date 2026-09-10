@@ -6,6 +6,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import type {UploadMetadata} from '#/core/Connection.js'
 import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
+import {ActivityEvent, type Activity} from '#/core/db/ActivityEvent.js'
 import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
@@ -20,7 +21,7 @@ export class WorkerGraph extends WritableGraph {
   #closed = false
   #pending = new Set<() => void>()
   #closing?: Promise<void>
-  #indexStops = new Set<() => Promise<void>>()
+  #eventStops = new Set<() => Promise<void>>()
 
   constructor(
     public config: Config,
@@ -50,14 +51,14 @@ export class WorkerGraph extends WritableGraph {
     const stop = async () => {
       if (!active) return
       active = false
-      this.#indexStops.delete(stop)
+      this.#eventStops.delete(stop)
       try {
         await unsubscribe()
       } finally {
         unsubscribe[releaseProxy]()
       }
     }
-    this.#indexStops.add(stop)
+    this.#eventStops.add(stop)
     if (this.#closed) {
       await stop()
       this.#assertOpen()
@@ -82,6 +83,50 @@ export class WorkerGraph extends WritableGraph {
   async pendingMutations() {
     this.#assertOpen()
     return this.#read(this.#worker.pendingMutations())
+  }
+
+  async activities(): Promise<Array<Activity>> {
+    this.#assertOpen()
+    return this.#read(this.#worker.activities())
+  }
+
+  async retryActivity(): Promise<void> {
+    this.#assertOpen()
+    await this.#read(this.#worker.retryActivity())
+  }
+
+  async discardActivity(): Promise<void> {
+    this.#assertOpen()
+    await this.#read(this.#worker.discardActivity())
+  }
+
+  async listenActivity(): Promise<() => Promise<void>> {
+    this.#assertOpen()
+    let active = true
+    const unsubscribe = await this.#worker.listenActivity(
+      proxy({
+        next: (activities: Array<Activity>) => {
+          if (active && !this.#closed)
+            this.events.dispatchEvent(new ActivityEvent(activities))
+        }
+      })
+    )
+    const stop = async () => {
+      if (!active) return
+      active = false
+      this.#eventStops.delete(stop)
+      try {
+        await unsubscribe()
+      } finally {
+        unsubscribe[releaseProxy]()
+      }
+    }
+    this.#eventStops.add(stop)
+    if (this.#closed) {
+      await stop()
+      this.#assertOpen()
+    }
+    return stop
   }
 
   async referencesTo(query: EntryReferenceQuery) {
@@ -196,7 +241,7 @@ export class WorkerGraph extends WritableGraph {
     this.#closing = (async () => {
       try {
         try {
-          await Promise.all([...this.#indexStops].map(stop => stop()))
+          await Promise.all([...this.#eventStops].map(stop => stop()))
         } finally {
           await this.#worker.close(purge)
         }

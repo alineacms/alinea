@@ -9,7 +9,7 @@ import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
-import {ActivityEvent} from './ActivityEvent.js'
+import {ActivityEvent} from '#/core/db/ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
 test('records remote database sync activity and keeps its outcome', async () => {

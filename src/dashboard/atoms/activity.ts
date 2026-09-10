@@ -6,7 +6,7 @@ import {
   type Activity,
   ActivityEvent,
   type ActivitySource
-} from '../boot/ActivityEvent.js'
+} from '#/core/db/ActivityEvent.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {pendingTimerAtom} from './utils.js'
 
@@ -54,19 +54,23 @@ export const activityAtom = Object.assign(
       const events = get(eventsAtom)
       const source = get(graphAtom) as WritableGraph & Partial<ActivitySource>
       let active = true
+      let updates = 0
 
       function update(activities: Array<Activity>) {
         startTransition(() => set(activityValueAtom, activities))
       }
 
       function listen(event: Event) {
-        if (event instanceof ActivityEvent) update(event.activities)
+        if (event instanceof ActivityEvent) {
+          updates++
+          update(event.activities)
+        }
       }
 
       events.addEventListener(ActivityEvent.type, listen)
       void source.activities?.().then(
         activities => {
-          if (active) update(activities)
+          if (active && updates === 0) update(activities)
         },
         () => {}
       )
@@ -211,6 +215,9 @@ export function activityState(items: Array<Activity>): DashboardActivity {
   const hasFailedUploads = items.some(
     activity => activity.type === 'upload' && activity.status === 'failed'
   )
+  const hasBlockedMutations = items.some(
+    activity => activity.type === 'mutation' && activity.status === 'blocked'
+  )
   return {
     items,
     isFetchingUpdates: items.some(
@@ -224,8 +231,8 @@ export function activityState(items: Array<Activity>): DashboardActivity {
     hasFailed: hasFailedMutations || hasFailedUploads || hasFailedFetch,
     hasFailedMutations,
     hasBlocked: items.some(activity => activity.status === 'blocked'),
-    canRetry: hasFailedMutations || hasFailedFetch,
-    canDiscard: hasFailedMutations || hasFailedUploads
+    canRetry: hasFailedMutations || hasFailedFetch || hasBlockedMutations,
+    canDiscard: hasFailedMutations || hasFailedUploads || hasBlockedMutations
   }
 }
 

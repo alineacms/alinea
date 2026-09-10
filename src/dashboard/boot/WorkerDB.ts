@@ -13,7 +13,7 @@ import type {
 } from '#/core/db/EntryReference.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {WritableGraph} from '#/core/db/WritableGraph.js'
-import type {Activity} from './ActivityEvent.js'
+import type {Activity} from '#/core/db/ActivityEvent.js'
 import type {DashboardWorker} from './DashboardWorker.js'
 
 export class WorkerDB extends WritableGraph {

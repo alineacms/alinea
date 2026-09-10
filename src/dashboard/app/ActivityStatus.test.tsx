@@ -11,13 +11,49 @@ import {
 } from '../atoms/activity.js'
 import {eventsAtom} from '../atoms/core.js'
 import {routeAtom} from '../atoms/nav.js'
-import {ActivityEvent} from '../boot/ActivityEvent.js'
+import {ActivityEvent} from '#/core/db/ActivityEvent.js'
 import {
   ActivityStatus as ActivityStatusView,
   type ActivityStatusProps
 } from './ActivityStatus.js'
 
 afterEach(cleanup)
+
+test('restored blocked edits expose retry and discard controls', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  let retried = 0
+  let discarded = 0
+  Object.assign(db, {
+    async activities() {
+      return [
+        {
+          id: 'restored',
+          type: 'mutation',
+          status: 'blocked',
+          operations: [],
+          startedAt: Date.now()
+        }
+      ]
+    },
+    async retryActivity() {
+      retried++
+    },
+    async discardActivity() {
+      discarded++
+    }
+  })
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatusView />
+    </Provider>
+  )
+  fireEvent.click(await screen.findByRole('button', {name: 'Actions waiting'}))
+  fireEvent.click(await screen.findByRole('button', {name: 'Retry'}))
+  fireEvent.click(await screen.findByRole('button', {name: 'Discard'}))
+  expect(retried).toBe(1)
+  expect(discarded).toBe(1)
+  view.unmount()
+})
 
 function AppSubscription() {
   useAtomValue(appAtom)

@@ -73,8 +73,10 @@ export class WritableReplica extends WritableGraph {
         store,
         replica,
         client,
-        lock: options.lock
+        lock: options.lock,
+        events: replica.events
       })
+      await queue.restore()
       return new WritableReplica(replica, queue, client)
     } catch (error) {
       store?.close()
@@ -126,17 +128,28 @@ export class WritableReplica extends WritableGraph {
   ): Promise<{id: string; sha: string}> {
     this.#assertOpen()
     const current = this.mutationContext()
+    if (
+      this.#queue
+        .activities()
+        .some(item => ['failed', 'blocked'].includes(item.status))
+    )
+      throw new Error(
+        'Retry or discard pending edits before making more changes'
+      )
     for (const key of ['project', 'namespace', 'epoch', 'principal'] as const)
       if (expected[key] !== current[key])
         throw new Error('Mutation context belongs to another replica scope')
     const id = createId()
-    await this.#queue.enqueue({
-      id,
-      mutations,
-      baseRevision: expected.baseRevision,
-      schemaId: expected.schemaId,
-      configId: expected.configId
-    })
+    await this.#queue.enqueue(
+      {
+        id,
+        mutations,
+        baseRevision: expected.baseRevision,
+        schemaId: expected.schemaId,
+        configId: expected.configId
+      },
+      {requireReady: true}
+    )
     await this.#queue.flush()
     this.#assertOpen()
     return {id, sha: this.bootstrap.revision}
@@ -166,6 +179,22 @@ export class WritableReplica extends WritableGraph {
   pendingMutations() {
     this.#assertOpen()
     return this.#queue.list()
+  }
+
+  async activities() {
+    this.#assertOpen()
+    return this.#queue.activities()
+  }
+
+  async retryActivity(): Promise<void> {
+    await this.refresh()
+    await this.retryMutations()
+  }
+
+  async discardActivity(): Promise<void> {
+    this.#assertOpen()
+    await this.refresh()
+    await this.#queue.discard()
   }
 
   referencesTo(query: EntryReferenceQuery) {

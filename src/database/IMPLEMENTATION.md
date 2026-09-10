@@ -571,6 +571,25 @@ delivery. The boot cutover must attach the event bridge and use a fresh dashboar
 store for each authenticated graph owner; activity and auth lifecycle integration
 are still pending.
 
+Durable mutation queues now publish the shared core ActivityEvent contract.
+Restored intents appear blocked without submission; enqueue/running/failure and
+post-refresh success are tracked by stable transaction ID. Metadata summaries
+exclude field values, snapshots are detached, terminal history is bounded, and
+close/scope invalidation suppresses late publications. Explicit retry reconciles
+intents already removed by another owner without claiming another source write.
+WritableReplica and the worker Graph expose activity/retry/discard methods and
+an activity event bridge. New saves cannot implicitly retry failed/restored work;
+the user must retry or discard first. Recovery refreshes the authenticated view
+before queue processing. Discard-all refreshes then abandons local intents; it
+does not undo possibly accepted source changes.
+
+The dashboard exposes controls for restored blocked edits as well as failures,
+and ignores a stale initial activity snapshot after a newer event arrives. Tests
+cover worker-streamed activity, detached snapshots while a submission is active,
+restart recovery, cross-owner removal and dashboard controls. ActivityEvent was
+moved into core so database owners do not depend on dashboard modules. Fetch
+activity/polling and authenticated boot/logout integration remain outstanding.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

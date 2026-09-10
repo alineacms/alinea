@@ -1,7 +1,7 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
-import {ActivityEvent} from './ActivityEvent.js'
+import {ActivityEvent} from '#/core/db/ActivityEvent.js'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
