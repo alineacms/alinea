@@ -95,6 +95,35 @@ test('post-write refresh waits past an index request started before acceptance',
   }
 })
 
+test('closing the live replica prevents a late reference response from escaping', async () => {
+  const current = await fixture('r1', 'One')
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  const replica = await LiveReplica.connect({
+    config,
+    expected: identity,
+    url: 'https://example.com/api',
+    async fetch(url) {
+      if (new URL(url).searchParams.get('action') === 'replicaIndex')
+        return Response.json(current.bootstrap)
+      started.resolve()
+      await resume.promise
+      return Response.json({
+        identity,
+        revision: 'r1',
+        total: 0,
+        references: [],
+        scan: {scanned: 1, total: 1, complete: true}
+      })
+    }
+  })
+  const result = replica.referencesTo({targetId: 'a'}).catch(error => error)
+  await started.promise
+  await replica.close()
+  resume.resolve()
+  expect(await result).toBeInstanceOf(Error)
+})
+
 test('live queries keep the old result until the whole subscribed replacement is ready', async () => {
   let current = await fixture('r1', 'One')
   const next = await fixture('r2', 'Two')

@@ -14,5 +14,6 @@ export enum HandleAction {
   Commit = 'commit',
   Blob = 'blob',
   ReplicaIndex = 'replicaIndex',
-  ReplicaPayloads = 'replicaPayloads'
+  ReplicaPayloads = 'replicaPayloads',
+  ReplicaReferences = 'replicaReferences'
 }

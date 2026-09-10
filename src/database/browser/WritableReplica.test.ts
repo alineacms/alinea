@@ -46,6 +46,14 @@ async function fixture() {
       }),
     async fetch(url, init) {
       const action = new URL(url).searchParams.get('action')
+      if (action === 'replicaReferences')
+        return Response.json({
+          identity,
+          revision,
+          references: [],
+          total: 0,
+          scan: {scanned: 1, total: 1, complete: true}
+        })
       if (action === 'mutate') {
         submissions++
         const headers = new Headers(init.headers)
@@ -268,6 +276,11 @@ test('public writable Graph operations retain query scope across the worker port
     ])
     expect(await graph.pendingMutations()).toEqual([])
     expect(source.writes).toBe(1)
+    expect(await graph.referencesTo({targetId: 'a'})).toEqual({
+      references: [],
+      total: 0,
+      scan: {scanned: 1, total: 1, complete: true}
+    })
   } finally {
     await graph.close(true)
     port1.close()

@@ -1,4 +1,5 @@
 import * as fsp from 'node:fs/promises'
+import type {ReferenceRequest} from '#/database/replica/ReferenceBatch.js'
 import {Config} from '#/core/Config.js'
 import type {SyncApi, UploadResponse} from '#/core/Connection.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
@@ -134,6 +135,16 @@ export class DevDB extends WritableGraph {
     if (this.#closed || !this.#replica)
       return Promise.reject(new Error('Dev database is not ready'))
     return this.#replica.bootstrap(principal, roles)
+  }
+
+  referenceBatch(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: ReferenceRequest
+  ) {
+    if (this.#closed || !this.#replica)
+      return Promise.reject(new Error('Dev database is not ready'))
+    return this.#replica.referenceBatch(principal, roles, request)
   }
 
   payloads(

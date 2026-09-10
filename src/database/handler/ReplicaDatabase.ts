@@ -1,5 +1,6 @@
 import type {HandlerDatabase} from '#/backend/Handler.js'
 import type {Config} from '#/core/Config.js'
+import type {ReferenceRequest} from '../replica/ReferenceBatch.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -48,6 +49,14 @@ export class ReplicaDatabase extends WritableGraph implements HandlerDatabase {
 
   referencesTo(query: EntryReferenceQuery) {
     return this.replica.referencesTo(query)
+  }
+
+  referenceBatch(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: ReferenceRequest
+  ) {
+    return this.replica.referenceBatch(principal, roles, request)
   }
 
   getTreeIfDifferent(sha: string) {

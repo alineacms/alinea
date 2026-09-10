@@ -3,6 +3,7 @@ import type {UploadMetadata} from '#/core/Connection.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
@@ -152,6 +153,11 @@ export class WritableReplica extends WritableGraph {
   pendingMutations() {
     this.#assertOpen()
     return this.#queue.list()
+  }
+
+  referencesTo(query: EntryReferenceQuery) {
+    this.#assertOpen()
+    return this.#replica.referencesTo(query)
   }
 
   retryMutations(): Promise<void> {

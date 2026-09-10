@@ -5,6 +5,7 @@ import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import type {UploadMetadata} from '#/core/Connection.js'
+import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
 import type {QueryWorker} from './QueryWorker.js'
@@ -39,6 +40,11 @@ export class WorkerGraph extends WritableGraph {
   async pendingMutations() {
     this.#assertOpen()
     return this.#read(this.#worker.pendingMutations())
+  }
+
+  async referencesTo(query: EntryReferenceQuery) {
+    this.#assertOpen()
+    return this.#read(this.#worker.referencesTo(query))
   }
 
   async retryMutations(): Promise<void> {

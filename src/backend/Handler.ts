@@ -53,6 +53,11 @@ import type {
   PayloadBatchRequest
 } from '#/database/replica/PayloadBatch.js'
 import {readBody} from '#/core/util/ReadBody.js'
+import {
+  decodeReferenceRequest,
+  type ReferenceRequest,
+  type ReferenceBatch
+} from '#/database/replica/ReferenceBatch.js'
 
 const PayloadRequestBody = object({
   identity: object({
@@ -96,6 +101,11 @@ export interface HandlerHooks {
 }
 
 export interface HandlerDatabase extends WritableGraph {
+  referenceBatch?(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: ReferenceRequest
+  ): Promise<ReferenceBatch>
   readonly sha: string
   readonly source: Pick<Source, 'getTree' | 'getBlobs'>
   replicaIdentity?(): Promise<
@@ -307,6 +317,51 @@ export function createHandler({
           input
         )
         return Response.json(payloads, {
+          headers: {
+            'Cache-Control': 'private, no-store',
+            Vary: 'Cookie, Authorization'
+          }
+        })
+      }
+
+      if (
+        action === HandleAction.ReplicaReferences &&
+        request.method === 'POST'
+      ) {
+        const {claims} = expectUser()
+        expectJson()
+        if (!claims.sub) throw new HttpError(401, 'Missing replica principal')
+        if (!local.referenceBatch)
+          throw new HttpError(501, 'SQLite references unavailable')
+        if (
+          !request.headers.get('content-type')?.includes('application/json') ||
+          !request.body
+        )
+          throw new HttpError(400, 'Expected JSON')
+        let bytes: Uint8Array
+        try {
+          bytes = await readBody(request.body, 64 * 1024, request.signal)
+        } catch {
+          throw new HttpError(
+            413,
+            'Reference request exceeds byte limit or was aborted'
+          )
+        }
+        let input: ReferenceRequest
+        try {
+          input = decodeReferenceRequest(
+            JSON.parse(new TextDecoder().decode(bytes))
+          )
+        } catch {
+          throw new HttpError(400, 'Invalid reference request')
+        }
+        await local.syncWith(cnx)
+        const result = await local.referenceBatch(
+          claims.sub,
+          claims.roles ?? [],
+          input
+        )
+        return Response.json(result, {
           headers: {
             'Cache-Control': 'private, no-store',
             Vary: 'Cookie, Authorization'

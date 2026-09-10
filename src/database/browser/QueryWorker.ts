@@ -17,8 +17,13 @@ import {
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import type {UploadMetadata} from '#/core/Connection.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
 
 export interface QueryGraph extends Graph {
+  referencesTo?(query: EntryReferenceQuery): Promise<EntryReferenceResult>
   subscribe(query: GraphQuery, observer: QueryObserver): () => void
   readonly bootstrap?: IndexBootstrap
   refresh?(): Promise<boolean>
@@ -62,6 +67,17 @@ export class QueryWorker {
 
   mutationContext(): MutationContext {
     return this.#writable().mutationContext()
+  }
+
+  async referencesTo(
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    if (this.#closed) throw new Error('Query worker is closed')
+    if (!this.#runtime.referencesTo)
+      throw new Error('Query graph has no reference capability')
+    const result = await this.#runtime.referencesTo(query)
+    if (this.#closed) throw new Error('Query worker is closed')
+    return result
   }
 
   async mutate(mutations: Array<Mutation>, expected?: MutationContext) {

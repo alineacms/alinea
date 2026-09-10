@@ -82,7 +82,9 @@ test('filesystem SQL databases synchronize remote snapshots without a LocalDB in
 test('development handlers serve authenticated lazy browser replicas across filesystem edits', async () => {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-browser-'))
   await mkdir(join(rootDir, 'content'))
-  const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title'), related: Field.entry('Related')}
+  })
   const cms = createCMS({
     schema: {Page},
     workspaces: {
@@ -139,7 +141,13 @@ test('development handlers serve authenticated lazy browser replicas across file
   try {
     await expect(db.bootstrap('developer', roles)).rejects.toThrow('not ready')
     const source = await createEntryResolver(cms.config, [
-      {id: 'a', type: 'Page', index: 'a', title: 'Before'}
+      {
+        id: 'a',
+        type: 'Page',
+        index: 'a',
+        title: 'Before',
+        data: {related: {_id: 'self', _type: 'entry', _entry: 'a'}}
+      }
     ])
     await db.syncWith(source.source)
     browser = await LiveReplica.connect({
@@ -151,6 +159,37 @@ test('development handlers serve authenticated lazy browser replicas across file
       }
     })
     expect(await browser.find({select: Entry.id})).toEqual(['a'])
+    const references = await browser.referencesTo({targetId: 'a'})
+    expect(references.total).toBe(1)
+    expect(references.references[0]).toMatchObject({
+      sourceId: 'a',
+      targetId: 'a',
+      fieldPath: 'related',
+      linkId: 'self'
+    })
+    expect(references.scan.complete).toBe(true)
+    const view = browser.bootstrap
+    for (const changed of [
+      {
+        identity: {...view.identity, principal: 'other'},
+        revision: view.revision
+      },
+      {identity: {...view.identity, viewId: 'stale'}, revision: view.revision},
+      {identity: view.identity, revision: 'stale'}
+    ]) {
+      const response = await handler(
+        new Request(`${context.handlerUrl}?action=replicaReferences`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            accept: 'application/json'
+          },
+          body: JSON.stringify({...changed, query: {targetId: 'a'}})
+        }),
+        context
+      )
+      expect(response.status).toBe(409)
+    }
     expect(await browser.find({select: Page.title})).toEqual(['Before'])
     const file = join(rootDir, 'content/pages/a.json')
     const contents = JSON.parse(await readFile(file, 'utf8'))
@@ -161,6 +200,9 @@ test('development handlers serve authenticated lazy browser replicas across file
     roles = []
     expect(await browser.refresh()).toBe(true)
     expect(await browser.find({select: Entry.id})).toEqual([])
+    await expect(browser.referencesTo({targetId: 'a'})).rejects.toThrow(
+      'reference request failed'
+    )
     await browser.close(true)
     const target = await createEntryResolver(cms.config, [
       {id: 'b', type: 'Page', index: 'b', title: 'Must not write'}

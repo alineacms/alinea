@@ -5,6 +5,8 @@ import type {
   EntryReferenceTarget
 } from '#/core/db/EntryReference.js'
 import {Type} from '#/core/Type.js'
+import {Permission} from '#/core/Role.js'
+import type {AuthorizedEntry} from '../handler/Policy.js'
 import {
   and,
   asc,
@@ -63,12 +65,13 @@ export async function replaceEntryReferences(
     )
 }
 
-/** Complete trusted checkpoint lookup. Browser coverage/permissions need a
- * separate reference manifest before this can become a browser capability.
+/** Trusted checkpoint lookup, optionally restricted to a freshly compiled view.
+ * Browser callers must bind that view and this query to the same read lease.
  */
 export async function entryReferencesTo(
   db: Database,
-  query: EntryReferenceQuery
+  query: EntryReferenceQuery,
+  authorized?: ReadonlyArray<AuthorizedEntry>
 ): Promise<EntryReferenceResult> {
   const entry = EntryIndexTable
   const reference = EntryReferenceTable
@@ -88,6 +91,7 @@ export async function entryReferencesTo(
   else if (status !== 'all') conditions.push(eq(entry.status, status))
   const rows = await db
     .select({
+      versionId: entry.versionId,
       target: reference.target,
       sourceFilePath: reference.filePath,
       sourceId: entry.id,
@@ -101,15 +105,41 @@ export async function entryReferencesTo(
     .innerJoin(entry, eq(entry.versionId, reference.versionId))
     .where(and(...conditions))
     .orderBy(asc(entry.index), asc(entry.ordinal), asc(reference.ordinal))
-  const scanned =
-    (await db
-      .select(count())
-      .from(entry)
-      .where(eq(entry.visible, true))
-      .get()) ?? 0
+  const readable =
+    authorized &&
+    new Map(
+      authorized
+        .filter(row => Boolean(row.permissions & Permission.Read))
+        .map(row => [entryIndexRow(row.entry).versionId, row])
+    )
+  const permitted = rows.filter(row => {
+    if (!readable) return true
+    const source = readable.get(row.versionId)
+    if (!source) return false
+    // A dotted field name can overlap a nested field path. Fail closed when the
+    // serialized path cannot identify one unambiguous top-level field.
+    const fields = Object.keys(source.fields).filter(
+      field =>
+        row.target.fieldPath === field ||
+        row.target.fieldPath.startsWith(`${field}.`)
+    )
+    return (
+      fields.length === 1 && Boolean(source.fields[fields[0]] & Permission.Read)
+    )
+  })
+  const scanned = readable
+    ? readable.size
+    : ((await db
+        .select(count())
+        .from(entry)
+        .where(eq(entry.visible, true))
+        .get()) ?? 0)
   return {
-    references: rows.map(({target, ...source}) => ({...target, ...source})),
-    total: rows.length,
+    references: permitted.map(({target, versionId: _, ...source}) => ({
+      ...target,
+      ...source
+    })),
+    total: permitted.length,
     scan: {scanned, total: scanned, complete: true}
   }
 }

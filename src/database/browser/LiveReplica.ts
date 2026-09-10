@@ -1,5 +1,10 @@
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
+import type {
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
+import {fetchReferences} from './FetchReferences.js'
 import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
 import type {IndexBootstrap} from '../replica/Bootstrap.js'
@@ -74,6 +79,36 @@ export class LiveReplica extends Graph {
       } catch (error) {
         if (this.#current === session) throw error
       }
+    }
+  }
+
+  async referencesTo(
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    const captured = {...query}
+    const session = this.#current
+    if (this.#closed || !session) throw new Error('Live replica is not ready')
+    try {
+      const result = await fetchReferences(
+        this.#options,
+        {
+          identity: session.identity,
+          revision: session.revision,
+          query: captured
+        },
+        this.#abort.signal
+      )
+      if (this.#closed || this.#current !== session)
+        throw new Error('Replica changed during reference query')
+      return {
+        references: result.references,
+        total: result.total,
+        scan: result.scan
+      }
+    } catch (error) {
+      if (error instanceof HttpError && [401, 403, 409].includes(error.code))
+        await this.#invalidate(session, error, error.code !== 409)
+      throw error
     }
   }
 

@@ -4,6 +4,8 @@ import {connect} from 'rado/driver/bun-sqlite'
 import {eq} from 'rado'
 import {Config, Field} from '#/index.js'
 import {Type} from '#/core/Type.js'
+import {Permission} from '#/core/Role.js'
+import {EntryIndexTable} from '../entry/Schema.js'
 import {
   createEntryResolver,
   type EntryFixtureEntry
@@ -128,6 +130,48 @@ test('private SQL references match Graph status, locale, duplicates and media me
       row => row.linkType
     )
   ).toEqual(['file', 'image'])
+})
+
+test('authorized references omit hidden sources, denied fields and private scan counts', async () => {
+  const fixture = await createEntryResolver(config, entries())
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await buildDatabase(config, db, fixture.source, identity)
+  await db.delete(EntryDataTable)
+  const rows = await db.select().from(EntryIndexTable)
+  const authorized = rows
+    .filter(row => row.id === 'source')
+    .map(entry => ({
+      entry,
+      permissions: Permission.Read | Permission.Explore,
+      fields: {
+        related: entry.locale === 'en' ? Permission.Read : 0,
+        attachment: 0,
+        hero: 0
+      }
+    }))
+  const result = await entryReferencesTo(
+    db,
+    {targetId: 'target', status: 'all'},
+    authorized
+  )
+  expect(result.references.map(row => row.linkId)).toEqual(['one', 'two'])
+  expect(result.total).toBe(2)
+  expect(result.scan).toEqual({
+    scanned: authorized.length,
+    total: authorized.length,
+    complete: true
+  })
+  expect(
+    (await entryReferencesTo(db, {targetId: 'media'}, authorized)).references
+  ).toEqual([])
+  expect(
+    (await entryReferencesTo(db, {targetId: 'target'}, [])).scan.total
+  ).toBe(0)
+  for (const row of authorized) row.permissions = Permission.Explore
+  expect(
+    (await entryReferencesTo(db, {targetId: 'target'}, authorized)).references
+  ).toEqual([])
 })
 
 test('reconciliation updates changed references, retains unchanged rows, unmasks hidden versions and removes deleted sources', async () => {

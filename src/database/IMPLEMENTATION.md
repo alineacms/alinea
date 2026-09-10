@@ -534,6 +534,24 @@ refresh-only retry and logout. Dashboard boot/activity/index events, reference
 queries and editor-lifetime structural context still need wiring before replacing
 the old DashboardWorker; this is not yet a completed dashboard cutover.
 
+Browser reference queries now use a lazy authenticated `replicaReferences` POST.
+The handler synchronizes first, then NodeReplica holds one immutable read lease
+while compiling roles, checking the full principal/release/view/revision binding,
+and querying the private SQL reference index. The target must be visible; sources
+and top-level reference fields require Read. Unauthorized rows and corpus counts
+are excluded. Ambiguous dotted field paths fail closed rather than guessing a
+field grant. No source payload hydration is required, and plaintext results are
+not persisted. The browser validates binding, target/status/locale, completeness
+and counts with a 32 MiB transport limit; close/supersession prevents late results
+and denial/staleness invalidates the corresponding live session. This capability
+is exposed through LiveReplica, WritableReplica and the worker Graph. SQL tests
+remove resident payloads; dev-handler tests exercise real filesystem SQLite
+references and rejected bindings; transport tests cover malformed/oversized data.
+Mixed field-read bootstrap support remains blocked on filtered entry payloads,
+and persistent reference frames/incremental reference subscriptions are not yet
+implemented. This on-demand query path replaces the dashboard's dependency on a
+whole-source browser reference scan once boot is cut over.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

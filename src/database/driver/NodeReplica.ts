@@ -1,4 +1,8 @@
 import type {Config} from '#/core/Config.js'
+import type {
+  ReferenceRequest,
+  ReferenceBatch
+} from '../replica/ReferenceBatch.js'
 import type {User} from '#/core/User.js'
 import {
   applyPreview,
@@ -282,6 +286,39 @@ export class NodeReplica extends Graph {
     return this.#read(snapshot =>
       entryReferencesTo(nodeDatabase(snapshot.sqlite), query)
     )
+  }
+
+  referenceBatch(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: ReferenceRequest
+  ): Promise<ReferenceBatch> {
+    roles = [...roles]
+    request = structuredClone(request)
+    return this.#read(async snapshot => {
+      if (
+        !principal ||
+        request.identity.principal !== principal ||
+        !identityKeys.every(
+          key => request.identity[key] === snapshot.identity[key]
+        )
+      )
+        throw new HttpError(409, 'Replica identity mismatch')
+      const view = await authorizedIndex(snapshot.runtime, roles)
+      if (
+        request.revision !== view.revision ||
+        request.identity.viewId !== view.viewId
+      )
+        throw new HttpError(409, 'Replica reference view changed')
+      if (!view.entries.some(row => row.entry.id === request.query.targetId))
+        throw new HttpError(403, 'Reference target is not accessible')
+      const result = await entryReferencesTo(
+        nodeDatabase(snapshot.sqlite),
+        request.query,
+        view.entries
+      )
+      return {...result, identity: request.identity, revision: view.revision}
+    })
   }
 
   getTree() {
