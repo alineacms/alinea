@@ -6,6 +6,8 @@ import type {
 } from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import {updatePrecondition} from '#/core/db/UpdatePrecondition.js'
+import type {MutationContext} from '#/core/db/MutationContext.js'
+import {readWithMutationContext} from '#/core/db/ReadWithMutationContext.js'
 import {canonicalJson} from '#/core/util/Json.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
@@ -39,6 +41,7 @@ import {policyAtom, userAtom} from './user.js'
 import {atomWithPending, dispense, loader} from './utils.js'
 
 interface EntryData {
+  context?: MutationContext
   id: string
   type: string
   parentId: string | null
@@ -125,14 +128,16 @@ class EditorNode extends ReactiveNode<object> {
     entry: Entry,
     readOnly: boolean,
     guarded: boolean,
-    config: Config
+    config: Config,
+    context?: MutationContext
   ) {
     super(value, readOnly)
     this.baseline = atom({
       entry: structuredClone(entry),
       value: structuredClone(value),
       guarded,
-      config
+      config,
+      context: structuredClone(context)
     })
   }
 }
@@ -276,6 +281,7 @@ export class EntryLocaleAtoms {
     const entry = await get(this.selectedEntry)
     const isUntranslated = get(this.untranslated)
     const config = get(configAtom)
+    const context = get(this.entry.data).context
     if (!version || (version.type === 'status' && entry.active)) {
       const editing = get(this.currentlyEditing)
       if (editing) {
@@ -288,7 +294,9 @@ export class EntryLocaleAtoms {
           baseline.entry.locale === entry.locale &&
           baseline.entry.status === entry.status &&
           baseline.entry.fileHash === entry.fileHash &&
-          baseline.entry.rowHash === entry.rowHash
+          baseline.entry.rowHash === entry.rowHash &&
+          canonicalJson(baseline.context ?? null) ===
+            canonicalJson(context ?? null)
         )
           return editing
       }
@@ -309,7 +317,8 @@ export class EntryLocaleAtoms {
       entry,
       readOnly,
       !isUntranslated && version?.type !== 'history',
-      config
+      config,
+      context
     )
   })
   richTextImages = atom(async get => {
@@ -509,7 +518,6 @@ export class EntryLocaleAtoms {
       baseline.guarded &&
       baseline.entry.status === status &&
       !(type === 'MediaFile' && Object.hasOwn(changes, 'location'))
-    let saved: Entry
     if (sameVersion) {
       if (Object.keys(changes).length) {
         const precondition = await updatePrecondition(
@@ -517,35 +525,43 @@ export class EntryLocaleAtoms {
           baseline.entry.data,
           changes
         )
-        await graph.mutate([
-          {
-            op: 'update',
-            id,
-            locale: this.requestedLocale,
-            status,
-            set: changes,
-            precondition,
-            ...(audit ? {audit} : {})
-          }
-        ])
+        await graph.mutate(
+          [
+            {
+              op: 'update',
+              id,
+              locale: this.requestedLocale,
+              status,
+              set: changes,
+              precondition,
+              ...(audit ? {audit} : {})
+            }
+          ],
+          baseline.context
+        )
       }
-      saved = await graph.get({
-        id,
-        locale: this.requestedLocale,
-        status,
-        select: Entry
-      })
     } else {
-      saved = await graph.create({
-        type: typeConfig,
+      await graph.create(
+        {
+          type: typeConfig,
+          id,
+          locale: this.requestedLocale,
+          status,
+          set: data,
+          overwrite: true,
+          select: Entry
+        },
+        baseline.context
+      )
+    }
+    const {value: saved, context} = await readWithMutationContext(graph, () =>
+      graph.get({
         id,
         locale: this.requestedLocale,
         status,
-        set: data,
-        overwrite: true,
         select: Entry
       })
-    }
+    )
     const value = Type.withInitialValue(typeConfig, {
       ...Type.initialValue(typeConfig),
       ...saved.data
@@ -555,7 +571,8 @@ export class EntryLocaleAtoms {
       entry: structuredClone(saved),
       value: structuredClone(value),
       guarded: true,
-      config
+      config,
+      context
     })
   }
 
@@ -597,15 +614,27 @@ export class EntryLocaleAtoms {
       get(userAtom)
     )
     const graph = get(graphAtom)
-    const saved = await graph.create({
-      type,
-      id: this.entry.id,
-      parentId: dataState.parentId,
-      locale: this.requestedLocale,
-      status: config.enableDrafts ? 'draft' : 'published',
-      set: data,
-      select: Entry
-    })
+    const status = config.enableDrafts ? 'draft' : 'published'
+    await graph.create(
+      {
+        type,
+        id: this.entry.id,
+        parentId: dataState.parentId,
+        locale: this.requestedLocale,
+        status,
+        set: data,
+        select: Entry
+      },
+      get(node.baseline).context
+    )
+    const {value: saved, context} = await readWithMutationContext(graph, () =>
+      graph.get({
+        id: this.entry.id,
+        locale: this.requestedLocale,
+        status,
+        select: Entry
+      })
+    )
     const value = Type.withInitialValue(type, {
       ...Type.initialValue(type),
       ...saved.data
@@ -615,7 +644,8 @@ export class EntryLocaleAtoms {
       entry: structuredClone(saved),
       value: structuredClone(value),
       guarded: true,
-      config
+      config,
+      context
     })
   })
 
@@ -851,18 +881,24 @@ const entryLoader = atom(get => {
     .filter(([, type]) => !Type.isHidden(type))
     .map(([name]) => name)
   return loader(async ids => {
-    const rows = await graph.find({
-      groupBy: Entry.id,
-      select: selection,
-      id: {in: ids},
-      status: 'preferDraft'
-    })
-    const parentIds = await graph.find({
-      select: Entry.parentId,
-      parentId: {in: ids},
-      filter: {_type: {in: visibleTypes}},
-      groupBy: Entry.parentId,
-      status: 'preferDraft'
+    const {
+      value: [rows, parentIds],
+      context
+    } = await readWithMutationContext(graph, async () => {
+      const rows = await graph.find({
+        groupBy: Entry.id,
+        select: selection,
+        id: {in: ids},
+        status: 'preferDraft'
+      })
+      const parentIds = await graph.find({
+        select: Entry.parentId,
+        parentId: {in: ids},
+        filter: {_type: {in: visibleTypes}},
+        groupBy: Entry.parentId,
+        status: 'preferDraft'
+      })
+      return [rows, parentIds] as const
     })
     const byId = new Map(rows.map(row => [row.id, row] as const))
     return ids.map(id => {
@@ -874,6 +910,7 @@ const entryLoader = atom(get => {
       return [
         {
           ...row,
+          context,
           entries: readableEntries,
           hasChildren: parentIds.includes(id)
         },

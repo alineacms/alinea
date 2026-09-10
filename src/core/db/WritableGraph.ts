@@ -56,16 +56,19 @@ export abstract class WritableGraph extends Graph {
   }
 
   async create<Definition, Selection extends Projection>(
-    create: CreateQuery<Definition> & {select: Selection}
+    create: CreateQuery<Definition> & {select: Selection},
+    expected?: MutationContext
   ): Promise<InferProjection<Selection>>
   async create<Definition>(
-    create: CreateQuery<Definition>
+    create: CreateQuery<Definition>,
+    expected?: MutationContext
   ): Promise<EntryFields & Infer<Type<Definition>>>
   async create<Definition>(
-    create: CreateQuery<Definition> & {select?: Projection}
+    create: CreateQuery<Definition> & {select?: Projection},
+    expected?: MutationContext
   ) {
     const op = new CreateOp(create)
-    await this.commit(op)
+    await this.#commit(expected ?? (await this.mutationContext()), [op])
     const status =
       create.status === 'draft'
         ? 'preferDraft'
@@ -143,8 +146,16 @@ export abstract class WritableGraph extends Graph {
 
   async commit(...operations: Array<Operation>) {
     const expected = await this.mutationContext()
+    await this.#commit(expected, operations)
+  }
+
+  async #commit(
+    expected: MutationContext | undefined,
+    operations: Array<Operation>
+  ) {
+    const context = structuredClone(expected)
     const mutations = await Promise.all(operations.map(op => op.task(this)))
-    await this.mutate(mutations.flat(), expected)
+    await this.mutate(mutations.flat(), context)
   }
 
   async createPolicy(forRoles: Array<string>): Promise<Policy> {

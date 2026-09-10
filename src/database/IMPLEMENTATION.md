@@ -496,9 +496,8 @@ for every otherwise independent edit. Local optimistic preparation without an
 authenticated user is provisional; the authority stamps its verified actor.
 Editor, HTTP and SQL tests cover independent loaded forms, stale same-field
 errors, advanced baselines, in-flight typing, normalized media aliases and audit
-actor/creation-history preservation. SQL worker/queue cutover,
-captured whole-revision context for structural editor actions and atomic ready
-state publication remain required.
+actor/creation-history preservation. The worker/queue and editor-context wiring
+are described below; production cutover remains gated on its source authority.
 
 `browser/MutationQueue` now connects the encrypted pending store to context-bound
 Graph submissions. Opening and enqueueing do not send; explicit flush serializes
@@ -530,9 +529,27 @@ workers reject those write operations. `WritableGraph.commit` captures available
 context before asynchronous operation preparation; callers can also capture a
 context at authoring time and pass it to mutate. Real SQLite/frame and MessagePort
 tests cover save/read ordering, restart receipt recovery, rejected stale context,
-refresh-only retry and logout. Dashboard boot/activity/index events, reference
-queries and editor-lifetime structural context still need wiring before replacing
-the old DashboardWorker; this is not yet a completed dashboard cutover.
+refresh-only retry and logout. The dashboard boot/activity/index/reference wiring
+is described below; this is not yet a completed production dashboard cutover.
+
+Editor entry batches now carry the mutation context captured with their loaded
+data. Before/after context sampling rejects a view that changes during loading;
+this is an optimistic consistency check, not an atomic multi-query read lease.
+Editing nodes detach and retain that authoring context. Same-version field edits,
+structural draft/version replacement and translation creation submit it rather
+than obtaining a newer revision at save time. `Graph.create` accepts an optional
+context without changing existing calls; operation preparation detaches it before
+asynchronous work. After an accepted save the editor rereads current data/context
+and advances its baseline together. Failed structural writes leave dirty values
+and the original baseline intact. Clean nodes can adopt refreshed context while
+dirty nodes retain their original context and per-field guards.
+
+Tests cover context detachment/change detection, stale structural saves, guarded
+field saves and context advancement after acceptance. Whole-view sampling can
+conservatively reject an unrelated change during hydration; an atomic contextual
+Graph read remains desirable for stronger cross-query snapshot guarantees.
+Production CloudRemote still has no receipt lookup contract in this repository;
+no guessed cloud endpoint or production writable-browser cutover is introduced.
 
 Browser reference queries now use a lazy authenticated `replicaReferences` POST.
 The handler synchronizes first, then NodeReplica holds one immutable read lease

@@ -1,6 +1,8 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
+import type {MutationContext} from '#/core/db/MutationContext.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
 import {
@@ -425,4 +427,56 @@ test('draft creation remains structural and subsequent edits target the captured
   expect(
     await db.get({id: parent._id, status: 'draft', select: Entry.title})
   ).toBe('Draft two')
+})
+
+test('editor structural saves retain their authoring context and advance it only after an accepted save', async () => {
+  const {db, parent, store} = await createDashboardAtomFixture()
+  await db.discard({id: parent._id, status: 'draft'})
+  const graph: WritableGraph = db
+  let current: MutationContext = {
+    project: 'project',
+    namespace: 'main',
+    epoch: 'epoch',
+    principal: 'user',
+    configId: 'config',
+    schemaId: 'schema',
+    baseRevision: 'loaded'
+  }
+  using context = spyOn(graph, 'mutationContext').mockImplementation(() => ({
+    ...current
+  }))
+  await store.get(authReady)
+  const locale = (await store.get(entryAtoms(parent._id))).locales(null)
+  const node = await store.get(locale.selectedNode)
+  store.set(locale.currentlyEditing, node)
+  store.set(node.field('title'), 'My changes')
+  current = {...current, baseRevision: 'unrelated-source-change'}
+  const sent: Array<MutationContext | undefined> = []
+  const write = graph.mutate.bind(graph)
+  using mutate = spyOn(graph, 'mutate').mockImplementation(
+    async (mutations, expected) => {
+      sent.push(expected)
+      const guarded = mutations.every(
+        mutation => mutation.op === 'update' && mutation.precondition
+      )
+      if (!guarded && expected?.baseRevision !== current.baseRevision)
+        throw new Error('Structural edit has a stale source context')
+      const response = await write(mutations)
+      current = {...current, baseRevision: response.sha}
+      return response
+    }
+  )
+  await expect(store.set(locale.saveDraft, node)).rejects.toThrow(
+    'stale source context'
+  )
+  expect(sent[0]?.baseRevision).toBe('loaded')
+  expect(store.get(node.isDirty)).toBe(true)
+  // Field guards can safely rebase independent changes against the old context.
+  await store.set(locale.publishEdits, node)
+  expect(sent[1]?.baseRevision).toBe('loaded')
+  const accepted = current.baseRevision
+  store.set(node.field('title'), 'Next draft')
+  await store.set(locale.saveDraft, node)
+  expect(sent[2]?.baseRevision).toBe(accepted)
+  expect(store.get(node.isDirty)).toBe(false)
 })
