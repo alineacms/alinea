@@ -11,14 +11,21 @@ export interface EmbeddingSpace {
   encoding: 'float32-le'
 }
 
-export interface EmbeddingTarget {
+export interface EmbeddingOwner {
   owner: {versionId: string; kind: 'entry' | 'image' | 'document'}
   /** Current entry payload descriptor, distinct from an image/document source hash. */
   ownerPayloadId: string
   slot: string
+  space: EmbeddingSpace
+}
+
+export interface EmbeddingTarget extends EmbeddingOwner {
   chunk: string
   sourceHash: string
-  space: EmbeddingSpace
+}
+
+export interface EmbeddingPublication extends EmbeddingOwner {
+  chunks: ReadonlyArray<{chunk: string; sourceHash: string}>
 }
 
 export interface EmbeddingJob {
@@ -33,19 +40,22 @@ export interface EmbeddingManifest extends EmbeddingJob {
 }
 
 export function validateEmbedding(target: EmbeddingTarget): void {
-  const {owner, space} = target
-  for (const value of [
-    owner.versionId,
-    target.ownerPayloadId,
-    target.slot,
-    target.chunk
-  ])
-    if (typeof value !== 'string' || !value || value.length > 1024)
-      throw new Error('Invalid embedding identity')
+  validateEmbeddingOwner(target)
   if (
-    !['entry', 'image', 'document'].includes(owner.kind) ||
+    typeof target.chunk !== 'string' ||
+    !target.chunk ||
+    target.chunk.length > 1024 ||
     !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(target.sourceHash)
   )
+    throw new Error('Invalid embedding source')
+}
+
+export function validateEmbeddingOwner(target: EmbeddingOwner): void {
+  const {owner, space} = target
+  for (const value of [owner.versionId, target.ownerPayloadId, target.slot])
+    if (typeof value !== 'string' || !value || value.length > 1024)
+      throw new Error('Invalid embedding identity')
+  if (!['entry', 'image', 'document'].includes(owner.kind))
     throw new Error('Invalid embedding source')
   validateSpace(space)
 }

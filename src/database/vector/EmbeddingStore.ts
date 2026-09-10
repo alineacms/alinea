@@ -9,6 +9,8 @@ import {
   embeddingHash,
   encodeEmbedding,
   validateEmbedding,
+  validateEmbeddingOwner,
+  type EmbeddingPublication,
   type EmbeddingTarget,
   type EmbeddingJob,
   type EmbeddingManifest,
@@ -32,12 +34,32 @@ const Manifest = table(
     slot: column.varchar(undefined, {length: 1024}).notNull(),
     payloadId: column.varchar(undefined, {length: 64})
   },
-  row => ({byOwner: index().on(row.ownerVersionId, row.spaceId, row.slot)})
+  row => ({
+    alinea_embedding_manifest_owner: index().on(
+      row.ownerVersionId,
+      row.spaceId,
+      row.slot
+    )
+  })
 )
 const Payload = table('alinea_embedding_data', {
   id: column.varchar(undefined, {length: 64}).primaryKey(),
   bytes: column.blob().notNull()
 })
+const Publication = table(
+  'alinea_embedding_publication',
+  {
+    id: column.varchar(undefined, {length: 64}).primaryKey(),
+    ownerVersionId: column.varchar(undefined, {length: 1024}).notNull(),
+    ownerPayloadId: column.varchar(undefined, {length: 1024}).notNull(),
+    slot: column.varchar(undefined, {length: 1024}).notNull(),
+    spaceId: column.varchar(undefined, {length: 64}).notNull(),
+    jobs: column.json<Array<{id: string; generation: string}>>().notNull()
+  },
+  row => ({
+    alinea_embedding_publication_owner: index().on(row.ownerVersionId, row.slot)
+  })
+)
 const State = table('alinea_embedding_state', {
   id: column.integer().primaryKey(),
   revision: column.varchar(undefined, {length: 128}).notNull()
@@ -52,7 +74,7 @@ export class EmbeddingStore {
   constructor(readonly db: Database) {}
 
   static async createSchema(db: Database): Promise<void> {
-    await db.create(Manifest, Payload, State)
+    await db.create(Manifest, Payload, Publication, State)
     await db.insert(State).values({id: 1, revision: createId()})
   }
 
@@ -87,6 +109,14 @@ export class EmbeddingStore {
           )
             return {id, generation: previous.generation, spaceId, target}
           const job = {id, generation: createId(), spaceId, target}
+          await tx
+            .delete(Publication)
+            .where(
+              and(
+                eq(Publication.ownerVersionId, target.owner.versionId),
+                eq(Publication.slot, target.slot)
+              )
+            )
           await tx.delete(Manifest).where(eq(Manifest.id, id))
           await tx.insert(Manifest).values({
             ...job,
@@ -113,6 +143,106 @@ export class EmbeddingStore {
         .where(eq(Manifest.id, id))
         .get()
       return manifest ? structuredClone(manifest) : undefined
+    })
+  }
+
+  /** Atomically declares the complete chunk set for one owner/slot. An empty
+   * set is explicit; missing publication is never interpreted as zero chunks.
+   * Capture expectedRevision before asynchronous extraction so a newer published
+   * generation cannot be overwritten by older preparation.
+   */
+  publishOwner(
+    input: EmbeddingPublication,
+    expectedRevision: string
+  ): Promise<Array<EmbeddingJob>> {
+    if (input.chunks.length > 1024) throw new Error('Too many embedding chunks')
+    const {chunks, ...owner} = structuredClone(input)
+    validateEmbeddingOwner(owner)
+    if (new Set(chunks.map(chunk => chunk.chunk)).size !== chunks.length)
+      throw new Error('Duplicate embedding chunk')
+    const targets = chunks.map(({chunk, sourceHash}) => ({
+      ...owner,
+      chunk,
+      sourceHash
+    }))
+    targets.forEach(validateEmbedding)
+    return this.#run(async () => {
+      const id = await embeddingHash([owner.owner.versionId, owner.slot])
+      const spaceId = await embeddingHash(owner.space)
+      const prepared = await Promise.all(
+        targets.map(async target => ({
+          target,
+          id: await embeddingHash([target.owner, target.slot, target.chunk])
+        }))
+      )
+      prepared.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      return this.db.transaction(
+        async tx => {
+          const revision = await tx
+            .select(State.revision)
+            .from(State)
+            .where(eq(State.id, 1))
+            .get()
+          if (revision !== expectedRevision)
+            throw new Error('Embedding publication revision is stale')
+          const scope = and(
+            eq(Manifest.ownerVersionId, owner.owner.versionId),
+            eq(Manifest.slot, owner.slot)
+          )
+          const previous = await tx.select().from(Manifest).where(scope)
+          const byId = new Map(previous.map(row => [row.id, row]))
+          const rows = prepared.map(({id, target}) => {
+            const old = byId.get(id)
+            if (old && canonicalJson(old.target) === canonicalJson(target))
+              return old
+            return {
+              id,
+              target,
+              spaceId,
+              generation: createId(),
+              ownerVersionId: owner.owner.versionId,
+              slot: owner.slot,
+              payloadId: null
+            }
+          })
+          const publication = {
+            id,
+            ownerVersionId: owner.owner.versionId,
+            ownerPayloadId: owner.ownerPayloadId,
+            slot: owner.slot,
+            spaceId,
+            jobs: rows.map(({id, generation}) => ({id, generation}))
+          }
+          const old = await tx
+            .select()
+            .from(Publication)
+            .where(eq(Publication.id, id))
+            .get()
+          const jobs = rows.map(({id, generation, spaceId, target}) => ({
+            id,
+            generation,
+            spaceId,
+            target
+          }))
+          if (
+            old &&
+            previous.length === rows.length &&
+            canonicalJson(old) === canonicalJson(publication)
+          )
+            return jobs
+          await tx.delete(Manifest).where(scope)
+          for (let offset = 0; offset < rows.length; offset += 100)
+            await tx.insert(Manifest).values(rows.slice(offset, offset + 100))
+          await tx.delete(Publication).where(eq(Publication.id, id))
+          await tx.insert(Publication).values(publication)
+          await tx
+            .update(State)
+            .set({revision: createId()})
+            .where(eq(State.id, 1))
+          return jobs
+        },
+        {async: true}
+      )
     })
   }
 
@@ -146,8 +276,41 @@ export class EmbeddingStore {
             throw new Error('Embedding search scope is stale')
           const ids: Array<string> = []
           const found = new Set<string>()
+          const expected = new Map<string, string>()
           const versions = [...owners.keys()]
           for (let offset = 0; offset < versions.length; offset += 128) {
+            const publications = await tx
+              .select()
+              .from(Publication)
+              .where(
+                and(
+                  inArray(
+                    Publication.ownerVersionId,
+                    versions.slice(offset, offset + 128)
+                  ),
+                  eq(Publication.slot, slot),
+                  eq(Publication.spaceId, spaceId)
+                )
+              )
+            for (const publication of publications) {
+              if (
+                publication.ownerPayloadId !==
+                owners.get(publication.ownerVersionId)
+              )
+                throw new Error(
+                  'Embedding inputs are stale for the current owner'
+                )
+              found.add(publication.ownerVersionId)
+              for (const job of publication.jobs) {
+                if (expected.has(job.id))
+                  throw new Error('Invalid embedding publication')
+                expected.set(job.id, job.generation)
+              }
+              if (expected.size > 1024)
+                throw new Error(
+                  'Embedding search scope exceeds local work limit'
+                )
+            }
             const rows = await tx
               .select()
               .from(Manifest)
@@ -172,12 +335,13 @@ export class EmbeddingStore {
                   'Embedding inputs are stale for the current owner'
                 )
               ids.push(row.id)
-              found.add(row.ownerVersionId)
+              if (expected.get(row.id) !== row.generation)
+                throw new Error('Embedding owner scope is not fully indexed')
             }
             if (ids.length > 1024)
               throw new Error('Embedding search scope exceeds local work limit')
           }
-          if (found.size !== owners.size)
+          if (found.size !== owners.size || ids.length !== expected.size)
             throw new Error('Embedding owner scope is not fully indexed')
           return ids
         },
@@ -271,12 +435,20 @@ export class EmbeddingStore {
       await this.db.transaction(
         async tx => {
           const exists = await tx
-            .select(Manifest.id)
+            .select()
             .from(Manifest)
             .where(eq(Manifest.id, id))
             .get()
           if (!exists) return
           await tx.delete(Manifest).where(eq(Manifest.id, id))
+          await tx
+            .delete(Publication)
+            .where(
+              and(
+                eq(Publication.ownerVersionId, exists.ownerVersionId),
+                eq(Publication.slot, exists.slot)
+              )
+            )
           await tx
             .update(State)
             .set({revision: createId()})

@@ -1258,11 +1258,28 @@ Native/WASM tests cover unreadable nearest matches, inaccessible corrupt vectors
 same-source-revision policy revocation, stale source cursors, changed owner
 payloads, pending replacements and roles with no access. Mixed field-read policy
 views retain the existing fail-closed behavior; no derived bytes may bypass it.
-This is not yet a public HTTP route or a Graph method. Results cover registered
-authorized chunks only: atomic publication of a complete owner chunk manifest
-and source reconciliation still need implementation before claiming complete
-owner/global vector search. Encrypted vector transport and principal/release
-binding must be added at the eventual HTTP boundary.
+This is not yet a public HTTP route or a Graph method. Source reconciliation must
+declare the complete chunk scope before claiming global vector coverage. Encrypted
+vector transport and principal/release binding must be added at the eventual HTTP
+boundary.
+
+`EmbeddingStore.publishOwner` now atomically replaces a complete owner/slot chunk
+manifest and records its exact job generations. It checks the expected derived
+revision captured before preparation, retains unchanged jobs and ready vectors,
+removes obsolete chunks, and distinguishes an explicitly empty set from absent
+indexing. Repeated identical publication at the current revision is a no-op;
+competing stale preparations cannot replace newer declarations. Individual
+low-level scheduling/removal invalidates the complete-owner declaration until
+republished. Authorized candidate selection now requires this declaration and
+matching owner payload, space, chunk IDs and job generations. Pending declared
+chunks still prevent search from returning partial rankings.
+
+Native/WASM tests cover retained ready chunks, empty versus unknown owners,
+removed-job rejection, source A → B → A job generations, input detachment,
+competing preparations and transaction rollback using an injected publication
+failure. A built Node SQLite publication/search smoke test also passed. The
+source reconciliation/provider pipeline must still supply complete, current input
+sets; this store cannot independently discover missing extraction output.
 
 Add embedding manifests, content/model identity, background job completion,
 invalidation, chunk ownership, permission filtering, and lazy vector payloads.

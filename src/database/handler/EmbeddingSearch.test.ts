@@ -33,6 +33,16 @@ function target(id: string, payloadId = id): EmbeddingTarget {
   }
 }
 
+async function publish(store: EmbeddingStore, id: string, payloadId = id) {
+  const {chunk, sourceHash, ...owner} = target(id, payloadId)
+  return (
+    await store.publishOwner(
+      {...owner, chunks: [{chunk, sourceHash}]},
+      await store.revision()
+    )
+  )[0]
+}
+
 for (const driver of ['native', 'wasm'] as const) {
   test(`${driver} embedding search filters owner permissions before top-k and rejects stale inputs`, async () => {
     // The stores have independent connections; the runtime read generation guards
@@ -88,7 +98,7 @@ for (const driver of ['native', 'wasm'] as const) {
       })
       const embeddings = new EmbeddingStore(vectors)
       for (const id of ['readable', 'denied', 'hidden']) {
-        const job = await embeddings.schedule(target(id))
+        const job = await publish(embeddings, id)
         await embeddings.install(job, id === 'readable' ? [0, 1] : [1, 0])
       }
       const service = new AuthorizedEmbeddingSearch(runtime, embeddings)
@@ -173,9 +183,7 @@ for (const driver of ['native', 'wasm'] as const) {
       await expect(service.search(['reader'], nextQuery)).rejects.toThrow(
         'inputs are stale'
       )
-      const replacement = await embeddings.schedule(
-        target('readable', 'readable-v2')
-      )
+      const replacement = await publish(embeddings, 'readable', 'readable-v2')
       await expect(
         service.search(['reader'], {
           ...nextQuery,
