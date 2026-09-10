@@ -11,7 +11,6 @@ import {isRecord} from '#/core/util/Objects.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {buildDatabase} from '../runtime/BuildDatabase.js'
 import {openCheckpoint} from '../runtime/Checkpoint.js'
-import {FrameTable} from '../release/FrameStore.js'
 import {sqlMutationRequest} from './SqlMutationRequest.js'
 
 const config = {
@@ -83,7 +82,6 @@ for (const [name, mutation] of cases) {
     using sqlite = new Database(':memory:')
     const db = connect(sqlite)
     await buildDatabase(config, db, fixture.source, identity)
-    const before = await db.select().from(FrameTable)
     const legacy = await fixture.index.transaction(fixture.source)
     await legacy.apply([mutation])
     const request = await sqlMutationRequest(
@@ -100,7 +98,6 @@ for (const [name, mutation] of cases) {
     expect(
       (await openCheckpoint(config, db, identity)).descriptor.sourceSha
     ).toBe(request.fromSha)
-    expect(await db.select().from(FrameTable)).toEqual(before)
     await fixture.source.applyChanges(sourceChanges(request))
     expect((await fixture.source.getTree()).sha).toBe(request.intoSha)
   })
@@ -142,7 +139,6 @@ test('SQL Graph mutation preparation sees earlier operations without committing 
   const reopened = await openCheckpoint(config, db, identity)
   expect(reopened.descriptor.sourceSha).toBe(request.fromSha)
   expect(await reopened.runtime.find({select: Entry.id})).toEqual([])
-  expect(await db.select().from(FrameTable)).toEqual([])
   await fixture.source.applyChanges(sourceChanges(request))
   expect((await fixture.source.getTree()).sha).toBe(request.intoSha)
 })
@@ -181,5 +177,4 @@ test('SQL mutation preparation rolls back earlier operations when a later operat
   const reopened = await openCheckpoint(config, db, identity)
   expect(reopened.descriptor.sourceSha).toBe(revision)
   expect(await reopened.runtime.find({select: Entry.id})).toEqual([])
-  expect(await db.select().from(FrameTable)).toEqual([])
 })

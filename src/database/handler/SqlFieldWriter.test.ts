@@ -12,7 +12,6 @@ import {entryVersionId} from '../entry/Schema.js'
 import {buildDatabase} from '../runtime/BuildDatabase.js'
 import {openCheckpoint} from '../runtime/Checkpoint.js'
 import {hashFieldValue, type FieldTransaction} from '../replica/Operations.js'
-import {FrameTable} from '../release/FrameStore.js'
 import {
   SqlFieldWriter,
   FieldReceiptTable,
@@ -67,7 +66,6 @@ test('routing changes roll back source, derived rows and receipts, and field den
   const db = connect(sqlite)
   await buildDatabase(config, db, fixture.source, identity)
   await SqlFieldWriter.createSchema(db)
-  const frames = await db.select().from(FrameTable)
   const writer = new SqlFieldWriter(config, db, identity)
   const baseRevision = (await fixture.source.getTree()).sha
   const recordId = entryVersionId('a', null, 'published')
@@ -104,7 +102,6 @@ test('routing changes roll back source, derived rows and receipts, and field den
   const {runtime, descriptor} = await openCheckpoint(config, db, identity)
   expect(descriptor.sourceSha).toBe(baseRevision)
   expect(await runtime.find({select: Entry.url})).toEqual(['/First'])
-  expect(await db.select().from(FrameTable)).toEqual(frames)
   expect(await db.select().from(FieldReceiptTable)).toEqual([])
 })
 

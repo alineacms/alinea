@@ -9,7 +9,7 @@ import {
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {count, type Database, eq, inArray, table} from 'rado'
+import {and, count, type Database, eq, inArray, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {
   EntryDataTable,
@@ -20,7 +20,7 @@ import {
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from '../query/EntryQuery.js'
-import {createSearch, type SearchQuery} from '../query/Search.js'
+import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 
 const superseded = Symbol('superseded query')
@@ -45,6 +45,13 @@ export interface LoadedPayload extends PayloadRequest {
   source?: EntrySource
 }
 
+export interface SerializedPayload extends PayloadRequest {
+  dataJson: string
+  sourceJson?: string
+}
+
+export type PayloadResult = LoadedPayload | SerializedPayload
+
 export interface EntryReplacement {
   entry: IndexedEntry
   /** Omitted for an explore-only entry. */
@@ -64,9 +71,11 @@ export interface RuntimeOptions {
   /** Prepare a complete search plan under the connection's statement queue. */
   search?(input: GraphQuery['search']): Promise<SearchQuery | undefined>
   includedAtBuild?(filePath: string): boolean | Promise<boolean>
+  /** The immutable checkpoint already contains its complete FTS5 corpus. */
+  searchReady?: boolean
   load?(
     requests: ReadonlyArray<PayloadRequest>
-  ): Promise<ReadonlyArray<LoadedPayload>>
+  ): Promise<ReadonlyArray<PayloadResult>>
 }
 
 export interface QueryObserver {
@@ -81,6 +90,7 @@ export class EntryRuntime extends Graph {
   #options: RuntimeOptions
   #queue: Promise<unknown> = Promise.resolve()
   #generation = 0
+  #searchDirty = true
   #listeners = new Set<() => void>()
 
   constructor(config: Config, db: Database, options: RuntimeOptions = {}) {
@@ -88,6 +98,7 @@ export class EntryRuntime extends Graph {
     this.#config = config
     this.#db = db
     this.#options = options
+    this.#searchDirty = !options.searchReady
   }
 
   get config(): Config {
@@ -151,6 +162,117 @@ export class EntryRuntime extends Graph {
     await db.insert(Meta).values({id: 1, revision})
   }
 
+  /** Read exact resident payloads for a trusted, separately authorized handler. */
+  payloads(
+    requests: ReadonlyArray<PayloadRequest>
+  ): Promise<Array<LoadedPayload>> {
+    if (requests.length > 20_000) throw new Error('Too many payload requests')
+    const captured = requests.map(request => ({...request}))
+    if (
+      captured.some(request => !request.versionId || !request.payloadId) ||
+      new Set(captured.map(request => request.versionId)).size !==
+        captured.length
+    )
+      throw new Error('Invalid payload requests')
+    return this.#exclusive(async () => {
+      if (!captured.length) return []
+      const rows = await this.#db
+        .select({
+          versionId: EntryDataTable.versionId,
+          payloadId: EntryDataTable.payloadId,
+          data: EntryDataTable.data,
+          source: EntryDataTable.source
+        })
+        .from(EntryDataTable)
+        .innerJoin(
+          Payload,
+          and(
+            eq(EntryDataTable.versionId, Payload.versionId),
+            eq(EntryDataTable.payloadId, Payload.payloadId)
+          )
+        )
+        .where(
+          inArray(
+            EntryDataTable.versionId,
+            captured.map(request => request.versionId)
+          )
+        )
+      const found = new Map(rows.map(row => [row.versionId, row]))
+      return captured.map(request => {
+        const row = found.get(request.versionId)
+        if (!row || row.payloadId !== request.payloadId || !isRecord(row.data))
+          throw new Error('Entry payload is unavailable or stale')
+        return {
+          ...request,
+          data: structuredClone(row.data),
+          source: validateSource(row.source ?? undefined)
+        }
+      })
+    })
+  }
+
+  /** Read the resident SQLite JSON representation without parsing it in JS. */
+  serializedPayloads(
+    requests: ReadonlyArray<PayloadRequest>
+  ): Promise<Array<SerializedPayload>> {
+    if (requests.length > 20_000) throw new Error('Too many payload requests')
+    const captured = requests.map(request => ({...request}))
+    if (!captured.length) return Promise.resolve([])
+    return this.#exclusive(async () => {
+      const placeholders = captured.map(() => '?').join(',')
+      const statement = this.#db.driver.prepare(
+        `select d.versionId, d.payloadId, d.data as dataJson,
+          d.source as sourceJson
+        from alinea_entry_data d
+        inner join alinea_entry_payload p
+          on p.versionId = d.versionId and p.payloadId = d.payloadId
+        where d.versionId in (${placeholders})`
+      )
+      try {
+        const rows = await statement.all(
+          captured.map(request => request.versionId)
+        )
+        const found = new Map<
+          string,
+          {payloadId: string; dataJson: string; sourceJson?: string}
+        >(
+          rows.map(row => {
+            if (
+              !isRecord(row) ||
+              typeof row.versionId !== 'string' ||
+              typeof row.payloadId !== 'string' ||
+              typeof row.dataJson !== 'string' ||
+              (row.sourceJson !== null &&
+                row.sourceJson !== undefined &&
+                typeof row.sourceJson !== 'string')
+            )
+              throw new Error('Invalid serialized payload row')
+            return [
+              row.versionId,
+              {
+                payloadId: row.payloadId,
+                dataJson: row.dataJson,
+                sourceJson: row.sourceJson ?? undefined
+              }
+            ] as const
+          })
+        )
+        return captured.map(request => {
+          const row = found.get(request.versionId)
+          if (!row || row.payloadId !== request.payloadId)
+            throw new Error('Entry payload is unavailable or stale')
+          return {
+            ...request,
+            dataJson: row.dataJson,
+            sourceJson: row.sourceJson ?? undefined
+          }
+        })
+      } finally {
+        statement.free()
+      }
+    })
+  }
+
   #exclusive<T>(run: () => Promise<T>): Promise<T> {
     const task = this.#queue.then(run)
     this.#queue = task.catch(() => {})
@@ -166,6 +288,57 @@ export class EntryRuntime extends Graph {
             throw new Error('Replica revision mismatch')
           if (delta.toRevision === delta.fromRevision)
             throw new Error('A delta must advance the revision')
+          if (
+            delta.fromRevision === '' &&
+            !delta.removedVersionIds?.length &&
+            (await tx.select(count()).from(EntryIndexTable).get()) === 0
+          ) {
+            const changed = new Set<string>()
+            const indexRows = []
+            const manifests = []
+            const payloadRows = []
+            for (const replacement of delta.entries) {
+              const row = entryIndexRow(replacement.entry)
+              if (changed.has(row.versionId))
+                throw new Error('Duplicate entry in delta')
+              changed.add(row.versionId)
+              if (replacement.data && !replacement.payloadId)
+                throw new Error('Entry data requires a payload identity')
+              if (replacement.source !== undefined && !replacement.data)
+                throw new Error('Source metadata must accompany entry data')
+              indexRows.push(row)
+              if (replacement.payloadId) {
+                manifests.push({
+                  versionId: row.versionId,
+                  payloadId: replacement.payloadId
+                })
+                if (replacement.data)
+                  payloadRows.push({
+                    versionId: row.versionId,
+                    payloadId: replacement.payloadId,
+                    data: replacement.data,
+                    source: validateSource(replacement.source)
+                  })
+              }
+            }
+            for (let offset = 0; offset < indexRows.length; offset += 1000)
+              await tx
+                .insert(EntryIndexTable)
+                .values(indexRows.slice(offset, offset + 1000))
+            for (let offset = 0; offset < manifests.length; offset += 1000)
+              await tx
+                .insert(Payload)
+                .values(manifests.slice(offset, offset + 1000))
+            for (let offset = 0; offset < payloadRows.length; offset += 1000)
+              await tx
+                .insert(EntryDataTable)
+                .values(payloadRows.slice(offset, offset + 1000))
+            await tx
+              .update(Meta)
+              .set({revision: delta.toRevision})
+              .where(eq(Meta.id, 1))
+            return
+          }
           const changed = new Set(delta.removedVersionIds)
           for (const replacement of delta.entries) {
             const row = entryIndexRow(replacement.entry)
@@ -225,14 +398,15 @@ export class EntryRuntime extends Graph {
         {async: true}
       )
       this.#generation++
+      this.#searchDirty = true
     })
     for (const invalidate of this.#listeners) invalidate()
   }
 
   async #missing(ids: ReadonlyArray<string>): Promise<Array<PayloadRequest>> {
     const missing: Array<PayloadRequest> = []
-    for (let offset = 0; offset < ids.length; offset += 100) {
-      const batch = ids.slice(offset, offset + 100)
+    for (let offset = 0; offset < ids.length; offset += 1000) {
+      const batch = ids.slice(offset, offset + 1000)
       const manifests = await this.#db
         .select()
         .from(Payload)
@@ -269,12 +443,12 @@ export class EntryRuntime extends Graph {
     if (!requests.length) return
     if (!this.#options.load)
       throw new Error('Entry payloads are missing and no loader is configured')
-    // No database transaction is held during transport/decryption.
-    const loaded: Array<LoadedPayload> = []
+    // No database transaction is held during transport.
+    const loaded: Array<PayloadResult> = []
     try {
-      for (let offset = 0; offset < requests.length; offset += 100) {
+      for (let offset = 0; offset < requests.length; offset += 20_000) {
         loaded.push(
-          ...(await this.#options.load(requests.slice(offset, offset + 100)))
+          ...(await this.#options.load(requests.slice(offset, offset + 20_000)))
         )
         if (this.#generation !== generation) return
       }
@@ -291,28 +465,69 @@ export class EntryRuntime extends Graph {
       throw new Error('Unexpected or duplicate payload response')
     for (const request of requests) {
       const payload = returned.get(request.versionId)
-      if (payload?.payloadId !== request.payloadId || !isRecord(payload.data))
+      if (
+        payload?.payloadId !== request.payloadId ||
+        ('data' in payload
+          ? !isRecord(payload.data)
+          : typeof payload.dataJson !== 'string')
+      )
         throw new Error(`Incomplete payload response for ${request.versionId}`)
-      validateSource(payload.source)
+      if ('source' in payload) validateSource(payload.source)
     }
     await this.#exclusive(async () => {
       if (this.#generation !== generation) return
+      const rows = requests.map(request => {
+        const payload = returned.get(request.versionId)!
+        return {
+          versionId: request.versionId,
+          payloadId: request.payloadId,
+          dataJson:
+            'dataJson' in payload
+              ? payload.dataJson
+              : JSON.stringify(payload.data),
+          sourceJson:
+            'dataJson' in payload
+              ? payload.sourceJson
+              : payload.source === undefined
+                ? undefined
+                : JSON.stringify(validateSource(payload.source))
+        }
+      })
       await this.#db.transaction(
         async tx => {
-          for (const request of requests) {
-            await tx
-              .delete(EntryDataTable)
-              .where(eq(EntryDataTable.versionId, request.versionId))
-            await tx.insert(EntryDataTable).values({
-              versionId: request.versionId,
-              payloadId: request.payloadId,
-              data: returned.get(request.versionId)!.data,
-              source: validateSource(returned.get(request.versionId)!.source)
-            })
+          for (let offset = 0; offset < rows.length; offset += 1000) {
+            const batch = rows.slice(offset, offset + 1000)
+            await tx.delete(EntryDataTable).where(
+              inArray(
+                EntryDataTable.versionId,
+                batch.map(row => row.versionId)
+              )
+            )
+            // The authenticated server already read these exact values from
+            // SQLite. Keep them as text; JSON is parsed only by a query (or a
+            // generated column) that actually needs values from the payload.
+            const values = batch.map(() => `(?, ?, ?, ?)`).join(',')
+            const statement = tx.driver.prepare(
+              `insert into alinea_entry_data
+                (versionId, payloadId, data, source) values ${values}`
+            )
+            try {
+              await statement.run(
+                batch.flatMap(row => [
+                  row.versionId,
+                  row.payloadId,
+                  row.dataJson,
+                  row.sourceJson ?? null
+                ])
+              )
+            } finally {
+              statement.free()
+            }
           }
         },
         {async: true}
       )
+      this.#searchDirty = true
     })
   }
 
@@ -355,6 +570,8 @@ export class EntryRuntime extends Graph {
       )
       await this.#hydrate(candidates, generation)
     }
+    if (query.search !== undefined && !this.#options.search)
+      await this.#ensureSearch()
     if (this.#generation !== generation) throw superseded
     if (plan.projectionData) {
       const selected = await this.#exclusive(async () =>
@@ -470,6 +687,15 @@ export class EntryRuntime extends Graph {
     // Graph's nested projection stage returns undefined for an absent single
     // relation; only the public top-level first/get stage normalizes absence.
     return plan.single ? (source ? rows[0] : (rows[0] ?? null)) : rows
+  }
+
+  async #ensureSearch(): Promise<void> {
+    if (!this.#searchDirty) return
+    await this.#exclusive(async () => {
+      if (!this.#searchDirty) return
+      await this.#db.transaction(async tx => rebuildSearch(tx), {async: true})
+      this.#searchDirty = false
+    })
   }
 
   /** Conservative commit invalidation includes rows outside the current result. */

@@ -224,7 +224,14 @@ export function compressResponse(
   const stream = body.pipeThrough(new CompressionStream(method))
   const headers = new Headers(response.headers)
   headers.set('content-encoding', method)
-  headers.set('vary', 'accept-encoding')
+  const vary = new Set(
+    (headers.get('vary') ?? '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+  )
+  vary.add('accept-encoding')
+  headers.set('vary', [...vary].join(', '))
   headers.delete('content-length')
   return new Response(stream, {
     headers,

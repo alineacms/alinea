@@ -7,9 +7,6 @@ import {EntryGraph, VersionParser} from '#/core/db/EntryIndex.js'
 import {importSource} from '#/core/source/SourceExport.js'
 import {NodeReplica} from '#/database/driver/NodeReplica.js'
 import {openCheckpoint} from '#/database/runtime/Checkpoint.js'
-import {FrameStore} from '#/database/release/FrameStore.js'
-import {entryVersionId} from '#/database/entry/Schema.js'
-import {decryptFrame} from '#/database/replica/Frame.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {execFile} from 'node:child_process'
 import {
@@ -29,7 +26,7 @@ import {FSSource} from '#/core/source/FSSource.js'
 import {cms} from '#test/cms.js'
 import {exportDatabase} from './ExportDatabase.js'
 
-test('release export captures one generation and rebinds frames without source normalization', async () => {
+test('release export captures one generation without source normalization', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-captured-release-'))
   const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
   const config = {
@@ -67,13 +64,10 @@ test('release export captures one generation and rebinds frames without source n
     expect(await readFile(occupied, 'utf8')).toBe('keep')
     const release = {...identity, releaseId: 'deployment'}
     await expect(
-      exportDatabase(
-        config,
-        replica,
-        directory,
-        {...release, configId: 'wrong'},
-        join(directory, 'public')
-      )
+      exportDatabase(config, replica, directory, {
+        ...release,
+        configId: 'wrong'
+      })
     ).rejects.toThrow('configId mismatch')
     expect(await replica.first({select: Entry.title})).toBe('Captured')
     const capturedSource = {
@@ -98,13 +92,7 @@ test('release export captures one generation and rebinds frames without source n
         return capture
       }
     }
-    await exportDatabase(
-      config,
-      capturedSource,
-      directory,
-      release,
-      join(directory, 'public')
-    )
+    await exportDatabase(config, capturedSource, directory, release)
     const loader = await import(
       pathToFileURL(join(directory, 'database.js')).href
     )
@@ -118,29 +106,6 @@ test('release export captures one generation and rebinds frames without source n
     )
     const legacy = await importSource(sourceModule.source)
     expect((await legacy.getTree()).sha).toBe(descriptor.sourceSha)
-    const row = (await runtime.indexSnapshot()).entries[0]
-    const frame = {
-      ...release,
-      versionId: entryVersionId('a', null, 'published'),
-      payloadId: row.payloadId!,
-      kind: 'data' as const
-    }
-    const store = new FrameStore(db)
-    const grant = await store.grant(frame)
-    const decoded = JSON.parse(
-      new TextDecoder().decode(
-        await decryptFrame(
-          frame,
-          grant.descriptor,
-          await store.ciphertext(frame),
-          grant.key
-        )
-      )
-    )
-    expect(decoded.data.title).toBe('Captured')
-    await expect(
-      store.grant({...frame, releaseId: identity.releaseId})
-    ).rejects.toThrow('Missing release')
     await expect(
       replica.captureCheckpoint(join(directory, 'closed'))
     ).rejects.toThrow('closed')
@@ -151,7 +116,7 @@ test('release export captures one generation and rebinds frames without source n
   }
 })
 
-test('rebuilds switch one loader while retained readers and failed builds keep their checkpoint', async () => {
+test('rebuilds switch one loader while retained readers keep their checkpoint', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-rebuild-'))
   try {
     const identity = {
@@ -163,26 +128,11 @@ test('rebuilds switch one loader while retained readers and failed builds keep t
       namespace: 'main'
     }
     const source = new FSSource('test/fixtures/demo')
-    const publish = (
-      releaseId: string,
-      publicDir = join(directory, 'public')
-    ) =>
-      exportDatabase(
-        cms.config,
-        source,
-        directory,
-        {...identity, releaseId},
-        publicDir
-      )
+    const publish = (releaseId: string) =>
+      exportDatabase(cms.config, source, directory, {...identity, releaseId})
     await publish('first')
     const original = await readFile(join(directory, 'database.js'), 'utf8')
     await writeFile(join(directory, 'retained.js'), original)
-    const invalidPublicDir = join(directory, 'not-a-directory')
-    await writeFile(invalidPublicDir, 'publication must fail')
-    await expect(publish('failed', invalidPublicDir)).rejects.toThrow()
-    expect(await readFile(join(directory, 'database.js'), 'utf8')).toBe(
-      original
-    )
     expect(await readdir(join(directory, 'checkpoints'))).toHaveLength(1)
     await publish('second')
     expect(await readdir(join(directory, 'checkpoints'))).toHaveLength(2)
@@ -225,14 +175,12 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
       cms.config,
       new FSSource('test/fixtures/demo'),
       directory,
-      identity,
-      join(directory, 'public')
+      identity
     )
     expect(size).toBeGreaterThan(0)
     expect((await readdir(directory)).sort()).toEqual([
       'checkpoints',
       'database.js',
-      'public',
       'source.js'
     ])
     const {nodeFileTrace} = createRequire(import.meta.url)(
@@ -257,7 +205,7 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
       import {DatabaseSync} from 'node:sqlite';
       const loader = await import(${JSON.stringify(pathToFileURL(join(relocated, 'database.js')).href)});
       const db = new DatabaseSync(loader.databasePath, {readOnly: true});
-      console.log(JSON.stringify({identity: loader.identity, payloadBasePath: loader.payloadBasePath, check: db.prepare('pragma integrity_check').get(), count: db.prepare('select count(*) as count from alinea_entry_index').get(), frames: db.prepare('select count(*) as count from alinea_release_frame').get(), locations: db.prepare('select count(*) as count from alinea_release_frame_location').get()}));
+      console.log(JSON.stringify({identity: loader.identity, check: db.prepare('pragma integrity_check').get(), count: db.prepare('select count(*) as count from alinea_entry_index').get()}));
       db.close();
     `
     ])
@@ -265,12 +213,6 @@ test('exports a self-contained checkpoint and relocatable loader readable by Nod
     expect(result.identity).toEqual(identity)
     expect(result.check).toEqual({integrity_check: 'ok'})
     expect(result.count.count).toBeGreaterThan(0)
-    expect(result.frames.count).toBe(result.count.count)
-    expect(result.locations.count).toBe(result.count.count)
-    expect(result.payloadBasePath).toBe('/_alinea/payloads/')
-    const publicFiles = await readdir(join(relocated, 'public'))
-    expect(publicFiles.length).toBeGreaterThan(0)
-    for (const file of publicFiles) expect(file).toMatch(/^[a-f0-9]{64}\.bin$/)
   } finally {
     await rm(directory, {recursive: true, force: true})
     await rm(relocated, {recursive: true, force: true})

@@ -5,13 +5,9 @@ import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import {role} from '#/core/Role.js'
 import {EntryRuntime} from '#/database/runtime/EntryRuntime.js'
-import {FrameStore, buildFrames} from '#/database/release/FrameStore.js'
-import {GrantService} from '#/database/handler/Grants.js'
 import {authorizedIndex} from '#/database/handler/Policy.js'
-import {packFrames} from '#/database/replica/Transport.js'
-import {entryVersionId} from '#/database/entry/Schema.js'
+import {authorizedPayloads} from '#/database/handler/Payloads.js'
 import {config, entry, replicaIdentity} from './sqlite-browser/config.js'
-import {base64} from '#/core/util/Encoding.js'
 import type {PayloadBatchRequest} from '#/database/replica/PayloadBatch.js'
 
 using sqlite = new Database(':memory:')
@@ -39,35 +35,7 @@ await runtime.apply({
     data: {title: `Payload ${id}`}
   }))
 })
-await buildFrames(db, replicaIdentity)
-const store = new FrameStore(db)
-const service = new GrantService(runtime, store, replicaIdentity)
 const view = await authorizedIndex(runtime, ['reader'])
-const issued = await service.issue(
-  ['reader'],
-  view,
-  ['a', 'b'].map(id => ({
-    versionId: entryVersionId(id, null, 'published'),
-    payloadId: id
-  }))
-)
-const frames = await Promise.all(
-  issued.map(async grant => ({
-    ...grant,
-    ciphertext: await store.ciphertext(grant.descriptor)
-  }))
-)
-const bundle = packFrames(frames)
-const grants = bundle.locations.map((location, i) => ({
-  ...location,
-  url: 'https://alinea.test/bundle.bin',
-  key: Array.from(frames[i].key),
-  descriptor: {
-    ...location.descriptor,
-    nonce: Array.from(location.descriptor.nonce)
-  }
-}))
-const ranges: Array<string> = []
 
 const build = await Bun.build({
   entrypoints: [
@@ -129,53 +97,20 @@ try {
           assert.equal(action, 'replicaPayloads')
           const request = route.request().postDataJSON() as PayloadBatchRequest
           assert.deepEqual(request.identity, identity)
-          const grants = await service.issue(
-            ['reader'],
-            {revision: request.revision, viewId: request.identity.viewId},
-            request.requests
-          )
-          const frames = await Promise.all(
-            grants.map(async ({descriptor, key}) => ({
-              descriptor: {
-                ...descriptor,
-                nonce: base64.stringify(descriptor.nonce)
-              },
-              key: base64.stringify(key),
-              ciphertext: base64.stringify(await store.ciphertext(descriptor))
-            }))
-          )
+          const payloads = await authorizedPayloads(runtime, ['reader'], request)
           await route.fulfill({
-            contentType: 'application/json',
-            body: JSON.stringify({
-              version: 1,
-              identity,
-              revision: view.revision,
-              frames
-            })
+            contentType: 'application/x-alinea-payloads',
+            body:
+              [
+                JSON.stringify({version: 1, identity, revision: view.revision}),
+                ...payloads.map(
+                  row =>
+                    `${JSON.stringify(row.versionId)}\t${JSON.stringify(row.payloadId)}\t${JSON.stringify(row.data)}\t${JSON.stringify(row.source ?? null)}`
+                )
+              ].join('\n') + '\n'
           })
         }
       }
-    } else if (path === '/grants') {
-      await route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify(grants)
-      })
-    } else if (path === '/bundle.bin') {
-      const range = route.request().headers().range
-      const match = /^bytes=(\d+)-(\d+)$/.exec(range ?? '')
-      assert.ok(match)
-      ranges.push(range)
-      const start = Number(match[1]),
-        end = Number(match[2])
-      assert.ok(start >= 0 && end < bundle.contents.length)
-      await route.fulfill({
-        status: 206,
-        contentType: 'application/octet-stream',
-        headers: {
-          'content-range': `bytes ${start}-${end}/${bundle.contents.length}`
-        },
-        body: Buffer.from(bundle.contents.slice(start, end + 1))
-      })
     } else {
       const body = assets.get(path)
       if (body === undefined) throw new Error(`Missing fixture asset ${path}`)
@@ -193,7 +128,6 @@ try {
     ])
   }, '/main.js')
   assert.deepEqual(result, {loads: ['a'], deliveries: 2, closed: true})
-  assert.deepEqual(ranges, [`bytes=0-${frames[0].ciphertext.length - 1}`])
   const owned = await page.evaluate(async path => {
     const {runOwned} = await import(path)
     return Promise.race([
@@ -212,7 +146,7 @@ try {
     true
   )
   console.log(
-    'Chromium SQLite workers: encrypted hydration, authenticated bootstrap, live Graph queries, pending-edit restart and logout purge passed'
+    'Chromium SQLite workers: streamed hydration, authenticated bootstrap, live Graph queries, pending-edit restart and logout purge passed'
   )
   assert.deepEqual(await page.evaluate(async path => {
     const {runHost} = await import(path)

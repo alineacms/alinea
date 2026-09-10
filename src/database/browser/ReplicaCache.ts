@@ -1,8 +1,10 @@
 import {createId} from '#/core/Id.js'
 import {Permission} from '#/core/Role.js'
-import {isRecord} from '#/core/util/Objects.js'
 import {entryIndexRow, type IndexedEntry} from '../entry/Schema.js'
-import type {PayloadRequest} from '../runtime/EntryRuntime.js'
+import {
+  type PayloadRequest,
+  type SerializedPayload
+} from '../runtime/EntryRuntime.js'
 import {idbResult as result, idbTransaction} from './IndexedDB.js'
 
 /** Supplied only after the handler has authenticated the complete replica binding. */
@@ -37,10 +39,7 @@ export interface CacheDelta {
   removedVersionIds?: ReadonlyArray<string>
 }
 
-export interface CachedFrame extends PayloadRequest {
-  /** Opaque encrypted frame bytes; authentication/decryption belongs to the loader. */
-  ciphertext: Uint8Array
-}
+export interface CachedPayload extends SerializedPayload {}
 
 export interface CachedSnapshot {
   revision: string | undefined
@@ -65,10 +64,10 @@ function cacheName(identity: ReplicaIdentity): string {
   ]
   if (binding.some(value => typeof value !== 'string' || !value))
     throw new Error('Incomplete replica identity')
-  return `alinea-replica-2:${JSON.stringify(binding)}`
+  return `alinea-replica-3:${JSON.stringify(binding)}`
 }
 
-/** Incremental authorized-index/ciphertext cache, never a plaintext SQLite export. */
+/** Incremental authorized index and exact-payload cache, never a SQLite copy. */
 export class ReplicaCache {
   #db: IDBDatabase
   #generation: string
@@ -85,7 +84,7 @@ export class ReplicaCache {
     factory: IDBFactory,
     scope: ReplicaScope
   ): Promise<void> {
-    const prefix = 'alinea-replica-2:'
+    const prefix = 'alinea-replica-3:'
     for (const {name} of await factory.databases()) {
       if (!name?.startsWith(prefix)) continue
       let binding: unknown
@@ -151,7 +150,7 @@ export class ReplicaCache {
       }
       request.onerror = () => reject(request.error)
       request.onupgradeneeded = () => {
-        for (const store of ['state', 'entries', 'frames'])
+        for (const store of ['state', 'entries', 'payloads'])
           request.result.createObjectStore(store)
       }
       request.onsuccess = () => {
@@ -188,7 +187,7 @@ export class ReplicaCache {
     if (this.#closed) throw new Error('Replica cache is closed')
     return idbTransaction(
       this.#db,
-      ['state', 'entries', 'frames'],
+      ['state', 'entries', 'payloads'],
       mode,
       run,
       signal
@@ -222,13 +221,13 @@ export class ReplicaCache {
       if (!delta.toRevision || delta.toRevision === delta.fromRevision)
         throw new Error('A cache delta must advance the revision')
       const entries = tx.objectStore('entries')
-      const frames = tx.objectStore('frames')
+      const payloads = tx.objectStore('payloads')
       const changed = new Set<string>()
       for (const id of delta.removedVersionIds ?? []) {
         if (changed.has(id)) throw new Error('Duplicate entry in cache delta')
         changed.add(id)
         entries.delete(id)
-        frames.delete(id)
+        payloads.delete(id)
       }
       for (const replacement of delta.entries) {
         const {permissions, payloadId} = replacement
@@ -255,7 +254,7 @@ export class ReplicaCache {
           entries.get(versionId)
         )
         if (previous?.payloadId !== payloadId || !payloadId)
-          frames.delete(versionId)
+          payloads.delete(versionId)
         entries.put({entry, permissions, payloadId}, versionId)
       }
       tx.objectStore('state').put(
@@ -265,9 +264,9 @@ export class ReplicaCache {
     })
   }
 
-  putFrames(
+  putPayloads(
     revision: string,
-    frames: ReadonlyArray<CachedFrame>,
+    payloads: ReadonlyArray<CachedPayload>,
     signal?: AbortSignal
   ): Promise<void> {
     return this.#transaction(
@@ -277,31 +276,41 @@ export class ReplicaCache {
         if (state.revision !== revision)
           throw new Error('Stale replica payload response')
         const changed = new Set<string>()
-        for (const frame of frames) {
-          if (changed.has(frame.versionId))
-            throw new Error('Duplicate cached frame')
-          changed.add(frame.versionId)
-          const entry = await result<CachedEntry | undefined>(
-            tx.objectStore('entries').get(frame.versionId)
+        const entries = tx.objectStore('entries')
+        const indexed = await Promise.all(
+          payloads.map(payload =>
+            result<CachedEntry | undefined>(entries.get(payload.versionId))
           )
+        )
+        for (let index = 0; index < payloads.length; index++) {
+          const payload = payloads[index]
+          if (changed.has(payload.versionId))
+            throw new Error('Duplicate cached payload')
+          changed.add(payload.versionId)
+          const entry = indexed[index]
           if (
             !entry?.payloadId ||
-            entry.payloadId !== frame.payloadId ||
+            entry.payloadId !== payload.payloadId ||
             !(entry.permissions & Permission.Read)
           )
-            throw new Error('Cached frame does not match a readable descriptor')
+            throw new Error(
+              'Cached payload does not match a readable descriptor'
+            )
           if (
-            !(frame.ciphertext instanceof Uint8Array) ||
-            !frame.ciphertext.byteLength
+            typeof payload.dataJson !== 'string' ||
+            !payload.dataJson ||
+            (payload.sourceJson !== undefined &&
+              typeof payload.sourceJson !== 'string')
           )
-            throw new Error('Missing encrypted frame bytes')
-          tx.objectStore('frames').put(
+            throw new Error('Invalid cached payload')
+          tx.objectStore('payloads').put(
             {
-              versionId: frame.versionId,
-              payloadId: frame.payloadId,
-              ciphertext: frame.ciphertext
+              versionId: payload.versionId,
+              payloadId: payload.payloadId,
+              dataJson: payload.dataJson,
+              sourceJson: payload.sourceJson
             },
-            frame.versionId
+            payload.versionId
           )
         }
       },
@@ -309,17 +318,33 @@ export class ReplicaCache {
     )
   }
 
-  getFrames(
+  getPayloads(
     requests: ReadonlyArray<PayloadRequest>
-  ): Promise<Array<CachedFrame>> {
+  ): Promise<Array<CachedPayload>> {
     return this.#transaction('readonly', async tx => {
       await this.#state(tx)
-      const found: Array<CachedFrame> = []
-      for (const request of requests) {
-        const frame = await result<CachedFrame | undefined>(
-          tx.objectStore('frames').get(request.versionId)
+      const store = tx.objectStore('payloads')
+      const cached = await Promise.all(
+        requests.map(request =>
+          result<CachedPayload | undefined>(store.get(request.versionId))
         )
-        if (frame?.payloadId === request.payloadId) found.push(frame)
+      )
+      const found: Array<CachedPayload> = []
+      for (let index = 0; index < requests.length; index++) {
+        const request = requests[index]
+        const payload = cached[index]
+        if (
+          payload?.payloadId === request.payloadId &&
+          typeof payload.dataJson === 'string' &&
+          payload.dataJson &&
+          (payload.sourceJson === undefined ||
+            typeof payload.sourceJson === 'string')
+        )
+          found.push({
+            ...request,
+            dataJson: payload.dataJson,
+            sourceJson: payload.sourceJson
+          })
       }
       return found
     })
@@ -330,7 +355,7 @@ export class ReplicaCache {
     await this.#transaction('readwrite', async tx => {
       await this.#state(tx)
       tx.objectStore('entries').clear()
-      tx.objectStore('frames').clear()
+      tx.objectStore('payloads').clear()
       tx.objectStore('state').put({generation: createId()}, 'current')
     })
     this.close()

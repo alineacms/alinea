@@ -63,7 +63,7 @@ export class ReplicaSession extends Graph {
       onInvalidated: error => {
         // Gate new reads synchronously; cleanup drains already-running queries.
         // A stale revision may already have a newer session sharing this cache.
-        // Do not erase its index/ciphertext; definitive denial/logout still purge.
+        // Do not erase its cache; definitive denial/logout still purges it.
         void this.close(error.code !== 409).catch(() => {})
         options.onInvalidated?.(error)
       }
@@ -159,7 +159,7 @@ export class ReplicaSession extends Graph {
     return pending.finally(() => this.#pending.delete(pending))
   }
 
-  /** Logout/revocation purges this identity's disk cache; ordinary close retains ciphertext. */
+  /** Logout/revocation purges this identity's disk cache; ordinary close retains it. */
   close(purge = false): Promise<void> {
     if (!this.#closing) {
       this.#closed = true
@@ -167,6 +167,7 @@ export class ReplicaSession extends Graph {
       this.#closing = (async () => {
         await Promise.allSettled([...this.#pending])
         try {
+          await this.#loader.flushCache()
           await this.#db.close()
         } finally {
           this.#cache?.close()

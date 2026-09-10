@@ -2,7 +2,6 @@ import {expect, test} from 'bun:test'
 import {IDBFactory} from 'fake-indexeddb'
 import {Entry} from '#/core/Entry.js'
 import {Permission} from '#/core/Role.js'
-import {base64} from '#/core/util/Encoding.js'
 import {
   config,
   entry,
@@ -10,7 +9,6 @@ import {
   replicaIdentity as identity
 } from '#test/sqlite-browser/config.js'
 import {entryIndexRow} from '../entry/Schema.js'
-import {createFrameKey, encryptFrame} from '../replica/Frame.js'
 import {decodeBootstrap} from './DecodeBootstrap.js'
 import {ReplicaCache} from './ReplicaCache.js'
 import {ReplicaSession} from './ReplicaSession.js'
@@ -19,14 +17,6 @@ import {fetchBootstrap} from './FetchBootstrap.js'
 async function fixture() {
   const {versionId, ...indexed} = entryIndexRow(entry('a'))
   const request = {versionId, payloadId: 'payload'}
-  const key = createFrameKey()
-  const frame = await encryptFrame(
-    {...identity, ...request, kind: 'data'},
-    new TextEncoder().encode(
-      JSON.stringify({data: {title: 'Private payload'}})
-    ),
-    key
-  )
   const bootstrap = {
     version: 1,
     identity,
@@ -45,22 +35,29 @@ async function fixture() {
     version: 1,
     identity,
     revision: 'r1',
-    frames: [
-      {
-        descriptor: {
-          ...frame.descriptor,
-          nonce: base64.stringify(frame.descriptor.nonce)
-        },
-        key: base64.stringify(key),
-        ciphertext: base64.stringify(frame.ciphertext)
-      }
-    ]
+    payloads: [{...request, data: {title: 'Private payload'}}]
   }
-  return {bootstrap, response, request, frame}
+  return {bootstrap, response, request}
+}
+
+function payloadResponse(
+  batch: Awaited<ReturnType<typeof fixture>>['response']
+) {
+  const {payloads, ...header} = batch
+  return new Response(
+    [
+      JSON.stringify(header),
+      ...payloads.map(
+        row =>
+          `${JSON.stringify(row.versionId)}\t${JSON.stringify(row.payloadId)}\t${JSON.stringify(row.data)}\tnull`
+      )
+    ].join('\n') + '\n',
+    {headers: {'content-type': 'application/x-alinea-payloads'}}
+  )
 }
 
 test('session bootstraps lazily, reopens from authenticated rows and purges after ordinary close', async () => {
-  const {bootstrap, response, request, frame} = await fixture()
+  const {bootstrap, response, request} = await fixture()
   const indexedDB = new IDBFactory()
   let calls = 0
   const options = {
@@ -71,7 +68,7 @@ test('session bootstraps lazily, reopens from authenticated rows and purges afte
     url: 'https://example.com/api',
     async fetch() {
       calls++
-      return Response.json(response)
+      return payloadResponse(response)
     }
   }
   const first = await ReplicaSession.open(options)
@@ -89,15 +86,15 @@ test('session bootstraps lazily, reopens from authenticated rows and purges afte
   await expect(first.count({})).rejects.toThrow('closed')
   expect(() => first.bootstrap).toThrow('closed')
   const cache = await ReplicaCache.open(indexedDB, identity)
-  expect(await cache.getFrames([request])).toEqual([
-    {...request, ciphertext: frame.ciphertext}
+  expect(await cache.getPayloads([request])).toEqual([
+    {...request, dataJson: '{"title":"Private payload"}'}
   ])
   cache.close()
   const next = await ReplicaSession.open(options)
   try {
     expect(await next.find({select: Entry.id})).toEqual(['a'])
     expect(await next.find({select: Page.title})).toEqual(['Private payload'])
-    expect(calls).toBe(2) // A fresh session still requires a fresh authorized key.
+    expect(calls).toBe(1)
   } finally {
     await next.close()
   }
@@ -180,7 +177,7 @@ test('closing during a payload fetch gates new reads and drains the late result'
     async fetch() {
       started.resolve()
       await resume.promise
-      return Response.json(response)
+      return payloadResponse(response)
     }
   })
   const pending = session.find({select: Page.title})
@@ -218,7 +215,9 @@ test('connect authenticates bootstrap before opening a queryable lazy session', 
       expect(init.cache).toBe('no-store')
       expect(init.redirect).toBe('error')
       expect(new Headers(init.headers).get('authorization')).toBe('Bearer user')
-      return Response.json(action === 'replicaIndex' ? bootstrap : response)
+      return action === 'replicaIndex'
+        ? Response.json(bootstrap)
+        : payloadResponse(response)
     }
   })
   try {

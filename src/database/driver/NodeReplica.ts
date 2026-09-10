@@ -36,7 +36,12 @@ import {DatabaseSync} from 'node:sqlite'
 import {sqlMutationRequest} from '../handler/SqlMutationRequest.js'
 import {buildDatabase} from '../runtime/BuildDatabase.js'
 import {openCheckpoint, type CheckpointIdentity} from '../runtime/Checkpoint.js'
-import type {EntryRuntime, QueryObserver} from '../runtime/EntryRuntime.js'
+import type {
+  EntryRuntime,
+  LoadedPayload,
+  QueryObserver,
+  SerializedPayload
+} from '../runtime/EntryRuntime.js'
 import {reconcileDatabase} from '../runtime/ReconcileDatabase.js'
 import {entryReferencesTo} from '../runtime/EntryReferences.js'
 import {fixDatabase} from '../runtime/FixDatabase.js'
@@ -46,14 +51,14 @@ import {NodeOverlay} from './NodeOverlay.js'
 import {SqlSource} from '../source/SqlSource.js'
 import {authorizedIndex} from '../handler/Policy.js'
 import type {IndexBootstrap} from '../replica/Bootstrap.js'
-import {GrantService} from '../handler/Grants.js'
-import {FrameStore} from '../release/FrameStore.js'
 import {
-  payloadBatchLimit,
-  type PayloadBatch,
-  type PayloadBatchRequest
+  authorizePayloadRequests,
+  authorizedPayloads
+} from '../handler/Payloads.js'
+import type {
+  PayloadBatch,
+  PayloadBatchRequest
 } from '../replica/PayloadBatch.js'
-import {base64} from '#/core/util/Encoding.js'
 import {HttpError} from '#/core/HttpError.js'
 
 interface Snapshot {
@@ -368,48 +373,56 @@ export class NodeReplica extends Graph {
         )
       )
         throw new HttpError(409, 'Replica identity mismatch')
-      const frames = new FrameStore(nodeDatabase(snapshot.sqlite))
-      const service = new GrantService(
+      const payloads = await authorizedPayloads(
         snapshot.runtime,
-        frames,
-        snapshot.identity
-      )
-      const grants = await service.issue(
         roles,
-        {
-          revision: request.revision,
-          viewId: request.identity.viewId
-        },
-        request.requests
+        request
       )
-      if (
-        grants.reduce(
-          (size, grant) => size + grant.descriptor.ciphertextLength,
-          0
-        ) > payloadBatchLimit
-      )
-        throw new HttpError(413, 'Payload batch exceeds byte limit')
-      const encoded: PayloadBatch['frames'] = []
-      for (const {descriptor, key} of grants) {
-        const ciphertext = await frames.ciphertext(descriptor)
-        if (ciphertext.byteLength !== descriptor.ciphertextLength)
-          throw new Error('Stored frame length mismatch')
-        encoded.push({
-          descriptor: {
-            ...descriptor,
-            nonce: base64.stringify(descriptor.nonce)
-          },
-          key: base64.stringify(key),
-          ciphertext: base64.stringify(ciphertext)
-        })
-      }
       return {
         version: 1,
         identity: request.identity,
         revision: request.revision,
-        frames: encoded
+        payloads
       }
     })
+  }
+
+  async payloadStream(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ): Promise<AsyncIterable<SerializedPayload>> {
+    roles = [...roles]
+    request = structuredClone(request)
+    if (this.#closed || !this.#current)
+      throw new Error('SQLite replica is closed or not ready')
+    const snapshot = this.#current
+    snapshot.readers++
+    try {
+      if (
+        !principal ||
+        request.identity.principal !== principal ||
+        !identityKeys.every(
+          key => request.identity[key] === snapshot.identity[key]
+        )
+      )
+        throw new HttpError(409, 'Replica identity mismatch')
+      await authorizePayloadRequests(snapshot.runtime, roles, request)
+    } catch (error) {
+      this.#release(snapshot)
+      throw error
+    }
+    const release = () => this.#release(snapshot)
+    return (async function* () {
+      try {
+        for (let offset = 0; offset < request.requests.length; offset += 500)
+          yield* await snapshot.runtime.serializedPayloads(
+            request.requests.slice(offset, offset + 500)
+          )
+      } finally {
+        release()
+      }
+    })()
   }
 
   async *getBlobs(
@@ -501,9 +514,13 @@ export class NodeReplica extends Graph {
     try {
       return await read(snapshot)
     } finally {
-      snapshot.readers--
-      if (snapshot.retired && !snapshot.readers) snapshot.sqlite.close()
+      this.#release(snapshot)
     }
+  }
+
+  #release(snapshot: Snapshot): void {
+    snapshot.readers--
+    if (snapshot.retired && !snapshot.readers) snapshot.sqlite.close()
   }
 
   /** Open restores the prior view immediately; sync reconciles the requested source. */

@@ -1,1255 +1,140 @@
-# Implementation and verification plan
-
-## Current implementation progress
-
-`source/SqlTree.ts` now stores immutable directory metadata through Rado, skips
-equal subtrees when diffing, and applies file changes by rehashing affected
-directories and ancestors. Tests cover snapshots across connections, mode-only
-changes, file/directory replacement, exact-base preconditions, and reopening a
-raw SQLite file read-only. This is a foundation, not an integrated runtime: the
-full entry compiler, source/Tree API integration, generation/NFT, dev boot,
-browser hydration/subscriptions, and remaining gates below are still outstanding.
-
-`source/SqlSource.ts` now implements the existing Source protocol over persistent
-SQL trees/blobs and namespace-specific heads. Blob hashes and exact-base writes
-are checked transactionally. Tests reopen a raw file read-only, fork isolated
-namespaces from retained snapshots, reuse blobs on rename, and verify rollback,
-stale writes, and cancellation. This is trusted source storage, not a browser
-authorization boundary. Snapshot retention/GC and production dev wiring remain.
-
-`driver/WasmDatabase.ts` restores `@alinea/sqlite-wasm` through Rado's SQL.js
-driver. Tests run the actual WASM binary against native-built checkpoints,
-Graph projections/relations/grouping, lazy payload caching, live invalidation,
-transaction rollback, and batched binary source reads. The adapter copies blob
-columns before SQLite advances the statement: this package returns borrowed WASM
-memory, and an unadapted batched read demonstrably overwrites earlier blob results.
-SQL.js types are pinned to the implemented API (newer types require `updateHook`).
-The installed binary reports SQLite 3.46.1 and a direct FTS5 create/insert/search
-probe succeeds. Driver unit tests run WASM under Bun; the browser check below
-also exercises the binary in Chromium.
-The optional input is a complete database copy into WASM memory, not page-lazy
-file access; it must never be used to ship private server checkpoints to clients.
-Permission-scoped replica transport, browser persistence, and worker integration
-remain separate gates.
-
-`browser/QueryWorker.ts` and `browser/WorkerGraph.ts` now provide a per-port
-Comlink query bridge using the existing config-scoped Graph serialization.
-Subscriptions return explicit async cleanup; closing a client suppresses late
-results, rejects pending hydration reads, and releases observers without closing
-other clients' ports. The worker owner still owns the runtime/connection lifecycle.
-`bun test/sqlite-browser.ts` bundles and runs the actual WASM runtime in a Chromium
-module worker: structural queries fetch no payloads, field projections lazily load
-and reuse data, live updates cross the port, unsubscribe stops delivery, errors
-survive serialization, and closed clients reject new queries. The endpoint is
-exposed before asynchronous initialization, with methods awaiting readiness, to
-avoid dropping early worker messages. This is not yet the dashboard cutover:
-permission-scoped transport/persistence and the writable runtime must be connected
-before replacing the existing worker and its Graph mutation API.
-
-`browser/ReplicaCache.ts` adds incremental IndexedDB persistence for structural
-rows with compiled permissions and sparse opaque encrypted frame bytes. Its
-partition includes project, namespace, epoch, schema/config, principal, policy
-view, and release. Deltas compare the exact current revision and atomically update
-rows, frame eviction, and revision; unchanged payload identities retain ciphertext.
-Explore-only rows cannot retain readable descriptors. The cache whitelists index
-columns rather than persisting entry data or a WASM database export. Purging writes
-a new generation marker before closing, so already-open handles in other tabs
-cannot repopulate the old generation. Concurrent-writer, rollback, partition,
-revocation, and reopen tests use IndexedDB's transaction semantics.
-The Chromium fixture now commits the index before its in-memory install, terminates
-the original worker, and restores a new WASM index from IndexedDB without loading
-payloads. Plaintext hydration remains memory-only. This fixture supplies trusted
-test grants; production policy compilation, authenticated frame descriptors and
-decryption, cache-to-runtime recovery orchestration, and dashboard wiring remain.
-The cache is not an authorization authority: open it only after authentication,
-and authenticate cached ciphertext against its descriptor before decoding it.
-
-`handler/Policy.ts` evaluates configured role functions against the trusted SQL
-Graph and exports structural authorized rows with effective entry action masks.
-Masks use `Policy.check`, including denials, rather than packed allow flags.
-No explore grant means no exported row; explore without read omits the payload
-identity. Policy fingerprints include denied/field rules in canonical order and
-use a domain-separated SHA-256 digest. Compound policy evaluation/index export
-retries if a runtime commit overlaps it, including content-dependent role queries.
-The index snapshot reads structural/manifests only, without hydration. Field-level
-permissions are explicitly unsupported by SQLite replicas and reject bootstrap
-when they differ from the entry grant. Mutation enforcement still reevaluates the
-policy independently on the handler.
-These are policy compilation building blocks, not yet production authorization
-endpoints or authenticated encrypted-frame delivery.
-
-`replica/Frame.ts` adapts independent AES-256-GCM framing with random keys/nonces
-and an unambiguous, versioned authenticated identity: project, namespace, epoch,
-schema/config, release, entry version, payload identity/class, compression, and
-lengths. Decode checks the expected handler binding, exact encrypted size, and
-bounded declared plaintext size; gzip collection cancels on overflow or revocation.
-Native Compression/DecompressionStream is used because the older Bun wrapper in
-`@alinea/iso` does not handle cancellation safely. Unit tests cover each identity
-dimension, tampering, wrong keys, mutable input capture, producer length errors,
-and cancellation. Chromium also verifies compressed framing and tamper rejection.
-
-`browser/PayloadLoader.ts` connects authenticated data-frame grants to runtime
-hydration, with six bounded concurrent fetch/decode tasks and in-flight deduplication.
-It validates the complete request batch before fetching, checks cache identity,
-authenticates cached frames, and refetches corrupted cached ciphertext once. Only
-validated ciphertext is persisted; keys and decoded entry data stay in memory.
-Close clears keys and aborts pending transport/decode/cache installation. Revision
-CAS prevents stale downloads from installing after an index delta. WASM runtime
-tests cover index-only reads, selected-field decryption, metadata, and ciphertext
-reuse without network. This is not yet the production transport: handler grant
-issuance, view-filtered payload generation, bundle/range manifests and coalescing,
-and full browser boot/sync integration are still required.
-
-`replica/Transport.ts` now packs bounded ciphertext bundles and resolves scoped
-frame locations through exact HTTP byte ranges. The reader checks status,
-Content-Range bounds, declared/actual lengths, transfer encoding, and streaming
-byte limits; malformed/oversized bodies are cancelled. Public ciphertext requests
-omit credentials and reject redirects. An explicit bounded 200-response fallback
-supports hosts without Range; it is disabled by default. The default fetch is
-bound to the global receiver, as required in actual browser workers.
-The Chromium fixture now generates encrypted frames outside the browser, serves
-test grants and a range endpoint, and drives the real PayloadLoader/SQL worker.
-It verifies exactly one frame range is requested, no unrelated payload is fetched,
-and after terminating/restarting the worker a new grant plus persisted ciphertext
-can hydrate the field without another bundle request. This is a controlled test
-grant endpoint, not production authentication. Nearby-range coalescing, generated
-bundle publication, handler issuance and full live transport remain outstanding.
-
-`release/FrameStore.ts` generates encrypted data frames from normalized SQL rows
-in keyset batches and persists immutable descriptors, private keys and ciphertext
-in the trusted database. It rejects sparse entry data before generating frames;
-duplicate identities never overwrite a key. Grant lookup selects only metadata
-and keys; ciphertext lookup never selects keys. Raw-file reopen tests retain keys
-and successfully decrypt the persisted frames without source parsing.
-`handler/Grants.ts` re-evaluates trusted-session roles, verifies revision/view
-cursors and every requested read identity before looking up any key. A commit
-overlapping key lookup invalidates the result. Policy-only changes invalidate old
-cursors even when the source revision is unchanged. The Chromium fixture now
-uses this SQL frame store and grant service for its controlled grant endpoint.
-The authenticated Node handler wires these services to the replica endpoints.
-FrameStore/GrantService do not themselves authenticate a session.
-
-`cli/generate/ExportFrameBundles.ts` publishes ciphertext in content-addressed
-files, targeting bounded bundles while reading one frame at a time. Completed
-temporary files are linked into their final names without overwriting existing
-artifacts; existing files must match their hash. No keys or entry mapping are
-selected for public output. The private frame-location manifest commits only after
-all files exist and rolls back to its prior state on failure. Completed unreferenced
-ciphertext may remain after failure/repacking; retention/GC is intentionally separate.
-`GrantService.published` combines authorized keys with the committed public locations
-under a trusted configured base URL, rejecting unpublished frames. Tests decrypt
-the exact generated file ranges, reuse immutable files without rewriting them,
-and verify failed publication preserves the previous manifest and conflicting files.
-The main Generate/exportDatabase orchestration now invokes frame generation and
-publication. Optional `config.replica` settings supply project, namespace and epoch;
-defaults use production URL/local config identity, provider branch metadata and
-epoch 1. Namespaces label sources, not Git checkout instructions; epoch reset
-detection remains manual. Checkpoint format 6 stores/validates all frame identity
-components. BuildDatabase generates frames in the same transaction as normalized
-rows and the checkpoint. ExportDatabase publishes public ciphertext under
-`/_alinea/payloads/` before closing/publishing the private SQLite file and loader.
-The loader exports that public base path, not keys or the private frame manifest.
-Tests verify complete frame/location coverage and raw Node reopening. Both real
-Next fixture variants pass for this path. Production handler/dashboard consumption
-still needs integration.
-
-Private files now live in immutable `checkpoints/<uuid>/release.sqlite` generations.
-Publication closes the database, installs its generation, then atomically renames
-the single `database.js` pointer. Failed builds leave the old pointer intact;
-already loaded modules retain their matching database and identity after rebuilds.
-Tests exercise failed publication and retained old readers. `withAlinea` reads the
-literal generated path without executing the loader and includes only that
-generation, rejecting malformed paths. Run generation before the Next build;
-concurrent rebuilds during a framework trace are not coordinated by this mechanism.
-Old/orphaned generations remain available; retention and garbage collection must
-respect active readers. Atomic visibility here does not claim power-loss durability.
-
-`runtime/BuildDatabase.ts` now builds a private checkpoint from a captured source
-snapshot and build-time normalization. Source heads, normalized rows, and the
-checkpoint descriptor commit together. `runtime/Checkpoint.ts` validates format,
-config/release/namespace identity and matching source/runtime revisions on open.
-Reopen tests query the raw file read-only without calling blob reads, whole-tree
-materialization, or normalization. Source-status identity is preserved separately
-from effective inherited status; inactive authored versions remain in source
-storage and private query rows even when Graph excludes them from normal results.
-The resident `visible` flag distinguishes effective rows from suppressed authored
-versions. Trusted mutation reads opt in through `internalSourceVersions`, a symbol
-that JSON Graph transport cannot carry; normal SQL/JS queries remain unchanged,
-and browser policy views omit suppressed versions. Tests compare both query modes
-under inherited archive status and verify serialization cannot enable the opt-in.
-The initial build reuses the existing normalizer transiently, not as the runtime
-query store. `NormalizeSource` persists parsed authored records by blob hash,
-including versions hidden by inherited status. `ReconcileDatabase` updates an
-exclusively owned writable checkpoint copy: fetch remote differences before the
-transaction, reuse cached parsing, normalize, replace changed rows and append only
-missing immutable frames, then advance source/runtime/checkpoint revisions together.
-No-change reconciliation skips normalization entirely. Tests cover one-blob edits,
-preserved unrelated SQL rows and keys, unarchiving hidden versions, reverting to
-cached source records/frames, and rollback without changing the published baseline.
-The normalizer still reconstructs a transient whole graph and hashes all effective
-payloads; affected-subgraph normalization and stable ordinals for insert/delete
-remain scale gates. Live connections must not call this offline reconciliation
-function. `driver/NodeReplica` provides the writable-copy ownership baseline:
-restore a compatible private cache without parsing, reconcile a separate file,
-validate/open it read-only, atomically switch the restart pointer and notify live
-queries. Per-query leases keep old connections open across async projections and
-nested reads; close prevents new work without invalidating active readers. Tests
-cover restoration, config mismatch, failed updates, malformed cache paths, swaps
-during nested reads, subscriptions and close during source lookup. Disk generations
-are retained, and this cache is not a cross-process mutation authority. Copy cost,
-retention and an attached-overlay comparison remain scale gates. Publishing new
-frame locations and production query cutover remain outstanding.
-
-The CLI build and dev paths now pass a config-bound private cache into `DevDB`,
-using separate build/dev directories. Ordinary
-Graph queries and subscriptions use `NodeReplica`; source writes reconcile SQL
-before returning, and the served revision follows the ready SQL snapshot. Media
-effects reject a stale filesystem revision even while an older SQL snapshot
-is still being served. Watcher/config teardown closes the owner and prevents late
-cache emissions. Integration tests exercise filesystem-backed Graph updates, live
-results, restart reuse and watcher shutdown. SQL-configured dev startup, seeding,
-reads, writes, fixes, references and previews no longer build the legacy index.
-An unchanged restart test verifies zero source-record parsing. Preview routing
-now uses the leased snapshot and request-local overlay described below; there is
-no catch-all query fallback. `DevDB` now extends WritableGraph directly, requires
-a SQLite cache and has no legacy index/resolver instance. Its remote source-sync
-adapter serializes filesystem updates and reconciles SQL before returning. Tests
-disable EntryIndex synchronization, seed and mutation readers, and exercise
-snapshot replacement, source deletion, restart reuse and closed-owner rejection.
-The HTTP handler depends on a Graph/source/commit interface instead of the
-concrete LocalDB class. Existing production adapters still use LocalDB; this does
-not claim their cutover.
-
-Release export now captures a leased immutable NodeReplica generation into its
-private staging directory (exclusive destination, opportunistic filesystem
-clone). It validates configuration/namespace/schema and source revision, replaces
-the copied frame store with fresh release-bound keys/ciphertext, and updates the
-release descriptor without parsing source records or reconstructing EntryGraph.
-The temporary legacy source module is exported from the same SQL source snapshot
-and stored beside the immutable checkpoint. Its separate compatibility loader
-and the database loader are individually atomic pointers, not a joint atomic
-switch; production legacy-adapter removal is still required. Tests advance and
-close the working owner after capture, forbid parsing/normalization during
-export, verify the retained revision and decrypted data, reject scope mismatch
-and destination overwrite, and retain existing relocation/NFT and failed-build
-checks. Copy cost, retained source history and fresh frame encryption remain
-explicit build costs, not an incremental normalization claim.
-
-Private checkpoint format 7 adds `alinea_entry_reference`, keyed by authored
-version and reference ordinal with an indexed target ID. Build and reconciliation
-use the existing field reference extractors and commit reference replacements or
-removals with the source/index/payload transaction. Unchanged payload references
-are retained; status, visibility and locale filtering join current structural
-rows. `NodeReplica.referencesTo` leases the immutable snapshot, and dev reference
-lookups no longer materialize the JS index or parse source records on restart.
-Tests compare all status/locale modes, duplicate and media links, hidden versions,
-reconciliation, removal and rollback after extraction failure. Queries still work
-with no resident entry payloads. This is a complete private checkpoint index, not
-a browser authorization boundary: permission-scoped reference frames and sparse
-browser coverage remain to be implemented.
-
-Explicit dev content fixes now use `runtime/FixDatabase` to compare SQL Graph
-entry values with their authored blob hashes and prepare updates through the same
-SQL mutation compiler. `NodeReplica.requestFix` keeps planning on one leased
-snapshot under its update queue; dev commits the resulting request through the
-filesystem authority. It is intentionally full-content maintenance, not a startup
-scan. The integration test disables JS indexing, normalizes a compact source
-record without changing its content, and verifies a second fix leaves the source
-revision unchanged.
-
-`driver/NodeOverlay` now provides a request-local storage prototype: a fresh
-in-memory SQLite database attaches the immutable checkpoint read-only and uses
-TEMP views to merge complete changed versions with untouched base rows. A mask
-handles replacements and removals across index/data/payload tables. Nested Graph
-queries share the same view, and in-flight reads retain their connection across
-close. Tests interleave two overlays, query nested children and data predicates,
-check identity failures and conflicting masks, and verify the original file is
-byte-for-byte unchanged with no copy files or source reconstruction. Callers
-supply normalized rows; the snapshot owner's preview adapter and merged search
-integration are described below.
-
-`runtime/NormalizePreview` now normalizes existing-entry data previews from the
-edited identity's authored versions and ancestors, read directly from the private
-parsed-record cache. Fixed physical paths and authored statuses mean these data
-edits do not require reconstructing descendants. Only changed normalized rows are
-returned for the attached overlay; original ordinals and untouched base rows are
-retained. Tests compare full Graph results and nested children across all status
-modes under published/archived ancestors, with 100 unrelated entries present. A
-child edit reads three records, a root edit one, and each parses only the supplied
-preview record. New-identity and translation support are described below.
-
-New authored versions of an existing identity (for example a draft or archived
-version) now use a recursive structural query to include descendants as well as
-ancestors. Normalization updates their inherited status/visibility in the overlay
-without touching unrelated rows. Private checkpoint format 8 spaces source
-ordinals to reserve integer insertion slots for these request-local versions;
-tests include an unrelated entry with the same order key. Existing source paths
-cannot be claimed by another identity, and new versions must share the existing
-physical entry directory. Tests compare added draft/archive versions under both
-published and archived ancestors across all status modes.
-
-Type and order previews now use the same bounded normalization. The existing
-authored-version consistency checks reject changing only one of several versions
-to an incompatible type/order; unknown types also reject explicitly. Tests cover
-custom type URLs, ancestors and children, and moving entries onto occupied sort
-keys without loading unrelated records. Checkpoint format 9 assigns tie ordinals
-by flattened source-path identity order, not by the editable sort key, retaining
-each identity's locale/version grouping. This keeps tie placement correct when a
-preview changes an entry's key. Source files are sorted before reconstruction,
-avoiding traversal-dependent placement of a parent after its child directory.
-
-New-identity previews now load the physical parent's ancestors and existing
-versions under the new directory. This correctly adopts previously orphaned
-children and recomputes their inherited status, paths and URLs, without loading
-unrelated payloads. New identities append a request-local tie ordinal; existing
-rows keep theirs. Tests compare all status modes and nested children with Graph,
-cover empty checkpoints and published/draft/archived inserts, and verify one parse
-and only affected source records with 100 unrelated entries. Exact-file and
-cross-status directory collisions reject, as do noncanonical source paths and
-attempts to move an existing locale by adding it at another directory.
-
-New translations reuse all authored versions of the identity and its ancestors,
-and include the physical destination parent and subtree. Graph consistency checks
-validate workspace/root/type/order and matching parent identities; mismatched
-same-locale paths and unrelated destination parents reject. A new locale appends
-within the identity's reserved ordinal slots, preserving grouping with existing
-locales and versions. Tests compare all status/locale modes, localized parent
-paths, inherited archive status and newly adopted children against Graph.
-
-The snapshot owner's preview path connects decoding, revision checks, Graph-based
-patch application, bounded normalization and an attached row overlay.
-`applyPreview` depends on Graph rather than LocalDB, so it can apply the existing
-wire format without a JS index. Encoded requests must match the leased source
-revision; invalid patches reject. Tests run two distinct entry previews using the
-same marker alongside a patch preview and a normal query, and hold a preview
-across a base swap and owner close while nested reads retain the original view.
-No preview publishes files or changes the source revision. SQL-configured DevDB
-now routes previews through this same owner and removes its legacy indexing
-boundary. The restart integration test makes both the old index and resolver
-throw, then verifies edited/search and new-entry previews, isolation from normal
-reads, and only one supplied-record parse for the first preview.
-
-Normal preview queries read union views over small in-memory replacement tables
-and the attached immutable checkpoint, without copying base rows. Search lazily
-builds one temporary standard FTS5 index from that effective view. This avoids a
-second BM25 implementation; previews that do not search pay no corpus-copy cost.
-Native Graph tests compare search, snippets, pagination, grouping and nested
-queries with a freshly materialized reference database.
-
-`replica/Operations` now implements detached, all-or-nothing field CAS with
-canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
-collection operations. Numeric array offsets are rejected; collection operations
-still require the entire collection hash, not automatic independent-item merging.
-`handler/SqlFieldWriter` is a SQL-authoritative content writer, not a Git/cache
-adapter: trusted role checks, source/derived-row/frame changes and a principal-
-scoped request-digest receipt commit in one transaction. Reopened receipts dedupe
-successful retries, reject changed bodies and never bypass current authorization.
-Before/after source roots are retained for future delivery. Tests cover independent
-stale edits, whole-transaction conflicts, reopened retries, revocation and rollback.
-Writes require read/update rights and publish rights for published versions;
-path/metadata/aliases and derived structural changes are rejected pending the
-structural stage. Full Graph mutation routing, production Git receipt integration,
-outbox delivery, concurrent-connection retry policy and production authority
-configuration remain outstanding; dev writes still use the existing Git/FS path.
-
-`GithubApi.write` now supports opt-in source-carried transaction receipts. The
-trusted caller supplies namespace, epoch, transaction ID and the digest of the
-original authorized request. A hashed path binds these to repository, branch,
-content location and authenticated principal; it exposes neither principal nor
-transaction ID. The receipt and content changes share the existing expected-head
-Git commit, outside the content tree in `.alinea/receipts`. A fresh adapter checks
-the receipt at a pinned head before checking the old content SHA, recovering a
-lost response without another write. Changed digests and corrupt receipts fail
-closed; content/media mutations cannot target receipt storage. Mocked transport
-tests cover lost responses, restarted adapters, concurrent CAS and identity
-isolation. The caller must still reauthorize every retry and compute the digest
-itself; this is not yet wired through browser Graph requests. Receipts retain the
-prepared target content SHA, not a journal/outbox. Force-push/receipt deletion
-requires a new epoch; automatic epoch management and receipt retention remain
-unfinished. Repositories indexing their root or `.alinea` cannot enable this
-layout. No live GitHub repository has been mutated to verify the prototype.
-
-Mutation preparation now records and deduplicates the exact successful permission
-assertions (including fields, ancestors, destination and publication checks) in
-`CommitRequest.authorization`. Only `Resource` routing keys are copied; source
-payloads and mutable entry objects are not retained. SQL/legacy preparation parity
-tests compare the footprints as well as content changes. Git receipt format 2
-requires this footprint. Optional `CommitApi.receipt` reads a principal-scoped
-receipt at a pinned Git head without preparing or resubmitting the mutation; backend
-composition preserves the optional method. `authorizeMutationReceipt` validates
-the full saved footprint before asserting it against a fresh trusted policy, so
-deleted entries can be checked without replay and revoked field/ancestor grants
-are not implicitly accepted. This helper is not an authorization endpoint: Graph
-handler routing must still bind identity/digest, evaluate current roles and invoke
-it before returning an acknowledgement.
-
-The Graph mutation HTTP route now accepts an opt-in `x-alinea-transaction-id`
-header (`Client.mutate(mutations, transactionId)`). It computes the digest from
-the original JSON mutations, takes namespace/epoch from the loaded SQL replica
-(or shared config/hosting scope resolution for the remaining non-SQL adapter),
-and uses only the verified/enriched principal. Backends without receipt lookup
-reject opt-in requests instead of silently claiming retry safety. After source
-sync it evaluates roles anew, checks a receipt before preparing mutations, and
-reauthorizes every saved check before acknowledging a replay. Internal conflict
-retries also repeat this lookup and policy evaluation. Accepted creates/deletes
-can therefore recover without requiring the pre-edit entry state. Hooks are not
-rerun for acknowledged receipts; afterCommit remains best-effort and needs the
-planned durable outbox to survive a crash after source acceptance. HTTP-client
-tests cover restart/lost-response recovery, changed bodies, revoked roles,
-principal isolation, deleted entries, internal conflicts and loaded identity
-precedence. The dashboard queue does not yet opt in or persist pending IDs.
-
-`browser/PendingMutations` now supplies the separate durable intent store for that
-queue. It partitions authenticated project/namespace/epoch/principal and exact
-handler endpoint, while retaining each edit's base revision/schema/config so a
-replacement deployment cannot silently reinterpret pending work. JSON mutation
-bodies and accepted-source acknowledgements are AES-GCM encrypted using a
-persisted non-extractable device CryptoKey; IDs/digests/order remain metadata.
-This protects local draft values from plaintext storage, not from hostile
-same-origin JavaScript, which can use the stored key. It is separate from the
-replicated-content ciphertext cache and does not persist content grant keys.
-Transactions deduplicate IDs, reject changed bodies/context, retain acceptance
-across reopen, bound queue size, and support explicit remove/purge. Generation
-checks make purge invalidate other handles and reject plaintext completing after
-logout. Shared IndexedDB request/transaction helpers now also serve ReplicaCache.
-Fake-IndexedDB tests cover races, limits, isolation, tampering and late decryption;
-the Chromium fixture persists/reopens the CryptoKey and accepted edit across
-terminated workers, then verifies purge in a third worker. No scheduler submits
-these records yet: authenticated dashboard ownership, schema/base conflict checks,
-retry scheduling and logout integration remain required for the browser cutover.
-
-Context-bound Graph writes now carry a bounded ASCII-encoded
-`x-alinea-mutation-context` header through the optional third `Client.mutate`
-argument. It records project/namespace/epoch/principal, schema/config and base
-revision, and requires a transaction ID plus an identity-aware database. The
-server compares scope before receipt lookup, includes context in the trusted
-request digest, and checks schema/base only if no accepted receipt exists. Thus a
-receipt can acknowledge its original edit after schema/content advances, but not
-under a different identity or a reused ID with altered context. New stale edits
-fail before hooks/preparation. The prepared source base is checked again before
-authority submission, and source-CAS retries repeat receipt/base checks instead of
-silently rebasing an old queued edit. Tests cover all context dimensions, Unicode
-branch names, malformed headers, receipt recovery across deployment changes, and
-source races during preparation/commit. This is the conservative structural/full-
-revision guard; per-field Graph preconditions must still allow safe independent
-field edits before the concurrent-editor cutover is complete.
-
-Graph `UpdateMutation.precondition` now carries exact hashes for every changed
-top-level field plus a routing/lifecycle hash (version, status, parent/location,
-order, URL and active/main state). Shared canonical JSON/field hashing lives in
-core utilities and retains the SQL field-operation hash format. Preparation
-requires read/update access to guarded fields, compares hashes before staging
-changes, and records those reads in durable authorization footprints. A context-
-bound batch containing only fully guarded non-structural updates can advance
-past its old whole-source revision; each source-CAS retry reruns the actual field
-checks against the refreshed state. Unguarded, structural and mixed batches keep
-exact-base behavior. Hooks cannot strip guards or add structural effects and
-silently retain the rebase exemption. HTTP and native SQL tests cover independent
-updates, same-field/structural conflicts, receipt retry and all-or-nothing batch
-rollback. Updates now propagate only touched shared fields to translations;
-guarded propagation checks each target's field hash/read access, and shared writes
-require target update/publication rights. Unrelated localized edits no longer copy
-untouched shared values over a translation's newer source data. Whole collections
-still use one field hash; stable-item operation routing and dashboard generation
-of these preconditions remain outstanding.
-
-Dashboard editor nodes now retain their loaded entry and initialized form baseline
-in a Jotai atom, independent of subsequent index refreshes. Same-version saves
-diff only changed top-level fields and build guards from that original raw entry;
-they no longer replace every field via create/overwrite. Successful saves refresh
-the baseline and rebase edits typed while saving onto the returned ready entry;
-conflicts keep the form dirty. Config replacement rejects the old form rather
-than reinterpreting it. Draft creation, version transitions, history restoration
-and media-file replacement still use structural creation semantics. Translation
-creation advances the node to its new locale/version baseline.
-
-Automatic metadata audits are excluded from the user's field diff when no actual
-metadata was edited. Guarded updates request an audit action instead: mutation
-preparation receives a detached trusted user from the handler and stamps the
-built-in audit keys against current stored metadata after the user-field checks.
-Client-provided audit actors/timestamps cannot replace those stamps or existing
-creation history on this path. This avoids updatedAt becoming a shared conflict
-for every otherwise independent edit. Local optimistic preparation without an
-authenticated user is provisional; the authority stamps its verified actor.
-Editor, HTTP and SQL tests cover independent loaded forms, stale same-field
-errors, advanced baselines, in-flight typing, normalized media aliases and audit
-actor/creation-history preservation. The worker/queue and editor-context wiring
-are described below; production cutover remains gated on its source authority.
-
-`browser/MutationQueue` now connects the encrypted pending store to context-bound
-Graph submissions. Opening and enqueueing do not send; explicit flush serializes
-owners using a scope-hashed Web Lock. It retains original IDs/schema/base context,
-persists acceptance before refreshing, and removes intent only after a fresh
-post-write refresh. A poll begun before acceptance cannot satisfy that barrier.
-Lost responses retry through authority receipts; accepted edits retry refresh
-without submission, including after restart. Acceptance-storage failures retain
-an in-memory receipt until persistence can retry. A failed row stops later rows.
-Scope changes fail closed; discard refreshes first and never undoes a possibly
-accepted source write. Close aborts mutation transport and drains operations,
-retaining drafts unless purge was requested on the first close. The owner must
-also close the borrowed replica to cancel pending refreshes during shutdown.
-Tests cover restart, refresh/storage failure, cross-owner serialization, changed
-principal, discard and shutdown races. This scheduler is not yet the dashboard
-worker, and its read-after-write guarantee depends on authoritative source sync,
-not revision equality (newer accepted content may already supersede the write).
-
-`browser/WritableReplica` owns that queue and a live SQLite replica behind the
-public WritableGraph API. It constructs reads and writes from the same endpoint
-and authentication options, exposes compiled policy/live subscriptions, and
-awaits ready authoritative reads before resolving a save. Pending recovery is
-explicit on reopen; startup never silently submits restored edits. Queue and
-replica shutdown run together so transport, refresh and durable-store cleanup
-drain without waiting on one another. Logout purge must be requested before close.
-`QueryWorker.connectWritable` and `WorkerGraph` carry mutations, captured context,
-pending/retry/discard and upload preparation across the port. Read-only query
-workers reject those write operations. `WritableGraph.commit` captures available
-context before asynchronous operation preparation; callers can also capture a
-context at authoring time and pass it to mutate. Real SQLite/frame and MessagePort
-tests cover save/read ordering, restart receipt recovery, rejected stale context,
-refresh-only retry and logout. The dashboard boot/activity/index/reference wiring
-is described below; this is not yet a completed production dashboard cutover.
-
-Editor entry batches now carry the mutation context captured with their loaded
-data. Before/after context sampling rejects a view that changes during loading;
-this is an optimistic consistency check, not an atomic multi-query read lease.
-Editing nodes detach and retain that authoring context. Same-version field edits,
-structural draft/version replacement and translation creation submit it rather
-than obtaining a newer revision at save time. `Graph.create` accepts an optional
-context without changing existing calls; operation preparation detaches it before
-asynchronous work. After an accepted save the editor rereads current data/context
-and advances its baseline together. Failed structural writes leave dirty values
-and the original baseline intact. Clean nodes can adopt refreshed context while
-dirty nodes retain their original context and per-field guards.
-
-Tests cover context detachment/change detection, stale structural saves, guarded
-field saves and context advancement after acceptance. Whole-view sampling can
-conservatively reject an unrelated change during hydration; an atomic contextual
-Graph read remains desirable for stronger cross-query snapshot guarantees.
-Production CloudRemote still has no receipt lookup contract in this repository;
-no guessed cloud endpoint or production writable-browser cutover is introduced.
-
-Browser reference queries now use a lazy authenticated `replicaReferences` POST.
-The handler synchronizes first, then NodeReplica holds one immutable read lease
-while compiling roles, checking the full principal/release/view/revision binding,
-and querying the private SQL reference index. The target must be visible; sources
-and top-level reference fields require Read. Unauthorized rows and corpus counts
-are excluded. Ambiguous dotted field paths fail closed rather than guessing a
-field grant. No source payload hydration is required, and plaintext results are
-not persisted. The browser validates binding, target/status/locale, completeness
-and counts with a 32 MiB transport limit; close/supersession prevents late results
-and denial/staleness invalidates the corresponding live session. This capability
-is exposed through LiveReplica, WritableReplica and the worker Graph. SQL tests
-remove resident payloads; dev-handler tests exercise real filesystem SQLite
-references and rejected bindings; transport tests cover malformed/oversized data.
-Mixed field-read bootstrap support remains blocked on filtered entry payloads,
-and persistent reference frames/incremental reference subscriptions are not yet
-implemented. This on-demand query path replaces the dashboard's dependency on a
-whole-source browser reference scan once boot is cut over.
-
-Live replicas now expose the dashboard's IndexEvent contract. Replacement events
-compare complete authorized index rows (including payload IDs and grants), report
-changed/deleted logical entry IDs, and publish only after the replacement SQL
-generation and subscribed query results are ready. Permission/release identity
-changes invalidate first and mark every affected entry even if content SHA stays
-unchanged; unchanged refreshes emit nothing. QueryWorker can replay and forward
-these events to WorkerGraph, whose listener proxies are released on close. Both
-writable facades expose sha/sync for existing dashboard atoms.
-
-Dashboard graph atoms now track an event revision independently of the content
-SHA. Changed-entry tokens and compiled-policy evaluation therefore advance on
-same-content permission changes. Invalidation makes revision/policy reads fail
-closed until an authoritative ready event arrives; it does not reuse preloaded
-policy grants. Tests cover ready publication after query hydration, unchanged and
-removed rows, same-SHA policy changes, atom invalidation/recovery and MessagePort
-delivery. The boot cutover must attach the event bridge and use a fresh dashboard
-store for each authenticated graph owner; activity and auth lifecycle integration
-are still pending.
-
-Durable mutation queues now publish the shared core ActivityEvent contract.
-Restored intents appear blocked without submission; enqueue/running/failure and
-post-refresh success are tracked by stable transaction ID. Metadata summaries
-exclude field values, snapshots are detached, terminal history is bounded, and
-close/scope invalidation suppresses late publications. Explicit retry reconciles
-intents already removed by another owner without claiming another source write.
-WritableReplica and the worker Graph expose activity/retry/discard methods and
-an activity event bridge. New saves cannot implicitly retry failed/restored work;
-the user must retry or discard first. Recovery refreshes the authenticated view
-before queue processing. Discard-all refreshes then abandons local intents; it
-does not undo possibly accepted source changes.
-
-The dashboard exposes controls for restored blocked edits as well as failures,
-and ignores a stale initial activity snapshot after a newer event arrives. Tests
-cover worker-streamed activity, detached snapshots while a submission is active,
-restart recovery, cross-owner removal and dashboard controls. ActivityEvent was
-moved into core so database owners do not depend on dashboard modules. Fetch
-activity/polling and authenticated boot/logout integration remain outstanding.
-
-`dashboard/boot/ReplicaGraph` now provides the authentication-scoped owner for
-the boot cutover. It does not open a database before a verified principal is
-provided, coalesces same-principal startup, gates reads/mutations on readiness,
-forwards index/activity/live-query events, and schedules non-overlapping polling.
-User replacement aborts and drains pending startup and purges the prior owner
-before connecting the next one; ordinary shutdown retains durable drafts. Late
-startup/read/subscription results cannot publish into a replacement session.
-Dashboard auth readiness now awaits this optional Graph session capability, and
-logout/disallowed authentication disconnects it. Compiled policy caches are
-principal-bound, and stale authentication responses cannot replace newer ones.
-Tests cover ownership races, startup/poll lifecycle, atom readiness/logout order,
-and an actual writable SQLite owner with a response-lost accepted edit.
-
-Polling currently has lifecycle control but needs fetch-activity reporting.
-No production dashboard cutover is claimed yet.
-
-Generated boot batches now carry explicit public project/namespace/epoch metadata
-from the same helper as checkpoint release identity. Production bundles embed
-the configured handler endpoint as well; a script query parameter no longer
-selects it. Development exports the binding with each dynamically loaded config
-revision, so an existing entry bundle cannot pin hot reload to an old namespace
-or epoch. Bindings omit release/config IDs and user claims: they constrain source
-scope while the authenticated bootstrap supplies current grants and release data.
-Tests exercise explicit scopes, hosting preview names, Unicode/quoted names and
-actual esbuild define serialization.
-
-DevDB now exposes filesystem transaction receipts through the existing backend
-composition and handler retry route. A private SQLite journal in
-`.alinea/local/receipts.sqlite` stores principal/project/namespace/epoch/ID-scoped
-digests, accepted target revisions and authorization footprints. It is separate
-from disposable generated checkpoints, uses full-synchronous SQLite commits,
-and its reserved local directory is Git-ignored. Request values are detached
-before entering the write queue. The journal prepares before file effects and
-records acceptance only after the source is reread at the intended target.
-Known accepted retries do not reapply source changes or rerun handler hooks, even
-after restart or later source edits; acknowledgements preserve the original SHA.
-
-Startup can recover an interrupted acceptance marker only when the complete
-target revision and requested media removals are present. A partial/ambiguous
-filesystem update remains prepared and blocks normalization/new writes with an
-explicit recovery error; it is never silently replayed. Tests cover restart,
-later source edits, ID/digest and scope mismatches, interrupted file/marker writes,
-and a real dev-handler response-loss retry. This is not an atomic filesystem
-transaction or a power-loss proof: file fsync/rollback tooling, explicit partial
-recovery UX and multi-process filesystem write locking remain required. Receipt
-storage must be outside indexed content; configurations indexing the project
-root need a separate private-directory arrangement before durable dev writes
-can be enabled there. Automatic epoch changes after journal deletion remain open.
-
-Development dashboard boot now connects ReplicaGraph to a dedicated SQLite
-worker after authentication. Each worker owns its generated configuration and
-source binding, pins the requested config revision, and accepts only one
-principal. Its port listener is installed before the dynamic config import;
-early connection calls await configuration instead of being dropped. Index and
-activity bridges attach before returning the Graph. A config revision replaces
-the owner and dashboard atom store; source refetch refreshes the current owner.
-Page shutdown retains drafts; logout requests purge. Environments without Worker
-use the same writable SQLite owner on the main thread. Production continues on
-the legacy path until CloudRemote supports durable receipt lookup.
-
-Unit tests cover config/principal binding and cancellation during startup. The
-Chromium fixture exercises delayed config loading, the dedicated host/factory,
-authenticated bootstrap, lazy Graph reads and logout cleanup.
-
-Dedicated worker errors/message decoding failures now fail the local Graph
-immediately: pending reads and subscription setup reject, live observers receive
-the failure, and dashboard index state is invalidated. New calls fail instead of
-waiting on a dead port. Owned shutdown has a five-second transport deadline and
-terminates the script even if remote cleanup cannot acknowledge completion.
-Ordinary shutdown retains drafts; logout also purges pending intents and all
-IndexedDB replica views for the exact project/namespace/epoch/principal from the
-main thread, including older releases and interrupted startup caches. Purge
-retains invalidation markers so existing handles cannot repopulate those cache
-generations. It relies on IndexedDB database enumeration; unsupported or failed
-enumeration rejects cleanup rather than claiming logout purge succeeded.
-
-Tests cover crash invalidation, pending-call cancellation, bounded unresponsive
-shutdown, ordinary draft retention, and cache-scope isolation. The Chromium test
-crashes an actual dedicated worker during lazy hydration and verifies rejection,
-live-query error delivery, and logout purge of an older release's resident index.
-An error-free but unresponsive worker is detected on shutdown, not by a general
-query watchdog; production authentication/revocation lifecycle coverage remains
-outstanding.
-
-`bun test/sqlite-dev.ts` now installs the built package in an isolated temporary
-project and runs its real generated development dashboard in Chromium. It checks
-the dedicated worker and authenticated index/payload requests, edits and saves a
-draft through the public Graph handler, verifies the saved JSON on disk, stops
-the actual Node server, and restarts on the same origin with existing databases
-and browser storage. It then edits source externally and changes a config field
-label: source refresh reuses the worker, while config reload replaces it and
-renders the updated editor. The fixture resolves Node's real executable to avoid
-version-manager wrappers leaving a server behind after termination.
-
-The fixture now performs three config reloads by default (a numeric argument,
-up to 50, selects a stress run), retains bounded console/network/worker diagnostics
-on failure, and rejects disconnected-graph React errors even when the editor
-eventually recovers. This exposed a deterministic teardown ordering bug: all three
-reloads reached the new editor but rendered the old dashboard against its closed
-graph. Boot now commits the new keyed App/atom store before retiring the old graph,
-using `flushSync` to make the detach boundary explicit. A 20-reload run passed with
-no such errors after the fix.
-
-`DevConfigUpdates` also keeps a persistent event listener while the generator
-imports or yields configuration. Its bounded latest-revision mailbox prevents
-refresh events from being dropped during those waits; later source refetches do
-not replace an already requested newer config. Unknown/malformed events no longer
-consume a one-shot listener, and generator cleanup removes the listener and closes
-the event source. Unit tests cover queued/coalesced revisions, refetch ordering,
-page versus worker reload behavior and disposal. The earlier intermittent worker
-startup stall has not been conclusively tied to the teardown error; retain the
-stress fixture and diagnostics as a final-cutover gate rather than treating one
-successful run as proof that every reload race is eliminated.
-
-`ReplicaGraph.sync()` now waits for the authentication attempt already in progress
-before synchronizing. A dev source refetch received during worker startup therefore
-does not fail immediately as unauthenticated and disappear into the boot loop's
-refetch error handler. The wait captures the authentication generation: replacement
-or shutdown cannot redirect that request into another principal's session. Unit
-tests cover delayed startup followed by exactly one refresh, replacement while
-waiting, and startup failure without an implicit reconnect. Calls before any
-authentication attempt still fail rather than opening an unauthenticated database.
-
-Change-triggered browser refreshes also need to run after an older in-flight
-request, which may already have sampled the previous source. The internal
-`refreshAfterWrite` fence is now named `refreshAfterChange` and serves accepted
-mutations, writable dashboard refreshes and read-only worker refreshes. Ordinary
-low-level `LiveReplica.refresh()` calls still share an in-flight request; a change
-notification waits past it and starts a new read. Several notifications waiting on
-the same old request share the follow-up rather than issuing redundant requests.
-Tests cover stale and failed older reads across live, writable, read-only worker
-and writable worker paths, requiring the new revision to be observed with exactly
-one shared follow-up. Existing durable mutation retry and live-result hydration
-tests continue to exercise the same fence.
-
-This integration test exposed and now covers two UI fixes. Clean editing nodes
-are replaced when their source/row hashes or identity change; dirty nodes keep
-their values and original mutation baseline, and resetting them reveals the
-current source. The async page boundary still owns readiness. Config stylesheet
-reload also recognizes the previously revisioned CSS URL rather than assuming
-the initial unversioned link still exists. Unit tests retain independent-field
-conflict guards and cover clean refresh, dirty preservation and reset behavior.
-
-`EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
-directly reading an `EntryIndex`. The legacy adapter retains sequential batch
-semantics, while `handler/SqlMutationRequest` prepares the same source commit
-request through SQL queries. It advances an exclusively owned writable connection
-inside a transaction, then rolls back all intermediate source, index, payload and
-frame changes before returning. This is preparation only: the Git/FS authority
-still has to accept the request against its exact source revision. Tests compare
-rename, publish, unpublish, archive, move, remove and create-then-update requests,
-and verify rollback on successful preparation and failed later operations.
-Dev mutations now use this adapter through `NodeReplica.request`: a private
-scratch copy (reflink where supported) supplies the writable connection, never a
-published reader file. Preparation shares the owner's update queue and cleans
-scratch files on success, denial, failure and close. It neither publishes a
-snapshot nor notifies live queries. The existing filesystem commit remains
-authoritative and reconciles SQL before acknowledgement. Tests disable the legacy
-mutation reader during a real dev Graph update, verify unchanged published state
-during preparation, and close an owner during a pending request. Per-operation
-reconciliation still rebuilds the transient normalizer graph; removing that cost,
-scratch-copy costs and seed/reference boot dependencies remains cutover work.
-
-`runtime/SeedDatabase` now discovers missing configured pages through structural
-Graph reads. Dev sync applies each yielded seed through the SQL mutation reader
-and filesystem authority before considering the next seed. It preserves nested
-parents, shared IDs across locales, config-only default titles and renamed seed
-identities. Tests disable JS seeding, create four localized parent/child entries,
-rename a parent, edit it again, and verify repeat sync/restart does not duplicate
-seeds or republish an unchanged checkpoint. Normalization now resolves retained
-seed markers when a renamed entry or descendant no longer has its configured
-physical path. Dev startup no longer builds the legacy index or calls its seeding
-algorithm. Seed-marker lookups currently
-scan structural rows in the root; direct indexed seed lookups remain an optimization.
-
-Dev writes and sync now share one owner queue. Before media effects, SQL-mode
-writes refresh and compare the filesystem source revision, validate added blob
-hashes and the proposed target tree, then commit the source and reconcile SQL.
-Tests submit two requests with the same base revision and verify one commits while
-the stale one cannot remove media; malformed blob/target hashes are also rejected
-before effects. This is per-instance serialization, not cross-process filesystem
-locking or atomic media/content delivery. Those durable authority guarantees still
-require the later source receipt/outbox work.
-
-Build generation now additionally writes a closed private `release.sqlite` and a
-module-relative `database.js` loader. Node can open the relocated artifact read-only,
-and the installed Next NFT tracer discovers the SQLite file from that loader.
-`withAlinea` merges exact artifact includes, supports route scoping, resolves hoisted
-symlinks, and preserves existing tracing mappings. Browser/edge package exports
-reject this private native artifact. The old source export remains temporarily
-until the query/backend cutover; it is not the intended final runtime path.
-`bun test/sqlite-next.ts` and its `--turbopack` variant build a real Next 16 fixture
-with a custom distDir, trace both an RSC page and a Node route, and run the relocated
-standalone output after deleting the fixture source. Both query the bundled SQLite
-file successfully. The fixture also verifies that an unrelated route does not
-receive the database and that private test data/SQLite files are absent from static
-client assets. Relocation must preserve relative symlinks (including Turbopack's
-external-package aliases). These checks exercise the native artifact path, not yet
-the complete production CMS adapter or Cloudflare runtime.
-
-`driver/NodeCheckpoint` now opens deployment-pinned Graph reads directly on the
-read-only artifact, with descriptor validation and leases for pending asynchronous
-projections. It does not copy the database, parse source or synchronize it. The
-generated Node loader exposes `openDatabase(config)` through the packaged native
-driver. NextCMS uses that Graph for build-phase queries without preview cookies;
-tests forbid legacy initialization and verify checkpoint failures do not fall
-back. The real Next standalone
-fixture now calls this generated Graph opener rather than hand-written SQLite
-queries. Package declaration generation also required explicit named Graph/edge
-return types on query helpers, avoiding inferred leakage of an internal symbol.
-
-The live-replica bootstrap now accepts a packaged checkpoint directly. Initial
-reads and unchanged syncs use that file in place; the first real delta forks an
-exclusive working file, opportunistically cloning it before SQL reconciliation.
-Packaged-baseline cache reuse requires the exact release identity as well as the
-normal configuration/namespace/epoch checks, unlike dev restart reuse. Tests
-verify zero cold parsing/copy files, previews over the packaged path, one changed
-record parsed during catch-up, unchanged packaged bytes, same-release restart
-reuse, and isolation from another deployment's cached revision. The generated
-loader exposes `openReplica(config, directory)` for this path.
-
-NextCMS now uses the SQLite replica for live Node reads and previews as well as
-the pinned reader for builds. Configured sync intervals and disableSync retain
-their behavior; explicit query previews are no longer lost when there is no
-preview cookie. The default live owner uses a fresh process-local temporary
-directory, avoiding shared cross-process writable caches. Failed opens remove
-their temporary directory; successful-owner generation retention/GC remains a
-separate lifecycle task. Native opening stays inside the generated package's
-Node export; Edge/dev client routes still use the HTTP Graph API. Mutations and
-uploads still forward through the authenticated client.
-
-Live preview patch verification, normalization and nested queries now share one
-snapshot lease. A valid per-file patch may apply across unrelated tree changes;
-an unavailable base allows one remote catch-up attempt, while an invalid patch
-against the current revision fails immediately. Failure never silently removes
-the preview. Tests cover normal catch-up, disabled sync, cookie/direct previews,
-concurrent reads, missing/invalid patch bases and a sync/close between base lookup
-and preview querying. The real webpack/Turbopack fixture now installs the built
-package in isolation and invokes NextCMS from the relocated deployment, including
-an authenticated Edge-to-Node query. The production HTTP handler's own legacy
-database, permission-scoped browser bootstrap/deltas, and Cloudflare deployment
-remain separate unfinished integration work.
-
-The Node replica now exposes leased source tree/blob reads and `acceptCommit`
-for the handler's post-authority cache handoff. It validates the exact base,
-content hashes and resulting tree revision, then publishes via the same serialized
-immutable-generation path as remote catch-up. Replaying the current target is a
-no-op; an intervening remote generation rejects the stale handoff. No source or
-media write happens here, and this is not a durable mutation receipt. Tests cover
-validation failure without publication, restart reuse, races with remote sync,
-and blob-stream leases through sync/close/cancellation.
-
-The Next Node handler now shares the CMS replica through `ReplicaDatabase`, a
-Graph adapter that prepares SQL mutations but only caches commits accepted by the
-remote source. The handler's source contract only requires read access, and SQL
-previews use the replica's single-lease preview/catch-up path. Legacy preview
-fallbacks also fail closed when patches cannot apply. An adapter integration test
-covers API-key reads, rejection of API-key-only mutations, authenticated source
-writes, hooks, updated SQL queries and isolated previews. The Edge handler still
-uses its explicit legacy path until a portable SQLite owner is available; this
-is unfinished integration, not the target architecture.
-The real webpack/Turbopack fixture now routes its authenticated Edge query through
-the actual Node handler. Cache conflicts after a successful authority write trigger
-catch-up only, outside the authority-conflict retry loop; an integration race test
-verifies that an intervening remote edit does not resubmit the accepted mutation.
-
-Authenticated Node handlers expose `POST ?action=replicaIndex` as the first browser
-bootstrap boundary. API keys alone cannot obtain this user view. The handler
-catches up before evaluating verified/enriched session roles, ignores caller
-identity/roles, and emits a versioned index with full replica identity, policy
-view ID, revision and compiled entry permissions. Responses are private and
-no-store. One replica lease binds graph-backed role evaluation, row projection
-and identity even through concurrent sync/close. Tests cover that lease, hidden
-rows, forged roles/principals, policy-only revocation, and absence of payload data.
-This is currently a full filtered index response; tree deltas remain unfinished.
-
-`POST ?action=replicaPayloads` now delivers lazy encrypted data frames through the
-authenticated handler, including live frames without published bundle locations.
-The request carries the complete bootstrap identity/revision and at most 100
-version/payload pairs. The handler bounds actual request bytes (64 KiB), catches
-up, verifies session principal and deployment binding, and reevaluates the current
-policy view before reading any keys. A single immutable lease covers grants and
-ciphertext; the batch is capped at 32 MiB of ciphertext before reading frame bytes.
-The base64 wire envelope includes keys only in a private, no-store response; only
-ciphertext may enter browser persistence. Integration tests decrypt authorized
-payloads and reject API-key-only access, foreign principals/releases, unreadable
-entries, duplicate/oversized/malformed requests and policy/content-stale cursors.
-Browser wire validation/loading, filtered-field frames and CDN optimization remain
-unfinished. Mixed field-read policies still fail closed rather than grant an
-unfiltered frame.
-
-`HttpPayloadLoader` now connects this endpoint to the existing lazy SQL loader.
-It captures one replica identity/revision, deduplicates overlapping version/payload
-loads, limits HTTP concurrency to six, disables fetch caching/redirects and bounds
-streamed response bytes. Complete envelope validation checks principal/view/release,
-revision, exact requested membership, frame class, descriptor sizes and base64
-lengths before decryption or persistence. Grant keys are copied into the short-lived
-decrypting loader and cleared on completion/close. Authorization/stale-cursor
-responses close the loader and notify the owning session to discard its SQL view.
-Tests cover lazy WASM hydration, ciphertext-only IndexedDB persistence, malformed
-envelopes, session invalidation, late responses after close, and the actual Node
-handler-to-browser-loader path. This initial inline transport requests one frame
-per deduplicated load; grant batching/CDN reuse and the dashboard/session owner
-are still unfinished.
-
-`ReplicaSession` now owns one authenticated browser Graph generation: it validates
-the bootstrap's authority binding, status/structural fields and permission masks,
-explicitly projects structural columns, then builds an in-memory WASM database.
-SQLite rows always come from the fresh authenticated bootstrap, never cached rows.
-An optional identity-scoped IndexedDB cache retains only index/ciphertext; a fresh
-session still obtains fresh grants before decrypting cached frames. Close gates
-new and late query results immediately, aborts loaders and drains pending reads
-before closing SQLite. Revocation closes and purges the cache; logout can also
-purge an already ordinarily closed session. Tests cover lazy hydration, reopen,
-strict bootstrap filtering, revocation, cache purge and the actual Node handler
-bootstrap/payload-to-WASM session path. Generation refresh/live-query ownership
-and dashboard integration remain unfinished.
-
-`ReplicaSession.connect` now obtains that bootstrap through authenticated HTTP
-before allocating its ready Graph. The bounded fetch requires a 200 JSON response,
-disables caching/redirects, captures the expected identity before awaiting I/O,
-and cancels rejected or over-limit bodies. Startup cancellation is checked through
-WASM/cache initialization and closes partially opened resources; it does not own
-the lifetime of an already-ready session. Tests cover the handler-to-session HTTP
-path, no payload fetch for index-only reads, invalid authority/content, chunked
-response limits and cancellation before or during bootstrap. Generation refresh,
-live-query ownership, incremental deltas and dashboard integration remain open.
-
-`LiveReplica` now provides a stable Graph/subscription facade over browser session
-generations. Refreshes coalesce; an unchanged identity/revision keeps its ready
-session. Content updates prepare every active subscription (including ones added
-during preparation) before publishing the new generation and retiring the old.
-Late old reads retry against the published generation, and late observer results
-are suppressed. Permission-view changes invalidate the old view before preparing
-the replacement. Authentication/binding rejection removes the ready view, whereas
-an offline refresh preserves it. Close aborts pending preparation and drains all
-owned sessions; logout purges every cache identity touched by the owner, including
-a candidate cancelled during startup. A stale payload cursor closes its old
-session without purging a newer revision's shared cache. Tests exercise ready
-swaps, subscriptions added mid-refresh, policy changes, offline/auth behavior,
-close during hydration, logout and stale-session cache isolation. Refresh currently
-fetches the full authorized index and opens a replacement in-memory DB; incremental
-tree/delta reconciliation, polling/push scheduling, worker-port ownership and the
-dashboard cutover remain unfinished.
-
-The query-port boundary now accepts a subscribable Graph rather than requiring a
-concrete EntryRuntime. `QueryWorker.connect` creates an owned LiveReplica inside
-the worker; the existing constructor still supports borrowed graphs shared by
-independent ports. WorkerGraph forwards bootstrap/refresh and logout purge, rejects
-pending reads on close, waits for owned cleanup and releases its proxy afterward.
-Repeated closes await the same cleanup; a borrowed port never closes its shared
-database. The Chromium fixture now runs a separate owned Web Worker through
-authenticated bootstrap, lazy field hydration, live refresh, Graph expressions
-across Comlink, and IndexedDB purge on logout, alongside the earlier range/restart
-fixture. Unit tests verify pending close/cleanup and borrowed-port independence.
-The dashboard still uses its legacy worker; wiring this owner into its mutation,
-activity and page-atom lifecycle is unfinished.
-
-DevDB now exposes the same authenticated index/payload boundary through its ready
-SQLite replica, so the development handler can serve the browser owner rather
-than requiring the legacy source transport. An integration test runs the core
-handler against a filesystem-backed DevDB, opens a lazy browser LiveReplica,
-edits an authored file, refreshes the SQL view and observes policy-only revocation.
-The dev sync path also rechecks close after remote diff/blob I/O and before
-applying filesystem changes; a shutdown race test proves the pending remote tree
-cannot replace local content after close. The dashboard cutover still needs to
-replace browser role evaluation with compiled policy state and route its queued
-mutations/activity acknowledgements through the new owner.
-
-Bootstrap now includes a validated evaluated scope policy for generic navigation
-and creation checks, with entry-ID rules limited to visible rows and their already
-exported ancestors. `CompiledPolicy` uses exact compiled entry flags for known
-entries and the filtered scope rules for non-entry resources; unknown entries fail
-closed, and locale-unspecified checks intersect candidate grants. Entry fields
-inherit the entry grant because field-level replica permissions are unsupported.
-It does not run role functions and cannot be serialized/combined as authority policy.
-WorkerGraph exposes this read-only UI policy, and the dashboard policy atom prefers
-it when supplied by a replica-backed graph. Tests compare compiled checks against
-trusted evaluation, hide unrelated entry rules, validate
-packed policy data and prove browser role execution is bypassed. The legacy
-dashboard graph still uses its existing role path until the worker cutover.
-
-Configuration fingerprinting also needs the final normalizer/config
-dependency contract before dev-cache reuse is enabled.
-
-`entry/Schema.ts` and `query/` now define separate structural/data tables and
-compile basic entry queries into Rado SQL with stage-specific data dependencies.
-Tests compare supported queries against the current resolver on the demo
-corpus, distinguish JSON primitive types and missing/null values, and verify an
-index-only query runs without a payload table. Grouping ranks matching identities
-before ordering/pagination and preserves JSON primitive distinctions. Alias
-projections merge both storage locations, URL alias predicates ignore malformed
-rows, and nested array `includes` compiles to scoped SQL existence checks. Page
-locations use a resident source-root segment rather than the URL slug. The
-checkpoint format is now 6, including release identity, derived FTS, parsed source records and authored-version visibility.
-Natural collation, previews, and production integration remain.
-
-`query/Search.ts` restores SQLite FTS5 through the existing Graph search/snippet
-API: quoted AND-prefix terms, accent folding, title-weighted BM25, SQL snippets,
-grouping before pagination, and explicit order overrides. This intentionally uses
-FTS semantics, not MiniSearch's fuzzy matching or identical scores/highlighting.
-Transactional insert/delete triggers keep search synchronized with runtime row
-replacement, hydration, title changes, revocation and rollback, using payload rowids
-instead of scanning unindexed version keys. Native and WASM tests cover these paths.
-Other SQL dialects need explicit search adapters; ordinary queries remain portable.
-Browser search currently hydrates every structurally eligible payload before
-returning results and fails closed if any required payload is unreadable. Separate
-lazy search frames, explore-only safe-title search, query-plan scale gates and
-dedicated search coverage remain outstanding. Structural queries still hydrate none.
-
-`runtime/EntryRuntime.ts` adds atomic revision-checked deltas, sparse payload
-hydration before content filtering or after structural pagination, and conservative
-live-query invalidation. Superseded payload responses are discarded. This runtime
-implements the typed Graph query interface, but is not yet wired into production
-connections, browser transport, permissions, or dashboard atoms. Mutations remain
-on the existing backend pending the writable-runtime cutover.
-Structural relation projections (parents, children, siblings, neighboring entries,
-translations) now compile membership to SQL and resolve nested selections at one
-revision, retrying the whole projection if a delta arrives during hydration.
-Eleven nested-query cases agree with the existing Graph resolver on the demo
-corpus; separate tests cover locale boundaries and nested hydration races.
-Relation queries currently execute per selected source row; batched relation
-execution remains necessary before production cutover.
-Explicit single/multiple entry-link relations now expand stored references to SQL
-rows, preserving authored order and duplicates, and hydrate source link data before
-resolving target membership. Nine link queries match the existing Graph resolver;
-lazy-loading tests verify unlocalized targets and selected-target-only hydration.
-Field postprocessors now depend on a backend-neutral link loader. SQL selections
-invoke the existing field query-value hooks at the same runtime revision; direct
-entry-link selections and URL suffixes match the existing resolver. Source metadata
-is stored alongside lazy payloads rather than in the resident index. Full `Entry`
-projections match the demo resolver; an image test verifies localized alt fallback,
-preview/build URL selection, and lazy metadata hydration. Broader field parity
-still needs coverage.
-
-Verification so far: thirty-six database tests and `bun lint` pass; the existing
-resolver's 41 tests also pass (77 combined).
-Including the existing rich-text field suite gives 88 passing tests.
-The latest repository TypeScript check also passes.
-The Next adapter and native artifact export checks add fourteen passing tests
-(102 in the expanded targeted suite).
-The explicit standalone integration fixture passes with Next 16.2.10 under both
-webpack and Turbopack; it requires permission to bind a temporary localhost port.
-
-Status: foundations implemented; production cutover outstanding. Read [README.md](./README.md) and [SYNC.md](./SYNC.md)
-before implementing. Complete each gate before expanding the cutover. No
-production performance or platform compatibility claim has been verified by
-these documents.
-
-Implement one current format and one final runtime path. Refactor internal APIs
-freely and use historical code as a reference rather than retaining compatibility
-wrappers. The public Graph querying and mutation API must stay: preserve its
-signatures and behavior, and verify both against the new runtime. Unsupported checkpoints rebuild from source; old generated artifacts
-and wire protocols do not need migration paths. Restrict platform/version testing
-to the support scope chosen for this cutover, not every historical Alinea target.
-
-## 1. Recover the SQL compiler and establish parity
-
-Use `e4e6eb8fd` as the historical reference, especially `EntryResolver.ts`,
-`ResolveContext.ts`, `EntryRow.ts`, `Database.ts`, and `CreateEntrySearch.ts`.
-Adapt its query generation to current Alinea expressions and installed Rado;
-do not revert current query, locale, alias, link, or status behavior.
-
-Define the minimal structural/data schema and effective relation interface.
-Compare current resolver results against SQL on shared fixtures. Cover nested
-JSON, null versus missing fields, boolean conditions, aliases, links, locale,
-source/effective status, hierarchy, grouping, ordering ties, and pagination.
-Include current regressions in `src/core/db/EntryResolver.test.ts` and `test/`.
-
-Gate: representative structural and JSON queries execute as SQL with matching
-results. `EXPLAIN QUERY PLAN` confirms indexes for ID, URL, and ordered listing
-paths. Identify dialect-specific SQL explicitly. Test portable queries on SQLite
-and at least one supported non-SQLite driver before claiming universality.
-
-## 2. Prove raw SQLite packaging and file tracing
-
-Generate a closed, consistent `@alinea/generated/checkpoints/<uuid>/release.sqlite` plus private
-manifest. Checkpoint any build-time WAL before packaging; the file must be
-self-contained and open read-only without requiring adjacent writable files.
-Validate manifest/schema compatibility without hashing or scanning the whole
-database on each cold start.
-
-Prototype a generated server loader whose path resolution works after deployment
-relocation. Native SQLite opening is preferred for Node; loading the whole file
-into `new Database(bytes)` must not be mistaken for lazy file access. Probe the
-actual native driver and `@alinea/sqlite-wasm` package API, SQLite version,
-compile options, FTS support, initialization cost, and persistence options.
-No package upgrade or extension choice is implied by historical compatibility.
-
-`withAlinea` now externalizes `@alinea/generated` and merges exact generated artifact paths into
-`outputFileTracingIncludes`, preserving user mappings, configured `distDir`, and
-tracing root. Resolve actual generated package paths, including hoisted/symlinked
-monorepo installations. Native add-ons or WASM assets need their own verified
-packaging. Expose route scoping if necessary to avoid including a large database
-in every unrelated function.
-
-File tracing packages dependencies; runtime code opens the SQLite file. It should
-not parse `.nft.json` on requests to discover its database. Prefer a traceable
-module-relative loader; explicit includes cover static-analysis gaps.
-
-[Next.js output documentation](https://nextjs.org/docs/app/api-reference/config/next-config-js/output)
-describes route-keyed includes, project-relative file globs, monorepo roots, and
-standalone output. Tracing includes do not apply to Edge Runtime routes. This
-also matches the inspected local Next implementation in
-`node_modules/next/dist/build/collect-build-traces.js`; neither establishes that
-Alinea's proposed loader works until the build fixture passes.
-
-Gate: build a small real Next application importing the generated loader from
-an RSC page and route handler. Inspect their `.nft.json` files, copy/run standalone
-output away from the source checkout, and successfully query the bundled file
-without network access. Test the supported bundlers and a hoisted monorepo case.
-Ensure the trusted DB, manifest secrets, and keys are absent from public/client
-output. Validate the chosen supported Next versions; legacy configuration branches
-may be removed rather than extended for this cutover.
-
-Cloudflare needs a separate deployment test for the chosen Next/Workers adapter
-and DB binding. Node filesystem tracing is not proof of a usable SQLite VFS in
-Workers. Candidate paths are a configured Rado database such as D1, or a WASM
-replica with authorized index and lazy frames. An HTTP range VFS is an optional
-experiment, not a prerequisite. A file locator fallback alone does not turn a
-native SQLite connection into an HTTP reader.
-
-## 3. Reconcile source changes and read consistent overlays
-
-Implement the index's Tree view using exact file/directory metadata and stored
-hashes. Adapt the current serialized `Tree`/concrete `ReadonlyTree` boundary into
-a shared contract where necessary, with explicit async behavior for remote Rado
-drivers. Verify tree lookup, serialization, root/subtree hashes, and diff against
-the existing implementation; include modes, renames, seeds without files, multiple
-source versions, and files outside the queryable entry set. Tree operations must
-not open content payloads. Test that filtered replicas reveal no hidden source
-tree metadata.
-
-Port source differences, exact authored bytes, normalization, and affected-entry
-replacement from `sync-engine`. Update tree metadata and query rows atomically.
-Generate server SQL data and browser frames from one normalization pass.
-Add/delete/move/archive/publish must preserve inherited status and source semantics.
-
-Prototype immutable attached base plus one writable overlay. Test SQL index
-usage through effective relations, deletes, data changes, FTS updates, and
-reference replacement. Pin read revisions across async stages and serialize
-installs. Compare with a writable-copy baseline for startup, update cost, and
-memory. Select the mechanism from evidence before porting every caller.
-
-Gate: one content edit updates only its dependent rows/frames; structural edits
-touch the necessary descendants; unchanged descriptors and caches survive.
-Concurrent reads see a complete old or new state. No query-layer history chain
-grows with the number of applied deltas.
-
-### Development restart and previous-database hydration
-
-Make checkpoint restoration part of the dev server boot path in this stage.
-Prefer a compatible last committed dev DB/overlay, then a compatible generated
-DB; reuse its payload tables and indexes as well as its Tree. Restore before
-source scanning and reconcile only the differences. Preserve valid checkpoints
-through startup and publish replacements atomically. Background compaction must
-not determine startup readiness.
-
-Gate: stop and restart the dev server with unchanged files and verify zero entry
-parsing, zero payload regeneration, and no FTS/reference rebuild. Repeat after an
-offline content edit, addition, deletion, rename, parent archive, and branch
-switch; only affected content is normalized and old cached rows cannot reappear.
-Test fallback from a missing dev DB to a generated DB, reuse of matching payloads
-from an older DB, incomplete persistence, missing bundles, an overlay newer than
-the base release, and config incompatibility. A crash must recover from the last
-committed checkpoint plus source diff without losing accepted edits.
-
-## 4. Browser index, compiled grants, and lazy SQL hydration
-
-Port handler-side policy evaluation and filtered bootstrap. Serialize grants with
-each visible index row. Add sparse payload tables, residency by immutable identity,
-query dependency planning, bounded range fetching, and transactional installation.
-Persist index and payload cache incrementally and reconstruct committed state after
-a worker crash. Wire loading through existing asynchronous dashboard page atoms.
-
-Gate: compare fully populated and sparsely hydrated query results across the same
-suite. Assert zero data fetches for index-only queries; projection pagination loads
-only selected entries and requested linked data. Exercise mixed `OR`/`NOT`, data
-sort/count/group, nested relations, unloaded versus absent payloads, empty search
-and reference payloads, interrupted fetches, sync during hydration, and policy
-revocation during a request. Full search/reference results require scope coverage.
-
-### Live browser query subscriptions
-
-Add a worker subscription API over the same SQL compiler and hydration planner,
-then bridge it to query/replica-scoped Jotai atoms. Emit dependency invalidation
-after commits, starting with conservative relation/class dependencies. Coalesce
-reruns, share loads, preserve complete results during ordinary refresh, and
-discard superseded executions. Keep local reactivity independent of remote sync
-transport; polling is enough to verify the first implementation.
-
-Gate: a matching insert appears, a delete disappears, an initially nonmatching
-entry enters after an edit, and order/limit results change when an off-page entry
-moves into the page. Exercise nested links, reference changes, search completion,
-and inherited status changes. Newly matching rows hydrate before
-publication; hydration cannot create an invalidation loop. Interleave two revisions
-with slow fetches and verify the older completion never replaces the latest result.
-Test transaction batching, unsubscribe cleanup, reconnect catch-up, error handling,
-and immediate result invalidation on permission/context changes.
-
-## 5. Deployment catch-up, recovery, and preview namespaces
-
-Implement the identities and exact-base cursor checks in [SYNC.md](./SYNC.md).
-Keep tree reconciliation as recovery for Git-backed sources. Add a journal only
-where the adapter supplies durable storage or measurements justify it. Persist
-derived-data state separately from source revision when needed.
-
-Add provider-neutral deployment binding with Vercel and Cloudflare Pages inputs,
-explicit overrides, source repository/ref identity, stable artifact locations,
-and read-only behavior for unmapped previews. Keep public deployment-pinned reads
-separate from synchronized dashboard/editor-preview reads.
-
-Gate: simulate build at R10, edits to R13, activation, client migration, concurrent
-R14, rollback, empty handler caches, truncated/missing journals, old bundle URLs,
-config incompatibility, and force-pushed/recreated branches. Source namespaces,
-credentials, caches, and writes stay isolated. Test protected preview deployments
-on each target host before claiming host compatibility.
-
-## 6. Field mutations and request previews
-
-Port field hashes and operations, define transaction atomicity, and retain source
-compare-and-swap. Solve durable idempotency and ambiguous response recovery before
-advertising reliable retries across instances. Field hash tables remain optional.
-Implement request-scoped SQL preview composition without global mutations or
-whole-database cloning.
-
-Gate: independent-field edits merge; same-field and overlapping-path edits
-conflict correctly; list identity survives insertion/reordering; structural races
-respect URL/tree constraints. Retry the same transaction on two handler instances,
-reuse its ID with a different body, and kill a handler after durable source commit
-but before local materialization/response. No duplicate writes or lost edits.
-Interleave two previews and a normal read and verify complete isolation.
-
-## 7. Benchmarks and cutover
-
-Use small correctness fixtures, synthetic scale, and the same 11,374-entry imec
-project cited by `sync-engine` when available. That branch reports roughly 4.47 MB
-of packed index JSON and 70 MB of entry fields, with about 41 ms index module
-import/open and 3 ms for an index-only page on its development machine. These
-are historical comparison points, not measurements of SQLite or guarantees.
-
-Record cold module/driver initialization, file pages or bytes read, first/warm
-queries, index boot transfer, hydration bytes/requests, SQL query plans, source
-reconciliation, preview latency, concurrent writes, search first use,
-retained memory, cache growth, artifact size, and browser persistence time.
-Scale entry count and payload size independently to expose eager loading.
-
-Gate: cold open does not scale with payload parsing or whole-file copying on the
-native path; index-only browser queries fetch no payloads; one-entry updates and
-previews do not rebuild the corpus; repeated queries reuse resident inputs. Report
-WASM and native behavior separately, including setup and persistence costs.
-
-Route generated server, handler, development, browser, source, and preview callers
-through the completed SQL layer. Preserve current public query tests. Remove the
-superseded implementation after parity and deployment gates pass, with no runtime
-compatibility code for never-released internal formats. Run `bun format`, relevant
-tests, `bun lint`, and targeted `bun spec` coverage for the cutover.
-
-## Decisions to settle with the prototypes
-
-- Immutable-base overlay SQL and preview isolation mechanism, including FTS.
-- Browser persistence strategy supported by the actual Alinea WASM build.
-- Artifact duplication and server deployment size versus a hybrid payload layout.
-- Durable retry receipts for Git and whether a hosted journal is worth its cost.
-- Preview edits going directly to configured Git branches or an Alinea overlay.
-- Search behavior across dialects.
-
-These do not block the schema/compiler and tracing prototypes. They must be
-settled before depending on their behavior in the production cutover.
+# SQLite engine implementation
+
+This file describes the current implementation. The architectural constraints and
+deployment model live in [README.md](./README.md) and [SYNC.md](./SYNC.md).
+
+## Storage and source state
+
+- `SqlTree` stores the source tree, blobs, namespace heads, directory metadata,
+  and subtree hashes in SQLite. Tree diffs skip equal subtrees.
+- `SqlSource` implements the existing `Source` protocol over those tables.
+- `EntryRuntime` owns the normalized entry index, exact payload manifests,
+  resident payload rows, standard FTS5 search, Graph query compilation, and query
+  subscriptions.
+- `BuildDatabase` creates one checkpoint from one pinned source revision.
+  `ReconcileDatabase` parses changed source records and updates the source tree,
+  normalized entries, references, FTS, and checkpoint revision transactionally.
+- Checkpoints bind project, namespace, epoch, schema, config, release, and source
+  revision. Incompatible checkpoints fail closed.
+
+## Native server and preview reads
+
+Generated deployments contain one private immutable `release.sqlite` plus a
+small loader module. Native Node queries open that file directly; the generator
+does not export/import the database through JavaScript and does not publish a
+second payload representation.
+
+`NodeReplica` retains immutable reader generations. A source update is reconciled
+in a private writable generation and published only after validation. Existing
+readers finish against their pinned generation.
+
+`NodeOverlay` attaches the immutable base read-only and uses in-memory
+replacement/tombstone tables with TEMP effective views. It does not copy the base
+database. Preview search builds a temporary standard FTS5 index over the effective
+view when a search is actually requested.
+
+Generated loaders resolve the SQLite file through `import.meta.url`; NFT tracing
+tests verify that the database is included and remains readable after relocation.
+
+## Browser replica
+
+The browser never receives the unrestricted server database. Bootstrap returns:
+
+- the complete permitted structural index;
+- entry-level compiled permission masks;
+- exact payload IDs for readable rows;
+- the complete replica identity and policy view ID.
+
+The browser creates an in-memory `@alinea/sqlite-wasm` database and installs the
+authorized index. Queries that only need structural fields perform no payload
+request. Queries that require content ask `EntryRuntime` to hydrate the exact
+missing payload IDs before executing the dependent SQL stage.
+
+Payload transport is an authenticated `application/x-alinea-payloads` text
+stream. The header and row identities are JSON encoded, while the payload and
+source bodies remain raw SQLite JSON text. Browser hydration therefore does not
+parse, validate or re-serialize every payload before inserting it into SQLite.
+Queries and selective generated columns can ask SQLite to interpret individual
+values when needed.
+
+1. the client coalesces simultaneous misses and sends up to 20,000 exact identities;
+2. the server validates principal, release identity, revision, view, read access,
+   and payload identity against one consistent SQL snapshot;
+3. the response sends one identity/revision header line followed by raw payload
+   text rows;
+4. the browser validates the framing and exact identities, queues raw rows for
+   idle cache persistence, and installs a complete query result only after all
+   requested rows arrive;
+5. a 413 response recursively splits a batch, allowing large documents without
+   reducing the normal cold-start batch size.
+
+Responses are capped at 128 MiB and can be gzip/deflate compressed as a stream.
+There is no request-per-entry path, frame encryption, public range bundle, key
+grant, or complete database copy.
+
+`ReplicaCache` stores the authorized structural index and raw plaintext payload
+text in identity-partitioned IndexedDB stores. Payload residency is keyed by
+`versionId + payloadId`; descriptor changes and permission loss evict old data.
+Authentication is always required before a cache is opened. Logout/revocation
+invalidates the cache generation so old tabs cannot repopulate it.
+
+## Query and live-query behavior
+
+The public Graph API remains the query and mutation surface. `EntryQuery` compiles
+filters, projections, relations, grouping, ordering, pagination, `when`, and
+`exists` through Rado. Primitive-array `includes` compiles to SQLite JSON
+membership. Search uses ordinary FTS5.
+
+`QueryWorker` and `WorkerGraph` expose the same Graph over a dedicated worker.
+`LiveReplica` retains the currently rendered generation while the replacement
+index and all payloads needed by active subscriptions are loading. Observers see a
+complete next result or an error, never a partially hydrated result.
+
+## Permissions
+
+SQLite browser replicas support entry-level permissions. Explore controls index
+visibility; Read controls whether a payload ID can be advertised and fetched.
+Configurations whose field permissions differ from the entry grant are rejected
+for this replica path. Mutation permissions are independently evaluated on the
+trusted handler.
+
+## Builds, branches, and development
+
+`releaseIdentity` derives a provider-neutral project/namespace/epoch binding.
+Explicit configuration wins; Vercel and Cloudflare branch metadata provide
+defaults. A deployment remains pinned to its built release for ordinary rendering,
+while its authenticated dashboard replica catches up to the configured source.
+
+The development server reopens the latest compatible checkpoint and reconciles it
+against the current source tree. Unchanged source records and normalized payloads
+are reused. It does not start by copying a generated database or exporting it
+through JS.
+
+Advanced cross-release delta journals and linked external databases are deferred.
+The correctness fallback is a fresh authorized index plus lazy exact-payload
+hydration; tree/source reconciliation avoids reparsing unchanged server content.
+
+## Mutations
+
+Writable browser replicas keep pending edits in a separate encrypted IndexedDB
+outbox and submit them through the existing Graph mutation API. Accepted writes
+refresh the SQLite view. Source compare-and-swap and top-level field hashes protect
+against overwriting a concurrent edit.
+
+Cross-process source-carried receipts and collection-specific stable-ID/list
+operations are intentionally outside the core cutover. They should only return
+after a concrete product requirement and benchmark justify their protocol cost.
+
+## Verification
+
+The normal gates are:
+
+- `bun test`
+- `bun lint`
+- `bun format`
+- `bun test/sqlite-browser.ts` when Chromium is installed
+
+The browser fixture bundles the real WASM runtime, exercises authenticated streamed
+hydration, IndexedDB restart, live queries, worker ownership, mutation recovery,
+and logout/crash cleanup. The imec benchmark and captured results are under
+`test/benchmarks/`.

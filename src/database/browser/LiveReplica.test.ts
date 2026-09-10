@@ -3,7 +3,6 @@ import {IDBFactory} from 'fake-indexeddb'
 import {Entry} from '#/core/Entry.js'
 import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
 import {Permission} from '#/core/Role.js'
-import {base64} from '#/core/util/Encoding.js'
 import {
   config,
   entry,
@@ -11,7 +10,6 @@ import {
   replicaIdentity as identity
 } from '#test/sqlite-browser/config.js'
 import {entryIndexRow} from '../entry/Schema.js'
-import {createFrameKey, encryptFrame} from '../replica/Frame.js'
 import {LiveReplica} from './LiveReplica.js'
 import {ReplicaCache} from './ReplicaCache.js'
 import {ReplicaSession} from './ReplicaSession.js'
@@ -28,12 +26,6 @@ async function fixture(
 ) {
   const binding = {...identity, viewId}
   const {versionId, ...indexed} = entryIndexRow(entry('a', title))
-  const key = createFrameKey()
-  const frame = await encryptFrame(
-    {...binding, versionId, payloadId: revision, kind: 'data'},
-    new TextEncoder().encode(JSON.stringify({data: {title}})),
-    key
-  )
   return {
     bootstrap: {
       version: 1,
@@ -53,18 +45,25 @@ async function fixture(
       version: 1,
       identity: binding,
       revision,
-      frames: [
-        {
-          descriptor: {
-            ...frame.descriptor,
-            nonce: base64.stringify(frame.descriptor.nonce)
-          },
-          key: base64.stringify(key),
-          ciphertext: base64.stringify(frame.ciphertext)
-        }
-      ]
+      payloads: [{versionId, payloadId: revision, data: {title}}]
     }
   }
+}
+
+function payloadResponse(
+  batch: Awaited<ReturnType<typeof fixture>>['payload']
+) {
+  const {payloads, ...header} = batch
+  return new Response(
+    [
+      JSON.stringify(header),
+      ...payloads.map(
+        row =>
+          `${JSON.stringify(row.versionId)}\t${JSON.stringify(row.payloadId)}\t${JSON.stringify(row.data)}\tnull`
+      )
+    ].join('\n') + '\n',
+    {headers: {'content-type': 'application/x-alinea-payloads'}}
+  )
 }
 
 for (const mode of [
@@ -216,7 +215,7 @@ test('live queries keep the old result until the whole subscribed replacement is
         started.resolve()
         await resume.promise
       }
-      return Response.json(current.payload)
+      return payloadResponse(current.payload)
     }
   })
   const values: Array<unknown> = []
@@ -340,11 +339,9 @@ test('policy changes invalidate old results before replacement and logout purges
     indexedDB,
     url: 'https://example.com/api',
     async fetch(url) {
-      return Response.json(
-        new URL(url).searchParams.get('action') === 'replicaIndex'
-          ? current.bootstrap
-          : current.payload
-      )
+      return new URL(url).searchParams.get('action') === 'replicaIndex'
+        ? Response.json(current.bootstrap)
+        : payloadResponse(current.payload)
     }
   })
   replica.subscribe(
@@ -383,11 +380,9 @@ test('offline refresh preserves the ready generation but rejected authentication
     async fetch(url) {
       if (failure === 'offline') throw new Error('offline')
       if (failure === 'auth') return new Response(null, {status: 401})
-      return Response.json(
-        new URL(url).searchParams.get('action') === 'replicaIndex'
-          ? data.bootstrap
-          : data.payload
-      )
+      return new URL(url).searchParams.get('action') === 'replicaIndex'
+        ? Response.json(data.bootstrap)
+        : payloadResponse(data.payload)
     }
   })
   try {
@@ -423,7 +418,7 @@ test('close while a replacement hydrates prevents late publication and notificat
         started.resolve()
         await resume.promise
       }
-      return Response.json(current.payload)
+      return payloadResponse(current.payload)
     }
   })
   const first = Promise.withResolvers<void>()
@@ -473,19 +468,20 @@ test('a stale old session cannot purge the newer generation sharing its cache id
     ...options,
     bootstrap: second.bootstrap,
     async fetch() {
-      return Response.json(second.payload)
+      return payloadResponse(second.payload)
     }
   })
   try {
     await expect(old.find({select: Page.title})).rejects.toThrow()
     await old.close()
     expect(await next.find({select: Page.title})).toEqual(['Two'])
+    await next.close()
     const cache = await ReplicaCache.open(indexedDB, identity)
     expect((await cache.snapshot()).revision).toBe('r2')
     expect(
-      await cache.getFrames([
+      await cache.getPayloads([
         {
-          versionId: second.payload.frames[0].descriptor.versionId,
+          versionId: second.payload.payloads[0].versionId,
           payloadId: 'r2'
         }
       ])

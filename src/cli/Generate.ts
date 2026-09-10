@@ -108,18 +108,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       context.configLocation,
       process.env
     )
-    const size = await exportDatabase(
-      db.config,
-      db,
-      context.outDir,
-      identity,
-      path.join(
-        context.rootDir,
-        db.config.publicDir ?? '/public',
-        '_alinea',
-        'payloads'
-      )
-    )
+    const size = await exportDatabase(db.config, db, context.outDir, identity)
     return size
   }
   for await (const cms of builds) {

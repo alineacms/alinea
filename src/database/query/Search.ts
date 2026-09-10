@@ -13,32 +13,25 @@ export interface SearchQuery {
   ): Sql<string>
 }
 
-/** SQLite capability: keep the private/local FTS index transactionally derived
- * from resident, readable payloads. Other drivers need their own search adapter.
- */
+/** Create the local standard FTS5 index. It is populated lazily so a cold
+ * replica does not tokenize every payload before its first non-search query. */
 export async function createSearch(db: Database): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
   await db.run(sql`create virtual table alinea_entry_search using fts5(
     title, body, tokenize='unicode61 remove_diacritics 2'
   )`)
-  await db.run(sql`create trigger alinea_search_data_insert after insert on alinea_entry_data begin
-    insert into alinea_entry_search(rowid, title, body)
-      select new.rowid, title, coalesce(json_extract(new.source, '$.searchableText'), '')
-      from alinea_entry_index where versionId = new.versionId;
-  end`)
-  await db.run(sql`create trigger alinea_search_data_delete after delete on alinea_entry_data begin
-    delete from alinea_entry_search where rowid = old.rowid;
-  end`)
-  await db.run(sql`create trigger alinea_search_index_insert after insert on alinea_entry_index begin
-    insert into alinea_entry_search(rowid, title, body)
-      select rowid, new.title, coalesce(json_extract(source, '$.searchableText'), '')
-      from alinea_entry_data where versionId = new.versionId;
-  end`)
-  await db.run(sql`create trigger alinea_search_index_delete after delete on alinea_entry_index begin
-    delete from alinea_entry_search where rowid = (
-      select rowid from alinea_entry_data where versionId = old.versionId
-    );
-  end`)
+}
+
+/** Rebuild from resident payload text only when a search needs it. */
+export async function rebuildSearch(db: Database): Promise<void> {
+  if (db.dialect.runtime !== 'sqlite') return
+  await db.run(sql`delete from alinea_entry_search`)
+  await db.run(sql`insert into alinea_entry_search(rowid, title, body)
+    select data.rowid, entry.title,
+      coalesce(json_extract(data.source, '$.searchableText'), '')
+    from alinea_entry_data data
+    inner join alinea_entry_index entry
+      on entry.versionId = data.versionId`)
 }
 
 export function searchTokens(input: string | Array<string> | undefined) {

@@ -19,7 +19,7 @@ silently change where content is owned.
 | Release ID               | Immutable built artifact and the source/runtime revision it contains                      |
 | Deployment ID            | Hosting instance of an application build; distinct from the content branch                |
 | Policy view ID           | Effective authorized view for the authenticated principal                                 |
-| Payload identity         | Immutable bytes and their cryptographic binding; separate from their transport URL        |
+| Payload identity         | Immutable normalized content identity for one entry version                               |
 
 These are opaque identities, not sortable strings. Git commit IDs and content
 hashes cannot establish which revision is newer by lexical comparison.
@@ -61,19 +61,18 @@ interface ReplicaDelta {
   sourceRevision: string
   entries: ReadonlyArray<EntryReplacement>
   removedVersionIds: ReadonlyArray<string>
-  inlineBundles?: Readonly<Record<string, string>>
 }
 ```
 
 `EntryReplacement` represents the complete visible structural row, effective
-grants, and payload manifests for that version. Detailed types belong to the
+permissions, and payload identity for that version. Detailed types belong to the
 protocol implementation. Deltas carry domain data, never executable SQL. Physical
 SQLite pages or native SQLite changesets are not the cross-engine wire protocol.
 
 ## Build and ordinary reads
 
 The build pins one source revision and compiled config, reconciles/normalizes it,
-and generates the private query DB and browser bundles from that same state.
+and generates the private query DB from that same state.
 Publish the completed manifest only after all referenced artifacts exist. A
 moving branch cannot change the source halfway through a release build.
 
@@ -87,8 +86,8 @@ silently turn every RSC read into a remote synchronization request.
 RSC, handler, and browser have independent caches. The handler coordinates
 authentication, source refresh, policy evaluation, mutations, and replica state.
 Each process opens the release or its filtered replica and queries locally.
-An authorized synchronization response supplies recoverable payload locations
-or inline live ciphertext, never a pointer into another handler's private memory.
+An authorized synchronization response streams exact readable payload rows from
+that pinned database state.
 
 ## Browser bootstrap and delta installation
 
@@ -97,18 +96,18 @@ or inline live ciphertext, never a pointer into another handler's private memory
 2. Submit a compatible cached cursor, or request a full filtered index.
 3. Receive unchanged, a delta with an exact base cursor, or a full filtered
    index snapshot. A full index snapshot does not imply full content hydration.
-4. Stage rows, grants, manifests, tombstones, and inline live ciphertext.
+4. Stage rows, permissions, payload identities, and tombstones.
 5. Commit a complete next replica state and revision atomically. Invalidate
    stale payload residency; retain unchanged permitted payloads by identity.
 6. Hydrate required payload classes when query stages ask for them.
 
 Only return unchanged when both data and policy bindings match. A read-to-explore
-transition removes data grants and resident content; explore-to-read adds readable
-descriptors; loss of explore removes the row. A policy change may use a full
+transition removes payload identities and resident content; explore-to-read adds
+readable payload identities; loss of explore removes the row. A policy change may use a full
 filtered index instead of a cross-view delta. Never expose old view data during
 the switch. Deletes remove dependent search/reference rows as well.
 
-If ciphertext is in IndexedDB while active query state is in WASM memory, these
+If payloads are in IndexedDB while active query state is in WASM memory, these
 are not a distributed transaction. Persist a complete committed checkpoint first,
 then install its in-memory generation; after a crash reconstruct only a committed
 generation. Reject stale fetch completion after revision or view replacement.
@@ -147,16 +146,9 @@ delta is only a fast path. A journal, when configured, commits rows, revision,
 and outbox records atomically in its authoritative SQL store; background delivery
 can retry. It may coalesce many transitions into one exact-base response.
 
-Retain immutable bundles for active and rollback deployments or provide a durable
-way to serve equivalent referenced bytes. Never depend on the current production
-alias retaining an old deployment's static files. Store a stable artifact origin
-in the binding, or include referenced live ciphertext in state as `sync-engine`
-does. A raw old locator must not become an instance-affinity requirement.
-
-Compaction creates a new immutable release/bundle manifest and switches it only
-when complete. Do not delete journal segments or bundles still needed by retained
-readers. Configure retention and recovery behavior explicitly; tracking every
-active hosting instance is not a prerequisite for correctness.
+Retain immutable release databases for active and rollback deployments. An old
+deployment serves its own checkpoint; authenticated live payloads come from its
+current compatible replica rather than static payload bundle URLs.
 
 Schema/config changes require compatibility checks before replay. Reconcile
 with the deployment's matching schema when supported; otherwise return a clear
@@ -275,7 +267,7 @@ historical Alinea database formats. Rebuild incompatible caches from source.
 
 1. Resolve the latest committed compatible dev checkpoint; otherwise try a
    compatible generated release. Validate namespace, storage version, config,
-   normalization identity, and availability of referenced files/bundles.
+   normalization identity, and availability of the checkpoint.
 2. Open the previous SQLite database and any committed overlay as the starting
    state. Reuse resident entry data, search/reference indexes, and manifests
    without exporting the complete database through JS.
@@ -299,7 +291,7 @@ checkpoint. Avoid retaining a chain of old DBs to answer ordinary queries: pin a
 bounded base/overlay set or import the needed cache rows, then release old handles.
 
 Checkpoint persistence must survive interrupted writes. Publish the manifest
-only after its database/overlay and referenced bundles are durable; retain the
+only after its database/overlay is durable; retain the
 previous valid generation until the replacement is complete. A crash before
 persistence recovers uncheckpointed accepted edits by diffing the durable source.
 Never overwrite a valid checkpoint with an empty DB during process startup.

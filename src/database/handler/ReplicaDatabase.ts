@@ -75,6 +75,14 @@ export class ReplicaDatabase extends WritableGraph implements HandlerDatabase {
     return this.replica.payloads(principal, roles, request)
   }
 
+  payloadStream(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ) {
+    return this.replica.payloadStream(principal, roles, request)
+  }
+
   async syncWith(remote: RemoteSource) {
     await this.replica.sync(remote)
     return this.sha

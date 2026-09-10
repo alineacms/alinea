@@ -4,40 +4,26 @@ import {EntryRuntime, type EntryDelta} from '#/database/runtime/EntryRuntime.js'
 import {QueryWorker} from '#/database/browser/QueryWorker.js'
 import {ReplicaCache} from '#/database/browser/ReplicaCache.js'
 import {Permission} from '#/core/Role.js'
-import {PayloadLoader} from '#/database/browser/PayloadLoader.js'
-import {HttpFrameReader} from '#/database/replica/Transport.js'
-import type {FrameDescriptor} from '#/database/replica/Frame.js'
+import {HttpPayloadLoader} from '#/database/browser/HttpPayloadLoader.js'
 import {config, replicaIdentity} from './config.js'
 
 const loads: Array<string> = []
 const ready = (async () => {
   const cache = await ReplicaCache.open(indexedDB, replicaIdentity)
-  // Test-only grant endpoint. Production will authenticate before returning keys.
-  const wire: Array<{
-    descriptor: Omit<FrameDescriptor, 'nonce'> & {nonce: Array<number>}
-    key: Array<number>
-    url: string
-    offset: number
-  }> = await (await fetch('/grants')).json()
-  const grants = wire.map(grant => ({
-    ...grant,
-    descriptor: {
-      ...grant.descriptor,
-      nonce: new Uint8Array(grant.descriptor.nonce)
-    },
-    key: new Uint8Array(grant.key)
-  }))
-  const transport = new HttpFrameReader(grants)
   const snapshot = await cache.snapshot()
   function createLoader(revision: string) {
-    return new PayloadLoader({
+    return new HttpPayloadLoader({
+      url: new URL('/replica', location.href).href,
       identity: replicaIdentity,
       revision,
-      grants,
       cache,
-      read(frame, signal) {
-        loads.push(frame.payloadId)
-        return transport.read(frame, signal)
+      applyAuth(init) {
+        return {...init, headers: {...init.headers, authorization: 'Bearer fixture'}}
+      },
+      fetch(input, init) {
+        const body = JSON.parse(init.body as string)
+        loads.push(...body.requests.map((row: {payloadId: string}) => row.payloadId))
+        return fetch(input, init)
       }
     })
   }
@@ -72,7 +58,7 @@ export const api = {
   },
   async install(delta: EntryDelta) {
     const {install, cache} = await ready
-    // Test-only trusted index producer. Production grants must come from the handler.
+    // Test-only trusted index producer.
     await cache.apply({
       ...delta,
       fromRevision:
@@ -80,7 +66,6 @@ export const api = {
       entries: delta.entries.map(row => ({
         ...row,
         permissions: Permission.Explore | Permission.Read,
-        fields: {title: Permission.Explore | Permission.Read}
       }))
     })
     await install(delta)

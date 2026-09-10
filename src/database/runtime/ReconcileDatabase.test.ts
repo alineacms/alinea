@@ -12,7 +12,6 @@ import {createEntryResolver} from '#test/EntryFixture.js'
 import {buildDatabase} from './BuildDatabase.js'
 import {openCheckpoint} from './Checkpoint.js'
 import {reconcileDatabase} from './ReconcileDatabase.js'
-import {FrameTable} from '../release/FrameStore.js'
 
 const Page = Config.document('Page', {fields: {title: Field.text('Title')}})
 const config = {
@@ -86,7 +85,7 @@ test('reconciliation retains hidden authored versions and recomputes inherited d
   }
 })
 
-test('reopens a writable copy, parses only changed source blobs and preserves unaffected SQL rows and frames', async () => {
+test('reopens a writable copy, parses only changed source blobs and preserves unaffected SQL rows', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-reconcile-'))
   try {
     const baseline = await createEntryResolver(config, [
@@ -106,7 +105,6 @@ test('reopens a writable copy, parses only changed source blobs and preserves un
     await copyFile(original, copy)
     using sqlite = new Database(copy)
     const db = connect(sqlite)
-    const frames = await db.select().from(FrameTable)
     const dataRows = sqlite
       .query('select rowid, * from alinea_entry_data order by versionId')
       .all()
@@ -125,9 +123,6 @@ test('reopens a writable copy, parses only changed source blobs and preserves un
           .query('select rowid, * from alinea_entry_data order by versionId')
           .all()[1]
       ).toEqual(dataRows[1])
-      const nextFrames = await db.select().from(FrameTable)
-      expect(nextFrames).toHaveLength(frames.length + 1)
-      for (const frame of frames) expect(nextFrames).toContainEqual(frame)
       const {runtime} = await openCheckpoint(config, db, identity)
       expect(await runtime.find({select: Entry})).toEqual(
         await edited.resolver.resolve({select: Entry})
@@ -154,11 +149,9 @@ test('reopens a writable copy, parses only changed source blobs and preserves un
       expect(
         (await openCheckpoint(config, db, identity)).descriptor.sourceSha
       ).toBe(revision)
-      expect(await db.select().from(FrameTable)).toEqual(nextFrames)
       expect(
         await reconcileDatabase(config, db, baseline.source, identity)
       ).toMatchObject({parsed: 0, replaced: 1, removed: 0})
-      expect(await db.select().from(FrameTable)).toEqual(nextFrames)
       using published = new Database(original, {readonly: true})
       expect(
         await (

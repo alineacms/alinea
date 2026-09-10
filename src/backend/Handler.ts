@@ -52,6 +52,14 @@ import type {
   PayloadBatch,
   PayloadBatchRequest
 } from '#/database/replica/PayloadBatch.js'
+import type {
+  LoadedPayload,
+  SerializedPayload
+} from '#/database/runtime/EntryRuntime.js'
+import {
+  payloadBatchLimit,
+  payloadRequestLimit
+} from '#/database/replica/PayloadBatch.js'
 import {readBody} from '#/core/util/ReadBody.js'
 import {
   decodeReferenceRequest,
@@ -120,6 +128,11 @@ export interface HandlerDatabase extends WritableGraph {
     roles: ReadonlyArray<string>,
     request: PayloadBatchRequest
   ): Promise<PayloadBatch>
+  payloadStream?(
+    principal: string,
+    roles: ReadonlyArray<string>,
+    request: PayloadBatchRequest
+  ): Promise<AsyncIterable<SerializedPayload>>
   resolvePreview?<Query extends GraphQuery>(
     query: Query,
     remote: RemoteSource
@@ -284,7 +297,7 @@ export function createHandler({
         const {claims} = expectUser()
         expectJson()
         if (!claims.sub) throw new HttpError(401, 'Missing replica principal')
-        if (!local.payloads)
+        if (!local.payloads && !local.payloadStream)
           throw new HttpError(501, 'SQLite replica unavailable')
         if (
           !request.headers.get('content-type')?.includes('application/json') ||
@@ -293,7 +306,7 @@ export function createHandler({
           throw new HttpError(400, 'Expected JSON')
         let bytes: Uint8Array
         try {
-          bytes = await readBody(request.body, 64 * 1024, request.signal)
+          bytes = await readBody(request.body, 8 * 1024 * 1024, request.signal)
         } catch {
           throw new HttpError(
             413,
@@ -308,20 +321,22 @@ export function createHandler({
         } catch {
           throw new HttpError(400, 'Invalid payload request')
         }
-        if (input.requests.length > 100)
-          throw new HttpError(413, 'Too many payload grant requests')
+        if (input.requests.length > payloadRequestLimit)
+          throw new HttpError(413, 'Too many payload requests')
         await local.syncWith(cnx)
-        const payloads = await local.payloads(
-          claims.sub,
-          claims.roles ?? [],
-          input
+        const payloads = local.payloadStream
+          ? await local.payloadStream(claims.sub, claims.roles ?? [], input)
+          : (await local.payloads!(claims.sub, claims.roles ?? [], input))
+              .payloads
+        return compressResponse(
+          request,
+          payloadStream(input, payloads, {
+            headers: {
+              'Cache-Control': 'private, no-store',
+              Vary: 'Cookie, Authorization'
+            }
+          })
         )
-        return Response.json(payloads, {
-          headers: {
-            'Cache-Control': 'private, no-store',
-            Vary: 'Cookie, Authorization'
-          }
-        })
       }
 
       if (
@@ -718,6 +733,75 @@ export function createHandler({
       )
     }
   }
+}
+
+function payloadStream(
+  request: PayloadBatchRequest,
+  payloads:
+    | AsyncIterable<LoadedPayload | SerializedPayload>
+    | Iterable<LoadedPayload | SerializedPayload>,
+  init: ResponseInit
+): Response {
+  const encoder = new TextEncoder()
+  const iterator = (async function* () {
+    yield* payloads
+  })()
+  let size = 0
+  let header = true
+  let finished = false
+  const body = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        if (finished) return controller.close()
+        let contents = ''
+        if (header) {
+          contents += `${JSON.stringify({
+            version: 1,
+            identity: request.identity,
+            revision: request.revision
+          })}\n`
+          header = false
+        }
+        while (contents.length < 256 * 1024) {
+          const next = await iterator.next()
+          if (next.done) {
+            finished = true
+            break
+          }
+          contents += `${encodePayloadRow(next.value)}\n`
+        }
+        if (!contents) return controller.close()
+        const bytes = encoder.encode(contents)
+        size += bytes.byteLength
+        if (size > payloadBatchLimit)
+          throw new Error('Payload batch exceeds byte limit')
+        controller.enqueue(bytes)
+      } catch (error) {
+        controller.error(error)
+        await iterator.return?.()
+      }
+    },
+    async cancel() {
+      await iterator.return?.()
+    }
+  })
+  const headers = new Headers(init.headers)
+  headers.set('Content-Type', 'application/x-alinea-payloads; charset=utf-8')
+  return new Response(body, {...init, headers})
+}
+
+function encodePayloadRow(payload: LoadedPayload | SerializedPayload): string {
+  const dataJson =
+    'dataJson' in payload ? payload.dataJson : JSON.stringify(payload.data)
+  const sourceJson =
+    'dataJson' in payload
+      ? (payload.sourceJson ?? 'null')
+      : JSON.stringify(payload.source ?? null)
+  if ([dataJson, sourceJson].some(value => /[\t\r\n]/.test(value)))
+    throw new Error('Payload JSON must use compact text encoding')
+  return `${JSON.stringify(payload.versionId)}\t${JSON.stringify(
+    payload.payloadId
+  )}\t${dataJson}\t${sourceJson}`
 }
 
 function parseUser(input: unknown): UserInput {

@@ -10,7 +10,6 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import {Operation} from '#/core/db/Operation.js'
 import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
 import {ActivityEvent, type Activity} from '#/core/db/ActivityEvent.js'
-import {base64} from '#/core/util/Encoding.js'
 import {
   config,
   entry,
@@ -18,7 +17,6 @@ import {
   replicaIdentity as identity
 } from '#test/sqlite-browser/config.js'
 import {entryIndexRow} from '../entry/Schema.js'
-import {createFrameKey, encryptFrame} from '../replica/Frame.js'
 import {
   WritableReplica,
   type WritableReplicaOptions
@@ -98,27 +96,13 @@ async function fixture() {
         })
       }
       if (action === 'replicaPayloads') {
-        const key = createFrameKey()
-        const frame = await encryptFrame(
-          {...identity, versionId, payloadId: revision, kind: 'data'},
-          new TextEncoder().encode(JSON.stringify({data: {title}})),
-          key
+        return new Response(
+          [
+            JSON.stringify({version: 1, identity, revision}),
+            `${JSON.stringify(versionId)}\t${JSON.stringify(revision)}\t${JSON.stringify({title})}\tnull`
+          ].join('\n') + '\n',
+          {headers: {'content-type': 'application/x-alinea-payloads'}}
         )
-        return Response.json({
-          version: 1,
-          identity,
-          revision,
-          frames: [
-            {
-              descriptor: {
-                ...frame.descriptor,
-                nonce: base64.stringify(frame.descriptor.nonce)
-              },
-              key: base64.stringify(key),
-              ciphertext: base64.stringify(frame.ciphertext)
-            }
-          ]
-        })
       }
       throw new Error(`Unexpected action ${action}`)
     }

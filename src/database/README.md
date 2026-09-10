@@ -103,7 +103,7 @@ constraints.
 | `replica_meta`      | Schema/config identity, source namespace, source revision, runtime revision, release binding, policy view                                       | On bootstrap and atomic sync                            |
 | `entry_index`       | Non-null version key, logical entry ID, locale, type, workspace/root, ancestry, title, path/URL, ordering, source/effective status, active/main | Authorized rows only                                    |
 | `entry_grant`       | Effective entry actions scoped to a policy view                                                                                                 | Compiled by handler; may be packed into wire index rows |
-| `payload_manifest`  | Version key, class, immutable payload identity, hash, size, bundle locator, compression/encryption information                                  | Readable descriptors only                               |
+| `payload_manifest`  | Version key and immutable payload identity                                                                                                      | Readable identities only                                |
 | `entry_data`        | Version key, payload identity, queryable JSON with defaults applied                                                                             | Lazy                                                    |
 | `entry_search`      | Version key, payload identity, searchable text; adapter-managed search index                                                                    | Lazy                                                    |
 | `entry_reference`   | Source version, payload identity, target source/entry, field path and link metadata                                                             | Lazy, complete per source version                       |
@@ -120,6 +120,9 @@ Start with indexes required by ID/URL/type, workspace/root, hierarchy, locale,
 status, and ordered listing queries. Reference rows need source and target
 indexes. Add content scalar indexes when measured queries justify them. Avoid
 prematurely projecting every user field into an independent SQL column.
+Values needed by most queries belong in the structural index. For a hot value
+that remains sourced from the raw payload, prefer a selective virtual/generated
+column and index it only when measurements justify the write cost.
 
 The trusted database must not store one user's grants in globally shared entry
 rows. Grants are a view over content and policy. Their wire representation can
@@ -171,29 +174,18 @@ Browser replica diffing continues to use its authorized view and runtime identit
 
 ## Release artifacts and server reads
 
-The proposed release contains a private raw `release.sqlite`, a small private
-manifest binding its schema/config/source/revision identity, and immutable
-encrypted payload bundles for browser hydration. The server database includes
-queryable JSON, references, and built search data. Normal native server queries
-use SQLite's file access rather than loading an exported byte buffer into WASM.
+The release contains one private raw `release.sqlite` and a small loader binding
+its schema/config/source/revision identity. The database includes queryable JSON,
+references, and FTS5 data. Native server queries use SQLite file access rather
+than loading an exported byte buffer into WASM.
 
-This duplicates some information across the private query database and encrypted
-browser bundles. Measure the build time, disk size, and deployment limits. Build
-both from one source normalization pass. Exact source bytes may require separate
-storage from normalized query JSON; keep this cost explicit. A later layout may
-share a file or use sidecars, but eliminating duplication must not force every
-server content predicate through network hydration.
-
-The public bundles contain independently compressed/encrypted frames for data,
-search, and references. Retain per-entry read grants and authenticated
-frame identity from `sync-engine`. Frames sharing a key must use distinct nonces.
-Descriptors directly identify bytes; they do not require traversing delta chains.
-Group frames by class so the loader can coalesce nearby ranges. Batch and bound
-fetch/decode concurrency and deduplicate in-flight requests.
+Browser hydration does not require a second generated payload representation.
+An authenticated handler reads exact permitted payload rows from the database and
+streams them in large bounded batches. This avoids public bundle publication,
+range manifests, encryption keys, and duplicate build output.
 
 Do not publish the trusted SQLite file: it contains unrestricted content and
-source metadata. Secrets and decode keys remain in trusted storage or in an
-authenticated authorized response. An unpredictable URL is not authorization.
+source metadata. An unpredictable URL is not authorization.
 
 For native SQLite, prototype an immutable attached base plus one writable
 overlay. Effective SQL relations select the overlay row when present and the
@@ -210,8 +202,8 @@ interactive transactions or identical isolation.
 
 ## Browser loading and query correctness
 
-Bootstrap synchronizes the complete permitted structural index and compiled
-grants into SQLite. Content stays in separate sparse tables. Residency is keyed
+Bootstrap synchronizes the complete permitted structural index and entry-level
+permissions into SQLite. Content stays in separate sparse tables. Residency is keyed
 by exact payload identity, not just entry ID or a boolean `loaded` flag.
 Unloaded data is distinct from `NULL`, a missing JSON field, an empty reference
 list, and a payload class that does not exist for this entry.
@@ -240,21 +232,21 @@ before resolving a predicate or ordering expression that can change membership.
 
 Pin the read revision while planning and fetching. Do not hold a write transaction
 open across network I/O. After fetch, validate the expected revision, policy view,
-and descriptors before installation; retry or finish against a retained pinned
+and exact payload identities before installation; retry or finish against a retained pinned
 snapshot if they changed. One worker serializes installs; readers must still have
 explicit revision semantics when asynchronous work interleaves.
 
 Payload insertion and residency marking are one transaction. FTS/reference rows
 must correspond to the same payload identity. Full search cannot report partial
-results as complete merely because some search frames are already loaded.
-Explore-only search may use safe title/path data, never unreadable search frames.
+results as complete merely because some payloads are already loaded.
+Explore-only search may use safe structural data, never unreadable content.
 
 The dashboard's asynchronous page atoms await these queries. Requested tabs and
 disclosures determine dependencies; the old page remains visible until the next
 page and its required payloads are ready. Component mounting must not initiate
 loads required to render the replacement page.
 
-Persist the authorized index, descriptors, and cache records incrementally in
+Persist the authorized index and exact payload cache records incrementally in
 IndexedDB, or use a suitable persistent SQLite VFS after verification. The
 historical `db.export()` persistence is a fallback to measure, not a write path
 to assume scales. `@alinea/sqlite-wasm` availability does not establish OPFS,
@@ -307,7 +299,7 @@ alone does not supply reactive query subscriptions or remote change delivery.
 
 The handler evaluates roles against its trusted database and compiles effective
 actions per entry. It can return these alongside structural rows. No explore
-access means no row; explore without read means no content-derived descriptors,
+access means no row; explore without read means no payload identity,
 keys, references, or searchable text. SQLite replicas intentionally support only
 entry-level grants. Bootstrap rejects roles whose field permissions differ from
 the entry grant; it never broadens them or creates per-user filtered payloads.
@@ -320,7 +312,7 @@ invalidate the complete evaluated view when dependency tracking is insufficient.
 Partition browser persistence and worker identity by project, source namespace,
 schema/config compatibility, authenticated principal, and policy view. Keep the
 release binding in replica metadata; cross-release cache reuse needs explicit
-compatibility and descriptor checks. Role changes or logout replace the worker
+compatibility and exact payload identity checks. Role changes or logout replace the worker
 and purge access that is no longer available, including in-flight responses.
 Already disclosed plaintext cannot be revoked from a client.
 

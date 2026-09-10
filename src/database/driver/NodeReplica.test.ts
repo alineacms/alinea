@@ -13,8 +13,6 @@ import {Policy, role} from '#/core/Role.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {EntryRuntime} from '../runtime/EntryRuntime.js'
 import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
-import {FrameStore} from '../release/FrameStore.js'
-import {entryVersionId} from '../entry/Schema.js'
 
 const Page = Config.document('Page', {fields: {title: Fields.text('Title')}})
 const config = {
@@ -41,64 +39,6 @@ async function fixture(title: string) {
     {id: 'b', type: 'Page', index: 'b', title: 'Child', parentPaths: ['a']}
   ])
 }
-
-test('payload batches enforce their aggregate byte budget before fetching ciphertext', async () => {
-  const directory = await mkdtemp(join(tmpdir(), 'alinea-payload-budget-'))
-  const baseline = await fixture('Original')
-  const scoped = {
-    ...config,
-    roles: {
-      reader: role('Reader', {
-        permissions(policy) {
-          policy.allowAll()
-        }
-      })
-    }
-  }
-  const replica = await NodeReplica.open(
-    {directory, config: scoped, identity},
-    baseline.source
-  )
-  const original = FrameStore.prototype.grant
-  const grant = spyOn(FrameStore.prototype, 'grant').mockImplementation(
-    async function (this: FrameStore, binding) {
-      const value = await original.call(this, binding)
-      return {
-        ...value,
-        descriptor: {...value.descriptor, ciphertextLength: 20 * 1024 * 1024}
-      }
-    }
-  )
-  const ciphertext = spyOn(FrameStore.prototype, 'ciphertext')
-  try {
-    const binding = await replica.identity()
-    expect(binding).toEqual(identity)
-    binding.namespace = 'caller-mutation'
-    expect((await replica.identity()).namespace).toBe(identity.namespace)
-    const view = await replica.bootstrap('user', ['reader'])
-    await expect(
-      replica.payloads('user', ['reader'], {
-        identity: view.identity,
-        revision: view.revision,
-        requests: view.entries.map(({entry, payloadId}) => ({
-          versionId: entryVersionId(
-            entry.id,
-            entry.locale,
-            entry.versionStatus
-          ),
-          payloadId: payloadId!
-        }))
-      })
-    ).rejects.toThrow('byte limit')
-    expect(ciphertext).not.toHaveBeenCalled()
-  } finally {
-    grant.mockRestore()
-    ciphertext.mockRestore()
-    await replica.close()
-    await expect(replica.identity()).rejects.toThrow()
-    await rm(directory, {recursive: true, force: true})
-  }
-})
 
 test('authenticated index bootstrap binds policy, rows and identity to one leased snapshot', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-index-bootstrap-'))

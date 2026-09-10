@@ -1,34 +1,138 @@
 import {isRecord} from '#/core/util/Objects.js'
-import {base64} from '#/core/util/Encoding.js'
-import {
-  validateFrameDescriptor,
-  type FrameDescriptor,
-  type FrameGrant
-} from '../replica/Frame.js'
 import {
   payloadBatchLimit,
+  payloadRequestLimit,
   type PayloadBatchRequest
 } from '../replica/PayloadBatch.js'
+import type {SerializedPayload} from '../runtime/EntryRuntime.js'
 
-export interface DecodedFrame extends FrameGrant {
-  ciphertext: Uint8Array
+/** Decode authenticated raw SQLite JSON payloads without parsing their bodies. */
+export async function decodePayloadStream(
+  stream: ReadableStream<Uint8Array>,
+  expected: PayloadBatchRequest,
+  onPayload?: (payload: SerializedPayload) => void | Promise<void>
+): Promise<Array<SerializedPayload>> {
+  const requests = new Map(
+    expected.requests.map(request => [request.versionId, request.payloadId])
+  )
+  if (
+    requests.size !== expected.requests.length ||
+    requests.size > payloadRequestLimit
+  )
+    throw new Error('Invalid payload request batch')
+
+  const reader = stream.getReader()
+  const decoder = new TextDecoder('utf-8', {fatal: true})
+  const found = new Map<string, SerializedPayload>()
+  let buffer = ''
+  let bytes = 0
+  let line = 0
+  try {
+    for (;;) {
+      const next = await reader.read()
+      if (next.done) break
+      bytes += next.value.byteLength
+      if (bytes > payloadBatchLimit)
+        throw new Error('Payload batch exceeds byte limit')
+      buffer += decoder.decode(next.value, {stream: true})
+      let newline: number
+      while ((newline = buffer.indexOf('\n')) !== -1) {
+        const value = buffer.slice(0, newline)
+        buffer = buffer.slice(newline + 1)
+        if (!value) throw new Error('Invalid empty payload line')
+        const pending = decodeLine(
+          value,
+          line++,
+          expected,
+          requests,
+          found,
+          onPayload
+        )
+        if (pending) await pending
+      }
+    }
+    buffer += decoder.decode()
+    if (buffer) {
+      const pending = decodeLine(
+        buffer,
+        line++,
+        expected,
+        requests,
+        found,
+        onPayload
+      )
+      if (pending) await pending
+    }
+    if (line === 0 || found.size !== expected.requests.length)
+      throw new Error('Incomplete payload response')
+    return expected.requests.map(request => found.get(request.versionId)!)
+  } catch (error) {
+    await reader.cancel(error).catch(() => {})
+    throw error
+  } finally {
+    reader.releaseLock()
+  }
 }
 
-/** Validate the complete envelope before a caller may hydrate or persist any row. */
-export function decodePayloadBatch(
-  value: unknown,
-  expected: PayloadBatchRequest
-): Array<DecodedFrame> {
+function decodeLine(
+  value: string,
+  line: number,
+  expected: PayloadBatchRequest,
+  requests: Map<string, string>,
+  found: Map<string, SerializedPayload>,
+  onPayload?: (payload: SerializedPayload) => void | Promise<void>
+): void | Promise<void> {
+  if (line === 0) {
+    let header: unknown
+    try {
+      header = JSON.parse(value)
+    } catch {
+      throw new Error('Invalid payload response header')
+    }
+    return validateHeader(header, expected)
+  }
+  const first = value.indexOf('\t')
+  const second = value.indexOf('\t', first + 1)
+  const third = value.indexOf('\t', second + 1)
+  if (first < 1 || second < first + 2 || third < second + 2)
+    throw new Error('Invalid payload row')
+  let versionId: unknown
+  let payloadId: unknown
+  try {
+    versionId = JSON.parse(value.slice(0, first))
+    payloadId = JSON.parse(value.slice(first + 1, second))
+  } catch {
+    throw new Error('Invalid payload row identity')
+  }
+  const dataJson = value.slice(second + 1, third)
+  const sourceJson = value.slice(third + 1)
+  if (
+    typeof versionId !== 'string' ||
+    typeof payloadId !== 'string' ||
+    requests.get(versionId) !== payloadId ||
+    found.has(versionId) ||
+    !dataJson ||
+    sourceJson.includes('\t')
+  )
+    throw new Error('Unexpected payload row')
+  const payload: SerializedPayload = {
+    versionId,
+    payloadId,
+    dataJson,
+    sourceJson: sourceJson === 'null' ? undefined : sourceJson
+  }
+  found.set(versionId, payload)
+  return onPayload?.(payload)
+}
+
+function validateHeader(value: unknown, expected: PayloadBatchRequest): void {
   if (
     !isRecord(value) ||
     value.version !== 1 ||
     value.revision !== expected.revision ||
-    !isRecord(value.identity) ||
-    !Array.isArray(value.frames) ||
-    value.frames.length !== expected.requests.length
+    !isRecord(value.identity)
   )
     throw new Error('Invalid payload response')
-  const identity = value.identity
   for (const key of [
     'project',
     'namespace',
@@ -39,75 +143,9 @@ export function decodePayloadBatch(
     'principal',
     'viewId'
   ] as const)
-    if (!expected.identity[key] || identity[key] !== expected.identity[key])
+    if (
+      !expected.identity[key] ||
+      value.identity[key] !== expected.identity[key]
+    )
       throw new Error('Payload response identity mismatch')
-  const requests = new Map(
-    expected.requests.map(request => [request.versionId, request.payloadId])
-  )
-  if (requests.size !== expected.requests.length || requests.size > 100)
-    throw new Error('Invalid payload request batch')
-  const result: Array<DecodedFrame> = []
-  let size = 0
-  try {
-    for (const encoded of value.frames) {
-      if (!isRecord(encoded) || !isRecord(encoded.descriptor))
-        throw new Error('Invalid payload frame')
-      const wire = encoded.descriptor
-      if (
-        typeof wire.versionId !== 'string' ||
-        typeof wire.payloadId !== 'string' ||
-        !requests.has(wire.versionId) ||
-        requests.get(wire.versionId) !== wire.payloadId
-      )
-        throw new Error('Unexpected payload frame')
-      requests.delete(wire.versionId)
-      // Explicit projection prevents extra wire properties from entering the runtime.
-      const descriptor = {
-        project: wire.project,
-        namespace: wire.namespace,
-        epoch: wire.epoch,
-        schemaId: wire.schemaId,
-        configId: wire.configId,
-        releaseId: wire.releaseId,
-        versionId: wire.versionId,
-        payloadId: wire.payloadId,
-        kind: wire.kind,
-        compression: wire.compression,
-        plaintextLength: wire.plaintextLength,
-        ciphertextLength: wire.ciphertextLength,
-        nonce: decodeBytes(wire.nonce, 12)
-      } as FrameDescriptor
-      validateFrameDescriptor(
-        {
-          ...expected.identity,
-          versionId: wire.versionId,
-          payloadId: wire.payloadId,
-          kind: 'data'
-        },
-        descriptor
-      )
-      size += descriptor.ciphertextLength
-      if (size > payloadBatchLimit)
-        throw new Error('Payload batch exceeds byte limit')
-      const ciphertext = decodeBytes(
-        encoded.ciphertext,
-        descriptor.ciphertextLength
-      )
-      const key = decodeBytes(encoded.key, 32)
-      result.push({descriptor, ciphertext, key})
-    }
-    return result
-  } catch (error) {
-    for (const frame of result) frame.key.fill(0)
-    throw error
-  }
-}
-
-function decodeBytes(value: unknown, length: number): Uint8Array {
-  if (typeof value !== 'string' || value.length !== Math.ceil(length / 3) * 4)
-    throw new Error('Invalid encoded frame length')
-  const bytes = base64.parse(value)
-  if (bytes.byteLength !== length)
-    throw new Error('Invalid decoded frame length')
-  return bytes
 }

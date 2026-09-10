@@ -11,8 +11,6 @@ import {MissingCredentialsError} from '#/backend/Auth.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {Entry} from '#/core/Entry.js'
 import {getScope} from '#/core/Scope.js'
-import {base64} from '#/core/util/Encoding.js'
-import {decryptFrame} from '#/database/replica/Frame.js'
 import {entryVersionId} from '#/database/entry/Schema.js'
 import {ReplicaSession} from '#/database/browser/ReplicaSession.js'
 
@@ -179,24 +177,15 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
     )
     expect(payload.status).toBe(200)
     expect(payload.headers.get('cache-control')).toBe('private, no-store')
-    const encoded = await payload.json()
-    expect(encoded.identity).toEqual(view.identity)
-    expect(encoded.revision).toBe(view.revision)
-    expect(encoded.frames).toHaveLength(1)
-    const frame = encoded.frames[0]
-    const descriptor = {
-      ...frame.descriptor,
-      nonce: base64.parse(frame.descriptor.nonce)
-    }
-    const plaintext = await decryptFrame(
-      {...view.identity, ...payloadRequest.requests[0], kind: 'data'},
-      descriptor,
-      base64.parse(frame.ciphertext),
-      base64.parse(frame.key)
+    expect(payload.headers.get('content-type')).toContain(
+      'application/x-alinea-payloads'
     )
-    expect(JSON.parse(new TextDecoder().decode(plaintext)).data.title).toBe(
-      'Original'
-    )
+    const [headerLine, rowLine] = (await payload.text()).trimEnd().split('\n')
+    const header = JSON.parse(headerLine)
+    const [, , dataJson] = rowLine.split('\t')
+    expect(header.identity).toEqual(view.identity)
+    expect(header.revision).toBe(view.revision)
+    expect(JSON.parse(dataJson).title).toBe('Original')
     const browserSession = await ReplicaSession.connect({
       url: 'https://example.com/api/cms',
       config: localCms.config,
@@ -281,7 +270,7 @@ test('Node handler queries and authenticated mutations use the SQLite replica', 
         await handler(
           request(
             'replicaPayloads',
-            {...payloadRequest, padding: 'x'.repeat(65536)},
+            {...payloadRequest, padding: 'x'.repeat(9 * 1024 * 1024)},
             'user'
           )
         )

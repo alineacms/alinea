@@ -1,6 +1,5 @@
 import type {ReplicaIdentity} from '../browser/ReplicaCache.js'
-import type {PayloadRequest} from '../runtime/EntryRuntime.js'
-import type {FrameDescriptor} from './Frame.js'
+import type {LoadedPayload, PayloadRequest} from '../runtime/EntryRuntime.js'
 
 export interface PayloadBatchRequest {
   identity: ReplicaIdentity
@@ -8,18 +7,13 @@ export interface PayloadBatchRequest {
   requests: Array<PayloadRequest>
 }
 
-export interface EncodedFrame {
-  descriptor: Omit<FrameDescriptor, 'nonce'> & {nonce: string}
-  key: string
-  ciphertext: string
-}
-
-/** Authenticated, non-cacheable envelope; only ciphertext belongs in disk caches. */
+/** Authenticated, non-cacheable payload envelope. */
 export interface PayloadBatch {
   version: 1
   identity: ReplicaIdentity
   revision: string
-  frames: Array<EncodedFrame>
+  payloads: Array<LoadedPayload>
 }
 
-export const payloadBatchLimit = 32 * 1024 * 1024
+export const payloadBatchLimit = 128 * 1024 * 1024
+export const payloadRequestLimit = 20_000

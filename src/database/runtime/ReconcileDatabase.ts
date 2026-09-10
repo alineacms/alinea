@@ -2,7 +2,6 @@ import type {Config} from '#/core/Config.js'
 import {bundleContents, type RemoteSource} from '#/core/source/Source.js'
 import {eq, inArray, type Database} from 'rado'
 import {entryIndexRow} from '../entry/Schema.js'
-import {FrameStore} from '../release/FrameStore.js'
 import {SqlSource} from '../source/SqlSource.js'
 import {
   CheckpointTable,
@@ -12,6 +11,7 @@ import {
 import {EntryRuntime, type EntryReplacement} from './EntryRuntime.js'
 import {normalizeSource} from './NormalizeSource.js'
 import {EntryReferenceTable, replaceEntryReferences} from './EntryReferences.js'
+import {rebuildSearch} from '../query/Search.js'
 
 /** Reconcile an exclusively owned writable checkpoint copy, never a published
  * release or a connection serving live queries. The owner swaps readers only
@@ -47,7 +47,6 @@ export async function reconcileDatabase(
         previous.entries.map(row => [entryIndexRow(row.entry).versionId, row])
       )
       const changed: Array<EntryReplacement> = []
-      const frames = new FrameStore(tx)
       for (const row of entries) {
         const index = entryIndexRow(row.entry)
         const before = remaining.get(index.versionId)
@@ -65,19 +64,6 @@ export async function reconcileDatabase(
         )
         if (before?.payloadId !== row.payloadId)
           await replaceEntryReferences(config, tx, row)
-        const frame = {
-          ...identity,
-          versionId: index.versionId,
-          payloadId: row.payloadId!,
-          kind: 'data' as const
-        }
-        if (!(await frames.has(frame)))
-          await frames.put(
-            frame,
-            new TextEncoder().encode(
-              JSON.stringify({data: row.data, source: row.source})
-            )
-          )
       }
       await runtime.apply({
         fromRevision: descriptor.sourceSha,
@@ -85,6 +71,7 @@ export async function reconcileDatabase(
         entries: changed,
         removedVersionIds: [...remaining.keys()]
       })
+      await rebuildSearch(tx)
       const removed = [...remaining.keys()]
       for (let offset = 0; offset < removed.length; offset += 100)
         await tx

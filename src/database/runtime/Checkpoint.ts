@@ -3,7 +3,6 @@ import {type Database, eq, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {SqlSource} from '../source/SqlSource.js'
 import {EntryRuntime} from './EntryRuntime.js'
-import type {FrameBinding} from '../replica/Frame.js'
 
 export const checkpointFormat = 9
 export const CheckpointTable = table('alinea_checkpoint', {
@@ -18,7 +17,10 @@ export const CheckpointTable = table('alinea_checkpoint', {
   sourceSha: column.varchar(undefined, {length: 40}).notNull()
 })
 
-export interface CheckpointIdentity extends FrameBinding {
+export interface CheckpointIdentity {
+  project: string
+  epoch: string
+  schemaId: string
   /** Build-system fingerprint including schema, configuration and normalizer. */
   configId: string
   namespace: string
@@ -53,6 +55,7 @@ export async function openCheckpoint(
   const source = new SqlSource(db, descriptor.namespace)
   const tree = await source.getSqlTree()
   const runtime = new EntryRuntime(config, db, {
+    searchReady: true,
     async includedAtBuild(filePath) {
       return Boolean(await tree.get(filePath))
     }

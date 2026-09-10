@@ -105,8 +105,7 @@ try {
       configId: 'integration',
       namespace: 'preview/test',
       releaseId: 'test-release'
-    },
-    join(project, 'public', '_alinea', 'payloads')
+    }
   )
   const bundled = await Bun.build({
     entrypoints: [join(root, 'src/adapter/next/with-alinea.ts')],
