@@ -2,10 +2,7 @@ import {views} from '#/field/views.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
-import {MemorySource} from './src/core/source/MemorySource.js'
 import {App} from './src/dashboard/App.js'
-import {DashboardWorker} from './src/dashboard/boot/DashboardWorker.js'
-import {WorkerDB} from './src/dashboard/boot/WorkerDB.js'
 import {cms, db} from './src/dashboard/fixture/cms.ts?alinea'
 
 const elem = document.getElementById('root')!
@@ -18,15 +15,11 @@ db.mutate = async (...args: Parameters<typeof sourceMutate>) => {
   return sourceMutate(...args)
 }
 
-const worker = new DashboardWorker(new MemorySource())
-await worker.load('frontend-fixture', cms.config, fixtureConnection)
-const graph = new WorkerDB(cms.config, worker, fixtureConnection, worker)
-
 const app = (
   <StrictMode>
     <App
-      graph={graph}
-      events={worker}
+      graph={db}
+      events={db.index}
       config={cms.config}
       client={fixtureConnection}
       views={views}
