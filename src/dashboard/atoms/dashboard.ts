@@ -3,7 +3,8 @@ import {atom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
 import type {SetStateAction} from 'react'
 import {authAtom, authRequiredAtom} from './auth.js'
-import {clientAtom} from './core.js'
+import {clientAtom, graphAtom} from './core.js'
+import {graphSession} from '#/core/db/GraphSession.js'
 
 export type DashboardTheme = 'system' | 'light' | 'dark'
 
@@ -67,6 +68,7 @@ export const canLogoutAtom = atom(get => {
 })
 
 export const logoutAtom = atom(null, async (get, set) => {
+  await graphSession(get(graphAtom))?.disconnect(true)
   const client = get(clientAtom) as LocalConnection & Partial<LogoutConnection>
   if (client.logout) await client.logout()
   await set(authAtom, {type: 'check'})

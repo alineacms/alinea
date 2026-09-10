@@ -1,5 +1,7 @@
 import {AuthResultType} from '#/cloud/AuthResult.js'
 import {Client} from '#/core/Client.js'
+import {graphSession} from '#/core/db/GraphSession.js'
+import {graphAtom} from './core.js'
 import {localUser, User} from '#/core/User.js'
 import {atom} from 'jotai'
 import {alineaDevAtom, clientAtom, localAtom} from './core.js'
@@ -57,6 +59,7 @@ interface DashboardAuthSetupCloud {
 export type DashboardAuthAction = DashboardAuthCheck | DashboardAuthSetupCloud
 
 const authState = atom<DashboardAuthState>({status: 'loading'})
+const authAttemptAtom = atom(0)
 
 export const setUserRolesAtom = atom(null, (get, set, roles: Array<string>) => {
   const state = get(authAtom)
@@ -100,8 +103,11 @@ export const authAtom = Object.assign(
       }
 
       set(authState, {status: 'loading'})
+      const attempt = get(authAttemptAtom) + 1
+      set(authAttemptAtom, attempt)
       try {
         const result = await client.authStatus()
+        if (get(authAttemptAtom) !== attempt) return
         switch (result.type) {
           case AuthResultType.NeedsRefresh:
             set(authState, {
@@ -122,10 +128,14 @@ export const authAtom = Object.assign(
             set(authState, {status: 'authenticated', user: result.user})
             return
           case AuthResultType.UnAuthenticated:
+            await graphSession(get(graphAtom))?.disconnect(true)
+            if (get(authAttemptAtom) !== attempt) return
             set(authState, {status: 'redirecting'})
             window.location.href = appendFrom(result.redirect)
             return
           case AuthResultType.MissingApiKey:
+            await graphSession(get(graphAtom))?.disconnect(true)
+            if (get(authAttemptAtom) !== attempt) return
             set(authState, {
               status: 'missingApiKey',
               setupUrl: result.setupUrl
@@ -133,7 +143,8 @@ export const authAtom = Object.assign(
             return
         }
       } catch {
-        set(authState, {status: 'missingHandler'})
+        if (get(authAttemptAtom) === attempt)
+          set(authState, {status: 'missingHandler'})
       }
     }
   ),

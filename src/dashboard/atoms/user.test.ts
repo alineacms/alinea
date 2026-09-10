@@ -6,6 +6,7 @@ import {clientAtom} from './core.js'
 import {configAtom} from './core.js'
 import {eventsAtom} from './core.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {logoutAtom} from './dashboard.js'
 import {authReady, canManageMembersAtom, policyAtom, userAtom} from './user.js'
 
 test('user and policy are synchronous after preloading', async () => {
@@ -86,4 +87,38 @@ test('compiled policy refreshes for same-content view events and fails closed on
   expect(() => store.get(policyAtom)).toThrow('Revoked')
   await expect(store.get(authReady)).rejects.toThrow('Revoked')
   stop()
+})
+
+test('authenticated dashboard readiness waits for the scoped graph and logout purges before HTTP logout', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  const order: Array<string> = []
+  Object.assign(db, {
+    async authenticate(user: {sub: string}) {
+      order.push(user.sub)
+      started.resolve()
+      await resume.promise
+    },
+    async disconnect(purge: boolean) {
+      order.push(`disconnect:${purge}`)
+    },
+    async compiledPolicy() {
+      order.push('policy')
+      return Policy.ALLOW_ALL
+    }
+  })
+  Object.assign(store.get(clientAtom), {
+    async logout() {
+      order.push('logout')
+    }
+  })
+  const ready = store.get(authReady)
+  await started.promise
+  expect(order).toEqual(['local'])
+  resume.resolve()
+  await ready
+  expect(order).toEqual(['local', 'policy'])
+  await store.set(logoutAtom)
+  expect(order.slice(-2)).toEqual(['disconnect:true', 'logout'])
 })

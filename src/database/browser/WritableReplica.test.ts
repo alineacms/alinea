@@ -25,6 +25,7 @@ import {
 } from './WritableReplica.js'
 import {QueryWorker} from './QueryWorker.js'
 import {WorkerGraph} from './WorkerGraph.js'
+import {ReplicaGraph} from '#/dashboard/boot/ReplicaGraph.js'
 
 async function fixture() {
   let revision = 'base'
@@ -260,6 +261,36 @@ test('owned query worker exposes writable recovery and purges pending drafts on 
   const reopened = await WritableReplica.connect(source.options)
   expect(await reopened.pendingMutations()).toEqual([])
   await reopened.close(true)
+})
+
+test('authenticated dashboard ownership gates real SQLite startup and purges pending edits on logout', async () => {
+  const source = await fixture()
+  let opens = 0
+  const graph = new ReplicaGraph({
+    config,
+    pollInterval: 0,
+    connect(principal, signal) {
+      opens++
+      return WritableReplica.connect({
+        ...source.options,
+        expected: {...identity, principal},
+        signal
+      })
+    }
+  })
+  expect(opens).toBe(0)
+  await graph.authenticate({sub: identity.principal})
+  expect(await graph.find({select: Page.title})).toEqual(['Before'])
+  source.loseResponse()
+  await expect(graph.mutate(mutations)).rejects.toThrow('Lost response')
+  expect((await graph.activities())[0].status).toBe('failed')
+  await graph.disconnect(true)
+  await expect(graph.find({})).rejects.toThrow('not authenticated')
+  await graph.authenticate({sub: identity.principal})
+  expect(await graph.activities()).toEqual([])
+  expect(await graph.find({select: Page.title})).toEqual(['After'])
+  expect(source.writes).toBe(1)
+  await graph.close(true)
 })
 
 test('public writable Graph operations retain query scope across the worker port', async () => {

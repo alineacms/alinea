@@ -590,6 +590,24 @@ restart recovery, cross-owner removal and dashboard controls. ActivityEvent was
 moved into core so database owners do not depend on dashboard modules. Fetch
 activity/polling and authenticated boot/logout integration remain outstanding.
 
+`dashboard/boot/ReplicaGraph` now provides the authentication-scoped owner for
+the boot cutover. It does not open a database before a verified principal is
+provided, coalesces same-principal startup, gates reads/mutations on readiness,
+forwards index/activity/live-query events, and schedules non-overlapping polling.
+User replacement aborts and drains pending startup and purges the prior owner
+before connecting the next one; ordinary shutdown retains durable drafts. Late
+startup/read/subscription results cannot publish into a replacement session.
+Dashboard auth readiness now awaits this optional Graph session capability, and
+logout/disallowed authentication disconnects it. Compiled policy caches are
+principal-bound, and stale authentication responses cannot replace newer ones.
+Tests cover ownership races, startup/poll lifecycle, atom readiness/logout order,
+and an actual writable SQLite owner with a response-lost accepted edit.
+
+Generated dashboard boot still instantiates the legacy worker: it must supply
+the generated project/namespace/endpoint binding to ReplicaGraph and attach the
+owned worker event bridges. Polling currently has lifecycle control but needs
+fetch-activity reporting. No production dashboard cutover is claimed yet.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit
