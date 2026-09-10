@@ -1244,6 +1244,26 @@ duplicate/missing/pending IDs, immutable query inputs, work limits, corruption,
 and a 129-candidate result spanning SQL batches. A built Node SQLite smoke query
 also passed. Graph/authorization integration and remote/ANN adapters remain open.
 
+`handler/EmbeddingSearch` now adds a trusted, role-filtered candidate-selection
+service. It recompiles the current authorized index, verifies the source/policy
+cursor, and intersects requested owner versions with readable rows before any
+vector payload is selected or ranked. Manifest owner/space/slot indexes support
+that lookup. Each embedding target now also binds the exact owner payload ID;
+stale owner inputs and readable owners with no matching manifests are rejected.
+The derived revision pins candidate enumeration and ranking, and the runtime's
+read-generation guard detects concurrent source changes. The stores must use
+independent connections or an enclosing owner-controlled serialization boundary.
+
+Native/WASM tests cover unreadable nearest matches, inaccessible corrupt vectors,
+same-source-revision policy revocation, stale source cursors, changed owner
+payloads, pending replacements and roles with no access. Mixed field-read policy
+views retain the existing fail-closed behavior; no derived bytes may bypass it.
+This is not yet a public HTTP route or a Graph method. Results cover registered
+authorized chunks only: atomic publication of a complete owner chunk manifest
+and source reconciliation still need implementation before claiming complete
+owner/global vector search. Encrypted vector transport and principal/release
+binding must be added at the eventual HTTP boundary.
+
 Add embedding manifests, content/model identity, background job completion,
 invalidation, chunk ownership, permission filtering, and lazy vector payloads.
 Start with an exact-search correctness baseline and a capability interface. Verify

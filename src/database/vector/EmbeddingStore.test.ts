@@ -15,6 +15,7 @@ function target(
 ): EmbeddingTarget {
   return {
     owner: {versionId: 'entry/en/published', kind},
+    ownerPayloadId: 'owner-v1',
     slot: 'semantic',
     chunk: 'paragraph-1',
     sourceHash: 'a'.repeat(40),

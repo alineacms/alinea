@@ -23,6 +23,7 @@ const space: EmbeddingSpace = {
 function target(id: string, selected = space): EmbeddingTarget {
   return {
     owner: {versionId: id, kind: 'entry'},
+    ownerPayloadId: 'owner-v1',
     slot: 'semantic',
     chunk: 'main',
     sourceHash: 'a'.repeat(40),

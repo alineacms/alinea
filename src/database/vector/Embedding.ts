@@ -13,6 +13,8 @@ export interface EmbeddingSpace {
 
 export interface EmbeddingTarget {
   owner: {versionId: string; kind: 'entry' | 'image' | 'document'}
+  /** Current entry payload descriptor, distinct from an image/document source hash. */
+  ownerPayloadId: string
   slot: string
   chunk: string
   sourceHash: string
@@ -32,7 +34,12 @@ export interface EmbeddingManifest extends EmbeddingJob {
 
 export function validateEmbedding(target: EmbeddingTarget): void {
   const {owner, space} = target
-  for (const value of [owner.versionId, target.slot, target.chunk])
+  for (const value of [
+    owner.versionId,
+    target.ownerPayloadId,
+    target.slot,
+    target.chunk
+  ])
     if (typeof value !== 'string' || !value || value.length > 1024)
       throw new Error('Invalid embedding identity')
   if (

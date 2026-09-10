@@ -1,4 +1,4 @@
-import {eq, inArray, sql, table, type Database} from 'rado'
+import {and, eq, inArray, index, sql, table, type Database} from 'rado'
 import * as column from 'rado/universal/columns'
 import pLimit from 'p-limit'
 import {createId} from '#/core/Id.js'
@@ -11,7 +11,8 @@ import {
   validateEmbedding,
   type EmbeddingTarget,
   type EmbeddingJob,
-  type EmbeddingManifest
+  type EmbeddingManifest,
+  type EmbeddingSpace
 } from './Embedding.js'
 import {
   embeddingDistance,
@@ -20,13 +21,19 @@ import {
   type EmbeddingSearchResult
 } from './EmbeddingSearch.js'
 
-const Manifest = table('alinea_embedding_manifest', {
-  id: column.varchar(undefined, {length: 64}).primaryKey(),
-  generation: column.varchar(undefined, {length: 128}).notNull(),
-  spaceId: column.varchar(undefined, {length: 64}).notNull(),
-  target: column.json<EmbeddingTarget>().notNull(),
-  payloadId: column.varchar(undefined, {length: 64})
-})
+const Manifest = table(
+  'alinea_embedding_manifest',
+  {
+    id: column.varchar(undefined, {length: 64}).primaryKey(),
+    generation: column.varchar(undefined, {length: 128}).notNull(),
+    spaceId: column.varchar(undefined, {length: 64}).notNull(),
+    target: column.json<EmbeddingTarget>().notNull(),
+    ownerVersionId: column.varchar(undefined, {length: 1024}).notNull(),
+    slot: column.varchar(undefined, {length: 1024}).notNull(),
+    payloadId: column.varchar(undefined, {length: 64})
+  },
+  row => ({byOwner: index().on(row.ownerVersionId, row.spaceId, row.slot)})
+)
 const Payload = table('alinea_embedding_data', {
   id: column.varchar(undefined, {length: 64}).primaryKey(),
   bytes: column.blob().notNull()
@@ -81,7 +88,12 @@ export class EmbeddingStore {
             return {id, generation: previous.generation, spaceId, target}
           const job = {id, generation: createId(), spaceId, target}
           await tx.delete(Manifest).where(eq(Manifest.id, id))
-          await tx.insert(Manifest).values({...job, payloadId: null})
+          await tx.insert(Manifest).values({
+            ...job,
+            ownerVersionId: target.owner.versionId,
+            slot: target.slot,
+            payloadId: null
+          })
           await tx
             .update(State)
             .set({revision: createId()})
@@ -101,6 +113,76 @@ export class EmbeddingStore {
         .where(eq(Manifest.id, id))
         .get()
       return manifest ? structuredClone(manifest) : undefined
+    })
+  }
+
+  /** Callers supply freshly authorized owner descriptors, not just cached IDs.
+   * Every requested owner must have current manifests in the selected space/slot.
+   */
+  candidates(
+    revision: string,
+    input: ReadonlyArray<{versionId: string; payloadId: string}>,
+    space: EmbeddingSpace,
+    slot: string
+  ): Promise<Array<string>> {
+    if (input.length > 1024)
+      throw new Error('Embedding search scope exceeds local work limit')
+    const owners = new Map(
+      input.map(owner => [owner.versionId, owner.payloadId])
+    )
+    if (owners.size !== input.length || !slot || slot.length > 1024)
+      throw new Error('Invalid embedding owner scope')
+    const selected = structuredClone(space)
+    return this.#run(async () => {
+      const spaceId = await embeddingHash(selected)
+      return this.db.transaction(
+        async tx => {
+          const current = await tx
+            .select(State.revision)
+            .from(State)
+            .where(eq(State.id, 1))
+            .get()
+          if (current !== revision)
+            throw new Error('Embedding search scope is stale')
+          const ids: Array<string> = []
+          const found = new Set<string>()
+          const versions = [...owners.keys()]
+          for (let offset = 0; offset < versions.length; offset += 128) {
+            const rows = await tx
+              .select()
+              .from(Manifest)
+              .where(
+                and(
+                  inArray(
+                    Manifest.ownerVersionId,
+                    versions.slice(offset, offset + 128)
+                  ),
+                  eq(Manifest.spaceId, spaceId),
+                  eq(Manifest.slot, slot)
+                )
+              )
+              .limit(1025 - ids.length)
+            for (const row of rows) {
+              if (
+                row.target.owner.versionId !== row.ownerVersionId ||
+                row.target.slot !== slot ||
+                row.target.ownerPayloadId !== owners.get(row.ownerVersionId)
+              )
+                throw new Error(
+                  'Embedding inputs are stale for the current owner'
+                )
+              ids.push(row.id)
+              found.add(row.ownerVersionId)
+            }
+            if (ids.length > 1024)
+              throw new Error('Embedding search scope exceeds local work limit')
+          }
+          if (found.size !== owners.size)
+            throw new Error('Embedding owner scope is not fully indexed')
+          return ids
+        },
+        {async: true}
+      )
     })
   }
 
