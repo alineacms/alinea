@@ -1226,6 +1226,24 @@ manifests, encrypted browser transport, embedding providers or Graph search.
 Obsolete private payload retention/GC also remains open. Do not expose this
 trusted store directly as a browser API or ship its private checkpoint to clients.
 
+The private store now has a bounded exact-search baseline for explicitly supplied
+candidate IDs at an exact derived revision. A single SQL transaction pins the
+revision, manifests and vector reads. Missing/pending candidates, stale scope,
+incompatible embedding spaces and corrupt payloads reject the query rather than
+silently ranking a partial cache. Blob sizes are checked before bytes are loaded;
+work is limited to 1,024 candidates and 1,048,576 float32 components (4 MiB of
+vector data, not a total heap limit). Queries above that bound need a separate
+capable search path, not truncated results.
+
+Cosine distance, Euclidean L2 and negative dot-product ranking are exact over the
+provided candidates, with deterministic manifest-ID tie breaking. Results say
+`scope: 'provided-candidates'`; they do not claim global coverage or authorize the
+candidate selection. Owner/chunk metadata, not vector bytes, is returned for
+top-k matches. Tests on native/WASM cover all metrics, pre-filtered scopes,
+duplicate/missing/pending IDs, immutable query inputs, work limits, corruption,
+and a 129-candidate result spanning SQL batches. A built Node SQLite smoke query
+also passed. Graph/authorization integration and remote/ANN adapters remain open.
+
 Add embedding manifests, content/model identity, background job completion,
 invalidation, chunk ownership, permission filtering, and lazy vector payloads.
 Start with an exact-search correctness baseline and a capability interface. Verify

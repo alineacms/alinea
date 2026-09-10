@@ -32,15 +32,7 @@ export interface EmbeddingManifest extends EmbeddingJob {
 
 export function validateEmbedding(target: EmbeddingTarget): void {
   const {owner, space} = target
-  for (const value of [
-    owner.versionId,
-    target.slot,
-    target.chunk,
-    space.provider,
-    space.model,
-    space.revision,
-    space.preprocessing
-  ])
+  for (const value of [owner.versionId, target.slot, target.chunk])
     if (typeof value !== 'string' || !value || value.length > 1024)
       throw new Error('Invalid embedding identity')
   if (
@@ -52,6 +44,14 @@ export function validateEmbedding(target: EmbeddingTarget): void {
 }
 
 function validateSpace(space: EmbeddingSpace): void {
+  for (const value of [
+    space.provider,
+    space.model,
+    space.revision,
+    space.preprocessing
+  ])
+    if (typeof value !== 'string' || !value || value.length > 1024)
+      throw new Error('Invalid embedding space identity')
   if (
     !Number.isInteger(space.dimensions) ||
     space.dimensions < 1 ||
