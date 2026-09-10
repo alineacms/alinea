@@ -54,6 +54,11 @@ export const syncAtom = atom(null, async (get, set) => {
   return sha
 })
 
+export const graphReadyAtom = atom(async get => {
+  const graph = get(graphAtom)
+  if (isSyncableGraph(graph)) await graph.sync()
+})
+
 interface SyncableGraph {
   sync: () => Promise<string>
 }

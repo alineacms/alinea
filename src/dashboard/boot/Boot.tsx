@@ -56,10 +56,8 @@ export async function boot(gen: ConfigGenerator) {
       }
       const isLocal = worker instanceof DashboardWorker
       if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
-      if (batch.revision !== lastRevision) {
-        const db = new WorkerDB(batch.config, worker, batch.client, events)
-        root.render(<App graph={db} events={events} {...batch} />)
-      }
+      const db = new WorkerDB(batch.config, worker, batch.client, events)
+      root.render(<App graph={db} events={events} {...batch} />)
       lastRevision = batch.revision
     }
   }

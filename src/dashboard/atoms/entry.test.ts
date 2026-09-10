@@ -12,7 +12,7 @@ import {expect, spyOn, test} from 'bun:test'
 import {atom} from 'jotai'
 import {configAtom, eventsAtom} from './core.js'
 import {EntryAtoms, entryAtoms, EntryLocaleAtoms} from './entry.js'
-import {authReady} from './user.js'
+import {userPolicyReadyAtom} from './user.js'
 
 test('entryAtoms returns stable entry and locale atom bundles', () => {
   const entry = new EntryAtoms('entry-id', atom({} as never))
@@ -28,7 +28,7 @@ test('entry atoms only reload for matching index event ids', async () => {
   const {db, parent, child, store} = await createDashboardAtomFixture()
   const events = new TestEvents()
   store.set(eventsAtom, events)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const resolve = spyOn(db, 'resolve')
   const parentAtom = entryAtoms(parent._id)
   const childAtom = entryAtoms(child._id)
@@ -111,7 +111,7 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
   const entry = new EntryAtoms(selectedEntry.id, entryDataAtom)
   const {store} = await createDashboardAtomFixture()
   store.set(configAtom, config)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
 
   const selectedNode = entry.locales(null).selectedNode
   const first = await store.get(selectedNode)
@@ -255,7 +255,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
     }
   })
   const store = createDashboardStore(config, db)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const entry = await store.get(entryAtoms(created._id))
   const locale = entry.locales(null)
   const node = await store.get(locale.selectedNode)

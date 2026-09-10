@@ -3,11 +3,11 @@ import {expect, spyOn, test} from 'bun:test'
 import {activityAtom} from './activity.js'
 import {configAtom} from './core.js'
 import {createExplorerAtoms} from './explorer.js'
-import {authReady} from './user.js'
+import {userPolicyReadyAtom} from './user.js'
 
 test('reports invalid uploads while continuing with valid files', async () => {
   const {config, db, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   store.set(configAtom, {...config, maxUploadSize: 5})
   const upload = spyOn(db, 'upload').mockResolvedValue(undefined as never)
   const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})

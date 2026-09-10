@@ -54,7 +54,7 @@ export const preloadUserPolicyAtom = atom(
   }
 )
 
-export const authReady = atom(async get => {
+export const userPolicyReadyAtom = atom(async get => {
   // Observe the unwrapped atoms before awaiting so they retain their resolved
   // values while their resources revalidate.
   get(resolvedUser)
