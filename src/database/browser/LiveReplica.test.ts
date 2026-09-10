@@ -62,6 +62,39 @@ async function fixture(
   }
 }
 
+test('post-write refresh waits past an index request started before acceptance', async () => {
+  const first = await fixture('r1', 'One')
+  const next = await fixture('r2', 'Two')
+  const started = Promise.withResolvers<void>()
+  const resume = Promise.withResolvers<void>()
+  let calls = 0
+  const replica = await LiveReplica.connect({
+    config,
+    expected: identity,
+    url: 'https://example.com/api',
+    async fetch() {
+      calls++
+      if (calls === 2) {
+        started.resolve()
+        await resume.promise
+      }
+      return Response.json(calls > 2 ? next.bootstrap : first.bootstrap)
+    }
+  })
+  try {
+    const beforeWrite = replica.refresh()
+    await started.promise
+    const afterWrite = replica.refreshAfterWrite()
+    resume.resolve()
+    expect(await beforeWrite).toBe(false)
+    expect(await afterWrite).toBe(true)
+    expect(calls).toBe(3)
+    expect(replica.bootstrap.revision).toBe('r2')
+  } finally {
+    await replica.close()
+  }
+})
+
 test('live queries keep the old result until the whole subscribed replacement is ready', async () => {
   let current = await fixture('r1', 'One')
   const next = await fixture('r2', 'Two')

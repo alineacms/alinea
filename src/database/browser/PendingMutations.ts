@@ -55,6 +55,27 @@ const encoder = new TextEncoder()
 const maximumMutationBytes = 16 * 1024 * 1024
 const maximumQueueBytes = 64 * 1024 * 1024
 
+function scopeBinding(scope: PendingScope): string {
+  const endpoint = new URL(scope.endpoint)
+  if (
+    !['https:', 'http:'].includes(endpoint.protocol) ||
+    endpoint.username ||
+    endpoint.password ||
+    endpoint.search ||
+    endpoint.hash
+  )
+    throw new Error('Invalid pending mutation endpoint')
+  const parts = [
+    scope.project,
+    scope.namespace,
+    scope.epoch,
+    scope.principal,
+    endpoint.href
+  ]
+  if (!parts.every(text)) throw new Error('Incomplete pending mutation scope')
+  return JSON.stringify(parts)
+}
+
 function text(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= 4096
 }
@@ -82,24 +103,7 @@ export class PendingMutations {
     factory: IDBFactory,
     scope: PendingScope
   ): Promise<PendingMutations> {
-    const endpoint = new URL(scope.endpoint)
-    if (
-      !['https:', 'http:'].includes(endpoint.protocol) ||
-      endpoint.username ||
-      endpoint.password ||
-      endpoint.search ||
-      endpoint.hash
-    )
-      throw new Error('Invalid pending mutation endpoint')
-    const parts = [
-      scope.project,
-      scope.namespace,
-      scope.epoch,
-      scope.principal,
-      endpoint.href
-    ]
-    if (!parts.every(text)) throw new Error('Incomplete pending mutation scope')
-    const binding = JSON.stringify(parts)
+    const binding = scopeBinding(scope)
     const name = `alinea-pending-1:${await sha256Hash(encoder.encode(binding))}`
     const candidate = await crypto.subtle.generateKey(
       {name: 'AES-GCM', length: 256},
@@ -383,5 +387,13 @@ export class PendingMutations {
   close(): void {
     this.#key = undefined
     this.#db.close()
+  }
+
+  matches(scope: PendingScope): boolean {
+    return scopeBinding(scope) === this.#binding
+  }
+
+  get lockName(): string {
+    return this.#db.name
   }
 }

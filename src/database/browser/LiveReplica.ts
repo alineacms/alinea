@@ -50,6 +50,18 @@ export class LiveReplica extends Graph {
     return this.#current.bootstrap
   }
 
+  get identity(): ReplicaIdentity {
+    if (this.#closed || !this.#current)
+      throw new Error('Live replica is not ready')
+    return this.#current.identity
+  }
+
+  /** A refresh already in flight may have read the source before acceptance. */
+  async refreshAfterWrite(): Promise<boolean> {
+    if (this.#refreshing) await this.#refreshing.catch(() => {})
+    return this.refresh()
+  }
+
   async resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

@@ -50,7 +50,8 @@ export interface LocalConnection extends Connection, CapabilitiesApi {
   mutate(
     mutations: Array<Mutation>,
     transactionId?: string,
-    expected?: MutationContext
+    expected?: MutationContext,
+    signal?: AbortSignal
   ): Promise<{sha: string}>
   previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(

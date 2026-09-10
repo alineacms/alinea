@@ -496,9 +496,26 @@ for every otherwise independent edit. Local optimistic preparation without an
 authenticated user is provisional; the authority stamps its verified actor.
 Editor, HTTP and SQL tests cover independent loaded forms, stale same-field
 errors, advanced baselines, in-flight typing, normalized media aliases and audit
-actor/creation-history preservation. SQL worker/queue cutover, durable submission,
+actor/creation-history preservation. SQL worker/queue cutover,
 captured whole-revision context for structural editor actions and atomic ready
 state publication remain required.
+
+`browser/MutationQueue` now connects the encrypted pending store to context-bound
+Graph submissions. Opening and enqueueing do not send; explicit flush serializes
+owners using a scope-hashed Web Lock. It retains original IDs/schema/base context,
+persists acceptance before refreshing, and removes intent only after a fresh
+post-write refresh. A poll begun before acceptance cannot satisfy that barrier.
+Lost responses retry through authority receipts; accepted edits retry refresh
+without submission, including after restart. Acceptance-storage failures retain
+an in-memory receipt until persistence can retry. A failed row stops later rows.
+Scope changes fail closed; discard refreshes first and never undoes a possibly
+accepted source write. Close aborts mutation transport and drains operations,
+retaining drafts unless purge was requested on the first close. The owner must
+also close the borrowed replica to cancel pending refreshes during shutdown.
+Tests cover restart, refresh/storage failure, cross-owner serialization, changed
+principal, discard and shutdown races. This scheduler is not yet the dashboard
+worker, and its read-after-write guarantee depends on authoritative source sync,
+not revision equality (newer accepted content may already supersede the write).
 
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch

@@ -159,13 +159,15 @@ export class Client implements LocalConnection {
   mutate(
     mutations: Array<Mutation>,
     transactionId?: string,
-    expected?: MutationContext
+    expected?: MutationContext,
+    signal?: AbortSignal
   ): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {
         method: 'POST',
         body: JSON.stringify(mutations),
+        signal,
         headers: {
           ...(transactionId === undefined
             ? {}
@@ -284,7 +286,9 @@ export class Client implements LocalConnection {
       fetch: requestFetch = fetch
     } = this.#options
     const controller = new AbortController()
-    const signal = controller.signal
+    const signal = init.signal
+      ? AbortSignal.any([controller.signal, init.signal])
+      : controller.signal
     const location = `${url}?${new URLSearchParams(params).toString()}`
     const promise = requestFetch(location, {
       ...applyAuth(init),
