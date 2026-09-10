@@ -12,7 +12,15 @@ import type {
   SyncApi,
   RequestContext
 } from '#/core/Connection.js'
-import {developmentKeyHeader, transactionIdHeader} from '#/core/Connection.js'
+import {
+  developmentKeyHeader,
+  transactionIdHeader,
+  mutationContextHeader
+} from '#/core/Connection.js'
+import {
+  decodeMutationContext,
+  type MutationContext
+} from '#/core/db/MutationContext.js'
 import type {CommitRequest, CommitTransaction} from '#/core/db/CommitRequest.js'
 import {authorizeMutationReceipt} from '#/core/db/MutationAuthorization.js'
 import {replicaScope} from '#/core/ReplicaScope.js'
@@ -89,7 +97,9 @@ export interface HandlerHooks {
 export interface HandlerDatabase extends WritableGraph {
   readonly sha: string
   readonly source: Pick<Source, 'getTree' | 'getBlobs'>
-  replicaIdentity?(): Promise<{namespace: string; epoch: string}>
+  replicaIdentity?(): Promise<
+    Omit<MutationContext, 'baseRevision' | 'principal'>
+  >
   bootstrap?(
     principal: string,
     roles: ReadonlyArray<string>
@@ -375,6 +385,16 @@ export function createHandler({
         expectJson()
         let mutations = (await body) as ReadonlyArray<Mutation>
         const transactionId = request.headers.get(transactionIdHeader)
+        const expected = decodeMutationContext(
+          request.headers.get(mutationContextHeader)
+        )
+        if (expected && transactionId === null)
+          throw new HttpError(400, 'Mutation context requires a transaction ID')
+        if (expected && !local.replicaIdentity)
+          throw new HttpError(
+            501,
+            'Database does not support mutation context checks'
+          )
         let transaction: CommitTransaction | undefined
         if (transactionId !== null) {
           if (
@@ -399,13 +419,27 @@ export function createHandler({
             namespace,
             epoch,
             digest: await sha256Hash(
-              new TextEncoder().encode(canonicalJson(mutations))
+              new TextEncoder().encode(
+                canonicalJson(expected ? {mutations, expected} : mutations)
+              )
             )
           }
         }
         let prepared = false
         const attempt = async (retry = 0) => {
           if (retry > 0) await local.syncWith(cnx)
+          const identity = expected ? await local.replicaIdentity!() : undefined
+          if (
+            expected &&
+            (expected.principal !== user.claims.sub ||
+              expected.project !== identity!.project ||
+              expected.namespace !== identity!.namespace ||
+              expected.epoch !== identity!.epoch)
+          )
+            throw new HttpError(
+              409,
+              'Mutation belongs to another replica identity'
+            )
           const policy = user.claims.roles
             ? await local.createPolicy(user.claims.roles)
             : Policy.ALLOW_NONE
@@ -417,6 +451,17 @@ export function createHandler({
               return {sha: receipt.sha, replayed: true}
             }
           }
+          if (
+            expected &&
+            (expected.schemaId !== identity!.schemaId ||
+              expected.configId !== identity!.configId)
+          )
+            throw new HttpError(
+              409,
+              'Pending mutation schema or configuration changed'
+            )
+          if (expected && expected.baseRevision !== local.sha)
+            throw new HttpError(409, 'Pending mutation base revision changed')
           if (!prepared) {
             const adjusted = await hooks.beforeCommit?.({mutations})
             if (adjusted) mutations = adjusted
@@ -427,6 +472,10 @@ export function createHandler({
             user: user.claims,
             ...(transaction ? {transaction} : {})
           }
+          // Preparation may await hooks/queries while another cache generation
+          // becomes current. Compare its pinned source base as well.
+          if (expected && request.fromSha !== expected.baseRevision)
+            throw new HttpError(409, 'Pending mutation base revision changed')
           let sha: string
           try {
             sha = (await cnx.write(request)).sha

@@ -6,7 +6,8 @@ import {
   decodeBlobSequence
 } from './BlobTransport.js'
 import type {Config} from './Config.js'
-import {transactionIdHeader} from './Connection.js'
+import {transactionIdHeader, mutationContextHeader} from './Connection.js'
+import type {MutationContext} from './db/MutationContext.js'
 import type {
   BackendCapabilities,
   DraftTransport,
@@ -157,17 +158,26 @@ export class Client implements LocalConnection {
 
   mutate(
     mutations: Array<Mutation>,
-    transactionId?: string
+    transactionId?: string,
+    expected?: MutationContext
   ): Promise<{sha: string}> {
     return this.#requestJson(
       {action: HandleAction.Mutate},
       {
         method: 'POST',
         body: JSON.stringify(mutations),
-        headers:
-          transactionId === undefined
-            ? undefined
-            : {[transactionIdHeader]: transactionId}
+        headers: {
+          ...(transactionId === undefined
+            ? {}
+            : {[transactionIdHeader]: transactionId}),
+          ...(expected === undefined
+            ? {}
+            : {
+                [mutationContextHeader]: encodeURIComponent(
+                  JSON.stringify(expected)
+                )
+              })
+        }
       }
     ).then<{sha: string}>(this.#failOnHttpError)
   }

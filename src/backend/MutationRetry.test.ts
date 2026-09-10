@@ -5,6 +5,7 @@ import {transactionIdHeader, type RequestContext} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import type {CommitReceipt, CommitTransaction} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {MutationContext} from '#/core/db/MutationContext.js'
 import {HttpError} from '#/core/HttpError.js'
 import {Config} from '#/index.js'
 import {composeBackend} from './api/CreateBackend.js'
@@ -39,6 +40,8 @@ function fixture(
     after: 0,
     loseResponse: false,
     conflictAfterAcceptance: false,
+    conflictBeforeAcceptance: false,
+    beforePrepare: undefined as ((db: LocalDB) => Promise<void>) | undefined,
     principal: 'user',
     roles: ['admin'],
     lastTransaction: undefined as CommitTransaction | undefined
@@ -47,11 +50,19 @@ function fixture(
     JSON.stringify([principal, tx.namespace, tx.epoch, tx.id])
   function handler() {
     const db = Object.assign(new LocalDB(cms.config), {
-      replicaIdentity: binding ? async () => binding : undefined
+      replicaIdentity: binding
+        ? async () => ({
+            project: 'project',
+            schemaId: 'schema',
+            configId: 'config',
+            ...binding
+          })
+        : undefined
     })
     const prepare = db.request.bind(db)
-    db.request = (...args) => {
+    db.request = async (...args) => {
       state.prepares++
+      await state.beforePrepare?.(db)
       return prepare(...args)
     }
     return createHandler({
@@ -83,6 +94,19 @@ function fixture(
           async write(request) {
             state.writes++
             state.lastTransaction = request.transaction
+            if (state.conflictBeforeAcceptance) {
+              state.conflictBeforeAcceptance = false
+              await authority.mutate([
+                {
+                  op: 'create',
+                  id: 'other',
+                  type: 'Page',
+                  locale: null,
+                  data: {title: 'Other editor'}
+                }
+              ])
+              throw new HttpError(409, 'Source advanced')
+            }
             const result = await authority.write(request)
             if (request.transaction)
               receipts.set(key(request.user!.sub, request.transaction), {
@@ -199,4 +223,115 @@ test('transaction opt-in fails explicitly on unsupported backends and rejects ma
   expect(await f.client.mutate(create)).toEqual({sha: f.authority.sha})
   expect(f.state.lastTransaction).toBeUndefined()
   expect(transactionIdHeader).toBe('x-alinea-transaction-id')
+})
+
+test('context-bound receipts recover across content and schema changes but cannot cross principals or epochs', async () => {
+  const binding = {namespace: 'preview/日本語', epoch: '1', schemaId: 'schema'}
+  const f = fixture(true, binding)
+  const expected: MutationContext = {
+    project: 'project',
+    namespace: binding.namespace,
+    epoch: binding.epoch,
+    principal: 'user',
+    schemaId: 'schema',
+    configId: 'config',
+    baseRevision: f.authority.sha
+  }
+  const accepted = await f.client.mutate(create, 'context', expected)
+  binding.schemaId = 'next-schema'
+  f.restart()
+  expect(await f.client.mutate(create, 'context', expected)).toEqual(accepted)
+  expect(f.state).toMatchObject({writes: 1, prepares: 1, before: 1, after: 1})
+  await expect(
+    f.client.mutate(create, 'context', {...expected, schemaId: 'next-schema'})
+  ).rejects.toThrow('Transaction ID reused')
+  f.state.principal = 'different-user'
+  await expect(f.client.mutate(create, 'context', expected)).rejects.toThrow(
+    'another replica identity'
+  )
+  f.state.principal = 'user'
+  binding.epoch = 'reset'
+  await expect(f.client.mutate(create, 'context', expected)).rejects.toThrow(
+    'another replica identity'
+  )
+  expect(f.state.writes).toBe(1)
+})
+
+test('unaccepted stale intents fail before hooks or preparation instead of overwriting newer content', async () => {
+  const f = fixture(true, {namespace: 'preview', epoch: '1'})
+  const expected: MutationContext = {
+    project: 'project',
+    namespace: 'preview',
+    epoch: '1',
+    principal: 'user',
+    schemaId: 'schema',
+    configId: 'config',
+    baseRevision: f.authority.sha
+  }
+  for (const field of [
+    'project',
+    'namespace',
+    'epoch',
+    'principal',
+    'schemaId',
+    'configId',
+    'baseRevision'
+  ] as const)
+    await expect(
+      f.client.mutate(create, `wrong-${field}`, {...expected, [field]: 'wrong'})
+    ).rejects.toThrow()
+  await expect(f.client.mutate(create, undefined, expected)).rejects.toThrow(
+    'requires a transaction ID'
+  )
+  expect(f.state).toMatchObject({writes: 0, prepares: 0, before: 0})
+  await f.client.mutate(create, 'other-editor')
+  const remove: Array<Mutation> = [{op: 'remove', id: 'entry'}]
+  await expect(
+    f.client.mutate(remove, 'stale-delete', expected)
+  ).rejects.toThrow('base revision changed')
+  expect(f.state).toMatchObject({writes: 1, prepares: 1, before: 1})
+})
+
+test('source races during preparation or authority CAS never silently rebase a context-bound edit', async () => {
+  for (const stage of ['preparation', 'authority']) {
+    const f = fixture(true, {namespace: 'preview', epoch: '1'})
+    const expected: MutationContext = {
+      project: 'project',
+      namespace: 'preview',
+      epoch: '1',
+      principal: 'user',
+      schemaId: 'schema',
+      configId: 'config',
+      baseRevision: f.authority.sha
+    }
+    if (stage === 'preparation')
+      f.state.beforePrepare = async db => {
+        await f.authority.mutate([
+          {
+            op: 'create',
+            id: 'other',
+            type: 'Page',
+            locale: null,
+            data: {title: 'Other editor'}
+          }
+        ])
+        await db.syncWith(f.authority)
+      }
+    else f.state.conflictBeforeAcceptance = true
+    await expect(
+      f.client.mutate(create, 'raced-context', expected)
+    ).rejects.toThrow('base revision changed')
+    expect(f.state).toMatchObject({
+      prepares: 1,
+      before: 1,
+      after: 0,
+      writes: stage === 'preparation' ? 0 : 1
+    })
+    expect(
+      f.authority.index.findFirst(entry => entry.id === 'entry')
+    ).toBeUndefined()
+    expect(
+      f.authority.index.findFirst(entry => entry.id === 'other')
+    ).toBeDefined()
+  }
 })

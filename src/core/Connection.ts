@@ -5,6 +5,7 @@ import type {
   CommitTransaction
 } from './db/CommitRequest.js'
 import type {Mutation} from './db/Mutation.js'
+import type {MutationContext} from './db/MutationContext.js'
 import type {Draft, DraftKey} from './Draft.js'
 import type {EntryRecord} from './EntryRecord.js'
 import type {AnyQueryResult, GraphQuery} from './Graph.js'
@@ -48,7 +49,8 @@ export interface LocalConnection extends Connection, CapabilitiesApi {
   capabilities(): Promise<BackendCapabilities>
   mutate(
     mutations: Array<Mutation>,
-    transactionId?: string
+    transactionId?: string,
+    expected?: MutationContext
   ): Promise<{sha: string}>
   previewToken(): Promise<string>
   resolve<Query extends GraphQuery>(
@@ -107,6 +109,7 @@ export interface RequestContext {
 
 export const developmentKeyHeader = 'x-alinea-dev-key'
 export const transactionIdHeader = 'x-alinea-transaction-id'
+export const mutationContextHeader = 'x-alinea-mutation-context'
 
 export interface AuthedContext extends RequestContext {
   user: User

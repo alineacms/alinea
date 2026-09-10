@@ -441,6 +441,22 @@ terminated workers, then verifies purge in a third worker. No scheduler submits
 these records yet: authenticated dashboard ownership, schema/base conflict checks,
 retry scheduling and logout integration remain required for the browser cutover.
 
+Context-bound Graph writes now carry a bounded ASCII-encoded
+`x-alinea-mutation-context` header through the optional third `Client.mutate`
+argument. It records project/namespace/epoch/principal, schema/config and base
+revision, and requires a transaction ID plus an identity-aware database. The
+server compares scope before receipt lookup, includes context in the trusted
+request digest, and checks schema/base only if no accepted receipt exists. Thus a
+receipt can acknowledge its original edit after schema/content advances, but not
+under a different identity or a reused ID with altered context. New stale edits
+fail before hooks/preparation. The prepared source base is checked again before
+authority submission, and source-CAS retries repeat receipt/base checks instead of
+silently rebasing an old queued edit. Tests cover all context dimensions, Unicode
+branch names, malformed headers, receipt recovery across deployment changes, and
+source races during preparation/commit. This is the conservative structural/full-
+revision guard; per-field Graph preconditions must still allow safe independent
+field edits before the concurrent-editor cutover is complete.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit
