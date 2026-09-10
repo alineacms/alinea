@@ -102,7 +102,7 @@ constraints.
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | `replica_meta`      | Schema/config identity, source namespace, source revision, runtime revision, release binding, policy view                                       | On bootstrap and atomic sync                            |
 | `entry_index`       | Non-null version key, logical entry ID, locale, type, workspace/root, ancestry, title, path/URL, ordering, source/effective status, active/main | Authorized rows only                                    |
-| `entry_grant`       | Effective entry actions and any supported field restrictions, scoped to policy view                                                             | Compiled by handler; may be packed into wire index rows |
+| `entry_grant`       | Effective entry actions scoped to a policy view                                                                                                 | Compiled by handler; may be packed into wire index rows |
 | `payload_manifest`  | Version key, class, immutable payload identity, hash, size, bundle locator, compression/encryption information                                  | Readable descriptors only                               |
 | `entry_data`        | Version key, payload identity, queryable JSON with defaults applied                                                                             | Lazy                                                    |
 | `entry_search`      | Version key, payload identity, searchable text; adapter-managed search index                                                                    | Lazy                                                    |
@@ -308,8 +308,9 @@ alone does not supply reactive query subscriptions or remote change delivery.
 The handler evaluates roles against its trusted database and compiles effective
 actions per entry. It can return these alongside structural rows. No explore
 access means no row; explore without read means no content-derived descriptors,
-keys, references, or searchable text. Preserve existing supported
-field restrictions without inventing field-level payload encryption.
+keys, references, or searchable text. SQLite replicas intentionally support only
+entry-level grants. Bootstrap rejects roles whose field permissions differ from
+the entry grant; it never broadens them or creates per-user filtered payloads.
 
 All server query and mutation endpoints enforce authorization independently of
 the client's stored flags. Policy revisions can change without a source change.

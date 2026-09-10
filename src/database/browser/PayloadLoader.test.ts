@@ -31,8 +31,7 @@ const payload = {
 const row = {
   entry: entry('a'),
   payloadId: request.payloadId,
-  permissions: Permission.All,
-  fields: {title: Permission.All}
+  permissions: Permission.All
 }
 
 async function fixture() {

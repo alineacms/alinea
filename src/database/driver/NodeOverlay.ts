@@ -1,19 +1,19 @@
 import type {Config} from '#/core/Config.js'
-import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
+import {Graph, type AnyQueryResult, type GraphQuery} from '#/core/Graph.js'
 import {randomUUID} from 'node:crypto'
 import {DatabaseSync} from 'node:sqlite'
 import {pathToFileURL} from 'node:url'
-import {sql} from 'rado'
-import {entryIndexRow} from '../entry/Schema.js'
-import {overlaySearch} from '../query/OverlaySearch.js'
+import {eq, sql, type Database, type HasSql} from 'rado'
+import {entryIndexRow, EntryIndexTable} from '../entry/Schema.js'
+import {searchQuery, searchTokens, type SearchQuery} from '../query/Search.js'
 import {openCheckpoint, type CheckpointIdentity} from '../runtime/Checkpoint.js'
 import {EntryRuntime, type EntryReplacement} from '../runtime/EntryRuntime.js'
 import {SqlSource} from '../source/SqlSource.js'
 import {nodeDatabase} from './NodeDatabase.js'
 
-/** Request-local row overlay over a trusted immutable checkpoint. No file copy
- * or whole-corpus normalization. Callers must supply complete normalized changed
- * versions; search merges immutable base and changed-row FTS postings.
+/** Request-local replacement rows over an attached immutable checkpoint. Normal
+ * queries copy no base rows. A search lazily builds one ordinary temporary FTS5
+ * index from the effective view instead of maintaining a second ranking engine.
  */
 export class NodeOverlay extends Graph {
   #sqlite: DatabaseSync
@@ -54,17 +54,6 @@ export class NodeOverlay extends Graph {
       if (entries.some(row => removed.has(entryIndexRow(row.entry).versionId)))
         throw new Error('Overlay cannot replace and remove the same version')
       await EntryRuntime.createSchema(db, descriptor.sourceSha)
-      const runtime = new EntryRuntime(config, db, {
-        search: overlaySearch(db),
-        async includedAtBuild(path) {
-          return Boolean(await tree.get(path))
-        }
-      })
-      await runtime.apply({
-        fromRevision: descriptor.sourceSha,
-        toRevision: `overlay:${randomUUID()}`,
-        entries
-      })
       await db.run(
         sql`create table alinea_overlay_mask (versionId text primary key)`
       )
@@ -76,7 +65,18 @@ export class NodeOverlay extends Graph {
       ]
       for (const versionId of mask)
         await db.run(sql`insert into alinea_overlay_mask values (${versionId})`)
-      // TEMP names shadow both main and attached tables for all nested queries.
+      const runtime = new EntryRuntime(config, db, {
+        search: previewSearch(db),
+        async includedAtBuild(path) {
+          return Boolean(await tree.get(path))
+        }
+      })
+      await runtime.apply({
+        fromRevision: descriptor.sourceSha,
+        toRevision: `overlay:${randomUUID()}`,
+        entries
+      })
+      // TEMP names shadow main and attached tables for all nested queries.
       for (const name of [
         'alinea_entry_index',
         'alinea_entry_data',
@@ -112,4 +112,49 @@ export class NodeOverlay extends Graph {
     this.#closed = true
     if (!this.#readers) this.#sqlite.close()
   }
+}
+
+function previewSearch(db: Database) {
+  let ready: Promise<void> | undefined
+  return async function prepare(
+    input: string | Array<string> | undefined
+  ): Promise<SearchQuery | undefined> {
+    const tokens = searchTokens(input)
+    if (!tokens?.length) return searchQuery(input)
+    ready ??= createPreviewSearch(db)
+    await ready
+    const terms = tokens.map(term => `"${term}"*`).join(' AND ')
+    const match = sql`alinea_preview_search match ${terms}`
+    const identity = eq(
+      sql`alinea_preview_search.versionId`,
+      EntryIndexTable.versionId
+    )
+    return {
+      needsPayloads: false,
+      condition: sql`exists (
+        select 1 from alinea_preview_search where ${identity} and ${match}
+      )`,
+      rank: sql`(
+        select bm25(alinea_preview_search, 0, 20, 1)
+        from alinea_preview_search where ${identity} and ${match}
+      )`,
+      snippet(start: HasSql, end: HasSql, cutOff: HasSql, limit: HasSql) {
+        return sql`(
+          select snippet(alinea_preview_search, 2, ${start}, ${end}, ${cutOff}, ${limit})
+          from alinea_preview_search where ${identity} and ${match}
+        )`
+      }
+    }
+  }
+}
+
+async function createPreviewSearch(db: Database): Promise<void> {
+  await db.run(sql`create virtual table temp.alinea_preview_search using fts5(
+    versionId unindexed, title, body, tokenize='unicode61 remove_diacritics 2'
+  )`)
+  await db.run(sql`insert into temp.alinea_preview_search(versionId, title, body)
+    select entry.versionId, entry.title,
+      coalesce(json_extract(data.source, '$.searchableText'), '')
+    from alinea_entry_index as entry
+    inner join alinea_entry_data as data on data.versionId = entry.versionId`)
 }

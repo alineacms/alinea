@@ -23,6 +23,7 @@ export interface QueryField {
   selection?: HasSql<unknown>
   /** JSON type distinguishes missing, null, numbers and booleans. */
   jsonType?: HasSql<string | null>
+  equals?(value: unknown): Sql<boolean>
   child(name: string): QueryField
 }
 
@@ -67,6 +68,7 @@ export function columnField(value: HasSql): QueryField {
 }
 
 function equals(field: QueryField, value: unknown): Sql<boolean> {
+  if (field.equals) return field.equals(value)
   if (!field.jsonType)
     return value === null ? isNull(field.value) : eq(field.value, value)
   if (value === null) return truth(eq(field.jsonType, 'null'))
@@ -150,7 +152,10 @@ export function compileCondition(
         clauses.push(
           arrayIncludes(
             field,
-            item => compileFilter(value, name => item.child(name), depth + 1),
+            item =>
+              isRecord(value)
+                ? compileFilter(value, name => item.child(name), depth + 1)
+                : equals(item, value),
             depth
           )
         )
@@ -217,7 +222,7 @@ export function arrayIncludes(
     postgres: sql`jsonb_array_elements((${array})::jsonb) as ${alias}(value)`,
     mysql: sql`json_table(${array}, '$[*]' columns (value json path '$')) as ${alias}`
   })
-  const value = sql.universal({
+  const document = sql.universal({
     // json_each exposes scalar strings as SQL text, which is not valid JSON.
     sqlite: when(
       [inArray(sql`${alias}.type`, ['object', 'array']), sql`${alias}.value`],
@@ -226,10 +231,37 @@ export function arrayIncludes(
     postgres: sql`${alias}.value`,
     mysql: sql`${alias}.value`
   })
+  const item: QueryField = {
+    value: sql.universal({
+      sqlite: sql`${alias}.value`,
+      postgres: sql`${alias}.value`,
+      mysql: sql`${alias}.value`
+    }),
+    jsonType: sql.universal({
+      sqlite: sql`${alias}.type`,
+      postgres: sql`jsonb_typeof(${alias}.value)`,
+      mysql: sql`lower(json_type(${alias}.value))`
+    }),
+    equals(value) {
+      const json = JSON.stringify(value)
+      return sql.universal<boolean>({
+        sqlite: equals(
+          {
+            value: sql`${alias}.value`,
+            jsonType: sql`${alias}.type`,
+            child: name => jsonField(document, [name])
+          },
+          value
+        ),
+        postgres: truth(sql`${alias}.value = ${json}::jsonb`),
+        mysql: truth(sql`${alias}.value = cast(${json} as json)`)
+      })
+    },
+    child(name) {
+      return jsonField(document, [name])
+    }
+  }
   return exists(
-    new Builder()
-      .select(sql.value(1))
-      .from(target)
-      .where(predicate(jsonField(value)))
+    new Builder().select(sql.value(1)).from(target).where(predicate(item))
   )
 }

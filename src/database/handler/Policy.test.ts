@@ -23,8 +23,7 @@ test('SQL policy views compile denials and field actions without hydrating unrea
         .allowAll()
         .set(
           {id: 'b', deny: {read: true, update: true}},
-          {id: 'hidden', deny: {explore: true}},
-          {field: Page.title, deny: {update: true}}
+          {id: 'hidden', deny: {explore: true}}
         )
     }
   })
@@ -42,7 +41,6 @@ test('SQL policy views compile denials and field actions without hydrating unrea
   expect(view.revision).toBe('r1')
   expect(view.entries.map(row => row.entry.id)).toEqual(['a', 'b'])
   expect(view.entries[0].payloadId).toBe('a')
-  expect(view.entries[0].fields.title & Permission.Update).toBe(0)
   expect(view.entries[1].permissions & Permission.Read).toBe(0)
   expect(view.entries[1].permissions & Permission.Update).toBe(0)
   expect(view.entries[1]).not.toHaveProperty('payloadId')
@@ -50,6 +48,26 @@ test('SQL policy views compile denials and field actions without hydrating unrea
   expect((await authorizedIndex(runtime, [])).entries).toEqual([])
   await expect(authorizedIndex(runtime, ['unknown'])).rejects.toThrow(
     'not found'
+  )
+})
+
+test('SQLite replica bootstrap rejects field-specific permissions', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const editor = role('Editor', {
+    permissions(policy) {
+      policy.allowAll().set({field: Page.title, deny: {update: true}})
+    }
+  })
+  const runtime = new EntryRuntime({...config, roles: {editor}}, db)
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: [{entry: entry('a'), payloadId: 'a'}]
+  })
+  await expect(authorizedIndex(runtime, ['editor'])).rejects.toThrow(
+    'Field-level permissions are not supported'
   )
 })
 
@@ -136,7 +154,7 @@ test('suppressed authored versions remain private and do not enter browser polic
   ).toEqual(['a'])
 })
 
-test('field read denials cannot accidentally issue whole-entry payload grants', async () => {
+test('field read denials reject entry-level replica bootstrap', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await EntryRuntime.createSchema(db, 'empty')
@@ -152,7 +170,7 @@ test('field read denials cannot accidentally issue whole-entry payload grants', 
     entries: [{entry: entry('a'), payloadId: 'secret'}]
   })
   await expect(authorizedIndex(runtime, ['editor'])).rejects.toThrow(
-    'filtered entry payloads'
+    'Field-level permissions are not supported'
   )
   expect(
     (

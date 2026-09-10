@@ -92,7 +92,6 @@ function row(id: string, payloadId = id): CachedEntry {
   return {
     entry: entry(id),
     permissions: Permission.Explore | Permission.Read,
-    fields: {title: Permission.Explore | Permission.Read},
     payloadId
   }
 }
@@ -122,7 +121,6 @@ test('cache reopens a committed structural index without storing plaintext field
     const snapshot = await reopened.snapshot()
     expect(snapshot.revision).toBe('r1')
     expect(snapshot.entries).toHaveLength(2)
-    expect(snapshot.entries[0].fields.title & Permission.Update).toBe(0)
     expect(JSON.stringify(snapshot)).not.toContain('private')
     expect(JSON.stringify(snapshot)).not.toContain('secret')
     expect(JSON.stringify(snapshot)).not.toContain('ciphertext')
@@ -177,8 +175,7 @@ test('cache updates retain exact payloads, evict changed descriptors and revoke 
       entries: [
         {
           entry: entry('a'),
-          permissions: Permission.Explore,
-          fields: {title: Permission.Explore}
+          permissions: Permission.Explore
         }
       ],
       removedVersionIds: [b]
@@ -208,16 +205,6 @@ test('cache batches roll back rows, ciphertext and revision on invalid grants or
       })
     ).rejects.toThrow('Duplicate')
     expect((await cache.snapshot()).revision).toBe('r1')
-    await expect(
-      cache.apply({
-        fromRevision: 'r1',
-        toRevision: 'bad-fields',
-        entries: [{...row('a'), fields: {title: Permission.Explore}}]
-      })
-    ).rejects.toThrow('unreadable field')
-    expect((await cache.snapshot()).entries.map(row => row.entry.id)).toEqual([
-      'a'
-    ])
     await expect(
       cache.apply({
         fromRevision: 'r1',

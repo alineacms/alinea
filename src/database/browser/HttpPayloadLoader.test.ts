@@ -55,8 +55,7 @@ test('HTTP grants lazily hydrate WASM SQL and persist only authenticated ciphert
   const row = {
     entry: entry('a'),
     payloadId: request.payloadId,
-    permissions: Permission.All,
-    fields: {title: Permission.All}
+    permissions: Permission.All
   }
   await cache.apply({fromRevision: undefined, toRevision: 'r1', entries: [row]})
   let calls = 0

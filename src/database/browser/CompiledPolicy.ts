@@ -43,11 +43,7 @@ export class CompiledPolicy extends Policy {
     if (!rows?.length) return Permission.None
     // Unspecified locale/version must not widen authority across authored rows.
     let bits = Permission.All
-    for (const row of rows) {
-      bits &= resource.field
-        ? (row.fields[resource.field] ?? Permission.None)
-        : row.permissions
-    }
+    for (const row of rows) bits &= row.permissions
     return bits
   }
 

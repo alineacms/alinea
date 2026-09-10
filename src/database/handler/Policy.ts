@@ -15,7 +15,6 @@ import type {EntryRuntime} from '../runtime/EntryRuntime.js'
 export interface AuthorizedEntry {
   entry: IndexedEntry
   permissions: number
-  fields: Record<string, number>
   payloadId?: string
 }
 
@@ -65,23 +64,17 @@ export function authorizedIndex(
       const {versionId: _, ...entry} = entryIndexRow(replacement.entry)
       const permissions = compiledPermissions(policy, entry)
       if (!(permissions & Permission.Explore)) continue
-      const fields = Object.fromEntries(
-        Object.keys(runtime.config.schema[entry.type] ?? {}).map(field => [
-          field,
-          compiledPermissions(policy, {...entry, field})
-        ])
-      )
+      const fieldPermissions = Object.keys(
+        runtime.config.schema[entry.type] ?? {}
+      ).map(field => compiledPermissions(policy, {...entry, field}))
       const read = Boolean(permissions & Permission.Read)
-      // Whole-entry grants cannot disclose a field that the policy denies.
-      // A view-specific filtered payload is required before supporting this case.
-      if (read && Object.values(fields).some(bits => !(bits & Permission.Read)))
+      if (fieldPermissions.some(bits => bits !== permissions))
         throw new Error(
-          'Field-level read restrictions require filtered entry payloads'
+          'Field-level permissions are not supported by SQLite replicas'
         )
       entries.push({
         entry,
         permissions,
-        fields,
         ...(read && replacement.payloadId
           ? {payloadId: replacement.payloadId}
           : {})

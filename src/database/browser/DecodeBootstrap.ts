@@ -74,8 +74,7 @@ export function decodeBootstrap(
   }
   const seen = new Set<string>()
   const entries = value.entries.map(row => {
-    if (!isRecord(row) || !isRecord(row.fields))
-      throw new Error('Invalid bootstrap row')
+    if (!isRecord(row)) throw new Error('Invalid bootstrap row')
     const raw = IndexEntry(row.entry)
     const status = entryStatus(raw.status)
     const versionStatus = entryStatus(raw.versionStatus)
@@ -99,19 +98,12 @@ export function decodeBootstrap(
     const permissions = permissionBits(row.permissions)
     if (!(permissions & Permission.Explore))
       throw new Error('Bootstrap entry requires explore permission')
-    const fields = Object.fromEntries(
-      Object.entries(row.fields).map(([field, bits]) => [
-        field,
-        permissionBits(bits)
-      ])
-    )
     const payloadId = row.payloadId
     if (
       payloadId !== undefined &&
       (typeof payloadId !== 'string' ||
         !payloadId ||
-        !(permissions & Permission.Read) ||
-        Object.values(fields).some(bits => !(bits & Permission.Read)))
+        !(permissions & Permission.Read))
     )
       throw new Error('Invalid bootstrap payload permission')
     const {versionId: _, ...entry} = entryIndexRow({
@@ -123,7 +115,6 @@ export function decodeBootstrap(
     return {
       entry,
       permissions,
-      fields,
       ...(typeof payloadId === 'string' ? {payloadId} : {})
     }
   })

@@ -13,7 +13,7 @@ import {authorizedIndex, evaluateRolePolicy} from '../handler/Policy.js'
 import {CompiledPolicy} from './CompiledPolicy.js'
 import {decodeBootstrap} from './DecodeBootstrap.js'
 
-test('compiled UI checks preserve field denials and generic creation without hidden-entry rules', async () => {
+test('compiled UI checks preserve entry denials and generic creation without hidden-entry rules', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await EntryRuntime.createSchema(db, 'empty')
@@ -26,8 +26,7 @@ test('compiled UI checks preserve field denials and generic creation without hid
             .allowAll()
             .set(
               {id: 'hidden', deny: {explore: true}},
-              {id: 'readonly', deny: {update: true}},
-              {field: Page.title, deny: {update: true}}
+              {id: 'readonly', deny: {update: true}}
             )
         }
       })
@@ -65,9 +64,9 @@ test('compiled UI checks preserve field denials and generic creation without hid
   ])
     for (let bit = 1; bit <= Permission.All; bit *= 2)
       expect(client.check(bit, resource)).toBe(trusted.check(bit, resource))
-  expect(client.get({...entry('a'), field: 'title'}).update).toBe(false)
+  expect(client.get({...entry('a'), field: 'title'}).update).toBe(true)
   expect(client.canRead({id: 'hidden'})).toBe(false)
-  expect(client.canRead({id: 'a', field: 'unknown'})).toBe(false)
+  expect(client.canRead({id: 'a', field: 'unknown'})).toBe(true)
   expect(client.canRead({id: 'a', workspace: 'wrong'})).toBe(false)
   expect(() => client.data()).toThrow('not an authority')
   expect(client.equals(new CompiledPolicy(bootstrap))).toBe(true)

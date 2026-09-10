@@ -45,7 +45,6 @@ async function fixture(
         {
           entry: indexed,
           permissions: Permission.All,
-          fields: {title: Permission.All},
           payloadId: revision
         }
       ]

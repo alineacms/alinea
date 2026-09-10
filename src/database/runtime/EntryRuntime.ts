@@ -9,7 +9,7 @@ import {
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {and, count, type Database, eq, inArray, table} from 'rado'
+import {count, type Database, eq, inArray, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {
   EntryDataTable,
@@ -149,65 +149,6 @@ export class EntryRuntime extends Graph {
     await db.create(EntryIndexTable, EntryDataTable, Payload, Meta)
     await createSearch(db)
     await db.insert(Meta).values({id: 1, revision})
-  }
-
-  /** Trusted handler read, not a browser endpoint or authorization check.
-   * Reads only exact resident payloads under the statement queue; never hydrates.
-   */
-  payloadSnapshot(
-    requests: ReadonlyArray<PayloadRequest>
-  ): Promise<{revision: string; payloads: Array<LoadedPayload>}> {
-    if (requests.length > 100)
-      throw new Error('Too many payload snapshot requests')
-    const captured = requests.map(request => ({...request}))
-    if (
-      captured.some(request => !request.versionId || !request.payloadId) ||
-      new Set(captured.map(request => request.versionId)).size !==
-        captured.length
-    )
-      throw new Error('Invalid payload snapshot requests')
-    return this.#exclusive(async () => {
-      const revision = await this.#db
-        .select(Meta.revision)
-        .from(Meta)
-        .where(eq(Meta.id, 1))
-        .get()
-      if (revision == null) throw new Error('Missing replica revision')
-      if (!captured.length) return {revision, payloads: []}
-      const rows = await this.#db
-        .select({
-          versionId: EntryDataTable.versionId,
-          payloadId: EntryDataTable.payloadId,
-          data: EntryDataTable.data,
-          source: EntryDataTable.source
-        })
-        .from(EntryDataTable)
-        .innerJoin(
-          Payload,
-          and(
-            eq(EntryDataTable.versionId, Payload.versionId),
-            eq(EntryDataTable.payloadId, Payload.payloadId)
-          )
-        )
-        .where(
-          inArray(
-            EntryDataTable.versionId,
-            captured.map(request => request.versionId)
-          )
-        )
-      const byId = new Map(rows.map(row => [row.versionId, row]))
-      const payloads = captured.map(request => {
-        const row = byId.get(request.versionId)
-        if (!row || row.payloadId !== request.payloadId || !isRecord(row.data))
-          throw new Error('Entry payload snapshot is unavailable or stale')
-        return {
-          ...request,
-          data: structuredClone(row.data),
-          source: validateSource(row.source ?? undefined)
-        }
-      })
-      return {revision, payloads}
-    })
   }
 
   #exclusive<T>(run: () => Promise<T>): Promise<T> {

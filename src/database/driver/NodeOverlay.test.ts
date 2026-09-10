@@ -43,7 +43,7 @@ const identity = {
   releaseId: 'release'
 }
 
-test('attached row overlays isolate concurrent views without copying the checkpoint or rebuilding its corpus', async () => {
+test('attached row overlays isolate concurrent views without copying the checkpoint', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-overlay-'))
   const file = join(directory, 'private checkpoint.sqlite')
   const fixture = await createEntryResolver(config, [

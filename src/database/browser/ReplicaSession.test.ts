@@ -37,7 +37,6 @@ async function fixture() {
       {
         entry: indexed,
         permissions: Permission.All,
-        fields: {title: Permission.All},
         payloadId: 'payload'
       }
     ]
@@ -154,10 +153,6 @@ test('bootstrap decoding rejects invalid authority and projects out payload prop
     {
       ...bootstrap,
       entries: [{...bootstrap.entries[0], permissions: Permission.Read}]
-    },
-    {
-      ...bootstrap,
-      entries: [{...bootstrap.entries[0], fields: {title: Permission.Explore}}]
     },
     {
       ...bootstrap,

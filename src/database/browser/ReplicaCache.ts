@@ -27,7 +27,6 @@ export interface ReplicaScope {
 export interface CachedEntry {
   entry: IndexedEntry
   permissions: number
-  fields: Record<string, number>
   payloadId?: string
 }
 
@@ -233,19 +232,6 @@ export class ReplicaCache {
       }
       for (const replacement of delta.entries) {
         const {permissions, payloadId} = replacement
-        if (!isRecord(replacement.fields))
-          throw new Error('Missing compiled field permissions')
-        const fields = Object.fromEntries(
-          Object.entries(replacement.fields).map(([name, bits]) => {
-            if (!Number.isInteger(bits) || bits < 0 || bits > Permission.All)
-              throw new Error('Invalid compiled field permissions')
-            if (payloadId && !(bits & Permission.Read))
-              throw new Error(
-                'Whole-entry payload contains an unreadable field'
-              )
-            return [name, bits]
-          })
-        )
         if (
           !Number.isInteger(permissions) ||
           permissions < 0 ||
@@ -270,7 +256,7 @@ export class ReplicaCache {
         )
         if (previous?.payloadId !== payloadId || !payloadId)
           frames.delete(versionId)
-        entries.put({entry, permissions, fields, payloadId}, versionId)
+        entries.put({entry, permissions, payloadId}, versionId)
       }
       tx.objectStore('state').put(
         {...state, revision: delta.toRevision},

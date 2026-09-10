@@ -87,3 +87,27 @@ test('nested SQL includes uses independent array scopes and rejects scalar conta
   expect(await query({items: {includes: {}}})).toEqual([1, 2, 4])
   expect(await query({items: {includes: {url: null}}})).toEqual([])
 })
+
+test('SQL includes matches primitive array values without treating them as objects', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(Documents)
+  await db.insert(Documents).values([
+    {id: 1, data: {tags: ['international', 'research']}},
+    {id: 2, data: {tags: ['regional']}},
+    {id: 3, data: {tags: ['1']}},
+    {id: 4, data: {tags: [1, true, null]}},
+    {id: 5, data: {tags: 'international'}},
+    {id: 6, data: {tags: ['true']}}
+  ])
+  const matching = (filter: unknown) =>
+    db
+      .select(Documents.id)
+      .from(Documents)
+      .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
+      .orderBy(Documents.id)
+  expect(await matching({tags: {includes: 'international'}})).toEqual([1])
+  expect(await matching({tags: {includes: 1}})).toEqual([4])
+  expect(await matching({tags: {includes: true}})).toEqual([4])
+  expect(await matching({tags: {includes: null}})).toEqual([4])
+})

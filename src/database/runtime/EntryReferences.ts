@@ -114,18 +114,7 @@ export async function entryReferencesTo(
     )
   const permitted = rows.filter(row => {
     if (!readable) return true
-    const source = readable.get(row.versionId)
-    if (!source) return false
-    // A dotted field name can overlap a nested field path. Fail closed when the
-    // serialized path cannot identify one unambiguous top-level field.
-    const fields = Object.keys(source.fields).filter(
-      field =>
-        row.target.fieldPath === field ||
-        row.target.fieldPath.startsWith(`${field}.`)
-    )
-    return (
-      fields.length === 1 && Boolean(source.fields[fields[0]] & Permission.Read)
-    )
+    return readable.has(row.versionId)
   })
   const scanned = readable
     ? readable.size

@@ -65,16 +65,16 @@ The cache is not an authorization authority: open it only after authentication,
 and authenticate cached ciphertext against its descriptor before decoding it.
 
 `handler/Policy.ts` evaluates configured role functions against the trusted SQL
-Graph and exports structural authorized rows with effective entry/field action
-masks. Masks use `Policy.check`, including denials, rather than packed allow flags.
+Graph and exports structural authorized rows with effective entry action masks.
+Masks use `Policy.check`, including denials, rather than packed allow flags.
 No explore grant means no exported row; explore without read omits the payload
 identity. Policy fingerprints include denied/field rules in canonical order and
 use a domain-separated SHA-256 digest. Compound policy evaluation/index export
 retries if a runtime commit overlaps it, including content-dependent role queries.
-The index snapshot reads structural/manifests only, without hydration. Compiled
-field masks now survive IndexedDB restore (cache format 2); mutation enforcement
-must still reevaluate the policy independently on the handler. A whole-entry read
-grant with a denied field fails closed until view-specific filtered payloads exist.
+The index snapshot reads structural/manifests only, without hydration. Field-level
+permissions are explicitly unsupported by SQLite replicas and reject bootstrap
+when they differ from the entry grant. Mutation enforcement still reevaluates the
+policy independently on the handler.
 These are policy compilation building blocks, not yet production authorization
 endpoints or authenticated encrypted-frame delivery.
 
@@ -126,8 +126,8 @@ cursors and every requested read identity before looking up any key. A commit
 overlapping key lookup invalidates the result. Policy-only changes invalidate old
 cursors even when the source revision is unchanged. The Chromium fixture now
 uses this SQL frame store and grant service for its controlled grant endpoint.
-The authenticated production router and filtered-field payload path are not wired
-yet. FrameStore/GrantService do not themselves authenticate a session.
+The authenticated Node handler wires these services to the replica endpoints.
+FrameStore/GrantService do not themselves authenticate a session.
 
 `cli/generate/ExportFrameBundles.ts` publishes ciphertext in content-addressed
 files, targeting bounded bundles while reading one frame at a time. Completed
@@ -316,8 +316,8 @@ within the identity's reserved ordinal slots, preserving grouping with existing
 locales and versions. Tests compare all status/locale modes, localized parent
 paths, inherited archive status and newly adopted children against Graph.
 
-The snapshot owner's preview path now connects decoding, revision checks, Graph-
-based patch application, bounded normalization and the attached row overlay.
+The snapshot owner's preview path connects decoding, revision checks, Graph-based
+patch application, bounded normalization and an attached row overlay.
 `applyPreview` depends on Graph rather than LocalDB, so it can apply the existing
 wire format without a JS index. Encoded requests must match the leased source
 revision; invalid patches reject. Tests run two distinct entry previews using the
@@ -329,35 +329,12 @@ boundary. The restart integration test makes both the old index and resolver
 throw, then verifies edited/search and new-entry previews, isolation from normal
 reads, and only one supplied-record parse for the first preview.
 
-Overlay FTS investigation ruled out replacing FTS shadow tables with views (the
-installed SQLite rejects dropping the protected shadow tables). The ranking path
-now has tested read-only primitives in `query/FtsStatistics`: decode documented
-FTS5 corpus/document token counts and reproduce the configured weighted BM25
-formula. Native and WASM tests compare scores directly with SQLite for multiple
-phrases and common terms, exercise attached databases, empty documents and
-multi-byte sizes, and reject malformed records. See SQLite's
-[FTS5 storage and ranking documentation](https://sqlite.org/fts5.html).
-`query/MergedFts` now merges base and overlay vocabulary postings, excluding
-replaced/deleted base rows and adjusting corpus statistics before scoring. SQLite
-tokenization preserves accent folding and phrase positions; indexed term ranges
-avoid scanning document text. Native tests compare the complete match set and
-numeric ranks with a freshly rebuilt reference index, including overlapping
-prefixes, duplicate terms, replacements and deletions. The corresponding WASM
-gate remains explicitly skipped: the installed 0.1.18 binary reports "out of
-memory" when creating TEMP FTS/vocabulary tables. This is a native overlay
-primitive, not a claimed browser capability.
-
-`query/OverlaySearch` now connects these matches to the existing Graph compiler
-through a queued search-plan provider. Each immutable overlay caches query-scoped
-version/rank rows; nested and concurrent searches cannot overwrite one another.
-Snippets read the matched document from its original base or overlay FTS index.
-The merged data view's missing implicit rowids do not matter: search resolves
-version identities through the explicitly qualified source tables. Native Graph
-tests compare a rebuilt reference corpus for ranking, snippets, pagination,
-counts, grouping, ordering, filters and concurrent nested searches, with more
-than one batch of matched identities. Revision-bound snapshot previews can now
-search their edited view, including through DevDB. Browser overlay FTS still
-requires a compatible storage strategy.
+Normal preview queries read union views over small in-memory replacement tables
+and the attached immutable checkpoint, without copying base rows. Search lazily
+builds one temporary standard FTS5 index from that effective view. This avoids a
+second BM25 implementation; previews that do not search pay no corpus-copy cost.
+Native Graph tests compare search, snippets, pagination, grouping and nested
+queries with a freshly materialized reference database.
 
 `replica/Operations` now implements detached, all-or-nothing field CAS with
 canonical JSON hashes, strict pointers, overlapping-path rejection, and stable-ID
@@ -877,12 +854,11 @@ Authenticated Node handlers expose `POST ?action=replicaIndex` as the first brow
 bootstrap boundary. API keys alone cannot obtain this user view. The handler
 catches up before evaluating verified/enriched session roles, ignores caller
 identity/roles, and emits a versioned index with full replica identity, policy
-view ID, revision and compiled row/field permissions. Responses are private and
+view ID, revision and compiled entry permissions. Responses are private and
 no-store. One replica lease binds graph-backed role evaluation, row projection
 and identity even through concurrent sync/close. Tests cover that lease, hidden
 rows, forged roles/principals, policy-only revocation, and absence of payload data.
-This is currently a full filtered index response; dashboard consumption, tree
-deltas and filtered-field payloads remain unfinished.
+This is currently a full filtered index response; tree deltas remain unfinished.
 
 `POST ?action=replicaPayloads` now delivers lazy encrypted data frames through the
 authenticated handler, including live frames without published bundle locations.
@@ -979,13 +955,14 @@ mutations/activity acknowledgements through the new owner.
 
 Bootstrap now includes a validated evaluated scope policy for generic navigation
 and creation checks, with entry-ID rules limited to visible rows and their already
-exported ancestors. `CompiledPolicy` uses exact compiled row/field flags for known
-entries and the filtered scope rules for non-entry resources; unknown entries and
-fields fail closed, and locale-unspecified checks intersect candidate grants. It
-does not run role functions and cannot be serialized/combined as authority policy.
+exported ancestors. `CompiledPolicy` uses exact compiled entry flags for known
+entries and the filtered scope rules for non-entry resources; unknown entries fail
+closed, and locale-unspecified checks intersect candidate grants. Entry fields
+inherit the entry grant because field-level replica permissions are unsupported.
+It does not run role functions and cannot be serialized/combined as authority policy.
 WorkerGraph exposes this read-only UI policy, and the dashboard policy atom prefers
 it when supplied by a replica-backed graph. Tests compare compiled checks against
-trusted evaluation, enforce field denials, hide unrelated entry rules, validate
+trusted evaluation, hide unrelated entry rules, validate
 packed policy data and prove browser role execution is bypassed. The legacy
 dashboard graph still uses its existing role path until the worker cutover.
 

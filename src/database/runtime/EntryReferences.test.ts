@@ -132,7 +132,7 @@ test('private SQL references match Graph status, locale, duplicates and media me
   ).toEqual(['file', 'image'])
 })
 
-test('authorized references omit hidden sources, denied fields and private scan counts', async () => {
+test('authorized references omit hidden sources and private scan counts', async () => {
   const fixture = await createEntryResolver(config, entries())
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
@@ -143,20 +143,19 @@ test('authorized references omit hidden sources, denied fields and private scan 
     .filter(row => row.id === 'source')
     .map(entry => ({
       entry,
-      permissions: Permission.Read | Permission.Explore,
-      fields: {
-        related: entry.locale === 'en' ? Permission.Read : 0,
-        attachment: 0,
-        hero: 0
-      }
+      permissions: Permission.Read | Permission.Explore
     }))
   const result = await entryReferencesTo(
     db,
     {targetId: 'target', status: 'all'},
     authorized
   )
-  expect(result.references.map(row => row.linkId)).toEqual(['one', 'two'])
-  expect(result.total).toBe(2)
+  expect(result.references.map(row => row.linkId)).toEqual([
+    'translated',
+    'one',
+    'two'
+  ])
+  expect(result.total).toBe(3)
   expect(result.scan).toEqual({
     scanned: authorized.length,
     total: authorized.length,
@@ -164,7 +163,7 @@ test('authorized references omit hidden sources, denied fields and private scan 
   })
   expect(
     (await entryReferencesTo(db, {targetId: 'media'}, authorized)).references
-  ).toEqual([])
+  ).toHaveLength(2)
   expect(
     (await entryReferencesTo(db, {targetId: 'target'}, [])).scan.total
   ).toBe(0)
