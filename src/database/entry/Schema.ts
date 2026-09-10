@@ -13,7 +13,7 @@ export function entryVersionId(
   return JSON.stringify([id, locale?.toLowerCase() ?? null, status])
 }
 
-/** Structural metadata is always resident. */
+/** One complete authored entry version. JSON is stored as SQLite text. */
 export const EntryIndexTable = table(
   'alinea_entry_index',
   {
@@ -45,8 +45,11 @@ export const EntryIndexTable = table(
     visible: column.boolean().notNull(),
     seeded: column.text(),
     rowHash: column.varchar(undefined, {length: 128}).notNull(),
-    /** Null means this structural row has no readable payload. */
-    payloadId: column.varchar(undefined, {length: 255})
+    /** Precomputed hashes for reconstructing the logical index tree. */
+    parentSha: column.varchar(undefined, {length: 128}),
+    childrenSha: column.varchar(undefined, {length: 128}),
+    data: column.json<Record<string, unknown>>().notNull(),
+    source: column.json<EntrySource>()
   },
   row => ({
     byId: index().on(row.id, row.locale, row.versionStatus),
@@ -56,14 +59,6 @@ export const EntryIndexTable = table(
     byLocation: index().on(row.workspace, row.root, row.status, row.index)
   })
 )
-
-/** Absence means unhydrated; empty JSON is a real, resident payload. */
-export const EntryDataTable = table('alinea_entry_data', {
-  versionId: column.varchar(undefined, {length: 255}).primaryKey(),
-  payloadId: column.varchar(undefined, {length: 255}).notNull(),
-  data: column.json<Record<string, unknown>>().notNull(),
-  source: column.json<EntrySource>()
-})
 
 export const sourceFields = [
   'filePath',
@@ -98,11 +93,16 @@ export interface IndexedEntry extends Omit<
   ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
   sourceRoot?: string | null
+  /** Logical parent directory hash, or the index root for top-level rows. */
+  parentSha?: string | null
+  /** Directory hash covering this identity's versions and children. */
+  childrenSha?: string | null
 }
 
 export function entryIndexRow(
   entry: IndexedEntry & Partial<Pick<Entry, 'parentDir'>>,
-  payloadId?: string
+  data: Record<string, unknown> = {},
+  source?: EntrySource
 ) {
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
@@ -129,6 +129,9 @@ export function entryIndexRow(
     visible: entry.visible ?? true,
     seeded: entry.seeded,
     rowHash: entry.rowHash,
-    payloadId: payloadId ?? null
+    parentSha: entry.parentSha ?? null,
+    childrenSha: entry.childrenSha ?? null,
+    data,
+    source: source ?? null
   }
 }

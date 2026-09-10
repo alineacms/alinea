@@ -17,7 +17,7 @@ import {
   when,
   type Sql
 } from 'rado'
-import {EntryDataTable, EntryIndexTable as entry} from '../entry/Schema.js'
+import {EntryIndexTable as entry} from '../entry/Schema.js'
 import {jsonField} from './Condition.js'
 
 export interface RelationSource {
@@ -47,9 +47,9 @@ export function linkRelation(
   multiple: boolean
 ) {
   const payload = new Builder()
-    .select(jsonField(EntryDataTable.data, [field]).selection!)
-    .from(EntryDataTable)
-    .where(eq(EntryDataTable.versionId, source.versionId))
+    .select(jsonField(entry.data, [field]).selection!)
+    .from(entry)
+    .where(eq(entry.versionId, source.versionId))
   const value = sql`(${payload})`
   const kind = sql.universal<string>({
     sqlite: sql`json_type(${value})`,

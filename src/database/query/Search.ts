@@ -2,7 +2,6 @@ import {sql, type Database, type HasSql, type Sql} from 'rado'
 import {EntryIndexTable} from '../entry/Schema.js'
 
 export interface SearchQuery {
-  needsPayloads: boolean
   condition: Sql<boolean>
   rank: Sql<number>
   snippet(
@@ -18,7 +17,7 @@ export interface SearchQuery {
 export async function createSearch(db: Database): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
   await db.run(sql`create virtual table alinea_entry_search using fts5(
-    title, body, tokenize='unicode61 remove_diacritics 2'
+    versionId unindexed, title, body, tokenize='unicode61 remove_diacritics 2'
   )`)
 }
 
@@ -26,12 +25,10 @@ export async function createSearch(db: Database): Promise<void> {
 export async function rebuildSearch(db: Database): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
   await db.run(sql`delete from alinea_entry_search`)
-  await db.run(sql`insert into alinea_entry_search(rowid, title, body)
-    select data.rowid, entry.title,
-      coalesce(json_extract(data.source, '$.searchableText'), '')
-    from alinea_entry_data data
-    inner join alinea_entry_index entry
-      on entry.versionId = data.versionId`)
+  await db.run(sql`insert into alinea_entry_search(versionId, title, body)
+    select versionId, title,
+      coalesce(json_extract(source, '$.searchableText'), '')
+    from alinea_entry_index`)
 }
 
 export function searchTokens(input: string | Array<string> | undefined) {
@@ -49,11 +46,8 @@ export function searchQuery(
   // inject FTS operators, column selectors, quotes or SQL syntax.
   const terms = tokens.map(term => `"${term}"*`).join(' AND ')
   const match = sql`alinea_entry_search match ${terms}`
-  const identity = sql`rowid = (
-    select rowid from alinea_entry_data where versionId = ${EntryIndexTable.versionId}
-  )`
+  const identity = sql`versionId = ${EntryIndexTable.versionId}`
   return {
-    needsPayloads: tokens.length > 0,
     condition: tokens.length
       ? sql.universal<boolean>({
           sqlite: sql`exists (
@@ -64,7 +58,7 @@ export function searchQuery(
     rank: tokens.length
       ? sql.universal<number>({
           sqlite: sql`(
-          select bm25(alinea_entry_search, 20, 1)
+          select bm25(alinea_entry_search, 0, 20, 1)
           from alinea_entry_search where ${identity} and ${match}
         )`
         })
@@ -73,7 +67,7 @@ export function searchQuery(
       return tokens.length
         ? sql.universal<string>({
             sqlite: sql`(
-            select snippet(alinea_entry_search, 1, ${start}, ${end}, ${cutOff}, ${limit})
+            select snippet(alinea_entry_search, 2, ${start}, ${end}, ${cutOff}, ${limit})
             from alinea_entry_search where ${identity} and ${match}
           )`
           })

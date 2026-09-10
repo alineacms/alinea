@@ -29,7 +29,6 @@ function entry(id: string, title: string, body = ''): EntryReplacement {
       seeded: null,
       rowHash: `${id}:${title}`
     },
-    payloadId: `${id}:${body}`,
     data: {},
     source: {searchableText: body}
   }
@@ -123,58 +122,40 @@ for (const driver of ['native', 'wasm'] as const)
     }
   })
 
-test('search hydrates its entire scope, updates retained payload titles and fails closed after revocation', async () => {
+test('search updates complete entry rows transactionally', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await EntryRuntime.createSchema(db, 'empty')
-  const loads: Array<string> = []
-  const runtime = new EntryRuntime({schema: {}, workspaces: {}}, db, {
-    async load(requests) {
-      loads.push(...requests.map(request => request.versionId))
-      return requests.map(request => ({
-        ...request,
-        data: {},
-        source: {searchableText: 'hidden chocolate'}
-      }))
-    }
-  })
+  const runtime = new EntryRuntime({schema: {}, workspaces: {}}, db)
   const a = entry('a', 'First')
   const b = entry('b', 'Second')
   await runtime.apply({
     fromRevision: 'empty',
     toRevision: 'one',
     entries: [
-      {entry: a.entry, payloadId: a.payloadId},
-      {entry: b.entry, payloadId: b.payloadId}
+      {...a, source: {searchableText: 'hidden chocolate'}},
+      {...b, source: {searchableText: 'hidden chocolate'}}
     ]
   })
   expect(await runtime.resolve({select: Entry.id})).toEqual(['a', 'b'])
-  expect(loads).toEqual([])
   expect(
     await runtime.resolve({search: 'choco', take: 1, select: Entry.id})
   ).toHaveLength(1)
-  expect(loads).toHaveLength(2)
   await runtime.apply({
     fromRevision: 'one',
     toRevision: 'two',
-    entries: [{entry: {...a.entry, title: 'Retitled'}, payloadId: a.payloadId}]
+    entries: [{...a, entry: {...a.entry, title: 'Retitled'}}]
   })
   expect(await runtime.resolve({search: 'retit', select: Entry.id})).toEqual([
     'a'
   ])
-  expect(loads).toHaveLength(2)
   await runtime.apply({
     fromRevision: 'two',
     toRevision: 'three',
-    entries: [{entry: b.entry}]
+    entries: [{...b, source: {searchableText: ''}}]
   })
-  await expect(
-    runtime.resolve({search: 'choco', select: Entry.id})
-  ).rejects.toThrow('not readable')
-  expect(
-    await runtime.resolve({id: 'a', search: 'choco', select: Entry.id})
-  ).toEqual(['a'])
+  expect(await runtime.resolve({search: 'choco', select: Entry.id})).toEqual([])
   expect(
     sqlite.query('select count(*) as count from alinea_entry_search').get()
-  ).toEqual({count: 1})
+  ).toEqual({count: 2})
 })

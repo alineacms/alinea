@@ -104,6 +104,46 @@ test('combineConditions combines checks from both conditions', () => {
   })
 })
 
+test('retains authored versions hidden by inherited status', async () => {
+  const {index} = await createEntryIndex(cms.config, [
+    {
+      id: 'recipes',
+      type: 'DemoRecipes',
+      index: 'a',
+      path: 'recipes',
+      status: 'archived',
+      data: {title: 'Recipes'}
+    },
+    {
+      id: 'cookie',
+      type: 'DemoRecipe',
+      index: 'a',
+      path: 'cookie',
+      parentPaths: ['recipes'],
+      data: {title: 'Published'}
+    },
+    {
+      id: 'cookie',
+      type: 'DemoRecipe',
+      index: 'a',
+      path: 'cookie',
+      parentPaths: ['recipes'],
+      status: 'draft',
+      data: {title: 'Draft'}
+    }
+  ])
+  const visible = [...index.filter({})].filter(entry => entry.id === 'cookie')
+  const authored = [...index.filter({includeHiddenVersions: true})].filter(
+    entry => entry.id === 'cookie'
+  )
+  test.equal(visible.length, 1)
+  test.equal(authored.length, 2)
+  test.equal(authored.map(entry => entry.filePath).sort(), [
+    'pages/recipes/cookie.draft.json',
+    'pages/recipes/cookie.json'
+  ])
+})
+
 test('constructs empty entry graph', () => {
   const graph = new EntryGraph(cms.config, new Map(), new Map())
   test.is(graph.byId('missing'), undefined)

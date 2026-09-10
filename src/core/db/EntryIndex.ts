@@ -35,6 +35,8 @@ export interface EntryFilter {
 }
 
 export interface EntryCondition {
+  /** Include authored versions suppressed by inherited status. */
+  includeHiddenVersions?: boolean
   search?: string
   nodes?: Iterable<EntryNode>
   node?(node: EntryNode): boolean
@@ -56,6 +58,7 @@ export function combineConditions(
   b: EntryCondition
 ): EntryCondition {
   return {
+    includeHiddenVersions: a.includeHiddenVersions ?? b.includeHiddenVersions,
     search: a.search ?? b.search,
     nodes: combineNodes(a.nodes, b.nodes),
     node(node) {
@@ -190,6 +193,7 @@ class EntryLanguageNode {
   locale: string | null
   path: string
   #entries: Array<Entry> | undefined
+  #sourceEntries: Array<Entry> | undefined
   readonly seeded: string | null = null
   constructor(
     private node: EntryNode,
@@ -253,10 +257,15 @@ class EntryLanguageNode {
 
   get entries() {
     if (this.#entries) return this.#entries
+    return (this.#entries = this.inheritedStatus
+      ? this.sourceEntries.filter(entry => entry.active)
+      : this.sourceEntries)
+  }
+
+  get sourceEntries() {
+    if (this.#sourceEntries) return this.#sourceEntries
     const entryType = this.node.entryType
-    const entries = (
-      this.inheritedStatus ? [this.active] : [...this.language.values()]
-    ).map((version): Entry => {
+    const entries = [...this.language.values()].map((version): Entry => {
       return {
         ...version,
         status: this.inheritedStatus ?? version.status,
@@ -273,12 +282,14 @@ class EntryLanguageNode {
         }
       }
     })
-    this.#entries = entries
+    this.#sourceEntries = entries
     return entries
   }
 
   *filter(filter: EntryCondition): Generator<Entry> {
-    for (const entry of this.entries) {
+    for (const entry of filter.includeHiddenVersions
+      ? this.sourceEntries
+      : this.entries) {
       if (filter.entry && !filter.entry(entry)) continue
       yield entry
     }

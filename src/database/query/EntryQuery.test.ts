@@ -7,7 +7,6 @@ import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import {
-  EntryDataTable,
   EntryIndexTable,
   entryIndexRow,
   entrySource,
@@ -51,10 +50,9 @@ function entry(
   }
 }
 
-test('structural SQL queries do not require or join payload tables', async () => {
+test('structural SQL queries use the complete entry table', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  // Deliberately omit the data table: an index-only query must still execute.
   await db.create(EntryIndexTable)
   await db
     .insert(EntryIndexTable)
@@ -70,8 +68,6 @@ test('structural SQL queries do not require or join payload tables', async () =>
     select: {id: Entry.id, title: Entry.title},
     take: 1
   })
-  expect(plan.membershipData).toBe(false)
-  expect(plan.projectionData).toBe(false)
   expect(await plan.rows.all(db)).toEqual([{id: 'a', title: 'a'}])
   expect(
     await compileEntryQuery(config, {
@@ -98,24 +94,18 @@ test('structural SQL queries do not require or join payload tables', async () =>
   expect(JSON.stringify(explain)).toContain('INDEX')
 })
 
-test('content conditions and projections compile with distinct dependencies', async () => {
+test('content conditions and projections query the data column', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await db.create(EntryIndexTable, EntryDataTable)
+  await db.create(EntryIndexTable)
   for (const [id, title] of [
     ['a', 'Alpha'],
     ['b', 'Beta'],
     ['c', 'Gamma']
   ]) {
-    const row = entryIndexRow(entry(id))
-    await db.insert(EntryIndexTable).values(row)
-    await db
-      .insert(EntryDataTable)
-      .values({versionId: row.versionId, payloadId: id, data: {title}})
+    await db.insert(EntryIndexTable).values(entryIndexRow(entry(id), {title}))
   }
   const projection = compileEntryQuery(config, {select: Page.title, take: 1})
-  expect(projection.membershipData).toBe(false)
-  expect(projection.projectionData).toBe(true)
   expect(await projection.rows.all(db)).toEqual(['Alpha'])
   const filtered = compileEntryQuery(config, {
     filter: {title: {isNot: 'Alpha'}},
@@ -123,11 +113,9 @@ test('content conditions and projections compile with distinct dependencies', as
     select: {id: Entry.id, fields: {title: Page.title}},
     take: 1
   } as GraphQuery)
-  expect(filtered.membershipData).toBe(true)
   expect(await filtered.rows.all(db)).toEqual([
     {id: 'c', fields: {title: 'Gamma'}}
   ])
-  expect(await filtered.candidates.all(db)).toHaveLength(3)
 })
 
 test('physical identity preserves source status, and pagination is validated', () => {
@@ -148,24 +136,18 @@ test('physical identity preserves source status, and pagination is validated', (
 test('SQL compilation agrees with the existing resolver on the real demo corpus', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await db.create(EntryIndexTable, EntryDataTable)
+  await db.create(EntryIndexTable)
   const index = new EntryIndex(cms.config)
   await index.syncWith(new FSSource('test/fixtures/demo'))
   const resolver = new EntryResolver(cms.config, index)
   let ordinal = 0
   for (const entry of index.filter({})) {
-    const row = entryIndexRow({
-      ...entry,
-      versionStatus: entry.status,
-      ordinal: ordinal++
-    })
+    const row = entryIndexRow(
+      {...entry, versionStatus: entry.status, ordinal: ordinal++},
+      entry.data,
+      entrySource(entry)
+    )
     await db.insert(EntryIndexTable).values(row)
-    await db.insert(EntryDataTable).values({
-      versionId: row.versionId,
-      payloadId: entry.fileHash,
-      source: entrySource(entry),
-      data: entry.data
-    })
   }
   const cases: Array<GraphQuery<unknown, typeof DemoRecipe>> = [
     {select: Entry.id},
@@ -199,17 +181,18 @@ test('SQL compilation agrees with the existing resolver on the real demo corpus'
 test('SQL grouping preserves primitive types and picks representatives before sorting', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await db.create(EntryIndexTable, EntryDataTable)
+  await db.create(EntryIndexTable)
   const values = [undefined, null, false, 0, '0', 0, null, {}, {}, [], []]
   for (const [index, value] of values.entries()) {
     const id = String(index).padStart(2, '0')
-    const row = entryIndexRow(entry(id, {ordinal: index}))
-    await db.insert(EntryIndexTable).values(row)
-    await db.insert(EntryDataTable).values({
-      versionId: row.versionId,
-      payloadId: id,
-      data: value === undefined ? {} : {title: value}
-    })
+    await db
+      .insert(EntryIndexTable)
+      .values(
+        entryIndexRow(
+          entry(id, {ordinal: index}),
+          value === undefined ? {} : {title: value}
+        )
+      )
   }
   const plan = compileEntryQuery(config, {
     groupBy: Page.title,
@@ -218,7 +201,6 @@ test('SQL grouping preserves primitive types and picks representatives before so
     skip: 1,
     take: 8
   })
-  expect(plan.membershipData).toBe(true)
   expect(await plan.rows.all(db)).toEqual([
     '09',
     '08',
@@ -237,7 +219,7 @@ test('SQL grouping preserves primitive types and picks representatives before so
 test('SQL alias projections combine both locations and alias filters ignore non-URL rows', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await db.create(EntryIndexTable, EntryDataTable)
+  await db.create(EntryIndexTable)
   const data = [
     {},
     {aliases: []},
@@ -249,13 +231,9 @@ test('SQL alias projections combine both locations and alias filters ignore non-
     {aliases: null, metadata: {aliases: 'not an array'}}
   ]
   for (const [index, payload] of data.entries()) {
-    const row = entryIndexRow(entry(String(index)))
-    await db.insert(EntryIndexTable).values(row)
-    await db.insert(EntryDataTable).values({
-      versionId: row.versionId,
-      payloadId: String(index),
-      data: payload
-    })
+    await db
+      .insert(EntryIndexTable)
+      .values(entryIndexRow(entry(String(index)), payload))
   }
   expect(
     await compileEntryQuery(config, {select: Entry.aliases}).rows.all(db)

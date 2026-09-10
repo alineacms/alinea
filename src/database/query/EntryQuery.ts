@@ -31,7 +31,7 @@ import {
   type SelectionRecord,
   type Sql
 } from 'rado'
-import {EntryDataTable, EntryIndexTable, sourceFields} from '../entry/Schema.js'
+import {EntryIndexTable, sourceFields} from '../entry/Schema.js'
 import {
   columnField,
   arrayIncludes,
@@ -62,9 +62,8 @@ interface FieldProjection {
   field: Field
 }
 
-/** A compilation is scoped to a single SQL stage and records its payload needs. */
+/** Expressions over a complete entry row. */
 class Expressions {
-  dataRequired = false
   relations: Array<RelationProjection> = []
   fields: Array<FieldProjection> = []
   #scope: Scope
@@ -76,23 +75,19 @@ class Expressions {
   }
 
   data(path: Array<string>): QueryField {
-    this.dataRequired = true
-    return jsonField(EntryDataTable.data, path)
+    return jsonField(EntryIndexTable.data, path)
   }
 
   index(name: string, path?: Array<string>): QueryField {
     if (name === 'aliases') {
-      this.dataRequired = true
-      return aliasesField(EntryDataTable.data)
+      return aliasesField(EntryIndexTable.data)
     }
     if (path) return this.data([...path, name])
     if (sourceFields.some(field => field === name)) {
-      this.dataRequired = true
-      return jsonField(EntryDataTable.source, [name])
+      return jsonField(EntryIndexTable.source, [name])
     }
     if (name === 'data') {
-      this.dataRequired = true
-      return columnField(EntryDataTable.data)
+      return columnField(EntryIndexTable.data)
     }
     if (Object.hasOwn(EntryIndexTable, name))
       return columnField(
@@ -144,7 +139,6 @@ class Expressions {
           value.value > 64
         )
           throw new Error('Snippet limit must be an integer from 1 to 64')
-        this.dataRequired ||= this.#search.needsPayloads
         return this.#search.snippet(
           this.expr(start),
           this.expr(end),
@@ -284,7 +278,6 @@ export function compileEntryQuery(
   const content: Array<Sql<boolean>> = []
   if (search) {
     content.push(search.condition)
-    membership.dataRequired = search.needsPayloads
   }
   if (query.alias !== undefined)
     content.push(
@@ -362,11 +355,6 @@ export function compileEntryQuery(
       .where(sql.value(true))
     if (links)
       ranked = ranked.innerJoin(links.target, eq(EntryIndexTable.id, links.id))
-    if (membership.dataRequired)
-      ranked = ranked.leftJoin(
-        EntryDataTable,
-        eq(EntryIndexTable.versionId, EntryDataTable.versionId)
-      )
     const matches = ranked
       .where(and(...structural, ...content))
       .as('group_matches')
@@ -383,18 +371,13 @@ export function compileEntryQuery(
         )
     )
   }
-  function selectRows(selection: SelectionInput, data: boolean) {
+  function selectRows(selection: SelectionInput) {
     let rows = builder
       .select(selection)
       .from(EntryIndexTable)
       .where(sql.value(true))
     if (links)
       rows = rows.innerJoin(links.target, eq(EntryIndexTable.id, links.id))
-    if (data)
-      rows = rows.leftJoin(
-        EntryDataTable,
-        eq(EntryIndexTable.versionId, EntryDataTable.versionId)
-      )
     rows = rows
       .where(and(...structural, ...content, ...(grouped ? [grouped] : [])))
       .orderBy(...ordering)
@@ -408,16 +391,6 @@ export function compileEntryQuery(
     return rows
   }
 
-  // A conservative superset for hydration before content predicates or sorting.
-  let candidates = builder
-    .select(EntryIndexTable.versionId)
-    .from(EntryIndexTable)
-    .where(and(...structural))
-  if (links)
-    candidates = candidates.innerJoin(
-      links.target,
-      eq(EntryIndexTable.id, links.id)
-    )
   const single = Boolean(
     query.first ||
     query.get ||
@@ -429,17 +402,10 @@ export function compileEntryQuery(
     rows: selectRows(
       projection.relations.length
         ? {value: selection, source: relationSource}
-        : selection,
-      membership.dataRequired || projection.dataRequired
+        : selection
     ),
-    identities: selectRows(EntryIndexTable.versionId, membership.dataRequired),
-    contextRows: selectRows(
-      {value: selection, source: relationSource},
-      membership.dataRequired || projection.dataRequired
-    ),
-    candidates,
-    membershipData: membership.dataRequired,
-    projectionData: projection.dataRequired,
+    identities: selectRows(EntryIndexTable.versionId),
+    contextRows: selectRows({value: selection, source: relationSource}),
     count: query.count === true,
     single,
     relations: projection.relations,
