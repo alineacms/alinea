@@ -34,6 +34,7 @@ async function fixture(
       identity: binding,
       revision,
       permissions: Permission.All,
+      scopePolicy: {root: Permission.All, entries: []},
       entries: [
         {
           entry: indexed,

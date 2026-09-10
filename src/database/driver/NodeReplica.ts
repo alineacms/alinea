@@ -298,6 +298,7 @@ export class NodeReplica extends Graph {
         identity: {...snapshot.identity, principal, viewId: view.viewId},
         revision: view.revision,
         permissions: view.permissions,
+        scopePolicy: view.scopePolicy,
         entries: view.entries
       }
     })

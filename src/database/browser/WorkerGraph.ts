@@ -5,6 +5,7 @@ import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
 import type {QueryWorker} from './QueryWorker.js'
 import type {IndexBootstrap} from '../replica/Bootstrap.js'
+import {CompiledPolicy} from './CompiledPolicy.js'
 
 /** Keeps Graph expressions in their config scope when crossing a worker port. */
 export class WorkerGraph extends Graph {
@@ -77,6 +78,10 @@ export class WorkerGraph extends Graph {
     const changed = await this.#read(this.#worker.refresh())
     this.#assertOpen()
     return changed
+  }
+
+  async compiledPolicy(): Promise<CompiledPolicy> {
+    return new CompiledPolicy(await this.bootstrap())
   }
 
   #assertOpen(): void {

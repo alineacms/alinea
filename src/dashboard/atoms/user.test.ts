@@ -1,6 +1,7 @@
 import {createTestConnection} from '#test/CreateConnection.js'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
-import {expect, test} from 'bun:test'
+import {expect, spyOn, test} from 'bun:test'
+import {Policy, Permission} from '#/core/Role.js'
 import {clientAtom} from './core.js'
 import {configAtom} from './core.js'
 import {authReady, canManageMembersAtom, policyAtom, userAtom} from './user.js'
@@ -47,4 +48,21 @@ test('requires backend support before exposing user management', async () => {
   )
 
   expect(await store.get(canManageMembersAtom)).toBeFalse()
+})
+
+test('replica-backed policy comes from compiled grants without executing client roles', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  const policy = new Policy(Permission.Explore)
+  Object.assign(db, {compiledPolicy: async () => policy})
+  const local = spyOn(db, 'createPolicy').mockImplementation(async () => {
+    throw new Error('Client roles must not execute')
+  })
+  try {
+    await store.get(authReady)
+    expect(store.get(policyAtom)).toBe(policy)
+    expect(local).not.toHaveBeenCalled()
+    expect(store.get(policyAtom).canManageMembers()).toBe(false)
+  } finally {
+    local.mockRestore()
+  }
 })

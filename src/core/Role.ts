@@ -4,6 +4,7 @@ import type {Graph} from './Graph.js'
 import {ErrorCode, HttpError} from './HttpError.js'
 import type {HasRoot, HasType, HasWorkspace} from './Internal.js'
 import {type Scope, ScopeKey} from './Scope.js'
+import {isRecord} from './util/Objects.js'
 
 interface SetPermissions {
   workspace?: never
@@ -129,7 +130,7 @@ function pack(input: PermissionInput): number {
   return result
 }
 
-function entitlements(packed: number): Permissions {
+export function permissionFlags(packed: number): Permissions {
   return {
     create: Boolean(packed & Permission.Create),
     read: Boolean(packed & Permission.Read),
@@ -154,6 +155,16 @@ export interface Resource {
   id?: string
   parents?: Array<string>
   locale?: string | null
+}
+
+export function effectivePermissions(
+  policy: Policy,
+  resource?: Resource
+): number {
+  let result = Permission.None
+  for (let bit = 1; bit <= Permission.All; bit *= 2)
+    if (policy.check(bit, resource)) result |= bit
+  return result
 }
 
 export interface PolicyData {
@@ -194,6 +205,33 @@ export class Policy {
     const result = new Policy()
     result.acl = new ACL(policy.acl)
     return result
+  }
+
+  /** Decode evaluated rules, not role functions. Server authority must still be verified separately. */
+  static fromData(data: unknown): Policy {
+    const mask = Permission.All | Permission.Explicit | deny(Permission.All)
+    const valid = (value: unknown): value is number =>
+      typeof value === 'number' &&
+      Number.isInteger(value) &&
+      value >= 0 &&
+      (value & mask) === value
+    if (!isRecord(data) || !valid(data.root) || !Array.isArray(data.entries))
+      throw new Error('Invalid policy data')
+    const policy = new Policy(data.root)
+    for (const row of data.entries) {
+      if (
+        !Array.isArray(row) ||
+        row.length !== 2 ||
+        typeof row[0] !== 'string' ||
+        !row[0] ||
+        row[0].length > 4096 ||
+        !valid(row[1]) ||
+        policy.acl.has(row[0])
+      )
+        throw new Error('Invalid policy rule')
+      policy.acl.set(row[0], row[1])
+    }
+    return policy
   }
 
   equals(that: Policy): boolean {
@@ -272,7 +310,7 @@ export class Policy {
   }
 
   get(resource?: Resource): Permissions {
-    return entitlements(this.#permissionsOf(resource))
+    return permissionFlags(this.#permissionsOf(resource))
   }
 
   canRead(resource?: Resource): boolean {

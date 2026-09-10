@@ -1,6 +1,11 @@
 import type {Config} from '#/core/Config.js'
 import type {Graph} from '#/core/Graph.js'
-import {Permission, Policy, WritablePolicy, type Resource} from '#/core/Role.js'
+import {
+  Permission,
+  Policy,
+  WritablePolicy,
+  effectivePermissions as compiledPermissions
+} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {compareStrings, sha256Hash} from '#/core/source/Utils.js'
 import type {IndexedEntry} from '../entry/Schema.js'
@@ -44,16 +49,7 @@ export async function policyFingerprint(policy: Policy): Promise<string> {
   return sha256Hash(bytes)
 }
 
-export function compiledPermissions(
-  policy: Policy,
-  resource?: Resource
-): number {
-  let result = Permission.None
-  // Policy.get() exposes packed allow flags; check() also enforces denials.
-  for (let bit = 1; bit <= Permission.All; bit *= 2)
-    if (policy.check(bit, resource)) result |= bit
-  return result
-}
+export {compiledPermissions}
 
 /** Materialize a complete policy view without reading payloads just to export rows. */
 export function authorizedIndex(
@@ -91,10 +87,20 @@ export function authorizedIndex(
           : {})
       })
     }
+    // Preserve generic/creation checks without leaking rules for hidden entries.
+    // Ancestor IDs already occur in the authorized rows' structural metadata.
+    const visibleIds = new Set(
+      entries.flatMap(({entry}) => [entry.id, ...entry.parents])
+    )
+    const scopePolicy = policy.data()
+    scopePolicy.entries = scopePolicy.entries.filter(
+      ([key]) => !key.startsWith('Entry.') || visibleIds.has(key.slice(6))
+    )
     return {
       revision: snapshot.revision,
       viewId: await policyFingerprint(policy),
       permissions: compiledPermissions(policy),
+      scopePolicy,
       entries
     }
   })

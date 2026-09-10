@@ -1,6 +1,6 @@
 import {array, boolean, number, object, string} from 'cito'
 import type {EntryStatus} from '#/core/Entry.js'
-import {Permission} from '#/core/Role.js'
+import {Permission, Policy} from '#/core/Role.js'
 import {HttpError} from '#/core/HttpError.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {entryIndexRow, entryVersionId} from '../entry/Schema.js'
@@ -127,11 +127,22 @@ export function decodeBootstrap(
       ...(typeof payloadId === 'string' ? {payloadId} : {})
     }
   })
+  const scopePolicy = Policy.fromData(value.scopePolicy).data()
+  const visibleIds = new Set(
+    entries.flatMap(({entry}) => [entry.id, ...entry.parents])
+  )
+  if (
+    scopePolicy.entries.some(
+      ([key]) => key.startsWith('Entry.') && !visibleIds.has(key.slice(6))
+    )
+  )
+    throw new Error('Hidden entry in bootstrap scope policy')
   return {
     version: 1,
     identity,
     revision: value.revision,
     permissions: permissionBits(value.permissions),
+    scopePolicy,
     entries
   }
 }

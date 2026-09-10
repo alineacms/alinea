@@ -20,6 +20,10 @@ export async function runOwned() {
   try {
     graph = new WorkerGraph(config, await remote.queries())
     const bootstrap = await graph.bootstrap()
+    const policy = await graph.compiledPolicy()
+    check(policy.canRead({id: 'a'}), true)
+    check(policy.canRead({id: 'hidden'}), false)
+    check(policy.canCreate({type: 'Page'}), true)
     check(await graph.find({select: Entry.id}), ['a', 'b'])
     check(await graph.find({id: 'a', select: Page.title}), ['Payload a'])
     const values: Array<unknown> = []

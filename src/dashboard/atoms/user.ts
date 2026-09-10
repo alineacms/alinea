@@ -1,4 +1,5 @@
 import {Policy} from '#/core/Role.js'
+import type {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {User} from '#/core/User.js'
 import {assert} from '#/core/util/Assert.js'
 import {atom} from 'jotai'
@@ -25,12 +26,25 @@ export const userAtom = atom(get => {
 
 const policyResult = atom(async get => {
   const user = await get(userResult)
-  if (!user?.roles) return Policy.ALLOW_NONE
   const graph = get(graphAtom)
   get(shaAtom)
+  if (hasCompiledPolicy(graph)) return graph.compiledPolicy()
+  if (!user?.roles) return Policy.ALLOW_NONE
   const roles = get(configAtom).roles ?? {}
   return graph.createPolicy(user.roles.filter(role => role in roles))
 })
+
+interface CompiledPolicyGraph {
+  compiledPolicy(): Promise<Policy>
+}
+
+function hasCompiledPolicy(
+  graph: WritableGraph
+): graph is WritableGraph & CompiledPolicyGraph {
+  return (
+    typeof (graph as Partial<CompiledPolicyGraph>).compiledPolicy === 'function'
+  )
+}
 
 const resolvedPolicy = unwrap(policyResult, previous => previous)
 const resolvedPolicyAtom = selectAtom(

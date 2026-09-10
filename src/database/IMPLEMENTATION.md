@@ -602,6 +602,18 @@ cannot replace local content after close. The dashboard cutover still needs to
 replace browser role evaluation with compiled policy state and route its queued
 mutations/activity acknowledgements through the new owner.
 
+Bootstrap now includes a validated evaluated scope policy for generic navigation
+and creation checks, with entry-ID rules limited to visible rows and their already
+exported ancestors. `CompiledPolicy` uses exact compiled row/field flags for known
+entries and the filtered scope rules for non-entry resources; unknown entries and
+fields fail closed, and locale-unspecified checks intersect candidate grants. It
+does not run role functions and cannot be serialized/combined as authority policy.
+WorkerGraph exposes this read-only UI policy, and the dashboard policy atom prefers
+it when supplied by a replica-backed graph. Tests compare compiled checks against
+trusted evaluation, enforce field denials, hide unrelated entry rules, validate
+packed policy data and prove browser role execution is bypassed. The legacy
+dashboard graph still uses its existing role path until the worker cutover.
+
 Configuration fingerprinting also needs the final normalizer/config
 dependency contract before dev-cache reuse is enabled.
 
