@@ -15,6 +15,11 @@ import {createFrameKey, encryptFrame} from '../replica/Frame.js'
 import {LiveReplica} from './LiveReplica.js'
 import {ReplicaCache} from './ReplicaCache.js'
 import {ReplicaSession} from './ReplicaSession.js'
+import {
+  WritableReplica,
+  type WritableReplicaOptions
+} from './WritableReplica.js'
+import {QueryWorker} from './QueryWorker.js'
 
 async function fixture(
   revision: string,
@@ -63,6 +68,74 @@ async function fixture(
   }
 }
 
+for (const mode of [
+  'live',
+  'readonly-worker',
+  'writable',
+  'writable-worker'
+] as const) {
+  for (const failed of [false, true]) {
+    test(`${mode} change notifications read after an older ${failed ? 'failed' : 'stale'} request and coalesce followups`, async () => {
+      const first = await fixture('r1', 'One'),
+        next = await fixture('r2', 'Two')
+      const started = Promise.withResolvers<void>(),
+        resume = Promise.withResolvers<void>()
+      let calls = 0
+      const options: WritableReplicaOptions = {
+        config,
+        expected: identity,
+        url: 'https://example.com/api',
+        indexedDB: new IDBFactory(),
+        lock: (_name, run, signal) => {
+          signal.throwIfAborted()
+          return run()
+        },
+        async fetch() {
+          const call = ++calls
+          if (call === 2) {
+            started.resolve()
+            await resume.promise
+            if (failed) throw new Error('Older request failed')
+          }
+          return Response.json(call > 2 ? next.bootstrap : first.bootstrap)
+        }
+      }
+      const replica = mode.startsWith('writable')
+        ? await WritableReplica.connect(options)
+        : await LiveReplica.connect(options)
+      const worker = mode.endsWith('worker')
+        ? new QueryWorker(replica)
+        : undefined
+      const refresh = () =>
+        worker
+          ? worker.refresh()
+          : replica instanceof LiveReplica
+            ? replica.refreshAfterChange()
+            : replica.refresh()
+      try {
+        const earlier = replica.refresh().catch(error => error as Error)
+        await started.promise
+        const notified = refresh(),
+          coalesced = refresh()
+        expect(calls).toBe(2)
+        expect(replica.bootstrap.revision).toBe('r1')
+        resume.resolve()
+        if (failed) expect(await earlier).toBeInstanceOf(Error)
+        else expect(await earlier).toBe(false)
+        expect(await notified).toBe(true)
+        expect(await coalesced).toBe(true)
+        expect(calls).toBe(3)
+        expect(replica.bootstrap.revision).toBe('r2')
+        expect(await replica.find({select: Entry.title})).toEqual(['Two'])
+      } finally {
+        resume.resolve()
+        await worker?.close()
+        await replica.close()
+      }
+    })
+  }
+}
+
 test('post-write refresh waits past an index request started before acceptance', async () => {
   const first = await fixture('r1', 'One')
   const next = await fixture('r2', 'Two')
@@ -85,7 +158,7 @@ test('post-write refresh waits past an index request started before acceptance',
   try {
     const beforeWrite = replica.refresh()
     await started.promise
-    const afterWrite = replica.refreshAfterWrite()
+    const afterWrite = replica.refreshAfterChange()
     resume.resolve()
     expect(await beforeWrite).toBe(false)
     expect(await afterWrite).toBe(true)

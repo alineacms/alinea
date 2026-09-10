@@ -730,6 +730,18 @@ tests cover delayed startup followed by exactly one refresh, replacement while
 waiting, and startup failure without an implicit reconnect. Calls before any
 authentication attempt still fail rather than opening an unauthenticated database.
 
+Change-triggered browser refreshes also need to run after an older in-flight
+request, which may already have sampled the previous source. The internal
+`refreshAfterWrite` fence is now named `refreshAfterChange` and serves accepted
+mutations, writable dashboard refreshes and read-only worker refreshes. Ordinary
+low-level `LiveReplica.refresh()` calls still share an in-flight request; a change
+notification waits past it and starts a new read. Several notifications waiting on
+the same old request share the follow-up rather than issuing redundant requests.
+Tests cover stale and failed older reads across live, writable, read-only worker
+and writable worker paths, requiring the new revision to be observed with exactly
+one shared follow-up. Existing durable mutation retry and live-result hydration
+tests continue to exercise the same fence.
+
 This integration test exposed and now covers two UI fixes. Clean editing nodes
 are replaced when their source/row hashes or identity change; dirty nodes keep
 their values and original mutation baseline, and resetting them reveals the

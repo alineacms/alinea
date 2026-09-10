@@ -20,7 +20,7 @@ export interface MutationQueueOptions {
   events?: EventTarget
   scope: PendingScope
   store: PendingMutations
-  replica: Pick<LiveReplica, 'identity' | 'refreshAfterWrite'>
+  replica: Pick<LiveReplica, 'identity' | 'refreshAfterChange'>
   /** Authenticated client for exactly scope.endpoint. */
   client: Pick<LocalConnection, 'mutate'>
   lock?: MutationQueueLock
@@ -219,7 +219,7 @@ export class MutationQueue {
             await store.accept(row.id, row.digest, accepted.sha)
             this.#assertScope()
           }
-          await replica.refreshAfterWrite()
+          await replica.refreshAfterChange()
           this.#assertScope()
           await store.remove(row.id, row.digest)
           this.#accepted.delete(row.id)
@@ -248,7 +248,7 @@ export class MutationQueue {
       )
       this.#assertScope()
       if (!rows.length) return
-      await replica.refreshAfterWrite()
+      await replica.refreshAfterChange()
       this.#assertScope()
       for (const row of rows) {
         await store.remove(row.id, row.digest)

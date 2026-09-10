@@ -30,6 +30,8 @@ export interface QueryGraph extends Graph {
   subscribe(query: GraphQuery, observer: QueryObserver): () => void
   readonly bootstrap?: IndexBootstrap
   refresh?(): Promise<boolean>
+  /** For change notifications: do not reuse a request started before the change. */
+  refreshAfterChange?(): Promise<boolean>
   close?(purge?: boolean): void | Promise<void>
 }
 
@@ -201,8 +203,9 @@ export class QueryWorker {
 
   async refresh(): Promise<boolean> {
     if (this.#closed) throw new Error('Query worker is closed')
-    if (!this.#runtime.refresh) throw new Error('Query graph cannot refresh')
-    const changed = await this.#runtime.refresh()
+    const refresh = this.#runtime.refreshAfterChange ?? this.#runtime.refresh
+    if (!refresh) throw new Error('Query graph cannot refresh')
+    const changed = await refresh.call(this.#runtime)
     if (this.#closed) throw new Error('Query worker is closed')
     return changed
   }

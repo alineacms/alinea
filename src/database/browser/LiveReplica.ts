@@ -65,8 +65,8 @@ export class LiveReplica extends Graph {
     return this.#current.identity
   }
 
-  /** A refresh already in flight may have read the source before acceptance. */
-  async refreshAfterWrite(): Promise<boolean> {
+  /** A request already in flight may have sampled the source before this change. */
+  async refreshAfterChange(): Promise<boolean> {
     if (this.#refreshing) await this.#refreshing.catch(() => {})
     return this.refresh()
   }

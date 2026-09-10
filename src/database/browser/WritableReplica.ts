@@ -173,7 +173,7 @@ export class WritableReplica extends WritableGraph {
 
   refresh(): Promise<boolean> {
     this.#assertOpen()
-    return this.#replica.refresh()
+    return this.#replica.refreshAfterChange()
   }
 
   pendingMutations() {

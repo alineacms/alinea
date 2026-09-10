@@ -50,7 +50,7 @@ async function setup() {
       viewId: 'view',
       releaseId: 'release'
     },
-    refreshAfterWrite: async () => true
+    refreshAfterChange: async () => true
   }
   const calls: Array<Parameters<MutationQueueOptions['client']['mutate']>> = []
   const client: MutationQueueOptions['client'] = {
@@ -102,7 +102,7 @@ test('accepted edits survive refresh failure and restart without another submiss
   const state = await setup()
   await state.queue.enqueue(input)
   await state.queue.enqueue({...input, id: 'later'})
-  state.replica.refreshAfterWrite = async () => {
+  state.replica.refreshAfterChange = async () => {
     throw new Error('Offline')
   }
   await expect(state.queue.flush()).rejects.toThrow('Offline')
@@ -110,7 +110,7 @@ test('accepted edits survive refresh failure and restart without another submiss
   expect(state.calls).toHaveLength(1)
   await state.queue.close()
   const reopened = await state.open()
-  state.replica.refreshAfterWrite = async () => true
+  state.replica.refreshAfterChange = async () => true
   await reopened.queue.flush()
   expect(state.calls.map(call => call[1])).toEqual(['edit', 'later'])
   await reopened.queue.close({purge: true})
@@ -153,12 +153,12 @@ test('scope changes fail closed without submitting or deleting drafts', async ()
 test('discard waits for authoritative refresh and never submits', async () => {
   const state = await setup()
   await state.queue.enqueue(input)
-  state.replica.refreshAfterWrite = async () => {
+  state.replica.refreshAfterChange = async () => {
     throw new Error('Offline')
   }
   await expect(state.queue.discard(input.id)).rejects.toThrow('Offline')
   expect(await state.queue.list()).toHaveLength(1)
-  state.replica.refreshAfterWrite = async () => true
+  state.replica.refreshAfterChange = async () => true
   await state.queue.discard(input.id)
   expect(await state.queue.list()).toHaveLength(0)
   expect(state.calls).toHaveLength(0)
@@ -193,7 +193,7 @@ test('close during refresh retains acceptance and prevents late intent removal',
   await state.queue.enqueue(input)
   const started = Promise.withResolvers<void>()
   const resume = Promise.withResolvers<void>()
-  state.replica.refreshAfterWrite = async () => {
+  state.replica.refreshAfterChange = async () => {
     started.resolve()
     await resume.promise
     return true
