@@ -29,8 +29,8 @@ probe succeeds. Driver unit tests run WASM under Bun; the browser check below
 also exercises the binary in Chromium.
 The optional input is a complete database copy into WASM memory, not page-lazy
 file access; it must never be used to ship private server checkpoints to clients.
-Permission-scoped replica transport, browser persistence, worker integration,
-and vector extension capabilities remain separate gates.
+Permission-scoped replica transport, browser persistence, and worker integration
+remain separate gates.
 
 `browser/QueryWorker.ts` and `browser/WorkerGraph.ts` now provide a per-port
 Comlink query bridge using the existing config-scoped Graph serialization.
@@ -1200,8 +1200,8 @@ transport; polling is enough to verify the first implementation.
 
 Gate: a matching insert appears, a delete disappears, an initially nonmatching
 entry enters after an edit, and order/limit results change when an off-page entry
-moves into the page. Exercise nested links, reference changes, search/vector
-completion, and inherited status changes. Newly matching rows hydrate before
+moves into the page. Exercise nested links, reference changes, search completion,
+and inherited status changes. Newly matching rows hydrate before
 publication; hydration cannot create an invalidation loop. Interleave two revisions
 with slow fetches and verify the older completion never replaces the latest result.
 Test transaction batching, unsubscribe cleanup, reconnect catch-up, error handling,
@@ -1240,210 +1240,7 @@ reuse its ID with a different body, and kill a handler after durable source comm
 but before local materialization/response. No duplicate writes or lost edits.
 Interleave two previews and a normal read and verify complete isolation.
 
-## 7. Optional vectors and linked database capabilities
-
-`vector/EmbeddingStore` now provides an opt-in, private Rado storage prototype
-using ordinary manifest, payload and derived-revision tables. Entry/image/document
-owner versions, named slots, chunks, source hashes and complete embedding-space
-descriptors are bound to generation-tagged jobs. Reconciliation can replace or
-remove a target before a background job completes; stale completions are rejected,
-including source A → B → A and model changes. Repeating the same completion is
-idempotent, while differing output under the same completed job is rejected.
-Completion advances the store's derived revision without changing its source hash.
-
-Manifest reads do not access the vector table. Lazy payload reads verify SHA-256
-identity and decode bounded, finite float32 little-endian vectors with explicit
-dimension/metric checks. A cosine vector cannot be zero. Tests cover all owner
-kinds on Bun native SQLite and Alinea WASM, stale/deleted jobs, lazy reads, detached
-values, a native-built checkpoint reopened in WASM and corrupt payload rejection.
-A separate smoke run verified the built store with Node's actual SQLite driver.
-
-Capability probes on the current binaries found SQLite 3.46.1 in Alinea WASM,
-without `vec_version()` or `vss_version()` (and without `pragma_function_list`).
-Node 24.16.0 reports SQLite 3.53.0 and no registered `vec_%`/`vector_%` functions.
-No vector extension is assumed or required for this store. Text source preparation
-is now wired into build/reconciliation (below). Browser revision publication,
-encrypted browser transport, configured embedding providers and Graph search are
-not yet wired.
-Obsolete private payload retention/GC also remains open. Do not expose this
-trusted store directly as a browser API or ship its private checkpoint to clients.
-
-The private store now has a bounded exact-search baseline for explicitly supplied
-candidate IDs at an exact derived revision. A single SQL transaction pins the
-revision, manifests and vector reads. Missing/pending candidates, stale scope,
-incompatible embedding spaces and corrupt payloads reject the query rather than
-silently ranking a partial cache. Blob sizes are checked before bytes are loaded;
-work is limited to 1,024 candidates and 1,048,576 float32 components (4 MiB of
-vector data, not a total heap limit). Queries above that bound need a separate
-capable search path, not truncated results.
-
-Cosine distance, Euclidean L2 and negative dot-product ranking are exact over the
-provided candidates, with deterministic manifest-ID tie breaking. Results say
-`scope: 'provided-candidates'`; they do not claim global coverage or authorize the
-candidate selection. Owner/chunk metadata, not vector bytes, is returned for
-top-k matches. Tests on native/WASM cover all metrics, pre-filtered scopes,
-duplicate/missing/pending IDs, immutable query inputs, work limits, corruption,
-and a 129-candidate result spanning SQL batches. A built Node SQLite smoke query
-also passed. Graph/authorization integration and remote/ANN adapters remain open.
-
-`handler/EmbeddingSearch` now adds a trusted, role-filtered candidate-selection
-service. It recompiles the current authorized index, verifies the source/policy
-cursor, and intersects requested owner versions with readable rows before any
-vector payload is selected or ranked. Manifest owner/space/slot indexes support
-that lookup. Each embedding target now also binds the exact owner payload ID;
-stale owner inputs and readable owners with no matching manifests are rejected.
-The derived revision pins candidate enumeration and ranking, and the runtime's
-read-generation guard detects concurrent source changes. The stores must use
-independent connections or an enclosing owner-controlled serialization boundary.
-
-Native/WASM tests cover unreadable nearest matches, inaccessible corrupt vectors,
-same-source-revision policy revocation, stale source cursors, changed owner
-payloads, pending replacements and roles with no access. Mixed field-read policy
-views retain the existing fail-closed behavior; no derived bytes may bypass it.
-This is not yet a public HTTP route or a Graph method. Source reconciliation must
-declare the complete chunk scope before claiming global vector coverage. Encrypted
-vector transport and principal/release binding must be added at the eventual HTTP
-boundary.
-
-`EmbeddingStore.publishOwner` now atomically replaces a complete owner/slot chunk
-manifest and records its exact job generations. It checks the expected derived
-revision captured before preparation, retains unchanged jobs and ready vectors,
-removes obsolete chunks, and distinguishes an explicitly empty set from absent
-indexing. Repeated identical publication at the current revision is a no-op;
-competing stale preparations cannot replace newer declarations. Individual
-low-level scheduling/removal invalidates the complete-owner declaration until
-republished. Authorized candidate selection now requires this declaration and
-matching owner payload, space, chunk IDs and job generations. Pending declared
-chunks still prevent search from returning partial rankings.
-
-Native/WASM tests cover retained ready chunks, empty versus unknown owners,
-removed-job rejection, source A → B → A job generations, input detachment,
-competing preparations and transaction rollback using an injected publication
-failure. A built Node SQLite publication/search smoke test also passed. The
-source reconciliation/provider pipeline must still supply complete, current input
-sets; this store cannot independently discover missing extraction output.
-
-`vector/EmbeddingRunner` adds explicit, opt-in background batches over durable
-pending jobs in complete published owner sets. A runner selects only its declared
-model space, bounds concurrent provider calls, and keeps failed jobs pending for
-explicit retry or restart. Inputs are detached and bounded to 8 MiB; their SHA-256
-identity binds canonical media type and actual normalized bytes, not a mutable
-URL. Loaders must resolve the exact immutable owner payload/chunk. A changed input
-never reaches the provider, and obsolete generations cannot install late output.
-Providers must return the expected space identity; installation checks dimensions,
-encoding and metric constraints as before.
-
-Closing aborts queued work and cooperative in-flight calls, drains actual provider
-calls, and prevents cancelled installation from committing. Providers that ignore
-cancellation can delay shutdown. Native/WASM tests cover concurrency, model-space
-isolation, unpublished-job exclusion, input mismatch, failed-job restart, late
-results after owner replacement, and cancellation with pending work preserved.
-The built runner also passed a Node SQLite publication/completion smoke test.
-This is an internal runner, not provider configuration or a scheduler: no network
-calls, automatic retry policy, distributed provider lease or source reconciliation
-are added. Multiple runners can duplicate provider work; generation checks protect
-installation, not billing. A failed first batch requires caller policy before
-advancing to later work. Runtime derived-revision publication remains separate.
-
-`Config.embeddings` now accepts named declarative slots with
-`{source: 'searchableText', space}`. The descriptor contains no provider code or
-credentials. Checkpoint format 10 creates private embedding tables, and the real
-builder prepares one `text` chunk per configured slot from the normalizer's
-searchable text (fields must opt into search). Empty text publishes a complete
-empty slot; absent configuration declares no coverage. Text preparation is local,
-bounded by the runner's 8 MiB input limit, and never invokes providers or downloads
-media. This first preparation mode does not yet split long documents or extract
-image/document bytes.
-
-Source reconciliation retains jobs and vectors for unchanged payloads, invalidates
-all slots/kinds for changed/deleted owner versions, and prepares replacement text
-jobs in the same source SQL transaction. A failed source commit rolls back derived
-invalidation/publication too. Conservative invalidation uses the full owner payload
-descriptor even if only non-searchable data changed. An A → B → A source sequence
-gets fresh job generations. Configuration/model changes require a new matching
-checkpoint identity/rebuild, not reconciliation under a reused config identity.
-
-`loadEntryEmbeddingInput` reconstructs exact input from the persisted owner payload
-for the background runner, allowing restart without repeating source normalization.
-The caller must own the database connection/serialization boundary; do not run
-reconciliation or unrelated transactions concurrently on that connection, and do
-not mutate a published immutable release to install provider output. Native/WASM
-tests exercise build → provider completion → edit/delete → reconcile, unchanged
-vector retention, empty/undeclared slots, source rollback and native-built jobs
-reopened and completed in WASM. Automatic background scheduling, provider adapters,
-browser derived-generation publication and media extraction remain to be connected.
-The built package also passed a Node SQLite build/completion/reconciliation smoke.
-
-`NodeReplica.runEmbeddings(provider, {limit, concurrency})` now owns an explicit
-background batch. It leases/copies an immutable checkpoint into private scratch
-storage, releases the lease, and runs providers outside the source-update queue.
-Source sync and Graph reads continue while providers wait. Completed vectors are
-then replayed by exact job generation into a fresh copy of the latest source head,
-not published by swapping in the potentially stale provider snapshot. Changed or
-deleted owners are skipped as obsolete; unrelated current completions are retained.
-Only a successful complete merge advances the on-disk generation pointer. Failed,
-empty or entirely obsolete batches do not publish a replacement. Existing reader
-files are never modified, and provider scratch files are removed on completion.
-
-The Node replica exposes `embeddingRevision()` separately from its source revision;
-successful completion notifies its local subscriptions even when content is
-unchanged. Restart restores both data and derived revision from the committed
-checkpoint. One batch runs per replica at a time; a second explicit call rejects
-rather than silently sharing a different provider's result. Close cancels the
-cooperative provider runner and drains background work and scratch cleanup. Tests
-cover concurrent source changes, unchanged-reader bytes, retained current vectors,
-restart, local subscription invalidation, provider failure/retry, full obsolescence,
-injected merge failure after a partial scratch update, and shutdown.
-The built package passed the concurrent-source/completion/restart scenario on
-Node's actual SQLite driver as well.
-The generated dev fixture passed after an isolated retry. Its first run timed out
-at the replacement config's textbox while showing `Loading dashboard`; boot,
-save, restart and external source refresh had passed. This intermittent reload
-failure remains unresolved and must be diagnosed before the final cutover gate;
-a successful retry is not evidence that the reload race has been fixed.
-
-This is a Node-owned explicit batch API, not an automatic remote scheduler. The
-application still supplies the provider implementation server-side; no network
-provider adapter or credentials are shipped into dashboard configuration. There is
-no cross-process provider lease, managed Cloud/edge runner, browser vector revision
-stream, public Graph vector method or old-generation garbage collector yet. Disk
-pointer publication remains a restart-cache mechanism, not a durable provider
-receipt or a distributed source transaction.
-
-For example, add this to the CMS configuration (provider implementation is supplied
-separately to `EmbeddingRunner`, not serialized into dashboard configuration):
-
-```ts
-embeddings: {
-  semantic: {
-    source: 'searchableText',
-    space: {
-      provider: 'application', model: 'my-model', revision: '1',
-      preprocessing: 'searchable-text-v1', dimensions: 384,
-      metric: 'cosine', encoding: 'float32-le'
-    }
-  }
-}
-```
-
-Add embedding manifests, content/model identity, background job completion,
-invalidation, chunk ownership, permission filtering, and lazy vector payloads.
-Start with an exact-search correctness baseline and a capability interface. Verify
-extension support in the actual native/WASM binaries before selecting sqlite-vec
-or another implementation. Compare capable remote execution with bounded local
-hydration. Unsupported vector search does not prevent ordinary content queries.
-
-Gate: stale jobs cannot install obsolete vectors; model/dimension/metric mismatch
-is rejected; media/document changes invalidate the correct chunks; source-unchanged
-embedding completion synchronizes; unauthorized vectors never reach clients;
-global search never presents cached-only results as complete. Measure approximate
-recall with permission/metadata filters when ANN is enabled.
-
-Exercise Alinea-owned tables through a second Rado driver. Define a read-only
-external mapping prototype with source-qualified links and explicit freshness.
-Writable external tables and cross-source transactions require their own design.
-
-## 8. Benchmarks and cutover
+## 7. Benchmarks and cutover
 
 Use small correctness fixtures, synthetic scale, and the same 11,374-entry imec
 project cited by `sync-engine` when available. That branch reports roughly 4.47 MB
@@ -1453,7 +1250,7 @@ are historical comparison points, not measurements of SQLite or guarantees.
 
 Record cold module/driver initialization, file pages or bytes read, first/warm
 queries, index boot transfer, hydration bytes/requests, SQL query plans, source
-reconciliation, preview latency, concurrent writes, search/vector first use,
+reconciliation, preview latency, concurrent writes, search first use,
 retained memory, cache growth, artifact size, and browser persistence time.
 Scale entry count and payload size independently to expose eager loading.
 
@@ -1475,7 +1272,7 @@ tests, `bun lint`, and targeted `bun spec` coverage for the cutover.
 - Artifact duplication and server deployment size versus a hybrid payload layout.
 - Durable retry receipts for Git and whether a hosted journal is worth its cost.
 - Preview edits going directly to configured Git branches or an Alinea overlay.
-- Search behavior across dialects and optional vector extension/provider choices.
+- Search behavior across dialects.
 
 These do not block the schema/compiler and tracing prototypes. They must be
 settled before depending on their behavior in the production cutover.

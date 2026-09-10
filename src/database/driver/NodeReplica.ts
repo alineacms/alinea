@@ -55,21 +55,11 @@ import {
 } from '../replica/PayloadBatch.js'
 import {base64} from '#/core/util/Encoding.js'
 import {HttpError} from '#/core/HttpError.js'
-import type {Database} from 'rado'
-import {EmbeddingStore} from '../vector/EmbeddingStore.js'
-import {ObsoleteEmbeddingJobError} from '../vector/Embedding.js'
-import {loadEntryEmbeddingInput} from '../vector/EntryEmbeddings.js'
-import {
-  EmbeddingRunner,
-  type EmbeddingProvider,
-  type EmbeddingRunResult
-} from '../vector/EmbeddingRunner.js'
 
 interface Snapshot {
   path: string
   identity: CheckpointIdentity
   revision: string
-  embeddingRevision: string
   runtime: EntryRuntime
   sqlite: DatabaseSync
   readers: number
@@ -81,11 +71,6 @@ export interface NodeReplicaOptions {
   /** Private cache directory; never an application's public directory. */
   directory: string
   identity: CheckpointIdentity
-}
-
-export interface NodeEmbeddingOptions {
-  limit?: number
-  concurrency?: number
 }
 
 export interface CheckpointCapture {
@@ -117,9 +102,6 @@ export class NodeReplica extends Graph {
   #updates: Promise<unknown> = Promise.resolve()
   #closed = false
   #listeners = new Set<() => void>()
-  #embeddingRun?: Promise<Array<EmbeddingRunResult>>
-  #embeddingRunner?: EmbeddingRunner
-  #closing?: Promise<void>
 
   private constructor(options: NodeReplicaOptions) {
     super()
@@ -136,10 +118,6 @@ export class NodeReplica extends Graph {
 
   identity(): Promise<CheckpointIdentity> {
     return this.#read(async snapshot => ({...snapshot.identity}))
-  }
-
-  embeddingRevision(): Promise<string> {
-    return this.#read(async snapshot => snapshot.embeddingRevision)
   }
 
   static async open(
@@ -225,9 +203,6 @@ export class NodeReplica extends Graph {
         path,
         identity,
         revision: descriptor.sourceSha,
-        embeddingRevision: await new EmbeddingStore(
-          nodeDatabase(sqlite)
-        ).revision(),
         runtime,
         sqlite,
         readers: 0,
@@ -540,109 +515,6 @@ export class NodeReplica extends Graph {
     return update
   }
 
-  /** Explicit background batch. Providers run off the source update queue;
-   * completions merge into the latest head using original job generations.
-   */
-  runEmbeddings(
-    provider: EmbeddingProvider,
-    options: NodeEmbeddingOptions = {}
-  ): Promise<Array<EmbeddingRunResult>> {
-    if (this.#closed)
-      return Promise.reject(new Error('SQLite replica is closed'))
-    if (this.#embeddingRun)
-      return Promise.reject(new Error('Embedding batch already running'))
-    const run = this.#runEmbeddings(
-      {
-        space: structuredClone(provider.space),
-        embed: provider.embed.bind(provider)
-      },
-      {...options}
-    )
-    this.#embeddingRun = run
-    void run
-      .finally(() => {
-        if (this.#embeddingRun === run) this.#embeddingRun = undefined
-      })
-      .catch(() => {})
-    return run
-  }
-
-  async #runEmbeddings(
-    provider: EmbeddingProvider,
-    options: NodeEmbeddingOptions
-  ): Promise<Array<EmbeddingRunResult>> {
-    const scratch = join(
-      this.#options.directory,
-      `.embedding-${randomUUID()}.sqlite`
-    )
-    try {
-      await this.#read(snapshot =>
-        copyFile(
-          snapshot.path,
-          scratch,
-          constants.COPYFILE_EXCL | constants.COPYFILE_FICLONE
-        )
-      )
-      if (this.#closed) throw new Error('SQLite replica is closed')
-      const sqlite = new DatabaseSync(scratch)
-      try {
-        const db = nodeDatabase(sqlite),
-          staged = new EmbeddingStore(db)
-        const runner = new EmbeddingRunner({
-          store: staged,
-          provider,
-          concurrency: options.concurrency,
-          load: job => loadEntryEmbeddingInput(db, job)
-        })
-        this.#embeddingRunner = runner
-        let results: Array<EmbeddingRunResult>
-        try {
-          results = await runner.run(options.limit)
-        } finally {
-          await runner.close()
-          this.#embeddingRunner = undefined
-        }
-        if (this.#closed) throw new Error('SQLite replica is closed')
-        if (!results.some(result => result.status === 'installed'))
-          return results
-        const publish = this.#updates.then(() =>
-          this.#publish(async target => {
-            const current = new EmbeddingStore(target)
-            let changed = false
-            for (const result of results) {
-              if (result.status !== 'installed') continue
-              const job = await staged.manifest(result.id)
-              if (!job || job.generation !== result.generation)
-                throw new Error('Missing staged embedding completion')
-              const vector = await staged.load(job)
-              if (!vector) throw new Error('Missing staged embedding payload')
-              try {
-                const installed = await current.install(job, vector)
-                changed ||= installed
-                result.status = installed ? 'installed' : 'ready'
-              } catch (error) {
-                if (!(error instanceof ObsoleteEmbeddingJobError)) throw error
-                result.status = 'obsolete'
-              }
-            }
-            return changed
-          })
-        )
-        this.#updates = publish.catch(() => {})
-        await publish
-        return results
-      } finally {
-        sqlite.close()
-      }
-    } finally {
-      await Promise.all(
-        ['', '-journal', '-wal', '-shm'].map(suffix =>
-          rm(`${scratch}${suffix}`, {force: true})
-        )
-      )
-    }
-  }
-
   /** Prepare against a private scratch copy, never the published reader file.
    * The request still needs an exact-revision commit at the source authority.
    */
@@ -718,31 +590,7 @@ export class NodeReplica extends Graph {
       previous && (await source.getTreeIfDifferent(previous.revision))
     if (this.#closed) throw new Error('SQLite replica is closed')
     if (previous && (!tree || tree.sha === previous.revision)) return false
-    return this.#publish(async db => {
-      const {config} = this.#options
-      const identity = previous?.identity ?? this.#options.identity
-      if (previous)
-        await reconcileDatabase(
-          config,
-          db,
-          {
-            getTreeIfDifferent: async () => tree,
-            getBlobs: source.getBlobs.bind(source)
-          },
-          identity
-        )
-      else await buildDatabase(config, db, source, identity)
-      return true
-    })
-  }
-
-  /** Only called on the update queue. Publish a complete source or derived generation. */
-  async #publish(
-    prepare: (db: Database) => Promise<boolean>
-  ): Promise<boolean> {
-    if (this.#closed) throw new Error('SQLite replica is closed')
-    const previous = this.#current
-    const {directory} = this.#options
+    const {directory, config} = this.#options
     const identity = previous?.identity ?? this.#options.identity
     const id = randomUUID()
     const file = `checkpoint-${id}.sqlite`
@@ -760,7 +608,17 @@ export class NodeReplica extends Graph {
       const sqlite = new DatabaseSync(pending)
       try {
         const db = nodeDatabase(sqlite)
-        if (!(await prepare(db))) return false
+        if (previous)
+          await reconcileDatabase(
+            config,
+            db,
+            {
+              getTreeIfDifferent: async () => tree,
+              getBlobs: source.getBlobs.bind(source)
+            },
+            identity
+          )
+        else await buildDatabase(config, db, source, identity)
         sqlite.exec('PRAGMA wal_checkpoint(TRUNCATE)')
         sqlite.exec('PRAGMA journal_mode=DELETE')
       } finally {
@@ -811,15 +669,11 @@ export class NodeReplica extends Graph {
   }
 
   /** New reads stop immediately; in-flight queries retain their connection. */
-  close(): Promise<void> {
-    if (this.#closing) return this.#closing
+  async close(): Promise<void> {
+    if (this.#closed) return
     this.#closed = true
     this.#listeners.clear()
     if (this.#current) this.#retire(this.#current)
-    return (this.#closing = (async () => {
-      await this.#embeddingRunner?.close()
-      await this.#embeddingRun?.catch(() => {})
-      await this.#updates
-    })())
+    await this.#updates
   }
 }

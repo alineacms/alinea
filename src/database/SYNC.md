@@ -106,7 +106,7 @@ Only return unchanged when both data and policy bindings match. A read-to-explor
 transition removes data grants and resident content; explore-to-read adds readable
 descriptors; loss of explore removes the row. A policy change may use a full
 filtered index instead of a cross-view delta. Never expose old view data during
-the switch. Deletes remove dependent search/reference/vector rows as well.
+the switch. Deletes remove dependent search/reference rows as well.
 
 If ciphertext is in IndexedDB while active query state is in WASM memory, these
 are not a distributed transaction. Persist a complete committed checkpoint first,
@@ -146,12 +146,6 @@ must supply a durable journal or replacement snapshot. An instance-local latest
 delta is only a fast path. A journal, when configured, commits rows, revision,
 and outbox records atomically in its authoritative SQL store; background delivery
 can retry. It may coalesce many transitions into one exact-base response.
-
-Runtime revisions include derived-data changes such as embedding completion.
-Recover those from a durable derived-data manifest/store, or regenerate them;
-source-tree reconciliation alone cannot discover such changes. Optional derived
-data may become pending during recovery, but cannot be reported as current using
-stale vectors. A new snapshot carries a new runtime identity.
 
 Retain immutable bundles for active and rollback deployments or provide a durable
 way to serve equivalent referenced bytes. Never depend on the current production
@@ -283,8 +277,8 @@ historical Alinea database formats. Rebuild incompatible caches from source.
    compatible generated release. Validate namespace, storage version, config,
    normalization identity, and availability of referenced files/bundles.
 2. Open the previous SQLite database and any committed overlay as the starting
-   state. Reuse resident entry data, search/reference indexes, manifests, and
-   compatible embeddings without exporting the complete database through JS.
+   state. Reuse resident entry data, search/reference indexes, and manifests
+   without exporting the complete database through JS.
 3. Obtain the previous source Tree from its SQL index. Seed the filesystem
    scanner with stored fingerprints, compare the current working tree, and
    read/hash only changed candidates. Source hashes remain authoritative.

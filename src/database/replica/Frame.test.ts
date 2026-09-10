@@ -35,12 +35,6 @@ test('independent AES-GCM frames round-trip compressed and raw binary payloads',
     )
     const next = await encryptFrame(identity, contents, key, compression)
     expect(next.descriptor.nonce).not.toEqual(frame.descriptor.nonce)
-    const binary = new Uint8Array([0, 128, 255, 0])
-    const vector = {...identity, kind: 'vector' as const}
-    const encoded = await encryptFrame(vector, binary, key, compression)
-    expect(
-      await decryptFrame(vector, encoded.descriptor, encoded.ciphertext, key)
-    ).toEqual(binary)
   }
 })
 

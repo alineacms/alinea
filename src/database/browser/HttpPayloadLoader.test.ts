@@ -135,7 +135,7 @@ test('wire validation rejects foreign, duplicate, truncated and malformed envelo
       frames: [
         {
           ...response.frames[0],
-          descriptor: {...response.frames[0].descriptor, kind: 'vector'}
+          descriptor: {...response.frames[0].descriptor, kind: 'unknown'}
         }
       ]
     },

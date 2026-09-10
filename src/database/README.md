@@ -83,8 +83,8 @@ reject incompatible pending operations visibly instead of dropping them.
   defaults and normalization must not rewrite source on ordinary reads.
 - Deployment previews, editor previews, content revisions, and authentication
   views have distinct identities.
-- Rado supplies the common SQL layer. Storage transport, full-text search,
-  vector search, and transaction capabilities are explicit adapter concerns.
+- Rado supplies the common SQL layer. Storage transport, full-text search, and
+  transaction capabilities are explicit adapter concerns.
 
 ## One logical schema, different population strategies
 
@@ -98,18 +98,17 @@ prefixed with `alinea_` in an external database. Each database is scoped to a
 source namespace; shared hosted tables must include that namespace in keys and
 constraints.
 
-| Relation                                | Contents and identity                                                                                                                           | Browser population                                      |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `replica_meta`                          | Schema/config identity, source namespace, source revision, runtime revision, release binding, policy view                                       | On bootstrap and atomic sync                            |
-| `entry_index`                           | Non-null version key, logical entry ID, locale, type, workspace/root, ancestry, title, path/URL, ordering, source/effective status, active/main | Authorized rows only                                    |
-| `entry_grant`                           | Effective entry actions and any supported field restrictions, scoped to policy view                                                             | Compiled by handler; may be packed into wire index rows |
-| `payload_manifest`                      | Version key, class, immutable payload identity, hash, size, bundle locator, compression/encryption information                                  | Readable descriptors only                               |
-| `entry_data`                            | Version key, payload identity, queryable JSON with defaults applied                                                                             | Lazy                                                    |
-| `entry_search`                          | Version key, payload identity, searchable text; adapter-managed search index                                                                    | Lazy                                                    |
-| `entry_reference`                       | Source version, payload identity, target source/entry, field path and link metadata                                                             | Lazy, complete per source version                       |
-| `payload_residency`                     | Which class and exact payload identity has been completely installed, including empty payloads                                                  | Local cache metadata                                    |
-| `source_file`                           | Exact authored bytes, path and source blob hash; tree/checkpoint metadata                                                                       | Trusted source operations only                          |
-| `embedding_manifest` / `embedding_data` | Owner/chunk, source hash, embedding space, vector descriptor / vector bytes                                                                     | Readable manifests and lazy vectors                     |
+| Relation            | Contents and identity                                                                                                                           | Browser population                                      |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `replica_meta`      | Schema/config identity, source namespace, source revision, runtime revision, release binding, policy view                                       | On bootstrap and atomic sync                            |
+| `entry_index`       | Non-null version key, logical entry ID, locale, type, workspace/root, ancestry, title, path/URL, ordering, source/effective status, active/main | Authorized rows only                                    |
+| `entry_grant`       | Effective entry actions and any supported field restrictions, scoped to policy view                                                             | Compiled by handler; may be packed into wire index rows |
+| `payload_manifest`  | Version key, class, immutable payload identity, hash, size, bundle locator, compression/encryption information                                  | Readable descriptors only                               |
+| `entry_data`        | Version key, payload identity, queryable JSON with defaults applied                                                                             | Lazy                                                    |
+| `entry_search`      | Version key, payload identity, searchable text; adapter-managed search index                                                                    | Lazy                                                    |
+| `entry_reference`   | Source version, payload identity, target source/entry, field path and link metadata                                                             | Lazy, complete per source version                       |
+| `payload_residency` | Which class and exact payload identity has been completely installed, including empty payloads                                                  | Local cache metadata                                    |
+| `source_file`       | Exact authored bytes, path and source blob hash; tree/checkpoint metadata                                                                       | Trusted source operations only                          |
 
 Use a stable non-null version key derived unambiguously from entry ID, locale,
 and source version status. Do not inherit the old nullable composite primary
@@ -133,7 +132,7 @@ The trusted SQL index should implement the source tree contract so the database
 can participate directly in existing source synchronization and diffing. Persist
 exact source paths, blob hashes, modes, directory relationships, and subtree
 hashes alongside the entry index. These are small index metadata; reading a tree
-or calculating a source diff must not hydrate entry JSON, search, or vectors.
+or calculating a source diff must not hydrate entry JSON or search data.
 Source bytes remain in separate payload storage, fetched only by `getBlobs`.
 
 This tree describes the configured source files, including every file tracked by
@@ -147,7 +146,7 @@ parent/name, node kind, mode, and hash. `source_file` supplies its blob contents
 The tree and query index are two views of one committed database revision; a
 source reconciliation updates both in one SQL transaction. Keep the source tree
 hash separate from the commit reference and runtime revision. A change to a
-derived embedding or policy view does not change the source tree hash.
+derived policy view does not change the source tree hash.
 
 Use the public shape and semantics of `src/core/source/Tree.ts`: root `sha`,
 lookup, traversal, serialization, and diff. Its `Tree` interface is currently a
@@ -186,7 +185,7 @@ share a file or use sidecars, but eliminating duplication must not force every
 server content predicate through network hydration.
 
 The public bundles contain independently compressed/encrypted frames for data,
-search, references, and embeddings. Retain per-entry read grants and authenticated
+search, and references. Retain per-entry read grants and authenticated
 frame identity from `sync-engine`. Frames sharing a key must use distinct nonces.
 Descriptors directly identify bytes; they do not require traversing delta chains.
 Group frames by class so the loader can coalesce nearby ranges. Batch and bound
@@ -218,20 +217,19 @@ Unloaded data is distinct from `NULL`, a missing JSON field, an empty reference
 list, and a payload class that does not exist for this entry.
 
 The planner inspects the entire query, including nested selections and relations,
-and builds SQL stages with dependencies on index, data, search, references, or
-vectors. SQL remains responsible for predicates, joins, ordering, and projection;
+and builds SQL stages with dependencies on index, data, search, or references.
+SQL remains responsible for predicates, joins, ordering, and projection;
 the planner supplies missing inputs before executing each dependent stage.
 
-| Query                                                       | Required hydration                                                                     |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Index-only filter/order/projection/count                    | None                                                                                   |
-| Index-only filter/order with `take: 10` and data projection | Selected ten data payloads, plus explicitly requested linked data                      |
-| Data predicate, known index order, small limit              | Ordered batches until enough matches exist; apply skip to matches                      |
-| Data-dependent order, group, or aggregate                   | All remaining candidates whose data can affect the result                              |
-| Full-content search                                         | Complete permitted search corpus for the chosen search scope, then result data         |
-| Outgoing references                                         | Reference payload for the source version                                               |
-| Incoming references                                         | Complete reference coverage for the permitted scope, then result data                  |
-| Exact vector top-k                                          | All vectors in the defined candidate scope, or a server query over that complete scope |
+| Query                                                       | Required hydration                                                             |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Index-only filter/order/projection/count                    | None                                                                           |
+| Index-only filter/order with `take: 10` and data projection | Selected ten data payloads, plus explicitly requested linked data              |
+| Data predicate, known index order, small limit              | Ordered batches until enough matches exist; apply skip to matches              |
+| Data-dependent order, group, or aggregate                   | All remaining candidates whose data can affect the result                      |
+| Full-content search                                         | Complete permitted search corpus for the chosen search scope, then result data |
+| Outgoing references                                         | Reference payload for the source version                                       |
+| Incoming references                                         | Complete reference coverage for the permitted scope, then result data          |
 
 An inner join against only hydrated rows silently loses candidates. Do not use
 that as an implicit loading strategy. For `OR`, `NOT`, missing fields, and mixed
@@ -260,7 +258,7 @@ Persist the authorized index, descriptors, and cache records incrementally in
 IndexedDB, or use a suitable persistent SQLite VFS after verification. The
 historical `db.export()` persistence is a fallback to measure, not a write path
 to assume scales. `@alinea/sqlite-wasm` availability does not establish OPFS,
-HTTP VFS, FTS, vector extension, or native file paging support in that build.
+HTTP VFS, FTS, or native file paging support in that build.
 
 ## Live queries in the browser
 
@@ -274,7 +272,7 @@ Track query dependencies at the relation/payload-class level initially, refining
 to structural scope, fields, or entry IDs where provably safe. Include potential
 matches: a query returning ten rows may change because an eleventh entry changes
 its filter value or ordering. Tracking only returned IDs is insufficient. Nested
-links, references, effective ancestor state, FTS, and vector search contribute
+links, references, effective ancestor state, and FTS contribute
 dependencies too. Use conservative invalidation for expressions whose narrower
 dependencies cannot be established. Fine-grained tracking is an optimization.
 
@@ -310,7 +308,7 @@ alone does not supply reactive query subscriptions or remote change delivery.
 The handler evaluates roles against its trusted database and compiles effective
 actions per entry. It can return these alongside structural rows. No explore
 access means no row; explore without read means no content-derived descriptors,
-keys, references, searchable text, or embeddings. Preserve existing supported
+keys, references, or searchable text. Preserve existing supported
 field restrictions without inventing field-level payload encryption.
 
 All server query and mutation endpoints enforce authorization independently of
@@ -324,42 +322,6 @@ release binding in replica metadata; cross-release cache reuse needs explicit
 compatibility and descriptor checks. Role changes or logout replace the worker
 and purge access that is no longer available, including in-flight responses.
 Already disclosed plaintext cannot be revoked from a client.
-
-## Embeddings for entries, images, and documents
-
-Treat embeddings as optional derived data with their own payload class. Store
-owner version, media/content hash, chunk identity, model/provider revision,
-preprocessing/chunking version, dimensions, scalar encoding, metric, and vector
-payload identity. Define an embedding-space ID from these compatibility inputs;
-vectors from different spaces must never be compared accidentally.
-
-Entries may have one or many chunks; images have an asset hash and transformation
-identity; documents have extraction and chunk boundaries. Derived metadata,
-extracted text, and vectors inherit the owner's read boundary. Share computation
-by content identity within an appropriate trust scope without exposing restricted
-deduplication metadata to clients.
-
-Generate embeddings asynchronously when configured. Saving an entry must not
-wait for an embedding provider. Install completed work only if the owner still
-references the source hash and embedding space used by the job. Obsolete jobs
-cannot overwrite newer vectors. Derived-data completion advances runtime state
-even when the authored source revision is unchanged; see [SYNC.md](./SYNC.md).
-
-Lazy loading defers vector transfer until a query needs it. It does not make
-exact global nearest-neighbor search possible from only currently cached vectors.
-For a small permitted scope, load all relevant vectors and run exact distance
-search. For a large scope, use a capable server index and return permitted IDs,
-scores, and then lazy result payloads. Label approximate results explicitly.
-Candidate filters and authorization must be incorporated before final top-k;
-post-filtering a fixed unrestricted top-k can miss valid permitted results.
-
-Keep ordinary embedding storage portable through Rado. A search capability
-adapter implements distance, filtering, ranking, and optional ANN indexing.
-[sqlite-vec](https://alexgarcia.xyz/sqlite-vec/) documents browser WASM support;
-that does not establish compatibility with the existing Alinea WASM binary.
-[pgvector](https://github.com/pgvector/pgvector#filtering) documents exact and
-approximate filtering behavior; identical ranking/recall across engines must
-not be assumed. No vector extension is required to open the core content DB.
 
 ## Other databases through Rado
 
@@ -375,7 +337,7 @@ The first can reuse the database implementation directly. The second may serve
 queries remotely or replicate mapped rows into SQLite. Rado alone does not
 provide change capture, source mapping, cross-database transactions, or snapshots
 across unrelated servers. Expose capabilities such as read, write, snapshot,
-change feed, full-text, and vector search. Start external mappings as read-only
+change feed and full-text search. Start external mappings as read-only
 unless explicitly configured writable; do not auto-migrate a user's own tables.
 
 Preserve source IDs on links and batch cross-source resolution. Arbitrary joins

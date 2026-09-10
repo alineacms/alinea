@@ -1,7 +1,6 @@
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {Preview} from '#/core/Preview.js'
 import type {Auth} from './Auth.js'
-import type {EntryEmbedding} from './Embedding.js'
 import {getWorkspace} from './Internal.js'
 import {admin, type Role} from './Role.js'
 import {Root} from './Root.js'
@@ -31,9 +30,6 @@ export interface Config {
 
   /** A record containing roles */
   roles?: Record<string, Role>
-
-  /** Optional named text embedding slots; never include provider credentials. */
-  embeddings?: Record<string, EntryEmbedding>
 
   /** A url which will be embedded in the dashboard for live previews */
   preview?: Preview

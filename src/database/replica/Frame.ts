@@ -10,7 +10,7 @@ export interface FrameIdentity {
   releaseId: string
   versionId: string
   payloadId: string
-  kind: 'data' | 'search' | 'references' | 'vector'
+  kind: 'data' | 'search' | 'references'
 }
 
 export interface FrameDescriptor extends FrameIdentity {
@@ -54,7 +54,7 @@ function identityData(identity: FrameIdentity): Array<string> {
   ]
   if (fields.some(value => typeof value !== 'string' || !value))
     throw new Error('Incomplete frame identity')
-  if (!['data', 'search', 'references', 'vector'].includes(identity.kind))
+  if (!['data', 'search', 'references'].includes(identity.kind))
     throw new Error('Unknown frame class')
   return fields
 }
