@@ -701,6 +701,26 @@ label: source refresh reuses the worker, while config reload replaces it and
 renders the updated editor. The fixture resolves Node's real executable to avoid
 version-manager wrappers leaving a server behind after termination.
 
+The fixture now performs three config reloads by default (a numeric argument,
+up to 50, selects a stress run), retains bounded console/network/worker diagnostics
+on failure, and rejects disconnected-graph React errors even when the editor
+eventually recovers. This exposed a deterministic teardown ordering bug: all three
+reloads reached the new editor but rendered the old dashboard against its closed
+graph. Boot now commits the new keyed App/atom store before retiring the old graph,
+using `flushSync` to make the detach boundary explicit. A 20-reload run passed with
+no such errors after the fix.
+
+`DevConfigUpdates` also keeps a persistent event listener while the generator
+imports or yields configuration. Its bounded latest-revision mailbox prevents
+refresh events from being dropped during those waits; later source refetches do
+not replace an already requested newer config. Unknown/malformed events no longer
+consume a one-shot listener, and generator cleanup removes the listener and closes
+the event source. Unit tests cover queued/coalesced revisions, refetch ordering,
+page versus worker reload behavior and disposal. The earlier intermittent worker
+startup stall has not been conclusively tied to the teardown error; retain the
+stress fixture and diagnostics as a final-cutover gate rather than treating one
+successful run as proof that every reload race is eliminated.
+
 This integration test exposed and now covers two UI fixes. Clean editing nodes
 are replaced when their source/row hashes or identity change; dirty nodes keep
 their values and original mutation baseline, and resetting them reveals the

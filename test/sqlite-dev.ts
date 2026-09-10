@@ -17,6 +17,8 @@ import {chromium, type Page} from 'playwright'
 import {expect} from '@playwright/experimental-ct-react'
 
 const root = resolve(import.meta.dir, '..')
+const reloadCount = Number(process.argv[2] ?? 3)
+assert(Number.isInteger(reloadCount) && reloadCount >= 1 && reloadCount <= 50)
 // Version-manager shims can exit without terminating the actual server child.
 const node = execFileSync('node', ['-p', 'process.execPath'], {
   encoding: 'utf8'
@@ -27,6 +29,12 @@ let server: ChildProcess | undefined
 let output = ''
 let dashboardPort: number | undefined
 let page: Page | undefined
+const diagnostics: Array<string> = []
+const lifecycleErrors: Array<string> = []
+function trace(message: string) {
+  diagnostics.push(`${Date.now()} ${message}`)
+  if (diagnostics.length > 200) diagnostics.shift()
+}
 const browser = await chromium.launch({headless: true})
 
 async function stop() {
@@ -129,11 +137,35 @@ await serve({cmd: 'dev', cwd: process.cwd(), port: Number(process.argv[2]),
 `
   )
   page = await browser.newPage()
+  page.on('console', message => {
+    trace(`console ${message.type()}: ${message.text()}`)
+    if (
+      message.type() === 'error' &&
+      message.text().includes('Dashboard replica disconnected')
+    )
+      lifecycleErrors.push(message.text())
+  })
+  page.on('crash', () => trace('page crashed'))
+  page.on('requestfailed', request =>
+    trace(
+      `failed ${new URL(request.url()).pathname}: ${request.failure()?.errorText}`
+    )
+  )
+  page.on('response', response => {
+    const url = new URL(response.url())
+    const detail =
+      url.pathname === '/config.js'
+        ? url.search
+        : (url.searchParams.get('action') ?? '')
+    trace(`response ${response.status()} ${url.pathname} ${detail}`)
+  })
   const errors: Array<string> = []
   const actions: Array<string> = []
   let workers = 0
-  page.on('worker', () => {
+  page.on('worker', worker => {
     workers++
+    trace(`worker started ${worker.url()}`)
+    worker.on('close', () => trace(`worker closed ${worker.url()}`))
   })
   page.on('pageerror', error => {
     errors.push(error.message)
@@ -206,18 +238,26 @@ await serve({cmd: 'dev', cwd: process.cwd(), port: Number(process.argv[2]),
     'Source refresh must reuse the authenticated worker'
   )
   const configFile = join(project, 'cms.ts')
-  await writeFile(
-    configFile,
-    (await readFile(configFile, 'utf8')).replace(
-      "Field.text('Title')",
-      "Field.text('Title refreshed')"
+  let previousLabel = 'Title'
+  for (let reload = 1; reload <= reloadCount; reload++) {
+    const label = `Title refreshed ${reload}`,
+      beforeReload = workers
+    trace(`config reload ${reload}`)
+    await writeFile(
+      configFile,
+      (await readFile(configFile, 'utf8')).replace(
+        `Field.text('${previousLabel}')`,
+        `Field.text('${label}')`
+      )
     )
-  )
-  await expect(
-    page.getByRole('textbox', {name: 'Title refreshed', exact: true})
-  ).toHaveValue('SQLite external edit', {timeout: 30000})
-  assert(workers > beforeRefresh, 'Config reload must replace the worker')
+    await expect(
+      page.getByRole('textbox', {name: label, exact: true})
+    ).toHaveValue('SQLite external edit', {timeout: 30000})
+    assert(workers > beforeReload, 'Config reload must replace the worker')
+    previousLabel = label
+  }
   assert.equal(errors.length, 0, errors.join('\n'))
+  assert.equal(lifecycleErrors.length, 0, lifecycleErrors.join('\n'))
   assert(
     (await readdir(join(project, '.alinea/local'))).includes('receipts.sqlite')
   )
@@ -225,10 +265,11 @@ await serve({cmd: 'dev', cwd: process.cwd(), port: Number(process.argv[2]),
     'Generated SQLite dashboard: authenticated boot, lazy hydration, Graph save, same-origin restart, source refresh and config reload passed'
   )
 } catch (error) {
+  console.error(diagnostics.join('\n'))
   console.error(
     await page
       ?.locator('body')
-      .innerText()
+      .innerText({timeout: 2000})
       .catch(() => 'Page unavailable')
   )
   console.error(output)

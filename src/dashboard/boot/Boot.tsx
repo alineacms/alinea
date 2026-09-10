@@ -4,6 +4,7 @@ import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
 import * as Comlink from 'comlink'
 import type {ComponentType} from 'react'
+import {flushSync} from 'react-dom'
 import {createRoot} from 'react-dom/client'
 import {App} from '../App.js'
 import {ActivityEvent} from '#/core/db/ActivityEvent.js'
@@ -72,8 +73,8 @@ export async function boot(gen: ConfigGenerator) {
       }
       if (batch.local) {
         if (batch.revision !== lastRevision) {
-          await replica?.close()
-          replica = new ReplicaGraph({
+          const previous = replica
+          const next = new ReplicaGraph({
             config: batch.config,
             connect(principal, signal) {
               if (typeof Worker !== 'undefined')
@@ -92,14 +93,20 @@ export async function boot(gen: ConfigGenerator) {
               })
             }
           })
-          root.render(
-            <App
-              key={batch.revision}
-              graph={replica}
-              events={replica.events}
-              {...batch}
-            />
+          replica = next
+          // Detach the old atom store before retiring its graph. Closing while
+          // it is still mounted sends teardown errors into the active app.
+          flushSync(() =>
+            root.render(
+              <App
+                key={batch.revision}
+                graph={next}
+                events={next.events}
+                {...batch}
+              />
+            )
           )
+          await previous?.close()
         } else await replica?.sync().catch(() => {})
         lastRevision = batch.revision
         continue

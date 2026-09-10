@@ -2,6 +2,7 @@ import {Client} from '#/core/Client.js'
 import {SharedEventSource} from 'shared-event-source'
 import {boot, type ConfigBatch, type ConfigGenerator} from './Boot.js'
 import {replicaBinding} from './ReplicaBinding.js'
+import {DevConfigUpdates} from './DevConfigUpdates.js'
 
 export function bootDev() {
   return boot(getConfig())
@@ -12,6 +13,11 @@ async function* getConfig(): ConfigGenerator {
   let revision =
     new URL(import.meta.url).searchParams.get('configRevision') ?? buildId
   const source = new SharedEventSource('./~dev')
+  const updates = new DevConfigUpdates(
+    source,
+    revision,
+    typeof window === 'undefined' ? undefined : () => window.location.reload()
+  )
   const url = new URL('./api', import.meta.url).href
   const createConfig = async (revision: string) => {
     const {cms, views, dashboardReplica} = await loadConfig(revision)
@@ -28,31 +34,18 @@ async function* getConfig(): ConfigGenerator {
       handlerUrl: url
     }
   }
-  let batch: ConfigBatch | undefined
-  while (true) {
-    const next =
-      batch?.revision !== revision ? await createConfig(revision) : batch
-    yield next
-    batch = next
-    revision = await new Promise<string>(resolve => {
-      source.addEventListener(
-        'message',
-        event => {
-          console.info(`[reload] received ${event.data}`)
-          const info = JSON.parse(event.data)
-          switch (info.type) {
-            case 'refresh':
-              return resolve(info.revision)
-            case 'reload':
-              if (typeof window === 'undefined') return resolve(info.revision)
-              return window.location.reload()
-            case 'refetch':
-              return resolve(revision)
-          }
-        },
-        {once: true}
-      )
-    })
+  try {
+    let batch: ConfigBatch | undefined
+    while (true) {
+      const next =
+        batch?.revision !== revision ? await createConfig(revision) : batch
+      yield next
+      batch = next
+      revision = await updates.next()
+    }
+  } finally {
+    updates.close()
+    source.close()
   }
 }
 
