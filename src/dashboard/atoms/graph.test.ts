@@ -4,7 +4,12 @@ import {createStore} from 'jotai'
 import {activityState} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {activityAtom} from './activity.js'
-import {entryRevisionAtom, shaAtom, syncAtom} from './graph.js'
+import {
+  entryRevisionAtom,
+  graphRevisionAtom,
+  shaAtom,
+  syncAtom
+} from './graph.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
 
 test('reads the indexed content hash without synchronizing the graph', async () => {
@@ -52,13 +57,38 @@ test('only invalidates revisions for changed entry ids', async () => {
 
   events.emit(new IndexEvent({op: 'index', sha: 'changed-sha', ids: ['first']}))
 
-  expect(store.get(first)).toBe('changed-sha')
+  expect(store.get(first)).toBe('changed-sha:1')
   expect(store.get(second)).toBeUndefined()
   expect(firstChanges).toBe(1)
   expect(secondChanges).toBe(0)
 
   unsubscribeFirst()
   unsubscribeSecond()
+})
+
+test('same-SHA permission changes advance entry revisions and invalidation fails closed', async () => {
+  const {store, db} = await createDashboardAtomFixture()
+  const events = new TestEvents()
+  store.set(eventsAtom, events)
+  const stop = store.sub(shaAtom, () => {})
+  events.emit(new IndexEvent({op: 'index', sha: db.sha, ids: ['entry']}))
+  const first = store.get(entryRevisionAtom('entry'))
+  events.emit(new IndexEvent({op: 'index', sha: db.sha, ids: ['entry']}))
+  expect(store.get(entryRevisionAtom('entry'))).not.toBe(first)
+  expect(store.get(graphRevisionAtom)).toBe(2)
+  events.emit(
+    new IndexEvent({
+      op: 'invalidate',
+      error: new Error('Permission view revoked')
+    })
+  )
+  expect(() => store.get(graphRevisionAtom)).toThrow('revoked')
+  expect(() => store.get(entryRevisionAtom('entry'))).toThrow('revoked')
+  await expect(store.get(shaAtom)).rejects.toThrow('revoked')
+  events.emit(new IndexEvent({op: 'index', sha: db.sha, ids: ['entry']}))
+  expect(await store.get(shaAtom)).toBe(db.sha)
+  expect(store.get(graphRevisionAtom)).toBe(4)
+  stop()
 })
 
 test('summarizes current activity without hiding its history', () => {

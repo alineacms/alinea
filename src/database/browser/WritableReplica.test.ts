@@ -8,6 +8,7 @@ import {mutationContextHeader, transactionIdHeader} from '#/core/Connection.js'
 import {decodeMutationContext} from '#/core/db/MutationContext.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Operation} from '#/core/db/Operation.js'
+import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
 import {base64} from '#/core/util/Encoding.js'
 import {
   config,
@@ -262,7 +263,21 @@ test('public writable Graph operations retain query scope across the worker port
   const {port1, port2} = new MessageChannel()
   expose(worker, port1)
   const graph = new WorkerGraph(config, wrap<QueryWorker>(port2))
+  const events: Array<IndexOp> = []
+  const initial = Promise.withResolvers<void>()
+  const updated = Promise.withResolvers<void>()
+  graph.events.addEventListener(IndexEvent.type, event => {
+    if (!(event instanceof IndexEvent)) return
+    events.push(event.data)
+    if (event.data.op === 'index') {
+      if (event.data.sha === 'base') initial.resolve()
+      if (event.data.sha === 'accepted') updated.resolve()
+    }
+  })
   try {
+    await graph.listenIndex()
+    await initial.promise
+    expect(events).toEqual([{op: 'index', sha: 'base', ids: ['a']}])
     const context = await graph.mutationContext()
     expect(context.baseRevision).toBe('base')
     const result = await graph.update({
@@ -271,6 +286,9 @@ test('public writable Graph operations retain query scope across the worker port
       set: {title: 'After'}
     })
     expect(result.title).toBe('After')
+    await updated.promise
+    expect(events.at(-1)).toEqual({op: 'index', sha: 'accepted', ids: ['a']})
+    expect(await graph.sha).toBe('accepted')
     expect(await graph.find({type: Page, select: Page.title})).toEqual([
       'After'
     ])

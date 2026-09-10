@@ -6,7 +6,7 @@ import {atom} from 'jotai'
 import {selectAtom, unwrap} from 'jotai/utils'
 import {authAtom} from './auth.js'
 import {clientAtom, configAtom, graphAtom} from './core.js'
-import {shaAtom} from './graph.js'
+import {graphRevisionAtom, shaAtom} from './graph.js'
 
 const userResult = atom(async get => {
   const auth = get(authAtom)
@@ -27,7 +27,8 @@ export const userAtom = atom(get => {
 const policyResult = atom(async get => {
   const user = await get(userResult)
   const graph = get(graphAtom)
-  get(shaAtom)
+  get(graphRevisionAtom)
+  await get(shaAtom)
   if (hasCompiledPolicy(graph)) return graph.compiledPolicy()
   if (!user?.roles) return Policy.ALLOW_NONE
   const roles = get(configAtom).roles ?? {}
@@ -55,6 +56,7 @@ const resolvedPolicyAtom = selectAtom(
 )
 
 export const policyAtom = atom(get => {
+  get(graphRevisionAtom)
   const policy = get(preloadedPolicyAtom) ?? get(resolvedPolicyAtom)
   assert(policy, 'Dashboard policy was not preloaded')
   return policy

@@ -17,12 +17,14 @@ import {
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import type {UploadMetadata} from '#/core/Connection.js'
+import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 
 export interface QueryGraph extends Graph {
+  readonly events?: EventTarget
   referencesTo?(query: EntryReferenceQuery): Promise<EntryReferenceResult>
   subscribe(query: GraphQuery, observer: QueryObserver): () => void
   readonly bootstrap?: IndexBootstrap
@@ -113,6 +115,42 @@ export class QueryWorker {
     const view = this.#runtime.bootstrap
     if (!view) throw new Error('Query graph has no authenticated bootstrap')
     return view
+  }
+
+  listenIndex(observer: Remote<{next(event: IndexOp): void} & ProxyMarked>) {
+    if (this.#closed || !this.#runtime.events) {
+      observer[releaseProxy]()
+      throw new Error('Query graph has no live index events')
+    }
+    const events = this.#runtime.events
+    let active = true
+    const stop = () => {
+      if (!active) return
+      active = false
+      events.removeEventListener(IndexEvent.type, listen)
+      this.#subscriptions.delete(stop)
+      observer[releaseProxy]()
+    }
+    const listen = (event: Event) => {
+      if (event instanceof IndexEvent && active)
+        void observer.next(event.data).catch(stop)
+    }
+    events.addEventListener(IndexEvent.type, listen)
+    this.#subscriptions.add(stop)
+    try {
+      const view = this.bootstrap()
+      void observer
+        .next({
+          op: 'index',
+          sha: view.revision,
+          ids: [...new Set(view.entries.map(row => row.entry.id))]
+        })
+        .catch(stop)
+    } catch (error) {
+      stop()
+      throw error
+    }
+    return proxy(stop)
   }
 
   async refresh(): Promise<boolean> {

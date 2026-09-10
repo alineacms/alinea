@@ -1,5 +1,8 @@
 import {Graph, type GraphQuery, type AnyQueryResult} from '#/core/Graph.js'
 import {HttpError} from '#/core/HttpError.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import {canonicalJson} from '#/core/util/Json.js'
+import {entryIndexRow} from '../entry/Schema.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
@@ -20,6 +23,7 @@ interface Subscription {
 
 /** Stable Graph/live-query facade over authenticated, immutable SQL generations. */
 export class LiveReplica extends Graph {
+  readonly events = new EventTarget()
   readonly config: ConnectReplicaOptions['config']
   #options: ConnectReplicaOptions
   #current?: ReplicaSession
@@ -157,6 +161,7 @@ export class LiveReplica extends Graph {
     const closing = session.close(purge)
     try {
       if (current) {
+        this.events.dispatchEvent(new IndexEvent({op: 'invalidate', error}))
         for (const subscription of this.#subscriptions) {
           subscription.sequence++
           this.#deliver(subscription, {status: 'rejected', reason: error})
@@ -188,6 +193,7 @@ export class LiveReplica extends Graph {
       const view = await fetchBootstrap({...this.#options, signal})
       this.#identities.set(JSON.stringify(view.identity), view.identity)
       const previous = this.#current
+      const previousView = previous?.bootstrap
       const sameIdentity =
         previous &&
         JSON.stringify(previous.identity) === JSON.stringify(view.identity)
@@ -230,10 +236,31 @@ export class LiveReplica extends Graph {
         throw new Error('Replacement replica revision mismatch')
       this.#current = next
       this.#candidate = undefined
+      const before = new Map(
+        previousView?.entries.map(row => [
+          entryIndexRow(row.entry).versionId,
+          row
+        ])
+      )
+      const changed = new Set<string>()
+      for (const row of view.entries) {
+        const key = entryIndexRow(row.entry).versionId
+        if (
+          !sameIdentity ||
+          canonicalJson(before.get(key) ?? null) !== canonicalJson(row)
+        )
+          changed.add(row.entry.id)
+        before.delete(key)
+      }
+      for (const row of before.values()) changed.add(row.entry.id)
       for (const [subscription, result] of prepared) {
         subscription.sequence++
         this.#deliver(subscription, result)
       }
+      if (!this.#closed)
+        this.events.dispatchEvent(
+          new IndexEvent({op: 'index', sha: view.revision, ids: [...changed]})
+        )
       if (previous) await previous.close()
       return true
     } catch (error) {

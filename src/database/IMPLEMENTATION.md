@@ -552,6 +552,25 @@ and persistent reference frames/incremental reference subscriptions are not yet
 implemented. This on-demand query path replaces the dashboard's dependency on a
 whole-source browser reference scan once boot is cut over.
 
+Live replicas now expose the dashboard's IndexEvent contract. Replacement events
+compare complete authorized index rows (including payload IDs and grants), report
+changed/deleted logical entry IDs, and publish only after the replacement SQL
+generation and subscribed query results are ready. Permission/release identity
+changes invalidate first and mark every affected entry even if content SHA stays
+unchanged; unchanged refreshes emit nothing. QueryWorker can replay and forward
+these events to WorkerGraph, whose listener proxies are released on close. Both
+writable facades expose sha/sync for existing dashboard atoms.
+
+Dashboard graph atoms now track an event revision independently of the content
+SHA. Changed-entry tokens and compiled-policy evaluation therefore advance on
+same-content permission changes. Invalidation makes revision/policy reads fail
+closed until an authoritative ready event arrives; it does not reuse preloaded
+policy grants. Tests cover ready publication after query hydration, unchanged and
+removed rows, same-SHA policy changes, atom invalidation/recovery and MessagePort
+delivery. The boot cutover must attach the event bridge and use a fresh dashboard
+store for each authenticated graph owner; activity and auth lifecycle integration
+are still pending.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

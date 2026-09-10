@@ -1,6 +1,7 @@
 import {expect, test} from 'bun:test'
 import {IDBFactory} from 'fake-indexeddb'
 import {Entry} from '#/core/Entry.js'
+import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
 import {Permission} from '#/core/Role.js'
 import {base64} from '#/core/util/Encoding.js'
 import {
@@ -147,6 +148,13 @@ test('live queries keep the old result until the whole subscribed replacement is
     }
   })
   const values: Array<unknown> = []
+  const indexEvents: Array<IndexOp> = []
+  replica.events.addEventListener(IndexEvent.type, event => {
+    if (event instanceof IndexEvent) {
+      indexEvents.push(event.data)
+      if (event.data.op === 'index') expect(values.at(-1)).toEqual(['Two'])
+    }
+  })
   const first = Promise.withResolvers<void>()
   const stop = replica.subscribe(
     {select: Page.title},
@@ -166,6 +174,7 @@ test('live queries keep the old result until the whole subscribed replacement is
     const refreshing = replica.refresh()
     expect(replica.refresh()).toBe(refreshing)
     await started.promise
+    expect(indexEvents).toEqual([])
     expect(values).toEqual([['One']])
     expect(replica.bootstrap.revision).toBe('r1')
     expect(await replica.find({select: Page.title})).toEqual(['One'])
@@ -186,6 +195,7 @@ test('live queries keep the old result until the whole subscribed replacement is
     await lateReady.promise
     resume.resolve()
     expect(await refreshing).toBe(true)
+    expect(indexEvents).toEqual([{op: 'index', sha: 'r2', ids: ['a']}])
     expect(values).toEqual([['One'], ['Two']])
     expect(late).toEqual([['One'], ['Two']])
     expect(replica.bootstrap.revision).toBe('r2')
@@ -197,6 +207,46 @@ test('live queries keep the old result until the whole subscribed replacement is
   } finally {
     resume.resolve()
     stop()
+    await replica.close()
+  }
+})
+
+test('index events report only changed/deleted IDs and invalidate same-SHA policy replacements', async () => {
+  let current = await fixture('r1', 'One')
+  const extra = (id: string) => {
+    const {versionId: _, ...indexed} = entryIndexRow(entry(id))
+    return {...current.bootstrap.entries[0], entry: indexed, payloadId: id}
+  }
+  current.bootstrap.entries.push(extra('stable'), extra('deleted'))
+  const replica = await LiveReplica.connect({
+    config,
+    expected: {
+      project: identity.project,
+      namespace: identity.namespace,
+      principal: identity.principal
+    },
+    url: 'https://cms.test/api',
+    async fetch() {
+      return Response.json(current.bootstrap)
+    }
+  })
+  const events: Array<IndexOp> = []
+  replica.events.addEventListener(IndexEvent.type, event => {
+    if (event instanceof IndexEvent) events.push(event.data)
+  })
+  try {
+    const stable = current.bootstrap.entries[1]
+    current = await fixture('r2', 'Two')
+    current.bootstrap.entries.push(stable)
+    await replica.refresh()
+    expect(events).toEqual([{op: 'index', sha: 'r2', ids: ['a', 'deleted']}])
+    expect(await replica.refresh()).toBe(false)
+    expect(events).toHaveLength(1)
+    current.bootstrap.identity.viewId = 'new-policy'
+    await replica.refresh()
+    expect(events[1].op).toBe('invalidate')
+    expect(events[2]).toEqual({op: 'index', sha: 'r2', ids: ['a', 'stable']})
+  } finally {
     await replica.close()
   }
 })

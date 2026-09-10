@@ -92,6 +92,19 @@ export class WritableReplica extends WritableGraph {
     return this.#replica.bootstrap
   }
 
+  get events(): EventTarget {
+    return this.#replica.events
+  }
+
+  get sha(): string {
+    return this.bootstrap.revision
+  }
+
+  async sync(): Promise<string> {
+    await this.refresh()
+    return this.sha
+  }
+
   /** Capture when authoring starts; pass it back for structural saves. */
   mutationContext(): MutationContext {
     const {identity, revision} = this.bootstrap

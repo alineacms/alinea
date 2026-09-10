@@ -7,10 +7,15 @@ import {dispense} from './utils.js'
 
 interface IndexState {
   sha?: string
+  revision: number
+  error?: Error
   entryRevisions: ReadonlyMap<string, string>
 }
 
-const indexStateValueAtom = atom<IndexState>({entryRevisions: new Map()})
+const indexStateValueAtom = atom<IndexState>({
+  revision: 0,
+  entryRevisions: new Map()
+})
 
 const indexStateAtom = Object.assign(
   atom(
@@ -20,11 +25,21 @@ const indexStateAtom = Object.assign(
       const listen = (event: Event) => {
         if (!(event instanceof IndexEvent)) return
         const data = event.data
+        if (data.op === 'invalidate') {
+          set(indexStateValueAtom, current => ({
+            ...current,
+            revision: current.revision + 1,
+            error: data.error
+          }))
+          return
+        }
         if (data.op !== 'index') return
         set(indexStateValueAtom, current => {
           const entryRevisions = new Map(current.entryRevisions)
-          for (const id of data.ids) entryRevisions.set(id, data.sha)
-          return {sha: data.sha, entryRevisions}
+          const revision = current.revision + 1
+          for (const id of data.ids)
+            entryRevisions.set(id, `${data.sha}:${revision}`)
+          return {sha: data.sha, revision, entryRevisions}
         })
       }
       events.addEventListener(IndexEvent.type, listen)
@@ -37,13 +52,24 @@ const indexStateAtom = Object.assign(
 )
 
 export const shaAtom = atom(async get => {
-  const current = get(indexStateAtom).sha
+  const state = get(indexStateAtom)
+  if (state.error) throw state.error
+  const current = state.sha
   if (current) return current
   return readGraphSha(get(graphAtom))
 })
 
+export const graphRevisionAtom = atom(get => {
+  const state = get(indexStateAtom)
+  if (state.error) throw state.error
+  return state.revision
+})
+
 export const entryRevisionAtom = dispense((id: string) =>
-  selectAtom(indexStateAtom, state => state.entryRevisions.get(id))
+  selectAtom(indexStateAtom, state => {
+    if (state.error) throw state.error
+    return state.entryRevisions.get(id)
+  })
 )
 
 export const syncAtom = atom(null, async (get, set) => {

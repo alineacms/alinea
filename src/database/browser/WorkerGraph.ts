@@ -5,6 +5,7 @@ import {WritableGraph} from '#/core/db/WritableGraph.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {MutationContext} from '#/core/db/MutationContext.js'
 import type {UploadMetadata} from '#/core/Connection.js'
+import {IndexEvent, type IndexOp} from '#/core/db/IndexEvent.js'
 import type {EntryReferenceQuery} from '#/core/db/EntryReference.js'
 import {getScope} from '#/core/Scope.js'
 import type {QueryObserver} from '../runtime/EntryRuntime.js'
@@ -14,10 +15,12 @@ import {CompiledPolicy} from './CompiledPolicy.js'
 
 /** Keeps Graph expressions in their config scope when crossing a worker port. */
 export class WorkerGraph extends WritableGraph {
+  readonly events = new EventTarget()
   #worker: Remote<QueryWorker>
   #closed = false
   #pending = new Set<() => void>()
   #closing?: Promise<void>
+  #indexStops = new Set<() => Promise<void>>()
 
   constructor(
     public config: Config,
@@ -30,6 +33,45 @@ export class WorkerGraph extends WritableGraph {
   async mutationContext(): Promise<MutationContext> {
     this.#assertOpen()
     return this.#read(this.#worker.mutationContext())
+  }
+
+  /** Attach before mounting dashboard atoms; initial readiness is replayed. */
+  async listenIndex(): Promise<() => Promise<void>> {
+    this.#assertOpen()
+    let active = true
+    const unsubscribe = await this.#worker.listenIndex(
+      proxy({
+        next: (event: IndexOp) => {
+          if (active && !this.#closed)
+            this.events.dispatchEvent(new IndexEvent(event))
+        }
+      })
+    )
+    const stop = async () => {
+      if (!active) return
+      active = false
+      this.#indexStops.delete(stop)
+      try {
+        await unsubscribe()
+      } finally {
+        unsubscribe[releaseProxy]()
+      }
+    }
+    this.#indexStops.add(stop)
+    if (this.#closed) {
+      await stop()
+      this.#assertOpen()
+    }
+    return stop
+  }
+
+  get sha(): Promise<string> {
+    return this.bootstrap().then(view => view.revision)
+  }
+
+  async sync(): Promise<string> {
+    await this.refresh()
+    return this.sha
   }
 
   async mutate(mutations: Array<Mutation>, expected?: MutationContext) {
@@ -153,7 +195,11 @@ export class WorkerGraph extends WritableGraph {
     this.#pending.clear()
     this.#closing = (async () => {
       try {
-        await this.#worker.close(purge)
+        try {
+          await Promise.all([...this.#indexStops].map(stop => stop()))
+        } finally {
+          await this.#worker.close(purge)
+        }
       } finally {
         this.#worker[releaseProxy]()
       }
