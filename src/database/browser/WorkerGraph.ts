@@ -19,7 +19,9 @@ export class WorkerGraph extends WritableGraph {
   readonly events = new EventTarget()
   #worker: Remote<QueryWorker>
   #closed = false
+  #failure?: Error
   #pending = new Set<() => void>()
+  #queryErrors = new Set<(error: Error) => void>()
   #closing?: Promise<void>
   #eventStops = new Set<() => Promise<void>>()
 
@@ -40,20 +42,22 @@ export class WorkerGraph extends WritableGraph {
   async listenIndex(): Promise<() => Promise<void>> {
     this.#assertOpen()
     let active = true
-    const unsubscribe = await this.#worker.listenIndex(
-      proxy({
-        next: (event: IndexOp) => {
-          if (active && !this.#closed)
-            this.events.dispatchEvent(new IndexEvent(event))
-        }
-      })
+    const unsubscribe = await this.#read(
+      this.#worker.listenIndex(
+        proxy({
+          next: (event: IndexOp) => {
+            if (active && !this.#closed)
+              this.events.dispatchEvent(new IndexEvent(event))
+          }
+        })
+      )
     )
     const stop = async () => {
       if (!active) return
       active = false
       this.#eventStops.delete(stop)
       try {
-        await unsubscribe()
+        if (!this.#failure) await this.#read(unsubscribe())
       } finally {
         unsubscribe[releaseProxy]()
       }
@@ -103,20 +107,22 @@ export class WorkerGraph extends WritableGraph {
   async listenActivity(): Promise<() => Promise<void>> {
     this.#assertOpen()
     let active = true
-    const unsubscribe = await this.#worker.listenActivity(
-      proxy({
-        next: (activities: Array<Activity>) => {
-          if (active && !this.#closed)
-            this.events.dispatchEvent(new ActivityEvent(activities))
-        }
-      })
+    const unsubscribe = await this.#read(
+      this.#worker.listenActivity(
+        proxy({
+          next: (activities: Array<Activity>) => {
+            if (active && !this.#closed)
+              this.events.dispatchEvent(new ActivityEvent(activities))
+          }
+        })
+      )
     )
     const stop = async () => {
       if (!active) return
       active = false
       this.#eventStops.delete(stop)
       try {
-        await unsubscribe()
+        if (!this.#failure) await this.#read(unsubscribe())
       } finally {
         unsubscribe[releaseProxy]()
       }
@@ -166,22 +172,36 @@ export class WorkerGraph extends WritableGraph {
   ): Promise<() => Promise<void>> {
     this.#assertOpen()
     let active = true
-    const unsubscribe = await this.#worker.subscribe(
-      getScope(this.config).stringify(query),
-      proxy({
-        next: (value: unknown) => {
-          if (active && !this.#closed) observer.next(value)
-        },
-        error: (error: unknown) => {
-          if (active && !this.#closed) observer.error(error)
-        }
-      })
-    )
+    const failed = (error: Error) => {
+      if (active) observer.error(error)
+    }
+    this.#queryErrors.add(failed)
+    let unsubscribe
+    try {
+      unsubscribe = await this.#read(
+        this.#worker.subscribe(
+          getScope(this.config).stringify(query),
+          proxy({
+            next: (value: unknown) => {
+              if (active && !this.#closed) observer.next(value)
+            },
+            error: (error: unknown) => {
+              if (active && !this.#closed) observer.error(error)
+            }
+          })
+        )
+      )
+    } catch (error) {
+      active = false
+      this.#queryErrors.delete(failed)
+      throw error
+    }
     const stop = async () => {
       if (!active) return
       active = false
+      this.#queryErrors.delete(failed)
       try {
-        await unsubscribe()
+        if (!this.#failure) await this.#read(unsubscribe())
       } finally {
         unsubscribe[releaseProxy]()
       }
@@ -212,12 +232,32 @@ export class WorkerGraph extends WritableGraph {
   }
 
   #assertOpen(): void {
+    if (this.#failure) throw this.#failure
     if (this.#closed) throw new Error('Worker graph is closed')
+  }
+
+  /** A dead transport cannot acknowledge cleanup. Stop local delivery immediately. */
+  protected fail(error: Error): void {
+    if (this.#failure) return
+    this.#failure = error
+    const notify = !this.#closed
+    this.#closed = true
+    for (const cancel of this.#pending) cancel()
+    this.#pending.clear()
+    for (const failed of this.#queryErrors) {
+      try {
+        failed(error)
+      } catch {}
+    }
+    this.#queryErrors.clear()
+    if (notify)
+      this.events.dispatchEvent(new IndexEvent({op: 'invalidate', error}))
   }
 
   #read<T>(request: Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {
-      const cancel = () => reject(new Error('Worker graph is closed'))
+      const cancel = () =>
+        reject(this.#failure ?? new Error('Worker graph is closed'))
       this.#pending.add(cancel)
       request.then(
         value => {
@@ -229,6 +269,10 @@ export class WorkerGraph extends WritableGraph {
           reject(error)
         }
       )
+      if (this.#failure) {
+        this.#pending.delete(cancel)
+        cancel()
+      }
     })
   }
 
@@ -238,12 +282,13 @@ export class WorkerGraph extends WritableGraph {
     this.#closed = true
     for (const cancel of this.#pending) cancel()
     this.#pending.clear()
+    this.#queryErrors.clear()
     this.#closing = (async () => {
       try {
         try {
           await Promise.all([...this.#eventStops].map(stop => stop()))
         } finally {
-          await this.#worker.close(purge)
+          if (!this.#failure) await this.#read(this.#worker.close(purge))
         }
       } finally {
         this.#worker[releaseProxy]()

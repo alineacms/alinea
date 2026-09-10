@@ -653,9 +653,26 @@ the legacy path until CloudRemote supports durable receipt lookup.
 Unit tests cover config/principal binding and cancellation during startup. The
 Chromium fixture exercises delayed config loading, the dedicated host/factory,
 authenticated bootstrap, lazy Graph reads and logout cleanup. This is not yet a
-full generated dev dashboard edit/restart smoke test. Post-start worker crashes,
-bounded shutdown and exhaustive cache purge after startup failure still need
-hardening before treating the lifecycle cutover as complete.
+full generated dev dashboard edit/restart smoke test.
+
+Dedicated worker errors/message decoding failures now fail the local Graph
+immediately: pending reads and subscription setup reject, live observers receive
+the failure, and dashboard index state is invalidated. New calls fail instead of
+waiting on a dead port. Owned shutdown has a five-second transport deadline and
+terminates the script even if remote cleanup cannot acknowledge completion.
+Ordinary shutdown retains drafts; logout also purges pending intents and all
+IndexedDB replica views for the exact project/namespace/epoch/principal from the
+main thread, including older releases and interrupted startup caches. Purge
+retains invalidation markers so existing handles cannot repopulate those cache
+generations. It relies on IndexedDB database enumeration; unsupported or failed
+enumeration rejects cleanup rather than claiming logout purge succeeded.
+
+Tests cover crash invalidation, pending-call cancellation, bounded unresponsive
+shutdown, ordinary draft retention, and cache-scope isolation. The Chromium test
+crashes an actual dedicated worker during lazy hydration and verifies rejection,
+live-query error delivery, and logout purge of an older release's resident index.
+An error-free but unresponsive worker is detected on shutdown, not by a general
+query watchdog; full generated-dashboard lifecycle coverage remains outstanding.
 
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch

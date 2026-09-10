@@ -22,6 +22,50 @@ const identity: ReplicaIdentity = {
 const a = entryVersionId('a', null, 'published')
 const b = entryVersionId('b', null, 'published')
 
+test('scope purge clears every policy/release generation without touching another owner', async () => {
+  const factory = new IDBFactory()
+  const identities = [
+    identity,
+    {...identity, viewId: 'old-policy', releaseId: 'old-release'},
+    {...identity, principal: 'other'},
+    {...identity, namespace: 'preview'},
+    {...identity, epoch: 'other'},
+    {...identity, project: 'other'}
+  ]
+  const caches = await Promise.all(
+    identities.map(id => ReplicaCache.open(factory, id))
+  )
+  try {
+    for (const cache of caches) {
+      await cache.apply({
+        fromRevision: undefined,
+        toRevision: 'r1',
+        entries: [row('a')]
+      })
+      await cache.putFrames('r1', [
+        {versionId: a, payloadId: 'a', ciphertext: new Uint8Array([1])}
+      ])
+    }
+    await ReplicaCache.purgeScope(factory, identity)
+    for (const cache of caches.slice(0, 2))
+      await expect(cache.snapshot()).rejects.toThrow('invalidated')
+    for (let i = 0; i < identities.length; i++) {
+      const reopened = await ReplicaCache.open(factory, identities[i])
+      try {
+        const snapshot = await reopened.snapshot()
+        expect(snapshot.entries).toHaveLength(i < 2 ? 0 : 1)
+        expect(
+          await reopened.getFrames([{versionId: a, payloadId: 'a'}])
+        ).toHaveLength(i < 2 ? 0 : 1)
+      } finally {
+        reopened.close()
+      }
+    }
+  } finally {
+    for (const cache of caches) cache.close()
+  }
+})
+
 test('aborting an in-flight ciphertext transaction prevents installation', async () => {
   const cache = await ReplicaCache.open(new IDBFactory(), identity)
   try {

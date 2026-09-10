@@ -17,6 +17,13 @@ export interface ReplicaIdentity {
   releaseId: string
 }
 
+export interface ReplicaScope {
+  project: string
+  namespace: string
+  epoch: string
+  principal: string
+}
+
 export interface CachedEntry {
   entry: IndexedEntry
   permissions: number
@@ -72,6 +79,63 @@ export class ReplicaCache {
     this.#db = db
     this.#generation = generation
     db.onversionchange = () => this.close()
+  }
+
+  /** Logout fallback when a terminated worker cannot report the views it touched. */
+  static async purgeScope(
+    factory: IDBFactory,
+    scope: ReplicaScope
+  ): Promise<void> {
+    const prefix = 'alinea-replica-2:'
+    for (const {name} of await factory.databases()) {
+      if (!name?.startsWith(prefix)) continue
+      let binding: unknown
+      try {
+        binding = JSON.parse(name.slice(prefix.length))
+      } catch {
+        continue
+      }
+      if (
+        !Array.isArray(binding) ||
+        binding.length !== 8 ||
+        !binding.every(value => typeof value === 'string' && value)
+      )
+        continue
+      const [
+        project,
+        namespace,
+        epoch,
+        schemaId,
+        configId,
+        principal,
+        viewId,
+        releaseId
+      ] = binding as Array<string>
+      if (
+        project !== scope.project ||
+        namespace !== scope.namespace ||
+        epoch !== scope.epoch ||
+        principal !== scope.principal
+      )
+        continue
+      const identity = {
+        project,
+        namespace,
+        epoch,
+        schemaId,
+        configId,
+        principal,
+        viewId,
+        releaseId
+      }
+      if (cacheName(identity) !== name) continue
+      const cache = await ReplicaCache.open(factory, identity)
+      try {
+        await cache.purge()
+      } finally {
+        cache.close()
+      }
+    }
   }
 
   static async open(

@@ -13,20 +13,52 @@ import type {api} from './worker.js'
 import type {api as ownedApi} from './owned-worker.js'
 import {ReplicaCache} from '#/database/browser/ReplicaCache.js'
 
-export async function runHost() {
+async function rejects(run: () => Promise<unknown>, message: string) {
+  try { await run() } catch (error) {
+    if (error instanceof Error && error.message.includes(message)) return
+    throw error
+  }
+  throw new Error(`Expected rejection containing ${message}`)
+}
+
+async function hostGraph(crash = false) {
   const handlerUrl = new URL('/replica', import.meta.url).href
   const {project, namespace, epoch, principal} = replicaIdentity
-  const graph = await connectReplicaWorker(new URL('./host-worker.js', import.meta.url), {
+  return connectReplicaWorker(new URL(`./host-worker.js${crash ? '?crash=true' : ''}`, import.meta.url), {
     config, local: true, revision: 'fixture', handlerUrl,
     replica: {project, namespace, epoch},
     client: new Client({config, url: handlerUrl}), views: {}
   }, principal, new AbortController().signal)
+}
+
+export async function runHost() {
+  const graph = await hostGraph()
   try {
     check(await graph.find({id: 'b', select: Page.title}), ['Payload b'])
     check(await graph.activities(), [])
     check((await graph.compiledPolicy()).canRead({id: 'b'}), true)
     return {connected: true}
   } finally {await graph.close(true)}
+}
+
+export async function runHostCrash() {
+  const graph = await hostGraph(true)
+  const bootstrap = await graph.bootstrap()
+  const identity = {...bootstrap.identity, releaseId: 'previous-worker-release'}
+  const old = await ReplicaCache.open(indexedDB, identity)
+  try {
+    await old.apply({fromRevision: undefined, toRevision: bootstrap.revision, entries: bootstrap.entries})
+    const errors: Array<unknown> = []
+    const stop = await graph.subscribe({select: Entry.id}, {next() {}, error(error) { errors.push(error) }})
+    await rejects(() => graph.find({id: 'b', select: Page.title}), 'Replica fixture crash')
+    check(errors.length, 1)
+    await stop()
+    await graph.close(true)
+    await rejects(() => old.snapshot(), 'invalidated')
+    const restored = await ReplicaCache.open(indexedDB, identity)
+    try { check((await restored.snapshot()).entries, []) } finally { restored.close() }
+    return {crashed: true, purged: true}
+  } finally { old.close(); await graph.close(true) }
 }
 
 export async function runOwned() {

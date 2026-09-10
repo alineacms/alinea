@@ -219,6 +219,11 @@ try {
     return Promise.race([runHost(), new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard worker host timed out')), 15000))])
   }, '/main.js'), {connected: true})
   console.log('Dedicated dashboard replica worker: generated binding, lazy Graph reads and cleanup passed')
+  assert.deepEqual(await page.evaluate(async path => {
+    const {runHostCrash} = await import(path)
+    return Promise.race([runHostCrash(), new Promise((_, reject) => setTimeout(() => reject(new Error('Worker crash cleanup timed out')), 15000))])
+  }, '/main.js'), {crashed: true, purged: true})
+  console.log('Dedicated worker crash: pending calls rejected, live queries invalidated and old cache generations purged')
 } finally {
   await browser.close()
 }
