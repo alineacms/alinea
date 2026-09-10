@@ -11,6 +11,8 @@ import {EntryRuntime} from './EntryRuntime.js'
 import {buildFrames} from '../release/FrameStore.js'
 import {normalizeSource, SourceRecordTable} from './NormalizeSource.js'
 import {EntryReferenceTable, replaceEntryReferences} from './EntryReferences.js'
+import {EmbeddingStore} from '../vector/EmbeddingStore.js'
+import {prepareEntryEmbeddings} from '../vector/EntryEmbeddings.js'
 
 /** Populate a fresh private database. Publish/close the file only after success.
  * The existing normalizer is build-only; opening a checkpoint never imports it.
@@ -38,6 +40,7 @@ export async function buildDatabase(
     throw new Error('A complete checkpoint identity is required')
   await SqlSource.createSchema(db)
   await EntryRuntime.createSchema(db, 'uninitialized')
+  await EmbeddingStore.createSchema(db)
   await db.create(CheckpointTable, SourceRecordTable, EntryReferenceTable)
   await db.transaction(
     async tx => {
@@ -52,6 +55,7 @@ export async function buildDatabase(
       })
       for (const entry of entries)
         await replaceEntryReferences(config, tx, entry)
+      await prepareEntryEmbeddings(config, tx, entries)
       await buildFrames(tx, identity)
       await tx.insert(CheckpointTable).values({
         id: 1,

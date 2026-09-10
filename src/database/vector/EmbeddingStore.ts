@@ -157,6 +157,44 @@ export class EmbeddingStore {
     })
   }
 
+  /** Remove all derived jobs for changed/deleted owners inside source reconciliation. */
+  invalidateOwners(versionIds: ReadonlyArray<string>): Promise<void> {
+    const ids = [...new Set(versionIds)]
+    if (!ids.length) return Promise.resolve()
+    return this.#run(() =>
+      this.db.transaction(
+        async tx => {
+          let changed = false
+          for (let offset = 0; offset < ids.length; offset += 100) {
+            const batch = ids.slice(offset, offset + 100)
+            const manifests = inArray(Manifest.ownerVersionId, batch)
+            const publications = inArray(Publication.ownerVersionId, batch)
+            const present = await tx
+              .select(Manifest.id)
+              .from(Manifest)
+              .where(manifests)
+              .limit(1)
+            const declared = await tx
+              .select(Publication.id)
+              .from(Publication)
+              .where(publications)
+              .limit(1)
+            if (!present.length && !declared.length) continue
+            changed = true
+            await tx.delete(Manifest).where(manifests)
+            await tx.delete(Publication).where(publications)
+          }
+          if (changed)
+            await tx
+              .update(State)
+              .set({revision: createId()})
+              .where(eq(State.id, 1))
+        },
+        {async: true}
+      )
+    )
+  }
+
   /** Durable pending work, limited to published chunk sets in one model space. */
   pending(spaceId: string, limit = 128): Promise<Array<EmbeddingJob>> {
     if (

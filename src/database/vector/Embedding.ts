@@ -1,15 +1,7 @@
 import {sha256Hash} from '#/core/source/Utils.js'
 import {canonicalJson} from '#/core/util/Json.js'
-
-export interface EmbeddingSpace {
-  provider: string
-  model: string
-  revision: string
-  preprocessing: string
-  dimensions: number
-  metric: 'cosine' | 'l2' | 'dot'
-  encoding: 'float32-le'
-}
+import type {EmbeddingSpace} from '#/core/Embedding.js'
+export type {EmbeddingSpace} from '#/core/Embedding.js'
 
 export interface EmbeddingOwner {
   owner: {versionId: string; kind: 'entry' | 'image' | 'document'}

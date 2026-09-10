@@ -1220,9 +1220,10 @@ A separate smoke run verified the built store with Node's actual SQLite driver.
 Capability probes on the current binaries found SQLite 3.46.1 in Alinea WASM,
 without `vec_version()` or `vss_version()` (and without `pragma_function_list`).
 Node 24.16.0 reports SQLite 3.53.0 and no registered `vec_%`/`vector_%` functions.
-No vector extension is assumed or required for this store. It is not yet wired
-into source reconciliation, runtime revision publication, authorization-filtered
-manifests, encrypted browser transport, configured embedding providers or Graph search.
+No vector extension is assumed or required for this store. Text source preparation
+is now wired into build/reconciliation (below). Runtime revision publication,
+encrypted browser transport, configured embedding providers and Graph search are
+not yet wired.
 Obsolete private payload retention/GC also remains open. Do not expose this
 trusted store directly as a browser API or ship its private checkpoint to clients.
 
@@ -1302,6 +1303,51 @@ calls, automatic retry policy, distributed provider lease or source reconciliati
 are added. Multiple runners can duplicate provider work; generation checks protect
 installation, not billing. A failed first batch requires caller policy before
 advancing to later work. Runtime derived-revision publication remains separate.
+
+`Config.embeddings` now accepts named declarative slots with
+`{source: 'searchableText', space}`. The descriptor contains no provider code or
+credentials. Checkpoint format 10 creates private embedding tables, and the real
+builder prepares one `text` chunk per configured slot from the normalizer's
+searchable text (fields must opt into search). Empty text publishes a complete
+empty slot; absent configuration declares no coverage. Text preparation is local,
+bounded by the runner's 8 MiB input limit, and never invokes providers or downloads
+media. This first preparation mode does not yet split long documents or extract
+image/document bytes.
+
+Source reconciliation retains jobs and vectors for unchanged payloads, invalidates
+all slots/kinds for changed/deleted owner versions, and prepares replacement text
+jobs in the same source SQL transaction. A failed source commit rolls back derived
+invalidation/publication too. Conservative invalidation uses the full owner payload
+descriptor even if only non-searchable data changed. An A → B → A source sequence
+gets fresh job generations. Configuration/model changes require a new matching
+checkpoint identity/rebuild, not reconciliation under a reused config identity.
+
+`loadEntryEmbeddingInput` reconstructs exact input from the persisted owner payload
+for the background runner, allowing restart without repeating source normalization.
+The caller must own the database connection/serialization boundary; do not run
+reconciliation or unrelated transactions concurrently on that connection, and do
+not mutate a published immutable release to install provider output. Native/WASM
+tests exercise build → provider completion → edit/delete → reconcile, unchanged
+vector retention, empty/undeclared slots, source rollback and native-built jobs
+reopened and completed in WASM. A managed background owner, provider adapters,
+derived-generation publication and media extraction remain to be connected.
+The built package also passed a Node SQLite build/completion/reconciliation smoke.
+
+For example, add this to the CMS configuration (provider implementation is supplied
+separately to `EmbeddingRunner`, not serialized into dashboard configuration):
+
+```ts
+embeddings: {
+  semantic: {
+    source: 'searchableText',
+    space: {
+      provider: 'application', model: 'my-model', revision: '1',
+      preprocessing: 'searchable-text-v1', dimensions: 384,
+      metric: 'cosine', encoding: 'float32-le'
+    }
+  }
+}
+```
 
 Add embedding manifests, content/model identity, background job completion,
 invalidation, chunk ownership, permission filtering, and lazy vector payloads.

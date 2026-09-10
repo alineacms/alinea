@@ -12,6 +12,8 @@ import {
 import {EntryRuntime, type EntryReplacement} from './EntryRuntime.js'
 import {normalizeSource} from './NormalizeSource.js'
 import {EntryReferenceTable, replaceEntryReferences} from './EntryReferences.js'
+import {EmbeddingStore} from '../vector/EmbeddingStore.js'
+import {prepareEntryEmbeddings} from '../vector/EntryEmbeddings.js'
 
 /** Reconcile an exclusively owned writable checkpoint copy, never a published
  * release or a connection serving live queries. The owner swaps readers only
@@ -47,6 +49,7 @@ export async function reconcileDatabase(
         previous.entries.map(row => [entryIndexRow(row.entry).versionId, row])
       )
       const changed: Array<EntryReplacement> = []
+      const payloadChanges: Array<EntryReplacement> = []
       const frames = new FrameStore(tx)
       for (const row of entries) {
         const index = entryIndexRow(row.entry)
@@ -63,8 +66,10 @@ export async function reconcileDatabase(
             ? {entry: row.entry, payloadId: row.payloadId}
             : row
         )
-        if (before?.payloadId !== row.payloadId)
+        if (before?.payloadId !== row.payloadId) {
+          payloadChanges.push(row)
           await replaceEntryReferences(config, tx, row)
+        }
         const frame = {
           ...identity,
           versionId: index.versionId,
@@ -86,6 +91,11 @@ export async function reconcileDatabase(
         removedVersionIds: [...remaining.keys()]
       })
       const removed = [...remaining.keys()]
+      await new EmbeddingStore(tx).invalidateOwners([
+        ...removed,
+        ...payloadChanges.map(row => entryIndexRow(row.entry).versionId)
+      ])
+      await prepareEntryEmbeddings(config, tx, payloadChanges)
       for (let offset = 0; offset < removed.length; offset += 100)
         await tx
           .delete(EntryReferenceTable)
