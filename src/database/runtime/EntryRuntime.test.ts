@@ -706,6 +706,31 @@ test('live queries include new matches and unsubscribe cleanly', async () => {
   expect(errors).toEqual([])
 })
 
+test('index trees are cached per revision and invalidated by deltas', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const runtime = new EntryRuntime(config, db)
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'r1',
+    entries: [replacement('a')]
+  })
+  const pending = runtime.indexTree()
+  expect(runtime.indexTree()).toBe(pending)
+  const before = await pending
+  await runtime.apply({
+    fromRevision: 'r1',
+    toRevision: 'r2',
+    entries: [replacement('a', 'updated')]
+  })
+  const after = await runtime.indexTree()
+  expect(after.root.hash).not.toBe(before.root.hash)
+  expect(before.diff(after).replacements).toEqual([
+    entryVersionId('a', null, 'published')
+  ])
+})
+
 test('failed deltas roll back and unreadable payloads never produce partial results', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)

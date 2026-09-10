@@ -22,17 +22,13 @@ import {
 import {compileEntryQuery} from '../query/EntryQuery.js'
 import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
+import {IndexTree} from '../sync/IndexTree.js'
 
 const superseded = Symbol('superseded query')
 
-const Meta = table('alinea_replica_state', {
+const Meta = table('alinea_database_state', {
   id: column.integer().primaryKey(),
   revision: column.text().notNull()
-})
-
-const Payload = table('alinea_entry_payload', {
-  versionId: column.varchar(undefined, {length: 255}).primaryKey(),
-  payloadId: column.varchar(undefined, {length: 255}).notNull()
 })
 
 export interface PayloadRequest {
@@ -83,7 +79,7 @@ export interface QueryObserver {
   error(error: unknown): void
 }
 
-/** Owns one local replica connection. All access goes through its statement queue. */
+/** Owns one local database connection. All access uses its statement queue. */
 export class EntryRuntime extends Graph {
   #db: Database
   #config: Config
@@ -91,6 +87,7 @@ export class EntryRuntime extends Graph {
   #queue: Promise<unknown> = Promise.resolve()
   #generation = 0
   #searchDirty = true
+  #indexTree?: Promise<IndexTree>
   #listeners = new Set<() => void>()
 
   constructor(config: Config, db: Database, options: RuntimeOptions = {}) {
@@ -112,7 +109,7 @@ export class EntryRuntime extends Graph {
         .from(Meta)
         .where(eq(Meta.id, 1))
         .get()
-      if (revision == null) throw new Error('Missing replica revision')
+      if (revision == null) throw new Error('Missing database revision')
       return revision
     })
   }
@@ -141,23 +138,33 @@ export class EntryRuntime extends Graph {
         .from(Meta)
         .where(eq(Meta.id, 1))
         .get()
-      if (revision == null) throw new Error('Missing replica revision')
-      const rows = await this.#db
-        .select({entry: EntryIndexTable, payloadId: Payload.payloadId})
-        .from(EntryIndexTable)
-        .leftJoin(Payload, eq(Payload.versionId, EntryIndexTable.versionId))
+      if (revision == null) throw new Error('Missing database revision')
+      const rows = await this.#db.select().from(EntryIndexTable)
       return {
         revision,
-        entries: rows.map(({entry, payloadId}) => {
-          if (!entry) throw new Error('Missing indexed entry')
+        entries: rows.map(row => {
+          const {versionId: _, payloadId, ...entry} = row
           return {entry, payloadId: payloadId ?? undefined}
         })
       }
     })
   }
 
+  indexTree(): Promise<IndexTree> {
+    if (!this.#indexTree) {
+      const pending = this.indexSnapshot()
+        .then(snapshot => IndexTree.from(snapshot.entries))
+        .catch(error => {
+          if (this.#indexTree === pending) this.#indexTree = undefined
+          throw error
+        })
+      this.#indexTree = pending
+    }
+    return this.#indexTree
+  }
+
   static async createSchema(db: Database, revision: string): Promise<void> {
-    await db.create(EntryIndexTable, EntryDataTable, Payload, Meta)
+    await db.create(EntryIndexTable, EntryDataTable, Meta)
     await createSearch(db)
     await db.insert(Meta).values({id: 1, revision})
   }
@@ -185,10 +192,10 @@ export class EntryRuntime extends Graph {
         })
         .from(EntryDataTable)
         .innerJoin(
-          Payload,
+          EntryIndexTable,
           and(
-            eq(EntryDataTable.versionId, Payload.versionId),
-            eq(EntryDataTable.payloadId, Payload.payloadId)
+            eq(EntryDataTable.versionId, EntryIndexTable.versionId),
+            eq(EntryDataTable.payloadId, EntryIndexTable.payloadId)
           )
         )
         .where(
@@ -224,8 +231,8 @@ export class EntryRuntime extends Graph {
         `select d.versionId, d.payloadId, d.data as dataJson,
           d.source as sourceJson
         from alinea_entry_data d
-        inner join alinea_entry_payload p
-          on p.versionId = d.versionId and p.payloadId = d.payloadId
+        inner join alinea_entry_index i
+          on i.versionId = d.versionId and i.payloadId = d.payloadId
         where d.versionId in (${placeholders})`
       )
       try {
@@ -285,7 +292,7 @@ export class EntryRuntime extends Graph {
         async tx => {
           const state = await tx.select().from(Meta).where(eq(Meta.id, 1)).get()
           if (state?.revision !== delta.fromRevision)
-            throw new Error('Replica revision mismatch')
+            throw new Error('Database revision mismatch')
           if (delta.toRevision === delta.fromRevision)
             throw new Error('A delta must advance the revision')
           if (
@@ -295,10 +302,12 @@ export class EntryRuntime extends Graph {
           ) {
             const changed = new Set<string>()
             const indexRows = []
-            const manifests = []
             const payloadRows = []
             for (const replacement of delta.entries) {
-              const row = entryIndexRow(replacement.entry)
+              const row = entryIndexRow(
+                replacement.entry,
+                replacement.payloadId
+              )
               if (changed.has(row.versionId))
                 throw new Error('Duplicate entry in delta')
               changed.add(row.versionId)
@@ -307,28 +316,18 @@ export class EntryRuntime extends Graph {
               if (replacement.source !== undefined && !replacement.data)
                 throw new Error('Source metadata must accompany entry data')
               indexRows.push(row)
-              if (replacement.payloadId) {
-                manifests.push({
+              if (replacement.payloadId && replacement.data)
+                payloadRows.push({
                   versionId: row.versionId,
-                  payloadId: replacement.payloadId
+                  payloadId: replacement.payloadId,
+                  data: replacement.data,
+                  source: validateSource(replacement.source)
                 })
-                if (replacement.data)
-                  payloadRows.push({
-                    versionId: row.versionId,
-                    payloadId: replacement.payloadId,
-                    data: replacement.data,
-                    source: validateSource(replacement.source)
-                  })
-              }
             }
             for (let offset = 0; offset < indexRows.length; offset += 1000)
               await tx
                 .insert(EntryIndexTable)
                 .values(indexRows.slice(offset, offset + 1000))
-            for (let offset = 0; offset < manifests.length; offset += 1000)
-              await tx
-                .insert(Payload)
-                .values(manifests.slice(offset, offset + 1000))
             for (let offset = 0; offset < payloadRows.length; offset += 1000)
               await tx
                 .insert(EntryDataTable)
@@ -341,7 +340,7 @@ export class EntryRuntime extends Graph {
           }
           const changed = new Set(delta.removedVersionIds)
           for (const replacement of delta.entries) {
-            const row = entryIndexRow(replacement.entry)
+            const row = entryIndexRow(replacement.entry, replacement.payloadId)
             if (changed.has(row.versionId))
               throw new Error('Duplicate entry in delta')
             changed.add(row.versionId)
@@ -350,12 +349,12 @@ export class EntryRuntime extends Graph {
             if (replacement.source !== undefined && !replacement.data)
               throw new Error('Source metadata must accompany entry data')
             const existing = await tx
-              .select()
-              .from(Payload)
-              .where(eq(Payload.versionId, row.versionId))
+              .select(EntryIndexTable.payloadId)
+              .from(EntryIndexTable)
+              .where(eq(EntryIndexTable.versionId, row.versionId))
               .get()
             if (
-              existing?.payloadId !== replacement.payloadId ||
+              existing !== (replacement.payloadId ?? null) ||
               replacement.data ||
               !replacement.payloadId
             )
@@ -366,20 +365,13 @@ export class EntryRuntime extends Graph {
               .delete(EntryIndexTable)
               .where(eq(EntryIndexTable.versionId, row.versionId))
             await tx.insert(EntryIndexTable).values(row)
-            await tx.delete(Payload).where(eq(Payload.versionId, row.versionId))
-            if (replacement.payloadId) {
-              await tx.insert(Payload).values({
+            if (replacement.payloadId && replacement.data)
+              await tx.insert(EntryDataTable).values({
                 versionId: row.versionId,
-                payloadId: replacement.payloadId
+                payloadId: replacement.payloadId,
+                data: replacement.data,
+                source: validateSource(replacement.source)
               })
-              if (replacement.data)
-                await tx.insert(EntryDataTable).values({
-                  versionId: row.versionId,
-                  payloadId: replacement.payloadId,
-                  data: replacement.data,
-                  source: validateSource(replacement.source)
-                })
-            }
           }
           for (const id of delta.removedVersionIds ?? []) {
             await tx
@@ -388,7 +380,6 @@ export class EntryRuntime extends Graph {
             await tx
               .delete(EntryDataTable)
               .where(eq(EntryDataTable.versionId, id))
-            await tx.delete(Payload).where(eq(Payload.versionId, id))
           }
           await tx
             .update(Meta)
@@ -399,6 +390,7 @@ export class EntryRuntime extends Graph {
       )
       this.#generation++
       this.#searchDirty = true
+      this.#indexTree = undefined
     })
     for (const invalidate of this.#listeners) invalidate()
   }
@@ -408,10 +400,16 @@ export class EntryRuntime extends Graph {
     for (let offset = 0; offset < ids.length; offset += 1000) {
       const batch = ids.slice(offset, offset + 1000)
       const manifests = await this.#db
-        .select()
-        .from(Payload)
-        .where(inArray(Payload.versionId, batch))
-      if (manifests.length !== batch.length)
+        .select({
+          versionId: EntryIndexTable.versionId,
+          payloadId: EntryIndexTable.payloadId
+        })
+        .from(EntryIndexTable)
+        .where(inArray(EntryIndexTable.versionId, batch))
+      if (
+        manifests.length !== batch.length ||
+        manifests.some(row => row.payloadId === null)
+      )
         throw new Error('Entry payload is not readable')
       const resident = new Map(
         (
@@ -425,9 +423,9 @@ export class EntryRuntime extends Graph {
         ).map(row => [row.id, row.payload])
       )
       missing.push(
-        ...manifests.filter(
-          row => resident.get(row.versionId) !== row.payloadId
-        )
+        ...manifests
+          .filter(row => resident.get(row.versionId) !== row.payloadId)
+          .map(row => ({versionId: row.versionId, payloadId: row.payloadId!}))
       )
     }
     return missing

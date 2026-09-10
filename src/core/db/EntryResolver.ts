@@ -42,7 +42,7 @@ import {
   type EntryIndex,
   type EntryNode
 } from './EntryIndex.js'
-import {LinkResolver} from './LinkResolver.js'
+import {IndexedLinkResolver as LinkResolver} from './LinkResolver.js'
 
 const orFilter = cito.object({or: cito.array(cito.any)}).and(hasExact(['or']))
 const andFilter = cito

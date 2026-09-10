@@ -13,7 +13,7 @@ export function entryVersionId(
   return JSON.stringify([id, locale?.toLowerCase() ?? null, status])
 }
 
-/** Structural metadata is fully resident, including in browser replicas. */
+/** Structural metadata is always resident. */
 export const EntryIndexTable = table(
   'alinea_entry_index',
   {
@@ -44,7 +44,9 @@ export const EntryIndexTable = table(
     main: column.boolean().notNull(),
     visible: column.boolean().notNull(),
     seeded: column.text(),
-    rowHash: column.varchar(undefined, {length: 128}).notNull()
+    rowHash: column.varchar(undefined, {length: 128}).notNull(),
+    /** Null means this structural row has no readable payload. */
+    payloadId: column.varchar(undefined, {length: 255})
   },
   row => ({
     byId: index().on(row.id, row.locale, row.versionStatus),
@@ -99,7 +101,8 @@ export interface IndexedEntry extends Omit<
 }
 
 export function entryIndexRow(
-  entry: IndexedEntry & Partial<Pick<Entry, 'parentDir'>>
+  entry: IndexedEntry & Partial<Pick<Entry, 'parentDir'>>,
+  payloadId?: string
 ) {
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
@@ -125,6 +128,7 @@ export function entryIndexRow(
     main: entry.main,
     visible: entry.visible ?? true,
     seeded: entry.seeded,
-    rowHash: entry.rowHash
+    rowHash: entry.rowHash,
+    payloadId: payloadId ?? null
   }
 }

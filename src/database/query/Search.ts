@@ -14,7 +14,7 @@ export interface SearchQuery {
 }
 
 /** Create the local standard FTS5 index. It is populated lazily so a cold
- * replica does not tokenize every payload before its first non-search query. */
+ * database does not tokenize every payload before its first search query. */
 export async function createSearch(db: Database): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
   await db.run(sql`create virtual table alinea_entry_search using fts5(
