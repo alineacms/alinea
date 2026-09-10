@@ -222,6 +222,82 @@ test('discarding failed mutations restores the remote state', async () => {
   )
 })
 
+test('retry refreshes an accepted mutation without replaying it locally or remotely', async () => {
+  const remoteSource = new MemorySource()
+  await syncWith(remoteSource, new FSSource('test/fixtures/demo'))
+  const remoteDB = new LocalDB(cms.config, remoteSource)
+  await remoteDB.sync()
+  const entry = await remoteDB.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  const baseClient = createTestConnection(remoteDB)
+  let unavailable = false
+  let writes = 0
+  let failedReads = 0
+  let recoveryFailed: (() => void) | undefined
+  const failure = new Promise<void>(resolve => {
+    recoveryFailed = resolve
+  })
+  const client: LocalConnection = {
+    ...baseClient,
+    async mutate(mutations) {
+      writes++
+      await baseClient.mutate(mutations)
+      // A server-side change makes the accepted tree differ from the optimistic
+      // local result, requiring a refresh after the write has succeeded.
+      const result = await baseClient.mutate([
+        {
+          op: 'update',
+          id: entry._id,
+          locale: null,
+          status: 'published',
+          set: {title: 'Authoritative title'}
+        }
+      ])
+      unavailable = true
+      return result
+    },
+    async getTreeIfDifferent(sha) {
+      if (unavailable) {
+        if (++failedReads === 2) recoveryFailed?.()
+        throw new Error('Refresh unavailable')
+      }
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('accepted-refresh-retry', cms.config, client)
+  const db = await worker.db
+  db.index.dispatchEvent = () => true
+  const original = await db.get({
+    type: cms.schema.DemoRecipe,
+    path: 'chocolate-chip'
+  })
+  await worker.queue('accepted', [
+    {
+      op: 'update',
+      id: original._id,
+      locale: null,
+      status: 'published',
+      set: {title: 'Optimistic title'}
+    }
+  ])
+  await failure
+  unavailable = false
+  db.mutate = () => {
+    throw new Error('Must not replay accepted mutations')
+  }
+  await worker.retryActivity()
+  expect(writes).toBe(1)
+  expect(
+    await db.get({type: cms.schema.DemoRecipe, id: original._id})
+  ).toMatchObject({title: 'Authoritative title'})
+  expect(
+    worker.activities().find(activity => activity.id === 'accepted')
+  ).toMatchObject({status: 'succeeded'})
+})
+
 async function createFailedMutationFixture() {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteSource = new MemorySource()

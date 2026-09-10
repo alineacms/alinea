@@ -31,6 +31,7 @@ interface QueuedMutation {
   activity: Activity
   attempt: number
   sha?: string
+  acceptedSha?: string
 }
 
 const activityHistoryLimit = 100
@@ -150,7 +151,7 @@ export class DashboardWorker extends EventTarget {
         item.activity.status = 'pending'
         item.activity.finishedAt = undefined
         item.activity.error = undefined
-        if (!item.sha) {
+        if (!item.sha && !item.acceptedSha) {
           try {
             await db.mutate(item.mutations)
             item.sha = db.sha
@@ -201,8 +202,13 @@ export class DashboardWorker extends EventTarget {
       const client = await this.#client
       const db = await this.db
       try {
-        const {sha} = await client.mutate(item.mutations)
-        if (remote.pendingCount === 0 && sha !== item.sha)
+        const accepted = item.acceptedSha !== undefined
+        // Remember acceptance before refreshing: a read failure is not a write
+        // failure. This is an in-session receipt, not durable retry protection.
+        const sha = (item.acceptedSha ??= (
+          await client.mutate(item.mutations)
+        ).sha)
+        if (accepted || (remote.pendingCount === 0 && sha !== item.sha))
           await this.#syncWithClient(db, client)
         this.#completeMutation(item)
       } catch (error) {
