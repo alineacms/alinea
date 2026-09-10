@@ -1,6 +1,7 @@
 import {Client} from '#/core/Client.js'
 import {SharedEventSource} from 'shared-event-source'
 import {boot, type ConfigBatch, type ConfigGenerator} from './Boot.js'
+import {replicaBinding} from './ReplicaBinding.js'
 
 export function bootDev() {
   return boot(getConfig())
@@ -12,7 +13,7 @@ async function* getConfig(): ConfigGenerator {
   const source = new SharedEventSource('./~dev')
   const url = new URL('./api', import.meta.url).href
   const createConfig = async (revision: string) => {
-    const {cms, views} = await loadConfig(revision)
+    const {cms, views, dashboardReplica} = await loadConfig(revision)
     const {config} = cms
     const client = new Client({config, url})
     return {
@@ -21,7 +22,9 @@ async function* getConfig(): ConfigGenerator {
       revision,
       config,
       views,
-      client
+      client,
+      replica: replicaBinding(dashboardReplica),
+      handlerUrl: url
     }
   }
   let batch: ConfigBatch | undefined

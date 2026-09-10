@@ -608,6 +608,18 @@ the generated project/namespace/endpoint binding to ReplicaGraph and attach the
 owned worker event bridges. Polling currently has lifecycle control but needs
 fetch-activity reporting. No production dashboard cutover is claimed yet.
 
+Generated boot batches now carry explicit public project/namespace/epoch metadata
+from the same helper as checkpoint release identity. Production bundles embed
+the configured handler endpoint as well; a script query parameter no longer
+selects it. Development exports the binding with each dynamically loaded config
+revision, so an existing entry bundle cannot pin hot reload to an old namespace
+or epoch. Bindings omit release/config IDs and user claims: they constrain source
+scope while the authenticated bootstrap supplies current grants and release data.
+Tests exercise explicit scopes, hosting preview names, Unicode/quoted names and
+actual esbuild define serialization. The legacy worker still boots until local
+filesystem receipt support is available; enabling the durable queue beforehand
+would make dev mutations fail the handler's required receipt capability check.
+
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch
 semantics, while `handler/SqlMutationRequest` prepares the same source commit

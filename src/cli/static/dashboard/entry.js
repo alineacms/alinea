@@ -3,7 +3,4 @@ import {bootProd} from 'alinea/dashboard/boot/BootProd'
 import {cms} from '#alinea/config'
 import {views} from '#alinea/views'
 
-const params = new URL(import.meta.url).searchParams
-const handlerUrl = params.get('handlerUrl')
-
-bootProd(handlerUrl, cms, views)
+bootProd(process.env.ALINEA_HANDLER_URL, cms, views)

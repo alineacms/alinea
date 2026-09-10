@@ -13,16 +13,12 @@ export function releaseIdentity(
   configLocation: string,
   env: Record<string, string | undefined>
 ): CheckpointIdentity {
-  const project =
-    config.replica?.project ??
-    Config.baseUrl(config, 'production') ??
-    `local:${configLocation}`
-  const {namespace, epoch} = replicaScope(config, env)
-  if (
-    ![project, namespace, epoch, configId].every(
-      value => typeof value === 'string' && value.length > 0
-    )
+  const {project, namespace, epoch} = dashboardBinding(
+    config,
+    configLocation,
+    env
   )
+  if (typeof configId !== 'string' || !configId)
     throw new Error('Replica identity values must be non-empty strings')
   return {
     project,
@@ -32,4 +28,27 @@ export function releaseIdentity(
     schemaId: `alinea-sqlite-${checkpointFormat}`,
     releaseId: createId()
   }
+}
+
+/** Public source scope embedded in dashboard bundles; never infer preview
+ * identity from the browser's hostname or its build-time process environment.
+ */
+export function dashboardBinding(
+  config: Config,
+  configLocation: string,
+  env: Record<string, string | undefined>
+) {
+  const project =
+    config.replica?.project ??
+    Config.baseUrl(config, 'production') ??
+    `local:${configLocation}`
+  const {namespace, epoch} = replicaScope(config, env)
+  if (
+    ![project, namespace, epoch].every(
+      value =>
+        typeof value === 'string' && value.length > 0 && value.length <= 4096
+    )
+  )
+    throw new Error('Replica identity values must be non-empty strings')
+  return {project, namespace, epoch}
 }

@@ -1,7 +1,8 @@
 import {expect, test} from 'bun:test'
 import type {Config} from '#/core/Config.js'
 import {checkpointFormat} from '#/database/runtime/Checkpoint.js'
-import {releaseIdentity} from './ReleaseIdentity.js'
+import {dashboardBinding, releaseIdentity} from './ReleaseIdentity.js'
+import {transform} from 'esbuild'
 
 const config: Config = {
   schema: {},
@@ -68,4 +69,52 @@ test('local configurations without production URLs use distinct config-file iden
   expect(releaseIdentity(config, 'config', '/repo/b.ts', {}).project).toBe(
     'local:/repo/b.ts'
   )
+})
+
+test('generated dashboard scope matches checkpoints without pinning deployment IDs or user identity', async () => {
+  for (const env of [
+    {},
+    {VERCEL_GIT_COMMIT_REF: 'feature/日本語"quoted'},
+    {CF_PAGES_BRANCH: 'cf-preview'}
+  ]) {
+    const binding = dashboardBinding(config, '/repo/config.ts', env)
+    const checkpoint = releaseIdentity(
+      config,
+      'config-id',
+      '/repo/config.ts',
+      env
+    )
+    expect(binding).toEqual({
+      project: checkpoint.project,
+      namespace: checkpoint.namespace,
+      epoch: checkpoint.epoch
+    })
+    const result = await transform(
+      'export default process.env.ALINEA_REPLICA_BINDING',
+      {
+        format: 'esm',
+        define: {'process.env.ALINEA_REPLICA_BINDING': JSON.stringify(binding)}
+      }
+    )
+    const loaded = await import(
+      `data:text/javascript;base64,${Buffer.from(result.code).toString('base64')}`
+    )
+    expect(loaded.default).toEqual(binding)
+    expect(Object.keys(loaded.default).sort()).toEqual([
+      'epoch',
+      'namespace',
+      'project'
+    ])
+  }
+  expect(
+    dashboardBinding(
+      {...config, replica: {namespace: 'explicit', epoch: 'reset'}},
+      '/repo/config.ts',
+      {VERCEL_GIT_COMMIT_REF: 'ignored'}
+    )
+  ).toEqual({
+    project: 'https://example.test',
+    namespace: 'explicit',
+    epoch: 'reset'
+  })
 })

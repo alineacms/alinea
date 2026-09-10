@@ -11,6 +11,7 @@ import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
 import type {GenerateContext} from './GenerateContext.js'
+import {dashboardBinding} from './ReleaseIdentity.js'
 
 export async function generateDashboard(
   {configLocation, rootDir, configDir}: GenerateContext,
@@ -52,6 +53,10 @@ export async function generateDashboard(
     define: {
       'process.env.NODE_ENV': '"production"',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
+      'process.env.ALINEA_HANDLER_URL': JSON.stringify(handlerUrl),
+      'process.env.ALINEA_REPLICA_BINDING': JSON.stringify(
+        dashboardBinding(cms.config, configLocation, process.env)
+      ),
       ...publicDefines(process.env)
     },
     ...buildOptions,
@@ -71,9 +76,7 @@ export async function generateDashboard(
         <meta name="handshake_url" value="${handlerUrl}?auth=handshake" />
         <meta name="redirect_url" value="${handlerUrl}?auth=login" />
         <body>
-          <script type="module" src="${baseUrl}/entry.js?buildId=${buildId}&handlerUrl=${encodeURIComponent(
-            handlerUrl
-          )}">
+          <script type="module" src="${baseUrl}/entry.js?buildId=${buildId}">
           </script>
         </body>
       `.toString()

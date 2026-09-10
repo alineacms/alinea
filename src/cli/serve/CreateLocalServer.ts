@@ -15,6 +15,7 @@ import {publicDefines} from '../util/PublicDefines.js'
 import {reportFatal} from '../util/Report.js'
 import {viewsPlugin} from '../util/ViewsPlugin.js'
 import type {ServeContext} from './ServeContext.js'
+import {dashboardBinding} from '../generate/ReleaseIdentity.js'
 
 type BuildDetails = Map<string, OutputFile>
 
@@ -115,6 +116,7 @@ export function createLocalServer(
     '#alinea/entry': `data:text/javascript,
         export * from '#alinea/config'
         export * from '${viewsPlugin.entry}'
+        export const dashboardReplica = ${JSON.stringify(dashboardBinding(cms.config, configLocation, process.env))}
       `
   }
   const config = {

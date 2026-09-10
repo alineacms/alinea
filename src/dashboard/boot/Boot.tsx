@@ -10,12 +10,15 @@ import {ActivityEvent} from '#/core/db/ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 import {loadWorker} from './LoadWorker.js'
 import {WorkerDB} from './WorkerDB.js'
+import type {ReplicaBinding} from './ReplicaBinding.js'
 
 export interface ConfigBatch {
   local: boolean
   revision: string
   config: Config
   client: Client
+  replica: ReplicaBinding
+  handlerUrl: string
   views: Record<string, ComponentType>
   alineaDev?: boolean
 }
