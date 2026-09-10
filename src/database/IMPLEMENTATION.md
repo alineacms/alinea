@@ -603,10 +603,8 @@ principal-bound, and stale authentication responses cannot replace newer ones.
 Tests cover ownership races, startup/poll lifecycle, atom readiness/logout order,
 and an actual writable SQLite owner with a response-lost accepted edit.
 
-Generated dashboard boot still instantiates the legacy worker: it must supply
-the generated project/namespace/endpoint binding to ReplicaGraph and attach the
-owned worker event bridges. Polling currently has lifecycle control but needs
-fetch-activity reporting. No production dashboard cutover is claimed yet.
+Polling currently has lifecycle control but needs fetch-activity reporting.
+No production dashboard cutover is claimed yet.
 
 Generated boot batches now carry explicit public project/namespace/epoch metadata
 from the same helper as checkpoint release identity. Production bundles embed
@@ -616,9 +614,7 @@ revision, so an existing entry bundle cannot pin hot reload to an old namespace
 or epoch. Bindings omit release/config IDs and user claims: they constrain source
 scope while the authenticated bootstrap supplies current grants and release data.
 Tests exercise explicit scopes, hosting preview names, Unicode/quoted names and
-actual esbuild define serialization. The legacy worker still boots until local
-filesystem receipt support is available; enabling the durable queue beforehand
-would make dev mutations fail the handler's required receipt capability check.
+actual esbuild define serialization.
 
 DevDB now exposes filesystem transaction receipts through the existing backend
 composition and handler retry route. A private SQLite journal in
@@ -642,6 +638,24 @@ recovery UX and multi-process filesystem write locking remain required. Receipt
 storage must be outside indexed content; configurations indexing the project
 root need a separate private-directory arrangement before durable dev writes
 can be enabled there. Automatic epoch changes after journal deletion remain open.
+
+Development dashboard boot now connects ReplicaGraph to a dedicated SQLite
+worker after authentication. Each worker owns its generated configuration and
+source binding, pins the requested config revision, and accepts only one
+principal. Its port listener is installed before the dynamic config import;
+early connection calls await configuration instead of being dropped. Index and
+activity bridges attach before returning the Graph. A config revision replaces
+the owner and dashboard atom store; source refetch refreshes the current owner.
+Page shutdown retains drafts; logout requests purge. Environments without Worker
+use the same writable SQLite owner on the main thread. Production continues on
+the legacy path until CloudRemote supports durable receipt lookup.
+
+Unit tests cover config/principal binding and cancellation during startup. The
+Chromium fixture exercises delayed config loading, the dedicated host/factory,
+authenticated bootstrap, lazy Graph reads and logout cleanup. This is not yet a
+full generated dev dashboard edit/restart smoke test. Post-start worker crashes,
+bounded shutdown and exhaustive cache purge after startup failure still need
+hardening before treating the lifecycle cutover as complete.
 
 `EntryTransaction` now plans through a Graph-backed `MutationReader` instead of
 directly reading an `EntryIndex`. The legacy adapter retains sequential batch

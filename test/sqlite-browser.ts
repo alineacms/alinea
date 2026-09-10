@@ -73,7 +73,8 @@ const build = await Bun.build({
   entrypoints: [
     'test/sqlite-browser/main.ts',
     'test/sqlite-browser/worker.ts',
-    'test/sqlite-browser/owned-worker.ts'
+    'test/sqlite-browser/owned-worker.ts',
+    'test/sqlite-browser/host-worker.ts'
   ],
   target: 'browser',
   format: 'esm',
@@ -213,6 +214,11 @@ try {
   console.log(
     'Chromium SQLite workers: encrypted hydration, authenticated bootstrap, live Graph queries, pending-edit restart and logout purge passed'
   )
+  assert.deepEqual(await page.evaluate(async path => {
+    const {runHost} = await import(path)
+    return Promise.race([runHost(), new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard worker host timed out')), 15000))])
+  }, '/main.js'), {connected: true})
+  console.log('Dedicated dashboard replica worker: generated binding, lazy Graph reads and cleanup passed')
 } finally {
   await browser.close()
 }

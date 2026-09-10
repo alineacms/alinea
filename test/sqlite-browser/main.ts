@@ -6,10 +6,28 @@ import {
   encryptFrame,
   decryptFrame
 } from '#/database/replica/Frame.js'
-import {config, entry, Page} from './config.js'
+import {config, entry, Page, replicaIdentity} from './config.js'
+import {connectReplicaWorker} from '#/dashboard/boot/ConnectReplicaWorker.js'
+import {Client} from '#/core/Client.js'
 import type {api} from './worker.js'
 import type {api as ownedApi} from './owned-worker.js'
 import {ReplicaCache} from '#/database/browser/ReplicaCache.js'
+
+export async function runHost() {
+  const handlerUrl = new URL('/replica', import.meta.url).href
+  const {project, namespace, epoch, principal} = replicaIdentity
+  const graph = await connectReplicaWorker(new URL('./host-worker.js', import.meta.url), {
+    config, local: true, revision: 'fixture', handlerUrl,
+    replica: {project, namespace, epoch},
+    client: new Client({config, url: handlerUrl}), views: {}
+  }, principal, new AbortController().signal)
+  try {
+    check(await graph.find({id: 'b', select: Page.title}), ['Payload b'])
+    check(await graph.activities(), [])
+    check((await graph.compiledPolicy()).canRead({id: 'b'}), true)
+    return {connected: true}
+  } finally {await graph.close(true)}
+}
 
 export async function runOwned() {
   const worker = new Worker(new URL('./owned-worker.js', import.meta.url), {

@@ -9,7 +9,8 @@ export function bootDev() {
 
 async function* getConfig(): ConfigGenerator {
   const buildId = process.env.ALINEA_BUILD_ID as string
-  let revision = buildId
+  let revision =
+    new URL(import.meta.url).searchParams.get('configRevision') ?? buildId
   const source = new SharedEventSource('./~dev')
   const url = new URL('./api', import.meta.url).href
   const createConfig = async (revision: string) => {

@@ -6,6 +6,12 @@ export interface GraphSession {
   disconnect(purge?: boolean): Promise<void>
 }
 
+export class GraphSessionAbort extends Error {
+  constructor(readonly purge: boolean) {
+    super('Dashboard replica disconnected')
+  }
+}
+
 export function graphSession(graph: WritableGraph): GraphSession | undefined {
   const session = graph as WritableGraph & Partial<GraphSession>
   if (

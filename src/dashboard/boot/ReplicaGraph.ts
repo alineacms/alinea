@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {GraphSessionAbort} from '#/core/db/GraphSession.js'
 import type {User} from '#/core/User.js'
 import type {GraphQuery, AnyQueryResult} from '#/core/Graph.js'
 import type {Policy} from '#/core/Role.js'
@@ -73,7 +74,7 @@ export class ReplicaGraph extends WritableGraph {
     let purgeCancelled = false
     this.#cancel = purge => {
       purgeCancelled = purge
-      abort.abort(new Error('Dashboard replica disconnected'))
+      abort.abort(new GraphSessionAbort(purge))
     }
     this.#principal = user.sub
     const connecting = (async () => {
