@@ -47,7 +47,7 @@ interface CacheFailure {
 const activityHistoryLimit = 100
 
 export class DashboardWorker extends EventTarget {
-  #source: Source
+  #source: Source | undefined
   #localDB: EntryStore | undefined
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<LoadedDashboard>()
@@ -59,7 +59,7 @@ export class DashboardWorker extends EventTarget {
   #blocked = false
   #syncInterval: ReturnType<typeof setInterval> | undefined
 
-  constructor(source: Source) {
+  constructor(source?: Source) {
     super()
     this.#source = source
   }
@@ -334,7 +334,7 @@ export class DashboardWorker extends EventTarget {
             name: 'alinea-entry-database',
             revision
           })
-        : await EntryStore.memory(config, this.#source)
+        : await EntryStore.memory(config, this.#fallbackSource())
       if (this.#defer)
         void this.#defer().catch(() => {
           // The replaced database finishes outstanding work before closing.
@@ -362,6 +362,12 @@ export class DashboardWorker extends EventTarget {
       nextLoad.reject(new Error('Failed to load database', {cause}))
       throw cause
     }
+  }
+
+  #fallbackSource(): Source {
+    if (!this.#source)
+      throw new Error('A source is required when IndexedDB is unavailable')
+    return this.#source
   }
 
   async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {
