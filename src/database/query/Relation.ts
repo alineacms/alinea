@@ -153,7 +153,8 @@ export function relationCondition(
         )
         .orderBy(
           next ? asc(entry.index) : desc(entry.index),
-          asc(entry.ordinal)
+          asc(entry.filePath),
+          asc(entry.versionId)
         )
         .limit(1)
       return and(inArray(entry.id, neighbor), locale)

@@ -314,7 +314,7 @@ export function compileEntryQuery(
   else ordering.push(asc(EntryIndexTable.index))
   ordering.push(
     links ? asc(links.ordinal) : asc(EntryIndexTable.index),
-    asc(EntryIndexTable.ordinal),
+    asc(EntryIndexTable.filePath),
     asc(EntryIndexTable.versionId)
   )
 
@@ -346,7 +346,7 @@ export function compileEntryQuery(
         versionId: EntryIndexTable.versionId,
         linkOrdinal: links?.ordinal ?? sql.value(0),
         rank: sql<number>`row_number() over (partition by ${sql.join(grouping, sql`, `)}
-        order by ${search?.rank ?? links?.ordinal ?? EntryIndexTable.index}, ${EntryIndexTable.ordinal}, ${EntryIndexTable.versionId})`
+        order by ${search?.rank ?? links?.ordinal ?? EntryIndexTable.index}, ${EntryIndexTable.filePath}, ${EntryIndexTable.versionId})`
       })
       .from(EntryIndexTable)
       .where(sql.value(true))

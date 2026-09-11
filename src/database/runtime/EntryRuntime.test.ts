@@ -127,8 +127,8 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
   const db = connect(sqlite)
   await EntryRuntime.createSchema(db, 'empty')
   const runtime = new EntryRuntime(config, db)
-  const entries = Array.from(index.filter({}), (entry, ordinal) => ({
-    entry: {...entry, versionStatus: entry.status, ordinal}
+  const entries = Array.from(index.filter({}), entry => ({
+    entry: {...entry, versionStatus: entry.status}
   }))
   await runtime.apply({fromRevision: 'empty', toRevision: 'one', entries})
   for (const select of [

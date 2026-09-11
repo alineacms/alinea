@@ -152,12 +152,10 @@ test('SQL compilation agrees with the existing resolver on the real demo corpus'
   const index = new EntryIndex(cms.config)
   await index.syncWith(new FSSource('test/fixtures/demo'))
   const resolver = new EntryResolver(cms.config, index)
-  let ordinal = 0
   for (const entry of index.filter({})) {
     const row = entryIndexRow({
       ...entry,
-      versionStatus: entry.status,
-      ordinal: ordinal++
+      versionStatus: entry.status
     })
     await db.insert(EntryIndexTable).values(row)
   }
@@ -200,7 +198,6 @@ test('SQL grouping preserves primitive types and picks representatives before so
     await db.insert(EntryIndexTable).values(
       entryIndexRow(
         entry(id, {
-          ordinal: index,
           data: value === undefined ? {} : {title: value}
         })
       )

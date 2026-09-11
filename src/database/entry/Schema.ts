@@ -2,9 +2,6 @@ import type {Entry, EntryStatus} from '#/core/Entry.js'
 import {index, table} from 'rado'
 import * as column from 'rado/universal/columns'
 
-/** Leave integer insertion slots for request-local authored versions. */
-export const entryOrdinalStep = 1024
-
 export function entryVersionId(
   id: string,
   locale: string | null,
@@ -37,7 +34,6 @@ export const EntryIndexTable = table(
     parents: column.json<Array<string>>().notNull(),
     level: column.integer().notNull(),
     index: column.varchar(undefined, {length: 255}).notNull(),
-    ordinal: column.integer().notNull(),
     path: column.text().notNull(),
     /** Full source path of this authored version. */
     filePath: column.text().notNull(),
@@ -71,8 +67,6 @@ export interface IndexedEntry extends Entry {
   versionStatus: EntryStatus
   /** False for authored versions suppressed by inherited status in normal queries. */
   visible?: boolean
-  /** Stable source insertion order for equal fractional positions. */
-  ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
   sourceRoot?: string | null
   /** Hash of this entry's child directory in the synced source tree. */
@@ -97,7 +91,6 @@ export function entryIndexRow(entry: IndexedEntry) {
     parents: entry.parents,
     level: entry.level,
     index: entry.index,
-    ordinal: entry.ordinal ?? 0,
     path: entry.path,
     filePath: entry.filePath,
     fileHash: entry.fileHash,
