@@ -60,7 +60,8 @@ export const EntryIndexTable = table(
     byUrl: index().on(row.url),
     byType: index().on(row.type),
     byParent: index().on(row.parentId, row.locale, row.index),
-    byLocation: index().on(row.workspace, row.root, row.status, row.index)
+    byLocation: index().on(row.workspace, row.root, row.status, row.index),
+    byFilePath: index().on(row.filePath)
   })
 )
 

@@ -23,6 +23,7 @@ import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 import {entryTree} from '../sync/EntryTree.js'
 import {EntrySyncer} from '../sync/EntrySyncer.js'
+import {syncSourceTree} from '../sync/DatabaseSync.js'
 
 const superseded = Symbol('superseded query')
 
@@ -109,11 +110,10 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     return this.#config
   }
 
-  /** Synchronize this database with a source through a cached compiler. */
+  /** Synchronize this database with a source-bound, serialized synchronizer. */
   syncWith(source: Source): Promise<string> {
     if (this.#closed) return Promise.reject(new Error('EntryRuntime is closed'))
-    const syncer =
-      this.#syncers.get(source) ?? new EntrySyncer(this.#config, source)
+    const syncer = this.#syncers.get(source) ?? new EntrySyncer(source)
     this.#syncers.set(source, syncer)
     const task = this.#syncQueue.then(() => syncer.sync(this))
     this.#syncQueue = task.catch(() => {})
@@ -146,27 +146,18 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     })
   }
 
-  /**
-   * Hydrate only the rows a source delta must rewrite. The synchronizer never
-   * snapshots the entire database into JavaScript.
-   */
-  syncEntries(
-    entryIds: ReadonlyArray<string>
-  ): Promise<Map<string, IndexedEntry>> {
-    return this.#exclusive(async () => {
-      const result = new Map<string, IndexedEntry>()
-      for (const ids of chunks(entryIds, 500)) {
-        const rows = await this.#db
-          .select()
-          .from(EntryIndexTable)
-          .where(inArray(EntryIndexTable.id, ids))
-        for (const row of rows) {
-          const {versionId, ...entry} = row
-          result.set(versionId, entry)
-        }
-      }
-      return result
+  /** Apply one source tree without keeping an in-memory copy of its entries. */
+  async syncSource(
+    source: Source,
+    tree: ReadonlyTree,
+    fromRevision: string
+  ): Promise<void> {
+    await this.#exclusive(async () => {
+      await syncSourceTree(this.#db, this.#config, source, tree, fromRevision)
+      this.#generation++
+      this.#searchDirty = true
     })
+    for (const invalidate of this.#listeners) invalidate()
   }
 
   /** Retry a read-only compound operation if any local commit overlaps it. */
