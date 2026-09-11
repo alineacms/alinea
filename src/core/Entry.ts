@@ -10,6 +10,8 @@ export const ALT_STATUS: Array<EntryStatus> = ['draft', 'archived']
 
 export interface Entry<Data extends object = Record<string, unknown>> {
   id: string
+  /** Physical authored version before status inheritance is applied. */
+  versionStatus?: EntryStatus
   status: EntryStatus
   title: string
   type: string
@@ -45,6 +47,10 @@ export interface EntryAuditUser {
 
 export const Entry = {
   id: new Expr<string>({type: 'entryField', name: 'id'}),
+  versionStatus: new Expr<EntryStatus>({
+    type: 'entryField',
+    name: 'versionStatus'
+  }),
   status: new Expr<EntryStatus>({type: 'entryField', name: 'status'}),
   title: new Expr<string>({type: 'entryField', name: 'title'}),
   type: new Expr<string>({type: 'entryField', name: 'type'}),

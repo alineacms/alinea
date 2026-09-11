@@ -268,6 +268,7 @@ class EntryLanguageNode {
     const entries = [...this.language.values()].map((version): Entry => {
       return {
         ...version,
+        versionStatus: version.status,
         status: this.inheritedStatus ?? version.status,
         parentId: this.node.parentId,
         parents: this.node.parents,

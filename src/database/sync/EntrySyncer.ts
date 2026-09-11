@@ -131,7 +131,7 @@ const afterVersionId = sql.placeholder<string>('afterVersionId')
 const level = sql.placeholder<number>('level')
 const offset = sql.placeholder<number>('offset')
 const revision = sql.placeholder<string>('revision')
-function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
+function createSyncQueryPlan(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   const DatabaseState = target.state
   const isDraft = max(eq(EntryIndexTable.versionStatus, 'draft'))
@@ -333,34 +333,58 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
       sql<boolean>`${SyncStatus.key} = json_array(${EntryIndexTable.id}, ${EntryIndexTable.locale})`
     )
 
+  return {
+    revision: revisionQuery,
+    entryCount: entryCountQuery,
+    setRevision: setRevisionQuery,
+    storedFiles: storedFilesQuery,
+    hierarchy: hierarchyQuery,
+    levels: levelsQuery,
+    statuses: statusesQuery,
+    mainEntries: mainEntriesQuery,
+    changedIds: changedIdsQuery,
+    clearAffected: clearAffectedQuery,
+    clearValues: clearValuesQuery,
+    clearStatus: clearStatusQuery,
+    markAllAffected: markAllAffectedQuery,
+    updateChildrenSha: updateChildrenShaQuery,
+    updateUrls: updateUrlsQuery,
+    copyInitialUrls: copyInitialUrlsQuery,
+    updateHierarchy: updateHierarchyQuery,
+    updateStatus: updateStatusQuery
+  }
+}
+
+function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
+  const query = createSyncQueryPlan(target)
   const statements = {
-    revision: revisionQuery.prepare(undefined, db),
-    entryCount: entryCountQuery.prepare(undefined, db),
-    setRevision: setRevisionQuery.prepare<{revision: string}>(undefined, db),
-    storedFiles: storedFilesQuery.prepare<{afterFilePath: string}>(
+    revision: query.revision.prepare(undefined, db),
+    entryCount: query.entryCount.prepare(undefined, db),
+    setRevision: query.setRevision.prepare<{revision: string}>(undefined, db),
+    storedFiles: query.storedFiles.prepare<{afterFilePath: string}>(
       undefined,
       db
     ),
-    hierarchy: hierarchyQuery.prepare<{afterEntryId: string}>(undefined, db),
-    levels: levelsQuery.prepare(undefined, db),
-    statuses: statusesQuery.prepare<{level: number; offset: number}>(
+    hierarchy: query.hierarchy.prepare<{afterEntryId: string}>(undefined, db),
+    levels: query.levels.prepare(undefined, db),
+    statuses: query.statuses.prepare<{level: number; offset: number}>(
       undefined,
       db
     ),
-    mainEntries: mainEntriesQuery.prepare<{afterVersionId: string}>(
+    mainEntries: query.mainEntries.prepare<{afterVersionId: string}>(
       undefined,
       db
     ),
-    changedIds: changedIdsQuery.prepare(undefined, db),
-    clearAffected: clearAffectedQuery.prepare(undefined, db),
-    clearValues: clearValuesQuery.prepare(undefined, db),
-    clearStatus: clearStatusQuery.prepare(undefined, db),
-    markAllAffected: markAllAffectedQuery.prepare(undefined, db),
-    updateChildrenSha: updateChildrenShaQuery.prepare(undefined, db),
-    updateUrls: updateUrlsQuery.prepare(undefined, db),
-    copyInitialUrls: copyInitialUrlsQuery.prepare(undefined, db),
-    updateHierarchy: updateHierarchyQuery.prepare(undefined, db),
-    updateStatus: updateStatusQuery.prepare(undefined, db)
+    changedIds: query.changedIds.prepare(undefined, db),
+    clearAffected: query.clearAffected.prepare(undefined, db),
+    clearValues: query.clearValues.prepare(undefined, db),
+    clearStatus: query.clearStatus.prepare(undefined, db),
+    markAllAffected: query.markAllAffected.prepare(undefined, db),
+    updateChildrenSha: query.updateChildrenSha.prepare(undefined, db),
+    updateUrls: query.updateUrls.prepare(undefined, db),
+    copyInitialUrls: query.copyInitialUrls.prepare(undefined, db),
+    updateHierarchy: query.updateHierarchy.prepare(undefined, db),
+    updateStatus: query.updateStatus.prepare(undefined, db)
   }
   return {
     ...statements,

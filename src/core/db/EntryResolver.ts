@@ -686,7 +686,10 @@ function entryChecker(scope: Scope, query: QuerySettings): Check {
     {
       id: query.id,
       parentId: query.parentId,
+      versionStatus: query.versionStatus,
+      main: query.main,
       path: query.path,
+      filePath: query.filePath,
       url: query.url,
       createdAt: query.createdAt,
       updatedAt: query.updatedAt,

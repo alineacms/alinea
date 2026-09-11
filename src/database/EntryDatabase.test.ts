@@ -3,6 +3,7 @@ import {Entry} from '#/core/Entry.js'
 import {Field as CoreField} from '#/core/Field.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {transaction} from '#/core/source/Source.js'
+import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
@@ -291,4 +292,200 @@ test('linked queries retain one snapshot while sync commits separately', async (
     await database.close()
     await rm(directory, {recursive: true, force: true})
   }
+})
+
+test('database mutations use a private overlay and commit one final tree', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const initial = await source.getTree()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, initial.sha)
+  const database = new EntryDatabase(config, db)
+
+  const result = await database.apply(
+    [
+      {
+        op: 'create',
+        id: 'a',
+        type: 'Page',
+        locale: null,
+        data: {title: 'First'}
+      },
+      {
+        op: 'update',
+        id: 'a',
+        locale: null,
+        status: 'published',
+        set: {title: 'Updated'}
+      }
+    ],
+    {source}
+  )
+
+  expect(await database.resolve({select: Entry.title})).toEqual(['Updated'])
+  expect(await source.getTree()).toEqual(initial)
+  expect(result.revision).toBe(result.request.intoSha)
+  expect(result.changedEntryIds).toEqual(['a'])
+  expect(result.request.changes).toHaveLength(1)
+  await source.applyChanges(sourceChanges(result.request))
+  await database.close()
+})
+
+test('failed database mutation batches leave the receiver untouched', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const initial = await source.getTree()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, initial.sha)
+  const database = new EntryDatabase(config, db)
+
+  await expect(
+    database.apply(
+      [
+        {
+          op: 'create',
+          id: 'a',
+          type: 'Page',
+          locale: null,
+          data: {title: 'First'}
+        },
+        {
+          op: 'create',
+          id: 'a',
+          type: 'Page',
+          locale: null,
+          data: {title: 'Duplicate'}
+        }
+      ],
+      {source}
+    )
+  ).rejects.toThrow('duplicate entry')
+  expect(await database.resolve({select: Entry.id})).toEqual([])
+  expect(await database.getRevision()).toBe(initial.sha)
+  await database.close()
+})
+
+test('database mutations preserve authored status and hierarchy transitions', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    contains: ['Page'],
+    fields: {title: Field.text('Title')}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const initial = await source.getTree()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, initial.sha)
+  const database = new EntryDatabase(config, db)
+  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
+    const result = await database.apply(mutations, {source})
+    await source.applyChanges(sourceChanges(result.request))
+    return result
+  }
+
+  await apply([
+    {
+      op: 'create',
+      id: 'parent',
+      type: 'Page',
+      locale: null,
+      data: {title: 'Parent'}
+    },
+    {
+      op: 'create',
+      id: 'child',
+      type: 'Page',
+      locale: null,
+      data: {title: 'Child'}
+    }
+  ])
+  await apply([
+    {
+      op: 'move',
+      id: 'child',
+      target: 'parent',
+      targetType: 'entry',
+      dropPosition: 'on'
+    }
+  ])
+  expect(
+    await database.resolve({
+      id: 'child',
+      get: true,
+      select: {parentId: Entry.parentId, filePath: Entry.filePath}
+    })
+  ).toEqual({parentId: 'parent', filePath: 'pages/parent/child.json'})
+
+  await apply([{op: 'unpublish', id: 'child', locale: null}])
+  expect(
+    await database.resolve({
+      id: 'child',
+      get: true,
+      status: 'draft',
+      select: {
+        status: Entry.status,
+        versionStatus: Entry.versionStatus,
+        filePath: Entry.filePath
+      }
+    })
+  ).toEqual({
+    status: 'draft',
+    versionStatus: 'draft',
+    filePath: 'pages/parent/child.draft.json'
+  })
+
+  await apply([
+    {op: 'publish', id: 'child', locale: null, status: 'draft'},
+    {op: 'archive', id: 'child', locale: null}
+  ])
+  expect(
+    await database.resolve({
+      id: 'child',
+      get: true,
+      status: 'archived',
+      select: {
+        status: Entry.status,
+        versionStatus: Entry.versionStatus,
+        filePath: Entry.filePath
+      }
+    })
+  ).toEqual({
+    status: 'archived',
+    versionStatus: 'archived',
+    filePath: 'pages/parent/child.archived.json'
+  })
+
+  await apply([{op: 'remove', id: 'child'}])
+  expect(await database.resolve({id: 'child', select: Entry.id})).toEqual([])
+  await database.close()
 })

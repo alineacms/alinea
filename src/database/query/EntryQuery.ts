@@ -229,7 +229,16 @@ export function compileEntryQuery(
           ? eq(entry.main, true)
           : eq(entry.status, status)
   )
-  for (const key of ['id', 'parentId', 'path', 'url', 'level'] as const)
+  for (const key of [
+    'id',
+    'parentId',
+    'versionStatus',
+    'main',
+    'path',
+    'filePath',
+    'url',
+    'level'
+  ] as const)
     if (query[key] !== undefined)
       structural.push(compileCondition(membership.index(key), query[key]))
   for (const key of ['workspace', 'root'] as const) {

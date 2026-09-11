@@ -1,5 +1,6 @@
 import type {Root, Workspace} from '#/types.js'
 import type {Config} from './Config.js'
+import type {EntryStatus} from './Entry.js'
 import type {EntryFields} from './EntryFields.js'
 import type {Expr} from './Expr.js'
 import type {Condition, Filter} from './Filter.js'
@@ -177,8 +178,14 @@ export declare class QuerySettings {
   id?: Condition<string>
   /** Filter by parentId */
   parentId?: Condition<string | null>
+  /** Filter by the physical authored status before inheritance. */
+  versionStatus?: Condition<EntryStatus>
+  /** Filter by whether this is the preferred version for its locale. */
+  main?: Condition<boolean>
   /** Filter by path */
   path?: Condition<string>
+  /** Filter by the full source file path. */
+  filePath?: Condition<string>
   /** Filter by url */
   url?: Condition<string>
   /** Filter by a metadata URL alias */

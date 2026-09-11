@@ -8,6 +8,11 @@ import {
 } from '#/core/Graph.js'
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {Policy} from '#/core/Role.js'
+import {OverlaySource} from '#/core/source/OverlaySource.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import {SourceTransaction} from '#/core/source/Source.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -19,6 +24,8 @@ import {
   type EntryIndexTarget
 } from './entry/Schema.js'
 import {compileEntryQuery} from './query/EntryQuery.js'
+import {EntryTransaction} from './EntryTransaction.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {
   createSearch,
   EntrySearchName,
@@ -56,6 +63,11 @@ export interface EntryDatabaseOptions {
   syncDatabase?: Database
 }
 
+export interface EntryApplyOptions {
+  source: Source
+  policy?: Policy
+}
+
 export interface QueryObserver {
   next(value: unknown): void
   error(error: unknown): void
@@ -65,6 +77,10 @@ export interface EntrySyncResult {
   revision: string
   /** Includes source changes, deletions, and entries changed by inheritance. */
   changedEntryIds: ReadonlyArray<string>
+}
+
+export interface EntryApplyResult extends EntrySyncResult {
+  request: CommitRequest
 }
 
 /** A queryable entry database or a named copy-on-write view over one. */
@@ -139,6 +155,53 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     })
     this.#syncQueue = task.catch(() => {})
     return task
+  }
+
+  /** Atomically plan and apply mutations through a private database overlay. */
+  apply(
+    mutations: ReadonlyArray<Mutation>,
+    options: EntryApplyOptions
+  ): Promise<EntryApplyResult> {
+    if (this.#closed)
+      return Promise.reject(new Error('EntryDatabase is closed'))
+    const task = this.#syncQueue.then(() =>
+      this.#applyMutations(mutations, options)
+    )
+    this.#syncQueue = task.catch(() => {})
+    return task
+  }
+
+  async #applyMutations(
+    mutations: ReadonlyArray<Mutation>,
+    options: EntryApplyOptions
+  ): Promise<EntryApplyResult> {
+    const [revision, from] = await Promise.all([
+      this.getRevision(),
+      options.source.getTree()
+    ])
+    if (revision !== from.sha) throw new ShaMismatchError(revision, from.sha)
+    const workingSource = new OverlaySource(options.source, from)
+    const workingDatabase = await this.overlay(workingSource)
+    const transaction = new EntryTransaction(
+      workingDatabase,
+      workingSource,
+      new SourceTransaction(options.source, from),
+      from,
+      options.policy ?? Policy.ALLOW_ALL
+    )
+    try {
+      await transaction.apply(mutations)
+      const request = await transaction.toRequest()
+      const tree = await workingSource.getTree()
+      const changedEntryIds = await this.#syncSource(
+        workingSource,
+        tree,
+        revision
+      )
+      return {revision: tree.sha, changedEntryIds, request}
+    } finally {
+      await transaction.close()
+    }
   }
 
   async close(): Promise<void> {
