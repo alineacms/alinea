@@ -253,6 +253,7 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
 
   mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
     return this.#run(async () => {
+      await this.#sync()
       const result = await this.database.apply(mutations, {source: this.source})
       await this.source.applyChanges(sourceChanges(result.request))
       return {sha: result.revision}

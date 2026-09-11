@@ -219,7 +219,10 @@ export function compileEntryQuery(
   search ??= searchQuery(query.search, entry)
   const membership = new Expressions(scope, entry, search)
   const structural: Array<Sql<boolean>> = []
-  structural.push(eq(entry.visible, true))
+  // An explicit authored status addresses physical versions, including one
+  // currently hidden by another active/main version.
+  if (query.versionStatus === undefined)
+    structural.push(eq(entry.visible, true))
   const edge = 'edge' in query ? (query as EdgeQuery) : undefined
   const link = edge?.edge === 'entrySingle' || edge?.edge === 'entryMultiple'
   let links: ReturnType<typeof linkRelation> | undefined
@@ -269,7 +272,7 @@ export function compileEntryQuery(
         query.locale?.toLowerCase() ?? null
       )
     )
-  else if (query.preferredLocale)
+  else if (query.preferredLocale && edge?.edge !== 'translations')
     structural.push(
       or(
         isNull(entry.locale),
@@ -333,6 +336,20 @@ export function compileEntryQuery(
   } else if (search) ordering.push(asc(search.rank))
   else if (links) ordering.push(asc(links.ordinal))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
+  else if (edge?.edge === 'translations' && edge.includeSelf)
+    ordering.push(
+      asc(
+        when(
+          [
+            source?.locale === null
+              ? isNull(entry.locale)
+              : eq(entry.locale, source!.locale!),
+            0
+          ],
+          1
+        )
+      )
+    )
   else ordering.push(asc(entry.index))
   ordering.push(
     links ? asc(links.ordinal) : asc(entry.index),

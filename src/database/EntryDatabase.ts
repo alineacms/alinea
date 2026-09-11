@@ -59,6 +59,7 @@ import {
   EntrySyncRoot,
   type EntrySyncTarget
 } from './sync/EntrySyncer.js'
+import {DatabaseSource} from './DatabaseSource.js'
 
 interface EntryDatabaseContext {
   nextOverlayId: number
@@ -110,6 +111,12 @@ export interface EntrySyncResult {
 
 export interface EntryApplyResult extends EntrySyncResult {
   request: CommitRequest
+}
+
+export interface EntryDatabaseOverlay extends AsyncDisposable {
+  database: EntryDatabase
+  source: OverlaySource
+  close(): Promise<void>
 }
 
 /** A queryable entry database or a named copy-on-write view over one. */
@@ -456,6 +463,18 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     }
   }
 
+  /** Create an initially empty writable source and database layer. */
+  async createOverlay(): Promise<EntryDatabaseOverlay> {
+    const source = await OverlaySource.create(new DatabaseSource(this))
+    const database = await this.overlay(source)
+    return {
+      database,
+      source,
+      close: () => database.close(),
+      [Symbol.asyncDispose]: () => database.close()
+    }
+  }
+
   async resolve<const Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
@@ -595,7 +614,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     }
     // Graph's nested projection stage returns undefined for an absent single
     // relation; only the public top-level first/get stage normalizes absence.
-    return plan.single ? (source ? rows[0] : (rows[0] ?? null)) : rows
+    return plan.single ? (source || rows.length ? rows[0] : null) : rows
   }
 
   /** Scan references in bounded pages without retaining an entry index. */

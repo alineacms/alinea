@@ -1,5 +1,5 @@
 import {Config} from '#/core/Config.js'
-import {Entry, type EntryStatus} from '#/core/Entry.js'
+import {Entry, entryStatuses, type EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {Field} from '#/core/Field.js'
 import {getRoot} from '#/core/Internal.js'
@@ -10,7 +10,7 @@ import {Type} from '#/core/Type.js'
 import {ListEditor} from '#/core/field/ListField.js'
 import type {ChangesBatch} from '#/core/source/Change.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
-import {SourceTransaction} from '#/core/source/Source.js'
+import {bundleContents, SourceTransaction} from '#/core/source/Source.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryUrl, pathSuffix} from '#/core/util/EntryFilenames.js'
@@ -111,6 +111,7 @@ const EntrySelection = {
 export class EntryTransaction implements AsyncDisposable {
   #workingDatabase: EntryDatabase
   #workingSource: OverlaySource
+  #fromTree: ReadonlyTree
   #workingTree: ReadonlyTree
   #sourceTransaction: SourceTransaction
   #policy: Policy
@@ -129,6 +130,7 @@ export class EntryTransaction implements AsyncDisposable {
   ) {
     this.#workingDatabase = workingDatabase
     this.#workingSource = workingSource
+    this.#fromTree = from
     this.#workingTree = from
     this.#sourceTransaction = sourceTransaction
     this.#policy = policy
@@ -689,10 +691,13 @@ export class EntryTransaction implements AsyncDisposable {
 
   async toRequest(): Promise<CommitRequest> {
     this.#assertOpen()
-    const {from, into, changes} = await this.#sourceTransaction.compile()
+    const {changes} = await bundleContents(
+      this.#workingSource,
+      this.#fromTree.diff(this.#workingTree)
+    )
     return {
-      fromSha: from.sha,
-      intoSha: into.sha,
+      fromSha: this.#fromTree.sha,
+      intoSha: this.#workingTree.sha,
       description: this.description(),
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
@@ -1034,6 +1039,7 @@ export class EntryTransaction implements AsyncDisposable {
     return this.#workingDatabase.find({
       select: EntrySelection,
       status: 'all',
+      versionStatus: {in: entryStatuses},
       id,
       locale
     }) as Promise<Array<TransactionEntry>>
