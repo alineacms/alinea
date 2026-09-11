@@ -12,9 +12,12 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import {Policy} from '#/core/Role.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import {SourceTransaction} from '#/core/source/Source.js'
+import {
+  SourceTransaction,
+  type RemoteSource,
+  type Source
+} from '#/core/source/Source.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
-import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database, eq} from 'rado'
 import {EntryView} from './entry/EntryView.js'
@@ -150,7 +153,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   /** Synchronize a source through this database's single prepared syncer. */
-  syncWith(source: Source): Promise<EntrySyncResult> {
+  syncWith(source: RemoteSource): Promise<EntrySyncResult> {
     if (this.#closed)
       return Promise.reject(new Error('EntryDatabase is closed'))
     const task = this.#syncQueue.then(async () => {
@@ -291,7 +294,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   /** Apply one source tree without keeping an in-memory copy of its entries. */
   async #syncSource(
-    source: Source,
+    source: RemoteSource,
     tree: ReadonlyTree,
     fromRevision: string
   ): Promise<Array<string>> {
@@ -333,7 +336,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   /** Create and synchronize a copy-on-write layer over this database. */
-  async overlay(source: Source): Promise<EntryDatabase> {
+  async overlay(source: RemoteSource): Promise<EntryDatabase> {
     if (this.#closed) throw new Error('EntryDatabase is closed')
     const name = `overlay_${this.#context.nextOverlayId++}`
     let child: EntryDatabase | undefined

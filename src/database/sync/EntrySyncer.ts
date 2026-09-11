@@ -1,5 +1,5 @@
 import type {Config} from '#/core/Config.js'
-import type {Source} from '#/core/source/Source.js'
+import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryUrl} from '#/core/util/EntryFilenames.js'
@@ -531,7 +531,7 @@ async function replaceFiles(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   config: Config,
-  source: Source,
+  source: RemoteSource,
   tree: ReadonlyTree,
   files: ReadonlyArray<FileRow>
 ): Promise<void> {
@@ -610,7 +610,7 @@ async function insertInitialSource(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   config: Config,
-  source: Source,
+  source: RemoteSource,
   tree: ReadonlyTree,
   queries: SyncQueries
 ): Promise<void> {
@@ -667,7 +667,7 @@ async function mergeSource(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   config: Config,
-  source: Source,
+  source: RemoteSource,
   tree: ReadonlyTree,
   queries: SyncQueries
 ): Promise<void> {
@@ -792,7 +792,7 @@ async function mergeTrees(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   config: Config,
-  source: Source,
+  source: RemoteSource,
   previousTree: ReadonlyTree,
   tree: ReadonlyTree,
   queries: SyncQueries
@@ -1071,7 +1071,7 @@ export class EntrySyncer implements AsyncDisposable {
   /** Stream a source/tree diff directly into the canonical SQLite table. */
   sync(
     target: EntrySyncTarget,
-    source: Source,
+    source: RemoteSource,
     tree: ReadonlyTree,
     fromRevision: string,
     options: EntrySyncOptions = {}
@@ -1093,7 +1093,7 @@ export class EntrySyncer implements AsyncDisposable {
 
   async #sync(
     target: EntrySyncTarget,
-    source: Source,
+    source: RemoteSource,
     tree: ReadonlyTree,
     fromRevision: string,
     previousTree: ReadonlyTree | undefined,
