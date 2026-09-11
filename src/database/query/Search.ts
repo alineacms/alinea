@@ -20,9 +20,13 @@ export interface SearchQuery {
  * database does not tokenize every payload before its first search query. */
 export async function createSearch(
   db: Database,
-  name = EntrySearchName
+  name = EntrySearchName,
+  temporary = false
 ): Promise<void> {
-  await db.run(sql`create virtual table if not exists ${sql.identifier(name)} using fts5(
+  const search = temporary
+    ? sql`temp.${sql.identifier(name)}`
+    : sql.identifier(name)
+  await db.run(sql`create virtual table if not exists ${search} using fts5(
     versionId unindexed, title, body, tokenize='unicode61 remove_diacritics 2'
   )`)
 }

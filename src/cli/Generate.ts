@@ -1,9 +1,8 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import {exportSource} from '#/core/source/SourceExport.js'
+import {buildEntryDatabase} from '#/database/BuildDatabase.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
-import * as fsp from 'node:fs/promises'
 import {createRequire} from 'node:module'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
@@ -97,13 +96,11 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
-    const exported = await exportSource(db.source)
-    const data = JSON.stringify(exported, null, 2)
-    await fsp.writeFile(
-      join(context.outDir, 'source.js'),
-      `export const source = ${data}`
+    return buildEntryDatabase(
+      db.config,
+      db.source,
+      join(context.outDir, 'database.sqlite')
     )
-    return data.length
   }
   for await (const cms of builds) {
     Config.handlerUrl(cms.config)

@@ -7,12 +7,11 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {generatedSource} from '#/backend/store/GeneratedSource.js'
+import {generatedDatabase} from '#/backend/store/GeneratedDatabase.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {EntryStore} from '#/database/EntryStore.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -40,8 +39,7 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
-      const source = await generatedSource
-      return EntryStore.create(config, source)
+      return generatedDatabase(config)
     })
   )
   const handleBackend = createCoreHandler({

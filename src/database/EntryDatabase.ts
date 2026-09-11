@@ -154,7 +154,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       : this.#context.syncer
     this.#searchName = this.#view?.searchName ?? EntrySearchName
     this.#options = options
-    this.#searchDirty = !options.searchReady
+    this.#searchDirty = this.#view ? true : !options.searchReady
     this.#withinTransaction = internal?.withinTransaction ?? false
   }
 
@@ -645,7 +645,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   async #ensureSearch(db: Database): Promise<void> {
     if (!this.#searchDirty) return
-    if (this.#view) await createSearch(db, this.#searchName)
+    if (this.#view) await createSearch(db, this.#searchName, true)
     await rebuildSearch(db, this.#entryTarget, this.#searchName)
     this.#searchDirty = false
   }

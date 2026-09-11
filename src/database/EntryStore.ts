@@ -36,19 +36,21 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   readonly database: EntryDatabase
   readonly source: Source
   #ownsDatabase: boolean
+  #close?: () => Promise<void>
   #queue: Promise<unknown> = Promise.resolve()
 
   constructor(
     config: Config,
     database: EntryDatabase,
     source: Source,
-    options: {ownsDatabase?: boolean} = {}
+    options: {ownsDatabase?: boolean; close?: () => Promise<void>} = {}
   ) {
     super()
     this.config = config
     this.database = database
     this.source = source
     this.#ownsDatabase = options.ownsDatabase ?? false
+    this.#close = options.close
   }
 
   static async create(
@@ -261,7 +263,8 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
 
   async close(): Promise<void> {
     await this.#queue
-    if (this.#ownsDatabase) await this.database.close()
+    if (this.#close) await this.#close()
+    else if (this.#ownsDatabase) await this.database.close()
   }
 
   [Symbol.asyncDispose](): Promise<void> {

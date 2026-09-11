@@ -41,10 +41,9 @@ export class NextCMS<
       throw new Error('Local DB is not supported in Edge runtime environments.')
     const span = trace(this.config, 'alinea.next.cms.db')
     return span(async () => {
-      const {generatedSource} =
-        await import('#/backend/store/GeneratedSource.js')
-      const source = await generatedSource
-      return EntryStore.create(this.config, source)
+      const {generatedDatabase} =
+        await import('#/backend/store/GeneratedDatabase.js')
+      return generatedDatabase(this.config)
     })
   })
   #applyPreview = cache(async () => {
