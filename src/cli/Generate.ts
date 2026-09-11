@@ -1,8 +1,10 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
 import {createRequire} from 'node:module'
+import * as fsp from 'node:fs/promises'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
@@ -129,6 +131,9 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       config: cms.config,
       rootDir,
       databasePath: join(context.outDir, 'database.sqlite'),
+      configFingerprint: await hashBlob(
+        await fsp.readFile(join(context.outDir, 'config.js'))
+      ),
       dashboardUrl: await options.dashboardUrl
     })
     try {

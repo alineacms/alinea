@@ -97,6 +97,22 @@ function truth(condition: HasSql<boolean>): Sql<boolean> {
   return sql`coalesce(${condition}, false)`
 }
 
+function comparable(field: QueryField, value: unknown): Sql<boolean> {
+  if (!field.jsonType) return sql.value(true)
+  if (typeof value === 'number')
+    return inArray(field.jsonType, ['integer', 'real'])
+  if (typeof value === 'string') return eq(field.jsonType, 'text')
+  return sql.value(false)
+}
+
+function compare(
+  field: QueryField,
+  value: unknown,
+  operation: (left: HasSql, right: unknown) => HasSql<boolean>
+): Sql<boolean> {
+  return truth(and(comparable(field, value), operation(field.value, value)))
+}
+
 export function compileCondition(
   field: QueryField,
   condition: unknown,
@@ -125,16 +141,16 @@ export function compileCondition(
         break
       }
       case 'gt':
-        clauses.push(truth(gt(field.value, value)))
+        clauses.push(compare(field, value, gt))
         break
       case 'gte':
-        clauses.push(truth(gte(field.value, value)))
+        clauses.push(compare(field, value, gte))
         break
       case 'lt':
-        clauses.push(truth(lt(field.value, value)))
+        clauses.push(compare(field, value, lt))
         break
       case 'lte':
-        clauses.push(truth(lte(field.value, value)))
+        clauses.push(compare(field, value, lte))
         break
       case 'or': {
         const values = Array.isArray(value) ? value : [value]

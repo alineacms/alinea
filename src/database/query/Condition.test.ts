@@ -111,3 +111,28 @@ test('SQL includes matches primitive array values without treating them as objec
   expect(await matching({tags: {includes: true}})).toEqual([4])
   expect(await matching({tags: {includes: null}})).toEqual([4])
 })
+
+test('SQL comparisons do not use SQLite ordering between JSON types', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(Documents)
+  await db.insert(Documents).values([
+    {id: 1, data: {value: 10}},
+    {id: 2, data: {value: 2}},
+    {id: 3, data: {value: '10'}},
+    {id: 4, data: {value: '2'}},
+    {id: 5, data: {value: {nested: true}}},
+    {id: 6, data: {value: [10]}},
+    {id: 7, data: {value: true}}
+  ])
+  const matching = (filter: unknown) =>
+    db
+      .select(Documents.id)
+      .from(Documents)
+      .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
+      .orderBy(Documents.id)
+
+  expect(await matching({value: {gt: 5}})).toEqual([1])
+  expect(await matching({value: {gte: '2'}})).toEqual([4])
+  expect(await matching({value: {lt: 5}})).toEqual([2])
+})

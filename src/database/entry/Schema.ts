@@ -88,6 +88,17 @@ export const DatabaseStateTable = table(
   DatabaseStateColumns
 )
 
+export const DatabaseMetadataColumns = {
+  id: column.integer().primaryKey(),
+  schemaVersion: column.integer().notNull(),
+  configFingerprint: column.text().notNull()
+}
+
+export const DatabaseMetadataTable = table(
+  'alinea_database_metadata',
+  DatabaseMetadataColumns
+)
+
 /** An Entry plus the physical-version and local-index fields. */
 export interface IndexedEntry extends Entry {
   versionStatus: EntryStatus

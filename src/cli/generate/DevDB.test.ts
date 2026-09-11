@@ -73,6 +73,7 @@ test('reopens the generated database without loading unchanged blobs', async () 
       config,
       rootDir,
       databasePath,
+      configFingerprint: 'same-config',
       dashboardUrl: undefined
     })
     await initial.sync()
@@ -83,6 +84,7 @@ test('reopens the generated database without loading unchanged blobs', async () 
       config,
       rootDir,
       databasePath,
+      configFingerprint: 'same-config',
       dashboardUrl: undefined
     })
     let requestedBlobs = 0
@@ -95,6 +97,26 @@ test('reopens the generated database without loading unchanged blobs', async () 
     test.is(requestedBlobs, 0)
     test.equal(await reopened.find({select: Entry.title}), ['Page'])
     await reopened.close()
+
+    const changedConfig = await DevDB.create({
+      config,
+      rootDir,
+      databasePath,
+      configFingerprint: 'changed-config',
+      dashboardUrl: undefined
+    })
+    let reloadedBlobs = 0
+    const changedGetBlobs = changedConfig.source.getBlobs.bind(
+      changedConfig.source
+    )
+    changedConfig.source.getBlobs = async function* (shas, options) {
+      reloadedBlobs += shas.length
+      yield* changedGetBlobs(shas, options)
+    }
+    await changedConfig.sync()
+    test.ok(reloadedBlobs > 0)
+    test.equal(await changedConfig.find({select: Entry.title}), ['Page'])
+    await changedConfig.close()
   } finally {
     await rm(rootDir, {recursive: true, force: true})
   }

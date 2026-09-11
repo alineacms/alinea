@@ -4,7 +4,7 @@ import type {
   RemoteSource,
   Source
 } from '#/core/source/Source.js'
-import {bundleContents} from '#/core/source/Source.js'
+import {applyChangesFrom} from '#/core/source/Source.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
@@ -29,6 +29,7 @@ import {
   type EntrySyncResult
 } from './EntryDatabase.js'
 import {wasmDatabase} from './driver/WasmDatabase.js'
+import {DatabaseSource} from './DatabaseSource.js'
 
 /** Source and commit lifecycle around the transport-neutral SQLite database. */
 export class EntryStore extends WriteableGraph implements AsyncDisposable {
@@ -194,30 +195,22 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
       const localTree = await this.source.getTree()
       const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
       if (!remoteTree) return this.#sync()
-      const batch = await bundleContents(remote, localTree.diff(remoteTree))
-      const blobs = new Map(
-        batch.changes.flatMap(change =>
-          change.op === 'delete' || !change.contents
-            ? []
-            : [[change.sha, change.contents] as const]
-        )
-      )
-      const bundledRemote: RemoteSource = {
+      const batch = localTree.diff(remoteTree)
+      const knownRemote: RemoteSource = {
         async getTreeIfDifferent(revision) {
           return revision === remoteTree.sha ? undefined : remoteTree
         },
-        async *getBlobs(shas) {
-          for (const sha of shas) {
-            const blob = blobs.get(sha)
-            assert(blob, `Missing synchronized blob ${sha}`)
-            yield [sha, blob]
-          }
+        async *getBlobs(shas, options) {
+          yield* remote.getBlobs(shas, options)
         }
       }
-      await this.database.syncWith(bundledRemote)
-      if (this.source instanceof OverlaySource)
-        await this.source.applyChangesTo(batch, remoteTree)
-      else await this.source.applyChanges(batch)
+      await this.database.syncWith(knownRemote)
+      await applyChangesFrom(
+        this.source,
+        new DatabaseSource(this.database),
+        batch,
+        remoteTree
+      )
       await this.#seed()
       return this.database.getRevision()
     })
@@ -230,8 +223,28 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
       const localTree = await source.getTree()
       const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
       if (remoteTree) {
-        const batch = await bundleContents(remote, localTree.diff(remoteTree))
-        await source.applyChangesTo(batch, remoteTree)
+        const knownRemote: RemoteSource = {
+          async getTreeIfDifferent(revision) {
+            return revision === remoteTree.sha ? undefined : remoteTree
+          },
+          getBlobs(shas, options) {
+            return remote.getBlobs(shas, options)
+          }
+        }
+        const database = await this.database.overlay(knownRemote)
+        try {
+          await source.applyChangesFrom(
+            new DatabaseSource(database),
+            localTree.diff(remoteTree),
+            remoteTree
+          )
+          return new EntryStore(this.config, database, source, {
+            ownsDatabase: true
+          })
+        } catch (error) {
+          await database.close()
+          throw error
+        }
       }
       const database = await this.database.overlay(source)
       return new EntryStore(this.config, database, source, {

@@ -39,6 +39,7 @@ import {
 } from 'rado'
 import {EntryView} from './entry/EntryView.js'
 import {
+  DatabaseMetadataTable,
   DatabaseStateTable,
   EntryIndexTable,
   type EntryIndexTarget
@@ -74,12 +75,17 @@ interface EntryDatabaseInternal {
   tree?: ReadonlyTree
   view?: EntryView
   withinTransaction?: boolean
+  searchName?: string
+  searchDirty?: boolean
 }
 
 interface EntryDatabaseState {
   revision: string
   tree: Tree | null
 }
+
+const databaseSchemaVersion = 1
+const defaultConfigFingerprint = 'runtime'
 
 export interface EntryDatabaseOptions {
   /** Prepare a complete search plan under the connection's statement queue. */
@@ -169,9 +175,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#syncer = this.#ownsSyncer
       ? new EntrySyncer(config, this.#syncDatabase)
       : this.#context.syncer
-    this.#searchName = this.#view?.searchName ?? EntrySearchName
+    this.#searchName =
+      internal?.searchName ?? this.#view?.searchName ?? EntrySearchName
     this.#options = options
-    this.#searchDirty = this.#view ? true : !options.searchReady
+    this.#searchDirty =
+      internal?.searchDirty ?? (this.#view ? true : !options.searchReady)
     this.#withinTransaction = internal?.withinTransaction ?? false
   }
 
@@ -234,7 +242,9 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
             },
             target: this.#target,
             tree: from,
-            withinTransaction: true
+            withinTransaction: true,
+            searchName: this.#searchName,
+            searchDirty: this.#searchDirty
           }
         )
         const transaction = new EntryTransaction(
@@ -262,7 +272,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       {async: true}
     )
     this.#tree = applied.tree
-    this.#searchDirty = true
+    if (applied.result.changedEntryIds.length) {
+      if (this.#view) this.#searchName = this.#view.searchName
+      this.#searchDirty = true
+    }
     this.#emitChange(applied.result)
     return applied.result
   }
@@ -373,7 +386,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         }
       )
       this.#tree = tree
-      this.#searchDirty = true
+      if (changedEntryIds.length) {
+        if (this.#view) this.#searchName = this.#view.searchName
+        this.#searchDirty = true
+      }
     }
     if (this.#syncDatabase === this.#db) await this.#withReadConnection(sync)
     else await sync()
@@ -386,14 +402,55 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     for (const listener of this.#changeListeners) listener(change)
   }
 
-  static async createSchema(db: Database, revision: string): Promise<void> {
+  static async createSchema(
+    db: Database,
+    revision: string,
+    configFingerprint = defaultConfigFingerprint
+  ): Promise<void> {
     const schema = await db.get<{name: string}>(sql`
       select name from sqlite_master
       where type = 'table' and name = 'alinea_database_state'
     `)
-    if (schema == null) {
-      await db.create(EntryIndexTable, DatabaseStateTable)
+    const metadata = await db.get<{name: string}>(sql`
+      select name from sqlite_master
+      where type = 'table' and name = 'alinea_database_metadata'
+    `)
+    const current = metadata
+      ? await db
+          .select({
+            schemaVersion: DatabaseMetadataTable.schemaVersion,
+            configFingerprint: DatabaseMetadataTable.configFingerprint
+          })
+          .from(DatabaseMetadataTable)
+          .where(eq(DatabaseMetadataTable.id, 1))
+          .get()
+      : undefined
+    const compatible =
+      schema != null &&
+      current?.schemaVersion === databaseSchemaVersion &&
+      current.configFingerprint === configFingerprint
+    if (!compatible) {
+      await db.run(sql`drop table if exists ${sql.identifier(EntrySearchName)}`)
+      await db.run(
+        sql`drop table if exists ${sql.identifier('alinea_entry_index')}`
+      )
+      await db.run(
+        sql`drop table if exists ${sql.identifier('alinea_database_state')}`
+      )
+      await db.run(
+        sql`drop table if exists ${sql.identifier('alinea_database_metadata')}`
+      )
+      await db.create(
+        EntryIndexTable,
+        DatabaseStateTable,
+        DatabaseMetadataTable
+      )
       await createSearch(db)
+      await db.insert(DatabaseMetadataTable).values({
+        id: 1,
+        schemaVersion: databaseSchemaVersion,
+        configFingerprint
+      })
     }
     const existing = await db
       .select(DatabaseStateTable.id)
@@ -452,7 +509,9 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           state: view.state
         },
         tree,
-        view
+        view,
+        searchName: this.#searchDirty ? view.searchName : this.#searchName,
+        searchDirty: this.#searchDirty
       })
       this.#children.add(child)
       await child.syncWith(source)

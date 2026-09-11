@@ -21,7 +21,7 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
   const name = `alinea-browser-db-${crypto.randomUUID()}`
   const options = {indexedDB, name, revision: 'config-1'}
   const initial = await BrowserEntryStore.open(config, source, options)
-  await initial.mutate([
+  const mutation = initial.mutate([
     {
       op: 'create',
       id: 'page',
@@ -30,7 +30,7 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
       data: {title: 'Page'}
     }
   ])
-  await initial.close()
+  await Promise.all([mutation, initial.close()])
 
   let requestedBlobs = 0
   const getBlobs = source.getBlobs.bind(source)
@@ -47,3 +47,59 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
     await reopened.close()
   }
 })
+
+test('browser entry stores discard a corrupt persisted SQLite file', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  const name = `alinea-browser-corrupt-${crypto.randomUUID()}`
+  const cache = await openCache(name)
+  const transaction = cache.transaction('database', 'readwrite')
+  transaction.objectStore('database').put(
+    {
+      revision: 'config-1',
+      schemaVersion: 2,
+      data: new Uint8Array([1, 2, 3])
+    },
+    'entries'
+  )
+  await transactionComplete(transaction)
+  cache.close()
+
+  const store = await BrowserEntryStore.open(config, source, {
+    indexedDB,
+    name,
+    revision: 'config-1'
+  })
+  try {
+    expect(await store.sync()).toBe((await source.getTree()).sha)
+    expect(await store.find({select: Entry.id})).toEqual([])
+  } finally {
+    await store.close()
+  }
+})
+
+function openCache(name: string): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(name, 1)
+    request.onupgradeneeded = () => request.result.createObjectStore('database')
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+}
+
+function transactionComplete(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve()
+    transaction.onerror = () => reject(transaction.error)
+    transaction.onabort = () => reject(transaction.error)
+  })
+}

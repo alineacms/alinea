@@ -1,7 +1,7 @@
 import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
-import type {GetBlobsOptions, Source} from './Source.js'
+import type {GetBlobsOptions, RemoteSource, Source} from './Source.js'
 import type {ReadonlyTree} from './Tree.js'
 
 export class OverlaySource implements Source {
@@ -45,6 +45,28 @@ export class OverlaySource implements Source {
     return this.applyChangesTo(batch)
   }
 
+  async applyChangesFrom(
+    remote: RemoteSource,
+    batch: ChangesBatch,
+    tree: ReadonlyTree
+  ): Promise<void> {
+    if (this.#tree.sha !== batch.fromSha)
+      throw new ShaMismatchError(batch.fromSha, this.#tree.sha)
+    const needed = new Set(
+      batch.changes
+        .filter(change => change.op === 'add')
+        .map(change => change.sha)
+    )
+    for await (const [sha, blob] of remote.getBlobs([...needed])) {
+      if (!needed.delete(sha)) continue
+      this.#blobs.set(sha, blob)
+    }
+    const missing = needed.values().next().value
+    assert(missing === undefined, `Source did not return blob ${missing}`)
+    this.#tree = tree
+    this.#pruneBlobs()
+  }
+
   /** Apply a batch while reusing an already received or compiled target tree. */
   async applyChangesTo(
     batch: ChangesBatch,
@@ -58,6 +80,10 @@ export class OverlaySource implements Source {
       this.#blobs.set(change.sha, change.contents)
     }
     this.#tree = tree ?? (await this.#tree.withChanges(batch))
+    this.#pruneBlobs()
+  }
+
+  #pruneBlobs(): void {
     for (const sha of this.#blobs.keys()) {
       if (!this.#tree.hasSha(sha)) this.#blobs.delete(sha)
     }

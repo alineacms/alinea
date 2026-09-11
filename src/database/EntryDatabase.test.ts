@@ -14,6 +14,7 @@ import {Database} from 'bun:sqlite'
 import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {sql} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
 import {EntryDatabase} from './EntryDatabase.js'
 
@@ -297,6 +298,40 @@ test('generated database overlays sync and query without copying the base', asyn
     'Replacement A'
   ])
   await replacement.close()
+})
+
+test('an unchanged overlay reuses the prepared base search index', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const {source} = await createEntryStore(config, [
+    {id: 'page', type: 'Page', index: 'a', data: {title: 'Searchable'}}
+  ])
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  const base = new EntryDatabase(config, db)
+  await base.syncWith(source)
+  await base.prepareSearch()
+  const overlay = await base.overlay(source)
+
+  expect(await overlay.find({search: 'Searchable', select: Entry.id})).toEqual([
+    'page'
+  ])
+  const temporarySearch = await db.get<{name: string}>(sql`
+    select name from sqlite_temp_master
+    where type = 'table' and name = 'alinea_overlay_1_search'
+  `)
+  expect(temporarySearch).toBeNull()
+  await overlay.close()
+  await base.close()
 })
 
 test('linked queries retain one snapshot while sync commits separately', async () => {

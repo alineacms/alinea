@@ -19,6 +19,7 @@ export interface DevDBOptions {
   config: Config
   rootDir: string
   databasePath: string
+  configFingerprint?: string
   dashboardUrl: string | undefined
 }
 
@@ -47,7 +48,11 @@ export class DevDB extends EntryStore {
     )
     const db = await runtimeDatabase({path: options.databasePath})
     try {
-      await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+      await EntryDatabase.createSchema(
+        db,
+        ReadonlyTree.EMPTY.sha,
+        options.configFingerprint
+      )
       return new DevDB(options, new EntryDatabase(options.config, db), source)
     } catch (error) {
       await db.close()
