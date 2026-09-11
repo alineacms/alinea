@@ -8,16 +8,29 @@ import {createFilePatch} from '#/core/source/FilePatch.js'
 import {chunkCookieValue} from '#/preview/ChunkCookieValue.js'
 import {PREVIEW_COOKIE_NAME} from '#/preview/PreviewCookies.js'
 import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
+import * as iso from '@alinea/iso'
 import {afterEach, beforeEach, expect, mock, test} from 'bun:test'
 import PLazy from 'p-lazy'
 
 const phase = process.env.NEXT_PHASE
+const runtime = process.env.NEXT_RUNTIME
 let previewCookies: Array<{name: string; value: string}> = []
+let handlerUrl = new URL('https://example.com/api/cms')
+type HandlerFetch = (
+  ...args: Parameters<typeof iso.fetch>
+) => ReturnType<typeof iso.fetch>
+const defaultFetch: HandlerFetch = iso.fetch
+let handlerFetch = defaultFetch
+
+mock.module('@alinea/iso', () => ({
+  ...iso,
+  fetch: (...args: Parameters<typeof iso.fetch>) => handlerFetch(...args)
+}))
 
 mock.module('./context.js', () => ({
   requestContext: async () => ({
     isDev: false,
-    handlerUrl: new URL('https://example.com/api/cms'),
+    handlerUrl,
     apiKey: 'test-api-key'
   })
 }))
@@ -37,11 +50,30 @@ const {NextCMS} = await import('./cms.js')
 beforeEach(() => {
   process.env.NEXT_PHASE = 'production-server'
   previewCookies = []
+  handlerUrl = new URL('https://example.com/api/cms')
+  handlerFetch = defaultFetch
 })
 
 afterEach(() => {
   if (phase === undefined) delete process.env.NEXT_PHASE
   else process.env.NEXT_PHASE = phase
+  if (runtime === undefined) delete process.env.NEXT_RUNTIME
+  else process.env.NEXT_RUNTIME = runtime
+})
+
+test('forwards Edge queries to the configured handler', async () => {
+  process.env.NEXT_RUNTIME = 'edge'
+  handlerFetch = mock(async input => {
+    const url = new URL(String(input))
+    expect(url.origin).toBe('https://example.com')
+    expect(url.pathname).toBe('/api/cms')
+    expect(url.searchParams.get('action')).toBe('resolve')
+    return Response.json([{title: 'Forwarded'}])
+  })
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+
+  expect(await cms.resolve({})).toEqual([{title: 'Forwarded'}])
+  expect(handlerFetch).toHaveBeenCalledTimes(1)
 })
 
 test('skips syncing a bundled database for a matching preview content hash', async () => {
