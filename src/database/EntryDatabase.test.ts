@@ -4,6 +4,7 @@ import {Field as CoreField} from '#/core/Field.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {transaction} from '#/core/source/Source.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
@@ -87,6 +88,60 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
   ]) {
     const query = {id: 'source', select}
     expect(await runtime.resolve(query)).toEqual(await resolver.resolve(query))
+  }
+})
+
+test('SQL references retain status and locale behavior', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {related: Field.entry('Related')}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const link = (entry: string, id: string) => ({
+    _type: 'entry',
+    _entry: entry,
+    _id: id
+  })
+  const {source, index} = await createEntryResolver(config, [
+    {id: 'target', type: 'Page', index: 'a'},
+    {
+      id: 'source',
+      type: 'Page',
+      index: 'b',
+      status: 'published',
+      data: {related: link('target', 'published-link')}
+    },
+    {
+      id: 'source',
+      type: 'Page',
+      index: 'b',
+      status: 'draft',
+      data: {related: link('other', 'draft-link')}
+    }
+  ])
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  const runtime = new EntryDatabase(config, db)
+  await runtime.syncWith(source)
+
+  for (const query of [
+    {targetId: 'target' as const},
+    {targetId: 'target' as const, status: 'preferDraft' as const},
+    {targetId: 'other' as const, status: 'preferDraft' as const},
+    {targetId: 'target' as const, locale: 'en'}
+  ]) {
+    const expected = await index.referencesTo(query)
+    const actual = await runtime.referencesTo(query)
+    expect(actual.total).toBe(expected.total)
+    expect(actual.references).toEqual(expected.references)
   }
 })
 

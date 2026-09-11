@@ -7,6 +7,11 @@ import {
   type InferProjection
 } from '#/core/Graph.js'
 import {Field} from '#/core/Field.js'
+import type {
+  EntryReference,
+  EntryReferenceQuery,
+  EntryReferenceResult
+} from '#/core/db/EntryReference.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Policy} from '#/core/Role.js'
@@ -18,8 +23,9 @@ import {
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {count, type Database, eq} from 'rado'
+import {and, asc, count, type Database, eq, gt, isNull} from 'rado'
 import {EntryView} from './entry/EntryView.js'
 import {
   DatabaseStateTable,
@@ -511,6 +517,86 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     // Graph's nested projection stage returns undefined for an absent single
     // relation; only the public top-level first/get stage normalizes absence.
     return plan.single ? (source ? rows[0] : (rows[0] ?? null)) : rows
+  }
+
+  /** Scan references in bounded pages without retaining an entry index. */
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    if (this.#closed)
+      return Promise.reject(new Error('EntryDatabase is closed'))
+    return this.#withReadConnection(() =>
+      this.#db.transaction(tx => this.#referencesTo(tx, query), {
+        async: true,
+        behavior: 'deferred'
+      })
+    )
+  }
+
+  async #referencesTo(
+    db: Database,
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    const entry = this.#entryTarget
+    const status = query.status ?? 'published'
+    const conditions = [eq(entry.visible, true)]
+    if (query.locale !== undefined)
+      conditions.push(
+        query.locale === null
+          ? isNull(entry.locale)
+          : eq(entry.locale, query.locale.toLowerCase())
+      )
+    if (status === 'preferDraft') conditions.push(eq(entry.active, true))
+    else if (status === 'preferPublished') conditions.push(eq(entry.main, true))
+    else if (status !== 'all') conditions.push(eq(entry.status, status))
+
+    const references: Array<EntryReference> = []
+    const pageSize = 500
+    let cursor = ''
+    let scanned = 0
+    for (;;) {
+      const rows = await db
+        .select({
+          versionId: entry.versionId,
+          id: entry.id,
+          filePath: entry.filePath,
+          type: entry.type,
+          locale: entry.locale,
+          status: entry.status,
+          active: entry.active,
+          main: entry.main,
+          data: entry.data
+        })
+        .from(entry)
+        .where(and(...conditions, gt(entry.versionId, cursor)))
+        .orderBy(asc(entry.versionId))
+        .limit(pageSize)
+        .all()
+      if (!rows.length) break
+      for (const row of rows) {
+        scanned += 1
+        const type = this.#config.schema[row.type]
+        if (!type) continue
+        for (const target of Type.references(type, row.data)) {
+          if (target.targetId !== query.targetId) continue
+          references.push({
+            ...target,
+            sourceId: row.id,
+            sourceFilePath: row.filePath,
+            sourceType: row.type,
+            sourceLocale: row.locale,
+            sourceStatus: row.status,
+            sourceActive: row.active,
+            sourceMain: row.main
+          })
+        }
+      }
+      cursor = rows.at(-1)!.versionId
+      if (rows.length < pageSize) break
+    }
+    return {
+      references,
+      total: references.length,
+      scan: {scanned, total: scanned, complete: true}
+    }
   }
 
   async #ensureSearch(db: Database): Promise<void> {
