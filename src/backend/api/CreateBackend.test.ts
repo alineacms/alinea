@@ -44,11 +44,21 @@ test('composes backend parts into a connection', async () => {
         location: 'media/file.jpg',
         previewUrl: 'https://example.com/file.jpg',
         url: 'https://example.com/upload'
-      })
+      }),
+      readMedia: async () => new Response('media')
     })
   )
 
   const connection = backend(context, config)
   test.is((await connection.write({} as never)).sha, 'sha')
   test.is((await connection.prepareUpload('file.jpg')).entryId, 'entry')
+  test.is(
+    await (
+      await connection.readMedia!(
+        {location: 'media/file.jpg'},
+        new Request('https://example.com/file.jpg')
+      )
+    ).text(),
+    'media'
+  )
 })

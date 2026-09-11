@@ -1,19 +1,11 @@
 import type {NextConfig} from 'next/dist/types.js'
+import {join} from '#/core/util/Paths.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
 
 type RedirectsResult = Awaited<ReturnType<NonNullable<NextConfig['redirects']>>>
 type RewritesResult = Awaited<ReturnType<NonNullable<NextConfig['rewrites']>>>
-
-export interface WithAlineaOptions {
-  /**
-   * Base path where the dashboard is mounted.
-   *
-   * @default '/admin'
-   */
-  adminPath?: string
-}
 
 export function createCMS() {
   throw new Error(
@@ -29,6 +21,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     )
   }
   const adminPath = settings?.adminPath
+  const handlerUrl = settings?.handlerUrl
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
@@ -40,28 +33,18 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
   } catch {
     console.warn('Alinea could not determine Next.js version, assuming 15+')
   }
-  const imagesConfig = config.images ?? {}
-  const remotePatterns = [
-    ...(imagesConfig.remotePatterns ?? []),
-    {
-      protocol: 'https' as const,
-      hostname: 'uploads.alinea.cloud'
-    }
-  ]
-  const images = {
-    ...imagesConfig,
-    remotePatterns
-  }
   const redirects = adminPath
     ? createRedirects(config, adminPath)
     : config.redirects
   const rewrites = adminPath
-    ? createRewrites(config, adminPath)
+    ? createRewrites(config, adminPath, handlerUrl ?? '/api/cms')
     : config.rewrites
+  const images = adminPath ? createImages(config, adminPath) : config.images
   const env = settings
     ? {
         ...config.env,
-        ALINEA_ADMIN_PATH: settings.adminPath
+        ALINEA_ADMIN_PATH: settings.adminPath,
+        ALINEA_HANDLER_URL: settings.handlerUrl
       }
     : config.env
   if (nextVersion < 15)
@@ -74,9 +57,9 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
           '@alinea/generated'
         ]
       },
-      images,
       redirects,
       rewrites,
+      images,
       env
     }
   return {
@@ -85,10 +68,25 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
       ...(config.serverExternalPackages ?? []),
       '@alinea/generated'
     ],
-    images,
     redirects,
     rewrites,
+    images,
     env
+  }
+}
+
+function createImages(config: NextConfig, adminPath: string) {
+  const localPatterns = config.images?.localPatterns ?? [
+    {pathname: '**', search: ''}
+  ]
+  return {
+    ...config.images,
+    localPatterns: [
+      ...localPatterns,
+      {
+        pathname: `${adminPath}/file/**`
+      }
+    ]
   }
 }
 
@@ -114,7 +112,11 @@ const emptyRewrites = {
   fallback: []
 }
 
-function createRewrites(config: NextConfig, adminPath: string) {
+function createRewrites(
+  config: NextConfig,
+  adminPath: string,
+  handlerUrl: string
+) {
   return async (): Promise<RewritesResult> => {
     const devServer = process.env.ALINEA_DEV_SERVER
     const nodeEnv = process.env.NODE_ENV
@@ -151,6 +153,13 @@ function createRewrites(config: NextConfig, adminPath: string) {
           source: adminPath,
           destination: `${adminPath}.html`
         }
+      ],
+      fallback: [
+        ...rewrites.fallback,
+        {
+          source: `${adminPath}/file/:file*`,
+          destination: `${handlerUrl}?file=:file*&delivery=proxy`
+        }
       ]
     }
   }
@@ -158,6 +167,7 @@ function createRewrites(config: NextConfig, adminPath: string) {
 
 interface ResolvedSettings {
   adminPath: string
+  handlerUrl: string
 }
 
 function resolveSettings(config: NextConfig): ResolvedSettings | undefined {
@@ -165,10 +175,14 @@ function resolveSettings(config: NextConfig): ResolvedSettings | undefined {
     config.env?.ALINEA_ADMIN_PATH ?? process.env.ALINEA_ADMIN_PATH
   if (!adminPath) return
   return {
-    adminPath: normalizeBasePath(adminPath)
+    adminPath: normalizeBasePath(adminPath),
+    handlerUrl:
+      config.env?.ALINEA_HANDLER_URL ??
+      process.env.ALINEA_HANDLER_URL ??
+      '/api/cms'
   }
 }
 
 function normalizeBasePath(value: string): string {
-  return value.startsWith('/') ? value : `/${value}`
+  return join('/', value, '.')
 }

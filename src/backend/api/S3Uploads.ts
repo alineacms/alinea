@@ -1,9 +1,11 @@
 import type {
+  MediaReadInput,
   UploadMetadata,
   UploadResponse,
   UploadsApi
 } from '#/core/Connection.js'
 import {join} from '#/core/util/Paths.js'
+import {readMediaUrl} from './ReadMedia.js'
 import {
   createUploadKey,
   createUploadLocation,
@@ -64,6 +66,12 @@ export class S3Uploads implements UploadsApi {
       }),
       method: 'PUT'
     }
+  }
+
+  async readMedia(input: MediaReadInput, request: Request): Promise<Response> {
+    const key = createUploadKey(this.#options.prefix, input.location)
+    const source = new URL(await this.#previewUrl(key))
+    return readMediaUrl(request, source)
   }
 
   async #previewUrl(key: string): Promise<string> {

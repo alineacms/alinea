@@ -18,7 +18,6 @@ test('shows the resolved media URL', () => {
     workspaces: {
       main: Config.workspace('Main', {
         source: 'content',
-        mediaUrl: ({path, extension}) => `/images/${path}${extension}`,
         roots: {media: Config.media()}
       })
     }
@@ -54,8 +53,8 @@ test('shows the resolved media URL', () => {
     </DashboardScopeInternal>
   )
 
-  const link = screen.getByRole('link', {name: '/images/guide.pdf'})
+  const link = screen.getByRole('link', {name: '/admin/file/guide.pdf'})
   expect(link.getAttribute('href')).toBe(
-    'https://example.test/images/guide.pdf'
+    'https://example.test/admin/file/guide.pdf'
   )
 })

@@ -49,6 +49,29 @@ test('creates a signed preview for private buckets', async () => {
   test.ok(previewUrl.searchParams.get('X-Amz-Signature'))
 })
 
+test('reads media from the configured storage key', async () => {
+  let requestedKey: string | undefined
+  const uploads = new S3Uploads({
+    bucket: 'assets',
+    region: 'eu-west-1',
+    accessKeyId: 'access',
+    secretAccessKey: 'secret',
+    prefix: 'uploads',
+    publicUrl(key) {
+      requestedKey = key
+      return 'data:text/plain,media-bytes'
+    }
+  })
+
+  const response = await uploads.readMedia(
+    {location: '/public/media/file.jpg'},
+    new Request('https://example.com/admin/file/file.jpg')
+  )
+
+  test.is(requestedKey, 'uploads/public/media/file.jpg')
+  test.is(await response.text(), 'media-bytes')
+})
+
 test('supports path-style endpoints and temporary credentials', async () => {
   const uploads = new S3Uploads({
     bucket: 'assets',

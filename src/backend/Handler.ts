@@ -5,6 +5,7 @@ import {
   encodeBlobSequence
 } from '#/core/BlobTransport.js'
 import type {CMS} from '#/core/CMS.js'
+import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
   DraftTransport,
@@ -18,6 +19,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -25,6 +27,7 @@ import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {isAbsolute, normalize} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
@@ -115,6 +118,82 @@ export function createHandler({
             }
           }
         })
+      }
+
+      if (
+        params.has('file') &&
+        (request.method === 'GET' || request.method === 'HEAD')
+      ) {
+        const file = string(params.get('file'))
+        const proxy = params.get('delivery') === 'proxy'
+        const normalized = normalize(file)
+        if (
+          !normalized ||
+          isAbsolute(normalized) ||
+          normalized === '..' ||
+          normalized.startsWith('../') ||
+          normalized.includes('/../')
+        )
+          throw new HttpError(400, 'Invalid file path')
+        await periodicSync(cnx)
+        const requestedUrl = Config.filePathname(cms.config, normalized)
+        const entry = local.index.findByUrl(
+          requestedUrl,
+          entry => entry.type === 'MediaFile' && entry.main
+        )
+        if (!entry) return new Response('Not found', {status: 404})
+        if (entry.url !== requestedUrl && !proxy)
+          return new Response(null, {
+            status: 308,
+            headers: {location: entry.url}
+          })
+        const wasBuilt = local.index.initialSync?.has(entry.filePath) ?? false
+        const previewUrl = entry.data.previewUrl
+        const location = entry.data.location
+        if (typeof location !== 'string')
+          return new Response('Not found', {status: 404})
+        if (!wasBuilt && typeof previewUrl === 'string' && previewUrl) {
+          const source = new URL(previewUrl, request.url).href
+          if (proxy && cnx.readMedia) {
+            const response = await cnx.readMedia(
+              {
+                location: MediaLocation.storagePath(
+                  cms.config,
+                  entry.workspace,
+                  location
+                ),
+                previewUrl: source
+              },
+              request
+            )
+            return mediaResponse(request, response, 'private, no-store')
+          }
+          return redirectFile(source, 'private, no-store')
+        }
+        const source = MediaLocation.sourceUrl(
+          cms.config,
+          entry.workspace,
+          location
+        )
+        if (!source || source === requestedUrl)
+          return new Response('Not found', {status: 404})
+        const configuredBase = Config.baseUrl(
+          cms.config,
+          context.isDev ? 'development' : 'production'
+        )
+        const deliveryBase = configuredBase ?? context.handlerUrl
+        const sourceUrl = new URL(source, deliveryBase)
+        const deliveryOrigin = new URL(deliveryBase).origin
+        const isSameOrigin = (url: string) =>
+          new URL(url).origin === deliveryOrigin
+        return proxy && isSameOrigin(sourceUrl.href)
+          ? proxyFile(
+              request,
+              sourceUrl.href,
+              'public, max-age=60',
+              isSameOrigin
+            )
+          : redirectFile(source, 'public, max-age=60')
       }
 
       const action = params.get('action') as HandleAction
@@ -436,6 +515,69 @@ export function createHandler({
       )
     }
   }
+}
+
+function redirectFile(location: string, cacheControl: string): Response {
+  return new Response(null, {
+    status: 307,
+    headers: {'cache-control': cacheControl, location}
+  })
+}
+
+function mediaResponse(
+  request: Request,
+  upstream: Response,
+  cacheControl: string
+): Response {
+  if ([301, 302, 303, 307, 308].includes(upstream.status))
+    return new Response('Media backend returned a redirect', {status: 502})
+  const responseHeaders = new Headers({'cache-control': cacheControl})
+  for (const name of [
+    'accept-ranges',
+    'content-disposition',
+    'content-range',
+    'content-type',
+    'etag',
+    'last-modified'
+  ]) {
+    const value = upstream.headers.get(name)
+    if (value) responseHeaders.set(name, value)
+  }
+  return new Response(request.method === 'HEAD' ? null : upstream.body, {
+    status: upstream.status,
+    headers: responseHeaders
+  })
+}
+
+async function proxyFile(
+  request: Request,
+  source: string,
+  cacheControl: string,
+  isAllowed: (url: string) => boolean
+): Promise<Response> {
+  const headers = new Headers()
+  for (const name of ['range', 'if-none-match', 'if-modified-since']) {
+    const value = request.headers.get(name)
+    if (value) headers.set(name, value)
+  }
+  let current = source
+  let upstream: Response
+  for (let redirects = 0; ; redirects++) {
+    if (!isAllowed(current))
+      return new Response('Invalid media source', {status: 502})
+    upstream = await fetch(current, {
+      method: request.method,
+      headers,
+      redirect: 'manual',
+      signal: request.signal
+    })
+    const location = upstream.headers.get('location')
+    if (![301, 302, 303, 307, 308].includes(upstream.status) || !location) break
+    if (redirects === 3)
+      return new Response('Too many media redirects', {status: 502})
+    current = new URL(location, current).href
+  }
+  return mediaResponse(request, upstream, cacheControl)
 }
 
 function parseUser(input: unknown): UserInput {

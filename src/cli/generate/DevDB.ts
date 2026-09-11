@@ -5,6 +5,7 @@ import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {assert} from '#/core/util/Assert.js'
@@ -67,7 +68,7 @@ export class DevDB extends LocalDB {
 
   isInMediaLocation(file: string): boolean {
     const {config, rootDir} = this.#options
-    const mediaDirs: Array<string> = values(config.workspaces)
+    const mediaDirs = values(config.workspaces)
       .map(workspace => getWorkspace(workspace).mediaDir!)
       .filter(Boolean)
     return mediaDirs.some(dir => contains(join(rootDir, dir), file))

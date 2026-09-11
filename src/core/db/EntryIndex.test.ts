@@ -202,8 +202,6 @@ test('indexes the public URL of MediaFile entries', async () => {
     workspaces: {
       main: Config.workspace('Main', {
         source: 'content',
-        mediaUrl: ({parentPaths, path, extension}) =>
-          `/assets/${parentPaths.concat(path).join('/')}${extension}`,
         roots: {media: Config.media()}
       })
     }
@@ -218,13 +216,18 @@ test('indexes the public URL of MediaFile entries', async () => {
       data: {
         title: 'Guide',
         extension: '.pdf',
-        location: '/uploads/guide.pdf'
+        location: '/uploads/guide.pdf',
+        metadata: {
+          aliases: [{url: '/admin/file/old-guide.pdf'}]
+        }
       }
     }
   ])
 
   const [entry] = Array.from(index.filter({}))
-  test.is(entry.url, '/assets/guide.pdf')
+  test.is(entry.url, '/admin/file/guide.pdf')
+  test.is(index.findByUrl('/admin/file/guide.pdf', () => true)?.id, 'guide')
+  test.is(index.findByUrl('/admin/file/old-guide.pdf', () => true)?.id, 'guide')
 })
 test('filters by entry predicate', async () => {
   const {index} = await createEntryIndex(cms.config, fixtureEntries)

@@ -58,7 +58,6 @@ test('resolves linked image data for queried rich text', async () => {
         workspaces: {
           main: workspace('Main', {
             source: 'content',
-            mediaUrl: '/media',
             roots: {}
           })
         }
@@ -69,6 +68,7 @@ test('resolves linked image data for queried rich text', async () => {
         {
           id: 'media-1',
           url: '/media/image.jpg',
+          hash: 'image-hash',
           alt: {en: 'English alt text', fr: 'Texte alternatif'}
         }
       ]
@@ -83,7 +83,7 @@ test('resolves linked image data for queried rich text', async () => {
       _id: 'image-1',
       _entry: 'media-1',
       _link: 'image',
-      src: '/media/image.jpg',
+      src: '/media/image.jpg?v=image-hash',
       alt: 'Texte alternatif'
     }
   ] satisfies TextDoc)

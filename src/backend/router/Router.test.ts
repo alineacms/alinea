@@ -7,7 +7,10 @@ const matcher = router.matcher()
 const {handle} = router(
   matcher.get('/').map(() => undefined),
   matcher.get('/').map(() => new Response('root')),
-  matcher.get('/param/:id').map(({params}) => new Response(params.id as string))
+  matcher
+    .get('/param/:id')
+    .map(({params}) => new Response(params.id as string)),
+  matcher.get('/file/*').map(({params}) => new Response(params.wild as string))
 )
 
 const test = suite(import.meta)
@@ -20,6 +23,13 @@ test('root', async () => {
 test('param', async () => {
   const response = await handle(new Request('http://localhost/param/123'))
   test.is(await response?.text(), '123')
+})
+
+test('wildcard', async () => {
+  const response = await handle(
+    new Request('http://localhost/file/nested/image.png')
+  )
+  test.is(await response?.text(), 'nested/image.png')
 })
 
 test('compresses a response when the request accepts gzip', async () => {

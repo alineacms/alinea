@@ -25,6 +25,7 @@ import type {
   EntryReferenceResult
 } from './EntryReference.js'
 import {EntryReferenceIndex} from './EntryReferenceIndex.js'
+import {aliasesFromData, aliasUrl} from './EntryAliases.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {IndexEvent} from './IndexEvent.js'
 
@@ -379,6 +380,7 @@ export class EntryGraph {
   #byId = new Map<string, EntryNode>()
   #byDir = new Map<string, string>()
   #nodesBy = {
+    alias: new Map<string, Array<EntryNode>>(),
     parentId: new Map<string | null, Array<EntryNode>>(),
     url: new Map<string, Array<EntryNode>>(),
     workspace: new Map<string, Array<EntryNode>>(),
@@ -503,6 +505,32 @@ export class EntryGraph {
     )
     const urls = new Set(Array.from(node.values(), language => language.url))
     for (const url of urls) addToIndex(this.#nodesBy.url, url, node)
+    const aliases = new Set(
+      Array.from(node.values()).flatMap(language =>
+        (aliasesFromData(language.main.data) ?? []).flatMap(value => {
+          const url = aliasUrl(value)
+          return url === undefined ? [] : [url]
+        })
+      )
+    )
+    for (const alias of aliases) addToIndex(this.#nodesBy.alias, alias, node)
+  }
+
+  byUrl(url: string): Iterable<Entry> {
+    return this.filter({
+      nodes: this.#nodesBy.url.get(url) ?? [],
+      entry: entry => entry.url === url
+    })
+  }
+
+  byAlias(alias: string): Iterable<Entry> {
+    return this.filter({
+      nodes: this.#nodesBy.alias.get(alias) ?? [],
+      entry: entry =>
+        (aliasesFromData(entry.data) ?? []).some(
+          value => aliasUrl(value) === alias
+        )
+    })
   }
 
   #fromIndex<Key>(
@@ -823,6 +851,10 @@ export class EntryIndex extends EventTarget {
   }
   findMany(filter: (entry: Entry) => boolean): Iterable<Entry> {
     return this.graph.filter({entry: filter})
+  }
+  findByUrl(url: string, filter: (entry: Entry) => boolean): Entry | undefined {
+    for (const entry of this.graph.byUrl(url)) if (filter(entry)) return entry
+    for (const entry of this.graph.byAlias(url)) if (filter(entry)) return entry
   }
   async referencesTo(
     query: EntryReferenceQuery
