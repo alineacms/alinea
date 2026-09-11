@@ -1,8 +1,10 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {Field as CoreField} from '#/core/Field.js'
+import {ListRow} from '#/core/ListRow.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {transaction} from '#/core/source/Source.js'
+import {isRecord} from '#/core/util/Objects.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {createEntryResolver} from '#test/EntryFixture.js'
@@ -14,6 +16,23 @@ import {join} from 'node:path'
 import {connect} from 'rado/driver/bun-sqlite'
 import {EntryIndexTable, entryIndexRow} from './entry/Schema.js'
 import {EntryDatabase} from './EntryDatabase.js'
+
+function urlAlias(url: string) {
+  return {
+    [ListRow.id]: `alias-${url}`,
+    [ListRow.index]: 'a0',
+    [ListRow.type]: 'alias',
+    url
+  }
+}
+
+function aliasUrls(value: unknown): Array<string> {
+  if (!Array.isArray(value)) return []
+  return value.flatMap(value => {
+    if (!isRecord(value)) return []
+    return typeof value.url === 'string' ? [value.url] : []
+  })
+}
 
 test('SQL entry-link queries retain the Graph API behavior', async () => {
   const Page = ConfigBuilder.document('Page', {
@@ -549,4 +568,209 @@ test('database mutations commit to the receiving overlay only', async () => {
   expect(result.request.fromSha).toBe(remoteRevision)
   await overlay.close()
   await base.close()
+})
+
+test('database mutations enforce URL ownership and retain previous URLs', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    contains: ['Page'],
+    fields: {}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  const database = new EntryDatabase(config, db)
+  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
+    const result = await database.apply(mutations, {source})
+    await source.applyChanges(sourceChanges(result.request))
+  }
+
+  await apply([
+    {
+      op: 'create',
+      id: 'one',
+      type: 'Page',
+      locale: null,
+      data: {
+        title: 'One',
+        path: 'one',
+        metadata: {aliases: [urlAlias('/old-one')]}
+      }
+    }
+  ])
+  await expect(
+    apply([
+      {
+        op: 'create',
+        id: 'two',
+        type: 'Page',
+        locale: null,
+        data: {
+          title: 'Two',
+          path: 'two',
+          metadata: {aliases: [urlAlias('/one')]}
+        }
+      }
+    ])
+  ).rejects.toThrow('URL "/one" is already defined by entry one')
+  await apply([
+    {
+      op: 'update',
+      id: 'one',
+      locale: null,
+      status: 'published',
+      set: {path: 'renamed'}
+    }
+  ])
+  expect(
+    await database.get({
+      id: 'one',
+      select: {url: Entry.url, aliases: Entry.aliases}
+    })
+  ).toMatchObject({url: '/renamed', aliases: expect.any(Array)})
+  expect(
+    aliasUrls(await database.get({id: 'one', select: Entry.aliases}))
+  ).toEqual(['/old-one', '/one'])
+  await database.close()
+})
+
+test('database moves retain published URLs for an entire subtree', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    contains: ['Page'],
+    fields: {}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const source = new MemorySource()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  const database = new EntryDatabase(config, db)
+  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
+    const result = await database.apply(mutations, {source})
+    await source.applyChanges(sourceChanges(result.request))
+  }
+  const data = (title: string, path: string) => ({
+    title,
+    path,
+    metadata: {aliases: []}
+  })
+  await apply([
+    {
+      op: 'create',
+      id: 'parent',
+      type: 'Page',
+      locale: null,
+      data: data('Parent', 'parent')
+    },
+    {
+      op: 'create',
+      id: 'target',
+      type: 'Page',
+      locale: null,
+      data: data('Target', 'target')
+    },
+    {
+      op: 'create',
+      id: 'child',
+      type: 'Page',
+      locale: null,
+      parentId: 'parent',
+      data: data('Child', 'child')
+    }
+  ])
+  await apply([
+    {
+      op: 'move',
+      id: 'parent',
+      target: 'target',
+      targetType: 'entry',
+      dropPosition: 'on'
+    }
+  ])
+  const result = await database.find({
+    id: {in: ['parent', 'child']},
+    select: {id: Entry.id, url: Entry.url, aliases: Entry.aliases}
+  })
+  expect(result).toEqual([
+    {id: 'parent', url: '/target/parent', aliases: expect.any(Array)},
+    {id: 'child', url: '/target/parent/child', aliases: expect.any(Array)}
+  ])
+  expect(aliasUrls(result[0].aliases)).toEqual(['/parent'])
+  expect(aliasUrls(result[1].aliases)).toEqual(['/parent/child'])
+  await database.close()
+})
+
+test('database mutations propagate shared fields between translations', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {shared: Field.text('Shared', {shared: true})}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: ConfigBuilder.root('Pages', {i18n: {locales: ['en', 'de']}})
+        }
+      })
+    }
+  }
+  const source = new MemorySource()
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  const database = new EntryDatabase(config, db)
+  async function apply(mutations: Parameters<EntryDatabase['apply']>[0]) {
+    const result = await database.apply(mutations, {source})
+    await source.applyChanges(sourceChanges(result.request))
+  }
+  await apply([
+    {
+      op: 'create',
+      id: 'page',
+      type: 'Page',
+      locale: 'en',
+      data: {title: 'English', shared: 'initial'}
+    },
+    {
+      op: 'create',
+      id: 'page',
+      type: 'Page',
+      locale: 'de',
+      data: {title: 'German'}
+    }
+  ])
+  expect(
+    await database.get({id: 'page', locale: 'de', select: Page.shared})
+  ).toBe('initial')
+  await apply([
+    {
+      op: 'update',
+      id: 'page',
+      locale: 'en',
+      status: 'published',
+      set: {shared: 'updated'}
+    }
+  ])
+  expect(
+    await database.find({id: 'page', select: Page.shared, status: 'published'})
+  ).toEqual(['updated', 'updated'])
+  await database.close()
 })
