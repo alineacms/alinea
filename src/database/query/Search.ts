@@ -64,11 +64,19 @@ export function searchQuery(
   const search = sql.identifier(name)
   const match = sql`${search} match ${terms}`
   const versionId = sql`${search}.${sql.identifier('versionId')}`
+  const relevance = sql<number>`bm25(${search}, 0, 20, 1)`
+  const titlePrefix = tokens.length
+    ? sql<number>`case
+        when instr(lower(trim(${entry.title})), ${tokens[0]!.toLowerCase()}) = 1
+        then -1000000 else 0 end`
+    : sql.value(0)
   return {
     target: search,
     identity: sql<boolean>`${versionId} = ${entry.versionId}`,
     condition: tokens.length ? sql<boolean>`${match}` : sql.value(false),
-    rank: tokens.length ? sql<number>`bm25(${search}, 0, 20, 1)` : sql.value(0),
+    rank: tokens.length
+      ? sql<number>`${titlePrefix} + ${relevance}`
+      : sql.value(0),
     snippet(start: HasSql, end: HasSql, cutOff: HasSql, limit: HasSql) {
       return tokens.length
         ? sql<string>`snippet(${search}, 2, ${start}, ${end}, ${cutOff}, ${limit})`

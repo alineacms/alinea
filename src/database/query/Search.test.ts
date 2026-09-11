@@ -64,6 +64,9 @@ for (const driver of ['native', 'wasm'] as const)
           )
           .add('pages/c.json', entry('c', 'Café crème', 'délicieux'))
           .add('pages/d.json', entry('d', 'Ordinary', 'nothing matching'))
+          .add('pages/e.json', entry('e', 'Unlocking semiconductor systems'))
+          .add('pages/f.json', entry('f', 'Systems unlocked by unlocking'))
+          .add('pages/g.json', entry('g', 'Background', 'unlocking systems'))
           .compile()
       )
       await runtime.syncWith(source)
@@ -73,6 +76,9 @@ for (const driver of ['native', 'wasm'] as const)
       expect(
         await runtime.resolve({search: 'cafe cre', select: Entry.id})
       ).toEqual(['c'])
+      expect(
+        await runtime.resolve({search: 'unlocking', select: Entry.id})
+      ).toEqual(['e', 'f', 'g'])
       expect(
         await runtime.resolve({
           id: 'a',
