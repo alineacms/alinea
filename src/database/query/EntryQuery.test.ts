@@ -57,7 +57,7 @@ test('structural SQL queries use the complete entry table', async () => {
   await db
     .insert(EntryIndexTable)
     .values([
-      entryIndexRow(entry('a')),
+      entryIndexRow(entry('a', {filePath: 'pages/a.json'})),
       entryIndexRow(entry('b', {locale: 'EN'})),
       entryIndexRow(
         entry('c', {status: 'archived', versionStatus: 'published'})
@@ -69,6 +69,11 @@ test('structural SQL queries use the complete entry table', async () => {
     take: 1
   })
   expect(await plan.rows.all(db)).toEqual([{id: 'a', title: 'a'}])
+  expect(
+    await compileEntryQuery(config, {select: Entry.filePath, id: 'a'}).rows.all(
+      db
+    )
+  ).toEqual(['pages/a.json'])
   expect(
     await compileEntryQuery(config, {
       select: Entry.id,

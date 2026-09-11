@@ -39,6 +39,8 @@ export const EntryIndexTable = table(
     index: column.varchar(undefined, {length: 255}).notNull(),
     ordinal: column.integer().notNull(),
     path: column.text().notNull(),
+    /** Full source path of this authored version. */
+    filePath: column.text(),
     url: column.varchar(undefined, {length: 1024}).notNull(),
     active: column.boolean().notNull(),
     main: column.boolean().notNull(),
@@ -60,7 +62,6 @@ export const EntryIndexTable = table(
 )
 
 export const sourceFields = [
-  'filePath',
   'fileHash',
   'parentDir',
   'childrenDir',
@@ -92,6 +93,8 @@ export interface IndexedEntry extends Omit<
   ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
   sourceRoot?: string | null
+  /** Full source path for this authored version. */
+  filePath?: string | null
   /** Directory hash covering this identity's versions and children. */
   childrenSha?: string | null
 }
@@ -120,6 +123,7 @@ export function entryIndexRow(
     index: entry.index,
     ordinal: entry.ordinal ?? 0,
     path: entry.path,
+    filePath: entry.filePath ?? null,
     url: entry.url,
     active: entry.active,
     main: entry.main,

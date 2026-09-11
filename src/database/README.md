@@ -10,8 +10,8 @@ mutation protocols belong outside this core.
 The query runtime creates two ordinary tables and one optional FTS5 table:
 
 - `alinea_entry_index` contains one complete row per authored version: query
-  columns, precomputed sync hashes, `data` JSON and source JSON. Hidden authored
-  versions remain rows with `visible = false`.
+  columns, full `filePath`, precomputed sync hashes, `data` JSON and remaining
+  source JSON. Hidden authored versions remain rows with `visible = false`.
 - `alinea_database_state` contains the current revision.
 - `alinea_entry_search` is a standard FTS5 table rebuilt from searchable text
   only when a search is performed.
