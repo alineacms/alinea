@@ -20,7 +20,7 @@ test('reads the indexed content hash without synchronizing the graph', async () 
   store.set(graphAtom, db)
   store.set(eventsAtom, events)
 
-  expect(await store.get(shaAtom)).toBe(db.sha)
+  expect(await store.get(shaAtom)).toBe(await db.sha)
   expect(syncs).toBe(0)
 
   const unsubscribe = store.sub(shaAtom, () => {})

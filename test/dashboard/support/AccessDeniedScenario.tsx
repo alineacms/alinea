@@ -34,7 +34,7 @@ export function AccessDeniedScenario() {
     <App
       client={client}
       config={config}
-      events={db.index}
+      events={db.events}
       graph={db}
       local
       views={views}
@@ -51,7 +51,7 @@ export function UserAccessDeniedScenario() {
     <App
       client={client}
       config={config}
-      events={db.index}
+      events={db.events}
       graph={db}
       local
       views={views}

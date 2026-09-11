@@ -403,7 +403,7 @@ export class EntryTransaction implements AsyncDisposable {
         id,
         type: entry.type,
         index: entry.index,
-        path: entry.path,
+        path,
         seeded: entry.seeded,
         data
       },

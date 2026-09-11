@@ -25,7 +25,6 @@ export function parseSourceEntry(
   }
   assert(isRecord(raw), `Invalid entry record: ${filePath}`)
   const {meta, data: authoredData} = parseRecord(raw as EntryRecord)
-  const data = seedData(config, meta.seeded ?? null, authoredData)
   assert(typeof meta.id === 'string', `Entry is missing an id: ${filePath}`)
   assert(typeof meta.type === 'string', `Entry is missing a type: ${filePath}`)
   assert(
@@ -38,6 +37,10 @@ export function parseSourceEntry(
   const lastDot = fileName.lastIndexOf('.')
   assert(lastDot !== -1, `Entry must have an extension: ${filePath}`)
   const [path, versionStatus] = entryInfo(fileName.slice(0, lastDot))
+  const data: Record<string, unknown> = {
+    path,
+    ...seedData(config, meta.seeded ?? null, authoredData)
+  }
   const parentDir = segments.slice(0, -1).join('/')
   const childrenDir = `${parentDir}/${path}`
   let segmentIndex = 0

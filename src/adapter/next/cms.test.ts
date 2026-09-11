@@ -150,7 +150,7 @@ test('applies a valid preview patch without syncing unrelated tree changes', asy
     set: {title: 'Previewed entry'},
     select: Entry
   })
-  const contentHash = db.sha
+  const contentHash = await db.sha
   const baseText = new TextDecoder().decode(
     JsonLoader.format(config.schema, createRecord(entry, entry.status))
   )

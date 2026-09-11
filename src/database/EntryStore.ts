@@ -192,8 +192,32 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   syncWith(remote: RemoteSource): Promise<string> {
     return this.#run(async () => {
       const batch = await diff(this.source, remote)
-      if (batch.changes.length) await this.source.applyChanges(batch)
-      return this.#sync()
+      if (!batch.changes.length) return this.#sync()
+      const localTree = await this.source.getTree()
+      const remoteTree = await localTree.withChanges(batch)
+      const blobs = new Map(
+        batch.changes.flatMap(change =>
+          change.op === 'delete' || !change.contents
+            ? []
+            : [[change.sha, change.contents] as const]
+        )
+      )
+      const bundledRemote: RemoteSource = {
+        async getTreeIfDifferent(revision) {
+          return revision === remoteTree.sha ? undefined : remoteTree
+        },
+        async *getBlobs(shas) {
+          for (const sha of shas) {
+            const blob = blobs.get(sha)
+            assert(blob, `Missing synchronized blob ${sha}`)
+            yield [sha, blob]
+          }
+        }
+      }
+      await this.database.syncWith(bundledRemote)
+      await this.source.applyChanges(batch)
+      await this.#seed()
+      return this.database.getRevision()
     })
   }
 

@@ -233,8 +233,16 @@ test('assigns distinct order indexes to entries created in one batch', async () 
     }
   ])
 
-  const first = db.index.findFirst(entry => entry.id === 'batch-entry-0')
-  const second = db.index.findFirst(entry => entry.id === 'batch-entry-1')
+  const first = await db.first({
+    id: 'batch-entry-0',
+    status: 'all',
+    select: {index: Entry.index}
+  })
+  const second = await db.first({
+    id: 'batch-entry-1',
+    status: 'all',
+    select: {index: Entry.index}
+  })
   if (!first || !second) throw new Error('Expected both batch entries')
   test.ok(first.index !== second.index)
   test.ok(first.index < second.index)
@@ -278,8 +286,16 @@ test('resolves path collisions sequentially within one batch', async () => {
     }
   ])
 
-  const first = db.index.findFirst(entry => entry.id === 'batch-path-0')
-  const second = db.index.findFirst(entry => entry.id === 'batch-path-1')
+  const first = await db.first({
+    id: 'batch-path-0',
+    status: 'all',
+    select: {path: Entry.path}
+  })
+  const second = await db.first({
+    id: 'batch-path-1',
+    status: 'all',
+    select: {path: Entry.path}
+  })
   test.is(first?.path, 'same')
   test.is(second?.path, 'same-1')
 })
@@ -305,7 +321,11 @@ test('allows later mutations to target entries created in the same batch', async
     }
   ])
 
-  const entry = db.index.findFirst(entry => entry.id === 'batch-created')
+  const entry = await db.first({
+    id: 'batch-created',
+    status: 'all',
+    select: {title: Entry.title}
+  })
   test.is(entry?.title, 'Updated')
 })
 

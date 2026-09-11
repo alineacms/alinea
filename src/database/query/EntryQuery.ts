@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {aliasesFromData} from '#/core/db/EntryAliases.js'
 import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
@@ -93,8 +94,19 @@ class Expressions {
     const expr = EntryExpressions[name as keyof typeof EntryExpressions]
     if (expr) {
       const internal = getExpr(expr)
-      if (internal.type === 'entryField' && internal.path)
-        return this.data([...internal.path, name])
+      if (internal.type === 'entryField' && internal.path) {
+        const field = this.data([...internal.path, name])
+        if (name === 'aliases')
+          field.selection = sql`${this.#entry.data}`.forSelection().mapWith({
+            mapFromDriverValue(value, specs) {
+              const data = specs.parsesJson
+                ? (value as Record<string, unknown>)
+                : (JSON.parse(String(value)) as Record<string, unknown>)
+              return aliasesFromData(data)
+            }
+          })
+        return field
+      }
     }
     throw new Error(`Unsupported SQL entry field: ${name}`)
   }
