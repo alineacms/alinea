@@ -221,7 +221,7 @@ function RichTextFixture({
     <StoryProvider
       client={db}
       config={cms.config}
-      events={db.index}
+      events={db.events}
       graph={db}
       views={views}
     >
