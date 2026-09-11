@@ -6,6 +6,7 @@ import {join} from 'node:path'
 import {asc, eq} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
 import {EntryDatabase} from '../EntryDatabase.js'
+import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {EntryView} from './EntryView.js'
 import {EntryIndexTable, entryIndexRow, type IndexedEntry} from './Schema.js'
 
@@ -141,5 +142,28 @@ test('entry views remain writable over a readonly base database', async () => {
     }
   } finally {
     await rm(directory, {recursive: true, force: true})
+  }
+})
+
+test('entry views remain writable in SQLite WASM', async () => {
+  const db = await wasmDatabase()
+  try {
+    await EntryDatabase.createSchema(db, 'base')
+    await db.insert(EntryIndexTable).values(row('a', 'Base A'))
+    const overlay = await EntryView.create(db, 'wasm', EntryIndexTable, 'base')
+    await db
+      .update(overlay.entries)
+      .set({title: 'Overlay A'})
+      .where(eq(overlay.entries.id, 'a'))
+    expect(
+      await db
+        .select(overlay.entries.title)
+        .from(overlay.entries)
+        .where(eq(overlay.entries.id, 'a'))
+        .get()
+    ).toBe('Overlay A')
+    await overlay.close()
+  } finally {
+    await db.close()
   }
 })
