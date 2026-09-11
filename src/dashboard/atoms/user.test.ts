@@ -6,7 +6,12 @@ import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {expect, test} from 'bun:test'
 import {authAtom} from './auth.js'
 import {clientAtom, configAtom, localAtom} from './core.js'
-import {authReady, canManageMembersAtom, policyAtom, userAtom} from './user.js'
+import {
+  canManageMembersAtom,
+  policyAtom,
+  userAtom,
+  userPolicyReadyAtom
+} from './user.js'
 
 test('user and policy are synchronous after preloading', async () => {
   const {store} = await createDashboardAtomFixture()
@@ -16,7 +21,7 @@ test('user and policy are synchronous after preloading', async () => {
     'Dashboard policy was not preloaded'
   )
 
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
 
   expect(store.get(userAtom).sub).toBe('local')
   expect(store.get(policyAtom).canManageMembers()).toBeTrue()
@@ -24,8 +29,8 @@ test('user and policy are synchronous after preloading', async () => {
 
 test('policy stays stale while its replacement resolves', async () => {
   const {config, store} = await createDashboardAtomFixture()
-  const unsubscribe = store.sub(authReady, () => {})
-  await store.get(authReady)
+  const unsubscribe = store.sub(userPolicyReadyAtom, () => {})
+  await store.get(userPolicyReadyAtom)
   const previousUser = store.get(userAtom)
   const previousPolicy = store.get(policyAtom)
 
@@ -35,7 +40,7 @@ test('policy stays stale while its replacement resolves', async () => {
   expect(store.get(policyAtom)).toBe(previousPolicy)
 
   await Promise.resolve()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
 
   expect(store.get(userAtom)).toBe(previousUser)
   expect(store.get(policyAtom).canManageMembers()).toBeFalse()

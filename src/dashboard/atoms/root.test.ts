@@ -19,7 +19,7 @@ import type {Key} from 'react-aria-components'
 import {LucideFile} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
-import {authReady, preloadUserPolicyAtom} from './user.js'
+import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 
 class CountingDB extends LocalDB {
   resolveCount = 0
@@ -105,7 +105,7 @@ test('root explorers follow route locales and keep media unlocalized', async () 
     set: {title: 'French child'}
   })
   const store = createDashboardStore(config, db)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const root = rootAtoms(workspace, 'pages')
 
   store.set(routeAtom, {
@@ -174,7 +174,7 @@ test('root tree expansion is shared between locales', () => {
 
 test('tree renders children only when their parent is expanded', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const root = rootAtoms('main', 'pages')
   const tree = root.createTree(null, atom(new Set<Key>()))
 
@@ -220,7 +220,7 @@ test('tree queries only root and expanded parent levels', async () => {
     set: {title: 'Grandchild'}
   })
   const store = createDashboardStore(dashboardTestConfig, db)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const tree = rootAtoms('main', 'pages').createTree(null, atom(new Set<Key>()))
   db.queries = []
 
@@ -241,7 +241,7 @@ test('tree queries only root and expanded parent levels', async () => {
 
 test('selected entry ancestors load without expanding unrelated branches', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const root = rootAtoms('main', 'pages')
   const tree = root.createTree(null, atom(new Set<Key>([child._id])))
 
@@ -274,7 +274,7 @@ test('entry models and child levels are shared across trees', async () => {
     set: {title: 'Second child'}
   })
   const store = createDashboardStore(dashboardTestConfig, db)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const selectedKeys = atom(new Set<Key>([firstChild._id]))
   const expandedKeys = atom(new Set([parent._id]))
   const root = rootAtoms('main', 'pages')
@@ -348,7 +348,7 @@ test('child levels reload when a child ordering field changes', async () => {
   const store = createDashboardStore(config, db)
   const events = new TestEvents()
   store.set(eventsAtom, events)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const children = rootAtoms('main', 'pages')
     .createTree(null, atom(new Set<Key>()))
     .children(parent._id)
@@ -412,7 +412,7 @@ test('ordered children stay drag-disabled under a hidden parent', async () => {
     set: {title: 'Child'}
   })
   const store = createDashboardStore(config, db)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const tree = rootAtoms(workspace, 'pages').createTree(
     null,
     atom(new Set<Key>([child._id]))
@@ -425,7 +425,7 @@ test('ordered children stay drag-disabled under a hidden parent', async () => {
 
 test('entry data loads by id without loading its child level', async () => {
   const {child, parent, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const tree = rootAtoms('main', 'pages').createTree(null, atom(new Set<Key>()))
   await store.get(tree.ready)
 
@@ -446,7 +446,7 @@ test('entry data loads by id without loading its child level', async () => {
 
 test('unreadable children do not make a tree item expandable', async () => {
   const {child, config, parent, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const policy = new WriteablePolicy(getScope(config))
     .allowAll()
     .set({id: child._id, deny: {read: true}})

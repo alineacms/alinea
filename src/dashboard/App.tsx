@@ -34,9 +34,10 @@ import {authAtom} from './atoms/auth.js'
 import {workspaceAtom, workspacesAtom} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
+import {graphReadyAtom} from './atoms/graph.js'
 import {pageAtom, type Page} from './atoms/nav.js'
 import {rootAtoms} from './atoms/root.js'
-import {authReady, canManageMembersAtom} from './atoms/user.js'
+import {canManageMembersAtom, userPolicyReadyAtom} from './atoms/user.js'
 import {atomWithPending} from './atoms/utils.js'
 import {DashboardModelScope, type Dashboard} from './hooks.js'
 import './global.css'
@@ -62,10 +63,9 @@ export const appAtom = atomWithPending(
 )
 
 const authenticatedAtom = atom(async get => {
-  const [, canManageMembers] = await Promise.all([
-    get(authReady),
-    get(canManageMembersAtom)
-  ])
+  await get(graphReadyAtom)
+  await get(userPolicyReadyAtom)
+  const canManageMembers = await get(canManageMembersAtom)
   const page = get(pageAtom)
   const {entry, workspace, root} = page
   const workspaceData = workspace ? get(workspaceAtom(workspace)) : undefined

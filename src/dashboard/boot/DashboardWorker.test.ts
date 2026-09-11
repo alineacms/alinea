@@ -12,6 +12,260 @@ import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
+test('loads local state without starting a remote sync', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let remoteSyncs = 0
+  const client: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      remoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+
+  await worker.load('deferred-remote', cms.config, client)
+
+  expect(remoteSyncs).toBe(0)
+  expect(worker.activities()).toEqual([])
+
+  await worker.sync()
+
+  expect(remoteSyncs).toBe(1)
+  expect(
+    await (
+      await worker.db
+    ).get({
+      type: cms.schema.DemoRecipe,
+      path: 'chocolate-chip'
+    })
+  ).toMatchObject({title: 'Chocolate chip'})
+})
+
+test('serializes concurrent sync requests and waits for each result', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let remoteSyncs = 0
+  let releaseSync: (() => void) | undefined
+  let markSyncStarted: (() => void) | undefined
+  const syncStarted = new Promise<void>(resolve => {
+    markSyncStarted = resolve
+  })
+  const holdSync = new Promise<void>(resolve => {
+    releaseSync = resolve
+  })
+  const client: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      remoteSyncs += 1
+      markSyncStarted?.()
+      await holdSync
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('coalesced-sync', cms.config, client)
+
+  const first = worker.sync()
+  const second = worker.sync()
+
+  await syncStarted
+  expect(remoteSyncs).toBe(1)
+
+  let settled = false
+  void second.then(() => {
+    settled = true
+  })
+  await Promise.resolve()
+  expect(settled).toBe(false)
+
+  releaseSync?.()
+  await Promise.all([first, second])
+
+  expect(settled).toBe(true)
+  expect(remoteSyncs).toBe(2)
+})
+
+test('queues a separate sync when the revision changes', async () => {
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let firstRemoteSyncs = 0
+  let secondRemoteSyncs = 0
+  let releaseFirstSync: (() => void) | undefined
+  let markFirstSyncStarted: (() => void) | undefined
+  const firstSyncStarted = new Promise<void>(resolve => {
+    markFirstSyncStarted = resolve
+  })
+  const holdFirstSync = new Promise<void>(resolve => {
+    releaseFirstSync = resolve
+  })
+  const firstClient: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      firstRemoteSyncs += 1
+      markFirstSyncStarted?.()
+      await holdFirstSync
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const secondClient: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      secondRemoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(new MemorySource())
+  await worker.load('first-revision', cms.config, firstClient)
+  const first = worker.sync()
+  await firstSyncStarted
+
+  await worker.load('second-revision', cms.config, secondClient)
+  const second = worker.sync()
+
+  expect(secondRemoteSyncs).toBe(0)
+
+  releaseFirstSync?.()
+  await Promise.all([first, second])
+
+  expect(firstRemoteSyncs).toBe(1)
+  expect(secondRemoteSyncs).toBe(1)
+})
+
+test('waits for a new revision to finish loading before syncing it', async () => {
+  const source = new MemorySource()
+  const getTree = source.getTree.bind(source)
+  let holdNextTreeRead = false
+  let releaseTreeRead: (() => void) | undefined
+  let markTreeReadStarted: (() => void) | undefined
+  const treeReadStarted = new Promise<void>(resolve => {
+    markTreeReadStarted = resolve
+  })
+  const holdTreeRead = new Promise<void>(resolve => {
+    releaseTreeRead = resolve
+  })
+  source.getTree = async () => {
+    if (holdNextTreeRead) {
+      markTreeReadStarted?.()
+      await holdTreeRead
+    }
+    return getTree()
+  }
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let firstRemoteSyncs = 0
+  let secondRemoteSyncs = 0
+  const firstClient: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      firstRemoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const secondClient: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      secondRemoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(source)
+  await worker.load('first-loaded-revision', cms.config, firstClient)
+
+  holdNextTreeRead = true
+  const load = worker.load('loading-revision', cms.config, secondClient)
+  await treeReadStarted
+  const sync = worker.sync()
+  await Promise.resolve()
+
+  expect(firstRemoteSyncs).toBe(0)
+  expect(secondRemoteSyncs).toBe(0)
+
+  holdNextTreeRead = false
+  releaseTreeRead?.()
+  await load
+  await sync
+
+  expect(firstRemoteSyncs).toBe(0)
+  expect(secondRemoteSyncs).toBe(1)
+})
+
+test('keeps syncs bound to their load across a failed revision', async () => {
+  const source = new MemorySource()
+  const getTree = source.getTree.bind(source)
+  let failNextTreeRead = false
+  source.getTree = async () => {
+    if (failNextTreeRead) {
+      failNextTreeRead = false
+      throw new Error('Invalid local cache')
+    }
+    return getTree()
+  }
+  const fixture = new FSSource('test/fixtures/demo')
+  const remoteDB = new LocalDB(cms.config, fixture)
+  await remoteDB.sync()
+  const baseClient = createTestConnection(remoteDB)
+  let releaseFirstSync: (() => void) | undefined
+  let markFirstSyncStarted: (() => void) | undefined
+  const firstSyncStarted = new Promise<void>(resolve => {
+    markFirstSyncStarted = resolve
+  })
+  const holdFirstSync = new Promise<void>(resolve => {
+    releaseFirstSync = resolve
+  })
+  const firstClient: LocalConnection = {
+    ...baseClient,
+    async getTreeIfDifferent(sha) {
+      markFirstSyncStarted?.()
+      await holdFirstSync
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  let recoveredRemoteSyncs = 0
+  const recoveredClient: LocalConnection = {
+    ...baseClient,
+    getTreeIfDifferent(sha) {
+      recoveredRemoteSyncs += 1
+      return baseClient.getTreeIfDifferent(sha)
+    }
+  }
+  const worker = new DashboardWorker(source)
+  await worker.load('loaded-before-failure', cms.config, firstClient)
+  const firstSync = worker.sync()
+  await firstSyncStarted
+
+  failNextTreeRead = true
+  const failedLoad = worker.load(
+    'failed-loading-revision',
+    cms.config,
+    baseClient
+  )
+  const queuedSync = worker.sync()
+  const queuedSyncError = queuedSync.catch(error => error)
+
+  await expect(failedLoad).rejects.toThrow('Invalid local cache')
+  expect(await queuedSyncError).toEqual(
+    expect.objectContaining({message: 'Failed to load database'})
+  )
+
+  await worker.load('loaded-before-failure', cms.config, recoveredClient)
+  const recoveredSync = worker.sync()
+
+  releaseFirstSync?.()
+  await Promise.all([firstSync, recoveredSync])
+
+  expect(recoveredRemoteSyncs).toBe(1)
+})
+
 test('records remote database sync activity and keeps its outcome', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
@@ -41,7 +295,8 @@ test('records remote database sync activity and keeps its outcome', async () => 
       statuses.push(event.activities[0]?.status ?? 'missing')
   })
 
-  const load = worker.load('sync-status', cms.config, client)
+  await worker.load('sync-status', cms.config, client)
+  const sync = worker.sync()
   await syncStarted
 
   expect(statuses).toEqual(['running'])
@@ -50,7 +305,7 @@ test('records remote database sync activity and keeps its outcome', async () => 
   ])
 
   releaseSync?.()
-  await load
+  await sync
 
   expect(statuses).toEqual(['running', 'succeeded'])
   expect(worker.activities()).toEqual([
@@ -75,6 +330,7 @@ test('keeps successful content actions in activity history', async () => {
     cms.config,
     createTestConnection(remoteDB)
   )
+  await worker.sync()
   const db = await worker.db
   const original = await db.get({
     type: cms.schema.DemoRecipe,
@@ -160,10 +416,12 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
   await remoteDB.sync()
   const baseClient = createTestConnection(remoteDB)
   let remoteSyncs = 0
+  let remoteUnavailable = true
   const client: LocalConnection = {
     ...baseClient,
     getTreeIfDifferent(sha) {
       remoteSyncs++
+      if (remoteUnavailable) throw new Error('Remote unavailable')
       return baseClient.getTreeIfDifferent(sha)
     }
   }
@@ -171,8 +429,14 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
   worker.dispatchEvent = () => true
 
   await worker.load('incompatible-cache', cms.config, client)
+  await expect(worker.sync()).rejects.toThrow(
+    'Failed to load cached content and fetch remote updates'
+  )
 
-  expect(remoteSyncs).toBe(1)
+  remoteUnavailable = false
+  await worker.retryActivity()
+
+  expect(remoteSyncs).toBe(2)
   expect(
     await (
       await worker.db
@@ -181,9 +445,13 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
       path: 'chocolate-chip'
     })
   ).toMatchObject({title: 'Chocolate chip'})
+
+  remoteUnavailable = true
+  await expect(worker.sync()).rejects.toThrow('Remote unavailable')
+  expect(remoteSyncs).toBe(3)
 })
 
-test('retries a failed initial load for the same revision', async () => {
+test('retries a failed initial sync', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
   await remoteDB.sync()
@@ -197,20 +465,13 @@ test('retries a failed initial load for the same revision', async () => {
     }
   }
   const worker = new DashboardWorker(new MemorySource())
-  const failedDB = Promise.resolve(worker.db).catch((error: unknown) => error)
+  await worker.load('retry-initial-sync', cms.config, client)
 
-  await expect(
-    worker.load('retry-initial-load', cms.config, client)
-  ).rejects.toThrow('Remote unavailable')
-  expect(await failedDB).toEqual(
-    expect.objectContaining({message: 'Failed to load database'})
-  )
+  await expect(worker.sync()).rejects.toThrow('Remote unavailable')
 
   unavailable = false
-  const retriedDB = worker.db
-  await worker.load('retry-initial-load', cms.config, client)
+  await worker.sync()
 
-  expect(await retriedDB).toBe(await worker.db)
   expect(
     await (
       await worker.db
@@ -300,7 +561,9 @@ async function createFailedMutationFixture() {
 
   const worker = new DashboardWorker(localSource)
   await worker.load('test', cms.config, client)
+  const sync = worker.sync()
   await initialSyncStarted
+  await sync
   const db = await worker.db
   const original = await db.get({
     type: cms.schema.DemoRecipe,

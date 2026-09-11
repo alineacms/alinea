@@ -12,7 +12,7 @@ import {
   ExplorerEntry,
   type ExplorerItemData
 } from './explorer.js'
-import {authReady} from './user.js'
+import {userPolicyReadyAtom} from './user.js'
 
 function folderEntry(value: ExplorerItemData) {
   const item = atom(value)
@@ -137,7 +137,7 @@ test('workspace search includes all locales and unlocalized roots', async () => 
     set: {title: 'Shared result'}
   })
   const store = createDashboardStore(config, db)
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages', locale: 'en'},
     {allowAllWorkspaces: true, mode: 'search'}
@@ -158,7 +158,7 @@ test('workspace search includes all locales and unlocalized roots', async () => 
 
 test('ready pages snapshot the search that produced their items', async () => {
   const {store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages'},
     {mode: 'search'}
@@ -228,7 +228,7 @@ test('limits the picker to its allowed locations', () => {
 
 test('preloading items primes the synchronous items atom', async () => {
   const {store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms({workspace: 'main', root: 'pages'}, {})
 
   const readyItems = await store.get(explorer.itemsReady(null))
@@ -239,7 +239,7 @@ test('preloading items primes the synchronous items atom', async () => {
 
 test('preloading items includes expanded inline children', async () => {
   const {store, parent} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages'},
     {nestedNavigation: true}
@@ -255,7 +255,7 @@ test('preloading items includes expanded inline children', async () => {
 
 test('matches only contain selectable rows for compound conditions', async () => {
   const {store, child} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages'},
     {
@@ -272,7 +272,7 @@ test('matches only contain selectable rows for compound conditions', async () =>
 
 test('card browse queries show direct children without applying conditions', async () => {
   const {store, child, parent} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages'},
     {
@@ -297,7 +297,7 @@ test('card browse queries show direct children without applying conditions', asy
 
 test('filtered card queries stay scoped to the selected location', async () => {
   const {store, child, parent} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const explorer = createExplorerAtoms(
     {workspace: 'main', root: 'pages'},
     {

@@ -4,8 +4,41 @@ import {createStore} from 'jotai'
 import {activityState} from './activity.js'
 import {eventsAtom, graphAtom} from './core.js'
 import {activityAtom} from './activity.js'
-import {entryRevisionAtom, shaAtom, syncAtom} from './graph.js'
+import {entryRevisionAtom, graphReadyAtom, shaAtom, syncAtom} from './graph.js'
 import {createDashboardAtomFixture, TestEvents} from '#test/DashboardFixture.js'
+
+test('waits for the initial graph sync', async () => {
+  const {db} = await createDashboardAtomFixture()
+  let releaseSync: (() => void) | undefined
+  let markSyncStarted: (() => void) | undefined
+  const syncStarted = new Promise<void>(resolve => {
+    markSyncStarted = resolve
+  })
+  const syncReady = new Promise<void>(resolve => {
+    releaseSync = resolve
+  })
+  db.sync = async () => {
+    markSyncStarted?.()
+    await syncReady
+    return db.sha
+  }
+  const store = createStore()
+  store.set(graphAtom, db)
+
+  const ready = store.get(graphReadyAtom)
+  await syncStarted
+  let settled = false
+  void ready.then(() => {
+    settled = true
+  })
+
+  expect(settled).toBe(false)
+
+  releaseSync?.()
+  await ready
+
+  expect(settled).toBe(true)
+})
 
 test('reads the indexed content hash without synchronizing the graph', async () => {
   const {db} = await createDashboardAtomFixture()

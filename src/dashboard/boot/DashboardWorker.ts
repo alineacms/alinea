@@ -34,13 +34,23 @@ interface QueuedMutation {
   sha?: string
 }
 
+interface LoadedDashboard {
+  db: EntryStore
+  client: LocalConnection
+  cacheFailure?: CacheFailure
+}
+
+interface CacheFailure {
+  error: unknown
+}
+
 const activityHistoryLimit = 100
 
 export class DashboardWorker extends EventTarget {
   #source: Source
   #localDB: EntryStore | undefined
   #localClient: LocalConnection | undefined
-  #nextLoad = trigger<{db: EntryStore; client: LocalConnection}>()
+  #nextLoad = trigger<LoadedDashboard>()
   #defer: (() => Promise<void>) | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
@@ -62,24 +72,27 @@ export class DashboardWorker extends EventTarget {
     return this.#localClient ?? this.#nextLoad.then(res => res.client)
   }
 
-  async sync() {
-    const db = await this.db
-    const client = await this.#client
-    if (
-      this.#local.activeCount > 0 ||
-      this.#local.pendingCount > 0 ||
-      remote.activeCount > 0 ||
-      remote.pendingCount > 0
-    )
-      return db.sha
-    // The source and SQLite file are independently persisted in IndexedDB.
-    const sourceTree = await db.source.getTree()
-    if ((await db.sha) !== sourceTree.sha) await db.sync()
-    // Always schedule a remote freshness check, but do not block boot if local
-    // data was enough to build the index.
-    const sync = remote(() => this.#syncWithClient(db, client))
-    if (sourceTree.isEmpty) await sync
-    return db.sha
+  async sync(): Promise<string> {
+    const load = this.#nextLoad
+    const loaded = await load
+    const {db, client} = loaded
+    return this.#local(async () => {
+      let revision: string
+      try {
+        revision = await remote(() => this.#syncWithClient(db, client))
+      } catch (error) {
+        if (loaded.cacheFailure) {
+          throw new AggregateError(
+            [loaded.cacheFailure.error, error],
+            'Failed to load cached content and fetch remote updates'
+          )
+        }
+        throw error
+      }
+      loaded.cacheFailure = undefined
+      this.#startSyncing()
+      return revision
+    })
   }
 
   async sha() {
@@ -133,11 +146,7 @@ export class DashboardWorker extends EventTarget {
     const latestFetch = this.#activities.find(
       activity => activity.type === 'fetch'
     )
-    if (latestFetch?.status === 'failed') {
-      const db = await this.db
-      const client = await this.#client
-      await remote(() => this.#syncWithClient(db, client))
-    }
+    if (latestFetch?.status === 'failed') await this.sync()
   }
 
   async #retryMutations(): Promise<void> {
@@ -209,7 +218,9 @@ export class DashboardWorker extends EventTarget {
         try {
           await this.#syncWithClient(db, client)
           item.sha = undefined
-        } catch {}
+        } catch {
+          // Both the mutation and its recovery sync record their own failures.
+        }
       }
     })
   }
@@ -308,12 +319,12 @@ export class DashboardWorker extends EventTarget {
   }
 
   async load(revision: string, config: Config, client: LocalConnection) {
-    if (this.#currentRevision === revision) {
-      await this.sync()
-      return
-    }
+    if (this.#currentRevision === revision) return
     this.#currentRevision = revision
-    const nextLoad = this.#nextLoad
+    const nextLoad = this.#localDB ? trigger<LoadedDashboard>() : this.#nextLoad
+    this.#nextLoad = nextLoad
+    this.#localDB = undefined
+    this.#localClient = undefined
     try {
       const db = globalThis.indexedDB
         ? await BrowserEntryStore.open(config, this.#source, {
@@ -322,12 +333,14 @@ export class DashboardWorker extends EventTarget {
             revision
           })
         : await EntryStore.memory(config, this.#source)
-      if (this.#defer) await this.#defer()
-      const cacheReady = await this.#syncLocalIndex(db)
-      if (!cacheReady) await remote(() => this.#syncWithClient(db, client))
+      if (this.#defer)
+        void this.#defer().catch(() => {
+          // The replaced database finishes outstanding work before closing.
+        })
+      const cacheFailure = await this.#syncLocalIndex(db)
       this.#localDB = db
       this.#localClient = client
-      nextLoad.resolve({db, client})
+      nextLoad.resolve({db, client, cacheFailure})
       const unsubscribe = db.onChange(change => {
         this.dispatchEvent(
           new IndexEvent({
@@ -341,7 +354,6 @@ export class DashboardWorker extends EventTarget {
         unsubscribe()
         await db.close()
       }
-      this.#startSyncing(cacheReady)
     } catch (cause) {
       this.#currentRevision = undefined
       this.#nextLoad = trigger()
@@ -350,23 +362,23 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async #syncLocalIndex(db: EntryStore): Promise<boolean> {
+  async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {
     const sourceTree = await db.source.getTree()
-    if (sourceTree.isEmpty) return false
+    if (sourceTree.isEmpty) return
     try {
       await db.sync()
-      return true
-    } catch {
-      return false
+    } catch (error) {
+      return {error}
     }
   }
 
-  #startSyncing(refreshImmediately: boolean) {
+  #startSyncing() {
     if (this.#syncInterval) return
     const sync = () => {
-      void this.sync().catch(() => {})
+      void this.sync().catch(() => {
+        // Background sync failures are exposed through activity state.
+      })
     }
-    if (refreshImmediately) sync()
     this.#syncInterval = setInterval(sync, syncInterval)
   }
 }

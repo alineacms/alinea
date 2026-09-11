@@ -2,7 +2,7 @@ import {expect, spyOn, test} from 'bun:test'
 import {createStore, type Atom} from 'jotai'
 import {createDashboardAtomFixture} from '#test/DashboardFixture.js'
 import {linkEntryAtoms, type LinkEntryState} from './link.js'
-import {authReady} from './user.js'
+import {userPolicyReadyAtom} from './user.js'
 
 type Store = ReturnType<typeof createStore>
 
@@ -17,7 +17,7 @@ function waitForChange(store: Store, value: Atom<LinkEntryState>) {
 
 test('batches link entry reads started in the same turn', async () => {
   const {child, db, parent, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const resolve = spyOn(db, 'resolve')
   const parentEntry = linkEntryAtoms(parent._id)
   const childEntry = linkEntryAtoms(child._id)
@@ -48,7 +48,7 @@ test('batches link entry reads started in the same turn', async () => {
 
 test('contains link entry load errors in the atom state', async () => {
   const {child, db, store} = await createDashboardAtomFixture()
-  await store.get(authReady)
+  await store.get(userPolicyReadyAtom)
   const error = new Error('Could not load link entry')
   const resolve = spyOn(db, 'resolve').mockRejectedValue(error)
   const linkEntry = linkEntryAtoms(child._id)
