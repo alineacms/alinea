@@ -254,7 +254,8 @@ export function createLocalServer(
       }
     }),
     router.compress(
-      matcher.get('/file/*').map(({request, params}) => {
+      matcher.all('/file/*').map(({request, params}) => {
+        if (request.method !== 'GET' && request.method !== 'HEAD') return
         const url = new URL(request.url)
         url.pathname = '/api'
         url.search = new URLSearchParams({

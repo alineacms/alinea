@@ -13,7 +13,9 @@ export type {
   SupabaseUploadsOptions
 } from './SupabaseUploads.js'
 
-export function custom(api: UploadsApi): BackendPart {
+export function custom(
+  api: UploadsApi & Required<Pick<UploadsApi, 'readMedia'>>
+): BackendPart {
   return api
 }
 

@@ -52,6 +52,8 @@ test('preserves locations when no media directory is configured', () => {
   })
 
   test.is(MediaLocation.sourceUrl(config, 'main', '/stored.jpg'), '/stored.jpg')
+  test.is(MediaLocation.sourceUrl(config, 'main', 'stored.jpg'), '/stored.jpg')
+  test.is(MediaLocation.publicFileUrl(config, 'main', '/stored.jpg'), undefined)
 })
 
 test('strips an absolute media directory from relative provider locations', () => {

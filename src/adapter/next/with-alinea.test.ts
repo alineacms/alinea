@@ -33,19 +33,19 @@ test('routes files through the handler and allows versioned images', async () =>
   })
   const rewrites = await config.rewrites!()
   test.equal(rewrites, {
-    beforeFiles: [],
+    beforeFiles: [
+      {
+        source: '/cms/file/:file*',
+        destination: '/api/alinea?file=:file*&delivery=proxy'
+      }
+    ],
     afterFiles: [
       {
         source: '/cms',
         destination: '/cms.html'
       }
     ],
-    fallback: [
-      {
-        source: '/cms/file/:file*',
-        destination: '/api/alinea?file=:file*&delivery=proxy'
-      }
-    ]
+    fallback: []
   })
 })
 

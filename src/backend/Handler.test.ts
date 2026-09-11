@@ -1130,6 +1130,90 @@ test('preserves legacy built locations without a media directory', async () => {
   test.is(response.headers.get('location'), '/stored.pdf')
 })
 
+test('does not proxy an unverified legacy location', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Guide',
+      path: 'guide',
+      extension: '.pdf',
+      location: '/api/private'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=guide.pdf&delivery=proxy'),
+    requestContext()
+  )
+
+  test.is(response.status, 501)
+})
+
+test('delegates built remote media reads to the backend', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'private/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: 'remote/image.jpg',
+      previewUrl: 'https://uploads.example/preview.jpg'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db, {
+        async readMedia(input) {
+          test.equal(input, {
+            location: 'private/media/remote/image.jpg',
+            previewUrl: 'https://uploads.example/preview.jpg'
+          })
+          return new Response('image bytes', {
+            headers: {'content-type': 'image/jpeg'}
+          })
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.is(response.headers.get('content-type'), 'image/jpeg')
+  test.is(await response.text(), 'image bytes')
+})
+
 test('rejects oversized uploads before preparing a remote upload', async () => {
   const cms = createCMS({
     schema: {Page},

@@ -147,18 +147,18 @@ function createRewrites(
     }
     return {
       ...rewrites,
+      beforeFiles: [
+        ...rewrites.beforeFiles,
+        {
+          source: `${adminPath}/file/:file*`,
+          destination: `${handlerUrl}?file=:file*&delivery=proxy`
+        }
+      ],
       afterFiles: [
         ...rewrites.afterFiles,
         {
           source: adminPath,
           destination: `${adminPath}.html`
-        }
-      ],
-      fallback: [
-        ...rewrites.fallback,
-        {
-          source: `${adminPath}/file/:file*`,
-          destination: `${handlerUrl}?file=:file*&delivery=proxy`
         }
       ]
     }

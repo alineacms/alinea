@@ -152,23 +152,47 @@ export function createHandler({
         const location = entry.data.location
         if (typeof location !== 'string')
           return new Response('Not found', {status: 404})
-        if (!wasBuilt && typeof previewUrl === 'string' && previewUrl) {
-          const source = new URL(previewUrl, request.url).href
-          if (proxy && cnx.readMedia) {
+        const storageLocation = MediaLocation.storagePath(
+          cms.config,
+          entry.workspace,
+          location
+        )
+        const previewSource =
+          typeof previewUrl === 'string' && previewUrl
+            ? new URL(previewUrl, request.url).href
+            : undefined
+        if (!wasBuilt && previewSource) {
+          if (proxy) {
+            if (!cnx.readMedia)
+              return new Response('Media backend cannot read files', {
+                status: 501
+              })
             const response = await cnx.readMedia(
               {
-                location: MediaLocation.storagePath(
-                  cms.config,
-                  entry.workspace,
-                  location
-                ),
-                previewUrl: source
+                location: storageLocation,
+                previewUrl: previewSource
               },
               request
             )
             return mediaResponse(request, response, 'private, no-store')
           }
-          return redirectFile(source, 'private, no-store')
+          return redirectFile(previewSource, 'private, no-store')
+        }
+        const publicFile = MediaLocation.publicFileUrl(
+          cms.config,
+          entry.workspace,
+          location
+        )
+        if (proxy && !publicFile) {
+          if (!cnx.readMedia)
+            return new Response('Media backend cannot read files', {
+              status: 501
+            })
+          const response = await cnx.readMedia(
+            {location: storageLocation, previewUrl: previewSource},
+            request
+          )
+          return mediaResponse(request, response, 'public, max-age=60')
         }
         const source = MediaLocation.sourceUrl(
           cms.config,
@@ -177,23 +201,23 @@ export function createHandler({
         )
         if (!source || source === requestedUrl)
           return new Response('Not found', {status: 404})
+        if (!proxy) return redirectFile(source, 'public, max-age=60')
+        if (!publicFile) return new Response('Not found', {status: 404})
         const configuredBase = Config.baseUrl(
           cms.config,
           context.isDev ? 'development' : 'production'
         )
         const deliveryBase = configuredBase ?? context.handlerUrl
-        const sourceUrl = new URL(source, deliveryBase)
+        const sourceUrl = new URL(publicFile, deliveryBase)
         const deliveryOrigin = new URL(deliveryBase).origin
         const isSameOrigin = (url: string) =>
           new URL(url).origin === deliveryOrigin
-        return proxy && isSameOrigin(sourceUrl.href)
-          ? proxyFile(
-              request,
-              sourceUrl.href,
-              'public, max-age=60',
-              isSameOrigin
-            )
-          : redirectFile(source, 'public, max-age=60')
+        return proxyFile(
+          request,
+          sourceUrl.href,
+          'public, max-age=60',
+          isSameOrigin
+        )
       }
 
       const action = params.get('action') as HandleAction
@@ -531,7 +555,10 @@ function mediaResponse(
 ): Response {
   if ([301, 302, 303, 307, 308].includes(upstream.status))
     return new Response('Media backend returned a redirect', {status: 502})
-  const responseHeaders = new Headers({'cache-control': cacheControl})
+  const responseHeaders = new Headers({
+    'cache-control':
+      upstream.ok || upstream.status === 304 ? cacheControl : 'no-store'
+  })
   for (const name of [
     'accept-ranges',
     'content-disposition',

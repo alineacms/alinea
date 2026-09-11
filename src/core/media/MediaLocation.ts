@@ -64,7 +64,17 @@ export namespace MediaLocation {
     location: string
   ): string | undefined {
     if (/^https?:\/\//.test(location)) return location
-    if (!directory(config, workspace)) return location
+    if (!directory(config, workspace)) return join('/', location)
+    return publicFileUrl(config, workspace, location)
+  }
+
+  /** Resolve storage known to be inside the application's public directory. */
+  export function publicFileUrl(
+    config: Config,
+    workspace: string,
+    location: string
+  ): string | undefined {
+    if (/^https?:\/\//.test(location) || !directory(config, workspace)) return
     const publicDir = join('/', config.publicDir ?? '/public')
     const storage = join('/', storagePath(config, workspace, location))
     if (!contains(publicDir, storage)) return
