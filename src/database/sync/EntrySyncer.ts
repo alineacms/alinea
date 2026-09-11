@@ -16,6 +16,7 @@ import {
   isNull,
   max,
   min,
+  ne,
   not,
   or,
   sql,
@@ -116,6 +117,7 @@ interface ParentPathRow {
 
 interface HierarchyRow {
   id: string
+  versionId: string
   parentDir: string
   parentId: string | null
   parents: Array<string>
@@ -194,15 +196,15 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
   const hierarchyQuery = builder
     .select({
       id: DerivedEntries.id,
+      versionId: DerivedEntries.versionId,
       parentDir: DerivedEntries.parentDir,
       parentId: DerivedEntries.parentId,
       parents: DerivedEntries.parents
     })
     .from(DerivedEntries)
     .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
-    .where(gt(DerivedEntries.id, afterEntryId))
-    .groupBy(DerivedEntries.id)
-    .orderBy(asc(DerivedEntries.id))
+    .where(gt(DerivedEntries.versionId, afterVersionId))
+    .orderBy(asc(DerivedEntries.versionId))
     .limit(sqliteBatchSize)
   const levelsQuery = builder
     .select({level: DerivedEntries.level})
@@ -340,7 +342,7 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
       >`json_extract(${SyncValues.value}, '$.parents')`
     })
     .from(SyncValues)
-    .where(eq(SyncValues.key, DerivedEntries.id))
+    .where(eq(SyncValues.key, DerivedEntries.versionId))
   const updateStatusQuery = builder
     .update(DerivedEntries)
     .set({
@@ -401,7 +403,7 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
       undefined,
       db
     ),
-    hierarchy: query.hierarchy.prepare<{afterEntryId: string}>(undefined, db),
+    hierarchy: query.hierarchy.prepare<{afterVersionId: string}>(undefined, db),
     levels: query.levels.prepare(undefined, db),
     statuses: query.statuses.prepare<{level: number; offset: number}>(
       undefined,
@@ -839,21 +841,21 @@ async function deriveHierarchy(
   queries: SyncQueries
 ): Promise<boolean> {
   let changed = false
-  let afterEntryId = ''
+  let afterVersionId = ''
   for (;;) {
     const rows = (await queries.hierarchy.all({
-      afterEntryId
+      afterVersionId
     })) as Array<HierarchyRow>
     if (!rows.length) return changed
-    afterEntryId = rows.at(-1)!.id
-    const prefixesById = new Map<string, Array<string>>()
+    afterVersionId = rows.at(-1)!.versionId
+    const prefixesByVersionId = new Map<string, Array<string>>()
     const needed = new Set<string>()
     for (const row of rows) {
       const segments = row.parentDir.split('/')
       const prefixes = segments.map((_, index) =>
         segments.slice(0, index + 1).join('/')
       )
-      prefixesById.set(row.id, prefixes)
+      prefixesByVersionId.set(row.versionId, prefixes)
       for (const prefix of prefixes) needed.add(prefix)
     }
     const directories = Array<DirectoryRow>()
@@ -866,16 +868,18 @@ async function deriveHierarchy(
           })
           .from(EntryIndexTable)
           .where(inArray(EntryIndexTable.childrenDir, paths))
-          .groupBy(EntryIndexTable.id)) as Array<DirectoryRow>)
+          .groupBy(EntryIndexTable.childrenDir)) as Array<DirectoryRow>)
       )
     const idByDirectory = new Map<string, string>()
     for (const directory of directories)
       idByDirectory.set(directory.childrenDir, directory.id)
     const hierarchy = rows.flatMap(row => {
-      const parents = (prefixesById.get(row.id) ?? []).flatMap(path => {
-        const id = idByDirectory.get(path)
-        return id ? [id] : []
-      })
+      const parents = (prefixesByVersionId.get(row.versionId) ?? []).flatMap(
+        path => {
+          const id = idByDirectory.get(path)
+          return id ? [id] : []
+        }
+      )
       const parentId = parents.at(-1) ?? null
       const unchanged =
         row.parentId === parentId &&
@@ -883,7 +887,7 @@ async function deriveHierarchy(
         row.parents.every((id, index) => id === parents[index])
       return unchanged
         ? []
-        : [{key: row.id, value: JSON.stringify({parentId, parents})}]
+        : [{key: row.versionId, value: JSON.stringify({parentId, parents})}]
     })
     if (!hierarchy.length) continue
     changed = true
@@ -1049,6 +1053,98 @@ async function deriveUrls(
   }
 }
 
+/** Validate authored relationships that SQLite column constraints cannot express. */
+async function validateEntries(
+  db: Database,
+  entries: EntryIndexTarget
+): Promise<void> {
+  const minParent = min(sql<string>`coalesce(${entries.parentId}, '')`)
+  const maxParent = max(sql<string>`coalesce(${entries.parentId}, '')`)
+  const node = await db
+    .select({
+      id: entries.id,
+      minType: min(entries.type),
+      maxType: max(entries.type),
+      minIndex: min(entries.index),
+      maxIndex: max(entries.index),
+      minRoot: min(entries.root),
+      maxRoot: max(entries.root),
+      minWorkspace: min(entries.workspace),
+      maxWorkspace: max(entries.workspace),
+      minParent,
+      maxParent
+    })
+    .from(entries)
+    .innerJoin(SyncAffected, eq(entries.id, SyncAffected.id))
+    .groupBy(entries.id)
+    .having(
+      or(
+        ne(min(entries.type), max(entries.type)),
+        ne(min(entries.index), max(entries.index)),
+        ne(min(entries.root), max(entries.root)),
+        ne(min(entries.workspace), max(entries.workspace)),
+        ne(minParent, maxParent)
+      )
+    )
+    .get()
+  if (node) {
+    const versions = await db
+      .select({
+        id: entries.id,
+        locale: entries.locale,
+        filePath: entries.filePath,
+        parentDir: entries.parentDir,
+        parentId: entries.parentId
+      })
+      .from(entries)
+      .where(eq(entries.id, node.id))
+    assert(
+      false,
+      `Mismatched authored entry versions for ${node.id}: ${JSON.stringify({node, versions})}`
+    )
+  }
+
+  const language = await db
+    .select({
+      id: entries.id,
+      locale: entries.locale,
+      minPath: min(entries.path),
+      maxPath: max(entries.path),
+      minParentDir: min(entries.parentDir),
+      maxParentDir: max(entries.parentDir),
+      minChildrenDir: min(entries.childrenDir),
+      maxChildrenDir: max(entries.childrenDir)
+    })
+    .from(entries)
+    .innerJoin(SyncAffected, eq(entries.id, SyncAffected.id))
+    .groupBy(entries.id, entries.locale)
+    .having(
+      or(
+        ne(min(entries.path), max(entries.path)),
+        ne(min(entries.parentDir), max(entries.parentDir)),
+        ne(min(entries.childrenDir), max(entries.childrenDir))
+      )
+    )
+    .get()
+  assert(
+    !language,
+    `Mismatched authored language versions for ${language?.id} (${language?.locale ?? 'unlocalized'})`
+  )
+
+  const hierarchy = await db
+    .select({id: entries.id, filePath: entries.filePath})
+    .from(entries)
+    .innerJoin(SyncAffected, eq(entries.id, SyncAffected.id))
+    .where(
+      sql<boolean>`exists (
+        select 1 from json_each(${entries.parents}) parent
+        where parent.value = ${entries.id}
+      )`
+    )
+    .get()
+  assert(!hierarchy, `Invalid entry hierarchy: ${hierarchy?.filePath}`)
+}
+
 async function copyInitialUrls(queries: SyncQueries): Promise<void> {
   await queries.copyInitialUrls.run()
 }
@@ -1151,6 +1247,7 @@ export class EntrySyncer implements AsyncDisposable {
       await deriveStatus(tx, queries)
       if (initial) await copyInitialUrls(queries)
       else await deriveUrls(tx, target.entries, this.#config, queries)
+      await validateEntries(tx, target.entries)
       const changed = await queries.changedIds.all()
       await queries.setRevision.run({
         revision: tree.sha,

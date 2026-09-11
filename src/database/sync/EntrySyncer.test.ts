@@ -1,14 +1,30 @@
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
+import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith, transaction, type Source} from '#/core/source/Source.js'
 import {cms} from '#test/cms.js'
+import {createEntrySource, type EntryFixtureEntry} from '#test/EntryFixture.js'
+import {config as exampleConfig} from '#test/example.js'
 import {eq} from 'rado'
 import {DatabaseStateTable, EntryIndexTable} from '../entry/Schema.js'
 import {EntryDatabase} from '../EntryDatabase.js'
+
+async function expectInvalidEntries(
+  config: Config,
+  entries: Array<EntryFixtureEntry>,
+  message: string
+): Promise<void> {
+  const source = await createEntrySource(config, entries)
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, (await new MemorySource().getTree()).sha)
+  const runtime = new EntryDatabase(config, db)
+  await expect(runtime.syncWith(source)).rejects.toThrow(message)
+}
 
 test('runtime serializes sources through one database-bound syncer', async () => {
   const source = new MemorySource()
@@ -141,4 +157,169 @@ test('runtime serializes sources through one database-bound syncer', async () =>
   expect(
     await runtime.resolve({status: 'archived', select: Entry.path})
   ).toEqual(expect.arrayContaining(['recipes', 'chocolate-chip']))
+})
+
+test('rejects incompatible authored versions of one entry', async () => {
+  await expectInvalidEntries(
+    cms.config,
+    [
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'same',
+        status: 'published'
+      },
+      {
+        id: 'same-entry',
+        type: 'DemoRecipes',
+        index: 'a0',
+        path: 'same',
+        status: 'draft'
+      }
+    ],
+    'Mismatched authored entry versions for same-entry'
+  )
+})
+
+test('rejects mismatched indexes, roots, and workspaces', async () => {
+  await expectInvalidEntries(
+    cms.config,
+    [
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'same',
+        status: 'published'
+      },
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'b0',
+        path: 'same',
+        status: 'draft'
+      }
+    ],
+    'Mismatched authored entry versions for same-entry'
+  )
+
+  await expectInvalidEntries(
+    cms.config,
+    [
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'same',
+        status: 'published',
+        root: 'pages'
+      },
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'same',
+        status: 'draft',
+        root: 'media'
+      }
+    ],
+    'Mismatched authored entry versions for same-entry'
+  )
+
+  const multiWorkspaceConfig: Config = {
+    ...cms.config,
+    workspaces: {
+      demo: cms.config.workspaces.demo,
+      second: cms.config.workspaces.demo
+    }
+  }
+  await expectInvalidEntries(
+    multiWorkspaceConfig,
+    [
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'same',
+        status: 'published',
+        workspace: 'demo'
+      },
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'same',
+        status: 'draft',
+        workspace: 'second'
+      }
+    ],
+    'Mismatched authored entry versions for same-entry'
+  )
+})
+
+test('rejects translations with different logical parents', async () => {
+  await expectInvalidEntries(
+    exampleConfig,
+    [
+      {
+        id: 'parent-en',
+        type: 'Page',
+        index: 'a0',
+        path: 'parent-en',
+        root: 'multiLanguage',
+        locale: 'en'
+      },
+      {
+        id: 'parent-fr',
+        type: 'Page',
+        index: 'a0',
+        path: 'parent-fr',
+        root: 'multiLanguage',
+        locale: 'fr'
+      },
+      {
+        id: 'same-entry',
+        type: 'Page',
+        index: 'a0',
+        path: 'child',
+        root: 'multiLanguage',
+        locale: 'en',
+        parentPaths: ['parent-en']
+      },
+      {
+        id: 'same-entry',
+        type: 'Page',
+        index: 'a0',
+        path: 'child',
+        root: 'multiLanguage',
+        locale: 'fr',
+        parentPaths: ['parent-fr']
+      }
+    ],
+    'Mismatched authored entry versions for same-entry'
+  )
+})
+
+test('rejects mismatched paths between status versions', async () => {
+  await expectInvalidEntries(
+    cms.config,
+    [
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'published-path',
+        status: 'published'
+      },
+      {
+        id: 'same-entry',
+        type: 'DemoRecipe',
+        index: 'a0',
+        path: 'draft-path',
+        status: 'draft'
+      }
+    ],
+    'Mismatched authored language versions for same-entry'
+  )
 })
