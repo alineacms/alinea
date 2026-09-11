@@ -139,6 +139,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     try {
       indexing = fillCache(db, context.fix)
     } catch (error: any) {
+      await db.close()
       reportError(error)
       if (cmd === 'build') process.exit(1)
       continue
