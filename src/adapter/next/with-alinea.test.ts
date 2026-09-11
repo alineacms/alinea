@@ -15,4 +15,7 @@ test('inlines CLI routing settings into the Next config', () => {
     EXISTING_VALUE: 'preserved',
     ALINEA_ADMIN_PATH: '/admin'
   })
+  test.equal(config.outputFileTracingIncludes, {
+    '/*': ['./node_modules/@alinea/generated/database.sqlite']
+  })
 })

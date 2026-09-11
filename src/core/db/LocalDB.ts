@@ -1,65 +1,63 @@
+import {Entry} from '#/core/Entry.js'
+import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
+import type {
+  GetBlobsOptions,
+  RemoteSource,
+  Source
+} from '#/core/source/Source.js'
 import {trace} from '#/core/Trace.js'
-import pLimit from 'p-limit'
+import {EntryStore} from '#/database/EntryStore.js'
 import type {Config} from '../Config.js'
-import type {SyncApi, UploadMetadata, UploadResponse} from '../Connection.js'
-import {Entry} from '../Entry.js'
-import type {AnyQueryResult, GraphQuery} from '../Graph.js'
+import type {UploadMetadata, UploadResponse} from '../Connection.js'
 import type {Policy} from '../Role.js'
-import type {ChangesBatch} from '../source/Change.js'
-import {MemorySource} from '../source/MemorySource.js'
-import type {GetBlobsOptions} from '../source/Source.js'
-import {diff, type Source} from '../source/Source.js'
-import {type CommitRequest, sourceChanges} from './CommitRequest.js'
-import {EntryIndex} from './EntryIndex.js'
+import type {CommitRequest} from './CommitRequest.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
 } from './EntryReference.js'
-import {EntryResolver} from './EntryResolver.js'
-import {EntryTransaction} from './EntryTransaction.js'
 import type {Mutation} from './Mutation.js'
+import {IndexEvent} from './IndexEvent.js'
 import {WriteableGraph} from './WriteableGraph.js'
 
-const limit = pLimit(1)
+/** @deprecated Use EntryStore. This facade is backed by the SQLite engine. */
+export class LocalDB extends WriteableGraph implements AsyncDisposable {
+  readonly config: Config
+  readonly source: Source
+  readonly events = new EventTarget()
+  #store: Promise<EntryStore>
 
-export class LocalDB extends WriteableGraph {
-  public index: EntryIndex
-  source: Source
-  #resolver: EntryResolver
-
-  constructor(
-    public config: Config,
-    source: Source = new MemorySource(),
-    index: EntryIndex = new EntryIndex(config)
-  ) {
+  constructor(config: Config, source: Source = new MemorySource()) {
     super()
-    const resolver = new EntryResolver(config, index)
-    this.#resolver = resolver
-    this.index = index
+    this.config = config
     this.source = source
+    this.#store = EntryStore.memory(config, source).then(store => {
+      store.onChange(change => {
+        this.events.dispatchEvent(
+          new IndexEvent({
+            op: 'index',
+            sha: change.revision,
+            ids: [...change.changedEntryIds]
+          })
+        )
+      })
+      return store
+    })
+  }
+
+  get sha(): Promise<string> {
+    return this.#store.then(store => store.sha)
   }
 
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     const span = trace(this.config, 'alinea.local_db.resolve')
-    return span(() => this.#resolver.resolve(query))
+    return span(async () => (await this.#store).resolve(query))
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
-    return this.index.referencesTo(query)
-  }
-
-  get sha() {
-    return this.index.sha
-  }
-
-  indexChanges(batch: ChangesBatch) {
-    return this.index.indexChanges(batch)
-  }
-
-  applyChanges(batch: ChangesBatch) {
-    return this.source.applyChanges(batch)
+    return this.#store.then(store => store.referencesTo(query))
   }
 
   getTreeIfDifferent(sha: string) {
@@ -70,32 +68,17 @@ export class LocalDB extends WriteableGraph {
     return this.source.getBlobs(shas, options)
   }
 
-  async sync() {
+  sync(): Promise<string> {
     const span = trace(this.config, 'alinea.local_db.sync')
-    return span(() => this.index.sync(this.source))
+    return span(async () => (await this.#store).sync())
   }
 
-  syncWith(remote: SyncApi) {
+  syncWith(remote: RemoteSource): Promise<string> {
     const span = trace(this.config, 'alinea.local_db.sync_with')
-    return span(() =>
-      limit(async () => {
-        const batch = await diff(this.source, remote)
-        const canIndexChanges = this.index.sha === batch.fromSha
-        if (batch.changes.length > 0)
-          await Promise.all([
-            this.source.applyChanges(batch),
-            canIndexChanges ? this.index.indexChanges(batch) : undefined
-          ])
-        if (canIndexChanges) {
-          await this.index.seed(this.source)
-          return this.index.sha
-        }
-        return this.sync()
-      })
-    )
+    return span(async () => (await this.#store).syncWith(remote))
   }
 
-  async logEntries() {
+  async logEntries(): Promise<void> {
     const entries = await this.find({
       select: {
         id: Entry.id,
@@ -112,43 +95,41 @@ export class LocalDB extends WriteableGraph {
       status: 'all'
     })
     console.table(
-      entries.map(({id, parentId, ...entry}) => {
-        return {id: id.slice(-7), parentId: parentId?.slice(-7), ...entry}
-      })
+      entries.map(({id, parentId, ...entry}) => ({
+        id: id.slice(-7),
+        parentId: parentId?.slice(-7),
+        ...entry
+      }))
     )
   }
 
-  async request(mutations: ReadonlyArray<Mutation>, policy?: Policy) {
-    await this.sync()
-    const from = await this.source.getTree()
-    const tx = new EntryTransaction(
-      this.config,
-      this.index,
-      this.source,
-      from,
-      policy
-    )
-    await tx.apply(mutations)
-    return tx.toRequest()
+  async request(
+    mutations: ReadonlyArray<Mutation>,
+    policy?: Policy
+  ): Promise<CommitRequest> {
+    return (await this.#store).request(mutations, policy)
   }
 
   async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
-    const request = await this.request(mutations)
-    return this.write(request)
+    return (await this.#store).mutate(mutations)
   }
 
   async write(request: CommitRequest): Promise<{sha: string}> {
-    if (this.sha === request.intoSha) return {sha: this.sha}
-    const contentChanges = sourceChanges(request)
-    await this.indexChanges(contentChanges)
-    await this.applyChanges(contentChanges)
-    return {sha: await this.sync()}
+    return (await this.#store).write(request)
   }
 
-  async prepareUpload(
-    file: string,
+  prepareUpload(
+    _file: string,
     _metadata?: UploadMetadata
   ): Promise<UploadResponse> {
-    throw new Error('Uploads not supported on local DB')
+    return Promise.reject(new Error('Uploads not supported on local DB'))
+  }
+
+  async close(): Promise<void> {
+    await (await this.#store).close()
+  }
+
+  [Symbol.asyncDispose](): Promise<void> {
+    return this.close()
   }
 }

@@ -11,6 +11,7 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import {Entry} from '#/core/Entry.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
@@ -396,7 +397,7 @@ test('forwards authenticated mutations before handling them locally', async () =
     sub: 'admin'
   })
   test.is(beforeCommitCalls, 0)
-  test.not.ok(db.index.findFirst(entry => entry.id === 'forwarded-entry'))
+  test.not.ok(await db.first({id: 'forwarded-entry', status: 'all'}))
 })
 
 test('handles a mutation locally when forwarding declines after reading it', async () => {
@@ -436,7 +437,7 @@ test('handles a mutation locally when forwarding declines after reading it', asy
 
   test.is(response.status, 200)
   test.equal(forwardedMutations, mutations)
-  test.ok(db.index.findFirst(entry => entry.id === 'local-entry'))
+  test.ok(await db.first({id: 'local-entry', status: 'all'}))
 })
 
 test('runs commit hooks around a successful commit', async () => {
@@ -669,7 +670,11 @@ test('commits mutations returned by beforeCommit', async () => {
     ]),
     requestContext()
   )
-  const entry = db.index.findFirst(entry => entry.id === 'adjusted-entry')
+  const entry = await db.first({
+    id: 'adjusted-entry',
+    status: 'all',
+    select: {data: Entry.data}
+  })
 
   test.is(response.status, 200)
   test.is(entry?.data.title, 'Adjusted by hook')
@@ -782,7 +787,7 @@ test('does not report a committed mutation as failed when afterCommit throws', a
     )
 
     test.is(response.status, 200)
-    test.ok(db.index.findFirst(entry => entry.id === 'committed-entry'))
+    test.ok(await db.first({id: 'committed-entry', status: 'all'}))
   } finally {
     console.error = error
   }
@@ -832,7 +837,7 @@ test('does not commit when beforeCommit throws', async () => {
 
     test.is(response.status, 500)
     test.is(writes, 0)
-    test.not.ok(db.index.findFirst(entry => entry.id === 'rejected-entry'))
+    test.not.ok(await db.first({id: 'rejected-entry', status: 'all'}))
   } finally {
     console.error = error
   }

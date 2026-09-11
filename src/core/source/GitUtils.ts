@@ -15,7 +15,7 @@ const decoder = new TextDecoder()
  * Serializes a TreeData object into a Git tree object as a Uint8Array.
  */
 export function serializeTreeEntries(entries: Array<Entry>): Uint8Array {
-  const sortedEntries = entries.slice().sort(compareEntries)
+  const sortedEntries = entries.slice().sort(compareTreeEntries)
   const entryBytesList = sortedEntries.map(entry => {
     const mode = entry.mode.startsWith('0') ? entry.mode.slice(1) : entry.mode
     const prefix = `${mode} ${entry.name}\0`
@@ -29,7 +29,7 @@ export function serializeTreeEntries(entries: Array<Entry>): Uint8Array {
 /**
  * Compares two TreeEntry objects for sorting.
  */
-function compareEntries(a: Entry, b: Entry) {
+export function compareTreeEntries(a: Entry, b: Entry) {
   const aName = a.entries ? `${a.name}/` : a.name
   const bName = b.entries ? `${b.name}/` : b.name
   return compareStrings(aName, bName)

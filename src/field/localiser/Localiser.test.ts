@@ -4,7 +4,7 @@ import {ListRow} from '#/core/ListRow.js'
 import {BlockNode, Node} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {Config, Field} from '#/index.js'
-import {createEntryResolver} from '#test/EntryFixture.js'
+import {createEntryStore} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
 import {localiser} from './Localiser.js'
 
@@ -98,7 +98,7 @@ const cms = createCMS({
 })
 
 async function createResolver() {
-  return createEntryResolver(cms.config, [
+  const {store} = await createEntryStore(cms.config, [
     {
       id: 'article',
       type: 'Article',
@@ -286,6 +286,7 @@ async function createResolver() {
       }
     }
   ])
+  return {resolver: store}
 }
 
 test('localised field query value is the underlying field value', () => {

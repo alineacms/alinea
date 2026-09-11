@@ -64,6 +64,13 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ALINEA_ADMIN_PATH: settings.adminPath
       }
     : config.env
+  const outputFileTracingIncludes = {
+    ...config.outputFileTracingIncludes,
+    '/*': [
+      ...(config.outputFileTracingIncludes?.['/*'] ?? []),
+      './node_modules/@alinea/generated/database.sqlite'
+    ]
+  }
   if (nextVersion < 15)
     return {
       ...config,
@@ -77,7 +84,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
       images,
       redirects,
       rewrites,
-      env
+      env,
+      outputFileTracingIncludes
     }
   return {
     ...config,
@@ -88,7 +96,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     images,
     redirects,
     rewrites,
-    env
+    env,
+    outputFileTracingIncludes
   }
 }
 

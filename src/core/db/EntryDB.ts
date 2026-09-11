@@ -5,8 +5,7 @@ import type {
   UploadResponse
 } from '../Connection.js'
 import type {Source} from '../source/Source.js'
-import {type CommitRequest, sourceChanges} from './CommitRequest.js'
-import {EntryTransaction} from './EntryTransaction.js'
+import type {CommitRequest} from './CommitRequest.js'
 import {LocalDB} from './LocalDB.js'
 import type {Mutation} from './Mutation.js'
 
@@ -25,24 +24,18 @@ export class EntryDB extends LocalDB {
   async mutate(
     mutations: Array<Mutation>
   ): Promise<{sha: string; remote: Promise<string>}> {
-    const from = await this.source.getTree()
-    const tx = new EntryTransaction(this.config, this.index, this.source, from)
-    await tx.apply(mutations)
-    const request = await tx.toRequest()
-    const contentChanges = sourceChanges(request)
-    const sha = this.indexChanges(contentChanges)
+    const {sha} = await super.mutate(mutations)
     return {
-      sha: await sha,
-      remote: sha.then(async () => {
+      sha,
+      remote: (async () => {
         try {
           const remote = await this.connect()
           await remote.mutate(mutations)
-          await this.applyChanges(contentChanges)
         } finally {
           await this.syncWithRemote()
         }
-        return this.sha
-      })
+        return await this.sha
+      })()
     }
   }
 

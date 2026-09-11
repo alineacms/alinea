@@ -10,10 +10,11 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
+import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {EntryStore} from '#/database/EntryStore.js'
 import pLimit from 'p-limit'
 import {
   type Activity,
@@ -34,7 +35,7 @@ interface QueuedMutation {
 }
 
 interface LoadedDashboard {
-  db: LocalDB
+  db: EntryStore
   client: LocalConnection
   cacheFailure?: CacheFailure
 }
@@ -46,11 +47,11 @@ interface CacheFailure {
 const activityHistoryLimit = 100
 
 export class DashboardWorker extends EventTarget {
-  #source: Source
-  #localDB: LocalDB | undefined
+  #source: Source | undefined
+  #localDB: EntryStore | undefined
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<LoadedDashboard>()
-  #defer: Function | undefined
+  #defer: (() => Promise<void>) | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
@@ -58,7 +59,7 @@ export class DashboardWorker extends EventTarget {
   #blocked = false
   #syncInterval: ReturnType<typeof setInterval> | undefined
 
-  constructor(source: Source) {
+  constructor(source?: Source) {
     super()
     this.#source = source
   }
@@ -76,20 +77,23 @@ export class DashboardWorker extends EventTarget {
     const loaded = await load
     const {db, client} = loaded
     return this.#local(async () => {
+      let revision: string
       try {
-        await remote(() => this.#syncWithClient(db, client))
+        revision = await remote(() => this.#syncWithClient(db, client))
       } catch (error) {
         if (loaded.cacheFailure) {
+          const cached = errorMessage(loaded.cacheFailure.error)
+          const remote = errorMessage(error)
           throw new AggregateError(
             [loaded.cacheFailure.error, error],
-            'Failed to load cached content and fetch remote updates'
+            `Failed to load cached content and fetch remote updates\nCached content: ${cached}\nRemote updates: ${remote}`
           )
         }
         throw error
       }
       loaded.cacheFailure = undefined
       this.#startSyncing()
-      return db.sha
+      return revision
     })
   }
 
@@ -122,8 +126,7 @@ export class DashboardWorker extends EventTarget {
       this.#mutations.push(item)
       this.#emitActivity()
       try {
-        await db.mutate(mutations)
-        item.sha = db.sha
+        item.sha = (await db.mutate(mutations)).sha
         this.#emitActivity()
         void this.#flush(item)
         return item.sha
@@ -159,8 +162,7 @@ export class DashboardWorker extends EventTarget {
         item.activity.error = undefined
         if (!item.sha) {
           try {
-            await db.mutate(item.mutations)
-            item.sha = db.sha
+            item.sha = (await db.mutate(item.mutations)).sha
           } catch (error) {
             this.#blocked = true
             this.#failActivity(item.activity, error)
@@ -255,7 +257,7 @@ export class DashboardWorker extends EventTarget {
     this.dispatchEvent(new ActivityEvent(this.activities()))
   }
 
-  async #syncWithClient(db: LocalDB, client: LocalConnection) {
+  async #syncWithClient(db: EntryStore, client: LocalConnection) {
     const activity: Activity = {
       id: createId(),
       type: 'fetch',
@@ -326,19 +328,33 @@ export class DashboardWorker extends EventTarget {
     this.#localDB = undefined
     this.#localClient = undefined
     try {
-      const db = new LocalDB(config, this.#source)
-      if (this.#defer) this.#defer()
+      const db = globalThis.indexedDB
+        ? await BrowserEntryStore.open(config, {
+            indexedDB: globalThis.indexedDB,
+            name: 'alinea-entry-database',
+            revision
+          })
+        : await EntryStore.memory(config, this.#fallbackSource())
+      if (this.#defer)
+        void this.#defer().catch(() => {
+          // The replaced database finishes outstanding work before closing.
+        })
       const cacheFailure = await this.#syncLocalIndex(db)
       this.#localDB = db
       this.#localClient = client
       nextLoad.resolve({db, client, cacheFailure})
-      const listen = (event: Event) => {
-        if (event instanceof IndexEvent)
-          this.dispatchEvent(new IndexEvent(event.data))
-      }
-      db.index.addEventListener(IndexEvent.type, listen)
-      this.#defer = () => {
-        db.index.removeEventListener(IndexEvent.type, listen)
+      const unsubscribe = db.onChange(change => {
+        this.dispatchEvent(
+          new IndexEvent({
+            op: 'index',
+            sha: change.revision,
+            ids: [...change.changedEntryIds]
+          })
+        )
+      })
+      this.#defer = async () => {
+        unsubscribe()
+        await db.close()
       }
     } catch (cause) {
       this.#currentRevision = undefined
@@ -348,7 +364,13 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async #syncLocalIndex(db: LocalDB): Promise<CacheFailure | undefined> {
+  #fallbackSource(): Source {
+    if (!this.#source)
+      throw new Error('A source is required when IndexedDB is unavailable')
+    return this.#source
+  }
+
+  async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {
     const sourceTree = await db.source.getTree()
     if (sourceTree.isEmpty) return
     try {
@@ -388,7 +410,7 @@ interface MutationActivitySummary {
 }
 
 async function summarizeMutations(
-  db: LocalDB,
+  db: EntryStore,
   mutations: Array<Mutation>
 ): Promise<MutationActivitySummary> {
   const targets = mutations.flatMap(mutation =>

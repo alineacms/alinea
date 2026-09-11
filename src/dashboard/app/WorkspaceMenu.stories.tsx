@@ -16,7 +16,12 @@ const page = {
 export function GlobalSearchStory() {
   const workspace = getWorkspace(cms.config.workspaces.simple)
   return (
-    <StoryProvider client={db} config={cms.config} events={db.index} graph={db}>
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.events}
+      graph={db}
+    >
       <WorkspaceMenu
         canManageMembers={false}
         page={page}
@@ -50,7 +55,12 @@ export function LocalizedGlobalSearchStory() {
     view: undefined
   }
   return (
-    <StoryProvider client={db} config={cms.config} events={db.index} graph={db}>
+    <StoryProvider
+      client={db}
+      config={cms.config}
+      events={db.events}
+      graph={db}
+    >
       <WorkspaceMenu
         canManageMembers={false}
         page={page}

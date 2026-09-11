@@ -3,7 +3,9 @@ import type {
   LocalConnection,
   Revision
 } from '#/core/Connection.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {RemoteSource} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {localUser} from '#/core/User.js'
 
@@ -21,8 +23,12 @@ interface ConnectionOverrides extends Partial<
   >
 > {}
 
+interface TestDatabase extends WriteableGraph, RemoteSource, ConnectionOverrides {
+  write(request: CommitRequest): Promise<{sha: string}>
+}
+
 export function createTestConnection(
-  db: LocalDB & ConnectionOverrides,
+  db: TestDatabase,
   options: TestConnectionOptions = {}
 ): LocalConnection {
   const currentUser: User = options.user ?? localUser

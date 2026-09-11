@@ -130,7 +130,7 @@ export function resolve(...args: Array<string>) {
   let resolvedAbsolute = false
 
   for (let i = args.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    const path = i >= 0 ? args[i] : process.cwd()
+    const path = i >= 0 ? args[i] : currentWorkingDirectory()
 
     // Skip empty and invalid entries
     if (typeof path !== 'string') {
@@ -154,6 +154,15 @@ export function resolve(...args: Array<string>) {
   ).join('/')
 
   return (resolvedAbsolute ? '/' : '') + resolvedPath || '.'
+}
+
+interface RuntimeGlobal {
+  process?: {cwd?(): string}
+}
+
+function currentWorkingDirectory(): string {
+  const runtime = globalThis as typeof globalThis & RuntimeGlobal
+  return runtime.process?.cwd?.() ?? '/'
 }
 
 export function relative(from: string, to: string) {
