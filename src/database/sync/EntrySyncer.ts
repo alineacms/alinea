@@ -13,6 +13,7 @@ import {
   exists,
   gt,
   inArray,
+  isNull,
   max,
   min,
   not,
@@ -228,10 +229,10 @@ const markAllAffectedQuery = builder
   .select(
     builder.selectDistinct({id: EntryIndexTable.id}).from(EntryIndexTable)
   )
-const updateValueForVersion = sql<string>`(
-  select ${SyncValues.value} from ${SyncValues}
-  where ${SyncValues.key} = ${EntryIndexTable.versionId}
-)`
+const updateValueForVersion = builder
+  .select(SyncValues.value)
+  .from(SyncValues)
+  .where(eq(SyncValues.key, EntryIndexTable.versionId))
 const hasUpdateValueForVersion = exists(
   builder
     .select({value: sql.value(1)})
@@ -255,27 +256,67 @@ const hasUpdatedMainUrl = exists(
       )
     )
 )
-const updatedMainUrl = sql<string>`(
-  select ${SyncValues.value}
-  from ${SyncValues}
-  join ${MainEntry} on ${MainEntry.versionId} = ${SyncValues.key}
-  where ${MainEntry.id} = ${EntryIndexTable.id}
-    and ${MainEntry.locale} is ${EntryIndexTable.locale}
-)`
+const updatedMainUrl = builder
+  .select(SyncValues.value)
+  .from(SyncValues)
+  .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
+  .where(
+    and(
+      eq(MainEntry.id, EntryIndexTable.id),
+      sql<boolean>`${MainEntry.locale} is ${EntryIndexTable.locale}`
+    )
+  )
 const updateUrlsQuery = builder
   .update(EntryIndexTable)
   .set({url: updatedMainUrl})
   .where(hasUpdatedMainUrl)
 const InitialMainEntry = alias(EntryIndexTable, 'initial_main_entry')
-const initialMainUrl = sql<string>`(
-  select ${InitialMainEntry.url} from ${InitialMainEntry}
-  where ${InitialMainEntry.id} = ${EntryIndexTable.id}
-    and ${InitialMainEntry.locale} is ${EntryIndexTable.locale}
-    and ${InitialMainEntry.main}
-)`
+const initialMainUrl = builder
+  .select(InitialMainEntry.url)
+  .from(InitialMainEntry)
+  .where(
+    and(
+      eq(InitialMainEntry.id, EntryIndexTable.id),
+      sql<boolean>`${InitialMainEntry.locale} is ${EntryIndexTable.locale}`,
+      eq(InitialMainEntry.main, true)
+    )
+  )
 const copyInitialUrlsQuery = builder
   .update(EntryIndexTable)
   .set({url: initialMainUrl})
+const updateHierarchyQuery = builder
+  .update(EntryIndexTable)
+  .set({
+    parentId: sql<
+      string | null
+    >`json_extract(${SyncValues.value}, '$.parentId')`,
+    parents: sql<Array<string>>`json_extract(${SyncValues.value}, '$.parents')`
+  })
+  .from(SyncValues)
+  .where(eq(SyncValues.key, EntryIndexTable.id))
+const updateStatusQuery = builder
+  .update(EntryIndexTable)
+  .set({
+    status: sql<
+      IndexedEntry['status']
+    >`coalesce(${SyncStatus.effectiveStatus}, ${EntryIndexTable.versionStatus})`,
+    active: eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus),
+    main: eq(
+      EntryIndexTable.versionStatus,
+      when(
+        [isNull(SyncStatus.effectiveStatus), SyncStatus.mainStatus],
+        SyncStatus.activeStatus
+      )
+    ),
+    visible: when(
+      [isNull(SyncStatus.effectiveStatus), true],
+      eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus)
+    )
+  })
+  .from(SyncStatus)
+  .where(
+    sql<boolean>`${SyncStatus.key} = json_array(${EntryIndexTable.id}, ${EntryIndexTable.locale})`
+  )
 
 function prepareSyncQueries(db: Database) {
   const statements = {
@@ -303,7 +344,9 @@ function prepareSyncQueries(db: Database) {
     markAllAffected: markAllAffectedQuery.prepare(undefined, db),
     updateChildrenSha: updateChildrenShaQuery.prepare(undefined, db),
     updateUrls: updateUrlsQuery.prepare(undefined, db),
-    copyInitialUrls: copyInitialUrlsQuery.prepare(undefined, db)
+    copyInitialUrls: copyInitialUrlsQuery.prepare(undefined, db),
+    updateHierarchy: updateHierarchyQuery.prepare(undefined, db),
+    updateStatus: updateStatusQuery.prepare(undefined, db)
   }
   return {
     ...statements,
@@ -616,13 +659,7 @@ async function deriveHierarchy(
     })
     await queries.clearValues.run()
     await db.insert(SyncValues).values(hierarchy)
-    await db.run(sql`
-      update alinea_entry_index as entry set
-        parentId = json_extract(update_value.value, '$.parentId'),
-        parents = json_extract(update_value.value, '$.parents')
-      from alinea_sync_values update_value
-      where update_value.key = entry.id;
-    `)
+    await queries.updateHierarchy.run()
   }
 }
 
@@ -678,21 +715,7 @@ async function deriveStatus(db: Database, queries: SyncQueries): Promise<void> {
       )
     }
   }
-  await db.run(sql`
-    update alinea_entry_index as entry set
-      status = coalesce(sync_status.effectiveStatus, entry.versionStatus),
-      active = entry.versionStatus = sync_status.activeStatus,
-      main = entry.versionStatus = case
-        when sync_status.effectiveStatus is not null then sync_status.activeStatus
-        else sync_status.mainStatus
-      end,
-      visible = case
-        when sync_status.effectiveStatus is null then true
-        else entry.versionStatus = sync_status.activeStatus
-      end
-    from alinea_sync_status sync_status
-    where sync_status.key = json_array(entry.id, entry.locale);
-  `)
+  await queries.updateStatus.run()
 }
 
 function statusKey(id: string, locale: string | null): string {
