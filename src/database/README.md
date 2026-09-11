@@ -32,16 +32,17 @@ Supplying `syncDatabase` gives the syncer a second connection to the same
 WAL-backed database, allowing commits while existing queries retain their old
 snapshot. `EntryDatabase.close()` owns and closes both connections.
 
-## Named overlays
+## Overlays
 
-`database.overlay(name, source)` creates a queryable copy-on-write database and
-synchronizes the source into it. An overlay stores only replaced rows and
-version tombstones in connection-local temporary tables. Its effective view is
-the unchanged parent rows followed by its replacements, so no database or
-payload corpus is copied.
+`database.overlay(source)` creates a queryable copy-on-write database and
+synchronizes the source into it. A connection-unique internal name targets and
+cleans up its SQLite objects. An overlay stores only replaced rows and version
+tombstones in connection-local temporary tables. Its effective view is the
+unchanged parent rows followed by its replacements, so no database or payload
+corpus is copied.
 
-Overlays compose: a handler can keep a `github` overlay over its embedded
-readonly database and create one named overlay per preview request over that.
+Overlays compose: a handler can keep an overlay synchronized with GitHub over
+its embedded readonly database and create another overlay per preview request.
 Every layer has namespaced tables, triggers, state, view and lazy FTS5 index.
 All layers on a connection share one operation queue and one prepared syncer.
 Close children before their parent; closing a child frees its statements and

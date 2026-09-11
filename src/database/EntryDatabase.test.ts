@@ -122,7 +122,7 @@ test('subscriptions publish the initial value and committed changes', async () =
   expect(errors).toEqual([])
 })
 
-test('named databases sync and query nested overlays without copying the base', async () => {
+test('generated database overlays sync and query without copying the base', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
     schema: {Page},
@@ -161,14 +161,12 @@ test('named databases sync and query nested overlays without copying the base', 
     ])
   )
   const github = await base.overlay(
-    'github',
     await source([
       ['a', 'a', 'GitHub A'],
       ['c', 'c', 'GitHub C']
     ])
   )
   const preview = await github.overlay(
-    'preview_1',
     await source([
       ['a', 'a', 'Preview A'],
       ['b', 'b', 'Preview B'],
@@ -196,7 +194,6 @@ test('named databases sync and query nested overlays without copying the base', 
   await preview.close()
   await github.close()
   const replacement = await base.overlay(
-    'github',
     await source([['a', 'a', 'Replacement A']])
   )
   expect(await replacement.resolve({select: Entry.title})).toEqual([

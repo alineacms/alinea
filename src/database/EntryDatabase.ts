@@ -34,7 +34,7 @@ import {
 } from './sync/EntrySyncer.js'
 
 interface EntryDatabaseContext {
-  names: Set<string>
+  nextOverlayId: number
   queue: Promise<unknown>
   syncer: EntrySyncer
 }
@@ -99,7 +99,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#db = db
     this.#syncDatabase = internal ? db : (options.syncDatabase ?? db)
     this.#context = internal?.context ?? {
-      names: new Set(),
+      nextOverlayId: 1,
       queue: Promise.resolve(),
       syncer: new EntrySyncer(config, db)
     }
@@ -121,10 +121,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   get config(): Config {
     return this.#config
-  }
-
-  get name(): string {
-    return this.#target.name
   }
 
   /** Synchronize a source through this database's single prepared syncer. */
@@ -155,7 +151,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       if (this.#view) {
         await this.#context.syncer.release(this.#target)
         await this.#view.close()
-        this.#context.names.delete(this.#view.name)
         this.#detach?.()
         return
       }
@@ -219,12 +214,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     return task
   }
 
-  /** Create and synchronize a named copy-on-write layer over this database. */
-  async overlay(name: string, source: Source): Promise<EntryDatabase> {
+  /** Create and synchronize a copy-on-write layer over this database. */
+  async overlay(source: Source): Promise<EntryDatabase> {
     if (this.#closed) throw new Error('EntryDatabase is closed')
-    if (this.#context.names.has(name))
-      throw new Error(`Entry view ${JSON.stringify(name)} already exists`)
-    this.#context.names.add(name)
+    const name = `overlay_${this.#context.nextOverlayId++}`
     let child: EntryDatabase | undefined
     try {
       const revision = await this.getRevision()
@@ -242,7 +235,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       return child
     } catch (error) {
       if (child) await child.close()
-      else this.#context.names.delete(name)
       throw error
     }
   }
