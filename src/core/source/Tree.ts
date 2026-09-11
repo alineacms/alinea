@@ -43,6 +43,7 @@ export class Leaf {
       throw new Error(`Invalid mode for leaf: ${mode}`)
     this.sha = sha
     this.mode = mode
+    Object.freeze(this)
   }
 
   clone(): Leaf {
@@ -159,6 +160,7 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
       else for (const sha of node.#shas) this.#shas.add(sha)
       this.nodes.set(entry.name, node)
     }
+    Object.freeze(this)
   }
 
   get isEmpty() {
@@ -240,10 +242,65 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   }
 
   // Todo: check modes
-  diff(that: TreeBase<any>): ChangesBatch {
+  diff(that: ReadonlyTree | WriteableTree): ChangesBatch {
+    if (!(that instanceof ReadonlyTree)) return this.#flatDiff(that)
+    const changes = Array.from(this.#changes(that, '')).sort((a, b) => {
+      if (a.op !== b.op) return a.op === 'delete' ? -1 : 1
+      const order = compareStrings(a.path, b.path)
+      return a.op === 'delete' ? -order : order
+    })
+    return {
+      fromSha: this.sha,
+      changes
+    }
+  }
+
+  *#changes(that: ReadonlyTree, prefix: string): Generator<Change> {
+    if (this.sha === that.sha) return
+    const names = Array.from(
+      new Set([...this.nodes.keys(), ...that.nodes.keys()])
+    ).sort(compareStrings)
+    for (const name of names) {
+      const path = prefix ? `${prefix}/${name}` : name
+      const local = this.nodes.get(name)
+      const remote = that.nodes.get(name)
+      if (!local) {
+        yield* this.#files(remote!, path, 'add')
+      } else if (!remote) {
+        yield* this.#files(local, path, 'delete')
+      } else if (local.sha === remote.sha) {
+        continue
+      } else if (
+        local instanceof ReadonlyTree &&
+        remote instanceof ReadonlyTree
+      ) {
+        yield* local.#changes(remote, path)
+      } else if (local instanceof Leaf && remote instanceof Leaf) {
+        yield {op: 'add', path, sha: remote.sha}
+      } else {
+        yield* this.#files(local, path, 'delete')
+        yield* this.#files(remote, path, 'add')
+      }
+    }
+  }
+
+  *#files(
+    node: ReadonlyTree | Leaf,
+    path: string,
+    op: Change['op']
+  ): Generator<Change> {
+    if (node instanceof Leaf) {
+      yield {op, path, sha: node.sha}
+      return
+    }
+    for (const name of Array.from(node.nodes.keys()).sort(compareStrings))
+      yield* this.#files(node.nodes.get(name)!, `${path}/${name}`, op)
+  }
+
+  #flatDiff(that: ReadonlyTree | WriteableTree): ChangesBatch {
     const local = this.index()
     const remote = that.index()
-    const changes: Array<Change> = []
+    const changes = Array<Change>()
     const paths = new Set(
       [...local.keys(), ...remote.keys()].sort(compareStrings)
     )
@@ -251,16 +308,11 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
       const localValue = local.get(path)
       const remoteValue = remote.get(path)
       if (localValue === remoteValue) continue
-      if (remoteValue === undefined) {
+      if (remoteValue === undefined)
         changes.unshift({op: 'delete', path, sha: localValue!})
-      } else {
-        changes.push({op: 'add', path, sha: remoteValue!})
-      }
+      else changes.push({op: 'add', path, sha: remoteValue})
     }
-    return {
-      fromSha: this.sha,
-      changes
-    }
+    return {fromSha: this.sha, changes}
   }
 }
 

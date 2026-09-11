@@ -1,6 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import type {Source} from '#/core/source/Source.js'
-import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
+import {Leaf, ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryUrl} from '#/core/util/EntryFilenames.js'
 import {
@@ -49,6 +49,11 @@ export const EntrySyncRoot: EntrySyncTarget = {
   name: 'root',
   entries: EntryIndexTable,
   state: DatabaseStateTable
+}
+
+interface EntrySyncOptions {
+  previousTree?: ReadonlyTree
+  withinTransaction?: boolean
 }
 
 const SyncAffected = temporaryTable('alinea_sync_affected', {
@@ -121,6 +126,11 @@ interface DirectoryRow {
   childrenDir: string
 }
 
+interface DirectoryHashRow extends DirectoryRow {
+  versionId: string
+  childrenSha: string | null
+}
+
 interface StatusRow {
   id: string
   locale: string | null
@@ -145,6 +155,7 @@ const afterVersionId = sql.placeholder<string>('afterVersionId')
 const level = sql.placeholder<number>('level')
 const offset = sql.placeholder<number>('offset')
 const revision = sql.placeholder<string>('revision')
+const treeSnapshot = sql.placeholder<string | null>('tree')
 function createSyncQueryPlan(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   const DerivedEntries = target.changes ?? target.entries
@@ -154,7 +165,7 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
   const isArchived = max(eq(DerivedEntries.versionStatus, 'archived'))
 
   const revisionQuery = builder
-    .select({revision: DatabaseState.revision})
+    .select({revision: DatabaseState.revision, tree: DatabaseState.tree})
     .from(DatabaseState)
     .where(eq(DatabaseState.id, 1))
     .$first()
@@ -165,7 +176,7 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .$first()
   const setRevisionQuery = builder
     .update(DatabaseState)
-    .set({revision})
+    .set({revision, tree: sql<Tree>`${treeSnapshot}`})
     .where(eq(DatabaseState.id, 1))
   const storedFilesQuery = builder
     .select({
@@ -382,7 +393,10 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
   const statements = {
     revision: query.revision.prepare(undefined, db),
     entryCount: query.entryCount.prepare(undefined, db),
-    setRevision: query.setRevision.prepare<{revision: string}>(undefined, db),
+    setRevision: query.setRevision.prepare<{
+      revision: string
+      tree: string | null
+    }>(undefined, db),
     storedFiles: query.storedFiles.prepare<{afterFilePath: string}>(
       undefined,
       db
@@ -724,6 +738,94 @@ async function mergeSource(
   await flush()
 }
 
+function parentDirectories(filePath: string): Array<string> {
+  const result = Array<string>()
+  let slash = filePath.lastIndexOf('/')
+  while (slash !== -1) {
+    result.push(filePath.slice(0, slash))
+    slash = filePath.lastIndexOf('/', slash - 1)
+  }
+  return result
+}
+
+async function updateDirectoryHashes(
+  db: Database,
+  EntryIndexTable: EntryIndexTarget,
+  tree: ReadonlyTree,
+  queries: SyncQueries,
+  filePaths: ReadonlyArray<string>
+): Promise<void> {
+  const directories = new Set(filePaths.flatMap(parentDirectories))
+  for (const paths of chunks(Array.from(directories), sqliteBatchSize)) {
+    const rows = (await db
+      .select({
+        id: EntryIndexTable.id,
+        versionId: EntryIndexTable.versionId,
+        childrenDir: EntryIndexTable.childrenDir,
+        childrenSha: EntryIndexTable.childrenSha
+      })
+      .from(EntryIndexTable)
+      .where(
+        inArray(EntryIndexTable.childrenDir, paths)
+      )) as Array<DirectoryHashRow>
+    const changed = rows.filter(row => {
+      const childrenSha = sourceDirectorySha(tree, row.childrenDir)
+      return childrenSha !== row.childrenSha
+    })
+    if (!changed.length) continue
+    await addAffected(
+      db,
+      changed.map(row => row.id)
+    )
+    await queries.clearValues.run()
+    await db.insert(SyncValues).values(
+      changed.map(row => ({
+        key: row.versionId,
+        value: sourceDirectorySha(tree, row.childrenDir)
+      }))
+    )
+    await queries.updateChildrenSha.run()
+  }
+}
+
+async function mergeTrees(
+  db: Database,
+  EntryIndexTable: EntryIndexTarget,
+  config: Config,
+  source: Source,
+  previousTree: ReadonlyTree,
+  tree: ReadonlyTree,
+  queries: SyncQueries
+): Promise<void> {
+  const changes = previousTree.diff(tree).changes
+  for (const batch of chunks(changes, changeBatchSize)) {
+    await deleteFiles(
+      db,
+      EntryIndexTable,
+      batch.filter(change => change.op === 'delete').map(change => change.path)
+    )
+    await replaceFiles(
+      db,
+      EntryIndexTable,
+      config,
+      source,
+      tree,
+      batch.flatMap(change =>
+        change.op === 'add'
+          ? [{filePath: change.path, fileHash: change.sha}]
+          : []
+      )
+    )
+  }
+  await updateDirectoryHashes(
+    db,
+    EntryIndexTable,
+    tree,
+    queries,
+    changes.map(change => change.path)
+  )
+}
+
 function sourceDirectorySha(tree: ReadonlyTree, path: string): string {
   const node = tree.get(path)
   if (!node) return ReadonlyTree.EMPTY.sha
@@ -972,11 +1074,18 @@ export class EntrySyncer implements AsyncDisposable {
     source: Source,
     tree: ReadonlyTree,
     fromRevision: string,
-    withinTransaction = false
+    options: EntrySyncOptions = {}
   ): Promise<Array<string>> {
     if (this.#closed) return Promise.reject(new Error('EntrySyncer is closed'))
     const task = this.#queue.then(() =>
-      this.#sync(target, source, tree, fromRevision, withinTransaction)
+      this.#sync(
+        target,
+        source,
+        tree,
+        fromRevision,
+        options.previousTree,
+        options.withinTransaction ?? false
+      )
     )
     this.#queue = task.catch(() => {})
     return task
@@ -987,6 +1096,7 @@ export class EntrySyncer implements AsyncDisposable {
     source: Source,
     tree: ReadonlyTree,
     fromRevision: string,
+    previousTree: ReadonlyTree | undefined,
     withinTransaction: boolean
   ): Promise<Array<string>> {
     const queries = await this.#queriesFor(target)
@@ -996,6 +1106,8 @@ export class EntrySyncer implements AsyncDisposable {
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
         throw new Error('Database revision mismatch')
+      if (previousTree && previousTree.sha !== fromRevision)
+        throw new Error('Cached tree revision mismatch')
       const initial = (await queries.entryCount.get())?.value === 0
       if (initial)
         await insertInitialSource(
@@ -1003,6 +1115,16 @@ export class EntrySyncer implements AsyncDisposable {
           target.entries,
           this.#config,
           source,
+          tree,
+          queries
+        )
+      else if (previousTree || state.tree)
+        await mergeTrees(
+          tx,
+          target.entries,
+          this.#config,
+          source,
+          previousTree ?? new ReadonlyTree(state.tree!),
           tree,
           queries
         )
@@ -1030,7 +1152,10 @@ export class EntrySyncer implements AsyncDisposable {
       if (initial) await copyInitialUrls(queries)
       else await deriveUrls(tx, target.entries, this.#config, queries)
       const changed = await queries.changedIds.all()
-      await queries.setRevision.run({revision: tree.sha})
+      await queries.setRevision.run({
+        revision: tree.sha,
+        tree: target.changes ? null : JSON.stringify(tree)
+      })
       return changed.map(row => row.id)
     }
     return withinTransaction

@@ -13,7 +13,7 @@ import {Policy} from '#/core/Role.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {SourceTransaction} from '#/core/source/Source.js'
-import type {ReadonlyTree} from '#/core/source/Tree.js'
+import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database, eq} from 'rado'
@@ -50,8 +50,14 @@ interface EntryDatabaseInternal {
   context: EntryDatabaseContext
   parent?: EntryDatabase
   target: EntrySyncTarget
+  tree?: ReadonlyTree
   view?: EntryView
   withinTransaction?: boolean
+}
+
+interface EntryDatabaseState {
+  revision: string
+  tree: Tree | null
 }
 
 export interface EntryDatabaseOptions {
@@ -92,6 +98,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #config: Config
   #entryTarget: EntryIndexTarget
   #target: EntrySyncTarget
+  #tree?: ReadonlyTree
   #view?: EntryView
   #detach?: () => void
   #children = new Set<EntryDatabase>()
@@ -122,6 +129,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       syncer: new EntrySyncer(config, db)
     }
     this.#target = internal?.target ?? EntrySyncRoot
+    this.#tree = internal?.tree
     this.#entryTarget = this.#target.entries
     this.#view = internal?.view
     const parent = internal?.parent
@@ -178,7 +186,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     options: EntryApplyOptions
   ): Promise<EntryApplyResult> {
     const from = await options.source.getTree()
-    const result = await this.#syncDatabase.transaction(
+    const applied = await this.#syncDatabase.transaction(
       async tx => {
         const revision = await this.#getRevision(tx)
         if (revision !== from.sha)
@@ -195,6 +203,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
               syncer: this.#syncer
             },
             target: this.#target,
+            tree: from,
             withinTransaction: true
           }
         )
@@ -209,9 +218,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           await transaction.apply(mutations)
           const request = await transaction.toRequest()
           return {
-            revision: request.intoSha,
-            changedEntryIds: transaction.changedEntryIds,
-            request
+            result: {
+              revision: request.intoSha,
+              changedEntryIds: transaction.changedEntryIds,
+              request
+            },
+            tree: await workingSource.getTree()
           }
         } finally {
           await transaction.close()
@@ -219,9 +231,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       },
       {async: true}
     )
+    this.#tree = applied.tree
     this.#searchDirty = true
     for (const invalidate of this.#listeners) invalidate()
-    return result
+    return applied.result
   }
 
   async close(): Promise<void> {
@@ -265,6 +278,17 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     return revision
   }
 
+  async #getState(db: Database): Promise<EntryDatabaseState> {
+    const state = this.#target.state
+    const result = await db
+      .select({revision: state.revision, tree: state.tree})
+      .from(state)
+      .where(eq(state.id, 1))
+      .get()
+    if (result == null) throw new Error('Missing database state')
+    return result
+  }
+
   /** Apply one source tree without keeping an in-memory copy of its entries. */
   async #syncSource(
     source: Source,
@@ -278,8 +302,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         source,
         tree,
         fromRevision,
-        this.#withinTransaction
+        {
+          previousTree: this.#tree,
+          withinTransaction: this.#withinTransaction
+        }
       )
+      this.#tree = tree
       this.#searchDirty = true
     }
     if (this.#syncDatabase === this.#db) await this.#withReadConnection(sync)
@@ -291,7 +319,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   static async createSchema(db: Database, revision: string): Promise<void> {
     await db.create(EntryIndexTable, DatabaseStateTable)
     await createSearch(db)
-    await db.insert(DatabaseStateTable).values({id: 1, revision})
+    await db.insert(DatabaseStateTable).values({
+      id: 1,
+      revision,
+      tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
+    })
   }
 
   #withReadConnection<T>(run: () => Promise<T>): Promise<T> {
@@ -306,9 +338,14 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     const name = `overlay_${this.#context.nextOverlayId++}`
     let child: EntryDatabase | undefined
     try {
-      const revision = await this.getRevision()
+      const state = await this.#withReadConnection(() =>
+        this.#getState(this.#db)
+      )
+      const tree =
+        this.#tree ?? (state.tree ? new ReadonlyTree(state.tree) : undefined)
+      this.#tree = tree
       const view = await this.#withReadConnection(() =>
-        EntryView.create(this.#db, name, this.#entryTarget, revision)
+        EntryView.create(this.#db, name, this.#entryTarget, state.revision)
       )
       child = new EntryDatabase(this.#config, this.#db, this.#options, {
         context: this.#context,
@@ -319,6 +356,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           changes: view.changes,
           state: view.state
         },
+        tree,
         view
       })
       this.#children.add(child)

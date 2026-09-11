@@ -841,7 +841,7 @@ test('seed creates multiple entries against a cached filesystem source', async (
   }
 })
 
-test('fix rewrites changed blobs and transaction can be created', async () => {
+test('readonly trees reject forged revisions', async () => {
   const {index, source} = await createEntryIndex(cms.config, fixtureEntries)
   const [entry] = Array.from(
     index.filter({entry: entry => entry.id === 'cookie-1'})
@@ -871,20 +871,12 @@ test('fix rewrites changed blobs and transaction can be created', async () => {
   })
 
   const changedTree = await source.getTree()
-  ;(changedTree as any).sha = index.sha
-  await index.fix(source)
-  const tx = await index.transaction(source)
-  test.ok(tx)
-
-  const expectedRecord = createRecord(entry, entry.status)
-  const expectedContents = new TextEncoder().encode(
-    JSON.stringify(expectedRecord, null, 2)
+  test.throws(() =>
+    Object.defineProperty(changedTree, 'sha', {
+      value: index.sha
+    })
   )
-  const expectedSha = await hashBlob(expectedContents)
-  const after = await source.getTree()
-  test.is(after.getLeaf(entry.filePath).sha, expectedSha)
-
-  await index.fix(source)
+  await test.throws(() => index.fix(source), 'SHA mismatch')
 })
 
 const ReferenceBlock = Config.type('Reference block', {

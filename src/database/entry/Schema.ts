@@ -1,4 +1,5 @@
 import type {Entry, EntryStatus} from '#/core/Entry.js'
+import type {Tree} from '#/core/source/Tree.js'
 import {index, table, temporaryTable, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 
@@ -74,7 +75,9 @@ export const EntryIndexTable = entryIndexTable('alinea_entry_index')
 
 export const DatabaseStateColumns = {
   id: column.integer().primaryKey(),
-  revision: column.text().notNull()
+  revision: column.text().notNull(),
+  /** Merkle tree matching the indexed source revision. */
+  tree: column.json<Tree>()
 }
 
 export const DatabaseStateTable = table(

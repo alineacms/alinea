@@ -108,7 +108,7 @@ export class EntryView implements AsyncDisposable {
     )
     try {
       await db.create(entryChanges, keys, state)
-      await db.insert(state).values({id: 1, revision})
+      await db.insert(state).values({id: 1, revision, tree: null})
       await db.run(sql`create temp view ${identifier(viewName)} as
         select parent.* from ${parent} parent
         where not exists (
