@@ -76,8 +76,6 @@ test('keeps successful content actions in activity history', async () => {
     createTestConnection(remoteDB)
   )
   const db = await worker.db
-  // Index notifications are orthogonal to the activity behavior under test.
-  db.index.dispatchEvent = () => true
   const original = await db.get({
     type: cms.schema.DemoRecipe,
     path: 'chocolate-chip'
@@ -304,8 +302,6 @@ async function createFailedMutationFixture() {
   await worker.load('test', cms.config, client)
   await initialSyncStarted
   const db = await worker.db
-  // Index notifications are orthogonal to the queue behavior under test.
-  db.index.dispatchEvent = () => true
   const original = await db.get({
     type: cms.schema.DemoRecipe,
     path: 'chocolate-chip'

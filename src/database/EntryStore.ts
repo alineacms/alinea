@@ -65,7 +65,6 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
       const store = new EntryStore(config, database, source, {
         ownsDatabase: true
       })
-      await store.sync()
       return store
     } catch (error) {
       await db.close()

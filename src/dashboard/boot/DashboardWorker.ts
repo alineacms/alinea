@@ -10,10 +10,11 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
+import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {EntryStore} from '#/database/EntryStore.js'
 import pLimit from 'p-limit'
 import {
   type Activity,
@@ -37,10 +38,10 @@ const activityHistoryLimit = 100
 
 export class DashboardWorker extends EventTarget {
   #source: Source
-  #localDB: LocalDB | undefined
+  #localDB: EntryStore | undefined
   #localClient: LocalConnection | undefined
-  #nextLoad = trigger<{db: LocalDB; client: LocalConnection}>()
-  #defer: Function | undefined
+  #nextLoad = trigger<{db: EntryStore; client: LocalConnection}>()
+  #defer: (() => Promise<void>) | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
@@ -71,10 +72,9 @@ export class DashboardWorker extends EventTarget {
       remote.pendingCount > 0
     )
       return db.sha
-    // The source is IndexedDB: if it has data, we can boot from cache.
+    // The source and SQLite file are independently persisted in IndexedDB.
     const sourceTree = await db.source.getTree()
-    // The index is in-memory and starts empty for every fresh worker.
-    if (db.index.tree.isEmpty && !sourceTree.isEmpty) await db.sync()
+    if ((await db.sha) !== sourceTree.sha) await db.sync()
     // Always schedule a remote freshness check, but do not block boot if local
     // data was enough to build the index.
     const sync = remote(() => this.#syncWithClient(db, client))
@@ -111,8 +111,7 @@ export class DashboardWorker extends EventTarget {
       this.#mutations.push(item)
       this.#emitActivity()
       try {
-        await db.mutate(mutations)
-        item.sha = db.sha
+        item.sha = (await db.mutate(mutations)).sha
         this.#emitActivity()
         void this.#flush(item)
         return item.sha
@@ -152,8 +151,7 @@ export class DashboardWorker extends EventTarget {
         item.activity.error = undefined
         if (!item.sha) {
           try {
-            await db.mutate(item.mutations)
-            item.sha = db.sha
+            item.sha = (await db.mutate(item.mutations)).sha
           } catch (error) {
             this.#blocked = true
             this.#failActivity(item.activity, error)
@@ -246,7 +244,7 @@ export class DashboardWorker extends EventTarget {
     this.dispatchEvent(new ActivityEvent(this.activities()))
   }
 
-  async #syncWithClient(db: LocalDB, client: LocalConnection) {
+  async #syncWithClient(db: EntryStore, client: LocalConnection) {
     const activity: Activity = {
       id: createId(),
       type: 'fetch',
@@ -317,20 +315,31 @@ export class DashboardWorker extends EventTarget {
     this.#currentRevision = revision
     const nextLoad = this.#nextLoad
     try {
-      const db = new LocalDB(config, this.#source)
-      if (this.#defer) this.#defer()
+      const db = globalThis.indexedDB
+        ? await BrowserEntryStore.open(config, this.#source, {
+            indexedDB: globalThis.indexedDB,
+            name: 'alinea-entry-database',
+            revision
+          })
+        : await EntryStore.memory(config, this.#source)
+      if (this.#defer) await this.#defer()
       const cacheReady = await this.#syncLocalIndex(db)
       if (!cacheReady) await remote(() => this.#syncWithClient(db, client))
       this.#localDB = db
       this.#localClient = client
       nextLoad.resolve({db, client})
-      const listen = (event: Event) => {
-        if (event instanceof IndexEvent)
-          this.dispatchEvent(new IndexEvent(event.data))
-      }
-      db.index.addEventListener(IndexEvent.type, listen)
-      this.#defer = () => {
-        db.index.removeEventListener(IndexEvent.type, listen)
+      const unsubscribe = db.onChange(change => {
+        this.dispatchEvent(
+          new IndexEvent({
+            op: 'index',
+            sha: change.revision,
+            ids: [...change.changedEntryIds]
+          })
+        )
+      })
+      this.#defer = async () => {
+        unsubscribe()
+        await db.close()
       }
       this.#startSyncing(cacheReady)
     } catch (cause) {
@@ -341,7 +350,7 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async #syncLocalIndex(db: LocalDB): Promise<boolean> {
+  async #syncLocalIndex(db: EntryStore): Promise<boolean> {
     const sourceTree = await db.source.getTree()
     if (sourceTree.isEmpty) return false
     try {
@@ -381,7 +390,7 @@ interface MutationActivitySummary {
 }
 
 async function summarizeMutations(
-  db: LocalDB,
+  db: EntryStore,
   mutations: Array<Mutation>
 ): Promise<MutationActivitySummary> {
   const targets = mutations.flatMap(mutation =>
