@@ -89,6 +89,8 @@ export interface QueryObserver {
   error(error: unknown): void
 }
 
+export type EntryChangeListener = (change: EntrySyncResult) => void
+
 export interface EntrySyncResult {
   revision: string
   /** Includes source changes, deletions, and entries changed by inheritance. */
@@ -117,6 +119,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #options: EntryDatabaseOptions
   #searchDirty = true
   #listeners = new Set<() => void>()
+  #changeListeners = new Set<EntryChangeListener>()
   #syncer: EntrySyncer
   #withinTransaction: boolean
   #syncQueue: Promise<unknown> = Promise.resolve()
@@ -242,7 +245,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     )
     this.#tree = applied.tree
     this.#searchDirty = true
-    for (const invalidate of this.#listeners) invalidate()
+    this.#emitChange(applied.result)
     return applied.result
   }
 
@@ -321,8 +324,13 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     }
     if (this.#syncDatabase === this.#db) await this.#withReadConnection(sync)
     else await sync()
-    for (const invalidate of this.#listeners) invalidate()
+    this.#emitChange({revision: tree.sha, changedEntryIds})
     return changedEntryIds
+  }
+
+  #emitChange(change: EntrySyncResult): void {
+    for (const invalidate of this.#listeners) invalidate()
+    for (const listener of this.#changeListeners) listener(change)
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {
@@ -628,5 +636,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       sequence++
       this.#listeners.delete(invalidate)
     }
+  }
+
+  onChange(listener: EntryChangeListener): () => void {
+    if (this.#closed) throw new Error('EntryDatabase is closed')
+    this.#changeListeners.add(listener)
+    return () => this.#changeListeners.delete(listener)
   }
 }
