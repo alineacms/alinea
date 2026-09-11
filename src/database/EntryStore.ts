@@ -4,7 +4,7 @@ import type {
   RemoteSource,
   Source
 } from '#/core/source/Source.js'
-import {diff} from '#/core/source/Source.js'
+import {bundleContents} from '#/core/source/Source.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
@@ -191,10 +191,10 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   /** Keep the writable source and its query database at one remote revision. */
   syncWith(remote: RemoteSource): Promise<string> {
     return this.#run(async () => {
-      const batch = await diff(this.source, remote)
-      if (!batch.changes.length) return this.#sync()
       const localTree = await this.source.getTree()
-      const remoteTree = await localTree.withChanges(batch)
+      const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
+      if (!remoteTree) return this.#sync()
+      const batch = await bundleContents(remote, localTree.diff(remoteTree))
       const blobs = new Map(
         batch.changes.flatMap(change =>
           change.op === 'delete' || !change.contents
@@ -215,7 +215,9 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
         }
       }
       await this.database.syncWith(bundledRemote)
-      await this.source.applyChanges(batch)
+      if (this.source instanceof OverlaySource)
+        await this.source.applyChangesTo(batch, remoteTree)
+      else await this.source.applyChanges(batch)
       await this.#seed()
       return this.database.getRevision()
     })
@@ -225,8 +227,12 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   overlay(remote: RemoteSource): Promise<EntryStore> {
     return this.#run(async () => {
       const source = await OverlaySource.create(this.source)
-      const batch = await diff(source, remote)
-      if (batch.changes.length) await source.applyChanges(batch)
+      const localTree = await source.getTree()
+      const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
+      if (remoteTree) {
+        const batch = await bundleContents(remote, localTree.diff(remoteTree))
+        await source.applyChangesTo(batch, remoteTree)
+      }
       const database = await this.database.overlay(source)
       return new EntryStore(this.config, database, source, {
         ownsDatabase: true

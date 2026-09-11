@@ -42,6 +42,14 @@ export class OverlaySource implements Source {
   }
 
   async applyChanges(batch: ChangesBatch): Promise<void> {
+    return this.applyChangesTo(batch)
+  }
+
+  /** Apply a batch while reusing an already received or compiled target tree. */
+  async applyChangesTo(
+    batch: ChangesBatch,
+    tree?: ReadonlyTree
+  ): Promise<void> {
     if (this.#tree.sha !== batch.fromSha)
       throw new ShaMismatchError(batch.fromSha, this.#tree.sha)
     for (const change of batch.changes) {
@@ -49,7 +57,7 @@ export class OverlaySource implements Source {
       assert(change.contents, 'Missing contents')
       this.#blobs.set(change.sha, change.contents)
     }
-    this.#tree = await this.#tree.withChanges(batch)
+    this.#tree = tree ?? (await this.#tree.withChanges(batch))
     for (const sha of this.#blobs.keys()) {
       if (!this.#tree.hasSha(sha)) this.#blobs.delete(sha)
     }

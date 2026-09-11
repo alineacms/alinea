@@ -1236,7 +1236,11 @@ export class EntrySyncer implements AsyncDisposable {
         throw new Error('Database revision mismatch')
       if (previousTree && previousTree.sha !== fromRevision)
         throw new Error('Cached tree revision mismatch')
-      const initial = (await queries.entryCount.get())?.value === 0
+      const storedTree =
+        previousTree ?? (state.tree ? new ReadonlyTree(state.tree) : undefined)
+      const initial = storedTree
+        ? storedTree.isEmpty
+        : (await queries.entryCount.get())?.value === 0
       if (initial)
         await insertInitialSource(
           tx,
@@ -1246,13 +1250,13 @@ export class EntrySyncer implements AsyncDisposable {
           tree,
           queries
         )
-      else if (previousTree || state.tree)
+      else if (storedTree)
         await mergeTrees(
           tx,
           target.entries,
           this.#config,
           source,
-          previousTree ?? new ReadonlyTree(state.tree!),
+          storedTree,
           tree,
           queries
         )
@@ -1279,7 +1283,7 @@ export class EntrySyncer implements AsyncDisposable {
       await deriveStatus(tx, queries)
       if (initial) await copyInitialUrls(queries)
       else await deriveUrls(tx, target.entries, this.#config, queries)
-      await validateEntries(tx, target.entries)
+      await validateEntries(tx, target.changes ?? target.entries)
       const changed = await queries.changedIds.all()
       await queries.setRevision.run({
         revision: tree.sha,
