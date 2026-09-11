@@ -49,7 +49,7 @@ export class NextCMS<
     const span = trace(this.config, 'alinea.next.cms.db')
     return span(async () => {
       const {generatedDatabase} =
-        await import('#/backend/store/GeneratedDatabase.js')
+        await import('#/backend/store/GeneratedDatabaseNode.js')
       return generatedDatabase(this.config)
     })
   })

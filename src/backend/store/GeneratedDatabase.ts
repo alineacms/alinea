@@ -1,14 +1,13 @@
 import type {Config} from '#/core/Config.js'
-import {createRequire} from 'node:module'
 import {EntryDatabase} from '#/database/EntryDatabase.js'
 import {EntryStore} from '#/database/EntryStore.js'
-import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
+import type {Database} from 'rado'
 
-/** Open the generated database and add one writable, connection-local layer. */
-export async function generatedDatabase(config: Config): Promise<EntryStore> {
-  const require = createRequire(import.meta.url)
-  const path = require.resolve('@alinea/generated/database.sqlite')
-  const db = await runtimeDatabase({path, readonly: true})
+/** Add one writable, connection-local layer over a generated database. */
+export async function createGeneratedDatabase(
+  config: Config,
+  db: Database
+): Promise<EntryStore> {
   const base = new EntryDatabase(config, db, {searchReady: true})
   try {
     const overlay = await base.createOverlay()

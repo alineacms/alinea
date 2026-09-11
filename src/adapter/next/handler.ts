@@ -7,7 +7,6 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {generatedDatabase} from '#/backend/store/GeneratedDatabase.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
@@ -39,6 +38,12 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
+      if (process.env.NEXT_RUNTIME === 'edge')
+        throw new Error(
+          'Generated SQLite databases require an Edge database loader'
+        )
+      const {generatedDatabase} =
+        await import('#/backend/store/GeneratedDatabaseNode.js')
       return generatedDatabase(config)
     })
   )
