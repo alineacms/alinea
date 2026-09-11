@@ -8,7 +8,7 @@ import {syncWith, transaction, type Source} from '#/core/source/Source.js'
 import {cms} from '#test/cms.js'
 import {eq} from 'rado'
 import {EntryIndexTable} from '../entry/Schema.js'
-import {EntryRuntime} from '../runtime/EntryRuntime.js'
+import {EntryDatabase} from '../EntryDatabase.js'
 
 test('runtime serializes sources through one database-bound syncer', async () => {
   const source = new MemorySource()
@@ -31,8 +31,8 @@ test('runtime serializes sources through one database-bound syncer', async () =>
   }
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryRuntime.createSchema(db, 'empty')
-  const runtime = new EntryRuntime(cms.config, db)
+  await EntryDatabase.createSchema(db, 'empty')
+  const runtime = new EntryDatabase(cms.config, db)
 
   const [first, repeated] = await Promise.all([
     runtime.syncWith(remote),

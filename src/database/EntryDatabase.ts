@@ -11,71 +11,27 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {count, type Database, eq, inArray, table} from 'rado'
+import {count, type Database, eq, table} from 'rado'
 import * as column from 'rado/universal/columns'
-import {
-  EntryIndexTable,
-  entryIndexRow,
-  type IndexedEntry
-} from '../entry/Schema.js'
-import {compileEntryQuery} from '../query/EntryQuery.js'
-import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
-import type {RelationSource} from '../query/Relation.js'
-import {EntrySyncer} from '../sync/EntrySyncer.js'
-
-const superseded = Symbol('superseded query')
+import {EntryIndexTable} from './entry/Schema.js'
+import {compileEntryQuery} from './query/EntryQuery.js'
+import {createSearch, rebuildSearch, type SearchQuery} from './query/Search.js'
+import type {RelationSource} from './query/Relation.js'
+import {EntrySyncer} from './sync/EntrySyncer.js'
 
 const Meta = table('alinea_database_state', {
   id: column.integer().primaryKey(),
   revision: column.text().notNull()
 })
 
-function* chunks<T>(
-  items: ReadonlyArray<T>,
-  size: number
-): Generator<Array<T>> {
-  for (let offset = 0; offset < items.length; offset += size)
-    yield items.slice(offset, offset + size)
-}
-
-async function insertEntries(
-  db: Database,
-  entries: Iterable<EntryReplacement>
-): Promise<void> {
-  let rows = Array<ReturnType<typeof entryIndexRow>>()
-  for (const replacement of entries) {
-    rows.push(entryIndexRow(replacement.entry))
-    if (rows.length < 1000) continue
-    await db.insert(EntryIndexTable).values(rows)
-    rows = []
-  }
-  if (rows.length) await db.insert(EntryIndexTable).values(rows)
-}
-
-export interface EntryReplacement {
-  entry: IndexedEntry
-}
-
-export interface EntryDelta {
-  fromRevision: string
-  toRevision: string
-  /**
-   * Replaces every authored version belonging to these entry IDs. Entries not
-   * supplied for an ID are deleted, which handles removed source versions.
-   */
-  replaceEntryIds?: ReadonlyArray<string>
-  /** Replace the entire row set; used only when no prior source cache exists. */
-  replaceAll?: boolean
-  /** May stream rows; SQLite consumes them inside the commit transaction. */
-  entries: Iterable<EntryReplacement>
-}
-
-export interface RuntimeOptions {
+export interface EntryDatabaseOptions {
   /** Prepare a complete search plan under the connection's statement queue. */
   search?(input: GraphQuery['search']): Promise<SearchQuery | undefined>
   includedAtBuild?(filePath: string): boolean | Promise<boolean>
   /** The bundled database already contains its complete FTS5 corpus. */
   searchReady?: boolean
+  /** A second connection to the same SQLite database, used for synchronization. */
+  syncDatabase?: Database
 }
 
 export interface QueryObserver {
@@ -89,24 +45,29 @@ export interface EntrySyncResult {
   changedEntryIds: ReadonlyArray<string>
 }
 
-/** Owns one local database connection. All access uses its statement queue. */
-export class EntryRuntime extends Graph implements AsyncDisposable {
+/** Owns the query connection and an optional connection used for synchronization. */
+export class EntryDatabase extends Graph implements AsyncDisposable {
   #db: Database
+  #syncDatabase: Database
   #config: Config
-  #options: RuntimeOptions
-  #queue: Promise<unknown> = Promise.resolve()
-  #generation = 0
+  #options: EntryDatabaseOptions
+  #readQueue: Promise<unknown> = Promise.resolve()
   #searchDirty = true
   #listeners = new Set<() => void>()
   #syncer: EntrySyncer
   #syncQueue: Promise<unknown> = Promise.resolve()
   #closed = false
 
-  constructor(config: Config, db: Database, options: RuntimeOptions = {}) {
+  constructor(
+    config: Config,
+    db: Database,
+    options: EntryDatabaseOptions = {}
+  ) {
     super()
     this.#config = config
     this.#db = db
-    this.#syncer = new EntrySyncer(config, db)
+    this.#syncDatabase = options.syncDatabase ?? db
+    this.#syncer = new EntrySyncer(config, this.#syncDatabase)
     this.#options = options
     this.#searchDirty = !options.searchReady
   }
@@ -117,12 +78,16 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
 
   /** Synchronize a source through this database's single prepared syncer. */
   syncWith(source: Source): Promise<EntrySyncResult> {
-    if (this.#closed) return Promise.reject(new Error('EntryRuntime is closed'))
+    if (this.#closed)
+      return Promise.reject(new Error('EntryDatabase is closed'))
     const task = this.#syncQueue.then(async () => {
-      const current = await this.getRevision()
+      const current =
+        this.#syncDatabase === this.#db
+          ? await this.getRevision()
+          : await this.#getRevision(this.#syncDatabase)
       const tree = await source.getTreeIfDifferent(current)
       if (!tree) return {revision: current, changedEntryIds: []}
-      const changedEntryIds = await this.syncSource(source, tree, current)
+      const changedEntryIds = await this.#syncSource(source, tree, current)
       return {revision: tree.sha, changedEntryIds}
     })
     this.#syncQueue = task.catch(() => {})
@@ -133,8 +98,9 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     if (this.#closed) return
     this.#closed = true
     await this.#syncQueue
-    await this.#exclusive(async () => {
+    await this.#withReadConnection(async () => {
       await this.#syncer.close()
+      if (this.#syncDatabase !== this.#db) await this.#syncDatabase.close()
       await this.#db.close()
     })
   }
@@ -144,44 +110,34 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
   }
 
   getRevision(): Promise<string> {
-    return this.#exclusive(async () => {
-      const revision = await this.#db
-        .select(Meta.revision)
-        .from(Meta)
-        .where(eq(Meta.id, 1))
-        .get()
-      if (revision == null) throw new Error('Missing database revision')
-      return revision
-    })
+    return this.#withReadConnection(() => this.#getRevision(this.#db))
+  }
+
+  async #getRevision(db: Database): Promise<string> {
+    const revision = await db
+      .select(Meta.revision)
+      .from(Meta)
+      .where(eq(Meta.id, 1))
+      .get()
+    if (revision == null) throw new Error('Missing database revision')
+    return revision
   }
 
   /** Apply one source tree without keeping an in-memory copy of its entries. */
-  async syncSource(
+  async #syncSource(
     source: Source,
     tree: ReadonlyTree,
     fromRevision: string
   ): Promise<Array<string>> {
     let changedEntryIds = Array<string>()
-    await this.#exclusive(async () => {
+    const sync = async () => {
       changedEntryIds = await this.#syncer.sync(source, tree, fromRevision)
-      this.#generation++
       this.#searchDirty = true
-    })
+    }
+    if (this.#syncDatabase === this.#db) await this.#withReadConnection(sync)
+    else await sync()
     for (const invalidate of this.#listeners) invalidate()
     return changedEntryIds
-  }
-
-  /** Retry a read-only compound operation if any local commit overlaps it. */
-  async readConsistent<T>(read: () => Promise<T>): Promise<T> {
-    for (;;) {
-      const generation = this.#generation
-      try {
-        const value = await read()
-        if (generation === this.#generation) return value
-      } catch (error) {
-        if (generation === this.#generation) throw error
-      }
-    }
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {
@@ -190,90 +146,42 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     await db.insert(Meta).values({id: 1, revision})
   }
 
-  #exclusive<T>(run: () => Promise<T>): Promise<T> {
-    const task = this.#queue.then(run)
-    this.#queue = task.catch(() => {})
+  #withReadConnection<T>(run: () => Promise<T>): Promise<T> {
+    const task = this.#readQueue.then(run)
+    this.#readQueue = task.catch(() => {})
     return task
-  }
-
-  async apply(delta: EntryDelta): Promise<void> {
-    await this.#exclusive(async () => {
-      await this.#db.transaction(
-        async tx => {
-          const state = await tx.select().from(Meta).where(eq(Meta.id, 1)).get()
-          if (state?.revision !== delta.fromRevision)
-            throw new Error('Database revision mismatch')
-          if (delta.toRevision === delta.fromRevision)
-            throw new Error('A delta must advance the revision')
-          if (
-            delta.replaceAll ||
-            (await tx.select(count()).from(EntryIndexTable).get()) === 0
-          ) {
-            if (delta.replaceAll) await tx.delete(EntryIndexTable)
-            await insertEntries(tx, delta.entries)
-            await tx
-              .update(Meta)
-              .set({revision: delta.toRevision})
-              .where(eq(Meta.id, 1))
-            return
-          }
-          if (!delta.replaceEntryIds)
-            throw new Error(
-              'A non-initial delta must declare the entry identities it replaces'
-            )
-          for (const ids of chunks(delta.replaceEntryIds, 500))
-            await tx
-              .delete(EntryIndexTable)
-              .where(inArray(EntryIndexTable.id, ids))
-          await insertEntries(tx, delta.entries)
-          await tx
-            .update(Meta)
-            .set({revision: delta.toRevision})
-            .where(eq(Meta.id, 1))
-        },
-        {async: true}
-      )
-      this.#generation++
-      this.#searchDirty = true
-    })
-    for (const invalidate of this.#listeners) invalidate()
   }
 
   async resolve<const Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    for (;;) {
-      try {
-        return (await this.#resolve(
-          query,
-          this.#generation
-        )) as AnyQueryResult<Query>
-      } catch (error) {
-        if (error !== superseded) throw error
-      }
-    }
+    if (this.#closed) throw new Error('EntryDatabase is closed')
+    return this.#withReadConnection(
+      () =>
+        this.#db.transaction(tx => this.#resolve(query, tx), {
+          async: true,
+          behavior: 'deferred'
+        }) as Promise<AnyQueryResult<Query>>
+    )
   }
 
   async #resolve(
     query: GraphQuery,
-    generation: number,
+    db: Database,
     source?: RelationSource
   ): Promise<unknown> {
-    if (this.#generation !== generation) throw superseded
     if (source) {
       query = {preferredLocale: source.locale ?? undefined, ...query}
     }
     const search = this.#options.search
-      ? await this.#exclusive(() => this.#options.search!(query.search))
+      ? await this.#options.search(query.search)
       : undefined
     const plan = compileEntryQuery(this.#config, query, source, search)
     if (query.search !== undefined && !this.#options.search)
-      await this.#ensureSearch()
-    if (this.#generation !== generation) throw superseded
-    const result = await this.#exclusive(async () => {
-      if (this.#generation !== generation) throw superseded
+      await this.#ensureSearch(db)
+    const result = await (async () => {
       if (plan.count) {
-        const total = await this.#db
+        const total = await db
           .select(count())
           .from(plan.identities.as('matches'))
           .get()
@@ -283,11 +191,11 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
         plan.fields.length || plan.relations.length
           ? plan.contextRows
           : plan.rows
-      ).all(this.#db)
+      ).all(db)
       if (!source && query.get && !rows.length)
         throw new Error('Entry not found')
       return {count: undefined, rows}
-    })
+    })()
     if (plan.count) return result.count
     const rows: Array<unknown> = []
     for (const row of result.rows) {
@@ -297,25 +205,25 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
       }
       const projected = row as {value: unknown; source: RelationSource}
       let value = projected.value
-      const runtime = this
+      const database = this
       const loader: LinkResolver = {
         resolver: {config: this.#config},
         locale: projected.source.locale,
         includedAtBuild(filePath) {
-          return runtime.#options.includedAtBuild?.(filePath) ?? false
+          return database.#options.includedAtBuild?.(filePath) ?? false
         },
         async resolveLinks<P extends Projection>(
           projection: P,
           ids: ReadonlyArray<string>
         ): Promise<Array<InferProjection<P>>> {
-          return (await runtime.#resolve(
+          return (await database.#resolve(
             {
               select: projection,
               id: {in: ids},
               status: query.status ?? 'published',
               preferredLocale: projected.source.locale ?? undefined
             },
-            generation
+            db
           )) as Array<InferProjection<P>>
         }
       }
@@ -351,7 +259,7 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
             ...relation.query,
             status: query.status ?? 'published'
           },
-          generation,
+          db,
           projected.source
         )
         if (!relation.path.length) value = related
@@ -374,19 +282,15 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
       }
       rows.push(value)
     }
-    if (this.#generation !== generation) throw superseded
     // Graph's nested projection stage returns undefined for an absent single
     // relation; only the public top-level first/get stage normalizes absence.
     return plan.single ? (source ? rows[0] : (rows[0] ?? null)) : rows
   }
 
-  async #ensureSearch(): Promise<void> {
+  async #ensureSearch(db: Database): Promise<void> {
     if (!this.#searchDirty) return
-    await this.#exclusive(async () => {
-      if (!this.#searchDirty) return
-      await this.#db.transaction(async tx => rebuildSearch(tx), {async: true})
-      this.#searchDirty = false
-    })
+    await rebuildSearch(db)
+    this.#searchDirty = false
   }
 
   /** Conservative commit invalidation includes rows outside the current result. */

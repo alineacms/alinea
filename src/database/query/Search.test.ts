@@ -1,40 +1,46 @@
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
+import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
-import {EntryRuntime, type EntryReplacement} from '../runtime/EntryRuntime.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
+import {
+  transaction,
+  type Source,
+  type SourceTransaction
+} from '#/core/source/Source.js'
+import {Config as ConfigBuilder, Field} from '#/index.js'
 import {wasmDatabase} from '../driver/WasmDatabase.js'
+import {EntryDatabase} from '../EntryDatabase.js'
 import {snippet} from '#/core/pages/Snippet.js'
 
-function entry(id: string, title: string, body = ''): EntryReplacement {
-  return {
-    entry: {
-      id,
-      title,
-      locale: null,
-      versionStatus: 'published',
-      status: 'published',
-      type: 'Page',
-      workspace: 'main',
-      root: 'pages',
-      parentId: null,
-      parents: [],
-      level: 0,
-      index: id,
-      path: id,
-      url: `/${id}`,
-      active: true,
-      main: true,
-      seeded: null,
-      rowHash: `${id}:${title}`,
-      data: {},
-      filePath: `pages/${id}.json`,
-      fileHash: `${id}-file`,
-      parentDir: 'pages',
-      childrenDir: `pages/${id}`,
-      searchableText: body
-    }
+const Page = ConfigBuilder.document('Page', {
+  fields: {
+    title: Field.text('Title'),
+    body: Field.text('Body', {searchable: true})
   }
+})
+const config: Config = {
+  schema: {Page},
+  workspaces: {
+    main: ConfigBuilder.workspace('Main', {
+      source: 'content',
+      roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+    })
+  }
+}
+
+function entry(id: string, title: string, body = ''): Uint8Array {
+  return new TextEncoder().encode(
+    JSON.stringify({_id: id, _type: 'Page', _index: id, title, body})
+  )
+}
+
+async function applySourceChange(
+  source: Source,
+  change: Awaited<ReturnType<SourceTransaction['compile']>>
+): Promise<void> {
+  await source.applyChanges({fromSha: change.from.sha, changes: change.changes})
 }
 
 for (const driver of ['native', 'wasm'] as const)
@@ -44,18 +50,23 @@ for (const driver of ['native', 'wasm'] as const)
         ? connect(new Database(':memory:'))
         : await wasmDatabase()
     try {
-      await EntryRuntime.createSchema(db, 'empty')
-      const runtime = new EntryRuntime({schema: {}, workspaces: {}}, db)
-      await runtime.apply({
-        fromRevision: 'empty',
-        toRevision: 'one',
-        entries: [
-          entry('a', 'Other', 'baking chocolate cookies'),
-          entry('b', 'Chocolate cookies', 'baking recipes'),
-          entry('c', 'Café crème', 'délicieux'),
-          entry('d', 'Ordinary', 'nothing matching')
-        ]
-      })
+      const source = new MemorySource()
+      await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+      const runtime = new EntryDatabase(config, db)
+      const initial = await transaction(source)
+      await applySourceChange(
+        source,
+        await initial
+          .add('pages/a.json', entry('a', 'Other', 'baking chocolate cookies'))
+          .add(
+            'pages/b.json',
+            entry('b', 'Chocolate cookies', 'baking recipes')
+          )
+          .add('pages/c.json', entry('c', 'Café crème', 'délicieux'))
+          .add('pages/d.json', entry('d', 'Ordinary', 'nothing matching'))
+          .compile()
+      )
+      await runtime.syncWith(source)
       expect(
         await runtime.resolve({search: ['choco', 'cook'], select: Entry.id})
       ).toEqual(['b', 'a'])
@@ -98,26 +109,30 @@ for (const driver of ['native', 'wasm'] as const)
           select: Entry.id
         })
       ).toEqual(['a', 'b'])
-      await runtime.apply({
-        fromRevision: 'one',
-        toRevision: 'two',
-        entries: [entry('a', 'Vanilla', 'new body')],
-        replaceEntryIds: ['a', 'b']
-      })
+      const update = await transaction(source)
+      await applySourceChange(
+        source,
+        await update
+          .add('pages/a.json', entry('a', 'Vanilla', 'new body'))
+          .remove('pages/b.json')
+          .compile()
+      )
+      await runtime.syncWith(source)
       expect(
         await runtime.resolve({search: 'choco', select: Entry.id})
       ).toEqual([])
       expect(await runtime.resolve({search: 'van', select: Entry.id})).toEqual([
         'a'
       ])
-      await expect(
-        runtime.apply({
-          fromRevision: 'two',
-          toRevision: 'bad',
-          entries: [entry('a', 'Changed'), entry('a', 'Duplicate')],
-          replaceEntryIds: ['a']
-        })
-      ).rejects.toThrow('UNIQUE')
+      const duplicate = await transaction(source)
+      await applySourceChange(
+        source,
+        await duplicate
+          .add('pages/a.json', entry('a', 'Changed'))
+          .add('pages/a-copy.json', entry('a', 'Duplicate'))
+          .compile()
+      )
+      await expect(runtime.syncWith(source)).rejects.toThrow('UNIQUE')
       expect(await runtime.resolve({search: 'van', select: Entry.id})).toEqual([
         'a'
       ])
@@ -129,37 +144,37 @@ for (const driver of ['native', 'wasm'] as const)
 test('search updates complete entry rows transactionally', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryRuntime.createSchema(db, 'empty')
-  const runtime = new EntryRuntime({schema: {}, workspaces: {}}, db)
-  const a = entry('a', 'First')
-  const b = entry('b', 'Second')
-  await runtime.apply({
-    fromRevision: 'empty',
-    toRevision: 'one',
-    entries: [
-      {...a, entry: {...a.entry, searchableText: 'hidden chocolate'}},
-      {...b, entry: {...b.entry, searchableText: 'hidden chocolate'}}
-    ]
-  })
+  const source = new MemorySource()
+  await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+  const runtime = new EntryDatabase(config, db)
+  const initial = await transaction(source)
+  await applySourceChange(
+    source,
+    await initial
+      .add('pages/a.json', entry('a', 'First', 'hidden chocolate'))
+      .add('pages/b.json', entry('b', 'Second', 'hidden chocolate'))
+      .compile()
+  )
+  await runtime.syncWith(source)
   expect(await runtime.resolve({select: Entry.id})).toEqual(['a', 'b'])
   expect(
     await runtime.resolve({search: 'choco', take: 1, select: Entry.id})
   ).toHaveLength(1)
-  await runtime.apply({
-    fromRevision: 'one',
-    toRevision: 'two',
-    entries: [{...a, entry: {...a.entry, title: 'Retitled'}}],
-    replaceEntryIds: ['a']
-  })
+  const retitle = await transaction(source)
+  await applySourceChange(
+    source,
+    await retitle.add('pages/a.json', entry('a', 'Retitled')).compile()
+  )
+  await runtime.syncWith(source)
   expect(await runtime.resolve({search: 'retit', select: Entry.id})).toEqual([
     'a'
   ])
-  await runtime.apply({
-    fromRevision: 'two',
-    toRevision: 'three',
-    entries: [{...b, entry: {...b.entry, searchableText: ''}}],
-    replaceEntryIds: ['b']
-  })
+  const clearBody = await transaction(source)
+  await applySourceChange(
+    source,
+    await clearBody.add('pages/b.json', entry('b', 'Second')).compile()
+  )
+  await runtime.syncWith(source)
   expect(await runtime.resolve({search: 'choco', select: Entry.id})).toEqual([])
   expect(
     sqlite.query('select count(*) as count from alinea_entry_search').get()

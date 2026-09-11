@@ -20,11 +20,14 @@ JSON values are extracted only when a query selects or filters on them.
 
 ## Synchronization boundary
 
-`EntryRuntime.apply` accepts a revision-bound delta containing replacement rows
-and removed version ids. Applying it is transactional, invalidates affected
-live queries and replaces complete rows.
-
-`EntryRuntime.syncWith` compares the source tree directly with ordered
+`EntryDatabase.syncWith` compares the source tree directly with ordered
 `filePath`, `fileHash` and `childrenSha` columns. It does not construct a second
-database-side tree or read unchanged payloads. No transport format is defined
-here.
+database-side tree or read unchanged payloads. Applying changes is
+transactional and invalidates affected live queries. No transport format is
+defined here.
+
+Graph queries, including nested link resolution, run in one SQLite snapshot.
+By default synchronization shares that connection and waits for active queries.
+Supplying `syncDatabase` gives the syncer a second connection to the same
+WAL-backed database, allowing commits while existing queries retain their old
+snapshot. `EntryDatabase.close()` owns and closes both connections.

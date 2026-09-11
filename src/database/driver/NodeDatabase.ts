@@ -11,7 +11,7 @@ export function checkpointNodeDatabase(sqlite: DatabaseSync): void {
   sqlite.exec('pragma wal_checkpoint(truncate)')
 }
 
-/** Normalize Node's absent get() result to the current Rado driver contract. */
+/** Configure and connect Node's built-in SQLite implementation. */
 export function nodeDatabase(
   sqlite: DatabaseSync,
   options: NodeDatabaseOptions = {}
@@ -35,7 +35,7 @@ export function nodeDatabase(
         },
         setReturnArrays: statement.setReturnArrays.bind(statement),
         get(...params: Parameters<typeof statement.get>) {
-          return statement.get(...params) ?? null
+          return statement.get(...params)!
         }
       }
     }
