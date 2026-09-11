@@ -31,6 +31,7 @@ import {
   DatabaseStateTable,
   EntryIndexTable,
   entryIndexRow,
+  storedEntryData,
   type EntryIndexTarget,
   type IndexedEntry
 } from '../entry/Schema.js'
@@ -106,7 +107,7 @@ interface MainRow {
   root: string
   path: string
   parents: Array<string>
-  data: Record<string, unknown>
+  data: string
 }
 
 interface ParentPathRow {
@@ -1048,7 +1049,7 @@ async function deriveUrls(
         key: row.versionId,
         value: entryUrl(type, {
           config,
-          data: row.data,
+          data: storedEntryData(row.data, row.path),
           status: row.versionStatus as IndexedEntry['versionStatus'],
           path: row.path,
           parentPaths: paths,

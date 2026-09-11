@@ -67,7 +67,7 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   transaction.objectStore('database').put(
     {
       revision: 'config-1',
-      schemaVersion: 2,
+      schemaVersion: 3,
       data: new Uint8Array([1, 2, 3])
     },
     'entries'

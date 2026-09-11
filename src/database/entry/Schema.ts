@@ -1,5 +1,11 @@
 import type {Entry, EntryStatus} from '#/core/Entry.js'
-import {createRecord} from '#/core/EntryRecord.js'
+import {
+  createRecord,
+  parseRecord,
+  type EntryRecord
+} from '#/core/EntryRecord.js'
+import {assert} from '#/core/util/Assert.js'
+import {isRecord} from '#/core/util/Objects.js'
 import type {Tree} from '#/core/source/Tree.js'
 import {index, table, temporaryTable, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
@@ -49,9 +55,10 @@ export const EntryIndexColumns = {
   /** Hash of this entry's child directory in the synced source tree. */
   childrenSha: column.varchar(undefined, {length: 128}),
   searchableText: column.text().notNull(),
-  /** Exact source blob, kept as text so the database can act as a Source. */
-  payload: column.text().notNull(),
-  data: column.json<Record<string, unknown>>().notNull()
+  /** Exact source blob for seeded rows whose expanded data differs. */
+  payload: column.text(),
+  /** Exact source JSON, or expanded JSON for seeded rows. */
+  data: column.text().notNull()
 }
 
 export function entryIndexTable(name: string, temporary = false) {
@@ -113,6 +120,9 @@ export interface IndexedEntry extends Entry {
 }
 
 export function entryIndexRow(entry: IndexedEntry) {
+  const payload =
+    entry.payload ??
+    JSON.stringify(createRecord(entry, entry.versionStatus), null, 2)
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
     id: entry.id,
@@ -143,9 +153,17 @@ export function entryIndexRow(entry: IndexedEntry) {
     rowHash: entry.rowHash,
     childrenSha: entry.childrenSha ?? null,
     searchableText: entry.searchableText,
-    payload:
-      entry.payload ??
-      JSON.stringify(createRecord(entry, entry.versionStatus), null, 2),
-    data: entry.data
+    payload: entry.seeded ? payload : null,
+    data: entry.seeded ? JSON.stringify(entry.data) : payload
   }
+}
+
+export function storedEntryData(
+  value: unknown,
+  path: string
+): Record<string, unknown> {
+  const raw = typeof value === 'string' ? JSON.parse(value) : value
+  assert(isRecord(raw), 'Invalid stored entry data')
+  const {data} = parseRecord(raw as EntryRecord)
+  return {path, ...data}
 }

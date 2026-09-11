@@ -17,6 +17,7 @@ import {join} from 'node:path'
 import {sql} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
 import {EntryDatabase} from './EntryDatabase.js'
+import {EntryIndexTable} from './entry/Schema.js'
 
 function urlAlias(url: string) {
   return {
@@ -166,6 +167,18 @@ test('entry database returns exact source blobs by hash', async () => {
   for await (const blob of runtime.getBlobs(shas)) actual.set(...blob)
   expect(actual).toEqual(expected)
   expect(await runtime.getTree()).toEqual(tree)
+  const stored = await db
+    .select({data: EntryIndexTable.data, payload: EntryIndexTable.payload})
+    .from(EntryIndexTable)
+    .get()
+  expect(stored?.payload).toBeNull()
+  expect(stored!.data).toBe(
+    new TextDecoder().decode(expected.values().next().value!)
+  )
+  expect(await runtime.get({id: 'page', select: Entry.data})).toEqual({
+    path: 'page',
+    title: 'Page'
+  })
 })
 
 test('subscriptions publish the initial value and committed changes', async () => {

@@ -11,7 +11,7 @@ import {
   type WasmDatabaseHandle
 } from './driver/WasmDatabase.js'
 
-const schemaVersion = 2
+const schemaVersion = 3
 const storeName = 'database'
 const databaseKey = 'entries'
 

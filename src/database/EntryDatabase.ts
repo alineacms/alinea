@@ -42,6 +42,7 @@ import {
   DatabaseMetadataTable,
   DatabaseStateTable,
   EntryIndexTable,
+  storedEntryData,
   type EntryIndexTarget
 } from './entry/Schema.js'
 import {compileEntryQuery} from './query/EntryQuery.js'
@@ -84,7 +85,7 @@ interface EntryDatabaseState {
   tree: Tree | null
 }
 
-const databaseSchemaVersion = 1
+const databaseSchemaVersion = 2
 const defaultConfigFingerprint = 'runtime'
 
 export interface EntryDatabaseOptions {
@@ -331,7 +332,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         this.#db
           .select({
             sha: this.#entryTarget.fileHash,
-            payload: this.#entryTarget.payload
+            payload: sql<string>`coalesce(
+              ${this.#entryTarget.payload},
+              ${this.#entryTarget.data}
+            )`
           })
           .from(this.#entryTarget)
           .where(inArray(this.#entryTarget.fileHash, requested))
@@ -720,6 +724,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           status: entry.status,
           active: entry.active,
           main: entry.main,
+          path: entry.path,
           data: entry.data
         })
         .from(entry)
@@ -732,7 +737,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         scanned += 1
         const type = this.#config.schema[row.type]
         if (!type) continue
-        for (const target of Type.references(type, row.data)) {
+        for (const target of Type.references(
+          type,
+          storedEntryData(row.data, row.path)
+        )) {
           if (target.targetId !== query.targetId) continue
           references.push({
             ...target,

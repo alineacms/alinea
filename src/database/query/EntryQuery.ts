@@ -32,7 +32,11 @@ import {
   type SelectionRecord,
   type Sql
 } from 'rado'
-import {EntryIndexTable, type EntryIndexTarget} from '../entry/Schema.js'
+import {
+  EntryIndexTable,
+  storedEntryData,
+  type EntryIndexTarget
+} from '../entry/Schema.js'
 import {
   columnField,
   arrayIncludes,
@@ -81,13 +85,23 @@ class Expressions {
   }
 
   data(path: Array<string>): QueryField {
+    if (path.length === 1 && path[0] === 'path') {
+      const stored = jsonField(this.#entry.data, path)
+      return columnField(sql`coalesce(${stored.value}, ${this.#entry.path})`)
+    }
     return jsonField(this.#entry.data, path)
   }
 
   index(name: string, path?: Array<string>): QueryField {
     if (path) return this.data([...path, name])
     if (name === 'data') {
-      return columnField(this.#entry.data)
+      const selection = sql`json_set(
+        ${this.#entry.data}, '$.path',
+        coalesce(json_extract(${this.#entry.data}, '$.path'), ${this.#entry.path})
+      )`
+        .forSelection()
+        .mapWith({mapFromDriverValue: value => storedEntryData(value, '')})
+      return {...columnField(this.#entry.data), selection}
     }
     if (Object.hasOwn(this.#entry, name))
       return columnField(this.#entry[name as keyof EntryIndexTarget] as HasSql)
