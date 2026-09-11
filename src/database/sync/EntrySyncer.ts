@@ -666,7 +666,7 @@ async function* storedFiles(
   queries: SyncQueries
 ): AsyncGenerator<StoredFileRow> {
   let afterFilePath = ''
-  for (;;) {
+  while (true) {
     const rows = (await queries.storedFiles.all({
       afterFilePath
     })) as Array<StoredFileRow>
@@ -853,7 +853,7 @@ async function deriveHierarchy(
 ): Promise<boolean> {
   let changed = false
   let afterVersionId = ''
-  for (;;) {
+  while (true) {
     const rows = (await queries.hierarchy.all({
       afterVersionId
     })) as Array<HierarchyRow>
@@ -956,7 +956,7 @@ async function deriveStatus(db: Database, queries: SyncQueries): Promise<void> {
   const levels = (await queries.levels.all()) as Array<{level: number}>
   for (const {level} of levels) {
     let offset = 0
-    for (;;) {
+    while (true) {
       const rows = (await queries.statuses.all({
         level,
         offset
@@ -1010,7 +1010,7 @@ async function deriveUrls(
   queries: SyncQueries
 ): Promise<void> {
   let afterVersionId = ''
-  for (;;) {
+  while (true) {
     const rows = (await queries.mainEntries.all({
       afterVersionId
     })) as Array<MainRow>

@@ -650,7 +650,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     const pageSize = 500
     let cursor = ''
     let scanned = 0
-    for (;;) {
+    while (true) {
       const rows = await db
         .select({
           versionId: entry.versionId,
