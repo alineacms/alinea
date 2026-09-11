@@ -8,7 +8,7 @@ import {syncWith, transaction, type Source} from '#/core/source/Source.js'
 import {cms} from '#test/cms.js'
 import {EntryRuntime} from '../runtime/EntryRuntime.js'
 
-test('runtime caches one source-bound synchronizer and serializes syncs', async () => {
+test('runtime serializes sources through one database-bound syncer', async () => {
   const source = new MemorySource()
   await syncWith(source, new FSSource('test/fixtures/demo'))
   let conditionalTreeRequests = 0

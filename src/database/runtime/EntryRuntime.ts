@@ -22,8 +22,7 @@ import {compileEntryQuery} from '../query/EntryQuery.js'
 import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 import {entryTree} from '../sync/EntryTree.js'
-import {EntrySyncer, type EntrySyncResult} from '../sync/EntrySyncer.js'
-import {syncSourceTree} from '../sync/DatabaseSync.js'
+import {EntrySyncer} from '../sync/EntrySyncer.js'
 
 const superseded = Symbol('superseded query')
 
@@ -85,6 +84,12 @@ export interface QueryObserver {
   error(error: unknown): void
 }
 
+export interface EntrySyncResult {
+  revision: string
+  /** Includes source changes, deletions, and entries changed by inheritance. */
+  changedEntryIds: ReadonlyArray<string>
+}
+
 /** Owns one local database connection. All access uses its statement queue. */
 export class EntryRuntime extends Graph implements AsyncDisposable {
   #db: Database
@@ -94,7 +99,7 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
   #generation = 0
   #searchDirty = true
   #listeners = new Set<() => void>()
-  #syncers = new Map<Source, EntrySyncer>()
+  #syncer: EntrySyncer
   #syncQueue: Promise<unknown> = Promise.resolve()
   #closed = false
 
@@ -102,6 +107,7 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     super()
     this.#config = config
     this.#db = db
+    this.#syncer = new EntrySyncer(config, db)
     this.#options = options
     this.#searchDirty = !options.searchReady
   }
@@ -110,12 +116,16 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     return this.#config
   }
 
-  /** Synchronize this database with a source-bound, serialized synchronizer. */
+  /** Synchronize a source through this database's single prepared syncer. */
   syncWith(source: Source): Promise<EntrySyncResult> {
     if (this.#closed) return Promise.reject(new Error('EntryRuntime is closed'))
-    const syncer = this.#syncers.get(source) ?? new EntrySyncer(source)
-    this.#syncers.set(source, syncer)
-    const task = this.#syncQueue.then(() => syncer.sync(this))
+    const task = this.#syncQueue.then(async () => {
+      const current = await this.getRevision()
+      const tree = await source.getTreeIfDifferent(current)
+      if (!tree) return {revision: current, changedEntryIds: []}
+      const changedEntryIds = await this.syncSource(source, tree, current)
+      return {revision: tree.sha, changedEntryIds}
+    })
     this.#syncQueue = task.catch(() => {})
     return task
   }
@@ -124,10 +134,10 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     if (this.#closed) return
     this.#closed = true
     await this.#syncQueue
-    const syncers = Array.from(this.#syncers.values())
-    this.#syncers.clear()
-    await Promise.all(syncers.map(syncer => syncer.close()))
-    await this.#exclusive(() => this.#db.close())
+    await this.#exclusive(async () => {
+      await this.#syncer.close()
+      await this.#db.close()
+    })
   }
 
   [Symbol.asyncDispose](): Promise<void> {
@@ -154,13 +164,7 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
   ): Promise<Array<string>> {
     let changedEntryIds = Array<string>()
     await this.#exclusive(async () => {
-      changedEntryIds = await syncSourceTree(
-        this.#db,
-        this.#config,
-        source,
-        tree,
-        fromRevision
-      )
+      changedEntryIds = await this.#syncer.sync(source, tree, fromRevision)
       this.#generation++
       this.#searchDirty = true
     })
