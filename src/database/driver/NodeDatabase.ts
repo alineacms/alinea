@@ -29,7 +29,10 @@ export function nodeDatabase(
       const statement = sqlite.prepare(query)
       return {
         all: statement.all.bind(statement),
-        run: statement.run.bind(statement),
+        run(...params: Parameters<typeof statement.run>) {
+          const result = statement.run(...params)
+          return {...result, changes: Number(result.changes)}
+        },
         setReturnArrays: statement.setReturnArrays.bind(statement),
         get(...params: Parameters<typeof statement.get>) {
           return statement.get(...params) ?? null
