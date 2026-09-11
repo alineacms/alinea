@@ -131,14 +131,16 @@ test('syncWith indexes the downloaded batch without rereading local blobs', asyn
     }
   }
 
-  const remote = new MemorySource()
+  const remote = new TrackingMemorySource()
   await syncWith(remote, source)
+  remote.blobReads = 0
   const local = new TrackingMemorySource()
   const fresh = new LocalDB(cms.config, local)
 
   await fresh.syncWith(remote)
 
   test.is(local.blobReads, 0)
+  test.is(remote.blobReads, 1)
   test.is(await fresh.sha, (await remote.getTree()).sha)
 })
 
