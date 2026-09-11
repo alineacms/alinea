@@ -1,4 +1,5 @@
 import {Config} from '#/core/Config.js'
+import {seedData} from '#/core/EntrySeed.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {parseRecord, type EntryRecord} from '#/core/EntryRecord.js'
 import {getRoot} from '#/core/Internal.js'
@@ -23,7 +24,8 @@ export function parseSourceEntry(
     throw new Error(`Invalid JSON entry: ${filePath}`)
   }
   assert(isRecord(raw), `Invalid entry record: ${filePath}`)
-  const {meta, data} = parseRecord(raw as EntryRecord)
+  const {meta, data: authoredData} = parseRecord(raw as EntryRecord)
+  const data = seedData(config, meta.seeded ?? null, authoredData)
   assert(typeof meta.id === 'string', `Entry is missing an id: ${filePath}`)
   assert(typeof meta.type === 'string', `Entry is missing a type: ${filePath}`)
   assert(

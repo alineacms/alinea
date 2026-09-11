@@ -9,6 +9,10 @@ import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {createRecord} from '#/core/EntryRecord.js'
+import {Entry} from '#/core/Entry.js'
+import {entrySeeds} from '#/core/EntrySeed.js'
+import {createId} from '#/core/Id.js'
+import {assert} from '#/core/util/Assert.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {Policy} from '#/core/Role.js'
 import type {
@@ -32,6 +36,7 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   readonly database: EntryDatabase
   readonly source: Source
   #ownsDatabase: boolean
+  #queue: Promise<unknown> = Promise.resolve()
 
   constructor(
     config: Config,
@@ -117,54 +122,126 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   }
 
   async sync(): Promise<string> {
-    return (await this.database.syncWith(this.source)).revision
+    return this.#run(() => this.#sync())
+  }
+
+  async #sync(): Promise<string> {
+    await this.database.syncWith(this.source)
+    await this.#seed()
+    return this.database.getRevision()
+  }
+
+  #run<T>(task: () => Promise<T>): Promise<T> {
+    const result = this.#queue.then(task)
+    this.#queue = result.catch(() => {})
+    return result
+  }
+
+  async #seed(): Promise<void> {
+    const seeds = entrySeeds(this.config)
+    if (!seeds.length) return
+    const nodeIds = new Map<string, string>()
+    const translationIds = new Map<string, string>()
+    const mutations = Array<Mutation>()
+    for (const seed of seeds) {
+      const existing = await this.database.first({
+        filePath: {
+          in: [
+            seed.filePath,
+            seed.filePath.replace(/\.json$/, '.draft.json'),
+            seed.filePath.replace(/\.json$/, '.archived.json')
+          ]
+        },
+        status: 'all',
+        select: {id: Entry.id, type: Entry.type}
+      })
+      if (existing) {
+        assert(existing.type === seed.type, `Type mismatch in ${seed.nodePath}`)
+        nodeIds.set(seed.nodePath, existing.id)
+        translationIds.set(`${seed.workspace}/${seed.id}`, existing.id)
+        continue
+      }
+      const translationKey = `${seed.workspace}/${seed.id}`
+      const id = translationIds.get(translationKey) ?? createId()
+      const parentId = seed.parentNodePath
+        ? nodeIds.get(seed.parentNodePath)
+        : null
+      if (seed.parentNodePath)
+        assert(parentId, `Missing seed parent ${seed.parentNodePath}`)
+      translationIds.set(translationKey, id)
+      nodeIds.set(seed.nodePath, id)
+      mutations.push({
+        op: 'create',
+        id,
+        parentId,
+        locale: seed.locale,
+        type: seed.type,
+        workspace: seed.workspace,
+        root: seed.root,
+        fromSeed: seed.seedPath,
+        data: {path: seed.data.path}
+      })
+    }
+    if (!mutations.length) return
+    const result = await this.database.apply(mutations, {source: this.source})
+    await this.source.applyChanges(sourceChanges(result.request))
   }
 
   /** Keep the writable source and its query database at one remote revision. */
-  async syncWith(remote: RemoteSource): Promise<string> {
-    const batch = await diff(this.source, remote)
-    if (batch.changes.length) await this.source.applyChanges(batch)
-    return this.sync()
+  syncWith(remote: RemoteSource): Promise<string> {
+    return this.#run(async () => {
+      const batch = await diff(this.source, remote)
+      if (batch.changes.length) await this.source.applyChanges(batch)
+      return this.#sync()
+    })
   }
 
   /** Create a persistent copy-on-write session over this store. */
-  async overlay(remote: RemoteSource): Promise<EntryStore> {
-    const source = await OverlaySource.create(this.source)
-    const batch = await diff(source, remote)
-    if (batch.changes.length) await source.applyChanges(batch)
-    const database = await this.database.overlay(source)
-    return new EntryStore(this.config, database, source, {
-      ownsDatabase: true
+  overlay(remote: RemoteSource): Promise<EntryStore> {
+    return this.#run(async () => {
+      const source = await OverlaySource.create(this.source)
+      const batch = await diff(source, remote)
+      if (batch.changes.length) await source.applyChanges(batch)
+      const database = await this.database.overlay(source)
+      return new EntryStore(this.config, database, source, {
+        ownsDatabase: true
+      })
     })
   }
 
   /** Plan a commit without changing this store. */
-  async request(
+  request(
     mutations: ReadonlyArray<Mutation>,
     policy?: Policy
   ): Promise<CommitRequest> {
-    await this.sync()
-    const source = await OverlaySource.create(this.source)
-    const database = await this.database.overlay(source)
-    try {
-      return (await database.apply(mutations, {source, policy})).request
-    } finally {
-      await database.close()
-    }
+    return this.#run(async () => {
+      await this.#sync()
+      const source = await OverlaySource.create(this.source)
+      const database = await this.database.overlay(source)
+      try {
+        return (await database.apply(mutations, {source, policy})).request
+      } finally {
+        await database.close()
+      }
+    })
   }
 
-  async mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
-    const result = await this.database.apply(mutations, {source: this.source})
-    await this.source.applyChanges(sourceChanges(result.request))
-    return {sha: result.revision}
+  mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
+    return this.#run(async () => {
+      const result = await this.database.apply(mutations, {source: this.source})
+      await this.source.applyChanges(sourceChanges(result.request))
+      return {sha: result.revision}
+    })
   }
 
-  async write(request: CommitRequest): Promise<{sha: string}> {
-    const tree = await this.source.getTree()
-    if (tree.sha !== request.intoSha)
-      await this.source.applyChanges(sourceChanges(request))
-    const result = await this.database.syncWith(this.source)
-    return {sha: result.revision}
+  write(request: CommitRequest): Promise<{sha: string}> {
+    return this.#run(async () => {
+      const tree = await this.source.getTree()
+      if (tree.sha !== request.intoSha)
+        await this.source.applyChanges(sourceChanges(request))
+      const result = await this.database.syncWith(this.source)
+      return {sha: result.revision}
+    })
   }
 
   getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
@@ -183,6 +260,7 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   }
 
   async close(): Promise<void> {
+    await this.#queue
     if (this.#ownsDatabase) await this.database.close()
   }
 

@@ -23,12 +23,16 @@ const config: Config = {
   }
 }
 
-function createStore(source = new MemorySource()) {
+function createStore(source = new MemorySource(), storeConfig = config) {
   const sqlite = new Database(':memory:')
   const db = connect(sqlite)
   return EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha).then(() => ({
     sqlite,
-    store: new EntryStore(config, new EntryDatabase(config, db), source)
+    store: new EntryStore(
+      storeConfig,
+      new EntryDatabase(storeConfig, db),
+      source
+    )
   }))
 }
 
@@ -104,5 +108,82 @@ test('entry store resolves previews through a temporary database overlay', async
     expect(await store.get({id: 'page', select: Entry.title})).toBe('Published')
   } finally {
     sqlite.close()
+  }
+})
+
+test('entry store materializes configured seeds in every locale', async () => {
+  const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
+  const seededConfig: Config = {
+    schema: {Seeded},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: ConfigBuilder.root('Pages', {
+            i18n: {locales: ['en', 'fr']},
+            children: {home: ConfigBuilder.page({type: Seeded})}
+          })
+        }
+      })
+    }
+  }
+  const {sqlite, store} = await createStore(new MemorySource(), seededConfig)
+  try {
+    await store.sync()
+    const rows = await store.find({
+      path: 'home',
+      status: 'all',
+      select: {id: Entry.id, locale: Entry.locale}
+    })
+    expect(rows).toHaveLength(2)
+    expect(new Set(rows.map(row => row.id)).size).toBe(1)
+    expect(rows.map(row => row.locale).sort()).toEqual(['en', 'fr'])
+  } finally {
+    sqlite.close()
+  }
+})
+
+test('SQLite seed defaults follow config changes without rewriting source', async () => {
+  const Seeded = ConfigBuilder.document('Seeded', {
+    fields: {rate: Field.number('Rate')}
+  })
+  function seededConfig(title: string, rate: number): Config {
+    return {
+      schema: {Seeded},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {
+            pages: ConfigBuilder.root('Pages', {
+              children: {
+                vat: ConfigBuilder.page({
+                  type: Seeded,
+                  fields: {title, rate}
+                })
+              }
+            })
+          }
+        })
+      }
+    }
+  }
+  const source = new MemorySource()
+  const initial = await createStore(source, seededConfig('VAT', 6))
+  await initial.store.sync()
+  expect(await initial.store.get({path: 'vat', type: Seeded})).toMatchObject({
+    title: 'VAT',
+    rate: 6
+  })
+  initial.sqlite.close()
+
+  const changed = await createStore(source, seededConfig('BTW', 21))
+  try {
+    await changed.store.sync()
+    expect(await changed.store.get({path: 'vat', type: Seeded})).toMatchObject({
+      title: 'BTW',
+      rate: 21
+    })
+  } finally {
+    changed.sqlite.close()
   }
 })
