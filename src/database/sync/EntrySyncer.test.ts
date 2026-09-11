@@ -57,6 +57,39 @@ test('runtime serializes sources through one database-bound syncer', async () =>
     })
   ).toEqual([{title: 'Recipes', filePath: 'pages/recipes.json'}])
 
+  const leafChange = await transaction(source)
+  const updatedLeaf = await leafChange
+    .add(
+      'pages/recipes/chocolate-chip.json',
+      new TextEncoder().encode(
+        JSON.stringify({
+          _id: 'oi4qtV9YaXNRIUDT2s61Y',
+          _type: 'DemoRecipe',
+          _index: 'Zz',
+          _i18nId: 'oi4qtV9YaXNRIUDT2s61Y',
+          _root: 'pages',
+          title: 'Updated chocolate chip'
+        })
+      )
+    )
+    .compile()
+  await source.applyChanges({
+    fromSha: updatedLeaf.from.sha,
+    changes: updatedLeaf.changes
+  })
+
+  const leafSync = await runtime.syncWith(remote)
+  expect(leafSync.changedEntryIds).toEqual([
+    '2cGLQZvsCCxnguLrwCfPDL8uFkm',
+    'oi4qtV9YaXNRIUDT2s61Y'
+  ])
+  expect(
+    await runtime.resolve({
+      path: 'chocolate-chip',
+      select: Entry.title
+    })
+  ).toEqual(['Updated chocolate chip'])
+
   const change = await transaction(source)
   const next = await change
     .add(
@@ -77,7 +110,7 @@ test('runtime serializes sources through one database-bound syncer', async () =>
   await source.applyChanges({fromSha: next.from.sha, changes: next.changes})
 
   const second = await runtime.syncWith(remote)
-  expect(second.revision).not.toBe(first.revision)
+  expect(second.revision).not.toBe(leafSync.revision)
   expect(second.changedEntryIds).toContain('2cGLQZvsCCxnguLrwCfPDL8uFkm')
   expect(await runtime.getRevision()).toBe(second.revision)
   expect(await runtime.resolve({path: 'recipes', select: Entry.title})).toEqual(

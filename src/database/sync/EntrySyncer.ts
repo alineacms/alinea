@@ -55,6 +55,10 @@ const SyncAffected = temporaryTable('alinea_sync_affected', {
   id: column.text().primaryKey()
 })
 
+const SyncCascade = temporaryTable('alinea_sync_cascade', {
+  id: column.text().primaryKey()
+})
+
 const SyncValues = temporaryTable('alinea_sync_values', {
   key: column.text().primaryKey(),
   value: column.text().notNull()
@@ -79,6 +83,13 @@ interface StoredFileRow extends FileRow {
   childrenSha: string | null
 }
 
+interface StoredHierarchyRow {
+  versionId: string
+  parentDir: string
+  parentId: string | null
+  parents: Array<string>
+}
+
 interface MainRow {
   versionId: string
   id: string
@@ -101,6 +112,8 @@ interface ParentPathRow {
 interface HierarchyRow {
   id: string
   parentDir: string
+  parentId: string | null
+  parents: Array<string>
 }
 
 interface DirectoryRow {
@@ -168,7 +181,12 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .orderBy(asc(EntryIndexTable.filePath))
     .limit(sqliteBatchSize)
   const hierarchyQuery = builder
-    .select({id: DerivedEntries.id, parentDir: DerivedEntries.parentDir})
+    .select({
+      id: DerivedEntries.id,
+      parentDir: DerivedEntries.parentDir,
+      parentId: DerivedEntries.parentId,
+      parents: DerivedEntries.parents
+    })
     .from(DerivedEntries)
     .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
     .where(gt(DerivedEntries.id, afterEntryId))
@@ -237,29 +255,13 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .from(SyncAffected)
     .orderBy(asc(SyncAffected.id))
   const clearAffectedQuery = builder.delete(SyncAffected)
+  const clearCascadeQuery = builder.delete(SyncCascade)
   const clearValuesQuery = builder.delete(SyncValues)
   const clearStatusQuery = builder.delete(SyncStatus)
   const markAllAffectedQuery = builder
     .insert(SyncAffected)
     .select(
       builder.selectDistinct({id: EntryIndexTable.id}).from(EntryIndexTable)
-    )
-  const materializeAffectedQuery = builder
-    .update(target.changes ? EntryIndexTable : DerivedEntries)
-    .set({
-      versionId: target.changes
-        ? EntryIndexTable.versionId
-        : DerivedEntries.versionId
-    })
-    .where(
-      target.changes
-        ? exists(
-            builder
-              .select({value: sql.value(1)})
-              .from(SyncAffected)
-              .where(eq(SyncAffected.id, EntryIndexTable.id))
-          )
-        : sql.value(false)
     )
   const updateValueForVersion = builder
     .select(SyncValues.value)
@@ -363,10 +365,10 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     mainEntries: mainEntriesQuery,
     changedIds: changedIdsQuery,
     clearAffected: clearAffectedQuery,
+    clearCascade: clearCascadeQuery,
     clearValues: clearValuesQuery,
     clearStatus: clearStatusQuery,
     markAllAffected: markAllAffectedQuery,
-    materializeAffected: materializeAffectedQuery,
     updateChildrenSha: updateChildrenShaQuery,
     updateUrls: updateUrlsQuery,
     copyInitialUrls: copyInitialUrlsQuery,
@@ -397,10 +399,10 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     ),
     changedIds: query.changedIds.prepare(undefined, db),
     clearAffected: query.clearAffected.prepare(undefined, db),
+    clearCascade: query.clearCascade.prepare(undefined, db),
     clearValues: query.clearValues.prepare(undefined, db),
     clearStatus: query.clearStatus.prepare(undefined, db),
     markAllAffected: query.markAllAffected.prepare(undefined, db),
-    materializeAffected: query.materializeAffected.prepare(undefined, db),
     updateChildrenSha: query.updateChildrenSha.prepare(undefined, db),
     updateUrls: query.updateUrls.prepare(undefined, db),
     copyInitialUrls: query.copyInitialUrls.prepare(undefined, db),
@@ -422,15 +424,16 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
 type SyncQueries = ReturnType<typeof prepareSyncQueries>
 
 async function createTemporaryTables(db: Database): Promise<void> {
-  await db.create(SyncAffected, SyncValues, SyncStatus)
+  await db.create(SyncAffected, SyncCascade, SyncValues, SyncStatus)
 }
 
 async function dropTemporaryTables(db: Database): Promise<void> {
-  await db.drop(SyncAffected, SyncValues, SyncStatus)
+  await db.drop(SyncAffected, SyncCascade, SyncValues, SyncStatus)
 }
 
 async function clearTemporaryTables(queries: SyncQueries): Promise<void> {
   await queries.clearAffected.run()
+  await queries.clearCascade.run()
   await queries.clearValues.run()
   await queries.clearStatus.run()
 }
@@ -443,7 +446,10 @@ async function markAffected(
 ): Promise<void> {
   if (!filePaths.length && !versionIds.length) return
   const existing = await db
-    .select({id: EntryIndexTable.id})
+    .select({
+      id: EntryIndexTable.id,
+      childrenSha: EntryIndexTable.childrenSha
+    })
     .from(EntryIndexTable)
     .where(
       or(
@@ -459,6 +465,14 @@ async function markAffected(
     db,
     existing.map(row => row.id)
   )
+  await addCascade(
+    db,
+    existing.flatMap(row =>
+      row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
+        ? [row.id]
+        : []
+    )
+  )
 }
 
 async function addAffected(db: Database, ids: Iterable<string>): Promise<void> {
@@ -472,6 +486,19 @@ async function addAffected(db: Database, ids: Iterable<string>): Promise<void> {
   const missing = unique.filter(id => !present.has(id))
   if (missing.length)
     await db.insert(SyncAffected).values(missing.map(id => ({id})))
+}
+
+async function addCascade(db: Database, ids: Iterable<string>): Promise<void> {
+  const unique = Array.from(new Set(ids))
+  if (!unique.length) return
+  const existing = await db
+    .select({id: SyncCascade.id})
+    .from(SyncCascade)
+    .where(inArray(SyncCascade.id, unique))
+  const present = new Set(existing.map(row => row.id))
+  const missing = unique.filter(id => !present.has(id))
+  if (missing.length)
+    await db.insert(SyncCascade).values(missing.map(id => ({id})))
 }
 
 async function deleteFiles(
@@ -520,6 +547,27 @@ async function replaceFiles(
   }))
   const filePaths = rows.map(row => row.filePath)
   const versionIds = rows.map(row => row.versionId)
+  const previous = (await db
+    .select({
+      versionId: EntryIndexTable.versionId,
+      parentDir: EntryIndexTable.parentDir,
+      parentId: EntryIndexTable.parentId,
+      parents: EntryIndexTable.parents
+    })
+    .from(EntryIndexTable)
+    .where(
+      or(
+        inArray(EntryIndexTable.filePath, filePaths),
+        inArray(EntryIndexTable.versionId, versionIds)
+      )
+    )) as Array<StoredHierarchyRow>
+  const previousByVersion = new Map(previous.map(row => [row.versionId, row]))
+  for (const row of rows) {
+    const stored = previousByVersion.get(row.versionId)
+    if (!stored || stored.parentDir !== row.parentDir) continue
+    row.parentId = stored.parentId
+    row.parents = stored.parents
+  }
   await markAffected(db, EntryIndexTable, filePaths, versionIds)
   await db
     .delete(EntryIndexTable)
@@ -533,6 +581,14 @@ async function replaceFiles(
   await addAffected(
     db,
     rows.map(row => row.id)
+  )
+  await addCascade(
+    db,
+    rows.flatMap(row =>
+      row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
+        ? [row.id]
+        : []
+    )
   )
 }
 
@@ -679,13 +735,14 @@ async function deriveHierarchy(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   queries: SyncQueries
-): Promise<void> {
+): Promise<boolean> {
+  let changed = false
   let afterEntryId = ''
   for (;;) {
     const rows = (await queries.hierarchy.all({
       afterEntryId
     })) as Array<HierarchyRow>
-    if (!rows.length) return
+    if (!rows.length) return changed
     afterEntryId = rows.at(-1)!.id
     const prefixesById = new Map<string, Array<string>>()
     const needed = new Set<string>()
@@ -712,16 +769,22 @@ async function deriveHierarchy(
     const idByDirectory = new Map<string, string>()
     for (const directory of directories)
       idByDirectory.set(directory.childrenDir, directory.id)
-    const hierarchy = rows.map(row => {
+    const hierarchy = rows.flatMap(row => {
       const parents = (prefixesById.get(row.id) ?? []).flatMap(path => {
         const id = idByDirectory.get(path)
         return id ? [id] : []
       })
-      return {
-        key: row.id,
-        value: JSON.stringify({parentId: parents.at(-1) ?? null, parents})
-      }
+      const parentId = parents.at(-1) ?? null
+      const unchanged =
+        row.parentId === parentId &&
+        row.parents.length === parents.length &&
+        row.parents.every((id, index) => id === parents[index])
+      return unchanged
+        ? []
+        : [{key: row.id, value: JSON.stringify({parentId, parents})}]
     })
+    if (!hierarchy.length) continue
+    changed = true
     await queries.clearValues.run()
     await db.insert(SyncValues).values(hierarchy)
     await queries.updateHierarchy.run()
@@ -734,13 +797,42 @@ async function expandAffected(
 ): Promise<void> {
   await db.run(sql`
     with recursive descendants(id) as (
-      select id from alinea_sync_affected
+      select id from alinea_sync_cascade
       union
       select entry.id from ${EntryIndexTable} entry
       join descendants on entry.parentId = descendants.id
     )
     insert or ignore into alinea_sync_affected(id) select id from descendants;
   `)
+}
+
+async function materializeAffected(
+  db: Database,
+  target: EntrySyncTarget,
+  queries: SyncQueries,
+  materialized: Set<string>
+): Promise<void> {
+  if (!target.changes) return
+  const affected = (await queries.changedIds.all()) as Array<{id: string}>
+  const candidates = affected
+    .map(row => row.id)
+    .filter(id => !materialized.has(id))
+  for (const ids of chunks(candidates, sqliteBatchSize)) {
+    const resident = await db
+      .select({id: target.changes.id})
+      .from(target.changes)
+      .where(inArray(target.changes.id, ids))
+      .groupBy(target.changes.id)
+    for (const row of resident) materialized.add(row.id)
+  }
+  const missing = candidates.filter(id => !materialized.has(id))
+  for (const ids of chunks(missing, sqliteBatchSize)) {
+    await db
+      .update(target.entries)
+      .set({versionId: target.entries.versionId})
+      .where(inArray(target.entries.id, ids))
+  }
+  for (const id of missing) materialized.add(id)
 }
 
 async function deriveStatus(db: Database, queries: SyncQueries): Promise<void> {
@@ -899,6 +991,7 @@ export class EntrySyncer implements AsyncDisposable {
   ): Promise<Array<string>> {
     const queries = await this.#queriesFor(target)
     const run = async (tx: Database) => {
+      const materialized = new Set<string>()
       await clearTemporaryTables(queries)
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
@@ -923,10 +1016,16 @@ export class EntrySyncer implements AsyncDisposable {
           queries
         )
       await expandAffected(tx, target.entries)
-      await queries.materializeAffected.run()
-      await deriveHierarchy(tx, target.entries, queries)
-      await expandAffected(tx, target.entries)
-      await queries.materializeAffected.run()
+      await materializeAffected(tx, target, queries, materialized)
+      const hierarchyChanged = await deriveHierarchy(
+        tx,
+        target.entries,
+        queries
+      )
+      if (hierarchyChanged) {
+        await expandAffected(tx, target.entries)
+        await materializeAffected(tx, target, queries, materialized)
+      }
       await deriveStatus(tx, queries)
       if (initial) await copyInitialUrls(queries)
       else await deriveUrls(tx, target.entries, this.#config, queries)
