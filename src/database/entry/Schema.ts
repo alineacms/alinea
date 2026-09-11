@@ -1,5 +1,5 @@
 import type {Entry, EntryStatus} from '#/core/Entry.js'
-import {index, table} from 'rado'
+import {index, table, temporaryTable, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 
 export function entryVersionId(
@@ -11,55 +11,75 @@ export function entryVersionId(
 }
 
 /** One complete authored entry version. Only arrays and authored data are JSON. */
-export const EntryIndexTable = table(
-  'alinea_entry_index',
-  {
-    versionId: column.varchar(undefined, {length: 255}).primaryKey(),
-    id: column.varchar(undefined, {length: 128}).notNull(),
-    locale: column.varchar(undefined, {length: 64}),
-    versionStatus: column
-      .varchar(undefined, {length: 16})
-      .notNull()
-      .$type<EntryStatus>(),
-    status: column
-      .varchar(undefined, {length: 16})
-      .notNull()
-      .$type<EntryStatus>(),
-    type: column.varchar(undefined, {length: 255}).notNull(),
-    title: column.text().notNull(),
-    workspace: column.varchar(undefined, {length: 255}).notNull(),
-    root: column.varchar(undefined, {length: 255}).notNull(),
-    sourceRoot: column.varchar(undefined, {length: 255}),
-    parentId: column.varchar(undefined, {length: 128}),
-    parents: column.json<Array<string>>().notNull(),
-    level: column.integer().notNull(),
-    index: column.varchar(undefined, {length: 255}).notNull(),
-    path: column.text().notNull(),
-    /** Full source path of this authored version. */
-    filePath: column.text().notNull(),
-    fileHash: column.varchar(undefined, {length: 128}).notNull(),
-    parentDir: column.text().notNull(),
-    childrenDir: column.text().notNull(),
-    url: column.varchar(undefined, {length: 1024}).notNull(),
-    active: column.boolean().notNull(),
-    main: column.boolean().notNull(),
-    visible: column.boolean().notNull(),
-    seeded: column.text(),
-    rowHash: column.varchar(undefined, {length: 128}).notNull(),
-    /** Hash of this entry's child directory in the synced source tree. */
-    childrenSha: column.varchar(undefined, {length: 128}),
-    searchableText: column.text().notNull(),
-    data: column.json<Record<string, unknown>>().notNull()
-  },
-  row => ({
-    byId: index().on(row.id, row.locale, row.versionStatus),
-    byUrl: index().on(row.url),
-    byType: index().on(row.type),
-    byParent: index().on(row.parentId, row.locale, row.index),
-    byChildrenDir: index().on(row.childrenDir),
-    byLocation: index().on(row.workspace, row.root, row.status, row.index),
-    byFilePath: index().on(row.filePath)
-  })
+export const EntryIndexColumns = {
+  versionId: column.varchar(undefined, {length: 255}).primaryKey(),
+  id: column.varchar(undefined, {length: 128}).notNull(),
+  locale: column.varchar(undefined, {length: 64}),
+  versionStatus: column
+    .varchar(undefined, {length: 16})
+    .notNull()
+    .$type<EntryStatus>(),
+  status: column
+    .varchar(undefined, {length: 16})
+    .notNull()
+    .$type<EntryStatus>(),
+  type: column.varchar(undefined, {length: 255}).notNull(),
+  title: column.text().notNull(),
+  workspace: column.varchar(undefined, {length: 255}).notNull(),
+  root: column.varchar(undefined, {length: 255}).notNull(),
+  sourceRoot: column.varchar(undefined, {length: 255}),
+  parentId: column.varchar(undefined, {length: 128}),
+  parents: column.json<Array<string>>().notNull(),
+  level: column.integer().notNull(),
+  index: column.varchar(undefined, {length: 255}).notNull(),
+  path: column.text().notNull(),
+  /** Full source path of this authored version. */
+  filePath: column.text().notNull(),
+  fileHash: column.varchar(undefined, {length: 128}).notNull(),
+  parentDir: column.text().notNull(),
+  childrenDir: column.text().notNull(),
+  url: column.varchar(undefined, {length: 1024}).notNull(),
+  active: column.boolean().notNull(),
+  main: column.boolean().notNull(),
+  visible: column.boolean().notNull(),
+  seeded: column.text(),
+  rowHash: column.varchar(undefined, {length: 128}).notNull(),
+  /** Hash of this entry's child directory in the synced source tree. */
+  childrenSha: column.varchar(undefined, {length: 128}),
+  searchableText: column.text().notNull(),
+  data: column.json<Record<string, unknown>>().notNull()
+}
+
+export function entryIndexTable(name: string, temporary = false) {
+  const create = temporary ? temporaryTable : table
+  return create(name, EntryIndexColumns, row => ({
+    [`${name}_by_id`]: index().on(row.id, row.locale, row.versionStatus),
+    [`${name}_by_url`]: index().on(row.url),
+    [`${name}_by_type`]: index().on(row.type),
+    [`${name}_by_parent`]: index().on(row.parentId, row.locale, row.index),
+    [`${name}_by_children_dir`]: index().on(row.childrenDir),
+    [`${name}_by_location`]: index().on(
+      row.workspace,
+      row.root,
+      row.status,
+      row.index
+    ),
+    [`${name}_by_file_path`]: index().on(row.filePath)
+  }))
+}
+
+export type EntryIndexTarget = Table<typeof EntryIndexColumns>
+
+export const EntryIndexTable = entryIndexTable('alinea_entry_index')
+
+export const DatabaseStateColumns = {
+  id: column.integer().primaryKey(),
+  revision: column.text().notNull()
+}
+
+export const DatabaseStateTable = table(
+  'alinea_database_state',
+  DatabaseStateColumns
 )
 
 /** An Entry plus the physical-version and local-index fields. */

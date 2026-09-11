@@ -122,6 +122,89 @@ test('subscriptions publish the initial value and committed changes', async () =
   expect(errors).toEqual([])
 })
 
+test('named databases sync and query nested overlays without copying the base', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const encode = (id: string, index: string, title: string) =>
+    new TextEncoder().encode(
+      JSON.stringify({_id: id, _type: 'Page', _index: index, title})
+    )
+  async function source(entries: Array<[string, string, string]>) {
+    const result = new MemorySource()
+    const change = await transaction(result)
+    for (const [id, index, title] of entries)
+      change.add(`pages/${id}.json`, encode(id, index, title))
+    const compiled = await change.compile()
+    await result.applyChanges({
+      fromSha: compiled.from.sha,
+      changes: compiled.changes
+    })
+    return result
+  }
+
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, 'empty')
+  const base = new EntryDatabase(config, db)
+  await base.syncWith(
+    await source([
+      ['a', 'a', 'Base A'],
+      ['b', 'b', 'Base B']
+    ])
+  )
+  const github = await base.overlay(
+    'github',
+    await source([
+      ['a', 'a', 'GitHub A'],
+      ['c', 'c', 'GitHub C']
+    ])
+  )
+  const preview = await github.overlay(
+    'preview_1',
+    await source([
+      ['a', 'a', 'Preview A'],
+      ['b', 'b', 'Preview B'],
+      ['c', 'c', 'GitHub C']
+    ])
+  )
+
+  expect(await base.resolve({select: Entry.title})).toEqual([
+    'Base A',
+    'Base B'
+  ])
+  expect(await github.resolve({select: Entry.title})).toEqual([
+    'GitHub A',
+    'GitHub C'
+  ])
+  expect(await preview.resolve({select: Entry.title})).toEqual([
+    'Preview A',
+    'Preview B',
+    'GitHub C'
+  ])
+  expect(
+    await preview.resolve({search: 'Preview', select: Entry.title})
+  ).toEqual(['Preview A', 'Preview B'])
+  await expect(github.close()).rejects.toThrow('active overlays')
+  await preview.close()
+  await github.close()
+  const replacement = await base.overlay(
+    'github',
+    await source([['a', 'a', 'Replacement A']])
+  )
+  expect(await replacement.resolve({select: Entry.title})).toEqual([
+    'Replacement A'
+  ])
+  await replacement.close()
+})
+
 test('linked queries retain one snapshot while sync commits separately', async () => {
   const projectionStarted = Promise.withResolvers<void>()
   const resumeProjection = Promise.withResolvers<void>()

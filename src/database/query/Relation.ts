@@ -17,7 +17,7 @@ import {
   when,
   type Sql
 } from 'rado'
-import {EntryIndexTable as entry} from '../entry/Schema.js'
+import type {EntryIndexTarget} from '../entry/Schema.js'
 import {jsonField} from './Condition.js'
 
 export interface RelationSource {
@@ -30,18 +30,21 @@ export interface RelationSource {
   index: string
 }
 
-export const relationSource = {
-  versionId: entry.versionId,
-  id: entry.id,
-  locale: entry.locale,
-  parentId: entry.parentId,
-  parents: entry.parents,
-  level: entry.level,
-  index: entry.index
+export function relationSource(entry: EntryIndexTarget) {
+  return {
+    versionId: entry.versionId,
+    id: entry.id,
+    locale: entry.locale,
+    parentId: entry.parentId,
+    parents: entry.parents,
+    level: entry.level,
+    index: entry.index
+  }
 }
 
 /** Expand the stored references as SQL rows, retaining list order and duplicates. */
 export function linkRelation(
+  entry: EntryIndexTarget,
   source: RelationSource,
   field: string,
   multiple: boolean
@@ -82,6 +85,7 @@ export function linkRelation(
 
 /** Restrict related identities in SQL before the query's own filters/paging. */
 export function relationCondition(
+  entry: EntryIndexTarget,
   query: EdgeQuery,
   source: RelationSource
 ): Sql<boolean> {

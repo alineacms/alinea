@@ -1,5 +1,7 @@
 import {sql, type Database, type HasSql, type Sql} from 'rado'
-import {EntryIndexTable} from '../entry/Schema.js'
+import {EntryIndexTable, type EntryIndexTarget} from '../entry/Schema.js'
+
+export const EntrySearchName = 'alinea_entry_search'
 
 export interface SearchQuery {
   condition: Sql<boolean>
@@ -14,21 +16,29 @@ export interface SearchQuery {
 
 /** Create the local standard FTS5 index. It is populated lazily so a cold
  * database does not tokenize every payload before its first search query. */
-export async function createSearch(db: Database): Promise<void> {
+export async function createSearch(
+  db: Database,
+  name = EntrySearchName
+): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
-  await db.run(sql`create virtual table alinea_entry_search using fts5(
+  await db.run(sql`create virtual table if not exists ${sql.identifier(name)} using fts5(
     versionId unindexed, title, body, tokenize='unicode61 remove_diacritics 2'
   )`)
 }
 
 /** Rebuild from resident entry text only when a search needs it. */
-export async function rebuildSearch(db: Database): Promise<void> {
+export async function rebuildSearch(
+  db: Database,
+  entry: EntryIndexTarget = EntryIndexTable,
+  name = EntrySearchName
+): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
-  await db.run(sql`delete from alinea_entry_search`)
-  await db.run(sql`insert into alinea_entry_search(versionId, title, body)
+  const search = sql.identifier(name)
+  await db.run(sql`delete from ${search}`)
+  await db.run(sql`insert into ${search}(versionId, title, body)
     select versionId, title,
       searchableText
-    from alinea_entry_index`)
+    from ${entry}`)
 }
 
 export function searchTokens(input: string | Array<string> | undefined) {
@@ -38,28 +48,31 @@ export function searchTokens(input: string | Array<string> | undefined) {
 }
 
 export function searchQuery(
-  input: string | Array<string> | undefined
+  input: string | Array<string> | undefined,
+  entry: EntryIndexTarget = EntryIndexTable,
+  name = EntrySearchName
 ): SearchQuery | undefined {
   const tokens = searchTokens(input)
   if (!tokens) return undefined
   // Quote individual tokens and bind the entire expression: user text cannot
   // inject FTS operators, column selectors, quotes or SQL syntax.
   const terms = tokens.map(term => `"${term}"*`).join(' AND ')
-  const match = sql`alinea_entry_search match ${terms}`
-  const identity = sql`versionId = ${EntryIndexTable.versionId}`
+  const search = sql.identifier(name)
+  const match = sql`${search} match ${terms}`
+  const identity = sql`versionId = ${entry.versionId}`
   return {
     condition: tokens.length
       ? sql.universal<boolean>({
           sqlite: sql`exists (
-          select 1 from alinea_entry_search where ${identity} and ${match}
+          select 1 from ${search} where ${identity} and ${match}
         )`
         })
       : sql.value(false),
     rank: tokens.length
       ? sql.universal<number>({
           sqlite: sql`(
-          select bm25(alinea_entry_search, 0, 20, 1)
-          from alinea_entry_search where ${identity} and ${match}
+          select bm25(${search}, 0, 20, 1)
+          from ${search} where ${identity} and ${match}
         )`
         })
       : sql.value(0),
@@ -67,8 +80,8 @@ export function searchQuery(
       return tokens.length
         ? sql.universal<string>({
             sqlite: sql`(
-            select snippet(alinea_entry_search, 2, ${start}, ${end}, ${cutOff}, ${limit})
-            from alinea_entry_search where ${identity} and ${match}
+            select snippet(${search}, 2, ${start}, ${end}, ${cutOff}, ${limit})
+            from ${search} where ${identity} and ${match}
           )`
           })
         : sql.value('')

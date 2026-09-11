@@ -31,7 +31,7 @@ import {
   type SelectionRecord,
   type Sql
 } from 'rado'
-import {EntryIndexTable} from '../entry/Schema.js'
+import {EntryIndexTable, type EntryIndexTarget} from '../entry/Schema.js'
 import {
   columnField,
   arrayIncludes,
@@ -68,28 +68,32 @@ class Expressions {
   fields: Array<FieldProjection> = []
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
+  #entry: EntryIndexTarget
 
-  constructor(scope: Scope, search?: ReturnType<typeof searchQuery>) {
+  constructor(
+    scope: Scope,
+    entry: EntryIndexTarget,
+    search?: ReturnType<typeof searchQuery>
+  ) {
     this.#scope = scope
+    this.#entry = entry
     this.#search = search
   }
 
   data(path: Array<string>): QueryField {
-    return jsonField(EntryIndexTable.data, path)
+    return jsonField(this.#entry.data, path)
   }
 
   index(name: string, path?: Array<string>): QueryField {
     if (name === 'aliases') {
-      return aliasesField(EntryIndexTable.data)
+      return aliasesField(this.#entry.data)
     }
     if (path) return this.data([...path, name])
     if (name === 'data') {
-      return columnField(EntryIndexTable.data)
+      return columnField(this.#entry.data)
     }
-    if (Object.hasOwn(EntryIndexTable, name))
-      return columnField(
-        EntryIndexTable[name as keyof typeof EntryIndexTable] as HasSql
-      )
+    if (Object.hasOwn(this.#entry, name))
+      return columnField(this.#entry[name as keyof EntryIndexTarget] as HasSql)
     const expr = EntryExpressions[name as keyof typeof EntryExpressions]
     if (expr) {
       const internal = getExpr(expr)
@@ -171,7 +175,7 @@ class Expressions {
         kind
       ),
       when<unknown>(
-        [inArray(kind, ['object', 'array']), EntryIndexTable.versionId],
+        [inArray(kind, ['object', 'array']), this.#entry.versionId],
         field.value
       )
     ]
@@ -198,14 +202,16 @@ export function compileEntryQuery(
   config: Config,
   query: GraphQuery,
   source?: RelationSource,
-  search = searchQuery(query.search)
+  search?: ReturnType<typeof searchQuery>,
+  entry: EntryIndexTarget = EntryIndexTable
 ) {
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope, search)
+  search ??= searchQuery(query.search, entry)
+  const membership = new Expressions(scope, entry, search)
   const structural: Array<Sql<boolean>> = []
-  structural.push(eq(EntryIndexTable.visible, true))
+  structural.push(eq(entry.visible, true))
   const edge = 'edge' in query ? (query as EdgeQuery) : undefined
   const link = edge?.edge === 'entrySingle' || edge?.edge === 'entryMultiple'
   let links: ReturnType<typeof linkRelation> | undefined
@@ -214,18 +220,18 @@ export function compileEntryQuery(
     if (link) {
       const name = scope.nameOf(edge.field)
       if (!name) throw new Error('Link field is not in the configured schema')
-      links = linkRelation(source, name, edge.edge === 'entryMultiple')
-    } else structural.push(relationCondition(edge, source))
+      links = linkRelation(entry, source, name, edge.edge === 'entryMultiple')
+    } else structural.push(relationCondition(entry, edge, source))
   }
   const status = query.status ?? 'published'
   structural.push(
     status === 'all'
       ? sql.value(true)
       : status === 'preferDraft'
-        ? eq(EntryIndexTable.active, true)
+        ? eq(entry.active, true)
         : status === 'preferPublished'
-          ? eq(EntryIndexTable.main, true)
-          : eq(EntryIndexTable.status, status)
+          ? eq(entry.main, true)
+          : eq(entry.status, status)
   )
   for (const key of ['id', 'parentId', 'path', 'url', 'level'] as const)
     if (query[key] !== undefined)
@@ -249,8 +255,8 @@ export function compileEntryQuery(
   else if (query.preferredLocale)
     structural.push(
       or(
-        isNull(EntryIndexTable.locale),
-        eq(EntryIndexTable.locale, query.preferredLocale.toLowerCase())
+        isNull(entry.locale),
+        eq(entry.locale, query.preferredLocale.toLowerCase())
       )
     )
   if (query.type) {
@@ -266,11 +272,10 @@ export function compileEntryQuery(
     ? query.location
     : query.location && scope.locationOf(query.location)
   if (location && location.length >= 1 && location.length <= 3) {
-    structural.push(eq(EntryIndexTable.workspace, location[0]))
-    if (location.length >= 2)
-      structural.push(eq(EntryIndexTable.root, location[1]))
+    structural.push(eq(entry.workspace, location[0]))
+    if (location.length >= 2) structural.push(eq(entry.root, location[1]))
     if (location.length === 3)
-      structural.push(eq(EntryIndexTable.sourceRoot, location[2]))
+      structural.push(eq(entry.sourceRoot, location[2]))
   }
   const content: Array<Sql<boolean>> = []
   if (search) {
@@ -310,20 +315,20 @@ export function compileEntryQuery(
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (links) ordering.push(asc(links.ordinal))
-  else if (edge?.edge === 'parents') ordering.push(asc(EntryIndexTable.level))
-  else ordering.push(asc(EntryIndexTable.index))
+  else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
+  else ordering.push(asc(entry.index))
   ordering.push(
-    links ? asc(links.ordinal) : asc(EntryIndexTable.index),
-    asc(EntryIndexTable.filePath),
-    asc(EntryIndexTable.versionId)
+    links ? asc(links.ordinal) : asc(entry.index),
+    asc(entry.filePath),
+    asc(entry.versionId)
   )
 
-  const projection = new Expressions(scope, search)
+  const projection = new Expressions(scope, entry, search)
   const types = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
   const selection = query.count
-    ? EntryIndexTable.versionId
+    ? entry.versionId
     : projection.projection(
         query.select ?? {
           ...Object.assign({}, ...types),
@@ -343,15 +348,14 @@ export function compileEntryQuery(
   if (grouping) {
     let ranked = builder
       .select({
-        versionId: EntryIndexTable.versionId,
+        versionId: entry.versionId,
         linkOrdinal: links?.ordinal ?? sql.value(0),
         rank: sql<number>`row_number() over (partition by ${sql.join(grouping, sql`, `)}
-        order by ${search?.rank ?? links?.ordinal ?? EntryIndexTable.index}, ${EntryIndexTable.filePath}, ${EntryIndexTable.versionId})`
+        order by ${search?.rank ?? links?.ordinal ?? entry.index}, ${entry.filePath}, ${entry.versionId})`
       })
-      .from(EntryIndexTable)
+      .from(entry)
       .where(sql.value(true))
-    if (links)
-      ranked = ranked.innerJoin(links.target, eq(EntryIndexTable.id, links.id))
+    if (links) ranked = ranked.innerJoin(links.target, eq(entry.id, links.id))
     const matches = ranked
       .where(and(...structural, ...content))
       .as('group_matches')
@@ -362,19 +366,15 @@ export function compileEntryQuery(
         .where(
           and(
             eq(matches.rank, 1),
-            eq(matches.versionId, EntryIndexTable.versionId),
+            eq(matches.versionId, entry.versionId),
             links ? eq(matches.linkOrdinal, links.ordinal) : sql.value(true)
           )
         )
     )
   }
   function selectRows(selection: SelectionInput) {
-    let rows = builder
-      .select(selection)
-      .from(EntryIndexTable)
-      .where(sql.value(true))
-    if (links)
-      rows = rows.innerJoin(links.target, eq(EntryIndexTable.id, links.id))
+    let rows = builder.select(selection).from(entry).where(sql.value(true))
+    if (links) rows = rows.innerJoin(links.target, eq(entry.id, links.id))
     rows = rows
       .where(and(...structural, ...content, ...(grouped ? [grouped] : [])))
       .orderBy(...ordering)
@@ -398,11 +398,11 @@ export function compileEntryQuery(
   return {
     rows: selectRows(
       projection.relations.length
-        ? {value: selection, source: relationSource}
+        ? {value: selection, source: relationSource(entry)}
         : selection
     ),
-    identities: selectRows(EntryIndexTable.versionId),
-    contextRows: selectRows({value: selection, source: relationSource}),
+    identities: selectRows(entry.versionId),
+    contextRows: selectRows({value: selection, source: relationSource(entry)}),
     count: query.count === true,
     single,
     relations: projection.relations,

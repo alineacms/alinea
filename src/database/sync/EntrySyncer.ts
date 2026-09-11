@@ -19,15 +19,18 @@ import {
   not,
   or,
   sql,
-  table,
   temporaryTable,
   when,
-  type Database
+  type Database,
+  type Table
 } from 'rado'
 import * as column from 'rado/universal/columns'
 import {
+  DatabaseStateColumns,
+  DatabaseStateTable,
   EntryIndexTable,
   entryIndexRow,
+  type EntryIndexTarget,
   type IndexedEntry
 } from '../entry/Schema.js'
 import {parseSourceEntry} from './EntryParser.js'
@@ -35,10 +38,17 @@ import {parseSourceEntry} from './EntryParser.js'
 const changeBatchSize = 750
 const sqliteBatchSize = 500
 
-const DatabaseState = table('alinea_database_state', {
-  id: column.integer().primaryKey(),
-  revision: column.text().notNull()
-})
+export interface EntrySyncTarget {
+  name: string
+  entries: EntryIndexTarget
+  state: Table<typeof DatabaseStateColumns>
+}
+
+export const EntrySyncRoot: EntrySyncTarget = {
+  name: 'root',
+  entries: EntryIndexTable,
+  state: DatabaseStateTable
+}
 
 const SyncAffected = temporaryTable('alinea_sync_affected', {
   id: column.text().primaryKey()
@@ -121,132 +131,146 @@ const afterVersionId = sql.placeholder<string>('afterVersionId')
 const level = sql.placeholder<number>('level')
 const offset = sql.placeholder<number>('offset')
 const revision = sql.placeholder<string>('revision')
-const isDraft = max(eq(EntryIndexTable.versionStatus, 'draft'))
-const isPublished = max(eq(EntryIndexTable.versionStatus, 'published'))
-const isArchived = max(eq(EntryIndexTable.versionStatus, 'archived'))
+function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
+  const EntryIndexTable = target.entries
+  const DatabaseState = target.state
+  const isDraft = max(eq(EntryIndexTable.versionStatus, 'draft'))
+  const isPublished = max(eq(EntryIndexTable.versionStatus, 'published'))
+  const isArchived = max(eq(EntryIndexTable.versionStatus, 'archived'))
 
-const revisionQuery = builder
-  .select({revision: DatabaseState.revision})
-  .from(DatabaseState)
-  .where(eq(DatabaseState.id, 1))
-  .$first()
-const entryCountQuery = builder
-  .select({value: count()})
-  .from(EntryIndexTable)
-  .where(sql.value(true))
-  .$first()
-const setRevisionQuery = builder
-  .update(DatabaseState)
-  .set({revision})
-  .where(eq(DatabaseState.id, 1))
-const storedFilesQuery = builder
-  .select({
-    id: EntryIndexTable.id,
-    filePath: EntryIndexTable.filePath,
-    fileHash: EntryIndexTable.fileHash,
-    versionId: EntryIndexTable.versionId,
-    childrenDir: EntryIndexTable.childrenDir,
-    childrenSha: EntryIndexTable.childrenSha
-  })
-  .from(EntryIndexTable)
-  .where(gt(EntryIndexTable.filePath, afterFilePath))
-  .orderBy(asc(EntryIndexTable.filePath))
-  .limit(sqliteBatchSize)
-const hierarchyQuery = builder
-  .select({id: EntryIndexTable.id, parentDir: EntryIndexTable.parentDir})
-  .from(EntryIndexTable)
-  .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-  .where(gt(EntryIndexTable.id, afterEntryId))
-  .groupBy(EntryIndexTable.id)
-  .orderBy(asc(EntryIndexTable.id))
-  .limit(sqliteBatchSize)
-const levelsQuery = builder
-  .select({level: EntryIndexTable.level})
-  .from(EntryIndexTable)
-  .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-  .groupBy(EntryIndexTable.level)
-  .orderBy(asc(EntryIndexTable.level))
-const statusesQuery = builder
-  .select({
-    id: EntryIndexTable.id,
-    locale: EntryIndexTable.locale,
-    parentId: min(EntryIndexTable.parentId),
-    activeStatus: when(
-      [isDraft, 'draft'],
-      [isPublished, 'published'],
-      'archived'
-    ),
-    ownStatus: when(
-      [isArchived, 'archived'],
-      [and(isDraft, not(isPublished)), 'draft'],
-      null
-    ),
-    mainStatus: when(
-      [isPublished, 'published'],
-      [isArchived, 'archived'],
-      'draft'
+  const revisionQuery = builder
+    .select({revision: DatabaseState.revision})
+    .from(DatabaseState)
+    .where(eq(DatabaseState.id, 1))
+    .$first()
+  const entryCountQuery = builder
+    .select({value: count()})
+    .from(EntryIndexTable)
+    .where(sql.value(true))
+    .$first()
+  const setRevisionQuery = builder
+    .update(DatabaseState)
+    .set({revision})
+    .where(eq(DatabaseState.id, 1))
+  const storedFilesQuery = builder
+    .select({
+      id: EntryIndexTable.id,
+      filePath: EntryIndexTable.filePath,
+      fileHash: EntryIndexTable.fileHash,
+      versionId: EntryIndexTable.versionId,
+      childrenDir: EntryIndexTable.childrenDir,
+      childrenSha: EntryIndexTable.childrenSha
+    })
+    .from(EntryIndexTable)
+    .where(gt(EntryIndexTable.filePath, afterFilePath))
+    .orderBy(asc(EntryIndexTable.filePath))
+    .limit(sqliteBatchSize)
+  const hierarchyQuery = builder
+    .select({id: EntryIndexTable.id, parentDir: EntryIndexTable.parentDir})
+    .from(EntryIndexTable)
+    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
+    .where(gt(EntryIndexTable.id, afterEntryId))
+    .groupBy(EntryIndexTable.id)
+    .orderBy(asc(EntryIndexTable.id))
+    .limit(sqliteBatchSize)
+  const levelsQuery = builder
+    .select({level: EntryIndexTable.level})
+    .from(EntryIndexTable)
+    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
+    .groupBy(EntryIndexTable.level)
+    .orderBy(asc(EntryIndexTable.level))
+  const statusesQuery = builder
+    .select({
+      id: EntryIndexTable.id,
+      locale: EntryIndexTable.locale,
+      parentId: min(EntryIndexTable.parentId),
+      activeStatus: when(
+        [isDraft, 'draft'],
+        [isPublished, 'published'],
+        'archived'
+      ),
+      ownStatus: when(
+        [isArchived, 'archived'],
+        [and(isDraft, not(isPublished)), 'draft'],
+        null
+      ),
+      mainStatus: when(
+        [isPublished, 'published'],
+        [isArchived, 'archived'],
+        'draft'
+      )
+    })
+    .from(EntryIndexTable)
+    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
+    .where(eq(EntryIndexTable.level, level))
+    .groupBy(EntryIndexTable.id, EntryIndexTable.locale)
+    .orderBy(asc(EntryIndexTable.id), asc(EntryIndexTable.locale))
+    .limit(sqliteBatchSize)
+    .offset(offset)
+  const mainEntriesQuery = builder
+    .select({
+      versionId: EntryIndexTable.versionId,
+      id: EntryIndexTable.id,
+      locale: EntryIndexTable.locale,
+      type: EntryIndexTable.type,
+      versionStatus: EntryIndexTable.versionStatus,
+      workspace: EntryIndexTable.workspace,
+      root: EntryIndexTable.root,
+      path: EntryIndexTable.path,
+      parents: EntryIndexTable.parents,
+      data: EntryIndexTable.data
+    })
+    .from(EntryIndexTable)
+    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
+    .where(
+      and(
+        eq(EntryIndexTable.main, true),
+        gt(EntryIndexTable.versionId, afterVersionId)
+      )
     )
-  })
-  .from(EntryIndexTable)
-  .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-  .where(eq(EntryIndexTable.level, level))
-  .groupBy(EntryIndexTable.id, EntryIndexTable.locale)
-  .orderBy(asc(EntryIndexTable.id), asc(EntryIndexTable.locale))
-  .limit(sqliteBatchSize)
-  .offset(offset)
-const mainEntriesQuery = builder
-  .select({
-    versionId: EntryIndexTable.versionId,
-    id: EntryIndexTable.id,
-    locale: EntryIndexTable.locale,
-    type: EntryIndexTable.type,
-    versionStatus: EntryIndexTable.versionStatus,
-    workspace: EntryIndexTable.workspace,
-    root: EntryIndexTable.root,
-    path: EntryIndexTable.path,
-    parents: EntryIndexTable.parents,
-    data: EntryIndexTable.data
-  })
-  .from(EntryIndexTable)
-  .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-  .where(
-    and(
-      eq(EntryIndexTable.main, true),
-      gt(EntryIndexTable.versionId, afterVersionId)
+    .orderBy(asc(EntryIndexTable.versionId))
+    .limit(sqliteBatchSize)
+  const changedIdsQuery = builder
+    .select({id: SyncAffected.id})
+    .from(SyncAffected)
+    .orderBy(asc(SyncAffected.id))
+  const clearAffectedQuery = builder.delete(SyncAffected)
+  const clearValuesQuery = builder.delete(SyncValues)
+  const clearStatusQuery = builder.delete(SyncStatus)
+  const markAllAffectedQuery = builder
+    .insert(SyncAffected)
+    .select(
+      builder.selectDistinct({id: EntryIndexTable.id}).from(EntryIndexTable)
     )
-  )
-  .orderBy(asc(EntryIndexTable.versionId))
-  .limit(sqliteBatchSize)
-const changedIdsQuery = builder
-  .select({id: SyncAffected.id})
-  .from(SyncAffected)
-  .orderBy(asc(SyncAffected.id))
-const clearAffectedQuery = builder.delete(SyncAffected)
-const clearValuesQuery = builder.delete(SyncValues)
-const clearStatusQuery = builder.delete(SyncStatus)
-const markAllAffectedQuery = builder
-  .insert(SyncAffected)
-  .select(
-    builder.selectDistinct({id: EntryIndexTable.id}).from(EntryIndexTable)
-  )
-const updateValueForVersion = builder
-  .select(SyncValues.value)
-  .from(SyncValues)
-  .where(eq(SyncValues.key, EntryIndexTable.versionId))
-const hasUpdateValueForVersion = exists(
-  builder
-    .select({value: sql.value(1)})
+  const updateValueForVersion = builder
+    .select(SyncValues.value)
     .from(SyncValues)
     .where(eq(SyncValues.key, EntryIndexTable.versionId))
-)
-const updateChildrenShaQuery = builder
-  .update(EntryIndexTable)
-  .set({childrenSha: updateValueForVersion})
-  .where(hasUpdateValueForVersion)
-const MainEntry = alias(EntryIndexTable, 'main_entry')
-const hasUpdatedMainUrl = exists(
-  builder
-    .select({value: sql.value(1)})
+  const hasUpdateValueForVersion = exists(
+    builder
+      .select({value: sql.value(1)})
+      .from(SyncValues)
+      .where(eq(SyncValues.key, EntryIndexTable.versionId))
+  )
+  const updateChildrenShaQuery = builder
+    .update(EntryIndexTable)
+    .set({childrenSha: updateValueForVersion})
+    .where(hasUpdateValueForVersion)
+  const MainEntry = alias(EntryIndexTable, 'main_entry')
+  const hasUpdatedMainUrl = exists(
+    builder
+      .select({value: sql.value(1)})
+      .from(SyncValues)
+      .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
+      .where(
+        and(
+          eq(MainEntry.id, EntryIndexTable.id),
+          sql<boolean>`${MainEntry.locale} is ${EntryIndexTable.locale}`
+        )
+      )
+  )
+  const updatedMainUrl = builder
+    .select(SyncValues.value)
     .from(SyncValues)
     .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
     .where(
@@ -255,70 +279,60 @@ const hasUpdatedMainUrl = exists(
         sql<boolean>`${MainEntry.locale} is ${EntryIndexTable.locale}`
       )
     )
-)
-const updatedMainUrl = builder
-  .select(SyncValues.value)
-  .from(SyncValues)
-  .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
-  .where(
-    and(
-      eq(MainEntry.id, EntryIndexTable.id),
-      sql<boolean>`${MainEntry.locale} is ${EntryIndexTable.locale}`
-    )
-  )
-const updateUrlsQuery = builder
-  .update(EntryIndexTable)
-  .set({url: updatedMainUrl})
-  .where(hasUpdatedMainUrl)
-const InitialMainEntry = alias(EntryIndexTable, 'initial_main_entry')
-const initialMainUrl = builder
-  .select(InitialMainEntry.url)
-  .from(InitialMainEntry)
-  .where(
-    and(
-      eq(InitialMainEntry.id, EntryIndexTable.id),
-      sql<boolean>`${InitialMainEntry.locale} is ${EntryIndexTable.locale}`,
-      eq(InitialMainEntry.main, true)
-    )
-  )
-const copyInitialUrlsQuery = builder
-  .update(EntryIndexTable)
-  .set({url: initialMainUrl})
-const updateHierarchyQuery = builder
-  .update(EntryIndexTable)
-  .set({
-    parentId: sql<
-      string | null
-    >`json_extract(${SyncValues.value}, '$.parentId')`,
-    parents: sql<Array<string>>`json_extract(${SyncValues.value}, '$.parents')`
-  })
-  .from(SyncValues)
-  .where(eq(SyncValues.key, EntryIndexTable.id))
-const updateStatusQuery = builder
-  .update(EntryIndexTable)
-  .set({
-    status: sql<
-      IndexedEntry['status']
-    >`coalesce(${SyncStatus.effectiveStatus}, ${EntryIndexTable.versionStatus})`,
-    active: eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus),
-    main: eq(
-      EntryIndexTable.versionStatus,
-      when(
-        [isNull(SyncStatus.effectiveStatus), SyncStatus.mainStatus],
-        SyncStatus.activeStatus
+  const updateUrlsQuery = builder
+    .update(EntryIndexTable)
+    .set({url: updatedMainUrl})
+    .where(hasUpdatedMainUrl)
+  const InitialMainEntry = alias(EntryIndexTable, 'initial_main_entry')
+  const initialMainUrl = builder
+    .select(InitialMainEntry.url)
+    .from(InitialMainEntry)
+    .where(
+      and(
+        eq(InitialMainEntry.id, EntryIndexTable.id),
+        sql<boolean>`${InitialMainEntry.locale} is ${EntryIndexTable.locale}`,
+        eq(InitialMainEntry.main, true)
       )
-    ),
-    visible: when(
-      [isNull(SyncStatus.effectiveStatus), true],
-      eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus)
     )
-  })
-  .from(SyncStatus)
-  .where(
-    sql<boolean>`${SyncStatus.key} = json_array(${EntryIndexTable.id}, ${EntryIndexTable.locale})`
-  )
+  const copyInitialUrlsQuery = builder
+    .update(EntryIndexTable)
+    .set({url: initialMainUrl})
+  const updateHierarchyQuery = builder
+    .update(EntryIndexTable)
+    .set({
+      parentId: sql<
+        string | null
+      >`json_extract(${SyncValues.value}, '$.parentId')`,
+      parents: sql<
+        Array<string>
+      >`json_extract(${SyncValues.value}, '$.parents')`
+    })
+    .from(SyncValues)
+    .where(eq(SyncValues.key, EntryIndexTable.id))
+  const updateStatusQuery = builder
+    .update(EntryIndexTable)
+    .set({
+      status: sql<
+        IndexedEntry['status']
+      >`coalesce(${SyncStatus.effectiveStatus}, ${EntryIndexTable.versionStatus})`,
+      active: eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus),
+      main: eq(
+        EntryIndexTable.versionStatus,
+        when(
+          [isNull(SyncStatus.effectiveStatus), SyncStatus.mainStatus],
+          SyncStatus.activeStatus
+        )
+      ),
+      visible: when(
+        [isNull(SyncStatus.effectiveStatus), true],
+        eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus)
+      )
+    })
+    .from(SyncStatus)
+    .where(
+      sql<boolean>`${SyncStatus.key} = json_array(${EntryIndexTable.id}, ${EntryIndexTable.locale})`
+    )
 
-function prepareSyncQueries(db: Database) {
   const statements = {
     revision: revisionQuery.prepare(undefined, db),
     entryCount: entryCountQuery.prepare(undefined, db),
@@ -378,6 +392,7 @@ async function clearTemporaryTables(queries: SyncQueries): Promise<void> {
 
 async function markAffected(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   filePaths: ReadonlyArray<string>,
   versionIds: ReadonlyArray<string> = []
 ): Promise<void> {
@@ -416,10 +431,11 @@ async function addAffected(db: Database, ids: Iterable<string>): Promise<void> {
 
 async function deleteFiles(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   filePaths: ReadonlyArray<string>
 ): Promise<void> {
   if (!filePaths.length) return
-  await markAffected(db, filePaths)
+  await markAffected(db, EntryIndexTable, filePaths)
   await db
     .delete(EntryIndexTable)
     .where(inArray(EntryIndexTable.filePath, Array.from(filePaths)))
@@ -427,6 +443,7 @@ async function deleteFiles(
 
 async function replaceFiles(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   config: Config,
   source: Source,
   tree: ReadonlyTree,
@@ -458,7 +475,7 @@ async function replaceFiles(
   }))
   const filePaths = rows.map(row => row.filePath)
   const versionIds = rows.map(row => row.versionId)
-  await markAffected(db, filePaths, versionIds)
+  await markAffected(db, EntryIndexTable, filePaths, versionIds)
   await db
     .delete(EntryIndexTable)
     .where(
@@ -476,6 +493,7 @@ async function replaceFiles(
 
 async function insertInitialSource(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   config: Config,
   source: Source,
   tree: ReadonlyTree,
@@ -532,6 +550,7 @@ async function* storedFiles(
 
 async function mergeSource(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   config: Config,
   source: Source,
   tree: ReadonlyTree,
@@ -551,8 +570,8 @@ async function mergeSource(
   let directoryIds = Array<string>()
 
   async function flush(): Promise<void> {
-    await deleteFiles(db, removed)
-    await replaceFiles(db, config, source, tree, changed)
+    await deleteFiles(db, EntryIndexTable, removed)
+    await replaceFiles(db, EntryIndexTable, config, source, tree, changed)
     if (directoryHashes.length) {
       await addAffected(db, directoryIds)
       await queries.clearValues.run()
@@ -613,6 +632,7 @@ function sourceDirectorySha(tree: ReadonlyTree, path: string): string {
 
 async function deriveHierarchy(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   queries: SyncQueries
 ): Promise<void> {
   let afterEntryId = ''
@@ -663,12 +683,15 @@ async function deriveHierarchy(
   }
 }
 
-async function expandAffected(db: Database): Promise<void> {
+async function expandAffected(
+  db: Database,
+  EntryIndexTable: EntryIndexTarget
+): Promise<void> {
   await db.run(sql`
     with recursive descendants(id) as (
       select id from alinea_sync_affected
       union
-      select entry.id from alinea_entry_index entry
+      select entry.id from ${EntryIndexTable} entry
       join descendants on entry.parentId = descendants.id
     )
     insert or ignore into alinea_sync_affected(id) select id from descendants;
@@ -728,6 +751,7 @@ function parentPathKey(id: string, locale: string | null): string {
 
 async function deriveUrls(
   db: Database,
+  EntryIndexTable: EntryIndexTarget,
   config: Config,
   queries: SyncQueries
 ): Promise<void> {
@@ -794,39 +818,39 @@ async function copyInitialUrls(queries: SyncQueries): Promise<void> {
 export class EntrySyncer implements AsyncDisposable {
   #db: Database
   #config: Config
-  #queries: Promise<SyncQueries>
+  #queries = new Map<EntrySyncTarget, Promise<SyncQueries>>()
+  #ready: Promise<void>
   #queue: Promise<unknown> = Promise.resolve()
   #closed = false
 
   constructor(config: Config, db: Database) {
     this.#config = config
     this.#db = db
-    this.#queries = this.#initialize()
-  }
-
-  async #initialize(): Promise<SyncQueries> {
-    await createTemporaryTables(this.#db)
-    return prepareSyncQueries(this.#db)
+    this.#ready = createTemporaryTables(this.#db)
   }
 
   /** Stream a source/tree diff directly into the canonical SQLite table. */
   sync(
+    target: EntrySyncTarget,
     source: Source,
     tree: ReadonlyTree,
     fromRevision: string
   ): Promise<Array<string>> {
     if (this.#closed) return Promise.reject(new Error('EntrySyncer is closed'))
-    const task = this.#queue.then(() => this.#sync(source, tree, fromRevision))
+    const task = this.#queue.then(() =>
+      this.#sync(target, source, tree, fromRevision)
+    )
     this.#queue = task.catch(() => {})
     return task
   }
 
   async #sync(
+    target: EntrySyncTarget,
     source: Source,
     tree: ReadonlyTree,
     fromRevision: string
   ): Promise<Array<string>> {
-    const queries = await this.#queries
+    const queries = await this.#queriesFor(target)
     return this.#db.transaction(
       async tx => {
         await clearTemporaryTables(queries)
@@ -835,14 +859,29 @@ export class EntrySyncer implements AsyncDisposable {
           throw new Error('Database revision mismatch')
         const initial = (await queries.entryCount.get())?.value === 0
         if (initial)
-          await insertInitialSource(tx, this.#config, source, tree, queries)
-        else await mergeSource(tx, this.#config, source, tree, queries)
-        await expandAffected(tx)
-        await deriveHierarchy(tx, queries)
-        await expandAffected(tx)
+          await insertInitialSource(
+            tx,
+            target.entries,
+            this.#config,
+            source,
+            tree,
+            queries
+          )
+        else
+          await mergeSource(
+            tx,
+            target.entries,
+            this.#config,
+            source,
+            tree,
+            queries
+          )
+        await expandAffected(tx, target.entries)
+        await deriveHierarchy(tx, target.entries, queries)
+        await expandAffected(tx, target.entries)
         await deriveStatus(tx, queries)
         if (initial) await copyInitialUrls(queries)
-        else await deriveUrls(tx, this.#config, queries)
+        else await deriveUrls(tx, target.entries, this.#config, queries)
         const changed = await queries.changedIds.all()
         await queries.setRevision.run({revision: tree.sha})
         return changed.map(row => row.id)
@@ -851,12 +890,33 @@ export class EntrySyncer implements AsyncDisposable {
     )
   }
 
+  #queriesFor(target: EntrySyncTarget): Promise<SyncQueries> {
+    const cached = this.#queries.get(target)
+    if (cached) return cached
+    const queries = this.#ready.then(() => prepareSyncQueries(this.#db, target))
+    this.#queries.set(target, queries)
+    return queries
+  }
+
+  /** Release prepared statements belonging to a closed named target. */
+  async release(target: EntrySyncTarget): Promise<void> {
+    await this.#queue
+    const queries = this.#queries.get(target)
+    if (!queries) return
+    this.#queries.delete(target)
+    await (await queries).free()
+  }
+
   async close(): Promise<void> {
     if (this.#closed) return
     this.#closed = true
     await this.#queue
-    const queries = await this.#queries
-    await queries.free()
+    await this.#ready
+    await Promise.all(
+      Array.from(this.#queries.values(), async queries =>
+        (await queries).free()
+      )
+    )
     await dropTemporaryTables(this.#db)
   }
 

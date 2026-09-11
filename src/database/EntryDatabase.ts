@@ -11,18 +11,40 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {count, type Database, eq, table} from 'rado'
-import * as column from 'rado/universal/columns'
-import {EntryIndexTable} from './entry/Schema.js'
+import {count, type Database, eq} from 'rado'
+import {EntryView} from './entry/EntryView.js'
+import {
+  DatabaseStateTable,
+  EntryIndexTable,
+  type EntryIndexTarget
+} from './entry/Schema.js'
 import {compileEntryQuery} from './query/EntryQuery.js'
-import {createSearch, rebuildSearch, type SearchQuery} from './query/Search.js'
+import {
+  createSearch,
+  EntrySearchName,
+  rebuildSearch,
+  searchQuery,
+  type SearchQuery
+} from './query/Search.js'
 import type {RelationSource} from './query/Relation.js'
-import {EntrySyncer} from './sync/EntrySyncer.js'
+import {
+  EntrySyncer,
+  EntrySyncRoot,
+  type EntrySyncTarget
+} from './sync/EntrySyncer.js'
 
-const Meta = table('alinea_database_state', {
-  id: column.integer().primaryKey(),
-  revision: column.text().notNull()
-})
+interface EntryDatabaseContext {
+  names: Set<string>
+  queue: Promise<unknown>
+  syncer: EntrySyncer
+}
+
+interface EntryDatabaseInternal {
+  context: EntryDatabaseContext
+  parent: EntryDatabase
+  target: EntrySyncTarget
+  view: EntryView
+}
 
 export interface EntryDatabaseOptions {
   /** Prepare a complete search plan under the connection's statement queue. */
@@ -45,13 +67,21 @@ export interface EntrySyncResult {
   changedEntryIds: ReadonlyArray<string>
 }
 
-/** Owns the query connection and an optional connection used for synchronization. */
+/** A queryable entry database or a named copy-on-write view over one. */
 export class EntryDatabase extends Graph implements AsyncDisposable {
   #db: Database
   #syncDatabase: Database
+  #context: EntryDatabaseContext
   #config: Config
+  #entryTarget: EntryIndexTarget
+  #target: EntrySyncTarget
+  #view?: EntryView
+  #detach?: () => void
+  #children = new Set<EntryDatabase>()
+  #ownsConnections: boolean
+  #ownsSyncer: boolean
+  #searchName: string
   #options: EntryDatabaseOptions
-  #readQueue: Promise<unknown> = Promise.resolve()
   #searchDirty = true
   #listeners = new Set<() => void>()
   #syncer: EntrySyncer
@@ -61,19 +91,40 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   constructor(
     config: Config,
     db: Database,
-    options: EntryDatabaseOptions = {}
+    options: EntryDatabaseOptions = {},
+    internal?: EntryDatabaseInternal
   ) {
     super()
     this.#config = config
     this.#db = db
-    this.#syncDatabase = options.syncDatabase ?? db
-    this.#syncer = new EntrySyncer(config, this.#syncDatabase)
+    this.#syncDatabase = internal ? db : (options.syncDatabase ?? db)
+    this.#context = internal?.context ?? {
+      names: new Set(),
+      queue: Promise.resolve(),
+      syncer: new EntrySyncer(config, db)
+    }
+    this.#target = internal?.target ?? EntrySyncRoot
+    this.#entryTarget = this.#target.entries
+    this.#view = internal?.view
+    this.#detach = internal
+      ? () => internal.parent.#children.delete(this)
+      : undefined
+    this.#ownsConnections = !internal
+    this.#ownsSyncer = !internal && this.#syncDatabase !== db
+    this.#syncer = this.#ownsSyncer
+      ? new EntrySyncer(config, this.#syncDatabase)
+      : this.#context.syncer
+    this.#searchName = this.#view?.searchName ?? EntrySearchName
     this.#options = options
     this.#searchDirty = !options.searchReady
   }
 
   get config(): Config {
     return this.#config
+  }
+
+  get name(): string {
+    return this.#target.name
   }
 
   /** Synchronize a source through this database's single prepared syncer. */
@@ -96,12 +147,22 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   async close(): Promise<void> {
     if (this.#closed) return
+    if (this.#children.size)
+      throw new Error('Cannot close an entry database with active overlays')
     this.#closed = true
     await this.#syncQueue
     await this.#withReadConnection(async () => {
-      await this.#syncer.close()
+      if (this.#view) {
+        await this.#context.syncer.release(this.#target)
+        await this.#view.close()
+        this.#context.names.delete(this.#view.name)
+        this.#detach?.()
+        return
+      }
+      await this.#context.syncer.close()
+      if (this.#ownsSyncer) await this.#syncer.close()
       if (this.#syncDatabase !== this.#db) await this.#syncDatabase.close()
-      await this.#db.close()
+      if (this.#ownsConnections) await this.#db.close()
     })
   }
 
@@ -114,10 +175,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   async #getRevision(db: Database): Promise<string> {
+    const state = this.#target.state
     const revision = await db
-      .select(Meta.revision)
-      .from(Meta)
-      .where(eq(Meta.id, 1))
+      .select(state.revision)
+      .from(state)
+      .where(eq(state.id, 1))
       .get()
     if (revision == null) throw new Error('Missing database revision')
     return revision
@@ -131,7 +193,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   ): Promise<Array<string>> {
     let changedEntryIds = Array<string>()
     const sync = async () => {
-      changedEntryIds = await this.#syncer.sync(source, tree, fromRevision)
+      changedEntryIds = await this.#syncer.sync(
+        this.#target,
+        source,
+        tree,
+        fromRevision
+      )
       this.#searchDirty = true
     }
     if (this.#syncDatabase === this.#db) await this.#withReadConnection(sync)
@@ -141,15 +208,43 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {
-    await db.create(EntryIndexTable, Meta)
+    await db.create(EntryIndexTable, DatabaseStateTable)
     await createSearch(db)
-    await db.insert(Meta).values({id: 1, revision})
+    await db.insert(DatabaseStateTable).values({id: 1, revision})
   }
 
   #withReadConnection<T>(run: () => Promise<T>): Promise<T> {
-    const task = this.#readQueue.then(run)
-    this.#readQueue = task.catch(() => {})
+    const task = this.#context.queue.then(run)
+    this.#context.queue = task.catch(() => {})
     return task
+  }
+
+  /** Create and synchronize a named copy-on-write layer over this database. */
+  async overlay(name: string, source: Source): Promise<EntryDatabase> {
+    if (this.#closed) throw new Error('EntryDatabase is closed')
+    if (this.#context.names.has(name))
+      throw new Error(`Entry view ${JSON.stringify(name)} already exists`)
+    this.#context.names.add(name)
+    let child: EntryDatabase | undefined
+    try {
+      const revision = await this.getRevision()
+      const view = await this.#withReadConnection(() =>
+        EntryView.create(this.#db, name, this.#entryTarget, revision)
+      )
+      child = new EntryDatabase(this.#config, this.#db, this.#options, {
+        context: this.#context,
+        parent: this,
+        target: {name, entries: view.entries, state: view.state},
+        view
+      })
+      this.#children.add(child)
+      await child.syncWith(source)
+      return child
+    } catch (error) {
+      if (child) await child.close()
+      else this.#context.names.delete(name)
+      throw error
+    }
   }
 
   async resolve<const Query extends GraphQuery>(
@@ -175,8 +270,14 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     }
     const search = this.#options.search
       ? await this.#options.search(query.search)
-      : undefined
-    const plan = compileEntryQuery(this.#config, query, source, search)
+      : searchQuery(query.search, this.#entryTarget, this.#searchName)
+    const plan = compileEntryQuery(
+      this.#config,
+      query,
+      source,
+      search,
+      this.#entryTarget
+    )
     if (query.search !== undefined && !this.#options.search)
       await this.#ensureSearch(db)
     const result = await (async () => {
@@ -289,7 +390,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   async #ensureSearch(db: Database): Promise<void> {
     if (!this.#searchDirty) return
-    await rebuildSearch(db)
+    if (this.#view) await createSearch(db, this.#searchName)
+    await rebuildSearch(db, this.#entryTarget, this.#searchName)
     this.#searchDirty = false
   }
 
