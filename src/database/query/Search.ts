@@ -4,6 +4,8 @@ import {EntryIndexTable, type EntryIndexTarget} from '../entry/Schema.js'
 export const EntrySearchName = 'alinea_entry_search'
 
 export interface SearchQuery {
+  target: Sql
+  identity: Sql<boolean>
   condition: Sql<boolean>
   rank: Sql<number>
   snippet(
@@ -20,7 +22,6 @@ export async function createSearch(
   db: Database,
   name = EntrySearchName
 ): Promise<void> {
-  if (db.dialect.runtime !== 'sqlite') return
   await db.run(sql`create virtual table if not exists ${sql.identifier(name)} using fts5(
     versionId unindexed, title, body, tokenize='unicode61 remove_diacritics 2'
   )`)
@@ -32,7 +33,6 @@ export async function rebuildSearch(
   entry: EntryIndexTarget = EntryIndexTable,
   name = EntrySearchName
 ): Promise<void> {
-  if (db.dialect.runtime !== 'sqlite') return
   const search = sql.identifier(name)
   await db.run(sql`delete from ${search}`)
   await db.run(sql`insert into ${search}(versionId, title, body)
@@ -59,31 +59,15 @@ export function searchQuery(
   const terms = tokens.map(term => `"${term}"*`).join(' AND ')
   const search = sql.identifier(name)
   const match = sql`${search} match ${terms}`
-  const identity = sql`versionId = ${entry.versionId}`
+  const versionId = sql`${search}.${sql.identifier('versionId')}`
   return {
-    condition: tokens.length
-      ? sql.universal<boolean>({
-          sqlite: sql`exists (
-          select 1 from ${search} where ${identity} and ${match}
-        )`
-        })
-      : sql.value(false),
-    rank: tokens.length
-      ? sql.universal<number>({
-          sqlite: sql`(
-          select bm25(${search}, 0, 20, 1)
-          from ${search} where ${identity} and ${match}
-        )`
-        })
-      : sql.value(0),
+    target: search,
+    identity: sql<boolean>`${versionId} = ${entry.versionId}`,
+    condition: tokens.length ? sql<boolean>`${match}` : sql.value(false),
+    rank: tokens.length ? sql<number>`bm25(${search}, 0, 20, 1)` : sql.value(0),
     snippet(start: HasSql, end: HasSql, cutOff: HasSql, limit: HasSql) {
       return tokens.length
-        ? sql.universal<string>({
-            sqlite: sql`(
-            select snippet(${search}, 2, ${start}, ${end}, ${cutOff}, ${limit})
-            from ${search} where ${identity} and ${match}
-          )`
-          })
+        ? sql<string>`snippet(${search}, 2, ${start}, ${end}, ${cutOff}, ${limit})`
         : sql.value('')
     }
   }

@@ -360,6 +360,7 @@ export function compileEntryQuery(
       })
       .from(entry)
       .where(sql.value(true))
+    if (search) ranked = ranked.innerJoin(search.target, search.identity)
     if (links) ranked = ranked.innerJoin(links.target, eq(entry.id, links.id))
     const matches = ranked
       .where(and(...structural, ...content))
@@ -379,6 +380,7 @@ export function compileEntryQuery(
   }
   function selectRows(selection: SelectionInput) {
     let rows = builder.select(selection).from(entry).where(sql.value(true))
+    if (search) rows = rows.innerJoin(search.target, search.identity)
     if (links) rows = rows.innerJoin(links.target, eq(entry.id, links.id))
     rows = rows
       .where(and(...structural, ...content, ...(grouped ? [grouped] : [])))
