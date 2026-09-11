@@ -133,6 +133,12 @@ interface DirectoryHashRow extends DirectoryRow {
   childrenSha: string | null
 }
 
+interface AffectedEntryRow {
+  id: string
+  filePath: string
+  childrenSha: string | null
+}
+
 interface StatusRow {
   id: string
   locale: string | null
@@ -459,11 +465,12 @@ async function markAffected(
   EntryIndexTable: EntryIndexTarget,
   filePaths: ReadonlyArray<string>,
   versionIds: ReadonlyArray<string> = []
-): Promise<void> {
-  if (!filePaths.length && !versionIds.length) return
-  const existing = await db
+): Promise<Array<AffectedEntryRow>> {
+  if (!filePaths.length && !versionIds.length) return []
+  const existing = (await db
     .select({
       id: EntryIndexTable.id,
+      filePath: EntryIndexTable.filePath,
       childrenSha: EntryIndexTable.childrenSha
     })
     .from(EntryIndexTable)
@@ -476,7 +483,7 @@ async function markAffected(
           ? inArray(EntryIndexTable.versionId, Array.from(versionIds))
           : undefined
       )
-    )
+    )) as Array<AffectedEntryRow>
   await addAffected(
     db,
     existing.map(row => row.id)
@@ -489,6 +496,7 @@ async function markAffected(
         : []
     )
   )
+  return existing
 }
 
 async function addAffected(db: Database, ids: Iterable<string>): Promise<void> {
@@ -523,7 +531,10 @@ async function deleteFiles(
   filePaths: ReadonlyArray<string>
 ): Promise<void> {
   if (!filePaths.length) return
-  await markAffected(db, EntryIndexTable, filePaths)
+  const existing = await markAffected(db, EntryIndexTable, filePaths)
+  const found = new Set(existing.map(row => row.filePath))
+  for (const filePath of filePaths)
+    assert(found.has(filePath), `Missing version to delete: ${filePath}`)
   await db
     .delete(EntryIndexTable)
     .where(inArray(EntryIndexTable.filePath, Array.from(filePaths)))
@@ -1129,6 +1140,27 @@ async function validateEntries(
   assert(
     !language,
     `Mismatched authored language versions for ${language?.id} (${language?.locale ?? 'unlocalized'})`
+  )
+
+  const activeCount = count(
+    when([eq(entries.active, true), sql.value(1)], null)
+  )
+  const mainCount = count(when([eq(entries.main, true), sql.value(1)], null))
+  const status = await db
+    .select({
+      id: entries.id,
+      locale: entries.locale,
+      activeCount,
+      mainCount
+    })
+    .from(entries)
+    .innerJoin(SyncAffected, eq(entries.id, SyncAffected.id))
+    .groupBy(entries.id, entries.locale)
+    .having(or(ne(activeCount, 1), ne(mainCount, 1)))
+    .get()
+  assert(
+    !status,
+    `Invalid derived status for ${status?.id} (${status?.locale ?? 'unlocalized'})`
   )
 
   const hierarchy = await db
