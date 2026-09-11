@@ -52,20 +52,20 @@ export const EntryIndexColumns = {
 
 export function entryIndexTable(name: string, temporary = false) {
   const create = temporary ? temporaryTable : table
-  return create(name, EntryIndexColumns, row => ({
-    [`${name}_by_id`]: index().on(row.id, row.locale, row.versionStatus),
-    [`${name}_by_url`]: index().on(row.url),
-    [`${name}_by_type`]: index().on(row.type),
-    [`${name}_by_parent`]: index().on(row.parentId, row.locale, row.index),
-    [`${name}_by_children_dir`]: index().on(row.childrenDir),
-    [`${name}_by_location`]: index().on(
+  return create(name, EntryIndexColumns, row => [
+    index(`${name}_by_id`).on(row.id, row.locale, row.versionStatus),
+    index(`${name}_by_url`).on(row.url),
+    index(`${name}_by_type`).on(row.type),
+    index(`${name}_by_parent`).on(row.parentId, row.locale, row.index),
+    index(`${name}_by_children_dir`).on(row.childrenDir),
+    index(`${name}_by_location`).on(
       row.workspace,
       row.root,
       row.status,
       row.index
     ),
-    [`${name}_by_file_path`]: index().on(row.filePath)
-  }))
+    index(`${name}_by_file_path`).on(row.filePath)
+  ])
 }
 
 export type EntryIndexTarget = Table<typeof EntryIndexColumns>
