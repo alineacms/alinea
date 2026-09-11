@@ -313,7 +313,7 @@ test('linked queries retain one snapshot while sync commits separately', async (
   }
 })
 
-test('database mutations use a private overlay and commit one final tree', async () => {
+test('database mutations use one write transaction and commit one final tree', async () => {
   const Page = ConfigBuilder.document('Page', {
     fields: {title: Field.text('Title')}
   })

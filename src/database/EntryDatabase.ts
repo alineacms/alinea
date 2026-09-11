@@ -48,9 +48,10 @@ interface EntryDatabaseContext {
 
 interface EntryDatabaseInternal {
   context: EntryDatabaseContext
-  parent: EntryDatabase
+  parent?: EntryDatabase
   target: EntrySyncTarget
-  view: EntryView
+  view?: EntryView
+  withinTransaction?: boolean
 }
 
 export interface EntryDatabaseOptions {
@@ -101,6 +102,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #searchDirty = true
   #listeners = new Set<() => void>()
   #syncer: EntrySyncer
+  #withinTransaction: boolean
   #syncQueue: Promise<unknown> = Promise.resolve()
   #closed = false
 
@@ -122,9 +124,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#target = internal?.target ?? EntrySyncRoot
     this.#entryTarget = this.#target.entries
     this.#view = internal?.view
-    this.#detach = internal
-      ? () => internal.parent.#children.delete(this)
-      : undefined
+    const parent = internal?.parent
+    this.#detach = parent ? () => parent.#children.delete(this) : undefined
     this.#ownsConnections = !internal
     this.#ownsSyncer = !internal && this.#syncDatabase !== db
     this.#syncer = this.#ownsSyncer
@@ -133,6 +134,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     this.#searchName = this.#view?.searchName ?? EntrySearchName
     this.#options = options
     this.#searchDirty = !options.searchReady
+    this.#withinTransaction = internal?.withinTransaction ?? false
   }
 
   get config(): Config {
@@ -175,33 +177,51 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     mutations: ReadonlyArray<Mutation>,
     options: EntryApplyOptions
   ): Promise<EntryApplyResult> {
-    const [revision, from] = await Promise.all([
-      this.getRevision(),
-      options.source.getTree()
-    ])
-    if (revision !== from.sha) throw new ShaMismatchError(revision, from.sha)
-    const workingSource = new OverlaySource(options.source, from)
-    const workingDatabase = await this.overlay(workingSource)
-    const transaction = new EntryTransaction(
-      workingDatabase,
-      workingSource,
-      new SourceTransaction(options.source, from),
-      from,
-      options.policy ?? Policy.ALLOW_ALL
+    const from = await options.source.getTree()
+    const result = await this.#syncDatabase.transaction(
+      async tx => {
+        const revision = await this.#getRevision(tx)
+        if (revision !== from.sha)
+          throw new ShaMismatchError(revision, from.sha)
+        const workingSource = new OverlaySource(options.source, from)
+        const workingDatabase = new EntryDatabase(
+          this.#config,
+          tx,
+          this.#options,
+          {
+            context: {
+              nextOverlayId: this.#context.nextOverlayId,
+              queue: Promise.resolve(),
+              syncer: this.#syncer
+            },
+            target: this.#target,
+            withinTransaction: true
+          }
+        )
+        const transaction = new EntryTransaction(
+          workingDatabase,
+          workingSource,
+          new SourceTransaction(options.source, from),
+          from,
+          options.policy ?? Policy.ALLOW_ALL
+        )
+        try {
+          await transaction.apply(mutations)
+          const request = await transaction.toRequest()
+          return {
+            revision: request.intoSha,
+            changedEntryIds: transaction.changedEntryIds,
+            request
+          }
+        } finally {
+          await transaction.close()
+        }
+      },
+      {async: true}
     )
-    try {
-      await transaction.apply(mutations)
-      const request = await transaction.toRequest()
-      const tree = await workingSource.getTree()
-      const changedEntryIds = await this.#syncSource(
-        workingSource,
-        tree,
-        revision
-      )
-      return {revision: tree.sha, changedEntryIds, request}
-    } finally {
-      await transaction.close()
-    }
+    this.#searchDirty = true
+    for (const invalidate of this.#listeners) invalidate()
+    return result
   }
 
   async close(): Promise<void> {
@@ -217,10 +237,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         this.#detach?.()
         return
       }
-      await this.#context.syncer.close()
-      if (this.#ownsSyncer) await this.#syncer.close()
-      if (this.#syncDatabase !== this.#db) await this.#syncDatabase.close()
-      if (this.#ownsConnections) await this.#db.close()
+      if (this.#ownsConnections) {
+        await this.#context.syncer.close()
+        if (this.#ownsSyncer) await this.#syncer.close()
+        if (this.#syncDatabase !== this.#db) await this.#syncDatabase.close()
+        await this.#db.close()
+      }
     })
   }
 
@@ -255,7 +277,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         this.#target,
         source,
         tree,
-        fromRevision
+        fromRevision,
+        this.#withinTransaction
       )
       this.#searchDirty = true
     }
@@ -290,7 +313,12 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       child = new EntryDatabase(this.#config, this.#db, this.#options, {
         context: this.#context,
         parent: this,
-        target: {name, entries: view.entries, state: view.state},
+        target: {
+          name,
+          entries: view.entries,
+          changes: view.changes,
+          state: view.state
+        },
         view
       })
       this.#children.add(child)
@@ -306,13 +334,14 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     query: Query
   ): Promise<AnyQueryResult<Query>> {
     if (this.#closed) throw new Error('EntryDatabase is closed')
-    return this.#withReadConnection(
-      () =>
-        this.#db.transaction(tx => this.#resolve(query, tx), {
-          async: true,
-          behavior: 'deferred'
-        }) as Promise<AnyQueryResult<Query>>
-    )
+    return this.#withReadConnection(() => {
+      if (this.#withinTransaction)
+        return this.#resolve(query, this.#db) as Promise<AnyQueryResult<Query>>
+      return this.#db.transaction(tx => this.#resolve(query, tx), {
+        async: true,
+        behavior: 'deferred'
+      }) as Promise<AnyQueryResult<Query>>
+    })
   }
 
   async #resolve(

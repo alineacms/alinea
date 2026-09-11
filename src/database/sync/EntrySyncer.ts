@@ -41,6 +41,7 @@ const sqliteBatchSize = 500
 export interface EntrySyncTarget {
   name: string
   entries: EntryIndexTarget
+  changes?: EntryIndexTarget
   state: Table<typeof DatabaseStateColumns>
 }
 
@@ -133,10 +134,11 @@ const offset = sql.placeholder<number>('offset')
 const revision = sql.placeholder<string>('revision')
 function createSyncQueryPlan(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
+  const DerivedEntries = target.changes ?? target.entries
   const DatabaseState = target.state
-  const isDraft = max(eq(EntryIndexTable.versionStatus, 'draft'))
-  const isPublished = max(eq(EntryIndexTable.versionStatus, 'published'))
-  const isArchived = max(eq(EntryIndexTable.versionStatus, 'archived'))
+  const isDraft = max(eq(DerivedEntries.versionStatus, 'draft'))
+  const isPublished = max(eq(DerivedEntries.versionStatus, 'published'))
+  const isArchived = max(eq(DerivedEntries.versionStatus, 'archived'))
 
   const revisionQuery = builder
     .select({revision: DatabaseState.revision})
@@ -166,24 +168,24 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .orderBy(asc(EntryIndexTable.filePath))
     .limit(sqliteBatchSize)
   const hierarchyQuery = builder
-    .select({id: EntryIndexTable.id, parentDir: EntryIndexTable.parentDir})
-    .from(EntryIndexTable)
-    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-    .where(gt(EntryIndexTable.id, afterEntryId))
-    .groupBy(EntryIndexTable.id)
-    .orderBy(asc(EntryIndexTable.id))
+    .select({id: DerivedEntries.id, parentDir: DerivedEntries.parentDir})
+    .from(DerivedEntries)
+    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
+    .where(gt(DerivedEntries.id, afterEntryId))
+    .groupBy(DerivedEntries.id)
+    .orderBy(asc(DerivedEntries.id))
     .limit(sqliteBatchSize)
   const levelsQuery = builder
-    .select({level: EntryIndexTable.level})
-    .from(EntryIndexTable)
-    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-    .groupBy(EntryIndexTable.level)
-    .orderBy(asc(EntryIndexTable.level))
+    .select({level: DerivedEntries.level})
+    .from(DerivedEntries)
+    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
+    .groupBy(DerivedEntries.level)
+    .orderBy(asc(DerivedEntries.level))
   const statusesQuery = builder
     .select({
-      id: EntryIndexTable.id,
-      locale: EntryIndexTable.locale,
-      parentId: min(EntryIndexTable.parentId),
+      id: DerivedEntries.id,
+      locale: DerivedEntries.locale,
+      parentId: min(DerivedEntries.parentId),
       activeStatus: when(
         [isDraft, 'draft'],
         [isPublished, 'published'],
@@ -200,35 +202,35 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
         'draft'
       )
     })
-    .from(EntryIndexTable)
-    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
-    .where(eq(EntryIndexTable.level, level))
-    .groupBy(EntryIndexTable.id, EntryIndexTable.locale)
-    .orderBy(asc(EntryIndexTable.id), asc(EntryIndexTable.locale))
+    .from(DerivedEntries)
+    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
+    .where(eq(DerivedEntries.level, level))
+    .groupBy(DerivedEntries.id, DerivedEntries.locale)
+    .orderBy(asc(DerivedEntries.id), asc(DerivedEntries.locale))
     .limit(sqliteBatchSize)
     .offset(offset)
   const mainEntriesQuery = builder
     .select({
-      versionId: EntryIndexTable.versionId,
-      id: EntryIndexTable.id,
-      locale: EntryIndexTable.locale,
-      type: EntryIndexTable.type,
-      versionStatus: EntryIndexTable.versionStatus,
-      workspace: EntryIndexTable.workspace,
-      root: EntryIndexTable.root,
-      path: EntryIndexTable.path,
-      parents: EntryIndexTable.parents,
-      data: EntryIndexTable.data
+      versionId: DerivedEntries.versionId,
+      id: DerivedEntries.id,
+      locale: DerivedEntries.locale,
+      type: DerivedEntries.type,
+      versionStatus: DerivedEntries.versionStatus,
+      workspace: DerivedEntries.workspace,
+      root: DerivedEntries.root,
+      path: DerivedEntries.path,
+      parents: DerivedEntries.parents,
+      data: DerivedEntries.data
     })
-    .from(EntryIndexTable)
-    .innerJoin(SyncAffected, eq(EntryIndexTable.id, SyncAffected.id))
+    .from(DerivedEntries)
+    .innerJoin(SyncAffected, eq(DerivedEntries.id, SyncAffected.id))
     .where(
       and(
-        eq(EntryIndexTable.main, true),
-        gt(EntryIndexTable.versionId, afterVersionId)
+        eq(DerivedEntries.main, true),
+        gt(DerivedEntries.versionId, afterVersionId)
       )
     )
-    .orderBy(asc(EntryIndexTable.versionId))
+    .orderBy(asc(DerivedEntries.versionId))
     .limit(sqliteBatchSize)
   const changedIdsQuery = builder
     .select({id: SyncAffected.id})
@@ -241,6 +243,23 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .insert(SyncAffected)
     .select(
       builder.selectDistinct({id: EntryIndexTable.id}).from(EntryIndexTable)
+    )
+  const materializeAffectedQuery = builder
+    .update(target.changes ? EntryIndexTable : DerivedEntries)
+    .set({
+      versionId: target.changes
+        ? EntryIndexTable.versionId
+        : DerivedEntries.versionId
+    })
+    .where(
+      target.changes
+        ? exists(
+            builder
+              .select({value: sql.value(1)})
+              .from(SyncAffected)
+              .where(eq(SyncAffected.id, EntryIndexTable.id))
+          )
+        : sql.value(false)
     )
   const updateValueForVersion = builder
     .select(SyncValues.value)
@@ -256,7 +275,7 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .update(EntryIndexTable)
     .set({childrenSha: updateValueForVersion})
     .where(hasUpdateValueForVersion)
-  const MainEntry = alias(EntryIndexTable, 'main_entry')
+  const MainEntry = alias(DerivedEntries, 'main_entry')
   const hasUpdatedMainUrl = exists(
     builder
       .select({value: sql.value(1)})
@@ -264,8 +283,8 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
       .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
       .where(
         and(
-          eq(MainEntry.id, EntryIndexTable.id),
-          sql<boolean>`${MainEntry.locale} is ${EntryIndexTable.locale}`
+          eq(MainEntry.id, DerivedEntries.id),
+          sql<boolean>`${MainEntry.locale} is ${DerivedEntries.locale}`
         )
       )
   )
@@ -275,12 +294,12 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .innerJoin(MainEntry, eq(MainEntry.versionId, SyncValues.key))
     .where(
       and(
-        eq(MainEntry.id, EntryIndexTable.id),
-        sql<boolean>`${MainEntry.locale} is ${EntryIndexTable.locale}`
+        eq(MainEntry.id, DerivedEntries.id),
+        sql<boolean>`${MainEntry.locale} is ${DerivedEntries.locale}`
       )
     )
   const updateUrlsQuery = builder
-    .update(EntryIndexTable)
+    .update(DerivedEntries)
     .set({url: updatedMainUrl})
     .where(hasUpdatedMainUrl)
   const InitialMainEntry = alias(EntryIndexTable, 'initial_main_entry')
@@ -298,7 +317,7 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .update(EntryIndexTable)
     .set({url: initialMainUrl})
   const updateHierarchyQuery = builder
-    .update(EntryIndexTable)
+    .update(DerivedEntries)
     .set({
       parentId: sql<
         string | null
@@ -308,16 +327,16 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
       >`json_extract(${SyncValues.value}, '$.parents')`
     })
     .from(SyncValues)
-    .where(eq(SyncValues.key, EntryIndexTable.id))
+    .where(eq(SyncValues.key, DerivedEntries.id))
   const updateStatusQuery = builder
-    .update(EntryIndexTable)
+    .update(DerivedEntries)
     .set({
       status: sql<
         IndexedEntry['status']
-      >`coalesce(${SyncStatus.effectiveStatus}, ${EntryIndexTable.versionStatus})`,
-      active: eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus),
+      >`coalesce(${SyncStatus.effectiveStatus}, ${DerivedEntries.versionStatus})`,
+      active: eq(DerivedEntries.versionStatus, SyncStatus.activeStatus),
       main: eq(
-        EntryIndexTable.versionStatus,
+        DerivedEntries.versionStatus,
         when(
           [isNull(SyncStatus.effectiveStatus), SyncStatus.mainStatus],
           SyncStatus.activeStatus
@@ -325,12 +344,12 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
       ),
       visible: when(
         [isNull(SyncStatus.effectiveStatus), true],
-        eq(EntryIndexTable.versionStatus, SyncStatus.activeStatus)
+        eq(DerivedEntries.versionStatus, SyncStatus.activeStatus)
       )
     })
     .from(SyncStatus)
     .where(
-      sql<boolean>`${SyncStatus.key} = json_array(${EntryIndexTable.id}, ${EntryIndexTable.locale})`
+      sql<boolean>`${SyncStatus.key} = json_array(${DerivedEntries.id}, ${DerivedEntries.locale})`
     )
 
   return {
@@ -347,6 +366,7 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     clearValues: clearValuesQuery,
     clearStatus: clearStatusQuery,
     markAllAffected: markAllAffectedQuery,
+    materializeAffected: materializeAffectedQuery,
     updateChildrenSha: updateChildrenShaQuery,
     updateUrls: updateUrlsQuery,
     copyInitialUrls: copyInitialUrlsQuery,
@@ -380,6 +400,7 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     clearValues: query.clearValues.prepare(undefined, db),
     clearStatus: query.clearStatus.prepare(undefined, db),
     markAllAffected: query.markAllAffected.prepare(undefined, db),
+    materializeAffected: query.materializeAffected.prepare(undefined, db),
     updateChildrenSha: query.updateChildrenSha.prepare(undefined, db),
     updateUrls: query.updateUrls.prepare(undefined, db),
     copyInitialUrls: query.copyInitialUrls.prepare(undefined, db),
@@ -858,11 +879,12 @@ export class EntrySyncer implements AsyncDisposable {
     target: EntrySyncTarget,
     source: Source,
     tree: ReadonlyTree,
-    fromRevision: string
+    fromRevision: string,
+    withinTransaction = false
   ): Promise<Array<string>> {
     if (this.#closed) return Promise.reject(new Error('EntrySyncer is closed'))
     const task = this.#queue.then(() =>
-      this.#sync(target, source, tree, fromRevision)
+      this.#sync(target, source, tree, fromRevision, withinTransaction)
     )
     this.#queue = task.catch(() => {})
     return task
@@ -872,46 +894,49 @@ export class EntrySyncer implements AsyncDisposable {
     target: EntrySyncTarget,
     source: Source,
     tree: ReadonlyTree,
-    fromRevision: string
+    fromRevision: string,
+    withinTransaction: boolean
   ): Promise<Array<string>> {
     const queries = await this.#queriesFor(target)
-    return this.#db.transaction(
-      async tx => {
-        await clearTemporaryTables(queries)
-        const state = await queries.revision.get()
-        if (state?.revision !== fromRevision)
-          throw new Error('Database revision mismatch')
-        const initial = (await queries.entryCount.get())?.value === 0
-        if (initial)
-          await insertInitialSource(
-            tx,
-            target.entries,
-            this.#config,
-            source,
-            tree,
-            queries
-          )
-        else
-          await mergeSource(
-            tx,
-            target.entries,
-            this.#config,
-            source,
-            tree,
-            queries
-          )
-        await expandAffected(tx, target.entries)
-        await deriveHierarchy(tx, target.entries, queries)
-        await expandAffected(tx, target.entries)
-        await deriveStatus(tx, queries)
-        if (initial) await copyInitialUrls(queries)
-        else await deriveUrls(tx, target.entries, this.#config, queries)
-        const changed = await queries.changedIds.all()
-        await queries.setRevision.run({revision: tree.sha})
-        return changed.map(row => row.id)
-      },
-      {async: true}
-    )
+    const run = async (tx: Database) => {
+      await clearTemporaryTables(queries)
+      const state = await queries.revision.get()
+      if (state?.revision !== fromRevision)
+        throw new Error('Database revision mismatch')
+      const initial = (await queries.entryCount.get())?.value === 0
+      if (initial)
+        await insertInitialSource(
+          tx,
+          target.entries,
+          this.#config,
+          source,
+          tree,
+          queries
+        )
+      else
+        await mergeSource(
+          tx,
+          target.entries,
+          this.#config,
+          source,
+          tree,
+          queries
+        )
+      await expandAffected(tx, target.entries)
+      await queries.materializeAffected.run()
+      await deriveHierarchy(tx, target.entries, queries)
+      await expandAffected(tx, target.entries)
+      await queries.materializeAffected.run()
+      await deriveStatus(tx, queries)
+      if (initial) await copyInitialUrls(queries)
+      else await deriveUrls(tx, target.entries, this.#config, queries)
+      const changed = await queries.changedIds.all()
+      await queries.setRevision.run({revision: tree.sha})
+      return changed.map(row => row.id)
+    }
+    return withinTransaction
+      ? run(this.#db)
+      : this.#db.transaction(run, {async: true})
   }
 
   #queriesFor(target: EntrySyncTarget): Promise<SyncQueries> {

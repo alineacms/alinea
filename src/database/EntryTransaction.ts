@@ -104,9 +104,9 @@ const EntrySelection = {
 }
 
 /**
- * Plans mutations against a private database overlay. Each mutation is flushed
- * to the overlay, so subsequent mutations query its result without retaining an
- * in-memory entry index. The receiver changes only after the full batch passes.
+ * Plans mutations inside the receiver's write transaction. Each mutation is
+ * flushed so subsequent mutations query its result without retaining an
+ * in-memory entry index. SQLite rolls the full batch back on failure.
  */
 export class EntryTransaction implements AsyncDisposable {
   #workingDatabase: EntryDatabase
@@ -116,6 +116,7 @@ export class EntryTransaction implements AsyncDisposable {
   #policy: Policy
   #messages = Array<string>()
   #fileChanges = Array<CommitChange>()
+  #changedEntryIds = new Set<string>()
   #closed = false
 
   /** @internal Constructed by EntryDatabase.apply. */
@@ -135,6 +136,10 @@ export class EntryTransaction implements AsyncDisposable {
 
   get empty(): boolean {
     return this.#messages.length === 0
+  }
+
+  get changedEntryIds(): Array<string> {
+    return Array.from(this.#changedEntryIds).sort()
   }
 
   async apply(mutations: ReadonlyArray<Mutation>): Promise<void> {
@@ -710,7 +715,8 @@ export class EntryTransaction implements AsyncDisposable {
     const batch: ChangesBatch = {fromSha: from.sha, changes}
     if (changes.length) {
       await this.#workingSource.applyChanges(batch)
-      await this.#workingDatabase.syncWith(this.#workingSource)
+      const result = await this.#workingDatabase.syncWith(this.#workingSource)
+      for (const id of result.changedEntryIds) this.#changedEntryIds.add(id)
     }
     this.#workingTree = into
   }

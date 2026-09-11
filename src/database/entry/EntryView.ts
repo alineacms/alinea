@@ -36,6 +36,7 @@ function objectName(name: string, suffix: string): string {
 export class EntryView implements AsyncDisposable {
   readonly name: string
   readonly entries: EntryIndexTarget
+  readonly changes: EntryIndexTarget
   readonly searchName: string
   readonly state: Table<typeof DatabaseStateColumns>
   readonly #db: Database
@@ -56,6 +57,7 @@ export class EntryView implements AsyncDisposable {
     this.#db = db
     this.name = name
     this.entries = entries
+    this.changes = entryChanges
     this.searchName = objectName(name, 'search')
     this.#entryChanges = entryChanges
     this.#keys = keys
