@@ -11,7 +11,7 @@ import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {asc, count, type Database, eq, inArray, table} from 'rado'
+import {count, type Database, eq, inArray, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {
   EntryIndexTable,
@@ -21,7 +21,6 @@ import {
 import {compileEntryQuery} from '../query/EntryQuery.js'
 import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
-import {entryTree} from '../sync/EntryTree.js'
 import {EntrySyncer} from '../sync/EntrySyncer.js'
 
 const superseded = Symbol('superseded query')
@@ -183,32 +182,6 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
         if (generation === this.#generation) throw error
       }
     }
-  }
-
-  async tree(): Promise<ReadonlyTree> {
-    return this.#exclusive(async () => {
-      const revision = await this.#db
-        .select(Meta.revision)
-        .from(Meta)
-        .where(eq(Meta.id, 1))
-        .get()
-      if (revision == null) throw new Error('Missing database revision')
-      const entries = await this.#db
-        .select({
-          id: EntryIndexTable.id,
-          versionId: EntryIndexTable.versionId,
-          rowHash: EntryIndexTable.rowHash,
-          parentId: EntryIndexTable.parentId,
-          childrenSha: EntryIndexTable.childrenSha
-        })
-        .from(EntryIndexTable)
-        .orderBy(
-          asc(EntryIndexTable.parentId),
-          asc(EntryIndexTable.id),
-          asc(EntryIndexTable.versionId)
-        )
-      return entryTree(entries, revision)
-    })
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {

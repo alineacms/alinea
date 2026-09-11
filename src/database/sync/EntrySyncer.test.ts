@@ -6,6 +6,8 @@ import {FSSource} from '#/core/source/FSSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith, transaction, type Source} from '#/core/source/Source.js'
 import {cms} from '#test/cms.js'
+import {eq} from 'rado'
+import {EntryIndexTable} from '../entry/Schema.js'
 import {EntryRuntime} from '../runtime/EntryRuntime.js'
 
 test('runtime serializes sources through one database-bound syncer', async () => {
@@ -40,9 +42,14 @@ test('runtime serializes sources through one database-bound syncer', async () =>
   expect(await runtime.getRevision()).toBe(first.revision)
   expect(first.changedEntryIds.length).toBeGreaterThan(0)
   expect(conditionalTreeRequests).toBe(2)
-  expect(
-    (await runtime.tree()).getNode('2cGLQZvsCCxnguLrwCfPDL8uFkm').sha
-  ).toBe((await source.getTree()).getNode('pages/recipes').sha)
+  const recipes = await db
+    .select({childrenSha: EntryIndexTable.childrenSha})
+    .from(EntryIndexTable)
+    .where(eq(EntryIndexTable.id, '2cGLQZvsCCxnguLrwCfPDL8uFkm'))
+    .get()
+  expect(recipes?.childrenSha).toBe(
+    (await source.getTree()).getNode('pages/recipes').sha
+  )
   expect(
     await runtime.resolve({
       path: 'recipes',
