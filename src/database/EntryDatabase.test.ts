@@ -145,6 +145,35 @@ test('SQL references retain status and locale behavior', async () => {
   }
 })
 
+test('entry database returns exact source blobs by hash', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const {source} = await createEntryResolver(config, [
+    {id: 'page', type: 'Page', index: 'a', data: {title: 'Page'}}
+  ])
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  const runtime = new EntryDatabase(config, db)
+  await runtime.syncWith(source)
+  const tree = await source.getTree()
+  const shas = [...tree.index().values()]
+  const expected = new Map<string, Uint8Array>()
+  const actual = new Map<string, Uint8Array>()
+  for await (const blob of source.getBlobs(shas)) expected.set(...blob)
+  for await (const blob of runtime.getBlobs(shas)) actual.set(...blob)
+  expect(actual).toEqual(expected)
+  expect(await runtime.getTree()).toEqual(tree)
+})
+
 test('subscriptions publish the initial value and committed changes', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {

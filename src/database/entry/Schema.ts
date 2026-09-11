@@ -1,4 +1,5 @@
 import type {Entry, EntryStatus} from '#/core/Entry.js'
+import {createRecord} from '#/core/EntryRecord.js'
 import type {Tree} from '#/core/source/Tree.js'
 import {index, table, temporaryTable, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
@@ -48,6 +49,8 @@ export const EntryIndexColumns = {
   /** Hash of this entry's child directory in the synced source tree. */
   childrenSha: column.varchar(undefined, {length: 128}),
   searchableText: column.text().notNull(),
+  /** Exact source blob, kept as text so the database can act as a Source. */
+  payload: column.text().notNull(),
   data: column.json<Record<string, unknown>>().notNull()
 }
 
@@ -88,6 +91,8 @@ export const DatabaseStateTable = table(
 /** An Entry plus the physical-version and local-index fields. */
 export interface IndexedEntry extends Entry {
   versionStatus: EntryStatus
+  /** Exact source text matching fileHash. */
+  payload?: string
   /** False for authored versions suppressed by inherited status in normal queries. */
   visible?: boolean
   /** First source-directory segment below the content root (not the URL slug). */
@@ -127,6 +132,9 @@ export function entryIndexRow(entry: IndexedEntry) {
     rowHash: entry.rowHash,
     childrenSha: entry.childrenSha ?? null,
     searchableText: entry.searchableText,
+    payload:
+      entry.payload ??
+      JSON.stringify(createRecord(entry, entry.versionStatus), null, 2),
     data: entry.data
   }
 }

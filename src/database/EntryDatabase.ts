@@ -19,13 +19,14 @@ import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {
   SourceTransaction,
+  type GetBlobsOptions,
   type RemoteSource,
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {and, asc, count, type Database, eq, gt, isNull} from 'rado'
+import {and, asc, count, type Database, eq, gt, inArray, isNull} from 'rado'
 import {EntryView} from './entry/EntryView.js'
 import {
   DatabaseStateTable,
@@ -277,6 +278,41 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   getRevision(): Promise<string> {
     return this.#withReadConnection(() => this.#getRevision(this.#db))
+  }
+
+  async getTree(): Promise<ReadonlyTree> {
+    const state = await this.#withReadConnection(() => this.#getState(this.#db))
+    if (!state.tree)
+      throw new Error(`Database revision ${state.revision} has no source tree`)
+    return new ReadonlyTree(state.tree)
+  }
+
+  async *getBlobs(
+    shas: ReadonlyArray<string>,
+    options: GetBlobsOptions = {}
+  ): AsyncGenerator<[sha: string, blob: Uint8Array]> {
+    const encoder = new TextEncoder()
+    const found = new Set<string>()
+    for (let offset = 0; offset < shas.length; offset += 400) {
+      if (options.signal?.aborted)
+        throw options.signal.reason ?? new Error('Blob transfer aborted')
+      const requested = shas.slice(offset, offset + 400)
+      const rows = await this.#withReadConnection(async () =>
+        this.#db
+          .select({
+            sha: this.#entryTarget.fileHash,
+            payload: this.#entryTarget.payload
+          })
+          .from(this.#entryTarget)
+          .where(inArray(this.#entryTarget.fileHash, requested))
+          .all()
+      )
+      for (const row of rows) {
+        if (found.has(row.sha)) continue
+        found.add(row.sha)
+        yield [row.sha, encoder.encode(row.payload)]
+      }
+    }
   }
 
   async #getRevision(db: Database): Promise<string> {

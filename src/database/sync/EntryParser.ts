@@ -102,6 +102,7 @@ export function parseSourceEntry(
     active: false,
     main: false,
     visible: true,
+    payload: text,
     searchableText: Type.searchableText(type, data)
   }
 }
