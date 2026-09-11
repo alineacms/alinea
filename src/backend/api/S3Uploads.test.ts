@@ -49,6 +49,29 @@ test('creates a signed preview for private buckets', async () => {
   test.ok(previewUrl.searchParams.get('X-Amz-Signature'))
 })
 
+test('reads media from the configured storage key', async () => {
+  let requestedKey: string | undefined
+  const uploads = new S3Uploads({
+    bucket: 'assets',
+    region: 'eu-west-1',
+    accessKeyId: 'access',
+    secretAccessKey: 'secret',
+    prefix: 'uploads',
+    publicUrl(key) {
+      requestedKey = key
+      return 'data:text/plain,media-bytes'
+    }
+  })
+
+  const response = await uploads.readMedia(
+    {location: '/public/media/file.jpg'},
+    new Request('https://example.com/admin/file/file.jpg')
+  )
+
+  test.is(requestedKey, 'uploads/public/media/file.jpg')
+  test.is(await response.text(), 'media-bytes')
+})
+
 test('supports path-style endpoints and temporary credentials', async () => {
   const uploads = new S3Uploads({
     bucket: 'assets',
@@ -82,6 +105,59 @@ test('matches the AWS SigV4 presigned URL example', async () => {
     new URL(url).searchParams.get('X-Amz-Signature'),
     'aeeed9bbccd4d02ee5c0109b86d86835f995330da4c265957d157751f604d404'
   )
+})
+
+test('signs private HEAD media reads with the HEAD method', async () => {
+  const originalFetch = globalThis.fetch
+  let requested: URL | undefined
+  globalThis.fetch = Object.assign(
+    async (
+      input: Parameters<typeof fetch>[0],
+      init?: Parameters<typeof fetch>[1]
+    ) => {
+      requested = new URL(String(input))
+      test.is(init?.method, 'HEAD')
+      return new Response(null)
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+
+  try {
+    const uploads = new S3Uploads({
+      bucket: 'assets',
+      region: 'eu-west-1',
+      accessKeyId: 'access',
+      secretAccessKey: 'secret',
+      previewExpiresIn: 3600
+    })
+    await uploads.readMedia(
+      {location: 'media/file.jpg'},
+      new Request('https://example.com/admin/file/file.jpg', {method: 'HEAD'})
+    )
+
+    test.ok(requested)
+    const signed = requested!
+    const date = signed.searchParams.get('X-Amz-Date')!
+    const source = new URL(signed)
+    source.search = ''
+    const expected = new URL(
+      await presignS3Url({
+        method: 'HEAD',
+        url: source,
+        region: 'eu-west-1',
+        accessKeyId: 'access',
+        secretAccessKey: 'secret',
+        expiresIn: 3600,
+        now: parseAmzDate(date)
+      })
+    )
+    test.is(
+      signed.searchParams.get('X-Amz-Signature'),
+      expected.searchParams.get('X-Amz-Signature')
+    )
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })
 
 test('rejects upload paths which escape the staging prefix', async () => {
@@ -119,3 +195,10 @@ test('requires and limits the signed upload size', async () => {
     'exceeds the configured limit'
   )
 })
+
+function parseAmzDate(value: string): Date {
+  return new Date(
+    `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}` +
+      `T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}Z`
+  )
+}

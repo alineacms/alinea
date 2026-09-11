@@ -1,9 +1,11 @@
 import type {
+  MediaReadInput,
   UploadMetadata,
   UploadResponse,
   UploadsApi
 } from '#/core/Connection.js'
 import {join} from '#/core/util/Paths.js'
+import {readMediaUrl} from './ReadMedia.js'
 import {
   createUploadKey,
   createUploadLocation,
@@ -25,7 +27,7 @@ export interface S3UploadsOptions {
 }
 
 interface S3PresignOptions {
-  method: 'GET' | 'PUT'
+  method: 'GET' | 'HEAD' | 'PUT'
   url: URL
   region: string
   accessKeyId: string
@@ -66,11 +68,18 @@ export class S3Uploads implements UploadsApi {
     }
   }
 
-  async #previewUrl(key: string): Promise<string> {
+  async readMedia(input: MediaReadInput, request: Request): Promise<Response> {
+    const key = createUploadKey(this.#options.prefix, input.location)
+    const method = request.method === 'HEAD' ? 'HEAD' : 'GET'
+    const source = new URL(await this.#previewUrl(key, method))
+    return readMediaUrl(request, source)
+  }
+
+  async #previewUrl(key: string, method: 'GET' | 'HEAD' = 'GET') {
     const {publicUrl} = this.#options
     if (typeof publicUrl === 'function') return publicUrl(key)
     if (publicUrl) return joinUrl(publicUrl, key)
-    return this.#presign('GET', key, this.#previewExpiresIn())
+    return this.#presign(method, key, this.#previewExpiresIn())
   }
 
   #uploadExpiresIn(): number {
@@ -82,7 +91,7 @@ export class S3Uploads implements UploadsApi {
   }
 
   #presign(
-    method: 'GET' | 'PUT',
+    method: 'GET' | 'HEAD' | 'PUT',
     key: string,
     expiresIn: number,
     headers?: Record<string, string>

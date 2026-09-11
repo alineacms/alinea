@@ -119,6 +119,7 @@ export function composeBackend(
     prepareUpload: call('prepareUpload'),
     handleUpload: call('handleUpload'),
     previewUpload: call('previewUpload'),
+    readMedia: hasMethod('readMedia') ? call('readMedia') : undefined,
     enrichUser: call('enrichUser'),
     listUsers: call('listUsers'),
     createUser: call('createUser'),

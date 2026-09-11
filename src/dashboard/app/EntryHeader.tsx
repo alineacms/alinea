@@ -69,13 +69,15 @@ function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
       }}
     >
       {conflict && (
-        <DashboardModalDialog label="URL alias already in use">
+        <DashboardModalDialog label="URL already in use">
           <DashboardModalContent>
             <p>
-              The URL alias <strong>{conflict.url}</strong> is already defined
-              on entry <strong>{conflict.entryId}</strong>.
+              The URL <strong>{conflict.url}</strong> is already defined on
+              entry <strong>{conflict.entryId}</strong> in workspace{' '}
+              <strong>{conflict.workspace}</strong>, root{' '}
+              <strong>{conflict.root}</strong>.
             </p>
-            <p>Remove or change this alias, then publish again.</p>
+            <p>Change the entry path or remove this alias, then try again.</p>
           </DashboardModalContent>
           <DashboardModalFooter>
             <Button intent="primary" onPress={onClose}>

@@ -41,6 +41,11 @@ export interface CapabilitiesApi {
 export interface RemoteConnection
   extends Connection, AuthApi, CapabilitiesApi {}
 
+export interface MediaReadInput {
+  location: string
+  previewUrl?: string
+}
+
 export interface BrowserConnection extends Connection {
   logout?(): Promise<void>
 }
@@ -86,6 +91,8 @@ export interface UploadsApi {
   ): Promise<UploadResponse>
   handleUpload?(entryId: string, file: Blob): Promise<void>
   previewUpload?(entryId: string): Promise<Response>
+  /** Return a terminal media response containing bytes, not a redirect. */
+  readMedia?(input: MediaReadInput, request: Request): Promise<Response>
 }
 
 export interface Connection

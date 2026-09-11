@@ -1,11 +1,10 @@
-import type {Config} from '../Config.js'
+import {Config} from '../Config.js'
 import {Workspace} from '../Workspace.js'
-import {join, normalize} from '../util/Paths.js'
-import {joinPaths} from '../util/Urls.js'
+import {contains, join, normalize, relative} from '../util/Paths.js'
 
 export const MEDIA_LOCATION = '@alinea.location'
 
-export interface MediaUrlMeta {
+export interface MediaPublicUrlMeta {
   /** The media entry path without its extension. */
   path: string
   /** The paths of parent media directories. */
@@ -16,16 +15,6 @@ export interface MediaUrlMeta {
   location: string
   workspace: string
   root: string
-}
-
-export interface MediaUrlResolver {
-  (meta: MediaUrlMeta): string
-}
-
-export interface MediaPublicUrlMeta extends Omit<MediaUrlMeta, 'parentPaths'> {
-  /** @deprecated Pass parentPaths directly when available. */
-  entryUrl?: string
-  parentPaths?: Array<string>
 }
 
 export interface MediaEntryUrlMeta {
@@ -61,27 +50,51 @@ export namespace MediaLocation {
   ): string {
     const mediaDir = directory(config, workspace)
     if (!mediaDir) return location
-    const prefix = normalize(mediaDir).replace(/\/$/, '')
-    if (location === prefix) return ''
-    return location.startsWith(`${prefix}/`)
-      ? location.slice(prefix.length)
-      : location
+    const normalizedDir = join('/', normalize(mediaDir))
+    const normalizedLocation = join('/', normalize(location))
+    if (normalizedLocation === normalizedDir) return ''
+    if (!contains(normalizedDir, normalizedLocation)) return location
+    return join('/', relative(normalizedDir, normalizedLocation))
+  }
+
+  /** Resolve the deployed public location of a stored media file. */
+  export function sourceUrl(
+    config: Config,
+    workspace: string,
+    location: string
+  ): string | undefined {
+    if (/^https?:\/\//.test(location)) return location
+    if (!directory(config, workspace)) return join('/', location)
+    return publicFileUrl(config, workspace, location)
+  }
+
+  /** Resolve storage known to be inside the application's public directory. */
+  export function publicFileUrl(
+    config: Config,
+    workspace: string,
+    location: string
+  ): string | undefined {
+    if (/^https?:\/\//.test(location) || !directory(config, workspace)) return
+    const publicDir = join('/', config.publicDir ?? '/public')
+    const storage = join('/', storagePath(config, workspace, location))
+    if (!contains(publicDir, storage)) return
+    return join('/', relative(publicDir, storage))
   }
 
   /** Resolve the public URL used to serve a media entry. */
   export function publicUrl(config: Config, meta: MediaPublicUrlMeta): string {
-    const {entryUrl, parentPaths, ...media} = meta
-    const {location, workspace} = meta
-    const {mediaUrl} = Workspace.data(config.workspaces[workspace])
-    if (!mediaUrl) return location
-    if (typeof mediaUrl === 'function') {
-      return mediaUrl({
-        ...media,
-        parentPaths:
-          parentPaths ?? entryUrl?.split('/').filter(Boolean).slice(0, -1) ?? []
-      })
-    }
-    return joinPaths(mediaUrl, location)
+    const file = join(...meta.parentPaths, `${meta.path}${meta.extension}`)
+    return Config.filePathname(config, file)
+  }
+
+  /** Add an immutable media version without changing its canonical path. */
+  export function versionedUrl(url: string, version: string | undefined) {
+    if (!version) return url
+    const fragmentAt = url.indexOf('#')
+    const base = fragmentAt === -1 ? url : url.slice(0, fragmentAt)
+    const fragment = fragmentAt === -1 ? '' : url.slice(fragmentAt)
+    const separator = base.includes('?') ? '&' : '?'
+    return `${base}${separator}v=${encodeURIComponent(version)}${fragment}`
   }
 
   /** Resolve a media entry URL, falling back to its regular entry URL. */

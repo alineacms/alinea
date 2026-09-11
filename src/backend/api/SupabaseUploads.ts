@@ -1,8 +1,10 @@
 import type {
+  MediaReadInput,
   UploadMetadata,
   UploadResponse,
   UploadsApi
 } from '#/core/Connection.js'
+import {readMediaUrl} from './ReadMedia.js'
 import {
   createUploadKey,
   createUploadLocation,
@@ -58,6 +60,12 @@ export class SupabaseUploads implements UploadsApi {
       url: result(upload).signedUrl,
       method: 'PUT'
     }
+  }
+
+  readMedia(input: MediaReadInput, request: Request): Promise<Response> {
+    const key = createUploadKey(this.#options.prefix, input.location)
+    const source = new URL(this.#bucket.getPublicUrl(key).data.publicUrl)
+    return readMediaUrl(request, source)
   }
 }
 

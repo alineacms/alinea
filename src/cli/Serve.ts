@@ -71,6 +71,7 @@ export async function serve(options: ServeOptions): Promise<void> {
           options.onAfterGenerate?.({
             ALINEA_DEV_SERVER: url,
             ALINEA_ADMIN_PATH: Config.adminPath(config),
+            ALINEA_HANDLER_URL: Config.handlerUrl(config),
             ALINEA_API_KEY: apiKey
           })
         })

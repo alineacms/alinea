@@ -9,6 +9,7 @@ import {Reference} from '#/core/Reference.js'
 import {Root, type RootI18n} from '#/core/Root.js'
 import {Type, type} from '#/core/Type.js'
 import {ListRow} from '#/core/ListRow.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {applyUrlSuffix} from '#/core/util/Anchors.js'
 import {assign, isRecord, keys} from '#/core/util/Objects.js'
 import {LocalisedValue, selectLocalisedValue} from '#/field/localiser.js'
@@ -112,8 +113,6 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       const {
         extension,
         src,
-        previewUrl,
-        filePath,
         alt,
         root: _root,
         workspace: _workspace,
@@ -123,18 +122,11 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         root: _root,
         workspace: _workspace
       })
-      if (!previewUrl) {
-        assign(row, rest, {extension, src})
-        if (typeof selectedAlt === 'string') row.alt = selectedAlt
-        return
-      }
-      // If the DB was built with this entry in it we can assume the location
-      // is ready to use, otherwise use the preview url
-      const locationAvailable = loader.includedAtBuild(filePath)
-      row.src = locationAvailable ? src : previewUrl
-      row.extension = extension
+      const version = typeof rest.hash === 'string' ? rest.hash : undefined
+      const versionedSrc =
+        typeof src === 'string' ? MediaLocation.versionedUrl(src, version) : src
+      assign(row, rest, {extension, src: versionedSrc})
       if (typeof selectedAlt === 'string') row.alt = selectedAlt
-      assign(row, rest)
     }
   }
 }

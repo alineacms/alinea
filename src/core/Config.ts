@@ -36,9 +36,14 @@ export interface Config {
   baseUrl?: string | {development?: string; production?: string}
   /** The url of the handler endpoint */
   handlerUrl?: string
-  /** The folder where public assets are stored, defaults to /public */
+  /** The public path where Alinea is mounted, defaults to /admin */
+  adminPath?: string
+  /** The folder where public assets are stored, defaults to /public. */
   publicDir?: string
-  /** Filename of the generated dashboard, defaults to admin.html */
+  /**
+   * Filename of the generated dashboard, defaults to admin.html.
+   * @deprecated Use adminPath instead.
+   */
   dashboardFile?: string
 
   /** Optional application-owned instrumentation for Alinea operations. */
@@ -71,8 +76,18 @@ export namespace Config {
   }
 
   export function adminPath(config: Config) {
+    if (config.adminPath) return normalizeUrlPath(config.adminPath)
     const file = config.dashboardFile ?? 'admin.html'
-    return paths.basename(file, '.html')
+    return normalizeUrlPath(paths.basename(file, '.html'))
+  }
+
+  export function filePathname(config: Config, file: string) {
+    return paths.join(adminPath(config), 'file', file)
+  }
+
+  export function dashboardFile(config: Config) {
+    if (!config.adminPath && config.dashboardFile) return config.dashboardFile
+    return `${paths.relative('/', adminPath(config))}.html`
   }
 
   export function mainWorkspace(config: Config): WorkspaceInternal {
@@ -185,6 +200,12 @@ export namespace Config {
       values(config.workspaces).flatMap(Workspace.referencedViews)
     )
   }
+}
+
+function normalizeUrlPath(value: string): string {
+  const normalized = paths.join('/', value, '.')
+  if (normalized === '/') throw new Error('adminPath must not be the root path')
+  return normalized
 }
 
 const normalized = new WeakSet()

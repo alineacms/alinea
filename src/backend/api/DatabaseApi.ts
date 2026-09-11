@@ -1,5 +1,6 @@
 import type {
   DraftsApi,
+  MediaReadInput,
   RequestContext,
   UploadResponse,
   UploadsApi,
@@ -110,6 +111,20 @@ export class DatabaseApi implements DraftsApi, UploadsApi, UserApi {
         'content-disposition': `inline; filename="${entryId}"`
       }
     })
+  }
+
+  async readMedia(input: MediaReadInput): Promise<Response> {
+    if (!input.previewUrl) return new Response('Not found', {status: 404})
+    const previewUrl = new URL(input.previewUrl)
+    if (
+      previewUrl.origin !== this.#context.handlerUrl.origin ||
+      previewUrl.pathname !== this.#context.handlerUrl.pathname ||
+      previewUrl.searchParams.get('action') !== HandleAction.Upload
+    )
+      return new Response('Not found', {status: 404})
+    const entryId = previewUrl.searchParams.get('entryId')
+    if (!entryId) return new Response('Not found', {status: 404})
+    return this.previewUpload(entryId)
   }
 
   async enrichUser(user: User): Promise<User> {

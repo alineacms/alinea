@@ -1,11 +1,12 @@
 import type {Handler} from '#/backend/Handler.js'
 import {router} from '#/backend/router/Router.js'
 import type {CMS} from '#/core/CMS.js'
+import {Config} from '#/core/Config.js'
 import {HttpError} from '#/core/HttpError.js'
 import {type Trigger, trigger} from '#/core/Trigger.js'
 import type {User} from '#/core/User.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
-import {ReadableStream, type Request, Response} from '@alinea/iso'
+import {ReadableStream, Request, Response} from '@alinea/iso'
 import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -91,9 +92,10 @@ export function createLocalServer(
     })
   }
   const devDir = path.join(staticDir, 'dev')
+  const adminPath = Config.adminPath(cms.config)
   const getPath = (url: URL) => {
-    if (url.pathname.startsWith('/admin'))
-      return url.pathname.slice('/admin'.length)
+    if (url.pathname === adminPath || url.pathname.startsWith(`${adminPath}/`))
+      return url.pathname.slice(adminPath.length)
     return url.pathname
   }
   const matcher = router.matcher(getPath)
@@ -252,6 +254,16 @@ export function createLocalServer(
       }
     }),
     router.compress(
+      matcher.all('/file/*').map(({request, params}) => {
+        if (request.method !== 'GET' && request.method !== 'HEAD') return
+        const url = new URL(request.url)
+        url.pathname = '/api'
+        url.search = new URLSearchParams({
+          file: String(params.wild),
+          delivery: 'proxy'
+        }).toString()
+        return devHandler(new Request(url, request))
+      }),
       matcher.all('/api').map(async ({url, request}) => {
         return devHandler(request)
       }),

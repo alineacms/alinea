@@ -49,3 +49,25 @@ test('surfaces Supabase errors', async () => {
     'Could not sign upload'
   )
 })
+
+test('reads media from the configured storage key', async () => {
+  let requestedKey: string | undefined
+  const bucket: SupabaseBucketLike = {
+    async createSignedUploadUrl() {
+      return {data: {signedUrl: 'https://example.com/upload'}, error: null}
+    },
+    getPublicUrl(path) {
+      requestedKey = path
+      return {data: {publicUrl: 'data:text/plain,media-bytes'}}
+    }
+  }
+  const uploads = new SupabaseUploads(bucket, {prefix: 'uploads'})
+
+  const response = await uploads.readMedia(
+    {location: '/public/media/file.jpg'},
+    new Request('https://example.com/admin/file/file.jpg')
+  )
+
+  test.is(requestedKey, 'uploads/public/media/file.jpg')
+  test.is(await response.text(), 'media-bytes')
+})
