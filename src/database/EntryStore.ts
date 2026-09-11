@@ -22,6 +22,7 @@ import type {
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
+import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {
   EntryDatabase,
   type EntryChangeListener,
@@ -37,6 +38,7 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   readonly database: EntryDatabase
   readonly source: Source
   #ownsDatabase: boolean
+  #sourceFollowsDatabase: boolean
   #close?: () => Promise<void>
   #queue: Promise<unknown> = Promise.resolve()
 
@@ -44,13 +46,18 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     config: Config,
     database: EntryDatabase,
     source: Source,
-    options: {ownsDatabase?: boolean; close?: () => Promise<void>} = {}
+    options: {
+      ownsDatabase?: boolean
+      sourceFollowsDatabase?: boolean
+      close?: () => Promise<void>
+    } = {}
   ) {
     super()
     this.config = config
     this.database = database
     this.source = source
     this.#ownsDatabase = options.ownsDatabase ?? false
+    this.#sourceFollowsDatabase = options.sourceFollowsDatabase ?? false
     this.#close = options.close
   }
 
@@ -186,12 +193,18 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     }
     if (!mutations.length) return
     const result = await this.database.apply(mutations, {source: this.source})
-    await this.source.applyChanges(sourceChanges(result.request))
+    if (!this.#sourceFollowsDatabase)
+      await this.source.applyChanges(sourceChanges(result.request))
   }
 
   /** Keep the writable source and its query database at one remote revision. */
   syncWith(remote: RemoteSource): Promise<string> {
     return this.#run(async () => {
+      if (this.#sourceFollowsDatabase) {
+        await this.database.syncWith(remote)
+        await this.#seed()
+        return this.database.getRevision()
+      }
       const localTree = await this.source.getTree()
       const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
       if (!remoteTree) return this.#sync()
@@ -274,7 +287,8 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     return this.#run(async () => {
       await this.#sync()
       const result = await this.database.apply(mutations, {source: this.source})
-      await this.source.applyChanges(sourceChanges(result.request))
+      if (!this.#sourceFollowsDatabase)
+        await this.source.applyChanges(sourceChanges(result.request))
       return {sha: result.revision}
     })
   }
@@ -282,6 +296,15 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   write(request: CommitRequest): Promise<{sha: string}> {
     return this.#run(async () => {
       const tree = await this.source.getTree()
+      if (this.#sourceFollowsDatabase) {
+        if (tree.sha === request.intoSha) return {sha: tree.sha}
+        if (tree.sha !== request.fromSha)
+          throw new ShaMismatchError(request.fromSha, tree.sha)
+        const source = await OverlaySource.create(this.source)
+        await source.applyChanges(sourceChanges(request))
+        const result = await this.database.syncWith(source)
+        return {sha: result.revision}
+      }
       if (tree.sha !== request.intoSha)
         await this.source.applyChanges(sourceChanges(request))
       const result = await this.database.syncWith(this.source)

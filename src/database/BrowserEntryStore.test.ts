@@ -21,7 +21,7 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
   const source = new MemorySource()
   const name = `alinea-browser-db-${crypto.randomUUID()}`
   const options = {indexedDB, name, revision: 'config-1'}
-  const initial = await BrowserEntryStore.open(config, source, options)
+  const initial = await BrowserEntryStore.open(config, options)
   const mutation = initial.mutate([
     {
       op: 'create',
@@ -39,7 +39,7 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
     requestedBlobs += shas.length
     yield* getBlobs(shas, blobOptions)
   }
-  const reopened = await BrowserEntryStore.open(config, source, options)
+  const reopened = await BrowserEntryStore.open(config, options)
   try {
     await reopened.sync()
     expect(requestedBlobs).toBe(0)
@@ -75,7 +75,7 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   await transactionComplete(transaction)
   cache.close()
 
-  const store = await BrowserEntryStore.open(config, source, {
+  const store = await BrowserEntryStore.open(config, {
     indexedDB,
     name,
     revision: 'config-1'
@@ -109,13 +109,13 @@ test('browser entry stores sync source rows in bounded batches', async () => {
       data: {body}
     }))
   )
-  const store = await BrowserEntryStore.open(config, source, {
+  const store = await BrowserEntryStore.open(config, {
     indexedDB,
     name: `alinea-browser-batched-${crypto.randomUUID()}`,
     revision: 'config-1'
   })
   try {
-    await store.sync()
+    await store.syncWith(source)
     expect(await store.count({})).toBe(800)
   } finally {
     await store.close()

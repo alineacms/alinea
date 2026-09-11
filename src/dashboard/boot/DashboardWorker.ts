@@ -329,7 +329,7 @@ export class DashboardWorker extends EventTarget {
     this.#localClient = undefined
     try {
       const db = globalThis.indexedDB
-        ? await BrowserEntryStore.open(config, this.#source, {
+        ? await BrowserEntryStore.open(config, {
             indexedDB: globalThis.indexedDB,
             name: 'alinea-entry-database',
             revision

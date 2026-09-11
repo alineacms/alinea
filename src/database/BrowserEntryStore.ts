@@ -1,10 +1,11 @@
 import type {Config} from '#/core/Config.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
-import type {RemoteSource, Source} from '#/core/source/Source.js'
+import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
+import {DatabaseSource} from './DatabaseSource.js'
 import {
   openWasmDatabase,
   type WasmDatabaseHandle
@@ -37,7 +38,6 @@ export class BrowserEntryStore extends EntryStore {
 
   static async open(
     config: Config,
-    source: Source,
     options: BrowserEntryStoreOptions
   ): Promise<BrowserEntryStore> {
     const cache = await openCache(options.indexedDB, options.name)
@@ -55,7 +55,6 @@ export class BrowserEntryStore extends EntryStore {
       return new BrowserEntryStore(
         config,
         database,
-        source,
         handle,
         cache,
         options.revision,
@@ -66,7 +65,7 @@ export class BrowserEntryStore extends EntryStore {
       if (data) {
         await deleteDatabase(cache)
         cache.close()
-        return BrowserEntryStore.open(config, source, options)
+        return BrowserEntryStore.open(config, options)
       }
       cache.close()
       throw error
@@ -76,13 +75,15 @@ export class BrowserEntryStore extends EntryStore {
   private constructor(
     config: Config,
     database: EntryDatabase,
-    source: Source,
     handle: WasmDatabaseHandle,
     cache: IDBDatabase,
     revision: string,
     persistedSha: string | undefined
   ) {
-    super(config, database, source, {ownsDatabase: true})
+    super(config, database, new DatabaseSource(database), {
+      ownsDatabase: true,
+      sourceFollowsDatabase: true
+    })
     this.#handle = handle
     this.#cache = cache
     this.#revision = revision
