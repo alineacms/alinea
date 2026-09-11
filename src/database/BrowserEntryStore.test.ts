@@ -2,6 +2,7 @@ import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {Config as ConfigBuilder} from '#/index.js'
+import {createEntrySource} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {BrowserEntryStore} from './BrowserEntryStore.js'
@@ -82,6 +83,40 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   try {
     expect(await store.sync()).toBe((await source.getTree()).sha)
     expect(await store.find({select: Entry.id})).toEqual([])
+  } finally {
+    await store.close()
+  }
+})
+
+test('browser entry stores sync source rows in bounded batches', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const body = 'x'.repeat(8 * 1024)
+  const source = await createEntrySource(
+    config,
+    Array.from({length: 800}, (_, index) => ({
+      id: `page-${index}`,
+      type: 'Page',
+      index: String(index).padStart(4, '0'),
+      data: {body}
+    }))
+  )
+  const store = await BrowserEntryStore.open(config, source, {
+    indexedDB,
+    name: `alinea-browser-batched-${crypto.randomUUID()}`,
+    revision: 'config-1'
+  })
+  try {
+    await store.sync()
+    expect(await store.count({})).toBe(800)
   } finally {
     await store.close()
   }

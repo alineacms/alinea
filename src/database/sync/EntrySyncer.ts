@@ -36,7 +36,7 @@ import {
 } from '../entry/Schema.js'
 import {parseSourceEntry} from './EntryParser.js'
 
-const changeBatchSize = 750
+const changeBatchSize = 250
 const sqliteBatchSize = 500
 
 export interface EntrySyncTarget {
