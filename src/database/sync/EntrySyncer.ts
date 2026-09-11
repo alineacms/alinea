@@ -26,7 +26,7 @@ import {
 } from '../entry/Schema.js'
 import {parseSourceEntry} from './EntryParser.js'
 
-const sourceBatchSize = 250
+const changeBatchSize = 750
 const sqliteBatchSize = 500
 
 const DatabaseState = table('alinea_database_state', {
@@ -126,6 +126,7 @@ function prepareSyncQueries(db: Database) {
       .where(eq(DatabaseState.id, 1))
       .$first()
       .prepare(),
+    entryCount: db.$count(EntryIndexTable).prepare(),
     setRevision: db
       .update(DatabaseState)
       .set({revision})
@@ -361,6 +362,50 @@ async function replaceFiles(
   )
 }
 
+async function insertInitialSource(
+  db: Database,
+  config: Config,
+  source: Source,
+  tree: ReadonlyTree
+): Promise<void> {
+  const pathsByHash = new Map<string, Array<string>>()
+  for (const [filePath, node] of tree) {
+    if (!(node instanceof Leaf)) continue
+    const paths = pathsByHash.get(node.sha) ?? []
+    paths.push(filePath)
+    pathsByHash.set(node.sha, paths)
+  }
+  const found = new Set<string>()
+  let rows = Array<ReturnType<typeof entryIndexRow>>()
+  async function flush(): Promise<void> {
+    if (!rows.length) return
+    await db.insert(EntryIndexTable).values(rows)
+    rows = []
+  }
+  for await (const [fileHash, blob] of source.getBlobs([
+    ...pathsByHash.keys()
+  ])) {
+    const paths = pathsByHash.get(fileHash)
+    if (!paths) continue
+    found.add(fileHash)
+    for (const filePath of paths) {
+      const entry = parseSourceEntry(config, filePath, fileHash, blob)
+      rows.push({
+        ...entryIndexRow(entry),
+        childrenSha: sourceDirectorySha(tree, entry.childrenDir)
+      })
+      if (rows.length >= changeBatchSize) await flush()
+    }
+  }
+  await flush()
+  for (const fileHash of pathsByHash.keys())
+    assert(found.has(fileHash), `Source did not return blob ${fileHash}`)
+  await db.run(sql`
+    insert into alinea_sync_affected(id)
+      select distinct id from alinea_entry_index;
+  `)
+}
+
 async function* storedFiles(
   queries: SyncQueries
 ): AsyncGenerator<StoredFileRow> {
@@ -450,7 +495,7 @@ async function mergeSource(
     }
     if (
       removed.length + changed.length + directoryHashes.length >=
-      sourceBatchSize
+      changeBatchSize
     )
       await flush()
   }
@@ -672,6 +717,17 @@ async function deriveUrls(
   }
 }
 
+async function copyInitialUrls(db: Database): Promise<void> {
+  await db.run(sql`
+    update alinea_entry_index as entry set url = (
+      select main.url from alinea_entry_index main
+      where main.id = entry.id
+        and main.locale is entry.locale
+        and main.main
+    );
+  `)
+}
+
 /** Prepared, serialized source synchronization for one database connection. */
 export class EntrySyncer implements AsyncDisposable {
   #db: Database
@@ -715,12 +771,15 @@ export class EntrySyncer implements AsyncDisposable {
         const state = await queries.revision.get()
         if (state?.revision !== fromRevision)
           throw new Error('Database revision mismatch')
-        await mergeSource(tx, this.#config, source, tree, queries)
+        const initial = (await queries.entryCount.get()) === 0
+        if (initial) await insertInitialSource(tx, this.#config, source, tree)
+        else await mergeSource(tx, this.#config, source, tree, queries)
         await expandAffected(tx)
         await deriveHierarchy(tx, queries)
         await expandAffected(tx)
         await deriveStatus(tx, queries)
-        await deriveUrls(tx, this.#config, queries)
+        if (initial) await copyInitialUrls(tx)
+        else await deriveUrls(tx, this.#config, queries)
         const changed = await queries.changedIds.all()
         await queries.setRevision.run({revision: tree.sha})
         return changed.map(row => row.id)
