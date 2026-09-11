@@ -70,6 +70,8 @@ interface UrlCandidate {
 interface UrlClaim {
   id: string
   url: string
+  workspace: string
+  root: string
 }
 
 interface MoveTarget {
@@ -424,8 +426,8 @@ export class EntryTransaction {
         throw new EntryUrlConflictError({
           url,
           entryId: existing.id,
-          workspace: candidate.workspace,
-          root: candidate.root
+          workspace: existing.workspace,
+          root: existing.root
         })
       }
     }
@@ -440,7 +442,12 @@ export class EntryTransaction {
           candidate.type,
           url
         ),
-        {id: candidate.id, url}
+        {
+          id: candidate.id,
+          url,
+          workspace: candidate.workspace,
+          root: candidate.root
+        }
       )
     }
   }
@@ -516,7 +523,9 @@ export class EntryTransaction {
           this.#urlClaimKey(entry.workspace, entry.root, entry.type, url),
           {
             id: entry.id,
-            url
+            url,
+            workspace: entry.workspace,
+            root: entry.root
           }
         )
       }

@@ -139,7 +139,10 @@ export function createHandler({
         const requestedUrl = Config.filePathname(cms.config, normalized)
         const entry = local.index.findByUrl(
           requestedUrl,
-          entry => entry.type === 'MediaFile' && entry.main
+          entry =>
+            entry.type === 'MediaFile' &&
+            entry.status === 'published' &&
+            entry.main
         )
         if (!entry) return new Response('Not found', {status: 404})
         if (entry.url !== requestedUrl && !proxy)

@@ -27,6 +27,7 @@ import type {
 import {EntryReferenceIndex} from './EntryReferenceIndex.js'
 import {aliasesFromData, aliasUrl} from './EntryAliases.js'
 import {EntryTransaction} from './EntryTransaction.js'
+import {EntryUrlConflictError} from './EntryUrlConflictError.js'
 import {IndexEvent} from './IndexEvent.js'
 
 export interface EntryFilter {
@@ -427,6 +428,7 @@ export class EntryGraph {
       this.#nodeOrder.set(node, order)
       this.#indexNode(node)
     }
+    this.#assertUniqueMediaUrls()
   }
 
   byId(id: string) {
@@ -514,6 +516,38 @@ export class EntryGraph {
       )
     )
     for (const alias of aliases) addToIndex(this.#nodesBy.alias, alias, node)
+  }
+
+  #assertUniqueMediaUrls() {
+    const claims = new Map<string, Entry>()
+    for (const node of this.nodes) {
+      if (node.type !== 'MediaFile') continue
+      const published = Array.from(
+        node.filter({entry: entry => entry.status === 'published'})
+      )
+      const [representative] = published
+      if (!representative) continue
+      const urls = new Set<string>()
+      for (const entry of published) {
+        urls.add(entry.url)
+        for (const value of aliasesFromData(entry.data) ?? []) {
+          const alias = aliasUrl(value)
+          if (alias) urls.add(alias)
+        }
+      }
+      for (const url of urls) {
+        const existing = claims.get(url)
+        if (existing && existing.id !== node.id) {
+          throw new EntryUrlConflictError({
+            url,
+            entryId: existing.id,
+            workspace: existing.workspace,
+            root: existing.root
+          })
+        }
+        claims.set(url, representative)
+      }
+    }
   }
 
   byUrl(url: string): Iterable<Entry> {
