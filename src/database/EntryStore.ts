@@ -8,6 +8,7 @@ import {diff} from '#/core/source/Source.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
+import {createRecord} from '#/core/EntryRecord.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {Policy} from '#/core/Role.js'
 import type {
@@ -50,7 +51,39 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
+    if (query.preview && 'entry' in query.preview)
+      return this.#resolvePreview(query)
     return this.database.resolve(query)
+  }
+
+  async #resolvePreview<Query extends GraphQuery>(
+    query: Query
+  ): Promise<AnyQueryResult<Query>> {
+    const preview = query.preview
+    if (!preview || !('entry' in preview)) return this.database.resolve(query)
+    const source = await OverlaySource.create(this.source)
+    const tree = await source.getTree()
+    const entry = preview.entry
+    await source.applyChanges({
+      fromSha: tree.sha,
+      changes: [
+        {
+          op: 'add',
+          path: entry.filePath,
+          sha: entry.fileHash,
+          contents: new TextEncoder().encode(
+            JSON.stringify(createRecord(entry, entry.status), null, 2)
+          )
+        }
+      ]
+    })
+    const database = await this.database.overlay(source)
+    try {
+      const {preview: _preview, ...withoutPreview} = query
+      return database.resolve(withoutPreview as Query)
+    } finally {
+      await database.close()
+    }
   }
 
   referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {

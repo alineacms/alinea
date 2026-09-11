@@ -2,6 +2,7 @@ import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {createEntryRow} from '#/core/util/EntryRows.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
@@ -69,6 +70,38 @@ test('entry store requests are isolated until written', async () => {
 
     expect(await store.write(request)).toEqual({sha: request.intoSha})
     expect(await store.find({select: Entry.id})).toEqual(['page'])
+  } finally {
+    sqlite.close()
+  }
+})
+
+test('entry store resolves previews through a temporary database overlay', async () => {
+  const {sqlite, store} = await createStore()
+  try {
+    await store.mutate([
+      {
+        op: 'create',
+        id: 'page',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Published'}
+      }
+    ])
+    const entry = await store.get({id: 'page', select: Entry})
+    const {rowHash: _rowHash, fileHash: _fileHash, ...base} = entry
+    const preview = await createEntryRow(
+      config,
+      {...base, title: 'Preview', data: {...entry.data, title: 'Preview'}},
+      entry.status
+    )
+    expect(
+      await store.get({
+        id: 'page',
+        select: Entry.title,
+        preview: {entry: preview}
+      })
+    ).toBe('Preview')
+    expect(await store.get({id: 'page', select: Entry.title})).toBe('Published')
   } finally {
     sqlite.close()
   }
