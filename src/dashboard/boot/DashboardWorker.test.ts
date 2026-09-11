@@ -430,7 +430,9 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
 
   await worker.load('incompatible-cache', cms.config, client)
   await expect(worker.sync()).rejects.toThrow(
-    'Failed to load cached content and fetch remote updates'
+    'Failed to load cached content and fetch remote updates\n' +
+      'Cached content: Invalid root: removed-root for workspace demo\n' +
+      'Remote updates: Remote unavailable'
   )
 
   remoteUnavailable = false

@@ -82,9 +82,11 @@ export class DashboardWorker extends EventTarget {
         revision = await remote(() => this.#syncWithClient(db, client))
       } catch (error) {
         if (loaded.cacheFailure) {
+          const cached = errorMessage(loaded.cacheFailure.error)
+          const remote = errorMessage(error)
           throw new AggregateError(
             [loaded.cacheFailure.error, error],
-            'Failed to load cached content and fetch remote updates'
+            `Failed to load cached content and fetch remote updates\nCached content: ${cached}\nRemote updates: ${remote}`
           )
         }
         throw error
