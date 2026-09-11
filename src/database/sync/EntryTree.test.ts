@@ -5,10 +5,7 @@ function replacement(
   entry: Partial<EntryTreeRow> & Pick<EntryTreeRow, 'id' | 'rowHash'>
 ): EntryTreeRow {
   return {
-    locale: null,
-    versionStatus: 'published',
-    workspace: 'main',
-    root: 'pages',
+    versionId: JSON.stringify([entry.id, null, 'published']),
     parentId: null,
     childrenSha: null,
     ...entry
@@ -25,14 +22,14 @@ test('retains hidden authored versions beneath an archived parent', () => {
       }),
       replacement({
         id: 'child',
-        rowHash: 'child-published',
+        rowHash: 'child-draft',
+        versionId: JSON.stringify(['child', null, 'draft']),
         parentId: 'parent',
         childrenSha: 'child-directory'
       }),
       replacement({
         id: 'child',
-        rowHash: 'child-draft',
-        versionStatus: 'draft',
+        rowHash: 'child-published',
         parentId: 'parent',
         childrenSha: 'child-directory'
       })

@@ -10,7 +10,7 @@ import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {count, type Database, eq, table} from 'rado'
+import {asc, count, type Database, eq, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {
   EntryIndexTable,
@@ -142,15 +142,17 @@ export class EntryRuntime extends Graph {
       const entries = await this.#db
         .select({
           id: EntryIndexTable.id,
-          locale: EntryIndexTable.locale,
-          versionStatus: EntryIndexTable.versionStatus,
+          versionId: EntryIndexTable.versionId,
           rowHash: EntryIndexTable.rowHash,
           parentId: EntryIndexTable.parentId,
-          workspace: EntryIndexTable.workspace,
-          root: EntryIndexTable.root,
           childrenSha: EntryIndexTable.childrenSha
         })
         .from(EntryIndexTable)
+        .orderBy(
+          asc(EntryIndexTable.parentId),
+          asc(EntryIndexTable.id),
+          asc(EntryIndexTable.versionId)
+        )
       return entryTree(entries, revision)
     })
   }
