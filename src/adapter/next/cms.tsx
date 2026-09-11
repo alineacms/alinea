@@ -35,24 +35,26 @@ interface BundledDatabase extends Graph {
   syncWith(source: RemoteSource): Promise<string>
 }
 
+export type OpenBundledDatabase = (config: Config) => Promise<BundledDatabase>
+
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  constructor(config: Definition) {
+  bundledDb: PLazy<BundledDatabase>
+
+  constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
+    this.bundledDb = PLazy.from(async () => {
+      if (!openBundledDatabase)
+        throw new Error(
+          'Generated SQLite databases require an Edge database loader'
+        )
+      const span = trace(this.config, 'alinea.next.cms.db')
+      return span(() => openBundledDatabase(this.config))
+    })
   }
 
   throttle = createThrottledSync()
-  bundledDb: PLazy<BundledDatabase> = PLazy.from(async () => {
-    if (process.env.NEXT_RUNTIME === 'edge')
-      throw new Error('Local DB is not supported in Edge runtime environments.')
-    const span = trace(this.config, 'alinea.next.cms.db')
-    return span(async () => {
-      const {generatedDatabase} =
-        await import('#/backend/store/GeneratedDatabaseNode.js')
-      return generatedDatabase(this.config)
-    })
-  })
   #applyPreview = cache(async () => {
     const context = await requestContext(this.config)
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
