@@ -225,19 +225,20 @@ test('SQL grouping preserves primitive types and picks representatives before so
   )
 })
 
-test('SQL alias projections combine both locations and alias filters ignore non-URL rows', async () => {
+test('SQL alias projections use metadata aliases and ignore non-URL rows', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await db.create(EntryIndexTable)
   const data = [
     {},
-    {aliases: []},
+    {metadata: {aliases: []}},
     {metadata: {aliases: [{url: '/old'}, null]}},
     {
-      aliases: ['legacy', {url: ' /spaced '}, false],
-      metadata: {aliases: [{url: '/nested'}, {url: 12}]}
+      metadata: {
+        aliases: ['invalid', {url: ' /spaced '}, {url: '/nested'}, {url: 12}]
+      }
     },
-    {aliases: null, metadata: {aliases: 'not an array'}}
+    {metadata: {}}
   ]
   for (const [index, payload] of data.entries()) {
     await db

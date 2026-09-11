@@ -1073,25 +1073,16 @@ function dataWithUrlAlias(
   previousUrl: string,
   currentUrl: string
 ): Record<string, unknown> {
-  const target = typeAliasTarget(type)
-  if (!target) return data
+  if (!hasMetadataAliases(type)) return data
   const aliasUrls = aliasUrlsFromData(data)
   if (aliasUrls.includes(previousUrl)) return data
   const nextData = aliasUrls.includes(currentUrl)
     ? dataWithoutUrlAlias(data, currentUrl)
     : data
   const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
-  const aliases =
-    target === 'metadata'
-      ? Array.isArray(metadata.aliases)
-        ? metadata.aliases
-        : []
-      : Array.isArray(nextData.aliases)
-        ? nextData.aliases
-        : []
+  const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
   return dataWithAliases(
     nextData,
-    target,
     metadata,
     aliases.concat(createUrlAliasRow(previousUrl, aliases))
   )
@@ -1101,33 +1092,24 @@ function dataWithoutUrlAlias(
   data: Record<string, unknown>,
   url: string
 ): Record<string, unknown> {
-  let result = data
-  if (Array.isArray(data.aliases)) {
-    result = {
-      ...result,
-      aliases: data.aliases.filter(alias => aliasUrl(alias) !== url)
-    }
-  }
   const metadata = data.metadata
   if (isRecord(metadata) && Array.isArray(metadata.aliases)) {
-    result = {
-      ...result,
+    return {
+      ...data,
       metadata: {
         ...metadata,
         aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
       }
     }
   }
-  return result
+  return data
 }
 
 function dataWithAliases(
   data: Record<string, unknown>,
-  target: AliasTarget,
   metadata: Record<string, unknown>,
   aliases: Array<unknown>
 ): Record<string, unknown> {
-  if (target === 'aliases') return {...data, aliases}
   return {
     ...data,
     metadata: {
@@ -1137,21 +1119,17 @@ function dataWithAliases(
   }
 }
 
-type AliasTarget = 'aliases' | 'metadata'
-
 interface UrlAliasRow extends ListRow {
   _type: 'alias'
   url: string
 }
 
-function typeAliasTarget(type: Type): AliasTarget | undefined {
-  if (Type.field(type, 'aliases')) return 'aliases'
+function hasMetadataAliases(type: Type): boolean {
   const metadata = Type.field(type, 'metadata')
-  if (!metadata) return undefined
+  if (!metadata) return false
   const options = Field.options(metadata)
   const fields = (options as {fields?: unknown}).fields
-  if (!Type.isType(fields)) return undefined
-  return Type.field(fields, 'aliases') ? 'metadata' : undefined
+  return Type.isType(fields) && Boolean(Type.field(fields, 'aliases'))
 }
 
 function createUrlAliasRow(url: string, aliases: Array<unknown>) {

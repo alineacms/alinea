@@ -40,7 +40,6 @@ import {
   jsonField,
   type QueryField
 } from './Condition.js'
-import {aliasesField} from './Aliases.js'
 import {searchQuery} from './Search.js'
 
 import {
@@ -85,9 +84,6 @@ class Expressions {
   }
 
   index(name: string, path?: Array<string>): QueryField {
-    if (name === 'aliases') {
-      return aliasesField(this.#entry.data)
-    }
     if (path) return this.data([...path, name])
     if (name === 'data') {
       return columnField(this.#entry.data)

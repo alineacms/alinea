@@ -519,7 +519,6 @@ const advancedEntries = [
     path: 'i18n-image',
     data: {
       title: 'I18n image',
-      aliases: ['   '],
       location: '/i18n.jpg',
       previewUrl: '/preview/i18n.jpg',
       extension: '.jpg',
