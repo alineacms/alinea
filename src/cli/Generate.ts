@@ -1,6 +1,5 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import {buildEntryDatabase} from '#/database/BuildDatabase.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
 import {createRequire} from 'node:module'
@@ -96,11 +95,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
-    return buildEntryDatabase(
-      db.config,
-      db.source,
-      join(context.outDir, 'database.sqlite')
-    )
+    return db.finalize()
   }
   for await (const cms of builds) {
     Config.handlerUrl(cms.config)
@@ -130,9 +125,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       else message += ` (${recordCount} records)`
       return message
     }
-    const db = new DevDB({
+    const db = await DevDB.create({
       config: cms.config,
       rootDir,
+      databasePath: join(context.outDir, 'database.sqlite'),
       dashboardUrl: await options.dashboardUrl
     })
     try {
@@ -142,21 +138,25 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       if (cmd === 'build') process.exit(1)
       continue
     }
-    for await (const db of indexing) {
-      yield {cms, db}
-      if (onAfterGenerate && !afterGenerateCalled) {
-        const recordCount = await db.count({})
-        await write(recordCount ?? 0).then(
-          message => {
-            afterGenerateCalled = true
-            onAfterGenerate(message, cms.config)
-          },
-          () => {
-            reportFatal('Alinea failed to write dashboard files')
-            if (cmd === 'build') process.exit(1)
-          }
-        )
+    try {
+      for await (const db of indexing) {
+        yield {cms, db}
+        if (onAfterGenerate && !afterGenerateCalled) {
+          const recordCount = await db.count({})
+          await write(recordCount ?? 0).then(
+            message => {
+              afterGenerateCalled = true
+              onAfterGenerate(message, cms.config)
+            },
+            () => {
+              reportFatal('Alinea failed to write dashboard files')
+              if (cmd === 'build') process.exit(1)
+            }
+          )
+        }
       }
+    } finally {
+      await db.close()
     }
   }
 }

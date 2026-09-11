@@ -40,9 +40,10 @@ function requestContext(request: Request): RequestContext {
   }
 }
 
-const local = new DevDB({
+const local = await DevDB.create({
   config: cms.config,
   rootDir: fixtureDir,
+  databasePath: path.join(fixtureDir, 'database.sqlite'),
   dashboardUrl: `http://localhost:${port}`
 })
 await local.sync()

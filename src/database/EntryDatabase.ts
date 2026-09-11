@@ -26,7 +26,17 @@ import {
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {and, asc, count, type Database, eq, gt, inArray, isNull} from 'rado'
+import {
+  and,
+  asc,
+  count,
+  type Database,
+  eq,
+  gt,
+  inArray,
+  isNull,
+  sql
+} from 'rado'
 import {EntryView} from './entry/EntryView.js'
 import {
   DatabaseStateTable,
@@ -370,12 +380,37 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {
-    await db.create(EntryIndexTable, DatabaseStateTable)
-    await createSearch(db)
-    await db.insert(DatabaseStateTable).values({
-      id: 1,
-      revision,
-      tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
+    const schema = await db.get<{name: string}>(sql`
+      select name from sqlite_master
+      where type = 'table' and name = 'alinea_database_state'
+    `)
+    if (schema == null) {
+      await db.create(EntryIndexTable, DatabaseStateTable)
+      await createSearch(db)
+    }
+    const existing = await db
+      .select(DatabaseStateTable.id)
+      .from(DatabaseStateTable)
+      .where(eq(DatabaseStateTable.id, 1))
+      .get()
+    if (existing == null)
+      await db.insert(DatabaseStateTable).values({
+        id: 1,
+        revision,
+        tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
+      })
+  }
+
+  async prepareSearch(): Promise<void> {
+    await this.#withReadConnection(() => this.#ensureSearch(this.#db))
+  }
+
+  async compact(): Promise<void> {
+    if (this.#view) throw new Error('Cannot compact an entry database overlay')
+    await this.prepareSearch()
+    await this.#withReadConnection(async () => {
+      await this.#db.run(sql`pragma optimize`)
+      await this.#db.run(sql`vacuum`)
     })
   }
 

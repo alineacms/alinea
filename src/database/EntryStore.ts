@@ -53,7 +53,7 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     this.#close = options.close
   }
 
-  static async create(
+  static async memory(
     config: Config,
     source: Source,
     options: EntryDatabaseOptions = {}
