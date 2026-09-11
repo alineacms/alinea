@@ -8,7 +8,8 @@ import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {EntryStore} from '#/database/EntryStore.js'
+import type {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
@@ -35,7 +36,7 @@ export class NextCMS<
   }
 
   throttle = createThrottledSync()
-  bundledDb = PLazy.from(async () => {
+  bundledDb: PLazy<LocalDB | EntryStore> = PLazy.from(async () => {
     if (process.env.NEXT_RUNTIME === 'edge')
       throw new Error('Local DB is not supported in Edge runtime environments.')
     const span = trace(this.config, 'alinea.next.cms.db')
@@ -43,9 +44,7 @@ export class NextCMS<
       const {generatedSource} =
         await import('#/backend/store/GeneratedSource.js')
       const source = await generatedSource
-      const db = new LocalDB(this.config, source)
-      await db.sync()
-      return db
+      return EntryStore.create(this.config, source)
     })
   })
   #applyPreview = cache(async () => {
@@ -81,12 +80,13 @@ export class NextCMS<
   })
 
   async #prepareLocalPreview(
-    db: LocalDB,
+    db: LocalDB | EntryStore,
     decoded: DecodedPreviewRequest,
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
-    if (db.sha === decoded.contentHash) return applyPreviewUpdate(db, decoded)
+    if ((await db.sha) === decoded.contentHash)
+      return applyPreviewUpdate(db, decoded)
 
     const source = await db.source.getTree()
     if (source.sha === decoded.contentHash) {

@@ -6,7 +6,7 @@ import type {
 } from '#/core/source/Source.js'
 import {diff} from '#/core/source/Source.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
-import type {ReadonlyTree} from '#/core/source/Tree.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import type {Mutation} from '#/core/db/Mutation.js'
@@ -21,8 +21,10 @@ import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {
   EntryDatabase,
   type EntryChangeListener,
+  type EntryDatabaseOptions,
   type EntrySyncResult
 } from './EntryDatabase.js'
+import {wasmDatabase} from './driver/WasmDatabase.js'
 
 /** Source and commit lifecycle around the transport-neutral SQLite database. */
 export class EntryStore extends WriteableGraph implements AsyncDisposable {
@@ -42,6 +44,26 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     this.database = database
     this.source = source
     this.#ownsDatabase = options.ownsDatabase ?? false
+  }
+
+  static async create(
+    config: Config,
+    source: Source,
+    options: EntryDatabaseOptions = {}
+  ): Promise<EntryStore> {
+    const db = await wasmDatabase()
+    try {
+      await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+      const database = new EntryDatabase(config, db, options)
+      const store = new EntryStore(config, database, source, {
+        ownsDatabase: true
+      })
+      await store.sync()
+      return store
+    } catch (error) {
+      await db.close()
+      throw error
+    }
   }
 
   get sha(): Promise<string> {

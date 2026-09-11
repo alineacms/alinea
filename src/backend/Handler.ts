@@ -14,6 +14,7 @@ import type {
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import type {EntryStore} from '#/database/EntryStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -61,7 +62,7 @@ export interface HandlerHooks {
 
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
-  db: LocalDB | Promise<LocalDB>
+  db: LocalDB | EntryStore | Promise<LocalDB | EntryStore>
   remote?: (context: RequestContext) => RemoteConnection
   forwardMutations?(
     request: Request,
@@ -240,7 +241,10 @@ export function createHandler({
           )
         } else {
           const preview = await decodePreviewRequest(query.preview)
-          if ('contentHash' in preview && local.sha !== preview.contentHash)
+          if (
+            'contentHash' in preview &&
+            (await local.sha) !== preview.contentHash
+          )
             await local.syncWith(cnx)
           query.preview = await applyPreview(local, preview)
         }
