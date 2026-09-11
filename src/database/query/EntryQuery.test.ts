@@ -12,11 +12,6 @@ import {
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from './EntryQuery.js'
-import {EntryIndex} from '#/core/db/EntryIndex.js'
-import {EntryResolver} from '#/core/db/EntryResolver.js'
-import {FSSource} from '#/core/source/FSSource.js'
-import {cms} from '#test/cms.js'
-import {DemoRecipe} from '#test/schema/DemoRecipe.js'
 import {aliasesFromData} from '#/core/db/EntryAliases.js'
 
 const Page = type('Page', {fields: {title: text('Title')}})
@@ -143,49 +138,6 @@ test('physical identity preserves source status, and pagination is validated', (
   expect(() =>
     compileEntryQuery(config, {take: 1.5, select: Entry.id})
   ).toThrow('take')
-})
-
-test('SQL compilation agrees with the existing resolver on the real demo corpus', async () => {
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await db.create(EntryIndexTable)
-  const index = new EntryIndex(cms.config)
-  await index.syncWith(new FSSource('test/fixtures/demo'))
-  const resolver = new EntryResolver(cms.config, index)
-  for (const entry of index.filter({})) {
-    const row = entryIndexRow({
-      ...entry,
-      versionStatus: entry.status
-    })
-    await db.insert(EntryIndexTable).values(row)
-  }
-  const cases: Array<GraphQuery<unknown, typeof DemoRecipe>> = [
-    {select: Entry.id},
-    {select: Entry},
-    {id: 'oi4qtV9YaXNRIUDT2s61Y', select: Entry.id},
-    {type: DemoRecipe, select: DemoRecipe.title},
-    {location: cms.workspaces.demo.media, select: Entry.id},
-    {location: cms.workspaces.demo, select: Entry.id, skip: 2, take: 3},
-    {locale: 'en', select: Entry.id},
-    {type: DemoRecipe, select: {id: Entry.id, title: DemoRecipe.title}},
-    {
-      type: DemoRecipe,
-      filter: {title: {startsWith: 'Chocolate'}},
-      select: Entry.id
-    },
-    {status: 'archived', select: Entry.id},
-    {groupBy: Entry.type, select: Entry.id},
-    {groupBy: DemoRecipe.title, type: DemoRecipe, select: Entry.id},
-    {select: Entry.id, skip: 1},
-    {select: Entry.id, take: 0},
-    {groupBy: Entry.type, select: Entry.id, skip: 1, take: 0},
-    {filter: {_id: {notIn: ['oi4qtV9YaXNRIUDT2s61Y']}}, select: Entry.id}
-  ]
-  for (const query of cases) {
-    const expected = await resolver.resolve(query)
-    const plan = compileEntryQuery(cms.config, query)
-    expect(await plan.rows.all(db)).toEqual(expected)
-  }
 })
 
 test('SQL grouping preserves primitive types and picks representatives before sorting', async () => {

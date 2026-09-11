@@ -8,14 +8,13 @@ import {ReadonlyTree} from '#/core/source/Tree.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {sourceChanges} from '#/core/db/CommitRequest.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
-import {createEntryResolver} from '#test/EntryFixture.js'
+import {createEntryStore} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {connect} from 'rado/driver/bun-sqlite'
-import {EntryIndexTable, entryIndexRow} from './entry/Schema.js'
 import {EntryDatabase} from './EntryDatabase.js'
 
 function urlAlias(url: string) {
@@ -51,7 +50,7 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
       })
     }
   }
-  const {resolver, index} = await createEntryResolver(config, [
+  const {source, store} = await createEntryStore(config, [
     {
       id: 'source',
       type: 'Page',
@@ -70,15 +69,9 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
   ])
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, 'empty')
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
   const runtime = new EntryDatabase(config, db)
-  await db
-    .insert(EntryIndexTable)
-    .values(
-      Array.from(index.filter({}), entry =>
-        entryIndexRow({...entry, versionStatus: entry.status})
-      )
-    )
+  await runtime.syncWith(source)
   for (const select of [
     Page.single,
     Page.many,
@@ -87,7 +80,7 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
     Page.many.find({count: true})
   ]) {
     const query = {id: 'source', select}
-    expect(await runtime.resolve(query)).toEqual(await resolver.resolve(query))
+    expect(await runtime.resolve(query)).toEqual(await store.resolve(query))
   }
 })
 
@@ -109,7 +102,7 @@ test('SQL references retain status and locale behavior', async () => {
     _entry: entry,
     _id: id
   })
-  const {source, index} = await createEntryResolver(config, [
+  const {source, store} = await createEntryStore(config, [
     {id: 'target', type: 'Page', index: 'a'},
     {
       id: 'source',
@@ -138,7 +131,7 @@ test('SQL references retain status and locale behavior', async () => {
     {targetId: 'other' as const, status: 'preferDraft' as const},
     {targetId: 'target' as const, locale: 'en'}
   ]) {
-    const expected = await index.referencesTo(query)
+    const expected = await store.referencesTo(query)
     const actual = await runtime.referencesTo(query)
     expect(actual.total).toBe(expected.total)
     expect(actual.references).toEqual(expected.references)
@@ -156,7 +149,7 @@ test('entry database returns exact source blobs by hash', async () => {
       })
     }
   }
-  const {source} = await createEntryResolver(config, [
+  const {source} = await createEntryStore(config, [
     {id: 'page', type: 'Page', index: 'a', data: {title: 'Page'}}
   ])
   using sqlite = new Database(':memory:')
