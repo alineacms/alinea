@@ -489,3 +489,64 @@ test('database mutations preserve authored status and hierarchy transitions', as
   expect(await database.resolve({id: 'child', select: Entry.id})).toEqual([])
   await database.close()
 })
+
+test('database mutations commit to the receiving overlay only', async () => {
+  const Page = ConfigBuilder.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  async function source(title: string) {
+    const result = new MemorySource()
+    const change = await transaction(result)
+    const compiled = await change
+      .add(
+        'pages/a.json',
+        new TextEncoder().encode(
+          JSON.stringify({_id: 'a', _type: 'Page', _index: 'a', title})
+        )
+      )
+      .compile()
+    await result.applyChanges({
+      fromSha: compiled.from.sha,
+      changes: compiled.changes
+    })
+    return result
+  }
+
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, 'empty')
+  const base = new EntryDatabase(config, db)
+  await base.syncWith(await source('Base'))
+  const remote = await source('Remote')
+  const overlay = await base.overlay(remote)
+  const remoteRevision = (await remote.getTree()).sha
+
+  const result = await overlay.apply(
+    [
+      {
+        op: 'update',
+        id: 'a',
+        locale: null,
+        status: 'published',
+        set: {title: 'Preview'}
+      }
+    ],
+    {source: remote}
+  )
+
+  expect(await base.resolve({select: Entry.title})).toEqual(['Base'])
+  expect(await overlay.resolve({select: Entry.title})).toEqual(['Preview'])
+  expect((await remote.getTree()).sha).toBe(remoteRevision)
+  expect(result.request.fromSha).toBe(remoteRevision)
+  await overlay.close()
+  await base.close()
+})
