@@ -52,6 +52,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && bun build.ts",
     "bump": "bun bump.js",
+    "benchmark:corpus": "bun benchmark/corpus.ts",
     "cycles": "bun run build && bunx --bun madge --warning --circular dist/index.js",
     "dev": "run-p dev:run",
     "dev:check": "tsc -w",

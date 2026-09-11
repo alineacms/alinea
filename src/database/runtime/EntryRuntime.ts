@@ -9,20 +9,20 @@ import {
 import {Field} from '#/core/Field.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
+import type {Source} from '#/core/source/Source.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {asc, count, type Database, eq, table} from 'rado'
+import {asc, count, type Database, eq, inArray, table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {
   EntryIndexTable,
   entryIndexRow,
-  sourceFields,
-  type EntrySource,
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from '../query/EntryQuery.js'
 import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 import {entryTree} from '../sync/EntryTree.js'
+import {EntrySyncer} from '../sync/EntrySyncer.js'
 
 const superseded = Symbol('superseded query')
 
@@ -31,17 +31,44 @@ const Meta = table('alinea_database_state', {
   revision: column.text().notNull()
 })
 
+function* chunks<T>(
+  items: ReadonlyArray<T>,
+  size: number
+): Generator<Array<T>> {
+  for (let offset = 0; offset < items.length; offset += size)
+    yield items.slice(offset, offset + size)
+}
+
+async function insertEntries(
+  db: Database,
+  entries: Iterable<EntryReplacement>
+): Promise<void> {
+  let rows = Array<ReturnType<typeof entryIndexRow>>()
+  for (const replacement of entries) {
+    rows.push(entryIndexRow(replacement.entry))
+    if (rows.length < 1000) continue
+    await db.insert(EntryIndexTable).values(rows)
+    rows = []
+  }
+  if (rows.length) await db.insert(EntryIndexTable).values(rows)
+}
+
 export interface EntryReplacement {
   entry: IndexedEntry
-  data: Record<string, unknown>
-  source?: EntrySource
 }
 
 export interface EntryDelta {
   fromRevision: string
   toRevision: string
-  entries: ReadonlyArray<EntryReplacement>
-  removedVersionIds?: ReadonlyArray<string>
+  /**
+   * Replaces every authored version belonging to these entry IDs. Entries not
+   * supplied for an ID are deleted, which handles removed source versions.
+   */
+  replaceEntryIds?: ReadonlyArray<string>
+  /** Replace the entire row set; used only when no prior source cache exists. */
+  replaceAll?: boolean
+  /** May stream rows; SQLite consumes them inside the commit transaction. */
+  entries: Iterable<EntryReplacement>
 }
 
 export interface RuntimeOptions {
@@ -58,7 +85,7 @@ export interface QueryObserver {
 }
 
 /** Owns one local database connection. All access uses its statement queue. */
-export class EntryRuntime extends Graph {
+export class EntryRuntime extends Graph implements AsyncDisposable {
   #db: Database
   #config: Config
   #options: RuntimeOptions
@@ -66,6 +93,9 @@ export class EntryRuntime extends Graph {
   #generation = 0
   #searchDirty = true
   #listeners = new Set<() => void>()
+  #syncers = new Map<Source, EntrySyncer>()
+  #syncQueue: Promise<unknown> = Promise.resolve()
+  #closed = false
 
   constructor(config: Config, db: Database, options: RuntimeOptions = {}) {
     super()
@@ -77,6 +107,31 @@ export class EntryRuntime extends Graph {
 
   get config(): Config {
     return this.#config
+  }
+
+  /** Synchronize this database with a source through a cached compiler. */
+  syncWith(source: Source): Promise<string> {
+    if (this.#closed) return Promise.reject(new Error('EntryRuntime is closed'))
+    const syncer =
+      this.#syncers.get(source) ?? new EntrySyncer(this.#config, source)
+    this.#syncers.set(source, syncer)
+    const task = this.#syncQueue.then(() => syncer.sync(this))
+    this.#syncQueue = task.catch(() => {})
+    return task
+  }
+
+  async close(): Promise<void> {
+    if (this.#closed) return
+    this.#closed = true
+    await this.#syncQueue
+    const syncers = Array.from(this.#syncers.values())
+    this.#syncers.clear()
+    await Promise.all(syncers.map(syncer => syncer.close()))
+    await this.#exclusive(() => this.#db.close())
+  }
+
+  [Symbol.asyncDispose](): Promise<void> {
+    return this.close()
   }
 
   getRevision(): Promise<string> {
@@ -91,6 +146,29 @@ export class EntryRuntime extends Graph {
     })
   }
 
+  /**
+   * Hydrate only the rows a source delta must rewrite. The synchronizer never
+   * snapshots the entire database into JavaScript.
+   */
+  syncEntries(
+    entryIds: ReadonlyArray<string>
+  ): Promise<Map<string, IndexedEntry>> {
+    return this.#exclusive(async () => {
+      const result = new Map<string, IndexedEntry>()
+      for (const ids of chunks(entryIds, 500)) {
+        const rows = await this.#db
+          .select()
+          .from(EntryIndexTable)
+          .where(inArray(EntryIndexTable.id, ids))
+        for (const row of rows) {
+          const {versionId, ...entry} = row
+          result.set(versionId, entry)
+        }
+      }
+      return result
+    })
+  }
+
   /** Retry a read-only compound operation if any local commit overlaps it. */
   async readConsistent<T>(read: () => Promise<T>): Promise<T> {
     for (;;) {
@@ -102,33 +180,6 @@ export class EntryRuntime extends Graph {
         if (generation === this.#generation) throw error
       }
     }
-  }
-
-  /** Export complete entry rows for synchronization or tree reconstruction. */
-  indexSnapshot(): Promise<{
-    revision: string
-    entries: Array<EntryReplacement>
-  }> {
-    return this.#exclusive(async () => {
-      const revision = await this.#db
-        .select(Meta.revision)
-        .from(Meta)
-        .where(eq(Meta.id, 1))
-        .get()
-      if (revision == null) throw new Error('Missing database revision')
-      const rows = await this.#db.select().from(EntryIndexTable)
-      return {
-        revision,
-        entries: rows.map(row => {
-          const {versionId: _, data, source, ...entry} = row
-          return {
-            entry,
-            data,
-            source: source ?? undefined
-          }
-        })
-      }
-    })
   }
 
   async tree(): Promise<ReadonlyTree> {
@@ -179,52 +230,26 @@ export class EntryRuntime extends Graph {
           if (delta.toRevision === delta.fromRevision)
             throw new Error('A delta must advance the revision')
           if (
-            !delta.removedVersionIds?.length &&
+            delta.replaceAll ||
             (await tx.select(count()).from(EntryIndexTable).get()) === 0
           ) {
-            const changed = new Set<string>()
-            const indexRows = []
-            for (const replacement of delta.entries) {
-              const row = entryIndexRow(
-                replacement.entry,
-                replacement.data,
-                validateSource(replacement.source)
-              )
-              if (changed.has(row.versionId))
-                throw new Error('Duplicate entry in delta')
-              changed.add(row.versionId)
-              indexRows.push(row)
-            }
-            for (let offset = 0; offset < indexRows.length; offset += 1000)
-              await tx
-                .insert(EntryIndexTable)
-                .values(indexRows.slice(offset, offset + 1000))
+            if (delta.replaceAll) await tx.delete(EntryIndexTable)
+            await insertEntries(tx, delta.entries)
             await tx
               .update(Meta)
               .set({revision: delta.toRevision})
               .where(eq(Meta.id, 1))
             return
           }
-          const changed = new Set(delta.removedVersionIds)
-          for (const replacement of delta.entries) {
-            const row = entryIndexRow(
-              replacement.entry,
-              replacement.data,
-              validateSource(replacement.source)
+          if (!delta.replaceEntryIds)
+            throw new Error(
+              'A non-initial delta must declare the entry identities it replaces'
             )
-            if (changed.has(row.versionId))
-              throw new Error('Duplicate entry in delta')
-            changed.add(row.versionId)
+          for (const ids of chunks(delta.replaceEntryIds, 500))
             await tx
               .delete(EntryIndexTable)
-              .where(eq(EntryIndexTable.versionId, row.versionId))
-            await tx.insert(EntryIndexTable).values(row)
-          }
-          for (const id of delta.removedVersionIds ?? []) {
-            await tx
-              .delete(EntryIndexTable)
-              .where(eq(EntryIndexTable.versionId, id))
-          }
+              .where(inArray(EntryIndexTable.id, ids))
+          await insertEntries(tx, delta.entries)
           await tx
             .update(Meta)
             .set({revision: delta.toRevision})
@@ -411,18 +436,4 @@ export class EntryRuntime extends Graph {
       this.#listeners.delete(invalidate)
     }
   }
-}
-
-export function validateSource(value: unknown): EntrySource | undefined {
-  if (value === undefined) return undefined
-  if (!isRecord(value)) throw new Error('Invalid entry source metadata')
-  const result: EntrySource = {}
-  for (const name of sourceFields) {
-    const field = value[name]
-    if (field === undefined) continue
-    if (typeof field !== 'string')
-      throw new Error(`Invalid entry source field: ${name}`)
-    result[name] = field
-  }
-  return result
 }

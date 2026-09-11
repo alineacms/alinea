@@ -21,13 +21,13 @@ export async function createSearch(db: Database): Promise<void> {
   )`)
 }
 
-/** Rebuild from resident payload text only when a search needs it. */
+/** Rebuild from resident entry text only when a search needs it. */
 export async function rebuildSearch(db: Database): Promise<void> {
   if (db.dialect.runtime !== 'sqlite') return
   await db.run(sql`delete from alinea_entry_search`)
   await db.run(sql`insert into alinea_entry_search(versionId, title, body)
     select versionId, title,
-      coalesce(json_extract(source, '$.searchableText'), '')
+      searchableText
     from alinea_entry_index`)
 }
 

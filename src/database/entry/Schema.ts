@@ -13,7 +13,7 @@ export function entryVersionId(
   return JSON.stringify([id, locale?.toLowerCase() ?? null, status])
 }
 
-/** One complete authored entry version. JSON is stored as SQLite text. */
+/** One complete authored entry version. Only arrays and authored data are JSON. */
 export const EntryIndexTable = table(
   'alinea_entry_index',
   {
@@ -40,17 +40,20 @@ export const EntryIndexTable = table(
     ordinal: column.integer().notNull(),
     path: column.text().notNull(),
     /** Full source path of this authored version. */
-    filePath: column.text(),
+    filePath: column.text().notNull(),
+    fileHash: column.varchar(undefined, {length: 128}).notNull(),
+    parentDir: column.text().notNull(),
+    childrenDir: column.text().notNull(),
     url: column.varchar(undefined, {length: 1024}).notNull(),
     active: column.boolean().notNull(),
     main: column.boolean().notNull(),
     visible: column.boolean().notNull(),
     seeded: column.text(),
     rowHash: column.varchar(undefined, {length: 128}).notNull(),
-    /** Precomputed directory hash for reconstructing the logical index tree. */
+    /** Cached logical-directory hash for no-hash client tree reconstruction. */
     childrenSha: column.varchar(undefined, {length: 128}),
-    data: column.json<Record<string, unknown>>().notNull(),
-    source: column.json<EntrySource>()
+    searchableText: column.text().notNull(),
+    data: column.json<Record<string, unknown>>().notNull()
   },
   row => ({
     byId: index().on(row.id, row.locale, row.versionStatus),
@@ -61,31 +64,8 @@ export const EntryIndexTable = table(
   })
 )
 
-export const sourceFields = [
-  'fileHash',
-  'parentDir',
-  'childrenDir',
-  'searchableText'
-] as const
-
-/** Normalized source metadata travels with the authorized entry payload. */
-export interface EntrySource extends Partial<
-  Pick<Entry, (typeof sourceFields)[number]>
-> {}
-
-export function entrySource(entry: Entry): EntrySource {
-  return Object.fromEntries(sourceFields.map(name => [name, entry[name]]))
-}
-
-export interface IndexedEntry extends Omit<
-  Entry,
-  | 'data'
-  | 'searchableText'
-  | 'filePath'
-  | 'fileHash'
-  | 'parentDir'
-  | 'childrenDir'
-> {
+/** An Entry plus the physical-version and local-index fields. */
+export interface IndexedEntry extends Entry {
   versionStatus: EntryStatus
   /** False for authored versions suppressed by inherited status in normal queries. */
   visible?: boolean
@@ -93,17 +73,11 @@ export interface IndexedEntry extends Omit<
   ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
   sourceRoot?: string | null
-  /** Full source path for this authored version. */
-  filePath?: string | null
-  /** Directory hash covering this identity's versions and children. */
+  /** Cached logical-directory hash for no-hash client tree reconstruction. */
   childrenSha?: string | null
 }
 
-export function entryIndexRow(
-  entry: IndexedEntry & Partial<Pick<Entry, 'parentDir'>>,
-  data: Record<string, unknown> = {},
-  source?: EntrySource
-) {
+export function entryIndexRow(entry: IndexedEntry) {
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
     id: entry.id,
@@ -116,14 +90,17 @@ export function entryIndexRow(
     root: entry.root,
     sourceRoot:
       entry.sourceRoot ??
-      (entry.level > 0 ? entry.parentDir?.split('/').at(-entry.level) : null),
+      (entry.level > 0 ? entry.parentDir.split('/').at(-entry.level) : null),
     parentId: entry.parentId,
     parents: entry.parents,
     level: entry.level,
     index: entry.index,
     ordinal: entry.ordinal ?? 0,
     path: entry.path,
-    filePath: entry.filePath ?? null,
+    filePath: entry.filePath,
+    fileHash: entry.fileHash,
+    parentDir: entry.parentDir,
+    childrenDir: entry.childrenDir,
     url: entry.url,
     active: entry.active,
     main: entry.main,
@@ -131,7 +108,7 @@ export function entryIndexRow(
     seeded: entry.seeded,
     rowHash: entry.rowHash,
     childrenSha: entry.childrenSha ?? null,
-    data,
-    source: source ?? null
+    searchableText: entry.searchableText,
+    data: entry.data
   }
 }

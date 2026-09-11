@@ -9,7 +9,6 @@ import {connect} from 'rado/driver/bun-sqlite'
 import {
   EntryIndexTable,
   entryIndexRow,
-  entrySource,
   type IndexedEntry
 } from '../entry/Schema.js'
 import {compileEntryQuery} from './EntryQuery.js'
@@ -41,11 +40,17 @@ function entry(
     level: 0,
     index: id,
     path: id,
+    filePath: `pages/${id}.json`,
+    fileHash: `file-${id}`,
+    parentDir: 'pages',
+    childrenDir: `pages/${id}`,
     url: `/${id}`,
     active: true,
     main: true,
     seeded: null,
     rowHash: `hash-${id}`,
+    searchableText: '',
+    data: {},
     ...overrides
   }
 }
@@ -108,7 +113,9 @@ test('content conditions and projections query the data column', async () => {
     ['b', 'Beta'],
     ['c', 'Gamma']
   ]) {
-    await db.insert(EntryIndexTable).values(entryIndexRow(entry(id), {title}))
+    await db
+      .insert(EntryIndexTable)
+      .values(entryIndexRow(entry(id, {data: {title}})))
   }
   const projection = compileEntryQuery(config, {select: Page.title, take: 1})
   expect(await projection.rows.all(db)).toEqual(['Alpha'])
@@ -147,11 +154,11 @@ test('SQL compilation agrees with the existing resolver on the real demo corpus'
   const resolver = new EntryResolver(cms.config, index)
   let ordinal = 0
   for (const entry of index.filter({})) {
-    const row = entryIndexRow(
-      {...entry, versionStatus: entry.status, ordinal: ordinal++},
-      entry.data,
-      entrySource(entry)
-    )
+    const row = entryIndexRow({
+      ...entry,
+      versionStatus: entry.status,
+      ordinal: ordinal++
+    })
     await db.insert(EntryIndexTable).values(row)
   }
   const cases: Array<GraphQuery<unknown, typeof DemoRecipe>> = [
@@ -190,14 +197,14 @@ test('SQL grouping preserves primitive types and picks representatives before so
   const values = [undefined, null, false, 0, '0', 0, null, {}, {}, [], []]
   for (const [index, value] of values.entries()) {
     const id = String(index).padStart(2, '0')
-    await db
-      .insert(EntryIndexTable)
-      .values(
-        entryIndexRow(
-          entry(id, {ordinal: index}),
-          value === undefined ? {} : {title: value}
-        )
+    await db.insert(EntryIndexTable).values(
+      entryIndexRow(
+        entry(id, {
+          ordinal: index,
+          data: value === undefined ? {} : {title: value}
+        })
       )
+    )
   }
   const plan = compileEntryQuery(config, {
     groupBy: Page.title,
@@ -238,7 +245,7 @@ test('SQL alias projections combine both locations and alias filters ignore non-
   for (const [index, payload] of data.entries()) {
     await db
       .insert(EntryIndexTable)
-      .values(entryIndexRow(entry(String(index)), payload))
+      .values(entryIndexRow(entry(String(index), {data: payload})))
   }
   expect(
     await compileEntryQuery(config, {select: Entry.aliases}).rows.all(db)

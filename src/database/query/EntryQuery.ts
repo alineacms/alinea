@@ -31,7 +31,7 @@ import {
   type SelectionRecord,
   type Sql
 } from 'rado'
-import {EntryIndexTable, sourceFields} from '../entry/Schema.js'
+import {EntryIndexTable} from '../entry/Schema.js'
 import {
   columnField,
   arrayIncludes,
@@ -83,9 +83,6 @@ class Expressions {
       return aliasesField(EntryIndexTable.data)
     }
     if (path) return this.data([...path, name])
-    if (sourceFields.some(field => field === name)) {
-      return jsonField(EntryIndexTable.source, [name])
-    }
     if (name === 'data') {
       return columnField(EntryIndexTable.data)
     }

@@ -5,11 +5,7 @@ import {createEntryResolver} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
 import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
-import {
-  entrySource,
-  entryVersionId,
-  type IndexedEntry
-} from '../entry/Schema.js'
+import type {IndexedEntry} from '../entry/Schema.js'
 import {EntryRuntime, type EntryReplacement} from './EntryRuntime.js'
 
 const emptyConfig: Config = {schema: {}, workspaces: {}}
@@ -33,13 +29,19 @@ function replacement(
     level: 0,
     index: id,
     path: id,
+    filePath: `pages/${id}.json`,
+    fileHash: `${id}-file`,
+    parentDir: 'pages',
+    childrenDir: `pages/${id}`,
     url: `/${id}`,
     active: true,
     main: true,
     seeded: null,
-    rowHash: title
+    rowHash: title,
+    searchableText: '',
+    data
   }
-  return {entry, data}
+  return {entry}
 }
 
 test('stores complete rows and applies revision-bound deltas atomically', async () => {
@@ -63,7 +65,7 @@ test('stores complete rows and applies revision-bound deltas atomically', async 
     fromRevision: 'one',
     toRevision: 'two',
     entries: [replacement('a', 'Updated', {body: 'two'})],
-    removedVersionIds: [entryVersionId('b', null, 'published')]
+    replaceEntryIds: ['a', 'b']
   })
   expect(await runtime.getRevision()).toBe('two')
   expect(await runtime.resolve({select: Entry})).toEqual([
@@ -126,9 +128,7 @@ test('SQL entry-link queries retain the Graph API behavior', async () => {
   await EntryRuntime.createSchema(db, 'empty')
   const runtime = new EntryRuntime(config, db)
   const entries = Array.from(index.filter({}), (entry, ordinal) => ({
-    entry: {...entry, versionStatus: entry.status, ordinal},
-    data: entry.data,
-    source: entrySource(entry)
+    entry: {...entry, versionStatus: entry.status, ordinal}
   }))
   await runtime.apply({fromRevision: 'empty', toRevision: 'one', entries})
   for (const select of [

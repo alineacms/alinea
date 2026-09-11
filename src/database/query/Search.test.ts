@@ -3,7 +3,6 @@ import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import {Entry} from '#/core/Entry.js'
 import {EntryRuntime, type EntryReplacement} from '../runtime/EntryRuntime.js'
-import {entryVersionId} from '../entry/Schema.js'
 import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {snippet} from '#/core/pages/Snippet.js'
 
@@ -27,10 +26,14 @@ function entry(id: string, title: string, body = ''): EntryReplacement {
       active: true,
       main: true,
       seeded: null,
-      rowHash: `${id}:${title}`
-    },
-    data: {},
-    source: {searchableText: body}
+      rowHash: `${id}:${title}`,
+      data: {},
+      filePath: `pages/${id}.json`,
+      fileHash: `${id}-file`,
+      parentDir: 'pages',
+      childrenDir: `pages/${id}`,
+      searchableText: body
+    }
   }
 }
 
@@ -99,7 +102,7 @@ for (const driver of ['native', 'wasm'] as const)
         fromRevision: 'one',
         toRevision: 'two',
         entries: [entry('a', 'Vanilla', 'new body')],
-        removedVersionIds: [entryVersionId('b', null, 'published')]
+        replaceEntryIds: ['a', 'b']
       })
       expect(
         await runtime.resolve({search: 'choco', select: Entry.id})
@@ -111,9 +114,10 @@ for (const driver of ['native', 'wasm'] as const)
         runtime.apply({
           fromRevision: 'two',
           toRevision: 'bad',
-          entries: [entry('a', 'Changed'), entry('a', 'Duplicate')]
+          entries: [entry('a', 'Changed'), entry('a', 'Duplicate')],
+          replaceEntryIds: ['a']
         })
-      ).rejects.toThrow('Duplicate')
+      ).rejects.toThrow('UNIQUE')
       expect(await runtime.resolve({search: 'van', select: Entry.id})).toEqual([
         'a'
       ])
@@ -133,8 +137,8 @@ test('search updates complete entry rows transactionally', async () => {
     fromRevision: 'empty',
     toRevision: 'one',
     entries: [
-      {...a, source: {searchableText: 'hidden chocolate'}},
-      {...b, source: {searchableText: 'hidden chocolate'}}
+      {...a, entry: {...a.entry, searchableText: 'hidden chocolate'}},
+      {...b, entry: {...b.entry, searchableText: 'hidden chocolate'}}
     ]
   })
   expect(await runtime.resolve({select: Entry.id})).toEqual(['a', 'b'])
@@ -144,7 +148,8 @@ test('search updates complete entry rows transactionally', async () => {
   await runtime.apply({
     fromRevision: 'one',
     toRevision: 'two',
-    entries: [{...a, entry: {...a.entry, title: 'Retitled'}}]
+    entries: [{...a, entry: {...a.entry, title: 'Retitled'}}],
+    replaceEntryIds: ['a']
   })
   expect(await runtime.resolve({search: 'retit', select: Entry.id})).toEqual([
     'a'
@@ -152,7 +157,8 @@ test('search updates complete entry rows transactionally', async () => {
   await runtime.apply({
     fromRevision: 'two',
     toRevision: 'three',
-    entries: [{...b, source: {searchableText: ''}}]
+    entries: [{...b, entry: {...b.entry, searchableText: ''}}],
+    replaceEntryIds: ['b']
   })
   expect(await runtime.resolve({search: 'choco', select: Entry.id})).toEqual([])
   expect(
