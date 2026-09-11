@@ -14,7 +14,7 @@ export class EntrySyncer implements AsyncDisposable {
     this.#source = source
   }
 
-  async sync(runtime: EntryRuntime): Promise<string> {
+  async sync(runtime: EntryRuntime): Promise<EntrySyncResult> {
     const task = this.#queue.then(() => this.#sync(runtime))
     this.#queue = task.catch(() => {})
     return task
@@ -29,12 +29,22 @@ export class EntrySyncer implements AsyncDisposable {
     return this.close()
   }
 
-  async #sync(runtime: EntryRuntime): Promise<string> {
+  async #sync(runtime: EntryRuntime): Promise<EntrySyncResult> {
     if (this.#closed) throw new Error('EntrySyncer is closed')
     const current = await runtime.getRevision()
     const tree = await this.#source.getTreeIfDifferent(current)
-    if (!tree) return current
-    await runtime.syncSource(this.#source, tree, current)
-    return tree.sha
+    if (!tree) return {revision: current, changedEntryIds: []}
+    const changedEntryIds = await runtime.syncSource(
+      this.#source,
+      tree,
+      current
+    )
+    return {revision: tree.sha, changedEntryIds}
   }
+}
+
+export interface EntrySyncResult {
+  revision: string
+  /** Includes source changes, deletions, and entries changed by inheritance. */
+  changedEntryIds: ReadonlyArray<string>
 }

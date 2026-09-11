@@ -1,6 +1,6 @@
 import {assert} from '../util/Assert.js'
 import type {Change, ChangesBatch} from './Change.js'
-import {hashTree, serializeTreeEntries} from './GitUtils.js'
+import {compareTreeEntries, hashTree, serializeTreeEntries} from './GitUtils.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
 import {compareStrings, splitPath} from './Utils.js'
 
@@ -109,11 +109,7 @@ class TreeBase<Node extends TreeBase<Node>> {
   }
 
   *paths(): Iterable<string> {
-    for (const [name, entry] of this.nodes) {
-      yield name
-      if (entry instanceof TreeBase)
-        for (const path of entry.paths()) yield `${name}/${path}`
-    }
+    for (const [path] of this) yield path
   }
 
   index(): Map<string, string> {
@@ -155,7 +151,7 @@ export class ReadonlyTree extends TreeBase<ReadonlyTree> {
   constructor({sha, entries}: Tree) {
     super(sha)
     this.sha = sha
-    for (const entry of entries) {
+    for (const entry of entries.slice().sort(compareTreeEntries)) {
       const node = entry.entries
         ? new ReadonlyTree(entry as EntryNode)
         : new Leaf(entry)

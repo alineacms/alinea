@@ -50,7 +50,7 @@ export const EntryIndexTable = table(
     visible: column.boolean().notNull(),
     seeded: column.text(),
     rowHash: column.varchar(undefined, {length: 128}).notNull(),
-    /** Cached logical-directory hash for no-hash client tree reconstruction. */
+    /** Hash of this entry's child directory in the synced source tree. */
     childrenSha: column.varchar(undefined, {length: 128}),
     searchableText: column.text().notNull(),
     data: column.json<Record<string, unknown>>().notNull()
@@ -60,6 +60,7 @@ export const EntryIndexTable = table(
     byUrl: index().on(row.url),
     byType: index().on(row.type),
     byParent: index().on(row.parentId, row.locale, row.index),
+    byChildrenDir: index().on(row.childrenDir),
     byLocation: index().on(row.workspace, row.root, row.status, row.index),
     byFilePath: index().on(row.filePath)
   })
@@ -74,7 +75,7 @@ export interface IndexedEntry extends Entry {
   ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
   sourceRoot?: string | null
-  /** Cached logical-directory hash for no-hash client tree reconstruction. */
+  /** Hash of this entry's child directory in the synced source tree. */
   childrenSha?: string | null
 }
 

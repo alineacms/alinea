@@ -9,7 +9,7 @@ export interface EntryTreeRow {
   versionId: string
   rowHash: string
   parentId: string | null
-  /** Cached logical-directory hash supplied by the server. */
+  /** Cached source-directory hash supplied by the server. */
   childrenSha: string | null
 }
 
@@ -28,8 +28,7 @@ export interface EntryTreeSourceRow {
 }
 
 /**
- * Compute directory hashes once at the source. The values travel with rows so
- * browser replicas can rebuild the tree without hashing their full database.
+ * Compute logical directory hashes for callers that do not have a source tree.
  */
 export async function entryTreeHashes(
   entries: Iterable<EntryTreeSourceRow>
@@ -77,7 +76,7 @@ export async function entryTreeHashes(
   )
 }
 
-/** Construct the sync tree from pre-hashed rows, without hashing on the client. */
+/** Construct the logical sync shape using cached source-directory hashes. */
 export function entryTree(
   entries: ReadonlyArray<EntryTreeRow>,
   rootSha: string

@@ -36,9 +36,13 @@ test('runtime caches one source-bound synchronizer and serializes syncs', async 
     runtime.syncWith(remote),
     runtime.syncWith(remote)
   ])
-  expect(repeated).toBe(first)
-  expect(await runtime.getRevision()).toBe(first)
+  expect(repeated).toEqual({revision: first.revision, changedEntryIds: []})
+  expect(await runtime.getRevision()).toBe(first.revision)
+  expect(first.changedEntryIds.length).toBeGreaterThan(0)
   expect(conditionalTreeRequests).toBe(2)
+  expect(
+    (await runtime.tree()).getNode('2cGLQZvsCCxnguLrwCfPDL8uFkm').sha
+  ).toBe((await source.getTree()).getNode('pages/recipes').sha)
   expect(
     await runtime.resolve({
       path: 'recipes',
@@ -66,8 +70,9 @@ test('runtime caches one source-bound synchronizer and serializes syncs', async 
   await source.applyChanges({fromSha: next.from.sha, changes: next.changes})
 
   const second = await runtime.syncWith(remote)
-  expect(second).not.toBe(first)
-  expect(await runtime.getRevision()).toBe(second)
+  expect(second.revision).not.toBe(first.revision)
+  expect(second.changedEntryIds).toContain('2cGLQZvsCCxnguLrwCfPDL8uFkm')
+  expect(await runtime.getRevision()).toBe(second.revision)
   expect(await runtime.resolve({path: 'recipes', select: Entry.title})).toEqual(
     ['Updated recipes']
   )
@@ -81,7 +86,8 @@ test('runtime caches one source-bound synchronizer and serializes syncs', async 
     changes: archived.changes
   })
 
-  await runtime.syncWith(remote)
+  const archivedSync = await runtime.syncWith(remote)
+  expect(archivedSync.changedEntryIds).toContain('2cGLQZvsCCxnguLrwCfPDL8uFkm')
   expect(
     await runtime.resolve({status: 'published', select: Entry.path})
   ).not.toContain('recipes')

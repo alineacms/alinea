@@ -22,7 +22,7 @@ import {compileEntryQuery} from '../query/EntryQuery.js'
 import {createSearch, rebuildSearch, type SearchQuery} from '../query/Search.js'
 import type {RelationSource} from '../query/Relation.js'
 import {entryTree} from '../sync/EntryTree.js'
-import {EntrySyncer} from '../sync/EntrySyncer.js'
+import {EntrySyncer, type EntrySyncResult} from '../sync/EntrySyncer.js'
 import {syncSourceTree} from '../sync/DatabaseSync.js'
 
 const superseded = Symbol('superseded query')
@@ -111,7 +111,7 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
   }
 
   /** Synchronize this database with a source-bound, serialized synchronizer. */
-  syncWith(source: Source): Promise<string> {
+  syncWith(source: Source): Promise<EntrySyncResult> {
     if (this.#closed) return Promise.reject(new Error('EntryRuntime is closed'))
     const syncer = this.#syncers.get(source) ?? new EntrySyncer(source)
     this.#syncers.set(source, syncer)
@@ -151,13 +151,21 @@ export class EntryRuntime extends Graph implements AsyncDisposable {
     source: Source,
     tree: ReadonlyTree,
     fromRevision: string
-  ): Promise<void> {
+  ): Promise<Array<string>> {
+    let changedEntryIds = Array<string>()
     await this.#exclusive(async () => {
-      await syncSourceTree(this.#db, this.#config, source, tree, fromRevision)
+      changedEntryIds = await syncSourceTree(
+        this.#db,
+        this.#config,
+        source,
+        tree,
+        fromRevision
+      )
       this.#generation++
       this.#searchDirty = true
     })
     for (const invalidate of this.#listeners) invalidate()
+    return changedEntryIds
   }
 
   /** Retry a read-only compound operation if any local commit overlaps it. */
