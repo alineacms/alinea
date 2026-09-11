@@ -71,6 +71,23 @@ test('stores complete rows and applies revision-bound deltas atomically', async 
   ])
 })
 
+test('tree construction does not read or parse entry payloads', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryRuntime.createSchema(db, 'empty')
+  const runtime = new EntryRuntime(emptyConfig, db)
+  const row = replacement('a')
+  row.entry.childrenSha = 'directory-a'
+  row.entry.rowHash = 'row-a'
+  await runtime.apply({
+    fromRevision: 'empty',
+    toRevision: 'tree-a',
+    entries: [row]
+  })
+  sqlite.exec(`update alinea_entry_index set data = 'invalid json'`)
+  expect([...(await runtime.tree()).index().values()]).toEqual(['row-a'])
+})
+
 test('SQL entry-link queries retain the Graph API behavior', async () => {
   const Page = ConfigBuilder.document('Page', {
     fields: {

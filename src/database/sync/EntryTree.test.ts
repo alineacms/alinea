@@ -1,33 +1,17 @@
 import {expect, test} from 'bun:test'
-import type {IndexedEntry} from '../entry/Schema.js'
-import type {EntryReplacement} from '../runtime/EntryRuntime.js'
-import {entryTree} from './EntryTree.js'
+import {entryTree, type EntryTreeRow} from './EntryTree.js'
 
 function replacement(
-  entry: Partial<IndexedEntry> & Pick<IndexedEntry, 'id' | 'rowHash'>
-): EntryReplacement {
+  entry: Partial<EntryTreeRow> & Pick<EntryTreeRow, 'id' | 'rowHash'>
+): EntryTreeRow {
   return {
-    entry: {
-      locale: null,
-      versionStatus: 'published',
-      status: 'archived',
-      type: 'Page',
-      title: entry.id,
-      workspace: 'main',
-      root: 'pages',
-      parentId: null,
-      parents: [],
-      level: 0,
-      index: entry.id,
-      path: entry.id,
-      url: `/${entry.id}`,
-      active: true,
-      main: true,
-      visible: true,
-      seeded: null,
-      ...entry
-    },
-    data: {}
+    locale: null,
+    versionStatus: 'published',
+    workspace: 'main',
+    root: 'pages',
+    parentId: null,
+    childrenSha: null,
+    ...entry
   }
 }
 
@@ -37,15 +21,12 @@ test('retains hidden authored versions beneath an archived parent', () => {
       replacement({
         id: 'parent',
         rowHash: 'parent-published',
-        parentSha: 'root',
         childrenSha: 'parent-directory'
       }),
       replacement({
         id: 'child',
         rowHash: 'child-published',
         parentId: 'parent',
-        parents: ['parent'],
-        parentSha: 'parent-directory',
         childrenSha: 'child-directory'
       }),
       replacement({
@@ -53,11 +34,6 @@ test('retains hidden authored versions beneath an archived parent', () => {
         rowHash: 'child-draft',
         versionStatus: 'draft',
         parentId: 'parent',
-        parents: ['parent'],
-        active: false,
-        main: false,
-        visible: false,
-        parentSha: 'parent-directory',
         childrenSha: 'child-directory'
       })
     ],

@@ -23,9 +23,12 @@ JSON values are extracted only when a query selects or filters on them.
 
 There is no separate tree table or second Merkle structure. `entryTree` groups
 the complete entry rows by identity and constructs the existing `ReadonlyTree`
-using `parentId`, `rowHash`, `parentSha` and `childrenSha`. It performs no
-hashing. All authored versions participate, including versions hidden by an
-inherited archived status.
+using `parentId`, `rowHash` and `childrenSha`. `parentId` provides the edge and
+the parent row's `childrenSha` provides its directory hash, so duplicating a
+parent hash on every child is unnecessary. It performs no hashing. All authored
+versions participate, including versions hidden by an inherited archived
+status. The runtime reads only these structural columns when building a tree;
+entry payload JSON is not selected or parsed.
 
 ## Synchronization boundary
 

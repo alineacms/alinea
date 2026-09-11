@@ -132,8 +132,27 @@ export class EntryRuntime extends Graph {
   }
 
   async tree(): Promise<ReadonlyTree> {
-    const snapshot = await this.indexSnapshot()
-    return entryTree(snapshot.entries, snapshot.revision)
+    return this.#exclusive(async () => {
+      const revision = await this.#db
+        .select(Meta.revision)
+        .from(Meta)
+        .where(eq(Meta.id, 1))
+        .get()
+      if (revision == null) throw new Error('Missing database revision')
+      const entries = await this.#db
+        .select({
+          id: EntryIndexTable.id,
+          locale: EntryIndexTable.locale,
+          versionStatus: EntryIndexTable.versionStatus,
+          rowHash: EntryIndexTable.rowHash,
+          parentId: EntryIndexTable.parentId,
+          workspace: EntryIndexTable.workspace,
+          root: EntryIndexTable.root,
+          childrenSha: EntryIndexTable.childrenSha
+        })
+        .from(EntryIndexTable)
+      return entryTree(entries, revision)
+    })
   }
 
   static async createSchema(db: Database, revision: string): Promise<void> {

@@ -45,8 +45,7 @@ export const EntryIndexTable = table(
     visible: column.boolean().notNull(),
     seeded: column.text(),
     rowHash: column.varchar(undefined, {length: 128}).notNull(),
-    /** Precomputed hashes for reconstructing the logical index tree. */
-    parentSha: column.varchar(undefined, {length: 128}),
+    /** Precomputed directory hash for reconstructing the logical index tree. */
     childrenSha: column.varchar(undefined, {length: 128}),
     data: column.json<Record<string, unknown>>().notNull(),
     source: column.json<EntrySource>()
@@ -93,8 +92,6 @@ export interface IndexedEntry extends Omit<
   ordinal?: number
   /** First source-directory segment below the content root (not the URL slug). */
   sourceRoot?: string | null
-  /** Logical parent directory hash, or the index root for top-level rows. */
-  parentSha?: string | null
   /** Directory hash covering this identity's versions and children. */
   childrenSha?: string | null
 }
@@ -129,7 +126,6 @@ export function entryIndexRow(
     visible: entry.visible ?? true,
     seeded: entry.seeded,
     rowHash: entry.rowHash,
-    parentSha: entry.parentSha ?? null,
     childrenSha: entry.childrenSha ?? null,
     data,
     source: source ?? null
