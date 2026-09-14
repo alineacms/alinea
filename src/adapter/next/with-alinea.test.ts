@@ -29,7 +29,7 @@ test('routes files through the handler and allows versioned images', async () =>
 
   test.equal(config.images, {
     unoptimized: true,
-    localPatterns: [{pathname: '**', search: ''}, {pathname: '/cms/file/**'}]
+    localPatterns: [{pathname: '/**'}, {pathname: '/cms/file/**'}]
   })
   const rewrites = await config.rewrites!()
   test.equal(rewrites, {

@@ -117,6 +117,11 @@ test('signs private HEAD media reads with the HEAD method', async () => {
     ) => {
       requested = new URL(String(input))
       test.is(init?.method, 'HEAD')
+      if (!init?.headers) throw new Error('Expected request headers')
+      test.is(
+        (init.headers as {get(name: string): string | null}).get('if-range'),
+        'preview-etag'
+      )
       return new Response(null)
     },
     {preconnect: originalFetch.preconnect}
@@ -132,7 +137,10 @@ test('signs private HEAD media reads with the HEAD method', async () => {
     })
     await uploads.readMedia(
       {location: 'media/file.jpg'},
-      new Request('https://example.com/admin/file/file.jpg', {method: 'HEAD'})
+      new Request('https://example.com/admin/file/file.jpg', {
+        method: 'HEAD',
+        headers: {'if-range': 'preview-etag'}
+      })
     )
 
     test.ok(requested)

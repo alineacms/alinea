@@ -30,11 +30,8 @@ test('maps media locations between storage and entry data', () => {
   test.is(
     MediaLocation.publicUrl(config, {
       extension: '.jpg',
-      location: '/upload-id.jpg',
       parentPaths: [],
-      path: 'example',
-      root: 'media',
-      workspace: 'main'
+      path: 'example'
     }),
     '/admin/file/example.jpg'
   )
@@ -101,11 +98,8 @@ test('resolves nested media paths below the Alinea file route', () => {
 
   const url = MediaLocation.publicUrl(config, {
     extension: '.jpg',
-    location: '/media/upload-id.jpg',
     parentPaths: ['library', 'nested'],
-    path: 'example',
-    root: 'media',
-    workspace: 'main'
+    path: 'example'
   })
 
   test.is(url, '/admin/file/library/nested/example.jpg')

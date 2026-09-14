@@ -212,6 +212,8 @@ export function compressResponse(
 ): Response {
   const body = response.body
   if (!body) return response
+  if (response.status === 206 || response.headers.has('content-range'))
+    return response
   const isCompressed = response.headers.get('content-encoding')
   if (isCompressed) return response
   const accept = request.headers.get('accept-encoding')

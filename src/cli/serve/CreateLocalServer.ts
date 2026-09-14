@@ -11,6 +11,7 @@ import type {BuildOptions, BuildResult, OutputFile} from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
 import {buildEmitter} from '../build/BuildEmitter.js'
+import {contentType} from '../util/ContentType.js'
 import {ignorePlugin} from '../util/IgnorePlugin.js'
 import {publicDefines} from '../util/PublicDefines.js'
 import {reportFatal} from '../util/Report.js'
@@ -18,40 +19,6 @@ import {viewsPlugin} from '../util/ViewsPlugin.js'
 import type {ServeContext} from './ServeContext.js'
 
 type BuildDetails = Map<string, OutputFile>
-
-// Source: https://github.com/evanw/esbuild/blob/71be8bc24e70609ab50a80e90a17a1f5770c89b5/internal/helpers/mime.go#L5
-const mimeTypes = new Map(
-  Object.entries({
-    // Text
-    '.css': 'text/css; charset=utf-8',
-    '.htm': 'text/html; charset=utf-8',
-    '.html': 'text/html; charset=utf-8',
-    '.js': 'text/javascript; charset=utf-8',
-    '.json': 'application/json',
-    '.mjs': 'text/javascript; charset=utf-8',
-    '.xml': 'text/xml; charset=utf-8',
-
-    // Images
-    '.gif': 'image/gif',
-    '.jpeg': 'image/jpeg',
-    '.jpg': 'image/jpeg',
-    '.png': 'image/png',
-    '.svg': 'image/svg+xml',
-    '.webp': 'image/webp',
-
-    // Fonts
-    '.eot': 'application/vnd.ms-fontobject',
-    '.otf': 'font/otf',
-    '.sfnt': 'font/sfnt',
-    '.ttf': 'font/ttf',
-    '.woff': 'font/woff',
-    '.woff2': 'font/woff2',
-
-    // Other
-    '.pdf': 'application/pdf',
-    '.wasm': 'application/wasm'
-  })
-)
 
 function buildFiles(outdir: string, result: BuildResult) {
   return new Map(
@@ -92,6 +59,7 @@ export function createLocalServer(
     })
   }
   const devDir = path.join(staticDir, 'dev')
+  const publicDir = path.join(rootDir, cms.config.publicDir ?? 'public')
   const adminPath = Config.adminPath(cms.config)
   const getPath = (url: URL) => {
     if (url.pathname === adminPath || url.pathname.startsWith(`${adminPath}/`))
@@ -186,10 +154,43 @@ export function createLocalServer(
     const extension = path.extname(fileName)
     return new Response(file.contents as BodyInit, {
       headers: {
-        'content-type': mimeTypes.get(extension) || 'application/octet-stream',
+        'content-type': contentType(extension),
         etag
       }
     })
+  }
+
+  async function servePublicFile(
+    request: Request
+  ): Promise<Response | undefined> {
+    if (request.method !== 'GET' && request.method !== 'HEAD') return
+    const pathname = decodeURIComponent(new URL(request.url).pathname)
+    const location = path.resolve(publicDir, pathname.replace(/^[/\\]+/, ''))
+    const relative = path.relative(publicDir, location)
+    if (
+      relative === '..' ||
+      relative.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relative)
+    )
+      return
+    try {
+      const stat = await fs.promises.stat(location)
+      if (!stat.isFile()) return
+      const body =
+        request.method === 'HEAD'
+          ? undefined
+          : await fs.promises.readFile(location)
+      return new Response(body as BodyInit | undefined, {
+        headers: {
+          'content-length': String(stat.size),
+          'content-type': contentType(path.extname(location))
+        }
+      })
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'ENOENT')
+        return
+      throw error
+    }
   }
 
   const httpRouter = router(
@@ -259,8 +260,7 @@ export function createLocalServer(
         const url = new URL(request.url)
         url.pathname = '/api'
         url.search = new URLSearchParams({
-          file: String(params.wild),
-          delivery: 'proxy'
+          file: String(params.wild)
         }).toString()
         return devHandler(new Request(url, request))
       }),
@@ -287,7 +287,8 @@ export function createLocalServer(
           {headers: {'content-type': 'text/html'}}
         )
       }),
-      serveBrowserBuild
+      serveBrowserBuild,
+      servePublicFile
     )
   ).notFound(() => new Response('Not found', {status: 404}))
 

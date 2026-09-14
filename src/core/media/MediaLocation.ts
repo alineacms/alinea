@@ -11,23 +11,21 @@ export interface MediaPublicUrlMeta {
   parentPaths: Array<string>
   /** The file extension, including its leading dot. */
   extension: string
-  /** The location stored in the media entry, excluding mediaDir. */
-  location: string
-  workspace: string
-  root: string
 }
 
 export interface MediaEntryUrlMeta {
   defaultUrl: string
   parentPaths: Array<string>
   path: string
-  workspace: string
-  root: string
   data: Record<string, unknown>
 }
 
 /** Maps media entry locations between storage and public URLs. */
 export namespace MediaLocation {
+  export function isExternal(location: string): boolean {
+    return /^https?:\/\//.test(location)
+  }
+
   /** The workspace directory where media files are physically stored. */
   export function directory(config: Config, workspace: string): string {
     return Workspace.data(config.workspaces[workspace]).mediaDir ?? ''
@@ -63,7 +61,7 @@ export namespace MediaLocation {
     workspace: string,
     location: string
   ): string | undefined {
-    if (/^https?:\/\//.test(location)) return location
+    if (isExternal(location)) return location
     if (!directory(config, workspace)) return join('/', location)
     return publicFileUrl(config, workspace, location)
   }
@@ -74,7 +72,7 @@ export namespace MediaLocation {
     workspace: string,
     location: string
   ): string | undefined {
-    if (/^https?:\/\//.test(location) || !directory(config, workspace)) return
+    if (isExternal(location) || !directory(config, workspace)) return
     const publicDir = join('/', config.publicDir ?? '/public')
     const storage = join('/', storagePath(config, workspace, location))
     if (!contains(publicDir, storage)) return
@@ -99,17 +97,14 @@ export namespace MediaLocation {
 
   /** Resolve a media entry URL, falling back to its regular entry URL. */
   export function entryUrl(config: Config, meta: MediaEntryUrlMeta): string {
-    const {data, defaultUrl, parentPaths, path, root, workspace} = meta
+    const {data, defaultUrl, parentPaths, path} = meta
     const {extension, location} = data
     if (typeof extension !== 'string' || typeof location !== 'string')
       return defaultUrl
     return publicUrl(config, {
       extension,
-      location,
       parentPaths,
-      path,
-      root,
-      workspace
+      path
     })
   }
 }

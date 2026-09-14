@@ -21,7 +21,6 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     )
   }
   const adminPath = settings?.adminPath
-  const handlerUrl = settings?.handlerUrl
   let nextVersion = 15
   try {
     // Ducktape this together so we can get the package.json contents regardless
@@ -37,7 +36,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     ? createRedirects(config, adminPath)
     : config.redirects
   const rewrites = adminPath
-    ? createRewrites(config, adminPath, handlerUrl ?? '/api/cms')
+    ? createRewrites(config, adminPath, settings.handlerUrl)
     : config.rewrites
   const images = adminPath ? createImages(config, adminPath) : config.images
   const env = settings
@@ -76,9 +75,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
 }
 
 function createImages(config: NextConfig, adminPath: string) {
-  const localPatterns = config.images?.localPatterns ?? [
-    {pathname: '**', search: ''}
-  ]
+  const localPatterns = config.images?.localPatterns ?? [{pathname: '/**'}]
   return {
     ...config.images,
     localPatterns: [
@@ -151,6 +148,7 @@ function createRewrites(
         ...rewrites.beforeFiles,
         {
           source: `${adminPath}/file/:file*`,
+          // Next's internal image optimizer does not follow redirects.
           destination: `${handlerUrl}?file=:file*&delivery=proxy`
         }
       ],

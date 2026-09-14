@@ -349,7 +349,7 @@ function EntryEditorContent({
       <>
         <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor entry={selectedEntry} parentPaths={parentPaths} />
+            <FileEditor parentPaths={parentPaths} />
           </NodeEditor>
         </RailBody>
       </>

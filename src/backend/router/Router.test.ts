@@ -47,3 +47,21 @@ test('compresses a response when the request accepts gzip', async () => {
   )
   test.is(await new Response(decompressed).text(), 'hello')
 })
+
+test('does not compress partial responses', async () => {
+  const request = new Request('http://localhost/file', {
+    headers: {'accept-encoding': 'gzip'}
+  })
+  const response = compressResponse(
+    request,
+    new Response('partial', {
+      status: 206,
+      headers: {'content-range': 'bytes 0-6/12'}
+    })
+  )
+
+  test.is(response.status, 206)
+  test.is(response.headers.get('content-encoding'), null)
+  test.is(response.headers.get('content-range'), 'bytes 0-6/12')
+  test.is(await response.text(), 'partial')
+})
