@@ -287,6 +287,7 @@ const Article = Config.document('Article', {
     spotlight: Field.check('Spotlight'),
     text: Field.text('Text'),
     single: Field.entry('Single'),
+    localizedLink: Field.entry('Localized link'),
     multi: Field.entry.multiple('Multi'),
     body: Field.richText('Body'),
     heroImage: Field.image('Hero image'),
@@ -357,6 +358,12 @@ const advancedEntries = [
         _anchor: 'details',
         _suffix: '?filter=active'
       },
+      localizedLink: {
+        _id: 'localized-link',
+        _type: 'entry',
+        _entry: 'trans',
+        _locale: 'de'
+      },
       multi: [{_entry: 'child-2'}, {_entry: 'parent'}, {_entry: 'missing'}],
       body: [
         {
@@ -373,6 +380,32 @@ const advancedEntries = [
                   _entry: 'child-2',
                   _anchor: 'details',
                   _suffix: '?filter=active'
+                }
+              ]
+            },
+            {
+              _type: 'text',
+              text: 'German translation',
+              marks: [
+                {
+                  _type: 'link',
+                  _id: 'localized-body-link',
+                  _link: 'entry',
+                  _entry: 'trans',
+                  _locale: 'de'
+                }
+              ]
+            },
+            {
+              _type: 'text',
+              text: 'English translation',
+              marks: [
+                {
+                  _type: 'link',
+                  _id: 'english-body-link',
+                  _link: 'entry',
+                  _entry: 'trans',
+                  _locale: 'en'
                 }
               ]
             }
@@ -1029,6 +1062,19 @@ test('direct entry selections resolve unlocalized links from localized entries',
   test.is(result?.multiple[0]?.title, 'Parent')
 })
 
+test('direct entry selections resolve the locale stored on the link', async () => {
+  const {resolver} = await createAdvancedResolver()
+  const result = await resolver.resolve({
+    first: true,
+    id: 'child-1',
+    select: Article.localizedLink
+  })
+
+  test.is(result?.entryId, 'trans')
+  test.is(result?.title, 'Trans DE')
+  test.is(result?.url, '/de/trans')
+})
+
 test('nested entry selections resolve unlocalized links from localized entries', async () => {
   const {resolver} = await createAdvancedResolver()
   const selection = {
@@ -1088,6 +1134,16 @@ test('entry link suffixes are appended to query URLs', async () => {
     throw new Error('Expected first rich text child to be text')
   }
   test.is(firstText.marks?.[0]?.href, '/parent/beta?filter=active#details')
+  const secondText = firstNode.content?.[1]
+  if (!secondText || !Node.isText(secondText)) {
+    throw new Error('Expected second rich text child to be text')
+  }
+  test.is(secondText.marks?.[0]?.href, '/de/trans')
+  const thirdText = firstNode.content?.[2]
+  if (!thirdText || !Node.isText(thirdText)) {
+    throw new Error('Expected third rich text child to be text')
+  }
+  test.is(thirdText.marks?.[0]?.href, '/en/trans')
 })
 
 test('image fields include alt text in query values', async () => {

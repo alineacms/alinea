@@ -10,6 +10,7 @@ test('round trips an internal link anchor through editor attributes', () => {
     [Reference.id]: 'link-1',
     [Reference.type]: 'entry',
     [EntryReference.entry]: 'entry-1',
+    [EntryReference.locale]: 'fr',
     [EntryReference.anchor]: 'details',
     [EntryReference.suffix]: '?mode=preview'
   }
@@ -18,6 +19,7 @@ test('round trips an internal link anchor through editor attributes', () => {
   test.equal(attributes, {
     'data-id': 'link-1',
     'data-entry': 'entry-1',
+    'data-locale': 'fr',
     'data-anchor': 'details',
     'data-link': 'entry',
     'data-suffix': '?mode=preview',
@@ -38,6 +40,7 @@ test('round trips an image reference through editor node attributes', () => {
   test.equal(attributes, {
     'data-id': 'image-1',
     'data-entry': 'media-1',
+    'data-locale': undefined,
     'data-anchor': undefined,
     'data-link': 'image',
     'data-suffix': undefined,

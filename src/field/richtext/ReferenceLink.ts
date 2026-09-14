@@ -7,9 +7,11 @@ import type {HTMLProps} from 'react'
 interface Anchor extends HTMLProps<HTMLAnchorElement> {
   _id?: string
   _entry?: string
+  _locale?: string
   _link?: 'entry' | 'file' | 'image' | 'url'
   'data-id'?: string
   'data-entry'?: string
+  'data-locale'?: string
   'data-anchor'?: string
   'data-link'?: 'entry' | 'file' | 'image' | 'url'
   'data-suffix'?: string
@@ -23,6 +25,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': undefined,
+        'data-locale': undefined,
         'data-anchor': undefined,
         'data-link': 'url',
         href: ref._url,
@@ -34,6 +37,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-locale': ref[EntryReference.locale],
         'data-anchor': ref[EntryReference.anchor],
         'data-link': 'entry',
         'data-suffix': ref._suffix,
@@ -46,6 +50,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-locale': undefined,
         'data-anchor': undefined,
         'data-link': 'file',
         'data-suffix': undefined,
@@ -58,6 +63,7 @@ export function referenceToAttributes(reference: Reference): Anchor {
       return {
         'data-id': ref[Reference.id],
         'data-entry': ref[EntryReference.entry],
+        'data-locale': undefined,
         'data-anchor': undefined,
         'data-link': 'image',
         'data-suffix': undefined,
@@ -92,6 +98,8 @@ export function attributesToReference(
       [Reference.id]: id,
       [Reference.type]: type,
       [EntryReference.entry]: entry,
+      [EntryReference.locale]:
+        type === 'entry' ? attributes['data-locale'] : undefined,
       [EntryReference.anchor]:
         type === 'entry' ? attributes['data-anchor'] : undefined,
       [EntryReference.suffix]:

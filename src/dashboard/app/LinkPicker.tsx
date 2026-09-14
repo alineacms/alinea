@@ -260,7 +260,7 @@ function LinkPickerCompact({
       (selection.size === 0 && explorer.selectionMode !== 'multiple')
     )
       return
-    onCommit?.([...selection].map(String))
+    onCommit?.([...selection].map(String), page.locale)
     popover.close()
   }
 
@@ -341,7 +341,7 @@ function LinkPickerExpanded({
   const selectedItems = selection === 'all' ? 0 : selection.size
 
   function onSubmit() {
-    onConfirm()
+    onConfirm(page.locale)
     modal.close()
   }
 

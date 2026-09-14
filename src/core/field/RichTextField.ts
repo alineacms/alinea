@@ -349,11 +349,16 @@ async function applyLinkMarks(
   loader: import('../db/LinkResolver.js').LinkResolver
 ): Promise<void> {
   if (!Array.isArray(doc)) return
-  const links = new Map<Mark, string>()
+  interface RichTextLinkTarget {
+    entryId: string
+    locale?: string
+  }
+  const links = new Map<Mark, RichTextLinkTarget>()
   iterMarks(doc, mark => {
     if (mark[Mark.type] !== 'link') return
     const entryId = mark[LinkMark.entry]
-    if (typeof entryId === 'string') links.set(mark, entryId)
+    if (typeof entryId === 'string')
+      links.set(mark, {entryId, locale: mark[LinkMark.locale]})
   })
   const images = new Map<ImageNode, string>()
   iterImageNodes(doc, node => {
@@ -363,11 +368,14 @@ async function applyLinkMarks(
       images.set(node, node._entry)
     }
   })
-  const linkIds = Array.from(new Set([...links.values(), ...images.values()]))
-  const entries = await loader.resolveLinks(linkInfoFields, linkIds)
-  const info = new Map(entries.map(entry => [entry.id, entry]))
-  for (const [mark, entryId] of links) {
-    const data = info.get(entryId)
+  const targets = [
+    ...links.values(),
+    ...Array.from(images.values(), entryId => ({entryId}))
+  ]
+  const resolved = await loader.resolveTargets(linkInfoFields, targets)
+  let index = 0
+  for (const [mark] of links) {
+    const data = resolved[index++]
     if (!data) continue
     const href = data.url
     mark.href = applyUrlSuffix(
@@ -376,8 +384,8 @@ async function applyLinkMarks(
       mark[LinkMark.anchor]
     )
   }
-  for (const [node, entryId] of images) {
-    const data = info.get(entryId)
+  for (const [node] of images) {
+    const data = resolved[index++]
     if (!data) continue
     node.src = MediaLocation.versionedUrl(data.url, data.hash)
     node.alt = mediaAltText(data.alt, loader.locale ?? undefined)

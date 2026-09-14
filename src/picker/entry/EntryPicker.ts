@@ -82,6 +82,7 @@ export function entryPicker<Ref extends EntryReference, Fields>(
         [Reference.id]: id,
         [Reference.type]: type,
         [EntryReference.entry]: entryId,
+        [EntryReference.locale]: locale,
         [EntryReference.anchor]: anchor,
         [EntryReference.suffix]: suffix,
         [ListRow.index]: index,
@@ -95,7 +96,11 @@ export function entryPicker<Ref extends EntryReference, Fields>(
       }
       const linkIds = [entryId]
       if (!options.selection) return
-      const [extra] = await loader.resolveLinks(options.selection, linkIds)
+      const [extra] = await loader.resolveLinks(
+        options.selection,
+        linkIds,
+        locale
+      )
       if (!extra) {
         row[unresolvedEntryMarker] = true
         return
