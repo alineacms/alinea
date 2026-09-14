@@ -75,12 +75,10 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
 }
 
 function createImages(config: NextConfig, adminPath: string) {
-  const localPatterns = config.images?.localPatterns
-  if (!localPatterns) return config.images
   return {
     ...config.images,
     localPatterns: [
-      ...localPatterns,
+      ...(config.images?.localPatterns ?? []),
       {
         pathname: `${adminPath}/file/**`
       }
@@ -136,6 +134,10 @@ function createRewrites(
         ...rewrites,
         beforeFiles: [
           ...rewrites.beforeFiles,
+          {
+            source: `${adminPath}/file/:file*`,
+            destination: `${devServer}/api?file=:file*&delivery=proxy`
+          },
           {
             source: `${adminPath}/:path*`,
             destination: `${devServer}${adminPath}/:path*`
