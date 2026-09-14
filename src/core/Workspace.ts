@@ -1,6 +1,5 @@
 import type {Preview} from '#/core/Preview.js'
 import type {ComponentType} from 'react'
-import type {MediaUrlResolver} from './media/MediaLocation.js'
 import {
   getWorkspace,
   hasWorkspace,
@@ -16,17 +15,16 @@ import {entries, values} from './util/Objects.js'
 export interface WorkspaceMeta {
   /** A directory which contains the json entry files */
   source: string
-  /** The directory where media files are placed in case a file backend is used */
+  /**
+   * The directory where media files are placed in case a file backend is used.
+   * @deprecated Prefer backend-managed media storage when possible.
+   */
   mediaDir?: string
-  /** Prepare the public URL used when querying media files */
-  mediaUrl?: string | MediaUrlResolver
   /** The main theme color used in the dashboard */
   color?: string
   icon?: ComponentType
   preview?: Preview
 }
-
-export type {MediaUrlMeta, MediaUrlResolver} from './media/MediaLocation.js'
 
 type Roots = Record<string, Root>
 

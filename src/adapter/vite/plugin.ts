@@ -1,5 +1,6 @@
 import {nodeHandler} from '#/backend/router/NodeHandler.js'
 import {createDevServer, type DevServer} from '#/cli/serve/DevServer.js'
+import {Config} from '#/core/Config.js'
 import type {Plugin, ViteDevServer} from 'vite'
 
 function createFallbackUrl(server: ViteDevServer): string {
@@ -38,11 +39,11 @@ function waitForServerUrl(server: ViteDevServer): Promise<string> {
   })
 }
 
-function isAlineaRequest(request: Request): boolean {
+function isAlineaRequest(request: Request, adminPath: string): boolean {
   const url = new URL(request.url)
   return (
-    url.pathname === '/admin' ||
-    url.pathname.startsWith('/admin/') ||
+    url.pathname === adminPath ||
+    url.pathname.startsWith(`${adminPath}/`) ||
     url.pathname === '/api' ||
     url.pathname.startsWith('/api/') ||
     url.pathname === '/~dev' ||
@@ -53,6 +54,7 @@ function isAlineaRequest(request: Request): boolean {
 
 export function alineaPlugin(dir: string): Plugin {
   let devServer: DevServer | undefined
+  let adminPath = '/admin'
 
   return {
     name: 'alinea-plugin',
@@ -60,7 +62,10 @@ export function alineaPlugin(dir: string): Plugin {
       const serverUrl = waitForServerUrl(server)
       const devServerPromise = createDevServer(dir, {
         cmd: 'dev',
-        dashboardUrl: serverUrl
+        dashboardUrl: serverUrl,
+        onAfterGenerate(_, config) {
+          adminPath = Config.adminPath(config)
+        }
       }).then(result => {
         devServer = result
         return result
@@ -72,7 +77,7 @@ export function alineaPlugin(dir: string): Plugin {
 
       server.middlewares.use(
         nodeHandler(async request => {
-          if (!isAlineaRequest(request)) return undefined
+          if (!isAlineaRequest(request, adminPath)) return undefined
           const localServer = await devServerPromise
           return localServer.handle(request)
         })

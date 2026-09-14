@@ -1,7 +1,6 @@
 import {type} from '#/config.js'
 import {Surface, Tab, TabList, TabPanel, Tabs} from '#/components.js'
 import {Config} from '#/core/Config.js'
-import type {Entry} from '#/core/Entry.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
@@ -29,13 +28,11 @@ const metadataFields = type('Metadata', {
 })
 
 export interface FileEditorProps {
-  entry: Pick<Entry, 'root' | 'url' | 'workspace'>
   parentPaths: Array<string>
 }
 
-export function FileEditor({entry, parentPaths}: FileEditorProps) {
+export function FileEditor({parentPaths}: FileEditorProps) {
   const config = useAtomValueRaw(configAtom)
-  const location = useFieldValue(MediaFile.location)
   const path = useFieldValue(MediaFile.path)
   const extension = useFieldValue(MediaFile.extension)
   const isImage = isImageExtension(extension)
@@ -52,11 +49,8 @@ export function FileEditor({entry, parentPaths}: FileEditorProps) {
   const [hoverPoint, setHoverPoint] = useState<FocusPoint | null>(null)
   const publicLocation = MediaLocation.publicUrl(config, {
     extension,
-    location,
     parentPaths,
-    path,
-    root: entry.root,
-    workspace: entry.workspace
+    path
   })
   const baseUrl = Config.baseUrl(config) ?? window.location.href
   const liveUrl = URL.parse(publicLocation, baseUrl)

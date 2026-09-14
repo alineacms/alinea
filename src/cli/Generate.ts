@@ -37,11 +37,7 @@ export interface GenerateOptions {
 
 async function generatePackage(context: GenerateContext, cms: CMS) {
   const {config} = cms
-  if (!config.dashboardFile) return
-  const staticFile = config.dashboardFile
-    ? join(config.publicDir, config.dashboardFile)
-    : undefined
-  if (!staticFile) return
+  const staticFile = join(config.publicDir, Config.dashboardFile(config))
   await generateDashboard(context, cms, Config.handlerUrl(config), staticFile)
   return basename(staticFile)
 }

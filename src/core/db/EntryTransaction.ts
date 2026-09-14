@@ -70,6 +70,8 @@ interface UrlCandidate {
 interface UrlClaim {
   id: string
   url: string
+  workspace: string
+  root: string
 }
 
 interface MoveTarget {
@@ -413,14 +415,19 @@ export class EntryTransaction {
     const claims = this.#getUrlClaims()
     const urls = this.#candidateUrls(candidate)
     for (const url of urls) {
-      const key = this.#urlClaimKey(candidate.workspace, candidate.root, url)
+      const key = this.#urlClaimKey(
+        candidate.workspace,
+        candidate.root,
+        candidate.type,
+        url
+      )
       const existing = claims.get(key)
       if (existing && existing.id !== candidate.id) {
         throw new EntryUrlConflictError({
           url,
           entryId: existing.id,
-          workspace: candidate.workspace,
-          root: candidate.root
+          workspace: existing.workspace,
+          root: existing.root
         })
       }
     }
@@ -428,10 +435,20 @@ export class EntryTransaction {
       if (claim.id === candidate.id) claims.delete(key)
     }
     for (const url of urls) {
-      claims.set(this.#urlClaimKey(candidate.workspace, candidate.root, url), {
-        id: candidate.id,
-        url
-      })
+      claims.set(
+        this.#urlClaimKey(
+          candidate.workspace,
+          candidate.root,
+          candidate.type,
+          url
+        ),
+        {
+          id: candidate.id,
+          url,
+          workspace: candidate.workspace,
+          root: candidate.root
+        }
+      )
     }
   }
 
@@ -502,17 +519,23 @@ export class EntryTransaction {
         this.#resolvedUrl(entry),
         ...aliasUrlsFromData(entry.data)
       ]) {
-        claims.set(this.#urlClaimKey(entry.workspace, entry.root, url), {
-          id: entry.id,
-          url
-        })
+        claims.set(
+          this.#urlClaimKey(entry.workspace, entry.root, entry.type, url),
+          {
+            id: entry.id,
+            url,
+            workspace: entry.workspace,
+            root: entry.root
+          }
+        )
       }
     }
     this.#urlClaims = claims
     return claims
   }
 
-  #urlClaimKey(workspace: string, root: string, url: string) {
+  #urlClaimKey(workspace: string, root: string, type: string, url: string) {
+    if (type === 'MediaFile') return `MediaFile\0${url}`
     return `${workspace}\0${root}\0${url}`
   }
 

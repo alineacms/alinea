@@ -52,3 +52,44 @@ test('requires an explicitly configured handler URL', () => {
   test.throws(() => Config.handlerUrl(config), 'Missing handlerUrl')
   test.is(Config.handlerUrl({...config, handlerUrl: '/custom'}), '/custom')
 })
+
+test('derives legacy dashboard settings from adminPath', () => {
+  const config = createConfig({
+    adminPath: 'cms',
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {source: 'content', roots: {}})
+    }
+  })
+  test.is(Config.adminPath(config), '/cms')
+  test.is(Config.dashboardFile(config), 'cms.html')
+  test.is(
+    Config.filePathname(config, 'nested/file.jpg'),
+    '/cms/file/nested/file.jpg'
+  )
+})
+
+test('derives adminPath from legacy dashboardFile', () => {
+  const config = createConfig({
+    dashboardFile: 'legacy.html',
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {source: 'content', roots: {}})
+    }
+  })
+  test.is(Config.adminPath(config), '/legacy')
+  test.is(Config.dashboardFile(config), 'legacy.html')
+})
+
+test('adminPath takes precedence over legacy dashboardFile', () => {
+  const config = createConfig({
+    adminPath: '/cms',
+    dashboardFile: 'legacy.html',
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {source: 'content', roots: {}})
+    }
+  })
+  test.is(Config.adminPath(config), '/cms')
+  test.is(Config.dashboardFile(config), 'cms.html')
+})

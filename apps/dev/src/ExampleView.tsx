@@ -1,6 +1,7 @@
 import type {TextDoc} from 'alinea/core/TextDoc'
 import {isRecord} from 'alinea/core/util/Objects'
 import {RichText} from 'alinea/ui'
+import NextImage from 'next/image'
 import styles from './ExampleView.module.css'
 
 export interface ExampleViewProps {
@@ -94,14 +95,18 @@ function isRichText(value: Array<unknown>): value is TextDoc {
 
 function ImageValue({src, value}: ImageValueProps) {
   const caption = text(value.caption)
+  const width = typeof value.width === 'number' ? value.width : 800
+  const height = typeof value.height === 'number' ? value.height : 600
   return (
     <figure className={styles.ImageValue}>
-      {/* The dev app intentionally supports arbitrary CMS media URLs. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <NextImage
         className={styles.ImageValueImage}
         src={src}
         alt={text(value.alt) ?? text(value.title) ?? 'Content image'}
+        width={width}
+        height={height}
+        sizes="(max-width: 600px) 100vw, 50vw"
+        unoptimized={/^https?:\/\//.test(src)}
       />
       {caption && (
         <figcaption className={styles.ImageValueCaption}>{caption}</figcaption>

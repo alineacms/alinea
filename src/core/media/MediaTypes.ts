@@ -22,14 +22,12 @@ export const MediaLibrary = type('Media directory', {
 export type MediaFile = Type.Infer<typeof MediaFile>
 export const MediaFile = type('Media file', {
   hidden: true,
-  entryUrl({config, data, defaultUrl, parentPaths, path, root, workspace}) {
+  entryUrl({config, data, defaultUrl, parentPaths, path}) {
     return MediaLocation.entryUrl(config, {
       data,
       defaultUrl,
       parentPaths,
-      path,
-      root,
-      workspace
+      path
     })
   },
   fields: {

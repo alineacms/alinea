@@ -10,7 +10,7 @@ export class EntryUrlConflictError extends Error {
 
   constructor(public info: EntryUrlConflictErrorInfo) {
     super(
-      `URL "${info.url}" is already defined by entry ${info.entryId}. Remove or change this URL alias before publishing.`
+      `URL "${info.url}" is already defined by entry ${info.entryId} in workspace "${info.workspace}", root "${info.root}". Change the entry path or remove this URL alias before publishing.`
     )
   }
 }

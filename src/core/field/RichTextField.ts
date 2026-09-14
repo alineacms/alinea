@@ -11,6 +11,7 @@ import {
 import {createId} from '../Id.js'
 import type {InferStoredValue} from '../Infer.js'
 import {mediaAltText} from '../media/MediaAltField.js'
+import {MediaLocation} from '../media/MediaLocation.js'
 import {MediaFile} from '../media/MediaTypes.js'
 import {Schema} from '../Schema.js'
 import {
@@ -33,7 +34,8 @@ export type RichTextMutator<R> = {
 const linkInfoFields = {
   id: Entry.id,
   url: Entry.url,
-  alt: MediaFile.alt
+  alt: MediaFile.alt,
+  hash: MediaFile.hash
 }
 
 export class RichTextField<
@@ -377,7 +379,7 @@ async function applyLinkMarks(
   for (const [node, entryId] of images) {
     const data = info.get(entryId)
     if (!data) continue
-    node.src = data.url
+    node.src = MediaLocation.versionedUrl(data.url, data.hash)
     node.alt = mediaAltText(data.alt, loader.locale ?? undefined)
   }
 }

@@ -5,6 +5,7 @@ import type {Graph} from '#/core/Graph.js'
 import {createId} from '#/core/Id.js'
 import {imageExtensions} from '#/core/media/IsImage.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Reference} from '#/core/Reference.js'
 import {type as createType, Type} from '#/core/Type.js'
@@ -204,7 +205,8 @@ async function resolveRichTextImage(
     status: 'preferDraft',
     select: {
       url: Entry.url,
-      alt: MediaFile.alt
+      alt: MediaFile.alt,
+      hash: MediaFile.hash
     }
   })
   if (!image) throw new Error(`Image entry not found: ${entryId}`)
@@ -213,11 +215,13 @@ async function resolveRichTextImage(
     [Reference.type]: 'image',
     _entry: entryId
   }
+  const src =
+    URL.parse(image.url, Config.baseUrl(config) ?? window.location.href)
+      ?.href ?? ''
   return {
     alt: mediaAltText(image.alt, locale),
     link,
-    src: URL.parse(image.url, Config.baseUrl(config) ?? window.location.href)
-      ?.href
+    src: MediaLocation.versionedUrl(src, image.hash)
   }
 }
 

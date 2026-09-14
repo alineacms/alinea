@@ -76,10 +76,8 @@ function imagePicker<Fields>(
     defaultView: 'thumb',
     selection: {
       ...ImageLink,
-      filePath: Entry.filePath,
       root: Entry.root,
-      workspace: Entry.workspace,
-      previewUrl: MediaFile.previewUrl
+      workspace: Entry.workspace
     }
   })
 }
