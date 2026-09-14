@@ -576,15 +576,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       if (plan.count) {
         const total = await db
           .select(count())
-          .from(plan.identities.as('matches'))
+          .from(plan.rows.as('matches'))
           .get()
         return {count: total, rows: []}
       }
-      const rows = await (
-        plan.fields.length || plan.relations.length
-          ? plan.contextRows
-          : plan.rows
-      ).all(db)
+      const rows = await plan.rows.all(db)
       if (!source && query.get && !rows.length)
         throw new Error('Entry not found')
       return {count: undefined, rows}

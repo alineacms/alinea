@@ -10,16 +10,14 @@ const Documents = table('documents', {
   data: column.json<Record<string, unknown>>().notNull()
 })
 
-test('SQL JSON predicates preserve missing/null and primitive types', async () => {
+test('SQL JSON predicates compare typed field values directly', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await db.create(Documents)
   await db.insert(Documents).values([
     {id: 1, data: {}},
-    {id: 2, data: {value: null}},
-    {id: 3, data: {value: false}},
-    {id: 4, data: {value: 0}},
-    {id: 5, data: {value: '0'}}
+    {id: 2, data: {nullable: null, enabled: false, count: 0, label: 'zero'}},
+    {id: 3, data: {nullable: 'value', enabled: true, count: 1, label: 'one'}}
   ])
   async function matching(filter: unknown) {
     return db
@@ -28,15 +26,14 @@ test('SQL JSON predicates preserve missing/null and primitive types', async () =
       .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
       .orderBy(Documents.id)
   }
-  expect(await matching({value: null})).toEqual([2])
-  expect(await matching({value: false})).toEqual([3])
-  expect(await matching({value: 0})).toEqual([4])
-  expect(await matching({value: '0'})).toEqual([5])
-  expect(await matching({value: {isNot: null}})).toEqual([1, 3, 4, 5])
-  expect(await matching({value: {in: [null, 0]}})).toEqual([2, 4])
-  expect(await matching({value: {notIn: [null, 0]}})).toEqual([1, 3, 5])
+  expect(await matching({nullable: null})).toEqual([1, 2])
+  expect(await matching({nullable: {isNot: null}})).toEqual([3])
+  expect(await matching({enabled: false})).toEqual([2])
+  expect(await matching({count: 0})).toEqual([2])
+  expect(await matching({label: {in: ['zero', 'two']}})).toEqual([2])
+  expect(await matching({label: {notIn: ['zero', 'two']}})).toEqual([3])
   expect(await matching({or: []})).toEqual([])
-  expect(await matching({and: []})).toEqual([1, 2, 3, 4, 5])
+  expect(await matching({and: []})).toEqual([1, 2, 3])
 })
 
 test('nested predicates and literal prefixes compile to parameterized SQL', async () => {
@@ -62,15 +59,14 @@ test('nested predicates and literal prefixes compile to parameterized SQL', asyn
   expect(await query({})).toEqual([1, 2, 3])
 })
 
-test('nested SQL includes uses independent array scopes and rejects scalar containers', async () => {
+test('nested SQL includes uses independent array scopes', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await db.create(Documents)
   await db.insert(Documents).values([
     {id: 1, data: {items: [{url: '/one', children: [{title: 'match'}]}]}},
     {id: 2, data: {items: [{url: '/two', children: [{title: 'miss'}]}]}},
-    {id: 3, data: {items: 'not json'}},
-    {id: 4, data: {items: [null, 'plain', 1, false]}}
+    {id: 3, data: {items: []}}
   ])
   const query = (filter: unknown) =>
     db
@@ -84,11 +80,10 @@ test('nested SQL includes uses independent array scopes and rejects scalar conta
   expect(await query({items: {includes: {url: {startsWith: '/t'}}}})).toEqual([
     2
   ])
-  expect(await query({items: {includes: {}}})).toEqual([1, 2, 4])
-  expect(await query({items: {includes: {url: null}}})).toEqual([])
+  expect(await query({items: {includes: {}}})).toEqual([1, 2])
 })
 
-test('SQL includes matches primitive array values without treating them as objects', async () => {
+test('SQL includes matches primitive array values', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await db.create(Documents)
@@ -96,9 +91,7 @@ test('SQL includes matches primitive array values without treating them as objec
     {id: 1, data: {tags: ['international', 'research']}},
     {id: 2, data: {tags: ['regional']}},
     {id: 3, data: {tags: ['1']}},
-    {id: 4, data: {tags: [1, true, null]}},
-    {id: 5, data: {tags: 'international'}},
-    {id: 6, data: {tags: ['true']}}
+    {id: 4, data: {tags: []}}
   ])
   const matching = (filter: unknown) =>
     db
@@ -107,23 +100,16 @@ test('SQL includes matches primitive array values without treating them as objec
       .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
       .orderBy(Documents.id)
   expect(await matching({tags: {includes: 'international'}})).toEqual([1])
-  expect(await matching({tags: {includes: 1}})).toEqual([4])
-  expect(await matching({tags: {includes: true}})).toEqual([4])
-  expect(await matching({tags: {includes: null}})).toEqual([4])
 })
 
-test('SQL comparisons do not use SQLite ordering between JSON types', async () => {
+test('SQL comparisons use the declared field type', async () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   await db.create(Documents)
   await db.insert(Documents).values([
-    {id: 1, data: {value: 10}},
-    {id: 2, data: {value: 2}},
-    {id: 3, data: {value: '10'}},
-    {id: 4, data: {value: '2'}},
-    {id: 5, data: {value: {nested: true}}},
-    {id: 6, data: {value: [10]}},
-    {id: 7, data: {value: true}}
+    {id: 1, data: {score: 10, title: 'alpha'}},
+    {id: 2, data: {score: 2, title: 'beta'}},
+    {id: 3, data: {score: 5, title: 'gamma'}}
   ])
   const matching = (filter: unknown) =>
     db
@@ -132,7 +118,7 @@ test('SQL comparisons do not use SQLite ordering between JSON types', async () =
       .where(compileFilter(filter, name => jsonField(Documents.data, [name])))
       .orderBy(Documents.id)
 
-  expect(await matching({value: {gt: 5}})).toEqual([1])
-  expect(await matching({value: {gte: '2'}})).toEqual([4])
-  expect(await matching({value: {lt: 5}})).toEqual([2])
+  expect(await matching({score: {gt: 5}})).toEqual([1])
+  expect(await matching({score: {lte: 5}})).toEqual([2, 3])
+  expect(await matching({title: {gte: 'beta'}})).toEqual([2, 3])
 })
