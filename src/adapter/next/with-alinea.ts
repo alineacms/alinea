@@ -75,7 +75,8 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
 }
 
 function createImages(config: NextConfig, adminPath: string) {
-  const localPatterns = config.images?.localPatterns ?? [{pathname: '/**'}]
+  const localPatterns = config.images?.localPatterns
+  if (!localPatterns) return config.images
   return {
     ...config.images,
     localPatterns: [

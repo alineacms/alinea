@@ -32,7 +32,7 @@ import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
-import {isRedirectStatus, readMediaUrl} from './api/ReadMedia.js'
+import {isRedirectStatus, proxyMediaUrl} from './api/ProxyMedia.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
@@ -129,11 +129,9 @@ export function createHandler({
         const proxy = params.get('delivery') === 'proxy'
         const normalized = normalize(file)
         if (
-          !normalized ||
           isAbsolute(normalized) ||
           normalized === '..' ||
-          normalized.startsWith('../') ||
-          normalized.includes('/../')
+          normalized.startsWith('../')
         )
           throw new HttpError(400, 'Invalid file path')
         await periodicSync(cnx)
@@ -156,67 +154,59 @@ export function createHandler({
         const location = entry.data.location
         if (typeof location !== 'string')
           return new Response('Not found', {status: 404})
-        const workspace = entry.workspace
-        const mediaLocation = location
-        const externalLocation = MediaLocation.isExternal(mediaLocation)
         const previewSource =
           typeof previewUrl === 'string' && previewUrl
             ? new URL(previewUrl, request.url).href
             : undefined
-        async function readBackendMedia(cacheControl: string) {
-          if (!cnx.readMedia)
-            return new Response('Media backend cannot read files', {
-              status: 501
-            })
-          const response = await cnx.readMedia(
-            {
-              location: MediaLocation.storagePath(
-                cms.config,
-                workspace,
-                mediaLocation
-              ),
-              previewUrl: previewSource
-            },
-            request
+        async function proxyMedia(
+          source: string,
+          cacheControl: string,
+          isAllowed?: (url: URL) => boolean
+        ) {
+          const previewEntryId = uploadPreviewEntryId(
+            source,
+            context.handlerUrl
           )
+          let response: Response
+          if (previewEntryId && cnx.previewUpload) {
+            response = await cnx.previewUpload(previewEntryId)
+          } else {
+            response = await proxyMediaUrl(
+              request,
+              new URL(source, request.url),
+              isAllowed
+            )
+          }
           return mediaResponse(request, response, cacheControl)
         }
         if (!wasBuilt && previewSource) {
-          if (externalLocation)
-            return redirectFile(previewSource, 'private, no-store')
-          if (proxy) return readBackendMedia('private, no-store')
+          if (proxy) return proxyMedia(previewSource, 'private, no-store')
           return redirectFile(previewSource, 'private, no-store')
         }
-        if (externalLocation)
-          return redirectFile(mediaLocation, 'public, max-age=60')
-        const publicFile = MediaLocation.publicFileUrl(
-          cms.config,
-          workspace,
-          mediaLocation
-        )
-        if (proxy && !publicFile) return readBackendMedia('public, max-age=60')
         const source = MediaLocation.sourceUrl(
           cms.config,
-          workspace,
-          mediaLocation
+          entry.workspace,
+          location
         )
         if (!source || source === requestedUrl)
           return new Response('Not found', {status: 404})
         if (!proxy) return redirectFile(source, 'public, max-age=60')
-        if (!publicFile) return new Response('Not found', {status: 404})
         const configuredBase = Config.baseUrl(
           cms.config,
           context.isDev ? 'development' : 'production'
         )
         const deliveryBase = configuredBase ?? context.handlerUrl
-        const sourceUrl = new URL(publicFile, deliveryBase)
+        const sourceUrl = new URL(source, deliveryBase)
         const deliveryOrigin = new URL(deliveryBase).origin
-        const response = await readMediaUrl(
-          request,
-          sourceUrl,
-          url => url.origin === deliveryOrigin
+        const handlerPath = context.handlerUrl.pathname
+        return proxyMedia(
+          sourceUrl.href,
+          'public, max-age=60',
+          url =>
+            url.origin === deliveryOrigin &&
+            url.pathname !== handlerPath &&
+            !url.pathname.startsWith(`${handlerPath}/`)
         )
-        return mediaResponse(request, response, 'public, max-age=60')
       }
 
       const action = params.get('action') as HandleAction
@@ -545,6 +535,20 @@ function redirectFile(location: string, cacheControl: string): Response {
     status: 307,
     headers: {'cache-control': cacheControl, location}
   })
+}
+
+function uploadPreviewEntryId(
+  previewSource: string,
+  handlerUrl: URL
+): string | undefined {
+  const previewUrl = new URL(previewSource)
+  if (
+    previewUrl.origin !== handlerUrl.origin ||
+    previewUrl.pathname !== handlerUrl.pathname ||
+    previewUrl.searchParams.get('action') !== HandleAction.Upload
+  )
+    return
+  return previewUrl.searchParams.get('entryId') ?? undefined
 }
 
 function mediaResponse(

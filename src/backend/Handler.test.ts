@@ -1010,7 +1010,7 @@ test('redirects an unbuilt nested media file to its preview', async () => {
   test.is(response.headers.get('cache-control'), 'private, no-store')
 })
 
-test('streams media through the trusted file route', async () => {
+test('proxies database upload previews through the trusted file route', async () => {
   const mediaWorkspace = Config.workspace('Main', {
     source: 'content',
     roots: {media: Config.media()}
@@ -1026,7 +1026,7 @@ test('streams media through the trusted file route', async () => {
       path: 'image',
       extension: '.jpg',
       location: '/stored.jpg',
-      previewUrl: 'https://uploads.alinea.cloud/preview.jpg'
+      previewUrl: 'http://localhost/api?action=upload&entryId=upload-1'
     }
   })
   const handle = createHandler({
@@ -1034,9 +1034,8 @@ test('streams media through the trusted file route', async () => {
     db,
     remote() {
       return composeBackend(db, {
-        async readMedia(input) {
-          test.is(input.previewUrl, 'https://uploads.alinea.cloud/preview.jpg')
-          test.is(input.location, '/stored.jpg')
+        async previewUpload(entryId) {
+          test.is(entryId, 'upload-1')
           return new Response('image bytes', {
             headers: {
               'content-length': '11',
@@ -1154,47 +1153,7 @@ test('proxies built public media for the Next image optimizer', async () => {
   }
 })
 
-test('redirects legacy external media instead of treating it as storage', async () => {
-  const mediaWorkspace = Config.workspace('Main', {
-    source: 'content',
-    roots: {media: Config.media()}
-  })
-  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
-  const sourceDb = new LocalDB(cms.config)
-  await sourceDb.create({
-    type: MediaFile,
-    root: 'media',
-    set: {
-      title: 'Guide',
-      path: 'guide',
-      extension: '.pdf',
-      location: 'https://cdn.example/guide.pdf'
-    }
-  })
-  const db = new LocalDB(cms.config, sourceDb.source)
-  await db.sync()
-  const handle = createHandler({
-    cms,
-    db,
-    remote() {
-      return composeBackend(db, {
-        async readMedia() {
-          throw new Error('External locations must not be read as storage')
-        }
-      })
-    }
-  })
-
-  const response = await handle(
-    new Request('http://localhost/api?file=guide.pdf&delivery=proxy'),
-    requestContext()
-  )
-
-  test.is(response.status, 307)
-  test.is(response.headers.get('location'), 'https://cdn.example/guide.pdf')
-})
-
-test('prefers private previews for unbuilt external media', async () => {
+test('proxies an external preview before a file is built', async () => {
   const mediaWorkspace = Config.workspace('Main', {
     source: 'content',
     roots: {media: Config.media()}
@@ -1209,8 +1168,8 @@ test('prefers private previews for unbuilt external media', async () => {
       title: 'Guide',
       path: 'guide',
       extension: '.pdf',
-      location: 'https://cdn.example/guide.pdf',
-      previewUrl: 'https://uploads.example/preview.pdf'
+      location: '/guide.pdf',
+      previewUrl: 'data:image/jpeg;base64,cHJldmlldw=='
     }
   })
   const handle = createHandler({
@@ -1226,12 +1185,10 @@ test('prefers private previews for unbuilt external media', async () => {
     requestContext()
   )
 
-  test.is(response.status, 307)
-  test.is(
-    response.headers.get('location'),
-    'https://uploads.example/preview.pdf'
-  )
+  test.is(response.status, 200)
+  test.is(response.headers.get('content-type'), 'image/jpeg')
   test.is(response.headers.get('cache-control'), 'private, no-store')
+  test.is(await response.text(), 'preview')
 })
 
 test('preserves legacy built locations without a media directory', async () => {
@@ -1270,7 +1227,7 @@ test('preserves legacy built locations without a media directory', async () => {
   test.is(response.headers.get('location'), '/stored.pdf')
 })
 
-test('does not proxy an unverified legacy location', async () => {
+test('does not proxy a legacy location through the handler', async () => {
   const mediaWorkspace = Config.workspace('Main', {
     source: 'content',
     roots: {media: Config.media()}
@@ -1302,56 +1259,7 @@ test('does not proxy an unverified legacy location', async () => {
     requestContext()
   )
 
-  test.is(response.status, 501)
-})
-
-test('delegates built remote media reads to the backend', async () => {
-  const mediaWorkspace = Config.workspace('Main', {
-    source: 'content',
-    mediaDir: 'private/media',
-    roots: {media: Config.media()}
-  })
-  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
-  const sourceDb = new LocalDB(cms.config)
-  await sourceDb.create({
-    type: MediaFile,
-    root: 'media',
-    set: {
-      title: 'Image',
-      path: 'image',
-      extension: '.jpg',
-      location: 'remote/image.jpg',
-      previewUrl: 'https://uploads.example/preview.jpg'
-    }
-  })
-  const db = new LocalDB(cms.config, sourceDb.source)
-  await db.sync()
-  const handle = createHandler({
-    cms,
-    db,
-    remote() {
-      return composeBackend(db, {
-        async readMedia(input) {
-          test.equal(input, {
-            location: 'private/media/remote/image.jpg',
-            previewUrl: 'https://uploads.example/preview.jpg'
-          })
-          return new Response('image bytes', {
-            headers: {'content-type': 'image/jpeg'}
-          })
-        }
-      })
-    }
-  })
-
-  const response = await handle(
-    new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
-    requestContext()
-  )
-
-  test.is(response.status, 200)
-  test.is(response.headers.get('content-type'), 'image/jpeg')
-  test.is(await response.text(), 'image bytes')
+  test.is(response.status, 502)
 })
 
 test('rejects oversized uploads before preparing a remote upload', async () => {

@@ -2,7 +2,6 @@ import {OAuth2} from '#/backend/api/OAuth2.js'
 import {AuthAction} from '#/backend/Auth.js'
 import {Config} from '#/core/Config.js'
 import type {
-  MediaReadInput,
   AuthedContext,
   AuthOptions,
   RemoteConnection,
@@ -28,7 +27,6 @@ import {entries} from '#/core/util/Objects.js'
 import {Workspace} from '#/core/Workspace.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {Response} from '@alinea/iso'
-import {readMediaUrl} from '#/backend/api/ReadMedia.js'
 import pkg from '../../package.json' with {type: 'json'}
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
@@ -237,14 +235,6 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
         url: upload.url
       }
     })
-  }
-
-  async readMedia(input: MediaReadInput, request: Request): Promise<Response> {
-    if (!input.previewUrl) return new Response('Not found', {status: 404})
-    const source = new URL(input.previewUrl)
-    if (source.origin !== 'https://uploads.alinea.cloud')
-      return new Response('Invalid media source', {status: 502})
-    return readMediaUrl(request, source)
   }
 
   async getDraft(draftKey: DraftKey): Promise<Draft | undefined> {

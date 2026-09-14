@@ -1,6 +1,6 @@
 import {Headers, type Request, Response} from '@alinea/iso'
 
-export async function readMediaUrl(
+export async function proxyMediaUrl(
   request: Request,
   source: URL,
   isAllowed: (url: URL) => boolean = url => url.origin === source.origin

@@ -22,10 +22,6 @@ export interface MediaEntryUrlMeta {
 
 /** Maps media entry locations between storage and public URLs. */
 export namespace MediaLocation {
-  export function isExternal(location: string): boolean {
-    return /^https?:\/\//.test(location)
-  }
-
   /** The workspace directory where media files are physically stored. */
   export function directory(config: Config, workspace: string): string {
     return Workspace.data(config.workspaces[workspace]).mediaDir ?? ''
@@ -61,18 +57,8 @@ export namespace MediaLocation {
     workspace: string,
     location: string
   ): string | undefined {
-    if (isExternal(location)) return location
+    if (/^https?:\/\//.test(location)) return
     if (!directory(config, workspace)) return join('/', location)
-    return publicFileUrl(config, workspace, location)
-  }
-
-  /** Resolve storage known to be inside the application's public directory. */
-  export function publicFileUrl(
-    config: Config,
-    workspace: string,
-    location: string
-  ): string | undefined {
-    if (isExternal(location) || !directory(config, workspace)) return
     const publicDir = join('/', config.publicDir ?? '/public')
     const storage = join('/', storagePath(config, workspace, location))
     if (!contains(publicDir, storage)) return
