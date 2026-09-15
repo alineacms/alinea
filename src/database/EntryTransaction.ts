@@ -284,7 +284,7 @@ export class EntryTransaction implements AsyncDisposable {
       root,
       locale
     })
-    let index = existingMain?.index
+    let index = existingMain?.index ?? existing.at(0)?.index
     if (!index) {
       const previous =
         insertOrder === 'first' ? null : (siblings.at(-1) ?? null)

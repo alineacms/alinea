@@ -186,6 +186,8 @@ export declare class QuerySettings {
   path?: Condition<string>
   /** Filter by the full source file path. */
   filePath?: Condition<string>
+  /** Filter by the configured seed identity. */
+  seeded?: Condition<string | null>
   /** Filter by url */
   url?: Condition<string>
   /** Filter by a metadata URL alias */

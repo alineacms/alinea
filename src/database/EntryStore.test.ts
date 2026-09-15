@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
+import {transaction} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {createEntryRow} from '#/core/util/EntryRows.js'
 import {Config as ConfigBuilder, Field} from '#/index.js'
@@ -140,6 +141,121 @@ test('entry store materializes configured seeds in every locale', async () => {
     expect(rows.map(row => row.locale).sort()).toEqual(['en', 'fr'])
   } finally {
     sqlite.close()
+  }
+})
+
+test('seed translations share an index when locale siblings differ', async () => {
+  const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
+  function seededConfig(includeSeed: boolean): Config {
+    return {
+      schema: {Seeded},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {
+            pages: ConfigBuilder.root('Pages', {
+              i18n: {locales: ['en', 'fr']},
+              children: includeSeed
+                ? {home: ConfigBuilder.page({type: Seeded})}
+                : undefined
+            })
+          }
+        })
+      }
+    }
+  }
+
+  const source = new MemorySource()
+  const initial = await createStore(source, seededConfig(false))
+  await initial.store.sync()
+  await initial.store.mutate([
+    {
+      op: 'create',
+      id: 'english-page',
+      type: 'Seeded',
+      locale: 'en',
+      data: {title: 'English page'}
+    },
+    {
+      op: 'create',
+      id: 'french-page-1',
+      type: 'Seeded',
+      locale: 'fr',
+      data: {title: 'French page 1'}
+    },
+    {
+      op: 'create',
+      id: 'french-page-2',
+      type: 'Seeded',
+      locale: 'fr',
+      data: {title: 'French page 2'}
+    }
+  ])
+  initial.sqlite.close()
+
+  const seeded = await createStore(source, seededConfig(true))
+  try {
+    await seeded.store.sync()
+    const rows = await seeded.store.find({
+      path: 'home',
+      status: 'all',
+      select: {id: Entry.id, index: Entry.index, locale: Entry.locale}
+    })
+    expect(rows).toHaveLength(2)
+    expect(new Set(rows.map(row => row.id)).size).toBe(1)
+    expect(new Set(rows.map(row => row.index)).size).toBe(1)
+  } finally {
+    seeded.sqlite.close()
+  }
+})
+
+test('entry store finds an existing seed by its seed identity', async () => {
+  const Seeded = ConfigBuilder.document('Seeded', {fields: {}})
+  const seededConfig: Config = {
+    schema: {Seeded},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {
+          pages: ConfigBuilder.root('Pages', {
+            children: {home: ConfigBuilder.page({type: Seeded})}
+          })
+        }
+      })
+    }
+  }
+  const source = new MemorySource()
+  const initial = await createStore(source, seededConfig)
+  await initial.store.sync()
+  const original = await initial.store.get({
+    path: 'home',
+    select: {id: Entry.id, seeded: Entry.seeded}
+  })
+  expect(original.seeded).toBe('/home.json')
+  initial.sqlite.close()
+
+  const rename = await transaction(source)
+  const renamed = await rename
+    .rename('pages/home.json', 'pages/existing-home.json')
+    .compile()
+  await source.applyChanges({
+    fromSha: renamed.from.sha,
+    changes: renamed.changes
+  })
+
+  const reopened = await createStore(source, seededConfig)
+  try {
+    await reopened.store.sync()
+    const rows = await reopened.store.find({
+      seeded: '/home.json',
+      status: 'all',
+      select: {id: Entry.id, filePath: Entry.filePath}
+    })
+    expect(rows).toEqual([
+      {id: original.id, filePath: 'pages/existing-home.json'}
+    ])
+  } finally {
+    reopened.sqlite.close()
   }
 })
 

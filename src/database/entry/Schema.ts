@@ -75,7 +75,8 @@ export function entryIndexTable(name: string, temporary = false) {
       row.status,
       row.index
     ),
-    index(`${name}_by_file_path`).on(row.filePath)
+    index(`${name}_by_file_path`).on(row.filePath),
+    index(`${name}_by_seed`).on(row.seeded, row.workspace, row.root, row.locale)
   ])
 }
 

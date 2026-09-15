@@ -156,18 +156,29 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     const nodeIds = new Map<string, string>()
     const translationIds = new Map<string, string>()
     const mutations = Array<Mutation>()
+    const selection = {id: Entry.id, type: Entry.type}
     for (const seed of seeds) {
-      const existing = await this.database.first({
-        filePath: {
-          in: [
-            seed.filePath,
-            seed.filePath.replace(/\.json$/, '.draft.json'),
-            seed.filePath.replace(/\.json$/, '.archived.json')
-          ]
-        },
+      const existingBySeed = await this.database.first({
+        seeded: seed.seedPath,
+        workspace: seed.workspace,
+        root: seed.root,
+        locale: seed.locale,
         status: 'all',
-        select: {id: Entry.id, type: Entry.type}
+        select: selection
       })
+      const existing =
+        existingBySeed ??
+        (await this.database.first({
+          filePath: {
+            in: [
+              seed.filePath,
+              seed.filePath.replace(/\.json$/, '.draft.json'),
+              seed.filePath.replace(/\.json$/, '.archived.json')
+            ]
+          },
+          status: 'all',
+          select: selection
+        }))
       if (existing) {
         assert(existing.type === seed.type, `Type mismatch in ${seed.nodePath}`)
         nodeIds.set(seed.nodePath, existing.id)

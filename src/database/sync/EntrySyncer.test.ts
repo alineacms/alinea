@@ -178,7 +178,7 @@ test('rejects incompatible authored versions of one entry', async () => {
         status: 'draft'
       }
     ],
-    'Mismatched authored entry versions for same-entry'
+    'pages/same.draft.json: _type="DemoRecipes"'
   )
 })
 
@@ -201,7 +201,7 @@ test('rejects mismatched indexes, roots, and workspaces', async () => {
         status: 'draft'
       }
     ],
-    'Mismatched authored entry versions for same-entry'
+    'pages/same.draft.json: _index="b0"'
   )
 
   await expectInvalidEntries(

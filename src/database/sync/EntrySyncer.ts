@@ -1098,17 +1098,47 @@ async function validateEntries(
   if (node) {
     const versions = await db
       .select({
-        id: entries.id,
+        type: entries.type,
+        index: entries.index,
+        root: entries.root,
+        workspace: entries.workspace,
         locale: entries.locale,
         filePath: entries.filePath,
-        parentDir: entries.parentDir,
         parentId: entries.parentId
       })
       .from(entries)
       .where(eq(entries.id, node.id))
+      .orderBy(asc(entries.filePath))
+    type Version = (typeof versions)[number]
+    const differences = Array<{
+      label: string
+      value: (version: Version) => string | null
+    }>()
+    function addDifference(
+      label: string,
+      value: (version: Version) => string | null
+    ) {
+      if (new Set(versions.map(value)).size > 1)
+        differences.push({label, value})
+    }
+    addDifference('_type', version => version.type)
+    addDifference('_index', version => version.index)
+    addDifference('root', version => version.root)
+    addDifference('workspace', version => version.workspace)
+    addDifference('parent', version => version.parentId)
     assert(
       false,
-      `Mismatched authored entry versions for ${node.id}: ${JSON.stringify({node, versions})}`
+      `Mismatched authored entry versions for ${node.id}. All translations and statuses of an entry must use the same type, index, root, workspace, and logical parent.\n${versions
+        .map(
+          version =>
+            `${version.filePath}: ${differences
+              .map(
+                difference =>
+                  `${difference.label}=${JSON.stringify(difference.value(version))}`
+              )
+              .join(', ')}`
+        )
+        .join('\n')}`
     )
   }
 

@@ -236,6 +236,7 @@ export function compileEntryQuery(
     'main',
     'path',
     'filePath',
+    'seeded',
     'url',
     'level'
   ] as const)
