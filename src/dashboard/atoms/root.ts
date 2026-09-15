@@ -382,6 +382,7 @@ export class RootAtoms {
         rootData: this.data,
         selectedLocaleAtom: this.#explorerLocale,
         treeItems: locale => this.tree(locale).items,
+        treeReady: locale => this.tree(locale).ready,
         selectionBehavior: 'toggle',
         selectionMode: 'multiple'
       }

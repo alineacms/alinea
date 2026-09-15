@@ -796,7 +796,6 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
     requestedLocation,
     selectedLocale
   )
-  const canUpload = useAtomValueRaw(explorer.canUpload)
   const uploads = useAtomValueRaw(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
   const uploadCount = uploads.length
@@ -819,7 +818,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />
-        {page.isMedia && canUpload && !locationIsPending && (
+        {page.isMedia && page.canUpload && !locationIsPending && (
           <FileTrigger
             allowsMultiple
             onSelect={files => {
