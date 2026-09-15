@@ -16,7 +16,7 @@ import {
 } from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import type {Key} from 'react-aria-components'
-import {LucideFile} from '../icons.js'
+import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -49,11 +49,11 @@ test('rootAtoms returns stable bundles independent of route state', () => {
   expect(root.tree('fr')).not.toBe(root.tree('en'))
 })
 
-test('root icon uses the original file fallback', async () => {
+test('root icon uses the Material description fallback', async () => {
   const {store} = await createDashboardAtomFixture()
   const root = rootAtoms('main', 'pages')
 
-  expect(store.get(root.icon)).toBe(LucideFile)
+  expect(store.get(root.icon)).toBe(IcOutlineDescription)
 })
 
 test('root explorers follow route locales and keep media unlocalized', async () => {

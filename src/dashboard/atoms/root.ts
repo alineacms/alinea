@@ -22,7 +22,7 @@ import type {
   DroppableCollectionReorderEvent,
   Key
 } from 'react-aria-components'
-import {LucideFile} from '../icons.js'
+import {IcOutlineDescription} from '../icons.js'
 import {viewAtoms} from './config.js'
 import {configAtom, graphAtom} from './core.js'
 import {
@@ -389,7 +389,7 @@ export class RootAtoms {
   )
 
   label = atom(get => get(this.data).label)
-  icon = atom(get => get(this.data).icon ?? LucideFile)
+  icon = atom(get => get(this.data).icon ?? IcOutlineDescription)
   i18n = atom((get): RootI18n | undefined => {
     const data = get(this.data)
     return data.isMediaRoot ? undefined : data.i18n
