@@ -24,12 +24,19 @@ export default function NextPreviews({
   const [previewDisabled, setPreviewDisabled] = useState(false)
   const pathname = usePathname()
   const adminUrl = new URL(dashboardUrl, location.origin)
+  const host = window.parent !== window ? window.parent : window.opener
+  let hostOrigin = adminUrl.origin
+  try {
+    if (host?.location.origin === location.origin) hostOrigin = location.origin
+  } catch {
+    // A cross-origin dashboard is expected when using the CLI directly.
+  }
   const entryParams = new URLSearchParams({url: pathname})
   if (workspace) entryParams.set('workspace', workspace)
   if (root) entryParams.set('root', root)
   const editUrl = new URL(`#/edit?${entryParams}`, adminUrl)
   const {isPreviewing} = usePreview({
-    hostOrigin: adminUrl.origin,
+    hostOrigin,
     async preview(update) {
       if (!update) return
       const success = await setPreviewCookies(update.payload)

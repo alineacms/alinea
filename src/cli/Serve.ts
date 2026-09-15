@@ -36,7 +36,7 @@ export async function serve(options: ServeOptions): Promise<void> {
   const apiKey = process.env.ALINEA_API_KEY ?? createId()
   const nodeServer = startServer(preferredPort, 0, cmd === 'build')
   const dashboardUrl = nodeServer.then(
-    server => `http://${server.hostname}:${server.port}`
+    server => `http://localhost:${server.port}`
   )
 
   let devServer: DevServer

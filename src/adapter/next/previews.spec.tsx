@@ -9,7 +9,7 @@ test('shows the full-page widget after disconnecting or closing the CMS', async 
   page,
   context
 }) => {
-  const script = await buildPreviewScript('/admin')
+  const script = await buildPreviewScript('http://127.0.0.1:4500/admin')
   await context.route('http://preview.example/**', route =>
     route.fulfill({
       contentType: 'text/html',
@@ -58,11 +58,11 @@ test('shows the full-page widget after disconnecting or closing the CMS', async 
   await expect(preview.locator('alinea-preview .is-warning')).toHaveCount(1)
   await expect(preview.getByTitle('Admin panel')).toHaveAttribute(
     'href',
-    'http://preview.example/admin'
+    'http://127.0.0.1:4500/admin'
   )
   await expect(preview.getByTitle('Edit content')).toHaveAttribute(
     'href',
-    'http://preview.example/admin#/edit?url=%2Fpreview'
+    'http://127.0.0.1:4500/admin#/edit?url=%2Fpreview'
   )
   await preview.evaluate(() =>
     window.opener.postMessage('disconnect', location.origin)
@@ -115,6 +115,39 @@ test('rejects preview messages from an untrusted opener origin', async ({
 
   await expect(preview.getByTitle('Edit content')).toBeVisible()
   await expect(preview.locator('alinea-preview .is-connected')).toHaveCount(0)
+})
+
+test('connects to a trusted cross-origin CLI dashboard', async ({
+  page,
+  context
+}) => {
+  const dashboardUrl = 'http://dashboard.example/admin'
+  const script = await buildPreviewScript(dashboardUrl)
+  await context.route('http://dashboard.example/**', route =>
+    route.fulfill({contentType: 'text/html', body: '<body>CMS</body>'})
+  )
+  await context.route('http://preview.example/**', route =>
+    route.fulfill({
+      contentType: 'text/html',
+      body: `<body><div id="root"></div><script>${script}</script></body>`
+    })
+  )
+  await page.goto(dashboardUrl)
+  await page.evaluate(() => {
+    window.addEventListener('message', event => {
+      if (event.data?.action !== '[alinea-ping]') return
+      const source = event.source as Window
+      source.postMessage({action: '[alinea-pong]'}, event.origin)
+    })
+  })
+
+  const popup = page.waitForEvent('popup')
+  await page.evaluate(() =>
+    window.open('http://preview.example/page', '_blank')
+  )
+  const preview = await popup
+
+  await expect(preview.getByTitle('Edit content')).toHaveCount(0)
 })
 
 async function buildPreviewScript(dashboardUrl: string): Promise<string> {

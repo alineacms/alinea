@@ -47,7 +47,7 @@ export const cms = createCMS({
   },
   schema,
   roles: {editor},
-  maxUploadSize: 100,
+  maxUploadSize: 10_000_000,
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',
