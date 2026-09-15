@@ -431,24 +431,26 @@ function EntryEditorContent({
               <Button onPress={discardAndConfirm} appearance="plain">
                 Discard my changes
               </Button>
-              {dirtyActions.publish && (
-                <Button
-                  onPress={publishAndConfirm}
-                  intent={canSaveDraft ? 'secondary' : 'primary'}
-                  icon={IcRoundCheck}
-                >
-                  Publish
-                </Button>
-              )}
-              {dirtyActions.saveDraft && (
-                <Button
-                  onPress={saveDraftAndConfirm}
-                  intent="primary"
-                  icon={IcRoundSave}
-                >
-                  Save as draft
-                </Button>
-              )}
+              <div className={styles.EntryEditorContent.navigationActions()}>
+                {dirtyActions.publish && (
+                  <Button
+                    onPress={publishAndConfirm}
+                    intent={canSaveDraft ? 'secondary' : 'primary'}
+                    icon={IcRoundCheck}
+                  >
+                    Publish
+                  </Button>
+                )}
+                {dirtyActions.saveDraft && (
+                  <Button
+                    onPress={saveDraftAndConfirm}
+                    intent="primary"
+                    icon={IcRoundSave}
+                  >
+                    Save as draft
+                  </Button>
+                )}
+              </div>
             </DashboardModalFooter>
           </DashboardModalDialog>
         )}
