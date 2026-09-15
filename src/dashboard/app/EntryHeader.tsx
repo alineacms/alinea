@@ -9,7 +9,6 @@ import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
-import {activityAtom} from '#/dashboard/atoms/activity.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -182,7 +181,6 @@ export function EntryHeader({
   const replaceFile = useSetAtom(localeData.replaceFile)
   const reset = useSetAtom(node.reset)
   const isDirty = useAtomValueRaw(node.isDirty)
-  const activity = useAtomValueRaw(activityAtom)
   const activeVersion = Array.from(versions.values()).find(
     version => version.active
   )
@@ -203,11 +201,10 @@ export function EntryHeader({
       ? 'unpublished'
       : viewedStatus
   const [isPending, startTransition] = useTransition()
-  const isActionDisabled = isPending || activity.hasFailedMutations
+  const isActionDisabled = isPending
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
 
   function runAction(action: () => void | Promise<void>) {
-    if (activity.hasFailedMutations) return
     startTransition(async () => {
       try {
         await action()

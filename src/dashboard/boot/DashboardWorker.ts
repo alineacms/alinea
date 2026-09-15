@@ -98,6 +98,7 @@ export class DashboardWorker extends EventTarget {
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
+    if (this.#blocked) await this.discardActivity()
     return this.#local(async () => {
       const db = await this.db
       if (this.#blocked) {

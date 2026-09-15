@@ -515,6 +515,29 @@ test('retrying failed mutations clears the preceding fetch failure', async () =>
   ).toMatchObject({status: 'succeeded'})
 })
 
+test('performing another mutation discards a previous failure', async () => {
+  const {db, original, setUnavailable, worker} =
+    await createFailedMutationFixture()
+
+  setUnavailable(false)
+  await worker.queue('next-mutation', [
+    {
+      op: 'update',
+      id: original._id,
+      locale: null,
+      status: 'published',
+      set: {title: 'Next title'}
+    }
+  ])
+
+  expect(
+    await db.get({type: cms.schema.DemoRecipe, id: original._id})
+  ).toMatchObject({title: 'Next title'})
+  expect(
+    worker.activities().find(activity => activity.id === 'test-mutation')
+  ).toMatchObject({status: 'discarded', error: undefined})
+})
+
 test('discarding failed mutations restores the remote state', async () => {
   const {db, original, setUnavailable, worker} =
     await createFailedMutationFixture()
