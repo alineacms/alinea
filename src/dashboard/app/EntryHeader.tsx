@@ -25,6 +25,7 @@ import {
   IcRoundDelete,
   IcRoundEdit,
   IcRoundFlashOn,
+  IcRoundLanguage,
   IcRoundMoreHoriz,
   IcRoundPublishedWithChanges,
   IcRoundSave,
@@ -119,21 +120,24 @@ const variantDescription = {
   published: 'Published',
   unpublished: 'Unpublished',
   archived: 'Archived',
-  draft: 'Draft'
+  draft: 'Draft',
+  untranslated: 'Untranslated'
 }
 
 const badgeStatus = {
   published: 'published',
   unpublished: 'unpublished',
   archived: 'archived',
-  draft: 'draft'
+  draft: 'draft',
+  untranslated: 'untranslated'
 } as const
 
 const badgeIcon = {
   published: IcRoundCheck,
   unpublished: IcRoundFlashOn,
   archived: IcOutlineArchive,
-  draft: IcRoundEdit
+  draft: IcRoundEdit,
+  untranslated: IcRoundLanguage
 }
 
 export interface EntryHeaderProps {
@@ -200,10 +204,12 @@ export function EntryHeader({
   const isRevision = selectedVersion?.type === 'history'
   const isUnpublished = activeStatus === 'draft' && activeVersion.main
   const viewedStatus = selectedEntry.status
-  const status =
-    viewedStatus === 'draft' && selectedEntry.main
+  const status = untranslated
+    ? 'untranslated'
+    : viewedStatus === 'draft' && selectedEntry.main
       ? 'unpublished'
       : viewedStatus
+  const showStatus = isRevision || status !== 'published'
   const [isPending, startTransition] = useTransition()
   const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
@@ -437,13 +443,17 @@ export function EntryHeader({
           />
           <h1 className={styles.EntryHeader.title()}>{selectedEntry.title}</h1>
           {controls}
-          <Badge
-            className={styles.EntryHeader.status()}
-            icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
-            status={isRevision ? undefined : badgeStatus[status]}
-          >
-            {isRevision ? 'Revision' : variantDescription[status]}
-          </Badge>
+          {showStatus && (
+            <Badge
+              className={styles.EntryHeader.status()}
+              icon={
+                isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]
+              }
+              status={isRevision ? undefined : badgeStatus[status]}
+            >
+              {isRevision ? 'Revision' : variantDescription[status]}
+            </Badge>
+          )}
           <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
             {typeData.label}
           </Badge>
