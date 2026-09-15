@@ -3,6 +3,7 @@ import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
 import {entrySidebarOpenAtom} from '#/dashboard/atoms/dashboard.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
@@ -21,6 +22,7 @@ import {
 } from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useEffect, useLayoutEffect, useRef} from 'react'
@@ -36,6 +38,7 @@ import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields, NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
+import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {
   EntrySidebar,
   entrySidebar,
@@ -283,6 +286,9 @@ function EntryEditorContent({
   const defaultView = useAtomValueRaw(entry.view)
   const sourceLocales = useAtomValueRaw(entry.translationSourceLocales)
   const parentPaths = useAtomValueRaw(entry.parentPaths)
+  const versions = useAtomValueRaw(localeData.versions)
+  const config = useAtomValueRaw(configAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const View = type.customView
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
@@ -298,16 +304,27 @@ function EntryEditorContent({
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
-  const mediaDraftsDisabled = isMediaFile || isMediaLibrary
+  const isMedia = isMediaFile || isMediaLibrary
+  const activeVersion = Array.from(versions.values()).find(
+    version => version.active
+  )
+  assert(activeVersion, `Entry "${entry.id}" has no active version`)
+  const access = policy.get(activeVersion)
+  const canSaveDraft = !isMedia && Boolean(config.enableDrafts) && access.update
+  const dirtyActions = entryDirtyActions(access.publish, canSaveDraft)
 
   const discardAndConfirm = () => {
     reset()
     routeBlock?.confirm()
   }
 
-  const saveAndConfirm = async () => {
-    if (mediaDraftsDisabled) await publishEdits(node)
-    else await saveDraft(node)
+  const publishAndConfirm = async () => {
+    await publishEdits(node)
+    routeBlock?.confirm()
+  }
+
+  const saveDraftAndConfirm = async () => {
+    await saveDraft(node)
     routeBlock?.confirm()
   }
 
@@ -414,13 +431,24 @@ function EntryEditorContent({
               <Button onPress={discardAndConfirm} appearance="plain">
                 Discard my changes
               </Button>
-              <Button
-                onPress={saveAndConfirm}
-                intent="primary"
-                icon={mediaDraftsDisabled ? IcRoundCheck : IcRoundSave}
-              >
-                {mediaDraftsDisabled ? 'Publish' : 'Save as draft'}
-              </Button>
+              {dirtyActions.publish && (
+                <Button
+                  onPress={publishAndConfirm}
+                  intent={canSaveDraft ? 'secondary' : 'primary'}
+                  icon={IcRoundCheck}
+                >
+                  Publish
+                </Button>
+              )}
+              {dirtyActions.saveDraft && (
+                <Button
+                  onPress={saveDraftAndConfirm}
+                  intent="primary"
+                  icon={IcRoundSave}
+                >
+                  Save as draft
+                </Button>
+              )}
             </DashboardModalFooter>
           </DashboardModalDialog>
         )}

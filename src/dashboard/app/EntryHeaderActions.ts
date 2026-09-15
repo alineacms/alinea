@@ -1,26 +1,5 @@
 import type {EntryStatus} from '#/core/Entry.js'
 
-export type EntryHeaderActionId =
-  | 'remove-draft'
-  | 'replace'
-  | 'unpublish'
-  | 'archive'
-  | 'publish'
-  | 'delete'
-
-export type EntryHeaderPrimaryActionId =
-  | 'create-draft'
-  | 'save-translation'
-  | 'discard-changes'
-  | 'publish-edits'
-  | 'save-draft'
-  | 'publish-draft'
-
-export type EntryHeaderSaveActionId = Exclude<
-  EntryHeaderPrimaryActionId,
-  'discard-changes'
->
-
 interface EntryHeaderAccess {
   archive: boolean
   delete: boolean
@@ -55,7 +34,35 @@ export interface EntryHeaderPrimaryActionState {
   untranslated: boolean
 }
 
-export function entryHeaderPrimaryActionIds({
+export interface EntryDirtyActions {
+  publish: boolean
+  saveDraft: boolean
+}
+
+export interface EntryHeaderPrimaryActions {
+  createDraft: boolean
+  dirty: EntryDirtyActions | undefined
+  publishDraft: boolean
+  saveTranslation: boolean
+}
+
+export interface EntryHeaderActions {
+  archive: boolean
+  delete: boolean
+  publish: boolean
+  removeDraft: boolean
+  replace: boolean
+  unpublish: boolean
+}
+
+export function entryDirtyActions(
+  canPublish: boolean,
+  canSaveDraft: boolean
+): EntryDirtyActions {
+  return {publish: canPublish, saveDraft: canSaveDraft}
+}
+
+export function entryHeaderPrimaryActions({
   access,
   activeStatus,
   canPublishParents,
@@ -64,33 +71,31 @@ export function entryHeaderPrimaryActionIds({
   isRevision,
   parentNeedsTranslation,
   untranslated
-}: EntryHeaderPrimaryActionState): Array<EntryHeaderPrimaryActionId> {
-  if (isRevision) return canSaveDraft ? ['create-draft'] : []
+}: EntryHeaderPrimaryActionState): EntryHeaderPrimaryActions {
+  const actions: EntryHeaderPrimaryActions = {
+    createDraft: false,
+    dirty: undefined,
+    publishDraft: false,
+    saveTranslation: false
+  }
+  if (isRevision) {
+    actions.createDraft = canSaveDraft
+    return actions
+  }
   if (untranslated) {
-    return !parentNeedsTranslation && access.update ? ['save-translation'] : []
+    actions.saveTranslation = !parentNeedsTranslation && access.update
+    return actions
   }
   if (isDirty) {
-    const actions: Array<EntryHeaderPrimaryActionId> = ['discard-changes']
-    if (access.publish) actions.push('publish-edits')
-    if (canSaveDraft) actions.push('save-draft')
+    actions.dirty = entryDirtyActions(access.publish, canSaveDraft)
     return actions
   }
   if (activeStatus === 'draft' && canPublishParents && access.publish)
-    return ['publish-draft']
-  return []
+    actions.publishDraft = true
+  return actions
 }
 
-export function entryHeaderSaveShortcutActionId(
-  actions: Array<EntryHeaderPrimaryActionId>
-): EntryHeaderSaveActionId | undefined {
-  if (actions.includes('save-draft')) return 'save-draft'
-  if (actions.includes('publish-edits')) return 'publish-edits'
-  return actions.find(
-    (action): action is EntryHeaderSaveActionId => action !== 'discard-changes'
-  )
-}
-
-export function entryHeaderActionIds({
+export function entryHeaderActions({
   access,
   activeStatus,
   canDelete,
@@ -103,34 +108,43 @@ export function entryHeaderActionIds({
   isRevision,
   isUnpublished,
   untranslated
-}: EntryHeaderActionState): Array<EntryHeaderActionId> {
-  if (isRevision || isDirty || untranslated) return []
+}: EntryHeaderActionState): EntryHeaderActions {
+  const actions: EntryHeaderActions = {
+    archive: false,
+    delete: false,
+    publish: false,
+    removeDraft: false,
+    replace: false,
+    unpublish: false
+  }
+  if (isRevision || isDirty || untranslated) return actions
 
   if (activeStatus === 'draft') {
-    if (!isUnpublished) return access.update ? ['remove-draft'] : []
-    if (isParentUnpublished) {
-      return canDelete && access.delete ? ['delete'] : []
+    if (!isUnpublished) {
+      actions.removeDraft = access.update
+      return actions
     }
-    return access.archive ? ['archive'] : []
+    if (isParentUnpublished) {
+      actions.delete = canDelete && access.delete
+      return actions
+    }
+    actions.archive = access.archive
+    return actions
   }
 
   if (activeStatus === 'published') {
     if (isMediaFile) {
-      const actions: Array<EntryHeaderActionId> = []
-      if (access.update && access.upload) actions.push('replace')
-      if (canDelete && access.delete) actions.push('delete')
+      actions.replace = access.update && access.upload
+      actions.delete = canDelete && access.delete
       return actions
     }
 
-    const actions: Array<EntryHeaderActionId> = []
-    if (!isMediaLibrary && draftsEnabled && access.publish)
-      actions.push('unpublish')
-    if (canDelete && access.archive) actions.push('archive')
+    actions.unpublish = !isMediaLibrary && draftsEnabled && access.publish
+    actions.archive = canDelete && access.archive
     return actions
   }
 
-  const actions: Array<EntryHeaderActionId> = []
-  if (canPublishParents && access.publish) actions.push('publish')
-  if (canDelete && access.delete) actions.push('delete')
+  actions.publish = canPublishParents && access.publish
+  actions.delete = canDelete && access.delete
   return actions
 }

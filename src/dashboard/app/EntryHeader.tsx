@@ -36,10 +36,8 @@ import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {
-  entryHeaderActionIds,
-  entryHeaderPrimaryActionIds,
-  entryHeaderSaveShortcutActionId,
-  type EntryHeaderActionId
+  entryHeaderActions,
+  entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
 import {
@@ -52,7 +50,7 @@ import {
 const styles = styler(css)
 
 interface EntryHeaderMenuItem {
-  id: EntryHeaderActionId
+  id: string
   label: string
   action: () => void | Promise<void>
   icon?: ComponentType
@@ -249,7 +247,7 @@ export function EntryHeader({
   }
 
   const canSaveDraft = !isMedia && config.enableDrafts && access.update
-  const primaryActionIds = entryHeaderPrimaryActionIds({
+  const primaryActions = entryHeaderPrimaryActions({
     access,
     activeStatus,
     canPublishParents,
@@ -259,65 +257,64 @@ export function EntryHeader({
     parentNeedsTranslation,
     untranslated
   })
-  const saveShortcutActionId = entryHeaderSaveShortcutActionId(primaryActionIds)
-  useSaveShortcut(
-    saveShortcutActionId
-      ? () => runPrimaryAction(saveShortcutActionId)
-      : undefined,
-    isActionDisabled
-  )
 
-  function runPrimaryAction(
-    actionId: NonNullable<typeof saveShortcutActionId>
-  ) {
-    switch (actionId) {
-      case 'create-draft':
-        runAction(async () => {
-          await saveDraft(node)
-          setSelectedVersion({type: 'status', status: 'draft'})
-        })
-        return
-      case 'save-translation':
-        runAction(() => saveTranslation(node))
-        return
-      case 'publish-edits':
-        runAction(() => publishEdits(node))
-        return
-      case 'save-draft':
-        runAction(() => saveDraft(node))
-        return
-      case 'publish-draft':
-        runAction(publishDraft)
-        return
-    }
+  function createDraft() {
+    runAction(async () => {
+      await saveDraft(node)
+      setSelectedVersion({type: 'status', status: 'draft'})
+    })
   }
 
+  function saveTranslationChanges() {
+    runAction(() => saveTranslation(node))
+  }
+
+  function publishChanges() {
+    runAction(() => publishEdits(node))
+  }
+
+  function saveDraftChanges() {
+    runAction(() => saveDraft(node))
+  }
+
+  function publishCurrentDraft() {
+    runAction(publishDraft)
+  }
+
+  let saveShortcut: (() => void) | undefined
+  if (primaryActions.dirty?.saveDraft) saveShortcut = saveDraftChanges
+  else if (primaryActions.dirty?.publish) saveShortcut = publishChanges
+  else if (primaryActions.saveTranslation) saveShortcut = saveTranslationChanges
+  else if (primaryActions.createDraft) saveShortcut = createDraft
+  else if (primaryActions.publishDraft) saveShortcut = publishCurrentDraft
+  useSaveShortcut(saveShortcut, isActionDisabled)
+
   let primaryAction: ReactNode = null
-  if (primaryActionIds.includes('create-draft')) {
+  if (primaryActions.createDraft) {
     primaryAction = (
       <Button
         icon={IcRoundSave}
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runPrimaryAction('create-draft')}
+        onPress={createDraft}
       >
         Create draft
       </Button>
     )
-  } else if (primaryActionIds.includes('save-translation')) {
+  } else if (primaryActions.saveTranslation) {
     primaryAction = (
       <Button
         icon={IcRoundSave}
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runPrimaryAction('save-translation')}
+        onPress={saveTranslationChanges}
       >
         Save translation
       </Button>
     )
-  } else if (primaryActionIds.includes('discard-changes')) {
+  } else if (primaryActions.dirty) {
     primaryAction = (
       <>
         <Button
@@ -327,38 +324,38 @@ export function EntryHeader({
         >
           Discard my changes
         </Button>
-        {primaryActionIds.includes('publish-edits') && (
+        {primaryActions.dirty.publish && (
           <Button
             icon={IcRoundCheck}
             intent={canSaveDraft ? 'secondary' : 'primary'}
             isDisabled={isActionDisabled}
             isPending={isPending}
-            onPress={() => runPrimaryAction('publish-edits')}
+            onPress={publishChanges}
           >
             Publish
           </Button>
         )}
-        {primaryActionIds.includes('save-draft') && (
+        {primaryActions.dirty.saveDraft && (
           <Button
             icon={IcRoundSave}
             intent="primary"
             isDisabled={isActionDisabled}
             isPending={isPending}
-            onPress={() => runPrimaryAction('save-draft')}
+            onPress={saveDraftChanges}
           >
             Save draft
           </Button>
         )}
       </>
     )
-  } else if (primaryActionIds.includes('publish-draft')) {
+  } else if (primaryActions.publishDraft) {
     primaryAction = (
       <Button
         icon={IcRoundCheck}
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runPrimaryAction('publish-draft')}
+        onPress={publishCurrentDraft}
       >
         Publish
       </Button>
@@ -366,7 +363,7 @@ export function EntryHeader({
   }
 
   const menuItems: Array<EntryHeaderMenuItem> = []
-  const actionIds = entryHeaderActionIds({
+  const actions = entryHeaderActions({
     access,
     activeStatus,
     canDelete: activeVersion.seeded === null,
@@ -380,51 +377,48 @@ export function EntryHeader({
     isUnpublished,
     untranslated
   })
-  for (const actionId of actionIds) {
-    if (actionId === 'remove-draft') {
-      menuItems.push({
-        id: 'remove-draft',
-        label: 'Remove draft',
-        action: discardDraft,
-        icon: IcRoundDelete
-      })
-    } else if (actionId === 'replace') {
-      menuItems.push({
-        id: 'replace',
-        label: 'Replace',
-        action: replaceMediaFile,
-        icon: IcRoundSync
-      })
-    } else if (actionId === 'unpublish') {
-      menuItems.push({
-        id: 'unpublish',
-        label: 'Unpublish',
-        action: unpublish,
-        icon: IcRoundVisibilityOff
-      })
-    } else if (actionId === 'archive') {
-      menuItems.push({
-        id: 'archive',
-        label: 'Archive',
-        action: archive,
-        icon: IcRoundArchive
-      })
-    } else if (actionId === 'publish') {
-      menuItems.push({
-        id: 'publish',
-        label: 'Publish',
-        action: publishArchived,
-        icon: IcRoundCheck
-      })
-    } else {
-      menuItems.push({
-        id: 'delete',
-        label: 'Delete',
-        action: deleteAndNavigate,
-        icon: IcRoundDelete
-      })
-    }
-  }
+  if (actions.removeDraft)
+    menuItems.push({
+      id: 'remove-draft',
+      label: 'Remove draft',
+      action: discardDraft,
+      icon: IcRoundDelete
+    })
+  if (actions.replace)
+    menuItems.push({
+      id: 'replace',
+      label: 'Replace',
+      action: replaceMediaFile,
+      icon: IcRoundSync
+    })
+  if (actions.unpublish)
+    menuItems.push({
+      id: 'unpublish',
+      label: 'Unpublish',
+      action: unpublish,
+      icon: IcRoundVisibilityOff
+    })
+  if (actions.archive)
+    menuItems.push({
+      id: 'archive',
+      label: 'Archive',
+      action: archive,
+      icon: IcRoundArchive
+    })
+  if (actions.publish)
+    menuItems.push({
+      id: 'publish',
+      label: 'Publish',
+      action: publishArchived,
+      icon: IcRoundCheck
+    })
+  if (actions.delete)
+    menuItems.push({
+      id: 'delete',
+      label: 'Delete',
+      action: deleteAndNavigate,
+      icon: IcRoundDelete
+    })
 
   return (
     <header className={styles.EntryHeader({dirty: isDirty})}>
