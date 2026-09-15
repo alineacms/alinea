@@ -81,7 +81,7 @@ export const EditFields = memo(function EditFields({fields}: EditFieldsProps) {
           <div
             key={name}
             className={styles.EditField.slot()}
-            style={{gridColumn: `span ${fieldSpan()}`}}
+            style={{flexBasis: fieldWidth()}}
           >
             <FormSection section={new EntryEditorSection(value)} />
           </div>
@@ -107,14 +107,16 @@ export const EditField = memo(function EditField({field}: EditFieldProps) {
   return (
     <div
       className={styles.EditField.slot()}
-      style={{gridColumn: `span ${fieldSpan(options.width)}`}}
+      style={{flexBasis: fieldWidth(options.width)}}
     >
       <View field={field} />
     </div>
   )
 })
 
-function fieldSpan(width = 1): number {
-  const columns = 12
-  return Math.max(1, Math.min(columns, Math.round(width * columns)))
+export function fieldWidth(width = 1): string {
+  const fraction = Math.max(0, Math.min(1, width))
+  if (fraction === 0) return '0px'
+  if (fraction === 1) return '100%'
+  return `calc(${fraction * 100}% - var(--alinea-field-gap) * ${1 - fraction})`
 }
