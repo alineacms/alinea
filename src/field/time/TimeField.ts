@@ -17,8 +17,6 @@ export interface TimeOptions extends FieldOptions<string> {
   minValue?: string
   /** A maximum value */
   maxValue?: string
-  /** Specifies the legal time intervals */
-  step?: number
 }
 
 /** Internal representation of a date field */

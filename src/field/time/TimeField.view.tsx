@@ -20,9 +20,9 @@ export function TimeFieldView({field}: TimeFieldViewProps) {
     <RacTimeField
       description={options.help}
       errorMessage={error}
-      granularity={options.step && options.step < 60 ? 'second' : 'minute'}
       hourCycle={24}
       isDisabled={options.readOnly}
+      isInvalid={Boolean(error)}
       isRequired={options.required}
       label={options.label}
       shared={options.shared}

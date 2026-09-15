@@ -26,6 +26,11 @@
   outline: none;
 }
 
+.TimeField-input[data-invalid='true'] {
+  border-color: var(--alinea-border-danger);
+  box-shadow: 0 0 0 3px var(--alinea-danger-overlay);
+}
+
 .TimeField-segment {
   padding: 4px;
   font-variant-numeric: tabular-nums;
