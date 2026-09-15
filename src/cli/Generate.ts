@@ -9,7 +9,10 @@ import * as fsp from 'node:fs/promises'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
-import {copyStaticFiles} from './generate/CopyStaticFiles.js'
+import {
+  cleanupOldDatabases,
+  copyStaticFiles
+} from './generate/CopyStaticFiles.js'
 import {DevDB} from './generate/DevDB.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
@@ -168,23 +171,4 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       }
     }
   }
-}
-
-async function cleanupOldDatabases(outDir: string): Promise<void> {
-  const files = await fsp.readdir(outDir).catch(() => [])
-  const currentFiles = new Set([
-    generatedDatabaseFile,
-    `${generatedDatabaseFile}-shm`,
-    `${generatedDatabaseFile}-wal`
-  ])
-  const oldFiles = files.filter(
-    file =>
-      !currentFiles.has(file) &&
-      /^database(?:-.+)?\.sqlite(?:-(?:shm|wal))?$/.test(file)
-  )
-  await Promise.all(
-    oldFiles.map(file =>
-      fsp.rm(join(outDir, file), {force: true}).catch(() => {})
-    )
-  )
 }
