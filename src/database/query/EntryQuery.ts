@@ -16,6 +16,7 @@ import {getScope, type Scope} from '#/core/Scope.js'
 import type {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {
+  alias,
   and,
   asc,
   Builder,
@@ -24,9 +25,9 @@ import {
   exists,
   getSql,
   isNull,
+  min,
   or,
   sql,
-  when,
   type HasSql,
   type SelectionInput,
   type SelectionRecord,
@@ -62,12 +63,19 @@ interface RelationProjection {
 interface FieldProjection {
   path: Array<string>
   field: Field
+  name: string
+}
+
+interface OptionalProjection {
+  path: Array<string>
+  dataPath: Array<string>
 }
 
 /** Expressions over a complete entry row. */
 class Expressions {
   relations: Array<RelationProjection> = []
   fields: Array<FieldProjection> = []
+  optional: Array<OptionalProjection> = []
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
   #entry: EntryIndexTarget
@@ -176,7 +184,23 @@ class Expressions {
 
   projection(value: unknown, path: Array<string> = []): SelectionInput {
     if (isRecord(value) && hasExpr(value)) {
-      if (hasField(value)) this.fields.push({path, field: value as Field})
+      const internal = getExpr(value as Expr)
+      if (hasField(value)) {
+        const field = value as Field
+        const name = this.#scope.nameOf(field)
+        if (!name)
+          throw new Error('Field expression is not in the configured schema')
+        this.fields.push({path, field, name})
+      }
+      if (
+        internal.type === 'entryField' &&
+        internal.path &&
+        internal.name !== 'aliases'
+      )
+        this.optional.push({
+          path,
+          dataPath: [...internal.path, internal.name]
+        })
       return this.expr(value as Expr, true)
     }
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
@@ -302,6 +326,29 @@ export function compileEntryQuery(
     ? membership.grouping(query.groupBy)
     : undefined
   const ordering: Array<HasSql> = []
+  const NodeVersion = alias(entry, 'alinea_node_version')
+  const LanguageVersion = alias(entry, 'alinea_language_version')
+  const firstNodeFile = builder
+    .select(min(NodeVersion.filePath))
+    .from(NodeVersion)
+    .where(eq(NodeVersion.id, entry.id))
+  const firstLanguageFile = builder
+    .select(min(LanguageVersion.filePath))
+    .from(LanguageVersion)
+    .where(
+      and(
+        eq(LanguageVersion.id, entry.id),
+        sql<boolean>`${LanguageVersion.locale} is ${entry.locale}`
+      )
+    )
+  const stableOrdering = links
+    ? [asc(links.ordinal)]
+    : [
+        asc(entry.index),
+        asc(firstNodeFile),
+        asc(firstLanguageFile),
+        asc(entry.filePath)
+      ]
   if (query.orderBy) {
     for (const order of Array.isArray(query.orderBy)
       ? query.orderBy
@@ -320,26 +367,8 @@ export function compileEntryQuery(
       )
     }
   } else if (search) ordering.push(asc(search.rank))
-  else if (links) ordering.push(asc(links.ordinal))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
-  else if (edge?.edge === 'translations' && edge.includeSelf)
-    ordering.push(
-      asc(
-        when(
-          [
-            source?.locale === null
-              ? isNull(entry.locale)
-              : eq(entry.locale, source!.locale!),
-            0
-          ],
-          1
-        )
-      )
-    )
-  else ordering.push(asc(entry.index))
-  if (search || edge?.edge === 'parents' || edge?.edge === 'translations')
-    ordering.push(links ? asc(links.ordinal) : asc(entry.index))
-  ordering.push(asc(entry.filePath), asc(entry.versionId))
+  ordering.push(...stableOrdering)
 
   const projection = new Expressions(scope, entry, search)
   const types = query.type
@@ -413,16 +442,26 @@ export function compileEntryQuery(
     return rows
   }
 
-  const needsContext = projection.relations.length || projection.fields.length
+  const needsContext =
+    projection.relations.length ||
+    projection.fields.length ||
+    projection.optional.length
   return {
     rows: selectRows(
       needsContext
-        ? {value: selection, source: relationSource(entry)}
+        ? {
+            value: selection,
+            source: relationSource(entry),
+            ...(projection.fields.length || projection.optional.length
+              ? {data: entry.data}
+              : {})
+          }
         : selection
     ),
     count: query.count === true,
     single,
     relations: projection.relations,
-    fields: projection.fields
+    fields: projection.fields,
+    optional: projection.optional
   }
 }

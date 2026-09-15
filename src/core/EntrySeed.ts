@@ -86,9 +86,16 @@ export function entrySeeds(config: ConfigType): ReadonlyArray<EntrySeed> {
 export function seedData(
   config: ConfigType,
   seedPath: string | null,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  location: Pick<EntrySeed, 'workspace' | 'root' | 'locale'>
 ): Record<string, unknown> {
   if (!seedPath) return data
-  const seed = entrySeeds(config).find(seed => seed.seedPath === seedPath)
+  const seed = entrySeeds(config).find(
+    seed =>
+      seed.seedPath === seedPath &&
+      seed.workspace === location.workspace &&
+      seed.root === location.root &&
+      seed.locale === location.locale
+  )
   return seed ? {...seed.data, ...data} : data
 }

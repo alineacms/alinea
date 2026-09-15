@@ -126,6 +126,28 @@ export interface EntryDatabaseOverlay extends AsyncDisposable {
   close(): Promise<void>
 }
 
+function hasOwnPath(value: unknown, path: Array<string>): boolean {
+  let current = value
+  for (const key of path) {
+    if (!isRecord(current) || !Object.hasOwn(current, key)) return false
+    current = current[key]
+  }
+  return true
+}
+
+function setProjectionValue(
+  value: unknown,
+  path: Array<string>,
+  replacement: unknown
+): void {
+  let target = value
+  for (const key of path.slice(0, -1)) {
+    if (!isRecord(target)) return
+    target = target[key]
+  }
+  if (isRecord(target)) target[path.at(-1)!] = replacement
+}
+
 /** A queryable entry database or a named copy-on-write view over one. */
 export class EntryDatabase extends Graph implements AsyncDisposable {
   #db: Database
@@ -596,12 +618,23 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     if (plan.count) return result.count
     const rows: Array<unknown> = []
     for (const row of result.rows) {
-      if (!plan.relations.length && !plan.fields.length) {
+      if (
+        !plan.relations.length &&
+        !plan.fields.length &&
+        !plan.optional.length
+      ) {
         rows.push(row)
         continue
       }
-      const projected = row as {value: unknown; source: RelationSource}
+      const projected = row as {
+        value: unknown
+        source: RelationSource
+        data?: unknown
+      }
       let value = projected.value
+      const selectedData = plan.fields.length || plan.optional.length
+        ? storedEntryData(projected.data, projected.source.path)
+        : undefined
       const database = this
       const loader: LinkResolver = {
         resolver: {config: this.#config},
@@ -657,9 +690,13 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         }
       }
       for (const selected of plan.fields) {
-        if (!selected.path.length)
-          value = await Field.queryValue(selected.field, value, loader)
-        else {
+        const present = Object.hasOwn(selectedData!, selected.name)
+        if (!selected.path.length) {
+          if (!present) value = undefined
+          // The Graph resolver returns a falsy top-level selection directly.
+          if (value)
+            value = await Field.queryValue(selected.field, value, loader)
+        } else {
           let target = value
           for (const key of selected.path.slice(0, -1)) {
             if (!isRecord(target))
@@ -671,7 +708,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           const key = selected.path.at(-1)!
           const processed = await Field.queryValue(
             selected.field,
-            target[key],
+            present ? target[key] : undefined,
             loader
           )
           Object.defineProperty(target, key, {
@@ -681,6 +718,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
             writable: true
           })
         }
+      }
+      for (const selected of plan.optional) {
+        if (hasOwnPath(selectedData!, selected.dataPath)) continue
+        if (!selected.path.length) value = undefined
+        else setProjectionValue(value, selected.path, undefined)
       }
       for (const relation of plan.relations) {
         const related = await this.#resolve(

@@ -321,7 +321,13 @@ const advancedEntries = [
     index: 'a3',
     parentPaths: ['parent', 'alpha'],
     path: 'grand',
-    data: {title: 'Grand', score: 2, text: 'grand text'}
+    data: {
+      title: 'Grand',
+      score: 2,
+      text: 'grand text',
+      tags: null,
+      metadata: {createdAt: null}
+    }
   },
   {
     id: 'trans',
@@ -512,6 +518,18 @@ test('preserves paging, ordering, grouping and location behavior', async () => {
   await withAdvancedStore(async store => {
     const ids = ['parent', 'child-1', 'child-2', 'grand']
     expect(
+      await store.find({type: Article, id: {in: ids}, select: Entry.id})
+    ).toEqual(['parent', 'child-1', 'child-2', 'grand'])
+    expect(
+      await store.find({
+        type: Article,
+        id: {in: ids},
+        skip: 1,
+        take: 2,
+        select: Entry.id
+      })
+    ).toEqual(['child-1', 'child-2'])
+    expect(
       await store.find({
         type: Article,
         id: {in: ids},
@@ -573,6 +591,32 @@ test('preserves paging, ordering, grouping and location behavior', async () => {
         orderBy: {asc: Article.title, desc: Article.spotlight}
       })
     ).rejects.toThrow('orderBy must specify exactly one direction')
+  })
+})
+
+test('preserves missing, null and nested field projections', async () => {
+  await withAdvancedStore(async store => {
+    expect(
+      await store.resolve({id: 'parent', first: true, select: Article.tags})
+    ).toBeUndefined()
+    expect(
+      await store.resolve({id: 'grand', first: true, select: Article.tags})
+    ).toBeNull()
+    expect(
+      await store.get({id: 'parent', select: {tags: Article.tags}})
+    ).toEqual({tags: []})
+    expect(
+      await store.get({id: 'grand', select: {tags: Article.tags}})
+    ).toEqual({tags: []})
+    expect(
+      await store.resolve({id: 'parent', first: true, select: Entry.createdAt})
+    ).toBeUndefined()
+    expect(
+      await store.resolve({id: 'grand', first: true, select: Entry.createdAt})
+    ).toBeNull()
+    expect(
+      await store.get({id: 'parent', select: {createdAt: Entry.createdAt}})
+    ).toEqual({createdAt: undefined})
   })
 })
 

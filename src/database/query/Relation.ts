@@ -28,6 +28,7 @@ export interface RelationSource {
   parents: Array<string>
   level: number
   index: string
+  path: string
 }
 
 export function relationSource(entry: EntryIndexTarget) {
@@ -38,7 +39,8 @@ export function relationSource(entry: EntryIndexTarget) {
     parentId: entry.parentId,
     parents: entry.parents,
     level: entry.level,
-    index: entry.index
+    index: entry.index,
+    path: entry.path
   }
 }
 

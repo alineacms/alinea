@@ -37,10 +37,6 @@ export function parseSourceEntry(
   const lastDot = fileName.lastIndexOf('.')
   assert(lastDot !== -1, `Entry must have an extension: ${filePath}`)
   const [path, versionStatus] = entryInfo(fileName.slice(0, lastDot))
-  const data: Record<string, unknown> = {
-    path,
-    ...seedData(config, meta.seeded ?? null, authoredData)
-  }
   const parentDir = segments.slice(0, -1).join('/')
   const childrenDir = `${parentDir}/${path}`
   let segmentIndex = 0
@@ -70,6 +66,14 @@ export function parseSourceEntry(
     (Config.multipleWorkspaces(config) ? 2 : 1) + (i18n ? 1 : 0)
   const type = config.schema[meta.type]
   assert(type, `Entry ${meta.id} has an unknown type: ${meta.type}`)
+  const data: Record<string, unknown> = {
+    path,
+    ...seedData(config, meta.seeded ?? null, authoredData, {
+      workspace,
+      root,
+      locale
+    })
+  }
   const parentPaths = segments.slice(levelOffset, -1)
   return {
     id: meta.id,
