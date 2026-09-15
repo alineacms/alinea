@@ -40,6 +40,7 @@ import {
   entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -451,6 +452,7 @@ export function EntryHeader({
           <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
             {typeData.label}
           </Badge>
+          {!access.update && <ReadOnlyBadge />}
           {menuItems.length > 0 && (
             <Menu
               label={

@@ -8,13 +8,7 @@ import type {
   TreeAtoms
 } from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
-import {
-  useAtom,
-  useAtomValueRaw,
-  useSetAtom,
-  type Atom,
-  type WritableAtom
-} from 'jotai'
+import {useAtom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
 import {memo, type ComponentType, type ReactNode} from 'react'
 import {
   Collection,
@@ -79,26 +73,21 @@ function sidebarStatus(
 
 interface SidebarTreeItemProps {
   children?: ReactNode
+  data: RootTreeItem
   entryLink?: (entry: RootTreeItem) => SidebarTreeLink
   item: RootTreeNode
   locale: string | null
   selectedItem?: RootTreeItem
-  tree: SidebarTreeItemSource
-}
-
-interface SidebarTreeItemSource {
-  item(id: string): Atom<RootTreeItem>
 }
 
 export const SidebarTreeItem = memo(function SidebarTreeItem({
   children,
+  data,
   entryLink,
   item,
   locale,
-  selectedItem,
-  tree
+  selectedItem
 }: SidebarTreeItemProps) {
-  const data = useAtomValueRaw(tree.item(item.id))
   const configuredIcon = useAtomValueRaw(typeAtoms(data.type)).icon
   const displayStatus = sidebarStatus(data, locale)
   const selectedAncestor =
@@ -200,7 +189,8 @@ export const SidebarTree = memo(function SidebarTree({
 }: SidebarTreeProps) {
   const {locale} = page
   const tree = root.tree(locale)
-  const snapshot = useAtomValueRaw(tree.snapshot)
+  const view = useAtomValueRaw(tree.view)
+  const {snapshot} = view
   const selectedItem = useAtomValueRaw(tree.selectedItem)
   const label = useAtomValueRaw(root.label)
   const icon = useAtomValueRaw(root.icon)
@@ -234,13 +224,15 @@ export const SidebarTree = memo(function SidebarTree({
     }
   }
   function renderItem(item: RootTreeNode): ReactNode {
+    const data = view.entries.get(item.id)
+    if (!data) return null
     return (
       <SidebarTreeItem
+        data={data}
         entryLink={entryLink}
         item={item}
         locale={locale}
         selectedItem={selectedItem}
-        tree={tree}
       >
         <Collection items={item.children}>{renderItem}</Collection>
       </SidebarTreeItem>
@@ -358,7 +350,8 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   const icon = useAtomValueRaw(root.icon)
   const i18n = useAtomValueRaw(root.i18n)
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
-  const snapshot = useAtomValueRaw(tree.snapshot)
+  const view = useAtomValueRaw(tree.view)
+  const {snapshot} = view
   const selectedItem = useAtomValueRaw(tree.selectedItem)
   const dragDisabled = useAtomValueRaw(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
@@ -375,12 +368,14 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
     onMove: event => move(event, tree)
   })
   function renderItem(item: RootTreeNode): ReactNode {
+    const data = view.entries.get(item.id)
+    if (!data) return null
     return (
       <SidebarTreeItem
+        data={data}
         item={item}
         locale={locale}
         selectedItem={selectedItem}
-        tree={tree}
       >
         <Collection items={item.children}>{renderItem}</Collection>
       </SidebarTreeItem>

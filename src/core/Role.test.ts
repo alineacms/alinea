@@ -178,6 +178,18 @@ test('deny overrides allow', async () => {
   test.ok(policy.canRead(a))
 })
 
+test('get returns effective permissions after denies', () => {
+  const policy = new WriteablePolicy(scope)
+  policy.allowAll()
+  policy.set({id: a.id, deny: {update: true}})
+
+  const permissions = policy.get(a)
+
+  test.not.ok(permissions.update)
+  test.not.ok(permissions.all)
+  test.ok(permissions.read)
+})
+
 test('default deny', async () => {
   const policy = new WriteablePolicy(scope)
   // No permissions applied

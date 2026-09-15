@@ -70,7 +70,7 @@ export interface TreeSnapshot {
   selectedKeys: Set<string>
 }
 
-interface TreeSource {
+export interface TreeView {
   entries: Map<string, RootTreeItem>
   snapshot: TreeSnapshot
 }
@@ -89,6 +89,11 @@ const emptyTreeSnapshot: TreeSnapshot = {
   expandedKeys: new Set(),
   items: [],
   selectedKeys: new Set()
+}
+
+const emptyTreeView: TreeView = {
+  entries: new Map(),
+  snapshot: emptyTreeSnapshot
 }
 
 function rootTreeItem(
@@ -154,7 +159,7 @@ export class TreeAtoms {
     const parents =
       selectedModel && selected ? await get(selectedModel.parents) : []
     const models = new Map(parents.map(parent => [parent.id, parent]))
-    if (selectedModel) models.set(selectedModel.id, selectedModel)
+    if (selectedModel && selected) models.set(selectedModel.id, selectedModel)
     const collapsed = get(this.collapsedKeys)
     const collapsedKeys =
       collapsed.selectedId === selectedId ? collapsed.keys : new Set<string>()
@@ -162,11 +167,20 @@ export class TreeAtoms {
     for (const parentId of selected?.parents ?? [])
       if (!collapsedKeys.has(parentId)) expandedKeys.add(parentId)
 
-    const missingModels = await Promise.all(
-      [...expandedKeys]
-        .filter(id => !models.has(id))
-        .map(id => get(treeEntryAtoms(id).ready))
-    )
+    const missingModels = (
+      await Promise.all(
+        [...expandedKeys]
+          .filter(id => !models.has(id))
+          .map(async id => {
+            try {
+              return await get(treeEntryAtoms(id).ready)
+            } catch (error) {
+              if (error instanceof MissingEntryError) return undefined
+              throw error
+            }
+          })
+      )
+    ).filter((model): model is TreeEntryAtoms => Boolean(model))
     for (const model of missingModels) models.set(model.id, model)
 
     const expandedModels = [...expandedKeys].flatMap(id => {
@@ -222,12 +236,13 @@ export class TreeAtoms {
     return {
       entries,
       snapshot: {expandedKeys, items: nested(null), selectedKeys}
-    } satisfies TreeSource
+    } satisfies TreeView
   })
 
   #state = unwrap(this.#source, previous => previous)
-  snapshot = atom(get => get(this.#state)?.snapshot ?? emptyTreeSnapshot)
-  items = atom(get => [...(get(this.#state)?.entries.values() ?? [])])
+  view = atom(get => get(this.#state) ?? emptyTreeView)
+  snapshot = atom(get => get(this.view).snapshot)
+  items = atom(get => [...get(this.view).entries.values()])
   #itemSource = dispense((id: string) =>
     atom(async get => {
       const model = treeEntryAtoms(id)
@@ -245,9 +260,15 @@ export class TreeAtoms {
   )
   item = dispense((id: string) =>
     atom(get => {
-      const item = get(this.#itemState(id))
-      if (item) return item
       const loaded = get(this.#state)?.entries.get(id)
+      try {
+        const item = get(this.#itemState(id))
+        if (item) return item
+      } catch (error) {
+        const isLoading = error instanceof Promise
+        if (!loaded || (!isLoading && !(error instanceof MissingEntryError)))
+          throw error
+      }
       if (loaded) return loaded
       throw get(this.#itemSource(id))
     })

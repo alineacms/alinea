@@ -256,6 +256,30 @@ test('selected entry ancestors load without expanding unrelated branches', async
   expect(snapshot.selectedKeys).toEqual(new Set([child._id]))
 })
 
+test('tree removes selected and expanded entries that become unreadable', async () => {
+  const {config, parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const tree = rootAtoms('main', 'pages').createTree(
+    null,
+    atom(new Set<Key>([parent._id])),
+    atom(new Set([parent._id]))
+  )
+
+  await store.get(tree.ready)
+
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: parent._id, deny: {read: true}})
+  store.set(preloadUserPolicyAtom, localUser, policy)
+
+  await expect(store.get(tree.ready)).resolves.toEqual({
+    expandedKeys: new Set([parent._id]),
+    items: [],
+    selectedKeys: new Set([parent._id])
+  })
+  expect(store.get(tree.view).entries).toEqual(new Map())
+})
+
 test('entry models and child levels are shared across trees', async () => {
   const db = new CountingDB(dashboardTestConfig)
   await db.sync()

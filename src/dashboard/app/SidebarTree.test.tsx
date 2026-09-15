@@ -3,7 +3,6 @@ import type {RootTreeItem, RootTreeNode} from '#/dashboard/atoms/root.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {cleanup, fireEvent, render, screen} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
-import {atom} from 'jotai'
 import {useMemo, useState} from 'react'
 import {Collection, type Key} from 'react-aria-components'
 import {cms} from '../fixture/cms.js'
@@ -65,29 +64,21 @@ function SidebarTreeFixture({
       }))
     }
     const rootItems = buildTreeNodes(null)
-    const itemAtoms = new Map(items.map(item => [item.id, atom(item)]))
-    return {
-      rootItems,
-      tree: {
-        item(id: string) {
-          const item = itemAtoms.get(id)
-          if (!item) throw new Error(`Tree item "${id}" not found`)
-          return item
-        }
-      }
-    }
+    return {items: new Map(items.map(item => [item.id, item])), rootItems}
   }, [items])
   const [expandedKeys, setExpandedKeys] = useState(initialExpandedKeys)
   const rootItems = source.rootItems
   function renderItem(item: RootTreeNode) {
+    const data = source.items.get(item.id)
+    if (!data) return null
     return (
       <SidebarTreeItem
+        data={data}
         entryLink={entry => ({
           href: `/entry/main/pages/${entry.id}?view=edit`
         })}
         item={item}
         locale={null}
-        tree={source.tree}
       >
         <Collection items={item.children}>{renderItem}</Collection>
       </SidebarTreeItem>

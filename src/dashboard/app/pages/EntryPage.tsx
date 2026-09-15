@@ -238,6 +238,7 @@ function EntryOverview({
   selectedEntry
 }: EntryOverviewProps) {
   const setRoute = useSetAtom(routeAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const parentId = selectedEntry.parentId
   return (
     <Rail main>
@@ -249,6 +250,10 @@ function EntryOverview({
         }
         explorer={root.children(entry.id)}
         page={explorerPage}
+        readOnly={
+          !policy.canUpdate(selectedEntry) ||
+          (explorerPage.isMedia && !explorerPage.canUpload)
+        }
         headerEntry={{
           backLabel: parentId ? 'Back to parent entry' : 'Back to root',
           title: selectedEntry.title,
