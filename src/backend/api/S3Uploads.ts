@@ -25,7 +25,7 @@ export interface S3UploadsOptions {
 }
 
 interface S3PresignOptions {
-  method: 'GET' | 'PUT'
+  method: 'GET' | 'HEAD' | 'PUT'
   url: URL
   region: string
   accessKeyId: string
@@ -66,7 +66,7 @@ export class S3Uploads implements UploadsApi {
     }
   }
 
-  async #previewUrl(key: string): Promise<string> {
+  async #previewUrl(key: string) {
     const {publicUrl} = this.#options
     if (typeof publicUrl === 'function') return publicUrl(key)
     if (publicUrl) return joinUrl(publicUrl, key)
@@ -82,7 +82,7 @@ export class S3Uploads implements UploadsApi {
   }
 
   #presign(
-    method: 'GET' | 'PUT',
+    method: 'GET' | 'HEAD' | 'PUT',
     key: string,
     expiresIn: number,
     headers?: Record<string, string>

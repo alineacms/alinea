@@ -74,6 +74,7 @@ interface EntryDatabaseInternal {
   parent?: EntryDatabase
   target: EntrySyncTarget
   tree?: ReadonlyTree
+  initialTree?: ReadonlyTree
   view?: EntryView
   withinTransaction?: boolean
   searchName?: string
@@ -135,6 +136,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   #entryTarget: EntryIndexTarget
   #target: EntrySyncTarget
   #tree?: ReadonlyTree
+  #initialTree?: ReadonlyTree
   #view?: EntryView
   #detach?: () => void
   #children = new Set<EntryDatabase>()
@@ -167,6 +169,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     }
     this.#target = internal?.target ?? EntrySyncRoot
     this.#tree = internal?.tree
+    this.#initialTree = internal?.initialTree
     this.#entryTarget = this.#target.entries
     this.#view = internal?.view
     const parent = internal?.parent
@@ -186,6 +189,14 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
 
   get config(): Config {
     return this.#config
+  }
+
+  includedAtBuild(filePath: string): boolean | Promise<boolean> {
+    return (
+      this.#options.includedAtBuild?.(filePath) ??
+      this.#initialTree?.has(filePath) ??
+      false
+    )
   }
 
   /** Synchronize a source through this database's single prepared syncer. */
@@ -377,6 +388,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     tree: ReadonlyTree,
     fromRevision: string
   ): Promise<Array<string>> {
+    this.#initialTree ??= tree
     let changedEntryIds = Array<string>()
     const sync = async () => {
       changedEntryIds = await this.#syncer.sync(
@@ -513,6 +525,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           state: view.state
         },
         tree,
+        initialTree: this.#initialTree,
         view,
         searchName: this.#searchDirty ? view.searchName : this.#searchName,
         searchDirty: this.#searchDirty
@@ -603,17 +616,49 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         },
         async resolveLinks<P extends Projection>(
           projection: P,
-          ids: ReadonlyArray<string>
+          ids: ReadonlyArray<string>,
+          locale: string | null | undefined = projected.source.locale
         ): Promise<Array<InferProjection<P>>> {
           return (await database.#resolve(
             {
               select: projection,
               id: {in: ids},
               status: query.status ?? 'published',
-              preferredLocale: projected.source.locale ?? undefined
+              preferredLocale: locale ?? undefined
             },
             db
           )) as Array<InferProjection<P>>
+        },
+        async resolveTargets<P extends Projection & {id: unknown}>(
+          projection: P,
+          targets: ReadonlyArray<{entryId: string; locale?: string}>
+        ): Promise<Array<InferProjection<P> | undefined>> {
+          const targetsByLocale = new Map<string | undefined, Set<string>>()
+          for (const {entryId, locale} of targets) {
+            const ids = targetsByLocale.get(locale) ?? new Set<string>()
+            ids.add(entryId)
+            targetsByLocale.set(locale, ids)
+          }
+          const resultsByLocale = new Map<
+            string | undefined,
+            Map<string, InferProjection<P>>
+          >()
+          await Promise.all(
+            Array.from(targetsByLocale, async ([locale, ids]) => {
+              const results = await loader.resolveLinks(
+                projection,
+                [...ids],
+                locale
+              )
+              resultsByLocale.set(
+                locale,
+                new Map(results.map(result => [String(result.id), result]))
+              )
+            })
+          )
+          return targets.map(({entryId, locale}) =>
+            resultsByLocale.get(locale)?.get(entryId)
+          )
         }
       }
       for (const selected of plan.fields) {

@@ -51,7 +51,6 @@ export const cms = createCMS({
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',
-      mediaUrl: ({path, extension}) => `/media/${path}${extension}`,
       source: 'content/primary',
       roots: {
         fields: Config.root('Fields', {

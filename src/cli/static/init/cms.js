@@ -17,7 +17,6 @@ export const cms = createCMS({
     main: Config.workspace('Example', {
       source: 'content',
       mediaDir: 'public/media',
-      mediaUrl: '/media',
       roots: {
         pages: Config.root('Example site', {
           contains: ['Page']
@@ -39,7 +38,5 @@ export const cms = createCMS({
 
   // The handler route URL
   handlerUrl: '/api/cms',
-
-  // The admin dashboard will be bundled in this static file
-  dashboardFile: 'admin.html'
+  adminPath: '/admin'
 })

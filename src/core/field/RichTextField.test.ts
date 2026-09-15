@@ -58,20 +58,18 @@ test('resolves linked image data for queried rich text', async () => {
         workspaces: {
           main: workspace('Main', {
             source: 'content',
-            mediaUrl: '/media',
             roots: {}
           })
         }
       }
     },
-    async resolveLinks() {
-      return [
-        {
-          id: 'media-1',
-          url: '/media/image.jpg',
-          alt: {en: 'English alt text', fr: 'Texte alternatif'}
-        }
-      ]
+    async resolveTargets(_projection: unknown, targets: Array<unknown>) {
+      return targets.map(() => ({
+        id: 'media-1',
+        url: '/media/image.jpg',
+        hash: 'image-hash',
+        alt: {en: 'English alt text', fr: 'Texte alternatif'}
+      }))
     }
   } as unknown as LinkResolver
 
@@ -83,8 +81,63 @@ test('resolves linked image data for queried rich text', async () => {
       _id: 'image-1',
       _entry: 'media-1',
       _link: 'image',
-      src: '/media/image.jpg',
+      src: '/media/image.jpg?v=image-hash',
       alt: 'Texte alternatif'
+    }
+  ] satisfies TextDoc)
+})
+
+test('resolves entry links using the locale stored on the link', async () => {
+  const field = richText('Body')
+  const value = [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'German page',
+          marks: [
+            {
+              _type: 'link',
+              _id: 'link-1',
+              _link: 'entry',
+              _entry: 'page-1',
+              _locale: 'de'
+            }
+          ]
+        }
+      ]
+    }
+  ] satisfies TextDoc
+  const loader = {
+    locale: 'en',
+    async resolveTargets(_projection: unknown, targets: Array<unknown>) {
+      test.equal(targets, [{entryId: 'page-1', locale: 'de'}])
+      return [{id: 'page-1', url: '/de/page-1'}]
+    }
+  } as unknown as LinkResolver
+
+  const queried = await Field.queryValue(field, value, loader)
+
+  test.equal(queried, [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'German page',
+          marks: [
+            {
+              _type: 'link',
+              _id: 'link-1',
+              _link: 'entry',
+              _entry: 'page-1',
+              _locale: 'de',
+              href: '/de/page-1'
+            }
+          ]
+        }
+      ]
     }
   ] satisfies TextDoc)
 })

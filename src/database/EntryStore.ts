@@ -84,6 +84,10 @@ export class EntryStore extends WriteableGraph implements AsyncDisposable {
     return this.database.getRevision()
   }
 
+  includedAtBuild(filePath: string): boolean | Promise<boolean> {
+    return this.database.includedAtBuild(filePath)
+  }
+
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

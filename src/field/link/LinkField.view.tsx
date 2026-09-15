@@ -400,14 +400,16 @@ interface LinkPickerDialogProps {
 function createEntryLink(
   type: PickerType,
   entryId: string,
-  picker: Picker<LinkFieldRow>
+  picker: Picker<LinkFieldRow>,
+  locale: string | null
 ) {
   return {
     ...initialFields(picker),
     _id: createId(),
     _type: getEntryPickerType(type),
     _index: '',
-    _entry: entryId
+    _entry: entryId,
+    _locale: type === 'entry' ? (locale ?? undefined) : undefined
   } satisfies LinkFieldRow
 }
 
@@ -524,13 +526,18 @@ function LinkPickerAction({
     selectionMode: selectsMultiple ? 'multiple' : 'single',
     selectionBehavior: selectsMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
-    onConfirm(entryIds: Array<string>) {
+    onConfirm(entryIds: Array<string>, locale: string | null) {
       const existing = allowDuplicates ? [] : selection
-      const links = entryIds.map(
-        entryId =>
-          existing?.find(row => '_entry' in row && row._entry === entryId) ??
-          createEntryLink(type, entryId, picker)
-      )
+      const links = entryIds.map(entryId => {
+        const current = existing?.find(
+          row => '_entry' in row && row._entry === entryId
+        )
+        if (!current) return createEntryLink(type, entryId, picker, locale)
+        return {
+          ...current,
+          _locale: type === 'entry' ? (locale ?? undefined) : undefined
+        }
+      })
       if (onPickMany) return onPickMany(links)
       const [link] = links
       if (link) onPick(link)
@@ -653,9 +660,9 @@ function LinkPickerDialog({
     selectionMode: handlesMultiple ? 'multiple' : 'single',
     selectionBehavior: handlesMultiple ? 'toggle' : 'replace',
     initialSelection: initialSelection(value, selection),
-    onConfirm(selection: Array<string>) {
+    onConfirm(selection: Array<string>, locale: string | null) {
       const links = selection.map(entryId =>
-        createEntryLink(type, entryId, picker)
+        createEntryLink(type, entryId, picker, locale)
       )
       if (onPickMany) {
         onPickMany(links)

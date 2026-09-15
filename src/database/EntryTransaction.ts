@@ -783,27 +783,34 @@ export class EntryTransaction implements AsyncDisposable {
 
   async #assertUniqueUrls(candidate: UrlCandidate): Promise<void> {
     for (const url of await this.#candidateUrls(candidate)) {
+      const scope =
+        candidate.type === 'MediaFile'
+          ? {}
+          : {workspace: candidate.workspace, root: candidate.root}
+      const select = {
+        id: Entry.id,
+        workspace: Entry.workspace,
+        root: Entry.root
+      }
       const [canonical, alias] = await Promise.all([
         this.#workingDatabase.first({
-          workspace: candidate.workspace,
-          root: candidate.root,
+          ...scope,
           url,
-          select: Entry.id
+          select
         }),
         this.#workingDatabase.first({
-          workspace: candidate.workspace,
-          root: candidate.root,
+          ...scope,
           alias: url,
-          select: Entry.id
+          select
         })
       ])
       const existing = canonical ?? alias
-      if (typeof existing === 'string' && existing !== candidate.id)
+      if (existing && existing.id !== candidate.id)
         throw new EntryUrlConflictError({
           url,
-          entryId: existing,
-          workspace: candidate.workspace,
-          root: candidate.root
+          entryId: existing.id,
+          workspace: existing.workspace,
+          root: existing.root
         })
     }
   }

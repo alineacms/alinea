@@ -5,6 +5,7 @@ import {
   encodeBlobSequence
 } from '#/core/BlobTransport.js'
 import type {CMS} from '#/core/CMS.js'
+import {Config} from '#/core/Config.js'
 import type {
   AuthedContext,
   DraftTransport,
@@ -16,8 +17,11 @@ import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {DraftKey} from '#/core/Draft.js'
+import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -26,10 +30,12 @@ import type {RemoteSource, Source} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {isAbsolute, normalize} from '#/core/util/Paths.js'
 import {array, number, object, optional, string} from 'cito'
 import PLazy from 'p-lazy'
 import {InvalidCredentialsError, MissingCredentialsError} from './Auth.js'
 import {HandleAction} from './HandleAction.js'
+import {isRedirectStatus, proxyMediaUrl} from './api/ProxyMedia.js'
 import {applyPreview, decodePreviewRequest} from './resolver/ParsePreview.js'
 import {compressResponse} from './router/Router.js'
 import {createThrottledSync} from './util/Syncable.js'
@@ -74,6 +80,7 @@ export interface HandlerDatabase extends WriteableGraph, RemoteSource {
   source: Source
   sha: string | Promise<string>
   syncWith(remote: RemoteSource): Promise<string>
+  includedAtBuild(filePath: string): boolean | Promise<boolean>
   request(
     mutations: ReadonlyArray<Mutation>,
     policy?: Policy
@@ -127,6 +134,103 @@ export function createHandler({
             }
           }
         })
+      }
+
+      if (
+        params.has('file') &&
+        (request.method === 'GET' || request.method === 'HEAD')
+      ) {
+        const file = string(params.get('file'))
+        const proxy = params.get('delivery') === 'proxy'
+        const normalized = normalize(file)
+        if (
+          isAbsolute(normalized) ||
+          normalized === '..' ||
+          normalized.startsWith('../')
+        )
+          throw new HttpError(400, 'Invalid file path')
+        await periodicSync(cnx)
+        const requestedUrl = Config.filePathname(cms.config, normalized)
+        const select = {
+          url: Entry.url,
+          filePath: Entry.filePath,
+          workspace: Entry.workspace,
+          location: MediaFile.location,
+          previewUrl: MediaFile.previewUrl
+        }
+        const query = {
+          type: MediaFile,
+          status: 'published' as const,
+          main: true,
+          select
+        }
+        const entry =
+          (await local.first({...query, url: requestedUrl})) ??
+          (await local.first({...query, alias: requestedUrl}))
+        if (!entry) return new Response('Not found', {status: 404})
+        if (entry.url !== requestedUrl && !proxy)
+          return new Response(null, {
+            status: 308,
+            headers: {location: entry.url}
+          })
+        const wasBuilt = await local.includedAtBuild(entry.filePath)
+        const previewUrl = entry.previewUrl
+        const location = entry.location
+        if (typeof location !== 'string')
+          return new Response('Not found', {status: 404})
+        const previewSource =
+          typeof previewUrl === 'string' && previewUrl
+            ? new URL(previewUrl, request.url).href
+            : undefined
+        async function proxyMedia(
+          source: string,
+          cacheControl: string,
+          isAllowed?: (url: URL) => boolean
+        ) {
+          const previewEntryId = uploadPreviewEntryId(
+            source,
+            context.handlerUrl
+          )
+          let response: Response
+          if (previewEntryId && cnx.previewUpload) {
+            response = await cnx.previewUpload(previewEntryId)
+          } else {
+            response = await proxyMediaUrl(
+              request,
+              new URL(source, request.url),
+              isAllowed
+            )
+          }
+          return mediaResponse(request, response, cacheControl)
+        }
+        if (!wasBuilt && previewSource) {
+          if (proxy) return proxyMedia(previewSource, 'private, no-store')
+          return redirectFile(previewSource, 'private, no-store')
+        }
+        const source = MediaLocation.sourceUrl(
+          cms.config,
+          entry.workspace,
+          location
+        )
+        if (!source || source === requestedUrl)
+          return new Response('Not found', {status: 404})
+        if (!proxy) return redirectFile(source, 'public, max-age=60')
+        const configuredBase = Config.baseUrl(
+          cms.config,
+          context.isDev ? 'development' : 'production'
+        )
+        const deliveryBase = configuredBase ?? context.handlerUrl
+        const sourceUrl = new URL(source, deliveryBase)
+        const deliveryOrigin = new URL(deliveryBase).origin
+        const handlerPath = context.handlerUrl.pathname
+        return proxyMedia(
+          sourceUrl.href,
+          'public, max-age=60',
+          url =>
+            url.origin === deliveryOrigin &&
+            url.pathname !== handlerPath &&
+            !url.pathname.startsWith(`${handlerPath}/`)
+        )
       }
 
       const action = params.get('action') as HandleAction
@@ -451,6 +555,56 @@ export function createHandler({
       )
     }
   }
+}
+
+function redirectFile(location: string, cacheControl: string): Response {
+  return new Response(null, {
+    status: 307,
+    headers: {'cache-control': cacheControl, location}
+  })
+}
+
+function uploadPreviewEntryId(
+  previewSource: string,
+  handlerUrl: URL
+): string | undefined {
+  const previewUrl = new URL(previewSource)
+  if (
+    previewUrl.origin !== handlerUrl.origin ||
+    previewUrl.pathname !== handlerUrl.pathname ||
+    previewUrl.searchParams.get('action') !== HandleAction.Upload
+  )
+    return
+  return previewUrl.searchParams.get('entryId') ?? undefined
+}
+
+function mediaResponse(
+  request: Request,
+  upstream: Response,
+  cacheControl: string
+): Response {
+  if (isRedirectStatus(upstream.status))
+    return new Response('Media backend returned a redirect', {status: 502})
+  const responseHeaders = new Headers({
+    'cache-control':
+      upstream.ok || upstream.status === 304 ? cacheControl : 'no-store'
+  })
+  for (const name of [
+    'accept-ranges',
+    'content-disposition',
+    'content-length',
+    'content-range',
+    'content-type',
+    'etag',
+    'last-modified'
+  ]) {
+    const value = upstream.headers.get(name)
+    if (value) responseHeaders.set(name, value)
+  }
+  return new Response(request.method === 'HEAD' ? null : upstream.body, {
+    status: upstream.status,
+    headers: responseHeaders
+  })
 }
 
 function parseUser(input: unknown): UserInput {

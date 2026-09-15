@@ -96,7 +96,7 @@ export class DevDB extends EntryStore {
 
   isInMediaLocation(file: string): boolean {
     const {config, rootDir} = this.#options
-    const mediaDirs: Array<string> = values(config.workspaces)
+    const mediaDirs = values(config.workspaces)
       .map(workspace => getWorkspace(workspace).mediaDir!)
       .filter(Boolean)
     return mediaDirs.some(dir => contains(join(rootDir, dir), file))

@@ -49,6 +49,10 @@ export class LocalDB extends WriteableGraph implements AsyncDisposable {
     return this.#store.then(store => store.sha)
   }
 
+  async includedAtBuild(filePath: string): Promise<boolean> {
+    return (await this.#store).includedAtBuild(filePath)
+  }
+
   resolve<Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {

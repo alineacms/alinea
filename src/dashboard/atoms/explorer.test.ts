@@ -46,6 +46,28 @@ test('picker rows select instead of navigating the dashboard', () => {
   expect(store.get(explorer.location).parentId).toBe('folder')
 })
 
+test('picker confirmation can use the rendered locale while another loads', () => {
+  let confirmed: {selection: Array<string>; locale: string | null} | undefined
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'pages', locale: 'fr'},
+    {
+      onConfirm(selection, locale) {
+        confirmed = {selection, locale}
+      }
+    }
+  )
+  const store = createStore()
+
+  store.set(explorer.selection, new Set(['entry-1']))
+  store.set(explorer.selectedLocale, 'de')
+  store.set(explorer.onConfirm, 'fr')
+
+  expect(confirmed).toEqual({selection: ['entry-1'], locale: 'fr'})
+
+  store.set(explorer.onConfirm, null)
+  expect(confirmed).toEqual({selection: ['entry-1'], locale: null})
+})
+
 test('page explorers keep their row navigation action', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'pages'},

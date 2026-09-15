@@ -158,7 +158,6 @@ test('preloads linked rich text images without changing stored data', async () =
     workspaces: {
       main: Config.workspace('Main', {
         source: 'content',
-        mediaUrl: '/media',
         roots: {
           pages: Config.root('Pages', {contains: [Page]}),
           media: Config.media()
@@ -177,6 +176,7 @@ test('preloads linked rich text images without changing stored data', async () =
       path: 'image',
       location: 'image.jpg',
       extension: '.jpg',
+      hash: 'image-hash',
       alt: {en: 'Resolved alt text'}
     }
   })
@@ -213,7 +213,7 @@ test('preloads linked rich text images without changing stored data', async () =
   const images = await store.get(entry.locales(null).richTextImages)
 
   expect(images.get('media-1')).toEqual({
-    src: 'http://localhost/media/image.jpg',
+    src: 'http://localhost/admin/file/image.jpg?v=image-hash',
     alt: 'Resolved alt text'
   })
   expect(selectedEntry.data.body).toEqual([
@@ -232,7 +232,6 @@ test('publishing reconciles transaction-generated media aliases immediately', as
     workspaces: {
       main: Config.workspace('Main', {
         source: 'content',
-        mediaUrl: ({path, extension}) => `/assets/${path}${extension}`,
         roots: {
           media: Config.media({contains: ['MediaFile']})
         }
@@ -286,7 +285,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
 
   expect(store.get(node.value)).toMatchObject({
     title: 'Typed while saving',
-    metadata: {aliases: [{url: '/assets/original.jpg'}]}
+    metadata: {aliases: [{url: '/admin/file/original.jpg'}]}
   })
   expect(store.get(node.isDirty)).toBeTrue()
 
@@ -294,7 +293,7 @@ test('publishing reconciles transaction-generated media aliases immediately', as
   expect(store.get(node.value)).toMatchObject({
     title: 'File',
     path: 'updated',
-    metadata: {aliases: [{url: '/assets/original.jpg'}]}
+    metadata: {aliases: [{url: '/admin/file/original.jpg'}]}
   })
   expect(store.get(node.isDirty)).toBeFalse()
 })

@@ -12,6 +12,7 @@ import type {
 import {developmentKeyHeader} from '#/core/Connection.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
+import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
 import {Config} from '#/index.js'
@@ -965,6 +966,305 @@ test('accepts authenticated commits only in development', async () => {
     requestContext()
   )
   test.is(unauthenticated.status, 401)
+})
+
+test('redirects an unbuilt nested media file to its preview', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'public/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  const library = await db.create({
+    type: MediaLibrary,
+    root: 'media',
+    set: {title: 'Library', path: 'library'}
+  })
+  await db.create({
+    type: MediaFile,
+    root: 'media',
+    parentId: library._id,
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: '/stored.jpg',
+      previewUrl: 'https://uploads.alinea.cloud/preview.jpg'
+    }
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=library/image.jpg'),
+    requestContext()
+  )
+
+  test.is(response.status, 307)
+  test.is(
+    response.headers.get('location'),
+    'https://uploads.alinea.cloud/preview.jpg'
+  )
+  test.is(response.headers.get('cache-control'), 'private, no-store')
+})
+
+test('proxies database upload previews through the trusted file route', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  await db.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: '/stored.jpg',
+      previewUrl: 'http://localhost/api?action=upload&entryId=upload-1'
+    }
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db, {
+        async previewUpload(entryId) {
+          test.is(entryId, 'upload-1')
+          return new Response('image bytes', {
+            headers: {
+              'content-length': '11',
+              'content-type': 'image/jpeg',
+              etag: 'preview-etag'
+            }
+          })
+        }
+      })
+    }
+  })
+  const response = await handle(
+    new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.is(response.headers.get('content-type'), 'image/jpeg')
+  test.is(response.headers.get('content-length'), '11')
+  test.is(response.headers.get('etag'), 'preview-etag')
+  test.is(response.headers.get('cache-control'), 'private, no-store')
+  test.is(await response.text(), 'image bytes')
+})
+
+test('redirects a built media file to its public storage location', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'public/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Guide',
+      path: 'guide',
+      extension: '.pdf',
+      location: '/stored.pdf',
+      previewUrl: 'https://uploads.example/preview.pdf'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=guide.pdf'),
+    requestContext()
+  )
+
+  test.is(response.status, 307)
+  test.is(response.headers.get('location'), '/media/stored.pdf')
+})
+
+test('proxies built public media for the Next image optimizer', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    mediaDir: 'public/media',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Image',
+      path: 'image',
+      extension: '.jpg',
+      location: '/stored.jpg'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+  const originalFetch = globalThis.fetch
+  let requested: URL | undefined
+  globalThis.fetch = Object.assign(
+    async (input: Parameters<typeof fetch>[0]) => {
+      requested = new URL(String(input))
+      return new Response('image bytes', {
+        headers: {'content-length': '11', 'content-type': 'image/jpeg'}
+      })
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+
+  try {
+    const response = await handle(
+      new Request('http://localhost/api?file=image.jpg&delivery=proxy'),
+      requestContext()
+    )
+
+    test.is(requested?.href, 'http://localhost/media/stored.jpg')
+    test.is(response.status, 200)
+    test.is(response.headers.get('content-type'), 'image/jpeg')
+    test.is(response.headers.get('content-length'), '11')
+    test.is(await response.text(), 'image bytes')
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('proxies an external preview before a file is built', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  await db.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Guide',
+      path: 'guide',
+      extension: '.pdf',
+      location: '/guide.pdf',
+      previewUrl: 'data:image/jpeg;base64,cHJldmlldw=='
+    }
+  })
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=guide.pdf&delivery=proxy'),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.is(response.headers.get('content-type'), 'image/jpeg')
+  test.is(response.headers.get('cache-control'), 'private, no-store')
+  test.is(await response.text(), 'preview')
+})
+
+test('preserves legacy built locations without a media directory', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Guide',
+      path: 'guide',
+      extension: '.pdf',
+      location: '/stored.pdf'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=guide.pdf'),
+    requestContext()
+  )
+
+  test.is(response.status, 307)
+  test.is(response.headers.get('location'), '/stored.pdf')
+})
+
+test('does not proxy a legacy location through the handler', async () => {
+  const mediaWorkspace = Config.workspace('Main', {
+    source: 'content',
+    roots: {media: Config.media()}
+  })
+  const cms = createCMS({schema: {}, workspaces: {main: mediaWorkspace}})
+  const sourceDb = new LocalDB(cms.config)
+  await sourceDb.create({
+    type: MediaFile,
+    root: 'media',
+    set: {
+      title: 'Guide',
+      path: 'guide',
+      extension: '.pdf',
+      location: '/api/private'
+    }
+  })
+  const db = new LocalDB(cms.config, sourceDb.source)
+  await db.sync()
+  const handle = createHandler({
+    cms,
+    db,
+    remote() {
+      return composeBackend(db)
+    }
+  })
+
+  const response = await handle(
+    new Request('http://localhost/api?file=guide.pdf&delivery=proxy'),
+    requestContext()
+  )
+
+  test.is(response.status, 502)
 })
 
 test('rejects oversized uploads before preparing a remote upload', async () => {

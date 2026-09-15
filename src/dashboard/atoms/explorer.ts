@@ -126,7 +126,7 @@ export interface ExplorerOptions {
   initialSelection?: Array<string>
   searchDepth?: 'current' | 'all'
   onAction?: (entry: ExplorerEntry) => void
-  onConfirm?: (selection: Array<string>) => void
+  onConfirm?: (selection: Array<string>, locale: string | null) => void
   preselect?: boolean
 }
 
@@ -721,9 +721,13 @@ export class ExplorerAtoms {
       locale: entry.locale ?? undefined
     })
   })
-  onConfirm = atom(null, get => {
+  onConfirm = atom(null, (get, _set, locale?: string | null) => {
     const selected = get(this.selection)
-    if (selected !== 'all') this.#options.onConfirm?.([...selected].map(String))
+    if (selected !== 'all')
+      this.#options.onConfirm?.(
+        [...selected].map(String),
+        locale === undefined ? get(this.selectedLocale) : locale
+      )
   })
   isExpanded = dispense((entry: ExplorerEntry) =>
     atom(get => get(this.expandedKeys).has(entry.id))

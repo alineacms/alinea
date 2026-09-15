@@ -23,8 +23,9 @@ import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import type {GetBlobsOptions} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
-import {entries, values} from '#/core/util/Objects.js'
+import {entries} from '#/core/util/Objects.js'
 import {Workspace} from '#/core/Workspace.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {Response} from '@alinea/iso'
 import pkg from '../../package.json' with {type: 'json'}
 import {AuthResultType} from './AuthResult.js'
@@ -177,10 +178,10 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
               }
             }),
             enableOAuth2: true,
-            sourceDirectories: values(config.workspaces)
-              .flatMap(workspace => {
-                const {source, mediaDir} = Workspace.data(workspace)
-                return [source, mediaDir]
+            sourceDirectories: entries(config.workspaces)
+              .flatMap(([key, workspace]) => {
+                const {source} = Workspace.data(workspace)
+                return [source, MediaLocation.directory(config, key)]
               })
               .filter(Boolean)
           }

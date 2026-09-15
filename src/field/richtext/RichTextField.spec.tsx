@@ -51,13 +51,13 @@ async function storedValue(page: Page): Promise<Array<StoredRichTextNode>> {
 }
 
 async function serveFixtureImages(page: Page) {
-  await page.route('**/landscape.*.jpg', route =>
+  await page.route('**/landscape.*.jpg*', route =>
     route.fulfill({
       contentType: 'image/jpeg',
       path: 'apps/dev/public/landscape.2V4cZVLipKGYEYJTIK1GMBHJMY0.jpg'
     })
   )
-  await page.route('**/portrait.*.jpg', route =>
+  await page.route('**/portrait.*.jpg*', route =>
     route.fulfill({
       contentType: 'image/jpeg',
       path: 'apps/dev/public/portrait.2V4cZWf1Mb18DtEjGBsOUyhLRDU.jpg'

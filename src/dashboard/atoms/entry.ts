@@ -11,6 +11,7 @@ import type {FieldBeforeSaveAction} from '#/core/Field.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {createPreview} from '#/core/media/CreatePreview.browser.js'
 import {mediaAltText} from '#/core/media/MediaAltField.js'
+import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Permission} from '#/core/Role.js'
 import {Root} from '#/core/Root.js'
@@ -269,7 +270,8 @@ export class EntryLocaleAtoms {
       select: {
         id: Entry.id,
         url: Entry.url,
-        alt: MediaFile.alt
+        alt: MediaFile.alt,
+        hash: MediaFile.hash
       }
     })
     const baseUrl =
@@ -279,7 +281,10 @@ export class EntryLocaleAtoms {
       images.map(image => [
         image.id,
         {
-          src: URL.parse(image.url, baseUrl)?.href ?? '',
+          src: MediaLocation.versionedUrl(
+            URL.parse(image.url, baseUrl)?.href ?? '',
+            image.hash
+          ),
           alt: mediaAltText(
             image.alt,
             this.requestedLocale ?? entry.locale ?? undefined
