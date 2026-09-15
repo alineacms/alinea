@@ -82,11 +82,13 @@ export const entryPage = page(async (page, get) => {
       ? false
       : await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
+    const copyTranslationSource = get(localeData.copyTranslationSource)
     const isSidebarOpen = get(entrySidebarOpenAtom)
     const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
     return (
       <EntryEditorContent
         entry={entry}
+        copyTranslationSource={copyTranslationSource}
         isSidebarOpen={Boolean(sidebar && isSidebarOpen)}
         localeData={localeData}
         node={selectedNode}
@@ -206,6 +208,7 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
 interface EntryEditorContentProps {
   page: Page
   entry: EntryAtoms
+  copyTranslationSource: boolean
   isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
@@ -264,6 +267,7 @@ function EntryOverview({
 function EntryEditorContent({
   page,
   entry,
+  copyTranslationSource,
   isSidebarOpen,
   localeData,
   parentNeedsTranslation,
@@ -283,6 +287,7 @@ function EntryEditorContent({
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
+  const setCopyTranslationSource = useSetAtom(localeData.copyTranslationSource)
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
   const saveDraft = useSetAtom(localeData.saveDraft)
   const publishEdits = useSetAtom(localeData.publishEdits)
@@ -328,9 +333,11 @@ function EntryEditorContent({
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
               <EntryTranslationBanner
+                copyFromSource={copyTranslationSource}
                 parentNeedsTranslation={parentNeedsTranslation}
                 sourceLocale={sourceLocale}
                 sourceLocales={sourceLocales}
+                onCopyFromSourceChange={setCopyTranslationSource}
                 onSourceLocaleChange={setSourceLocale}
               />
             </div>

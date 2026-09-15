@@ -1,7 +1,5 @@
 .EntryTranslationBanner {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
   gap: 16px;
   padding: 16px;
 }
@@ -30,16 +28,6 @@
 .EntryTranslationBanner-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-}
-
-.EntryTranslationBanner-label {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--alinea-fg-muted);
-}
-
-.EntryTranslationBanner-select {
-  min-width: 120px;
 }

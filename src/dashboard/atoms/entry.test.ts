@@ -148,6 +148,59 @@ test('currently editing nodes preserve arbitrary JSON values', async () => {
   expect(updatedValue.payload).toEqual(nextPayload)
 })
 
+test('untranslated entries can start with empty fields instead of copied content', async () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title'), body: Field.text('Body')}
+  })
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: '.',
+        roots: {
+          pages: Config.root('Pages', {
+            contains: ['Page'],
+            i18n: {locales: ['en', 'fr']}
+          })
+        }
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.create({
+    id: 'empty-translation-source',
+    locale: 'en',
+    root: 'pages',
+    type: Page,
+    set: {title: 'English title', body: 'English body'}
+  })
+  const store = createDashboardStore(config, db)
+  await store.get(userPolicyReadyAtom)
+  const entry = await store.get(entryAtoms('empty-translation-source'))
+  const locale = entry.locales('fr')
+
+  const copied = await store.get(locale.selectedNode)
+  expect(store.get(copied.value)).toMatchObject({
+    title: 'English title',
+    body: 'English body'
+  })
+
+  store.set(locale.copyTranslationSource, false)
+  const empty = await store.get(locale.selectedNode)
+  expect(empty).not.toBe(copied)
+  expect(store.get(empty.value)).not.toMatchObject({
+    title: 'English title',
+    body: 'English body'
+  })
+
+  store.set(locale.copyTranslationSource, true)
+  const copiedAgain = await store.get(locale.selectedNode)
+  expect(store.get(copiedAgain.value)).toMatchObject({
+    title: 'English title',
+    body: 'English body'
+  })
+})
+
 test('preloads linked rich text images without changing stored data', async () => {
   const Page = Config.document('Page', {
     fields: {body: Field.richText('Body')}

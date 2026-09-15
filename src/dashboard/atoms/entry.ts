@@ -124,6 +124,14 @@ export class EntryLocaleAtoms {
     const data = get(this.entry.data)
     return !data.entries.some(entry => entry.locale === this.requestedLocale)
   })
+  #copyTranslationSource = atom(true)
+  copyTranslationSource = atom(
+    get => get(this.#copyTranslationSource),
+    (_get, set, next: boolean) => {
+      set(this.#copyTranslationSource, next)
+      set(this.currentlyEditing, undefined)
+    }
+  )
   #selectedTranslationSourceLocale = atom<string>()
   translationSourceLocale = atom(
     get => {
@@ -240,7 +248,9 @@ export class EntryLocaleAtoms {
       (!isUntranslated && (!entry.active || !policy.canUpdate(entry)))
     const value = Type.withInitialValue(type, {
       ...Type.initialValue(type),
-      ...entry.data,
+      ...(!isUntranslated || get(this.copyTranslationSource)
+        ? entry.data
+        : undefined),
       ...(isUntranslated ? {path: undefined} : undefined)
     })
     return new ReactiveNode<object>(value, readOnly)
