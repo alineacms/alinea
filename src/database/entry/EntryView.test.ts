@@ -114,11 +114,11 @@ test('entry views remain writable over a readonly base database', async () => {
     const writeDb = connect(writer)
     await EntryDatabase.createSchema(writeDb, 'base')
     await writeDb.insert(EntryIndexTable).values(row('a', 'Base A'))
-    writer.close()
+    await writeDb.close()
 
     const reader = new Database(path, {readonly: true})
+    const db = connect(reader)
     try {
-      const db = connect(reader)
       const overlay = await EntryView.create(
         db,
         'readonly',
@@ -138,7 +138,7 @@ test('entry views remain writable over a readonly base database', async () => {
       ).toBe('Overlay A')
       await overlay.close()
     } finally {
-      reader.close()
+      await db.close()
     }
   } finally {
     await rm(directory, {recursive: true, force: true})

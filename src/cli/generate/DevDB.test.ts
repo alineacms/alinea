@@ -14,6 +14,7 @@ const test = suite(import.meta)
 test('rejects stale commits before removing media files', async () => {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-'))
   const mediaFile = join(rootDir, 'public/media/example.jpg')
+  let db: DevDB | undefined
   await mkdir(join(rootDir, 'content'), {recursive: true})
   await mkdir(dirname(mediaFile), {recursive: true})
   await writeFile(mediaFile, 'media')
@@ -29,13 +30,14 @@ test('rejects stale commits before removing media files', async () => {
         })
       }
     })
-    const db = await DevDB.create({
+    const created = await DevDB.create({
       config,
       rootDir,
       databasePath: join(rootDir, 'database.sqlite'),
       dashboardUrl: undefined
     })
-    await db.sync()
+    db = created
+    await created.sync()
     const request: CommitRequest = {
       description: 'Stale media removal',
       fromSha: 'stale',
@@ -43,9 +45,10 @@ test('rejects stale commits before removing media files', async () => {
       changes: [{op: 'removeFile', location: 'public/media/example.jpg'}]
     }
 
-    await test.throws(() => db.write(request), 'SHA mismatch')
+    await test.throws(() => created.write(request), 'SHA mismatch')
     test.is(await readFile(mediaFile, 'utf8'), 'media')
   } finally {
+    await db?.close()
     await rm(rootDir, {recursive: true, force: true})
   }
 })
@@ -53,6 +56,9 @@ test('rejects stale commits before removing media files', async () => {
 test('reopens the generated database without loading unchanged blobs', async () => {
   const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-reopen-'))
   const databasePath = join(rootDir, 'database.sqlite')
+  let initial: DevDB | undefined
+  let reopened: DevDB | undefined
+  let changedConfig: DevDB | undefined
   const Page = Config.document('Page', {fields: {}})
   const config = createConfig({
     schema: {Page},
@@ -69,7 +75,7 @@ test('reopens the generated database without loading unchanged blobs', async () 
     JSON.stringify({_id: 'page', _type: 'Page', _index: 'a', title: 'Page'})
   )
   try {
-    const initial = await DevDB.create({
+    initial = await DevDB.create({
       config,
       rootDir,
       databasePath,
@@ -80,7 +86,7 @@ test('reopens the generated database without loading unchanged blobs', async () 
     test.equal(await initial.find({select: Entry.title}), ['Page'])
     await initial.close()
 
-    const reopened = await DevDB.create({
+    reopened = await DevDB.create({
       config,
       rootDir,
       databasePath,
@@ -98,7 +104,7 @@ test('reopens the generated database without loading unchanged blobs', async () 
     test.equal(await reopened.find({select: Entry.title}), ['Page'])
     await reopened.close()
 
-    const changedConfig = await DevDB.create({
+    changedConfig = await DevDB.create({
       config,
       rootDir,
       databasePath,
@@ -118,6 +124,9 @@ test('reopens the generated database without loading unchanged blobs', async () 
     test.equal(await changedConfig.find({select: Entry.title}), ['Page'])
     await changedConfig.close()
   } finally {
+    await changedConfig?.close()
+    await reopened?.close()
+    await initial?.close()
     await rm(rootDir, {recursive: true, force: true})
   }
 })

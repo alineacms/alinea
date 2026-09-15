@@ -434,12 +434,8 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
   }
   return {
     ...statements,
-    async free() {
-      await Promise.all(
-        Object.values(statements).map(statement =>
-          statement[Symbol.asyncDispose]()
-        )
-      )
+    free() {
+      for (const statement of Object.values(statements)) statement.free()
     }
   }
 }
@@ -1319,10 +1315,10 @@ export class EntrySyncer implements AsyncDisposable {
     this.#closed = true
     await this.#queue
     await this.#ready
+    const queries = Array.from(this.#queries.values())
+    this.#queries.clear()
     await Promise.all(
-      Array.from(this.#queries.values(), async queries =>
-        (await queries).free()
-      )
+      queries.map(async statements => (await statements).free())
     )
     await dropTemporaryTables(this.#db)
   }

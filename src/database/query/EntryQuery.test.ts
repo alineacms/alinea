@@ -93,10 +93,15 @@ test('structural SQL queries use the complete entry table', async () => {
   ).toEqual(['c'])
   const statement = plan.rows.toSQL(db)
   expect(statement.sql).not.toContain('alinea_entry_data')
-  const explain = sqlite
-    .prepare(`explain query plan ${statement.sql}`)
-    .all(...(statement.params as Array<string | number | null>))
-  expect(JSON.stringify(explain)).toContain('INDEX')
+  const explainStatement = sqlite.prepare(`explain query plan ${statement.sql}`)
+  try {
+    const explain = explainStatement.all(
+      ...(statement.params as Array<string | number | null>)
+    )
+    expect(JSON.stringify(explain)).toContain('INDEX')
+  } finally {
+    explainStatement.finalize()
+  }
 })
 
 test('content conditions and projections query the data column', async () => {
