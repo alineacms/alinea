@@ -21,7 +21,10 @@ export function ObjectFieldView({field}: ObjectFieldViewProps) {
   const error = useFieldError(field)
   const node = useFieldNode(field)
   return (
-    <Label label={options.label} shared={options.shared}>
+    <Label
+      label={options.inline ? undefined : options.label}
+      shared={options.shared}
+    >
       <NodeEditor node={node as ReactiveNode<object>} type={options.fields}>
         <EntryFields />
       </NodeEditor>
