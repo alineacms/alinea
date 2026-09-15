@@ -1,14 +1,10 @@
-import {Entry} from '#/core/Entry.js'
 import type {EntryAnchorTarget} from '#/core/Field.js'
-import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Type} from '#/core/Type.js'
-import {parents} from '#/query.js'
-import {atom} from 'jotai'
+import {atom, type Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {configAtom, graphAtom} from './core.js'
-import {entryRevisionAtom} from './graph.js'
-import {policyAtom} from './user.js'
-import {dispense, loader} from './utils.js'
+import {configAtom} from './core.js'
+import {entryAtoms, type EntryAtoms, MissingEntryError} from './entry.js'
+import {dispense} from './utils.js'
 
 export interface LinkEntrySummary {
   id: string
@@ -26,59 +22,51 @@ export type LinkEntryState =
   | {state: 'hasData'; data: LinkEntrySummary | null}
   | {state: 'hasError'; error: Error}
 
-const linkEntryLoader = atom(get => {
-  const graph = get(graphAtom)
-  const config = get(configAtom)
-  const policy = get(policyAtom)
-  return loader<LinkEntrySummary | null>(async ids => {
-    const entries = await graph.find({
-      id: {in: ids},
-      groupBy: Entry.id,
-      status: 'preferDraft',
-      select: {
-        id: Entry.id,
-        title: Entry.title,
-        type: Entry.type,
-        workspace: Entry.workspace,
-        root: Entry.root,
-        data: Entry.data,
-        preview: MediaFile.preview,
-        parents: parents({select: {id: Entry.id, title: Entry.title}})
-      }
-    })
-    const byId = new Map(entries.map(entry => [entry.id, entry] as const))
-    return ids.map(id => {
-      const entry = byId.get(id)
-      if (
-        !entry ||
-        !policy.canRead({
-          id: entry.id,
-          type: entry.type,
-          workspace: entry.workspace,
-          root: entry.root,
-          parents: entry.parents.map(parent => parent.id)
-        })
-      )
-        return [null, null] as const
-      const type = config.schema[entry.type]
-      return [
-        {
-          ...entry,
-          anchors: type ? Type.anchors(type, entry.data) : []
-        },
-        null
-      ] as const
-    })
-  })
-})
+async function linkEntryParent(
+  get: Getter,
+  id: string,
+  locale: string | null
+): Promise<{id: string; title: string} | undefined> {
+  try {
+    const parent = await get(entryAtoms(id))
+    const preferred = get(parent.locales(locale).preferredEntry)
+    return {id: preferred.id, title: preferred.title}
+  } catch (error) {
+    if (error instanceof MissingEntryError) return undefined
+    throw error
+  }
+}
 
-export const linkEntryAtoms = dispense((id: string) => {
+export const linkEntryAtoms = dispense((id: string, locale?: string) => {
   const source = atom(async get => {
-    get(entryRevisionAtom(id))
-    const load = get(linkEntryLoader)
-    const [entry, error] = await load(id)
-    if (error) throw error
-    return entry
+    let model: EntryAtoms
+    try {
+      model = await get(entryAtoms(id))
+    } catch (error) {
+      if (error instanceof MissingEntryError) return null
+      throw error
+    }
+    const entry = get(model.locales(locale ?? null).preferredEntry)
+    const config = get(configAtom)
+    const type = config.schema[entry.type]
+    const parents = (
+      await Promise.all(
+        entry.parents.map(parentId =>
+          linkEntryParent(get, parentId, entry.locale)
+        )
+      )
+    ).filter(parent => parent !== undefined)
+    return {
+      id: entry.id,
+      title: entry.title,
+      type: entry.type,
+      workspace: entry.workspace,
+      root: entry.root,
+      preview:
+        typeof entry.data.preview === 'string' ? entry.data.preview : undefined,
+      parents,
+      anchors: type ? Type.anchors(type, entry.data) : []
+    }
   })
   const result = atom(async (get): Promise<LinkEntryState> => {
     try {
