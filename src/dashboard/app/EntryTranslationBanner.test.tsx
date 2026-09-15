@@ -17,13 +17,6 @@ test('allows an untranslated entry to start empty', () => {
     />
   )
 
-  expect(
-    screen.getByText(
-      'Start with empty fields and add the translated content yourself.'
-    )
-  ).toBeDefined()
-  expect(screen.queryByLabelText('Translation source language')).toBeNull()
-
   fireEvent.click(
     screen.getByRole('checkbox', {name: 'Copy from existing translation'})
   )

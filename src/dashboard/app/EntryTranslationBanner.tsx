@@ -31,9 +31,8 @@ export const EntryTranslationBanner = memo(function EntryTranslationBanner({
         </p>
         {(parentNeedsTranslation || !copyFromSource) && (
           <p className={styles.EntryTranslationBanner.message()}>
-            {parentNeedsTranslation
-              ? 'Translate the parent entry first before creating this translation.'
-              : 'Start with empty fields and add the translated content yourself.'}
+            {parentNeedsTranslation &&
+              'Translate the parent entry first before creating this translation.'}
           </p>
         )}
       </div>
