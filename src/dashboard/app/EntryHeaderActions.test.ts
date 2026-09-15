@@ -2,6 +2,7 @@ import {describe, expect, test} from 'bun:test'
 import {
   entryHeaderActionIds,
   entryHeaderPrimaryActionIds,
+  entryHeaderSaveShortcutActionId,
   type EntryHeaderActionId,
   type EntryHeaderActionState,
   type EntryHeaderPrimaryActionId,
@@ -220,4 +221,39 @@ describe('entryHeaderPrimaryActionIds', () => {
       ).toEqual(actionCase.expected)
     })
   }
+})
+
+describe('entryHeaderSaveShortcutActionId', () => {
+  test('prefers saving a draft over publishing dirty edits', () => {
+    expect(
+      entryHeaderSaveShortcutActionId([
+        'discard-changes',
+        'publish-edits',
+        'save-draft'
+      ])
+    ).toBe('save-draft')
+  })
+
+  test('publishes dirty edits when drafts are unavailable', () => {
+    expect(
+      entryHeaderSaveShortcutActionId(['discard-changes', 'publish-edits'])
+    ).toBe('publish-edits')
+  })
+
+  test('uses translation, revision and draft actions in their contexts', () => {
+    expect(entryHeaderSaveShortcutActionId(['save-translation'])).toBe(
+      'save-translation'
+    )
+    expect(entryHeaderSaveShortcutActionId(['create-draft'])).toBe(
+      'create-draft'
+    )
+    expect(entryHeaderSaveShortcutActionId(['publish-draft'])).toBe(
+      'publish-draft'
+    )
+  })
+
+  test('does not assign a shortcut when no save action is available', () => {
+    expect(entryHeaderSaveShortcutActionId([])).toBeUndefined()
+    expect(entryHeaderSaveShortcutActionId(['discard-changes'])).toBeUndefined()
+  })
 })

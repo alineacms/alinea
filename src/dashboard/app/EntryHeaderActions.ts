@@ -16,6 +16,11 @@ export type EntryHeaderPrimaryActionId =
   | 'save-draft'
   | 'publish-draft'
 
+export type EntryHeaderSaveActionId = Exclude<
+  EntryHeaderPrimaryActionId,
+  'discard-changes'
+>
+
 interface EntryHeaderAccess {
   archive: boolean
   delete: boolean
@@ -73,6 +78,16 @@ export function entryHeaderPrimaryActionIds({
   if (activeStatus === 'draft' && canPublishParents && access.publish)
     return ['publish-draft']
   return []
+}
+
+export function entryHeaderSaveShortcutActionId(
+  actions: Array<EntryHeaderPrimaryActionId>
+): EntryHeaderSaveActionId | undefined {
+  if (actions.includes('save-draft')) return 'save-draft'
+  if (actions.includes('publish-edits')) return 'publish-edits'
+  return actions.find(
+    (action): action is EntryHeaderSaveActionId => action !== 'discard-changes'
+  )
 }
 
 export function entryHeaderActionIds({

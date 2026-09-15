@@ -8,11 +8,13 @@ import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
+import {activityAtom} from '#/dashboard/atoms/activity.js'
 import {configAtom} from '#/dashboard/atoms/core.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
+import {useSaveShortcut} from '#/dashboard/hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {ComponentType, useState, useTransition, type ReactNode} from 'react'
@@ -35,6 +37,7 @@ import css from './EntryHeader.module.css'
 import {
   entryHeaderActionIds,
   entryHeaderPrimaryActionIds,
+  entryHeaderSaveShortcutActionId,
   type EntryHeaderActionId
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
@@ -155,6 +158,7 @@ export function EntryHeader({
   selectedEntry
 }: EntryHeaderProps) {
   const config = useAtomValueRaw(configAtom)
+  const activity = useAtomValueRaw(activityAtom)
   const policy = useAtomValueRaw(policyAtom)
   const route = useAtomValueRaw(routeAtom)
   const setRoute = useSetAtom(routeAtom)
@@ -201,7 +205,7 @@ export function EntryHeader({
       ? 'unpublished'
       : viewedStatus
   const [isPending, startTransition] = useTransition()
-  const isActionDisabled = isPending
+  const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
 
   function runAction(action: () => void | Promise<void>) {
@@ -249,6 +253,39 @@ export function EntryHeader({
     parentNeedsTranslation,
     untranslated
   })
+  const saveShortcutActionId = entryHeaderSaveShortcutActionId(primaryActionIds)
+  useSaveShortcut(
+    saveShortcutActionId
+      ? () => runPrimaryAction(saveShortcutActionId)
+      : undefined,
+    isActionDisabled
+  )
+
+  function runPrimaryAction(
+    actionId: NonNullable<typeof saveShortcutActionId>
+  ) {
+    switch (actionId) {
+      case 'create-draft':
+        runAction(async () => {
+          await saveDraft(node)
+          setSelectedVersion({type: 'status', status: 'draft'})
+        })
+        return
+      case 'save-translation':
+        runAction(() => saveTranslation(node))
+        return
+      case 'publish-edits':
+        runAction(() => publishEdits(node))
+        return
+      case 'save-draft':
+        runAction(() => saveDraft(node))
+        return
+      case 'publish-draft':
+        runAction(publishDraft)
+        return
+    }
+  }
+
   let primaryAction: ReactNode = null
   if (primaryActionIds.includes('create-draft')) {
     primaryAction = (
@@ -257,12 +294,7 @@ export function EntryHeader({
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() =>
-          runAction(async () => {
-            await saveDraft(node)
-            setSelectedVersion({type: 'status', status: 'draft'})
-          })
-        }
+        onPress={() => runPrimaryAction('create-draft')}
       >
         Create draft
       </Button>
@@ -274,7 +306,7 @@ export function EntryHeader({
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runAction(() => saveTranslation(node))}
+        onPress={() => runPrimaryAction('save-translation')}
       >
         Save translation
       </Button>
@@ -295,7 +327,7 @@ export function EntryHeader({
             intent={canSaveDraft ? 'secondary' : 'primary'}
             isDisabled={isActionDisabled}
             isPending={isPending}
-            onPress={() => runAction(() => publishEdits(node))}
+            onPress={() => runPrimaryAction('publish-edits')}
           >
             Publish
           </Button>
@@ -306,7 +338,7 @@ export function EntryHeader({
             intent="primary"
             isDisabled={isActionDisabled}
             isPending={isPending}
-            onPress={() => runAction(() => saveDraft(node))}
+            onPress={() => runPrimaryAction('save-draft')}
           >
             Save draft
           </Button>
@@ -320,7 +352,7 @@ export function EntryHeader({
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runAction(publishDraft)}
+        onPress={() => runPrimaryAction('publish-draft')}
       >
         Publish
       </Button>
