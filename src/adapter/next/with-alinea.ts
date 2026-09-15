@@ -1,5 +1,6 @@
 import type {NextConfig} from 'next/dist/types.js'
 import {join} from '#/core/util/Paths.js'
+import {generatedDatabaseFile} from '#/core/Version.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
@@ -50,7 +51,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     ...config.outputFileTracingIncludes,
     '/*': [
       ...(config.outputFileTracingIncludes?.['/*'] ?? []),
-      './node_modules/@alinea/generated/database.sqlite'
+      `./node_modules/@alinea/generated/${generatedDatabaseFile}`
     ]
   }
   if (nextVersion < 15)

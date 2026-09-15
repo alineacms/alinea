@@ -98,7 +98,6 @@ export const DatabaseStateTable = table(
 
 export const DatabaseMetadataColumns = {
   id: column.integer().primaryKey(),
-  schemaVersion: column.integer().notNull(),
   configFingerprint: column.text().notNull()
 }
 
@@ -127,7 +126,7 @@ export function entryIndexRow(entry: IndexedEntry) {
   return {
     versionId: entryVersionId(entry.id, entry.locale, entry.versionStatus),
     id: entry.id,
-    locale: entry.locale?.toLowerCase() ?? null,
+    locale: entry.locale,
     versionStatus: entry.versionStatus,
     status: entry.status,
     type: entry.type,

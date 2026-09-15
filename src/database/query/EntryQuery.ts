@@ -253,16 +253,15 @@ export function compileEntryQuery(
   }
   if (query.locale !== undefined && edge?.edge !== 'translations')
     conditions.push(
-      compileCondition(
-        membership.index('locale'),
-        query.locale?.toLowerCase() ?? null
-      )
+      query.locale === null
+        ? isNull(entry.locale)
+        : eq(sql`${entry.locale} collate nocase`, query.locale)
     )
   else if (query.preferredLocale && edge?.edge !== 'translations')
     conditions.push(
       or(
         isNull(entry.locale),
-        eq(entry.locale, query.preferredLocale.toLowerCase())
+        eq(sql`${entry.locale} collate nocase`, query.preferredLocale)
       )
     )
   if (query.type) {

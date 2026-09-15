@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
+import {versionedCacheName} from '#/core/Version.js'
 import {Config as ConfigBuilder} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
@@ -62,12 +63,11 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   }
   const source = new MemorySource()
   const name = `alinea-browser-corrupt-${crypto.randomUUID()}`
-  const cache = await openCache(name)
+  const cache = await openCache(versionedCacheName(name))
   const transaction = cache.transaction('database', 'readwrite')
   transaction.objectStore('database').put(
     {
       revision: 'config-1',
-      schemaVersion: 3,
       data: new Uint8Array([1, 2, 3])
     },
     'entries'
@@ -86,6 +86,49 @@ test('browser entry stores discard a corrupt persisted SQLite file', async () =>
   } finally {
     await store.close()
   }
+})
+
+test('browser entry stores clean up databases from other Alinea versions', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const name = `alinea-browser-version-${crypto.randomUUID()}`
+  const oldName = `${name}-old-version`
+  const cache = await openCache(oldName)
+  const transaction = cache.transaction('database', 'readwrite')
+  transaction.objectStore('database').put(
+    {
+      revision: 'config-1',
+      data: new Uint8Array([1, 2, 3])
+    },
+    'entries'
+  )
+  await transactionComplete(transaction)
+  cache.close()
+
+  const store = await BrowserEntryStore.open(config, {
+    indexedDB,
+    name,
+    revision: 'config-1'
+  })
+  try {
+    expect(await store.find({select: Entry.id})).toEqual([])
+  } finally {
+    await store.close()
+  }
+  expect(
+    (await indexedDB.databases()).map(database => database.name)
+  ).toContain(versionedCacheName(name))
+  expect(
+    (await indexedDB.databases()).map(database => database.name)
+  ).not.toContain(oldName)
 })
 
 test('browser entry stores sync source rows in bounded batches', async () => {

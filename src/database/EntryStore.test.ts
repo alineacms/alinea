@@ -121,7 +121,7 @@ test('entry store materializes configured seeds in every locale', async () => {
         source: 'content',
         roots: {
           pages: ConfigBuilder.root('Pages', {
-            i18n: {locales: ['en', 'fr']},
+            i18n: {locales: ['nl-BE', 'fr-BE']},
             children: {home: ConfigBuilder.page({type: Seeded})}
           })
         }
@@ -138,7 +138,14 @@ test('entry store materializes configured seeds in every locale', async () => {
     })
     expect(rows).toHaveLength(2)
     expect(new Set(rows.map(row => row.id)).size).toBe(1)
-    expect(rows.map(row => row.locale).sort()).toEqual(['en', 'fr'])
+    expect(rows.map(row => row.locale).sort()).toEqual(['fr-BE', 'nl-BE'])
+    expect(
+      await store.get({
+        path: 'home',
+        locale: 'nl-be',
+        select: Entry.locale
+      })
+    ).toBe('nl-BE')
   } finally {
     sqlite.close()
   }

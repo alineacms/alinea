@@ -3,6 +3,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {versionedCacheName} from '#/core/Version.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
 import {DatabaseSource} from './DatabaseSource.js'
@@ -11,13 +12,11 @@ import {
   type WasmDatabaseHandle
 } from './driver/WasmDatabase.js'
 
-const schemaVersion = 3
 const storeName = 'database'
 const databaseKey = 'entries'
 
 interface StoredDatabase {
   revision: string
-  schemaVersion: number
   data: Uint8Array
 }
 
@@ -31,6 +30,9 @@ export interface BrowserEntryStoreOptions {
 export class BrowserEntryStore extends EntryStore {
   #handle: WasmDatabaseHandle
   #cache: IDBDatabase
+  #indexedDB: IDBFactory
+  #baseName: string
+  #cacheName: string
   #revision: string
   #persistedSha: string | undefined
   #persistQueue: Promise<unknown> = Promise.resolve()
@@ -40,13 +42,10 @@ export class BrowserEntryStore extends EntryStore {
     config: Config,
     options: BrowserEntryStoreOptions
   ): Promise<BrowserEntryStore> {
-    const cache = await openCache(options.indexedDB, options.name)
+    const cacheName = versionedCacheName(options.name)
+    const cache = await openCache(options.indexedDB, cacheName)
     const stored = await readDatabase(cache)
-    const data =
-      stored?.revision === options.revision &&
-      stored.schemaVersion === schemaVersion
-        ? stored.data
-        : undefined
+    const data = stored?.revision === options.revision ? stored.data : undefined
     let handle: WasmDatabaseHandle | undefined
     try {
       handle = await openWasmDatabase(data)
@@ -57,6 +56,9 @@ export class BrowserEntryStore extends EntryStore {
         database,
         handle,
         cache,
+        options.indexedDB,
+        options.name,
+        cacheName,
         options.revision,
         data ? await database.getRevision() : undefined
       )
@@ -77,6 +79,9 @@ export class BrowserEntryStore extends EntryStore {
     database: EntryDatabase,
     handle: WasmDatabaseHandle,
     cache: IDBDatabase,
+    indexedDB: IDBFactory,
+    baseName: string,
+    cacheName: string,
     revision: string,
     persistedSha: string | undefined
   ) {
@@ -86,6 +91,9 @@ export class BrowserEntryStore extends EntryStore {
     })
     this.#handle = handle
     this.#cache = cache
+    this.#indexedDB = indexedDB
+    this.#baseName = baseName
+    this.#cacheName = cacheName
     this.#revision = revision
     this.#persistedSha = persistedSha
   }
@@ -134,7 +142,6 @@ export class BrowserEntryStore extends EntryStore {
     if (sha === this.#persistedSha) return
     const record: StoredDatabase = {
       revision: this.#revision,
-      schemaVersion,
       data: this.#handle.export()
     }
     const transaction = this.#cache.transaction(storeName, 'readwrite')
@@ -151,13 +158,47 @@ export class BrowserEntryStore extends EntryStore {
         const sha = await this.sha
         await this.#save(sha)
       } finally {
-        await super.close()
-        this.#cache.close()
+        try {
+          await super.close()
+        } finally {
+          this.#cache.close()
+          await cleanupOldCaches(
+            this.#indexedDB,
+            this.#baseName,
+            this.#cacheName
+          )
+        }
       }
     })
     this.#persistQueue = result.catch(() => {})
     return result
   }
+}
+
+async function cleanupOldCaches(
+  factory: IDBFactory,
+  baseName: string,
+  currentName: string
+): Promise<void> {
+  if (!factory.databases) return
+  const databases = await factory.databases().catch(() => [])
+  const names = databases.flatMap(database =>
+    database.name &&
+    database.name !== currentName &&
+    (database.name === baseName || database.name.startsWith(`${baseName}-`))
+      ? [database.name]
+      : []
+  )
+  await Promise.all(names.map(name => deleteCache(factory, name)))
+}
+
+function deleteCache(factory: IDBFactory, name: string): Promise<void> {
+  return new Promise(resolve => {
+    const request = factory.deleteDatabase(name)
+    request.onsuccess = () => resolve()
+    request.onerror = () => resolve()
+    request.onblocked = () => resolve()
+  })
 }
 
 function openCache(factory: IDBFactory, name: string): Promise<IDBDatabase> {

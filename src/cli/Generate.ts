@@ -3,6 +3,7 @@ import {Config} from '#/core/Config.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
+import {generatedDatabaseFile} from '#/core/Version.js'
 import {createRequire} from 'node:module'
 import * as fsp from 'node:fs/promises'
 import path from 'node:path'
@@ -126,7 +127,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     const db = await DevDB.create({
       config: cms.config,
       rootDir,
-      databasePath: join(context.outDir, 'database.sqlite'),
+      databasePath: join(context.outDir, generatedDatabaseFile),
       configFingerprint: await hashBlob(
         await fsp.readFile(join(context.outDir, 'config.js'))
       ),
@@ -140,8 +141,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       if (cmd === 'build') process.exit(1)
       continue
     }
+    let databaseReady = false
     try {
       for await (const db of indexing) {
+        databaseReady = true
         yield {cms, db}
         if (onAfterGenerate && !afterGenerateCalled) {
           const recordCount = await db.count({})
@@ -158,7 +161,30 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         }
       }
     } finally {
-      await db.close()
+      try {
+        await db.close()
+      } finally {
+        if (databaseReady) await cleanupOldDatabases(context.outDir)
+      }
     }
   }
+}
+
+async function cleanupOldDatabases(outDir: string): Promise<void> {
+  const files = await fsp.readdir(outDir).catch(() => [])
+  const currentFiles = new Set([
+    generatedDatabaseFile,
+    `${generatedDatabaseFile}-shm`,
+    `${generatedDatabaseFile}-wal`
+  ])
+  const oldFiles = files.filter(
+    file =>
+      !currentFiles.has(file) &&
+      /^database(?:-.+)?\.sqlite(?:-(?:shm|wal))?$/.test(file)
+  )
+  await Promise.all(
+    oldFiles.map(file =>
+      fsp.rm(join(outDir, file), {force: true}).catch(() => {})
+    )
+  )
 }

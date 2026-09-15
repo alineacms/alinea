@@ -87,6 +87,12 @@ test('structural SQL queries use the complete entry table', async () => {
   ).toEqual(['b'])
   expect(
     await compileEntryQuery(config, {
+      select: Entry.locale,
+      locale: 'en'
+    }).rows.all(db)
+  ).toEqual(['EN'])
+  expect(
+    await compileEntryQuery(config, {
       select: Entry.id,
       status: 'archived'
     }).rows.all(db)

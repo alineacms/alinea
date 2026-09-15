@@ -86,7 +86,6 @@ interface EntryDatabaseState {
   tree: Tree | null
 }
 
-const databaseSchemaVersion = 2
 const defaultConfigFingerprint = 'runtime'
 
 export interface EntryDatabaseOptions {
@@ -434,7 +433,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     const current = metadata
       ? await db
           .select({
-            schemaVersion: DatabaseMetadataTable.schemaVersion,
             configFingerprint: DatabaseMetadataTable.configFingerprint
           })
           .from(DatabaseMetadataTable)
@@ -442,9 +440,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           .get()
       : undefined
     const compatible =
-      schema != null &&
-      current?.schemaVersion === databaseSchemaVersion &&
-      current.configFingerprint === configFingerprint
+      schema != null && current?.configFingerprint === configFingerprint
     if (!compatible) {
       await db.run(sql`drop table if exists ${sql.identifier(EntrySearchName)}`)
       await db.run(
@@ -464,7 +460,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       await createSearch(db)
       await db.insert(DatabaseMetadataTable).values({
         id: 1,
-        schemaVersion: databaseSchemaVersion,
         configFingerprint
       })
     }
@@ -744,7 +739,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       conditions.push(
         query.locale === null
           ? isNull(entry.locale)
-          : eq(entry.locale, query.locale.toLowerCase())
+          : eq(sql`${entry.locale} collate nocase`, query.locale)
       )
     if (status === 'preferDraft') conditions.push(eq(entry.active, true))
     else if (status === 'preferPublished') conditions.push(eq(entry.main, true))
