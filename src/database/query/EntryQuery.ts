@@ -309,9 +309,15 @@ export function compileEntryQuery(
       if ((order.asc !== undefined) === (order.desc !== undefined))
         throw new Error('orderBy must specify exactly one direction')
       const value = membership.expr((order.asc ?? order.desc)!)
-      // Nulls sort last in either direction. Natural string order is a later
-      // dialect capability; do not silently substitute locale collation here.
-      ordering.push(asc(isNull(value)), order.asc ? asc(value) : desc(value))
+      const collated = order.caseSensitive
+        ? value
+        : sql`${value} collate nocase`
+      // Match the original resolver: strings are case-insensitive unless the
+      // query opts in, and nulls sort last in either direction.
+      ordering.push(
+        asc(isNull(collated)),
+        order.asc ? asc(collated) : desc(collated)
+      )
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (links) ordering.push(asc(links.ordinal))
