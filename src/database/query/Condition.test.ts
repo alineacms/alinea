@@ -3,6 +3,7 @@ import {Database} from 'bun:sqlite'
 import {connect} from 'rado/driver/bun-sqlite'
 import {table} from 'rado'
 import * as column from 'rado/universal/columns'
+import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {compileFilter, jsonField} from './Condition.js'
 
 const Documents = table('documents', {
@@ -121,4 +122,27 @@ test('SQL comparisons use the declared field type', async () => {
   expect(await matching({score: {gt: 5}})).toEqual([1])
   expect(await matching({score: {lte: 5}})).toEqual([2, 3])
   expect(await matching({title: {gte: 'beta'}})).toEqual([2, 3])
+})
+
+test('SQL in conditions support large value sets', async () => {
+  const db = await wasmDatabase()
+  try {
+    await db.create(Documents)
+    await db.insert(Documents).values({id: 1, data: {label: 'match'}})
+    const values = Array.from({length: 1500}, (_, index) => `value-${index}`)
+    values.push('match')
+
+    const result = await db
+      .select(Documents.id)
+      .from(Documents)
+      .where(
+        compileFilter({label: {in: values}}, name =>
+          jsonField(Documents.data, [name])
+        )
+      )
+
+    expect(result).toEqual([1])
+  } finally {
+    await db.close()
+  }
 })

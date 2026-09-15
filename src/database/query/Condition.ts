@@ -6,6 +6,7 @@ import {
   exists,
   gt,
   gte,
+  inArray,
   isNull,
   lt,
   lte,
@@ -53,8 +54,12 @@ export function compileCondition(
       case 'notIn': {
         if (!Array.isArray(value))
           throw new Error(`${operator} requires an array`)
+        const nonNull = value.filter(item => item !== null)
         const matches = value.length
-          ? or(...value.map(item => equals(field, item)))
+          ? or(
+              value.includes(null) ? isNull(field) : undefined,
+              nonNull.length ? inArray(field, nonNull) : undefined
+            )
           : sql.value(false)
         clauses.push(operator === 'in' ? matches : not(matches))
         break
