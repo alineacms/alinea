@@ -699,6 +699,14 @@ export class ExplorerAtoms {
         this.#options.onAction(entry)
         return
       }
+      const {data} = get(entry.data)
+      if (data) {
+        const item = get(data.item)
+        if (item.type === 'MediaLibrary') {
+          set(this.openLocation, entry)
+          return
+        }
+      }
       if (this.hasRowAction) {
         set(routeAtom, {
           workspace: entry.workspace,
@@ -708,7 +716,6 @@ export class ExplorerAtoms {
         })
         return
       }
-      const {data} = get(entry.data)
       if (data && get(data.canOpen)) set(this.openLocation, entry)
     }
   )

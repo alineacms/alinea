@@ -78,6 +78,32 @@ test('page explorers keep their row navigation action', () => {
   expect(explorer.items('en')).not.toBe(explorer.items('fr'))
 })
 
+test('page explorers browse into media folders instead of editing them', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'media'},
+    {enableNavigation: true}
+  )
+  const folder = folderEntry({
+    id: 'images',
+    title: 'Images',
+    path: 'images',
+    type: 'MediaLibrary',
+    workspace: 'workspace',
+    root: 'media',
+    locale: null,
+    parentId: null,
+    parents: [],
+    index: 'a0',
+    data: {},
+    hasChildren: true
+  })
+  const store = createStore()
+
+  store.set(explorer.onAction, folder, null)
+
+  expect(store.get(explorer.location).parentId).toBe('images')
+})
+
 test('explorers default to index sorting', () => {
   const explorer = createExplorerAtoms(
     {workspace: 'workspace', root: 'media'},
