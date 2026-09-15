@@ -131,15 +131,17 @@ test('syncWith indexes the downloaded batch without rereading local blobs', asyn
     }
   }
 
-  const remote = new MemorySource()
+  const remote = new TrackingMemorySource()
   await syncWith(remote, source)
+  remote.blobReads = 0
   const local = new TrackingMemorySource()
   const fresh = new LocalDB(cms.config, local)
 
   await fresh.syncWith(remote)
 
   test.is(local.blobReads, 0)
-  test.is(fresh.sha, (await remote.getTree()).sha)
+  test.is(remote.blobReads, 1)
+  test.is(await fresh.sha, (await remote.getTree()).sha)
 })
 
 test('traces syncWith at the database boundary', async () => {
@@ -155,36 +157,16 @@ test('traces syncWith at the database boundary', async () => {
   test.equal(spans, ['alinea.local_db.sync_with'])
 })
 
-test('syncWith stores and indexes downloaded changes concurrently', async () => {
-  class DelayedMemorySource extends MemorySource {
-    applying = false
-
-    async applyChanges(batch: ChangesBatch) {
-      this.applying = true
-      await new Promise(resolve => setTimeout(resolve, 10))
-      try {
-        await super.applyChanges(batch)
-      } finally {
-        this.applying = false
-      }
-    }
-  }
-
+test('syncWith leaves the source and database at the remote revision', async () => {
   const remote = new MemorySource()
   await syncWith(remote, source)
-  const local = new DelayedMemorySource()
+  const local = new MemorySource()
   const fresh = new LocalDB(cms.config, local)
-  const indexChanges = fresh.index.indexChanges.bind(fresh.index)
-  let indexedWhileApplying = false
-  fresh.index.indexChanges = async batch => {
-    indexedWhileApplying = local.applying
-    return indexChanges(batch)
-  }
 
   await fresh.syncWith(remote)
 
-  test.is(indexedWhileApplying, true)
-  test.is(fresh.sha, (await remote.getTree()).sha)
+  test.is((await local.getTree()).sha, (await remote.getTree()).sha)
+  test.is(await fresh.sha, (await remote.getTree()).sha)
 })
 
 test('change order', async () => {

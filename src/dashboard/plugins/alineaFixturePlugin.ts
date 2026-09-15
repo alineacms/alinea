@@ -151,7 +151,8 @@ export function alineaFixturePlugin(): Plugin {
       const importPath = JSON.stringify(cmsFile)
 
       return `
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {EntryStore} from '#/database/EntryStore.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {importSource} from '#/core/source/SourceExport.js'
 import {cms} from ${importPath}
 
@@ -165,7 +166,7 @@ const fixtureUser = {
   roles: ['admin']
 }
 
-class FixtureDB extends LocalDB {
+class FixtureDB extends EntryStore {
   capabilities() {
     return Promise.resolve({users: true})
   }
@@ -215,7 +216,16 @@ class FixtureDB extends LocalDB {
   }
 }
 
-const db = new FixtureDB(cms.config, source)
+const runtime = await EntryStore.memory(cms.config, source)
+const db = new FixtureDB(cms.config, runtime.database, source, {
+  close: () => runtime.close()
+})
+db.events = new EventTarget()
+db.onChange(change => db.events.dispatchEvent(new IndexEvent({
+  op: 'index',
+  sha: change.revision,
+  ids: [...change.changedEntryIds]
+})))
 await db.sync()
 
 export {cms, db}

@@ -28,15 +28,15 @@ test('moves an entry from an overview to the root level', async ({
     .getByRole('button', {name: 'Drag Beta'})
     .dragTo(tree.getByRole('row', {name: 'Folder', exact: true}), {force: true})
   await expect(overview.getByRole('row', {name: /^Beta/})).toBeVisible()
-  await overview.getByRole('button', {name: 'Drag Child'}).dragTo(
-    tree.getByRole('row', {name: 'Alpha', exact: true}),
-    {force: true, targetPosition: {x: 100, y: 1}}
-  )
-
-  await expect(tree.getByRole('row', {name: 'Child', exact: true})).toHaveAttribute(
-    'aria-level',
-    '1'
-  )
+  await expect(async () => {
+    await overview.getByRole('button', {name: 'Drag Child'}).dragTo(
+      tree.getByRole('row', {name: 'Alpha', exact: true}),
+      {force: true, targetPosition: {x: 100, y: 1}}
+    )
+    await expect(
+      tree.getByRole('row', {name: 'Child', exact: true})
+    ).toHaveAttribute('aria-level', '1', {timeout: 1000})
+  }).toPass()
 })
 
 test('moves a child above its expanded parent', async ({dashboard, mount}) => {

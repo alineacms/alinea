@@ -8,11 +8,11 @@ import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import type {GraphQuery} from '#/core/Graph.js'
+import type {Graph, GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import type {RemoteSource, Source} from '#/core/source/Source.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
@@ -27,27 +27,33 @@ export interface PreviewProps {
   root?: string
 }
 
+interface BundledDatabase extends Graph {
+  source: Source
+  sha: string | Promise<string>
+  sync(): Promise<string>
+  syncWith(source: RemoteSource): Promise<string>
+}
+
+export type OpenBundledDatabase = (config: Config) => Promise<BundledDatabase>
+
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  constructor(config: Definition) {
+  bundledDb: PLazy<BundledDatabase>
+
+  constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
+    this.bundledDb = PLazy.from(async () => {
+      if (!openBundledDatabase)
+        throw new Error(
+          'Generated SQLite databases require an Edge database loader'
+        )
+      const span = trace(this.config, 'alinea.next.cms.db')
+      return span(() => openBundledDatabase(this.config))
+    })
   }
 
   throttle = createThrottledSync()
-  bundledDb = PLazy.from(async () => {
-    if (process.env.NEXT_RUNTIME === 'edge')
-      throw new Error('Local DB is not supported in Edge runtime environments.')
-    const span = trace(this.config, 'alinea.next.cms.db')
-    return span(async () => {
-      const {generatedSource} =
-        await import('#/backend/store/GeneratedSource.js')
-      const source = await generatedSource
-      const db = new LocalDB(this.config, source)
-      await db.sync()
-      return db
-    })
-  })
   #applyPreview = cache(async () => {
     const context = await requestContext(this.config)
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
@@ -81,12 +87,13 @@ export class NextCMS<
   })
 
   async #prepareLocalPreview(
-    db: LocalDB,
+    db: BundledDatabase,
     decoded: DecodedPreviewRequest,
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
-    if (db.sha === decoded.contentHash) return applyPreviewUpdate(db, decoded)
+    if ((await db.sha) === decoded.contentHash)
+      return applyPreviewUpdate(db, decoded)
 
     const source = await db.source.getTree()
     if (source.sha === decoded.contentHash) {

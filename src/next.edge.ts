@@ -1,5 +1,8 @@
 export {createCMS} from '#/adapter/next/cms.js'
-export {createHandler, type NextHandlerOptions} from '#/adapter/next/handler.js'
+export {
+  createHandler,
+  type NextHandlerOptions
+} from '#/adapter/next/handler.edge.js'
 export type {
   AfterCommitContext,
   BeforeCommitContext
