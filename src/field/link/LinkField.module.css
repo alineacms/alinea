@@ -48,7 +48,7 @@
   aspect-ratio: 1;
   height: 32px;
   width: 32px;
-  object-fit: cover;
+  object-fit: contain;
   flex-shrink: 0;
   background: var(--alinea-bg-muted);
   margin-left: -16px;
@@ -98,7 +98,7 @@
 
 .LinkFieldView-previewImage {
   background: var(--alinea-bg-muted);
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .LinkFieldView-previewImagePlaceholder {

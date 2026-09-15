@@ -197,6 +197,8 @@ export function ListLabel({
   inline = false,
   ...props
 }: ListLabelProps) {
+  if (inline && !showFold && !description && !shared) return null
+
   return (
     <Button
       {...props}
