@@ -1,3 +1,25 @@
+import type {Config} from '#/core/Config.js'
+import {assert} from '#/core/util/Assert.js'
+import {entryUrl} from '#/core/util/EntryFilenames.js'
+import {
+  and,
+  asc,
+  count,
+  eq,
+  inArray,
+  max,
+  min,
+  ne,
+  or,
+  sql,
+  when,
+  type Database
+} from 'rado'
+import {
+  storedEntryData,
+  type EntryIndexTarget,
+  type IndexedEntry
+} from '../entry/Schema.js'
 import {
   chunks,
   sqliteBatchSize,
@@ -12,30 +34,7 @@ import {
   type EntrySyncTarget,
   type SyncQueries
 } from './queries.js'
-import type {Config} from '#/core/Config.js'
-import {assert} from '#/core/util/Assert.js'
-import {entryUrl} from '#/core/util/EntryFilenames.js'
-import {
-  and,
-  asc,
-  count,
-  eq,
-  exists,
-  inArray,
-  max,
-  min,
-  ne,
-  or,
-  sql,
-  when,
-  type Database
-} from 'rado'
-import {
-  EntryIndexTable,
-  storedEntryData,
-  type EntryIndexTarget,
-  type IndexedEntry
-} from '../entry/Schema.js'
+
 export async function deriveHierarchy(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
@@ -191,11 +190,11 @@ export async function deriveStatus(
   await queries.updateStatus.run()
 }
 
-export function statusKey(id: string, locale: string | null): string {
+function statusKey(id: string, locale: string | null): string {
   return JSON.stringify([id, locale])
 }
 
-export function parentPathKey(id: string, locale: string | null): string {
+function parentPathKey(id: string, locale: string | null): string {
   return `${id}\0${locale ?? ''}`
 }
 

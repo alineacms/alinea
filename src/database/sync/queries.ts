@@ -26,6 +26,7 @@ import {
   type EntryIndexTarget,
   type IndexedEntry
 } from '../entry/Schema.js'
+
 export const changeBatchSize = 250
 export const sqliteBatchSize = 5000
 
@@ -148,12 +149,11 @@ export function* chunks<T>(
 
 const builder = new Builder()
 const afterFilePath = sql.placeholder<string>('afterFilePath')
-const afterEntryId = sql.placeholder<string>('afterEntryId')
 const afterVersionId = sql.placeholder<string>('afterVersionId')
 const level = sql.placeholder<number>('level')
 const revision = sql.placeholder<string>('revision')
 const treeSnapshot = sql.placeholder<string | null>('tree')
-export function revisionQuery(target: EntrySyncTarget) {
+function revisionQuery(target: EntrySyncTarget) {
   const DatabaseState = target.state
   return builder
     .select({revision: DatabaseState.revision, tree: DatabaseState.tree})
@@ -162,7 +162,7 @@ export function revisionQuery(target: EntrySyncTarget) {
     .$first()
 }
 
-export function entryCountQuery(target: EntrySyncTarget) {
+function entryCountQuery(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   return builder
     .select({value: count()})
@@ -171,7 +171,7 @@ export function entryCountQuery(target: EntrySyncTarget) {
     .$first()
 }
 
-export function setRevisionQuery(target: EntrySyncTarget) {
+function setRevisionQuery(target: EntrySyncTarget) {
   const DatabaseState = target.state
   return builder
     .update(DatabaseState)
@@ -179,7 +179,7 @@ export function setRevisionQuery(target: EntrySyncTarget) {
     .where(eq(DatabaseState.id, 1))
 }
 
-export function storedFilesQuery(target: EntrySyncTarget) {
+function storedFilesQuery(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   return builder
     .select({
@@ -196,7 +196,7 @@ export function storedFilesQuery(target: EntrySyncTarget) {
     .limit(sqliteBatchSize)
 }
 
-export function hierarchyQuery(target: EntrySyncTarget) {
+function hierarchyQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   return builder
     .select({
@@ -213,7 +213,7 @@ export function hierarchyQuery(target: EntrySyncTarget) {
     .limit(sqliteBatchSize)
 }
 
-export function levelsQuery(target: EntrySyncTarget) {
+function levelsQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   return builder
     .select({level: DerivedEntries.level})
@@ -223,7 +223,7 @@ export function levelsQuery(target: EntrySyncTarget) {
     .orderBy(asc(DerivedEntries.level))
 }
 
-export function statusesQuery(target: EntrySyncTarget) {
+function statusesQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   const isDraft = max(eq(DerivedEntries.versionStatus, 'draft'))
   const isPublished = max(eq(DerivedEntries.versionStatus, 'published'))
@@ -256,7 +256,7 @@ export function statusesQuery(target: EntrySyncTarget) {
     .orderBy(asc(DerivedEntries.id), asc(DerivedEntries.locale))
 }
 
-export function mainEntriesQuery(target: EntrySyncTarget) {
+function mainEntriesQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   return builder
     .select({
@@ -283,30 +283,30 @@ export function mainEntriesQuery(target: EntrySyncTarget) {
     .limit(sqliteBatchSize)
 }
 
-export function changedIdsQuery(target: EntrySyncTarget) {
+function changedIdsQuery() {
   return builder
     .select({id: SyncAffected.id})
     .from(SyncAffected)
     .orderBy(asc(SyncAffected.id))
 }
 
-export function clearAffectedQuery(target: EntrySyncTarget) {
+function clearAffectedQuery() {
   return builder.delete(SyncAffected)
 }
 
-export function clearCascadeQuery(target: EntrySyncTarget) {
+function clearCascadeQuery() {
   return builder.delete(SyncCascade)
 }
 
-export function clearValuesQuery(target: EntrySyncTarget) {
+function clearValuesQuery() {
   return builder.delete(SyncValues)
 }
 
-export function clearStatusQuery(target: EntrySyncTarget) {
+function clearStatusQuery() {
   return builder.delete(SyncStatus)
 }
 
-export function markAllAffectedQuery(target: EntrySyncTarget) {
+function markAllAffectedQuery(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   return builder
     .insert(SyncAffected)
@@ -315,7 +315,7 @@ export function markAllAffectedQuery(target: EntrySyncTarget) {
     )
 }
 
-export function updateChildrenShaQuery(target: EntrySyncTarget) {
+function updateChildrenShaQuery(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   const updateValueForVersion = builder
     .select(SyncValues.value)
@@ -333,7 +333,7 @@ export function updateChildrenShaQuery(target: EntrySyncTarget) {
     .where(hasUpdateValueForVersion)
 }
 
-export function updateUrlsQuery(target: EntrySyncTarget) {
+function updateUrlsQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   const MainEntry = alias(DerivedEntries, 'main_entry')
   const hasUpdatedMainUrl = exists(
@@ -364,7 +364,7 @@ export function updateUrlsQuery(target: EntrySyncTarget) {
     .where(hasUpdatedMainUrl)
 }
 
-export function copyInitialUrlsQuery(target: EntrySyncTarget) {
+function copyInitialUrlsQuery(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   const InitialMainEntry = alias(EntryIndexTable, 'initial_main_entry')
   const initialMainUrl = builder
@@ -380,7 +380,7 @@ export function copyInitialUrlsQuery(target: EntrySyncTarget) {
   return builder.update(EntryIndexTable).set({url: initialMainUrl})
 }
 
-export function updateHierarchyQuery(target: EntrySyncTarget) {
+function updateHierarchyQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   return builder
     .update(DerivedEntries)
@@ -396,7 +396,7 @@ export function updateHierarchyQuery(target: EntrySyncTarget) {
     .where(eq(SyncValues.key, DerivedEntries.versionId))
 }
 
-export function updateStatusQuery(target: EntrySyncTarget) {
+function updateStatusQuery(target: EntrySyncTarget) {
   const DerivedEntries = target.changes ?? target.entries
   return builder
     .update(DerivedEntries)
@@ -433,11 +433,11 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     levels: levelsQuery(target).prepare(undefined, db),
     statuses: statusesQuery(target).prepare(undefined, db),
     mainEntries: mainEntriesQuery(target).prepare(undefined, db),
-    changedIds: changedIdsQuery(target).prepare(undefined, db),
-    clearAffected: clearAffectedQuery(target).prepare(undefined, db),
-    clearCascade: clearCascadeQuery(target).prepare(undefined, db),
-    clearValues: clearValuesQuery(target).prepare(undefined, db),
-    clearStatus: clearStatusQuery(target).prepare(undefined, db),
+    changedIds: changedIdsQuery().prepare(undefined, db),
+    clearAffected: clearAffectedQuery().prepare(undefined, db),
+    clearCascade: clearCascadeQuery().prepare(undefined, db),
+    clearValues: clearValuesQuery().prepare(undefined, db),
+    clearStatus: clearStatusQuery().prepare(undefined, db),
     markAllAffected: markAllAffectedQuery(target).prepare(undefined, db),
     updateChildrenSha: updateChildrenShaQuery(target).prepare(undefined, db),
     updateUrls: updateUrlsQuery(target).prepare(undefined, db),

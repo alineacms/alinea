@@ -1,3 +1,14 @@
+import type {Config} from '#/core/Config.js'
+import type {RemoteSource} from '#/core/source/Source.js'
+import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
+import {assert} from '#/core/util/Assert.js'
+import {inArray, or, type Database} from 'rado'
+import {
+  entryIndexRow,
+  type EntryIndexTarget,
+  type IndexedEntry
+} from '../entry/Schema.js'
+import {parseSourceEntry} from './EntryParser.js'
 import {
   changeBatchSize,
   chunks,
@@ -12,18 +23,7 @@ import {
   type StoredHierarchyRow,
   type SyncQueries
 } from './queries.js'
-import type {Config} from '#/core/Config.js'
-import type {RemoteSource} from '#/core/source/Source.js'
-import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
-import {assert} from '#/core/util/Assert.js'
-import {inArray, not, or, type Database} from 'rado'
-import {
-  EntryIndexTable,
-  entryIndexRow,
-  type EntryIndexTarget,
-  type IndexedEntry
-} from '../entry/Schema.js'
-import {parseSourceEntry} from './EntryParser.js'
+
 async function markAffected(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
@@ -63,10 +63,7 @@ async function markAffected(
   return existing
 }
 
-export async function addAffected(
-  db: Database,
-  ids: Iterable<string>
-): Promise<void> {
+async function addAffected(db: Database, ids: Iterable<string>): Promise<void> {
   const unique = Array.from(new Set(ids))
   if (!unique.length) return
   const existing = await db
@@ -79,10 +76,7 @@ export async function addAffected(
     await db.insert(SyncAffected).values(missing.map(id => ({id})))
 }
 
-export async function addCascade(
-  db: Database,
-  ids: Iterable<string>
-): Promise<void> {
+async function addCascade(db: Database, ids: Iterable<string>): Promise<void> {
   const unique = Array.from(new Set(ids))
   if (!unique.length) return
   const existing = await db
@@ -95,7 +89,7 @@ export async function addCascade(
     await db.insert(SyncCascade).values(missing.map(id => ({id})))
 }
 
-export async function deleteFiles(
+async function deleteFiles(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   filePaths: ReadonlyArray<string>
@@ -110,7 +104,7 @@ export async function deleteFiles(
     .where(inArray(EntryIndexTable.filePath, Array.from(filePaths)))
 }
 
-export async function replaceFiles(
+async function replaceFiles(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   config: Config,
@@ -321,7 +315,7 @@ export async function mergeSource(
   await flush()
 }
 
-export async function updateDirectoryHashes(
+async function updateDirectoryHashes(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
   tree: ReadonlyTree,
@@ -409,7 +403,7 @@ export async function mergeTrees(
   )
 }
 
-export function sourceDirectorySha(tree: ReadonlyTree, path: string): string {
+function sourceDirectorySha(tree: ReadonlyTree, path: string): string {
   const node = tree.get(path)
   if (!node) return ReadonlyTree.EMPTY.sha
   assert(!(node instanceof Leaf), `Entry children path is a file: ${path}`)
