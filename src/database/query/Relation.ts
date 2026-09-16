@@ -45,31 +45,6 @@ export interface SqlRelationSource {
 
 export type AnyRelationSource = RelationSource | SqlRelationSource
 
-export function canBatchRelation(query: EdgeQuery): boolean {
-  if (
-    query.select === undefined ||
-    query.orderBy !== undefined ||
-    query.groupBy !== undefined ||
-    query.skip !== undefined ||
-    query.take !== undefined ||
-    query.id !== undefined ||
-    query.parentId !== undefined ||
-    query.locale !== undefined ||
-    query.preferredLocale !== undefined ||
-    query.count ||
-    query.first ||
-    query.get
-  )
-    return false
-  return (
-    query.edge === 'parent' ||
-    query.edge === 'parents' ||
-    (query.edge === 'children' && (query.depth ?? 1) === 1) ||
-    query.edge === 'siblings' ||
-    query.edge === 'translations'
-  )
-}
-
 export function relationSource(entry: EntryIndexTarget) {
   return {
     versionId: entry.versionId,

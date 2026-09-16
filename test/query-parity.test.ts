@@ -428,7 +428,7 @@ test('selects children by depth', async () => {
   })
 })
 
-test('batches relation projections without changing their results', async () => {
+test('resolves relation projections without changing their results', async () => {
   await withAdvancedStore(async store => {
     const relationSelection = {
       id: Entry.id,

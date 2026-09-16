@@ -49,7 +49,6 @@ import {
 import {searchQuery} from './Search.js'
 
 import {
-  canBatchRelation,
   linkRelation,
   relationCondition,
   relationSource,
@@ -62,7 +61,6 @@ interface RelationProjection {
   path: Array<string>
   query: EdgeQuery
   plan: ProjectionPlan
-  embedded: boolean
 }
 
 interface FieldProjection {
@@ -88,7 +86,6 @@ export interface ProjectionPlan {
 interface CompiledRelation {
   selection: SelectionInput
   plan: ProjectionPlan
-  embedded: boolean
 }
 
 /** Expressions over a complete entry row. */
@@ -233,8 +230,7 @@ class Expressions {
       this.relations.push({
         path,
         query,
-        plan: relation.plan,
-        embedded: relation.embedded
+        plan: relation.plan
       })
       return relation.selection
     }
@@ -410,19 +406,6 @@ export function compileEntryQuery(
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
   const projection = new Expressions(scope, entry, search, relationQuery => {
-    if (canBatchRelation(relationQuery))
-      return {
-        selection: sql.value(null),
-        plan: {
-          count: false,
-          single: false,
-          needsSearch: false,
-          relations: [],
-          fields: [],
-          optional: []
-        },
-        embedded: false
-      }
     const nestedEntry = alias(baseEntry, `alinea_relation_${depth + 1}`)
     const nested = compileEntryQuery(
       config,
@@ -447,16 +430,14 @@ export function compileEntryQuery(
         selection: include.one(
           builder.select(count().as('count')).from(matches)
         ),
-        plan,
-        embedded: true
+        plan
       }
     }
     return {
       selection: nested.single
         ? include.one(nested.rows)
         : include(nested.rows),
-      plan,
-      embedded: true
+      plan
     }
   })
   const types = query.type

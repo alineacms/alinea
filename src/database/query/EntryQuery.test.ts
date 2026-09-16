@@ -282,12 +282,13 @@ test('unique ordering avoids correlated stable-order queries', async () => {
   expect(details).not.toContain('USE TEMP B-TREE FOR ORDER BY')
 })
 
-test('complex relations compile into the containing SQL query', () => {
+test('all relations compile into the containing SQL query', () => {
   using sqlite = new Database(':memory:')
   const db = connect(sqlite)
   const statement = compileEntryQuery(config, {
     select: {
       id: Entry.id,
+      siblings: Query.siblings({select: Entry.id}),
       children: Query.children({
         depth: 2,
         orderBy: {desc: Page.title},
@@ -302,4 +303,21 @@ test('complex relations compile into the containing SQL query', () => {
   expect(statement.sql).toContain('json_group_array')
   expect(statement.sql).toContain('with recursive')
   expect(statement.sql).toContain('alinea_relation_count_1')
+})
+
+test('embedded sibling relations use the parent index', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  const statement = compileEntryQuery(config, {
+    take: 100,
+    select: {
+      id: Entry.id,
+      siblings: Query.siblings({select: Entry.id})
+    }
+  }).rows.toSQL(db)
+  const explain = sqlite
+    .prepare(`explain query plan ${statement.sql}`)
+    .all(...(statement.params as Array<string | number | null>))
+  expect(JSON.stringify(explain)).toContain('alinea_entry_index_by_parent')
 })

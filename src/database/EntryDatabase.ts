@@ -2,7 +2,6 @@ import type {Config} from '#/core/Config.js'
 import {
   Graph,
   type AnyQueryResult,
-  type EdgeQuery,
   type GraphQuery,
   type Projection,
   type InferProjection
@@ -627,14 +626,8 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     db: Database,
     nested: boolean
   ): Promise<unknown> {
-    const batchedRelations = await this.#batchSetRelations(
-      query,
-      plan,
-      result,
-      db
-    )
     const rows = await Promise.all(
-      result.map(async (row, rowIndex): Promise<unknown> => {
+      result.map(async (row): Promise<unknown> => {
         if (
           !plan.relations.length &&
           !plan.fields.length &&
@@ -743,32 +736,27 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           else setProjectionValue(value, selected.path, undefined)
         }
         await Promise.all(
-          plan.relations.map(async (relation, relationIndex) => {
+          plan.relations.map(async relation => {
             const relationQuery = {
               ...relation.query,
               status: query.status ?? 'published'
             }
-            const key = `${rowIndex}:${relationIndex}`
-            const included = relation.embedded
-              ? getProjectionValue(value, relation.path)
-              : batchedRelations.get(key)
-            const related = !relation.embedded
-              ? included
-              : relation.plan.count
-                ? (included ?? 0)
-                : await this.#projectRows(
-                    relationQuery,
-                    relation.plan,
-                    relation.plan.single
-                      ? included === null || included === undefined
-                        ? []
-                        : [included]
-                      : Array.isArray(included)
-                        ? included
-                        : [],
-                    db,
-                    true
-                  )
+            const included = getProjectionValue(value, relation.path)
+            const related = relation.plan.count
+              ? (included ?? 0)
+              : await this.#projectRows(
+                  relationQuery,
+                  relation.plan,
+                  relation.plan.single
+                    ? included === null || included === undefined
+                      ? []
+                      : [included]
+                    : Array.isArray(included)
+                      ? included
+                      : [],
+                  db,
+                  true
+                )
             if (!relation.path.length) value = related
             else {
               let target = value
@@ -794,202 +782,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     // Graph's nested projection stage returns undefined for an absent single
     // relation; only the public top-level first/get stage normalizes absence.
     return plan.single ? (nested || rows.length ? rows[0] : null) : rows
-  }
-
-  async #batchSetRelations(
-    query: GraphQuery,
-    plan: ProjectionPlan,
-    rows: Array<unknown>,
-    db: Database
-  ): Promise<Map<string, unknown>> {
-    const result = new Map<string, unknown>()
-    if (!plan.relations.some(relation => !relation.embedded)) return result
-    const sources = rows.map(row => {
-      if (!isRecord(row) || !isRecord(row.source)) return
-      return row.source as unknown as RelationSource
-    })
-    if (sources.some(source => !source)) return result
-    for (
-      let relationIndex = 0;
-      relationIndex < plan.relations.length;
-      relationIndex++
-    ) {
-      const relation = plan.relations[relationIndex]
-      if (relation.embedded) continue
-      const direct = await this.#batchDirectRelations(
-        relation.query,
-        {
-          ...relation.query,
-          status: query.status ?? 'published'
-        },
-        sources as Array<RelationSource>,
-        relationIndex,
-        db
-      )
-      for (const [key, value] of direct) result.set(key, value)
-    }
-    return result
-  }
-
-  async #batchDirectRelations(
-    relation: EdgeQuery,
-    nestedQuery: GraphQuery,
-    sources: Array<RelationSource>,
-    relationIndex: number,
-    db: Database
-  ): Promise<Map<string, unknown>> {
-    const {edge: _edge, ...baseQuery} = nestedQuery as GraphQuery & {
-      edge: string
-    }
-    const result = new Map<string, unknown>()
-    if (relation.edge === 'translations') {
-      const rows = (await this.#resolve(
-        {
-          ...baseQuery,
-          id: {in: Array.from(new Set(sources.map(source => source.id)))},
-          select: {
-            id: Entry.id,
-            locale: Entry.locale,
-            value: relation.select
-          }
-        },
-        db
-      )) as Array<{id: string; locale: string | null; value: unknown}>
-      const byId = new Map<string, Array<(typeof rows)[number]>>()
-      for (const row of rows) {
-        const matches = byId.get(row.id) ?? []
-        matches.push(row)
-        byId.set(row.id, matches)
-      }
-      for (let index = 0; index < sources.length; index++) {
-        const source = sources[index]
-        const matches = byId.get(source.id) ?? []
-        const values = relation.includeSelf
-          ? [
-              ...matches.filter(row => row.locale === source.locale),
-              ...matches.filter(row => row.locale !== source.locale)
-            ].map(row => row.value)
-          : matches
-              .filter(row => row.locale !== source.locale)
-              .map(row => row.value)
-        result.set(`${index}:${relationIndex}`, values)
-      }
-      return result
-    }
-    const groups = new Map<
-      string,
-      Array<{index: number; source: RelationSource}>
-    >()
-    for (let index = 0; index < sources.length; index++) {
-      const source = sources[index]
-      const key = source.locale ?? '\0'
-      const group = groups.get(key) ?? []
-      group.push({index, source})
-      groups.set(key, group)
-    }
-    for (const group of groups.values()) {
-      const locale = group[0].source.locale
-      if (relation.edge === 'parent') {
-        const parentIds = Array.from(
-          new Set(group.flatMap(({source}) => source.parentId ?? []))
-        )
-        const rows = parentIds.length
-          ? ((await this.#resolve(
-              {
-                ...baseQuery,
-                id: {in: parentIds},
-                locale,
-                select: {id: Entry.id, value: relation.select}
-              },
-              db
-            )) as Array<{id: string; value: unknown}>)
-          : []
-        const byId = new Map(rows.map(row => [row.id, row.value]))
-        for (const {index, source} of group)
-          result.set(
-            `${index}:${relationIndex}`,
-            source.parentId ? byId.get(source.parentId) : undefined
-          )
-        continue
-      }
-      if (relation.edge === 'parents') {
-        const depth = relation.depth ?? Number.POSITIVE_INFINITY
-        const idsBySource = group.map(({source}) =>
-          source.parents.slice(-depth)
-        )
-        const ids = Array.from(new Set(idsBySource.flat()))
-        const rows = ids.length
-          ? ((await this.#resolve(
-              {
-                ...baseQuery,
-                id: {in: ids},
-                locale,
-                select: {id: Entry.id, value: relation.select}
-              },
-              db
-            )) as Array<{id: string; value: unknown}>)
-          : []
-        const byId = new Map(rows.map(row => [row.id, row.value]))
-        for (let groupIndex = 0; groupIndex < group.length; groupIndex++)
-          result.set(
-            `${group[groupIndex].index}:${relationIndex}`,
-            idsBySource[groupIndex].flatMap(id =>
-              byId.has(id) ? [byId.get(id)] : []
-            )
-          )
-        continue
-      }
-      const parentIds = Array.from(
-        new Set(
-          group.flatMap(({source}) =>
-            relation.edge === 'children' ? [source.id] : (source.parentId ?? [])
-          )
-        )
-      )
-      const rows = parentIds.length
-        ? ((await this.#resolve(
-            {
-              ...baseQuery,
-              parentId: {in: parentIds},
-              locale,
-              select: {
-                id: Entry.id,
-                parentId: Entry.parentId,
-                value: relation.select
-              }
-            },
-            db
-          )) as Array<{
-            id: string
-            parentId: string | null
-            value: unknown
-          }>)
-        : []
-      const byParent = new Map<string, Array<(typeof rows)[number]>>()
-      for (const row of rows) {
-        if (!row.parentId) continue
-        const matches = byParent.get(row.parentId) ?? []
-        matches.push(row)
-        byParent.set(row.parentId, matches)
-      }
-      for (const {index, source} of group) {
-        const parentId =
-          relation.edge === 'children' ? source.id : source.parentId
-        const matches = parentId ? (byParent.get(parentId) ?? []) : []
-        result.set(
-          `${index}:${relationIndex}`,
-          matches
-            .filter(
-              row =>
-                relation.edge !== 'siblings' ||
-                relation.includeSelf ||
-                row.id !== source.id
-            )
-            .map(row => row.value)
-        )
-      }
-    }
-    return result
   }
 
   /** Scan references in bounded pages without retaining an entry index. */
