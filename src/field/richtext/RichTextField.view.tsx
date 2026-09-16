@@ -1,4 +1,4 @@
-import {Label} from '#/components.js'
+import {Button, Label} from '#/components.js'
 import {RichTextField as CoreRichTextField} from '#/core/field/RichTextField.js'
 import {createId} from '#/core/Id.js'
 import type {Schema} from '#/core/Schema.js'
@@ -6,6 +6,7 @@ import {BlockNode, Node, type TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {rootEditor} from '#/dashboard/atoms/editor.js'
+import {IcRoundUnfoldLess, IcRoundUnfoldMore} from '#/dashboard/icons.js'
 import {
   useEditor as useDashboardEditor,
   useFieldError,
@@ -93,6 +94,9 @@ export function RichTextFieldView<Blocks extends Schema>({
   const hosts = useMemo(() => new RichTextBlockHosts(), [])
   const pendingBlocks = useRef(new Map<string, BlockNode>())
   const [activeEditor, setActiveEditor] = useState<Editor>()
+  const [collapsedBlockIds, setCollapsedBlockIds] = useState<Set<string>>(
+    () => new Set()
+  )
   const [focused, setFocused] = useState(false)
   const [innerBlockFocused, setInnerBlockFocused] = useState(false)
   const root = useRef<HTMLDivElement>(null)
@@ -108,6 +112,25 @@ export function RichTextFieldView<Blocks extends Schema>({
     [entryAnchors, store]
   )
   const readOnly = Boolean(options.readOnly || fieldNode.readOnly)
+  const hasBlocks = blocks.length > 0
+  const allBlocksExpanded =
+    hasBlocks && blocks.every(block => !collapsedBlockIds.has(block.id))
+
+  function toggleAllBlocks() {
+    setCollapsedBlockIds(
+      allBlocksExpanded ? new Set(blocks.map(block => block.id)) : new Set()
+    )
+  }
+
+  function toggleBlock(blockId: string) {
+    setCollapsedBlockIds(current => {
+      const next = new Set(current)
+      if (next.has(blockId)) next.delete(blockId)
+      else next.add(blockId)
+      return next
+    })
+  }
+
   const extensions = useMemo<Array<AnyExtension>>(() => {
     const configured = Object.values(
       configureRichTextExtensions(options.extensions, {
@@ -274,6 +297,24 @@ export function RichTextFieldView<Blocks extends Schema>({
       <PickTextLink picker={picker} />
       <PickTextAnchor picker={anchorPicker} />
       <Label
+        actions={
+          !options.inline && hasBlocks ? (
+            <Button
+              appearance="plain"
+              aria-label={
+                allBlocksExpanded
+                  ? 'Collapse all rich text blocks'
+                  : 'Expand all rich text blocks'
+              }
+              className={styles.RichTextFieldView.foldAll()}
+              icon={allBlocksExpanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
+              onPress={toggleAllBlocks}
+              size="small"
+            >
+              {allBlocksExpanded ? 'Collapse all' : 'Expand all'}
+            </Button>
+          ) : undefined
+        }
         description={options.help}
         errorMessage={error}
         isRequired={!options.inline && options.required}
@@ -307,12 +348,14 @@ export function RichTextFieldView<Blocks extends Schema>({
           {editor && (
             <RichTextBlockPortals
               blocksById={blocksById}
+              collapsedBlockIds={collapsedBlockIds}
               editor={editor}
               hosts={hosts}
               pendingBlocks={pendingBlocks.current}
               readOnly={readOnly}
               schema={options.schema}
               store={store}
+              onToggleBlock={toggleBlock}
             />
           )}
         </div>
@@ -353,22 +396,26 @@ function setEditorReadOnly(editor: Editor, readOnly: boolean) {
 
 interface RichTextBlockPortalsProps {
   blocksById: ReadonlyMap<string, ReactiveRichTextBlock>
+  collapsedBlockIds: ReadonlySet<string>
   editor: Editor
   hosts: RichTextBlockHosts
   pendingBlocks: Map<string, BlockNode>
   readOnly: boolean
   schema?: Schema
   store: ReturnType<typeof useStore>
+  onToggleBlock: (blockId: string) => void
 }
 
 function RichTextBlockPortals({
   blocksById,
+  collapsedBlockIds,
   editor,
   hosts,
   pendingBlocks,
   readOnly,
   schema,
-  store
+  store,
+  onToggleBlock
 }: RichTextBlockPortalsProps) {
   const mounted = useSyncExternalStore(
     hosts.subscribe,
@@ -408,12 +455,14 @@ function RichTextBlockPortals({
       <>
         <RichTextBlockSnapshot editor={editor} host={host} node={part.node} />
         <RichTextBlock
+          expanded={!collapsedBlockIds.has(part.id)}
           id={part.id}
           node={part.node}
           type={type}
           readOnly={readOnly}
           onDelete={() => remove(host)}
           onDuplicate={() => duplicate(host, part)}
+          onToggle={() => onToggleBlock(part.id)}
         />
       </>,
       host.dom,

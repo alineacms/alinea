@@ -1,11 +1,15 @@
 import styler from '@alinea/styler'
 import type {ComponentType, ReactNode} from 'react'
+import {useState} from 'react'
 import {DialogTrigger} from 'react-aria-components'
 import type {EntryStatus} from '#/core/Entry.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {
   IcOutlineDrafts,
+  IcOutlineGridView,
+  IcRoundAttachFile,
   IcRoundArchive,
+  IcRoundAccountTree,
   IcRoundCheck,
   IcRoundClose,
   IcRoundEdit,
@@ -21,6 +25,7 @@ import {
 import {Button} from './Button.js'
 import {
   List,
+  ListCreateButton,
   ListCreateRow,
   ListDragPreview,
   ListEmpty,
@@ -40,12 +45,14 @@ import {
   ListRowFooter,
   ListRowHeader,
   ListRowMeta,
-  ListRowSettings
+  ListRowSettings,
+  ListRowType
 } from './List.js'
 import css from './List.stories.module.css'
 import {Popover} from './Popover.js'
 import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
+import {TypeCreateActions} from './TypeCreateActions.js'
 
 const styles = styler(css)
 
@@ -98,7 +105,13 @@ export function Basic() {
 export function FieldRows() {
   return (
     <div style={{maxWidth: 720}}>
-      <ListLabel aria-label="Collapse all items" expanded hasRows shared>
+      <ListLabel
+        aria-label="Collapse all items"
+        count={2}
+        expanded
+        hasRows
+        shared
+      >
         Sections
       </ListLabel>
       <List data-depth="muted">
@@ -111,9 +124,7 @@ export function FieldRows() {
                   expanded
                   onPress={() => undefined}
                 />
-                <Badge icon={IcRoundPanorama} size="small">
-                  Hero
-                </Badge>
+                <ListRowType icon={IcRoundPanorama}>Hero</ListRowType>
                 <ListRowMeta>Landing page intro</ListRowMeta>
                 <Badge size="small">#landing-page-intro</Badge>
               </ListRowBadges>
@@ -152,7 +163,7 @@ export function FieldRows() {
                   expanded={false}
                   onPress={() => undefined}
                 />
-                <Badge size="small">Quote</Badge>
+                <ListRowType>Quote</ListRowType>
                 <ListRowMeta>Editorial quote</ListRowMeta>
               </ListRowBadges>
             </ListRowDrag>
@@ -169,16 +180,350 @@ export function FieldRows() {
             Quote: Content editing should stay close...
           </ListRowFooter>
         </ListRow>
-        <ListCreateRow>
-          <Button appearance="plain" size="small">
-            Add Hero
-          </Button>
-          <Button appearance="plain" size="small">
-            Add Quote
-          </Button>
-        </ListCreateRow>
       </List>
+      <ListCreateRow>
+        <Button appearance="plain" size="small">
+          Add Hero
+        </Button>
+        <Button appearance="plain" size="small">
+          Add Quote
+        </Button>
+      </ListCreateRow>
       <ListError>At least one section is required.</ListError>
+    </div>
+  )
+}
+
+interface FieldCompositionRowProps {
+  children?: ReactNode
+  expanded?: boolean
+  hasFold?: boolean
+  icon?: ComponentType
+  label: string
+  meta?: ReactNode
+  onToggle?: () => void
+  typeName?: string
+}
+
+function FieldCompositionRow({
+  children,
+  expanded = false,
+  hasFold = true,
+  icon,
+  label,
+  meta,
+  onToggle,
+  typeName
+}: FieldCompositionRowProps) {
+  return (
+    <ListRow role="listitem">
+      <ListRowHeader
+        aria-label={`${label} block`}
+        draggable
+        expanded={hasFold && expanded}
+        hasFold={hasFold}
+        onDragStart={event => {
+          event.dataTransfer.effectAllowed = 'move'
+          event.dataTransfer.setData('text/plain', label)
+        }}
+        onToggle={hasFold ? onToggle : undefined}
+      >
+        <ListRowDrag>
+          <ListRowBadges>
+            {hasFold && (
+              <ListRowFoldButton
+                aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+                expanded={expanded}
+                onPress={onToggle}
+              />
+            )}
+            <ListRowType icon={icon} name={typeName}>
+              {label}
+            </ListRowType>
+            {meta && <ListRowMeta>{meta}</ListRowMeta>}
+          </ListRowBadges>
+        </ListRowDrag>
+        <ListRowActions>
+          <Button
+            appearance="plain"
+            aria-label={`${label} settings`}
+            icon={IcRoundMoreHoriz}
+            size="icon-small"
+          />
+          <Button
+            appearance="plain"
+            aria-label={`Remove ${label}`}
+            icon={IcRoundClose}
+            size="icon-small"
+          />
+        </ListRowActions>
+      </ListRowHeader>
+      {expanded && children && <ListRowBody>{children}</ListRowBody>}
+    </ListRow>
+  )
+}
+
+function FieldCompositionCreateActions() {
+  return (
+    <TypeCreateActions
+      items={[
+        {id: 'text', label: 'Text', colorName: 'Text', icon: IcRoundEdit},
+        {
+          id: 'columns',
+          label: 'Columns',
+          colorName: 'Columns',
+          icon: IcOutlineGridView
+        },
+        {
+          id: 'programs',
+          label: 'Programs',
+          colorName: 'Programs',
+          icon: IcRoundAccountTree
+        },
+        {id: 'image', label: 'Image', colorName: 'Image', icon: IcRoundImage},
+        {
+          id: 'archive',
+          label: 'Archive',
+          colorName: 'Archive',
+          icon: IcRoundArchive
+        }
+      ]}
+      label="More block types"
+      onSelect={() => undefined}
+    />
+  )
+}
+
+export function FieldComposition() {
+  const linkLabels = [
+    'Opleidingen',
+    'Management, Organisatie & Toerisme',
+    'Gezondheid & Welzijn'
+  ]
+  const blockLabels = ['Intro', 'Columns']
+  const nestedLabels = ['Ontdek onze opleidingen', 'Praktische informatie']
+  const [expandedLinks, setExpandedLinks] = useState(new Set(linkLabels))
+  const [expandedBlocks, setExpandedBlocks] = useState(new Set(blockLabels))
+  const [expandedNested, setExpandedNested] = useState(new Set<string>())
+
+  function toggleRow(
+    label: string,
+    setExpanded: (value: Set<string>) => void,
+    expanded: Set<string>
+  ) {
+    const next = new Set(expanded)
+    if (next.has(label)) next.delete(label)
+    else next.add(label)
+    setExpanded(next)
+  }
+
+  return (
+    <div className={styles.FieldComposition()}>
+      <section className={styles.FieldComposition.section()}>
+        <ListLabel
+          aria-label={
+            expandedLinks.size === linkLabels.length
+              ? 'Collapse all links'
+              : 'Expand all links'
+          }
+          count={3}
+          description="Navigation links · with an internal-link settings example"
+          expanded={expandedLinks.size === linkLabels.length}
+          hasRows
+          addLabel="Add link"
+          onAdd={() => undefined}
+          onPress={() =>
+            setExpandedLinks(
+              expandedLinks.size === linkLabels.length
+                ? new Set()
+                : new Set(linkLabels)
+            )
+          }
+        >
+          Links
+        </ListLabel>
+        <List aria-label="Links" data-depth="muted">
+          <FieldCompositionRow
+            hasFold={false}
+            icon={IcRoundInsertDriveFile}
+            label="Opleidingen"
+            meta="Opleidingen#interes…"
+            typeName="Page link"
+            expanded={expandedLinks.has('Opleidingen')}
+            onToggle={() =>
+              toggleRow('Opleidingen', setExpandedLinks, expandedLinks)
+            }
+          />
+          <FieldCompositionRow
+            expanded={expandedLinks.has('Management, Organisatie & Toerisme')}
+            icon={IcRoundLink}
+            label="Management, Organisatie & Toerisme"
+            meta="#a"
+            typeName="External link"
+            onToggle={() =>
+              toggleRow(
+                'Management, Organisatie & Toerisme',
+                setExpandedLinks,
+                expandedLinks
+              )
+            }
+          >
+            <div className={styles.FieldComposition.fields()}>
+              <TextField
+                label="Link text"
+                value="Management, Organisatie & Toerisme"
+              />
+              <TextField label="URL" value="#a" />
+            </div>
+          </FieldCompositionRow>
+          <FieldCompositionRow
+            hasFold={false}
+            icon={IcRoundLink}
+            label="Gezondheid & Welzijn"
+            meta="#b"
+            typeName="External link"
+            expanded={expandedLinks.has('Gezondheid & Welzijn')}
+            onToggle={() =>
+              toggleRow('Gezondheid & Welzijn', setExpandedLinks, expandedLinks)
+            }
+          />
+        </List>
+        <ListCreateRow>
+          <ListCreateButton icon={IcRoundInsertDriveFile} name="Page link">
+            Page link
+          </ListCreateButton>
+          <ListCreateButton icon={IcRoundLink} name="External link">
+            External link
+          </ListCreateButton>
+          <ListCreateButton icon={IcRoundAttachFile} name="File">
+            File
+          </ListCreateButton>
+        </ListCreateRow>
+        <div className={styles.FieldComposition.empty()}>
+          <ListLabel count={0} expanded={false} hasRows={false}>
+            Empty list
+          </ListLabel>
+          <ListCreateRow empty>
+            <ListCreateButton icon={IcRoundInsertDriveFile} name="Page link">
+              Page link
+            </ListCreateButton>
+            <ListCreateButton icon={IcRoundLink} name="External link">
+              External link
+            </ListCreateButton>
+            <ListCreateButton icon={IcRoundAttachFile} name="File">
+              File
+            </ListCreateButton>
+          </ListCreateRow>
+        </div>
+      </section>
+      <section className={styles.FieldComposition.section()}>
+        <ListLabel
+          aria-label={
+            expandedBlocks.size === blockLabels.length
+              ? 'Collapse all blocks'
+              : 'Expand all blocks'
+          }
+          count={2}
+          description="Sample composition · expand a row to edit"
+          expanded={expandedBlocks.size === blockLabels.length}
+          hasRows
+          addLabel="Add block"
+          onAdd={() => undefined}
+          onPress={() =>
+            setExpandedBlocks(
+              expandedBlocks.size === blockLabels.length
+                ? new Set()
+                : new Set(blockLabels)
+            )
+          }
+        >
+          Blocks
+        </ListLabel>
+        <List aria-label="Blocks" data-depth="muted">
+          <FieldCompositionRow
+            expanded={expandedBlocks.has('Intro')}
+            icon={IcRoundEdit}
+            label="Intro"
+            meta="Biomedical Laboratory…"
+            typeName="Text"
+            onToggle={() =>
+              toggleRow('Intro', setExpandedBlocks, expandedBlocks)
+            }
+          >
+            <div className={styles.FieldComposition.editor()}>
+              Biomedical Laboratory Technology
+            </div>
+          </FieldCompositionRow>
+          <FieldCompositionRow
+            expanded={expandedBlocks.has('Columns')}
+            icon={IcOutlineGridView}
+            label="Columns"
+            typeName="Columns"
+            onToggle={() =>
+              toggleRow('Columns', setExpandedBlocks, expandedBlocks)
+            }
+          >
+            <ListLabel
+              aria-label={
+                expandedNested.size === nestedLabels.length
+                  ? 'Collapse nested blocks'
+                  : 'Expand nested blocks'
+              }
+              count={2}
+              expanded={expandedNested.size === nestedLabels.length}
+              hasRows
+              addLabel="Add nested block"
+              inline
+              onAdd={() => undefined}
+              onPress={() =>
+                setExpandedNested(
+                  expandedNested.size === nestedLabels.length
+                    ? new Set()
+                    : new Set(nestedLabels)
+                )
+              }
+            >
+              Blocks
+            </ListLabel>
+            <List aria-label="Nested blocks">
+              <FieldCompositionRow
+                icon={IcRoundEdit}
+                label="Ontdek onze opleidingen"
+                meta="Text"
+                typeName="Text"
+                expanded={expandedNested.has('Ontdek onze opleidingen')}
+                onToggle={() =>
+                  toggleRow(
+                    'Ontdek onze opleidingen',
+                    setExpandedNested,
+                    expandedNested
+                  )
+                }
+              />
+              <FieldCompositionRow
+                icon={IcOutlineGridView}
+                label="Praktische informatie"
+                meta="Columns"
+                typeName="Columns"
+                expanded={expandedNested.has('Praktische informatie')}
+                onToggle={() =>
+                  toggleRow(
+                    'Praktische informatie',
+                    setExpandedNested,
+                    expandedNested
+                  )
+                }
+              />
+            </List>
+            <ListCreateRow>
+              <FieldCompositionCreateActions />
+            </ListCreateRow>
+          </FieldCompositionRow>
+        </List>
+        <ListCreateRow>
+          <FieldCompositionCreateActions />
+        </ListCreateRow>
+      </section>
     </div>
   )
 }

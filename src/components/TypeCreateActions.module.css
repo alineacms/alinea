@@ -1,0 +1,15 @@
+.TypeCreateActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  gap: 6px;
+}
+
+.TypeCreateActions-leading {
+  display: contents;
+}
+
+.TypeCreateActions-button {
+  flex-shrink: 0;
+}

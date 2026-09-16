@@ -2,7 +2,3 @@
   margin: 14px 0;
   outline: 3px solid transparent;
 }
-
-.RichTextBlock-dragHandle {
-  touch-action: none;
-}

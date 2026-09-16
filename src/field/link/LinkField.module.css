@@ -168,7 +168,7 @@
   display: flex;
   flex-wrap: wrap;
   width: 100%;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
 }
 
@@ -179,8 +179,10 @@
 .LinkFieldView-rowAction {
   align-self: stretch;
   flex: 1;
+  justify-content: flex-start;
   min-width: 0;
   padding: 0;
+  text-align: left;
 }
 
 .LinkFieldView-rowDropTarget {
@@ -208,6 +210,14 @@
   background: var(--alinea-primary);
   border-radius: 4px;
   transform: translate(-50%, -50%);
+}
+
+.LinkFieldView-dropIndicator:first-child::before {
+  top: calc(50% + 3px);
+}
+
+.LinkFieldView-dropIndicator:last-child::before {
+  top: calc(50% - 3px);
 }
 
 .LinkFieldView-dropIndicator[data-active] {

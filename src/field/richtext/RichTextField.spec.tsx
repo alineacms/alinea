@@ -720,6 +720,39 @@ test('duplicates and deletes embedded blocks', async ({mount, page}) => {
   await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(1)
 })
 
+test('collapses and expands embedded blocks', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  await expect(
+    page
+      .locator('[data-richtext-block-header="true"]')
+      .first()
+      .locator('[data-color] [data-slot="icon"]')
+  ).toHaveCount(1)
+
+  await page.getByRole('button', {name: 'Collapse Callout'}).click()
+  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(0)
+
+  await page.getByRole('button', {name: 'Expand Callout'}).click()
+  await expect(page.getByRole('textbox', {name: 'Title'})).toBeVisible()
+})
+
+test('collapses and expands all embedded blocks', async ({mount, page}) => {
+  await mount(<RichTextStory />)
+
+  await page.getByRole('button', {name: 'Callout actions'}).click()
+  await page.getByRole('button', {name: 'Duplicate'}).click()
+  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(2)
+
+  await page
+    .getByRole('button', {name: 'Collapse all rich text blocks'})
+    .click()
+  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(0)
+
+  await page.getByRole('button', {name: 'Expand all rich text blocks'}).click()
+  await expect(page.getByRole('textbox', {name: 'Title'})).toHaveCount(2)
+})
+
 test('moves a complex block and keeps its fields editable', async ({
   mount,
   page
@@ -731,8 +764,7 @@ test('moves a complex block and keeps its fields editable', async ({
     page,
     editor.getByText('Before the block.', {exact: true})
   )
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('button', {name: 'Call to action'}).click()
 
   const titles = page.getByRole('textbox', {name: 'CTA title'})
   await titles.fill('Original CTA')
@@ -764,8 +796,7 @@ test('duplicates and independently edits a complex block', async ({
     page,
     editor.getByText('Before the block.', {exact: true})
   )
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('button', {name: 'Call to action'}).click()
 
   const titles = page.getByRole('textbox', {name: 'CTA title'})
   await titles.fill('Original CTA')
@@ -812,12 +843,9 @@ test('inserts a block in nested rich text and preserves it while moving', async 
     page,
     nestedEditor.getByText('Nested details.', {exact: true})
   )
-  const insertBlock = nestedField.getByRole('button', {name: 'Insert block'})
-  await insertBlock.focus()
+  const noteButton = nestedField.getByRole('button', {name: 'Note'})
+  await noteButton.focus()
   await page.keyboard.press('Enter')
-  const noteItem = page.getByRole('menuitem', {name: 'Note'})
-  await expect(noteItem).toBeVisible()
-  await noteItem.press('Enter')
 
   const noteText = page.getByRole('textbox', {name: 'Text'})
   await expect(page.getByRole('button', {name: 'Note actions'})).toBeVisible()
@@ -853,7 +881,7 @@ test('keeps outer and inner block fields read only', async ({mount, page}) => {
   )
   await expect(fields.nth(1)).toHaveAttribute('data-read-only', 'true')
   await expect(editors.last()).toHaveAttribute('contenteditable', 'false')
-  await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
+  await expect(page.getByRole('toolbar', {name: 'Insert block'})).toHaveCount(0)
   await expect(page.getByLabel('Drag Callout block')).toHaveCount(0)
   await expect(page.locator('[data-richtext-toolbar="true"]')).toHaveCount(0)
   await expect(page.getByRole('textbox', {name: 'Title'})).toBeDisabled()
@@ -971,8 +999,7 @@ test('inserts a block at the active text position', async ({mount, page}) => {
 
   const editor = page.locator('.ProseMirror').first()
   await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Callout'}).click()
+  await page.getByRole('button', {name: 'Callout', exact: true}).click()
 
   await expect(page.getByRole('button', {name: 'Callout actions'})).toHaveCount(
     2
@@ -1015,8 +1042,7 @@ test('inserts a complex CTA block without a detached DOM error', async ({
 
   const editor = page.locator('.ProseMirror').first()
   await createEmptyParagraphAfter(page, editor.getByText('Before the block.'))
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('button', {name: 'Call to action'}).click()
 
   await expect(page.getByRole('textbox', {name: 'CTA title'})).toBeVisible()
   await expect(page.getByText('Action code', {exact: true})).toBeVisible()
@@ -1058,8 +1084,7 @@ test('edits complex block controls and moves between nested editors', async ({
     page,
     outerEditor.getByText('Before the block.', {exact: true})
   )
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Call to action'}).click()
+  await page.getByRole('button', {name: 'Call to action'}).click()
 
   const title = page.getByRole('textbox', {name: 'CTA title'})
   await title.click()
@@ -1112,8 +1137,7 @@ test('survives a mixed editing session around several blocks', async ({
   await expect(editor.locator('li').last()).toContainText('Three')
   await page.keyboard.press('Enter')
   await page.keyboard.press('Enter')
-  await page.getByRole('button', {name: 'Insert block'}).click()
-  await page.getByRole('menuitem', {name: 'Callout'}).click()
+  await page.getByRole('button', {name: 'Callout', exact: true}).click()
 
   await page.getByRole('textbox', {name: 'Title'}).last().fill('Second block')
   await editor.getByText('After the block.', {exact: true}).click()
@@ -1172,7 +1196,7 @@ test('disallows embedded blocks inside list items', async ({mount, page}) => {
   await page.keyboard.press('End')
   await page.keyboard.press('Enter')
 
-  await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
+  await expect(page.getByRole('toolbar', {name: 'Insert block'})).toHaveCount(0)
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()
@@ -1196,7 +1220,7 @@ test('disallows embedded blocks inside tables', async ({mount, page}) => {
 
   const cell = editor.locator('td').first()
   await cell.click()
-  await expect(page.getByRole('button', {name: 'Insert block'})).toHaveCount(0)
+  await expect(page.getByRole('toolbar', {name: 'Insert block'})).toHaveCount(0)
 
   const block = page.locator('[data-richtext-block="true"]')
   await block.locator('[data-richtext-block-header="true"]').hover()

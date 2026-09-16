@@ -3,31 +3,30 @@ import type {
   ComponentPropsWithoutRef,
   ComponentType,
   HTMLAttributes,
+  MouseEvent,
   ReactNode
 } from 'react'
+import {
+  IcRoundAdd,
+  IcRoundUnfoldLess,
+  IcRoundUnfoldMore
+} from '../dashboard/icons.js'
 import css from './List.module.css'
 import {Button, type ButtonProps} from './Button.js'
-import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
-import {
-  LabelDescription,
-  LabelInline,
-  LabelLabel,
-  SharedLabelBadge
-} from './Label.js'
-import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
+import {SharedLabelBadge} from './Label.js'
 
 const styles = styler(css)
 
-export interface ListProps extends SurfaceProps {
+export interface ListProps extends ComponentPropsWithoutRef<'div'> {
   empty?: boolean
 }
 
 export function List({className, empty, role, ...props}: ListProps) {
   return (
-    <Surface
+    <div
       {...props}
-      className={className}
+      className={styles.List(styler.merge({className}))}
       role={role ?? (empty ? 'status' : 'list')}
     />
   )
@@ -61,7 +60,7 @@ export function ListItem({
     </>
   )
   return (
-    <SurfaceRow
+    <div
       {...props}
       className={styles.ListItem(styler.merge(props))}
       data-has-leading={leading ? 'true' : undefined}
@@ -82,7 +81,7 @@ export function ListItem({
         <header className={styles.ListItem.header()}>{headerContent}</header>
       )}
       {inner && <div className={styles.ListItem.inner()}>{inner}</div>}
-    </SurfaceRow>
+    </div>
   )
 }
 
@@ -178,8 +177,11 @@ export interface ListLabelProps extends Omit<
 > {
   children: ReactNode
   className?: string
+  count?: number
   expanded: boolean
   hasRows?: boolean
+  addLabel?: string
+  onAdd?: ButtonProps['onPress']
   shared?: boolean
   showFold?: boolean
   description?: ReactNode
@@ -188,6 +190,8 @@ export interface ListLabelProps extends Omit<
 
 export function ListLabel({
   children,
+  addLabel = 'Add item',
+  count,
   expanded,
   hasRows,
   shared,
@@ -195,27 +199,52 @@ export function ListLabel({
   className,
   description,
   inline = false,
+  onAdd,
   ...props
 }: ListLabelProps) {
-  if (inline && !showFold && !description && !shared) return null
-
   return (
-    <Button
-      {...props}
-      appearance="plain"
+    <div
       className={styles.ListLabel(styler.merge({className}))}
-      data-has-rows={hasRows ? 'true' : undefined}
-      isDisabled={props.isDisabled ?? !hasRows}
+      data-inline={inline || undefined}
     >
-      <LabelInline>
-        {!inline && <LabelLabel asLabel={false} label={children} />}
-        {showFold && (
-          <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
-        )}
-      </LabelInline>
-      {description && <LabelDescription description={description} />}
-      {shared && <SharedLabelBadge />}
-    </Button>
+      <div className={styles.ListLabel.header()}>
+        <div className={styles.ListLabel.title()}>
+          <span className={styles.ListLabel.label()}>{children}</span>
+          {count !== undefined && (
+            <span className={styles.ListLabel.count()}>{count}</span>
+          )}
+          {shared && <SharedLabelBadge />}
+        </div>
+        <div className={styles.ListLabel.actions()}>
+          {showFold && hasRows && (
+            <Button
+              {...props}
+              appearance="plain"
+              aria-expanded={expanded}
+              className={styles.ListLabel.action()}
+              icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
+              isDisabled={props.isDisabled ?? !hasRows}
+              size="small"
+            >
+              {expanded ? 'Collapse all' : 'Expand all'}
+            </Button>
+          )}
+          {onAdd && (
+            <Button
+              appearance="plain"
+              aria-label={addLabel}
+              className={styles.ListLabel.add()}
+              icon={IcRoundAdd}
+              onPress={onAdd}
+              size="icon-small"
+            />
+          )}
+        </div>
+      </div>
+      {description && (
+        <div className={styles.ListLabel.description()}>{description}</div>
+      )}
+    </div>
   )
 }
 
@@ -245,6 +274,63 @@ export function ListCreateRow({
     >
       <div className={styles.ListCreateRow.inner()}>{children}</div>
     </div>
+  )
+}
+
+export interface ListCreateButtonProps extends Omit<
+  ButtonProps,
+  'appearance' | 'size'
+> {
+  name: string
+}
+
+export function ListCreateButton({
+  className,
+  name,
+  ...props
+}: ListCreateButtonProps) {
+  return (
+    <Button
+      {...props}
+      appearance="plain"
+      className={renderProps =>
+        styles.ListCreateButton(
+          styler.merge({
+            className:
+              typeof className === 'function'
+                ? className(renderProps)
+                : className
+          })
+        )
+      }
+      data-color={listRowTypeColor(name)}
+      size="small"
+    />
+  )
+}
+
+export interface ListTypeIconProps extends Omit<
+  ComponentPropsWithoutRef<'span'>,
+  'children'
+> {
+  icon: ComponentType
+  name: string
+}
+
+export function ListTypeIcon({
+  className,
+  icon,
+  name,
+  ...props
+}: ListTypeIconProps) {
+  return (
+    <span
+      {...props}
+      className={styles.ListTypeIcon(styler.merge({className}))}
+      data-color={listRowTypeColor(name)}
+    >
+      <Icon aria-hidden icon={icon} />
+    </span>
   )
 }
 
@@ -280,7 +366,9 @@ export function ListRowDragHandle({
       {...props}
       className={styles.ListRowDragHandle(styler.merge({className}))}
       data-dragging={dragging || undefined}
-    />
+    >
+      <Icon aria-hidden icon={IcRoundUnfoldMore} />
+    </span>
   )
 }
 
@@ -288,6 +376,7 @@ export interface ListRowHeaderProps extends ComponentPropsWithoutRef<'div'> {
   expanded?: boolean
   first?: boolean
   hasFold?: boolean
+  onToggle?: () => void
 }
 
 export function ListRowHeader({
@@ -295,8 +384,22 @@ export function ListRowHeader({
   expanded,
   first,
   hasFold = true,
+  onClick,
+  onToggle,
   ...props
 }: ListRowHeaderProps) {
+  function handleClick(event: MouseEvent<HTMLDivElement>) {
+    onClick?.(event)
+    if (event.defaultPrevented || !onToggle) return
+    const target = event.target
+    if (
+      target instanceof Element &&
+      target.closest('button, a, input, select, textarea, [role="button"]')
+    )
+      return
+    onToggle()
+  }
+
   return (
     <div
       {...props}
@@ -304,6 +407,7 @@ export function ListRowHeader({
       data-expanded={expanded ? 'true' : undefined}
       data-first-row={first ? 'true' : undefined}
       data-has-fold={hasFold ? 'true' : undefined}
+      onClick={handleClick}
     />
   )
 }
@@ -331,6 +435,40 @@ export function ListRowBadges({className, ...props}: ListRowBadgesProps) {
       className={styles.ListRowBadges(styler.merge({className}))}
     />
   )
+}
+
+export interface ListRowTypeProps extends ComponentPropsWithoutRef<'span'> {
+  icon?: ComponentType
+  name?: string
+}
+
+export function ListRowType({
+  children,
+  className,
+  icon,
+  name,
+  ...props
+}: ListRowTypeProps) {
+  const colorName =
+    name ?? (typeof children === 'string' ? children : undefined)
+  return (
+    <span
+      {...props}
+      className={styles.ListRowType(styler.merge({className}))}
+      data-color={colorName ? listRowTypeColor(colorName) : undefined}
+    >
+      {icon && <Icon aria-hidden data-slot="icon" icon={icon} />}
+      <span className={styles.ListRowType.label()}>{children}</span>
+    </span>
+  )
+}
+
+function listRowTypeColor(name: string): number {
+  let hash = 0
+  for (let index = 0; index < name.length; index++) {
+    hash = Math.imul(hash, 31) + name.charCodeAt(index)
+  }
+  return (hash >>> 0) % 5
 }
 
 export interface ListRowMetaProps extends ComponentPropsWithoutRef<'span'> {}
@@ -372,13 +510,14 @@ export function ListRowFoldButton({
     <Button
       {...props}
       appearance="plain"
+      aria-expanded={expanded}
       className={styles.ListRowFoldButton(styler.merge({className}))}
       size="icon-small"
     >
-      <FoldIcon
+      <Icon
         aria-hidden
         className={styles.ListRowFoldButton.icon()}
-        expanded={expanded}
+        icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
       />
     </Button>
   )
