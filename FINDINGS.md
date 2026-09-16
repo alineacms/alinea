@@ -57,7 +57,7 @@ The reorder guard already matches `main`, nothing to backport.
 | # | Finding | Status |
 |---|---------|--------|
 | 5 | Sibling order after combined move+create histories. Root cause was the test model, not the engine: key generation reads siblings in index order on both engines (verified identical keys `Zz`, `ZzV`, `a1` across move/create sequences on `main` and branch). Fixed in the model; 150-run soak green. | ✅ resolved as model bug |
-| 6 | Moving an entry onto a sibling with the same path segment silently collides: both entries resolve to the same file and one row is lost. Neither engine dedupes the target path on move (`main` computes the same unchecked `filePath`). Genuine sharp edge present on **both** engines — candidate to fix on `main` (and the branch inherits it). The property generator now uses unique titles to stay out of this. | ⚠️ parity-broken on both, fixable on `main` |
+| 6 | Moving an entry onto a sibling with the same path segment silently collided files and dropped a row. Neither engine deduped the target path on move (published moves throw on URL conflict, but drafts skipped validation). Fixed on `sqlite-core` (`Dedupe sibling paths on move`): the path now runs through `availablePath` like create/update, so the moved entry lands on `same-1` instead of overwriting. Pinned by `move onto a same-path …` tests in `test/moves.test.ts`. Same fix is still applicable to `main`, which has the identical hole. | 🛠 fixed on branch, backportable |
 
 ## Property suite
 
