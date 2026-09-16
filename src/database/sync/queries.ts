@@ -306,15 +306,6 @@ function clearStatusQuery() {
   return builder.delete(SyncStatus)
 }
 
-function markAllAffectedQuery(target: EntrySyncTarget) {
-  const EntryIndexTable = target.entries
-  return builder
-    .insert(SyncAffected)
-    .select(
-      builder.selectDistinct({id: EntryIndexTable.id}).from(EntryIndexTable)
-    )
-}
-
 function updateChildrenShaQuery(target: EntrySyncTarget) {
   const EntryIndexTable = target.entries
   const updateValueForVersion = builder
@@ -438,7 +429,6 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     clearCascade: clearCascadeQuery().prepare(undefined, db),
     clearValues: clearValuesQuery().prepare(undefined, db),
     clearStatus: clearStatusQuery().prepare(undefined, db),
-    markAllAffected: markAllAffectedQuery(target).prepare(undefined, db),
     updateChildrenSha: updateChildrenShaQuery(target).prepare(undefined, db),
     updateUrls: updateUrlsQuery(target).prepare(undefined, db),
     copyInitialUrls: copyInitialUrlsQuery(target).prepare(undefined, db),

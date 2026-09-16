@@ -11,7 +11,7 @@ import {
   type EntrySyncTarget,
   type SyncQueries
 } from './queries.js'
-import {insertInitialSource, mergeSource, mergeTrees} from './ingest.js'
+import {mergeSource, mergeTrees} from './ingest.js'
 import {
   copyInitialUrls,
   deriveHierarchy,
@@ -85,22 +85,24 @@ export class EntrySyncer implements AsyncDisposable {
       const initial = storedTree
         ? storedTree.isEmpty
         : (await queries.entryCount.get())?.value === 0
-      if (initial)
-        await insertInitialSource(
-          tx,
-          target.entries,
-          this.#config,
-          source,
-          tree,
-          queries
-        )
-      else if (storedTree)
+      if (storedTree)
         await mergeTrees(
           tx,
           target.entries,
           this.#config,
           source,
           storedTree,
+          tree,
+          queries
+        )
+      else if (initial)
+        // A cold sync is a merge from an empty tree.
+        await mergeTrees(
+          tx,
+          target.entries,
+          this.#config,
+          source,
+          ReadonlyTree.EMPTY,
           tree,
           queries
         )

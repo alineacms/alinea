@@ -177,49 +177,6 @@ async function replaceFiles(
   )
 }
 
-export async function insertInitialSource(
-  db: Database,
-  EntryIndexTable: EntryIndexTarget,
-  config: Config,
-  source: RemoteSource,
-  tree: ReadonlyTree,
-  queries: SyncQueries
-): Promise<void> {
-  const pathsByHash = new Map<string, Array<string>>()
-  for (const [filePath, node] of tree) {
-    if (!(node instanceof Leaf)) continue
-    const paths = pathsByHash.get(node.sha) ?? []
-    paths.push(filePath)
-    pathsByHash.set(node.sha, paths)
-  }
-  const found = new Set<string>()
-  let rows = Array<ReturnType<typeof entryIndexRow>>()
-  async function flush(): Promise<void> {
-    if (!rows.length) return
-    await db.insert(EntryIndexTable).values(rows)
-    rows = []
-  }
-  for await (const [fileHash, blob] of source.getBlobs([
-    ...pathsByHash.keys()
-  ])) {
-    const paths = pathsByHash.get(fileHash)
-    if (!paths) continue
-    found.add(fileHash)
-    for (const filePath of paths) {
-      const entry = parseSourceEntry(config, filePath, fileHash, blob)
-      rows.push({
-        ...entryIndexRow(entry),
-        childrenSha: sourceDirectorySha(tree, entry.childrenDir)
-      })
-      if (rows.length >= changeBatchSize) await flush()
-    }
-  }
-  await flush()
-  for (const fileHash of pathsByHash.keys())
-    assert(found.has(fileHash), `Source did not return blob ${fileHash}`)
-  await queries.markAllAffected.run()
-}
-
 async function* storedFiles(
   queries: SyncQueries
 ): AsyncGenerator<StoredFileRow> {
