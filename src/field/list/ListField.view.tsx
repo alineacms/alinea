@@ -653,6 +653,7 @@ function ListFieldRow({
                 <NodeEditor
                   initiallyExpandDisclosures={newlyCreated}
                   node={row as ReactiveNode<object>}
+                  readOnly={readOnly}
                   type={type}
                 />
               </ListRowBody>

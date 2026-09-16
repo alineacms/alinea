@@ -2,3 +2,11 @@
   margin: 14px 0;
   outline: 3px solid transparent;
 }
+
+.RichTextBlock-dropTarget {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 4px;
+}

@@ -1303,11 +1303,9 @@ test('reorders embedded blocks by dragging', async ({mount, page}) => {
   const handles = page.getByLabel('Drag Callout block')
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
   await expect(handles.first()).toBeVisible()
-  const targetBounds = await blocks.last().boundingBox()
-  if (!targetBounds) throw new Error('Drop target not found')
-  await handles.first().dragTo(blocks.last(), {
-    targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
-  })
+  await handles
+    .first()
+    .dragTo(blocks.last().locator('[data-richtext-block-drop-target]'))
 
   await expect(titles.first()).toHaveValue('Second')
   await expect(titles.last()).toHaveValue('Important')
@@ -1335,14 +1333,10 @@ test('undoes and redoes block duplication and movement', async ({
   await titles.last().fill('Second')
   const blocks = page.locator('[data-richtext-block="true"]')
   await blocks.first().locator('[data-richtext-block-header="true"]').hover()
-  const targetBounds = await blocks.last().boundingBox()
-  if (!targetBounds) throw new Error('Drop target not found')
   await page
     .getByLabel('Drag Callout block')
     .first()
-    .dragTo(blocks.last(), {
-      targetPosition: {x: targetBounds.width / 2, y: targetBounds.height - 1}
-    })
+    .dragTo(blocks.last().locator('[data-richtext-block-drop-target]'))
   await expect(titles.first()).toHaveValue('Second')
   await expect(titles.last()).toHaveValue('Important')
 

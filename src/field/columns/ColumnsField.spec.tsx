@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Example} from './ColumnsField.stories.js'
+import {Example, ReadOnlyExample} from './ColumnsField.stories.js'
 
 test('adds anonymous rows and columns from the restricted schema', async ({
   mount,
@@ -74,4 +74,32 @@ test('inserts rows from the shared row actions menu', async ({mount, page}) => {
   await expect(
     page.getByRole('listitem', {name: 'Field row'}).first()
   ).toContainText('Email field')
+})
+
+test('disables nested fields and resizing in a read-only layout', async ({
+  mount,
+  page
+}) => {
+  await mount(<ReadOnlyExample />)
+
+  const firstRow = page.getByRole('listitem', {name: 'Field row'}).first()
+  await expect(
+    firstRow.getByRole('checkbox', {name: 'Required'}).first()
+  ).toBeDisabled()
+  await expect(firstRow.getByRole('slider')).toHaveCount(0)
+  await expect(firstRow.getByRole('button', {name: 'Add column'})).toHaveCount(
+    0
+  )
+
+  await firstRow.getByRole('button', {name: 'Settings'}).first().click()
+  await expect(
+    firstRow.getByRole('textbox', {name: 'Label'}).first()
+  ).toBeDisabled()
+  await firstRow
+    .getByRole('button', {name: 'Field', exact: true})
+    .first()
+    .click()
+  await expect(
+    firstRow.getByRole('textbox', {name: 'Placeholder'}).first()
+  ).toBeDisabled()
 })

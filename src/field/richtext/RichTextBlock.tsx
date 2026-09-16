@@ -137,6 +137,13 @@ export const RichTextBlock = memo(function RichTextBlock({
           </ListRowBody>
         )}
       </ListRow>
+      {!readOnly && (
+        <div
+          aria-hidden
+          className={styles.RichTextBlock.dropTarget()}
+          data-richtext-block-drop-target="true"
+        />
+      )}
     </List>
   )
 })

@@ -97,22 +97,41 @@ const contactType = type('Contact form', {
   }
 })
 
+const readOnlyContactType = type('Read-only contact form', {
+  fields: {
+    layout: list.columns('Contact details', {
+      schema: formControls,
+      initialValue: initialFields,
+      readOnly: true
+    })
+  }
+})
+
 const storyStyle: CSSProperties = {
   maxWidth: 960,
   padding: 24
 }
 
 export function Example() {
+  return <ColumnsExample formType={contactType} />
+}
+
+export function ReadOnlyExample() {
+  return <ColumnsExample formType={readOnlyContactType} />
+}
+
+interface ColumnsExampleProps {
+  formType: Type
+}
+
+function ColumnsExample({formType}: ColumnsExampleProps) {
   const editor = useMemo(
     () =>
-      new EntryEditor(
-        contactType,
-        new ReactiveNode(Type.initialValue(contactType))
-      ),
-    []
+      new EntryEditor(formType, new ReactiveNode(Type.initialValue(formType))),
+    [formType]
   )
-  const layout = Field.isField(contactType.layout) ? contactType.layout : null
-  if (!layout) return null
+  const layout = Type.fields(formType).layout
+  if (!Field.isField(layout)) return null
   return (
     <StoryProvider views={views}>
       <EditorScope editor={editor}>

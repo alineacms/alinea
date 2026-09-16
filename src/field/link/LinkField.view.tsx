@@ -840,7 +840,12 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
   const anchorRef = useRef<HTMLDivElement>(null)
   if (options.readOnly) return null
   return (
-    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
+    <div
+      aria-label={`Add ${options.label || 'link'}`}
+      className={styles.LinkFieldView.create()}
+      ref={anchorRef}
+      role="toolbar"
+    >
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           anchorRef={anchorRef}
@@ -876,7 +881,12 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   if (options.readOnly) return null
   if (!showCreate) return null
   return (
-    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
+    <div
+      aria-label={`Add ${options.label || 'links'}`}
+      className={styles.LinkFieldView.create()}
+      ref={anchorRef}
+      role="toolbar"
+    >
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           allowDuplicates={options.allowDuplicates}

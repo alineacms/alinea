@@ -1,6 +1,7 @@
 import type {ColumnsListValue} from '#/field/list/ColumnsListField.js'
 import {
   appendColumn,
+  appendColumnsRow,
   equalColumnSpans,
   groupColumnsList,
   insertColumnsRow,
@@ -13,9 +14,14 @@ import {text} from '#/field/text.js'
 import {expect, test} from 'bun:test'
 
 function item(id: string, row?: string, span?: number): ColumnsListValue {
+  const indexes: Record<string, string> = {
+    one: 'a0',
+    two: 'a1',
+    three: 'a2'
+  }
   return {
     _id: id,
-    _index: id,
+    _index: indexes[id] ?? 'a3',
     _type: 'Text',
     _layout: row && span ? {row, span} : undefined
   }
@@ -50,6 +56,21 @@ test('adding a column groups it and balances the row', () => {
     {row: 'address', span: 6}
   ])
   expect(equalColumnSpans(3)).toEqual([4, 4, 4])
+})
+
+test('structural edits preserve unaffected fractional indexes', () => {
+  const values = [item('one', 'address', 12), item('two', 'contact', 12)]
+  const appended = appendColumnsRow(values, [item('three', 'extra', 12)])
+  expect(appended.slice(0, 2).map(value => value._index)).toEqual(['a0', 'a1'])
+
+  const inserted = insertColumnsRow(
+    values,
+    'contact',
+    [item('three', 'extra', 12)],
+    'before'
+  )
+  expect(inserted[0]._index).toBe('a0')
+  expect(inserted[2]._index).toBe('a1')
 })
 
 test('resizing preserves the pair total and minimum', () => {

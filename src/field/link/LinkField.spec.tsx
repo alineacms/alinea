@@ -23,7 +23,10 @@ test('shows image results outside an entry scope', async ({mount, page}) => {
 
   const field = page.getByRole('list', {name: 'Hero image'})
   await field.getByRole('button', {name: 'Remove link'}).click()
-  await field.getByRole('button', {name: 'Image'}).click()
+  await page
+    .getByRole('toolbar', {name: 'Add Hero image'})
+    .getByRole('button', {name: 'Image'})
+    .click()
 
   const picker = page.getByRole('dialog', {name: 'Pick an image'})
   await expect(
@@ -184,7 +187,7 @@ test('keeps static picker conditions outside an entry scope', async ({
 }) => {
   await mount(<FilteredEntryFieldWithoutEntryScope />)
   await page
-    .getByRole('list', {name: 'Filtered entry'})
+    .getByRole('toolbar', {name: 'Add Filtered entry'})
     .getByRole('button', {name: 'Filtered entry'})
     .click()
   await page.getByRole('button', {name: 'Expand entry picker'}).click()
@@ -202,9 +205,9 @@ test('keeps static picker conditions outside an entry scope', async ({
 test('keeps picker copy for generic link fields', async ({mount, page}) => {
   await mount(<Example />)
 
-  const field = page.getByRole('list', {name: 'Resources'})
-  await expect(field.getByRole('button', {name: 'Page link'})).toBeVisible()
-  await expect(field.getByRole('button', {name: 'Resources'})).toHaveCount(0)
+  const create = page.getByRole('toolbar', {name: 'Add Resources'})
+  await expect(create.getByRole('button', {name: 'Page link'})).toBeVisible()
+  await expect(create.getByRole('button', {name: 'Resources'})).toHaveCount(0)
 })
 
 test('selects unique entries in one compact picker action', async ({
@@ -215,7 +218,10 @@ test('selects unique entries in one compact picker action', async ({
   const field = page.getByRole('list', {name: 'Related entries'})
   await expect(field.getByText('Home', {exact: true})).toHaveCount(1)
 
-  await field.getByRole('button', {name: 'Related entries'}).click()
+  await page
+    .getByRole('toolbar', {name: 'Add Related entries'})
+    .getByRole('button', {name: 'Related entries'})
+    .click()
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home).toHaveAttribute('aria-selected', 'true')
@@ -237,7 +243,10 @@ test('allows duplicate generic links by default', async ({mount, page}) => {
   const field = page.getByRole('list', {name: 'Resources'})
   await expect(field.getByText('Home', {exact: true})).toHaveCount(1)
 
-  await field.getByRole('button', {name: 'Page link'}).click()
+  await page
+    .getByRole('toolbar', {name: 'Add Resources'})
+    .getByRole('button', {name: 'Page link'})
+    .click()
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home).not.toHaveAttribute('aria-selected', 'true')
@@ -275,15 +284,13 @@ test('expands the compact entry picker into the explorer modal', async ({
   await expect(page.getByRole('button', {name: 'Select'})).toBeVisible()
 })
 
-test('centers the compact picker on the entire link field', async ({
+test('aligns the compact picker with its create actions', async ({
   mount,
   page
 }) => {
   await mount(<Example />)
-  const trigger = page
-    .getByRole('list', {name: 'Resources'})
-    .getByRole('button', {name: 'Page link'})
-  const field = trigger.locator('..')
+  const field = page.getByRole('toolbar', {name: 'Add Resources'})
+  const trigger = field.getByRole('button', {name: 'Page link'})
   await trigger.click()
 
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
@@ -293,9 +300,7 @@ test('centers the compact picker on the entire link field', async ({
       const fieldBox = await field.boundingBox()
       const pickerBox = await picker.boundingBox()
       if (!fieldBox || !pickerBox) return Number.POSITIVE_INFINITY
-      const fieldCenter = fieldBox.x + fieldBox.width / 2
-      const pickerCenter = pickerBox.x + pickerBox.width / 2
-      return Math.abs(fieldCenter - pickerCenter)
+      return Math.abs(fieldBox.x - pickerBox.x)
     })
     .toBeLessThanOrEqual(1)
 })

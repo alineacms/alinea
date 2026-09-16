@@ -67,6 +67,7 @@ import {
 import css from './ColumnsListField.module.css'
 import {
   appendColumn,
+  appendColumnsRow,
   columnLayout,
   columnsMax,
   columnsMinSpan,
@@ -76,7 +77,6 @@ import {
   groupColumnsList,
   insertColumnsRow,
   moveColumnsRow,
-  reindexColumnsList,
   removeColumnsRow,
   resizeColumnBoundary
 } from './ColumnsListField.js'
@@ -154,7 +154,7 @@ export function ColumnsListFieldView({field}: ColumnsListFieldViewProps) {
     const rowId = createId()
     const value = createListValue(item, {row: rowId, span: columnsTracks})
     setNewBlockIds(current => new Set(current).add(value._id))
-    setValue(current => reindexColumnsList([...current, value]))
+    setValue(current => appendColumnsRow(current, [value]))
   }
 
   function addColumn(rowId: string, item: ColumnsListTypeItem) {
@@ -489,26 +489,30 @@ function ColumnsListRow({
                           item.value._id
                         )}
                         node={nodes[item.index] as ReactiveNode<object>}
+                        readOnly={readOnly}
                         type={type}
                       />
                     </div>
                   </div>
                 )
               })}
-              {group.items.slice(0, -1).map((item, index) => (
-                <ColumnsResizer
-                  gridRef={gridRef}
-                  key={item.value._id}
-                  left={item.value}
-                  leftIndex={index}
-                  offset={group.items
-                    .slice(0, index + 1)
-                    .reduce((sum, current) => sum + current.layout.span, 0)}
-                  right={group.items[index + 1].value}
-                  rowId={group.id}
-                  setValue={setValue}
-                />
-              ))}
+              {!readOnly &&
+                group.items
+                  .slice(0, -1)
+                  .map((item, index) => (
+                    <ColumnsResizer
+                      gridRef={gridRef}
+                      key={item.value._id}
+                      left={item.value}
+                      leftIndex={index}
+                      offset={group.items
+                        .slice(0, index + 1)
+                        .reduce((sum, current) => sum + current.layout.span, 0)}
+                      right={group.items[index + 1].value}
+                      rowId={group.id}
+                      setValue={setValue}
+                    />
+                  ))}
             </div>
           </ListRowBody>
         )}

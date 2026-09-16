@@ -1,5 +1,8 @@
 import type {ListRow, ListRowLayout} from '#/core/ListRow.js'
-import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
+import {
+  generateKeyBetween,
+  generateNKeysBetween
+} from '#/core/util/FractionalIndexing.js'
 
 export const columnsTracks = 12
 export const columnsMax = 4
@@ -75,18 +78,27 @@ export function appendColumn(
   })
   next.splice(lastIndex + 1, 0, {
     ...value,
+    _index: generateKeyBetween(
+      next[lastIndex]?._index || null,
+      next[lastIndex + 1]?._index || null
+    ),
     _layout: {row: rowId, span: spans[spans.length - 1]}
   })
-  return reindexColumnsList(next)
+  return next
+}
+
+export function appendColumnsRow(
+  values: Array<ColumnsListValue>,
+  row: Array<ColumnsListValue>
+): Array<ColumnsListValue> {
+  return insertColumnsValues(values, values.length, row)
 }
 
 export function removeColumnsRow(
   values: Array<ColumnsListValue>,
   rowId: string
 ): Array<ColumnsListValue> {
-  return reindexColumnsList(
-    values.filter(value => columnLayout(value).row !== rowId)
-  )
+  return values.filter(value => columnLayout(value).row !== rowId)
 }
 
 export function insertColumnsRow(
@@ -103,9 +115,7 @@ export function insertColumnsRow(
     position === 'before'
       ? targetIndexes[0]
       : targetIndexes[targetIndexes.length - 1] + 1
-  const next = [...values]
-  next.splice(insertAt, 0, ...row)
-  return reindexColumnsList(next)
+  return insertColumnsValues(values, insertAt, row)
 }
 
 export function moveColumnsRow(
@@ -126,8 +136,7 @@ export function moveColumnsRow(
     position === 'before'
       ? targetIndexes[0]
       : targetIndexes[targetIndexes.length - 1] + 1
-  remaining.splice(insertAt, 0, ...moving)
-  return reindexColumnsList(remaining)
+  return insertColumnsValues(remaining, insertAt, moving)
 }
 
 export function resizeColumnBoundary(
@@ -154,9 +163,19 @@ export function resizeColumnBoundary(
   })
 }
 
-export function reindexColumnsList(
-  values: Array<ColumnsListValue>
+function insertColumnsValues(
+  values: Array<ColumnsListValue>,
+  insertAt: number,
+  inserted: Array<ColumnsListValue>
 ): Array<ColumnsListValue> {
-  const keys = generateNKeysBetween(null, null, values.length)
-  return values.map((value, index) => ({...value, _index: keys[index]}))
+  const keyA = values[insertAt - 1]?._index || null
+  const keyB = values[insertAt]?._index || null
+  const keys = generateNKeysBetween(keyA, keyB, inserted.length)
+  const next = [...values]
+  next.splice(
+    insertAt,
+    0,
+    ...inserted.map((value, index) => ({...value, _index: keys[index]}))
+  )
+  return next
 }
