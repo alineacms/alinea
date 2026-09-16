@@ -1,20 +1,21 @@
 import type {EdgeQuery} from '#/core/Graph.js'
 import {
   and,
+  alias,
   asc,
   Builder,
   desc,
   eq,
-  exists,
   getSql,
   gt,
+  gte,
   inArray,
-  isNull,
   lt,
   lte,
   ne,
   not,
   sql,
+  type HasSql,
   type Sql
 } from 'rado'
 import type {EntryIndexTarget} from '../entry/Schema.js'
@@ -29,6 +30,44 @@ export interface RelationSource {
   level: number
   index: string
   path: string
+}
+
+export interface SqlRelationSource {
+  versionId: HasSql<string>
+  id: HasSql<string>
+  locale: HasSql<string | null>
+  parentId: HasSql<string | null>
+  parents: HasSql<Array<string>>
+  level: HasSql<number>
+  index: HasSql<string>
+  path: HasSql<string>
+}
+
+export type AnyRelationSource = RelationSource | SqlRelationSource
+
+export function canBatchRelation(query: EdgeQuery): boolean {
+  if (
+    query.select === undefined ||
+    query.orderBy !== undefined ||
+    query.groupBy !== undefined ||
+    query.skip !== undefined ||
+    query.take !== undefined ||
+    query.id !== undefined ||
+    query.parentId !== undefined ||
+    query.locale !== undefined ||
+    query.preferredLocale !== undefined ||
+    query.count ||
+    query.first ||
+    query.get
+  )
+    return false
+  return (
+    query.edge === 'parent' ||
+    query.edge === 'parents' ||
+    (query.edge === 'children' && (query.depth ?? 1) === 1) ||
+    query.edge === 'siblings' ||
+    query.edge === 'translations'
+  )
 }
 
 export function relationSource(entry: EntryIndexTarget) {
@@ -47,7 +86,7 @@ export function relationSource(entry: EntryIndexTarget) {
 /** Expand the stored references as SQL rows, retaining list order and duplicates. */
 export function linkRelation(
   entry: EntryIndexTarget,
-  source: RelationSource,
+  source: AnyRelationSource,
   field: string,
   multiple: boolean
 ) {
@@ -68,12 +107,9 @@ export function linkRelation(
 export function relationCondition(
   entry: EntryIndexTarget,
   query: EdgeQuery,
-  source: RelationSource
+  source: AnyRelationSource
 ): Sql<boolean> {
-  const locale =
-    source.locale === null
-      ? isNull(entry.locale)
-      : eq(entry.locale, source.locale)
+  const locale = sql<boolean>`${entry.locale} is ${source.locale}`
   switch (query.edge) {
     case 'parent':
       return source.parentId
@@ -95,28 +131,58 @@ export function relationCondition(
           : not(sql`coalesce(${locale}, false)`)
       )
     case 'parents': {
-      const ids = source.parents.slice(
-        -(query.depth ?? Number.POSITIVE_INFINITY)
-      )
+      const depth = query.depth ?? Number.POSITIVE_INFINITY
+      const ids = Array.isArray(source.parents)
+        ? source.parents.slice(-depth)
+        : new Builder()
+            .select(sql<string>`value`)
+            .from(sql`json_each(${source.parents})`)
+            .where(
+              Number.isFinite(depth)
+                ? gte(
+                    sql<number>`key`,
+                    sql<number>`json_array_length(${source.parents}) - ${depth}`
+                  )
+                : sql.value(true)
+            )
       return and(inArray(entry.id, ids), locale)
     }
     case 'children': {
       const depth = query.depth ?? 1
       if (depth <= 0) return sql.value(false)
       if (depth === 1) return and(eq(entry.parentId, source.id), locale)
-      const ancestor = exists(
+      const Child = alias(entry, 'alinea_descendant')
+      const sourceId =
+        typeof source.id === 'string' ? sql.value(source.id) : source.id
+      const descendants = new Builder().$with('alinea_descendants').as(
         new Builder()
-          .select(sql.value(1))
-          .from(sql`json_each(${entry.parents})`)
-          .where(eq(sql`value`, source.id))
+          .select({
+            id: sourceId,
+            level: sql<number>`0`
+          })
+          .unionAll(self =>
+            new Builder()
+              .select({
+                id: Child.id,
+                level: sql<number>`${self.level} + 1`
+              })
+              .from(Child)
+              .innerJoin(self, eq(Child.parentId, self.id))
+              .where(
+                sql<boolean>`${Child.locale} is ${source.locale}`,
+                Number.isFinite(depth)
+                  ? lte(sql<number>`${self.level} + 1`, Math.min(depth, 999))
+                  : sql.value(true)
+              )
+          )
       )
-      return and(
-        ancestor,
-        locale,
-        Number.isFinite(depth)
-          ? lte(entry.level, source.level + depth)
-          : sql.value(true)
-      )
+      const ids = new Builder()
+        .withRecursive(descendants)
+        .select(descendants.id)
+        .from(descendants)
+        .limit(Number.MAX_SAFE_INTEGER)
+        .offset(1)
+      return and(inArray(entry.id, ids), locale)
     }
     case 'next':
     case 'previous': {

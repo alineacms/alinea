@@ -20,12 +20,13 @@ import {
   and,
   asc,
   Builder,
+  count,
   desc,
   eq,
   exists,
   getSql,
+  include,
   isNull,
-  min,
   or,
   sql,
   when,
@@ -48,10 +49,11 @@ import {
 import {searchQuery} from './Search.js'
 
 import {
+  canBatchRelation,
   linkRelation,
   relationCondition,
   relationSource,
-  type RelationSource
+  type AnyRelationSource
 } from './Relation.js'
 
 const builder = new Builder()
@@ -59,6 +61,8 @@ const builder = new Builder()
 interface RelationProjection {
   path: Array<string>
   query: EdgeQuery
+  plan: ProjectionPlan
+  embedded: boolean
 }
 
 interface FieldProjection {
@@ -72,6 +76,21 @@ interface OptionalProjection {
   dataPath: Array<string>
 }
 
+export interface ProjectionPlan {
+  count: boolean
+  single: boolean
+  needsSearch: boolean
+  relations: Array<RelationProjection>
+  fields: Array<FieldProjection>
+  optional: Array<OptionalProjection>
+}
+
+interface CompiledRelation {
+  selection: SelectionInput
+  plan: ProjectionPlan
+  embedded: boolean
+}
+
 /** Expressions over a complete entry row. */
 class Expressions {
   relations: Array<RelationProjection> = []
@@ -80,15 +99,18 @@ class Expressions {
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
   #entry: EntryIndexTarget
+  #relation: (query: EdgeQuery) => CompiledRelation
 
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
-    search?: ReturnType<typeof searchQuery>
+    search: ReturnType<typeof searchQuery> | undefined,
+    relation: (query: EdgeQuery) => CompiledRelation
   ) {
     this.#scope = scope
     this.#entry = entry
     this.#search = search
+    this.#relation = relation
   }
 
   data(path: Array<string>): HasSql {
@@ -206,8 +228,15 @@ class Expressions {
     }
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
     if ('edge' in value) {
-      this.relations.push({path, query: value as unknown as EdgeQuery})
-      return sql.value(null)
+      const query = value as unknown as EdgeQuery
+      const relation = this.#relation(query)
+      this.relations.push({
+        path,
+        query,
+        plan: relation.plan,
+        embedded: relation.embedded
+      })
+      return relation.selection
     }
     const result: SelectionRecord = {}
     for (const [key, nested] of Object.entries(value))
@@ -219,15 +248,19 @@ class Expressions {
 export function compileEntryQuery(
   config: Config,
   query: GraphQuery,
-  source?: RelationSource,
+  source?: AnyRelationSource,
   search?: ReturnType<typeof searchQuery>,
-  entry: EntryIndexTarget = EntryIndexTable
+  entry: EntryIndexTarget = EntryIndexTable,
+  depth = 0,
+  baseEntry: EntryIndexTarget = entry
 ) {
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
   search ??= searchQuery(query.search, entry)
-  const membership = new Expressions(scope, entry, search)
+  const membership = new Expressions(scope, entry, search, () => {
+    throw new Error('Relations cannot be used as query conditions')
+  })
   const conditions: Array<Sql<boolean>> = []
   // An explicit authored status addresses physical versions, including one
   // currently hidden by another active/main version.
@@ -289,6 +322,13 @@ export function compileEntryQuery(
         eq(sql`${entry.locale} collate nocase`, query.preferredLocale)
       )
     )
+  else if (link && source)
+    conditions.push(
+      or(
+        isNull(entry.locale),
+        eq(sql`${entry.locale} collate nocase`, source.locale)
+      )
+    )
   if (query.type) {
     const types = Array.isArray(query.type) ? query.type : [query.type]
     const names = types.map(type => {
@@ -327,45 +367,29 @@ export function compileEntryQuery(
     ? membership.grouping(query.groupBy)
     : undefined
   const ordering: Array<HasSql> = []
-  const NodeVersion = alias(entry, 'alinea_node_version')
-  const LanguageVersion = alias(entry, 'alinea_language_version')
-  const firstNodeFile = builder
-    .select(min(NodeVersion.filePath))
-    .from(NodeVersion)
-    .where(eq(NodeVersion.id, entry.id))
-  const firstLanguageFile = builder
-    .select(min(LanguageVersion.filePath))
-    .from(LanguageVersion)
-    .where(
-      and(
-        eq(LanguageVersion.id, entry.id),
-        sql<boolean>`${LanguageVersion.locale} is ${entry.locale}`
-      )
-    )
   const stableOrdering = links
     ? [asc(links.ordinal)]
-    : [
-        asc(entry.index),
-        asc(firstNodeFile),
-        asc(firstLanguageFile),
-        asc(entry.filePath)
-      ]
+    : [asc(entry.index), asc(entry.filePath)]
+  let uniquelyOrdered = false
   if (query.orderBy) {
     for (const order of Array.isArray(query.orderBy)
       ? query.orderBy
       : [query.orderBy]) {
       if ((order.asc !== undefined) === (order.desc !== undefined))
         throw new Error('orderBy must specify exactly one direction')
-      const value = membership.expr((order.asc ?? order.desc)!)
+      const expression = (order.asc ?? order.desc)!
+      const internal = getExpr(expression)
+      const ordersByFilePath =
+        internal.type === 'entryField' && internal.name === 'filePath'
+      const value = membership.expr(expression)
       const collated = order.caseSensitive
         ? value
         : sql`${value} collate nocase`
       // Match the original resolver: strings are case-insensitive unless the
       // query opts in, and nulls sort last in either direction.
-      ordering.push(
-        asc(isNull(collated)),
-        order.asc ? asc(collated) : desc(collated)
-      )
+      if (!ordersByFilePath) ordering.push(asc(isNull(collated)))
+      ordering.push(order.asc ? asc(collated) : desc(collated))
+      uniquelyOrdered ||= ordersByFilePath
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
@@ -383,9 +407,58 @@ export function compileEntryQuery(
         )
       )
     )
-  ordering.push(...stableOrdering)
+  if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
-  const projection = new Expressions(scope, entry, search)
+  const projection = new Expressions(scope, entry, search, relationQuery => {
+    if (canBatchRelation(relationQuery))
+      return {
+        selection: sql.value(null),
+        plan: {
+          count: false,
+          single: false,
+          needsSearch: false,
+          relations: [],
+          fields: [],
+          optional: []
+        },
+        embedded: false
+      }
+    const nestedEntry = alias(baseEntry, `alinea_relation_${depth + 1}`)
+    const nested = compileEntryQuery(
+      config,
+      {...relationQuery, status: query.status ?? 'published'},
+      relationSource(entry),
+      undefined,
+      nestedEntry,
+      depth + 1,
+      baseEntry
+    )
+    const plan: ProjectionPlan = {
+      count: nested.count,
+      single: nested.single,
+      needsSearch: nested.needsSearch,
+      relations: nested.relations,
+      fields: nested.fields,
+      optional: nested.optional
+    }
+    if (nested.count) {
+      const matches = nested.rows.as(`alinea_relation_count_${depth + 1}`)
+      return {
+        selection: include.one(
+          builder.select(count().as('count')).from(matches)
+        ),
+        plan,
+        embedded: true
+      }
+    }
+    return {
+      selection: nested.single
+        ? include.one(nested.rows)
+        : include(nested.rows),
+      plan,
+      embedded: true
+    }
+  })
   const types = query.type
     ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
     : []
@@ -475,6 +548,9 @@ export function compileEntryQuery(
     ),
     count: query.count === true,
     single,
+    needsSearch:
+      query.search !== undefined ||
+      projection.relations.some(relation => relation.plan.needsSearch),
     relations: projection.relations,
     fields: projection.fields,
     optional: projection.optional

@@ -446,6 +446,35 @@ test('batches relation projections without changing their results', async () => 
     )
     expect(batched).toEqual(individual)
 
+    const complexRelationSelection = {
+      id: Entry.id,
+      descendants: Query.children({depth: 2, select: Entry.id}),
+      pagedChildren: Query.children({
+        orderBy: {desc: Article.title},
+        skip: 1,
+        take: 1,
+        select: Entry.id
+      }),
+      groupedChildren: Query.children({
+        groupBy: Article.spotlight,
+        select: Entry.id
+      }),
+      childCount: Query.children({count: true}),
+      next: Query.next({select: Entry.id}),
+      previous: Query.previous({select: Entry.id}),
+      linked: Article.multi.find({take: 1, select: Entry.id})
+    }
+    const complexBatched = await store.find({
+      id: {in: ['parent', 'child-1', 'child-2', 'grand']},
+      select: complexRelationSelection
+    })
+    const complexIndividual = await Promise.all(
+      complexBatched.map(({id}) =>
+        store.get({id, select: complexRelationSelection})
+      )
+    )
+    expect(complexBatched).toEqual(complexIndividual)
+
     const translationSelection = {
       id: Entry.id,
       locale: Entry.locale,

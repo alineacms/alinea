@@ -47,7 +47,7 @@ import {
   storedEntryData,
   type EntryIndexTarget
 } from './entry/Schema.js'
-import {compileEntryQuery} from './query/EntryQuery.js'
+import {compileEntryQuery, type ProjectionPlan} from './query/EntryQuery.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {
@@ -148,6 +148,15 @@ function setProjectionValue(
     target = target[key]
   }
   if (isRecord(target)) target[path.at(-1)!] = replacement
+}
+
+function getProjectionValue(value: unknown, path: Array<string>): unknown {
+  let current = value
+  for (const key of path) {
+    if (!isRecord(current)) return
+    current = current[key]
+  }
+  return current
 }
 
 /** A queryable entry database or a named copy-on-write view over one. */
@@ -602,188 +611,199 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       search,
       this.#entryTarget
     )
-    if (query.search !== undefined && !this.#options.search)
-      await this.#ensureSearch(db)
-    const result = await (async () => {
-      if (plan.count) {
-        const total = await db
-          .select(count())
-          .from(plan.rows.as('matches'))
-          .get()
-        return {count: total, rows: []}
-      }
-      const rows = await plan.rows.all(db)
-      if (!source && query.get && !rows.length)
-        throw new Error('Entry not found')
-      return {count: undefined, rows}
-    })()
-    if (plan.count) return result.count
-    const batchedRelations = await this.#batchSimpleRelations(
-      query,
-      plan,
-      result.rows,
-      db
-    )
-    const rows: Array<unknown> = []
-    for (let rowIndex = 0; rowIndex < result.rows.length; rowIndex++) {
-      const row = result.rows[rowIndex]
-      if (
-        !plan.relations.length &&
-        !plan.fields.length &&
-        !plan.optional.length
-      ) {
-        rows.push(row)
-        continue
-      }
-      const projected = row as {
-        value: unknown
-        source: RelationSource
-        data?: unknown
-      }
-      let value = projected.value
-      const selectedData =
-        plan.fields.length || plan.optional.length
-          ? storedEntryData(projected.data, projected.source.path)
-          : undefined
-      const database = this
-      const loader: LinkResolver = {
-        resolver: {config: this.#config},
-        locale: projected.source.locale,
-        includedAtBuild(filePath) {
-          return database.#options.includedAtBuild?.(filePath) ?? false
-        },
-        async resolveLinks<P extends Projection>(
-          projection: P,
-          ids: ReadonlyArray<string>,
-          locale: string | null | undefined = projected.source.locale
-        ): Promise<Array<InferProjection<P>>> {
-          return (await database.#resolve(
-            {
-              select: projection,
-              id: {in: ids},
-              status: query.status ?? 'published',
-              preferredLocale: locale ?? undefined
-            },
-            db
-          )) as Array<InferProjection<P>>
-        },
-        async resolveTargets<P extends Projection & {id: unknown}>(
-          projection: P,
-          targets: ReadonlyArray<{entryId: string; locale?: string}>
-        ): Promise<Array<InferProjection<P> | undefined>> {
-          const targetsByLocale = new Map<string | undefined, Set<string>>()
-          for (const {entryId, locale} of targets) {
-            const ids = targetsByLocale.get(locale) ?? new Set<string>()
-            ids.add(entryId)
-            targetsByLocale.set(locale, ids)
-          }
-          const resultsByLocale = new Map<
-            string | undefined,
-            Map<string, InferProjection<P>>
-          >()
-          await Promise.all(
-            Array.from(targetsByLocale, async ([locale, ids]) => {
-              const results = await loader.resolveLinks(
-                projection,
-                [...ids],
-                locale
-              )
-              resultsByLocale.set(
-                locale,
-                new Map(results.map(result => [String(result.id), result]))
-              )
-            })
-          )
-          return targets.map(({entryId, locale}) =>
-            resultsByLocale.get(locale)?.get(entryId)
-          )
-        }
-      }
-      for (const selected of plan.fields) {
-        const present = Object.hasOwn(selectedData!, selected.name)
-        if (!selected.path.length) {
-          if (!present) value = undefined
-          // The Graph resolver returns a falsy top-level selection directly.
-          if (value)
-            value = await Field.queryValue(selected.field, value, loader)
-        } else {
-          let target = value
-          for (const key of selected.path.slice(0, -1)) {
-            if (!isRecord(target))
-              throw new Error('Invalid field projection path')
-            target = target[key]
-          }
-          if (!isRecord(target))
-            throw new Error('Invalid field projection target')
-          const key = selected.path.at(-1)!
-          const processed = await Field.queryValue(
-            selected.field,
-            present ? target[key] : undefined,
-            loader
-          )
-          Object.defineProperty(target, key, {
-            value: processed,
-            enumerable: true,
-            configurable: true,
-            writable: true
-          })
-        }
-      }
-      for (const selected of plan.optional) {
-        if (hasOwnPath(selectedData!, selected.dataPath)) continue
-        if (!selected.path.length) value = undefined
-        else setProjectionValue(value, selected.path, undefined)
-      }
-      for (
-        let relationIndex = 0;
-        relationIndex < plan.relations.length;
-        relationIndex++
-      ) {
-        const relation = plan.relations[relationIndex]
-        const batched = batchedRelations.get(`${rowIndex}:${relationIndex}`)
-        const related = batchedRelations.has(`${rowIndex}:${relationIndex}`)
-          ? batched
-          : await this.#resolve(
-              {
-                ...relation.query,
-                status: query.status ?? 'published'
-              },
-              db,
-              projected.source
-            )
-        if (!relation.path.length) value = related
-        else {
-          let target = value
-          for (const key of relation.path.slice(0, -1)) {
-            if (!isRecord(target))
-              throw new Error('Invalid relation projection path')
-            target = target[key]
-          }
-          if (!isRecord(target))
-            throw new Error('Invalid relation projection target')
-          Object.defineProperty(target, relation.path.at(-1)!, {
-            value: related,
-            enumerable: true,
-            configurable: true,
-            writable: true
-          })
-        }
-      }
-      rows.push(value)
-    }
-    // Graph's nested projection stage returns undefined for an absent single
-    // relation; only the public top-level first/get stage normalizes absence.
-    return plan.single ? (source || rows.length ? rows[0] : null) : rows
+    if (plan.needsSearch && !this.#options.search) await this.#ensureSearch(db)
+    if (plan.count)
+      return db.select(count()).from(plan.rows.as('matches')).get()
+    const result = await plan.rows.all(db)
+    if (!source && query.get && !result.length)
+      throw new Error('Entry not found')
+    return this.#projectRows(query, plan, result, db, Boolean(source))
   }
 
-  async #batchSimpleRelations(
+  async #projectRows(
     query: GraphQuery,
-    plan: ReturnType<typeof compileEntryQuery>,
+    plan: ProjectionPlan,
+    result: Array<unknown>,
+    db: Database,
+    nested: boolean
+  ): Promise<unknown> {
+    const batchedRelations = await this.#batchSetRelations(
+      query,
+      plan,
+      result,
+      db
+    )
+    const rows = await Promise.all(
+      result.map(async (row, rowIndex): Promise<unknown> => {
+        if (
+          !plan.relations.length &&
+          !plan.fields.length &&
+          !plan.optional.length
+        )
+          return row
+        const projected = row as {
+          value: unknown
+          source: RelationSource
+          data?: unknown
+        }
+        let value = projected.value
+        const selectedData =
+          plan.fields.length || plan.optional.length
+            ? storedEntryData(projected.data, projected.source.path)
+            : undefined
+        const database = this
+        const loader: LinkResolver = {
+          resolver: {config: this.#config},
+          locale: projected.source.locale,
+          includedAtBuild(filePath) {
+            return database.#options.includedAtBuild?.(filePath) ?? false
+          },
+          async resolveLinks<P extends Projection>(
+            projection: P,
+            ids: ReadonlyArray<string>,
+            locale: string | null | undefined = projected.source.locale
+          ): Promise<Array<InferProjection<P>>> {
+            return (await database.#resolve(
+              {
+                select: projection,
+                id: {in: ids},
+                status: query.status ?? 'published',
+                preferredLocale: locale ?? undefined
+              },
+              db
+            )) as Array<InferProjection<P>>
+          },
+          async resolveTargets<P extends Projection & {id: unknown}>(
+            projection: P,
+            targets: ReadonlyArray<{entryId: string; locale?: string}>
+          ): Promise<Array<InferProjection<P> | undefined>> {
+            const targetsByLocale = new Map<string | undefined, Set<string>>()
+            for (const {entryId, locale} of targets) {
+              const ids = targetsByLocale.get(locale) ?? new Set<string>()
+              ids.add(entryId)
+              targetsByLocale.set(locale, ids)
+            }
+            const resultsByLocale = new Map<
+              string | undefined,
+              Map<string, InferProjection<P>>
+            >()
+            await Promise.all(
+              Array.from(targetsByLocale, async ([locale, ids]) => {
+                const results = await loader.resolveLinks(
+                  projection,
+                  [...ids],
+                  locale
+                )
+                resultsByLocale.set(
+                  locale,
+                  new Map(results.map(result => [String(result.id), result]))
+                )
+              })
+            )
+            return targets.map(({entryId, locale}) =>
+              resultsByLocale.get(locale)?.get(entryId)
+            )
+          }
+        }
+        await Promise.all(
+          plan.fields.map(async selected => {
+            const present = Object.hasOwn(selectedData!, selected.name)
+            if (!selected.path.length) {
+              if (!present) value = undefined
+              // The Graph resolver returns a falsy top-level selection directly.
+              if (value)
+                value = await Field.queryValue(selected.field, value, loader)
+            } else {
+              let target = value
+              for (const key of selected.path.slice(0, -1)) {
+                if (!isRecord(target))
+                  throw new Error('Invalid field projection path')
+                target = target[key]
+              }
+              if (!isRecord(target))
+                throw new Error('Invalid field projection target')
+              const key = selected.path.at(-1)!
+              const processed = await Field.queryValue(
+                selected.field,
+                present ? target[key] : undefined,
+                loader
+              )
+              Object.defineProperty(target, key, {
+                value: processed,
+                enumerable: true,
+                configurable: true,
+                writable: true
+              })
+            }
+          })
+        )
+        for (const selected of plan.optional) {
+          if (hasOwnPath(selectedData!, selected.dataPath)) continue
+          if (!selected.path.length) value = undefined
+          else setProjectionValue(value, selected.path, undefined)
+        }
+        await Promise.all(
+          plan.relations.map(async (relation, relationIndex) => {
+            const relationQuery = {
+              ...relation.query,
+              status: query.status ?? 'published'
+            }
+            const key = `${rowIndex}:${relationIndex}`
+            const included = relation.embedded
+              ? getProjectionValue(value, relation.path)
+              : batchedRelations.get(key)
+            const related = !relation.embedded
+              ? included
+              : relation.plan.count
+                ? (included ?? 0)
+                : await this.#projectRows(
+                    relationQuery,
+                    relation.plan,
+                    relation.plan.single
+                      ? included === null || included === undefined
+                        ? []
+                        : [included]
+                      : Array.isArray(included)
+                        ? included
+                        : [],
+                    db,
+                    true
+                  )
+            if (!relation.path.length) value = related
+            else {
+              let target = value
+              for (const key of relation.path.slice(0, -1)) {
+                if (!isRecord(target))
+                  throw new Error('Invalid relation projection path')
+                target = target[key]
+              }
+              if (!isRecord(target))
+                throw new Error('Invalid relation projection target')
+              Object.defineProperty(target, relation.path.at(-1)!, {
+                value: related,
+                enumerable: true,
+                configurable: true,
+                writable: true
+              })
+            }
+          })
+        )
+        return value
+      })
+    )
+    // Graph's nested projection stage returns undefined for an absent single
+    // relation; only the public top-level first/get stage normalizes absence.
+    return plan.single ? (nested || rows.length ? rows[0] : null) : rows
+  }
+
+  async #batchSetRelations(
+    query: GraphQuery,
+    plan: ProjectionPlan,
     rows: Array<unknown>,
     db: Database
   ): Promise<Map<string, unknown>> {
     const result = new Map<string, unknown>()
-    if (!plan.relations.length || rows.length < 2) return result
+    if (!plan.relations.some(relation => !relation.embedded)) return result
     const sources = rows.map(row => {
       if (!isRecord(row) || !isRecord(row.source)) return
       return row.source as unknown as RelationSource
@@ -795,20 +815,18 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       relationIndex++
     ) {
       const relation = plan.relations[relationIndex]
-      const nestedQuery = {
-        ...relation.query,
-        status: query.status ?? 'published'
-      }
+      if (relation.embedded) continue
       const direct = await this.#batchDirectRelations(
         relation.query,
-        nestedQuery,
+        {
+          ...relation.query,
+          status: query.status ?? 'published'
+        },
         sources as Array<RelationSource>,
         relationIndex,
         db
       )
-      if (direct) {
-        for (const [key, value] of direct) result.set(key, value)
-      }
+      for (const [key, value] of direct) result.set(key, value)
     }
     return result
   }
@@ -819,22 +837,7 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     sources: Array<RelationSource>,
     relationIndex: number,
     db: Database
-  ): Promise<Map<string, unknown> | undefined> {
-    if (
-      relation.select === undefined ||
-      relation.orderBy !== undefined ||
-      relation.groupBy !== undefined ||
-      relation.skip !== undefined ||
-      relation.take !== undefined ||
-      relation.id !== undefined ||
-      relation.parentId !== undefined ||
-      relation.locale !== undefined ||
-      relation.preferredLocale !== undefined ||
-      relation.count ||
-      relation.first ||
-      relation.get
-    )
-      return
+  ): Promise<Map<string, unknown>> {
     const {edge: _edge, ...baseQuery} = nestedQuery as GraphQuery & {
       edge: string
     }
@@ -936,8 +939,6 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
           )
         continue
       }
-      if (relation.edge !== 'children' && relation.edge !== 'siblings') return
-      if (relation.edge === 'children' && (relation.depth ?? 1) !== 1) return
       const parentIds = Array.from(
         new Set(
           group.flatMap(({source}) =>

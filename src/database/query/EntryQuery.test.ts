@@ -13,6 +13,7 @@ import {
 } from '../entry/Schema.js'
 import {compileEntryQuery} from './EntryQuery.js'
 import {aliasesFromData} from '#/core/db/EntryAliases.js'
+import * as Query from '#/query.js'
 
 const Page = type('Page', {fields: {title: text('Title')}})
 const config: Config = {schema: {Page}, workspaces: {}}
@@ -260,4 +261,45 @@ test('page locations use the physical source root and remain index-only', async 
     'grand',
     'parent'
   ])
+})
+
+test('unique ordering avoids correlated stable-order queries', async () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await db.create(EntryIndexTable)
+  const statement = compileEntryQuery(config, {
+    orderBy: {asc: Entry.filePath, caseSensitive: true},
+    take: 10,
+    select: Entry.id
+  }).rows.toSQL(db)
+  expect(statement.sql).not.toContain('select min(')
+  const explain = sqlite
+    .prepare(`explain query plan ${statement.sql}`)
+    .all(...(statement.params as Array<string | number | null>))
+  const details = JSON.stringify(explain)
+  expect(details).toContain('alinea_entry_index_by_file_path')
+  expect(details).not.toContain('CORRELATED SCALAR SUBQUERY')
+  expect(details).not.toContain('USE TEMP B-TREE FOR ORDER BY')
+})
+
+test('complex relations compile into the containing SQL query', () => {
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  const statement = compileEntryQuery(config, {
+    select: {
+      id: Entry.id,
+      children: Query.children({
+        depth: 2,
+        orderBy: {desc: Page.title},
+        skip: 1,
+        take: 2,
+        select: Entry.id
+      }),
+      count: Query.children({count: true}),
+      next: Query.next({select: Entry.id})
+    }
+  }).rows.toSQL(db)
+  expect(statement.sql).toContain('json_group_array')
+  expect(statement.sql).toContain('with recursive')
+  expect(statement.sql).toContain('alinea_relation_count_1')
 })
