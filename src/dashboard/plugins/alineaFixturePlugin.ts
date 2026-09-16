@@ -167,6 +167,8 @@ const fixtureUser = {
 }
 
 class FixtureDB extends EntryStore {
+  events = new EventTarget()
+
   capabilities() {
     return Promise.resolve({users: true})
   }
@@ -220,7 +222,6 @@ const runtime = await EntryStore.memory(cms.config, source)
 const db = new FixtureDB(cms.config, runtime.database, source, {
   close: () => runtime.close()
 })
-db.events = new EventTarget()
 db.onChange(change => db.events.dispatchEvent(new IndexEvent({
   op: 'index',
   sha: change.revision,
