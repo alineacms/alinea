@@ -405,5 +405,3 @@ export async function validateEntries(
 export async function copyInitialUrls(queries: SyncQueries): Promise<void> {
   await queries.copyInitialUrls.run()
 }
-
-/** Prepared, serialized source synchronization for one database connection. */
