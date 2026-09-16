@@ -8,7 +8,10 @@ test('archives and restores an entry', async ({dashboard, mount}) => {
   await expect(app.page.getByText('Archived', {exact: true})).toBeVisible()
 
   await app.runEntryAction('Publish')
-  await expect(app.page.getByText('Published', {exact: true})).toBeVisible()
+  await app.page.getByRole('button', {name: 'More actions'}).click()
+  await expect(
+    app.page.getByRole('menuitem', {name: 'Unpublish', exact: true})
+  ).toBeVisible()
 })
 
 test('deletes an entry and navigates to its parent', async ({

@@ -75,10 +75,13 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
 }
 
 function createImages(config: NextConfig, adminPath: string) {
+  const localPatterns = config.images?.localPatterns
+  // An omitted list allows every local image; creating one would restrict app assets.
+  if (!localPatterns) return config.images
   return {
     ...config.images,
     localPatterns: [
-      ...(config.images?.localPatterns ?? []),
+      ...localPatterns,
       {
         pathname: `${adminPath}/file/**`
       }

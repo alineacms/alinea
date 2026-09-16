@@ -464,10 +464,11 @@ export class RootAtoms {
       const policy = get(policyAtom)
       const moveTarget = event.target.key ? String(event.target.key) : this.key
       const targetType = event.target.key ? 'entry' : 'root'
+      const items = get(tree.items)
       for (const key of event.keys) {
         const id = String(key)
-        const item = get(tree.item(id))
-        if (item.dragDisabled) continue
+        const item = items.find(candidate => candidate.id === id)
+        if (!item || item.dragDisabled) continue
         policy.assert(
           event.target.dropPosition === 'on'
             ? Permission.Move
