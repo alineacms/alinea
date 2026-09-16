@@ -48,12 +48,14 @@ async function markAffected(
           : undefined
       )
     )) as Array<AffectedEntryRow>
-  await addAffected(
+  await addIds(
     db,
+    SyncAffected,
     existing.map(row => row.id)
   )
-  await addCascade(
+  await addIds(
     db,
+    SyncCascade,
     existing.flatMap(row =>
       row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
         ? [row.id]
@@ -63,30 +65,20 @@ async function markAffected(
   return existing
 }
 
-async function addAffected(db: Database, ids: Iterable<string>): Promise<void> {
+async function addIds(
+  db: Database,
+  table: typeof SyncAffected | typeof SyncCascade,
+  ids: Iterable<string>
+): Promise<void> {
   const unique = Array.from(new Set(ids))
   if (!unique.length) return
   const existing = await db
-    .select({id: SyncAffected.id})
-    .from(SyncAffected)
-    .where(inArray(SyncAffected.id, unique))
+    .select({id: table.id})
+    .from(table)
+    .where(inArray(table.id, unique))
   const present = new Set(existing.map(row => row.id))
   const missing = unique.filter(id => !present.has(id))
-  if (missing.length)
-    await db.insert(SyncAffected).values(missing.map(id => ({id})))
-}
-
-async function addCascade(db: Database, ids: Iterable<string>): Promise<void> {
-  const unique = Array.from(new Set(ids))
-  if (!unique.length) return
-  const existing = await db
-    .select({id: SyncCascade.id})
-    .from(SyncCascade)
-    .where(inArray(SyncCascade.id, unique))
-  const present = new Set(existing.map(row => row.id))
-  const missing = unique.filter(id => !present.has(id))
-  if (missing.length)
-    await db.insert(SyncCascade).values(missing.map(id => ({id})))
+  if (missing.length) await db.insert(table).values(missing.map(id => ({id})))
 }
 
 async function deleteFiles(
@@ -169,12 +161,14 @@ async function replaceFiles(
       )
     )
   await db.insert(EntryIndexTable).values(rows)
-  await addAffected(
+  await addIds(
     db,
+    SyncAffected,
     rows.map(row => row.id)
   )
-  await addCascade(
+  await addIds(
     db,
+    SyncCascade,
     rows.flatMap(row =>
       row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
         ? [row.id]
@@ -265,7 +259,7 @@ export async function mergeSource(
     await deleteFiles(db, EntryIndexTable, removed)
     await replaceFiles(db, EntryIndexTable, config, source, tree, changed)
     if (directoryHashes.length) {
-      await addAffected(db, directoryIds)
+      await addIds(db, SyncAffected, directoryIds)
       await queries.clearValues.run()
       await db.insert(SyncValues).values(directoryHashes)
       await queries.updateChildrenSha.run()
@@ -350,8 +344,9 @@ async function updateDirectoryHashes(
       return childrenSha !== row.childrenSha
     })
     if (!changed.length) continue
-    await addAffected(
+    await addIds(
       db,
+      SyncAffected,
       changed.map(row => row.id)
     )
     await queries.clearValues.run()
