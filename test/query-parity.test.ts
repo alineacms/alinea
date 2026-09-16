@@ -489,7 +489,11 @@ test('resolves relation projections without changing their results', async () =>
     })
     const individualTranslations = await Promise.all(
       translations.map(({id, locale}) =>
-        store.get({id, locale: locale ?? undefined, select: translationSelection})
+        store.get({
+          id,
+          locale: locale ?? undefined,
+          select: translationSelection
+        })
       )
     )
     expect(translations).toEqual(individualTranslations)
@@ -706,6 +710,22 @@ test('preserves locale, translation and entry-link behavior', async () => {
         select: Query.translations({select: Entry.locale})
       })
     ).toEqual(['de'])
+    expect(
+      await store.get({
+        locale: 'en',
+        root: mainWorkspace.localized,
+        id: 'trans',
+        select: Query.translations({includeSelf: true, select: Entry.locale})
+      })
+    ).toEqual(['en', 'de'])
+    expect(
+      await store.get({
+        locale: 'de',
+        root: mainWorkspace.localized,
+        id: 'trans',
+        select: Query.translations({includeSelf: true, select: Entry.locale})
+      })
+    ).toEqual(['de', 'en'])
     expect(
       await store.get({
         id: 'child-1',
