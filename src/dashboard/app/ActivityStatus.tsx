@@ -168,6 +168,7 @@ export function ActivityStatus({
       </Tooltip>
       <Popover
         className={styles.ActivityStatus.popover.surface()}
+        isNonModal
         placement={isMobile ? mobilePlacement : placement}
         offset={16}
         style={{

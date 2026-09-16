@@ -5,6 +5,18 @@ import {verifyCloudHandshake} from './CloudHandshake.js'
 
 const test = suite(import.meta)
 
+test('rejects a malformed handshake token header', async () => {
+  await test.throws(
+    () =>
+      verifyCloudHandshake('bnVsbA.e30.', {
+        clientId: 'client-id',
+        handshakeId: 'handshake-id',
+        origin: 'https://cms.example.com'
+      }),
+    'Handshake token header is invalid'
+  )
+})
+
 test('verifies project and origin-bound Cloud handshake tokens', async () => {
   const originalFetch = globalThis.fetch
   const pair = (await crypto.subtle.generateKey(
@@ -47,12 +59,14 @@ test('verifies project and origin-bound Cloud handshake tokens', async () => {
       handshakeId: 'handshake-id',
       origin: 'https://cms.example.com'
     })
-    await test.throws(() =>
-      verifyCloudHandshake(token, {
-        clientId: 'client-id',
-        handshakeId: 'handshake-id',
-        origin: 'https://attacker.example.com'
-      })
+    await test.throws(
+      () =>
+        verifyCloudHandshake(token, {
+          clientId: 'client-id',
+          handshakeId: 'handshake-id',
+          origin: 'https://attacker.example.com'
+        }),
+      'Handshake origin mismatch: expected https://attacker.example.com, received https://cms.example.com'
     )
   } finally {
     globalThis.fetch = originalFetch

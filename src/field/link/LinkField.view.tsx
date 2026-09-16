@@ -158,11 +158,13 @@ interface RowLayerProps {
 
 function EntryRowLayer({hasFields, node, textOnly}: RowLayerProps) {
   const entryId = useAtomValueRaw(node.field('_entry')) as string | undefined
+  const locale = useAtomValueRaw(node.field('_locale')) as string | undefined
   const type = useAtomValueRaw(node.field('_type')) as string | undefined
   if (!entryId) return null
   return (
     <EntryRow
       entryId={entryId}
+      locale={locale}
       hasFields={hasFields}
       image={type === 'image'}
       textOnly={textOnly}
@@ -172,13 +174,20 @@ function EntryRowLayer({hasFields, node, textOnly}: RowLayerProps) {
 
 interface EntryRowProps {
   entryId: string
+  locale?: string
   hasFields?: boolean
   image?: boolean
   textOnly?: boolean
 }
 
-function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
-  const state = useLinkEntryState(entryId)
+function EntryRow({
+  entryId,
+  locale,
+  hasFields,
+  image,
+  textOnly
+}: EntryRowProps) {
+  const state = useLinkEntryState(entryId, locale)
   if (state.state === 'hasData' && state.data)
     return (
       <LoadedEntryRow
@@ -207,8 +216,8 @@ function EntryRow({entryId, hasFields, image, textOnly}: EntryRowProps) {
   )
 }
 
-function useLinkEntryState(entryId: string) {
-  return useAtomValueRaw(linkEntryAtoms(entryId))
+function useLinkEntryState(entryId: string, locale?: string) {
+  return useAtomValueRaw(linkEntryAtoms(entryId, locale))
 }
 
 interface EntryLoadingRowProps {
@@ -979,6 +988,7 @@ function LinkLabelField({isDisabled, node, value}: LinkLabelFieldProps) {
       <EntryLinkLabelField
         customLabel={customLabel}
         entryId={value._entry}
+        locale={value._locale}
         isDisabled={isDisabled}
         onChange={setCustomLabel}
       />
@@ -1032,6 +1042,7 @@ function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
     <EntryAnchorFieldInner
       anchor={anchor}
       entryId={value._entry}
+      locale={value._locale}
       isDisabled={isDisabled}
       onChange={setAnchor}
     />
@@ -1047,6 +1058,7 @@ function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
 interface EntryAnchorFieldInnerProps {
   anchor?: string
   entryId: string
+  locale?: string
   isDisabled?: boolean
   onChange(value: string | undefined): void
 }
@@ -1054,10 +1066,11 @@ interface EntryAnchorFieldInnerProps {
 function EntryAnchorFieldInner({
   anchor,
   entryId,
+  locale,
   isDisabled,
   onChange
 }: EntryAnchorFieldInnerProps) {
-  const state = useLinkEntryState(entryId)
+  const state = useLinkEntryState(entryId, locale)
   const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
@@ -1099,6 +1112,7 @@ function LinkMetaLabel({className, node, value}: LinkMetaLabelProps) {
         className={className}
         customLabel={customLabel}
         entryId={value._entry}
+        locale={value._locale}
       />
     )
   }
@@ -1120,14 +1134,16 @@ interface EntryLinkMetaLabelProps {
   className: string
   customLabel?: string
   entryId: string
+  locale?: string
 }
 
 function EntryLinkMetaLabel({
   className,
   customLabel,
-  entryId
+  entryId,
+  locale
 }: EntryLinkMetaLabelProps) {
-  const state = useLinkEntryState(entryId)
+  const state = useLinkEntryState(entryId, locale)
   if (state.state !== 'hasData' || !state.data) {
     return <ResolvedLinkMetaLabel className={className} label={customLabel} />
   }
@@ -1172,6 +1188,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
       <EntryLinkTypeBadge
         {...props}
         entryId={value._entry}
+        locale={value._locale}
         fallbackIcon={fallbackIcon}
         fallbackLabel={fallbackLabel}
       />
@@ -1203,17 +1220,19 @@ function EntryLinkImagePreview({entryId}: EntryLinkImagePreviewProps) {
 
 interface EntryLinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {
   entryId: string
+  locale?: string
   fallbackIcon: ComponentType
   fallbackLabel: string
 }
 
 function EntryLinkTypeBadge({
   entryId,
+  locale,
   fallbackIcon,
   fallbackLabel,
   ...props
 }: EntryLinkTypeBadgeProps) {
-  const state = useLinkEntryState(entryId)
+  const state = useLinkEntryState(entryId, locale)
   const config = useAtomValueRaw(configAtom)
   const entry = state.state === 'hasData' ? state.data : undefined
   const type = entry ? config.schema[entry.type] : undefined
@@ -1241,6 +1260,7 @@ function EntryLinkTypeBadge({
 interface EntryLinkLabelFieldProps {
   customLabel?: string
   entryId: string
+  locale?: string
   isDisabled?: boolean
   onChange: (value: string | undefined) => void
 }
@@ -1248,10 +1268,11 @@ interface EntryLinkLabelFieldProps {
 function EntryLinkLabelField({
   customLabel,
   entryId,
+  locale,
   isDisabled,
   onChange
 }: EntryLinkLabelFieldProps) {
-  const state = useLinkEntryState(entryId)
+  const state = useLinkEntryState(entryId, locale)
   return (
     <ResolvedLinkLabelField
       customLabel={customLabel}
@@ -1313,6 +1334,7 @@ function LinkRowReferenceActions({
     <EntryLinkRowActions
       closeActions={closeActions}
       entryId={value._entry}
+      locale={value._locale}
       type={type}
     />
   )
@@ -1321,16 +1343,18 @@ function LinkRowReferenceActions({
 interface EntryLinkRowActionsProps {
   closeActions: () => void
   entryId: string
+  locale?: string
   type: PickerType
 }
 
 function EntryLinkRowActions({
   closeActions,
   entryId,
+  locale,
   type
 }: EntryLinkRowActionsProps) {
   const scope = useOptionalEntryAtoms()
-  const state = useLinkEntryState(entryId)
+  const state = useLinkEntryState(entryId, locale)
   if (state.state !== 'hasData' || !state.data) {
     return (
       <Button
@@ -1345,9 +1369,9 @@ function EntryLinkRowActions({
     )
   }
   const entry = state.data
-  const locale =
-    type === 'entry' ? scope?.localeData.requestedLocale : undefined
-  const href = `#${nav.entry(entry.workspace, entry.root, entry.id, locale)}`
+  const linkLocale =
+    type === 'entry' ? (locale ?? scope?.localeData.requestedLocale) : undefined
+  const href = `#${nav.entry(entry.workspace, entry.root, entry.id, linkLocale)}`
   return (
     <Button
       aria-label="Open link"
@@ -1916,7 +1940,7 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         onPress={toggleAll}
         description={options.help}
         shared={options.shared}
-        showFold={hasFoldableRows}
+        showFold={!options.inline && hasFoldableRows}
         inline={options.inline}
       >
         {options.label}

@@ -1,10 +1,11 @@
 import {describe, expect, test} from 'bun:test'
 import {
-  entryHeaderActionIds,
-  entryHeaderPrimaryActionIds,
-  type EntryHeaderActionId,
+  entryDirtyActions,
+  entryHeaderActions,
+  entryHeaderPrimaryActions,
+  type EntryHeaderActions,
   type EntryHeaderActionState,
-  type EntryHeaderPrimaryActionId,
+  type EntryHeaderPrimaryActions,
   type EntryHeaderPrimaryActionState
 } from './EntryHeaderActions.js'
 
@@ -30,31 +31,40 @@ const base: EntryHeaderActionState = {
 }
 
 interface ActionCase {
-  expected: Array<EntryHeaderActionId>
+  expected: Partial<EntryHeaderActions>
   name: string
   state: Partial<EntryHeaderActionState>
+}
+
+const noActions: EntryHeaderActions = {
+  archive: false,
+  delete: false,
+  publish: false,
+  removeDraft: false,
+  replace: false,
+  unpublish: false
 }
 
 const cases: Array<ActionCase> = [
   {
     name: 'hides actions for a revision',
     state: {isRevision: true},
-    expected: []
+    expected: {}
   },
   {
     name: 'hides actions while dirty',
     state: {isDirty: true},
-    expected: []
+    expected: {}
   },
   {
     name: 'hides actions for an untranslated entry',
     state: {untranslated: true},
-    expected: []
+    expected: {}
   },
   {
     name: 'only removes a regular draft',
     state: {activeStatus: 'draft'},
-    expected: ['remove-draft']
+    expected: {removeDraft: true}
   },
   {
     name: 'does not remove a draft without update access',
@@ -62,7 +72,7 @@ const cases: Array<ActionCase> = [
       access: {...base.access, update: false},
       activeStatus: 'draft'
     },
-    expected: []
+    expected: {}
   },
   {
     name: 'deletes an unpublished entry only below an unpublished parent',
@@ -71,7 +81,7 @@ const cases: Array<ActionCase> = [
       isParentUnpublished: true,
       isUnpublished: true
     },
-    expected: ['delete']
+    expected: {delete: true}
   },
   {
     name: 'does not delete a seeded unpublished entry',
@@ -81,37 +91,37 @@ const cases: Array<ActionCase> = [
       isParentUnpublished: true,
       isUnpublished: true
     },
-    expected: []
+    expected: {}
   },
   {
     name: 'archives an unpublished entry below a published parent',
     state: {activeStatus: 'draft', isUnpublished: true},
-    expected: ['archive']
+    expected: {archive: true}
   },
   {
     name: 'offers unpublish and archive for a published entry',
     state: {},
-    expected: ['unpublish', 'archive']
+    expected: {archive: true, unpublish: true}
   },
   {
     name: 'does not offer delete directly for a published entry',
     state: {access: {...base.access, archive: false, publish: false}},
-    expected: []
+    expected: {}
   },
   {
     name: 'does not unpublish when drafts are disabled',
     state: {draftsEnabled: false},
-    expected: ['archive']
+    expected: {archive: true}
   },
   {
     name: 'does not unpublish a media library',
     state: {isMediaLibrary: true},
-    expected: ['archive']
+    expected: {archive: true}
   },
   {
     name: 'replaces or deletes a published media file',
     state: {isMediaFile: true},
-    expected: ['replace', 'delete']
+    expected: {delete: true, replace: true}
   },
   {
     name: 'does not archive a published media file',
@@ -119,31 +129,32 @@ const cases: Array<ActionCase> = [
       access: {...base.access, delete: false, update: false},
       isMediaFile: true
     },
-    expected: []
+    expected: {}
   },
   {
     name: 'does not archive a seeded published entry',
     state: {canDelete: false},
-    expected: ['unpublish']
+    expected: {unpublish: true}
   },
   {
     name: 'publishes or deletes an archived entry',
     state: {activeStatus: 'archived'},
-    expected: ['publish', 'delete']
+    expected: {delete: true, publish: true}
   },
   {
     name: 'does not publish an archived entry with unpublishable parents',
     state: {activeStatus: 'archived', canPublishParents: false},
-    expected: ['delete']
+    expected: {delete: true}
   }
 ]
 
-describe('entryHeaderActionIds', () => {
+describe('entryHeaderActions', () => {
   for (const actionCase of cases) {
     test(actionCase.name, () => {
-      expect(entryHeaderActionIds({...base, ...actionCase.state})).toEqual(
-        actionCase.expected
-      )
+      expect(entryHeaderActions({...base, ...actionCase.state})).toEqual({
+        ...noActions,
+        ...actionCase.expected
+      })
     })
   }
 })
@@ -160,36 +171,43 @@ const primaryBase: EntryHeaderPrimaryActionState = {
 }
 
 interface PrimaryActionCase {
-  expected: Array<EntryHeaderPrimaryActionId>
+  expected: Partial<EntryHeaderPrimaryActions>
   name: string
   state: Partial<EntryHeaderPrimaryActionState>
+}
+
+const noPrimaryActions: EntryHeaderPrimaryActions = {
+  createDraft: false,
+  dirty: undefined,
+  publishDraft: false,
+  saveTranslation: false
 }
 
 const primaryCases: Array<PrimaryActionCase> = [
   {
     name: 'creates a draft from a revision when drafts are available',
     state: {isRevision: true},
-    expected: ['create-draft']
+    expected: {createDraft: true}
   },
   {
     name: 'does not fall through to publish from a revision',
     state: {activeStatus: 'draft', canSaveDraft: false, isRevision: true},
-    expected: []
+    expected: {}
   },
   {
     name: 'saves an available translation',
     state: {untranslated: true},
-    expected: ['save-translation']
+    expected: {saveTranslation: true}
   },
   {
     name: 'does not save a translation before its parent',
     state: {parentNeedsTranslation: true, untranslated: true},
-    expected: []
+    expected: {}
   },
   {
     name: 'offers every permitted dirty-entry action in order',
     state: {isDirty: true},
-    expected: ['discard-changes', 'publish-edits', 'save-draft']
+    expected: {dirty: {publish: true, saveDraft: true}}
   },
   {
     name: 'only discards when publish and draft access are unavailable',
@@ -198,26 +216,49 @@ const primaryCases: Array<PrimaryActionCase> = [
       canSaveDraft: false,
       isDirty: true
     },
-    expected: ['discard-changes']
+    expected: {dirty: {publish: false, saveDraft: false}}
   },
   {
     name: 'publishes a clean draft whose parents can be published',
     state: {activeStatus: 'draft'},
-    expected: ['publish-draft']
+    expected: {publishDraft: true}
   },
   {
     name: 'does not publish a draft with unpublishable parents',
     state: {activeStatus: 'draft', canPublishParents: false},
-    expected: []
+    expected: {}
   }
 ]
 
-describe('entryHeaderPrimaryActionIds', () => {
+describe('entryHeaderPrimaryActions', () => {
   for (const actionCase of primaryCases) {
     test(actionCase.name, () => {
       expect(
-        entryHeaderPrimaryActionIds({...primaryBase, ...actionCase.state})
-      ).toEqual(actionCase.expected)
+        entryHeaderPrimaryActions({...primaryBase, ...actionCase.state})
+      ).toEqual({...noPrimaryActions, ...actionCase.expected})
     })
   }
+})
+
+describe('entryDirtyActions', () => {
+  test('allows publish and draft when both are available', () => {
+    expect(entryDirtyActions(true, true)).toEqual({
+      publish: true,
+      saveDraft: true
+    })
+  })
+
+  test('disables draft when drafts are unavailable', () => {
+    expect(entryDirtyActions(true, false)).toEqual({
+      publish: true,
+      saveDraft: false
+    })
+  })
+
+  test('disables publish and draft without access', () => {
+    expect(entryDirtyActions(false, false)).toEqual({
+      publish: false,
+      saveDraft: false
+    })
+  })
 })

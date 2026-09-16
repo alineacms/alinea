@@ -16,7 +16,7 @@ import {
 } from '#test/DashboardFixture.js'
 import {atom, createStore} from 'jotai'
 import type {Key} from 'react-aria-components'
-import {LucideFile} from '../icons.js'
+import {IcOutlineDescription} from '../icons.js'
 import {eventsAtom} from './core.js'
 import {RootAtoms, rootAtoms} from './root.js'
 import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
@@ -49,11 +49,11 @@ test('rootAtoms returns stable bundles independent of route state', () => {
   expect(root.tree('fr')).not.toBe(root.tree('en'))
 })
 
-test('root icon uses the original file fallback', async () => {
+test('root icon uses the Material description fallback', async () => {
   const {store} = await createDashboardAtomFixture()
   const root = rootAtoms('main', 'pages')
 
-  expect(store.get(root.icon)).toBe(LucideFile)
+  expect(store.get(root.icon)).toBe(IcOutlineDescription)
 })
 
 test('root explorers follow route locales and keep media unlocalized', async () => {
@@ -254,6 +254,30 @@ test('selected entry ancestors load without expanding unrelated branches', async
     {id: parent._id, children: [{id: child._id, children: []}]}
   ])
   expect(snapshot.selectedKeys).toEqual(new Set([child._id]))
+})
+
+test('tree removes selected and expanded entries that become unreadable', async () => {
+  const {config, parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const tree = rootAtoms('main', 'pages').createTree(
+    null,
+    atom(new Set<Key>([parent._id])),
+    atom(new Set([parent._id]))
+  )
+
+  await store.get(tree.ready)
+
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: parent._id, deny: {read: true}})
+  store.set(preloadUserPolicyAtom, localUser, policy)
+
+  await expect(store.get(tree.ready)).resolves.toEqual({
+    expandedKeys: new Set([parent._id]),
+    items: [],
+    selectedKeys: new Set([parent._id])
+  })
+  expect(store.get(tree.view).entries).toEqual(new Map())
 })
 
 test('entry models and child levels are shared across trees', async () => {

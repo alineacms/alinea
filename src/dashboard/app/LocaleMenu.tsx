@@ -14,6 +14,13 @@ interface LocaleMenuProps {
   onLocaleChange(locale: string): void
 }
 
+export interface LocaleMenuSelectProps {
+  ariaLabel?: string
+  locale: string | null
+  locales: ReadonlyArray<string>
+  onLocaleChange(locale: string): void
+}
+
 interface LocaleDisplay {
   code: string | null
   name: string
@@ -57,13 +64,28 @@ function LocaleLabel({locale}: LocaleLabelProps) {
 
 export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
   const i18n = useAtomValueRaw(root.i18n)
-  if (!i18n || i18n.locales.length === 0) return null
-  const activeLocale = locale ?? i18n.locales[0]
+  if (!i18n) return null
+  return (
+    <LocaleMenuSelect
+      locale={locale}
+      locales={i18n.locales}
+      onLocaleChange={onLocaleChange}
+    />
+  )
+}
+
+export function LocaleMenuSelect({
+  ariaLabel = 'Language',
+  locale,
+  locales,
+  onLocaleChange
+}: LocaleMenuSelectProps) {
+  const activeLocale = locale ?? locales[0]
   if (!activeLocale) return null
   return (
     <Menu
       label={
-        <Button className={styles.LocaleMenu.trigger()}>
+        <Button aria-label={ariaLabel} className={styles.LocaleMenu.trigger()}>
           <LocaleLabel locale={activeLocale} />
           <Icon
             icon={IcRoundUnfoldMore}
@@ -71,7 +93,7 @@ export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
           />
         </Button>
       }
-      aria-label="Language"
+      aria-label={ariaLabel}
       popoverProps={{placement: 'bottom right'}}
       selectionMode="single"
       selectedKeys={[activeLocale]}
@@ -79,7 +101,7 @@ export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
         onLocaleChange(String(key))
       }}
     >
-      {i18n.locales.map(locale => (
+      {locales.map(locale => (
         <MenuItem
           key={locale}
           id={locale}

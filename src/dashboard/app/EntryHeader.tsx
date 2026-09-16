@@ -8,12 +8,13 @@ import {getType} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
 import {activityAtom} from '#/dashboard/atoms/activity.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {routeAtom} from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
+import {useSaveShortcut} from '#/dashboard/hook/UseSaveShortcut.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {ComponentType, useState, useTransition, type ReactNode} from 'react'
@@ -24,6 +25,7 @@ import {
   IcRoundDelete,
   IcRoundEdit,
   IcRoundFlashOn,
+  IcRoundLanguage,
   IcRoundMoreHoriz,
   IcRoundPublishedWithChanges,
   IcRoundSave,
@@ -34,11 +36,11 @@ import {Badge} from './Badge.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {
-  entryHeaderActionIds,
-  entryHeaderPrimaryActionIds,
-  type EntryHeaderActionId
+  entryHeaderActions,
+  entryHeaderPrimaryActions
 } from './EntryHeaderActions.js'
 import {EntrySidebarToggle} from './EntrySidebarToggle.js'
+import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -49,7 +51,7 @@ import {
 const styles = styler(css)
 
 interface EntryHeaderMenuItem {
-  id: EntryHeaderActionId
+  id: string
   label: string
   action: () => void | Promise<void>
   icon?: ComponentType
@@ -117,21 +119,24 @@ const variantDescription = {
   published: 'Published',
   unpublished: 'Unpublished',
   archived: 'Archived',
-  draft: 'Draft'
+  draft: 'Draft',
+  untranslated: 'Untranslated'
 }
 
 const badgeStatus = {
   published: 'published',
   unpublished: 'unpublished',
   archived: 'archived',
-  draft: 'draft'
+  draft: 'draft',
+  untranslated: 'untranslated'
 } as const
 
 const badgeIcon = {
   published: IcRoundCheck,
   unpublished: IcRoundFlashOn,
   archived: IcOutlineArchive,
-  draft: IcRoundEdit
+  draft: IcRoundEdit,
+  untranslated: IcRoundLanguage
 }
 
 export interface EntryHeaderProps {
@@ -156,6 +161,7 @@ export function EntryHeader({
   selectedEntry
 }: EntryHeaderProps) {
   const config = useAtomValueRaw(configAtom)
+  const activity = useAtomValueRaw(activityAtom)
   const policy = useAtomValueRaw(policyAtom)
   const route = useAtomValueRaw(routeAtom)
   const setRoute = useSetAtom(routeAtom)
@@ -182,7 +188,6 @@ export function EntryHeader({
   const replaceFile = useSetAtom(localeData.replaceFile)
   const reset = useSetAtom(node.reset)
   const isDirty = useAtomValueRaw(node.isDirty)
-  const activity = useAtomValueRaw(activityAtom)
   const activeVersion = Array.from(versions.values()).find(
     version => version.active
   )
@@ -198,16 +203,17 @@ export function EntryHeader({
   const isRevision = selectedVersion?.type === 'history'
   const isUnpublished = activeStatus === 'draft' && activeVersion.main
   const viewedStatus = selectedEntry.status
-  const status =
-    viewedStatus === 'draft' && selectedEntry.main
+  const status = untranslated
+    ? 'untranslated'
+    : viewedStatus === 'draft' && selectedEntry.main
       ? 'unpublished'
       : viewedStatus
+  const showStatus = isRevision || status !== 'published'
   const [isPending, startTransition] = useTransition()
-  const isActionDisabled = isPending || activity.hasFailedMutations
+  const isActionDisabled = isPending || activity.isMutating
   const [urlConflict, setUrlConflict] = useState<EntryUrlConflictErrorInfo>()
 
   function runAction(action: () => void | Promise<void>) {
-    if (activity.hasFailedMutations) return
     startTransition(async () => {
       try {
         await action()
@@ -243,7 +249,7 @@ export function EntryHeader({
   }
 
   const canSaveDraft = !isMedia && config.enableDrafts && access.update
-  const primaryActionIds = entryHeaderPrimaryActionIds({
+  const primaryActions = entryHeaderPrimaryActions({
     access,
     activeStatus,
     canPublishParents,
@@ -253,37 +259,64 @@ export function EntryHeader({
     parentNeedsTranslation,
     untranslated
   })
+
+  function createDraft() {
+    runAction(async () => {
+      await saveDraft(node)
+      setSelectedVersion({type: 'status', status: 'draft'})
+    })
+  }
+
+  function saveTranslationChanges() {
+    runAction(() => saveTranslation(node))
+  }
+
+  function publishChanges() {
+    runAction(() => publishEdits(node))
+  }
+
+  function saveDraftChanges() {
+    runAction(() => saveDraft(node))
+  }
+
+  function publishCurrentDraft() {
+    runAction(publishDraft)
+  }
+
+  let saveShortcut: (() => void) | undefined
+  if (primaryActions.dirty?.saveDraft) saveShortcut = saveDraftChanges
+  else if (primaryActions.dirty?.publish) saveShortcut = publishChanges
+  else if (primaryActions.saveTranslation) saveShortcut = saveTranslationChanges
+  else if (primaryActions.createDraft) saveShortcut = createDraft
+  else if (primaryActions.publishDraft) saveShortcut = publishCurrentDraft
+  useSaveShortcut(saveShortcut, isActionDisabled)
+
   let primaryAction: ReactNode = null
-  if (primaryActionIds.includes('create-draft')) {
+  if (primaryActions.createDraft) {
     primaryAction = (
       <Button
         icon={IcRoundSave}
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() =>
-          runAction(async () => {
-            await saveDraft(node)
-            setSelectedVersion({type: 'status', status: 'draft'})
-          })
-        }
+        onPress={createDraft}
       >
         Create draft
       </Button>
     )
-  } else if (primaryActionIds.includes('save-translation')) {
+  } else if (primaryActions.saveTranslation) {
     primaryAction = (
       <Button
         icon={IcRoundSave}
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runAction(() => saveTranslation(node))}
+        onPress={saveTranslationChanges}
       >
         Save translation
       </Button>
     )
-  } else if (primaryActionIds.includes('discard-changes')) {
+  } else if (primaryActions.dirty) {
     primaryAction = (
       <>
         <Button
@@ -293,38 +326,38 @@ export function EntryHeader({
         >
           Discard my changes
         </Button>
-        {primaryActionIds.includes('publish-edits') && (
+        {primaryActions.dirty.publish && (
           <Button
             icon={IcRoundCheck}
             intent={canSaveDraft ? 'secondary' : 'primary'}
             isDisabled={isActionDisabled}
             isPending={isPending}
-            onPress={() => runAction(() => publishEdits(node))}
+            onPress={publishChanges}
           >
             Publish
           </Button>
         )}
-        {primaryActionIds.includes('save-draft') && (
+        {primaryActions.dirty.saveDraft && (
           <Button
             icon={IcRoundSave}
             intent="primary"
             isDisabled={isActionDisabled}
             isPending={isPending}
-            onPress={() => runAction(() => saveDraft(node))}
+            onPress={saveDraftChanges}
           >
             Save draft
           </Button>
         )}
       </>
     )
-  } else if (primaryActionIds.includes('publish-draft')) {
+  } else if (primaryActions.publishDraft) {
     primaryAction = (
       <Button
         icon={IcRoundCheck}
         intent="primary"
         isDisabled={isActionDisabled}
         isPending={isPending}
-        onPress={() => runAction(publishDraft)}
+        onPress={publishCurrentDraft}
       >
         Publish
       </Button>
@@ -332,7 +365,7 @@ export function EntryHeader({
   }
 
   const menuItems: Array<EntryHeaderMenuItem> = []
-  const actionIds = entryHeaderActionIds({
+  const actions = entryHeaderActions({
     access,
     activeStatus,
     canDelete: activeVersion.seeded === null,
@@ -346,51 +379,48 @@ export function EntryHeader({
     isUnpublished,
     untranslated
   })
-  for (const actionId of actionIds) {
-    if (actionId === 'remove-draft') {
-      menuItems.push({
-        id: 'remove-draft',
-        label: 'Remove draft',
-        action: discardDraft,
-        icon: IcRoundDelete
-      })
-    } else if (actionId === 'replace') {
-      menuItems.push({
-        id: 'replace',
-        label: 'Replace',
-        action: replaceMediaFile,
-        icon: IcRoundSync
-      })
-    } else if (actionId === 'unpublish') {
-      menuItems.push({
-        id: 'unpublish',
-        label: 'Unpublish',
-        action: unpublish,
-        icon: IcRoundVisibilityOff
-      })
-    } else if (actionId === 'archive') {
-      menuItems.push({
-        id: 'archive',
-        label: 'Archive',
-        action: archive,
-        icon: IcRoundArchive
-      })
-    } else if (actionId === 'publish') {
-      menuItems.push({
-        id: 'publish',
-        label: 'Publish',
-        action: publishArchived,
-        icon: IcRoundCheck
-      })
-    } else {
-      menuItems.push({
-        id: 'delete',
-        label: 'Delete',
-        action: deleteAndNavigate,
-        icon: IcRoundDelete
-      })
-    }
-  }
+  if (actions.removeDraft)
+    menuItems.push({
+      id: 'remove-draft',
+      label: 'Remove draft',
+      action: discardDraft,
+      icon: IcRoundDelete
+    })
+  if (actions.replace)
+    menuItems.push({
+      id: 'replace',
+      label: 'Replace',
+      action: replaceMediaFile,
+      icon: IcRoundSync
+    })
+  if (actions.unpublish)
+    menuItems.push({
+      id: 'unpublish',
+      label: 'Unpublish',
+      action: unpublish,
+      icon: IcRoundVisibilityOff
+    })
+  if (actions.archive)
+    menuItems.push({
+      id: 'archive',
+      label: 'Archive',
+      action: archive,
+      icon: IcRoundArchive
+    })
+  if (actions.publish)
+    menuItems.push({
+      id: 'publish',
+      label: 'Publish',
+      action: publishArchived,
+      icon: IcRoundCheck
+    })
+  if (actions.delete)
+    menuItems.push({
+      id: 'delete',
+      label: 'Delete',
+      action: deleteAndNavigate,
+      icon: IcRoundDelete
+    })
 
   return (
     <header className={styles.EntryHeader({dirty: isDirty})}>
@@ -409,16 +439,21 @@ export function EntryHeader({
           />
           <h1 className={styles.EntryHeader.title()}>{selectedEntry.title}</h1>
           {controls}
-          <Badge
-            className={styles.EntryHeader.status()}
-            icon={isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]}
-            status={isRevision ? undefined : badgeStatus[status]}
-          >
-            {isRevision ? 'Revision' : variantDescription[status]}
-          </Badge>
+          {showStatus && (
+            <Badge
+              className={styles.EntryHeader.status()}
+              icon={
+                isRevision ? IcRoundPublishedWithChanges : badgeIcon[status]
+              }
+              status={isRevision ? undefined : badgeStatus[status]}
+            >
+              {isRevision ? 'Revision' : variantDescription[status]}
+            </Badge>
+          )}
           <Badge className={styles.EntryHeader.type()} icon={typeData.icon}>
             {typeData.label}
           </Badge>
+          {!access.update && <ReadOnlyBadge />}
           {menuItems.length > 0 && (
             <Menu
               label={

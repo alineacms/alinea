@@ -129,20 +129,26 @@ function pack(input: PermissionInput): number {
   return result
 }
 
+function isAllowed(packed: number, permission: Permission): boolean {
+  return (
+    (packed & permission) === permission && (packed & deny(permission)) === 0
+  )
+}
+
 function entitlements(packed: number): Permissions {
   return {
-    create: Boolean(packed & Permission.Create),
-    read: Boolean(packed & Permission.Read),
-    update: Boolean(packed & Permission.Update),
-    delete: Boolean(packed & Permission.Delete),
-    reorder: Boolean(packed & Permission.Reorder),
-    move: Boolean(packed & Permission.Move),
-    publish: Boolean(packed & Permission.Publish),
-    archive: Boolean(packed & Permission.Archive),
-    upload: Boolean(packed & Permission.Upload),
-    explore: Boolean(packed & Permission.Explore),
-    manageMembers: Boolean(packed & Permission.ManageMembers),
-    all: Boolean(packed & Permission.All)
+    create: isAllowed(packed, Permission.Create),
+    read: isAllowed(packed, Permission.Read),
+    update: isAllowed(packed, Permission.Update),
+    delete: isAllowed(packed, Permission.Delete),
+    reorder: isAllowed(packed, Permission.Reorder),
+    move: isAllowed(packed, Permission.Move),
+    publish: isAllowed(packed, Permission.Publish),
+    archive: isAllowed(packed, Permission.Archive),
+    upload: isAllowed(packed, Permission.Upload),
+    explore: isAllowed(packed, Permission.Explore),
+    manageMembers: isAllowed(packed, Permission.ManageMembers),
+    all: isAllowed(packed, Permission.All)
   }
 }
 
@@ -249,11 +255,7 @@ export class Policy {
   }
 
   check(permission: Permission, resource?: Resource): boolean {
-    const permissions = this.#permissionsOf(resource)
-    return (
-      (permissions & permission) === permission &&
-      (permissions & deny(permission)) === 0
-    )
+    return isAllowed(this.#permissionsOf(resource), permission)
   }
 
   assert(permission: Permission, resource?: Resource): void {

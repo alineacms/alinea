@@ -54,6 +54,7 @@ import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
 import {ActivityStatus} from './ActivityStatus.js'
+import {ReadOnlyBadge} from './ReadOnlyBadge.js'
 import {RailBody, RailHeader} from './ui/Rail.js'
 
 const styles = styler(css)
@@ -63,6 +64,7 @@ export interface ExplorerProps {
   explorer: DashboardExplorer
   headerEntry?: ExplorerHeaderEntry
   page: ExplorerReadyPage
+  readOnly?: boolean
   titleControls?: ReactNode
 }
 
@@ -80,6 +82,7 @@ export interface ExplorerHeaderProps {
   headerEntry?: ExplorerHeaderEntry
   navigate?: boolean
   page: ExplorerReadyPage
+  readOnly?: boolean
   titleControls?: ReactNode
 }
 
@@ -796,7 +799,6 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
     requestedLocation,
     selectedLocale
   )
-  const canUpload = useAtomValueRaw(explorer.canUpload)
   const uploads = useAtomValueRaw(explorer.uploadsInCurrentFolder)
   const upload = useSetAtom(explorer.upload)
   const uploadCount = uploads.length
@@ -819,7 +821,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       />
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />
-        {page.isMedia && canUpload && !locationIsPending && (
+        {page.isMedia && page.canUpload && !locationIsPending && (
           <FileTrigger
             allowsMultiple
             onSelect={files => {
@@ -844,6 +846,7 @@ export function ExplorerHeader({
   headerEntry,
   navigate,
   page,
+  readOnly,
   titleControls
 }: ExplorerHeaderProps) {
   return (
@@ -858,6 +861,7 @@ export function ExplorerHeader({
               titleControls={titleControls}
             />
           )}
+          {readOnly && <ReadOnlyBadge />}
           <div className={styles.Explorer.searchSlot()}>
             <ExplorerSearch
               autoFocus={autoFocusSearch}
@@ -921,6 +925,7 @@ export function Explorer({
   explorer,
   headerEntry,
   page: loadedPage,
+  readOnly,
   titleControls
 }: ExplorerProps) {
   const resolvedPage = useAtomValueRaw(explorer.page)
@@ -932,6 +937,7 @@ export function Explorer({
         explorer={explorer}
         headerEntry={headerEntry}
         page={page}
+        readOnly={readOnly ?? (page.isMedia && !page.canUpload)}
         titleControls={titleControls}
       />
       <ExplorerBody explorer={explorer} page={page} />

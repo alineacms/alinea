@@ -121,10 +121,7 @@ const Page = Config.document('Page', {
     publishDate: Field.date('Publish date', {
       width: 1 / 3
     }),
-    publishTime: Field.time('Publish time', {
-      width: 1 / 3,
-      step: 900
-    }),
+    publishTime: Field.time('Publish time', {width: 1 / 3}),
     relatedLink: Field.link('Related link'),
     resources: Field.link.multiple('Resources'),
     inner: Field.object('Testje', {

@@ -6,7 +6,7 @@ import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import type {OrderBy} from '#/core/OrderBy.js'
-import {Permission} from '#/core/Role.js'
+import {Permission, type Resource} from '#/core/Role.js'
 import type {RootData} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
 import type {Infer} from '#/types.js'
@@ -141,6 +141,7 @@ export interface ExplorerTreeItem {
 export type ExplorerResultMode = 'browse' | 'matches'
 
 export interface ExplorerReadyPage {
+  canUpload: boolean
   isMedia: boolean
   items: Array<ExplorerEntry>
   locale: string | null
@@ -358,6 +359,29 @@ export class ExplorerAtoms {
   pageReady: Atom<Promise<ExplorerReadyPage>>
   page: Atom<ExplorerReadyPage | undefined>
   #options: ExplorerOptions
+  #uploadResource = dispense(
+    (location: ExplorerLocation, locale: string | null) =>
+      atom(get => {
+        const fallback: Resource = {
+          workspace: location.workspace,
+          root: location.root,
+          id: location.parentId
+        }
+        if (!location.parentId) return fallback
+        const parent = get(this.parent(location, locale))
+        if (!parent) return fallback
+        const {data} = get(parent.data)
+        return {
+          ...fallback,
+          parents: get(data.parents).map(ancestor => ancestor.id)
+        }
+      })
+  )
+  #canUpload = dispense((location: ExplorerLocation, locale: string | null) =>
+    atom(get =>
+      get(policyAtom).canUpload(get(this.#uploadResource(location, locale)))
+    )
+  )
 
   constructor(
     public readonly location: WritableAtom<
@@ -546,17 +570,20 @@ export class ExplorerAtoms {
       }
       const itemsPromise = get(this.itemsReady(locale))
       const needsTree =
-        view === 'card' &&
-        resultMode === 'browse' &&
-        !searchesEverything &&
-        !this.pickChildren &&
-        !options.limitLocations?.length
+        Boolean(location.parentId) ||
+        (view === 'card' &&
+          resultMode === 'browse' &&
+          !searchesEverything &&
+          !this.pickChildren &&
+          !options.limitLocations?.length)
       const treeReady = needsTree
         ? options.treeReady?.(locale, location)
         : undefined
       if (treeReady) await get(treeReady)
+      const canUpload = get(this.#canUpload(location, locale))
       const items = await itemsPromise
       return {
+        canUpload,
         isMedia,
         items,
         locale,
@@ -608,14 +635,9 @@ export class ExplorerAtoms {
   get limitLocations() {
     return this.#options.limitLocations
   }
-  canUpload = atom(get => {
-    const location = get(this.location)
-    return get(policyAtom).canUpload({
-      workspace: location.workspace,
-      root: location.root,
-      id: location.parentId
-    })
-  })
+  canUpload = atom(get =>
+    get(this.#canUpload(get(this.location), get(this.selectedLocale)))
+  )
   uploadsInCurrentFolder = atom(get => {
     const location = get(this.location)
     return get(activityAtom).items.filter(activity => {
@@ -632,16 +654,25 @@ export class ExplorerAtoms {
       )
     })
   })
-  upload = atom(null, (get, set, files: Iterable<File> | ArrayLike<File>) => {
-    const location = get(this.location)
-    if (!location.root) return
-    set(uploadFilesAtom, {
-      files,
-      workspace: location.workspace,
-      root: location.root,
-      parentId: location.parentId
-    })
-  })
+  upload = atom(
+    null,
+    async (get, set, files: Iterable<File> | ArrayLike<File>) => {
+      const location = get(this.location)
+      if (!location.root) return
+      const locale = get(this.selectedLocale)
+      const treeReady = this.#options.treeReady?.(locale, location)
+      if (treeReady) await get(treeReady)
+      const resource = get(this.#uploadResource(location, locale))
+      get(policyAtom).assert(Permission.Upload, resource)
+      await set(uploadFilesAtom, {
+        files,
+        workspace: location.workspace,
+        root: location.root,
+        parentId: location.parentId,
+        parents: resource.parents
+      })
+    }
+  )
   getItems = atom(null, (_get, _set, keys: Set<Key>): Array<DragItem> => {
     return [...keys].map(dashboardEntryDragItem)
   })
@@ -699,6 +730,14 @@ export class ExplorerAtoms {
         this.#options.onAction(entry)
         return
       }
+      const {data} = get(entry.data)
+      if (data) {
+        const item = get(data.item)
+        if (item.type === 'MediaLibrary') {
+          set(this.openLocation, entry)
+          return
+        }
+      }
       if (this.hasRowAction) {
         set(routeAtom, {
           workspace: entry.workspace,
@@ -708,7 +747,6 @@ export class ExplorerAtoms {
         })
         return
       }
-      const {data} = get(entry.data)
       if (data && get(data.canOpen)) set(this.openLocation, entry)
     }
   )

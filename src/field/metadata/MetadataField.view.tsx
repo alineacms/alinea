@@ -73,7 +73,11 @@ export function MetadataFieldView({field}: MetadataFieldViewProps) {
   const metadata = usePreviewMetadata()
   return (
     <>
-      <NodeEditor node={node} type={options.fields} />
+      <NodeEditor
+        node={node}
+        readOnly={options.readOnly}
+        type={options.fields}
+      />
       <MetadataPreview metadata={metadata} origin={origin} />
     </>
   )

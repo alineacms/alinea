@@ -968,6 +968,44 @@ test('accepts authenticated commits only in development', async () => {
   test.is(unauthenticated.status, 401)
 })
 
+test('routes history requests with a file to revisions', async () => {
+  const cms = createCMS({schema: {Page}, workspaces: {main}})
+  const db = new LocalDB(cms.config)
+  const revisions = ['content/pages/example.json']
+  const requestedFiles: Array<string> = []
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend({
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        },
+        async revisions(file) {
+          requestedFiles.push(file)
+          return revisions
+        }
+      })
+    }
+  })
+
+  const response = await handle(
+    new Request(
+      'http://localhost/api?action=history&file=content/pages/example.json',
+      {headers: {accept: 'application/json'}}
+    ),
+    requestContext()
+  )
+
+  test.is(response.status, 200)
+  test.equal(requestedFiles, ['content/pages/example.json'])
+  test.equal(await response.json(), revisions)
+})
+
 test('redirects an unbuilt nested media file to its preview', async () => {
   const mediaWorkspace = Config.workspace('Main', {
     source: 'content',

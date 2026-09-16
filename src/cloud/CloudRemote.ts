@@ -30,7 +30,11 @@ import {Response} from '@alinea/iso'
 import pkg from '../../package.json' with {type: 'json'}
 import {AuthResultType} from './AuthResult.js'
 import {cloudConfig} from './CloudConfig.js'
-import {verifyCloudHandshake} from './CloudHandshake.js'
+import {
+  CloudHandshakeError,
+  CloudHandshakeServiceError,
+  verifyCloudHandshake
+} from './CloudHandshake.js'
 
 export class CloudRemote extends OAuth2 implements RemoteConnection {
   #context: RequestContext
@@ -146,9 +150,9 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
       }
       // The cloud server will request a handshake confirmation on this route
       case AuthAction.Handshake: {
-        const handShakeId = url.searchParams.get('handshake_id')
+        const handshakeId = url.searchParams.get('handshake_id')
         const handshakeToken = url.searchParams.get('handshake_token')
-        if (!handShakeId || !handshakeToken)
+        if (!handshakeId || !handshakeToken)
           throw new HttpError(
             400,
             'Provide valid handshake credentials to initiate handshake'
@@ -159,14 +163,22 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
         try {
           await verifyCloudHandshake(handshakeToken, {
             clientId,
-            handshakeId: handShakeId,
+            handshakeId,
             origin: new URL(ctx.handlerUrl).origin
           })
         } catch (cause) {
-          throw new HttpError(401, 'Invalid handshake token', {cause})
+          if (cause instanceof CloudHandshakeError)
+            throw new HttpError(
+              401,
+              `Invalid handshake token: ${cause.message}`,
+              {cause}
+            )
+          if (cause instanceof CloudHandshakeServiceError)
+            throw new HttpError(503, cause.message, {cause})
+          throw new HttpError(500, 'Could not verify handshake token', {cause})
         }
         const body = {
-          handshake_id: handShakeId,
+          handshake_id: handshakeId,
           handshake_token: handshakeToken,
           status: {
             version: pkg.version,

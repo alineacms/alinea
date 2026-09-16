@@ -102,18 +102,17 @@ export function ExplorerList({
     requestedLocation,
     selectedLocale
   )
-  const canUpload = useAtomValueRaw(explorer.canUpload)
   const upload = useSetAtom(explorer.upload)
   const {dragAndDropHooks} = useDragAndDrop<DashboardEntry>({
     acceptedDragTypes:
-      page.isMedia && canUpload && !locationIsPending ? 'all' : [],
+      page.isMedia && page.canUpload && !locationIsPending ? 'all' : [],
     getItems,
     getDropOperation(target, types, allowedOperations) {
       const operation = getDropOperation(target, types, allowedOperations)
       if (operation !== 'cancel') return operation
       if (
         !page.isMedia ||
-        !canUpload ||
+        !page.canUpload ||
         locationIsPending ||
         target.type !== 'root'
       )

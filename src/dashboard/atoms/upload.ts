@@ -12,6 +12,7 @@ export interface UploadFilesRequest {
   workspace: string
   root: string
   parentId?: string
+  parents?: Array<string>
 }
 
 export const uploadFilesAtom = atom(
@@ -24,7 +25,8 @@ export const uploadFilesAtom = atom(
     get(policyAtom).assert(Permission.Upload, {
       workspace: request.workspace,
       root: request.root,
-      id: request.parentId
+      id: request.parentId,
+      parents: request.parents
     })
     const destination = {
       workspace: request.workspace,

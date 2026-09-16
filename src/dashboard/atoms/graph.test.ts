@@ -140,10 +140,9 @@ test('summarizes current activity without hiding its history', () => {
   expect(state.isFetchingUpdates).toBe(true)
   expect(state.isMutating).toBe(true)
   expect(state.hasFailed).toBe(true)
-  expect(state.hasFailedMutations).toBe(true)
   expect(state.hasBlocked).toBe(true)
   expect(state.canRetry).toBe(true)
-  expect(state.canDiscard).toBe(true)
+  expect(state.canDiscard).toBe(false)
 })
 
 test('a successful fetch resolves an older fetch failure', () => {
@@ -170,6 +169,42 @@ test('a successful fetch resolves an older fetch failure', () => {
   expect(state.items).toHaveLength(2)
   expect(state.hasFailed).toBe(false)
   expect(state.canRetry).toBe(false)
+})
+
+test('a failed fetch can be retried but not discarded', () => {
+  const state = activityState([
+    {
+      id: 'failed-fetch',
+      type: 'fetch',
+      status: 'failed',
+      operations: [],
+      startedAt: 1,
+      finishedAt: 2,
+      error: 'Offline'
+    }
+  ])
+
+  expect(state.hasFailed).toBe(true)
+  expect(state.canRetry).toBe(true)
+  expect(state.canDiscard).toBe(false)
+})
+
+test('a failed upload can be discarded but not retried', () => {
+  const state = activityState([
+    {
+      id: 'failed-upload',
+      type: 'upload',
+      status: 'failed',
+      operations: [],
+      startedAt: 1,
+      finishedAt: 2,
+      error: 'Upload failed'
+    }
+  ])
+
+  expect(state.hasFailed).toBe(true)
+  expect(state.canRetry).toBe(false)
+  expect(state.canDiscard).toBe(true)
 })
 
 test('hydrates activity after a worker action already started', async () => {

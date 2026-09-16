@@ -137,6 +137,7 @@ export function createHandler({
       }
 
       if (
+        !params.has('action') &&
         params.has('file') &&
         (request.method === 'GET' || request.method === 'HEAD')
       ) {

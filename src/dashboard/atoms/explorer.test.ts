@@ -3,16 +3,21 @@ import {
   createDashboardStore
 } from '#test/DashboardFixture.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
+import {WriteablePolicy} from '#/core/Role.js'
+import {getScope} from '#/core/Scope.js'
+import {localUser} from '#/core/User.js'
 import {Config, Field} from '#/index.js'
 import {expect, test} from 'bun:test'
 import {atom, createStore} from 'jotai'
 import {LucideFile} from '../icons.js'
+import {routeAtom} from './nav.js'
+import {rootAtoms} from './root.js'
 import {
   createExplorerAtoms,
   ExplorerEntry,
   type ExplorerItemData
 } from './explorer.js'
-import {userPolicyReadyAtom} from './user.js'
+import {preloadUserPolicyAtom, userPolicyReadyAtom} from './user.js'
 
 function folderEntry(value: ExplorerItemData) {
   const item = atom(value)
@@ -76,6 +81,32 @@ test('page explorers keep their row navigation action', () => {
 
   expect(explorer.hasRowAction).toBe(true)
   expect(explorer.items('en')).not.toBe(explorer.items('fr'))
+})
+
+test('page explorers browse into media folders instead of editing them', () => {
+  const explorer = createExplorerAtoms(
+    {workspace: 'workspace', root: 'media'},
+    {enableNavigation: true}
+  )
+  const folder = folderEntry({
+    id: 'images',
+    title: 'Images',
+    path: 'images',
+    type: 'MediaLibrary',
+    workspace: 'workspace',
+    root: 'media',
+    locale: null,
+    parentId: null,
+    parents: [],
+    index: 'a0',
+    data: {},
+    hasChildren: true
+  })
+  const store = createStore()
+
+  store.set(explorer.onAction, folder, null)
+
+  expect(store.get(explorer.location).parentId).toBe('images')
 })
 
 test('explorers default to index sorting', () => {
@@ -195,6 +226,29 @@ test('ready pages snapshot the search that produced their items', async () => {
   const searchPage = await store.get(explorer.pageReady)
   expect(searchPage.search).toBe('Parent')
   expect(searchPage.items.map(item => item.title)).toContain('Parent draft')
+})
+
+test('ready pages include inherited upload permissions for the current folder', async () => {
+  const {child, config, parent, store} = await createDashboardAtomFixture()
+  await store.get(userPolicyReadyAtom)
+  const policy = new WriteablePolicy(getScope(config))
+    .allowAll()
+    .set({id: parent._id, deny: {upload: true}})
+  store.set(preloadUserPolicyAtom, localUser, policy)
+  store.set(routeAtom, {
+    browser: true,
+    route: {
+      page: 'entry',
+      workspace: 'main',
+      root: 'pages',
+      entry: child._id
+    }
+  })
+  const explorer = rootAtoms('main', 'pages').children(child._id)
+
+  const page = await store.get(explorer.pageReady)
+
+  expect(page.canUpload).toBe(false)
 })
 
 test('search temporarily overrides the preferred result mode', () => {

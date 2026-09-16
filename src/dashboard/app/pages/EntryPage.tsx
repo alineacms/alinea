@@ -3,6 +3,7 @@ import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
+import {configAtom} from '#/dashboard/atoms/core.js'
 import {entrySidebarOpenAtom} from '#/dashboard/atoms/dashboard.js'
 import type {ExplorerReadyPage} from '#/dashboard/atoms/explorer.js'
 import {
@@ -21,6 +22,7 @@ import {
 } from '#/dashboard/atoms/nav.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
+import {policyAtom} from '#/dashboard/atoms/user.js'
 import {styler} from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useEffect, useLayoutEffect, useRef} from 'react'
@@ -36,6 +38,7 @@ import {FileEditor} from './../editor/FileEditor.js'
 import {CreateEntryButton} from './../DashboardLayout.js'
 import {EntryFields, NodeEditor} from './../EntryFields.js'
 import {EntryHeader} from './../EntryHeader.js'
+import {entryDirtyActions} from './../EntryHeaderActions.js'
 import {
   EntrySidebar,
   entrySidebar,
@@ -82,11 +85,13 @@ export const entryPage = page(async (page, get) => {
       ? false
       : await get(localeData.parentNeedsTranslation)
     const sourceLocale = get(localeData.translationSourceLocale)
+    const copyTranslationSource = get(localeData.copyTranslationSource)
     const isSidebarOpen = get(entrySidebarOpenAtom)
     const sidebar = await entrySidebar(get, entry, localeData, isSidebarOpen)
     return (
       <EntryEditorContent
         entry={entry}
+        copyTranslationSource={copyTranslationSource}
         isSidebarOpen={Boolean(sidebar && isSidebarOpen)}
         localeData={localeData}
         node={selectedNode}
@@ -206,6 +211,7 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
 interface EntryEditorContentProps {
   page: Page
   entry: EntryAtoms
+  copyTranslationSource: boolean
   isSidebarOpen: boolean
   localeData: EntryLocaleAtoms
   parentNeedsTranslation: boolean
@@ -232,6 +238,7 @@ function EntryOverview({
   selectedEntry
 }: EntryOverviewProps) {
   const setRoute = useSetAtom(routeAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const parentId = selectedEntry.parentId
   return (
     <Rail main>
@@ -243,6 +250,10 @@ function EntryOverview({
         }
         explorer={root.children(entry.id)}
         page={explorerPage}
+        readOnly={
+          !policy.canUpdate(selectedEntry) ||
+          (explorerPage.isMedia && !explorerPage.canUpload)
+        }
         headerEntry={{
           backLabel: parentId ? 'Back to parent entry' : 'Back to root',
           title: selectedEntry.title,
@@ -264,6 +275,7 @@ function EntryOverview({
 function EntryEditorContent({
   page,
   entry,
+  copyTranslationSource,
   isSidebarOpen,
   localeData,
   parentNeedsTranslation,
@@ -279,10 +291,14 @@ function EntryEditorContent({
   const defaultView = useAtomValueRaw(entry.view)
   const sourceLocales = useAtomValueRaw(entry.translationSourceLocales)
   const parentPaths = useAtomValueRaw(entry.parentPaths)
+  const versions = useAtomValueRaw(localeData.versions)
+  const config = useAtomValueRaw(configAtom)
+  const policy = useAtomValueRaw(policyAtom)
   const View = type.customView
   const {locale} = page
   const isUntranslated = selectedEntry.locale !== locale
   const setEditing = useSetAtom(localeData.currentlyEditing)
+  const setCopyTranslationSource = useSetAtom(localeData.copyTranslationSource)
   const setSourceLocale = useSetAtom(localeData.translationSourceLocale)
   const saveDraft = useSetAtom(localeData.saveDraft)
   const publishEdits = useSetAtom(localeData.publishEdits)
@@ -293,16 +309,27 @@ function EntryEditorContent({
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const isMediaFile = type.type === MediaFile
   const isMediaLibrary = type.type === MediaLibrary
-  const mediaDraftsDisabled = isMediaFile || isMediaLibrary
+  const isMedia = isMediaFile || isMediaLibrary
+  const activeVersion = Array.from(versions.values()).find(
+    version => version.active
+  )
+  assert(activeVersion, `Entry "${entry.id}" has no active version`)
+  const access = policy.get(activeVersion)
+  const canSaveDraft = !isMedia && Boolean(config.enableDrafts) && access.update
+  const dirtyActions = entryDirtyActions(access.publish, canSaveDraft)
 
   const discardAndConfirm = () => {
     reset()
     routeBlock?.confirm()
   }
 
-  const saveAndConfirm = async () => {
-    if (mediaDraftsDisabled) await publishEdits(node)
-    else await saveDraft(node)
+  const publishAndConfirm = async () => {
+    await publishEdits(node)
+    routeBlock?.confirm()
+  }
+
+  const saveDraftAndConfirm = async () => {
+    await saveDraft(node)
     routeBlock?.confirm()
   }
 
@@ -328,9 +355,11 @@ function EntryEditorContent({
           {isUntranslated && (
             <div className={styles.EntryEditor.banner()}>
               <EntryTranslationBanner
+                copyFromSource={copyTranslationSource}
                 parentNeedsTranslation={parentNeedsTranslation}
                 sourceLocale={sourceLocale}
                 sourceLocales={sourceLocales}
+                onCopyFromSourceChange={setCopyTranslationSource}
                 onSourceLocaleChange={setSourceLocale}
               />
             </div>
@@ -407,13 +436,26 @@ function EntryEditorContent({
               <Button onPress={discardAndConfirm} appearance="plain">
                 Discard my changes
               </Button>
-              <Button
-                onPress={saveAndConfirm}
-                intent="primary"
-                icon={mediaDraftsDisabled ? IcRoundCheck : IcRoundSave}
-              >
-                {mediaDraftsDisabled ? 'Publish' : 'Save as draft'}
-              </Button>
+              <div className={styles.EntryEditorContent.navigationActions()}>
+                {dirtyActions.publish && (
+                  <Button
+                    onPress={publishAndConfirm}
+                    intent={canSaveDraft ? 'secondary' : 'primary'}
+                    icon={IcRoundCheck}
+                  >
+                    Publish
+                  </Button>
+                )}
+                {dirtyActions.saveDraft && (
+                  <Button
+                    onPress={saveDraftAndConfirm}
+                    intent="primary"
+                    icon={IcRoundSave}
+                  >
+                    Save as draft
+                  </Button>
+                )}
+              </div>
             </DashboardModalFooter>
           </DashboardModalDialog>
         )}

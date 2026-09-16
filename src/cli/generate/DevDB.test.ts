@@ -130,3 +130,26 @@ test('reopens the generated database without loading unchanged blobs', async () 
     await rm(rootDir, {recursive: true, force: true})
   }
 })
+
+test('prepares uploads on the development server origin', async () => {
+  const config = createConfig({
+    handlerUrl: '/api/cms',
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {
+        source: 'content',
+        mediaDir: 'public/media',
+        roots: {}
+      })
+    }
+  })
+  const db = new DevDB({
+    config,
+    rootDir: '.',
+    dashboardUrl: 'http://localhost:4500'
+  })
+
+  const upload = await db.prepareUpload('public/media/example.png')
+
+  test.is(upload.url.startsWith('http://localhost:4500/?/upload&file='), true)
+})

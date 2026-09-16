@@ -14,7 +14,6 @@ export interface DashboardActivity {
   isFetchingUpdates: boolean
   isMutating: boolean
   hasFailed: boolean
-  hasFailedMutations: boolean
   hasBlocked: boolean
   canRetry: boolean
   canDiscard: boolean
@@ -221,10 +220,9 @@ export function activityState(items: Array<Activity>): DashboardActivity {
         (activity.status === 'pending' || activity.status === 'running')
     ),
     hasFailed: hasFailedMutations || hasFailedUploads || hasFailedFetch,
-    hasFailedMutations,
     hasBlocked: items.some(activity => activity.status === 'blocked'),
     canRetry: hasFailedMutations || hasFailedFetch,
-    canDiscard: hasFailedMutations || hasFailedUploads
+    canDiscard: hasFailedUploads
   }
 }
 

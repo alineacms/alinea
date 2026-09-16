@@ -52,6 +52,7 @@ export async function generateDashboard(
     define: {
       'process.env.NODE_ENV': '"production"',
       'process.env.ALINEA_BUILD_ID': JSON.stringify(buildId),
+      'process.env.ALINEA_FORCE_AUTH': 'true',
       ...publicDefines(process.env)
     },
     ...buildOptions,

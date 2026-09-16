@@ -62,10 +62,11 @@ export interface Metadata {
   updatedBy: MetadataAuditUser
 }
 
-export class MetadataField extends RecordField<
-  Metadata,
-  {label: string; fields: Type<MetadataFields>}
-> {}
+export interface MetadataOptions extends FieldOptions<Metadata> {
+  fields: Type<MetadataFields>
+}
+
+export class MetadataField extends RecordField<Metadata, MetadataOptions> {}
 
 export interface MetadataField extends MetadataFields {}
 

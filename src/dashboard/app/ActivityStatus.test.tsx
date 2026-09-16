@@ -359,6 +359,99 @@ test('keeps fetching updates visible alongside failed actions', async () => {
   view.unmount()
 })
 
+test('offers retry but not discard for a failed mutation', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  Object.assign(db, {
+    async activities() {
+      return [
+        {
+          id: 'failed-mutation',
+          type: 'mutation',
+          status: 'failed',
+          error: 'Could not save changes',
+          operations: [{op: 'update', title: 'Page'}],
+          startedAt: 1,
+          finishedAt: 2
+        }
+      ]
+    }
+  })
+
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatus />
+    </Provider>
+  )
+
+  fireEvent.click(await screen.findByRole('button', {name: 'Activity failed'}))
+  expect(await screen.findByText('Could not save changes')).toBeTruthy()
+  expect(screen.getByRole('button', {name: 'Retry'})).toBeTruthy()
+  expect(screen.queryByRole('button', {name: 'Discard'})).toBeNull()
+  view.unmount()
+})
+
+test('keeps retry available for a failed fetch', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  Object.assign(db, {
+    async activities() {
+      return [
+        {
+          id: 'failed-fetch',
+          type: 'fetch',
+          status: 'failed',
+          error: 'Could not fetch changes',
+          operations: [],
+          startedAt: 1,
+          finishedAt: 2
+        }
+      ]
+    }
+  })
+
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatus />
+    </Provider>
+  )
+
+  fireEvent.click(await screen.findByRole('button', {name: 'Activity failed'}))
+  expect(await screen.findByText('Could not fetch changes')).toBeTruthy()
+  expect(screen.getByRole('button', {name: 'Retry'})).toBeTruthy()
+  expect(screen.queryByRole('button', {name: 'Discard'})).toBeNull()
+  view.unmount()
+})
+
+test('keeps discard available for a failed upload', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  Object.assign(db, {
+    async activities() {
+      return [
+        {
+          id: 'failed-upload',
+          type: 'upload',
+          status: 'failed',
+          error: 'Could not upload file',
+          operations: [{op: 'uploadFile', title: 'photo.jpg'}],
+          startedAt: 1,
+          finishedAt: 2
+        }
+      ]
+    }
+  })
+
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatus />
+    </Provider>
+  )
+
+  fireEvent.click(await screen.findByRole('button', {name: 'Activity failed'}))
+  expect(await screen.findByText('Could not upload file')).toBeTruthy()
+  expect(screen.getByRole('button', {name: 'Discard'})).toBeTruthy()
+  expect(screen.queryByRole('button', {name: 'Retry'})).toBeNull()
+  view.unmount()
+})
+
 async function pause(duration: number) {
   await act(() => new Promise<void>(resolve => setTimeout(resolve, duration)))
 }

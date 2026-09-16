@@ -27,6 +27,11 @@ const editor = Config.role('Editor', {
         allow: {read: true, update: true}
       },
       {
+        id: '2rhtUtAwO0RU47pXOJwZBXQsN82',
+        allow: {read: true},
+        deny: {update: true}
+      },
+      {
         field: schema.FieldPermissions.readOnlyByRole,
         deny: {update: true}
       },
@@ -47,7 +52,7 @@ export const cms = createCMS({
   },
   schema,
   roles: {editor},
-  maxUploadSize: 100,
+  maxUploadSize: 10_000_000,
   workspaces: {
     primary: Config.workspace('Primary workspace', {
       mediaDir: 'public',

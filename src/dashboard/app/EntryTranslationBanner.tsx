@@ -1,21 +1,26 @@
-import {Select, SelectItem, Surface} from '#/components.js'
+import {Checkbox, Surface} from '#/components.js'
 import {styler} from '@alinea/styler'
 import {memo} from 'react'
 import css from './EntryTranslationBanner.module.css'
+import {LocaleMenuSelect} from './LocaleMenu.js'
 
 const styles = styler(css)
 
 export interface EntryTranslationBannerProps {
+  copyFromSource: boolean
   parentNeedsTranslation: boolean
   sourceLocale: string | null
   sourceLocales: ReadonlyArray<string>
+  onCopyFromSourceChange: (copyFromSource: boolean) => void
   onSourceLocaleChange: (locale: string) => void
 }
 
 export const EntryTranslationBanner = memo(function EntryTranslationBanner({
+  copyFromSource,
   parentNeedsTranslation,
   sourceLocale,
   sourceLocales,
+  onCopyFromSourceChange,
   onSourceLocaleChange
 }: EntryTranslationBannerProps) {
   return (
@@ -24,31 +29,28 @@ export const EntryTranslationBanner = memo(function EntryTranslationBanner({
         <p className={styles.EntryTranslationBanner.title()}>
           This entry has not been translated yet
         </p>
-        <p className={styles.EntryTranslationBanner.message()}>
-          {parentNeedsTranslation
-            ? 'Translate the parent entry first before creating this translation.'
-            : 'Choose the existing language to copy from before creating the translation.'}
-        </p>
+        {(parentNeedsTranslation || !copyFromSource) && (
+          <p className={styles.EntryTranslationBanner.message()}>
+            {parentNeedsTranslation &&
+              'Translate the parent entry first before creating this translation.'}
+          </p>
+        )}
       </div>
-      {!parentNeedsTranslation && sourceLocale && (
+      {!parentNeedsTranslation && (
         <div className={styles.EntryTranslationBanner.actions()}>
-          <span className={styles.EntryTranslationBanner.label()}>
-            Start from
-          </span>
-          <Select
-            aria-label="Translation source language"
-            className={styles.EntryTranslationBanner.select()}
-            selectedKey={sourceLocale}
-            onSelectionChange={key => {
-              if (key) onSourceLocaleChange(String(key))
-            }}
-          >
-            {sourceLocales.map(locale => (
-              <SelectItem key={locale} id={locale}>
-                {locale.toUpperCase()}
-              </SelectItem>
-            ))}
-          </Select>
+          <Checkbox
+            isSelected={copyFromSource}
+            label="Copy from existing translation"
+            onChange={onCopyFromSourceChange}
+          />
+          {copyFromSource && sourceLocale && (
+            <LocaleMenuSelect
+              ariaLabel="Translation source language"
+              locale={sourceLocale}
+              locales={sourceLocales}
+              onLocaleChange={onSourceLocaleChange}
+            />
+          )}
         </div>
       )}
     </Surface>
