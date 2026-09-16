@@ -349,6 +349,7 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async update({id, locale, status, set}: Op<UpdateMutation>): Promise<void> {
+    assert(id, 'Update mutation is missing an id')
     const entry = await this.#entry({id, locale, statuses: [status]})
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Update, entry)
@@ -418,6 +419,7 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async publish({id, locale, status}: Op<PublishMutation>): Promise<void> {
+    assert(id, 'Publish mutation is missing an id')
     const versions = await this.#versions(id, locale)
     const entry = versions.find(version => version.versionStatus === status)
     assert(entry, `Entry not found: ${id}`)
@@ -460,10 +462,12 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async unpublish({id, locale}: Op<UnpublishMutation>): Promise<void> {
+    assert(id, 'Unpublish mutation is missing an id')
     await this.#changeMainStatus(id, locale, 'draft', Permission.Publish)
   }
 
   async archive({id, locale}: Op<ArchiveMutation>): Promise<void> {
+    assert(id, 'Archive mutation is missing an id')
     await this.#changeMainStatus(id, locale, 'archived', Permission.Archive)
   }
 
@@ -495,6 +499,7 @@ export class EntryTransaction implements AsyncDisposable {
     dropPosition,
     targetType = 'entry'
   }: Op<MoveMutation>): Promise<void> {
+    assert(id, 'Move mutation is missing an id')
     const moving = await this.#versions(id)
     assert(moving.length, `Entry not found: ${id}`)
     const targetEntry =
@@ -574,7 +579,7 @@ export class EntryTransaction implements AsyncDisposable {
       const parent = parentId
         ? await this.#entry({id: parentId, locale: entry.locale, main: true})
         : undefined
-      if (parentId) {
+      if (action === Permission.Move && parentId) {
         assert(parent, `Parent not found: ${parentId}`)
         assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(
@@ -641,6 +646,7 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async remove({id, locale, status}: Op<RemoveMutation>): Promise<void> {
+    assert(id, 'Remove mutation is missing an id')
     const found = (await this.#versions(id, locale)).filter(
       entry => status === undefined || entry.versionStatus === status
     )
