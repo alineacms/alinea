@@ -240,7 +240,11 @@ function useFieldInfo(field: Field) {
 /**
  * Creates an editor for a nested reactive node.
  */
-export function useNodeEditor(node: EditorNode, type: Type) {
+export function useNodeEditor(
+  node: EditorNode,
+  type: Type,
+  readOnly?: boolean
+) {
   const parent = useContext(editorContext)
   const scope = useContext(entryContext)
   const policy = useAtomValueRaw(scope ? policyAtom : noPolicyAtom)
@@ -252,9 +256,18 @@ export function useNodeEditor(node: EditorNode, type: Type) {
       parent instanceof EntryEditor ? parent : undefined,
       activeVersion ?? undefined,
       policy,
-      scope?.richTextImages
+      scope?.richTextImages,
+      readOnly
     )
-  }, [activeVersion, node, parent, policy, scope?.richTextImages, type])
+  }, [
+    activeVersion,
+    node,
+    parent,
+    policy,
+    readOnly,
+    scope?.richTextImages,
+    type
+  ])
   return editor
 }
 

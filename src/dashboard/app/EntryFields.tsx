@@ -21,11 +21,12 @@ const styles = styler(css)
 
 interface NodeEditorProps extends PropsWithChildren {
   node: EditorNode
+  readOnly?: boolean
   type: Type
 }
 
-export function NodeEditor({children, node, type}: NodeEditorProps) {
-  const editor = useNodeEditor(node, type)
+export function NodeEditor({children, node, readOnly, type}: NodeEditorProps) {
+  const editor = useNodeEditor(node, type, readOnly)
   return (
     <EditorScope editor={editor}>{children ?? <FieldsEditor />}</EditorScope>
   )

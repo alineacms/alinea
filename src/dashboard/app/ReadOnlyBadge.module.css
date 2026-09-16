@@ -1,4 +1,7 @@
 .ReadOnlyBadge {
-  --alinea-badge-color: var(--alinea-warning-subtle-fg);
+  --alinea-badge-color: light-dark(
+    color-mix(in srgb, var(--alinea-yellow-600), var(--alinea-gray-900) 45%),
+    var(--alinea-yellow-200)
+  );
   --alinea-badge-background: var(--alinea-warning-subtle);
 }
