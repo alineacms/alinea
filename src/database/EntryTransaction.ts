@@ -606,26 +606,39 @@ export class EntryTransaction implements AsyncDisposable {
             root,
             entry.locale
           )
-      const childrenDir = paths.join(parentDir, entry.path)
+      // Siblings must never share a path: dedupe like create and update do,
+      // otherwise the moved file would overwrite its sibling.
+      const path =
+        action === Permission.Move
+          ? await this.#availablePath({
+              id,
+              path: entry.path,
+              parentId,
+              root,
+              workspace,
+              locale: entry.locale
+            })
+          : entry.path
+      const childrenDir = paths.join(parentDir, path)
       const filePath = `${childrenDir}${entry.versionStatus === 'published' ? '' : `.${entry.versionStatus}`}.json`
       if (action === Permission.Move) {
         this.#sourceTransaction.remove(entry.filePath)
         this.#sourceTransaction.rename(entry.childrenDir, childrenDir)
       }
-      this.#addRecord(
-        filePath,
-        createRecord(
-          {
-            ...entry,
-            index,
-            root,
-            workspace,
-            parentId,
-            data: aliasDataByFilePath.get(entry.filePath) ?? entry.data
-          },
-          entry.versionStatus
-        )
+      const record = createRecord(
+        {
+          ...entry,
+          index,
+          root,
+          workspace,
+          parentId,
+          data: aliasDataByFilePath.get(entry.filePath) ?? entry.data
+        },
+        entry.versionStatus
       )
+      if (entry.versionStatus !== 'published' && path !== entry.path)
+        record.path = path
+      this.#addRecord(filePath, record)
     }
     for (const update of aliasUpdates) {
       if (update.entry.id === id || update.data === update.entry.data) continue
