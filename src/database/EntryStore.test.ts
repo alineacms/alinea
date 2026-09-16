@@ -310,3 +310,38 @@ test('SQLite seed defaults follow config changes without rewriting source', asyn
     changed.sqlite.close()
   }
 })
+
+test('mutations without an id are rejected without touching data', async () => {
+  const {sqlite, store} = await createStore()
+  try {
+    await store.mutate([
+      {
+        op: 'create',
+        id: 'page',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Page'}
+      }
+    ])
+    const mutations = [
+      {op: 'remove', id: undefined},
+      {
+        op: 'update',
+        id: undefined,
+        locale: null,
+        status: 'published',
+        set: {title: 'Changed'}
+      },
+      {op: 'move', id: undefined, target: 'page', dropPosition: 'before'},
+      {op: 'publish', id: undefined, locale: null, status: 'draft'},
+      {op: 'unpublish', id: undefined, locale: null},
+      {op: 'archive', id: undefined, locale: null}
+    ] as any
+    for (const mutation of mutations)
+      await expect(store.mutate([mutation])).rejects.toThrow('missing an id')
+    expect(await store.find({select: Entry.id})).toEqual(['page'])
+    expect(await store.get({id: 'page', select: Entry.title})).toBe('Page')
+  } finally {
+    sqlite.close()
+  }
+})
