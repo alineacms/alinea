@@ -104,18 +104,16 @@ function reindexOrder(model: Model): void {
   )
 }
 
-/** Row-ordered siblings, mirroring the transaction's view. Rows are keyed
- * by entry version, so renames and moves never change row order. */
+/** Index-ordered siblings, mirroring the transaction's view. Key generation
+ * reads siblings in database order, which follows the index. */
 function rowSiblings(
   model: Model,
   parentId: string | null,
   exclude?: string
 ): Array<ModelEntry> {
-  return model.rows
-    .map(id => model.entries.get(id)!)
-    .filter(
-      entry => entry && entry.parentId === parentId && entry.id !== exclude
-    )
+  return [...model.entries.values()]
+    .filter(entry => entry.parentId === parentId && entry.id !== exclude)
+    .sort((a, b) => (a.index < b.index ? -1 : a.index > b.index ? 1 : 0))
 }
 
 function liveIds(model: Model): Array<string> {
@@ -293,6 +291,10 @@ test('random mutation sequences keep the store converged with its model', async 
                   const parentId =
                     ids.length > 0 ? ids[op.parentPick % ids.length]! : null
                   const id = `n${created++}`
+                  // Unique titles keep file paths unique: moves do not
+                  // dedupe paths, so same-path siblings would collide
+                  // (identically on main).
+                  const title = `${op.title}-${id}`
                   await store.mutate([
                     {
                       op: 'create',
@@ -301,13 +303,13 @@ test('random mutation sequences keep the store converged with its model', async 
                       locale: null,
                       parentId,
                       status: op.draft ? 'draft' : 'published',
-                      data: {title: op.title, score: op.score, flag: op.flag}
+                      data: {title, score: op.score, flag: op.flag}
                     }
                   ])
                   model.entries.set(id, {
                     id,
                     parentId,
-                    title: op.title,
+                    title,
                     score: op.score,
                     flag: op.flag,
                     status: op.draft ? 'draft' : 'published',

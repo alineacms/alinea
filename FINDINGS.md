@@ -56,7 +56,8 @@ The reorder guard already matches `main`, nothing to backport.
 
 | # | Finding | Status |
 |---|---------|--------|
-| 5 | Sibling order after combined move+create histories occasionally diverges from the index-accurate model (`test/property/transactions.test.ts` still red intermittently, ~1 in 3 runs). Simple histories match on both engines (probes `move-create-order`, `create-take-position`), so the trigger needs a longer history (suspect: key generation reading siblings in row order after moves reshuffle indexes). Not yet isolated to engine vs model. | 🔍 next: minimize the failing history to a deterministic probe and run it on both engines |
+| 5 | Sibling order after combined move+create histories. Root cause was the test model, not the engine: key generation reads siblings in index order on both engines (verified identical keys `Zz`, `ZzV`, `a1` across move/create sequences on `main` and branch). Fixed in the model; 150-run soak green. | ✅ resolved as model bug |
+| 6 | Moving an entry onto a sibling with the same path segment silently collides: both entries resolve to the same file and one row is lost. Neither engine dedupes the target path on move (`main` computes the same unchecked `filePath`). Genuine sharp edge present on **both** engines — candidate to fix on `main` (and the branch inherits it). The property generator now uses unique titles to stay out of this. | ⚠️ parity-broken on both, fixable on `main` |
 
 ## Property suite
 
