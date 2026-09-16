@@ -428,6 +428,45 @@ test('selects children by depth', async () => {
   })
 })
 
+test('batches relation projections without changing their results', async () => {
+  await withAdvancedStore(async store => {
+    const relationSelection = {
+      id: Entry.id,
+      parent: Query.parent({select: Entry.id}),
+      children: Query.children({select: Entry.id}),
+      parents: Query.parents({select: Entry.id}),
+      siblings: Query.siblings({select: Entry.id})
+    }
+    const batched = await store.find({
+      id: {in: ['parent', 'child-1', 'child-2', 'grand']},
+      select: relationSelection
+    })
+    const individual = await Promise.all(
+      batched.map(({id}) => store.get({id, select: relationSelection}))
+    )
+    expect(batched).toEqual(individual)
+
+    const translationSelection = {
+      id: Entry.id,
+      locale: Entry.locale,
+      translations: Query.translations({
+        includeSelf: true,
+        select: Entry.locale
+      })
+    }
+    const translations = await store.find({
+      type: Article,
+      select: translationSelection
+    })
+    const individualTranslations = await Promise.all(
+      translations.map(({id, locale}) =>
+        store.get({id, locale: locale ?? undefined, select: translationSelection})
+      )
+    )
+    expect(translations).toEqual(individualTranslations)
+  })
+})
+
 test('projects and filters metadata shortcuts', async () => {
   await withAdvancedStore(async store => {
     const metadata = await store.get({

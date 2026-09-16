@@ -28,6 +28,7 @@ import {
   min,
   or,
   sql,
+  when,
   type HasSql,
   type SelectionInput,
   type SelectionRecord,
@@ -368,6 +369,20 @@ export function compileEntryQuery(
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
+  else if (edge?.edge === 'translations' && edge.includeSelf)
+    ordering.push(
+      asc(
+        when(
+          [
+            source?.locale === null
+              ? isNull(entry.locale)
+              : eq(entry.locale, source!.locale!),
+            0
+          ],
+          1
+        )
+      )
+    )
   ordering.push(...stableOrdering)
 
   const projection = new Expressions(scope, entry, search)

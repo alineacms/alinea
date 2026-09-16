@@ -2,11 +2,13 @@ import type {Config} from '#/core/Config.js'
 import {
   Graph,
   type AnyQueryResult,
+  type EdgeQuery,
   type GraphQuery,
   type Projection,
   type InferProjection
 } from '#/core/Graph.js'
 import {Field} from '#/core/Field.js'
+import {Entry} from '#/core/Entry.js'
 import type {
   EntryReference,
   EntryReferenceQuery,
@@ -616,8 +618,15 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       return {count: undefined, rows}
     })()
     if (plan.count) return result.count
+    const batchedRelations = await this.#batchSimpleRelations(
+      query,
+      plan,
+      result.rows,
+      db
+    )
     const rows: Array<unknown> = []
-    for (const row of result.rows) {
+    for (let rowIndex = 0; rowIndex < result.rows.length; rowIndex++) {
+      const row = result.rows[rowIndex]
       if (
         !plan.relations.length &&
         !plan.fields.length &&
@@ -632,9 +641,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         data?: unknown
       }
       let value = projected.value
-      const selectedData = plan.fields.length || plan.optional.length
-        ? storedEntryData(projected.data, projected.source.path)
-        : undefined
+      const selectedData =
+        plan.fields.length || plan.optional.length
+          ? storedEntryData(projected.data, projected.source.path)
+          : undefined
       const database = this
       const loader: LinkResolver = {
         resolver: {config: this.#config},
@@ -724,15 +734,23 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
         if (!selected.path.length) value = undefined
         else setProjectionValue(value, selected.path, undefined)
       }
-      for (const relation of plan.relations) {
-        const related = await this.#resolve(
-          {
-            ...relation.query,
-            status: query.status ?? 'published'
-          },
-          db,
-          projected.source
-        )
+      for (
+        let relationIndex = 0;
+        relationIndex < plan.relations.length;
+        relationIndex++
+      ) {
+        const relation = plan.relations[relationIndex]
+        const batched = batchedRelations.get(`${rowIndex}:${relationIndex}`)
+        const related = batchedRelations.has(`${rowIndex}:${relationIndex}`)
+          ? batched
+          : await this.#resolve(
+              {
+                ...relation.query,
+                status: query.status ?? 'published'
+              },
+              db,
+              projected.source
+            )
         if (!relation.path.length) value = related
         else {
           let target = value
@@ -756,6 +774,221 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     // Graph's nested projection stage returns undefined for an absent single
     // relation; only the public top-level first/get stage normalizes absence.
     return plan.single ? (source || rows.length ? rows[0] : null) : rows
+  }
+
+  async #batchSimpleRelations(
+    query: GraphQuery,
+    plan: ReturnType<typeof compileEntryQuery>,
+    rows: Array<unknown>,
+    db: Database
+  ): Promise<Map<string, unknown>> {
+    const result = new Map<string, unknown>()
+    if (!plan.relations.length || rows.length < 2) return result
+    const sources = rows.map(row => {
+      if (!isRecord(row) || !isRecord(row.source)) return
+      return row.source as unknown as RelationSource
+    })
+    if (sources.some(source => !source)) return result
+    for (
+      let relationIndex = 0;
+      relationIndex < plan.relations.length;
+      relationIndex++
+    ) {
+      const relation = plan.relations[relationIndex]
+      const nestedQuery = {
+        ...relation.query,
+        status: query.status ?? 'published'
+      }
+      const direct = await this.#batchDirectRelations(
+        relation.query,
+        nestedQuery,
+        sources as Array<RelationSource>,
+        relationIndex,
+        db
+      )
+      if (direct) {
+        for (const [key, value] of direct) result.set(key, value)
+      }
+    }
+    return result
+  }
+
+  async #batchDirectRelations(
+    relation: EdgeQuery,
+    nestedQuery: GraphQuery,
+    sources: Array<RelationSource>,
+    relationIndex: number,
+    db: Database
+  ): Promise<Map<string, unknown> | undefined> {
+    if (
+      relation.select === undefined ||
+      relation.orderBy !== undefined ||
+      relation.groupBy !== undefined ||
+      relation.skip !== undefined ||
+      relation.take !== undefined ||
+      relation.id !== undefined ||
+      relation.parentId !== undefined ||
+      relation.locale !== undefined ||
+      relation.preferredLocale !== undefined ||
+      relation.count ||
+      relation.first ||
+      relation.get
+    )
+      return
+    const {edge: _edge, ...baseQuery} = nestedQuery as GraphQuery & {
+      edge: string
+    }
+    const result = new Map<string, unknown>()
+    if (relation.edge === 'translations') {
+      const rows = (await this.#resolve(
+        {
+          ...baseQuery,
+          id: {in: Array.from(new Set(sources.map(source => source.id)))},
+          select: {
+            id: Entry.id,
+            locale: Entry.locale,
+            value: relation.select
+          }
+        },
+        db
+      )) as Array<{id: string; locale: string | null; value: unknown}>
+      const byId = new Map<string, Array<(typeof rows)[number]>>()
+      for (const row of rows) {
+        const matches = byId.get(row.id) ?? []
+        matches.push(row)
+        byId.set(row.id, matches)
+      }
+      for (let index = 0; index < sources.length; index++) {
+        const source = sources[index]
+        const matches = byId.get(source.id) ?? []
+        const values = relation.includeSelf
+          ? [
+              ...matches.filter(row => row.locale === source.locale),
+              ...matches.filter(row => row.locale !== source.locale)
+            ].map(row => row.value)
+          : matches
+              .filter(row => row.locale !== source.locale)
+              .map(row => row.value)
+        result.set(`${index}:${relationIndex}`, values)
+      }
+      return result
+    }
+    const groups = new Map<
+      string,
+      Array<{index: number; source: RelationSource}>
+    >()
+    for (let index = 0; index < sources.length; index++) {
+      const source = sources[index]
+      const key = source.locale ?? '\0'
+      const group = groups.get(key) ?? []
+      group.push({index, source})
+      groups.set(key, group)
+    }
+    for (const group of groups.values()) {
+      const locale = group[0].source.locale
+      if (relation.edge === 'parent') {
+        const parentIds = Array.from(
+          new Set(group.flatMap(({source}) => source.parentId ?? []))
+        )
+        const rows = parentIds.length
+          ? ((await this.#resolve(
+              {
+                ...baseQuery,
+                id: {in: parentIds},
+                locale,
+                select: {id: Entry.id, value: relation.select}
+              },
+              db
+            )) as Array<{id: string; value: unknown}>)
+          : []
+        const byId = new Map(rows.map(row => [row.id, row.value]))
+        for (const {index, source} of group)
+          result.set(
+            `${index}:${relationIndex}`,
+            source.parentId ? byId.get(source.parentId) : undefined
+          )
+        continue
+      }
+      if (relation.edge === 'parents') {
+        const depth = relation.depth ?? Number.POSITIVE_INFINITY
+        const idsBySource = group.map(({source}) =>
+          source.parents.slice(-depth)
+        )
+        const ids = Array.from(new Set(idsBySource.flat()))
+        const rows = ids.length
+          ? ((await this.#resolve(
+              {
+                ...baseQuery,
+                id: {in: ids},
+                locale,
+                select: {id: Entry.id, value: relation.select}
+              },
+              db
+            )) as Array<{id: string; value: unknown}>)
+          : []
+        const byId = new Map(rows.map(row => [row.id, row.value]))
+        for (let groupIndex = 0; groupIndex < group.length; groupIndex++)
+          result.set(
+            `${group[groupIndex].index}:${relationIndex}`,
+            idsBySource[groupIndex].flatMap(id =>
+              byId.has(id) ? [byId.get(id)] : []
+            )
+          )
+        continue
+      }
+      if (relation.edge !== 'children' && relation.edge !== 'siblings') return
+      if (relation.edge === 'children' && (relation.depth ?? 1) !== 1) return
+      const parentIds = Array.from(
+        new Set(
+          group.flatMap(({source}) =>
+            relation.edge === 'children' ? [source.id] : (source.parentId ?? [])
+          )
+        )
+      )
+      const rows = parentIds.length
+        ? ((await this.#resolve(
+            {
+              ...baseQuery,
+              parentId: {in: parentIds},
+              locale,
+              select: {
+                id: Entry.id,
+                parentId: Entry.parentId,
+                value: relation.select
+              }
+            },
+            db
+          )) as Array<{
+            id: string
+            parentId: string | null
+            value: unknown
+          }>)
+        : []
+      const byParent = new Map<string, Array<(typeof rows)[number]>>()
+      for (const row of rows) {
+        if (!row.parentId) continue
+        const matches = byParent.get(row.parentId) ?? []
+        matches.push(row)
+        byParent.set(row.parentId, matches)
+      }
+      for (const {index, source} of group) {
+        const parentId =
+          relation.edge === 'children' ? source.id : source.parentId
+        const matches = parentId ? (byParent.get(parentId) ?? []) : []
+        result.set(
+          `${index}:${relationIndex}`,
+          matches
+            .filter(
+              row =>
+                relation.edge !== 'siblings' ||
+                relation.includeSelf ||
+                row.id !== source.id
+            )
+            .map(row => row.value)
+        )
+      }
+    }
+    return result
   }
 
   /** Scan references in bounded pages without retaining an entry index. */
