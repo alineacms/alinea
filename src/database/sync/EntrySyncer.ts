@@ -38,7 +38,7 @@ import {
 import {parseSourceEntry} from './EntryParser.js'
 
 const changeBatchSize = 250
-const sqliteBatchSize = 500
+const sqliteBatchSize = 5000
 
 export interface EntrySyncTarget {
   name: string
@@ -162,7 +162,6 @@ const afterFilePath = sql.placeholder<string>('afterFilePath')
 const afterEntryId = sql.placeholder<string>('afterEntryId')
 const afterVersionId = sql.placeholder<string>('afterVersionId')
 const level = sql.placeholder<number>('level')
-const offset = sql.placeholder<number>('offset')
 const revision = sql.placeholder<string>('revision')
 const treeSnapshot = sql.placeholder<string | null>('tree')
 function createSyncQueryPlan(target: EntrySyncTarget) {
@@ -245,8 +244,6 @@ function createSyncQueryPlan(target: EntrySyncTarget) {
     .where(eq(DerivedEntries.level, level))
     .groupBy(DerivedEntries.id, DerivedEntries.locale)
     .orderBy(asc(DerivedEntries.id), asc(DerivedEntries.locale))
-    .limit(sqliteBatchSize)
-    .offset(offset)
   const mainEntriesQuery = builder
     .select({
       versionId: DerivedEntries.versionId,
@@ -412,10 +409,7 @@ function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     ),
     hierarchy: query.hierarchy.prepare<{afterVersionId: string}>(undefined, db),
     levels: query.levels.prepare(undefined, db),
-    statuses: query.statuses.prepare<{level: number; offset: number}>(
-      undefined,
-      db
-    ),
+    statuses: query.statuses.prepare<{level: number}>(undefined, db),
     mainEntries: query.mainEntries.prepare<{afterVersionId: string}>(
       undefined,
       db
@@ -952,30 +946,31 @@ async function materializeAffected(
 async function deriveStatus(db: Database, queries: SyncQueries): Promise<void> {
   const levels = (await queries.levels.all()) as Array<{level: number}>
   for (const {level} of levels) {
-    let offset = 0
-    while (true) {
-      const rows = (await queries.statuses.all({
-        level,
-        offset
-      })) as Array<StatusRow>
-      if (!rows.length) break
-      offset += rows.length
-      const parentKeys = Array.from(
-        new Set(
-          rows.flatMap(row =>
-            row.parentId ? [statusKey(row.parentId, row.locale)] : []
-          )
+    // One fetch per level: OFFSET pagination rescans from the start on
+    // every page, which is quadratic in affected rows.
+    const rows = (await queries.statuses.all({level})) as Array<StatusRow>
+    if (!rows.length) continue
+    const parentKeys = Array.from(
+      new Set(
+        rows.flatMap(row =>
+          row.parentId ? [statusKey(row.parentId, row.locale)] : []
         )
       )
-      const parents = parentKeys.length
-        ? await db
-            .select()
-            .from(SyncStatus)
-            .where(inArray(SyncStatus.key, parentKeys))
-        : []
-      const parentByKey = new Map(parents.map(parent => [parent.key, parent]))
+    )
+    const parentByKey = new Map<string, {key: string; effectiveStatus: string}>()
+    for (const page of chunks(parentKeys, sqliteBatchSize)) {
+      const parents = (await db
+        .select()
+        .from(SyncStatus)
+        .where(inArray(SyncStatus.key, page))) as Array<{
+        key: string
+        effectiveStatus: string
+      }>
+      for (const parent of parents) parentByKey.set(parent.key, parent)
+    }
+    for (const page of chunks(rows, sqliteBatchSize))
       await db.insert(SyncStatus).values(
-        rows.map(row => {
+        page.map(row => {
           const parent = row.parentId
             ? parentByKey.get(statusKey(row.parentId, row.locale))
             : undefined
@@ -987,7 +982,6 @@ async function deriveStatus(db: Database, queries: SyncQueries): Promise<void> {
           }
         })
       )
-    }
   }
   await queries.updateStatus.run()
 }
