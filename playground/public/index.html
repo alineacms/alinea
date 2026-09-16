@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alinea SQLite playground</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="dot"></span> Alinea SQLite playground</div>
+  <div class="pills" id="status-pills">
+    <span class="pill">entries <b id="stat-entries">–</b></span>
+    <span class="pill">revision <b id="stat-revision">–</b></span>
+    <span class="pill">sqlite <b id="stat-bytes">–</b></span>
+    <span class="pill">remote files <b id="stat-remote">–</b></span>
+  </div>
+  <button id="btn-reset" class="ghost" title="Empty remote and store">Reset</button>
+</header>
+
+<main class="layout">
+  <section class="steps">
+    <article class="card" id="step-source">
+      <h2><span class="step">1</span> Remote source</h2>
+      <p>Edit the simulated cloud: add, retitle or remove files. Nothing happens locally until you sync.</p>
+      <div class="row">
+        <button data-remote="add">Add remote doc</button>
+        <button data-remote="edit">Retitle random doc</button>
+        <button data-remote="remove">Remove random doc</button>
+      </div>
+      <div class="result" id="remote-result">–</div>
+    </article>
+
+    <article class="card" id="step-sync">
+      <h2><span class="step">2</span> Sync</h2>
+      <p>Pull the remote into SQLite: parse, index, derive hierarchy, status and URLs — atomically.</p>
+      <div class="row">
+        <button id="btn-sync" class="primary">Sync now</button>
+      </div>
+      <div class="result" id="sync-result">–</div>
+    </article>
+
+    <article class="card" id="step-query">
+      <h2><span class="step">3</span> Query</h2>
+      <p>Everything below compiles to SQL. Click a row to inspect its relations.</p>
+      <div class="row">
+        <input id="search" type="search" placeholder="Full-text search…" autocomplete="off">
+        <button data-query="all">All</button>
+        <button data-query="children">Children of home</button>
+      </div>
+      <div class="result" id="query-meta">–</div>
+      <table class="entries">
+        <thead><tr><th>id</th><th>title</th><th>score</th><th>status</th><th>parent</th></tr></thead>
+        <tbody id="entries-body"></tbody>
+      </table>
+      <div class="row pager">
+        <button id="page-prev">← Prev</button>
+        <span id="page-label">page 1</span>
+        <button id="page-next">Next →</button>
+      </div>
+    </article>
+
+    <article class="card" id="step-mutate">
+      <h2><span class="step">4</span> Mutate</h2>
+      <p>Write through transactions against the selected entry. Invalid writes roll everything back.</p>
+      <div class="row">
+        <button data-mutate="rename">Rename</button>
+        <button data-mutate="move">Move under recipes</button>
+        <button data-mutate="unpublish">Unpublish</button>
+        <button data-mutate="publish">Publish</button>
+        <button data-mutate="remove">Delete</button>
+        <button data-mutate="create">Create child</button>
+      </div>
+      <div class="result" id="mutate-result">Select a row above first.</div>
+    </article>
+
+    <article class="card" id="step-scale">
+      <h2><span class="step">5</span> Scale lab</h2>
+      <p>Seed tens of thousands of documents, then sync and watch SQLite keep up.</p>
+      <div class="row">
+        <button data-seed="5000">Seed 5K</button>
+        <button data-seed="25000">Seed 25K</button>
+        <button data-seed="50000">Seed 50K</button>
+      </div>
+      <div class="result" id="seed-result">–</div>
+    </article>
+
+    <article class="card" id="step-about">
+      <h2>How it works</h2>
+      <ol class="how">
+        <li><b>Source files</b> (JSON records) live anywhere: git, CMS cloud, disk.</li>
+        <li><b>Sync</b> parses them into one <b>SQLite</b> table, then derives hierarchy, effective status, URLs and search text — inside a single transaction.</li>
+        <li><b>Queries</b> compile to SQL, including relations (parents, children, siblings) and full-text search.</li>
+        <li><b>Mutations</b> run as transactions with validation; failures roll back.</li>
+        <li><b>Overlays</b> give previews and the Next.js handler isolated write layers over a readonly database.</li>
+      </ol>
+    </article>
+  </section>
+
+  <aside class="side">
+    <article class="card">
+      <h2>Selected entry</h2>
+      <div class="result" id="detail">–</div>
+    </article>
+    <article class="card">
+      <h2>Event log</h2>
+      <div class="log" id="log"></div>
+    </article>
+  </aside>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
