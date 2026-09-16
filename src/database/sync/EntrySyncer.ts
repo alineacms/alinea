@@ -11,7 +11,7 @@ import {
   type EntrySyncTarget,
   type SyncQueries
 } from './queries.js'
-import {mergeSource, mergeTrees} from './ingest.js'
+import {mergeTrees} from './ingest.js'
 import {
   copyInitialUrls,
   deriveHierarchy,
@@ -107,13 +107,8 @@ export class EntrySyncer implements AsyncDisposable {
           queries
         )
       else
-        await mergeSource(
-          tx,
-          target.entries,
-          this.#config,
-          source,
-          tree,
-          queries
+        throw new Error(
+          'Cannot sync a populated database without a recorded source tree'
         )
       await expandAffected(tx, target.entries)
       await materializeAffected(tx, target, queries, materialized)

@@ -19,7 +19,6 @@ import {
   type AffectedEntryRow,
   type DirectoryHashRow,
   type FileRow,
-  type StoredFileRow,
   type StoredHierarchyRow,
   type SyncQueries
 } from './queries.js'
@@ -175,95 +174,6 @@ async function replaceFiles(
         : []
     )
   )
-}
-
-async function* storedFiles(
-  queries: SyncQueries
-): AsyncGenerator<StoredFileRow> {
-  let afterFilePath = ''
-  while (true) {
-    const rows = (await queries.storedFiles.all({
-      afterFilePath
-    })) as Array<StoredFileRow>
-    if (!rows.length) return
-    for (const row of rows) yield row
-    afterFilePath = rows.at(-1)!.filePath
-  }
-}
-
-export async function mergeSource(
-  db: Database,
-  EntryIndexTable: EntryIndexTarget,
-  config: Config,
-  source: RemoteSource,
-  tree: ReadonlyTree,
-  queries: SyncQueries
-): Promise<void> {
-  const stored = storedFiles(queries)[Symbol.asyncIterator]()
-  function* sourceFiles(): Generator<[string, Leaf]> {
-    for (const [filePath, node] of tree)
-      if (node instanceof Leaf) yield [filePath, node]
-  }
-  const incoming = sourceFiles()
-  let currentStored = await stored.next()
-  let currentIncoming = incoming.next()
-  let removed = Array<string>()
-  let changed = Array<FileRow>()
-  let directoryHashes = Array<{key: string; value: string}>()
-  let directoryIds = Array<string>()
-
-  async function flush(): Promise<void> {
-    await deleteFiles(db, EntryIndexTable, removed)
-    await replaceFiles(db, EntryIndexTable, config, source, tree, changed)
-    if (directoryHashes.length) {
-      await addIds(db, SyncAffected, directoryIds)
-      await queries.clearValues.run()
-      await db.insert(SyncValues).values(directoryHashes)
-      await queries.updateChildrenSha.run()
-    }
-    removed = []
-    changed = []
-    directoryHashes = []
-    directoryIds = []
-  }
-
-  while (!currentStored.done || !currentIncoming.done) {
-    const storedRow = currentStored.done ? undefined : currentStored.value
-    const incomingRow = currentIncoming.done
-      ? undefined
-      : {
-          filePath: currentIncoming.value[0],
-          fileHash: currentIncoming.value[1].sha
-        }
-    if (
-      !incomingRow ||
-      (storedRow && storedRow.filePath < incomingRow.filePath)
-    ) {
-      removed.push(storedRow!.filePath)
-      currentStored = await stored.next()
-    } else if (!storedRow || incomingRow.filePath < storedRow.filePath) {
-      changed.push(incomingRow)
-      currentIncoming = incoming.next()
-    } else {
-      if (storedRow.fileHash !== incomingRow.fileHash) {
-        changed.push(incomingRow)
-      } else {
-        const childrenSha = sourceDirectorySha(tree, storedRow.childrenDir)
-        if (childrenSha !== storedRow.childrenSha) {
-          directoryHashes.push({key: storedRow.versionId, value: childrenSha})
-          directoryIds.push(storedRow.id)
-        }
-      }
-      currentStored = await stored.next()
-      currentIncoming = incoming.next()
-    }
-    if (
-      removed.length + changed.length + directoryHashes.length >=
-      changeBatchSize
-    )
-      await flush()
-  }
-  await flush()
 }
 
 async function updateDirectoryHashes(

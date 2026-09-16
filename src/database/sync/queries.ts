@@ -73,13 +73,6 @@ export interface FileRow {
   fileHash: string
 }
 
-export interface StoredFileRow extends FileRow {
-  id: string
-  versionId: string
-  childrenDir: string
-  childrenSha: string | null
-}
-
 export interface StoredHierarchyRow {
   versionId: string
   parentDir: string
@@ -148,7 +141,6 @@ export function* chunks<T>(
 }
 
 const builder = new Builder()
-const afterFilePath = sql.placeholder<string>('afterFilePath')
 const afterVersionId = sql.placeholder<string>('afterVersionId')
 const level = sql.placeholder<number>('level')
 const revision = sql.placeholder<string>('revision')
@@ -177,23 +169,6 @@ function setRevisionQuery(target: EntrySyncTarget) {
     .update(DatabaseState)
     .set({revision, tree: sql<Tree>`${treeSnapshot}`})
     .where(eq(DatabaseState.id, 1))
-}
-
-function storedFilesQuery(target: EntrySyncTarget) {
-  const EntryIndexTable = target.entries
-  return builder
-    .select({
-      id: EntryIndexTable.id,
-      filePath: EntryIndexTable.filePath,
-      fileHash: EntryIndexTable.fileHash,
-      versionId: EntryIndexTable.versionId,
-      childrenDir: EntryIndexTable.childrenDir,
-      childrenSha: EntryIndexTable.childrenSha
-    })
-    .from(EntryIndexTable)
-    .where(gt(EntryIndexTable.filePath, afterFilePath))
-    .orderBy(asc(EntryIndexTable.filePath))
-    .limit(sqliteBatchSize)
 }
 
 function hierarchyQuery(target: EntrySyncTarget) {
@@ -419,7 +394,6 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     revision: revisionQuery(target).prepare(undefined, db),
     entryCount: entryCountQuery(target).prepare(undefined, db),
     setRevision: setRevisionQuery(target).prepare(undefined, db),
-    storedFiles: storedFilesQuery(target).prepare(undefined, db),
     hierarchy: hierarchyQuery(target).prepare(undefined, db),
     levels: levelsQuery(target).prepare(undefined, db),
     statuses: statusesQuery(target).prepare(undefined, db),
