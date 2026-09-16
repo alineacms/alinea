@@ -181,7 +181,7 @@ export class EntryLocaleAtoms {
   availableStatuses = atom(get => {
     return Array.from(get(this.versions).keys())
   })
-  selectedEntry = atom(async (get): Promise<Entry> => {
+  preferredEntry = atom(get => {
     const data = get(this.entry.data)
     const translated = data.entries.some(
       entry => entry.locale === this.requestedLocale
@@ -189,32 +189,37 @@ export class EntryLocaleAtoms {
     const sourceLocale = translated
       ? this.requestedLocale
       : get(this.translationSourceLocale)
+    const entry = data.entries.find(entry => entry.locale === sourceLocale)
+    assert(entry, `No readable entry for "${this.entry.id}"`)
+    return entry
+  })
+  selectedEntry = atom(async (get): Promise<Entry> => {
+    const data = get(this.entry.data)
+    const preferredEntry = get(this.preferredEntry)
     const localeEntries = data.entries.filter(
-      entry => entry.locale === sourceLocale
+      entry => entry.locale === preferredEntry.locale
     )
-    assert(localeEntries.length > 0, `No readable entry for "${this.entry.id}"`)
     const version = get(this.selectedVersion)
-    if (!version) return localeEntries[0]
+    if (!version) return preferredEntry
     if (version.type === 'status')
       return (
         localeEntries.find(entry => entry.status === version.status) ??
-        localeEntries[0]
+        preferredEntry
       )
     const client = get(clientAtom)
     const revision = await client.revisionData(version.file, version.ref)
-    const activeEntry = localeEntries[0]
-    if (!revision) return activeEntry
+    if (!revision) return preferredEntry
     const historyData = parseRecord(revision).data
     return {
-      ...activeEntry,
+      ...preferredEntry,
       title:
         typeof historyData.title === 'string'
           ? historyData.title
-          : activeEntry.title,
+          : preferredEntry.title,
       path:
         typeof historyData.path === 'string'
           ? historyData.path
-          : activeEntry.path,
+          : preferredEntry.path,
       data: historyData
     }
   })
