@@ -512,14 +512,9 @@ export function ListRowFoldButton({
       appearance="plain"
       aria-expanded={expanded}
       className={styles.ListRowFoldButton(styler.merge({className}))}
+      icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
       size="icon-small"
-    >
-      <Icon
-        aria-hidden
-        className={styles.ListRowFoldButton.icon()}
-        icon={expanded ? IcRoundUnfoldLess : IcRoundUnfoldMore}
-      />
-    </Button>
+    />
   )
 }
 

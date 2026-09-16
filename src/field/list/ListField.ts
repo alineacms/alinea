@@ -30,6 +30,18 @@ export interface ListOptions<Definitions extends Schema> extends FieldOptions<
   ): boolean | string | undefined
 }
 
+export interface ColumnsListOptions<Definitions extends Schema> extends Omit<
+  ListOptions<Definitions>,
+  'initialValue'
+> {
+  /** Store and display list items in anonymous, resizable rows */
+  columns: true
+  /** Initial list items, optionally grouped into 12-track rows */
+  initialValue?: Array<
+    InferStoredValue<Definitions> & Partial<Pick<ListRow, '_layout'>>
+  >
+}
+
 /** Create a list field configuration */
 export function list<Definitions extends Schema>(
   label: string,
@@ -60,4 +72,25 @@ export function list<Definitions extends Schema>(
     },
     view: viewKeys.ListInput
   })
+}
+
+export namespace list {
+  /** Create a list whose items can be arranged in resizable columns */
+  export function columns<Definitions extends Schema>(
+    label: string,
+    options: WithoutLabel<Omit<ColumnsListOptions<Definitions>, 'columns'>>
+  ): ListField<
+    InferStoredValue<Definitions> & ListRow,
+    InferQueryValue<Definitions> & ListRow,
+    ColumnsListOptions<Definitions>
+  > {
+    return list(label, {
+      ...options,
+      columns: true
+    } as WithoutLabel<ColumnsListOptions<Definitions>>) as ListField<
+      InferStoredValue<Definitions> & ListRow,
+      InferQueryValue<Definitions> & ListRow,
+      ColumnsListOptions<Definitions>
+    >
+  }
 }

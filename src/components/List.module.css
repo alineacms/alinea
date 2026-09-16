@@ -463,10 +463,10 @@
 }
 
 .ListRowFoldButton {
-  width: 32px;
+  width: 26px;
   height: 32px;
-  min-width: 32px;
-  flex: 0 0 32px;
+  min-width: 26px;
+  flex: 0 0 26px;
   color: var(--alinea-fg-muted);
 }
 
@@ -474,12 +474,6 @@
 .ListRowFoldButton[data-pressed],
 .ListRowFoldButton[data-active] {
   color: var(--alinea-fg);
-}
-
-.ListRowFoldButton-icon {
-  width: 30px;
-  height: 30px;
-  transform: scale(1.2);
 }
 
 .ListRowBody {

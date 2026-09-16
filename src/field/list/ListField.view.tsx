@@ -53,7 +53,8 @@ import {
   IcRoundMoreHoriz,
   IcRoundNotes
 } from '#/dashboard/icons.js'
-import {ListOptions} from '#/field/list.js'
+import {type ColumnsListOptions, ListOptions} from '#/field/list.js'
+import {ColumnsListFieldView} from '#/field/list/ColumnsListField.view.js'
 import {SlugField} from '#/field/path/SlugField.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
@@ -82,6 +83,7 @@ const ListFieldDepthContext = createContext(0)
 
 interface ListValue {
   _id: string
+  _index: string
   _type: string
   [key: string]: unknown
 }
@@ -100,9 +102,29 @@ interface ListFieldTypeItem {
 
 export interface ListFieldViewProps {
   field: CoreListField<ListRow, ListValue, ListOptions<Schema>>
+  initiallyCollapsed?: boolean
 }
 
-export function ListFieldView({field}: ListFieldViewProps) {
+export function ListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
+  const options = useFieldOptions(field) as ListOptions<Schema>
+  if ((options as ColumnsListOptions<Schema>).columns) {
+    return (
+      <ColumnsListFieldView
+        field={
+          field as CoreListField<ListRow, ListValue, ColumnsListOptions<Schema>>
+        }
+      />
+    )
+  }
+  return (
+    <DefaultListFieldView
+      field={field}
+      initiallyCollapsed={initiallyCollapsed}
+    />
+  )
+}
+
+function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
   const depth = useContext(ListFieldDepthContext)
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
@@ -126,10 +148,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   )
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
-  const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
-  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
-  const [dropIndicator, setDropIndicator] =
-    useState<ListFieldDropIndicatorState | null>(null)
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -139,6 +157,12 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [list]
   )
   const rowIds = useAtomValueRaw(rowIdsAtom)
+  const [foldedIds, setFoldedIds] = useState<Set<string>>(
+    () => new Set((initiallyCollapsed ?? depth > 0) ? rowIds : [])
+  )
+  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
+  const [dropIndicator, setDropIndicator] =
+    useState<ListFieldDropIndicatorState | null>(null)
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {

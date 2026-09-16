@@ -1,0 +1,211 @@
+.ColumnsListFieldView {
+  display: grid;
+}
+
+.ColumnsListFieldView-rowDropTarget {
+  position: relative;
+}
+
+.ColumnsListFieldView-dropIndicator {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 12px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--alinea-focus);
+  pointer-events: none;
+}
+
+.ColumnsListFieldView-dropIndicator[data-position='before'] {
+  inset-block-start: 0;
+}
+
+.ColumnsListFieldView-dropIndicator[data-position='after'] {
+  inset-block-end: 0;
+}
+
+.ColumnsListFieldView-rowHeader {
+  position: relative;
+  padding-block: 0;
+  padding-inline: 16px;
+}
+
+.ColumnsListFieldView-rowDrag,
+.ColumnsListFieldView-rowBadges {
+  width: 100%;
+  align-self: stretch;
+  align-items: stretch;
+}
+
+.ColumnsListFieldView-rowBadges {
+  gap: 0;
+}
+
+.ColumnsListFieldView-foldButton {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: 8px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+
+.ColumnsListFieldView-rowActions {
+  position: absolute;
+  z-index: 3;
+  inset-inline-end: 8px;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+
+.ColumnsListFieldView-rowBody {
+  padding: 0 16px;
+}
+
+.ColumnsListFieldView-headerGrid {
+  display: grid;
+  flex: 1 1 auto;
+  align-self: stretch;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.ColumnsListFieldView-headerColumn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 12px;
+}
+
+.ColumnsListFieldView-headerColumn[data-first-column] {
+  padding-inline-start: 18px;
+}
+
+.ColumnsListFieldView-headerColumn[data-last-column] {
+  padding-inline-end: 104px;
+}
+
+.ColumnsListFieldView-headerColumn:not([data-first-column]) {
+  border-left: 1px solid var(--alinea-border);
+}
+
+.ColumnsListFieldView-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: stretch;
+  min-width: 0;
+}
+
+.ColumnsListFieldView-column {
+  min-width: 0;
+  grid-column: span var(--alinea-column-span);
+  padding: 8px 12px 16px;
+}
+
+.ColumnsListFieldView-column[data-first-column] {
+  padding-left: 0;
+}
+
+.ColumnsListFieldView-column[data-last-column] {
+  padding-right: 0;
+}
+
+.ColumnsListFieldView-column:not([data-first-column]) {
+  border-left: 1px solid var(--alinea-border);
+}
+
+.ColumnsListFieldView-resizer {
+  position: absolute;
+  z-index: 2;
+  inset-block: 0;
+  inset-inline-start: calc(var(--alinea-column-offset) / 12 * 100%);
+  width: 18px;
+  transform: translateX(-50%);
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.ColumnsListFieldView-resizerLine {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 1px;
+  background: transparent;
+  transform: translateX(-50%);
+}
+
+.ColumnsListFieldView-resizerHandle {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--alinea-border);
+  border-radius: 9px;
+  background: var(--alinea-bg);
+  color: var(--alinea-fg-muted);
+  font-size: 9px;
+  line-height: 1;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: var(--alinea-transition);
+  transition-property: opacity, color, border-color;
+}
+
+.ColumnsListFieldView-resizer:hover .ColumnsListFieldView-resizerLine,
+.ColumnsListFieldView-resizer[data-focus-visible] .ColumnsListFieldView-resizerLine {
+  background: var(--alinea-focus);
+}
+
+.ColumnsListFieldView-resizer:hover .ColumnsListFieldView-resizerHandle,
+.ColumnsListFieldView-resizer[data-focus-visible] .ColumnsListFieldView-resizerHandle {
+  border-color: var(--alinea-focus);
+  color: var(--alinea-fg);
+  opacity: 1;
+}
+
+@media (max-width: 560px) {
+  .ColumnsListFieldView-headerGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ColumnsListFieldView-headerColumn:not([data-first-column]) {
+    display: none;
+  }
+
+  .ColumnsListFieldView-headerColumn[data-first-column] {
+    padding-inline-end: 104px;
+  }
+
+  .ColumnsListFieldView-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ColumnsListFieldView-column {
+    grid-column: 1;
+    padding: 12px 0;
+  }
+
+  .ColumnsListFieldView-column[data-first-column] {
+    padding-top: 0;
+  }
+
+  .ColumnsListFieldView-column[data-last-column] {
+    padding-bottom: 0;
+  }
+
+  .ColumnsListFieldView-column:not([data-first-column]) {
+    border-top: 1px solid var(--alinea-border);
+    border-left: 0;
+  }
+
+  .ColumnsListFieldView-resizer {
+    display: none;
+  }
+}
