@@ -24,12 +24,12 @@ Backport candidates for `main`: the missing-id asserts. `main` is only
 safe by accident of in-memory lookup; the asserts would harden it too.
 The reorder guard already matches `main`, nothing to backport.
 
-## Intentional behavior changes (need sign-off)
+## Intentional behavior changes (accepted 2026-09-16)
 
 | # | Finding | `main` | `sqlite-core` |
 |---|---------|--------|---------------|
-| 3 | `translations` with `includeSelf: true` ordering | Locale-ascending (`["de","en"]` for both) | Self first (`["en","de"]` for `en`) — deliberate (`EntryQuery.ts`) |
-| 4 | `remove` with `id: undefined` | Silent no-op success | Throws `Remove mutation is missing an id` (new assert from #1) |
+| 3 | `translations` with `includeSelf: true` ordering — accepted: self-first is deterministic and better for locale switchers. | Locale-ascending (`["de","en"]` for both) | Self first (`["en","de"]` for `en`) — deliberate (`EntryQuery.ts`) |
+| 4 | `remove` with `id: undefined` — accepted: fail loudly instead of silently succeeding. Dashboard always sends real ids. Consider backporting the assert to `main`, which is only safe by accident. | Silent no-op success | Throws `Remove mutation is missing an id` (new assert from #1) |
 
 #3 is pinned by an added assertion in `test/query-parity.test.ts`.
 #4 is the safe direction; consider backporting the assert to `main`.
