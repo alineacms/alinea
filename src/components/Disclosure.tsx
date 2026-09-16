@@ -1,4 +1,5 @@
 import styler from '@alinea/styler'
+import type {ReactNode} from 'react'
 import {
   Button,
   Disclosure as DisclosurePrimitive,
@@ -14,12 +15,21 @@ import css from './Disclosure.module.css'
 
 const styles = styler(css)
 
-export type {DisclosurePanelProps, DisclosurePrimitiveProps as DisclosureProps}
+export type {DisclosurePanelProps}
 
-export function Disclosure({className, ...props}: DisclosurePrimitiveProps) {
+export interface DisclosureProps extends DisclosurePrimitiveProps {
+  appearance?: 'default' | 'field' | 'block'
+}
+
+export function Disclosure({
+  appearance = 'default',
+  className,
+  ...props
+}: DisclosureProps) {
   return (
     <DisclosurePrimitive
       {...props}
+      data-appearance={appearance}
       className={renderProps =>
         styles.Disclosure(
           styler.merge({
@@ -34,11 +44,24 @@ export function Disclosure({className, ...props}: DisclosurePrimitiveProps) {
   )
 }
 
+export interface DisclosureHeaderProps extends HeadingProps {
+  chevronPosition?: 'start' | 'end'
+  summary?: ReactNode
+}
+
 export function DisclosureHeader({
   children,
+  chevronPosition = 'start',
   className,
+  summary,
   ...props
-}: HeadingProps) {
+}: DisclosureHeaderProps) {
+  const chevron = (
+    <Icon
+      icon={IcRoundKeyboardArrowRight}
+      className={styles.Disclosure.chevron()}
+    />
+  )
   return (
     <Heading
       {...props}
@@ -48,12 +71,17 @@ export function DisclosureHeader({
         })
       )}
     >
-      <Button slot="trigger" className={styles.Disclosure.trigger()}>
-        <Icon
-          icon={IcRoundKeyboardArrowRight}
-          className={styles.Disclosure.chevron()}
-        />
+      <Button
+        slot="trigger"
+        className={styles.Disclosure.trigger()}
+        data-chevron-position={chevronPosition}
+      >
+        {chevronPosition === 'start' && chevron}
         <span className={styles.Disclosure.title()}>{children}</span>
+        {summary && (
+          <span className={styles.Disclosure.summary()}>{summary}</span>
+        )}
+        {chevronPosition === 'end' && chevron}
       </Button>
     </Heading>
   )

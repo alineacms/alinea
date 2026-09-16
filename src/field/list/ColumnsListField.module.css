@@ -27,7 +27,7 @@
 .ColumnsListFieldView-rowHeader {
   position: relative;
   padding-block: 0;
-  padding-inline: 16px;
+  padding-inline: 0;
 }
 
 .ColumnsListFieldView-rowDrag,
@@ -58,7 +58,8 @@
 }
 
 .ColumnsListFieldView-rowBody {
-  padding: 0 16px;
+  padding: 0;
+  border-top: 0;
 }
 
 .ColumnsListFieldView-headerGrid {
@@ -78,7 +79,7 @@
 }
 
 .ColumnsListFieldView-headerColumn[data-first-column] {
-  padding-inline-start: 18px;
+  padding-inline-start: 42px;
 }
 
 .ColumnsListFieldView-headerColumn[data-last-column] {
@@ -98,17 +99,18 @@
 }
 
 .ColumnsListFieldView-column {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   grid-column: span var(--alinea-column-span);
-  padding: 8px 12px 16px;
 }
 
-.ColumnsListFieldView-column[data-first-column] {
-  padding-left: 0;
-}
-
-.ColumnsListFieldView-column[data-last-column] {
-  padding-right: 0;
+.ColumnsListFieldView-columnBody {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  flex: 1 1 auto;
+  padding: 8px 16px 0;
 }
 
 .ColumnsListFieldView-column:not([data-first-column]) {
@@ -189,14 +191,17 @@
 
   .ColumnsListFieldView-column {
     grid-column: 1;
-    padding: 12px 0;
   }
 
-  .ColumnsListFieldView-column[data-first-column] {
+  .ColumnsListFieldView-columnBody {
+    padding: 12px 16px 0;
+  }
+
+  .ColumnsListFieldView-column[data-first-column] .ColumnsListFieldView-columnBody {
     padding-top: 0;
   }
 
-  .ColumnsListFieldView-column[data-last-column] {
+  .ColumnsListFieldView-column[data-last-column] .ColumnsListFieldView-columnBody {
     padding-bottom: 0;
   }
 

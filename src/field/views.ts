@@ -5,6 +5,7 @@ import {ComponentType} from 'react'
 import {CheckFieldView} from './check/CheckField.view.js'
 import {CodeFieldView} from './code/CodeField.view.js'
 import {DateFieldView} from './date/DateField.view.js'
+import {DisclosureView} from './disclosure/Disclosure.view.js'
 import {HiddenInput} from './hidden/HiddenField.view.js'
 import {JsonFieldView} from './json/JsonField.view.js'
 import {LocalisedFieldView} from './localiser/LocalisedField.view.js'
@@ -38,6 +39,7 @@ export const views: Record<string, ComponentType<any>> = {
   [viewKeys.CodeInput]: CodeFieldView,
   [viewKeys.CompactField]: CompactField,
   [viewKeys.DateInput]: DateFieldView,
+  [viewKeys.DisclosureView]: DisclosureView,
   [viewKeys.JsonInput]: JsonFieldView,
   [viewKeys.LocalisedInput]: LocalisedFieldView,
   [viewKeys.SingleLinkInput]: SingleLinkFieldView,

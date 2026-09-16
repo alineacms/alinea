@@ -8,10 +8,21 @@ test('adds anonymous rows and columns from the restricted schema', async ({
   await mount(<Example />)
 
   await expect(page.getByRole('listitem', {name: 'Field row'})).toHaveCount(2)
+  const initialRow = page.getByRole('listitem', {name: 'Field row'}).first()
+  await expect(initialRow.getByRole('textbox', {name: 'Label'})).toHaveCount(0)
+  await expect(
+    initialRow.getByRole('textbox', {name: 'Placeholder'})
+  ).toHaveCount(0)
   await page.getByRole('button', {name: 'Email field', exact: true}).click()
   await expect(page.getByRole('listitem', {name: 'Field row'})).toHaveCount(3)
 
   const row = page.getByRole('listitem', {name: 'Field row'}).last()
+  await expect(row.getByRole('textbox', {name: 'Label'})).toBeVisible()
+  await expect(row.getByRole('textbox', {name: 'Placeholder'})).toBeVisible()
+  await row.getByRole('button', {name: 'Collapse field row'}).click()
+  await row.getByRole('button', {name: 'Expand field row'}).click()
+  await expect(row.getByRole('textbox', {name: 'Label'})).toHaveCount(0)
+  await expect(row.getByRole('textbox', {name: 'Placeholder'})).toHaveCount(0)
   await row.getByRole('button', {name: 'Add column'}).click()
   await page.getByRole('option', {name: 'Select field'}).click()
   await expect(row.getByText('Select field')).toBeVisible()
@@ -24,8 +35,8 @@ test('collapses rows and resizes a column pair with the keyboard', async ({
   await mount(<Example />)
 
   const firstRow = page.getByRole('listitem', {name: 'Field row'}).first()
-  const postalCode = firstRow.getByRole('textbox', {name: 'Label'}).first()
-  await expect(postalCode).toBeVisible()
+  const required = firstRow.getByRole('checkbox', {name: 'Required'}).first()
+  await expect(required).toBeVisible()
 
   const resizer = firstRow.getByRole('slider', {
     name: 'Resize columns 1 and 2'
@@ -35,10 +46,10 @@ test('collapses rows and resizes a column pair with the keyboard', async ({
   await expect(resizer).toHaveAttribute('aria-valuetext', /4 and 8/)
 
   await firstRow.getByRole('button', {name: 'Collapse field row'}).click()
-  await expect(postalCode).toHaveCount(0)
+  await expect(required).toHaveCount(0)
   await firstRow.getByRole('button', {name: 'Expand field row'}).click()
   await expect(
-    firstRow.getByRole('textbox', {name: 'Label'}).first()
+    firstRow.getByRole('checkbox', {name: 'Required'}).first()
   ).toBeVisible()
 })
 
@@ -46,16 +57,15 @@ test('inserts rows from the shared row actions menu', async ({mount, page}) => {
   await mount(<Example />)
 
   const firstRow = page.getByRole('listitem', {name: 'Field row'}).first()
+  await firstRow.getByRole('button', {name: 'Settings'}).first().click()
   await firstRow
-    .getByRole('button', {name: 'Text field settings'})
+    .getByRole('textbox', {name: 'Label'})
     .first()
-    .click()
-  await page.getByRole('textbox', {name: 'Label'}).last().fill('Address row')
-  await expect(page.getByRole('textbox', {name: 'Anchor'})).toHaveValue(
-    'address-row'
-  )
+    .fill('Address row')
+  await expect(
+    firstRow.getByRole('textbox', {name: 'Anchor'}).first()
+  ).toHaveValue('address-row')
   await expect(firstRow).toContainText('Address row')
-  await page.keyboard.press('Escape')
   await firstRow.getByRole('button', {name: 'Field row actions'}).click()
   await page.getByRole('button', {name: 'Insert before'}).click()
   await page.getByRole('option', {name: 'Email field'}).click()

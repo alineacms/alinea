@@ -3,6 +3,7 @@ export const viewKeys = {
   CodeInput: 'alinea/field/code/CodeField.view#CodeFieldView',
   CompactField: 'alinea/dashboard/app/CompactField#CompactField',
   DateInput: 'alinea/field/date/DateField.view#DateFieldView',
+  DisclosureView: 'alinea/field/disclosure/Disclosure.view#DisclosureView',
   HiddenInput: 'alinea/field/hidden/HiddenField.view#HiddenInput',
   JsonInput: 'alinea/field/json/JsonField.view#JsonFieldView',
   LocalisedInput:

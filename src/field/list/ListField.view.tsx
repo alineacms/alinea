@@ -19,7 +19,6 @@ import {
   ListRowType,
   MenuSeparator,
   Popover,
-  TextField,
   TypeCreateActions,
   TypePicker,
   type TypePickerItem,
@@ -55,7 +54,7 @@ import {
 } from '#/dashboard/icons.js'
 import {type ColumnsListOptions, ListOptions} from '#/field/list.js'
 import {ColumnsListFieldView} from '#/field/list/ColumnsListField.view.js'
-import {SlugField} from '#/field/path/SlugField.js'
+import {ListRowBlockSettings} from '#/field/list/ListRowBlockSettings.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -160,6 +159,7 @@ function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
   const [foldedIds, setFoldedIds] = useState<Set<string>>(
     () => new Set((initiallyCollapsed ?? depth > 0) ? rowIds : [])
   )
+  const [newRowIds, setNewRowIds] = useState<Set<string>>(() => new Set())
   const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
   const [dropIndicator, setDropIndicator] =
     useState<ListFieldDropIndicatorState | null>(null)
@@ -196,10 +196,18 @@ function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
   const allExpanded = nodes.length > 0 && foldedIds.size === 0
 
   function toggleAll() {
+    if (allExpanded) setNewRowIds(new Set())
     setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
   }
 
   function toggleRow(rowId: string) {
+    if (!foldedIds.has(rowId)) {
+      setNewRowIds(current => {
+        const next = new Set(current)
+        next.delete(rowId)
+        return next
+      })
+    }
     setFoldedIds(current => {
       const next = new Set(current)
       if (next.has(rowId)) next.delete(rowId)
@@ -209,7 +217,24 @@ function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
   }
 
   function addRow(typeName: string, type: Schema[string]) {
-    pushRow(createRow(typeName, type))
+    const row = createRow(typeName, type)
+    setNewRowIds(current => new Set(current).add(row._id))
+    pushRow(row)
+  }
+
+  function addBetweenRow(
+    index: number,
+    row: ListValue,
+    position: 'before' | 'after' = 'after'
+  ) {
+    setNewRowIds(current => new Set(current).add(row._id))
+    insertRow(insertIndex(index, position), row)
+  }
+
+  function pasteRow(row: ListValue) {
+    const clone = cloneRow(row)
+    setNewRowIds(current => new Set(current).add(clone._id))
+    pushRow(clone)
   }
 
   function isBoundaryDropTarget(index: number) {
@@ -238,12 +263,13 @@ function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
               )}
               <ListFieldRow
                 addBetweenRow={(value, position = 'after') =>
-                  insertRow(insertIndex(index, position), value)
+                  addBetweenRow(index, value, position)
                 }
                 draggingRowId={draggingRowId}
                 foldedIds={foldedIds}
                 index={index}
                 list={list}
+                newlyCreated={newRowIds.has(rowIds[index])}
                 readOnly={readOnly}
                 onCopyRow={copyRow}
                 onMoveRow={moveRow}
@@ -277,7 +303,7 @@ function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
           <ListFieldCreateActions
             items={typeItems}
             pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
-            onPaste={row => pushRow(cloneRow(row))}
+            onPaste={pasteRow}
             onSelect={item => addRow(item.id, item.type)}
           />
         </ListCreateRow>
@@ -386,6 +412,7 @@ interface ListFieldRowProps {
   draggingRowId: string | null
   index: number
   list: ReactiveNode<Array<ListValue>>
+  newlyCreated: boolean
   readOnly: boolean
   row: ReactiveNode<ListValue>
   rows: number
@@ -491,6 +518,7 @@ function ListFieldRow({
   draggingRowId,
   index,
   list,
+  newlyCreated,
   readOnly,
   row,
   rows,
@@ -515,8 +543,6 @@ function ListFieldRow({
     | string
     | undefined
   const customLabel = customLabelValue ?? ''
-  const setCustomLabel = useSetAtom(row.field('_label'))
-  const setAnchor = useSetAtom(row.field('_anchor'))
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
@@ -577,18 +603,6 @@ function ListFieldRow({
     removeRow(index)
   }
 
-  function updateCustomLabel(nextValue: string) {
-    setCustomLabel(nextValue || undefined)
-    const currentLabelSlug = slugify(customLabel)
-    const shouldSyncAnchor =
-      anchorValue === undefined || anchorValue === currentLabelSlug
-    if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
-  }
-
-  function updateAnchor(nextValue: string) {
-    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
-  }
-
   return (
     <>
       <div
@@ -618,8 +632,6 @@ function ListFieldRow({
             typeIcon={typeIcon}
             insertItems={typeItems}
             pasted={pasted && schema[pasted._type] ? pasted : undefined}
-            onAnchorChange={updateAnchor}
-            onCustomLabelChange={updateCustomLabel}
             onCopy={() => onCopyRow(itemId)}
             onDelete={deleteRow}
             onInsertBefore={(value: ListValue) =>
@@ -631,9 +643,20 @@ function ListFieldRow({
             onToggle={() => onToggleRow(itemId)}
           />
           {expanded && (
-            <ListRowBody>
-              <NodeEditor node={row as ReactiveNode<object>} type={type} />
-            </ListRowBody>
+            <>
+              <ListRowBlockSettings
+                defaultExpanded={newlyCreated}
+                node={row as ReactiveNode<ListValue>}
+                readOnly={readOnly}
+              />
+              <ListRowBody>
+                <NodeEditor
+                  initiallyExpandDisclosures={newlyCreated}
+                  node={row as ReactiveNode<object>}
+                  type={type}
+                />
+              </ListRowBody>
+            </>
           )}
         </ComponentListRow>
       </div>
@@ -679,8 +702,6 @@ interface ListFieldRowHeaderProps {
   pasted?: ListValue
   readOnly: boolean
   typeIcon?: ComponentType
-  onAnchorChange: (value: string) => void
-  onCustomLabelChange: (value: string) => void
   onCopy?: () => void
   onDelete?: () => void
   onInsertBefore: (value: ListValue) => void
@@ -705,8 +726,6 @@ function ListFieldRowHeader({
   pasted,
   readOnly,
   typeIcon,
-  onAnchorChange,
-  onCustomLabelChange,
   onCopy,
   onDelete,
   onInsertBefore,
@@ -779,23 +798,6 @@ function ListFieldRowHeader({
               />
             ) : (
               <>
-                <ListRowSettings>
-                  <TextField
-                    label="Label"
-                    autoFocus
-                    isDisabled={readOnly || isPreview}
-                    onChange={onCustomLabelChange}
-                    value={customLabel}
-                  />
-                  <SlugField
-                    fieldValue={anchor}
-                    label="Anchor"
-                    isDisabled={readOnly || isPreview}
-                    onChange={onAnchorChange}
-                    source={customLabel}
-                  />
-                </ListRowSettings>
-                <MenuSeparator />
                 <ListRowSettings actions>
                   <Button
                     appearance="plain"

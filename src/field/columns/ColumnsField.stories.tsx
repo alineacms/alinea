@@ -6,6 +6,7 @@ import {EditorScope} from '#/dashboard/hooks.js'
 import {StoryProvider} from '#/dashboard/StoryProvider.js'
 import {IcOutlineGridView, IcRoundNotes} from '#/dashboard/icons.js'
 import {check} from '#/field/check.js'
+import {disclosure} from '#/field/disclosure.js'
 import {list} from '#/field/list.js'
 import {ListFieldView} from '#/field/list/ListField.view.js'
 import {select} from '#/field/select.js'
@@ -18,32 +19,38 @@ import {views} from '../views.js'
 const textControl = type('Text field', {
   icon: IcRoundNotes,
   fields: {
-    name: text('Name'),
-    label: text('Label'),
-    placeholder: text('Placeholder'),
-    required: check('Required')
+    required: check('Required'),
+    ...disclosure('Field', {
+      fields: {
+        placeholder: text('Placeholder')
+      }
+    })
   }
 })
 
 const emailControl = type('Email field', {
   icon: IcRoundNotes,
   fields: {
-    name: text('Name'),
-    label: text('Label'),
-    placeholder: text('Placeholder'),
-    required: check('Required')
+    required: check('Required'),
+    ...disclosure('Field', {
+      fields: {
+        placeholder: text('Placeholder')
+      }
+    })
   }
 })
 
 const selectControl = type('Select field', {
   icon: IcOutlineGridView,
   fields: {
-    name: text('Name'),
-    label: text('Label'),
-    choices: select('Choices', {
-      options: {one: 'One', two: 'Two', three: 'Three'}
-    }),
-    required: check('Required')
+    required: check('Required'),
+    ...disclosure('Field', {
+      fields: {
+        choices: select('Choices', {
+          options: {one: 'One', two: 'Two', three: 'Three'}
+        })
+      }
+    })
   }
 })
 
@@ -57,24 +64,24 @@ const initialFields = [
   {
     _type: 'Text' as const,
     _layout: {row: 'address', span: 3},
-    name: 'postalCode',
-    label: 'Postal code',
+    _label: 'Postal code',
+    _anchor: 'postal-code',
     placeholder: '1000',
     required: true
   },
   {
     _type: 'Text' as const,
     _layout: {row: 'address', span: 9},
-    name: 'street',
-    label: 'Street and number',
+    _label: 'Street and number',
+    _anchor: 'street',
     placeholder: 'Main Street 12',
     required: true
   },
   {
     _type: 'Email' as const,
     _layout: {row: 'contact', span: 12},
-    name: 'email',
-    label: 'Email address',
+    _label: 'Email address',
+    _anchor: 'email',
     placeholder: 'you@example.com',
     required: true
   }

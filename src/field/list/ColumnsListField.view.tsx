@@ -17,7 +17,6 @@ import {
   ListRowType,
   MenuSeparator,
   Popover,
-  TextField,
   TypeCreateActions,
   TypePicker,
   TypePickerPanel,
@@ -31,7 +30,6 @@ import type {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {Badge} from '#/dashboard/app/Badge.js'
-import {SlugField} from '#/field/path/SlugField.js'
 import type {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   useFieldError,
@@ -51,7 +49,7 @@ import {
   IcRoundNotes
 } from '#/dashboard/icons.js'
 import type {ColumnsListOptions} from '#/field/list.js'
-import {slugify} from '#/core/util/Slugs.js'
+import {ListRowBlockSettings} from '#/field/list/ListRowBlockSettings.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import type {ChangeEvent, ComponentType, CSSProperties, RefObject} from 'react'
@@ -111,6 +109,7 @@ export function ColumnsListFieldView({field}: ColumnsListFieldViewProps) {
   const setValue = useSetAtom(list.value)
   const groups = groupColumnsList(values)
   const [foldedIds, setFoldedIds] = useState<Set<string>>(() => new Set())
+  const [newBlockIds, setNewBlockIds] = useState<Set<string>>(() => new Set())
   const typeItems = useMemo(
     () =>
       Object.entries(options.schema).map(([id, type]) => ({
@@ -125,12 +124,24 @@ export function ColumnsListFieldView({field}: ColumnsListFieldViewProps) {
   const allExpanded = hasRows && groups.every(group => !foldedIds.has(group.id))
 
   function toggleAll() {
+    if (allExpanded) setNewBlockIds(new Set())
     setFoldedIds(
       allExpanded ? new Set(groups.map(group => group.id)) : new Set()
     )
   }
 
   function toggleRow(rowId: string) {
+    if (!foldedIds.has(rowId)) {
+      const group = groups.find(group => group.id === rowId)
+      if (group) {
+        const ids = new Set(group.items.map(item => item.value._id))
+        setNewBlockIds(current => {
+          const next = new Set(current)
+          for (const id of ids) next.delete(id)
+          return next
+        })
+      }
+    }
     setFoldedIds(current => {
       const next = new Set(current)
       if (next.has(rowId)) next.delete(rowId)
@@ -141,16 +152,15 @@ export function ColumnsListFieldView({field}: ColumnsListFieldViewProps) {
 
   function addRow(item: ColumnsListTypeItem) {
     const rowId = createId()
-    setValue(current =>
-      reindexColumnsList([
-        ...current,
-        createListValue(item, {row: rowId, span: columnsTracks})
-      ])
-    )
+    const value = createListValue(item, {row: rowId, span: columnsTracks})
+    setNewBlockIds(current => new Set(current).add(value._id))
+    setValue(current => reindexColumnsList([...current, value]))
   }
 
   function addColumn(rowId: string, item: ColumnsListTypeItem) {
-    setValue(current => appendColumn(current, rowId, createListValue(item)))
+    const value = createListValue(item)
+    setNewBlockIds(current => new Set(current).add(value._id))
+    setValue(current => appendColumn(current, rowId, value))
   }
 
   function removeRow(rowId: string) {
@@ -163,13 +173,10 @@ export function ColumnsListFieldView({field}: ColumnsListFieldViewProps) {
     item: ColumnsListTypeItem
   ) {
     const rowId = createId()
+    const value = createListValue(item, {row: rowId, span: columnsTracks})
+    setNewBlockIds(current => new Set(current).add(value._id))
     setValue(current =>
-      insertColumnsRow(
-        current,
-        targetRowId,
-        [createListValue(item, {row: rowId, span: columnsTracks})],
-        position
-      )
+      insertColumnsRow(current, targetRowId, [value], position)
     )
   }
 
@@ -242,6 +249,7 @@ export function ColumnsListFieldView({field}: ColumnsListFieldViewProps) {
               first={index === 0}
               group={group}
               key={group.id}
+              newBlockIds={newBlockIds}
               nodes={nodes}
               onAddColumn={item => addColumn(group.id, item)}
               onDuplicate={() => duplicateRow(group.id)}
@@ -275,6 +283,7 @@ interface ColumnsListRowProps {
   expanded: boolean
   first: boolean
   group: ColumnsListGroup
+  newBlockIds: Set<string>
   nodes: Array<ReactiveNode<ColumnsListValue>>
   readOnly: boolean
   rowIndex: number
@@ -300,6 +309,7 @@ function ColumnsListRow({
   expanded,
   first,
   group,
+  newBlockIds,
   nodes,
   readOnly,
   rowIndex,
@@ -468,10 +478,20 @@ function ColumnsListRow({
                     key={item.value._id}
                     style={style}
                   >
-                    <NodeEditor
-                      node={nodes[item.index] as ReactiveNode<object>}
-                      type={type}
+                    <ListRowBlockSettings
+                      defaultExpanded={newBlockIds.has(item.value._id)}
+                      node={nodes[item.index]}
+                      readOnly={readOnly}
                     />
+                    <div className={styles.ColumnsListFieldView.columnBody()}>
+                      <NodeEditor
+                        initiallyExpandDisclosures={newBlockIds.has(
+                          item.value._id
+                        )}
+                        node={nodes[item.index] as ReactiveNode<object>}
+                        type={type}
+                      />
+                    </div>
                   </div>
                 )
               })}
@@ -630,24 +650,10 @@ function ColumnSummary({first, last, node, schema}: ColumnSummaryProps) {
   const anchorValue = useAtomValueRaw(node.field('_anchor')) as
     | string
     | undefined
-  const setCustomLabel = useSetAtom(node.field('_label'))
-  const setAnchor = useSetAtom(node.field('_anchor'))
   const type = schema[value._type]
   if (!type) return null
   const label = Type.label(type)
   const icon = getType(type).icon || IcRoundNotes
-
-  function updateCustomLabel(nextValue: string) {
-    const currentLabel = customLabelValue ?? ''
-    setCustomLabel(nextValue || undefined)
-    const shouldSyncAnchor =
-      anchorValue === undefined || anchorValue === slugify(currentLabel)
-    if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
-  }
-
-  function updateAnchor(nextValue: string) {
-    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
-  }
 
   return (
     <div
@@ -656,61 +662,11 @@ function ColumnSummary({first, last, node, schema}: ColumnSummaryProps) {
       data-last-column={last || undefined}
     >
       <ListRowType icon={icon}>{label}</ListRowType>
-      <ColumnSettings
-        anchor={anchorValue}
-        label={customLabelValue ?? ''}
-        typeLabel={label}
-        onAnchorChange={updateAnchor}
-        onLabelChange={updateCustomLabel}
-      />
       {customLabelValue && <ListRowMeta>{customLabelValue}</ListRowMeta>}
       {anchorValue && !customLabelValue && (
         <Badge size="small">#{anchorValue}</Badge>
       )}
     </div>
-  )
-}
-
-interface ColumnSettingsProps {
-  anchor?: string
-  label: string
-  typeLabel: string
-  onAnchorChange: (value: string) => void
-  onLabelChange: (value: string) => void
-}
-
-function ColumnSettings({
-  anchor,
-  label,
-  typeLabel,
-  onAnchorChange,
-  onLabelChange
-}: ColumnSettingsProps) {
-  return (
-    <DialogTrigger>
-      <Button
-        appearance="plain"
-        aria-label={`${typeLabel} settings`}
-        icon={IcRoundMoreHoriz}
-        size="icon-small"
-      />
-      <Popover placement="bottom right">
-        <ListRowSettings>
-          <TextField
-            autoFocus
-            label="Label"
-            onChange={onLabelChange}
-            value={label}
-          />
-          <SlugField
-            fieldValue={anchor}
-            label="Anchor"
-            onChange={onAnchorChange}
-            source={label}
-          />
-        </ListRowSettings>
-      </Popover>
-    </DialogTrigger>
   )
 }
 
