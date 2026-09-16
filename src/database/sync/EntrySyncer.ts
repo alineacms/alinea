@@ -10,7 +10,7 @@ import {
   type EntrySyncOptions,
   type EntrySyncTarget,
   type SyncQueries
-} from './plan.js'
+} from './queries.js'
 import {insertInitialSource, mergeSource, mergeTrees} from './ingest.js'
 import {
   copyInitialUrls,
@@ -22,8 +22,8 @@ import {
   validateEntries
 } from './derive.js'
 
-export {EntrySyncRoot} from './plan.js'
-export type {EntrySyncTarget} from './plan.js'
+export {EntrySyncRoot} from './queries.js'
+export type {EntrySyncTarget} from './queries.js'
 
 /** Prepared, serialized source synchronization for one database connection. */
 export class EntrySyncer implements AsyncDisposable {

@@ -11,7 +11,7 @@ import {
   type StatusRow,
   type EntrySyncTarget,
   type SyncQueries
-} from './plan.js'
+} from './queries.js'
 import type {Config} from '#/core/Config.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryUrl} from '#/core/util/EntryFilenames.js'

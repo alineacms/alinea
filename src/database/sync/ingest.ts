@@ -11,7 +11,7 @@ import {
   type StoredFileRow,
   type StoredHierarchyRow,
   type SyncQueries
-} from './plan.js'
+} from './queries.js'
 import type {Config} from '#/core/Config.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
@@ -321,16 +321,6 @@ export async function mergeSource(
   await flush()
 }
 
-function parentDirectories(filePath: string): Array<string> {
-  const result = Array<string>()
-  let slash = filePath.lastIndexOf('/')
-  while (slash !== -1) {
-    result.push(filePath.slice(0, slash))
-    slash = filePath.lastIndexOf('/', slash - 1)
-  }
-  return result
-}
-
 export async function updateDirectoryHashes(
   db: Database,
   EntryIndexTable: EntryIndexTarget,
@@ -338,7 +328,17 @@ export async function updateDirectoryHashes(
   queries: SyncQueries,
   filePaths: ReadonlyArray<string>
 ): Promise<void> {
-  const directories = new Set(filePaths.flatMap(parentDirectories))
+  const directories = new Set(
+    filePaths.flatMap(filePath => {
+      const result = Array<string>()
+      let slash = filePath.lastIndexOf('/')
+      while (slash !== -1) {
+        result.push(filePath.slice(0, slash))
+        slash = filePath.lastIndexOf('/', slash - 1)
+      }
+      return result
+    })
+  )
   for (const paths of chunks(Array.from(directories), sqliteBatchSize)) {
     const rows = (await db
       .select({
