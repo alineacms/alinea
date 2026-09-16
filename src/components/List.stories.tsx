@@ -53,8 +53,49 @@ import {Popover} from './Popover.js'
 import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
 import {TypeCreateActions} from './TypeCreateActions.js'
+import type {TypePickerItem} from './TypePicker.js'
 
 const styles = styler(css)
+
+function ignoreSelection() {}
+
+const fieldCompositionTypeItems: Array<TypePickerItem> = [
+  {
+    id: 'text',
+    label: 'Text',
+    colorName: 'Text',
+    icon: IcRoundEdit,
+    onSelect: ignoreSelection
+  },
+  {
+    id: 'columns',
+    label: 'Columns',
+    colorName: 'Columns',
+    icon: IcOutlineGridView,
+    onSelect: ignoreSelection
+  },
+  {
+    id: 'programs',
+    label: 'Programs',
+    colorName: 'Programs',
+    icon: IcRoundAccountTree,
+    onSelect: ignoreSelection
+  },
+  {
+    id: 'image',
+    label: 'Image',
+    colorName: 'Image',
+    icon: IcRoundImage,
+    onSelect: ignoreSelection
+  },
+  {
+    id: 'archive',
+    label: 'Archive',
+    colorName: 'Archive',
+    icon: IcRoundArchive,
+    onSelect: ignoreSelection
+  }
+]
 
 const itemControls = (
   <div style={{display: 'flex'}}>
@@ -266,30 +307,8 @@ function FieldCompositionRow({
 function FieldCompositionCreateActions() {
   return (
     <TypeCreateActions
-      items={[
-        {id: 'text', label: 'Text', colorName: 'Text', icon: IcRoundEdit},
-        {
-          id: 'columns',
-          label: 'Columns',
-          colorName: 'Columns',
-          icon: IcOutlineGridView
-        },
-        {
-          id: 'programs',
-          label: 'Programs',
-          colorName: 'Programs',
-          icon: IcRoundAccountTree
-        },
-        {id: 'image', label: 'Image', colorName: 'Image', icon: IcRoundImage},
-        {
-          id: 'archive',
-          label: 'Archive',
-          colorName: 'Archive',
-          icon: IcRoundArchive
-        }
-      ]}
+      items={fieldCompositionTypeItems}
       label="More block types"
-      onSelect={() => undefined}
     />
   )
 }

@@ -44,6 +44,7 @@ import {
 import {
   IcBaselineContentCopy,
   IcBaselineContentPasteGo,
+  IcRoundAdd,
   IcRoundArrowDownward,
   IcRoundArrowUpward,
   IcRoundClose,
@@ -95,12 +96,6 @@ interface ListFieldTypeItem {
   id: string
   label: string
   type: Schema[string]
-}
-
-interface ListFieldPickerOption extends TypePickerItem {
-  colorName?: string
-  typeItem?: ListFieldTypeItem
-  pasted?: ListValue
 }
 
 export interface ListFieldViewProps {
@@ -343,20 +338,9 @@ function ListFieldCreateActions({
   onPaste,
   onSelect
 }: ListFieldCreateActionsProps) {
-  const createItems = useMemo<Array<ListFieldPickerOption>>(
-    () =>
-      items.map(item => ({
-        id: item.id,
-        label: item.label,
-        icon: getType(item.type).icon || IcRoundNotes,
-        colorName: item.label,
-        typeItem: item
-      })),
-    [items]
-  )
   return (
     <TypeCreateActions
-      items={createItems}
+      items={listFieldTypePickerItems(items, onSelect)}
       label="More block types"
       leading={
         pasted ? (
@@ -370,9 +354,6 @@ function ListFieldCreateActions({
           </Button>
         ) : undefined
       }
-      onSelect={item => {
-        if (item.typeItem) onSelect(item.typeItem)
-      }}
     />
   )
 }
@@ -472,19 +453,14 @@ function ListFieldInsertPanel({
   onPaste,
   onSelect
 }: ListFieldInsertPanelProps) {
-  const pickerItems = useListFieldPickerItems(
+  const pickerItems = listFieldPickerItems(
     items,
     pasted,
     pasteLabel,
-    onPaste
+    onPaste,
+    onSelect
   )
-  return (
-    <TypePickerPanel
-      items={pickerItems}
-      label={label}
-      onSelect={item => handleListFieldPickerSelect(item, onPaste, onSelect)}
-    />
-  )
+  return <TypePickerPanel items={pickerItems} label={label} />
 }
 
 function ListFieldRow({
@@ -928,11 +904,12 @@ function ListFieldTypePicker({
   onPaste,
   onSelect
 }: ListFieldTypePickerProps) {
-  const pickerItems = useListFieldPickerItems(
+  const pickerItems = listFieldPickerItems(
     items,
     pasted,
     pasteLabel,
-    onPaste
+    onPaste,
+    onSelect
   )
 
   return (
@@ -940,7 +917,6 @@ function ListFieldTypePicker({
       items={pickerItems}
       label={label}
       onOpenChange={onOpenChange}
-      onSelect={item => handleListFieldPickerSelect(item, onPaste, onSelect)}
       trigger={
         <Button
           aria-label={label}
@@ -956,42 +932,36 @@ function ListFieldTypePicker({
   )
 }
 
-function useListFieldPickerItems(
+function listFieldPickerItems(
   items: Array<ListFieldTypeItem>,
-  pasted?: ListValue,
-  pasteLabel?: string,
-  onPaste?: (row: ListValue) => void
-): Array<ListFieldPickerOption> {
-  return useMemo<Array<ListFieldPickerOption>>(() => {
-    const pasteItem =
-      pasted && onPaste
-        ? [
-            {
-              id: 'paste',
-              label: pasteLabel || 'Paste block',
-              icon: IcBaselineContentPasteGo,
-              pasted
-            }
-          ]
-        : []
-    return [
-      ...pasteItem,
-      ...items.map(item => ({
-        id: item.id,
-        label: item.label,
-        icon: getType(item.type).icon || IcRoundNotes,
-        colorName: item.label,
-        typeItem: item
-      }))
-    ]
-  }, [items, onPaste, pasteLabel, pasted])
-}
-
-function handleListFieldPickerSelect(
-  item: ListFieldPickerOption,
+  pasted: ListValue | undefined,
+  pasteLabel: string | undefined,
   onPaste: ((row: ListValue) => void) | undefined,
   onSelect: (item: ListFieldTypeItem) => void
-) {
-  if (item.pasted) onPaste?.(item.pasted)
-  if (item.typeItem) onSelect(item.typeItem)
+): Array<TypePickerItem> {
+  const pasteItem: Array<TypePickerItem> =
+    pasted && onPaste
+      ? [
+          {
+            id: 'paste',
+            label: pasteLabel || 'Paste block',
+            icon: IcBaselineContentPasteGo,
+            onSelect: () => onPaste(pasted)
+          }
+        ]
+      : []
+  return [...pasteItem, ...listFieldTypePickerItems(items, onSelect)]
+}
+
+function listFieldTypePickerItems(
+  items: Array<ListFieldTypeItem>,
+  onSelect: (item: ListFieldTypeItem) => void
+): Array<TypePickerItem> {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    icon: getType(item.type).icon || IcRoundNotes,
+    colorName: item.label,
+    onSelect: () => onSelect(item)
+  }))
 }

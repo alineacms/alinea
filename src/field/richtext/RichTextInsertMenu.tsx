@@ -19,26 +19,23 @@ export interface RichTextInsertMenuProps {
   onInsert: (block: BlockNode) => void
 }
 
-interface RichTextTypePickerItem extends TypePickerItem {
-  name: string
-  type: Schema[string]
-}
-
 export function RichTextInsertMenu({
   editor,
   schema,
   onInsert
 }: RichTextInsertMenuProps) {
-  const items: Array<RichTextTypePickerItem> = entries(schema).map(
-    ([name, type]) => ({
-      id: name,
-      name,
-      type,
-      label: Type.label(type),
-      colorName: Type.label(type),
-      icon: getType(type).icon ?? IcRoundNotes
-    })
-  )
+  const items: Array<TypePickerItem> = entries(schema).map(([name, type]) => ({
+    id: name,
+    label: Type.label(type),
+    colorName: Type.label(type),
+    icon: getType(type).icon ?? IcRoundNotes,
+    onSelect: () =>
+      onInsert({
+        [Node.type]: name,
+        [BlockNode.id]: createId(),
+        ...Type.initialValue(type)
+      } as BlockNode)
+  }))
 
   return (
     <FloatingMenu
@@ -55,17 +52,7 @@ export function RichTextInsertMenu({
         )
       }}
     >
-      <TypeCreateActions
-        items={items}
-        label="Insert block"
-        onSelect={item => {
-          onInsert({
-            [Node.type]: item.name,
-            [BlockNode.id]: createId(),
-            ...Type.initialValue(item.type)
-          } as BlockNode)
-        }}
-      />
+      <TypeCreateActions items={items} label="Insert block" />
     </FloatingMenu>
   )
 }

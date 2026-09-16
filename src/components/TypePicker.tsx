@@ -22,19 +22,15 @@ export interface TypePickerItem {
   icon: ComponentType
   id: string
   label: string
+  onSelect: () => void
 }
 
-export interface TypePickerPanelProps<Item extends TypePickerItem> {
-  items: Array<Item>
+export interface TypePickerPanelProps {
+  items: Array<TypePickerItem>
   label: string
-  onSelect: (item: Item) => void
 }
 
-export function TypePickerPanel<Item extends TypePickerItem>({
-  items,
-  label,
-  onSelect
-}: TypePickerPanelProps<Item>) {
+export function TypePickerPanel({items, label}: TypePickerPanelProps) {
   return (
     <div className={styles.TypePicker.dialog()}>
       <Autocomplete filter={containsTypeLabel}>
@@ -53,9 +49,7 @@ export function TypePickerPanel<Item extends TypePickerItem>({
             <div className={styles.TypePicker.empty()}>No matching types</div>
           )}
         >
-          {item => (
-            <TypePickerAction key={item.id} item={item} onSelect={onSelect} />
-          )}
+          {item => <TypePickerAction key={item.id} item={item} />}
         </ListBox>
       </Autocomplete>
     </div>
@@ -66,22 +60,18 @@ function containsTypeLabel(textValue: string, inputValue: string): boolean {
   return textValue.toLocaleLowerCase().includes(inputValue.toLocaleLowerCase())
 }
 
-interface TypePickerActionProps<Item extends TypePickerItem> {
-  item: Item
-  onSelect: (item: Item) => void
+interface TypePickerActionProps {
+  item: TypePickerItem
 }
 
-function TypePickerAction<Item extends TypePickerItem>({
-  item,
-  onSelect
-}: TypePickerActionProps<Item>) {
+function TypePickerAction({item}: TypePickerActionProps) {
   const overlay = useContext(OverlayTriggerStateContext)
   return (
     <ListBoxItem
       className={styles.TypePicker.item()}
       id={item.id}
       onAction={() => {
-        onSelect(item)
+        item.onSelect()
         overlay?.close()
       }}
       textValue={item.label}
@@ -100,20 +90,17 @@ function TypePickerAction<Item extends TypePickerItem>({
   )
 }
 
-export interface TypePickerProps<
-  Item extends TypePickerItem
-> extends TypePickerPanelProps<Item> {
+export interface TypePickerProps extends TypePickerPanelProps {
   onOpenChange?: (isOpen: boolean) => void
   trigger: ReactNode
 }
 
-export function TypePicker<Item extends TypePickerItem>({
+export function TypePicker({
   items,
   label,
   onOpenChange,
-  onSelect,
   trigger
-}: TypePickerProps<Item>) {
+}: TypePickerProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   function handleOpenChange(nextOpen: boolean) {
@@ -125,8 +112,8 @@ export function TypePicker<Item extends TypePickerItem>({
     <DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
       {trigger}
       <Popover className={styles.TypePicker.popover()} placement="bottom left">
-        <Dialog className={styles.TypePicker.dialog()}>
-          <TypePickerPanel items={items} label={label} onSelect={onSelect} />
+        <Dialog>
+          <TypePickerPanel items={items} label={label} />
         </Dialog>
       </Popover>
     </DialogTrigger>
