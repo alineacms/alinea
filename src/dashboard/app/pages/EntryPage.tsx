@@ -378,7 +378,10 @@ function EntryEditorContent({
       <>
         <RailBody ref={editorBodyRef} className={styles.EntryEditor.body()}>
           <NodeEditor node={node} type={type.type}>
-            <FileEditor parentPaths={parentPaths} />
+            <FileEditor
+              parentPaths={parentPaths}
+              workspace={selectedEntry.workspace}
+            />
           </NodeEditor>
         </RailBody>
       </>

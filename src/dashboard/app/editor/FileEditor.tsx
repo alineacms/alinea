@@ -29,9 +29,10 @@ const metadataFields = type('Metadata', {
 
 export interface FileEditorProps {
   parentPaths: Array<string>
+  workspace: string
 }
 
-export function FileEditor({parentPaths}: FileEditorProps) {
+export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const config = useAtomValueRaw(configAtom)
   const path = useFieldValue(MediaFile.path)
   const extension = useFieldValue(MediaFile.extension)
@@ -50,7 +51,8 @@ export function FileEditor({parentPaths}: FileEditorProps) {
   const publicLocation = MediaLocation.publicUrl(config, {
     extension,
     parentPaths,
-    path
+    path,
+    workspace
   })
   const baseUrl = Config.baseUrl(config) ?? window.location.href
   const liveUrl = URL.parse(publicLocation, baseUrl)

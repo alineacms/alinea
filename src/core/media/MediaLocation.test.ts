@@ -31,7 +31,8 @@ test('maps media locations between storage and entry data', () => {
     MediaLocation.publicUrl(config, {
       extension: '.jpg',
       parentPaths: [],
-      path: 'example'
+      path: 'example',
+      workspace: 'main'
     }),
     '/admin/file/example.jpg'
   )
@@ -98,10 +99,44 @@ test('resolves nested media paths below the Alinea file route', () => {
   const url = MediaLocation.publicUrl(config, {
     extension: '.jpg',
     parentPaths: ['library', 'nested'],
-    path: 'example'
+    path: 'example',
+    workspace: 'main'
   })
 
   test.is(url, '/admin/file/library/nested/example.jpg')
+})
+
+test('prefixes media urls with the workspace mediaUrl', () => {
+  const config = createConfig({
+    schema: {},
+    workspaces: {
+      main: workspace('Main', {
+        source: 'content',
+        mediaUrl: 'my-custom-prefix',
+        roots: {media: root('Media')}
+      })
+    }
+  })
+
+  test.is(
+    MediaLocation.publicUrl(config, {
+      extension: '.jpg',
+      parentPaths: ['library'],
+      path: 'example',
+      workspace: 'main'
+    }),
+    '/admin/file/my-custom-prefix/library/example.jpg'
+  )
+  test.is(
+    MediaLocation.entryUrl(config, {
+      defaultUrl: '/example',
+      parentPaths: [],
+      path: 'example',
+      workspace: 'main',
+      data: {extension: '.pdf', location: '/upload-id.pdf'}
+    }),
+    '/admin/file/my-custom-prefix/example.pdf'
+  )
 })
 
 test('resolves a media entry URL from its stored data', () => {

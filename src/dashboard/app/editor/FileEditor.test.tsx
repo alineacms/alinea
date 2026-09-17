@@ -45,7 +45,7 @@ test('shows the resolved media URL', () => {
   render(
     <DashboardScopeInternal dashboard={dashboard}>
       <EditorScope editor={editor}>
-        <FileEditor parentPaths={[]} />
+        <FileEditor parentPaths={[]} workspace="main" />
       </EditorScope>
     </DashboardScopeInternal>
   )
