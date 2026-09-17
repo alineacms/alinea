@@ -1157,15 +1157,24 @@ function dataWithoutUrlAlias(
   data: Record<string, unknown>,
   url: string
 ): Record<string, unknown> {
-  const metadata = data.metadata
-  if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
-  return {
-    ...data,
-    metadata: {
-      ...metadata,
-      aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
+  let result = data
+  if (Array.isArray(data.aliases)) {
+    result = {
+      ...result,
+      aliases: data.aliases.filter(alias => aliasUrl(alias) !== url)
     }
   }
+  const metadata = data.metadata
+  if (isRecord(metadata) && Array.isArray(metadata.aliases)) {
+    result = {
+      ...result,
+      metadata: {
+        ...metadata,
+        aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
+      }
+    }
+  }
+  return result
 }
 
 function dataWithAliases(
