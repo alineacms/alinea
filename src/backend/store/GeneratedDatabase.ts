@@ -11,7 +11,10 @@ export async function createGeneratedDatabase(
 ): Promise<EntryStore> {
   let initialTree: ReadonlyTree | undefined
   const base = new EntryDatabase(config, db, {
-    searchReady: true,
+    // searchReady: false so overlay gets searchDirty=true and creates
+    // its temp FTS table (alinea_overlay_N_search). The generated DB's
+    // base FTS is already built by compact() during generation.
+    searchReady: false,
     includedAtBuild(filePath) {
       return initialTree?.has(filePath) ?? false
     }
