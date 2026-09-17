@@ -62,14 +62,22 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   })
   const handle: Handler = async request => {
     const url = new URL(request.url)
-    const {searchParams} = url
     const context = await requestContext(config, request)
     const handlerPath = handlerPathname(config, url)
-    if (url.pathname !== handlerPath)
-      return new Response(`Expected handler to be served on ${handlerPath}`, {
-        status: 400
-      })
+    const rewrittenFile = rewrittenFilePath(config, request)
     try {
+      if (rewrittenFile !== undefined) {
+        const backendUrl = new URL(url)
+        backendUrl.pathname = handlerPath
+        backendUrl.searchParams.set('file', rewrittenFile)
+        backendUrl.searchParams.set('delivery', 'proxy')
+        return await handleBackend(new Request(backendUrl, request), context)
+      }
+      if (url.pathname !== handlerPath)
+        return new Response(`Expected handler to be served on ${handlerPath}`, {
+          status: 400
+        })
+      const {searchParams} = url
       const previews = new JWTPreviews(context.apiKey)
       const previewToken = searchParams.get('preview')
       if (previewToken) {
@@ -105,4 +113,20 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
 
 export function handlerPathname(config: Config, requestUrl: URL): string {
   return new URL(Config.handlerUrl(config), requestUrl).pathname
+}
+
+function rewrittenFilePath(
+  config: Config,
+  request: Request
+): string | undefined {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return
+  const url = new URL(request.url)
+  const fileRoot = new URL(Config.filePathname(config, ''), url).pathname
+  const prefix = `${fileRoot}/`
+  if (!url.pathname.startsWith(prefix)) return
+  try {
+    return decodeURIComponent(url.pathname.slice(prefix.length))
+  } catch {
+    return
+  }
 }
