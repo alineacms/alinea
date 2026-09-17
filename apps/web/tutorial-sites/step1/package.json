@@ -1,0 +1,9 @@
+{
+  "name": "tutorial-step1",
+  "private": true,
+  "scripts": {
+    "dev": "../../node_modules/.bin/alinea dev -- ../../node_modules/.bin/next dev -p 3101",
+    "build": "../../node_modules/.bin/alinea build -- ../../node_modules/.bin/next build",
+    "start": "../../node_modules/.bin/next start -p 3101"
+  }
+}

@@ -1,0 +1,21 @@
+.root {
+  &-email {
+    display: block;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font: inherit;
+    width: 100%;
+    resize: none;
+    padding: 9px 14px;
+    border-radius: 12px;
+    line-height: 1.5;
+    border: 2px solid var(--web-outline);
+    background: var(--web-background);
+
+    &:focus {
+      outline: none;
+      border: 2px solid var(--web-accent);
+    }
+  }
+}

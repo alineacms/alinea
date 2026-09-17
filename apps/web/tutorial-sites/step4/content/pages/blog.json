@@ -1,0 +1,17 @@
+{
+  "_id": "3AOc3Rq1MN4c18g8oHCVqxa7G2b",
+  "_type": "Blog",
+  "_index": "a1",
+  "_seeded": "/blog.json",
+  "title": "Blog",
+  "intro": "Create posts under this page to publish them on /blog/[slug].",
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

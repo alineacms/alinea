@@ -1,0 +1,10 @@
+@use '@/style' as *;
+
+.root {
+  display: block;
+  width: 80px;
+
+  @include s {
+    width: 60px;
+  }
+}

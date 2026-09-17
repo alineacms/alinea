@@ -1,0 +1,103 @@
+{
+  "_id": "GyPkhJLrxgmfXYtYFOq9x",
+  "_type": "Doc",
+  "_index": "a26",
+  "title": "Number",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A number field is used to input numeric data."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "g4S5QLIWCAxleuIDzwNpk",
+      "code": "import {Field} from 'alinea'\n\nField.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "MFfouC0Ou_IJ8GmSx0nRK",
+      "code": "import {Field} from 'alinea'\n\nexport default Field.number('My number field', {\n  minValue: 0,\n  maxValue: 10,\n  step: 1\n})"
+    },
+    {
+      "_type": "heading",
+      "textAlign": "start",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`step`",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Specifies the interval between legal numbers in the input field."
+        },
+        {
+          "_type": "hardBreak"
+        },
+        {
+          "_type": "text",
+          "text": "Default is 1."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "TgFnfhtgWoXxn8JNTvLeU",
+      "code": "import {Field} from 'alinea'\n\nField.number('My decimal number field', {\n  step: 0.01\n})",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "FTmS0mD2qcabtj5xwOI9D",
+      "code": "import {Field} from 'alinea'\n\nexport default Field.number('My decimal number field', {\n  help: 'You can increase or decrease the value by 0.01',\n  initialValue: 0.01,\n  step: 0.01\n})"
+    }
+  ],
+  "metadata": {
+    "title": "Number field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

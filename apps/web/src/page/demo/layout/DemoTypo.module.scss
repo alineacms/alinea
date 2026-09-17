@@ -1,0 +1,107 @@
+.root {
+  > *:first-child {
+    margin-top: 0;
+  }
+}
+
+.hyphenate {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-all;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.h1 {
+  min-width: 0;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  margin: 35px 0 20px 0;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+  color: #b897b0;
+
+  &.is-flat {
+    margin: 0;
+  }
+}
+
+.h2 {
+  min-width: 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.33;
+  margin: 32px 0 14px 0;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+
+  &.is-flat {
+    margin: 0;
+  }
+}
+
+.h3 {
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 18px 0 4px 0;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+
+  &.is-flat {
+    margin: 0;
+  }
+}
+
+.h4 {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: pre-line;
+  text-rendering: optimizeLegibility;
+  @extend .hyphenate;
+
+  &.is-flat {
+    margin: 0;
+  }
+}
+
+.p {
+  line-height: 1.6;
+  margin-bottom: 14px;
+  max-width: 60ch;
+  text-rendering: optimizeLegibility;
+  white-space: pre-line;
+  @extend .hyphenate;
+
+  &.is-flat,
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.link {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+  cursor: pointer;
+  color: inherit;
+  @extend .hyphenate;
+}
+
+.monospace {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+  white-space: nowrap;
+  font-feature-settings: 'tnum' 1;
+  white-space: pre;
+}
+
+.small {
+  font-size: 0.8em;
+}

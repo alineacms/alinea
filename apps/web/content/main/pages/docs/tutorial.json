@@ -1,0 +1,75 @@
+{
+  "_id": "3AONCC6cssRWNTfGBx86XSB2Exn",
+  "_type": "Docs",
+  "_index": "Zgm",
+  "title": "Tutorial",
+  "navigationTitle": "Tutorial",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This tutorial is an opinionated, Next.js-first setup for building a real website with Alinea. It starts with one fixed homepage entry and grows into blocks, shared layout content, a blog, and finally a catch-all route."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Conventions used in every step"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Each page type and block type lives in its own folder with a server component and schema file. We found that this is the most convenient structure for readability and maintenance. Every page/block is responsible for collecting additional data/content when necessary. You can turn each server component into "
+        },
+        {
+          "_type": "text",
+          "text": "cache components",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3AR0sSBtNppAOz9pfiIk8ZrUQCO",
+              "_link": "url",
+              "href": "https://nextjs.org/docs/app/getting-started/cache-components",
+              "target": "_blank"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " when you see fit, giving you a lot of flexibility with maximum performance. Step 4 demonstrates this with a server-rendered blog post page that fetches sibling posts for Next/Previous navigation."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Continue with the five steps in this section."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

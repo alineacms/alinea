@@ -1,0 +1,113 @@
+{
+  "_id": "3AqAuDemLSXB8bacaKLETokTqRQ",
+  "_type": "Doc",
+  "_index": "Zz",
+  "title": "Path",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A path field is used to generate a slug based on another field - by default, the title field."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AqDnESNO6mPvuma6nNlrSmOTef",
+      "code": "import {Field} from 'alinea'\n\nField.text('Title', {required: true, width: 0.5}),\nField.path('Path', {required: true, width: 0.5})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "3AqE1eqF275ThdZFB2hkVfnCENY",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Contentpage'\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      required: true, width: 0.5\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Configuration"
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`from`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Automatically generate (slugify) the path from another field."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AqJiS32IeCy9SQk3LWIb6iIXjy",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    anchorId: Field.text('anchorId', {\n      initialValue: 'Anchord ID',\n      required: true, width: 0.5\n    }),\n    pathFrom: Field.path('Path from anchorId)', {\n      from: 'anchorId',\n      required: true, width: 0.5\n    })\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "3AqJkxkiOnV85ps3rkkyVdGkscQ",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (from)', {\n  fields: {\n    anchorId: Field.text('anchorId', {\n      initialValue: 'Anchord ID'\n      required: true, width: 0.5,\n    }),\n    pathFrom: Field.path('Path from anchorId)', {\n      from: 'anchorId',\n      required: true, width: 0.5\n    })\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`initialValue`"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Prefills the path value. This is useful for cases like setting the homepage path."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AqKGCP7GeVhDbB2mDKPSCUIC2q",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (homepage)', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Homepage',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      initialValue: 'index',\n      hidden: false,\n      readOnly: true,\n      required: true, width: 0.5\n    })\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "3AqKRFn20Kdo8hS9Wzbzmu5uZvi",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Path field (homepage)', {\n  fields: {\n    title: Field.text('Title', {\n      initialValue: 'Homepage',\n      required: true, width: 0.5\n    }),\n    path: Field.path('Path', {\n      initialValue: 'index',\n      hidden: false,\n      readOnly: true,\n      required: true, width: 0.5\n    })\n  }\n})"
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

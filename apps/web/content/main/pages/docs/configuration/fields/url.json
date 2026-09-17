@@ -1,0 +1,83 @@
+{
+  "_id": "2aiM9Z6hrhingqGxBX6GGKEVBAh",
+  "_type": "Doc",
+  "_index": "a2d",
+  "title": "Url",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The Url field can be used to link to an external resource."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "2aiMCRN0CLmhmeDTiClxqD0dIxf",
+      "code": "import {Field} from 'alinea'\n\nField.url('Single URL link')\n\nField.url.multiple('Multiple URL links')",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "2aiMFdnqKQucL7haTVJQfqtcsVs",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Url field', {\n  fields: {\n    url: Field.url('Single URL link'),\n    urlMultiple: Field.url.multiple('Multiple URL links')\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "textAlign": "start",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "textAlign": "start",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`max`",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Limit the amount of rows in case of multiple links."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Url field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

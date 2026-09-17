@@ -1,0 +1,135 @@
+{
+  "_id": "3AObPZG4JKh7YBgJ1aEbonntdos",
+  "_type": "LandingPage",
+  "_index": "a0",
+  "_seeded": "/index.json",
+  "title": "Welcome",
+  "blocks": [
+    {
+      "_id": "3AObXTSSkR8nhViSvw3yzTHXOdU",
+      "_index": "a0",
+      "_type": "TextBlock",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Rich text with "
+            },
+            {
+              "_type": "text",
+              "text": "bold styling, ",
+              "marks": [
+                {
+                  "_type": "bold"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": "an "
+            },
+            {
+              "_type": "text",
+              "text": "internal",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "3Aq47o2qHBrk6wSnHr8bBAocNQM",
+                  "_entry": "3AObPZG4JKh7YBgJ1aEbonntdos",
+                  "_link": "entry"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": " or an "
+            },
+            {
+              "_type": "text",
+              "text": "external",
+              "marks": [
+                {
+                  "_type": "link",
+                  "_id": "3Aq4fPuTDMAzxdvWJSLAdbhckq8",
+                  "_link": "url",
+                  "href": "https://www.google.be",
+                  "target": "_blank"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": " link."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Bullet1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Bullet2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "3AObYiRPm28Wj7gFHbzT4CBbdcn",
+      "_index": "a1",
+      "_type": "ImageBlock",
+      "image": {
+        "_id": "3AObb4xZM1kBInV81gAOLTCZljh",
+        "_type": "image",
+        "_entry": "3AObazssY5ER6VOt1bsIuXztLvb"
+      },
+      "alt": "Dog"
+    },
+    {
+      "_id": "3AObbasdETITnioFgCncfjSJT77",
+      "_index": "a2",
+      "_type": "WeatherBlock",
+      "title": "Current weather",
+      "region": "Brussels"
+    }
+  ],
+  "metadata": {
+    "title": "Regular metatitle",
+    "description": "",
+    "openGraph": {
+      "image": {
+        "_id": "3AObfLUJV5AhaR7EmGwj1lGlU10",
+        "_type": "image",
+        "_entry": "3AObazssY5ER6VOt1bsIuXztLvb"
+      },
+      "title": "OG title",
+      "description": "OG description"
+    }
+  }
+}

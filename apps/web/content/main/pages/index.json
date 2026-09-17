@@ -1,0 +1,475 @@
+{
+  "_id": "home",
+  "_type": "Home",
+  "_index": "Zx",
+  "title": "Homepage",
+  "hero": {
+    "headline": "Git-based CMS\nBuilt for Next.js",
+    "byline": "Open source headless CMS with minimal setup.\nFully typed content right in your repository.",
+    "button": {
+      "_id": "30YJq6LMDGRTe9xpsVzIfGMjKrC",
+      "_type": "entry",
+      "_entry": "2YWqKUTrANlgEFMyBUEYdih2HpP",
+      "label": "Get started"
+    },
+    "link": {
+      "_id": "30YJx1K3eqhYawLeqsesPCgm2Nl",
+      "_type": "url",
+      "_url": "https://alineacms.com/demo",
+      "_title": "",
+      "_target": "_blank",
+      "label": "Try a demo"
+    }
+  },
+  "body": [
+    {
+      "_type": "FeaturesBlock",
+      "_id": "30YNsasXP9NIEdYEYlHqCndo1ze",
+      "items": [
+        {
+          "_id": "30YNslOjO09SbLEV1AaoVwENyfC",
+          "_index": "a0",
+          "_type": "FeatureItem",
+          "icon": "IcRoundFastForward",
+          "title": "Minimal setup",
+          "description": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Straightforward content modeling without dealing with databases and migrations."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "30YNsnYgc4ro26LXrUQwnQJEKbK",
+          "_index": "a1",
+          "_type": "FeatureItem",
+          "icon": "MdiSourceBranch",
+          "title": "Git based",
+          "description": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Version controlled content in your repository. Easily branch and feature test content changes."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "30YNt0qo4xvhvDqL91JXKxYxaR6",
+          "_index": "a2",
+          "_type": "FeatureItem",
+          "icon": "MdiLanguageTypescript",
+          "title": "Fully typed",
+          "description": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "An optimized, type-safe experience for Typescript users without overcomplication."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "TemplateBlock",
+      "_id": "30aGHAsnfVeM1QVG7EszUkM2q55",
+      "image": {
+        "_id": "30atwror7UlkraJ5B5gQCJmCRQx",
+        "_type": "image",
+        "_entry": "30atwo31g5bOSNAwqKd1h0H7kQR"
+      },
+      "imagePosition": "left",
+      "title": "Get started with a template",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Vetra is a ready-made template for Alinea built in Next.js."
+            },
+            {
+              "_type": "hardBreak"
+            },
+            {
+              "_type": "text",
+              "text": "Designed to help you get started quickly with a production ready CMS."
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Beautiful blog with archive"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Includes categories and authors"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Built with Next.js and Tailwind CSS"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "button": {
+        "_id": "30aGmywvzhEA5Tj0kQpsWoLHpVl",
+        "_type": "url",
+        "_url": "https://github.com/alineacms/template-vetra",
+        "_title": "",
+        "_target": "_blank",
+        "label": "Check it out on GitHub"
+      },
+      "link": {
+        "_id": "30aGqf7BZ19sUtALjUy0DTgcJNe",
+        "_type": "url",
+        "_url": "https://vetra.alineacms.com",
+        "_title": "",
+        "_target": "_blank",
+        "label": "See the demo"
+      }
+    },
+    {
+      "_type": "ImageTextBlock",
+      "_id": "30b1NfG0dxg8h0oihthWoqfmYEb",
+      "image": {
+        "_id": "30d8LDWLgQ2PtElGkGlWLbxCAYM",
+        "_type": "image",
+        "_entry": "30d8L6eW48c6flEKTY16bifAaUz",
+        "alt": "Alinea dashboard screenshot"
+      },
+      "imagePosition": "right",
+      "title": "Organize content in a clear, hierarchical structure",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Editors can easily navigate, reorder, and manage pages in a way that makes sense for any project. Navigation stays simple, whether you’re editing in the dashboard or working with the API."
+            }
+          ]
+        }
+      ],
+      "button": {}
+    },
+    {
+      "_type": "CodeTextBlock",
+      "_id": "30b1MgT7V1SMQlSXIkvZ4CYslcm",
+      "code": "// Configure a CMS within minutes\n\nconst BlogPost = Config.document('Blog post', {\n  fields: {\n    title: Field.text('Title'),\n    body: Field.richText('Body text')\n  }\n})\n\nconst Blog = Config.document('Blog', {\n  contains: [BlogPost]\n})\n\nconst cms = createCMS({schema: {Blog, BlogPost}})",
+      "codePosition": "left",
+      "title": "Describe your schema in code, get back fully typed content",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Define your content schema in code and get fully typed content instantly — no generation step needed. Skip the endless form clicks and manage structure with the same workflow: branch, test, and iterate in code."
+            }
+          ]
+        }
+      ],
+      "button": {}
+    },
+    {
+      "_type": "ImageTextBlock",
+      "_id": "30d8SOd8IKw1Z7HDzWE1iw3QwWw",
+      "image": {
+        "_id": "30d8aJObcp1hcTTpmrXhA7l25Z0",
+        "_type": "image",
+        "_entry": "30d8aGj8XsC9oUOSVKNlXMQd2Kl",
+        "alt": "Alinea content tree screenshot"
+      },
+      "imagePosition": "right",
+      "title": "Publish with control",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Work on content without publishing right away. Alinea makes it easy to manage drafts, archive old pages, and keep your workspace tidy. The workflow stays simple for everyday tasks, but gives you the structure and control needed for larger, more complex projects."
+            }
+          ]
+        }
+      ],
+      "button": {}
+    },
+    {
+      "_type": "CodeTextBlock",
+      "_id": "30d8eGs51u1DI2dyGhkISNe8KB6",
+      "code": "// Query content within React components\n\nconst blog = await cms.get({\n  type: Blog\n})\n\nconst posts = await cms.find({\n  type: BlogPost,\n  select: {title: BlogPost.title, body: BlogPost.body}\n  // ... filter, sort, paginate, order by, etc.\n})",
+      "codePosition": "left",
+      "title": "Content is local, versioned and deploys with your site",
+      "description": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Access content through a developer-friendly query API. Because everything is bundled at build time, there is no need for runtime fetching or external requests."
+            }
+          ]
+        }
+      ],
+      "button": {}
+    },
+    {
+      "_type": "FeaturesBlock",
+      "_id": "30gpNz3rEan9j2XikqIfxKaghJn",
+      "items": [
+        {
+          "_id": "30gpOMpwGo5T4dhGMXcnXEXjBXb",
+          "_index": "a0",
+          "_type": "FeatureItem",
+          "icon": "ProiconsOpenSource",
+          "title": "Open source",
+          "description": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Open source by design, Alinea gives you full control over your CMS. Use it, extend it, or contribute back."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "30gpONndCs15dGVedmdUgN2oCeC",
+          "_index": "a1",
+          "_type": "FeatureItem",
+          "icon": "RiFlashlightFill",
+          "title": "Live Previews",
+          "description": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "See exactly what content changes look like in real time. Preview updates instantly with full support for React Server Components."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_id": "30gpOY2tbq8H85U71uAVyd1c7q6",
+          "_index": "a2",
+          "_type": "FeatureItem",
+          "icon": "IcBaselineDashboardCustomize",
+          "title": "Custom Fields",
+          "description": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Extend Alinea with your own fields. Create custom inputs with simple constructor functions. Tailored to exactly what your editors need."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "QuickLinksBlock",
+      "_id": "30grXuuQKS10oF93NRo8yrkvEmY",
+      "items": [
+        {
+          "_id": "30grYHybqwyZ3rOkzWahWa9XssA",
+          "_index": "a0",
+          "_type": "Item",
+          "icon": "RiFlashlightFill",
+          "link": {
+            "_id": "30grfDuDyDZUsSF4v3HSZYUKmdK",
+            "_type": "entry",
+            "_entry": "2YlBsRF2vZwxcS27oOSJYmQM37q",
+            "label": ""
+          }
+        },
+        {
+          "_id": "30grYu1i5IqeEZD3Gi0zG3tLlkv",
+          "_index": "a1",
+          "_type": "Item",
+          "icon": "IcRoundPublish",
+          "link": {
+            "_id": "30grh4Imy07gkciS2N5xJm2DgyK",
+            "_type": "entry",
+            "_entry": "2YlP39QVFZOzf94YMwDVrzd4gNz",
+            "label": "Editorial workflow"
+          }
+        },
+        {
+          "_id": "30grZ56H732KEf0zVaScH4vGBkj",
+          "_index": "a2",
+          "_type": "Item",
+          "icon": "IcRoundInsertDriveFile",
+          "link": {
+            "_id": "30grjZHzxjHn0Gdo9ENlReoe5K2",
+            "_type": "entry",
+            "_entry": "28hxVNf3JO9raYJ1HVQ6XgDX9pW",
+            "label": "Query engine"
+          }
+        },
+        {
+          "_id": "30guDtAVNFcZ3mrNbIHXufTSunz",
+          "_index": "a3",
+          "_type": "Item",
+          "icon": "IcBaselineDashboardCustomize",
+          "link": {
+            "_id": "30guJ8pp1O7LHSzeSiTE1NHdq01",
+            "_type": "entry",
+            "_entry": "286iEJsjhd8R9NxN6EVg59fELyd",
+            "label": ""
+          }
+        },
+        {
+          "_id": "30guDzlWnhXq1bxb5u07EdqG0WM",
+          "_index": "a4",
+          "_type": "Item",
+          "icon": "IcBaselineWorkspaces",
+          "link": {
+            "_id": "30guLkgd54TdG8LnH2YPU0p8zhv",
+            "_type": "entry",
+            "_entry": "259EzPfnSUaKOrNL1S2bpIpMdKl",
+            "label": ""
+          }
+        },
+        {
+          "_id": "30guE4193sRTy0vaLra37vKoiup",
+          "_index": "a5",
+          "_type": "Item",
+          "icon": "PhGlobe",
+          "link": {
+            "_id": "30guMqWPuF2tnwc1y6EIKl08fuR",
+            "_type": "entry",
+            "_entry": "2YcyNztG4JXc8TLpT4l1l7njGtn",
+            "label": ""
+          }
+        },
+        {
+          "_id": "30guE7Wghz69C67KLQgv7u3Gd6A",
+          "_index": "a6",
+          "_type": "Item",
+          "icon": "IcBaselineCloudQueue",
+          "link": {
+            "_id": "30guP9TP51Efa5V7zRVoeEuzZsV",
+            "_type": "entry",
+            "_entry": "28NgMpMQkmTy4uyFhPj8z4XVqml",
+            "label": "Self-host or cloud host"
+          }
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "_id": "2a7ftYTVOui6duXcA4Js0xG8QC6",
+      "_index": "a0",
+      "_type": "entry",
+      "_entry": "docs",
+      "label": "Docs",
+      "active": ""
+    },
+    {
+      "_id": "2a7ftRO1unpBDnfvXtgJUBIBwNr",
+      "_index": "a1",
+      "_type": "entry",
+      "_entry": "CC8aJ6-2U3s31micAzTLU",
+      "label": "Roadmap",
+      "active": ""
+    },
+    {
+      "_id": "2a7ftUxPD7w8EMFYWjpYoJVF6GP",
+      "_index": "a2",
+      "_type": "entry",
+      "_entry": "gx3H52whBKO_DdfcMNI3I",
+      "label": "Blog",
+      "active": ""
+    }
+  ],
+  "footer": [
+    {
+      "_id": "2ANVIUDmjNddF0QO8aB0gwXcRq8",
+      "_index": "a0",
+      "_type": "Section",
+      "label": "Developer",
+      "links": [
+        {
+          "_id": "2a7fvVi9M7zcX2wx3IJfYBrCqeC",
+          "_index": "a0",
+          "_type": "entry",
+          "_entry": "docs",
+          "label": ""
+        },
+        {
+          "_id": "2zjF046cGtCTwPONsqQAFfm5UWL",
+          "_index": "a1",
+          "_type": "url",
+          "_url": "https://alineacms.com/demo",
+          "_title": "Demo",
+          "_target": "_blank",
+          "label": "Demo"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "Alinea - Open source headless CMS",
+    "description": "Alinea is a open source headless CMS with minimal setup. Fully typed content right in your repository.",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

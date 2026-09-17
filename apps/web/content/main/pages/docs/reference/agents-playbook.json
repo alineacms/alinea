@@ -1,0 +1,597 @@
+{
+  "_id": "3AQhECgi92uKhPrujJvzZq578C5",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Agents playbook",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This page is the operational playbook for coding agents that need to create or update Alinea content JSON directly. It focuses on deterministic rules that match Alinea core behavior and this repository's content shapes."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Scope and source priority"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When documenting or generating Alinea content, use source of truth in this order:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The Alinea full-llms.txt file holds all documentation (including this playbook section). Use this as primary source of truth."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "In case of ambiguity or missing documentation, consult the alinea core source code."
+                }
+              ]
+            },
+            {
+              "_type": "bulletList",
+              "content": [
+                {
+                  "_type": "listItem",
+                  "content": [
+                    {
+                      "_type": "paragraph",
+                      "textAlign": "left",
+                      "content": [
+                        {
+                          "_type": "text",
+                          "text": "Projects using alinea will typically have alinea as a bundled node_modules dependency, which means the (compiled) source code can be accessed directly. "
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "_type": "listItem",
+                  "content": [
+                    {
+                      "_type": "paragraph",
+                      "textAlign": "left",
+                      "content": [
+                        {
+                          "_type": "text",
+                          "text": "In case the source code can not be retrieved, or the compiled code is unclear, consult the source code on https://github.com/alineacms/alinea"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Consult schema implementations and concrete JSON fixtures/content in the target project (for example `content/main/**`, `content/demo/**`) to find helpful examples and try to following the same structure when suggesting changes. "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "The source code of the alinea documentation website is also publicly available on https://github.com/alineacms/alineacms.com. The documentation website is itself created with Alinea + Next.js and can serve as a useful example."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Project structure conventions"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In new Next.js projects, agents should follow the tutorial file structure as closely as possible to keep the codebase readable and maintainable."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In existing codebases, first scan the current structure and then align new files and changes to the established coding guidelines and architectural principles. "
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Entry metadata rules"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Top-level entries are JSON records with required meta fields. In Alinea core this is defined by `EntryMeta` in `src/core/EntryRecord.ts`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhE9SPtaytVzp1tWLDjn9awx9",
+      "code": "{\n  \"_id\": \"<createId()>\",\n  \"_type\": \"<schema type name>\",\n  \"_index\": \"<fractional index>\",\n  \"_root\": \"pages\",\n  \"_seeded\": \"/index.json\",\n  \"title\": \"...\"\n}",
+      "fileName": "",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_id`: unique entry id from `createId()` (`alinea/core/Id`)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_type`: exact schema type key."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_index`: fractional ordering key. Generate with `generateKeyBetween` from `alinea/core/util/FractionalIndexing`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_root`: required for root-level entries (entries without a parent). Value is the workspace root key, for example `pages` or `media`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`_seeded`: only for entries that correspond to seeded config pages (`Config.page(...)`). Keep path stable."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "ID and index generation"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEELbvoUM6nqhUHXYGWbidbF",
+      "code": "# New id\nnode --input-type=module -e \"import {createId} from 'alinea/core/Id'; console.log(createId())\"\n\n# Index between two siblings\nnode --input-type=module -e \"import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'; console.log(generateKeyBetween('a0', 'a1'))\"\n\n# Append after last sibling\nnode --input-type=module -e \"import {generateKeyBetween} from 'alinea/core/util/FractionalIndexing'; console.log(generateKeyBetween('a0', null))\"",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea sorts sibling entries by `_index` ascending. Never hand-pick `_index` by eye when inserting between entries."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Internal and external links"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Links appear in two places: rich text marks and link fields (`Field.link` / `Field.link.multiple`)."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rich text link marks"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEAIUY4oUqOgqNS3DoP6tfz8",
+      "code": "[\n  {\n    \"_type\": \"paragraph\",\n    \"content\": [\n      {\n        \"_type\": \"text\",\n        \"text\": \"Internal doc\",\n        \"marks\": [\n          {\n            \"_type\": \"link\",\n            \"_id\": \"<createId()>\",\n            \"_link\": \"entry\",\n            \"_entry\": \"<target entry id>\"\n          }\n        ]\n      },\n      {\n        \"_type\": \"text\",\n        \"text\": \" and external site\",\n        \"marks\": [\n          {\n            \"_type\": \"link\",\n            \"_id\": \"<createId()>\",\n            \"_link\": \"url\",\n            \"href\": \"https://example.com\",\n            \"target\": \"_blank\",\n            \"title\": \"\"\n          }\n        ]\n      }\n    ]\n  }\n]",
+      "fileName": "",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rich text link mark shape is defined by `LinkMark` in `src/core/TextDoc.ts`: `_type: link`, `_id`, `_link` (`entry` | `file` | `url`), and optional `_entry`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Link field objects"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEAeaaAWl53zEwQztlLReKzR",
+      "code": "// Field.link('Link') -> single entry link\n{\n  \"_id\": \"<createId()>\",\n  \"_type\": \"entry\",\n  \"_entry\": \"<target entry id>\",\n  \"label\": \"Optional extra field\"\n}\n\n// Field.link('Link') -> single external url\n{\n  \"_id\": \"<createId()>\",\n  \"_type\": \"url\",\n  \"_url\": \"https://example.com\",\n  \"_title\": \"Example\",\n  \"_target\": \"_blank\",\n  \"label\": \"Optional extra field\"\n}\n\n// Field.link.multiple('Links') row\n{\n  \"_id\": \"<createId()>\",\n  \"_index\": \"<fractional index>\",\n  \"_type\": \"entry\",\n  \"_entry\": \"<target entry id>\",\n  \"label\": \"Optional extra field\"\n}",
+      "fileName": "",
+      "language": "javascript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For `Field.link.multiple`, each row is also a list row, so `_index` is required."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Lists and union/list row metadata"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "List rows are defined by `ListRow` in `src/core/shape/ListShape.ts`. Every row must include `_id`, `_type`, `_index`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEFiSAcrYip53jSe2Blq92FT",
+      "code": "{\n  \"items\": [\n    {\n      \"_id\": \"<createId()>\",\n      \"_index\": \"a0\",\n      \"_type\": \"Item\",\n      \"title\": \"First\"\n    },\n    {\n      \"_id\": \"<createId()>\",\n      \"_index\": \"a1\",\n      \"_type\": \"Item\",\n      \"title\": \"Second\"\n    }\n  ]\n}",
+      "fileName": "",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Union values (from `UnionShape`) require `_id` and `_type`. If a union is inside a list, it still needs list row `_index` as well."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Rich text JSON format"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea rich text is a `TextDoc` array (`src/core/TextDoc.ts`). Common internal nodes used by this project include `heading`, `paragraph`, `text`, `bulletList`, `orderedList`, `listItem`, `hardBreak`, and block nodes like `CodeBlock`/`ImageBlock` with `_id`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEBmLP7AlOjLugjsdjaiIhqq",
+      "code": "[\n  {\n    \"_type\": \"heading\",\n    \"level\": 2,\n    \"content\": [{\"_type\": \"text\", \"text\": \"Heading\"}]\n  },\n  {\n    \"_type\": \"paragraph\",\n    \"textAlign\": \"left\",\n    \"content\": [\n      {\"_type\": \"text\", \"text\": \"Normal text \"},\n      {\n        \"_type\": \"text\",\n        \"text\": \"bold\",\n        \"marks\": [{\"_type\": \"bold\"}]\n      },\n      {\"_type\": \"text\", \"text\": \" \"},\n      {\n        \"_type\": \"text\",\n        \"text\": \"italic\",\n        \"marks\": [{\"_type\": \"italic\"}]\n      },\n      {\"_type\": \"hardBreak\"},\n      {\n        \"_type\": \"text\",\n        \"text\": \"anchor\",\n        \"marks\": [\n          {\n            \"_type\": \"link\",\n            \"_id\": \"<createId()>\",\n            \"_link\": \"url\",\n            \"href\": \"https://example.com\",\n            \"target\": \"_blank\",\n            \"title\": \"\"\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"_type\": \"bulletList\",\n    \"content\": [\n      {\n        \"_type\": \"listItem\",\n        \"content\": [\n          {\n            \"_type\": \"paragraph\",\n            \"content\": [{\"_type\": \"text\", \"text\": \"Bullet item\"}]\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"_type\": \"orderedList\",\n    \"start\": 1,\n    \"content\": [\n      {\n        \"_type\": \"listItem\",\n        \"content\": [\n          {\n            \"_type\": \"paragraph\",\n            \"content\": [{\"_type\": \"text\", \"text\": \"Ordered item\"}]\n          }\n        ]\n      }\n    ]\n  },\n  {\n    \"_type\": \"CodeBlock\",\n    \"_id\": \"<createId()>\",\n    \"code\": \"console.log('block nodes need _id')\",\n    \"language\": \"javascript\",\n    \"fileName\": \"\",\n    \"compact\": false\n  }\n]",
+      "fileName": "",
+      "language": "json",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "If generating from HTML, Alinea's parser maps common tags to these node/mark types (`src/core/field/RichTextField.ts`), for example `<p>` -> `paragraph`, `<a>` -> `link`, `<ul>/<ol>/<li>` -> list nodes, `<strong>` -> `bold`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Roots and workspaces"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`Config.workspace` and `Config.root` define where content is stored and which root key each entry belongs to (`src/core/Workspace.ts`, `src/core/Root.ts`)."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEEidv1VGL0XMoV3RkckFfso",
+      "code": "// Example workspace layout in this repository\ncontent/\n  main/\n    pages/\n      docs.json\n      docs/\n        reference/\n          cli.json\n    media/\n      screenshot.json\n  demo/\n    pages/\n      index.json\n      recipes/\n        chocolate-chip.json\n    media/\n      ...\n\n// Workspace key -> source\nmain -> content/main\ndemo -> content/demo\n\n// Root key -> folder under each workspace source\npages -> <workspace>/pages\nmedia -> <workspace>/media",
+      "fileName": "",
+      "language": "text",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Manual generation rules:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "When creating a root-level entry file, include `_root` with the matching root key."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Place files under the workspace source directory and root directory that match config."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "For seeded pages, keep `_seeded` stable and matching the configured seed path."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "textAlign": "left",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Do not remove nested identity fields (`_id`, `_index`, `_type`) from list rows, union values, or rich text block nodes."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Validation workflow"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AQhEAc2JMSPC3IotHJuc9aZYF9",
+      "code": "# Normalize metadata via Alinea fix path\nalinea build --fix\n\n# In this repository\nbun run build -- --fix\n\n# Final validation\nbun run build",
+      "fileName": "",
+      "language": "shellscript",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Before commit: ensure JSON parses, `_type` matches schema, `_index` order is correct among siblings, and no duplicate `_id` values were introduced in edited scope."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "_id": "3AOateRQezPAp5Ofli2Qam6X05N",
+  "_type": "LandingPage",
+  "_index": "a0",
+  "_seeded": "/index.json",
+  "title": "Welcome",
+  "metadata": {
+    "title": "Regular metatitle",
+    "description": "Regular meta description.",
+    "openGraph": {
+      "image": {
+        "_id": "3AnxPTiGgX0Hm25APgSQ8m0Twdf",
+        "_type": "image",
+        "_entry": "3AnxOwGUFr3uFx7K6WVX8BV9ajY"
+      },
+      "title": "OG title",
+      "description": "OG description"
+    }
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "_id": "3AZY63OxjiPWzVM4siKRVbqLNF1",
+  "_type": "Doc",
+  "_index": "a1",
+  "title": "Examples",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Example Schemas"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AhnE8nj1H2ldoExRQ7cioM82L7",
+      "code": "export const ChildSchema = Config.document('Child', {\n  fields: {\n    title: Field.text('Title'),\n    // A multiple entry field to link related filters or categories\n    filters: Field.entry.multiple('Filter(s)', {\n      condition: { _type: 'FilterItem' }\n    }),\n    // Main content area\n    blocks: Field.text('Content') \n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AhnTuJFyW8ORgV22kLJHls6ymX",
+      "code": "export const BlogPostSchema = Config.document('Blog Post', {\n  fields: {\n    path: Field.path('Path'),\n    title: Field.text('Title'),\n    description: Field.text('Description'),\n    publishedDate: Field.date('Published Date'),\n    // Used for the \"Related Content\" example\n    tags: Field.list('Tags', {\n      schema: Field.text('Tag')\n    })\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Recent Content & Pagination"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This example shows how to retrieve the most recent entries while implementing a reusable pagination logic. By using constants for pageLength, you keep your query logic clean and easy to maintain."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZuCIlq3RXaKdbztvaz5rVCIsA",
+      "code": "const pageLength = 10\nconst pageIndex = 0 // Start at the first page\n\nawait cms.find({\n  type: BlogPost,\n  // Sort by date to get the newest items first\n  orderBy: { \n    desc: BlogPost.publishedDate \n  },\n  // Calculate offset based on the current page\n  skip: pageIndex * pageLength,\n  take: pageLength\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Filtering by Linked References "
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "OR Logic"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use this approach when you want to retrieve entries that are linked to one or more specific items. This is particularly useful for features like \"Filtering by Category\" or \"View all posts by these Authors.\""
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZiyHPw7uDo7kI54QMwdWu6Gnu",
+      "code": "const filterIds = [\n  'abc123',\n  'def456'\n]\n\nawait cms.find({\n  type: ChildSchema,\n  filter: {\n    filters: {\n      includes: {_entry: {in: filterIds}}\n    }\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "AND Logic"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "If you need to find entries that contain all specified references simultaneously, you can map over your IDs using an and operator. This ensures every single link in your list must be present for a match."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZi7kjJLXFnA21Agey2DjkAmhD",
+      "code": "const filterIds = [\n  'abc123',\n  'def456'\n]\n\nawait cms.find({\n  type: ChildSchema,\n  filter: {\n    and: filterIds.map(id => ({\n      filters: {includes: {_entry: id}}\n    }))\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "This pattern demonstrates how to find related content by comparing shared references. First, we retrieve the current entry to extract its linked metadata. Then, we use those IDs to query other entries of the same type, ensuring the current item is excluded from the results to provide a clean list of recommendations. This leverages Next.js routing params."
+        }
+      ]
+    },
+    {
+      "_type": "FrameworkBlock",
+      "_id": "3Ahe1VBpFEQzpFms0S0qH7ekgkj",
+      "next": [
+        {
+          "_type": "CodeBlock",
+          "_id": "3Ahe5K3PePHW5DZopeFrS9LCUiJ",
+          "code": "type ChildProps = {locale: Locale; url: string}\n\nexport default async function Child({locale, url}: ChildProps) {\n  const page = await cms.first({locale, url, type: ChildSchema})\n  if (!page) return\n  const filterIds = page.filters.map(filter => filter?._entry).filter(Boolean)\n\n  const other = await cms.find({\n    type: ChildSchema,\n    id: {notIn: [page._id]},\n    filter: {\n      filters: {\n        includes: {_entry: {in: filterIds}}\n      }\n    },\n    select: {title: Query.title}\n  })\n}",
+          "fileName": "",
+          "language": ""
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

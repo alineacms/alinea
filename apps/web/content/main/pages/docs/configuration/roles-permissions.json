@@ -1,0 +1,474 @@
+{
+  "_id": "3AhqfX37Pijf2zOEwYVVU4NmdHG",
+  "_type": "Doc",
+  "_index": "Zw",
+  "title": "Roles & Permissions",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Roles define what users can see and do within the CMS dashboard. Alinea automatically creates a default Admin role for every project with full access to every workspace, root, and entry. You do not need to define this manually, ensuring there is always an unrestricted management account available."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Setting up roles"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "To create a custom role, use the Config.role helper and register it in your CMS configuration."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ai3jSucgSlqqmzWcHlRroHEtak",
+      "code": "const myRole = Config.role('My role', {\n  async permissions(policy, graph) {\n    // Define permissions here\n  }\n})\n\nexport const cms = createCMS({\n  roles: { myRole },\n  // ...other config\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Defining Policies"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The permissions function is where you define your access policies. You use allow to grant access to specific actions and deny to strictly forbid them."
+        }
+      ]
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3AiAlR79kfrcrHvH4mVGHL8PvNU",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Note: ",
+              "marks": [
+                {
+                  "_type": "bold"
+                }
+              ]
+            },
+            {
+              "_type": "text",
+              "text": "A deny rule is absolute and propagates downstream without exception. Once an action is denied at a higher level, it becomes \"locked\" for all child entries and cannot be overridden by an allow rule or contained by grant: 'explicit' further down the stream. Always apply deny restrictions at the most specific level possible to avoid unintentionally locking out sub-sections."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Available Actions"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When configuring a policy, you can target these specific actions to create granular permissions:"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "read",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": View the entry in the dashboard."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "create",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Create new entries of a specific type."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "update",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Edit existing content."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "delete",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Remove entries from the CMS."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "publish",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Push changes to the live environment."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "archive",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Move entries to an archived state."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "reorder",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Change the sorting order within a parent."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "move",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Relocate entries to a different parent or root."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "upload",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Add new media files to the library."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "explore",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": Browse through the workspace structure."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "all",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ": A shorthand to grant every possible permission at once."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Understanding Grants"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The grant property specifically modifies how allow rules are applied across the content tree. By default, permissions use grant: 'implicit', meaning access trickles down to all children."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiCX7aXzZVdWeDiGhngdzch2ny",
+      "code": "// (Default) Permissions automatically trickle down to all child entries and sub-pages.\ngrant: 'implicit' \n// Permissions only apply to the specific entry or level defined. \n// Access to children must be granted separately.\ngrant: 'explicit' ",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Example use cases"
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Static Access Control"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In these examples, we define roles based on fixed paths or roots within your CMS. This is the most direct way to manage access for different user groups."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Viewer:",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " This role is granted read-only access to the entire workspace by default but is specifically excluded from sensitive administrative roots such as configurations and databases."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ai3GxZihQfZjdQtywffg7mB1Eo",
+      "code": "// Block specified pages, only give read-rights\nconst viewer = Config.role('Viewer', {\n  async permissions(policy) {\n    policy.set(\n      {\n        allow: {read: true}\n      },\n      {\n        root: cms.workspaces.main.general,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.redirects,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.configurator,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.database,\n        deny: {read: true}\n      }\n    )\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Editor:",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " Similar to the Viewer, but with the addition of editing rights (update) for all accessible sections."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ahwa7yMlETIJ4wuAZEMy6pdx5E",
+      "code": "// Block acces to certain roots, give read and update rights to everything else\nconst editor = Config.role('Editor', {\n  async permissions(policy) {\n    policy.set(\n      {\n        allow: {read: true, update: true}\n      },\n      {\n        root: cms.workspaces.main.general,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.redirects,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.configurator,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.database,\n        deny: {read: true}\n      }\n    )\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Explicit Granular Access"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Sometimes you want to grant a user access to a specific item without immediately making the entire underlying tree structure visible. By using grant: 'explicit', you ensure that rights must be manually assigned at each level. This is ideal for moderators who only need to manage one specific page (like a particular bike) while keeping the rest of the navigation hidden."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ai3DJiqX2CO5U4ugw1QszvRqlh",
+      "code": "const bikeId = '4d454f57636d735f323032365f7a'\n\n// Grant explicit to make sure not all children are visible\nconst bikeModerator = Config.role('Bike Moderator', {\n  async permissions(policy) {\n    policy.set(\n      {\n        workspace: cms.workspaces.main,\n        allow: {read: true},\n        grant: 'explicit'\n      },\n      {\n        root: cms.workspaces.main.pages,\n        allow: {read: true},\n        grant: 'explicit'\n      },\n      {\n        id: bikeId,\n        allow: {all: true}\n      }\n    )\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Dynamic Query-based Permissions"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea offers the unique capability to base permissions on your data structure via the graph. Instead of hardcoding IDs, you can perform a query to retrieve, for example, all products belonging to a specific brand. The results of this query are then used to dynamically assign permissions. This means you don't have to update the role when new products are added to the brand; the permissions automatically grow along with your content."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Ai34341S0rJQ1xXiauCpkPo35K",
+      "code": "bikeBrandId = '2o7I2ig8ry0ci1e0hZ5k1kKK3Qx'\n\n// Use querying to show only specific products\nconst bikeBrandModerator = Config.role('Bike Brand Moderator', {\n  async permissions(policy, graph) {\n    const bikes = await graph.find({\n      type: ProductSchema,\n      filter: {\n        brand: {\n          has: {_entry: bikeBrandId}\n        }\n      }\n    })\n    policy.set({\n      workspace: cms.workspaces.main,\n      allow: {read: true},\n      grant: 'explicit'\n    },\n    {\n    root: cms.workspaces.main.products,\n      allow: {read: true},\n      grant: 'explicit'\n    })\n    for (const bike of bikes) {\n      policy.set({\n        id: bike._id,\n        allow: {read: true, update: true}\n      })\n    }\n  }\n})",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "private": true,
+  "name": "alineacms.com",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "alinea dev -- next dev",
+    "build": "alinea build -- next build",
+    "start": "next start",
+    "step1:dev": "bun run --cwd tutorial-sites/step1 dev",
+    "step2:dev": "bun run --cwd tutorial-sites/step2 dev",
+    "step3:dev": "bun run --cwd tutorial-sites/step3 dev",
+    "step4:dev": "bun run --cwd tutorial-sites/step4 dev",
+    "step5:dev": "bun run --cwd tutorial-sites/step5 dev"
+  },
+  "dependencies": {
+    "@alinea/styler": "^1.0.3",
+    "@biomejs/biome": "^2.1.2",
+    "@monaco-editor/react": "^4.4.5",
+    "@vercel/postgres": "^0.10.0",
+    "alinea": "1.7.0-preview.10",
+    "jotai": "^2.12.5",
+    "lz-string": "^1.4.4",
+    "next": "^16.1.6",
+    "p-lazy": "^5.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-string-replace": "^1.0.0",
+    "remark": "^14.0.2",
+    "remark-html": "^15.0.1",
+    "shiki": "^0.10.1",
+    "use-clipboard-copy": "^0.2.0"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/jetbrains-mono": "5.0.1",
+    "@fontsource/poppins": "^5.2.6",
+    "@types/bun": "latest",
+    "@types/node": "^22.5.2",
+    "@types/react": "^18.2.13",
+    "sass": "^1.89.2",
+    "typescript": "^5.6.2"
+  }
+}

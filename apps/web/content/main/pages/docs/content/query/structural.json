@@ -1,0 +1,151 @@
+{
+  "_id": "3AUAiIoQhl86EKefhuhZ6EThETv",
+  "_type": "Doc",
+  "_index": "Zy",
+  "title": "Structural",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Structural Querying"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use top-level properties to define the scope of your query. This allows you to retrieve entries based on their structural identity such as content type, unique ID or their specific location in the project tree."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "1. Using default fields"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AUGWShqMFRj0JtbCa7Y1cXW15m",
+      "code": "const pageIds = ['abc123', 'def456', 'ghi789']\nawait cms.first({\n  // Filter by the schema.\n  type: BlogPostSchema,\n\n  // When you know the unique id\n  id: pageId,\n  // You can also use operations in these fields\n  id: {in: pageIds},\n  id: {notIn: pageIds},\n\n  // Using the path (e.g. querying).\n  path: pagePath,\n\n  // Using the url (e.g. docs/content/query)\n  url: pageUrl,\n  // But sometimes you only need the URL to start with a certain prefix\n  // instead of using javascript string manipulation you can use the startsWith field\n  url: {startsWith: 'docs/content'}\n\n  // Using the parents id\n  parentId: pageParentId  \n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "ChapterLinkBlock",
+      "_id": "3AiIemW7gjzBxUD3rV1fFXMpMAA",
+      "link": {
+        "_id": "3AiIggdFaryr3icK8IOcTUVjp0B",
+        "_type": "entry",
+        "_entry": "3AZJ7caQ7xN9oe18v57EGVm19Yz",
+        "description": "More information about possible operations"
+      }
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "2. Using the location in the tree structure"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AUGagq5lVCSs24yNtognDcd4W1",
+      "code": "await cms.first({\n  // e.g. cms.workspaces.main\n  workspace,\n  // e.g. cms.workspaces.main.pages\n  root,\n  // Level: 0 = parent level, 1 = child level, 2 = grandchild level, ...\n  level,\n\n  // For Location you can use a Root, Workspace or a Page as input.\n  // e.g. cms.workspaces.main | cms.workspaces.main.pages\n  location\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "3. Miscellaneous"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AUCfiqN9GE7kQlDsH3ROyTduA6",
+      "code": "await cms.first({\n  // This can be: 'published', 'draft', 'archived', 'preferDraft', 'preferPublished', 'all' \n  status: 'published',\n  // Look for result with the exact locale.\n  locale: pageLocale \n  // Look for a result with the locale, but ignore when there are no exact matches\n  preferredLocale: pageLocale \n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Output control"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Once you've filtered the results, you can manipulate the output. This can be done in two ways:"
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "1. Data"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZ7EzV3Q9XTl29dMU5c2YTJd3B",
+      "code": "await cms.first({\n  // Return everything from the related type\n  type: BlogPostSchema,\n  id: BlogPostId\n})\n\nawait cms.first({\n  id: BlogPostId,\n  // Only return the selected fields (similar to SQL's SELECT)  \n  select: {\n    title: Query.title,\n    description: Query.description\n  }\n})\n\nawait cms.first({\n  id: BlogPostId,\n  select: {\n    title: Query.title\n  },\n  // Use include to return extra fields that are not in the queried entry's schema\n  include: {\n    parent: Query.parent({\n      select: {\n        url: Query.url,\n        title: Query.title\n      }\n    })\n  }\n}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "2. Sorting"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZ7FHNFDpM4QIZoFih9yczK96Q",
+      "code": "await cms.find({\n  type: BlogPostSchema,\n  select: {\n    id: Query.id,\n    title: Query.title\n  },\n  orderBy: {\n    // Use desc or asc to sort by a specific field.\n    desc: BlogPost.publishedDate,\n    // This will sort the posts in alphabetical order\n    asc: BlogPost.title\n  },\n  // Group results by 1 or more categories\n  groupBy: BlogPost.category,\n\n  //skip the first 10 results and return a max of 20\n  skip: 10,\n  take: 20\n})",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

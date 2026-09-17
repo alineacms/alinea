@@ -1,0 +1,204 @@
+{
+  "_id": "3AONCEKYoMQiZ5HZWNKbMB8oVUT",
+  "_type": "Doc",
+  "_index": "a4",
+  "title": "Step 5: Use a catch-all slug route",
+  "navigationTitle": "Step 5: Catch-all route",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In this step we replace dedicated routes with one catch-all route, which gives full freedom to content editors to create and maintain their own content structures. All pages are served via one route."
+        }
+      ]
+    },
+    {
+      "_type": "ImageBlock",
+      "_id": "3B4cqeHyHIWgKqjxeCD6bmUpjBx",
+      "image": {
+        "_id": "3B4crO98ByKupE3sYenv0maaC3A",
+        "_type": "image",
+        "_entry": "3B4crJPW80hyfXZHjdAlW95AbnW"
+      }
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "We keep the Blog/Post setup from the previous step and add recursive Page entries for regular pages. We get rid of the current page.tsx routes for the landing page, the blog and invidivual posts and replace them all with one new route."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONyof32uSAsVKwWOVlZSoYACo",
+      "code": "app/\n├ layout.tsx\n╰ [[...slug]]/page.tsx\n\nentries/\n├ page/\n│ ├ Page.tsx\n│ ╰ Page.schema.tsx\n├ blog/\n│ ├ Blog.tsx\n│ ╰ Blog.schema.tsx\n├ post/\n│ ├ Post.tsx\n│ ╰ Post.schema.tsx\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
+      "fileName": "project structure",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Define a recursive Page entry type so editors can freely nest regular pages under one another, such as an About page with Team and History underneath it. You can define which page types can be nested by using the "
+        },
+        {
+          "_type": "text",
+          "text": "contains",
+          "marks": [
+            {
+              "_type": "italic"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " property."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONC7x8fNldabo2MZApzs6EbcP",
+      "code": "import {Config, Field} from 'alinea'\nimport {GalleryBlock} from '@/blocks/gallery/GalleryBlock.schema'\nimport {ImageBlock} from '@/blocks/image/ImageBlock.schema'\nimport {TextBlock} from '@/blocks/text/TextBlock.schema'\n\nexport const Page = Config.document('Page', {\n  contains: ['Page'],\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {required: true, width: 0.5}),\n    blocks: Field.list('Blocks', {\n      schema: {\n        TextBlock,\n        ImageBlock,\n        GalleryBlock\n      }\n    })\n  }\n})",
+      "fileName": "entries/page/Page.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Make sure to register this new type in cms.tsx. Regular pages can then be created freely in the Pages tree. We did opt to also go for one shared generateMetadata function, since all pages share the same metadata fields. In a real applications you might want to define different logic per page type, do define custom fallback metadata depending on the type of page."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep5CmsSnippet0000000001",
+      "code": "import {Blog} from '@/entries/blog/Blog.schema'\nimport {Page} from '@/entries/page/Page.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    Page,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog'],\n          children: {\n            blog: Config.page({\n              type: Blog,\n              fields: {title: 'Blog', path: 'blog', intro: 'Latest posts'}\n            })\n          }\n        }),\n        settings: Config.root('Settings', {\n          contains: ['SiteLayout']\n        })\n      }\n    })\n  }\n})",
+      "fileName": "cms.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use a catch-all route that resolves the URL from slug segments and branches on page._type. Page rendering stay inside their own server components, which nicely isolates functionality per page type. This one route replaces app/page.tsx, app/blog/page.tsx, and app/blog/[slug]/page.tsx."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONC8Rcye6z7EGBmQ3AbwCi67i",
+      "code": "import type {Infer} from 'alinea'\nimport {Entry} from 'alinea/core/Entry'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport {cms} from '@/cms'\nimport {BlogView} from '@/entries/blog/Blog'\nimport {PageView} from '@/entries/page/Page'\nimport {Page} from '@/entries/page/Page.schema'\nimport {PostView} from '@/entries/post/Post'\n\ninterface RouteProps {\n  params: Promise<{slug?: Array<string>}>\n}\n\nexport async function generateStaticParams() {\n  const urls = await cms.find({\n    root: cms.workspaces.main.pages,\n    select: Entry.url\n  })\n\n  return urls.map(url => ({slug: url === '/' ? [] : url.slice(1).split('/')}))\n}\n\nexport async function generateMetadata({\n  params\n}: RouteProps): Promise<Metadata> {\n  const {slug = []} = await params\n  const url = slug.length > 0 ? `/${slug.join('/')}` : '/'\n  const page = await cms.get({\n    url,\n    include: {\n      title: Entry.title,\n      metadata: Page.metadata // We will introduce Entry.metadata shortly, for now use Page or any other document type\n    }\n  })\n  if (!page) return {}\n\n  return {\n    title: page.metadata?.title || page.title,\n    description: page.metadata?.description,\n    openGraph: {\n      title:\n        page.metadata?.openGraph?.title || page.metadata?.title || page.title,\n      description:\n        page.metadata?.openGraph?.description || page.metadata?.description,\n      images: page.metadata?.openGraph?.image\n        ? [page.metadata.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n\nexport default async function CatchAllPage({params}: RouteProps) {\n  const {slug = []} = await params\n  const url = slug.length > 0 ? `/${slug.join('/')}` : '/'\n  const page = await cms.get({url})\n\n  if (!page) notFound()\n\n  if (page._type === 'Blog') {\n    return <BlogView />\n  }\n\n  if (page._type === 'Post') {\n    const postSlug = slug[slug.length - 1]\n    if (!postSlug) notFound()\n    return <PostView slug={postSlug} />\n  }\n\n  const regularPage = await cms.get({url, type: Page})\n  if (!regularPage) notFound()\n  return <PageView page={regularPage} />\n}\n",
+      "fileName": "app/[[...slug]]/page.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3Bstep5Notice0000000000001",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Upon completion of these steps, your website should be extended with these features:"
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "A single catch-all route resolves all page URLs in the Pages root, including nested regular pages."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Regular pages are modeled with recursive Page entries, for example an \"About\"-page with Team and History underneath it."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "The Blog/Post flow from step 4 still works, including post navigation and the back-to-blog CTA."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph"
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3B72DbWneK0XlgueBQ4msd0U0a6",
+      "level": "warning",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "It's worth mentioning that a catch-all route is not always the preferred way of working. It improves the flexibility of your website but it makes it impossible for Next.js to have a per-page javascript-bundle, so it might make the initial page loads of your website a bit heavier. Go for the solution that best fits your specific needs."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

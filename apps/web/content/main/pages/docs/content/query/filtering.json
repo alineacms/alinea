@@ -1,0 +1,232 @@
+{
+  "_id": "3AZJ7caQ7xN9oe18v57EGVm19Yz",
+  "_type": "Doc",
+  "_index": "ZyV",
+  "title": "Filtering",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use the filter property when you need to narrow down your results based on dynamic criteria or specific field values. While Structural Querying defines where or what you are looking for, Filtering allows you to search based on content, such as authors, dates, or full-text search terms."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZJy2rJ8r5CixcuVPVoLZJfkR2",
+      "code": "await cms.first({\n  type: BlogPostSchema,\n  // Filter using search terms\n  search: 'querying',\n  // Filter by fields\n  // This filters the blogposts with author 'alinea'\n  filter: {\n    author: 'alinea'\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph"
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Comparison Operators"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When filtering, you can use these operators to create precise conditions. They are especially useful for dates, numbers, and strings."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "is / isNot ",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "(Equality)"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGTCJ6ho0ize2JfBBI4sKDZ21",
+      "code": "filter: {status:{is: 'published'}}\nfilter: {type: {isNot: 'feature'}}}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "in / notIn ",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "(List matching)"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGWGP5xi7cn8a8YbnxL11EKBH",
+      "code": "filter: {category: {in: ['news', 'tech']}}\nfilter: {tags: {notIn: ['draft', 'internal']}}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "gt / gte ",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "(Greater than (or equal))"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGWSTlVJRDX90996yGjaLxDC9",
+      "code": "filter: {price: {gt: 100}}\nfilter: {publishedDate: {gte: '2024-01-01'}}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "lt / lte ",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "(Less than (or equal))"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGWrdA2yRYe3v2bjuQ3RKy9HK",
+      "code": "filter: {stock: {lt: 10}}\nfilter: {date: {lte: today}}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "startsWith",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " (String matching)"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGX4NiDAmqDMML2r66DLtkOLT",
+      "code": "filter: {title: {startsWith: 'Alinea'}}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "or ",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "(Logical OR)"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AiGXV2EbrbvNNaFAWaSEACuP1j",
+      "code": "filter: {or: [{category: 'blog'}, {featured: true}]}",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Example"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Let's take using a date as a filter for example as this lets us show quite a few of your options."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZJubgfIQG4gYAhR3BCatZf6lz",
+      "code": "const today = new Date().toISOString()\n\n// Getting the posts published in 2023\nawait cms.find({\n  type: BlogPostSchema,\n  \n  filter: {\n    author: 'alinea',\n    publishedDate: {\n      lt: '2024-01-01',\n      gte: '2023-01-01'\n    }\n  }\n})\n\n// Getting future events\nawait cms.find({\n  type: Event,\n\n  filter: {\n    date: {gte: today}\n  }\n})",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

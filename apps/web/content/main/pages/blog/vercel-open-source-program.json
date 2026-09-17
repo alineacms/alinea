@@ -1,0 +1,121 @@
+{
+  "_id": "318YB4Yr27DeZZFTBe52RjgYRaD",
+  "_type": "BlogPost",
+  "_index": "Zw",
+  "title": "Joining the Vercel Open Source Program",
+  "publishDate": "2025-08-11",
+  "author": {
+    "name": "Ben Merckx",
+    "url": {
+      "_id": "318YDs0q2fZXu8XLuQaYSKsElgA",
+      "_type": "url",
+      "_url": "https://github.com/benmerckx",
+      "_title": "",
+      "_target": "_self"
+    },
+    "avatar": {
+      "_id": "318YESE8ys6teeGPncK6ITHvAKY",
+      "_type": "url",
+      "_url": "https://avatars.githubusercontent.com/u/10584189?v=4&s=48",
+      "_title": "",
+      "_target": "_self"
+    }
+  },
+  "introduction": "We’re honored that Alinea CMS is part of the Vercel Open Source Program – Summer 2025 cohort. This recognition supports our mission to offer a clean, Git-based CMS built for Next.js.",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "We are pleased to share that Alinea CMS has been selected for the "
+        },
+        {
+          "_type": "text",
+          "text": "Vercel Open Source Program – Summer 2025 cohort",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "318YY6UyDvVaQAIpmljRwKHqj2o",
+              "_link": "url",
+              "href": "https://vercel.com/blog/summer-2025-oss-program",
+              "target": "_blank"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ". This program supports open source maintainers with the resources, infrastructure, and credits needed to continue building and improving their projects. It is an honor to be included and a nice recognition of the work and vision behind Alinea."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea is a Git-based CMS built for Next.js, offering a clean and modern way to manage structured content without relying on complex external systems. Content lives in your Git repository alongside your code, making version control, collaboration, and deployment straightforward. This approach is designed to fit naturally into the development workflow, whether for a small site or a large content platform."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With the support from Vercel, we look forward to further refining the integration with Next.js, improving documentation, and continuing to make content management fast, intuitive, and developer-friendly. We are grateful to Vercel for this opportunity and to our community for helping Alinea grow."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "You can read the official Vercel announcement "
+        },
+        {
+          "_type": "text",
+          "text": "here",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "318YZC58Na8b8yZBGtbWkqnXboM",
+              "_link": "url",
+              "href": "https://vercel.com/blog/summer-2025-oss-program",
+              "target": "_blank"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " and explore "
+        },
+        {
+          "_type": "text",
+          "text": "Alinea CMS on GitHub",
+          "marks": [
+            {
+              "_type": "link",
+              "href": "https://github.com/alineacms/alinea",
+              "target": "_new"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "_id": "tlhZ01MHUjv3Od172Ew6w",
+  "_type": "Doc",
+  "_index": "a2f",
+  "title": "File",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The file field can be used to link to a file."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "tYljidhFDZXvLGHPdOUyj",
+      "code": "import {Field} from 'alinea'\n\nField.file('Single file link')\n\nField.file.multiple('Multiple file links')",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "2Yks376YZg3E6MZZHv9KcuYgQos",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('File field', {\n  fields: {\n    file: Field.file('Single file link'),\n    fileMultiple: Field.file.multiple('Multiple file links')\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "textAlign": "start",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "textAlign": "start",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`max`",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "start",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Limit the amount of rows in case of multiple links."
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "File field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "siteName": "",
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

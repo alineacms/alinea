@@ -1,0 +1,17 @@
+{
+  "_id": "3AOc3QNCb04SV0f05DQdxXB36yf",
+  "_type": "Blog",
+  "_index": "a2",
+  "_seeded": "/blog.json",
+  "title": "Blog",
+  "intro": "Catch-all route demo blog index.",
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

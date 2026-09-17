@@ -1,0 +1,247 @@
+{
+  "_id": "3AONC9h7c2NnMtmorYnCBd19LjN",
+  "_type": "Doc",
+  "_index": "a3",
+  "title": "Step 4: Adding a blog",
+  "navigationTitle": "Step 4: Blog",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In this step we keep the landing page, blocks, and shared settings root from step 3, then add a dedicated blog section. The blog overview is fixed to /blog and contains nested post pages with editable slugs."
+        }
+      ]
+    },
+    {
+      "_type": "ImageBlock",
+      "_id": "3AqkfUsy6IOg8JFgEvl6Ieq0Odq",
+      "image": {
+        "_id": "3Aqkgs689Me1soJDuKUsXvMQKgT",
+        "_type": "image",
+        "_entry": "3AqkgwgLWo4ia71hyLTYtQy4CE4"
+      }
+    },
+    {
+      "_type": "ImageBlock",
+      "_id": "3AqkhM8RYr6sTedxlGDH11syups",
+      "image": {
+        "_id": "3Aqki9W9TGjKGAT97r4ac9ylqYK",
+        "_type": "image",
+        "_entry": "3Aqki7ijhngO2I1acqFuBVtIVUr"
+      }
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONyq914KorM1VYG7dLQ7qNeaP",
+      "code": "app/\n├ page.tsx\n├ layout.tsx\n├ blog/page.tsx\n╰ blog/[slug]/page.tsx\n\nentries/\n├ landing/\n│ ├ LandingPage.tsx\n│ ╰ LandingPage.schema.tsx\n├ blog/\n│ ├ Blog.tsx\n│ ╰ Blog.schema.tsx\n├ post/\n│ ├ Post.tsx\n│ ╰ Post.schema.tsx\n╰ settings/\n  ├ SiteLayout.tsx\n  ╰ SiteLayout.schema.tsx\n\nblocks/\n╰ ...\n\ncms.tsx",
+      "fileName": "project structure",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Start by defining the blog overview entry schema."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep4BlogSchema0000000001",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Blog = Config.document('Blog page', {\n  contains: ['Post'],\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {\n      readOnly: true,\n      initialValue: 'blog',\n      width: 0.5\n    }),\n    intro: Field.text('Intro', {multiline: true})\n  }\n})",
+      "fileName": "entries/blog/Blog.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Then implement the blog overview server component. It fetches the blog entry and its direct post children in one query, and exposes generateMetadata."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep4BlogView000000000001",
+      "code": "import {Query} from 'alinea'\nimport {Entry} from 'alinea/core/Entry'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport Link from 'next/link'\nimport {cms} from '@/cms'\nimport {Post} from '@/entries/post/Post.schema'\nimport {Blog} from './Blog.schema'\n\ntype PostLink = {id: string; title: string; url: string}\n\nexport async function BlogView() {\n  const page = await cms.get({\n    url: '/blog',\n    type: Blog,\n    select: {\n      title: Blog.title,\n      intro: Blog.intro,\n      posts: Query.children({\n        type: Post,\n        select: {\n          id: Entry.id,\n          title: Entry.title,\n          url: Entry.url\n        }\n      })\n    }\n  })\n  if (!page) notFound()\n\n  return (\n    <main>\n      <h1>{page.title}</h1>\n      {page.intro && <p>{page.intro}</p>}\n      <ul>\n        {page.posts.map((post: PostLink) => (\n          <li key={post.id}>\n            <Link href={post.url}>{post.title}</Link>\n          </li>\n        ))}\n      </ul>\n    </main>\n  )\n}\n\nexport async function generateMetadata(): Promise<Metadata> {\n  const page = await cms.get({url: '/blog', type: Blog})\n  if (!page) return {}\n\n  return {\n    title: page.metadata.title || page.title,\n    description: page.metadata?.description || page.intro,\n    openGraph: {\n      title: page.metadata.openGraph.title || page.metadata.title || page.title,\n      description:\n        page.metadata.openGraph.description ||\n        page.metadata?.description ||\n        page.intro,\n      images: page.metadata?.openGraph.image\n        ? [page.metadata?.openGraph.image.src]\n        : undefined\n    }\n  }\n}",
+      "fileName": "entries/blog/Blog.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Define the post entry schema in its own folder."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep4PostSchema0000000001",
+      "code": "import {Config, Field} from 'alinea'\n\nexport const Post = Config.document('Post page', {\n  fields: {\n    title: Field.text('Title', {required: true, width: 0.5}),\n    path: Field.path('Path', {required: true, width: 0.5}),\n    excerpt: Field.text('Excerpt', {multiline: true}),\n    body: Field.richText('Body')\n  }\n})",
+      "fileName": "entries/post/Post.schema.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Implement the post detail server component with previous/next sibling navigation and a post metadata helper."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep4PostView000000000001",
+      "code": "import {Entry} from 'alinea/core/Entry'\nimport type {TextDoc} from 'alinea'\nimport {Node} from 'alinea/core/TextDoc'\nimport {RichText} from 'alinea/ui'\nimport type {Metadata} from 'next'\nimport {notFound} from 'next/navigation'\nimport Link from 'next/link'\nimport {cms} from '@/cms'\nimport {Post} from './Post.schema'\n\ntype PostLink = {id: string; title: string; url: string; path: string}\n\nexport async function PostView({slug}: {slug: string}) {\n  const post = await cms.get({url: `/blog/${slug}`, type: Post})\n  if (!post) notFound()\n\n  const blogPage = await cms.get({url: '/blog'})\n  if (!blogPage) notFound()\n\n  const siblings = await cms.find({\n    parentId: blogPage._id,\n    select: {\n      id: Entry.id,\n      title: Entry.title,\n      url: Entry.url,\n      path: Entry.path\n    }\n  })\n\n  const index = siblings.findIndex(candidate => candidate.path === slug)\n  const previousPost: PostLink | null = index > 0 ? siblings[index - 1] : null\n  const nextPost: PostLink | null =\n    index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : null\n\n  return (\n    <article>\n      <h1>{post.title}</h1>\n      {typeof post.body === 'string' ? <p>{post.body}</p> : <RichText doc={post.body} />}\n      <p>\n        <Link href=\"/blog\">← Back to the full blog archive</Link>\n      </p>\n      {(previousPost || nextPost) && (\n        <nav aria-label=\"Post navigation\">\n          <h2>Next/Previous blogpost</h2>\n          <ul>\n            {previousPost && (\n              <li>\n                <Link href={previousPost.url}>\n                  Previous: {previousPost.title}\n                </Link>\n              </li>\n            )}\n            {nextPost && (\n              <li>\n                <Link href={nextPost.url}>Next: {nextPost.title}</Link>\n              </li>\n            )}\n          </ul>\n        </nav>\n      )}\n    </article>\n  )\n}\n\nexport async function generatePostMetadata(slug: string): Promise<Metadata> {\n  const post = await cms.get({url: `/blog/${slug}`, type: Post})\n  if (!post) return {}\n\n  const bodyText = plainText(post.body)\n\n  return {\n    title: post.metadata.title || post.title,\n    description: post.metadata?.description || post.excerpt || bodyText,\n    openGraph: {\n      title: post.metadata.openGraph.title || post.metadata.title || post.title,\n      description:\n        post.metadata.openGraph.description ||\n        post.metadata?.description ||\n        post.excerpt ||\n        bodyText,\n      images: post.metadata?.openGraph.image\n        ? [post.metadata?.openGraph.image.src]\n        : undefined\n    }\n  }\n}\n\nfunction plainText(value: TextDoc<any> | string | undefined): string {\n  if (!value) return ''\n  if (typeof value === 'string') return value\n\n  if (!Array.isArray(value)) return ''\n  const result = value\n    .reduce((acc, node) => {\n      return acc + textOf(node)\n    }, '')\n    .trim()\n  return result.replace(/ +(?= )/g, '')\n}\n\nfunction textOf(node: Node): string {\n  if (node._type === 'hardBreak') return '\\n'\n  if (Node.isText(node)) {\n    return node.text ? ' ' + node.text : ''\n  } else if (Node.isElement(node) && node.content) {\n    return node.content.reduce((acc, node) => {\n      return acc + textOf(node)\n    }, '')\n  }\n  return ''\n}",
+      "fileName": "entries/post/Post.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Register Blog and Post in cms.tsx and seed the fixed /blog overview page under the Pages root."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONC7OGaXa2S1uEHArBC9wRAyw",
+      "code": "import {Blog} from '@/entries/blog/Blog.schema'\nimport {LandingPage} from '@/entries/landing/LandingPage.schema'\nimport {Post} from '@/entries/post/Post.schema'\nimport {SiteLayout} from '@/entries/settings/SiteLayout.schema'\n\nexport const cms = createCMS({\n  schema: {\n    LandingPage,\n    SiteLayout,\n    Blog,\n    Post\n  },\n  workspaces: {\n    main: Config.workspace('Main', {\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['LandingPage', 'Blog'],\n          children: {\n            index: Config.page({\n              type: LandingPage,\n              fields: {\n                title: 'Welcome',\n                path: ''\n              }\n            }),\n            blog: Config.page({\n              type: Blog,\n              fields: {\n                title: 'Blog',\n                path: 'blog',\n                intro: 'Latest posts'\n              }\n            })\n          }\n        })\n      }\n    })\n  }\n})",
+      "fileName": "cms.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add dedicated Next.js routes for /blog and /blog/[slug]. Keep these routes thin and delegate rendering + metadata to entry components."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AONCD9vnb4pkvdOWCDPPOmBAab",
+      "code": "import {BlogView} from '@/entries/blog/Blog'\n\nexport {generateMetadata} from '@/entries/blog/Blog'\n\nexport default function BlogRoute() {\n  return <BlogView />\n}",
+      "fileName": "app/blog/page.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Bstep4BlogPostRoute0000001",
+      "code": "import {Entry} from 'alinea/core/Entry'\nimport type {Metadata} from 'next'\nimport {cms} from '@/cms'\nimport {generatePostMetadata, PostView} from '@/entries/post/Post'\nimport {Post} from '@/entries/post/Post.schema'\n\ninterface PostRouteProps {\n  params: Promise<{slug: string}>\n}\n\nexport async function generateStaticParams() {\n  const paths = await cms.find({\n    type: Post,\n    select: Entry.path\n  })\n\n  return paths.map(slug => ({slug}))\n}\n\nexport async function generateMetadata({\n  params\n}: PostRouteProps): Promise<Metadata> {\n  const {slug} = await params\n  return generatePostMetadata(slug)\n}\n\nexport default async function BlogPostRoute({params}: PostRouteProps) {\n  const {slug} = await params\n  return <PostView slug={slug} />\n}",
+      "fileName": "app/blog/[slug]/page.tsx",
+      "language": "tsx",
+      "compact": false
+    },
+    {
+      "_type": "NoticeBlock",
+      "_id": "3Bstep4Notice0000000000001",
+      "level": "info",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "Upon completion of these steps, your website should be extended with these features:"
+            }
+          ]
+        },
+        {
+          "_type": "bulletList",
+          "content": [
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "The landing page from step 3 keeps working with text, image, and weather blocks."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "A fixed /blog overview page is seeded and available right away."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Individual blog post pages support previous/next navigation between sibling posts."
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "_type": "listItem",
+              "content": [
+                {
+                  "_type": "paragraph",
+                  "content": [
+                    {
+                      "_type": "text",
+                      "text": "Metadata generation is implemented for the blog listing and post detail routes."
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

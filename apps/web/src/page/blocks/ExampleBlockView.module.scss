@@ -1,0 +1,10 @@
+.root {
+  &-iframe {
+    width: 100%;
+    border: none;
+    overflow: hidden;
+    height: 400px;
+    border: 2px solid var(--web-outline);
+    border-radius: 8px;
+  }
+}

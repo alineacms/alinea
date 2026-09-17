@@ -1,0 +1,34 @@
+{
+  "_id": "3Cstep5HistoryPage0000000001",
+  "_type": "Page",
+  "_index": "a1",
+  "title": "History",
+  "path": "history",
+  "blocks": [
+    {
+      "_id": "3Cstep5HistoryText000000001",
+      "_index": "a0",
+      "_type": "TextBlock",
+      "body": [
+        {
+          "_type": "paragraph",
+          "content": [
+            {
+              "_type": "text",
+              "text": "History is another child page under About, showing that regular pages can have multiple children."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

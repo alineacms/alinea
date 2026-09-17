@@ -1,0 +1,18 @@
+{
+  "_id": "3AOc3Tz3sKeU1hW00wPNxjOfWo7",
+  "_type": "SiteLayout",
+  "_index": "a0",
+  "_seeded": "/settings.json",
+  "title": "Global settings",
+  "headerText": "Tutorial Step 5",
+  "footerText": "Step 5 footer",
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

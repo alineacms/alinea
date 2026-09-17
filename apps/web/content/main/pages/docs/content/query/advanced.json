@@ -1,0 +1,151 @@
+{
+  "_id": "3AZFJMpiZHNpL8Uv1wFYpPYeHJR",
+  "_type": "Doc",
+  "_index": "a0",
+  "title": "Advanced",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Complex Relations"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "When fetching data, you will eventually need information from a linked entry. Instead of performing multiple fetches, Alinea allows you to nest these requests within a single call."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZYDtQEiQ9fIN2ZH6WUzfvjxnU",
+      "code": "await cms.first({\n  locale,\n  url,\n  type: ParentSchema,\n  select: {\n    ...ParentSchema,\n    // Use filters from another schema to retrieve related data\n    filters: ChildSchema.filters.find({\n      select: {\n        id: Query.id,\n        title: Query.title,\n        // Fetch multiple levels of nested relations in a single, optimized query\n        filterItems: Query.children({\n          select: {\n          id: Query.id,\n          title: Query.title\n          }\n        })\n      }\n    })\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query Logic"
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "OR Logic"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "By default, providing an array of values to a filter field or using the {in: [...]} operator will apply OR logic. This means the query will return any entry that matches at least one of the specified criteria. It is the most efficient way to broaden your search across multiple possible values, such as categories or tags."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZrw7kzKzdBiOhvT2qozwEV7kl",
+      "code": "await cms.find({\n  type: ChildSchema,\n  filter: {\n    category: {in: ['abc', 'def']}\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For more complex scenarios, such as combining filters across different fields use the explicit or operator. This allows you to group multiple distinct conditions where only one needs to be true for an entry to be included."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZsa6F0PPDaxiAkihTLF1Unc7v",
+      "code": "await cms.find({\n  type: BlogPostSchema,\n  filter: {\n    or: [\n      {author: 'alinea'},\n      {category: 'news'}\n    ]\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "AND Logic"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Use AND logic when an entry must strictly satisfy multiple conditions simultaneously. In Alinea, this is achieved by using the and operator, which requires every filter within its scope to be true for an entry to be included in the results. This is particularly useful for complex cross-referencing where a partial match is not enough."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZs3iwwE6V75J5GHAMuKoABQAo",
+      "code": "await cms.find({\n  type: ChildSchema,\n  filter: {\n    // Use .map to create a filter condition for each ID\n    and: ['abc', 'def'].map(id => ({\n      filters: {includes: { _entry: id }}\n    }))\n  }\n})",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Global Search"
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Alinea also provides a global search property. This allows you to perform broad queries across your content without targeting specific structural properties or nested filters."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AZMTVraRggRKFpls9fimCdP3hN",
+      "code": "await cms.find({\n  type: BlogPostSchema,\n  search: 'querying',\n})\n\n//You can also pass an array into the search, it then works like a logical OR\nawait cms.first({\n  type: BlogPostSchema,\n  search: ['cats', 'dogs'], // This will return all blogposts containing cats or dogs\n})\n",
+      "fileName": "",
+      "language": ""
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}

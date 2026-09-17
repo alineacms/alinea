@@ -1,0 +1,100 @@
+{
+  "_id": "A4UA9D0tJn2aanMDjODOj",
+  "_type": "Doc",
+  "_index": "a2B",
+  "title": "Date & time",
+  "navigationTitle": "",
+  "body": [
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "A date field is used to input a date."
+        },
+        {
+          "_type": "hardBreak"
+        },
+        {
+          "_type": "text",
+          "text": "A time field is used to input a time."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "utmfOtYpwki29ZXEW5QPX",
+      "code": "import {Field} from 'alinea'\n\nField.date('Date field')\nField.time('Time field')",
+      "fileName": "",
+      "language": "",
+      "compact": false
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "RHKsNdTj50LX0TFLU2_QH",
+      "code": "import {Config, Field} from 'alinea'\n\nexport default Config.type('Date/time field', {\n  fields: {\n    date: Field.date('Date field'),\n    time: Field.time('Time field')\n  }\n})"
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "Configuration",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 3,
+      "content": [
+        {
+          "_type": "text",
+          "text": "`initialValue`",
+          "marks": [
+            {
+              "_type": "bold"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Prefills the field’s value. For example, you can prefill it with today’s date."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3AqgFyQjZ6mumpYHEsTjtqcC3hm",
+      "code": "const today = new Date().toISOString().split('T')[0];\nField.date('Date (initialValue: today)')",
+      "fileName": "",
+      "language": ""
+    },
+    {
+      "_type": "ExampleBlock",
+      "_id": "3AqgIWUxshIAbuao0ObLey8g60Q",
+      "code": "import {Config, Field} from 'alinea'\n\nconst today = new Date().toISOString().split('T')[0];\n\nexport default Config.type('Date (initialValue)', {\n  fields: {\n    date: Field.date('Date (initialValue: today)', {initialValue: today}),\n  }\n})"
+    }
+  ],
+  "metadata": {
+    "title": "Date field - Alinea CMS",
+    "description": "",
+    "openGraph": {
+      "image": {},
+      "title": "",
+      "description": ""
+    }
+  }
+}
