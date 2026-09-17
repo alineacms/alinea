@@ -483,3 +483,139 @@ test('unreadable children do not make a tree item expandable', async () => {
     store.get(tree.items).find(item => item.id === parent._id)?.hasChildren
   ).toBe(false)
 })
+
+test('canCreate shows with a type-level create grant', () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const pages = Config.root('Pages', {contains: ['Page']})
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {source: '.', roots: {pages}})
+    }
+  })
+  const createStore = (policy: WriteablePolicy) => {
+    const store = createDashboardStore(config, new LocalDB(config))
+    store.set(preloadUserPolicyAtom, localUser, policy)
+    return store
+  }
+  const withTypeGrant = createStore(
+    new WriteablePolicy(getScope(config)).set({
+      type: Page,
+      allow: {create: true}
+    })
+  )
+  expect(withTypeGrant.get(rootAtoms('main', 'pages').canCreate)).toBe(true)
+
+  const withoutGrant = createStore(new WriteablePolicy(getScope(config)))
+  expect(withoutGrant.get(rootAtoms('main', 'pages').canCreate)).toBe(false)
+})
+
+test('canCreate follows root grants unless the type denies create', () => {
+  const Page = Config.document('Page', {
+    fields: {title: Field.text('Title')}
+  })
+  const pages = Config.root('Pages', {contains: ['Page']})
+  const config = Config.create({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {source: '.', roots: {pages}})
+    }
+  })
+  const createStore = (policy: WriteablePolicy) => {
+    const store = createDashboardStore(config, new LocalDB(config))
+    store.set(preloadUserPolicyAtom, localUser, policy)
+    return store
+  }
+  const withRootGrant = createStore(
+    new WriteablePolicy(getScope(config)).set({
+      root: pages,
+      allow: {create: true}
+    })
+  )
+  expect(withRootGrant.get(rootAtoms('main', 'pages').canCreate)).toBe(true)
+
+  const withTypeDeny = createStore(
+    new WriteablePolicy(getScope(config)).set(
+      {root: pages, allow: {create: true}},
+      {type: Page, deny: {create: true}}
+    )
+  )
+  expect(withTypeDeny.get(rootAtoms('main', 'pages').canCreate)).toBe(false)
+})
+
+test('canCreate finds creatable types nested in containers', () => {
+  const Article = Config.document('Article', {
+    fields: {title: Field.text('Title')}
+  })
+  const Collection = Config.document('Collection', {
+    contains: ['Article'],
+    fields: {title: Field.text('Title')}
+  })
+  const Secret = Config.document('Secret', {
+    fields: {title: Field.text('Title')},
+    hidden: true
+  })
+  const collections = Config.root('Collections', {
+    contains: ['Collection', 'Secret']
+  })
+  const config = Config.create({
+    schema: {Article, Collection, Secret},
+    workspaces: {
+      main: Config.workspace('Main', {source: '.', roots: {collections}})
+    }
+  })
+  const createStore = (policy: WriteablePolicy) => {
+    const store = createDashboardStore(config, new LocalDB(config))
+    store.set(preloadUserPolicyAtom, localUser, policy)
+    return store
+  }
+  const withNestedGrant = createStore(
+    new WriteablePolicy(getScope(config)).set({
+      type: Article,
+      allow: {create: true}
+    })
+  )
+  expect(withNestedGrant.get(rootAtoms('main', 'collections').canCreate)).toBe(
+    true
+  )
+
+  const withHiddenGrantOnly = createStore(
+    new WriteablePolicy(getScope(config)).set({
+      type: Secret,
+      allow: {create: true}
+    })
+  )
+  expect(
+    withHiddenGrantOnly.get(rootAtoms('main', 'collections').canCreate)
+  ).toBe(false)
+})
+
+test('canCreate terminates on cyclic contains', () => {
+  const A = Config.document('A', {
+    contains: ['B'],
+    fields: {title: Field.text('Title')}
+  })
+  const B = Config.document('B', {
+    contains: ['A'],
+    fields: {title: Field.text('Title')}
+  })
+  const pages = Config.root('Pages', {contains: ['A']})
+  const config = Config.create({
+    schema: {A, B},
+    workspaces: {
+      main: Config.workspace('Main', {source: '.', roots: {pages}})
+    }
+  })
+  const store = createDashboardStore(config, new LocalDB(config))
+  store.set(
+    preloadUserPolicyAtom,
+    localUser,
+    new WriteablePolicy(getScope(config)).set({
+      type: B,
+      allow: {create: true}
+    })
+  )
+  expect(store.get(rootAtoms('main', 'pages').canCreate)).toBe(true)
+})
