@@ -17,6 +17,7 @@ import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
 import {createDevRemote} from './DevRemote.js'
+import {revalidateContentSha} from './syncCheck.js'
 
 type Handler = (request: Request) => Promise<Response>
 
@@ -56,18 +57,34 @@ export function createHandlerWithDatabase(
   const handleBackend = createCoreHandler({
     ...options,
     remote,
-    db
+    db,
+    // Revalidate the shared content sha before the user-provided hook so
+    // page revalidation triggered there already sees the fresh sha when
+    // RSC renders resolve. Invalidation never throws (failures are
+    // swallowed inside revalidateContentSha).
+    afterCommit: async context => {
+      await revalidateContentSha()
+      await options.afterCommit?.(context)
+    }
   })
   const handle: Handler = async request => {
     const url = new URL(request.url)
-    const {searchParams} = url
     const context = await requestContext(config, request)
     const handlerPath = handlerPathname(config, url)
-    if (url.pathname !== handlerPath)
-      return new Response(`Expected handler to be served on ${handlerPath}`, {
-        status: 400
-      })
+    const rewrittenFile = rewrittenFilePath(config, request)
     try {
+      if (rewrittenFile !== undefined) {
+        const backendUrl = new URL(url)
+        backendUrl.pathname = handlerPath
+        backendUrl.searchParams.set('file', rewrittenFile)
+        backendUrl.searchParams.set('delivery', 'proxy')
+        return await handleBackend(new Request(backendUrl, request), context)
+      }
+      if (url.pathname !== handlerPath)
+        return new Response(`Expected handler to be served on ${handlerPath}`, {
+          status: 400
+        })
+      const {searchParams} = url
       const previews = new JWTPreviews(context.apiKey)
       const previewToken = searchParams.get('preview')
       if (previewToken) {
@@ -103,4 +120,20 @@ export function createHandlerWithDatabase(
 
 export function handlerPathname(config: Config, requestUrl: URL): string {
   return new URL(Config.handlerUrl(config), requestUrl).pathname
+}
+
+function rewrittenFilePath(
+  config: Config,
+  request: Request
+): string | undefined {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return
+  const url = new URL(request.url)
+  const fileRoot = new URL(Config.filePathname(config, ''), url).pathname
+  const prefix = `${fileRoot}/`
+  if (!url.pathname.startsWith(prefix)) return
+  try {
+    return decodeURIComponent(url.pathname.slice(prefix.length))
+  } catch {
+    return
+  }
 }

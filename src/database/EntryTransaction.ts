@@ -802,44 +802,27 @@ export class EntryTransaction implements AsyncDisposable {
   }
 
   async #assertUniqueUrls(candidate: UrlCandidate): Promise<void> {
-    for (const url of await this.#candidateUrls(candidate)) {
-      const scope =
-        candidate.type === 'MediaFile'
-          ? {}
-          : {workspace: candidate.workspace, root: candidate.root}
-      const select = {
+    const url = await this.#resolvedUrl(candidate)
+    const scope =
+      candidate.type === 'MediaFile'
+        ? {}
+        : {workspace: candidate.workspace, root: candidate.root}
+    const existing = await this.#workingDatabase.first({
+      ...scope,
+      url,
+      select: {
         id: Entry.id,
         workspace: Entry.workspace,
         root: Entry.root
       }
-      const [canonical, alias] = await Promise.all([
-        this.#workingDatabase.first({
-          ...scope,
-          url,
-          select
-        }),
-        this.#workingDatabase.first({
-          ...scope,
-          alias: url,
-          select
-        })
-      ])
-      const existing = canonical ?? alias
-      if (existing && existing.id !== candidate.id)
-        throw new EntryUrlConflictError({
-          url,
-          entryId: existing.id,
-          workspace: existing.workspace,
-          root: existing.root
-        })
-    }
-  }
-
-  async #candidateUrls(candidate: UrlCandidate): Promise<Array<string>> {
-    return [
-      await this.#resolvedUrl(candidate),
-      ...aliasUrlsFromData(candidate.data)
-    ]
+    })
+    if (existing && existing.id !== candidate.id)
+      throw new EntryUrlConflictError({
+        url,
+        entryId: existing.id,
+        workspace: existing.workspace,
+        root: existing.root
+      })
   }
 
   async #resolvedUrl(candidate: UrlCandidate): Promise<string> {

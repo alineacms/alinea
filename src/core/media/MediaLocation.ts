@@ -11,6 +11,8 @@ export interface MediaPublicUrlMeta {
   parentPaths: Array<string>
   /** The file extension, including its leading dot. */
   extension: string
+  /** The workspace holding the media entry. */
+  workspace: string
 }
 
 export interface MediaEntryUrlMeta {
@@ -18,6 +20,8 @@ export interface MediaEntryUrlMeta {
   parentPaths: Array<string>
   path: string
   data: Record<string, unknown>
+  /** The workspace holding the media entry. */
+  workspace: string
 }
 
 /** Maps media entry locations between storage and public URLs. */
@@ -68,7 +72,8 @@ export namespace MediaLocation {
   /** Resolve the public URL used to serve a media entry. */
   export function publicUrl(config: Config, meta: MediaPublicUrlMeta): string {
     const file = join(...meta.parentPaths, `${meta.path}${meta.extension}`)
-    return Config.filePathname(config, file)
+    const mediaUrl = Workspace.data(config.workspaces[meta.workspace]).mediaUrl
+    return Config.filePathname(config, join(mediaUrl, file))
   }
 
   /** Add an immutable media version without changing its canonical path. */
@@ -83,14 +88,15 @@ export namespace MediaLocation {
 
   /** Resolve a media entry URL, falling back to its regular entry URL. */
   export function entryUrl(config: Config, meta: MediaEntryUrlMeta): string {
-    const {data, defaultUrl, parentPaths, path} = meta
+    const {data, defaultUrl, parentPaths, path, workspace} = meta
     const {extension, location} = data
     if (typeof extension !== 'string' || typeof location !== 'string')
       return defaultUrl
     return publicUrl(config, {
       extension,
       parentPaths,
-      path
+      path,
+      workspace
     })
   }
 }

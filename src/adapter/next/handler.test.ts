@@ -1,5 +1,7 @@
 import {Config} from '#/index.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import {sign} from '#/core/util/JWT.js'
+import {EntryStore} from '#/database/EntryStore.js'
 import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
 
 const apiKey = 'preview-secret'
@@ -54,6 +56,52 @@ test('uses the exact pathname of an absolute handler URL', () => {
 
   expect(expected).toBe('/api/custom')
   expect('/api/custom-extra').not.toBe(expected)
+})
+
+test('reconstructs a rewritten media request from its public pathname', async () => {
+  const previousDevServer = process.env.ALINEA_DEV_SERVER
+  process.env.ALINEA_DEV_SERVER = 'https://example.com'
+  const mediaHandle = createHandlerWithDatabase(cms, () =>
+    EntryStore.memory(cms.config, new MemorySource())
+  )
+  try {
+    const response = await mediaHandle(
+      new Request(
+        'https://example.com/admin/file/company-a/missing.jpg?version=123'
+      )
+    )
+
+    expect(response.status).toBe(404)
+  } finally {
+    if (previousDevServer === undefined) delete process.env.ALINEA_DEV_SERVER
+    else process.env.ALINEA_DEV_SERVER = previousDevServer
+  }
+})
+
+test('rejects an unrelated pathname with media query parameters', async () => {
+  const response = await handle(
+    new Request(
+      'https://example.com/not-the-file-route?file=company-a%2Fmissing.jpg&delivery=proxy'
+    )
+  )
+
+  expect(response.status).toBe(400)
+  expect(await response.text()).toBe(
+    'Expected handler to be served on /api/cms'
+  )
+})
+
+test('rejects non-read requests on the public media pathname', async () => {
+  const response = await handle(
+    new Request('https://example.com/admin/file/company-a/example.jpg', {
+      method: 'POST'
+    })
+  )
+
+  expect(response.status).toBe(400)
+  expect(await response.text()).toBe(
+    'Expected handler to be served on /api/cms'
+  )
 })
 
 beforeEach(() => {

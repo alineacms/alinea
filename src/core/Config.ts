@@ -27,7 +27,7 @@ export interface Config {
   preview?: Preview
   /** Every edit will pass through a draft status before being published */
   enableDrafts?: boolean
-  /** The interval in seconds at which the frontend will poll for updates */
+  /** Fallback interval in seconds for polling content updates (freshness is primarily sha-driven) */
   syncInterval?: number
   /** Maximum file upload size in bytes */
   maxUploadSize?: number

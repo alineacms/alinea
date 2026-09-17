@@ -32,7 +32,8 @@ test('routes files through the handler without restricting local images', async 
   })
 
   test.equal(config.images, {
-    unoptimized: true
+    unoptimized: true,
+    localPatterns: [{pathname: '/cms/file/**'}, {pathname: '/**'}]
   })
   const rewrites = await config.rewrites!()
   test.equal(rewrites, {

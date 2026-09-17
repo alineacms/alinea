@@ -16,10 +16,11 @@ export interface WorkspaceMeta {
   /** A directory which contains the json entry files */
   source: string
   /**
-   * The directory where media files are placed in case a file backend is used.
-   * @deprecated Prefer backend-managed media storage when possible.
+   * The directory where media files are placed
    */
   mediaDir?: string
+  /** The public URL prefix used when querying media files */
+  mediaUrl?: string
   /** The main theme color used in the dashboard */
   color?: string
   icon?: ComponentType

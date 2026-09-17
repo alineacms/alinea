@@ -191,6 +191,61 @@ test('uploads use the mediaDir of the selected workspace', async () => {
   ])
 })
 
+test('media urls are prefixed per workspace mediaUrl', async () => {
+  const main = Config.workspace('Main', {
+    source: 'content/main',
+    mediaDir: 'public/media',
+    mediaUrl: 'company-a',
+    roots: {
+      pages: Config.root('Pages', {contains: [Page]}),
+      media: Config.media()
+    }
+  })
+  const secondary = Config.workspace('Secondary', {
+    source: 'content/secondary',
+    mediaDir: 'public/media/secondary',
+    mediaUrl: 'company-b',
+    roots: {
+      pages: Config.root('Pages', {contains: [Page]}),
+      media: Config.media()
+    }
+  })
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main, secondary}
+  })
+  const fetch = globalThis.fetch
+  globalThis.fetch = Object.assign(
+    async () => new Response(null, {status: 204}),
+    {preconnect: fetch.preconnect}
+  )
+
+  try {
+    const db = new DB(cms.config)
+    const upload = await db.upload({file: example, workspace: 'main'})
+    const page = await db.create({
+      type: Page,
+      set: {
+        title: 'Page 1',
+        image: Edit.link(Page.image).addImage(upload._id).value()
+      }
+    })
+    test.ok(page.image.src.startsWith('/admin/file/company-a/example.jpg'))
+    const db2 = new DB(cms.config)
+    const upload2 = await db2.upload({file: example, workspace: 'secondary'})
+    const page2 = await db2.create({
+      type: Page,
+      set: {
+        title: 'Page 2',
+        image: Edit.link(Page.image).addImage(upload2._id).value()
+      }
+    })
+    test.ok(page2.image.src.startsWith('/admin/file/company-b/example.jpg'))
+  } finally {
+    globalThis.fetch = fetch
+  }
+})
+
 test('uploads normalize only the filename extension', async () => {
   const cases = [
     {

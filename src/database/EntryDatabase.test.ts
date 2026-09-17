@@ -732,21 +732,24 @@ test('database mutations enforce URL ownership and retain previous URLs', async 
       }
     }
   ])
-  await expect(
-    apply([
-      {
-        op: 'create',
-        id: 'two',
-        type: 'Page',
-        locale: null,
-        data: {
-          title: 'Two',
-          path: 'two',
-          metadata: {aliases: [urlAlias('/one')]}
-        }
+  await apply([
+    {
+      op: 'create',
+      id: 'two',
+      type: 'Page',
+      locale: null,
+      data: {
+        title: 'Two',
+        path: 'two',
+        metadata: {aliases: [urlAlias('/one')]}
       }
-    ])
-  ).rejects.toThrow('URL "/one" is already defined by entry one')
+    }
+  ])
+  const owner = await database.first({
+    url: '/one',
+    select: Entry.id
+  })
+  expect(owner).toBe('one')
   await apply([
     {
       op: 'update',

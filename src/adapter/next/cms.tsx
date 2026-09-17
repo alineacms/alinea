@@ -20,6 +20,7 @@ import {Headers} from '@alinea/iso'
 import PLazy from 'p-lazy'
 import {cache} from 'react'
 import {requestContext} from './context.js'
+import {syncIfStale} from './syncCheck.js'
 
 export interface PreviewProps {
   widget?: boolean
@@ -129,7 +130,10 @@ export class NextCMS<
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
     if (hasPreview) return db.resolve(request)
-    if (!isBuild) await this.throttle(() => db.syncWith(client), syncInterval)
+    if (!isBuild) {
+      const settled = await syncIfStale(db, client, syncInterval)
+      if (!settled) await this.throttle(() => db.syncWith(client), syncInterval)
+    }
     return db.resolve(request)
   }
 
