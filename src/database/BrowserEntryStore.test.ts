@@ -50,6 +50,79 @@ test('browser entry stores reopen a persisted SQLite file', async () => {
   }
 })
 
+test('browser entry stores abandon a superseded revision without persisting', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const name = `alinea-browser-abandon-${crypto.randomUUID()}`
+  const oldStore = await BrowserEntryStore.open(config, {
+    indexedDB,
+    name,
+    revision: 'config-1'
+  })
+  // Dirty the old store past its persistence layer, as in-flight work can
+  // after a revision switch.
+  await oldStore.database.apply(
+    [
+      {
+        op: 'create',
+        id: 'old-page',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Old page'}
+      }
+    ],
+    {source: oldStore.source}
+  )
+  const nextStore = await BrowserEntryStore.open(config, {
+    indexedDB,
+    name,
+    revision: 'config-2'
+  })
+  await nextStore.mutate([
+    {
+      op: 'create',
+      id: 'next-page',
+      type: 'Page',
+      locale: null,
+      data: {title: 'Next page'}
+    }
+  ])
+  await nextStore.close()
+  // A trailing close of the superseded store must not overwrite the
+  // replacement revision's cache entry.
+  await oldStore.abandon()
+  await expect(
+    oldStore.mutate([
+      {
+        op: 'create',
+        id: 'late-page',
+        type: 'Page',
+        locale: null,
+        data: {title: 'Late page'}
+      }
+    ])
+  ).rejects.toThrow()
+
+  const reopened = await BrowserEntryStore.open(config, {
+    indexedDB,
+    name,
+    revision: 'config-2'
+  })
+  try {
+    expect(await reopened.find({select: Entry.id})).toEqual(['next-page'])
+  } finally {
+    await reopened.close()
+  }
+})
+
 test('browser entry stores discard a corrupt persisted SQLite file', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {

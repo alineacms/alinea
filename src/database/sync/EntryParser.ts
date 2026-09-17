@@ -53,7 +53,9 @@ export function parseSourceEntry(
   const i18n = getRoot(rootConfig).i18n
   let locale: string | null = null
   if (i18n) {
-    locale = segments[segmentIndex++].toLowerCase()
+    const segment = segments[segmentIndex++]
+    assert(segment, `Entry is missing a locale: ${filePath}`)
+    locale = segment.toLowerCase()
     for (const candidate of i18n.locales) {
       if (locale === candidate.toLowerCase()) {
         locale = candidate

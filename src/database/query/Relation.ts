@@ -107,6 +107,7 @@ export function relationCondition(
       )
     case 'parents': {
       const depth = query.depth ?? Number.POSITIVE_INFINITY
+      if (depth <= 0) return sql.value(false)
       const ids = Array.isArray(source.parents)
         ? source.parents.slice(-depth)
         : new Builder()

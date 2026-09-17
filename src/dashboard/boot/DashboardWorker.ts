@@ -336,6 +336,8 @@ export class DashboardWorker extends EventTarget {
             revision
           })
         : await EntryStore.memory(config, this.#fallbackSource())
+      // The replaced store closes in the background: awaiting it here would
+      // stall the replacement behind the old store's in-flight work.
       if (this.#defer)
         void this.#defer().catch(() => {
           // The replaced database finishes outstanding work before closing.
@@ -355,7 +357,10 @@ export class DashboardWorker extends EventTarget {
       })
       this.#defer = async () => {
         unsubscribe()
-        await db.close()
+        // A superseded store must not persist its stale bytes over the
+        // replacement's cache entry.
+        if (db instanceof BrowserEntryStore) await db.abandon()
+        else await db.close()
       }
     } catch (cause) {
       this.#currentRevision = undefined

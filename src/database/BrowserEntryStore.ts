@@ -158,20 +158,31 @@ export class BrowserEntryStore extends EntryStore {
         const sha = await this.sha
         await this.#save(sha)
       } finally {
-        try {
-          await super.close()
-        } finally {
-          this.#cache.close()
-          await cleanupOldCaches(
-            this.#indexedDB,
-            this.#baseName,
-            this.#cacheName
-          )
-        }
+        await this.#teardown()
       }
     })
     this.#persistQueue = result.catch(() => {})
     return result
+  }
+
+  /** Close a superseded store without persisting stale bytes over its
+   * replacement's cache. Supersede always implies a revision change, so the
+   * persisted revision would be discarded on the next open anyway. */
+  async abandon(): Promise<void> {
+    if (this.#closed) return this.#persistQueue.then(() => {})
+    this.#closed = true
+    const result = this.#persistQueue.then(() => this.#teardown())
+    this.#persistQueue = result.catch(() => {})
+    return result
+  }
+
+  async #teardown(): Promise<void> {
+    try {
+      await super.close()
+    } finally {
+      this.#cache.close()
+      await cleanupOldCaches(this.#indexedDB, this.#baseName, this.#cacheName)
+    }
   }
 }
 
