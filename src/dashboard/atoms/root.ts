@@ -2,6 +2,8 @@ import type {EntryStatus} from '#/core/Entry.js'
 import type {Config} from '#/core/Config.js'
 import {Permission} from '#/core/Role.js'
 import type {RootData, RootI18n} from '#/core/Root.js'
+import {Schema} from '#/core/Schema.js'
+import {Type} from '#/core/Type.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
 import type {
   DragItem,
@@ -418,10 +420,23 @@ export class RootAtoms {
   })
   isMedia = atom(get => Boolean(get(this.data).isMediaRoot))
   canCreate = atom(get => {
-    return get(policyAtom).canCreate({
-      workspace: this.workspace,
-      root: this.key
-    })
+    const policy = get(policyAtom)
+    const resource = {workspace: this.workspace, root: this.key}
+    const config = get(configAtom)
+    const rootData = get(this.data)
+    const seen = new Set<string>()
+    const queue = Schema.contained(config.schema, rootData.contains ?? [])
+    while (queue.length > 0) {
+      const typeName = queue.shift()!
+      if (seen.has(typeName)) continue
+      seen.add(typeName)
+      const type = config.schema[typeName]
+      if (!type || Type.isHidden(type)) continue
+      if (policy.canCreate({...resource, type: typeName})) return true
+      if (Type.isContainer(type))
+        queue.push(...Schema.contained(config.schema, Type.contains(type)))
+    }
+    return false
   })
   view = atom((get): ComponentType<RootViewProps> | undefined => {
     const view = get(this.data).view
