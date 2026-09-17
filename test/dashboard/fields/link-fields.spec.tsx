@@ -133,7 +133,7 @@ test('switches a localized card picker without showing its loader', async ({
   const picker = await expandLinkPicker(app.page)
   const rootLabel = picker.getByText('Localized pages', {exact: true})
   const localeButton = picker
-    .getByRole('button', {name: 'EN', exact: true})
+    .getByRole('button', {name: 'Language', exact: true})
     .first()
   const rootTypography = await rootLabel.evaluate(element => {
     const style = getComputedStyle(element)
@@ -161,7 +161,10 @@ test('switches a localized card picker without showing its loader', async ({
     observer.observe(document.body, {childList: true, subtree: true})
   })
 
-  await picker.getByRole('button', {name: 'EN', exact: true}).first().click()
+  await picker
+    .getByRole('button', {name: 'Language', exact: true})
+    .first()
+    .click()
   await app.page.getByRole('menuitemradio', {name: /^FR/}).click()
   await expect(
     picker.getByRole('checkbox', {name: 'Select French result'})

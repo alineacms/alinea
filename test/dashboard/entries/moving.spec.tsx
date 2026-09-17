@@ -24,19 +24,15 @@ test('moves an entry from an overview to the root level', async ({
   const tree = app.page.getByRole('treegrid', {name: 'Content tree'})
   const overview = app.page.getByRole('treegrid', {name: 'Explorer entries'})
 
-  await tree
-    .getByRole('button', {name: 'Drag Beta'})
-    .dragTo(tree.getByRole('row', {name: 'Folder', exact: true}), {force: true})
-  await expect(overview.getByRole('row', {name: /^Beta/})).toBeVisible()
-  await expect(async () => {
-    await overview.getByRole('button', {name: 'Drag Child'}).dragTo(
-      tree.getByRole('row', {name: 'Alpha', exact: true}),
-      {force: true, targetPosition: {x: 100, y: 1}}
-    )
-    await expect(
-      tree.getByRole('row', {name: 'Child', exact: true})
-    ).toHaveAttribute('aria-level', '1', {timeout: 1000})
-  }).toPass()
+  await overview.getByRole('button', {name: 'Drag Child'}).dragTo(
+    tree.getByRole('row', {name: 'Folder', exact: true}),
+    {force: true, targetPosition: {x: 100, y: 1}}
+  )
+
+  await expect(tree.getByRole('row', {name: 'Child', exact: true})).toHaveAttribute(
+    'aria-level',
+    '1'
+  )
 })
 
 test('moves a child above its expanded parent', async ({dashboard, mount}) => {

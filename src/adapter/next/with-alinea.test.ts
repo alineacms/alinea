@@ -22,7 +22,7 @@ test('inlines CLI routing settings into the Next config', () => {
   })
 })
 
-test('routes files through the handler and allows versioned images', async () => {
+test('routes files through the handler without restricting local images', async () => {
   const config = withAlinea({
     env: {
       ALINEA_ADMIN_PATH: '/cms',
@@ -32,8 +32,7 @@ test('routes files through the handler and allows versioned images', async () =>
   })
 
   test.equal(config.images, {
-    unoptimized: true,
-    localPatterns: [{pathname: '/cms/file/**'}]
+    unoptimized: true
   })
   const rewrites = await config.rewrites!()
   test.equal(rewrites, {

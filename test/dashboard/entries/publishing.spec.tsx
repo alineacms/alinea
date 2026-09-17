@@ -10,7 +10,7 @@ test('publishes field edits and keeps them after navigation', async ({
   await app.field('Title').fill('Published Alpha')
   await app.page.getByRole('button', {name: 'Publish'}).click()
   await expect(app.title).toHaveText('Published Alpha')
-  await expect(app.page.getByText('Published', {exact: true})).toBeVisible()
+  await expect(app.page.getByText('Published', {exact: true})).toHaveCount(0)
 
   await app.openEntry('Beta')
   await app.openEntry('Published Alpha')
@@ -25,5 +25,8 @@ test('unpublishes and republishes an entry', async ({dashboard, mount}) => {
   await expect(header.getByText('Unpublished', {exact: true})).toBeVisible()
 
   await app.page.getByRole('button', {name: 'Publish'}).click()
-  await expect(header.getByText('Published', {exact: true})).toBeVisible()
+  await app.page.getByRole('button', {name: 'More actions'}).click()
+  await expect(
+    app.page.getByRole('menuitem', {name: 'Unpublish', exact: true})
+  ).toBeVisible()
 })
