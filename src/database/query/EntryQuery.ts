@@ -46,7 +46,7 @@ import {
   compileFilter,
   jsonField
 } from './Condition.js'
-import {searchQuery} from './Search.js'
+import {EntrySearchName, searchQuery} from './Search.js'
 
 import {
   linkRelation,
@@ -248,12 +248,13 @@ export function compileEntryQuery(
   search?: ReturnType<typeof searchQuery>,
   entry: EntryIndexTarget = EntryIndexTable,
   depth = 0,
-  baseEntry: EntryIndexTarget = entry
+  baseEntry: EntryIndexTarget = entry,
+  searchName: string = EntrySearchName
 ) {
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  search ??= searchQuery(query.search, entry)
+  search ??= searchQuery(query.search, entry, searchName)
   const membership = new Expressions(scope, entry, search, () => {
     throw new Error('Relations cannot be used as query conditions')
   })
@@ -414,7 +415,8 @@ export function compileEntryQuery(
       undefined,
       nestedEntry,
       depth + 1,
-      baseEntry
+      baseEntry,
+      searchName
     )
     const plan: ProjectionPlan = {
       count: nested.count,

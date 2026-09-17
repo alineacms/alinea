@@ -25,10 +25,8 @@ mock.module('next/headers', () => ({
   })
 }))
 
-const [{createCMS}, {createHandler, handlerPathname}] = await Promise.all([
-  import('./cms.js'),
-  import('./handler.js')
-])
+const [{createCMS}, {createHandlerWithDatabase, handlerPathname}] =
+  await Promise.all([import('./cms.js'), import('./handler.js')])
 
 const Page = Config.document('Page', {fields: {}})
 const cms = createCMS({
@@ -42,7 +40,9 @@ const cms = createCMS({
     })
   }
 })
-const handle = createHandler(cms)
+const handle = createHandlerWithDatabase(cms, async () => {
+  throw new Error('Test handler should not open a database')
+})
 let consoleError: ReturnType<typeof spyOn>
 
 test('uses the exact pathname of an absolute handler URL', () => {

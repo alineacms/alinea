@@ -167,7 +167,7 @@ const fixtureUser = {
 }
 
 class FixtureDB extends EntryStore {
-  events = new EventTarget()
+  events: EventTarget = new EventTarget()
 
   capabilities() {
     return Promise.resolve({users: true})

@@ -46,7 +46,8 @@ export class NextCMS<
     this.bundledDb = PLazy.from(async () => {
       if (!openBundledDatabase)
         throw new Error(
-          'Generated SQLite databases require an Edge database loader'
+          'A bundled database loader is required. Import createCMS from ' +
+            "'alinea/next' for Node or 'alinea/next.edge' for Edge."
         )
       const span = trace(this.config, 'alinea.next.cms.db')
       return span(() => openBundledDatabase(this.config))

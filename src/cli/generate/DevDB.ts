@@ -70,8 +70,9 @@ export class DevDB extends EntryStore {
     return (await fsp.stat(this.#options.databasePath)).size
   }
 
-  async fix(): Promise<never> {
-    throw new Error('Source repair is not supported by the SQLite index')
+  async fix(): Promise<void> {
+    // The SQLite index is rebuilt from the source on sync, so there is no
+    // separate repair step. Keep `--fix` a successful no-op.
   }
 
   async watchFiles(): Promise<WatchFiles> {

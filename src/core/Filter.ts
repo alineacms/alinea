@@ -93,46 +93,66 @@ function createConditions<Input>(
       conditions.push(input => getField(input, name) === operation)
       continue
     }
-    const inner = operation as RuntimeCondition
-    if (inner.is !== undefined)
-      conditions.push(input => getField(input, name) === inner.is)
-    if (inner.isNot !== undefined)
-      conditions.push(input => getField(input, name) !== inner.isNot)
-    if (inner.in)
-      conditions.push(input => inner.in!.includes(getField(input, name)))
-    if (inner.notIn)
-      conditions.push(input => !inner.notIn!.includes(getField(input, name)))
-    if (inner.gt !== undefined)
-      conditions.push(input => compare(getField(input, name), inner.gt) > 0)
-    if (inner.gte !== undefined)
-      conditions.push(input => compare(getField(input, name), inner.gte) >= 0)
-    if (inner.lt !== undefined)
-      conditions.push(input => compare(getField(input, name), inner.lt) < 0)
-    if (inner.lte !== undefined)
-      conditions.push(input => compare(getField(input, name), inner.lte) <= 0)
-    if (inner.startsWith)
-      conditions.push(input => {
-        const value = getField(input, name)
-        return typeof value === 'string' && value.startsWith(inner.startsWith!)
-      })
-    if (inner.or) {
-      const nested = Array.isArray(inner.or) ? inner.or : [inner.or]
-      const checks = nested.flatMap(value =>
-        createConditions(value as unknown as Record<string, unknown>, getField)
+    conditions.push(...createFieldConditions(name, operation, getField))
+  }
+  return conditions
+}
+
+function createFieldConditions<Input>(
+  name: string,
+  operation: Record<string, unknown>,
+  getField: (input: Input, name: string) => unknown
+): Array<FilterCheck<Input>> {
+  const inner = operation as RuntimeCondition
+  const conditions = Array<FilterCheck<Input>>()
+  if ('is' in inner && inner.is !== undefined)
+    conditions.push(input => getField(input, name) === inner.is)
+  if ('isNot' in inner && inner.isNot !== undefined)
+    conditions.push(input => getField(input, name) !== inner.isNot)
+  if (inner.in)
+    conditions.push(input => inner.in!.includes(getField(input, name)))
+  if (inner.notIn)
+    conditions.push(input => !inner.notIn!.includes(getField(input, name)))
+  if ('gt' in inner && inner.gt !== undefined)
+    conditions.push(input => compare(getField(input, name), inner.gt) > 0)
+  if ('gte' in inner && inner.gte !== undefined)
+    conditions.push(input => compare(getField(input, name), inner.gte) >= 0)
+  if ('lt' in inner && inner.lt !== undefined)
+    conditions.push(input => compare(getField(input, name), inner.lt) < 0)
+  if ('lte' in inner && inner.lte !== undefined)
+    conditions.push(input => compare(getField(input, name), inner.lte) <= 0)
+  if (inner.startsWith)
+    conditions.push(input => {
+      const value = getField(input, name)
+      return typeof value === 'string' && value.startsWith(inner.startsWith!)
+    })
+  if (inner.or) {
+    const nested = Array.isArray(inner.or) ? inner.or : [inner.or]
+    if (!nested.length) {
+      conditions.push(() => false)
+    } else {
+      const branches = nested.map(value =>
+        createFieldConditions(
+          name,
+          value as unknown as Record<string, unknown>,
+          getField
+        )
       )
-      conditions.push(input => checks.some(check => check(input)))
+      conditions.push(input =>
+        branches.some(branch => branch.every(check => check(input)))
+      )
     }
-    if (inner.has) {
-      const has = filterChecker(inner.has)
-      conditions.push(input => has(getField(input, name)))
-    }
-    if (inner.includes) {
-      const includes = filterChecker(inner.includes)
-      conditions.push(input => {
-        const value = getField(input, name)
-        return Array.isArray(value) && value.some(item => includes(item))
-      })
-    }
+  }
+  if (inner.has) {
+    const has = filterChecker(inner.has)
+    conditions.push(input => has(getField(input, name)))
+  }
+  if (inner.includes) {
+    const includes = filterChecker(inner.includes)
+    conditions.push(input => {
+      const value = getField(input, name)
+      return Array.isArray(value) && value.some(item => includes(item))
+    })
   }
   return conditions
 }

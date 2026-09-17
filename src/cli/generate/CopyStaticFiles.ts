@@ -18,6 +18,7 @@ const packageJson = {
     './config.js': './config.js',
     './release.js': './release.js',
     [`./${generatedDatabaseFile}`]: `./${generatedDatabaseFile}`,
+    './database.js': './database.js',
     './source.js': {
       'edge-light': './empty-source.js',
       default: './source.js'
@@ -46,6 +47,10 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.writeFile(
     path.join(outDir, 'source.js'),
     `export const source = ${JSON.stringify(emptySource, null, 2)}`
+  )
+  await fs.writeFile(
+    path.join(outDir, 'database.js'),
+    `export const database = undefined`
   )
   // await writeFileIfContentsDiffer(path.join(outDir, '.gitignore'), `*\n!.keep`)*/
   await writeFileIfContentsDiffer(

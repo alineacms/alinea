@@ -143,13 +143,21 @@ test('prepares uploads on the development server origin', async () => {
       })
     }
   })
-  const db = new DevDB({
-    config,
-    rootDir: '.',
-    dashboardUrl: 'http://localhost:4500'
-  })
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-upload-'))
+  let db: DevDB | undefined
+  try {
+    db = await DevDB.create({
+      config,
+      rootDir,
+      databasePath: join(rootDir, 'database.sqlite'),
+      dashboardUrl: 'http://localhost:4500'
+    })
 
-  const upload = await db.prepareUpload('public/media/example.png')
+    const upload = await db.prepareUpload('public/media/example.png')
 
-  test.is(upload.url.startsWith('http://localhost:4500/?/upload&file='), true)
+    test.is(upload.url.startsWith('http://localhost:4500/?/upload&file='), true)
+  } finally {
+    await db?.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
 })

@@ -1,4 +1,4 @@
-export {createCMS} from '#/adapter/next/cms.js'
+export {createCMS} from '#/adapter/next/cms.edge.js'
 export {
   createHandler,
   type NextHandlerOptions

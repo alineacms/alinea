@@ -17,9 +17,13 @@ export class IndexEvent extends Event {
     // Test and browser runtimes can replace the global Event implementation
     // after this module was evaluated. Always return an event from the active
     // realm so its EventTarget accepts it.
-    const event = new globalThis.Event(IndexEvent.type) as IndexEvent
-    Object.defineProperty(event, 'data', {value: data, enumerable: true})
-    return event
+    if (typeof globalThis.Event === 'function') {
+      const event = new globalThis.Event(IndexEvent.type) as IndexEvent
+      Object.defineProperty(event, 'data', {value: data, enumerable: true})
+      return event
+    }
+    Object.defineProperty(this, 'data', {value: data, enumerable: true})
+    return this
   }
 }
 

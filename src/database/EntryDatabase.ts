@@ -608,7 +608,10 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       query,
       source,
       search,
-      this.#entryTarget
+      this.#entryTarget,
+      0,
+      this.#entryTarget,
+      this.#searchName
     )
     if (plan.needsSearch && !this.#options.search) await this.#ensureSearch(db)
     if (plan.count)

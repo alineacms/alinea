@@ -27,10 +27,6 @@ export interface NextHandlerOptions extends HandlerHooks {
 
 export type OpenGeneratedDatabase = (config: Config) => Promise<EntryStore>
 
-export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
-  return createHandlerWithDatabase(input)
-}
-
 export function createHandlerWithDatabase(
   input: NextCMS | NextHandlerOptions,
   openGeneratedDatabase?: OpenGeneratedDatabase
@@ -50,7 +46,9 @@ export function createHandlerWithDatabase(
     span(async () => {
       if (!openGeneratedDatabase)
         throw new Error(
-          'Generated SQLite databases require an Edge database loader'
+          'A generated database loader is required. Import createHandler from ' +
+            "'alinea/next' for Node or 'alinea/next.edge' for Edge, " +
+            'or pass a loader to createHandlerWithDatabase.'
         )
       return openGeneratedDatabase(config)
     })
