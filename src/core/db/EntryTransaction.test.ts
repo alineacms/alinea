@@ -416,6 +416,43 @@ test('blocks duplicate MediaFile URLs across media roots', async () => {
   )
 })
 
+test('mediaUrl prefixes disambiguate duplicate MediaFile URLs', async () => {
+  const mediaCms = createCMS({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content/main',
+        mediaUrl: 'company-a',
+        roots: {
+          media: Config.media()
+        }
+      }),
+      secondary: Config.workspace('Secondary', {
+        source: 'content/secondary',
+        mediaUrl: 'company-b',
+        roots: {
+          media: Config.media()
+        }
+      })
+    }
+  })
+  const db = new TestDB(mediaCms.config)
+  await db.sync()
+  await db.create({
+    type: MediaFile,
+    workspace: 'main',
+    set: mediaFileData('Image', 'image', [])
+  })
+
+  const secondary = await db.create({
+    type: MediaFile,
+    workspace: 'secondary',
+    set: mediaFileData('Image', 'image', [])
+  })
+
+  test.is(secondary._url, '/admin/file/company-b/image.jpg')
+})
+
 test('create blocks duplicate MediaFile URL aliases per root', async () => {
   const db = await createDb()
 
