@@ -16,7 +16,7 @@ import {
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
 import {base64, btoa} from '#/core/util/Encoding.js'
 import {fileVersions} from '#/core/util/EntryFilenames.js'
-import {join} from '#/core/util/Paths.js'
+import {join, relative} from '#/core/util/Paths.js'
 
 export interface GithubOptions extends GithubSourceOptions {}
 
@@ -273,13 +273,13 @@ export class GithubApi
       switch (change.op) {
         case 'addContent': {
           additions.push({
-            path: join(this.contentLocation, change.path),
+            path: repositoryPath(this.contentLocation, change.path),
             contents: btoa(change.contents!)
           })
           break
         }
         case 'uploadFile': {
-          const file = join(rootDir, change.location)
+          const file = repositoryPath(rootDir, change.location)
           additions.push({
             path: file,
             contents: await this.#fetchUploadedContent(change.url)
@@ -287,12 +287,12 @@ export class GithubApi
           break
         }
         case 'deleteContent': {
-          const file = join(this.contentLocation, change.path)
+          const file = repositoryPath(this.contentLocation, change.path)
           deletions.push({path: file})
           break
         }
         case 'removeFile': {
-          const file = join(rootDir, change.location)
+          const file = repositoryPath(rootDir, change.location)
           deletions.push({path: file})
           break
         }
@@ -325,4 +325,8 @@ export class GithubApi
       throw new HttpError(response.status, await response.text())
     return base64.stringify(new Uint8Array(await response.arrayBuffer()))
   }
+}
+
+function repositoryPath(...segments: Array<string>): string {
+  return relative('/', join('/', ...segments))
 }
