@@ -1,14 +1,18 @@
 import type {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
-import {exportSource} from '#/core/source/SourceExport.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {genEffect} from '#/core/util/Async.js'
 import {basename, join} from '#/core/util/Paths.js'
-import * as fsp from 'node:fs/promises'
+import {generatedDatabaseFile} from '#/core/Version.js'
 import {createRequire} from 'node:module'
+import * as fsp from 'node:fs/promises'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
-import {copyStaticFiles} from './generate/CopyStaticFiles.js'
+import {
+  cleanupOldDatabases,
+  copyStaticFiles
+} from './generate/CopyStaticFiles.js'
 import {DevDB} from './generate/DevDB.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
@@ -94,13 +98,16 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
-    const exported = await exportSource(db.source)
-    const data = JSON.stringify(exported, null, 2)
+    const size = await db.finalize()
+    // Bundle the SQLite file for Edge as a JS-importable base64 module so
+    // edge-light handlers can open it through sqlite-wasm without node:fs.
+    const databasePath = join(context.outDir, generatedDatabaseFile)
+    const bytes = await fsp.readFile(databasePath)
     await fsp.writeFile(
-      join(context.outDir, 'source.js'),
-      `export const source = ${data}`
+      join(context.outDir, 'database.js'),
+      `export const database = ${JSON.stringify(bytes.toString('base64'))}`
     )
-    return data.length
+    return size
   }
   for await (const cms of builds) {
     Config.handlerUrl(cms.config)
@@ -130,32 +137,47 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       else message += ` (${recordCount} records)`
       return message
     }
-    const db = new DevDB({
+    const db = await DevDB.create({
       config: cms.config,
       rootDir,
+      databasePath: join(context.outDir, generatedDatabaseFile),
+      configFingerprint: await hashBlob(
+        await fsp.readFile(join(context.outDir, 'config.js'))
+      ),
       dashboardUrl: await options.dashboardUrl
     })
     try {
       indexing = fillCache(db, context.fix, watch)
     } catch (error: any) {
+      await db.close()
       reportError(error)
       if (cmd === 'build') process.exit(1)
       continue
     }
-    for await (const db of indexing) {
-      yield {cms, db}
-      if (onAfterGenerate && !afterGenerateCalled) {
-        const recordCount = await db.count({})
-        await write(recordCount ?? 0).then(
-          message => {
-            afterGenerateCalled = true
-            onAfterGenerate(message, cms.config)
-          },
-          () => {
-            reportFatal('Alinea failed to write dashboard files')
-            if (cmd === 'build') process.exit(1)
-          }
-        )
+    let databaseReady = false
+    try {
+      for await (const db of indexing) {
+        databaseReady = true
+        yield {cms, db}
+        if (onAfterGenerate && !afterGenerateCalled) {
+          const recordCount = await db.count({})
+          await write(recordCount ?? 0).then(
+            message => {
+              afterGenerateCalled = true
+              onAfterGenerate(message, cms.config)
+            },
+            () => {
+              reportFatal('Alinea failed to write dashboard files')
+              if (cmd === 'build') process.exit(1)
+            }
+          )
+        }
+      }
+    } finally {
+      try {
+        await db.close()
+      } finally {
+        if (databaseReady) await cleanupOldDatabases(context.outDir)
       }
     }
   }

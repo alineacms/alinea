@@ -134,7 +134,7 @@ export function Example() {
     <StoryProvider
       client={db}
       config={cms.config}
-      events={db.index}
+      events={db.events}
       graph={db}
       views={views}
     >
@@ -163,7 +163,7 @@ export function FilteredEntryFieldWithoutEntryScope() {
     <StoryProvider
       client={db}
       config={cms.config}
-      events={db.index}
+      events={db.events}
       graph={db}
       views={views}
     >
@@ -226,7 +226,7 @@ function ExplorerPickerStory({
     <StoryProvider
       client={db}
       config={cms.config}
-      events={db.index}
+      events={db.events}
       graph={db}
       views={views}
     >

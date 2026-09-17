@@ -7,12 +7,11 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {generatedSource} from '#/backend/store/GeneratedSource.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import type {EntryStore} from '#/database/EntryStore.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -27,7 +26,12 @@ export interface NextHandlerOptions extends HandlerHooks {
   backend?: BackendFactory | BackendOptions
 }
 
-export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
+export type OpenGeneratedDatabase = (config: Config) => Promise<EntryStore>
+
+export function createHandlerWithDatabase(
+  input: NextCMS | NextHandlerOptions,
+  openGeneratedDatabase?: OpenGeneratedDatabase
+): Handler {
   const options = input instanceof NextCMS ? {cms: input} : input
   const config = options.cms.config
   const backend: BackendFactory =
@@ -41,10 +45,13 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
-      const source = await generatedSource
-      const db = new LocalDB(config, source)
-      await db.sync()
-      return db
+      if (!openGeneratedDatabase)
+        throw new Error(
+          'A generated database loader is required. Import createHandler from ' +
+            "'alinea/next' for Node or 'alinea/next.edge' for Edge, " +
+            'or pass a loader to createHandlerWithDatabase.'
+        )
+      return openGeneratedDatabase(config)
     })
   )
   const handleBackend = createCoreHandler({

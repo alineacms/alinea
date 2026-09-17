@@ -251,7 +251,7 @@ export function LinkFieldScenario() {
   return (
     <App
       graph={db}
-      events={db.index}
+      events={db.events}
       config={config}
       client={client}
       views={views}
