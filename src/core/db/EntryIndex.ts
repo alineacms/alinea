@@ -527,14 +527,7 @@ export class EntryGraph {
       )
       const [representative] = published
       if (!representative) continue
-      const urls = new Set<string>()
-      for (const entry of published) {
-        urls.add(entry.url)
-        for (const value of aliasesFromData(entry.data) ?? []) {
-          const alias = aliasUrl(value)
-          if (alias) urls.add(alias)
-        }
-      }
+      const urls = new Set(published.map(entry => entry.url))
       for (const url of urls) {
         const existing = claims.get(url)
         if (existing && existing.id !== node.id) {

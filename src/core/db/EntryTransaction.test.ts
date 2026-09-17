@@ -317,37 +317,35 @@ function aliasUrls(value: unknown): Array<string> {
   })
 }
 
-test('create blocks duplicate metadata URL aliases per root', async () => {
+test('create allows duplicate metadata URL aliases per root', async () => {
   const db = await createDb()
 
-  await test.throws(
-    () =>
-      db.create({
-        type: Page,
-        root: 'pages',
-        status: 'published',
-        set: pageData('Two', 'two', '/old-one')
-      }),
-    'URL "/old-one" is already defined by entry one'
-  )
+  await db.create({
+    type: Page,
+    root: 'pages',
+    status: 'published',
+    set: pageData('Two', 'two', '/old-one')
+  })
+
+  const found = db.index.findByUrl('/old-one', () => true)
+  test.is(found?.id, 'one')
 })
 
-test('create blocks aliases that conflict with canonical URLs', async () => {
+test('create allows aliases that conflict with canonical URLs', async () => {
   const db = await createDb()
 
-  await test.throws(
-    () =>
-      db.create({
-        type: Page,
-        root: 'pages',
-        status: 'published',
-        set: pageData('Two', 'two', '/one')
-      }),
-    'URL "/one" is already defined by entry one'
-  )
+  await db.create({
+    type: Page,
+    root: 'pages',
+    status: 'published',
+    set: pageData('Two', 'two', '/one')
+  })
+
+  const found = db.index.findByUrl('/one', () => true)
+  test.is(found?.id, 'one')
 })
 
-test('publish blocks duplicate metadata URL aliases per root', async () => {
+test('publish allows duplicate metadata URL aliases per root', async () => {
   const db = await createDb()
   const draft = await db.create({
     type: Page,
@@ -356,14 +354,13 @@ test('publish blocks duplicate metadata URL aliases per root', async () => {
     set: pageData('Two', 'two', '/old-one')
   })
 
-  await test.throws(
-    () =>
-      db.publish({
-        id: draft._id,
-        status: 'draft'
-      }),
-    'URL "/old-one" is already defined by entry one'
-  )
+  await db.publish({
+    id: draft._id,
+    status: 'draft'
+  })
+
+  const found = db.index.findByUrl('/old-one', () => true)
+  test.is(found?.id, 'one')
 })
 
 test('allows duplicate metadata URL aliases across roots', async () => {
@@ -416,6 +413,36 @@ test('blocks duplicate MediaFile URLs across media roots', async () => {
   )
 })
 
+test('allows duplicate MediaFile URL aliases across media roots', async () => {
+  const mediaCms = createCMS({
+    schema: {},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {
+          first: Config.media(),
+          second: Config.media()
+        }
+      })
+    }
+  })
+  const db = new TestDB(mediaCms.config)
+  await db.sync()
+  const first = await db.create({
+    type: MediaFile,
+    root: 'first',
+    set: mediaFileData('One', 'one', ['/old-file'])
+  })
+  await db.create({
+    type: MediaFile,
+    root: 'second',
+    set: mediaFileData('Two', 'two', ['/old-file'])
+  })
+
+  const found = db.index.findByUrl('/old-file', () => true)
+  test.is(found?.id, first._id)
+})
+
 test('mediaUrl prefixes disambiguate duplicate MediaFile URLs', async () => {
   const mediaCms = createCMS({
     schema: {},
@@ -453,26 +480,24 @@ test('mediaUrl prefixes disambiguate duplicate MediaFile URLs', async () => {
   test.is(secondary._url, '/admin/file/company-b/image.jpg')
 })
 
-test('create blocks duplicate MediaFile URL aliases per root', async () => {
+test('allows duplicate MediaFile URL aliases in the same root', async () => {
   const db = await createDb()
 
-  await db.create({
+  const first = await db.create({
     type: MediaFile,
     root: 'media',
     status: 'published',
     set: mediaFileData('One', 'one', ['/old-file'])
   })
+  await db.create({
+    type: MediaFile,
+    root: 'media',
+    status: 'published',
+    set: mediaFileData('Two', 'two', ['/old-file'])
+  })
 
-  await test.throws(
-    () =>
-      db.create({
-        type: MediaFile,
-        root: 'media',
-        status: 'published',
-        set: mediaFileData('Two', 'two', ['/old-file'])
-      }),
-    'URL "/old-file" is already defined by entry'
-  )
+  const found = db.index.findByUrl('/old-file', () => true)
+  test.is(found?.id, first._id)
 })
 
 test('allows duplicate metadata URL aliases on the same entry', async () => {

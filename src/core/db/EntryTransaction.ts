@@ -413,47 +413,31 @@ export class EntryTransaction {
 
   #assertUniqueUrls(candidate: UrlCandidate) {
     const claims = this.#getUrlClaims()
-    const urls = this.#candidateUrls(candidate)
-    for (const url of urls) {
-      const key = this.#urlClaimKey(
-        candidate.workspace,
-        candidate.root,
-        candidate.type,
-        url
-      )
-      const existing = claims.get(key)
-      if (existing && existing.id !== candidate.id) {
-        throw new EntryUrlConflictError({
-          url,
-          entryId: existing.id,
-          workspace: existing.workspace,
-          root: existing.root
-        })
-      }
+    const url = this.#resolvedUrl(candidate)
+    const key = this.#urlClaimKey(
+      candidate.workspace,
+      candidate.root,
+      candidate.type,
+      url
+    )
+    const existing = claims.get(key)
+    if (existing && existing.id !== candidate.id) {
+      throw new EntryUrlConflictError({
+        url,
+        entryId: existing.id,
+        workspace: existing.workspace,
+        root: existing.root
+      })
     }
-    for (const [key, claim] of claims) {
-      if (claim.id === candidate.id) claims.delete(key)
+    for (const [claimedKey, claim] of claims) {
+      if (claim.id === candidate.id) claims.delete(claimedKey)
     }
-    for (const url of urls) {
-      claims.set(
-        this.#urlClaimKey(
-          candidate.workspace,
-          candidate.root,
-          candidate.type,
-          url
-        ),
-        {
-          id: candidate.id,
-          url,
-          workspace: candidate.workspace,
-          root: candidate.root
-        }
-      )
-    }
-  }
-
-  #candidateUrls(candidate: UrlCandidate): Array<string> {
-    return [this.#resolvedUrl(candidate), ...aliasUrlsFromData(candidate.data)]
+    claims.set(key, {
+      id: candidate.id,
+      url,
+      workspace: candidate.workspace,
+      root: candidate.root
+    })
   }
 
   #resolvedUrl(candidate: UrlCandidate): string {
@@ -515,20 +499,16 @@ export class EntryTransaction {
     for (const entry of this.#index.findMany(entry => {
       return entry.status === 'published'
     })) {
-      for (const url of [
-        this.#resolvedUrl(entry),
-        ...aliasUrlsFromData(entry.data)
-      ]) {
-        claims.set(
-          this.#urlClaimKey(entry.workspace, entry.root, entry.type, url),
-          {
-            id: entry.id,
-            url,
-            workspace: entry.workspace,
-            root: entry.root
-          }
-        )
-      }
+      const url = this.#resolvedUrl(entry)
+      claims.set(
+        this.#urlClaimKey(entry.workspace, entry.root, entry.type, url),
+        {
+          id: entry.id,
+          url,
+          workspace: entry.workspace,
+          root: entry.root
+        }
+      )
     }
     this.#urlClaims = claims
     return claims

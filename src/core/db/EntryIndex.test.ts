@@ -271,7 +271,7 @@ test('rejects duplicate indexed MediaFile URLs across workspaces', async () => {
   )
 })
 
-test('rejects indexed MediaFile aliases that claim another file URL', async () => {
+test('allows indexed MediaFile aliases that claim another file URL', async () => {
   const mediaCms = createCMS({
     schema: {},
     workspaces: {
@@ -282,34 +282,33 @@ test('rejects indexed MediaFile aliases that claim another file URL', async () =
     }
   })
 
-  await test.throws(
-    () =>
-      createEntryIndex(mediaCms.config, [
-        {
-          id: 'first-image',
-          type: 'MediaFile',
-          index: 'a0',
-          root: 'media',
-          path: 'first',
-          data: {
-            extension: '.jpg',
-            location: '/first.jpg',
-            metadata: {
-              aliases: [{url: '/admin/file/second.jpg'}]
-            }
-          }
-        },
-        {
-          id: 'second-image',
-          type: 'MediaFile',
-          index: 'a1',
-          root: 'media',
-          path: 'second',
-          data: {extension: '.jpg', location: '/second.jpg'}
+  const {index} = await createEntryIndex(mediaCms.config, [
+    {
+      id: 'first-image',
+      type: 'MediaFile',
+      index: 'a0',
+      root: 'media',
+      path: 'first',
+      data: {
+        extension: '.jpg',
+        location: '/first.jpg',
+        metadata: {
+          aliases: [{url: '/admin/file/second.jpg'}]
         }
-      ]),
-    'URL "/admin/file/second.jpg" is already defined by entry first-image'
-  )
+      }
+    },
+    {
+      id: 'second-image',
+      type: 'MediaFile',
+      index: 'a1',
+      root: 'media',
+      path: 'second',
+      data: {extension: '.jpg', location: '/second.jpg'}
+    }
+  ])
+
+  const found = index.findByUrl('/admin/file/second.jpg', () => true)
+  test.is(found?.id, 'second-image')
 })
 
 test('filters by entry predicate', async () => {
