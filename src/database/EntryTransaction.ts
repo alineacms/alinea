@@ -738,7 +738,7 @@ export class EntryTransaction implements AsyncDisposable {
     )
     const batch: ChangesBatch = {fromSha: from.sha, changes}
     if (changes.length) {
-      await this.#workingSource.applyChanges(batch)
+      await this.#workingSource.applyChangesTo(batch, into)
       const result = await this.#workingDatabase.syncWith(this.#workingSource)
       for (const id of result.changedEntryIds) this.#changedEntryIds.add(id)
     }

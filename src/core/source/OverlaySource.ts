@@ -2,7 +2,7 @@ import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
 import type {GetBlobsOptions, RemoteSource, Source} from './Source.js'
-import type {ReadonlyTree} from './Tree.js'
+import {Leaf, type ReadonlyTree} from './Tree.js'
 
 export class OverlaySource implements Source {
   #source: Source
@@ -63,8 +63,9 @@ export class OverlaySource implements Source {
     }
     const missing = needed.values().next().value
     assert(missing === undefined, `Source did not return blob ${missing}`)
+    const previous = this.#tree
     this.#tree = tree
-    this.#pruneBlobs()
+    this.#pruneReplaced(batch, previous)
   }
 
   /** Apply a batch while reusing an already received or compiled target tree. */
@@ -79,13 +80,17 @@ export class OverlaySource implements Source {
       assert(change.contents, 'Missing contents')
       this.#blobs.set(change.sha, change.contents)
     }
+    const previous = this.#tree
     this.#tree = tree ?? (await this.#tree.withChanges(batch))
-    this.#pruneBlobs()
+    this.#pruneReplaced(batch, previous)
   }
 
-  #pruneBlobs(): void {
-    for (const sha of this.#blobs.keys()) {
-      if (!this.#tree.hasSha(sha)) this.#blobs.delete(sha)
+  /** Only blobs at changed paths can have become orphaned. */
+  #pruneReplaced(batch: ChangesBatch, previous: ReadonlyTree): void {
+    for (const change of batch.changes) {
+      const replaced = previous.get(change.path)
+      if (replaced instanceof Leaf && !this.#tree.hasSha(replaced.sha))
+        this.#blobs.delete(replaced.sha)
     }
   }
 }

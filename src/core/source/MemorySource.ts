@@ -3,7 +3,7 @@ import type {ChangesBatch} from './Change.js'
 import {hashBlob} from './GitUtils.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
 import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree} from './Tree.js'
+import {Leaf, ReadonlyTree} from './Tree.js'
 
 export class MemorySource implements Source {
   #tree: ReadonlyTree
@@ -58,8 +58,11 @@ export class MemorySource implements Source {
       }
     }
     const compiled = await this.#tree.withChanges(batch)
-    for (const sha of this.#blobs.keys()) {
-      if (!compiled.hasSha(sha)) this.#blobs.delete(sha)
+    // Only blobs at changed paths can have become orphaned.
+    for (const change of batch.changes) {
+      const previous = this.#tree.get(change.path)
+      if (previous instanceof Leaf && !compiled.hasSha(previous.sha))
+        this.#blobs.delete(previous.sha)
     }
     this.#tree = compiled
   }
