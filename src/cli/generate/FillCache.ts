@@ -4,7 +4,11 @@ import {reportError} from '../util/Report.js'
 import {createWatcher} from '../util/Watcher.js'
 import type {DevDB} from './DevDB.js'
 
-export function fillCache(db: DevDB, fix?: boolean): Emitter<DevDB> {
+export function fillCache(
+  db: DevDB,
+  fix?: boolean,
+  watch = true
+): Emitter<DevDB> {
   let canceled = false
   let stopWatching = () => {
     canceled = true
@@ -17,7 +21,17 @@ export function fillCache(db: DevDB, fix?: boolean): Emitter<DevDB> {
   })
 
   const limit = pLimit(1)
-  const run = () => limit(cache).then(results.emit, reportError)
+  const run = () =>
+    limit(cache).then(
+      db => {
+        results.emit(db)
+        if (!watch) results.return()
+      },
+      error => {
+        if (watch) reportError(error)
+        else results.throw(error)
+      }
+    )
 
   const cache = async () => {
     await db.sync()
@@ -25,13 +39,15 @@ export function fillCache(db: DevDB, fix?: boolean): Emitter<DevDB> {
     return db
   }
 
-  createWatcher({
-    watchFiles: db.watchFiles.bind(db),
-    onChange: run
-  }).then(cancel => {
-    if (canceled) cancel()
-    else stopWatching = cancel
-  })
+  if (watch) {
+    createWatcher({
+      watchFiles: db.watchFiles.bind(db),
+      onChange: run
+    }).then(cancel => {
+      if (canceled) cancel()
+      else stopWatching = cancel
+    })
+  }
 
   run()
 

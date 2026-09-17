@@ -56,6 +56,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
     configFile,
     staticDir = path.join(__dirname, 'static'),
     quiet = false,
+    watch = cmd === 'dev',
     onAfterGenerate
   } = options
 
@@ -135,7 +136,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       dashboardUrl: await options.dashboardUrl
     })
     try {
-      indexing = fillCache(db, context.fix)
+      indexing = fillCache(db, context.fix, watch)
     } catch (error: any) {
       reportError(error)
       if (cmd === 'build') process.exit(1)
