@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import type {ImageLink, TextDoc} from 'alinea'
 import {HStack, imageBlurUrl} from 'alinea/ui'
-import {IcRoundArrowBack} from 'alinea/ui/icons/IcRoundArrowBack'
+import {IcRoundArrowBack} from '@/icons'
 import Image from 'next/image'
 import Link from 'next/link'
 import css from './DemoHeader.module.scss'

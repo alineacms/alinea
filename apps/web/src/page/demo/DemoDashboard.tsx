@@ -5,6 +5,7 @@ import {Config} from 'alinea'
 import 'alinea/css'
 import {createConfig} from 'alinea/core/Config'
 import type {LocalConnection} from 'alinea/core/Connection'
+import type {Entry} from 'alinea/core/Entry'
 import {localUser} from 'alinea/core/User'
 import {
   type ExportedSource,
@@ -13,7 +14,7 @@ import {
 import {App} from 'alinea/dashboard/App'
 import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
 import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
-import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
+import {views as defaultViews} from 'alinea/field/views'
 import {useGraph} from 'alinea/dashboard/hook/UseGraph'
 import {Suspense, use, useDeferredValue, useMemo} from 'react'
 import {DemoHomePage} from './DemoHomePage'
@@ -44,7 +45,7 @@ const config = createConfig({
   }
 })
 
-function PreviewHome({entry}) {
+function PreviewHome({entry}: {entry: Entry}) {
   const graph = useGraph()
   const update = useDeferredValue(entry)
   const props = use(
@@ -55,7 +56,7 @@ function PreviewHome({entry}) {
   return <DemoHomePage {...props} />
 }
 
-function PreviewRecipe({entry}) {
+function PreviewRecipe({entry}: {entry: Entry}) {
   const graph = useGraph()
   const update = useDeferredValue(entry)
   const props = use(
@@ -80,6 +81,12 @@ async function setup(exported: ExportedSource) {
     prepareUpload: notImplemented,
     getDraft: notImplemented,
     storeDraft: notImplemented,
+    capabilities: async () => ({users: false}),
+    enrichUser: async user => user,
+    listUsers: async () => [],
+    createUser: notImplemented,
+    updateUser: notImplemented,
+    removeUser: notImplemented,
     getTreeIfDifferent(sha: string) {
       return source.getTreeIfDifferent(sha)
     },
@@ -103,7 +110,7 @@ async function setup(exported: ExportedSource) {
   }
   const db = new WorkerDB(config, worker, client, worker)
   await worker.load('demo', config, client)
-  return {config, client, db}
+  return {config, client, db, events: worker}
 }
 
 interface RenderDashboardProps {
@@ -111,9 +118,16 @@ interface RenderDashboardProps {
 }
 
 function RenderDashboard({init}: RenderDashboardProps) {
-  const {config, client, db} = use(init)
+  const {config, client, db, events} = use(init)
   return (
-    <App local config={config} db={db} client={client} views={defaultViews} />
+    <App
+      local
+      config={config}
+      graph={db}
+      events={events}
+      client={client}
+      views={defaultViews}
+    />
   )
 }
 

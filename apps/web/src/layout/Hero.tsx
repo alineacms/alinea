@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {IcRoundChevronRight} from 'alinea/ui/icons/IcRoundChevronRight'
+import {IcRoundChevronRight} from '@/icons'
 import {HStack} from 'alinea/ui/Stack'
 import Link, {type LinkProps} from 'next/link'
 import type {HTMLProps, PropsWithChildren} from 'react'

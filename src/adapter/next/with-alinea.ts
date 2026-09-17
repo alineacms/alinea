@@ -76,22 +76,32 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
 
 function createImages(config: NextConfig, adminPath: string) {
   const filePattern = `${adminPath}/file/**`
+  const fileSearch = '?**'
   const localPatterns = config.images?.localPatterns
   // An omitted list allows every local image. Defining any pattern restricts
   // all others, so preserve the default with an explicit catch-all.
   if (!localPatterns)
     return {
       ...config.images,
-      localPatterns: [{pathname: filePattern}, {pathname: '/**'}]
+      localPatterns: [
+        {pathname: filePattern, search: fileSearch},
+        {pathname: '/**'}
+      ]
     }
-  if (localPatterns.some(pattern => pattern.pathname === filePattern))
+  if (
+    localPatterns.some(
+      pattern =>
+        pattern.pathname === filePattern && pattern.search === fileSearch
+    )
+  )
     return config.images
   return {
     ...config.images,
     localPatterns: [
       ...localPatterns,
       {
-        pathname: filePattern
+        pathname: filePattern,
+        search: fileSearch
       }
     ]
   }

@@ -2,8 +2,9 @@ import {Link} from '@/layout/nav/Link'
 import {ChapterLinkBlock} from '@/schema/blocks/ChapterLinkBlock'
 import styler from '@alinea/styler'
 import {Infer} from 'alinea'
-import {HStack, Stack} from 'alinea/ui'
-import {IcRoundArrowForward} from 'alinea/ui/icons/IcRoundArrowForward'
+import {HStack} from 'alinea/ui'
+import {Stack} from '@/layout/Stack'
+import {IcRoundArrowForward} from '@/icons'
 import css from './ChapterLinkView.module.scss'
 
 const styles = styler(css)

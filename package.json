@@ -10,7 +10,8 @@
   "sideEffects": false,
   "type": "module",
   "workspaces": [
-    "apps/dev"
+    "apps/dev",
+    "apps/web"
   ],
   "imports": {
     "#/*": {
@@ -60,6 +61,7 @@
     "format:check": "oxfmt --check src",
     "lint": "oxlint",
     "prepublishOnly": "bun run build",
+    "postinstall": "node -e \"require('node:fs').existsSync('apps/web/scripts/fix-alinea-link.mjs')&&require('node:child_process').execSync('node apps/web/scripts/fix-alinea-link.mjs',{stdio:'inherit'})\"",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",
     "tag": "bun tag.js",

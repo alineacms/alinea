@@ -1,5 +1,6 @@
 import styler from '@alinea/styler'
-import {HStack, px} from 'alinea/ui'
+import {HStack} from 'alinea/ui'
+import {px} from '@/utils/units'
 import type {ComponentType, HTMLProps, PropsWithChildren} from 'react'
 import css from './Features.module.scss'
 

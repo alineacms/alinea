@@ -1,10 +1,9 @@
 'use client'
 
 import styler from '@alinea/styler'
-import {IcOutlineDarkMode} from 'alinea/ui/icons/IcOutlineDarkMode'
-import {IcOutlineLightMode} from 'alinea/ui/icons/IcOutlineLightMode'
-import {IcSharpBrightnessMedium} from 'alinea/ui/icons/IcSharpBrightnessMedium'
-import {HStack, Stack, VStack} from 'alinea/ui/Stack'
+import {IcOutlineDarkMode, IcOutlineLightMode, IcSharpBrightnessMedium} from '@/icons'
+import {HStack, VStack} from 'alinea/ui/Stack'
+import {Stack} from '@/layout/Stack'
 import Link from 'next/link'
 import {Newsletter} from './engage/Newsletter'
 import css from './Footer.module.scss'

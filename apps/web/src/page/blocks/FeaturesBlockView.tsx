@@ -1,12 +1,12 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {
   IcBaselineDashboardCustomize,
   IcRoundFastForward,
   MdiLanguageTypescript,
   MdiSourceBranch,
-  ProiconsOpenSource
+  ProiconsOpenSource,
+  RiFlashlightFill
 } from '@/icons'
 import {Feature, Features} from '@/layout/Features'
 import {WebText} from '@/layout/WebText'

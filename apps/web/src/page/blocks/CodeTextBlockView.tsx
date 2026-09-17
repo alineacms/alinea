@@ -1,6 +1,6 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {Typo, VStack} from 'alinea/ui'
+import {VStack} from 'alinea/ui'
 import {Button} from '@/layout/Button'
 import {WebText} from '@/layout/WebText'
 import {WebTypo} from '@/layout/WebTypo'
@@ -36,7 +36,7 @@ export async function CodeTextBlockView({
       </div>
       {code && (
         <div className={styles.root.code()}>
-          <Typo.Monospace
+          <WebTypo.Monospace
             as="div"
             // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
             dangerouslySetInnerHTML={{__html: html}}

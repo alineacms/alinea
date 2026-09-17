@@ -2,7 +2,7 @@
 
 import styler from '@alinea/styler'
 import {HStack} from 'alinea/ui'
-import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
+import {IcRoundKeyboardArrowDown} from '@/icons'
 import Link from 'next/link'
 import {useParams, usePathname, useRouter} from 'next/navigation'
 import css from './FrameworkPicker.module.scss'

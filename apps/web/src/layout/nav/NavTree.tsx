@@ -2,8 +2,7 @@
 
 import styler from '@alinea/styler'
 import {HStack} from 'alinea/ui'
-import {IcRoundKeyboardArrowDown} from 'alinea/ui/icons/IcRoundKeyboardArrowDown'
-import {IcRoundKeyboardArrowRight} from 'alinea/ui/icons/IcRoundKeyboardArrowRight'
+import {IcRoundKeyboardArrowDown, IcRoundKeyboardArrowRight} from '@/icons'
 import Link from 'next/link'
 import {useParams, usePathname} from 'next/navigation'
 import {type ComponentProps, useEffect, useMemo, useState} from 'react'

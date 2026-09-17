@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {createTypo} from 'alinea/ui/util/CreateTypo'
+import {createTypo} from '@/layout/util/createTypo'
 import NextLink from 'next/link'
 import {HTMLAttributes} from 'react'
 import css from './WebTypo.module.scss'

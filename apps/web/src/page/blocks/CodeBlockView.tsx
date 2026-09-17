@@ -1,6 +1,7 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {Typo, VStack} from 'alinea/ui'
+import {VStack} from 'alinea/ui'
+import {WebTypo} from '@/layout/WebTypo'
 //import {useClipboard} from 'use-clipboard-copy'
 //import MdiContentCopy from '../../icons/MdiContentCopy'
 import type {CodeBlock} from '@/schema/blocks/CodeBlock'
@@ -24,7 +25,7 @@ export async function CodeBlockView({
     <VStack gap={8} className={styles.root({compact})}>
       {fileName && <div className={styles.root.fileName()}>{fileName}</div>}
       <div style={{position: 'relative'}}>
-        <Typo.Monospace
+        <WebTypo.Monospace
           as="div"
           // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
           dangerouslySetInnerHTML={{__html: html}}

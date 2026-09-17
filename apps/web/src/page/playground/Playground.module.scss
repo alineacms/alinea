@@ -7,6 +7,21 @@
     width: 100% !important;
   }
 
+  &-editor {
+    position: relative;
+    height: 100%;
+    min-width: 300px;
+    flex: 1;
+  }
+
+  &-previewPane {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    overflow: auto;
+    background: var(--alinea-background);
+  }
+
   &-logo {
     padding: 0 16px;
     height: 100%;
@@ -97,6 +112,48 @@
         color: #f0f0f0;
         background: #23252a;
       }
+    }
+  }
+
+  &-preview {
+    margin: auto;
+    width: 100%;
+    max-width: 720px;
+    padding: 40px 20px;
+
+    &-title {
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+  }
+
+  &-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+    &-label {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    &-key {
+      font-family: var(--alinea-font-mono);
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    &-type {
+      font-family: var(--alinea-font-mono);
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.06);
     }
   }
 }

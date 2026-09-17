@@ -1,20 +1,20 @@
 import styler from '@alinea/styler'
 import type {Infer} from 'alinea'
-import {IcRoundInsertDriveFile} from 'alinea/ui/icons/IcRoundInsertDriveFile'
-import {IcRoundPublish} from 'alinea/ui/icons/IcRoundPublish'
-import {PhGlobe} from 'alinea/ui/icons/PhGlobe'
-import {RiFlashlightFill} from 'alinea/ui/icons/RiFlashlightFill'
 import {HStack} from 'alinea/ui/Stack'
-import {px} from 'alinea/ui/util/Units'
+import {px} from '@/utils/units'
 import type {ComponentType} from 'react'
 import {
   IcBaselineCloudQueue,
   IcBaselineDashboardCustomize,
   IcBaselineWorkspaces,
   IcRoundFastForward,
+  IcRoundInsertDriveFile,
+  IcRoundPublish,
   MdiLanguageTypescript,
   MdiSourceBranch,
-  ProiconsOpenSource
+  PhGlobe,
+  ProiconsOpenSource,
+  RiFlashlightFill
 } from '@/icons'
 import {Link} from '@/layout/nav/Link'
 import type {QuickLinksBlock} from '@/schema/blocks/QuickLinksBlock'

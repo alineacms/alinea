@@ -1,5 +1,5 @@
 import {promises as fs} from 'node:fs'
-import {Loader} from 'alinea/ui'
+import {Loader} from '@/layout/Loader'
 import type {Metadata, MetadataRoute, Viewport} from 'next'
 import {Suspense} from 'react'
 import {getMetadata, type MetadataProps} from '@/utils/metadata'

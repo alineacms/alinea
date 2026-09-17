@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {createTypo} from 'alinea/ui/util/CreateTypo'
+import {createTypo} from '@/layout/util/createTypo'
 import css from './DemoTypo.module.scss'
 
 const styles = styler(css)

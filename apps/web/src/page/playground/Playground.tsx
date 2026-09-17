@@ -4,27 +4,16 @@ import styler from '@alinea/styler'
 import Editor, {type Monaco} from '@monaco-editor/react'
 import * as alinea from 'alinea'
 import * as core from 'alinea/core'
-import type {Field} from 'alinea/core/Field'
+import {Field} from 'alinea/core/Field'
 import {outcome} from 'alinea/core/Outcome'
 import {trigger} from 'alinea/core/Trigger'
 import {Type, type} from 'alinea/core/Type'
+import * as dashboard from 'alinea/dashboard'
 import {Logo} from '@/layout/branding/Logo'
 import 'alinea/css'
-import {TestDB} from 'alinea/core/db/TestDB'
-import {MemorySource} from 'alinea/core/source/MemorySource'
-import * as dashboard from 'alinea/dashboard'
-import {DashboardWorker} from 'alinea/dashboard/boot/DashboardWorker'
-import {WorkerDB} from 'alinea/dashboard/boot/WorkerDB'
-import {DashboardProvider} from 'alinea/dashboard/DashboardProvider'
-import {defaultViews} from 'alinea/dashboard/editor/DefaultViews'
-import {InputForm} from 'alinea/dashboard/editor/InputForm'
-import {ErrorBoundary} from 'alinea/dashboard/view/ErrorBoundary'
-import {FieldToolbar} from 'alinea/dashboard/view/entry/FieldToolbar'
-import {Viewport} from 'alinea/dashboard/view/Viewport'
-import {cms} from 'alinea/test/cms'
-import {HStack, Loader, Stack, TextLabel, Typo, VStack} from 'alinea/ui'
-import {Main} from 'alinea/ui/Main'
-import {Pane} from 'alinea/ui/Pane'
+import {Loader} from '@/layout/Loader'
+import {HStack, VStack} from 'alinea/ui'
+import {Stack} from '@/layout/Stack'
 import lzstring from 'lz-string'
 import Link from 'next/link'
 import Script from 'next/script'
@@ -45,22 +34,31 @@ export default Config.type('Type', {
   }
 })`
 
+function PreviewFieldRow({name, field}: {name: string; field: Field}) {
+  const view = Field.view(field)
+  return (
+    <div className={styles.root.field()}>
+      <span className={styles.root.field.label()}>{Field.label(field)}</span>
+      <code className={styles.root.field.key()}>{name}</code>
+      {typeof view === 'string' && (
+        <code className={styles.root.field.type()}>{view}</code>
+      )}
+    </div>
+  )
+}
+
 type PreviewTypeProps = {
   type: Type
 }
 
 function PreviewType({type}: PreviewTypeProps) {
-  const state = useRef<any>()
-  const form = dashboard.useForm(type, {initialValue: state.current})
-  state.current = form.data()
-  const label = Type.label(type)
+  const fields = Type.fields(type)
   return (
-    <div style={{margin: 'auto', width: '100%', padding: '20px 0'}}>
-      <Typo.H1>
-        <TextLabel label={label} />
-      </Typo.H1>
-
-      <InputForm form={form} />
+    <div className={styles.root.preview()}>
+      <h1 className={styles.root.preview.title()}>{Type.label(type)}</h1>
+      {Object.entries(fields).map(([name, field]) => (
+        <PreviewFieldRow key={name} name={name} field={field} />
+      ))}
     </div>
   )
 }
@@ -70,14 +68,13 @@ type PreviewFieldProps = {
 }
 
 function PreviewField({field}: PreviewFieldProps) {
-  const formType = React.useMemo(
-    () => type('Preview', {fields: {field}}),
-    [field]
-  )
-  const form = dashboard.useForm(formType)
+  const view = Field.view(field)
   return (
-    <div style={{margin: 'auto', width: '100%'}}>
-      <InputForm form={form} />
+    <div className={styles.root.preview()}>
+      <h1 className={styles.root.preview.title()}>{Field.label(field)}</h1>
+      {typeof view === 'string' && (
+        <code className={styles.root.field.type()}>{view}</code>
+      )}
     </div>
   )
 }
@@ -120,28 +117,10 @@ function SourceEditor({
     />
   )
   if (!resizeable) return inner
-  return (
-    <Pane
-      id="editor"
-      resizable="right"
-      defaultWidth={window.innerWidth * 0.5}
-      maxWidth={window.innerWidth * 0.8}
-      className={styles.root.editor()}
-    >
-      {inner}
-    </Pane>
-  )
+  return <div className={styles.root.editor()}>{inner}</div>
 }
 
 const ts = trigger<typeof typescript>()
-const source = new MemorySource()
-const client = new TestDB(cms.config, source)
-const workerDB = new WorkerDB(
-  cms.config,
-  new DashboardWorker(source),
-  client,
-  client.index
-)
 
 export interface PlaygroundProps {
   declarations: string
@@ -195,7 +174,7 @@ export default function Playground({declarations}: PlaygroundProps) {
         body.outputText
       )
       const exports = Object.create(null)
-      const pkgs = {
+      const pkgs: Record<string, unknown> = {
         alinea,
         React,
         'alinea/core': core,
@@ -205,7 +184,7 @@ export default function Playground({declarations}: PlaygroundProps) {
       exec(require, exports, React, alinea)
       setState({result: exports.default})
     } catch (error) {
-      setState({...state, error})
+      setState({...state, error: error as Error})
     }
   }
   function handleShare() {
@@ -221,133 +200,111 @@ export default function Playground({declarations}: PlaygroundProps) {
   }, [code])
   if (state.error) console.error(state.error)
   return (
-    <DashboardProvider
-      dev
-      db={workerDB}
-      client={client}
-      config={client.config}
-      views={defaultViews}
-    >
+    <>
       <Script
         src="https://cdn.jsdelivr.net/npm/typescript@5.1.3/lib/typescript.min.js"
         onLoad={() => {
           ts.resolve((window as any).ts)
         }}
       />
-      <Viewport
-        attachToBody
-        contain
-        color="#5661E5"
-        className={styles.root(view)}
-      >
-        <FieldToolbar.Provider>
-          {clipboard.copied && (
-            <div className={styles.root.flash()}>
-              <p className={styles.root.flash.msg()}>URL copied to clipboard</p>
-            </div>
-          )}
-          <VStack style={{height: '100%'}}>
-            <HStack style={{height: '100%', minHeight: 0}}>
-              {view !== 'preview' && (
-                <SourceEditor
-                  declarations={declarations}
-                  code={code}
-                  setCode={setCode}
-                  resizeable={view === 'both'}
-                />
-              )}
+      <div className={styles.root(view)}>
+        {clipboard.copied && (
+          <div className={styles.root.flash()}>
+            <p className={styles.root.flash.msg()}>URL copied to clipboard</p>
+          </div>
+        )}
+        <VStack style={{height: '100%'}}>
+          <HStack style={{height: '100%', minHeight: 0}}>
+            {view !== 'preview' && (
+              <SourceEditor
+                declarations={declarations}
+                code={code}
+                setCode={setCode}
+                resizeable={view === 'both'}
+              />
+            )}
 
-              {view !== 'source' && (
-                <Suspense fallback={<Loader absolute />}>
-                  <ErrorBoundary dependencies={[state.result]}>
-                    <Main>
-                      <Main.Container>
-                        {!state.result ? (
-                          state.error && <Loader absolute />
-                        ) : Type.isType(state.result) ? (
-                          <PreviewType type={state.result} />
-                        ) : (
-                          <PreviewField field={state.result} />
-                        )}
+            {view !== 'source' && (
+              <Suspense fallback={<Loader absolute />}>
+                <div className={styles.root.previewPane()}>
+                  {state.error ? (
+                    <div className={styles.root.errors()}>
+                      <VStack gap={20}>
+                        <p>{state.error.message}</p>
+                      </VStack>
+                    </div>
+                  ) : Type.isType(state.result) ? (
+                    <PreviewType type={state.result} />
+                  ) : state.result ? (
+                    <PreviewField field={state.result} />
+                  ) : (
+                    <Loader absolute />
+                  )}
+                </div>
+              </Suspense>
+            )}
+          </HStack>
 
-                        {state.error && (
-                          <div className={styles.root.errors()}>
-                            <VStack gap={20}>
-                              <Typo.Monospace as="div">
-                                <p>{state.error.message}</p>
-                              </Typo.Monospace>
-                            </VStack>
-                          </div>
-                        )}
-                      </Main.Container>
-                      <FieldToolbar.Root />
-                    </Main>
-                  </ErrorBoundary>
-                </Suspense>
-              )}
-            </HStack>
-
-            <footer className={styles.root.footer()}>
-              <Link href="/" className={styles.root.logo()} target="_top">
-                <Logo />
-              </Link>
-              <button
-                type="button"
-                className={styles.root.footer.button({
-                  active: view === 'source'
-                })}
-                onClick={() => setView('source')}
-              >
-                Editor
-              </button>
-              <button
-                type="button"
-                className={styles.root.footer.button({
-                  active: view === 'preview'
-                })}
-                onClick={() => setView('preview')}
-              >
-                Preview
-              </button>
-              <button
-                type="button"
-                className={styles.root.footer.button({
-                  active: view === 'both'
-                })}
-                onClick={() => setView('both')}
-              >
-                Both
-              </button>
-              <Stack.Center />
+          <footer className={styles.root.footer()}>
+            <Link href="/" className={styles.root.logo()} target="_top">
+              <Logo />
+            </Link>
+            <button
+              type="button"
+              className={styles.root.footer.button({
+                active: view === 'source'
+              })}
+              onClick={() => setView('source')}
+            >
+              Editor
+            </button>
+            <button
+              type="button"
+              className={styles.root.footer.button({
+                active: view === 'preview'
+              })}
+              onClick={() => setView('preview')}
+            >
+              Preview
+            </button>
+            <button
+              type="button"
+              className={styles.root.footer.button({
+                active: view === 'both'
+              })}
+              onClick={() => setView('both')}
+            >
+              Both
+            </button>
+            <Stack.Center />
+            <button
+              type="button"
+              className={styles.root.footer.button()}
+              onClick={handleShare}
+            >
+              Copy url
+            </button>
+            {window.top === window.self ? (
               <button
                 type="button"
                 className={styles.root.footer.button()}
-                onClick={handleShare}
+                onClick={handleReset}
               >
-                Copy url
+                Reset
               </button>
-              {window.top === window.self ? (
-                <button
-                  type="button"
-                  className={styles.root.footer.button()}
-                  onClick={handleReset}
-                >
-                  Reset
-                </button>
-              ) : (
-                <a
-                  className={styles.root.footer.button()}
-                  href={location.href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open in new tab
-                </a>
-              )}
-            </footer>
-          </VStack>
-        </FieldToolbar.Provider>
-      </Viewport>
-    </DashboardProvider>
+            ) : (
+              <a
+                className={styles.root.footer.button()}
+                href={location.href}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in new tab
+              </a>
+            )}
+          </footer>
+        </VStack>
+      </div>
+    </>
   )
 }
