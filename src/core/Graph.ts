@@ -207,9 +207,9 @@ export declare class QuerySettings {
   /** Filter by search terms */
   search?: string | Array<string>
 
-  /** The time in seconds to poll for updates to content */
+  /** Fallback interval in seconds for polling content updates (freshness is primarily sha-driven) */
   syncInterval?: number
-  /** Disable polling for updates to content */
+  /** Disable syncing content updates */
   disableSync?: boolean
 
   /** Skip the first N results */

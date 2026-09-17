@@ -4,7 +4,9 @@ export function createThrottledSync(): (
   sync: () => Promise<unknown>,
   interval?: number
 ) => Promise<void> {
-  let lastSync = Date.now()
+  // Start unset so a fresh isolate syncs on first use instead of serving
+  // its build-time snapshot for a full interval (cold-start staleness).
+  let lastSync = 0
   const limit = pLimit(1)
   return async function throttle(
     sync: () => Promise<unknown>,

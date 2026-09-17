@@ -18,6 +18,7 @@ import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
 import {requestContext} from './context.js'
 import {createDevRemote} from './DevRemote.js'
+import {revalidateContentSha} from './syncCheck.js'
 
 type Handler = (request: Request) => Promise<Response>
 
@@ -49,7 +50,15 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const handleBackend = createCoreHandler({
     ...options,
     remote,
-    db
+    db,
+    // Revalidate the shared content sha before the user-provided hook so
+    // page revalidation triggered there already sees the fresh sha when
+    // RSC renders resolve. Invalidation never throws (failures are
+    // swallowed inside revalidateContentSha).
+    afterCommit: async context => {
+      await revalidateContentSha()
+      await options.afterCommit?.(context)
+    }
   })
   const handle: Handler = async request => {
     const url = new URL(request.url)
