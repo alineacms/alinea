@@ -251,6 +251,12 @@ export class GithubApi
             throw new ShaMismatchError(actualSha, expectedHeadOid)
           }
         }
+        console.error('Alinea GitHub commit failed', {
+          expectedHeadOid,
+          additions: additions.map(change => change.path),
+          deletions: deletions.map(change => change.path),
+          error
+        })
         throw error
       })
   }
