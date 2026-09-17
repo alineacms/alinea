@@ -1,7 +1,6 @@
 import {Config} from '#/core/Config.js'
 import {Entry, entryStatuses, type EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
-import {Field} from '#/core/Field.js'
 import {getRoot} from '#/core/Internal.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
@@ -1138,11 +1137,11 @@ function dataWithUrlAlias(
   previousUrl: string,
   currentUrl: string
 ): Record<string, unknown> {
-  if (!hasMetadataAliases(type)) return data
+  if (!Type.hasMetadataAliases(type)) return data
   const aliasUrls = aliasUrlsFromData(data)
   if (aliasUrls.includes(previousUrl)) return data
   const nextData = aliasUrls.includes(currentUrl)
-    ? dataWithoutUrlAlias(data, currentUrl)
+    ? Type.withoutUrlAlias(type, data, currentUrl)
     : data
   const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
   const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
@@ -1151,30 +1150,6 @@ function dataWithUrlAlias(
     metadata,
     aliases.concat(createUrlAliasRow(previousUrl, aliases))
   )
-}
-
-function dataWithoutUrlAlias(
-  data: Record<string, unknown>,
-  url: string
-): Record<string, unknown> {
-  let result = data
-  if (Array.isArray(data.aliases)) {
-    result = {
-      ...result,
-      aliases: data.aliases.filter(alias => aliasUrl(alias) !== url)
-    }
-  }
-  const metadata = data.metadata
-  if (isRecord(metadata) && Array.isArray(metadata.aliases)) {
-    result = {
-      ...result,
-      metadata: {
-        ...metadata,
-        aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
-      }
-    }
-  }
-  return result
 }
 
 function dataWithAliases(
@@ -1188,14 +1163,6 @@ function dataWithAliases(
 interface UrlAliasRow extends ListRow {
   _type: 'alias'
   url: string
-}
-
-function hasMetadataAliases(type: Type): boolean {
-  const metadata = Type.field(type, 'metadata')
-  if (!metadata) return false
-  const options = Field.options(metadata)
-  const fields = (options as {fields?: unknown}).fields
-  return Type.isType(fields) && Boolean(Type.field(fields, 'aliases'))
 }
 
 function createUrlAliasRow(url: string, aliases: Array<unknown>) {
