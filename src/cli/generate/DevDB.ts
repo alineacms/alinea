@@ -1,11 +1,15 @@
 import * as fsp from 'node:fs/promises'
 import {Config} from '#/core/Config.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {Entry, type EntryStatus} from '#/core/Entry.js'
 import {createId} from '#/core/Id.js'
 import {getWorkspace} from '#/core/Internal.js'
 import {CachedFSSource} from '#/core/source/FSSource.js'
+import {hashBlob} from '#/core/source/GitUtils.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
+import type {Change} from '#/core/source/Change.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
 import {keys, values} from '#/core/util/Objects.js'
@@ -71,8 +75,60 @@ export class DevDB extends EntryStore {
   }
 
   async fix(): Promise<void> {
-    // The SQLite index is rebuilt from the source on sync, so there is no
-    // separate repair step. Keep `--fix` a successful no-op.
+    // Repair source files by round-tripping every authored version through
+    // the entry transaction (fills defaults, normalizes records) and writing
+    // back files whose canonical contents differ, like EntryIndex.fix did.
+    await this.sync()
+    const entries = (await this.find({
+      status: 'all',
+      select: {
+        id: Entry.id,
+        locale: Entry.locale,
+        status: Entry.versionStatus,
+        data: Entry.data,
+        seeded: Entry.seeded
+      }
+    })) as Array<{
+      id: string
+      locale: string | null
+      status: EntryStatus
+      data: Record<string, unknown>
+      seeded: string | null
+    }>
+    const mutations = entries
+      .filter(entry => !entry.seeded)
+      .map(
+        (entry): Mutation => ({
+          op: 'update',
+          id: entry.id,
+          locale: entry.locale,
+          status: entry.status,
+          set: entry.data
+        })
+      )
+    if (!mutations.length) return
+    const planned = await this.request(mutations)
+    const batch = sourceChanges(planned)
+    if (!batch.changes.length) return
+    const tree = await this.source.getTree()
+    const changes = Array<Change>()
+    for (const change of batch.changes) {
+      if (change.op !== 'add' || !change.contents) {
+        changes.push(change)
+        continue
+      }
+      const sha = await hashBlob(change.contents)
+      let current: string | undefined
+      try {
+        current = tree.getLeaf(change.path).sha
+      } catch {
+        current = undefined
+      }
+      if (current !== sha) changes.push(change)
+    }
+    if (!changes.length) return
+    await this.source.applyChanges({fromSha: batch.fromSha, changes})
+    await this.sync()
   }
 
   async watchFiles(): Promise<WatchFiles> {
