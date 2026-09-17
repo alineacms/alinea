@@ -15,7 +15,6 @@ import type {OrderBy} from './OrderBy.js'
 import type {Preview} from './Preview.js'
 import {Section, section} from './Section.js'
 import type {View} from './View.js'
-import {aliasUrl} from './db/EntryAliases.js'
 import type {EntryReferenceTarget} from './db/EntryReference.js'
 import type {SummaryProps} from './media/Summary.js'
 import {isValidIdentifier} from './util/Identifiers.js'
@@ -118,32 +117,6 @@ export namespace Type {
 
   export function isType(type: any): type is Type {
     return Boolean(type && hasType(type))
-  }
-
-  export function hasMetadataAliases(type: Type): boolean {
-    const metadata = field(type, 'metadata')
-    if (!metadata) return false
-    const options = Field.options(metadata)
-    const fields = (options as {fields?: unknown}).fields
-    return isType(fields) && Boolean(field(fields, 'aliases'))
-  }
-
-  /** Remove a URL from the entry's metadata aliases, if the type has them. */
-  export function withoutUrlAlias(
-    type: Type,
-    data: Record<string, unknown>,
-    url: string
-  ): Record<string, unknown> {
-    if (!hasMetadataAliases(type)) return data
-    const metadata = data.metadata
-    if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
-    return {
-      ...data,
-      metadata: {
-        ...metadata,
-        aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
-      }
-    }
   }
 
   export function sharedData(type: Type, entryData: Record<string, unknown>) {

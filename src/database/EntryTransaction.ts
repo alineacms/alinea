@@ -19,6 +19,8 @@ import {
   isValidOrderKey
 } from '#/core/util/FractionalIndexing.js'
 import {entries, fromEntries, isRecord, keys} from '#/core/util/Objects.js'
+import {Field} from '#/core/Field.js'
+import {MetadataField} from '#/field/metadata/MetadataField.js'
 import * as paths from '#/core/util/Paths.js'
 import {slugify} from '#/core/util/Slugs.js'
 import {unreachable} from '#/core/util/Types.js'
@@ -1131,17 +1133,26 @@ function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
   return Array.from(result)
 }
 
+function hasUrlAliases(type: Type): boolean {
+  const metadata = Type.field(type, 'metadata')
+  if (metadata instanceof MetadataField) return true
+  if (!metadata) return false
+  const options = Field.options(metadata)
+  const fields = (options as {fields?: unknown}).fields
+  return Type.isType(fields) && Boolean(Type.field(fields, 'aliases'))
+}
+
 function dataWithUrlAlias(
   type: Type,
   data: Record<string, unknown>,
   previousUrl: string,
   currentUrl: string
 ): Record<string, unknown> {
-  if (!Type.hasMetadataAliases(type)) return data
+  if (!hasUrlAliases(type)) return data
   const aliasUrls = aliasUrlsFromData(data)
   if (aliasUrls.includes(previousUrl)) return data
   const nextData = aliasUrls.includes(currentUrl)
-    ? Type.withoutUrlAlias(type, data, currentUrl)
+    ? withoutUrlAlias(data, currentUrl)
     : data
   const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
   const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
@@ -1150,6 +1161,21 @@ function dataWithUrlAlias(
     metadata,
     aliases.concat(createUrlAliasRow(previousUrl, aliases))
   )
+}
+
+function withoutUrlAlias(
+  data: Record<string, unknown>,
+  url: string
+): Record<string, unknown> {
+  const metadata = data.metadata
+  if (!isRecord(metadata) || !Array.isArray(metadata.aliases)) return data
+  return {
+    ...data,
+    metadata: {
+      ...metadata,
+      aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
+    }
+  }
 }
 
 function dataWithAliases(
