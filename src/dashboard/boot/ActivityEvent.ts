@@ -1,4 +1,4 @@
-export type ActivityType = 'mutation' | 'fetch' | 'upload'
+export type ActivityType = 'mutation' | 'upload'
 
 export type ActivityStatus =
   | 'pending'

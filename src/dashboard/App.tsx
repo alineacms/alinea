@@ -224,8 +224,7 @@ function DashboardApp(props: AppProps): ReactNode {
   const [appPending, app] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
-  const pending =
-    appPending || activity.isFetchingUpdates || activity.isMutating
+  const pending = appPending || activity.isMutating
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])

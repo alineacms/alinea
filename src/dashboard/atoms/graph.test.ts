@@ -97,13 +97,6 @@ test('only invalidates revisions for changed entry ids', async () => {
 test('summarizes current activity without hiding its history', () => {
   const state = activityState([
     {
-      id: 'fetch',
-      type: 'fetch',
-      status: 'running',
-      operations: [],
-      startedAt: 5
-    },
-    {
       id: 'pending',
       type: 'mutation',
       status: 'pending',
@@ -136,55 +129,10 @@ test('summarizes current activity without hiding its history', () => {
     }
   ])
 
-  expect(state.items).toHaveLength(5)
-  expect(state.isFetchingUpdates).toBe(true)
+  expect(state.items).toHaveLength(4)
   expect(state.isMutating).toBe(true)
   expect(state.hasFailed).toBe(true)
   expect(state.hasBlocked).toBe(true)
-  expect(state.canRetry).toBe(true)
-  expect(state.canDiscard).toBe(false)
-})
-
-test('a successful fetch resolves an older fetch failure', () => {
-  const state = activityState([
-    {
-      id: 'latest-fetch',
-      type: 'fetch',
-      status: 'succeeded',
-      operations: [],
-      startedAt: 2,
-      finishedAt: 3
-    },
-    {
-      id: 'older-fetch',
-      type: 'fetch',
-      status: 'failed',
-      operations: [],
-      startedAt: 1,
-      finishedAt: 2,
-      error: 'Offline'
-    }
-  ])
-
-  expect(state.items).toHaveLength(2)
-  expect(state.hasFailed).toBe(false)
-  expect(state.canRetry).toBe(false)
-})
-
-test('a failed fetch can be retried but not discarded', () => {
-  const state = activityState([
-    {
-      id: 'failed-fetch',
-      type: 'fetch',
-      status: 'failed',
-      operations: [],
-      startedAt: 1,
-      finishedAt: 2,
-      error: 'Offline'
-    }
-  ])
-
-  expect(state.hasFailed).toBe(true)
   expect(state.canRetry).toBe(true)
   expect(state.canDiscard).toBe(false)
 })
@@ -215,8 +163,8 @@ test('hydrates activity after a worker action already started', async () => {
     async activities() {
       return [
         {
-          id: 'fetch',
-          type: 'fetch',
+          id: 'mutation',
+          type: 'mutation',
           status: 'running',
           operations: [],
           startedAt: Date.now()
@@ -230,7 +178,7 @@ test('hydrates activity after a worker action already started', async () => {
   const unsubscribe = store.sub(activityAtom, () => {})
   await Promise.resolve()
 
-  expect(store.get(activityAtom).isFetchingUpdates).toBe(true)
+  expect(store.get(activityAtom).isMutating).toBe(true)
 
   unsubscribe()
 })

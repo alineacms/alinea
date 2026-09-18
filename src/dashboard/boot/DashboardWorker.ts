@@ -2,7 +2,6 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
-import {createId} from '#/core/Id.js'
 import {getScope} from '#/core/Scope.js'
 import {trigger} from '#/core/Trigger.js'
 import type {
@@ -142,11 +141,6 @@ export class DashboardWorker extends EventTarget {
 
   async retryActivity(): Promise<void> {
     if (this.#blocked) await this.#retryMutations()
-    if (this.#blocked) return
-    const latestFetch = this.#activities.find(
-      activity => activity.type === 'fetch'
-    )
-    if (latestFetch?.status === 'failed') await this.sync()
   }
 
   async #retryMutations(): Promise<void> {
@@ -220,7 +214,8 @@ export class DashboardWorker extends EventTarget {
           await this.#syncWithClient(db, client)
           item.sha = undefined
         } catch {
-          // Both the mutation and its recovery sync record their own failures.
+          // The mutation failure is already recorded; the recovery sync
+          // failure is silent and retried later.
         }
       }
     })
@@ -257,28 +252,12 @@ export class DashboardWorker extends EventTarget {
   }
 
   async #syncWithClient(db: LocalDB, client: LocalConnection) {
-    const activity: Activity = {
-      id: createId(),
-      type: 'fetch',
-      status: 'running',
-      operations: [],
-      startedAt: Date.now()
-    }
-    this.#activities.unshift(activity)
-    this.#emitActivity()
-    try {
-      const result = await db.syncWith(client)
-      activity.status = 'succeeded'
-      return result
-    } catch (error) {
-      activity.status = 'failed'
-      activity.error = errorMessage(error)
-      throw error
-    } finally {
-      activity.finishedAt = Date.now()
-      this.#trimActivities()
-      this.#emitActivity()
-    }
+    // Fetch syncs are intentionally not recorded as activities: they run on
+    // every load and on an interval, so history rows would just be noise.
+    // Failures throw to the caller and background syncs retry on the next
+    // interval. The initial sync failure blocks graph readiness, so a broken
+    // initial sync still surfaces as a load error.
+    return db.syncWith(client)
   }
 
   #failActivity(activity: Activity, error: unknown) {
@@ -363,7 +342,7 @@ export class DashboardWorker extends EventTarget {
     if (this.#syncInterval) return
     const sync = () => {
       void this.sync().catch(() => {
-        // Background sync failures are exposed through activity state.
+        // Background sync failures are silent and retried on the next interval.
       })
     }
     this.#syncInterval = setInterval(sync, syncInterval)
