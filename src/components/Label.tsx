@@ -11,6 +11,7 @@ import css from './Label.module.css'
 const styles = styler(css)
 
 export interface LabelSharedProps {
+  actions?: ReactNode
   label?: ReactNode
   asLabel?: boolean
   description?: ReactNode
@@ -25,6 +26,7 @@ export interface LabelSharedProps {
 export interface LabelProps extends LabelSharedProps, LabelPrimitiveProps {}
 
 export function LabelHeader({
+  actions,
   label,
   description,
   shared,
@@ -48,6 +50,7 @@ export function LabelHeader({
           {...props}
         />
       )}
+      {actions && <div className={styles.LabelHeader.actions()}>{actions}</div>}
     </header>
   )
 }
@@ -175,6 +178,7 @@ export function SharedLabelBadge({label = 'Shared'}: SharedLabelBadgeProps) {
 }
 
 export function Label({
+  actions,
   label,
   description,
   errorMessage,
@@ -188,7 +192,7 @@ export function Label({
 }: LabelProps) {
   const hasLabel = label
   const hasTitle = hasLabel || icon
-  const hasHeader = hasTitle || description
+  const hasHeader = hasTitle || description || actions
   if (!hasHeader && !errorMessage && !children) return null
 
   return (
@@ -196,6 +200,7 @@ export function Label({
       {hasHeader && (
         <LabelHeader
           label={label}
+          actions={actions}
           asLabel={asLabel}
           description={description}
           isRequired={isRequired}

@@ -12,11 +12,12 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
-  ListRowDragHandle,
   ListRowFoldButton,
   ListRowFooter,
   ListRowHeader,
   ListRowSettings,
+  ListRowType,
+  ListTypeIcon,
   MenuSeparator,
   Popover,
   Select,
@@ -839,7 +840,12 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
   const anchorRef = useRef<HTMLDivElement>(null)
   if (options.readOnly) return null
   return (
-    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
+    <div
+      aria-label={`Add ${options.label || 'link'}`}
+      className={styles.LinkFieldView.create()}
+      ref={anchorRef}
+      role="toolbar"
+    >
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           anchorRef={anchorRef}
@@ -851,9 +857,9 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
           type={type as PickerType}
           value={value?._type === type ? value : undefined}
         >
-          <Icon
-            aria-hidden
+          <ListTypeIcon
             icon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
+            name={options.isEntryField ? options.label : picker.label}
           />
           {options.isEntryField ? options.label : picker.label}
         </LinkPickerAction>
@@ -875,7 +881,12 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
   if (options.readOnly) return null
   if (!showCreate) return null
   return (
-    <div className={styles.LinkFieldView.create()} ref={anchorRef}>
+    <div
+      aria-label={`Add ${options.label || 'links'}`}
+      className={styles.LinkFieldView.create()}
+      ref={anchorRef}
+      role="toolbar"
+    >
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           allowDuplicates={options.allowDuplicates}
@@ -904,9 +915,9 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
           selection={links.filter(row => row._type === type)}
           type={type as PickerType}
         >
-          <Icon
-            aria-hidden
+          <ListTypeIcon
             icon={options.isEntryField ? IcRoundAdd : getLinkIcon(type)}
+            name={options.isEntryField ? options.label : picker.label}
           />
           {options.isEntryField ? options.label : picker.label}
         </LinkPickerAction>
@@ -1178,9 +1189,9 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
   if (type === 'image') return null
   if (type === 'file') {
     return (
-      <Badge {...props} icon={IcRoundAttachFile} size="small">
+      <ListRowType {...props} icon={IcRoundAttachFile}>
         File
-      </Badge>
+      </ListRowType>
     )
   }
   if ('_entry' in value) {
@@ -1195,9 +1206,9 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
     )
   }
   return (
-    <Badge {...props} icon={fallbackIcon} size="small">
+    <ListRowType {...props} icon={fallbackIcon}>
       {fallbackLabel}
-    </Badge>
+    </ListRowType>
   )
 }
 
@@ -1238,22 +1249,21 @@ function EntryLinkTypeBadge({
   const type = entry ? config.schema[entry.type] : undefined
   if (!type) {
     return (
-      <Badge {...props} icon={fallbackIcon} size="small">
+      <ListRowType {...props} icon={fallbackIcon}>
         {fallbackLabel}
-      </Badge>
+      </ListRowType>
     )
   }
   return (
-    <Badge
+    <ListRowType
       {...props}
       className={styles.LinkFieldView.type(
         styler.merge({className: props.className})
       )}
       icon={getType(type).icon || IcRoundLink}
-      size="small"
     >
       {Type.label(type)}
-    </Badge>
+    </ListRowType>
   )
 }
 
@@ -1434,6 +1444,7 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
     <>
       <ListRow aria-label="Link item 1" first role="listitem">
         <ListRowHeader
+          expanded={hasFields}
           first
           hasFold={false}
           className={styles.LinkFieldView.inputHeader()}
@@ -1621,14 +1632,13 @@ function MultipleLinkRow({
           first={index === 0}
           role="listitem"
         >
-          <ListRowHeader first={index === 0} hasFold={hasFields}>
-            {!readOnly && (
-              <ListRowDragHandle
-                {...dragProps}
-                aria-label={`Drag link item ${index + 1}`}
-                dragging={isDragging}
-              />
-            )}
+          <ListRowHeader
+            {...(!readOnly ? dragProps : undefined)}
+            expanded={expanded && hasFields}
+            first={index === 0}
+            hasFold={hasFields}
+            onToggle={hasFields ? () => onToggleRow(itemId) : undefined}
+          >
             {imagePreviewEntryId && !hasFields && (
               <EntryLinkImagePreview entryId={imagePreviewEntryId} />
             )}
@@ -1768,22 +1778,24 @@ export function SingleLinkFieldView({field}: SingleLinkFieldViewProps) {
   const isEmpty = nodeIsEmpty || !selectedValue
   const hasRows = Boolean(selectedValue)
   const readOnly = Boolean(options.readOnly)
-  const content = (hasRows || !readOnly) && (
-    <List aria-label={options.label || 'Link'}>
-      {selectedValue && (
+  const content =
+    (hasRows || !readOnly) &&
+    (selectedValue ? (
+      <List aria-label={options.label || 'Link'}>
         <SingleLinkRow
           field={field}
           node={node as ReactiveNode<LinkFieldRow>}
           value={selectedValue}
         />
-      )}
-      {isEmpty && !readOnly && (
+      </List>
+    ) : (
+      isEmpty &&
+      !readOnly && (
         <ListCreateRow empty className={styles.LinkFieldView.inputHeader()}>
           <SingleLinkCreateActions field={field} />
         </ListCreateRow>
-      )}
-    </List>
-  )
+      )
+    ))
   return (
     <Label
       description={options.help}
@@ -1868,59 +1880,57 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
 
   const content = (hasRows || !readOnly) && (
     <>
-      <LinkFieldDropIndicator
-        active={
-          dropIndicator?.index === 0 && dropIndicator.position === 'before'
-        }
-      />
-      <List aria-label={options.label || 'Links'}>
-        {nodes.length > 0 && (
-          <>
-            {nodes.map((node, index) => {
-              const value = links[index]
-              if (!value) return null
-              return (
-                <Fragment key={value._id}>
-                  {index > 0 && (
-                    <LinkFieldDropIndicator
-                      active={isBoundaryDropTarget(index)}
-                    />
-                  )}
-                  <MultipleLinkRow
-                    dragging={Boolean(draggingRowId)}
-                    expanded={!foldedIds.has(value._id)}
-                    field={field}
-                    index={index}
-                    node={node}
-                    onMoveRow={moveRow}
-                    onRowDragEnd={() => {
-                      setDraggingRowId(null)
-                      setDropIndicator(null)
-                    }}
-                    onRowDragStart={() => setDraggingRowId(value._id)}
-                    onDropIndicatorChange={position =>
-                      setDropIndicator(position ? {index, position} : null)
-                    }
-                    onToggleRow={toggleRow}
-                    value={value}
+      {hasRows && (
+        <List aria-label={options.label || 'Links'}>
+          <LinkFieldDropIndicator
+            active={
+              dropIndicator?.index === 0 && dropIndicator.position === 'before'
+            }
+          />
+          {nodes.map((node, index) => {
+            const value = links[index]
+            if (!value) return null
+            return (
+              <Fragment key={value._id}>
+                {index > 0 && (
+                  <LinkFieldDropIndicator
+                    active={isBoundaryDropTarget(index)}
                   />
-                </Fragment>
-              )
-            })}
-          </>
-        )}
-        <LinkFieldDropIndicator
-          active={
-            dropIndicator?.index === nodes.length - 1 &&
-            dropIndicator.position === 'after'
-          }
-        />
-        {!readOnly && (
-          <ListCreateRow empty={!hasRows}>
-            <MultipleLinkCreateActions field={field} />
-          </ListCreateRow>
-        )}
-      </List>
+                )}
+                <MultipleLinkRow
+                  dragging={Boolean(draggingRowId)}
+                  expanded={!foldedIds.has(value._id)}
+                  field={field}
+                  index={index}
+                  node={node}
+                  onMoveRow={moveRow}
+                  onRowDragEnd={() => {
+                    setDraggingRowId(null)
+                    setDropIndicator(null)
+                  }}
+                  onRowDragStart={() => setDraggingRowId(value._id)}
+                  onDropIndicatorChange={position =>
+                    setDropIndicator(position ? {index, position} : null)
+                  }
+                  onToggleRow={toggleRow}
+                  value={value}
+                />
+              </Fragment>
+            )
+          })}
+          <LinkFieldDropIndicator
+            active={
+              dropIndicator?.index === nodes.length - 1 &&
+              dropIndicator.position === 'after'
+            }
+          />
+        </List>
+      )}
+      {!readOnly && (
+        <ListCreateRow empty={!hasRows}>
+          <MultipleLinkCreateActions field={field} />
+        </ListCreateRow>
+      )}
     </>
   )
 
@@ -1935,12 +1945,13 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
             : 'No links to fold'
         }
         expanded={allExpanded}
+        count={nodes.length}
         hasRows={hasRows}
         isDisabled={!hasFoldableRows}
         onPress={toggleAll}
         description={options.help}
         shared={options.shared}
-        showFold={!options.inline && hasFoldableRows}
+        showFold={hasFoldableRows}
         inline={options.inline}
       >
         {options.label}

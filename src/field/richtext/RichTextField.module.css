@@ -50,6 +50,12 @@
   outline-color: transparent;
 }
 
+.RichTextFieldView-foldAll {
+  margin: -4px -8px;
+  color: var(--alinea-fg-muted);
+  font-weight: 400;
+}
+
 .RichTextFieldView :global(.ProseMirror) {
   min-height: calc(1.5em + 16px);
   padding: 8px 10px;
@@ -57,6 +63,10 @@
   color: var(--alinea-fg);
   font-size: var(--alinea-font-size-base);
   line-height: 1.5;
+}
+
+.RichTextFieldView:not([data-read-only]) :global(.ProseMirror) {
+  cursor: text;
 }
 
 .RichTextFieldView[data-read-only='true'] :global(.ProseMirror) {

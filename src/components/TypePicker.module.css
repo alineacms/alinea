@@ -1,0 +1,70 @@
+.TypePicker-popover {
+  width: 280px;
+  min-width: 280px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.TypePicker-dialog {
+  padding: 0;
+  overflow: hidden;
+}
+
+.TypePicker-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--alinea-border);
+}
+
+.TypePicker-list {
+  max-height: 260px;
+  overflow: auto;
+  padding: 4px;
+  outline: none;
+}
+
+.TypePicker-empty {
+  padding: 16px;
+  color: var(--alinea-fg-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.TypePicker-item {
+  cursor: pointer;
+  font-size: var(--alinea-font-size-base);
+  padding: 0.4rem;
+  display: flex;
+  outline: none;
+  align-items: center;
+  border-radius: 4px;
+  gap: 8px;
+  position: relative;
+  color: var(--alinea-fg);
+}
+
+.TypePicker-item[data-focus-visible] {
+  outline: none;
+}
+
+.TypePicker-item[data-hovered]:not([data-focus-visible]) {
+  background: var(--alinea-muted);
+}
+
+.TypePicker-item[data-selected] {
+  color: var(--alinea-selected-fg);
+  background: var(--alinea-selected);
+}
+
+.TypePicker-item[data-focused] {
+  outline: 2px solid var(--alinea-focus);
+  outline-offset: -2px;
+}
+
+.TypePicker-item[data-disabled] {
+  color: var(--alinea-fg-disabled);
+  cursor: default;
+}
+
+.TypePicker-item-icon {
+  flex: 0 0 auto;
+}

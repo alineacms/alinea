@@ -117,7 +117,7 @@ function LinkPickerPopover({anchorRef, children}: LinkPickerPopoverProps) {
   return (
     <Popover
       className={styles.LinkPicker.popover()}
-      placement="bottom"
+      placement="bottom left"
       triggerRef={anchorRef}
     >
       {children}
