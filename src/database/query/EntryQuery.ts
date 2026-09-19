@@ -241,20 +241,31 @@ class Expressions {
   }
 }
 
+export interface EntryQueryOptions {
+  source?: AnyRelationSource
+  search?: ReturnType<typeof searchQuery>
+  entry?: EntryIndexTarget
+  depth?: number
+  baseEntry?: EntryIndexTarget
+  searchName?: string
+}
+
 export function compileEntryQuery(
   config: Config,
   query: GraphQuery,
-  source?: AnyRelationSource,
-  search?: ReturnType<typeof searchQuery>,
-  entry: EntryIndexTarget = EntryIndexTable,
-  depth = 0,
-  baseEntry: EntryIndexTarget = entry,
-  searchName: string = EntrySearchName
+  options: EntryQueryOptions = {}
 ) {
+  const {
+    source,
+    entry = EntryIndexTable,
+    depth = 0,
+    baseEntry = entry,
+    searchName = EntrySearchName
+  } = options
+  const search = options.search ?? searchQuery(query.search, entry, searchName)
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  search ??= searchQuery(query.search, entry, searchName)
   const membership = new Expressions(scope, entry, search, () => {
     throw new Error('Relations cannot be used as query conditions')
   })
@@ -411,12 +422,13 @@ export function compileEntryQuery(
     const nested = compileEntryQuery(
       config,
       {...relationQuery, status: query.status ?? 'published'},
-      relationSource(entry),
-      undefined,
-      nestedEntry,
-      depth + 1,
-      baseEntry,
-      searchName
+      {
+        source: relationSource(entry),
+        entry: nestedEntry,
+        depth: depth + 1,
+        baseEntry,
+        searchName
+      }
     )
     const plan: ProjectionPlan = {
       count: nested.count,

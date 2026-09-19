@@ -1,19 +1,10 @@
 import type {Config} from '#/core/Config.js'
-import {
-  Graph,
-  type AnyQueryResult,
-  type GraphQuery,
-  type Projection,
-  type InferProjection
-} from '#/core/Graph.js'
-import {Field} from '#/core/Field.js'
+import {Graph, type AnyQueryResult, type GraphQuery} from '#/core/Graph.js'
 import {Entry} from '#/core/Entry.js'
 import type {
-  EntryReference,
   EntryReferenceQuery,
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
-import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {Policy} from '#/core/Role.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
@@ -25,38 +16,24 @@ import {
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
-import {Type} from '#/core/Type.js'
-import {isRecord} from '#/core/util/Objects.js'
-import {
-  and,
-  asc,
-  count,
-  type Database,
-  eq,
-  gt,
-  inArray,
-  isNull,
-  sql
-} from 'rado'
+import {type Database, eq, inArray, sql} from 'rado'
 import {EntryView} from './entry/EntryView.js'
 import {
   DatabaseMetadataTable,
   DatabaseStateTable,
   EntryIndexTable,
-  storedEntryData,
   type EntryIndexTarget
 } from './entry/Schema.js'
-import {compileEntryQuery, type ProjectionPlan} from './query/EntryQuery.js'
+import {resolveEntryQuery} from './query/ResolveQuery.js'
+import {queryEntryReferences} from './query/EntryReferences.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {
   createSearch,
   EntrySearchName,
   rebuildSearch,
-  searchQuery,
   type SearchQuery
 } from './query/Search.js'
-import type {RelationSource} from './query/Relation.js'
 import {
   EntrySyncer,
   EntrySyncRoot,
@@ -125,42 +102,6 @@ export interface EntryDatabaseOverlay extends AsyncDisposable {
   database: EntryDatabase
   source: OverlaySource
   close(): Promise<void>
-}
-
-function hasOwnPath(value: unknown, path: Array<string>): boolean {
-  let current = value
-  for (const key of path) {
-    if (!isRecord(current) || !Object.hasOwn(current, key)) return false
-    current = current[key]
-  }
-  return true
-}
-
-function setProjectionValue(
-  value: unknown,
-  path: Array<string>,
-  replacement: unknown
-): void {
-  let target = value
-  for (const key of path.slice(0, -1)) {
-    if (!isRecord(target)) return
-    target = target[key]
-  }
-  if (isRecord(target)) target[path.at(-1)!] = replacement
-}
-
-function getProjectionValue(value: unknown, path: Array<string>): unknown {
-  let current = value
-  for (const key of path) {
-    if (!isRecord(current)) return
-    current = current[key]
-  }
-  return current
-}
-
-function relationRows(value: unknown, single: boolean): Array<unknown> {
-  if (single) return value == null ? [] : [value]
-  return Array.isArray(value) ? value : []
 }
 
 /** A queryable entry database or a named copy-on-write view over one. */
@@ -597,207 +538,17 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     })
   }
 
-  async #resolve(
-    query: GraphQuery,
-    db: Database,
-    source?: RelationSource
-  ): Promise<unknown> {
-    if (source) {
-      query = {preferredLocale: source.locale ?? undefined, ...query}
-    }
-    const search = this.#options.search
-      ? await this.#options.search(query.search)
-      : searchQuery(query.search, this.#entryTarget, this.#searchName)
-    const plan = compileEntryQuery(
-      this.#config,
-      query,
-      source,
-      search,
-      this.#entryTarget,
-      0,
-      this.#entryTarget,
-      this.#searchName
-    )
-    if (plan.needsSearch && !this.#options.search) await this.#ensureSearch(db)
-    if (plan.count)
-      return db.select(count()).from(plan.rows.as('matches')).get()
-    const result = await plan.rows.all(db)
-    if (!source && query.get && !result.length)
-      throw new Error('Entry not found')
-    return this.#projectRows(query, plan, result, db, Boolean(source))
-  }
-
-  #linkResolver(
-    query: GraphQuery,
-    source: RelationSource,
-    db: Database
-  ): LinkResolver {
-    const database = this
-    const loader: LinkResolver = {
-      resolver: {config: this.#config},
-      locale: source.locale,
-      includedAtBuild(filePath) {
-        return database.#options.includedAtBuild?.(filePath) ?? false
-      },
-      async resolveLinks<P extends Projection>(
-        projection: P,
-        ids: ReadonlyArray<string>,
-        locale: string | null | undefined = source.locale
-      ): Promise<Array<InferProjection<P>>> {
-        return (await database.#resolve(
-          {
-            select: projection,
-            id: {in: ids},
-            status: query.status ?? 'published',
-            preferredLocale: locale ?? undefined
-          },
-          db
-        )) as Array<InferProjection<P>>
-      },
-      async resolveTargets<P extends Projection & {id: unknown}>(
-        projection: P,
-        targets: ReadonlyArray<{entryId: string; locale?: string}>
-      ): Promise<Array<InferProjection<P> | undefined>> {
-        const targetsByLocale = new Map<string | undefined, Set<string>>()
-        for (const {entryId, locale} of targets) {
-          const ids = targetsByLocale.get(locale) ?? new Set<string>()
-          ids.add(entryId)
-          targetsByLocale.set(locale, ids)
-        }
-        const resultsByLocale = new Map<
-          string | undefined,
-          Map<string, InferProjection<P>>
-        >()
-        await Promise.all(
-          Array.from(targetsByLocale, async ([locale, ids]) => {
-            const results = await loader.resolveLinks(
-              projection,
-              [...ids],
-              locale
-            )
-            resultsByLocale.set(
-              locale,
-              new Map(results.map(result => [String(result.id), result]))
-            )
-          })
-        )
-        return targets.map(({entryId, locale}) =>
-          resultsByLocale.get(locale)?.get(entryId)
-        )
-      }
-    }
-    return loader
-  }
-
-  async #projectRows(
-    query: GraphQuery,
-    plan: ProjectionPlan,
-    result: Array<unknown>,
-    db: Database,
-    nested: boolean
-  ): Promise<unknown> {
-    const rows = await Promise.all(
-      result.map(row => this.#projectRow(query, plan, row, db))
-    )
-    // Graph's nested projection stage returns undefined for an absent single
-    // relation; only the public top-level first/get stage normalizes absence.
-    if (!plan.single) return rows
-    if (nested || rows.length) return rows[0]
-    return null
-  }
-
-  async #projectRow(
-    query: GraphQuery,
-    plan: ProjectionPlan,
-    row: unknown,
-    db: Database
-  ): Promise<unknown> {
-    if (!plan.relations.length && !plan.fields.length && !plan.optional.length)
-      return row
-    const projected = row as {
-      value: unknown
-      source: RelationSource
-      data?: unknown
-    }
-    let value = projected.value
-    const selectedData =
-      plan.fields.length || plan.optional.length
-        ? storedEntryData(projected.data, projected.source.path)
-        : undefined
-    const loader = this.#linkResolver(query, projected.source, db)
-    await Promise.all(
-      plan.fields.map(async selected => {
-        const present = Object.hasOwn(selectedData!, selected.name)
-        if (!selected.path.length) {
-          if (!present) value = undefined
-          // The Graph resolver returns a falsy top-level selection directly.
-          if (value)
-            value = await Field.queryValue(selected.field, value, loader)
-        } else {
-          let target = value
-          for (const key of selected.path.slice(0, -1)) {
-            if (!isRecord(target))
-              throw new Error('Invalid field projection path')
-            target = target[key]
-          }
-          if (!isRecord(target))
-            throw new Error('Invalid field projection target')
-          const key = selected.path.at(-1)!
-          const processed = await Field.queryValue(
-            selected.field,
-            present ? target[key] : undefined,
-            loader
-          )
-          Object.defineProperty(target, key, {
-            value: processed,
-            enumerable: true,
-            configurable: true,
-            writable: true
-          })
-        }
-      })
-    )
-    for (const selected of plan.optional) {
-      if (hasOwnPath(selectedData!, selected.dataPath)) continue
-      if (!selected.path.length) value = undefined
-      else setProjectionValue(value, selected.path, undefined)
-    }
-    await Promise.all(
-      plan.relations.map(async relation => {
-        const relationQuery = {
-          ...relation.query,
-          status: query.status ?? 'published'
-        }
-        const included = getProjectionValue(value, relation.path)
-        const related = relation.plan.count
-          ? (included ?? 0)
-          : await this.#projectRows(
-              relationQuery,
-              relation.plan,
-              relationRows(included, relation.plan.single),
-              db,
-              true
-            )
-        if (!relation.path.length) value = related
-        else {
-          let target = value
-          for (const key of relation.path.slice(0, -1)) {
-            if (!isRecord(target))
-              throw new Error('Invalid relation projection path')
-            target = target[key]
-          }
-          if (!isRecord(target))
-            throw new Error('Invalid relation projection target')
-          Object.defineProperty(target, relation.path.at(-1)!, {
-            value: related,
-            enumerable: true,
-            configurable: true,
-            writable: true
-          })
-        }
-      })
-    )
-    return value
+  #resolve(query: GraphQuery, database: Database): Promise<unknown> {
+    return resolveEntryQuery(query, {
+      config: this.#config,
+      database,
+      entries: this.#entryTarget,
+      searchName: this.#searchName,
+      search: this.#options.search,
+      prepareSearch: () => this.#ensureSearch(database),
+      includedAtBuild: filePath =>
+        this.#options.includedAtBuild?.(filePath) ?? false
+    })
   }
 
   /** Scan references in bounded pages without retaining an entry index. */
@@ -805,83 +556,14 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     if (this.#closed)
       return Promise.reject(new Error('EntryDatabase is closed'))
     return this.#withReadConnection(() =>
-      this.#db.transaction(tx => this.#referencesTo(tx, query), {
-        async: true,
-        behavior: 'deferred'
-      })
-    )
-  }
-
-  async #referencesTo(
-    db: Database,
-    query: EntryReferenceQuery
-  ): Promise<EntryReferenceResult> {
-    const entry = this.#entryTarget
-    const status = query.status ?? 'published'
-    const conditions = [eq(entry.visible, true)]
-    if (query.locale !== undefined)
-      conditions.push(
-        query.locale === null
-          ? isNull(entry.locale)
-          : eq(sql`${entry.locale} collate nocase`, query.locale)
-      )
-    if (status === 'preferDraft') conditions.push(eq(entry.active, true))
-    else if (status === 'preferPublished') conditions.push(eq(entry.main, true))
-    else if (status !== 'all') conditions.push(eq(entry.status, status))
-
-    const references: Array<EntryReference> = []
-    const pageSize = 500
-    let cursor = ''
-    let scanned = 0
-    while (true) {
-      const rows = await db
-        .select({
-          versionId: entry.versionId,
-          id: entry.id,
-          filePath: entry.filePath,
-          type: entry.type,
-          locale: entry.locale,
-          status: entry.status,
-          active: entry.active,
-          main: entry.main,
-          path: entry.path,
-          data: entry.data
-        })
-        .from(entry)
-        .where(and(...conditions, gt(entry.versionId, cursor)))
-        .orderBy(asc(entry.versionId))
-        .limit(pageSize)
-        .all()
-      if (!rows.length) break
-      for (const row of rows) {
-        scanned += 1
-        const type = this.#config.schema[row.type]
-        if (!type) continue
-        for (const target of Type.references(
-          type,
-          storedEntryData(row.data, row.path)
-        )) {
-          if (target.targetId !== query.targetId) continue
-          references.push({
-            ...target,
-            sourceId: row.id,
-            sourceFilePath: row.filePath,
-            sourceType: row.type,
-            sourceLocale: row.locale,
-            sourceStatus: row.status,
-            sourceActive: row.active,
-            sourceMain: row.main
-          })
+      this.#db.transaction(
+        tx => queryEntryReferences(this.#config, tx, this.#entryTarget, query),
+        {
+          async: true,
+          behavior: 'deferred'
         }
-      }
-      cursor = rows.at(-1)!.versionId
-      if (rows.length < pageSize) break
-    }
-    return {
-      references,
-      total: references.length,
-      scan: {scanned, total: scanned, complete: true}
-    }
+      )
+    )
   }
 
   async #ensureSearch(db: Database): Promise<void> {
