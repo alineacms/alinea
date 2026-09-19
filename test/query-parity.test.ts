@@ -686,9 +686,12 @@ test('preserves missing, null and nested field projections', async () => {
     expect(
       await store.resolve({id: 'grand', first: true, select: Entry.createdAt})
     ).toBeNull()
-    expect(
-      await store.get({id: 'parent', select: {createdAt: Entry.createdAt}})
-    ).toEqual({createdAt: undefined})
+    const parent = await store.get({
+      id: 'parent',
+      select: {createdAt: Entry.createdAt}
+    })
+    expect(Object.hasOwn(parent, 'createdAt')).toBe(true)
+    expect(parent.createdAt).toBeUndefined()
   })
 })
 

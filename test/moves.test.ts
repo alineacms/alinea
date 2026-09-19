@@ -1,4 +1,5 @@
 import {suite} from '@alinea/suite'
+import {expect} from 'bun:test'
 import {Config, Query} from '#/index.js'
 import {Entry, createCMS} from '#/core.js'
 import {LocalDB} from '#/core/db/LocalDB.js'
@@ -202,9 +203,9 @@ test('move onto a same-path published sibling throws', async () => {
   const db = new LocalDB(moveCms.config)
   try {
     await db.syncWith(await samePathSource('published'))
-    await test.throws(async () => {
-      await db.move({id: 'b', target: 'a', dropPosition: 'before'})
-    }, EntryUrlConflictError)
+    await expect(
+      db.move({id: 'b', target: 'a', dropPosition: 'before'})
+    ).rejects.toBeInstanceOf(EntryUrlConflictError)
     const rows = await db.find({
       select: {id: Entry.id, parentId: Entry.parentId}
     })

@@ -37,7 +37,7 @@ import {
 
 export async function deriveHierarchy(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   queries: SyncQueries
 ): Promise<boolean> {
   let changed = false
@@ -63,12 +63,12 @@ export async function deriveHierarchy(
       directories.push(
         ...((await db
           .select({
-            id: EntryIndexTable.id,
-            childrenDir: EntryIndexTable.childrenDir
+            id: entries.id,
+            childrenDir: entries.childrenDir
           })
-          .from(EntryIndexTable)
-          .where(inArray(EntryIndexTable.childrenDir, paths))
-          .groupBy(EntryIndexTable.childrenDir)) as Array<DirectoryRow>)
+          .from(entries)
+          .where(inArray(entries.childrenDir, paths))
+          .groupBy(entries.childrenDir)) as Array<DirectoryRow>)
       )
     const idByDirectory = new Map<string, string>()
     for (const directory of directories)
@@ -99,13 +99,13 @@ export async function deriveHierarchy(
 
 export async function expandAffected(
   db: Database,
-  EntryIndexTable: EntryIndexTarget
+  entries: EntryIndexTarget
 ): Promise<void> {
   await db.run(sql`
     with recursive descendants(id) as (
       select id from alinea_sync_cascade
       union
-      select entry.id from ${EntryIndexTable} entry
+      select entry.id from ${entries} entry
       join descendants on entry.parentId = descendants.id
     )
     insert or ignore into alinea_sync_affected(id) select id from descendants;
@@ -200,7 +200,7 @@ function parentPathKey(id: string, locale: string | null): string {
 
 export async function deriveUrls(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   config: Config,
   queries: SyncQueries
 ): Promise<void> {
@@ -215,16 +215,13 @@ export async function deriveUrls(
     const parentPaths = parentIds.length
       ? ((await db
           .select({
-            id: EntryIndexTable.id,
-            locale: EntryIndexTable.locale,
-            path: EntryIndexTable.path
+            id: entries.id,
+            locale: entries.locale,
+            path: entries.path
           })
-          .from(EntryIndexTable)
+          .from(entries)
           .where(
-            and(
-              eq(EntryIndexTable.main, true),
-              inArray(EntryIndexTable.id, parentIds)
-            )
+            and(eq(entries.main, true), inArray(entries.id, parentIds))
           )) as Array<ParentPathRow>)
       : []
     const pathByParent = new Map<string, string>()

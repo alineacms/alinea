@@ -25,25 +25,25 @@ import {
 
 async function markAffected(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   filePaths: ReadonlyArray<string>,
   versionIds: ReadonlyArray<string> = []
 ): Promise<Array<AffectedEntryRow>> {
   if (!filePaths.length && !versionIds.length) return []
   const existing = (await db
     .select({
-      id: EntryIndexTable.id,
-      filePath: EntryIndexTable.filePath,
-      childrenSha: EntryIndexTable.childrenSha
+      id: entries.id,
+      filePath: entries.filePath,
+      childrenSha: entries.childrenSha
     })
-    .from(EntryIndexTable)
+    .from(entries)
     .where(
       or(
         filePaths.length
-          ? inArray(EntryIndexTable.filePath, Array.from(filePaths))
+          ? inArray(entries.filePath, Array.from(filePaths))
           : undefined,
         versionIds.length
-          ? inArray(EntryIndexTable.versionId, Array.from(versionIds))
+          ? inArray(entries.versionId, Array.from(versionIds))
           : undefined
       )
     )) as Array<AffectedEntryRow>
@@ -82,22 +82,22 @@ async function addIds(
 
 async function deleteFiles(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   filePaths: ReadonlyArray<string>
 ): Promise<void> {
   if (!filePaths.length) return
-  const existing = await markAffected(db, EntryIndexTable, filePaths)
+  const existing = await markAffected(db, entries, filePaths)
   const found = new Set(existing.map(row => row.filePath))
   for (const filePath of filePaths)
     assert(found.has(filePath), `Missing version to delete: ${filePath}`)
   await db
-    .delete(EntryIndexTable)
-    .where(inArray(EntryIndexTable.filePath, Array.from(filePaths)))
+    .delete(entries)
+    .where(inArray(entries.filePath, Array.from(filePaths)))
 }
 
 async function replaceFiles(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   config: Config,
   source: RemoteSource,
   tree: ReadonlyTree,
@@ -110,7 +110,7 @@ async function replaceFiles(
     paths.push(file.filePath)
     pathsByHash.set(file.fileHash, paths)
   }
-  const entries = Array<IndexedEntry>()
+  const parsedEntries = Array<IndexedEntry>()
   const found = new Set<string>()
   for await (const [fileHash, blob] of source.getBlobs([
     ...pathsByHash.keys()
@@ -119,11 +119,11 @@ async function replaceFiles(
     if (!paths) continue
     found.add(fileHash)
     for (const filePath of paths)
-      entries.push(parseSourceEntry(config, filePath, fileHash, blob))
+      parsedEntries.push(parseSourceEntry(config, filePath, fileHash, blob))
   }
   for (const fileHash of pathsByHash.keys())
     assert(found.has(fileHash), `Source did not return blob ${fileHash}`)
-  const rows = entries.map(entry => ({
+  const rows = parsedEntries.map(entry => ({
     ...entryIndexRow(entry),
     childrenSha: sourceDirectorySha(tree, entry.childrenDir)
   }))
@@ -131,16 +131,16 @@ async function replaceFiles(
   const versionIds = rows.map(row => row.versionId)
   const previous = (await db
     .select({
-      versionId: EntryIndexTable.versionId,
-      parentDir: EntryIndexTable.parentDir,
-      parentId: EntryIndexTable.parentId,
-      parents: EntryIndexTable.parents
+      versionId: entries.versionId,
+      parentDir: entries.parentDir,
+      parentId: entries.parentId,
+      parents: entries.parents
     })
-    .from(EntryIndexTable)
+    .from(entries)
     .where(
       or(
-        inArray(EntryIndexTable.filePath, filePaths),
-        inArray(EntryIndexTable.versionId, versionIds)
+        inArray(entries.filePath, filePaths),
+        inArray(entries.versionId, versionIds)
       )
     )) as Array<StoredHierarchyRow>
   const previousByVersion = new Map(previous.map(row => [row.versionId, row]))
@@ -150,16 +150,16 @@ async function replaceFiles(
     row.parentId = stored.parentId
     row.parents = stored.parents
   }
-  await markAffected(db, EntryIndexTable, filePaths, versionIds)
+  await markAffected(db, entries, filePaths, versionIds)
   await db
-    .delete(EntryIndexTable)
+    .delete(entries)
     .where(
       or(
-        inArray(EntryIndexTable.filePath, filePaths),
-        inArray(EntryIndexTable.versionId, versionIds)
+        inArray(entries.filePath, filePaths),
+        inArray(entries.versionId, versionIds)
       )
     )
-  await db.insert(EntryIndexTable).values(rows)
+  await db.insert(entries).values(rows)
   await addIds(
     db,
     SyncAffected,
@@ -178,7 +178,7 @@ async function replaceFiles(
 
 async function updateDirectoryHashes(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   tree: ReadonlyTree,
   queries: SyncQueries,
   filePaths: ReadonlyArray<string>
@@ -197,15 +197,13 @@ async function updateDirectoryHashes(
   for (const paths of chunks(Array.from(directories), sqliteBatchSize)) {
     const rows = (await db
       .select({
-        id: EntryIndexTable.id,
-        versionId: EntryIndexTable.versionId,
-        childrenDir: EntryIndexTable.childrenDir,
-        childrenSha: EntryIndexTable.childrenSha
+        id: entries.id,
+        versionId: entries.versionId,
+        childrenDir: entries.childrenDir,
+        childrenSha: entries.childrenSha
       })
-      .from(EntryIndexTable)
-      .where(
-        inArray(EntryIndexTable.childrenDir, paths)
-      )) as Array<DirectoryHashRow>
+      .from(entries)
+      .where(inArray(entries.childrenDir, paths))) as Array<DirectoryHashRow>
     const changed = rows.filter(row => {
       const childrenSha = sourceDirectorySha(tree, row.childrenDir)
       return childrenSha !== row.childrenSha
@@ -229,7 +227,7 @@ async function updateDirectoryHashes(
 
 export async function mergeTrees(
   db: Database,
-  EntryIndexTable: EntryIndexTarget,
+  entries: EntryIndexTarget,
   config: Config,
   source: RemoteSource,
   previousTree: ReadonlyTree,
@@ -240,12 +238,12 @@ export async function mergeTrees(
   for (const batch of chunks(changes, changeBatchSize)) {
     await deleteFiles(
       db,
-      EntryIndexTable,
+      entries,
       batch.filter(change => change.op === 'delete').map(change => change.path)
     )
     await replaceFiles(
       db,
-      EntryIndexTable,
+      entries,
       config,
       source,
       tree,
@@ -258,7 +256,7 @@ export async function mergeTrees(
   }
   await updateDirectoryHashes(
     db,
-    EntryIndexTable,
+    entries,
     tree,
     queries,
     changes.map(change => change.path)

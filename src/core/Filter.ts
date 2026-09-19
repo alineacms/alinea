@@ -1,3 +1,4 @@
+import {isRecord} from './util/Objects.js'
 type Primitive = string | number | boolean | null
 
 export interface Ops<Value = unknown> {
@@ -167,5 +168,3 @@ function compare(left: unknown, right: unknown): number {
     return left < right ? -1 : left > right ? 1 : 0
   return Number.NaN
 }
-
-import {isRecord} from './util/Objects.js'

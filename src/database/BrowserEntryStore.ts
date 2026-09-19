@@ -37,7 +37,6 @@ export class BrowserEntryStore extends EntryStore {
   #persistedSha: string | undefined
   #persistQueue: Promise<unknown> = Promise.resolve()
   #closed = false
-  #superseded = false
 
   static async open(
     config: Config,
@@ -156,10 +155,8 @@ export class BrowserEntryStore extends EntryStore {
     this.#closed = true
     const result = this.#persistQueue.then(async () => {
       try {
-        if (!this.#superseded) {
-          const sha = await this.sha
-          await this.#save(sha)
-        }
+        const sha = await this.sha
+        await this.#save(sha)
       } finally {
         await this.#teardown()
       }
@@ -174,7 +171,6 @@ export class BrowserEntryStore extends EntryStore {
   async abandon(): Promise<void> {
     if (this.#closed) return this.#persistQueue.then(() => {})
     this.#closed = true
-    this.#superseded = true
     const result = this.#persistQueue.then(() => this.#teardown())
     this.#persistQueue = result.catch(() => {})
     return result

@@ -971,7 +971,9 @@ test('accepts authenticated commits only in development', async () => {
 test('routes history requests with a file to revisions', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
-  const revisions = ['content/pages/example.json']
+  const revisions = [
+    {ref: 'revision', createdAt: 0, file: 'content/pages/example.json'}
+  ]
   const requestedFiles: Array<string> = []
   const handle = createHandler({
     cms,

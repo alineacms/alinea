@@ -1,5 +1,6 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
+import type {Mutation} from '#/core/db/Mutation.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {transaction} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
@@ -336,7 +337,7 @@ test('mutations without an id are rejected without touching data', async () => {
       {op: 'publish', id: undefined, locale: null, status: 'draft'},
       {op: 'unpublish', id: undefined, locale: null},
       {op: 'archive', id: undefined, locale: null}
-    ] as any
+    ] as unknown as Array<Mutation>
     for (const mutation of mutations)
       await expect(store.mutate([mutation])).rejects.toThrow('missing an id')
     expect(await store.find({select: Entry.id})).toEqual(['page'])

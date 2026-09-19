@@ -85,31 +85,19 @@ export class EntrySyncer implements AsyncDisposable {
       const initial = storedTree
         ? storedTree.isEmpty
         : (await queries.entryCount.get())?.value === 0
-      if (storedTree)
-        await mergeTrees(
-          tx,
-          target.entries,
-          this.#config,
-          source,
-          storedTree,
-          tree,
-          queries
-        )
-      else if (initial)
-        // A cold sync is a merge from an empty tree.
-        await mergeTrees(
-          tx,
-          target.entries,
-          this.#config,
-          source,
-          ReadonlyTree.EMPTY,
-          tree,
-          queries
-        )
-      else
+      if (!storedTree && !initial)
         throw new Error(
           'Cannot sync a populated database without a recorded source tree'
         )
+      await mergeTrees(
+        tx,
+        target.entries,
+        this.#config,
+        source,
+        storedTree ?? ReadonlyTree.EMPTY,
+        tree,
+        queries
+      )
       await expandAffected(tx, target.entries)
       await materializeAffected(tx, target, queries, materialized)
       const hierarchyChanged = await deriveHierarchy(
