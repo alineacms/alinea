@@ -101,7 +101,8 @@ async function replaceFiles(
   config: Config,
   source: RemoteSource,
   tree: ReadonlyTree,
-  files: ReadonlyArray<FileRow>
+  files: ReadonlyArray<FileRow>,
+  queries: SyncQueries
 ): Promise<void> {
   if (!files.length) return
   const pathsByHash = new Map<string, Array<string>>()
@@ -159,7 +160,15 @@ async function replaceFiles(
         inArray(entries.versionId, versionIds)
       )
     )
-  await db.insert(entries).values(rows)
+  // Named parameters bypass column encoders, so bind SQLite values explicitly.
+  for (const row of rows)
+    await queries.insertEntry.run({
+      ...row,
+      parents: JSON.stringify(row.parents),
+      active: Number(row.active),
+      main: Number(row.main),
+      visible: Number(row.visible)
+    })
   await addIds(
     db,
     SyncAffected,
@@ -251,7 +260,8 @@ export async function mergeTrees(
         change.op === 'add'
           ? [{filePath: change.path, fileHash: change.sha}]
           : []
-      )
+      ),
+      queries
     )
   }
   await updateDirectoryHashes(

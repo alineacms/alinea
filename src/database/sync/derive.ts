@@ -25,7 +25,6 @@ import {
   sqliteBatchSize,
   SyncAffected,
   SyncStatus,
-  SyncValues,
   type DirectoryRow,
   type HierarchyRow,
   type MainRow,
@@ -92,7 +91,7 @@ export async function deriveHierarchy(
     if (!hierarchy.length) continue
     changed = true
     await queries.clearValues.run()
-    await db.insert(SyncValues).values(hierarchy)
+    for (const row of hierarchy) await queries.insertValue.run(row)
     await queries.updateHierarchy.run()
   }
 }
@@ -172,20 +171,17 @@ export async function deriveStatus(
       }>
       for (const parent of parents) parentByKey.set(parent.key, parent)
     }
-    for (const page of chunks(rows, sqliteBatchSize))
-      await db.insert(SyncStatus).values(
-        page.map(row => {
-          const parent = row.parentId
-            ? parentByKey.get(statusKey(row.parentId, row.locale))
-            : undefined
-          return {
-            key: statusKey(row.id, row.locale),
-            effectiveStatus: parent?.effectiveStatus ?? row.ownStatus,
-            activeStatus: row.activeStatus,
-            mainStatus: row.mainStatus
-          }
-        })
-      )
+    for (const row of rows) {
+      const parent = row.parentId
+        ? parentByKey.get(statusKey(row.parentId, row.locale))
+        : undefined
+      await queries.insertStatus.run({
+        key: statusKey(row.id, row.locale),
+        effectiveStatus: parent?.effectiveStatus ?? row.ownStatus,
+        activeStatus: row.activeStatus,
+        mainStatus: row.mainStatus
+      })
+    }
   }
   await queries.updateStatus.run()
 }
@@ -251,7 +247,7 @@ export async function deriveUrls(
       })
     }
     await queries.clearValues.run()
-    await db.insert(SyncValues).values(urls)
+    for (const row of urls) await queries.insertValue.run(row)
     await queries.updateUrls.run()
   }
 }

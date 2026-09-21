@@ -138,19 +138,30 @@ export class FSSource implements Source {
 
 export class CachedFSSource extends FSSource {
   #tree: Promise<ReadonlyTree> | undefined
+  #loaded = false
   #blobs: Map<string, Uint8Array> = new Map()
 
   constructor(cwd: string) {
     super(cwd)
   }
 
-  refresh = pDebounce(() => {
+  #debouncedRefresh = pDebounce(() => this.#refresh(), 50)
+
+  refresh(): Promise<ReadonlyTree> {
+    // Only watch refreshes need coalescing; the first snapshot is needed now.
+    if (!this.#tree) return this.#refresh()
+    // The watcher and initial sync can request the first snapshot together.
+    if (!this.#loaded) return this.#tree
+    return this.#debouncedRefresh()
+  }
+
+  #refresh(): Promise<ReadonlyTree> {
     let refresh: Promise<ReadonlyTree>
     refresh = super.getTree().then(
       tree => {
-        const currentShas = new Set(tree.index().values())
+        this.#loaded = true
         for (const sha of this.#blobs.keys()) {
-          if (!currentShas.has(sha)) this.#blobs.delete(sha)
+          if (!tree.hasSha(sha)) this.#blobs.delete(sha)
         }
         return tree
       },
@@ -161,7 +172,7 @@ export class CachedFSSource extends FSSource {
     )
     this.#tree = refresh
     return refresh
-  }, 50)
+  }
 
   getTree() {
     if (!this.#tree) return this.refresh()

@@ -8,6 +8,7 @@ import {
   eq,
   exists,
   gt,
+  inArray,
   isNull,
   max,
   min,
@@ -16,6 +17,7 @@ import {
   temporaryTable,
   when,
   type Database,
+  type Sql,
   type Table
 } from 'rado'
 import * as column from 'rado/universal/columns'
@@ -23,6 +25,8 @@ import {
   DatabaseStateColumns,
   DatabaseStateTable,
   EntryIndexTable,
+  EntryIndexColumns,
+  type entryIndexRow,
   type EntryIndexTarget,
   type IndexedEntry
 } from '../entry/Schema.js'
@@ -287,16 +291,15 @@ function updateChildrenShaQuery(target: EntrySyncTarget) {
     .select(SyncValues.value)
     .from(SyncValues)
     .where(eq(SyncValues.key, EntryIndexTable.versionId))
-  const hasUpdateValueForVersion = exists(
-    builder
-      .select({value: sql.value(1)})
-      .from(SyncValues)
-      .where(eq(SyncValues.key, EntryIndexTable.versionId))
-  )
   return builder
     .update(EntryIndexTable)
     .set({childrenSha: updateValueForVersion})
-    .where(hasUpdateValueForVersion)
+    .where(
+      inArray(
+        EntryIndexTable.versionId,
+        builder.select(SyncValues.key).from(SyncValues)
+      )
+    )
 }
 
 function updateUrlsQuery(target: EntrySyncTarget) {
@@ -389,8 +392,34 @@ function updateStatusQuery(target: EntrySyncTarget) {
     )
 }
 
+/** Reuse the same INSERT while streaming entries through bounded batches. */
+function insertEntryQuery(target: EntrySyncTarget) {
+  type Row = ReturnType<typeof entryIndexRow>
+  const values = Object.fromEntries(
+    Object.keys(EntryIndexColumns).map(name => [name, sql.placeholder(name)])
+  ) as {[Key in keyof Row]: Sql<NonNullable<Row[Key]>>}
+  return builder.insert(target.entries).values(values)
+}
+
 export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
   const statements = {
+    insertValue: builder
+      .insert(SyncValues)
+      .values({
+        key: sql.placeholder<string>('key'),
+        value: sql.placeholder<string>('value')
+      })
+      .prepare(undefined, db),
+    insertStatus: builder
+      .insert(SyncStatus)
+      .values({
+        key: sql.placeholder<string>('key'),
+        effectiveStatus: sql.placeholder<string>('effectiveStatus'),
+        activeStatus: sql.placeholder<string>('activeStatus'),
+        mainStatus: sql.placeholder<string>('mainStatus')
+      })
+      .prepare(undefined, db),
+    insertEntry: insertEntryQuery(target).prepare(undefined, db),
     revision: revisionQuery(target).prepare(undefined, db),
     entryCount: entryCountQuery(target).prepare(undefined, db),
     setRevision: setRevisionQuery(target).prepare(undefined, db),

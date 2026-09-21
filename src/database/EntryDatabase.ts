@@ -300,10 +300,20 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
   }
 
   async getTree(): Promise<ReadonlyTree> {
-    const state = await this.#withReadConnection(() => this.#getState(this.#db))
+    const state = await this.#withReadConnection(() => this.#readTreeState())
     if (!state.tree)
       throw new Error(`Database revision ${state.revision} has no source tree`)
-    return new ReadonlyTree(state.tree)
+    return state.tree
+  }
+
+  async #readTreeState() {
+    if (this.#tree) {
+      const revision = await this.#getRevision(this.#db)
+      if (this.#tree.sha === revision) return {revision, tree: this.#tree}
+    }
+    const state = await this.#getState(this.#db)
+    this.#tree = state.tree ? new ReadonlyTree(state.tree) : undefined
+    return {revision: state.revision, tree: this.#tree}
   }
 
   async *getBlobs(
@@ -316,23 +326,29 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
       if (options.signal?.aborted)
         throw options.signal.reason ?? new Error('Blob transfer aborted')
       const requested = shas.slice(offset, offset + 400)
-      const rows = await this.#withReadConnection(async () =>
-        this.#db
-          .select({
-            sha: this.#entryTarget.fileHash,
-            payload: sql<string>`coalesce(
-              ${this.#entryTarget.payload},
-              ${this.#entryTarget.data}
-            )`
-          })
-          .from(this.#entryTarget)
-          .where(inArray(this.#entryTarget.fileHash, requested))
-          .all()
-      )
-      for (const row of rows) {
-        if (found.has(row.sha)) continue
-        found.add(row.sha)
-        yield [row.sha, encoder.encode(row.payload)]
+      // Synced blobs already live in the overlay. Avoid scanning the immutable
+      // base for those hashes, which have no lookup index in generated files.
+      const targets = this.#target.changes
+        ? [this.#target.changes, this.#entryTarget]
+        : [this.#entryTarget]
+      for (const target of targets) {
+        const remaining = requested.filter(sha => !found.has(sha))
+        if (!remaining.length) break
+        const rows = await this.#withReadConnection(async () =>
+          this.#db
+            .select({
+              sha: target.fileHash,
+              payload: sql<string>`coalesce(${target.payload}, ${target.data})`
+            })
+            .from(target)
+            .where(inArray(target.fileHash, remaining))
+            .all()
+        )
+        for (const row of rows) {
+          if (found.has(row.sha)) continue
+          found.add(row.sha)
+          yield [row.sha, encoder.encode(row.payload)]
+        }
       }
     }
   }
@@ -479,14 +495,11 @@ export class EntryDatabase extends Graph implements AsyncDisposable {
     const name = `overlay_${this.#context.nextOverlayId++}`
     let child: EntryDatabase | undefined
     try {
-      const state = await this.#withReadConnection(() =>
-        this.#getState(this.#db)
+      const {revision, tree} = await this.#withReadConnection(() =>
+        this.#readTreeState()
       )
-      const tree =
-        this.#tree ?? (state.tree ? new ReadonlyTree(state.tree) : undefined)
-      this.#tree = tree
       const view = await this.#withReadConnection(() =>
-        EntryView.create(this.#db, name, this.#entryTarget, state.revision)
+        EntryView.create(this.#db, name, this.#entryTarget, revision)
       )
       child = new EntryDatabase(this.#config, this.#db, this.#options, {
         context: this.#context,

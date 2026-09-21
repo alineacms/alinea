@@ -181,6 +181,48 @@ test('entry database returns exact source blobs by hash', async () => {
   })
 })
 
+test('cached trees follow revisions written by another database instance', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const {source, store} = await createEntryStore(
+    {
+      schema: {Page},
+      workspaces: {
+        main: ConfigBuilder.workspace('Main', {
+          source: 'content',
+          roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+        })
+      }
+    },
+    [{id: 'page', type: 'Page', index: 'a', data: {title: 'Page'}}]
+  )
+  await store.close()
+  const directory = await mkdtemp(join(tmpdir(), 'alinea-tree-cache-'))
+  try {
+    using writeSqlite = new Database(join(directory, 'entries.sqlite'), {
+      create: true
+    })
+    using readSqlite = new Database(join(directory, 'entries.sqlite'))
+    const db = connect(writeSqlite)
+    await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+    const writer = new EntryDatabase(store.config, db)
+    const reader = new EntryDatabase(store.config, connect(readSqlite))
+    await writer.syncWith(source)
+    const before = await reader.getTree()
+    expect(await reader.getTree()).toBe(before)
+    const edit = await transaction(source)
+    const compiled = await edit.remove('pages/page.json').compile()
+    await source.applyChanges({
+      fromSha: compiled.from.sha,
+      changes: compiled.changes
+    })
+    await writer.syncWith(source)
+    expect((await reader.getTree()).sha).toBe((await source.getTree()).sha)
+    expect(await reader.getTree()).not.toBe(before)
+  } finally {
+    await rm(directory, {recursive: true, force: true})
+  }
+})
+
 test('subscriptions publish the initial value and committed changes', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {
@@ -268,7 +310,8 @@ test('generated database overlays sync and query without copying the base', asyn
   await base.syncWith(
     await source([
       ['a', 'a', 'Base A'],
-      ['b', 'b', 'Base B']
+      ['b', 'b', 'Base B'],
+      ['c', 'c', 'GitHub C']
     ])
   )
   const github = await base.overlay(
@@ -276,6 +319,28 @@ test('generated database overlays sync and query without copying the base', asyn
       ['a', 'a', 'GitHub A'],
       ['c', 'c', 'GitHub C']
     ])
+  )
+  const baseTree = await base.getTree()
+  const githubTree = await github.getTree()
+  const requested = [
+    ...baseTree.index().values(),
+    ...githubTree.index().values()
+  ]
+  const blobs = new Map<string, Uint8Array>()
+  for await (const [sha, blob] of github.getBlobs(requested)) {
+    expect(blobs.has(sha)).toBe(false)
+    blobs.set(sha, blob)
+  }
+  expect([...blobs.keys()].sort()).toEqual(
+    [...githubTree.index().values()].sort()
+  )
+  expect(
+    [...blobs.values()].map(blob => new TextDecoder().decode(blob)).sort()
+  ).toEqual(
+    [
+      new TextDecoder().decode(encode('a', 'a', 'GitHub A')),
+      new TextDecoder().decode(encode('c', 'c', 'GitHub C'))
+    ].sort()
   )
   const preview = await github.overlay(
     await source([
@@ -287,7 +352,8 @@ test('generated database overlays sync and query without copying the base', asyn
 
   expect(await base.resolve({select: Entry.title})).toEqual([
     'Base A',
-    'Base B'
+    'Base B',
+    'GitHub C'
   ])
   expect(await github.resolve({select: Entry.title})).toEqual([
     'GitHub A',
