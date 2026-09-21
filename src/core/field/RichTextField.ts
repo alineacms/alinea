@@ -421,8 +421,8 @@ function richTextNodeText(schema: Schema | undefined, node: Node): string {
 
 function iterMarks(doc: TextDoc<unknown>, fn: (mark: Mark) => void) {
   for (const row of doc) {
-    if (Node.isText(row)) row.marks?.forEach(fn)
-    else if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
+    if (Node.isText(row) || Node.isElement(row)) row.marks?.forEach(fn)
+    if (Node.isElement(row) && row.content) iterMarks(row.content, fn)
   }
 }
 
@@ -743,7 +743,7 @@ function findMark(tag: string, marks: Array<{tag: string}>) {
 }
 
 function applyMark(node: Node, mark: Mark) {
-  if (Node.isText(node)) {
+  if (Node.isText(node) || (Node.isElement(node) && !node.content)) {
     const marks: Array<Mark> = node.marks || (node.marks = [])
     if (!marks.some(current => sameMark(current, mark))) marks.unshift(mark)
     return
