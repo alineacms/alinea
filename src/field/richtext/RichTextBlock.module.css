@@ -3,6 +3,10 @@
   outline: 3px solid transparent;
 }
 
-.RichTextBlock-dragHandle {
-  touch-action: none;
+.RichTextBlock-dropTarget {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 4px;
 }

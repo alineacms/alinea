@@ -1,8 +1,26 @@
-.ListItem.ListItem {
+.List {
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  color: var(--alinea-fg);
+  background: var(--alinea-bg);
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  font-size: var(--alinea-font-size-base);
+}
+
+.ListItem {
+  box-sizing: border-box;
+  display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
+  min-height: 36px;
   padding: 0;
+}
+
+.ListItem:not(:first-child) {
+  border-top: 1px solid var(--alinea-border);
 }
 
 .ListItem-header {
@@ -180,20 +198,76 @@
 }
 
 .ListLabel {
-  color: var(--alinea-fg-muted);
-  flex-wrap: wrap;
-  min-height: auto;
-  padding-block: 0;
-  margin-left: -8px;
+  display: grid;
+  gap: 8px;
   margin-bottom: 8px;
-  border: none;
-  align-items: flex-start;
 }
 
-.ListLabel[data-hovered],
-.ListLabel[data-pressed],
-.ListLabel[data-active] {
+.ListLabel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ListLabel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ListLabel-label {
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 600;
+}
+
+.ListLabel-count {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-base);
+  line-height: inherit;
+}
+
+.ListLabel-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.ListLabel-action {
+  flex: 0 0 auto;
+  margin: -4px -8px;
+  color: var(--alinea-fg-muted);
+  font-weight: 400;
+}
+
+.ListLabel-action[data-hovered],
+.ListLabel-action[data-pressed],
+.ListLabel-action[data-active] {
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
+}
+
+.ListLabel-add {
+  flex: 0 0 auto;
+  margin: -4px -6px -4px 0;
+  color: var(--alinea-fg-muted);
+}
+
+.ListLabel-add[data-hovered],
+.ListLabel-add[data-pressed],
+.ListLabel-add[data-active] {
   background: transparent;
+  color: var(--alinea-fg);
+}
+
+.ListLabel-description {
+  color: var(--alinea-fg-muted);
+  font-size: var(--alinea-font-size-small);
+  line-height: 1.4;
 }
 
 .ListError {
@@ -204,6 +278,7 @@
 
 .ListCreateRow[data-empty] .ListCreateRow-inner {
   border-top: 0;
+  padding-top: 0;
 }
 
 .ListCreateRow-inner {
@@ -211,9 +286,24 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 36px;
-  border-top: 1px solid var(--alinea-border);
+  padding-top: 8px;
+}
+
+.ListCreateButton [data-slot='icon'] {
+  color: var(--alinea-list-type-color);
+}
+
+.ListCreateButton,
+.ListRowType,
+.ListTypeIcon {
+  --alinea-list-type-color: var(--alinea-fg-muted);
+}
+
+.ListTypeIcon {
+  display: inline-flex;
+  color: var(--alinea-list-type-color);
 }
 
 .ListRow {
@@ -236,30 +326,16 @@
 }
 
 .ListRowDragHandle {
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  z-index: 3;
-  width: 56px;
-  height: 22px;
+  width: 18px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--alinea-fg-muted);
+  font-size: 13px;
   cursor: grab;
-  opacity: 0;
   outline: none;
-  pointer-events: none;
-  transform: translateX(-50%);
-  transition: opacity 140ms ease-out;
-}
-
-.ListRowDragHandle::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 30px;
-  height: 4px;
-  background: light-dark(var(--alinea-gray-300), var(--alinea-gray-400));
-  border-radius: 999px;
-  transform: translate(-50%, -50%);
 }
 
 .ListRowDragHandle[data-dragging],
@@ -273,15 +349,21 @@
   align-items: center;
   justify-content: space-between;
   min-width: 0;
-  min-height: 36px;
+  min-height: calc(1.5 * var(--alinea-font-size-base) + 18px);
   padding: 2px 8px;
+  background: var(--alinea-bg);
 }
 
-.ListRowHeader:hover > .ListRowDragHandle,
-.ListRowHeader:focus-within > .ListRowDragHandle,
-.ListRowDragHandle[data-dragging] {
-  opacity: 1;
-  pointer-events: auto;
+.ListRowHeader[data-expanded='true'] {
+  background: var(--alinea-muted);
+}
+
+.ListRowHeader[draggable='true'] {
+  cursor: grab;
+}
+
+.ListRowHeader[draggable='true']:active {
+  cursor: grabbing;
 }
 
 .ListRowHeader:not([data-has-fold]) {
@@ -302,12 +384,68 @@
 .ListRowBadges {
   display: flex;
   align-items: center;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
   gap: 8px;
 }
 
+.ListRowType {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--alinea-fg);
+  font-size: var(--alinea-font-size-base);
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.ListRowType [data-slot='icon'] {
+  flex: 0 0 auto;
+  color: var(--alinea-list-type-color);
+  font-size: 15px;
+}
+
+.ListRowType[data-color='0'],
+.ListCreateButton[data-color='0'],
+.ListTypeIcon[data-color='0'] {
+  --alinea-list-type-color: light-dark(oklch(56% 0.18 25), oklch(76% 0.14 25));
+}
+
+.ListRowType[data-color='1'],
+.ListCreateButton[data-color='1'],
+.ListTypeIcon[data-color='1'] {
+  --alinea-list-type-color: light-dark(oklch(56% 0.18 90), oklch(76% 0.14 90));
+}
+
+.ListRowType[data-color='2'],
+.ListCreateButton[data-color='2'],
+.ListTypeIcon[data-color='2'] {
+  --alinea-list-type-color: light-dark(oklch(56% 0.18 155), oklch(76% 0.14 155));
+}
+
+.ListRowType[data-color='3'],
+.ListCreateButton[data-color='3'],
+.ListTypeIcon[data-color='3'] {
+  --alinea-list-type-color: light-dark(oklch(56% 0.18 220), oklch(76% 0.14 220));
+}
+
+.ListRowType[data-color='4'],
+.ListCreateButton[data-color='4'],
+.ListTypeIcon[data-color='4'] {
+  --alinea-list-type-color: light-dark(oklch(56% 0.18 285), oklch(76% 0.14 285));
+}
+
+.ListRowType-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ListRowMeta {
+  margin-left: auto;
   min-width: 0;
   overflow: hidden;
   color: var(--alinea-fg-muted);
@@ -325,7 +463,10 @@
 }
 
 .ListRowFoldButton {
-  flex: 0 0 auto;
+  width: 26px;
+  height: 32px;
+  min-width: 26px;
+  flex: 0 0 26px;
   color: var(--alinea-fg-muted);
 }
 
@@ -335,15 +476,13 @@
   color: var(--alinea-fg);
 }
 
-.ListRowFoldButton-icon {
-  font-size: 16px;
-}
-
 .ListRowBody {
   display: grid;
   gap: 12px;
   align-items: normal;
   padding: 8px 16px 16px 16px;
+  background: var(--alinea-bg);
+  border-top: 1px solid var(--alinea-border);
 }
 
 .ListRowFooter {

@@ -8,6 +8,12 @@
   line-height: 1;
 }
 
+.LabelHeader-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
 .LabelTitle {
   min-width: 0;
   max-width: 100%;

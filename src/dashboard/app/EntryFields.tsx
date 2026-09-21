@@ -5,7 +5,7 @@ import type {Type} from '#/core/Type.js'
 import {HiddenField} from '#/field/hidden.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {memo, type PropsWithChildren} from 'react'
+import {createContext, memo, type PropsWithChildren, useContext} from 'react'
 import type {EditorNode} from '../atoms/editor.js'
 import {EntryEditorSection, type EditorSection} from '../atoms/editor.js'
 import {
@@ -20,16 +20,35 @@ import css from './EntryFields.module.css'
 const styles = styler(css)
 
 interface NodeEditorProps extends PropsWithChildren {
+  initiallyExpandDisclosures?: boolean
   node: EditorNode
   readOnly?: boolean
   type: Type
 }
 
-export function NodeEditor({children, node, readOnly, type}: NodeEditorProps) {
+const InitiallyExpandDisclosuresContext = createContext(false)
+
+export function NodeEditor({
+  children,
+  initiallyExpandDisclosures = false,
+  node,
+  readOnly,
+  type
+}: NodeEditorProps) {
   const editor = useNodeEditor(node, type, readOnly)
   return (
-    <EditorScope editor={editor}>{children ?? <FieldsEditor />}</EditorScope>
+    <EditorScope editor={editor}>
+      <InitiallyExpandDisclosuresContext.Provider
+        value={initiallyExpandDisclosures}
+      >
+        {children ?? <FieldsEditor />}
+      </InitiallyExpandDisclosuresContext.Provider>
+    </EditorScope>
   )
+}
+
+export function useInitiallyExpandDisclosures() {
+  return useContext(InitiallyExpandDisclosuresContext)
 }
 
 export function FieldsEditor() {

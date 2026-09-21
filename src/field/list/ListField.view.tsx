@@ -1,7 +1,6 @@
 import {
   Button,
   ListRow as ComponentListRow,
-  Dialog,
   DialogTrigger,
   Icon,
   List,
@@ -13,14 +12,17 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
-  ListRowDragHandle,
+  ListRowFoldButton,
   ListRowHeader,
   ListRowMeta,
   ListRowSettings,
+  ListRowType,
   MenuSeparator,
   Popover,
-  SearchField,
-  TextField
+  TypeCreateActions,
+  TypePicker,
+  type TypePickerItem,
+  TypePickerPanel
 } from '#/components.js'
 import {ListField as CoreListField} from '#/core/field/ListField.js'
 import {createId} from '#/core/Id.js'
@@ -47,10 +49,12 @@ import {
   IcRoundClose,
   IcRoundFirstPage,
   IcRoundLastPage,
-  IcRoundMoreHoriz
+  IcRoundMoreHoriz,
+  IcRoundNotes
 } from '#/dashboard/icons.js'
-import {ListOptions} from '#/field/list.js'
-import {SlugField} from '#/field/path/SlugField.js'
+import {type ColumnsListOptions, ListOptions} from '#/field/list.js'
+import {ColumnsListFieldView} from '#/field/list/ColumnsListField.view.js'
+import {ListRowBlockSettings} from '#/field/list/ListRowBlockSettings.js'
 import styler from '@alinea/styler'
 import {atom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {atomWithStorage} from 'jotai/utils'
@@ -69,15 +73,8 @@ import {
   type DragPreviewRenderer,
   type DropItem,
   useDrag,
-  useDrop,
-  useFilter
+  useDrop
 } from 'react-aria'
-import {
-  Autocomplete,
-  ListBox,
-  ListBoxItem,
-  OverlayTriggerStateContext
-} from 'react-aria-components'
 import css from './ListField.module.css'
 
 const styles = styler(css)
@@ -85,6 +82,7 @@ const ListFieldDepthContext = createContext(0)
 
 interface ListValue {
   _id: string
+  _index: string
   _type: string
   [key: string]: unknown
 }
@@ -101,19 +99,31 @@ interface ListFieldTypeItem {
   type: Schema[string]
 }
 
-interface ListFieldPickerOption {
-  id: string
-  label: string
-  icon: ComponentType
-  typeItem?: ListFieldTypeItem
-  pasted?: ListValue
-}
-
 export interface ListFieldViewProps {
   field: CoreListField<ListRow, ListValue, ListOptions<Schema>>
+  initiallyCollapsed?: boolean
 }
 
-export function ListFieldView({field}: ListFieldViewProps) {
+export function ListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
+  const options = useFieldOptions(field) as ListOptions<Schema>
+  if ((options as ColumnsListOptions<Schema>).columns) {
+    return (
+      <ColumnsListFieldView
+        field={
+          field as CoreListField<ListRow, ListValue, ColumnsListOptions<Schema>>
+        }
+      />
+    )
+  }
+  return (
+    <DefaultListFieldView
+      field={field}
+      initiallyCollapsed={initiallyCollapsed}
+    />
+  )
+}
+
+function DefaultListFieldView({field, initiallyCollapsed}: ListFieldViewProps) {
   const depth = useContext(ListFieldDepthContext)
   const options = useFieldOptions(field) as ListOptions<Schema>
   const error = useFieldError(field)
@@ -137,10 +147,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   )
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
-  const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
-  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
-  const [dropIndicator, setDropIndicator] =
-    useState<ListFieldDropIndicatorState | null>(null)
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -150,6 +156,13 @@ export function ListFieldView({field}: ListFieldViewProps) {
     [list]
   )
   const rowIds = useAtomValueRaw(rowIdsAtom)
+  const [foldedIds, setFoldedIds] = useState<Set<string>>(
+    () => new Set((initiallyCollapsed ?? depth > 0) ? rowIds : [])
+  )
+  const [newRowIds, setNewRowIds] = useState<Set<string>>(() => new Set())
+  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
+  const [dropIndicator, setDropIndicator] =
+    useState<ListFieldDropIndicatorState | null>(null)
   const moveRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string, targetIndex: number) => {
@@ -183,10 +196,18 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const allExpanded = nodes.length > 0 && foldedIds.size === 0
 
   function toggleAll() {
+    if (allExpanded) setNewRowIds(new Set())
     setFoldedIds(allExpanded ? new Set(rowIds) : new Set())
   }
 
   function toggleRow(rowId: string) {
+    if (!foldedIds.has(rowId)) {
+      setNewRowIds(current => {
+        const next = new Set(current)
+        next.delete(rowId)
+        return next
+      })
+    }
     setFoldedIds(current => {
       const next = new Set(current)
       if (next.has(rowId)) next.delete(rowId)
@@ -196,7 +217,24 @@ export function ListFieldView({field}: ListFieldViewProps) {
   }
 
   function addRow(typeName: string, type: Schema[string]) {
-    pushRow(createRow(typeName, type))
+    const row = createRow(typeName, type)
+    setNewRowIds(current => new Set(current).add(row._id))
+    pushRow(row)
+  }
+
+  function addBetweenRow(
+    index: number,
+    row: ListValue,
+    position: 'before' | 'after' = 'after'
+  ) {
+    setNewRowIds(current => new Set(current).add(row._id))
+    insertRow(insertIndex(index, position), row)
+  }
+
+  function pasteRow(row: ListValue) {
+    const clone = cloneRow(row)
+    setNewRowIds(current => new Set(current).add(clone._id))
+    pushRow(clone)
   }
 
   function isBoundaryDropTarget(index: number) {
@@ -208,68 +246,68 @@ export function ListFieldView({field}: ListFieldViewProps) {
 
   const content = (hasRows || !readOnly) && (
     <>
-      <ListFieldDropIndicator
-        active={
-          dropIndicator?.index === 0 && dropIndicator.position === 'before'
-        }
-      />
-      <List
-        aria-label={options.label || 'List items'}
-        data-depth={depth % 2 === 0 ? 'muted' : 'base'}
-      >
-        {nodes.map((row, index) => (
-          <Fragment key={rowIds[index] || index}>
-            {index > 0 && (
-              <ListFieldDropIndicator active={isBoundaryDropTarget(index)} />
-            )}
-            <ListFieldRow
-              addBetweenRow={(value, position = 'after') =>
-                insertRow(insertIndex(index, position), value)
-              }
-              draggingRowId={draggingRowId}
-              foldedIds={foldedIds}
-              index={index}
-              list={list}
-              readOnly={readOnly}
-              onCopyRow={copyRow}
-              onMoveRow={moveRow}
-              onRowDragEnd={() => {
-                setDraggingRowId(null)
-                setDropIndicator(null)
-              }}
-              onRowDragStart={() => setDraggingRowId(rowIds[index] ?? null)}
-              onDropIndicatorChange={position =>
-                setDropIndicator(position ? {index, position} : null)
-              }
-              onToggleRow={toggleRow}
-              row={row}
-              rows={nodes.length}
-              schema={options.schema}
-              pasted={pasted}
-              typeItems={typeItems}
-            />
-          </Fragment>
-        ))}
-        <ListFieldDropIndicator
-          active={
-            dropIndicator?.index === nodes.length - 1 &&
-            dropIndicator.position === 'after'
-          }
-        />
-
-        {!readOnly && (
-          <ListCreateRow empty={!hasRows}>
-            <ListFieldCreateActions
-              items={typeItems}
-              pasted={
-                pasted && options.schema[pasted._type] ? pasted : undefined
-              }
-              onPaste={row => pushRow(cloneRow(row))}
-              onSelect={item => addRow(item.id, item.type)}
-            />
-          </ListCreateRow>
-        )}
-      </List>
+      {hasRows && (
+        <List
+          aria-label={options.label || 'List items'}
+          data-depth={depth % 2 === 0 ? 'muted' : 'base'}
+        >
+          <ListFieldDropIndicator
+            active={
+              dropIndicator?.index === 0 && dropIndicator.position === 'before'
+            }
+          />
+          {nodes.map((row, index) => (
+            <Fragment key={rowIds[index] || index}>
+              {index > 0 && (
+                <ListFieldDropIndicator active={isBoundaryDropTarget(index)} />
+              )}
+              <ListFieldRow
+                addBetweenRow={(value, position = 'after') =>
+                  addBetweenRow(index, value, position)
+                }
+                draggingRowId={draggingRowId}
+                foldedIds={foldedIds}
+                index={index}
+                list={list}
+                newlyCreated={newRowIds.has(rowIds[index])}
+                readOnly={readOnly}
+                onCopyRow={copyRow}
+                onMoveRow={moveRow}
+                onRowDragEnd={() => {
+                  setDraggingRowId(null)
+                  setDropIndicator(null)
+                }}
+                onRowDragStart={() => setDraggingRowId(rowIds[index] ?? null)}
+                onDropIndicatorChange={position =>
+                  setDropIndicator(position ? {index, position} : null)
+                }
+                onToggleRow={toggleRow}
+                row={row}
+                rows={nodes.length}
+                schema={options.schema}
+                pasted={pasted}
+                typeItems={typeItems}
+              />
+            </Fragment>
+          ))}
+          <ListFieldDropIndicator
+            active={
+              dropIndicator?.index === nodes.length - 1 &&
+              dropIndicator.position === 'after'
+            }
+          />
+        </List>
+      )}
+      {!readOnly && (
+        <ListCreateRow empty={!hasRows}>
+          <ListFieldCreateActions
+            items={typeItems}
+            pasted={pasted && options.schema[pasted._type] ? pasted : undefined}
+            onPaste={pasteRow}
+            onSelect={item => addRow(item.id, item.type)}
+          />
+        </ListCreateRow>
+      )}
     </>
   )
 
@@ -284,6 +322,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
             : 'No list items to fold'
         }
         expanded={allExpanded}
+        count={nodes.length}
         hasRows={hasRows}
         isDisabled={!hasRows}
         onPress={toggleAll}
@@ -349,45 +388,23 @@ function ListFieldCreateActions({
   onPaste,
   onSelect
 }: ListFieldCreateActionsProps) {
-  const visibleItems = items.slice(0, 3)
-  const hasMenu = items.length > visibleItems.length
   return (
-    <div className={styles.ListFieldCreateActions()}>
-      {pasted && (
-        <Button
-          className={styles.ListFieldCreateActions.button()}
-          onPress={() => onPaste(pasted)}
-          size="small"
-          icon={IcBaselineContentPasteGo}
-          appearance="plain"
-        >
-          {pasteBlockLabel(pasted, items)}
-        </Button>
-      )}
-      {visibleItems.map(item => (
-        <Button
-          className={styles.ListFieldCreateActions.button()}
-          key={item.id}
-          onPress={() => onSelect(item)}
-          size="small"
-          icon={getType(item.type).icon || IcRoundAdd}
-          appearance="plain"
-        >
-          {item.label}
-        </Button>
-      ))}
-      {hasMenu && (
-        <ListFieldTypePicker
-          items={items}
-          label="More block types"
-          pasted={pasted}
-          pasteLabel={pasted ? pasteBlockLabel(pasted, items) : undefined}
-          triggerIcon={IcRoundMoreHoriz}
-          onPaste={onPaste}
-          onSelect={onSelect}
-        />
-      )}
-    </div>
+    <TypeCreateActions
+      items={listFieldTypePickerItems(items, onSelect)}
+      label="More block types"
+      leading={
+        pasted ? (
+          <Button
+            onPress={() => onPaste(pasted)}
+            size="small"
+            icon={IcBaselineContentPasteGo}
+            appearance="plain"
+          >
+            {pasteBlockLabel(pasted, items)}
+          </Button>
+        ) : undefined
+      }
+    />
   )
 }
 
@@ -395,6 +412,7 @@ interface ListFieldRowProps {
   draggingRowId: string | null
   index: number
   list: ReactiveNode<Array<ListValue>>
+  newlyCreated: boolean
   readOnly: boolean
   row: ReactiveNode<ListValue>
   rows: number
@@ -486,51 +504,21 @@ function ListFieldInsertPanel({
   onPaste,
   onSelect
 }: ListFieldInsertPanelProps) {
-  const {contains} = useFilter({sensitivity: 'base'})
-  const pickerItems = useListFieldPickerItems(
+  const pickerItems = listFieldPickerItems(
     items,
     pasted,
     pasteLabel,
-    onPaste
+    onPaste,
+    onSelect
   )
-  return (
-    <div className={styles.ListFieldTypePicker.dialog()}>
-      <Autocomplete filter={contains}>
-        <SearchField
-          aria-label="Search types"
-          autoFocus
-          className={styles.ListFieldTypePicker.search()}
-          hasIcon
-          placeholder="Search types..."
-        />
-        <ListBox
-          aria-label={label}
-          className={styles.ListFieldTypePicker.list()}
-          items={pickerItems}
-          renderEmptyState={() => (
-            <div className={styles.ListFieldTypePicker.empty()}>
-              No matching types
-            </div>
-          )}
-        >
-          {item => (
-            <ListFieldTypePickerAction
-              key={item.id}
-              item={item}
-              onPaste={onPaste}
-              onSelect={onSelect}
-            />
-          )}
-        </ListBox>
-      </Autocomplete>
-    </div>
-  )
+  return <TypePickerPanel items={pickerItems} label={label} />
 }
 
 function ListFieldRow({
   draggingRowId,
   index,
   list,
+  newlyCreated,
   readOnly,
   row,
   rows,
@@ -555,8 +543,6 @@ function ListFieldRow({
     | string
     | undefined
   const customLabel = customLabelValue ?? ''
-  const setCustomLabel = useSetAtom(row.field('_label'))
-  const setAnchor = useSetAtom(row.field('_anchor'))
   const moveListRow = useSetAtom(list.move)
   const removeRow = useSetAtom(list.remove)
   const dragPreview = useRef<DragPreviewRenderer | null>(null)
@@ -607,7 +593,7 @@ function ListFieldRow({
   if (!type) return null
 
   const label = Type.label(type)
-  const typeIcon = getType(type).icon
+  const typeIcon = getType(type).icon || IcRoundNotes
   const expanded = !foldedIds.has(itemId)
   function moveCurrentRow(direction: -1 | 1) {
     moveListRow(index, index + direction)
@@ -615,18 +601,6 @@ function ListFieldRow({
 
   function deleteRow() {
     removeRow(index)
-  }
-
-  function updateCustomLabel(nextValue: string) {
-    setCustomLabel(nextValue || undefined)
-    const currentLabelSlug = slugify(customLabel)
-    const shouldSyncAnchor =
-      anchorValue === undefined || anchorValue === currentLabelSlug
-    if (shouldSyncAnchor) setAnchor(slugify(nextValue) || undefined)
-  }
-
-  function updateAnchor(nextValue: string) {
-    setAnchor(slugify(nextValue.replace(/^#+/, '')) || undefined)
   }
 
   return (
@@ -654,13 +628,10 @@ function ListFieldRow({
             label={label}
             customLabel={customLabel}
             anchor={anchorValue}
-            dragLabel={`Drag ${label} item ${index + 1}`}
             readOnly={readOnly}
             typeIcon={typeIcon}
             insertItems={typeItems}
             pasted={pasted && schema[pasted._type] ? pasted : undefined}
-            onAnchorChange={updateAnchor}
-            onCustomLabelChange={updateCustomLabel}
             onCopy={() => onCopyRow(itemId)}
             onDelete={deleteRow}
             onInsertBefore={(value: ListValue) =>
@@ -672,9 +643,21 @@ function ListFieldRow({
             onToggle={() => onToggleRow(itemId)}
           />
           {expanded && (
-            <ListRowBody>
-              <NodeEditor node={row as ReactiveNode<object>} type={type} />
-            </ListRowBody>
+            <>
+              <ListRowBlockSettings
+                defaultExpanded={newlyCreated}
+                node={row as ReactiveNode<ListValue>}
+                readOnly={readOnly}
+              />
+              <ListRowBody>
+                <NodeEditor
+                  initiallyExpandDisclosures={newlyCreated}
+                  node={row as ReactiveNode<object>}
+                  readOnly={readOnly}
+                  type={type}
+                />
+              </ListRowBody>
+            </>
           )}
         </ComponentListRow>
       </div>
@@ -715,14 +698,11 @@ interface ListFieldRowHeaderProps {
   isPreview?: boolean
   insertItems: Array<ListFieldTypeItem>
   label: string
-  dragLabel: string
   customLabel: string
   anchor?: string
   pasted?: ListValue
   readOnly: boolean
   typeIcon?: ComponentType
-  onAnchorChange: (value: string) => void
-  onCustomLabelChange: (value: string) => void
   onCopy?: () => void
   onDelete?: () => void
   onInsertBefore: (value: ListValue) => void
@@ -742,14 +722,11 @@ function ListFieldRowHeader({
   isPreview,
   insertItems,
   label,
-  dragLabel,
   customLabel,
   anchor,
   pasted,
   readOnly,
   typeIcon,
-  onAnchorChange,
-  onCustomLabelChange,
   onCopy,
   onDelete,
   onInsertBefore,
@@ -772,19 +749,21 @@ function ListFieldRowHeader({
   }
 
   return (
-    <ListRowHeader className={className} expanded={expanded} first={isFirstRow}>
-      {!readOnly && (
-        <ListRowDragHandle
-          {...dragProps}
-          aria-label={dragLabel}
-          dragging={isDragging}
-        />
-      )}
+    <ListRowHeader
+      {...(!readOnly ? dragProps : undefined)}
+      className={className}
+      expanded={expanded}
+      first={isFirstRow}
+      onToggle={onToggle}
+    >
       <ListRowDrag dragging={isDragging}>
         <ListRowBadges>
-          <Badge icon={typeIcon} size="small">
-            {label}
-          </Badge>
+          <ListRowFoldButton
+            aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+            expanded={expanded}
+            onPress={onToggle}
+          />
+          <ListRowType icon={typeIcon}>{label}</ListRowType>
           {displayLabel && <ListRowMeta>{displayLabel}</ListRowMeta>}
           {showAnchor && <Badge size="small">#{displayAnchor}</Badge>}
         </ListRowBadges>
@@ -820,23 +799,6 @@ function ListFieldRowHeader({
               />
             ) : (
               <>
-                <ListRowSettings>
-                  <TextField
-                    label="Label"
-                    autoFocus
-                    isDisabled={readOnly || isPreview}
-                    onChange={onCustomLabelChange}
-                    value={customLabel}
-                  />
-                  <SlugField
-                    fieldValue={anchor}
-                    label="Anchor"
-                    isDisabled={readOnly || isPreview}
-                    onChange={onAnchorChange}
-                    source={customLabel}
-                  />
-                </ListRowSettings>
-                <MenuSeparator />
                 <ListRowSettings actions>
                   <Button
                     appearance="plain"
@@ -969,127 +931,64 @@ function ListFieldTypePicker({
   onPaste,
   onSelect
 }: ListFieldTypePickerProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const {contains} = useFilter({sensitivity: 'base'})
-  const pickerItems = useListFieldPickerItems(
+  const pickerItems = listFieldPickerItems(
     items,
     pasted,
     pasteLabel,
-    onPaste
+    onPaste,
+    onSelect
   )
 
-  function handleOpenChange(nextOpen: boolean) {
-    setIsOpen(nextOpen)
-    onOpenChange?.(nextOpen)
-  }
-
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <Button
-        aria-label={label}
-        className={styles.ListFieldTypePicker.trigger(
-          styler.merge({className})
-        )}
-        data-open={isOpen ? 'true' : undefined}
-        isDisabled={isDisabled}
-        size="icon"
-        icon={triggerIcon}
-      />
-      <Popover className={styles.ListFieldTypePicker.popover()}>
-        <Dialog className={styles.ListFieldTypePicker.dialog()}>
-          <Autocomplete filter={contains}>
-            <SearchField
-              aria-label="Search types"
-              autoFocus
-              className={styles.ListFieldTypePicker.search()}
-              hasIcon
-              placeholder="Search types..."
-            />
-            <ListBox
-              aria-label={label}
-              className={styles.ListFieldTypePicker.list()}
-              items={pickerItems}
-              renderEmptyState={() => (
-                <div className={styles.ListFieldTypePicker.empty()}>
-                  No matching types
-                </div>
-              )}
-            >
-              {item => (
-                <ListFieldTypePickerAction
-                  key={item.id}
-                  item={item}
-                  onPaste={onPaste}
-                  onSelect={onSelect}
-                />
-              )}
-            </ListBox>
-          </Autocomplete>
-        </Dialog>
-      </Popover>
-    </DialogTrigger>
+    <TypePicker
+      items={pickerItems}
+      label={label}
+      onOpenChange={onOpenChange}
+      trigger={
+        <Button
+          aria-label={label}
+          className={styles.ListFieldTypePicker.trigger(
+            styler.merge({className})
+          )}
+          isDisabled={isDisabled}
+          size="icon"
+          icon={triggerIcon}
+        />
+      }
+    />
   )
 }
 
-function useListFieldPickerItems(
+function listFieldPickerItems(
   items: Array<ListFieldTypeItem>,
-  pasted?: ListValue,
-  pasteLabel?: string,
-  onPaste?: (row: ListValue) => void
-): Array<ListFieldPickerOption> {
-  return useMemo<Array<ListFieldPickerOption>>(() => {
-    const pasteItem =
-      pasted && onPaste
-        ? [
-            {
-              id: 'paste',
-              label: pasteLabel || 'Paste block',
-              icon: IcBaselineContentPasteGo,
-              pasted
-            }
-          ]
-        : []
-    return [
-      ...pasteItem,
-      ...items.map(item => ({
-        id: item.id,
-        label: item.label,
-        icon: getType(item.type).icon || IcRoundAdd,
-        typeItem: item
-      }))
-    ]
-  }, [items, onPaste, pasteLabel, pasted])
-}
-
-interface ListFieldTypePickerActionProps {
-  item: ListFieldPickerOption
-  onPaste?: (row: ListValue) => void
+  pasted: ListValue | undefined,
+  pasteLabel: string | undefined,
+  onPaste: ((row: ListValue) => void) | undefined,
   onSelect: (item: ListFieldTypeItem) => void
+): Array<TypePickerItem> {
+  const pasteItem: Array<TypePickerItem> =
+    pasted && onPaste
+      ? [
+          {
+            id: 'paste',
+            label: pasteLabel || 'Paste block',
+            icon: IcBaselineContentPasteGo,
+            onSelect: () => onPaste(pasted)
+          }
+        ]
+      : []
+  return [...pasteItem, ...listFieldTypePickerItems(items, onSelect)]
 }
 
-function ListFieldTypePickerAction({
-  item,
-  onPaste,
-  onSelect
-}: ListFieldTypePickerActionProps) {
-  const overlay = useContext(OverlayTriggerStateContext)
-  return (
-    <ListBoxItem
-      className={styles.ListFieldTypePicker.item()}
-      id={item.id}
-      onAction={() => {
-        if (item.pasted) onPaste?.(item.pasted)
-        if (item.typeItem) onSelect(item.typeItem)
-        overlay?.close()
-      }}
-      textValue={item.label}
-    >
-      <Icon
-        aria-hidden
-        icon={item.icon}
-        className={styles.ListFieldTypePicker.item.icon()}
-      />
-      <span>{item.label}</span>
-    </ListBoxItem>
-  )
+function listFieldTypePickerItems(
+  items: Array<ListFieldTypeItem>,
+  onSelect: (item: ListFieldTypeItem) => void
+): Array<TypePickerItem> {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    icon: getType(item.type).icon || IcRoundNotes,
+    colorName: item.label,
+    onSelect: () => onSelect(item)
+  }))
 }

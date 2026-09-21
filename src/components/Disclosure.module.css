@@ -28,6 +28,38 @@
     background-color var(--alinea-transition);
 }
 
+.Disclosure[data-appearance='field'] {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.Disclosure[data-appearance='block'] {
+  border-top: 1px solid var(--alinea-border);
+  background: var(--alinea-muted);
+}
+
+.Disclosure[data-appearance='field'] .Disclosure-trigger,
+.Disclosure[data-appearance='block'] .Disclosure-trigger {
+  min-height: 32px;
+}
+
+.Disclosure[data-appearance='field'] .Disclosure-trigger {
+  padding: 6px 0;
+}
+
+.Disclosure[data-appearance='block'] .Disclosure-trigger {
+  padding: 6px 12px;
+  background: var(--alinea-muted);
+}
+
+.Disclosure[data-appearance='field'] .Disclosure-panel-content {
+  padding: 12px 0 16px;
+}
+
+.Disclosure[data-appearance='block'] .Disclosure-panel-content {
+  padding: 12px;
+  background: var(--alinea-muted);
+}
+
 .Disclosure-trigger[data-hovered] {
   color: var(--alinea-fg-hover);
 }
@@ -67,6 +99,25 @@
   white-space: nowrap;
   transition: var(--alinea-transition);
   transition-property: color;
+}
+
+.Disclosure-summary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.Disclosure[data-appearance='block'] .Disclosure-title {
+  flex: 0 0 auto;
+}
+
+.Disclosure[data-appearance='block'] .Disclosure-summary {
+  flex: 1 1 auto;
+  text-align: right;
 }
 
 .Disclosure-panel {

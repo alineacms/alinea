@@ -48,7 +48,15 @@ export class RichTextBlockHosts {
         },
         stopEvent(event) {
           const target = event.target
+          const isControl =
+            target instanceof Element &&
+            Boolean(
+              target.closest(
+                'button, a, input, select, textarea, [role="button"]'
+              )
+            )
           const dragHandle =
+            !isControl &&
             target instanceof Element &&
             target.closest('[data-richtext-drag-handle]')
           if (event.type.startsWith('drag') || event.type === 'drop')

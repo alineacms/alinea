@@ -8,20 +8,21 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
-  ListRowDragHandle,
+  ListRowFoldButton,
   ListRowHeader,
   ListRowSettings,
+  ListRowType,
   Popover
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
-import {Badge} from '#/dashboard/app/Badge.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
   IcBaselineContentCopy,
   IcRoundClose,
-  IcRoundMoreHoriz
+  IcRoundMoreHoriz,
+  IcRoundNotes
 } from '#/dashboard/icons.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
@@ -31,24 +32,28 @@ import css from './RichTextBlock.module.css'
 const styles = styler(css)
 
 export interface RichTextBlockProps {
+  expanded: boolean
   id: string
   node: ReactiveNode<object>
   type: Type
   readOnly: boolean
   onDelete: () => void
   onDuplicate: () => void
+  onToggle: () => void
 }
 
 export const RichTextBlock = memo(function RichTextBlock({
+  expanded,
   id,
   node,
   type,
   readOnly,
   onDelete,
-  onDuplicate
+  onDuplicate,
+  onToggle
 }: RichTextBlockProps) {
   const label = Type.label(type)
-  const typeIcon = getType(type).icon
+  const typeIcon = getType(type).icon || IcRoundNotes
   const [actionsOpen, setActionsOpen] = useState(false)
 
   function closeActions() {
@@ -63,27 +68,29 @@ export const RichTextBlock = memo(function RichTextBlock({
       data-richtext-block="true"
     >
       <ListRow role="listitem" tabIndex={0}>
-        <ListRowHeader data-richtext-block-header="true" expanded>
-          {!readOnly && (
-            <ListRowDragHandle
-              aria-label={`Drag ${label} block`}
-              className={styles.RichTextBlock.dragHandle()}
-              data-richtext-drag-handle="true"
-              draggable
-              onDragStart={event => {
-                event.dataTransfer.effectAllowed = 'move'
-                event.dataTransfer.setData(
-                  'application/x-alinea-richtext-block',
-                  id
-                )
-              }}
-            />
-          )}
+        <ListRowHeader
+          aria-label={!readOnly ? `Drag ${label} block` : undefined}
+          data-richtext-drag-handle="true"
+          data-richtext-block-header="true"
+          draggable={!readOnly}
+          expanded={expanded}
+          onToggle={onToggle}
+          onDragStart={event => {
+            event.dataTransfer.effectAllowed = 'move'
+            event.dataTransfer.setData(
+              'application/x-alinea-richtext-block',
+              id
+            )
+          }}
+        >
           <ListRowDrag>
             <ListRowBadges>
-              <Badge icon={typeIcon} size="small">
-                {label}
-              </Badge>
+              <ListRowFoldButton
+                aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+                expanded={expanded}
+                onPress={onToggle}
+              />
+              <ListRowType icon={typeIcon}>{label}</ListRowType>
             </ListRowBadges>
           </ListRowDrag>
           <ListRowActions>
@@ -120,14 +127,23 @@ export const RichTextBlock = memo(function RichTextBlock({
             />
           </ListRowActions>
         </ListRowHeader>
-        <ListRowBody data-richtext-block-editor="true">
-          {readOnly ? (
-            <ReadOnlyBlockEditor node={node} type={type} />
-          ) : (
-            <NodeEditor node={node} type={type} />
-          )}
-        </ListRowBody>
+        {expanded && (
+          <ListRowBody data-richtext-block-editor="true">
+            {readOnly ? (
+              <ReadOnlyBlockEditor node={node} type={type} />
+            ) : (
+              <NodeEditor node={node} type={type} />
+            )}
+          </ListRowBody>
+        )}
       </ListRow>
+      {!readOnly && (
+        <div
+          aria-hidden
+          className={styles.RichTextBlock.dropTarget()}
+          data-richtext-block-drop-target="true"
+        />
+      )}
     </List>
   )
 })
