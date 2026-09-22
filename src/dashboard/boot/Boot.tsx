@@ -45,13 +45,17 @@ export async function boot(gen: ConfigGenerator) {
     let lastRevision: string | undefined
     for await (const batch of gen) {
       if (batch.local && batch.revision !== lastRevision) {
-        const link = document.querySelector(
-          'link[href="config.css"]'
-        ) as HTMLLinkElement
-        const copy = link.cloneNode() as HTMLLinkElement
-        copy.href = `config.css?${batch.revision}`
-        copy.onload = () => link.remove()
-        link.after(copy)
+        // Earlier batches replace the link with a revisioned href, so match
+        // on the file name rather than the exact attribute value.
+        const link = document.querySelector<HTMLLinkElement>(
+          'link[rel="stylesheet"][href^="config.css"]'
+        )
+        if (link) {
+          const copy = link.cloneNode() as HTMLLinkElement
+          copy.href = `config.css?${batch.revision}`
+          copy.onload = () => link.remove()
+          link.after(copy)
+        }
       }
       const isLocal = worker instanceof DashboardWorker
       if (isLocal) await worker.load(batch.revision, batch.config, batch.client)
