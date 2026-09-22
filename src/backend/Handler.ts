@@ -93,9 +93,22 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
+    /** Reads keep serving the current content when the remote is unreachable. */
+    async function syncForRead(cnx: RemoteConnection): Promise<void> {
+      try {
+        await local.syncWith(cnx)
+      } catch (error) {
+        console.warn(
+          `Alinea could not sync with the remote, serving current content: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        )
+      }
+    }
+
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
-      return throttle(() => local.syncWith(cnx), syncInterval)
+      return throttle(() => syncForRead(cnx), syncInterval)
     }
 
     try {
@@ -348,7 +361,7 @@ export function createHandler({
             'contentHash' in preview &&
             (await local.sha) !== preview.contentHash
           )
-            await local.syncWith(cnx)
+            await syncForRead(cnx)
           query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
@@ -436,7 +449,7 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await local.syncWith(cnx)
+        await syncForRead(cnx)
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }

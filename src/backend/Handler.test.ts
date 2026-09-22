@@ -1418,3 +1418,42 @@ function requestContext(): RequestContext {
     isDev: true
   }
 }
+
+test('serves current content when a read cannot sync with the remote', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    syncInterval: 0
+  })
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  db.syncWith = async () => {
+    throw new Error('Remote unavailable')
+  }
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const warn = console.warn
+  const warnings: Array<string> = []
+  console.warn = (message: string) => warnings.push(message)
+  try {
+    const response = await handle(resolveRequest({}), requestContext())
+    test.is(response.status, 200)
+    test.is(warnings.length, 1)
+    test.ok(warnings[0]!.includes('Remote unavailable'))
+  } finally {
+    console.warn = warn
+  }
+})

@@ -72,10 +72,20 @@ export class NextCMS<
     return {isBuild, useLocalDb: !isEdge && (!context.isDev || isBuild)}
   }
 
+  /** Renders keep serving the current content when the handler is unreachable. */
   async #syncDb(db: LocalStore, client: Client): Promise<string> {
-    const sha = await db.syncWith(client, preValidatedRemote)
-    this.#syncedAt = Date.now()
-    return sha
+    try {
+      const sha = await db.syncWith(client, preValidatedRemote)
+      this.#syncedAt = Date.now()
+      return sha
+    } catch (error) {
+      console.warn(
+        `Alinea could not sync with the handler, serving current content: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      )
+      return db.sha
+    }
   }
 
   #applyPreview = cache(async () => {
@@ -139,7 +149,9 @@ export class NextCMS<
       }
     }
     const client = createClient(this.config, context)
-    const tree = await client.getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
+    const tree = await client
+      .getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
+      .catch(() => undefined)
     return {source: 'handler', sha: tree?.sha, syncedAt: undefined}
   }
 

@@ -264,3 +264,28 @@ test('reports the handler revision when queries are forwarded', async () => {
     syncedAt: undefined
   })
 })
+
+test('serves the bundled database when the handler cannot be synced', async () => {
+  isDraft = false
+  const db = {
+    sha: 'bundled-content-hash',
+    syncWith: mock(async () => {
+      throw new Error('Handler unavailable')
+    }),
+    resolve: mock(async (query: GraphQuery) => query)
+  }
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+  cms.bundledDb = PLazy.from(async () => db as unknown as LocalDB)
+  const warn = console.warn
+  console.warn = mock(() => {})
+  try {
+    await cms.resolve({syncInterval: 0})
+    expect(db.resolve).toHaveBeenCalledTimes(1)
+    expect(console.warn).toHaveBeenCalledTimes(1)
+  } finally {
+    console.warn = warn
+  }
+  const status = await cms.status()
+  expect(status.sha).toBe('bundled-content-hash')
+  expect(status.syncedAt).toBeUndefined()
+})
