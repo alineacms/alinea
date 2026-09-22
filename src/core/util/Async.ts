@@ -123,3 +123,19 @@ export function genEffect<T, TReturn>(
     }
   }
 }
+
+/** Run tasks one after another; a failed task does not block the next one. */
+export class TaskQueue {
+  #tail: Promise<unknown> = Promise.resolve()
+
+  run<T>(task: () => Promise<T>): Promise<T> {
+    const result = this.#tail.then(task)
+    this.#tail = result.catch(() => {})
+    return result
+  }
+
+  /** Resolve once every task queued so far has settled. */
+  drain(): Promise<void> {
+    return this.#tail.then(() => {})
+  }
+}
