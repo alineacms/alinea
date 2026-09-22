@@ -13,6 +13,7 @@ import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
@@ -30,6 +31,15 @@ export interface PreviewProps {
 
 export type OpenBundledDatabase = (config: Config) => Promise<LocalStore>
 
+export interface SyncStatus {
+  /** Whether queries are answered from the bundled database or the handler. */
+  source: 'database' | 'handler'
+  /** The content revision the answering side is at. */
+  sha: string | undefined
+  /** When this isolate last synced its bundled database with the handler. */
+  syncedAt: Date | undefined
+}
+
 // The handler answers from a database that validated this content already.
 const preValidatedRemote: SyncOptions = {validate: false}
 
@@ -37,6 +47,7 @@ export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
   bundledDb: PLazy<LocalStore>
+  #syncedAt: number | undefined
 
   constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
@@ -52,12 +63,24 @@ export class NextCMS<
   }
 
   throttle = createThrottledSync()
-  #applyPreview = cache(async () => {
-    const context = await requestContext(this.config)
+
+  /** The bundled database answers outside Edge, except during development. */
+  async #environment(context: RequestContext) {
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
     const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-    const useLocalDb = !isEdge && (!context.isDev || isBuild)
+    return {isBuild, useLocalDb: !isEdge && (!context.isDev || isBuild)}
+  }
+
+  async #syncDb(db: LocalStore, client: Client): Promise<string> {
+    const sha = await db.syncWith(client, preValidatedRemote)
+    this.#syncedAt = Date.now()
+    return sha
+  }
+
+  #applyPreview = cache(async () => {
+    const context = await requestContext(this.config)
+    const {isBuild, useLocalDb} = await this.#environment(context)
     const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft)
@@ -99,8 +122,25 @@ export class NextCMS<
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
     if ((await db.sha) !== decoded.contentHash)
-      await db.syncWith(createClient(this.config, context), preValidatedRemote)
+      await this.#syncDb(db, createClient(this.config, context))
     return applyPreviewUpdate(db, decoded)
+  }
+
+  /** Where queries are answered from and how fresh that side is. */
+  async status(): Promise<SyncStatus> {
+    const context = await requestContext(this.config)
+    const {useLocalDb} = await this.#environment(context)
+    if (useLocalDb) {
+      const db = await this.bundledDb
+      return {
+        source: 'database',
+        sha: await db.sha,
+        syncedAt: this.#syncedAt ? new Date(this.#syncedAt) : undefined
+      }
+    }
+    const client = createClient(this.config, context)
+    const tree = await client.getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
+    return {source: 'handler', sha: tree?.sha, syncedAt: undefined}
   }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
@@ -125,14 +165,11 @@ export class NextCMS<
       // so asking for the shared sha would cost an uncached request on every
       // render. Without a preview cookie there is no hash to compare against,
       // and the throttled sync keeps drafts fresh instead.
+      const tracked = {sha: db.sha, syncWith: () => this.#syncDb(db, client)}
       const settled =
-        !isDraft &&
-        (await syncIfStale(db, client, syncInterval, preValidatedRemote))
+        !isDraft && (await syncIfStale(tracked, client, syncInterval))
       if (!settled)
-        await this.throttle(
-          () => db.syncWith(client, preValidatedRemote),
-          syncInterval
-        )
+        await this.throttle(() => this.#syncDb(db, client), syncInterval)
     }
     return db.resolve(request)
   }

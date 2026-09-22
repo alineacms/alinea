@@ -6,6 +6,7 @@ import {
 import {generatedDatabase} from '#/backend/store/GeneratedDatabaseNode.js'
 import type {Config} from '#/core/Config.js'
 
+export type {SyncStatus} from '#/adapter/next/cms.js'
 export type {NextHandlerOptions} from '#/adapter/next/handler.js'
 export type {
   AfterCommitContext,

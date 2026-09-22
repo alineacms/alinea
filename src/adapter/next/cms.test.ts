@@ -224,3 +224,43 @@ test('syncs without asking the handler for the shared sha in draft mode', async 
   expect(syncWith).toHaveBeenCalledTimes(1)
   expect(handlerFetch).not.toHaveBeenCalled()
 })
+
+test('reports the bundled database revision and the last sync', async () => {
+  isDraft = false
+  const sha = 'synced-content-hash'
+  const db = {
+    sha: 'stale-content-hash',
+    syncWith: mock(async () => {
+      db.sha = sha
+      return sha
+    }),
+    resolve: mock(async (query: GraphQuery) => query)
+  }
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+  cms.bundledDb = PLazy.from(async () => db as unknown as LocalDB)
+
+  expect(await cms.status()).toEqual({
+    source: 'database',
+    sha: 'stale-content-hash',
+    syncedAt: undefined
+  })
+  await cms.resolve({syncInterval: 0})
+  const status = await cms.status()
+  expect(status.source).toBe('database')
+  expect(status.sha).toBe(sha)
+  expect(status.syncedAt).toBeInstanceOf(Date)
+})
+
+test('reports the handler revision when queries are forwarded', async () => {
+  process.env.NEXT_RUNTIME = 'edge'
+  handlerFetch = mock(async () =>
+    Response.json({sha: 'handler-content-hash', entries: []})
+  )
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+
+  expect(await cms.status()).toEqual({
+    source: 'handler',
+    sha: 'handler-content-hash',
+    syncedAt: undefined
+  })
+})
