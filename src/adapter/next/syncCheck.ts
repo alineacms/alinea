@@ -1,10 +1,11 @@
 import type {Client} from '#/core/Client.js'
+import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 
 interface SyncableDB {
   readonly sha: string | Promise<string>
-  syncWith(source: RemoteSource): Promise<string>
+  syncWith(source: RemoteSource, options?: SyncOptions): Promise<string>
 }
 
 // Tag for the shared latest-content-sha entry. The Next handler wrapper
@@ -81,15 +82,16 @@ export async function revalidateContentSha(): Promise<void> {
 export async function syncIfStale(
   db: SyncableDB,
   client: Client,
-  syncInterval?: number
+  syncInterval?: number,
+  options?: SyncOptions
 ): Promise<boolean> {
   if (syncInterval === Number.POSITIVE_INFINITY) return true
   if (syncInterval === 0) {
-    await db.syncWith(client)
+    await db.syncWith(client, options)
     return true
   }
   const expected = await latestSha(client)
   if (!expected) return false
-  if (expected !== (await db.sha)) await db.syncWith(client)
+  if (expected !== (await db.sha)) await db.syncWith(client, options)
   return true
 }

@@ -5,6 +5,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import type {Mutation} from '#/core/db/Mutation.js'
+import type {SyncOptions} from '#/core/db/LocalStore.js'
 import {Graph, type AnyQueryResult, type GraphQuery} from '#/core/Graph.js'
 import {Policy} from '#/core/Role.js'
 import {OverlaySource} from '#/core/source/OverlaySource.js'
@@ -151,9 +152,13 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   /** Synchronize a source through this layer's single prepared syncer. */
-  syncWith(source: RemoteSource): Promise<EntrySyncResult> {
+  syncWith(
+    source: RemoteSource,
+    options?: SyncOptions
+  ): Promise<EntrySyncResult> {
     if (this.#closed)
       return Promise.reject(new Error('EntryDatabase is closed'))
+    const validate = options?.validate ?? true
     const task = this.#syncQueue.then(async () => {
       const current =
         this.#syncDb === this.#db
@@ -161,7 +166,12 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
           : await this.#getRevision(this.#syncDb)
       const tree = await source.getTreeIfDifferent(current)
       if (!tree) return {revision: current, changedEntryIds: []}
-      const changedEntryIds = await this.#syncSource(source, tree, current)
+      const changedEntryIds = await this.#syncSource(
+        source,
+        tree,
+        current,
+        validate
+      )
       return {revision: tree.sha, changedEntryIds}
     })
     this.#syncQueue = task.catch(() => {})
@@ -345,7 +355,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   async #syncSource(
     source: RemoteSource,
     tree: ReadonlyTree,
-    fromRevision: string
+    fromRevision: string,
+    validate: boolean
   ): Promise<Array<string>> {
     this.#initialTree ??= tree
     let changedEntryIds = Array<string>()
@@ -357,7 +368,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         fromRevision,
         {
           previousTree: this.#tree,
-          withinTransaction: this.#transactional
+          withinTransaction: this.#transactional,
+          validate
         }
       )
       this.#tree = tree

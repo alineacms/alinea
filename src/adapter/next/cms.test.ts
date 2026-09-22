@@ -40,9 +40,11 @@ mock.module('next/constants.js', () => ({
   PHASE_PRODUCTION_BUILD: 'production-build'
 }))
 
+let isDraft = true
+
 mock.module('next/headers.js', () => ({
   cookies: async () => ({getAll: () => previewCookies}),
-  draftMode: async () => ({isEnabled: true})
+  draftMode: async () => ({isEnabled: isDraft})
 }))
 
 const {NextCMS} = await import('./cms.js')
@@ -50,6 +52,7 @@ const {NextCMS} = await import('./cms.js')
 beforeEach(() => {
   process.env.NEXT_PHASE = 'production-server'
   previewCookies = []
+  isDraft = true
   handlerUrl = new URL('https://example.com/api/cms')
   handlerFetch = defaultFetch
 })
@@ -108,7 +111,6 @@ test('syncs a bundled database for a mismatched preview content hash', async () 
   const resolve = mock(async (query: GraphQuery) => query)
   const db = {
     sha: 'stale-content-hash',
-    source: {getTree: async () => ({sha: 'stale-content-hash'})},
     first: mock(async () => undefined),
     syncWith: async () => {
       db.sha = contentHash
@@ -132,39 +134,7 @@ test('syncs a bundled database for a mismatched preview content hash', async () 
   expect(syncWith).toHaveBeenCalledTimes(1)
 })
 
-test('uses a bundled source tree without requesting it from the handler', async () => {
-  const contentHash = 'requested-content-hash'
-  const syncWith = mock(async () => contentHash)
-  const sync = mock(async () => {
-    db.sha = contentHash
-    return contentHash
-  })
-  const db = {
-    sha: 'stale-index-hash',
-    source: {getTree: async () => ({sha: contentHash})},
-    first: mock(async () => undefined),
-    sync,
-    syncWith,
-    resolve: mock(async (query: GraphQuery) => query)
-  }
-  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
-  cms.bundledDb = PLazy.from(async () => db as unknown as LocalDB)
-  const payload = await encodePreviewPayload({
-    locale: null,
-    entryId: 'entry-id',
-    contentHash,
-    status: 'draft',
-    patch: new Uint8Array()
-  })
-  previewCookies = chunkCookieValue(PREVIEW_COOKIE_NAME, payload)
-
-  await cms.resolve({syncInterval: 0})
-
-  expect(sync).toHaveBeenCalledTimes(1)
-  expect(syncWith).not.toHaveBeenCalled()
-})
-
-test('applies a valid preview patch without syncing unrelated tree changes', async () => {
+test('syncs once for a stale preview content hash and still applies the patch', async () => {
   const Page = Config.document('Page', {fields: {}})
   const config = Config.create({
     schema: {Page},
@@ -202,6 +172,9 @@ test('applies a valid preview patch without syncing unrelated tree changes', asy
   )
   const patch = await createFilePatch(baseText, updatedText)
   await db.create({type: Page, set: {title: 'Unrelated entry'}})
+  // The handler is at the revision this db already holds, which makes the
+  // sync triggered by the stale cookie hash a no-op.
+  handlerFetch = mock(async () => Response.json(null))
   const syncWith = mock(db.syncWith.bind(db))
   db.syncWith = syncWith
   let initializations = 0
@@ -225,9 +198,29 @@ test('applies a valid preview patch without syncing unrelated tree changes', asy
   ])
 
   expect(initializations).toBe(1)
-  expect(syncWith).not.toHaveBeenCalled()
+  // Once per resolve: React's cache() only dedups within a request scope,
+  // which bun test has none of. Each sync is a no-op against this db.
+  expect(syncWith).toHaveBeenCalled()
   expect(results.map(result => result?.title)).toEqual([
     previewTitle,
     previewTitle
   ])
+})
+
+test('syncs without asking the handler for the shared sha in draft mode', async () => {
+  const syncWith = mock(async () => 'remote-content-hash')
+  const db = {
+    sha: 'local-content-hash',
+    first: mock(async () => undefined),
+    syncWith,
+    resolve: mock(async (query: GraphQuery) => query)
+  }
+  handlerFetch = mock(async () => Response.json(null))
+  const cms = new NextCMS(Config.create({schema: {}, workspaces: {}}))
+  cms.bundledDb = PLazy.from(async () => db as unknown as LocalDB)
+
+  await cms.resolve({syncInterval: 5000})
+
+  expect(syncWith).toHaveBeenCalledTimes(1)
+  expect(handlerFetch).not.toHaveBeenCalled()
 })

@@ -41,6 +41,8 @@ export const EntrySyncRoot: EntrySyncTarget = {
 export interface EntrySyncOptions {
   previousTree?: ReadonlyTree
   withinTransaction?: boolean
+  /** Skip entry validation for a source whose entries were already validated. */
+  validate?: boolean
 }
 
 /** Prepared, serialized source synchronization for one database connection. */
@@ -74,7 +76,8 @@ export class EntrySyncer implements AsyncDisposable {
         tree,
         fromRevision,
         options.previousTree,
-        options.withinTransaction ?? false
+        options.withinTransaction ?? false,
+        options.validate ?? true
       )
     )
     this.#queue = task.catch(() => {})
@@ -87,7 +90,8 @@ export class EntrySyncer implements AsyncDisposable {
     tree: ReadonlyTree,
     fromRevision: string,
     previousTree: ReadonlyTree | undefined,
-    withinTransaction: boolean
+    withinTransaction: boolean,
+    validate: boolean
   ): Promise<Array<string>> {
     const queries = await this.#queriesFor(target)
     const run = async (tx: Database) => {
@@ -130,7 +134,7 @@ export class EntrySyncer implements AsyncDisposable {
       await deriveStatus(tx, queries)
       if (initial) await copyInitialUrls(queries)
       else await deriveUrls(tx, target.entries, this.#config, queries)
-      await validateEntries(tx, target.changes ?? target.entries)
+      if (validate) await validateEntries(tx, target.changes ?? target.entries)
       const changed = await queries.changedIds.all()
       await queries.setRevision.run({
         revision: tree.sha,

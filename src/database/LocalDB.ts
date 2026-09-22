@@ -15,7 +15,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {Policy} from '#/core/Role.js'
@@ -84,9 +84,9 @@ export class LocalDB
     return span(async () => (await this.#store).sync())
   }
 
-  syncWith(remote: RemoteSource): Promise<string> {
+  syncWith(remote: RemoteSource, options?: SyncOptions): Promise<string> {
     const span = trace(this.config, 'alinea.local_db.sync_with')
-    return span(async () => (await this.#store).syncWith(remote))
+    return span(async () => (await this.#store).syncWith(remote, options))
   }
 
   async logEntries(): Promise<void> {

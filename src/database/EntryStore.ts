@@ -20,7 +20,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
-import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
@@ -217,10 +217,10 @@ export class EntryStore
   }
 
   /** Keep the writable source and its query database at one remote revision. */
-  syncWith(remote: RemoteSource): Promise<string> {
+  syncWith(remote: RemoteSource, options?: SyncOptions): Promise<string> {
     return this.#run(async () => {
       if (this.#sourceFollowsDatabase) {
-        await this.database.syncWith(remote)
+        await this.database.syncWith(remote, options)
         await this.#seed()
         return this.database.getRevision()
       }
@@ -229,7 +229,7 @@ export class EntryStore
       if (!remoteTree) return this.#sync()
       const batch = localTree.diff(remoteTree)
       const knownRemote = sourceAtTree(remote, remoteTree)
-      await this.database.syncWith(knownRemote)
+      await this.database.syncWith(knownRemote, options)
       await applyChangesFrom(
         this.source,
         new DatabaseSource(this.database),

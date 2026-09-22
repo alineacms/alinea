@@ -8,7 +8,7 @@ import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
-import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
@@ -29,6 +29,9 @@ export interface PreviewProps {
 }
 
 export type OpenBundledDatabase = (config: Config) => Promise<LocalStore>
+
+// The handler answers from a database that validated this content already.
+const preValidatedRemote: SyncOptions = {validate: false}
 
 export class NextCMS<
   Definition extends Config = Config
@@ -81,29 +84,22 @@ export class NextCMS<
     return {context, hasPreview: true, isDraft, isBuild, preview, useLocalDb}
   })
 
+  /**
+   * The preview cookie carries the content hash the dashboard rendered
+   * against, which is the freshness signal in draft mode: Next bypasses the
+   * `unstable_cache` that `syncIfStale` shares between renders there, so the
+   * cookie hash replaces the uncached lookup of the latest sha. A mismatch
+   * means this isolate is behind (or ahead of) the previewed content, and one
+   * sync brings it to the handler revision before the patch is applied.
+   */
   async #prepareLocalPreview(
     db: LocalStore,
     decoded: DecodedPreviewRequest,
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
-    if ((await db.sha) === decoded.contentHash)
-      return applyPreviewUpdate(db, decoded)
-
-    const source = await db.source.getTree()
-    if (source.sha === decoded.contentHash) {
-      await db.sync()
-      return applyPreviewUpdate(db, decoded)
-    }
-
-    // File patches carry and verify their own base hash. A patch can therefore
-    // be applied safely when only unrelated files changed in the content tree.
-    const applied = await applyPreviewUpdate(db, decoded)
-    if (applied) return applied
-
-    // The target entry is missing or has a different base. Only this case
-    // needs the current remote tree before applying the preview again.
-    await db.syncWith(createClient(this.config, context))
+    if ((await db.sha) !== decoded.contentHash)
+      await db.syncWith(createClient(this.config, context), preValidatedRemote)
     return applyPreviewUpdate(db, decoded)
   }
 
@@ -122,10 +118,21 @@ export class NextCMS<
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
+    // A preview cookie already settled freshness through its content hash.
     if (hasPreview) return db.resolve(request)
     if (!isBuild) {
-      const settled = await syncIfStale(db, client, syncInterval)
-      if (!settled) await this.throttle(() => db.syncWith(client), syncInterval)
+      // In draft mode Next bypasses the `unstable_cache` behind `syncIfStale`,
+      // so asking for the shared sha would cost an uncached request on every
+      // render. Without a preview cookie there is no hash to compare against,
+      // and the throttled sync keeps drafts fresh instead.
+      const settled =
+        !isDraft &&
+        (await syncIfStale(db, client, syncInterval, preValidatedRemote))
+      if (!settled)
+        await this.throttle(
+          () => db.syncWith(client, preValidatedRemote),
+          syncInterval
+        )
     }
     return db.resolve(request)
   }

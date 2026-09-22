@@ -269,7 +269,7 @@ export class DashboardWorker extends EventTarget {
     this.#activities.unshift(activity)
     this.#emitActivity()
     try {
-      const result = await db.syncWith(client)
+      const result = await db.syncWith(client, {validate: false})
       activity.status = 'succeeded'
       return result
     } catch (error) {

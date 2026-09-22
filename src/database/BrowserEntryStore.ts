@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {versionedCacheName} from '#/core/Version.js'
@@ -106,9 +107,12 @@ export class BrowserEntryStore extends EntryStore {
     })
   }
 
-  override syncWith(remote: RemoteSource): Promise<string> {
+  override syncWith(
+    remote: RemoteSource,
+    options?: SyncOptions
+  ): Promise<string> {
     return this.#persist(async () => {
-      const sha = await super.syncWith(remote)
+      const sha = await super.syncWith(remote, options)
       await this.#save(sha)
       return sha
     })

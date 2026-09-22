@@ -108,3 +108,30 @@ test('failed validation rolls back the sync', async () => {
     sqlite.close()
   }
 })
+
+/** A remote whose entries were validated by its own database can be synced
+ * with validation switched off. */
+test('syncWith can skip validation for an already validated remote', async () => {
+  const invalid = await remoteWith([
+    {id: 'a', type: 'Doc'},
+    {id: 'a', type: 'Other', status: 'draft'}
+  ])
+  const validating = await EntryStore.memory(cms.config, new MemorySource())
+  try {
+    await expect(validating.syncWith(invalid)).rejects.toThrow(
+      'Mismatched authored entry versions'
+    )
+  } finally {
+    await validating.close()
+  }
+  const trusting = await EntryStore.memory(cms.config, new MemorySource())
+  try {
+    await trusting.syncWith(invalid, {validate: false})
+    expect(await trusting.find({select: Entry.id, status: 'all'})).toEqual([
+      'a',
+      'a'
+    ])
+  } finally {
+    await trusting.close()
+  }
+})
