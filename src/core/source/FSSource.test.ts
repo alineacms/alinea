@@ -247,9 +247,12 @@ test('hydrated file stats avoid reading unchanged files', async () => {
       readFile.mockClear()
       const updated = await source.getTree()
 
+      // The source joins paths with forward slashes, so compare normalized
+      // paths on Windows as well.
+      const normalize = (file: string) => file.replaceAll('\\', '/')
       test.equal(
-        readFile.mock.calls.map(([file]) => String(file)),
-        [changedFile]
+        readFile.mock.calls.map(([file]) => normalize(String(file))),
+        [normalize(changedFile)]
       )
       test.ok(updated.sha !== tree.sha)
     } finally {

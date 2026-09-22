@@ -177,10 +177,13 @@ test('reopens the generated database without re-reading unchanged files', async 
     initial = undefined
 
     const readFile = spyOn(fs, 'readFile')
+    // The source joins paths with forward slashes, so compare normalized paths
+    // on Windows as well.
+    const normalize = (file: string) => file.replaceAll('\\', '/')
     const contentReads = () =>
       readFile.mock.calls
-        .map(([file]) => String(file))
-        .filter(file => file.startsWith(contentDir))
+        .map(([file]) => normalize(String(file)))
+        .filter(file => file.startsWith(normalize(contentDir)))
     try {
       reopened = await DevDB.create(options)
       test.is(reopened.hydrated, true)
@@ -202,7 +205,7 @@ test('reopens the generated database without re-reading unchanged files', async 
       readFile.mockClear()
       const changed = await reopened.sync()
 
-      test.equal(contentReads(), [pageFile])
+      test.equal(contentReads(), [normalize(pageFile)])
       test.ok(changed !== sha)
       test.equal(await reopened.find({select: Entry.title}), ['Changed'])
     } finally {
