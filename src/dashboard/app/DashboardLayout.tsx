@@ -5,7 +5,7 @@ import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import {styler} from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
 import type {PropsWithChildren} from 'react'
-import {DashboardScope} from '../hooks.js'
+import {DashboardScope, useDashboardContext} from '../hooks.js'
 import {IcRoundAdd} from '../icons.js'
 import {AppShell, AppShellContent, AppShellInner} from './AppShell.js'
 import {SidebarTree} from './SidebarTree.js'
@@ -90,7 +90,8 @@ export function CreateEntryButton({
   root,
   toolbar = false
 }: CreateEntryButtonProps) {
-  const canCreate = useAtomValueRaw(root.canCreate)
+  const {page} = useDashboardContext()
+  const canCreate = useAtomValueRaw(root.tree(page.locale).canCreate)
   if (!canCreate) return null
   return (
     <DialogTrigger>
