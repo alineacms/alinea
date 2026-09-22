@@ -14,6 +14,7 @@ import {
   ListRowBody,
   ListRowDrag,
   ListRowDragHandle,
+  ListRowFoldButton,
   ListRowHeader,
   ListRowMeta,
   ListRowSettings,
@@ -789,6 +790,12 @@ function ListFieldRowHeader({
       )}
       <ListRowDrag dragging={isDragging}>
         <ListRowBadges>
+          <ListRowFoldButton
+            aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+            expanded={expanded}
+            isDisabled={isPreview}
+            onPress={onToggle}
+          />
           <Badge icon={typeIcon} size="small">
             {label}
           </Badge>

@@ -70,3 +70,20 @@ test('enforces min and max item counts', async ({mount, page}) => {
   await expect(page.getByText('Add at most 2 items')).toHaveCount(0)
   await expect(addQuote).toBeVisible()
 })
+
+test('folds a single item', async ({mount, page}) => {
+  await mount(<Example />)
+  const rows = page.getByRole('list', {name: 'Sections'}).getByRole('listitem')
+  const hero = rows.first()
+  const quote = rows.nth(1)
+
+  await hero.getByRole('button', {name: 'Collapse Hero'}).click()
+  await expect(hero.getByRole('textbox')).toHaveCount(0)
+  await expect(quote.getByRole('textbox', {name: 'Quote'})).toBeVisible()
+  await expect(
+    page.getByRole('button', {name: 'Expand all items'}).first()
+  ).toBeVisible()
+
+  await hero.getByRole('button', {name: 'Expand Hero'}).click()
+  await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+})
