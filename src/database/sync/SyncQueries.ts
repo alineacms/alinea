@@ -27,7 +27,6 @@ import {
 } from '../entry/EntryTable.js'
 import type {EntrySyncTarget} from './EntrySyncer.js'
 
-export const changeBatchSize = 250
 export const sqliteBatchSize = 5000
 
 export const SyncAffected = temporaryTable('alinea_sync_affected', {
@@ -50,68 +49,10 @@ export const SyncStatus = temporaryTable('alinea_sync_status', {
   mainStatus: column.text().notNull()
 })
 
-export interface FileRow {
-  filePath: string
-  fileHash: string
-}
-
-export interface StoredHierarchyRow {
-  versionId: string
-  parentDir: string
-  parentId: string | null
-  parents: Array<string>
-}
-
-export interface MainRow {
-  versionId: string
-  id: string
-  locale: string | null
-  type: string
-  versionStatus: string
-  workspace: string
-  root: string
-  path: string
-  parents: Array<string>
-  data: string
-}
-
-export interface ParentPathRow {
-  id: string
-  locale: string | null
-  path: string
-}
-
-export interface HierarchyRow {
-  id: string
-  versionId: string
-  parentDir: string
-  parentId: string | null
-  parents: Array<string>
-}
-
-export interface DirectoryRow {
-  id: string
-  childrenDir: string
-}
-
-export interface DirectoryHashRow extends DirectoryRow {
-  versionId: string
-  childrenSha: string | null
-}
-
-export interface AffectedEntryRow {
-  id: string
-  filePath: string
-  childrenSha: string | null
-}
-
-export interface StatusRow {
-  id: string
-  locale: string | null
-  parentId: string | null
-  activeStatus: string
-  ownStatus: string | null
-  mainStatus: string
+/** One key/value pair staged in the temporary {@link SyncValues} table. */
+export interface SyncValueRow {
+  key: string
+  value: string
 }
 
 const builder = new Builder()
@@ -239,20 +180,8 @@ function changedIdsQuery() {
     .orderBy(asc(SyncAffected.id))
 }
 
-function clearAffectedQuery() {
-  return builder.delete(SyncAffected)
-}
-
-function clearCascadeQuery() {
-  return builder.delete(SyncCascade)
-}
-
 function clearValuesQuery() {
   return builder.delete(SyncValues)
-}
-
-function clearStatusQuery() {
-  return builder.delete(SyncStatus)
 }
 
 function updateChildrenShaQuery(target: EntrySyncTarget) {
@@ -371,6 +300,20 @@ function insertEntryQuery(target: EntrySyncTarget) {
   return builder.insert(target.entries).values(values)
 }
 
+/**
+ * Named parameters bypass column encoders, so bind SQLite values explicitly for
+ * the placeholders of {@link insertEntryQuery}.
+ */
+export function insertEntryValues(row: ReturnType<typeof entryIndexRow>) {
+  return {
+    ...row,
+    parents: JSON.stringify(row.parents),
+    active: Number(row.active),
+    main: Number(row.main),
+    visible: Number(row.visible)
+  }
+}
+
 export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
   const statements = {
     insertValue: builder
@@ -398,10 +341,7 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
     statuses: statusesQuery(target).prepare(undefined, db),
     mainEntries: mainEntriesQuery(target).prepare(undefined, db),
     changedIds: changedIdsQuery().prepare(undefined, db),
-    clearAffected: clearAffectedQuery().prepare(undefined, db),
-    clearCascade: clearCascadeQuery().prepare(undefined, db),
     clearValues: clearValuesQuery().prepare(undefined, db),
-    clearStatus: clearStatusQuery().prepare(undefined, db),
     updateChildrenSha: updateChildrenShaQuery(target).prepare(undefined, db),
     updateUrls: updateUrlsQuery(target).prepare(undefined, db),
     copyInitialUrls: copyInitialUrlsQuery(target).prepare(undefined, db),
@@ -418,6 +358,18 @@ export function prepareSyncQueries(db: Database, target: EntrySyncTarget) {
 
 export type SyncQueries = ReturnType<typeof prepareSyncQueries>
 
+/** Stage key/value pairs and apply the update that reads them back. */
+export async function writeValues(
+  queries: SyncQueries,
+  rows: ReadonlyArray<SyncValueRow>,
+  update: SyncQueries['updateChildrenSha' | 'updateHierarchy' | 'updateUrls']
+): Promise<void> {
+  await queries.clearValues.run()
+  for (const row of rows)
+    await queries.insertValue.run({key: row.key, value: row.value})
+  await update.run()
+}
+
 export async function createTemporaryTables(db: Database): Promise<void> {
   await db.create(SyncAffected, SyncCascade, SyncValues, SyncStatus)
 }
@@ -427,10 +379,11 @@ export async function dropTemporaryTables(db: Database): Promise<void> {
 }
 
 export async function clearTemporaryTables(
+  db: Database,
   queries: SyncQueries
 ): Promise<void> {
-  await queries.clearAffected.run()
-  await queries.clearCascade.run()
+  await db.delete(SyncAffected)
+  await db.delete(SyncCascade)
   await queries.clearValues.run()
-  await queries.clearStatus.run()
+  await db.delete(SyncStatus)
 }

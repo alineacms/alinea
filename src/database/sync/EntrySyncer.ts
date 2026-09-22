@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {TaskQueue} from '#/core/util/Async.js'
 import type {Database, Table} from 'rado'
 import {
   DatabaseStateTable,
@@ -16,7 +17,6 @@ import {
 } from './SyncQueries.js'
 import {mergeTrees} from './Ingest.js'
 import {
-  copyInitialUrls,
   deriveHierarchy,
   deriveStatus,
   deriveUrls,
@@ -51,7 +51,7 @@ export class EntrySyncer implements AsyncDisposable {
   #config: Config
   #queries = new Map<EntrySyncTarget, Promise<SyncQueries>>()
   #ready: Promise<void>
-  #queue: Promise<unknown> = Promise.resolve()
+  #queue = new TaskQueue()
   #closed = false
 
   constructor(config: Config, db: Database) {
@@ -69,7 +69,7 @@ export class EntrySyncer implements AsyncDisposable {
     options: EntrySyncOptions = {}
   ): Promise<Array<string>> {
     if (this.#closed) return Promise.reject(new Error('EntrySyncer is closed'))
-    const task = this.#queue.then(() =>
+    return this.#queue.run(() =>
       this.#sync(
         target,
         source,
@@ -80,8 +80,6 @@ export class EntrySyncer implements AsyncDisposable {
         options.validate ?? true
       )
     )
-    this.#queue = task.catch(() => {})
-    return task
   }
 
   async #sync(
@@ -96,7 +94,7 @@ export class EntrySyncer implements AsyncDisposable {
     const queries = await this.#queriesFor(target)
     const run = async (tx: Database) => {
       const materialized = new Set<string>()
-      await clearTemporaryTables(queries)
+      await clearTemporaryTables(tx, queries)
       const state = await queries.revision.get()
       if (state?.revision !== fromRevision)
         throw new Error('Database revision mismatch')
@@ -128,11 +126,14 @@ export class EntrySyncer implements AsyncDisposable {
         queries
       )
       if (hierarchyChanged) {
+        // The cascade table is deliberately left as is: deriveHierarchy rewrote
+        // parentId/parents, so re-walking the same roots picks up entries that
+        // moved under them, and `insert or ignore` keeps this idempotent.
         await expandAffected(tx, target.entries)
         await materializeAffected(tx, target, queries, materialized)
       }
       await deriveStatus(tx, queries)
-      if (initial) await copyInitialUrls(queries)
+      if (initial) await queries.copyInitialUrls.run()
       else await deriveUrls(tx, target.entries, this.#config, queries)
       if (validate) await validateEntries(tx, target.changes ?? target.entries)
       const changed = await queries.changedIds.all()
@@ -157,7 +158,7 @@ export class EntrySyncer implements AsyncDisposable {
 
   /** Release prepared statements belonging to a closed named target. */
   async release(target: EntrySyncTarget): Promise<void> {
-    await this.#queue
+    await this.#queue.drain()
     const queries = this.#queries.get(target)
     if (!queries) return
     this.#queries.delete(target)
@@ -167,7 +168,7 @@ export class EntrySyncer implements AsyncDisposable {
   async close(): Promise<void> {
     if (this.#closed) return
     this.#closed = true
-    await this.#queue
+    await this.#queue.drain()
     await this.#ready
     const queries = Array.from(this.#queries.values())
     this.#queries.clear()

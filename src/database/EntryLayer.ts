@@ -17,6 +17,7 @@ import {
   type Source
 } from '#/core/source/Source.js'
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import {TaskQueue} from '#/core/util/Async.js'
 import {eq, inArray, sql, type Database} from 'rado'
 import {DatabaseSource} from './DatabaseSource.js'
 import {EntryView} from './entry/EntryView.js'
@@ -30,7 +31,7 @@ import {EntrySyncer, type EntrySyncTarget} from './sync/EntrySyncer.js'
 /** Shared, connection-scoped state of one queryable layer of the entry index. */
 export interface EntryLayerContext {
   nextOverlayId: number
-  queue: Promise<unknown>
+  queue: TaskQueue
   syncer: EntrySyncer
 }
 
@@ -72,11 +73,6 @@ export interface EntryApplyOptions {
   policy?: Policy
 }
 
-export interface QueryObserver {
-  next(value: unknown): void
-  error(error: unknown): void
-}
-
 export type EntryChangeListener = (change: EntrySyncResult) => void
 
 export interface EntrySyncResult {
@@ -112,9 +108,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   #searchDirty: boolean
   #transactional: boolean
   #children = new Set<EntryLayer>()
-  #listeners = new Set<() => void>()
   #changeListeners = new Set<EntryChangeListener>()
-  #syncQueue: Promise<unknown> = Promise.resolve()
+  #syncQueue = new TaskQueue()
   #closed = false
 
   constructor(
@@ -151,19 +146,21 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     )
   }
 
+  #assertOpen(): void {
+    if (this.#closed) throw new Error('EntryDatabase is closed')
+  }
+
   /** Synchronize a source through this layer's single prepared syncer. */
-  syncWith(
+  async syncWith(
     source: RemoteSource,
     options?: SyncOptions
   ): Promise<EntrySyncResult> {
-    if (this.#closed)
-      return Promise.reject(new Error('EntryDatabase is closed'))
+    this.#assertOpen()
     const validate = options?.validate ?? true
-    const task = this.#syncQueue.then(async () => {
-      const current =
-        this.#syncDb === this.#db
-          ? await this.getRevision()
-          : await this.#getRevision(this.#syncDb)
+    return this.#syncQueue.run(async () => {
+      const current = await this.#onSyncConnection(() =>
+        this.#getRevision(this.#syncDb)
+      )
       const tree = await source.getTreeIfDifferent(current)
       if (!tree) return {revision: current, changedEntryIds: []}
       const changedEntryIds = await this.#syncSource(
@@ -174,22 +171,15 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       )
       return {revision: tree.sha, changedEntryIds}
     })
-    this.#syncQueue = task.catch(() => {})
-    return task
   }
 
   /** Atomically plan and apply mutations through a private working layer. */
-  apply(
+  async apply(
     mutations: ReadonlyArray<Mutation>,
     options: EntryApplyOptions
   ): Promise<EntryApplyResult> {
-    if (this.#closed)
-      return Promise.reject(new Error('EntryDatabase is closed'))
-    const task = this.#syncQueue.then(() =>
-      this.#applyMutations(mutations, options)
-    )
-    this.#syncQueue = task.catch(() => {})
-    return task
+    this.#assertOpen()
+    return this.#syncQueue.run(() => this.#applyMutations(mutations, options))
   }
 
   async #applyMutations(
@@ -212,7 +202,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
             syncer: this.#syncer,
             context: {
               nextOverlayId: this.#context.nextOverlayId,
-              queue: Promise.resolve(),
+              queue: new TaskQueue(),
               syncer: this.#syncer
             },
             target: this.#target,
@@ -247,10 +237,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       {async: true}
     )
     this.#tree = applied.tree
-    if (applied.result.changedEntryIds.length) {
-      if (this.#ownSearchName) this.#searchName = this.#ownSearchName
-      this.#searchDirty = true
-    }
+    this.#markChanged(applied.result.changedEntryIds)
     this.#emitChange(applied.result)
     return applied.result
   }
@@ -260,7 +247,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     if (this.#children.size)
       throw new Error('Cannot close an entry database with active overlays')
     this.#closed = true
-    await this.#syncQueue
+    await this.#syncQueue.drain()
     await this.#withReadConnection(() => this.releaseLayer())
   }
 
@@ -373,19 +360,21 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         }
       )
       this.#tree = tree
-      if (changedEntryIds.length) {
-        if (this.#ownSearchName) this.#searchName = this.#ownSearchName
-        this.#searchDirty = true
-      }
+      this.#markChanged(changedEntryIds)
     }
-    if (this.#syncDb === this.#db) await this.#withReadConnection(sync)
-    else await sync()
+    await this.#onSyncConnection(sync)
     this.#emitChange({revision: tree.sha, changedEntryIds})
     return changedEntryIds
   }
 
+  /** Divert to this layer's own search table once its contents diverge. */
+  #markChanged(changedEntryIds: ReadonlyArray<string>): void {
+    if (!changedEntryIds.length) return
+    if (this.#ownSearchName) this.#searchName = this.#ownSearchName
+    this.#searchDirty = true
+  }
+
   #emitChange(change: EntrySyncResult): void {
-    for (const invalidate of this.#listeners) invalidate()
     for (const listener of this.#changeListeners) listener(change)
   }
 
@@ -394,9 +383,12 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   #withReadConnection<T>(run: () => Promise<T>): Promise<T> {
-    const task = this.#context.queue.then(run)
-    this.#context.queue = task.catch(() => {})
-    return task
+    return this.#context.queue.run(run)
+  }
+
+  /** Serialize with the read connection only when both share one connection. */
+  #onSyncConnection<T>(run: () => Promise<T>): Promise<T> {
+    return this.#syncDb === this.#db ? this.#withReadConnection(run) : run()
   }
 
   /** Run a task serialized with every other read on this connection. */
@@ -406,7 +398,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
 
   /** Create and synchronize a copy-on-write layer over this one. */
   async overlay(source: RemoteSource): Promise<EntryOverlay> {
-    if (this.#closed) throw new Error('EntryDatabase is closed')
+    this.#assertOpen()
     const name = `overlay_${this.#context.nextOverlayId++}`
     let child: EntryOverlay | undefined
     try {
@@ -466,7 +458,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   async resolve<const Query extends GraphQuery>(
     query: Query
   ): Promise<AnyQueryResult<Query>> {
-    if (this.#closed) throw new Error('EntryDatabase is closed')
+    this.#assertOpen()
     return this.#withReadConnection(() => {
       if (this.#transactional)
         return this.#resolve(query, this.#db) as Promise<AnyQueryResult<Query>>
@@ -491,9 +483,10 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   /** Scan references in bounded pages without retaining an entry index. */
-  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
-    if (this.#closed)
-      return Promise.reject(new Error('EntryDatabase is closed'))
+  async referencesTo(
+    query: EntryReferenceQuery
+  ): Promise<EntryReferenceResult> {
+    this.#assertOpen()
     return this.#withReadConnection(() =>
       this.#db.transaction(
         tx => queryEntryReferences(this.#config, tx, this.#entryTarget, query),
@@ -512,32 +505,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#searchDirty = false
   }
 
-  /** Conservative commit invalidation includes rows outside the current result. */
-  subscribe(query: GraphQuery, observer: QueryObserver): () => void {
-    let active = true
-    let sequence = 0
-    const invalidate = () => {
-      const current = ++sequence
-      this.resolve(query).then(
-        value => {
-          if (active && current === sequence) observer.next(value)
-        },
-        error => {
-          if (active && current === sequence) observer.error(error)
-        }
-      )
-    }
-    this.#listeners.add(invalidate)
-    invalidate()
-    return () => {
-      active = false
-      sequence++
-      this.#listeners.delete(invalidate)
-    }
-  }
-
   onChange(listener: EntryChangeListener): () => void {
-    if (this.#closed) throw new Error('EntryDatabase is closed')
+    this.#assertOpen()
     this.#changeListeners.add(listener)
     return () => this.#changeListeners.delete(listener)
   }

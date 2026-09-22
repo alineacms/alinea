@@ -1,4 +1,3 @@
-import {Entry} from '#/core/Entry.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import type {
@@ -87,31 +86,6 @@ export class LocalDB
   syncWith(remote: RemoteSource, options?: SyncOptions): Promise<string> {
     const span = trace(this.config, 'alinea.local_db.sync_with')
     return span(async () => (await this.#store).syncWith(remote, options))
-  }
-
-  async logEntries(): Promise<void> {
-    const entries = await this.find({
-      select: {
-        id: Entry.id,
-        root: Entry.root,
-        workspace: Entry.workspace,
-        parentId: Entry.parentId,
-        locale: Entry.locale,
-        status: Entry.status,
-        path: Entry.path,
-        index: Entry.index,
-        title: Entry.title,
-        active: Entry.active
-      },
-      status: 'all'
-    })
-    console.table(
-      entries.map(({id, parentId, ...entry}) => ({
-        id: id.slice(-7),
-        parentId: parentId?.slice(-7),
-        ...entry
-      }))
-    )
   }
 
   async request(

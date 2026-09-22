@@ -27,7 +27,7 @@ type FieldSql = (name: string) => HasSql
 
 export function jsonField(
   target: HasSql,
-  segments: Array<string> = []
+  segments: Array<string>
 ): HasSql<unknown> {
   return segments.reduce<HasSql<unknown>>(
     (value, segment) =>

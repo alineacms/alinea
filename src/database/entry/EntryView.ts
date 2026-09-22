@@ -1,11 +1,4 @@
-import {
-  eq,
-  sql,
-  temporaryTable,
-  type Database,
-  type Sql,
-  type Table
-} from 'rado'
+import {eq, sql, temporaryTable, type Database, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {DatabaseStateColumns} from '../DatabaseTables.js'
 import {
@@ -18,10 +11,6 @@ const namePattern = /^[a-z][a-z0-9_]*$/i
 
 const OverlayKeyColumns = {
   versionId: column.varchar(undefined, {length: 255}).primaryKey()
-}
-
-function identifier(name: string): Sql {
-  return sql.identifier(name)
 }
 
 function objectName(name: string, suffix: string): string {
@@ -42,7 +31,6 @@ export class EntryView implements AsyncDisposable {
   readonly #db: Database
   readonly #entryChanges: EntryIndexTarget
   readonly #keys: Table<typeof OverlayKeyColumns>
-  readonly #objects: ReadonlyArray<string>
   #closed = false
 
   private constructor(
@@ -51,8 +39,7 @@ export class EntryView implements AsyncDisposable {
     entries: EntryIndexTarget,
     entryChanges: EntryIndexTarget,
     keys: Table<typeof OverlayKeyColumns>,
-    state: Table<typeof DatabaseStateColumns>,
-    objects: ReadonlyArray<string>
+    state: Table<typeof DatabaseStateColumns>
   ) {
     this.#db = db
     this.name = name
@@ -62,7 +49,6 @@ export class EntryView implements AsyncDisposable {
     this.#entryChanges = entryChanges
     this.#keys = keys
     this.state = state
-    this.#objects = objects
   }
 
   static async create(
@@ -83,33 +69,16 @@ export class EntryView implements AsyncDisposable {
     const keys = temporaryTable(keysName, OverlayKeyColumns)
     const state = temporaryTable(stateName, DatabaseStateColumns)
     const columns = Object.keys(EntryIndexColumns)
-    const columnList = sql.join(columns.map(identifier), sql`, `)
+    const columnList = sql.join(columns.map(sql.identifier), sql`, `)
     const newValues = sql.join(
-      columns.map(name => sql`new.${identifier(name)}`),
+      columns.map(name => sql`new.${sql.identifier(name)}`),
       sql`, `
     )
-    const objects = [
-      insertTrigger,
-      updateTrigger,
-      deleteTrigger,
-      viewName,
-      changesName,
-      keysName,
-      stateName
-    ]
-    const result = new EntryView(
-      db,
-      name,
-      entries,
-      entryChanges,
-      keys,
-      state,
-      objects
-    )
+    const result = new EntryView(db, name, entries, entryChanges, keys, state)
     try {
       await db.create(entryChanges, keys, state)
       await db.insert(state).values({id: 1, revision, tree: null})
-      await db.run(sql`create temp view ${identifier(viewName)} as
+      await db.run(sql`create temp view ${sql.identifier(viewName)} as
         select parent.* from ${parent} parent
         where not exists (
           select 1 from ${keys} changed
@@ -117,22 +86,22 @@ export class EntryView implements AsyncDisposable {
         )
         union all
         select changes.* from ${entryChanges} changes`)
-      await db.run(sql`create temp trigger ${identifier(insertTrigger)}
-        instead of insert on ${identifier(viewName)} begin
+      await db.run(sql`create temp trigger ${sql.identifier(insertTrigger)}
+        instead of insert on ${sql.identifier(viewName)} begin
           insert or ignore into ${keys}(versionId) values (new.versionId);
           insert or replace into ${entryChanges}(${columnList})
             values (${newValues});
         end`)
-      await db.run(sql`create temp trigger ${identifier(updateTrigger)}
-        instead of update on ${identifier(viewName)} begin
+      await db.run(sql`create temp trigger ${sql.identifier(updateTrigger)}
+        instead of update on ${sql.identifier(viewName)} begin
           insert or ignore into ${keys}(versionId) values (old.versionId);
           insert or ignore into ${keys}(versionId) values (new.versionId);
           delete from ${entryChanges} where versionId = old.versionId;
           insert or replace into ${entryChanges}(${columnList})
             values (${newValues});
         end`)
-      await db.run(sql`create temp trigger ${identifier(deleteTrigger)}
-        instead of delete on ${identifier(viewName)} begin
+      await db.run(sql`create temp trigger ${sql.identifier(deleteTrigger)}
+        instead of delete on ${sql.identifier(viewName)} begin
           insert or ignore into ${keys}(versionId) values (old.versionId);
           delete from ${entryChanges} where versionId = old.versionId;
         end`)
@@ -157,13 +126,23 @@ export class EntryView implements AsyncDisposable {
   async close(): Promise<void> {
     if (this.#closed) return
     this.#closed = true
-    const [insertTrigger, updateTrigger, deleteTrigger, viewName] =
-      this.#objects
-    await this.#db.run(sql`drop trigger if exists ${identifier(insertTrigger)}`)
-    await this.#db.run(sql`drop trigger if exists ${identifier(updateTrigger)}`)
-    await this.#db.run(sql`drop trigger if exists ${identifier(deleteTrigger)}`)
-    await this.#db.run(sql`drop view if exists ${identifier(viewName)}`)
-    await this.#db.run(sql`drop table if exists ${identifier(this.searchName)}`)
+    const insertTrigger = objectName(this.name, 'entry_insert')
+    const updateTrigger = objectName(this.name, 'entry_update')
+    const deleteTrigger = objectName(this.name, 'entry_delete')
+    const viewName = objectName(this.name, 'entries')
+    await this.#db.run(
+      sql`drop trigger if exists ${sql.identifier(insertTrigger)}`
+    )
+    await this.#db.run(
+      sql`drop trigger if exists ${sql.identifier(updateTrigger)}`
+    )
+    await this.#db.run(
+      sql`drop trigger if exists ${sql.identifier(deleteTrigger)}`
+    )
+    await this.#db.run(sql`drop view if exists ${sql.identifier(viewName)}`)
+    await this.#db.run(
+      sql`drop table if exists ${sql.identifier(this.searchName)}`
+    )
     await this.#db.drop(this.#entryChanges, this.#keys, this.state)
   }
 

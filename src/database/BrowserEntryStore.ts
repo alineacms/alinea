@@ -4,6 +4,8 @@ import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {SyncOptions} from '#/core/db/LocalStore.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {TaskQueue} from '#/core/util/Async.js'
+import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
 import {versionedCacheName} from './Version.js'
 import {EntryDatabase} from './EntryDatabase.js'
 import {EntryStore} from './EntryStore.js'
@@ -36,7 +38,7 @@ export class BrowserEntryStore extends EntryStore {
   #cacheName: string
   #revision: string
   #persistedSha: string | undefined
-  #persistQueue: Promise<unknown> = Promise.resolve()
+  #persistQueue = new TaskQueue()
   #closed = false
 
   static async open(
@@ -100,46 +102,35 @@ export class BrowserEntryStore extends EntryStore {
   }
 
   override sync(): Promise<string> {
-    return this.#persist(async () => {
-      const sha = await super.sync()
-      await this.#save(sha)
-      return sha
-    })
+    return this.#persistAfter(() => super.sync())
   }
 
   override syncWith(
     remote: RemoteSource,
     options?: SyncOptions
   ): Promise<string> {
-    return this.#persist(async () => {
-      const sha = await super.syncWith(remote, options)
-      await this.#save(sha)
-      return sha
-    })
+    return this.#persistAfter(() => super.syncWith(remote, options))
   }
 
   override mutate(mutations: Array<Mutation>): Promise<{sha: string}> {
-    return this.#persist(async () => {
-      const result = await super.mutate(mutations)
-      await this.#save(result.sha)
-      return result
-    })
+    return this.#persistAfter(() => super.mutate(mutations))
   }
 
   override write(request: CommitRequest): Promise<{sha: string}> {
-    return this.#persist(async () => {
-      const result = await super.write(request)
-      await this.#save(result.sha)
-      return result
-    })
+    return this.#persistAfter(() => super.write(request))
   }
 
-  #persist<T>(task: () => Promise<T>): Promise<T> {
+  /** Persist the SQLite file after a task that moved this store's revision. */
+  #persistAfter<T extends string | {sha: string}>(
+    task: () => Promise<T>
+  ): Promise<T> {
     if (this.#closed)
       return Promise.reject(new Error('BrowserEntryStore is closed'))
-    const result = this.#persistQueue.then(task)
-    this.#persistQueue = result.catch(() => {})
-    return result
+    return this.#persistQueue.run(async () => {
+      const result = await task()
+      await this.#save(typeof result === 'string' ? result : result.sha)
+      return result
+    })
   }
 
   async #save(sha: string): Promise<void> {
@@ -155,29 +146,26 @@ export class BrowserEntryStore extends EntryStore {
   }
 
   override close(): Promise<void> {
-    if (this.#closed) return this.#persistQueue.then(() => {})
-    this.#closed = true
-    const result = this.#persistQueue.then(async () => {
-      try {
-        const sha = await this.sha
-        await this.#save(sha)
-      } finally {
-        await this.#teardown()
-      }
-    })
-    this.#persistQueue = result.catch(() => {})
-    return result
+    return this.#shutdown(true)
   }
 
   /** Close a superseded store without persisting stale bytes over its
    * replacement's cache. Supersede always implies a revision change, so the
    * persisted revision would be discarded on the next open anyway. */
-  async abandon(): Promise<void> {
-    if (this.#closed) return this.#persistQueue.then(() => {})
+  abandon(): Promise<void> {
+    return this.#shutdown(false)
+  }
+
+  #shutdown(persist: boolean): Promise<void> {
+    if (this.#closed) return this.#persistQueue.drain()
     this.#closed = true
-    const result = this.#persistQueue.then(() => this.#teardown())
-    this.#persistQueue = result.catch(() => {})
-    return result
+    return this.#persistQueue.run(async () => {
+      try {
+        if (persist) await this.#save(await this.sha)
+      } finally {
+        await this.#teardown()
+      }
+    })
   }
 
   async #teardown(): Promise<void> {
@@ -217,35 +205,22 @@ function deleteCache(factory: IDBFactory, name: string): Promise<void> {
 }
 
 function openCache(factory: IDBFactory, name: string): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = factory.open(name, 1)
-    request.onupgradeneeded = () => request.result.createObjectStore(storeName)
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
+  const request = factory.open(name, 1)
+  request.onupgradeneeded = () => request.result.createObjectStore(storeName)
+  return requestResult(request)
 }
 
 function readDatabase(db: IDBDatabase): Promise<StoredDatabase | undefined> {
-  return new Promise((resolve, reject) => {
-    const request = db
+  return requestResult<StoredDatabase | undefined>(
+    db
       .transaction(storeName, 'readonly')
       .objectStore(storeName)
       .get(databaseKey)
-    request.onsuccess = () => resolve(request.result as StoredDatabase)
-    request.onerror = () => reject(request.error)
-  })
+  )
 }
 
 function deleteDatabase(db: IDBDatabase): Promise<void> {
   const transaction = db.transaction(storeName, 'readwrite')
   transaction.objectStore(storeName).delete(databaseKey)
   return transactionComplete(transaction)
-}
-
-function transactionComplete(transaction: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve()
-    transaction.onerror = () => reject(transaction.error)
-    transaction.onabort = () => reject(transaction.error)
-  })
 }

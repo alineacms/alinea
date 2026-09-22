@@ -122,6 +122,14 @@ export function entryChildrenDir(
     .join('/')}`
 }
 
+/** The `<childrenDir>[.status].json` file holding a single entry version. */
+export function entryVersionFile(
+  childrenDir: string,
+  status: EntryStatus
+): string {
+  return `${childrenDir}${status === 'published' ? '' : `.${status}`}.json`
+}
+
 export function entryFilepath(
   config: Config,
   entry: {
@@ -136,10 +144,10 @@ export function entryFilepath(
   const {status} = entry
   if (!entryStatuses.includes(status))
     throw new Error(`Entry has unknown phase: ${status}`)
-  const statusSegment = status === 'published' ? '' : `.${status}`
-  const location = `${
-    entryChildrenDir(config, entry, parentPaths) + statusSegment
-  }.json`.toLowerCase()
+  const location = entryVersionFile(
+    entryChildrenDir(config, entry, parentPaths),
+    status
+  ).toLowerCase()
   const workspace = config.workspaces[entry.workspace]
   if (!workspace)
     throw new Error(`Workspace "${entry.workspace}" does not exist`)

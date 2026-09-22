@@ -1,5 +1,5 @@
 import {sql, type Database, type HasSql, type Sql} from 'rado'
-import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
+import type {EntryIndexTarget} from '../entry/EntryTable.js'
 
 export const EntrySearchName = 'alinea_entry_search'
 
@@ -34,8 +34,8 @@ export async function createSearch(
 /** Rebuild from resident entry text only when a search needs it. */
 export async function rebuildSearch(
   db: Database,
-  entry: EntryIndexTarget = EntryIndexTable,
-  name = EntrySearchName
+  entry: EntryIndexTarget,
+  name: string
 ): Promise<void> {
   const search = sql.identifier(name)
   await db.run(sql`delete from ${search}`)
@@ -53,8 +53,8 @@ function searchTokens(input: string | Array<string> | undefined) {
 
 export function searchQuery(
   input: string | Array<string> | undefined,
-  entry: EntryIndexTarget = EntryIndexTable,
-  name = EntrySearchName
+  entry: EntryIndexTarget,
+  name: string
 ): SearchQuery | undefined {
   const tokens = searchTokens(input)
   if (!tokens) return undefined

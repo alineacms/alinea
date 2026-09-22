@@ -16,85 +16,92 @@ import {
   when,
   type Database
 } from 'rado'
-import {
-  storedEntryData,
-  type EntryIndexTarget,
-  type IndexedEntry
-} from '../entry/EntryTable.js'
+import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
 import type {EntrySyncTarget} from './EntrySyncer.js'
 import {
   sqliteBatchSize,
   SyncAffected,
   SyncCascade,
   SyncStatus,
-  type DirectoryRow,
-  type HierarchyRow,
-  type MainRow,
-  type ParentPathRow,
-  type StatusRow,
-  type SyncQueries
+  writeValues,
+  type SyncQueries,
+  type SyncValueRow
 } from './SyncQueries.js'
 
-export async function deriveHierarchy(
-  db: Database,
-  entries: EntryIndexTarget,
-  queries: SyncQueries
+/**
+ * Page through affected versions by keyset, staging the computed values of each
+ * page and applying `update`. Resolves to whether anything was written.
+ */
+async function derivePages<Row extends {versionId: string}>(
+  queries: SyncQueries,
+  page: (afterVersionId: string) => Promise<Array<Row>>,
+  compute: (rows: Array<Row>) => Promise<Array<SyncValueRow>>,
+  update: SyncQueries['updateHierarchy' | 'updateUrls']
 ): Promise<boolean> {
   let changed = false
   let afterVersionId = ''
   while (true) {
-    const rows = (await queries.hierarchy.all({
-      afterVersionId
-    })) as Array<HierarchyRow>
+    const rows = await page(afterVersionId)
     if (!rows.length) return changed
     afterVersionId = rows.at(-1)!.versionId
-    const prefixesByVersionId = new Map<string, Array<string>>()
-    const needed = new Set<string>()
-    for (const row of rows) {
-      const segments = row.parentDir.split('/')
-      const prefixes = segments.map((_, index) =>
-        segments.slice(0, index + 1).join('/')
-      )
-      prefixesByVersionId.set(row.versionId, prefixes)
-      for (const prefix of prefixes) needed.add(prefix)
-    }
-    const directories = Array<DirectoryRow>()
-    for (const paths of chunks(Array.from(needed), sqliteBatchSize))
-      directories.push(
-        ...((await db
+    const values = await compute(rows)
+    if (!values.length) continue
+    changed = true
+    await writeValues(queries, values, update)
+  }
+}
+
+export function deriveHierarchy(
+  db: Database,
+  entries: EntryIndexTarget,
+  queries: SyncQueries
+): Promise<boolean> {
+  return derivePages(
+    queries,
+    async afterVersionId => queries.hierarchy.all({afterVersionId}),
+    async rows => {
+      const prefixesByVersionId = new Map<string, Array<string>>()
+      const needed = new Set<string>()
+      for (const row of rows) {
+        const segments = row.parentDir.split('/')
+        const prefixes = segments.map((_, index) =>
+          segments.slice(0, index + 1).join('/')
+        )
+        prefixesByVersionId.set(row.versionId, prefixes)
+        for (const prefix of prefixes) needed.add(prefix)
+      }
+      const idByDirectory = new Map<string, string>()
+      for (const paths of chunks(Array.from(needed), sqliteBatchSize)) {
+        const directories = await db
           .select({
             id: entries.id,
             childrenDir: entries.childrenDir
           })
           .from(entries)
           .where(inArray(entries.childrenDir, paths))
-          .groupBy(entries.childrenDir)) as Array<DirectoryRow>)
-      )
-    const idByDirectory = new Map<string, string>()
-    for (const directory of directories)
-      idByDirectory.set(directory.childrenDir, directory.id)
-    const hierarchy = rows.flatMap(row => {
-      const parents = (prefixesByVersionId.get(row.versionId) ?? []).flatMap(
-        path => {
-          const id = idByDirectory.get(path)
-          return id ? [id] : []
-        }
-      )
-      const parentId = parents.at(-1) ?? null
-      const unchanged =
-        row.parentId === parentId &&
-        row.parents.length === parents.length &&
-        row.parents.every((id, index) => id === parents[index])
-      return unchanged
-        ? []
-        : [{key: row.versionId, value: JSON.stringify({parentId, parents})}]
-    })
-    if (!hierarchy.length) continue
-    changed = true
-    await queries.clearValues.run()
-    for (const row of hierarchy) await queries.insertValue.run(row)
-    await queries.updateHierarchy.run()
-  }
+          .groupBy(entries.childrenDir)
+        for (const directory of directories)
+          idByDirectory.set(directory.childrenDir, directory.id)
+      }
+      return rows.flatMap(row => {
+        const parents = (prefixesByVersionId.get(row.versionId) ?? []).flatMap(
+          path => {
+            const id = idByDirectory.get(path)
+            return id ? [id] : []
+          }
+        )
+        const parentId = parents.at(-1) ?? null
+        const unchanged =
+          row.parentId === parentId &&
+          row.parents.length === parents.length &&
+          row.parents.every((id, index) => id === parents[index])
+        return unchanged
+          ? []
+          : [{key: row.versionId, value: JSON.stringify({parentId, parents})}]
+      })
+    },
+    queries.updateHierarchy
+  )
 }
 
 export async function expandAffected(
@@ -119,7 +126,7 @@ export async function materializeAffected(
   materialized: Set<string>
 ): Promise<void> {
   if (!target.changes) return
-  const affected = (await queries.changedIds.all()) as Array<{id: string}>
+  const affected = await queries.changedIds.all()
   const candidates = affected
     .map(row => row.id)
     .filter(id => !materialized.has(id))
@@ -145,11 +152,11 @@ export async function deriveStatus(
   db: Database,
   queries: SyncQueries
 ): Promise<void> {
-  const levels = (await queries.levels.all()) as Array<{level: number}>
+  const levels = await queries.levels.all()
   for (const {level} of levels) {
     // One fetch per level: OFFSET pagination rescans from the start on
     // every page, which is quadratic in affected rows.
-    const rows = (await queries.statuses.all({level})) as Array<StatusRow>
+    const rows = await queries.statuses.all({level})
     if (!rows.length) continue
     const parentKeys = Array.from(
       new Set(
@@ -158,27 +165,22 @@ export async function deriveStatus(
         )
       )
     )
-    const parentByKey = new Map<
-      string,
-      {key: string; effectiveStatus: string}
-    >()
+    const parentByKey = new Map<string, string | null>()
     for (const page of chunks(parentKeys, sqliteBatchSize)) {
-      const parents = (await db
+      const parents = await db
         .select()
         .from(SyncStatus)
-        .where(inArray(SyncStatus.key, page))) as Array<{
-        key: string
-        effectiveStatus: string
-      }>
-      for (const parent of parents) parentByKey.set(parent.key, parent)
+        .where(inArray(SyncStatus.key, page))
+      for (const parent of parents)
+        parentByKey.set(parent.key, parent.effectiveStatus)
     }
     for (const row of rows) {
-      const parent = row.parentId
+      const parentStatus = row.parentId
         ? parentByKey.get(statusKey(row.parentId, row.locale))
         : undefined
       await queries.insertStatus.run({
         key: statusKey(row.id, row.locale),
-        effectiveStatus: parent?.effectiveStatus ?? row.ownStatus,
+        effectiveStatus: parentStatus ?? row.ownStatus,
         activeStatus: row.activeStatus,
         mainStatus: row.mainStatus
       })
@@ -187,12 +189,9 @@ export async function deriveStatus(
   await queries.updateStatus.run()
 }
 
+/** Must match the `json_array(id, locale)` key in SyncQueries' status update. */
 function statusKey(id: string, locale: string | null): string {
   return JSON.stringify([id, locale])
-}
-
-function parentPathKey(id: string, locale: string | null): string {
-  return `${id}\0${locale ?? ''}`
 }
 
 export async function deriveUrls(
@@ -201,56 +200,49 @@ export async function deriveUrls(
   config: Config,
   queries: SyncQueries
 ): Promise<void> {
-  let afterVersionId = ''
-  while (true) {
-    const rows = (await queries.mainEntries.all({
-      afterVersionId
-    })) as Array<MainRow>
-    if (!rows.length) break
-    afterVersionId = rows.at(-1)!.versionId
-    const parentIds = Array.from(new Set(rows.flatMap(row => row.parents)))
-    const parentPaths = parentIds.length
-      ? ((await db
-          .select({
-            id: entries.id,
-            locale: entries.locale,
-            path: entries.path
-          })
-          .from(entries)
-          .where(
-            and(eq(entries.main, true), inArray(entries.id, parentIds))
-          )) as Array<ParentPathRow>)
-      : []
-    const pathByParent = new Map<string, string>()
-    for (const parent of parentPaths)
-      pathByParent.set(parentPathKey(parent.id, parent.locale), parent.path)
-    const urls = Array<{key: string; value: string}>()
-    for (const row of rows) {
-      const type = config.schema[row.type]
-      assert(type, `Entry ${row.id} has an unknown type: ${row.type}`)
-      const paths = row.parents.map(id => {
-        const path = pathByParent.get(parentPathKey(id, row.locale))
-        assert(path !== undefined, `Missing parent path for ${id}`)
-        return path
-      })
-      urls.push({
-        key: row.versionId,
-        value: entryUrl(type, {
-          config,
-          data: storedEntryData(row.data, row.path),
-          status: row.versionStatus as IndexedEntry['versionStatus'],
-          path: row.path,
-          parentPaths: paths,
-          locale: row.locale,
-          workspace: row.workspace,
-          root: row.root
+  await derivePages(
+    queries,
+    async afterVersionId => queries.mainEntries.all({afterVersionId}),
+    async rows => {
+      const parentIds = Array.from(new Set(rows.flatMap(row => row.parents)))
+      const parentPaths = parentIds.length
+        ? await db
+            .select({
+              id: entries.id,
+              locale: entries.locale,
+              path: entries.path
+            })
+            .from(entries)
+            .where(and(eq(entries.main, true), inArray(entries.id, parentIds)))
+        : []
+      const pathByParent = new Map<string, string>()
+      for (const parent of parentPaths)
+        pathByParent.set(statusKey(parent.id, parent.locale), parent.path)
+      return rows.map(row => {
+        const type = config.schema[row.type]
+        assert(type, `Entry ${row.id} has an unknown type: ${row.type}`)
+        const paths = row.parents.map(id => {
+          const path = pathByParent.get(statusKey(id, row.locale))
+          assert(path !== undefined, `Missing parent path for ${id}`)
+          return path
         })
+        return {
+          key: row.versionId,
+          value: entryUrl(type, {
+            config,
+            data: storedEntryData(row.data, row.path),
+            status: row.versionStatus,
+            path: row.path,
+            parentPaths: paths,
+            locale: row.locale,
+            workspace: row.workspace,
+            root: row.root
+          })
+        }
       })
-    }
-    await queries.clearValues.run()
-    for (const row of urls) await queries.insertValue.run(row)
-    await queries.updateUrls.run()
-  }
+    },
+    queries.updateUrls
+  )
 }
 
 /** Validate authored relationships that SQLite column constraints cannot express. */
@@ -394,8 +386,4 @@ export async function validateEntries(
     )
     .get()
   assert(!hierarchy, `Invalid entry hierarchy: ${hierarchy?.filePath}`)
-}
-
-export async function copyInitialUrls(queries: SyncQueries): Promise<void> {
-  await queries.copyInitialUrls.run()
 }

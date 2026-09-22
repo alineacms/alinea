@@ -97,7 +97,7 @@ export class DevDB extends EntryStore {
   async fix(): Promise<void> {
     // Repair source files by round-tripping every authored version through
     // the entry transaction (fills defaults, normalizes records) and writing
-    // back files whose canonical contents differ, like EntryIndex.fix did.
+    // back files whose canonical contents differ.
     await this.sync()
     const entries = (await this.find({
       status: 'all',

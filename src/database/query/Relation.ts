@@ -32,20 +32,14 @@ export interface RelationSource {
   path: string
 }
 
-export interface SqlRelationSource {
-  versionId: HasSql<string>
-  id: HasSql<string>
-  locale: HasSql<string | null>
-  parentId: HasSql<string | null>
-  parents: HasSql<Array<string>>
-  level: HasSql<number>
-  index: HasSql<string>
-  path: HasSql<string>
+// A mapped type cannot be expressed as an interface.
+type SqlRelationSource = {
+  [K in keyof RelationSource]: HasSql<RelationSource[K]>
 }
 
 export type AnyRelationSource = RelationSource | SqlRelationSource
 
-export function relationSource(entry: EntryIndexTarget) {
+export function relationSource(entry: EntryIndexTarget): SqlRelationSource {
   return {
     versionId: entry.versionId,
     id: entry.id,

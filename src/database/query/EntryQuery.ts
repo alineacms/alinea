@@ -12,7 +12,7 @@ import {
   hasRoot,
   hasWorkspace
 } from '#/core/Internal.js'
-import {getScope, type Scope} from '#/core/Scope.js'
+import {getScope, type Entity, type Scope} from '#/core/Scope.js'
 import type {Type} from '#/core/Type.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {
@@ -96,13 +96,13 @@ class Expressions {
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
   #entry: EntryIndexTarget
-  #relation: (query: EdgeQuery) => CompiledRelation
+  #relation?: (query: EdgeQuery) => CompiledRelation
 
   constructor(
     scope: Scope,
     entry: EntryIndexTarget,
     search: ReturnType<typeof searchQuery> | undefined,
-    relation: (query: EdgeQuery) => CompiledRelation
+    relation?: (query: EdgeQuery) => CompiledRelation
   ) {
     this.#scope = scope
     this.#entry = entry
@@ -198,10 +198,6 @@ class Expressions {
     }
   }
 
-  grouping(expression: Expr): Array<HasSql> {
-    return [this.expr(expression)]
-  }
-
   projection(value: unknown, path: Array<string> = []): SelectionInput {
     if (isRecord(value) && hasExpr(value)) {
       const internal = getExpr(value as Expr)
@@ -225,6 +221,8 @@ class Expressions {
     }
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
     if ('edge' in value) {
+      if (!this.#relation)
+        throw new Error('Relations cannot be used as query conditions')
       const query = value as unknown as EdgeQuery
       const relation = this.#relation(query)
       this.relations.push({
@@ -268,7 +266,7 @@ export function localeCondition(
     : eq(sql`${entry.locale} collate nocase`, locale)
 }
 
-export interface EntryQueryOptions {
+interface EntryQueryOptions {
   source?: AnyRelationSource
   search?: ReturnType<typeof searchQuery>
   entry?: EntryIndexTarget
@@ -293,9 +291,10 @@ export function compileEntryQuery(
   if (query.preview)
     throw new Error('SQL preview requires its dedicated query stage')
   const scope = getScope(config)
-  const membership = new Expressions(scope, entry, search, () => {
-    throw new Error('Relations cannot be used as query conditions')
-  })
+  const membership = new Expressions(scope, entry, search)
+  const queryTypes: Array<Type> = query.type
+    ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
+    : []
   const conditions: Array<Sql<boolean>> = []
   // An explicit authored status addresses physical versions, including one
   // currently hidden by another active/main version.
@@ -322,7 +321,9 @@ export function compileEntryQuery(
     'filePath',
     'seeded',
     'url',
-    'level'
+    'level',
+    'createdAt',
+    'updatedAt'
   ] as const)
     if (query[key] !== undefined)
       conditions.push(compileCondition(membership.index(key), query[key]))
@@ -330,7 +331,7 @@ export function compileEntryQuery(
     const input = query[key]
     const value =
       isRecord(input) && (hasWorkspace(input) || hasRoot(input))
-        ? scope.nameOf(input as Parameters<Scope['nameOf']>[0])
+        ? scope.nameOf(input as Entity)
         : input
     if (value !== undefined)
       conditions.push(compileCondition(membership.index(key), value))
@@ -346,8 +347,7 @@ export function compileEntryQuery(
       or(isNull(entry.locale), localeCondition(entry, source.locale))
     )
   if (query.type) {
-    const types = Array.isArray(query.type) ? query.type : [query.type]
-    const names = types.map(type => {
+    const names = queryTypes.map(type => {
       const name = scope.nameOf(type)
       if (!name) throw new Error('Query type is not in the configured schema')
       return name
@@ -372,16 +372,11 @@ export function compileEntryQuery(
         compileCondition(jsonField(item, ['url']), query.alias)
       )
     )
-  for (const key of ['createdAt', 'updatedAt'] as const)
-    if (query[key] !== undefined)
-      conditions.push(compileCondition(membership.index(key), query[key]))
   if (query.filter !== undefined)
     conditions.push(compileFilter(query.filter, name => membership.field(name)))
   if (Array.isArray(query.groupBy))
     throw new Error('groupBy must be a single field')
-  const grouping = query.groupBy
-    ? membership.grouping(query.groupBy)
-    : undefined
+  const grouping = query.groupBy ? [membership.expr(query.groupBy)] : undefined
   const ordering: Array<HasSql> = []
   const stableOrdering = links
     ? [asc(links.ordinal)]
@@ -391,9 +386,9 @@ export function compileEntryQuery(
     for (const order of Array.isArray(query.orderBy)
       ? query.orderBy
       : [query.orderBy]) {
-      if ((order.asc !== undefined) === (order.desc !== undefined))
+      const expression = order.asc ?? order.desc
+      if (!expression || (order.asc !== undefined && order.desc !== undefined))
         throw new Error('orderBy must specify exactly one direction')
-      const expression = (order.asc ?? order.desc)!
       const internal = getExpr(expression)
       const ordersByFilePath =
         internal.type === 'entryField' && internal.name === 'filePath'
@@ -409,25 +404,25 @@ export function compileEntryQuery(
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
-  else if (edge?.edge === 'translations' && edge.includeSelf)
+  else if (edge?.edge === 'translations' && edge.includeSelf && source) {
+    const locale = source.locale
     ordering.push(
       asc(
         when(
           [
-            source?.locale === null
-              ? isNull(entry.locale)
-              : eq(entry.locale, source!.locale!),
+            locale === null ? isNull(entry.locale) : eq(entry.locale, locale),
             0
           ],
           1
         )
       )
     )
+  }
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
   const projection = new Expressions(scope, entry, search, relationQuery => {
     const nestedEntry = alias(baseEntry, `alinea_relation_${depth + 1}`)
-    const nested = compileEntryQuery(
+    const {rows, plan} = compileEntryQuery(
       config,
       {...relationQuery, status: query.status ?? 'published'},
       {
@@ -438,16 +433,8 @@ export function compileEntryQuery(
         searchName
       }
     )
-    const plan: ProjectionPlan = {
-      count: nested.count,
-      single: nested.single,
-      needsSearch: nested.needsSearch,
-      relations: nested.relations,
-      fields: nested.fields,
-      optional: nested.optional
-    }
-    if (nested.count) {
-      const matches = nested.rows.as(`alinea_relation_count_${depth + 1}`)
+    if (plan.count) {
+      const matches = rows.as(`alinea_relation_count_${depth + 1}`)
       return {
         selection: include.one(
           builder.select(count().as('count')).from(matches)
@@ -456,20 +443,15 @@ export function compileEntryQuery(
       }
     }
     return {
-      selection: nested.single
-        ? include.one(nested.rows)
-        : include(nested.rows),
+      selection: plan.single ? include.one(rows) : include(rows),
       plan
     }
   })
-  const types = query.type
-    ? ((Array.isArray(query.type) ? query.type : [query.type]) as Array<Type>)
-    : []
   const selection = query.count
     ? entry.versionId
     : projection.projection(
         query.select ?? {
-          ...Object.assign({}, ...types),
+          ...Object.assign({}, ...queryTypes),
           ...EntryFields,
           ...(isRecord(query.include) ? query.include : {})
         }
@@ -533,22 +515,7 @@ export function compileEntryQuery(
     return rows
   }
 
-  const needsContext =
-    projection.relations.length ||
-    projection.fields.length ||
-    projection.optional.length
-  return {
-    rows: selectRows(
-      needsContext
-        ? {
-            value: selection,
-            source: relationSource(entry),
-            ...(projection.fields.length || projection.optional.length
-              ? {data: entry.data}
-              : {})
-          }
-        : selection
-    ),
+  const plan: ProjectionPlan = {
     count: query.count === true,
     single,
     needsSearch:
@@ -557,5 +524,21 @@ export function compileEntryQuery(
     relations: projection.relations,
     fields: projection.fields,
     optional: projection.optional
+  }
+  const needsContext =
+    plan.relations.length || plan.fields.length || plan.optional.length
+  return {
+    rows: selectRows(
+      needsContext
+        ? {
+            value: selection,
+            source: relationSource(entry),
+            ...(plan.fields.length || plan.optional.length
+              ? {data: entry.data}
+              : {})
+          }
+        : selection
+    ),
+    plan
   }
 }

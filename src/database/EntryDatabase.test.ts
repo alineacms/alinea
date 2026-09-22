@@ -223,58 +223,6 @@ test('cached trees follow revisions written by another database instance', async
   }
 })
 
-test('subscriptions publish the initial value and committed changes', async () => {
-  const Page = ConfigBuilder.document('Page', {fields: {}})
-  const config: Config = {
-    schema: {Page},
-    workspaces: {
-      main: ConfigBuilder.workspace('Main', {
-        source: 'content',
-        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
-      })
-    }
-  }
-  const source = new MemorySource()
-  const initial = await source.getTree()
-  using sqlite = new Database(':memory:')
-  const db = connect(sqlite)
-  await EntryDatabase.createSchema(db, initial.sha)
-  const runtime = new EntryDatabase(config, db)
-  const values: Array<unknown> = []
-  const errors: Array<unknown> = []
-  const changed = Promise.withResolvers<void>()
-  const unsubscribe = runtime.subscribe(
-    {select: Entry.id},
-    {
-      next(value) {
-        values.push(value)
-        if (values.length === 2) changed.resolve()
-      },
-      error(error) {
-        errors.push(error)
-      }
-    }
-  )
-  const change = await transaction(source)
-  const compiled = await change
-    .add(
-      'pages/a.json',
-      new TextEncoder().encode(
-        JSON.stringify({_id: 'a', _type: 'Page', _index: 'a', title: 'A'})
-      )
-    )
-    .compile()
-  await source.applyChanges({
-    fromSha: compiled.from.sha,
-    changes: compiled.changes
-  })
-  await runtime.syncWith(source)
-  await changed.promise
-  unsubscribe()
-  expect(values).toEqual([[], ['a']])
-  expect(errors).toEqual([])
-})
-
 test('generated database overlays sync and query without copying the base', async () => {
   const Page = ConfigBuilder.document('Page', {fields: {}})
   const config: Config = {

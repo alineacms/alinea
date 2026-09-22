@@ -1,6 +1,7 @@
 import {Config} from '#/core/Config.js'
-import {Entry, entryStatuses, type EntryStatus} from '#/core/Entry.js'
+import {Entry, entryStatuses} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
+import type {QuerySettings} from '#/core/Graph.js'
 import {getRoot} from '#/core/Internal.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {Permission, type Policy} from '#/core/Role.js'
@@ -10,7 +11,11 @@ import {OverlaySource} from '#/core/source/OverlaySource.js'
 import {bundleContents, SourceTransaction} from '#/core/source/Source.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {assert} from '#/core/util/Assert.js'
-import {entryUrl, pathSuffix} from '#/core/util/EntryFilenames.js'
+import {
+  entryUrl,
+  entryVersionFile,
+  pathSuffix
+} from '#/core/util/EntryFilenames.js'
 import {
   generateKeyBetween,
   generateNKeysBetween
@@ -42,62 +47,42 @@ import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
 
-interface TransactionEntry extends Entry {
-  versionStatus: EntryStatus
-}
+/**
+ * A queried entry version. Compare `IndexedEntry` in entry/EntryTable.ts:
+ * nothing here selects the extra columns it adds.
+ */
+type TransactionEntry = Entry & Required<Pick<Entry, 'versionStatus'>>
 
-interface UrlCandidate {
-  id: string
-  type: string
-  path: string
-  parentId: string | null
+interface UrlCandidate extends Pick<
+  Entry,
+  'id' | 'type' | 'path' | 'parentId' | 'workspace' | 'root' | 'locale' | 'data'
+> {
   parentPaths?: Array<string>
-  workspace: string
-  root: string
-  locale: string | null
-  data: Record<string, unknown>
   url?: string
 }
 
-interface MoveTarget {
-  id: string
+/** Where an entry version lives in the tree. */
+interface EntryLocation {
   parentId: string | null
   workspace: string
   root: string
+  locale?: string | null
+}
+
+interface MoveTarget extends EntryLocation {
+  id: string
 }
 
 interface MoveUrlAliasUpdate {
   entry: TransactionEntry
   data: Record<string, unknown>
-  filePath: string
+  /** Undefined for the moved entry itself, which is written by `move`. */
+  filePath: string | undefined
 }
 
-const EntrySelection = {
-  id: Entry.id,
-  versionStatus: Entry.versionStatus,
-  status: Entry.status,
-  title: Entry.title,
-  type: Entry.type,
-  seeded: Entry.seeded,
-  workspace: Entry.workspace,
-  root: Entry.root,
-  level: Entry.level,
-  filePath: Entry.filePath,
-  parentDir: Entry.parentDir,
-  childrenDir: Entry.childrenDir,
-  index: Entry.index,
-  parentId: Entry.parentId,
-  parents: Entry.parents,
-  locale: Entry.locale,
-  rowHash: Entry.rowHash,
-  active: Entry.active,
-  main: Entry.main,
-  path: Entry.path,
-  fileHash: Entry.fileHash,
-  url: Entry.url,
-  data: Entry.data,
-  searchableText: Entry.searchableText
-}
+// Excludes only the metadata sub-path exprs, which are not entry columns
+const {aliases, createdAt, createdBy, updatedAt, updatedBy, ...EntrySelection} =
+  Entry
 
 /**
  * Plans mutations inside the receiver's write transaction. Each mutation is
@@ -130,10 +115,6 @@ export class EntryTransaction implements AsyncDisposable {
     this.#workingTree = from
     this.#sourceTransaction = sourceTransaction
     this.#policy = policy
-  }
-
-  get empty(): boolean {
-    return this.#messages.length === 0
   }
 
   get changedEntryIds(): Array<string> {
@@ -227,10 +208,9 @@ export class EntryTransaction implements AsyncDisposable {
     if (i18n) assert(i18n.locales.includes(locale as string), 'Invalid locale')
     else assert(locale === null, 'Invalid locale')
 
-    const parent = parentId
-      ? await this.#entry({id: parentId, locale, main: true})
-      : undefined
+    let parent: TransactionEntry | undefined
     if (parentId) {
+      parent = await this.#firstEntry({id: parentId, locale, main: true})
       assert(parent, `Parent not found: ${parentId}`)
       this.#policy.assert(Permission.Create, parent)
     }
@@ -241,9 +221,8 @@ export class EntryTransaction implements AsyncDisposable {
     assert(path.length > 0, 'Invalid path')
     const existingPath = existingMain?.path
     if (existingPath !== path)
-      path = await this.#availablePath({
+      path = await this.#availablePath(path, {
         id,
-        path,
         parentId,
         root,
         workspace,
@@ -291,13 +270,14 @@ export class EntryTransaction implements AsyncDisposable {
       for (const version of existing.filter(entry => entry.locale === locale))
         this.#sourceTransaction.remove(version.filePath)
     }
-    const parentDir = parent
-      ? parent.childrenDir
-      : Config.filePath(config, workspace, root, locale)
-    const filePath = paths.join(
-      parentDir,
-      `${path}${status === 'published' ? '' : `.${status}`}.json`
+    const parentDir = await this.#parentDir(
+      parentId,
+      locale,
+      workspace,
+      root,
+      parent
     )
+    const filePath = paths.join(parentDir, entryVersionFile(path, status))
     if (locale !== null && status === 'published') {
       const from = existing.find(
         entry => entry.locale !== locale && entry.versionStatus === 'published'
@@ -308,25 +288,15 @@ export class EntryTransaction implements AsyncDisposable {
         data = {...Type.sharedData(typeInstance, from.data), ...data}
       }
     }
-    if (status === 'published') {
-      const candidate = {
-        id,
-        type,
-        path,
-        parentId,
-        workspace,
-        root,
-        locale,
-        data
-      }
-      data = await this.#dataWithPreviousUrlAlias(
-        candidate,
-        await this.#publishedEntry(id, locale)
+    if (status === 'published')
+      data = await this.#publishedData(
+        {id, type, path, parentId, workspace, root, locale, data},
+        await this.#firstEntry({
+          id,
+          locale,
+          versionStatus: {in: ['published']}
+        })
       )
-      if (locale !== null)
-        await this.#persistSharedFields(id, locale, type, data)
-      await this.#assertUniqueUrls({...candidate, data})
-    }
     const record = createRecord(
       {
         id,
@@ -346,7 +316,11 @@ export class EntryTransaction implements AsyncDisposable {
 
   async update({id, locale, status, set}: Op<UpdateMutation>): Promise<void> {
     assert(id, 'Update mutation is missing an id')
-    const entry = await this.#entry({id, locale, statuses: [status]})
+    const entry = await this.#firstEntry({
+      id,
+      locale,
+      versionStatus: {in: [status]}
+    })
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Update, entry)
     for (const key of keys(set))
@@ -369,33 +343,31 @@ export class EntryTransaction implements AsyncDisposable {
     const lockPath = entry.versionStatus !== 'published' && !entry.main
     const path = lockPath
       ? entry.path
-      : await this.#availablePath({
+      : await this.#availablePath(desiredPath, {
           id,
-          path: desiredPath,
           parentId: entry.parentId,
           root: entry.root,
           workspace: entry.workspace,
           locale
         })
     const childrenDir = paths.join(entry.parentDir, path)
-    const filePath = `${childrenDir}${entry.versionStatus === 'published' ? '' : `.${entry.versionStatus}`}.json`
+    const filePath = entryVersionFile(childrenDir, entry.versionStatus)
     if (entry.versionStatus === 'published') {
       this.#policy.assert(Permission.Publish, entry)
       if (filePath !== entry.filePath) await this.#rename(id, locale, path)
-      const candidate = {
-        id,
-        type: entry.type,
-        path,
-        parentId: entry.parentId,
-        root: entry.root,
-        workspace: entry.workspace,
-        locale,
-        data
-      }
-      data = await this.#dataWithPreviousUrlAlias(candidate, entry)
-      if (locale !== null)
-        await this.#persistSharedFields(id, locale, entry.type, data)
-      await this.#assertUniqueUrls({...candidate, data})
+      data = await this.#publishedData(
+        {
+          id,
+          type: entry.type,
+          path,
+          parentId: entry.parentId,
+          root: entry.root,
+          workspace: entry.workspace,
+          locale,
+          data
+        },
+        entry
+      )
     }
     const record = createRecord(
       {
@@ -420,32 +392,30 @@ export class EntryTransaction implements AsyncDisposable {
     const entry = versions.find(version => version.versionStatus === status)
     assert(entry, `Entry not found: ${id}`)
     this.#policy.assert(Permission.Publish, entry)
-    const path = await this.#availablePath({
-      id,
-      path: slugify((entry.data.path as string) ?? entry.path),
-      parentId: entry.parentId,
-      root: entry.root,
-      workspace: entry.workspace,
-      locale
-    })
+    const path = await this.#availablePath(
+      slugify((entry.data.path as string) ?? entry.path),
+      {
+        id,
+        parentId: entry.parentId,
+        root: entry.root,
+        workspace: entry.workspace,
+        locale
+      }
+    )
     const childrenDir = paths.join(entry.parentDir, path)
-    const candidate = {
-      id,
-      type: entry.type,
-      path,
-      parentId: entry.parentId,
-      root: entry.root,
-      workspace: entry.workspace,
-      locale,
-      data: entry.data
-    }
-    const data = await this.#dataWithPreviousUrlAlias(
-      candidate,
+    const data = await this.#publishedData(
+      {
+        id,
+        type: entry.type,
+        path,
+        parentId: entry.parentId,
+        root: entry.root,
+        workspace: entry.workspace,
+        locale,
+        data: entry.data
+      },
       versions.find(version => version.versionStatus === 'published')
     )
-    if (locale !== null)
-      await this.#persistSharedFields(id, locale, entry.type, data)
-    await this.#assertUniqueUrls({...candidate, data})
     for (const version of versions)
       this.#sourceTransaction.remove(version.filePath)
     if (entry.path !== path)
@@ -482,7 +452,7 @@ export class EntryTransaction implements AsyncDisposable {
     }
     this.#sourceTransaction.rename(
       main.filePath,
-      `${main.childrenDir}.${status}.json`
+      entryVersionFile(main.childrenDir, status)
     )
     this.#messages.push(
       this.#report(status === 'draft' ? 'unpublish' : 'archive', main.title)
@@ -498,23 +468,24 @@ export class EntryTransaction implements AsyncDisposable {
     assert(id, 'Move mutation is missing an id')
     const moving = await this.#versions(id)
     assert(moving.length, `Entry not found: ${id}`)
-    const targetEntry =
-      targetType === 'root'
-        ? undefined
-        : await this.#entry({id: target, main: true})
-    assert(targetType === 'root' || targetEntry, `Target not found: ${target}`)
+    let parentId: string | null
+    let root: string
+    let workspace: string
+    if (targetType === 'root') {
+      parentId = null
+      root = target
+      workspace = moving[0].workspace
+    } else {
+      const targetEntry = await this.#firstEntry({id: target, main: true})
+      assert(targetEntry, `Target not found: ${target}`)
+      parentId = dropPosition === 'on' ? target : targetEntry.parentId
+      root = targetEntry.root
+      workspace = targetEntry.workspace
+    }
     assert(
       targetType === 'entry' || dropPosition === 'on',
       `Cannot move ${dropPosition} root ${target}`
     )
-    const parentId =
-      targetType === 'root'
-        ? null
-        : dropPosition === 'on'
-          ? target
-          : targetEntry!.parentId
-    const root = targetType === 'root' ? target : targetEntry!.root
-    const workspace = targetEntry?.workspace ?? moving[0].workspace
     const action =
       parentId !== moving[0].parentId || root !== moving[0].root
         ? Permission.Move
@@ -544,38 +515,15 @@ export class EntryTransaction implements AsyncDisposable {
         insertion = targetIndex + 1
       }
     }
-    const duplicateIndexes =
-      new Set(siblings.map(entry => entry.index)).size !== siblings.length
-    let index: string
-    if (duplicateIndexes) {
-      const ordered = siblings.slice()
-      ordered.splice(insertion, 0, moving[0])
-      for (const sibling of ordered)
-        this.#policy.assert(Permission.Reorder, sibling)
-      const generated = generateNKeysBetween(null, null, ordered.length)
-      for (const [position, sibling] of ordered.entries()) {
-        const versions = await this.#versions(sibling.id)
-        for (const version of versions)
-          this.#addRecord(
-            version.filePath,
-            createRecord(
-              {...version, index: generated[position]},
-              version.versionStatus
-            )
-          )
-      }
-      index = generated[insertion]
-    } else {
-      index = generateKeyBetween(
-        siblings[insertion - 1]?.index ?? null,
-        siblings[insertion]?.index ?? null
-      )
-    }
+    const index = await this.#insertionIndex(siblings, insertion, moving)
     for (const entry of moving) {
-      const parent = parentId
-        ? await this.#entry({id: parentId, locale: entry.locale, main: true})
-        : undefined
+      let parent: TransactionEntry | undefined
       if (action === Permission.Move && parentId) {
+        parent = await this.#firstEntry({
+          id: parentId,
+          locale: entry.locale,
+          main: true
+        })
         assert(parent, `Parent not found: ${parentId}`)
         assert(!entry.seeded, `Cannot move seeded entry ${entry.filePath}`)
         assert(
@@ -594,21 +542,19 @@ export class EntryTransaction implements AsyncDisposable {
           `Parent of type ${parent.type} does not allow children of type ${entry.type}`
         )
       }
-      const parentDir = parent
-        ? parent.childrenDir
-        : Config.filePath(
-            this.#workingDatabase.config,
-            workspace,
-            root,
-            entry.locale
-          )
+      const parentDir = await this.#parentDir(
+        parentId,
+        entry.locale,
+        workspace,
+        root,
+        parent
+      )
       // Siblings must never share a path: dedupe like create and update do,
       // otherwise the moved file would overwrite its sibling.
       const path =
         action === Permission.Move
-          ? await this.#availablePath({
+          ? await this.#availablePath(entry.path, {
               id,
-              path: entry.path,
               parentId,
               root,
               workspace,
@@ -616,7 +562,7 @@ export class EntryTransaction implements AsyncDisposable {
             })
           : entry.path
       const childrenDir = paths.join(parentDir, path)
-      const filePath = `${childrenDir}${entry.versionStatus === 'published' ? '' : `.${entry.versionStatus}`}.json`
+      const filePath = entryVersionFile(childrenDir, entry.versionStatus)
       if (action === Permission.Move) {
         this.#sourceTransaction.remove(entry.filePath)
         this.#sourceTransaction.rename(entry.childrenDir, childrenDir)
@@ -637,7 +583,9 @@ export class EntryTransaction implements AsyncDisposable {
       this.#addRecord(filePath, record)
     }
     for (const update of aliasUpdates) {
-      if (update.entry.id === id || update.data === update.entry.data) continue
+      // The moved entry itself was written above, at its available path
+      if (update.filePath === undefined || update.data === update.entry.data)
+        continue
       this.#addRecord(
         update.filePath,
         createRecord(
@@ -693,7 +641,7 @@ export class EntryTransaction implements AsyncDisposable {
     this.#fileChanges.push({op: 'uploadFile', ...mutation})
   }
 
-  description(): string {
+  #description(): string {
     return this.#messages
       .map((message, index, all) => {
         if (index) return message
@@ -713,7 +661,7 @@ export class EntryTransaction implements AsyncDisposable {
     return {
       fromSha: this.#fromTree.sha,
       intoSha: this.#workingTree.sha,
-      description: this.description(),
+      description: this.#description(),
       changes: this.#fileChanges.concat(commitChanges(changes))
     }
   }
@@ -755,13 +703,12 @@ export class EntryTransaction implements AsyncDisposable {
   ): Promise<void> {
     const versions = await this.#versions(id, locale)
     for (const version of versions) {
-      const name =
-        version.versionStatus === 'published'
-          ? path
-          : `${path}.${version.versionStatus}`
       this.#sourceTransaction.rename(
         version.filePath,
-        paths.join(version.parentDir, `${name}.json`)
+        paths.join(
+          version.parentDir,
+          entryVersionFile(path, version.versionStatus)
+        )
       )
       this.#sourceTransaction.rename(
         version.childrenDir,
@@ -770,30 +717,55 @@ export class EntryTransaction implements AsyncDisposable {
     }
   }
 
-  async #availablePath(candidate: {
-    id: string
-    path: string
-    parentId: string | null
-    root: string
-    workspace: string
-    locale: string | null
-  }): Promise<string> {
-    const siblings = await this.#siblings({
-      parentId: candidate.parentId,
-      root: candidate.root,
-      workspace: candidate.workspace,
-      locale: candidate.locale
-    })
+  /**
+   * The fractional index the moved entry takes between its new siblings.
+   * Siblings with colliding indexes are reindexed first.
+   */
+  async #insertionIndex(
+    siblings: ReadonlyArray<TransactionEntry>,
+    insertion: number,
+    moving: ReadonlyArray<TransactionEntry>
+  ): Promise<string> {
+    const duplicateIndexes =
+      new Set(siblings.map(entry => entry.index)).size !== siblings.length
+    if (!duplicateIndexes)
+      return generateKeyBetween(
+        siblings[insertion - 1]?.index ?? null,
+        siblings[insertion]?.index ?? null
+      )
+    const ordered = siblings.slice()
+    ordered.splice(insertion, 0, moving[0])
+    for (const sibling of ordered)
+      this.#policy.assert(Permission.Reorder, sibling)
+    const generated = generateNKeysBetween(null, null, ordered.length)
+    for (const [position, sibling] of ordered.entries()) {
+      const versions = await this.#versions(sibling.id)
+      for (const version of versions)
+        this.#addRecord(
+          version.filePath,
+          createRecord(
+            {...version, index: generated[position]},
+            version.versionStatus
+          )
+        )
+    }
+    return generated[insertion]
+  }
+
+  async #availablePath(
+    path: string,
+    location: EntryLocation & {id: string}
+  ): Promise<string> {
+    const siblings = await this.#siblings(location)
     const conflicting = siblings
       .filter(
         entry =>
-          entry.id !== candidate.id &&
-          (entry.path === candidate.path ||
-            entry.path.startsWith(`${candidate.path}-`))
+          entry.id !== location.id &&
+          (entry.path === path || entry.path.startsWith(`${path}-`))
       )
       .map(entry => entry.path)
-    const suffix = pathSuffix(candidate.path, conflicting)
-    return suffix === undefined ? candidate.path : `${candidate.path}-${suffix}`
+    const suffix = pathSuffix(path, conflicting)
+    return suffix === undefined ? path : `${path}-${suffix}`
   }
 
   async #assertUniqueUrls(candidate: UrlCandidate): Promise<void> {
@@ -853,11 +825,43 @@ export class EntryTransaction implements AsyncDisposable {
     return dataWithUrlAlias(type, candidate.data, previousUrl, currentUrl)
   }
 
-  async #publishedEntry(
-    id: string,
-    locale: string | null
-  ): Promise<TransactionEntry | undefined> {
-    return this.#entry({id, locale, statuses: ['published']})
+  /**
+   * Carry over the previous URL as an alias, share translated fields and
+   * guard URL uniqueness for an entry that is about to be published.
+   */
+  async #publishedData(
+    candidate: UrlCandidate,
+    previous: Entry | undefined,
+    shareFields = true
+  ): Promise<Record<string, unknown>> {
+    const data = await this.#dataWithPreviousUrlAlias(candidate, previous)
+    const {locale} = candidate
+    if (shareFields && locale !== null)
+      await this.#persistSharedFields(
+        candidate.id,
+        locale,
+        candidate.type,
+        data
+      )
+    await this.#assertUniqueUrls({...candidate, data})
+    return data
+  }
+
+  async #parentDir(
+    parentId: string | null,
+    locale: string | null,
+    workspace: string,
+    root: string,
+    known?: TransactionEntry
+  ): Promise<string> {
+    const parent =
+      known ??
+      (parentId
+        ? await this.#firstEntry({id: parentId, locale, main: true})
+        : undefined)
+    return parent
+      ? parent.childrenDir
+      : Config.filePath(this.#workingDatabase.config, workspace, root, locale)
   }
 
   async #parentPaths(
@@ -865,7 +869,7 @@ export class EntryTransaction implements AsyncDisposable {
     locale: string | null
   ): Promise<Array<string>> {
     if (!parentId) return []
-    const parent = await this.#entry({id: parentId, locale, main: true})
+    const parent = await this.#firstEntry({id: parentId, locale, main: true})
     assert(parent, `Missing parent language node`)
     const ids = parent.parents.concat(parent.id)
     const entries = (await this.#workingDatabase.find({
@@ -923,32 +927,40 @@ export class EntryTransaction implements AsyncDisposable {
     const descendants = Array<TransactionEntry>()
     for (const entry of published)
       descendants.push(
-        ...((await this.#workingDatabase.find({
+        ...(await this.#findEntries({
           status: 'published',
-          filePath: {startsWith: `${entry.childrenDir}/`},
-          select: EntrySelection
-        })) as Array<TransactionEntry>)
+          filePath: {startsWith: `${entry.childrenDir}/`}
+        }))
       )
     const updates = Array<MoveUrlAliasUpdate>()
     for (const entry of published.concat(descendants)) {
-      const parentPaths = await this.#movedParentPaths(entry, target, moving)
-      const candidate = {
-        id: entry.id,
-        type: entry.type,
-        path: entry.path,
-        parentId: entry.id === target.id ? target.parentId : entry.parentId,
-        parentPaths,
-        workspace: target.workspace,
-        root: target.root,
-        locale: entry.locale,
-        data: entry.data
-      }
-      const data = await this.#dataWithPreviousUrlAlias(candidate, entry)
-      await this.#assertUniqueUrls({...candidate, data})
+      const moved = moving.find(
+        candidate => candidate.locale === entry.locale && candidate.main
+      )
+      assert(moved, `Missing moved entry language node`)
+      const isMoved = entry.id === target.id
+      const data = await this.#publishedData(
+        {
+          id: entry.id,
+          type: entry.type,
+          path: entry.path,
+          parentId: isMoved ? target.parentId : entry.parentId,
+          parentPaths: await this.#movedParentPaths(entry, target, moved),
+          workspace: target.workspace,
+          root: target.root,
+          locale: entry.locale,
+          data: entry.data
+        },
+        entry,
+        false
+      )
       updates.push({
         entry,
         data,
-        filePath: await this.#movedFilePath(entry, target, moving)
+        // The moved entry is written by `move` at its deduped path
+        filePath: isMoved
+          ? undefined
+          : await this.#movedFilePath(entry, target, moved)
       })
     }
     return updates
@@ -957,12 +969,8 @@ export class EntryTransaction implements AsyncDisposable {
   async #movedParentPaths(
     entry: TransactionEntry,
     target: MoveTarget,
-    moving: ReadonlyArray<TransactionEntry>
+    moved: TransactionEntry
   ): Promise<Array<string>> {
-    const moved = moving.find(
-      candidate => candidate.locale === entry.locale && candidate.main
-    )
-    assert(moved, `Missing moved entry language node`)
     const newParentPaths = await this.#parentPaths(
       target.parentId,
       entry.locale
@@ -975,39 +983,27 @@ export class EntryTransaction implements AsyncDisposable {
     const previousPrefix = previousParentPaths.concat(moved.path)
     const nextPrefix = newParentPaths.concat(moved.path)
     assert(
-      startsWithSegments(currentParentPaths, previousPrefix),
+      previousPrefix.every(
+        (segment, index) => currentParentPaths[index] === segment
+      ),
       `Moved child is outside moved entry path`
     )
     return nextPrefix.concat(currentParentPaths.slice(previousPrefix.length))
   }
 
+  /** The file path a descendant of the moved entry ends up at. */
   async #movedFilePath(
     entry: TransactionEntry,
     target: MoveTarget,
-    moving: ReadonlyArray<TransactionEntry>
+    moved: TransactionEntry
   ): Promise<string> {
-    const moved = moving.find(
-      candidate => candidate.locale === entry.locale && candidate.main
+    const parentDir = await this.#parentDir(
+      target.parentId,
+      entry.locale,
+      target.workspace,
+      target.root
     )
-    assert(moved, `Missing moved entry language node`)
-    const parent = target.parentId
-      ? await this.#entry({
-          id: target.parentId,
-          locale: entry.locale,
-          main: true
-        })
-      : undefined
-    const parentDir = parent
-      ? parent.childrenDir
-      : Config.filePath(
-          this.#workingDatabase.config,
-          target.workspace,
-          target.root,
-          entry.locale
-        )
     const nextPrefix = paths.join(parentDir, moved.path)
-    if (entry.id === target.id)
-      return `${nextPrefix}${entry.versionStatus === 'published' ? '' : `.${entry.versionStatus}`}.json`
     assert(
       entry.filePath === moved.childrenDir ||
         entry.filePath.startsWith(`${moved.childrenDir}/`),
@@ -1019,20 +1015,23 @@ export class EntryTransaction implements AsyncDisposable {
     return paths.join(nextPrefix, suffix)
   }
 
-  async #entry(query: {
-    id: string
-    locale?: string | null
-    statuses?: ReadonlyArray<EntryStatus>
-    main?: boolean
-  }): Promise<TransactionEntry | undefined> {
+  /** Query entry versions, including every status unless the query says so. */
+  #findEntries(query: QuerySettings): Promise<Array<TransactionEntry>> {
+    return this.#workingDatabase.find({
+      status: 'all',
+      ...query,
+      select: EntrySelection
+    }) as Promise<Array<TransactionEntry>>
+  }
+
+  async #firstEntry(
+    query: QuerySettings
+  ): Promise<TransactionEntry | undefined> {
     return (
       ((await this.#workingDatabase.first({
-        id: query.id,
-        locale: query.locale,
         status: 'all',
-        select: EntrySelection,
-        versionStatus: query.statuses ? {in: query.statuses} : undefined,
-        main: query.main
+        ...query,
+        select: EntrySelection
       })) as TransactionEntry | null) ?? undefined
     )
   }
@@ -1041,29 +1040,20 @@ export class EntryTransaction implements AsyncDisposable {
     id: string,
     locale?: string | null
   ): Promise<Array<TransactionEntry>> {
-    return this.#workingDatabase.find({
-      select: EntrySelection,
-      status: 'all',
+    return this.#findEntries({
       versionStatus: {in: entryStatuses},
       id,
       locale
-    }) as Promise<Array<TransactionEntry>>
+    })
   }
 
-  #siblings(location: {
-    parentId: string | null
-    workspace: string
-    root: string
-    locale?: string | null
-  }): Promise<Array<TransactionEntry>> {
-    return this.#workingDatabase.find({
-      select: EntrySelection,
-      status: 'all',
+  #siblings(location: EntryLocation): Promise<Array<TransactionEntry>> {
+    return this.#findEntries({
       parentId: location.parentId,
       workspace: location.workspace,
       root: location.root,
       locale: location.locale
-    }) as Promise<Array<TransactionEntry>>
+    })
   }
 
   #mediaFiles(location: {
@@ -1071,14 +1061,12 @@ export class EntryTransaction implements AsyncDisposable {
     root: string
     filePathPrefix: string
   }): Promise<Array<TransactionEntry>> {
-    return this.#workingDatabase.find({
-      select: EntrySelection,
-      status: 'all',
+    return this.#findEntries({
       workspace: location.workspace,
       root: location.root,
       filePath: {startsWith: location.filePathPrefix},
       filter: {_type: 'MediaFile'}
-    }) as Promise<Array<TransactionEntry>>
+    })
   }
 
   #removeMediaFile(entry: Entry): void {
@@ -1100,11 +1088,4 @@ export class EntryTransaction implements AsyncDisposable {
   #assertOpen(): void {
     if (this.#closed) throw new Error('EntryTransaction is closed')
   }
-}
-
-function startsWithSegments(
-  value: ReadonlyArray<string>,
-  prefix: ReadonlyArray<string>
-): boolean {
-  return prefix.every((segment, index) => value[index] === segment)
 }

@@ -28,14 +28,14 @@ export async function resolveEntryQuery(
   const search = context.search
     ? await context.search(query.search)
     : searchQuery(query.search, entries, searchName)
-  const plan = compileEntryQuery(config, query, {
+  const {rows, plan} = compileEntryQuery(config, query, {
     search,
     entry: entries,
     searchName
   })
   if (plan.needsSearch && !context.search) await context.prepareSearch()
-  if (plan.count) return db.select(count()).from(plan.rows.as('matches')).get()
-  const result = await plan.rows.all(db)
+  if (plan.count) return db.select(count()).from(rows.as('matches')).get()
+  const result = await rows.all(db)
   if (query.get && !result.length) throw new Error('Entry not found')
   return projectRows(query, plan, result, context)
 }
@@ -135,43 +135,34 @@ async function projectRow(
   const selectedData =
     plan.fields.length || plan.optional.length
       ? storedEntryData(projected.data, projected.source.path)
-      : undefined
+      : {}
   const loader = createLinkResolver(query, projected.source, context)
   await Promise.all(
     plan.fields.map(async selected => {
-      const present = Object.hasOwn(selectedData!, selected.name)
+      const present = Object.hasOwn(selectedData, selected.name)
       if (!selected.path.length) {
         if (!present) value = undefined
         // The Graph resolver returns a falsy top-level selection directly.
         if (value) value = await Field.queryValue(selected.field, value, loader)
       } else {
-        let target = value
-        for (const key of selected.path.slice(0, -1)) {
-          if (!isRecord(target))
-            throw new Error('Invalid field projection path')
-          target = target[key]
-        }
-        if (!isRecord(target))
-          throw new Error('Invalid field projection target')
-        const key = selected.path.at(-1)!
+        const ref = projectionRef(value, selected.path)
+        if (!ref) throw new Error('Invalid field projection target')
         const processed = await Field.queryValue(
           selected.field,
-          present ? target[key] : undefined,
+          present ? ref.parent[ref.key] : undefined,
           loader
         )
-        Object.defineProperty(target, key, {
-          value: processed,
-          enumerable: true,
-          configurable: true,
-          writable: true
-        })
+        defineProjection(ref, processed)
       }
     })
   )
   for (const selected of plan.optional) {
-    if (hasOwnPath(selectedData!, selected.dataPath)) continue
+    if (hasOwnPath(selectedData, selected.dataPath)) continue
     if (!selected.path.length) value = undefined
-    else setProjectionValue(value, selected.path, undefined)
+    else {
+      const ref = projectionRef(value, selected.path)
+      if (ref) defineProjection(ref, undefined)
+    }
   }
   await Promise.all(
     plan.relations.map(async relation => {
@@ -191,20 +182,9 @@ async function projectRow(
           )
       if (!relation.path.length) value = related
       else {
-        let target = value
-        for (const key of relation.path.slice(0, -1)) {
-          if (!isRecord(target))
-            throw new Error('Invalid relation projection path')
-          target = target[key]
-        }
-        if (!isRecord(target))
-          throw new Error('Invalid relation projection target')
-        Object.defineProperty(target, relation.path.at(-1)!, {
-          value: related,
-          enumerable: true,
-          configurable: true,
-          writable: true
-        })
+        const ref = projectionRef(value, relation.path)
+        if (!ref) throw new Error('Invalid relation projection target')
+        defineProjection(ref, related)
       }
     })
   )
@@ -220,17 +200,32 @@ function hasOwnPath(value: unknown, path: Array<string>): boolean {
   return true
 }
 
-function setProjectionValue(
+interface ProjectionRef {
+  parent: Record<string, unknown>
+  key: string
+}
+
+/** Walk to the container of a non-empty projection path. */
+function projectionRef(
   value: unknown,
-  path: Array<string>,
-  replacement: unknown
-): void {
+  path: Array<string>
+): ProjectionRef | undefined {
   let target = value
   for (const key of path.slice(0, -1)) {
-    if (!isRecord(target)) return
+    if (!isRecord(target)) return undefined
     target = target[key]
   }
-  if (isRecord(target)) target[path.at(-1)!] = replacement
+  if (!isRecord(target)) return undefined
+  return {parent: target, key: path.at(-1)!}
+}
+
+function defineProjection(ref: ProjectionRef, value: unknown): void {
+  Object.defineProperty(ref.parent, ref.key, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: true
+  })
 }
 
 function getProjectionValue(value: unknown, path: Array<string>): unknown {

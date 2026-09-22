@@ -6,7 +6,6 @@ import {ListEditor} from '#/core/field/ListField.js'
 import {assert} from '#/core/util/Assert.js'
 import {isValidOrderKey} from '#/core/util/FractionalIndexing.js'
 import {isRecord} from '#/core/util/Objects.js'
-import {MetadataField} from '#/field/metadata/MetadataField.js'
 
 function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
   const result = new Set<string>()
@@ -19,7 +18,6 @@ function aliasUrlsFromData(data: Record<string, unknown>): Array<string> {
 
 function hasUrlAliases(type: Type): boolean {
   const metadata = Type.field(type, 'metadata')
-  if (metadata instanceof MetadataField) return true
   if (!metadata) return false
   const options = Field.options(metadata)
   const fields = (options as {fields?: unknown}).fields
@@ -40,11 +38,13 @@ export function dataWithUrlAlias(
     : data
   const metadata = isRecord(nextData.metadata) ? nextData.metadata : {}
   const aliases = Array.isArray(metadata.aliases) ? metadata.aliases : []
-  return dataWithAliases(
-    nextData,
-    metadata,
-    aliases.concat(createUrlAliasRow(previousUrl, aliases))
-  )
+  return {
+    ...nextData,
+    metadata: {
+      ...metadata,
+      aliases: aliases.concat(createUrlAliasRow(previousUrl, aliases))
+    }
+  }
 }
 
 function withoutUrlAlias(
@@ -60,14 +60,6 @@ function withoutUrlAlias(
       aliases: metadata.aliases.filter(alias => aliasUrl(alias) !== url)
     }
   }
-}
-
-function dataWithAliases(
-  data: Record<string, unknown>,
-  metadata: Record<string, unknown>,
-  aliases: Array<unknown>
-): Record<string, unknown> {
-  return {...data, metadata: {...metadata, aliases}}
 }
 
 interface UrlAliasRow extends ListRow {

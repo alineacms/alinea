@@ -1,7 +1,12 @@
 import {Config, type Config as ConfigType} from './Config.js'
+import type {Mutation} from './db/Mutation.js'
+import {Entry} from './Entry.js'
+import type {Graph} from './Graph.js'
+import {createId} from './Id.js'
 import {getRoot} from './Internal.js'
 import {Page, type Page as PageType} from './Page.js'
 import {Schema} from './Schema.js'
+import {assert} from './util/Assert.js'
 import {entries} from './util/Objects.js'
 import * as paths from './util/Paths.js'
 import {slugify} from './util/Slugs.js'
@@ -81,6 +86,69 @@ export function entrySeeds(config: ConfigType): ReadonlyArray<EntrySeed> {
   }
   cache.set(config, result)
   return result
+}
+
+/** Plan the creations needed to materialize every configured seed. */
+export async function seedMutations(
+  graph: Graph,
+  config: ConfigType
+): Promise<Array<Mutation>> {
+  const seeds = entrySeeds(config)
+  const mutations = Array<Mutation>()
+  if (!seeds.length) return mutations
+  const nodeIds = new Map<string, string>()
+  const translationIds = new Map<string, string>()
+  const selection = {id: Entry.id, type: Entry.type}
+  for (const seed of seeds) {
+    const existingBySeed = await graph.first({
+      seeded: seed.seedPath,
+      workspace: seed.workspace,
+      root: seed.root,
+      locale: seed.locale,
+      status: 'all',
+      select: selection
+    })
+    const existing =
+      existingBySeed ??
+      (await graph.first({
+        filePath: {
+          in: [
+            seed.filePath,
+            seed.filePath.replace(/\.json$/, '.draft.json'),
+            seed.filePath.replace(/\.json$/, '.archived.json')
+          ]
+        },
+        status: 'all',
+        select: selection
+      }))
+    if (existing) {
+      assert(existing.type === seed.type, `Type mismatch in ${seed.nodePath}`)
+      nodeIds.set(seed.nodePath, existing.id)
+      translationIds.set(`${seed.workspace}/${seed.id}`, existing.id)
+      continue
+    }
+    const translationKey = `${seed.workspace}/${seed.id}`
+    const id = translationIds.get(translationKey) ?? createId()
+    const parentId = seed.parentNodePath
+      ? nodeIds.get(seed.parentNodePath)
+      : null
+    if (seed.parentNodePath)
+      assert(parentId, `Missing seed parent ${seed.parentNodePath}`)
+    translationIds.set(translationKey, id)
+    nodeIds.set(seed.nodePath, id)
+    mutations.push({
+      op: 'create',
+      id,
+      parentId,
+      locale: seed.locale,
+      type: seed.type,
+      workspace: seed.workspace,
+      root: seed.root,
+      fromSeed: seed.seedPath,
+      data: {path: seed.data.path}
+    })
+  }
+  return mutations
 }
 
 export function seedData(

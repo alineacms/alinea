@@ -9,7 +9,7 @@ import {isRecord} from '#/core/util/Objects.js'
 import {index, table, temporaryTable, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 
-export function entryVersionId(
+function entryVersionId(
   id: string,
   locale: string | null,
   status: EntryStatus
@@ -112,7 +112,9 @@ export function entryIndexRow(entry: IndexedEntry) {
     root: entry.root,
     sourceRoot:
       entry.sourceRoot ??
-      (entry.level > 0 ? entry.parentDir.split('/').at(-entry.level) : null),
+      (entry.level > 0
+        ? (entry.parentDir.split('/').at(-entry.level) ?? null)
+        : null),
     parentId: entry.parentId,
     parents: entry.parents,
     level: entry.level,

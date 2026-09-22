@@ -2,6 +2,7 @@ import type {Config} from '#/core/Config.js'
 import type {FileStat} from '#/core/source/FSSource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {chunks} from '#/core/util/Arrays.js'
+import {TaskQueue} from '#/core/util/Async.js'
 import {eq, sql, type Database} from 'rado'
 import {
   DatabaseMetadataTable,
@@ -13,19 +14,6 @@ import {EntryLayer, type EntryDatabaseOptions} from './EntryLayer.js'
 import {createSearch, EntrySearchName} from './query/Search.js'
 import {EntrySyncer, EntrySyncRoot} from './sync/EntrySyncer.js'
 import {sqliteBatchSize} from './sync/SyncQueries.js'
-
-export type {
-  EntryApplyOptions,
-  EntryApplyResult,
-  EntryChangeListener,
-  EntryDatabaseOptions,
-  EntryDatabaseOverlay,
-  EntryLayerContext,
-  EntryLayerState,
-  EntrySyncResult,
-  QueryObserver
-} from './EntryLayer.js'
-export {EntryLayer, EntryOverlay} from './EntryLayer.js'
 
 const defaultConfigFingerprint = 'runtime'
 
@@ -49,7 +37,7 @@ export class EntryDatabase extends EntryLayer {
       db,
       syncDb,
       syncer: ownedSyncer ?? syncer,
-      context: {nextOverlayId: 1, queue: Promise.resolve(), syncer},
+      context: {nextOverlayId: 1, queue: new TaskQueue(), syncer},
       target: EntrySyncRoot,
       searchName: EntrySearchName,
       searchDirty: !options.searchReady,
@@ -66,19 +54,22 @@ export class EntryDatabase extends EntryLayer {
     revision: string,
     configFingerprint = defaultConfigFingerprint
   ): Promise<void> {
-    const schema = await db.get<{name: string}>(sql`
+    const tables = [
+      EntryIndexTable,
+      DatabaseStateTable,
+      DatabaseMetadataTable,
+      SourceFileTable
+    ]
+    const rows = await db.all<{name: string}>(sql`
       select name from sqlite_master
-      where type = 'table' and name = 'alinea_database_state'
+      where type = 'table' and name in (
+        'alinea_database_state',
+        'alinea_database_metadata',
+        'alinea_source_file'
+      )
     `)
-    const metadata = await db.get<{name: string}>(sql`
-      select name from sqlite_master
-      where type = 'table' and name = 'alinea_database_metadata'
-    `)
-    const sourceFiles = await db.get<{name: string}>(sql`
-      select name from sqlite_master
-      where type = 'table' and name = 'alinea_source_file'
-    `)
-    const current = metadata
+    const present = new Set(rows.map(row => row.name))
+    const current = present.has('alinea_database_metadata')
       ? await db
           .select({
             configFingerprint: DatabaseMetadataTable.configFingerprint
@@ -88,29 +79,14 @@ export class EntryDatabase extends EntryLayer {
           .get()
       : undefined
     const compatible =
-      schema != null &&
-      sourceFiles != null &&
+      present.has('alinea_database_state') &&
+      present.has('alinea_source_file') &&
       current?.configFingerprint === configFingerprint
     if (!compatible) {
+      // The FTS5 virtual table is not part of the declared schema.
       await db.run(sql`drop table if exists ${sql.identifier(EntrySearchName)}`)
-      await db.run(
-        sql`drop table if exists ${sql.identifier('alinea_entry_index')}`
-      )
-      await db.run(
-        sql`drop table if exists ${sql.identifier('alinea_database_state')}`
-      )
-      await db.run(
-        sql`drop table if exists ${sql.identifier('alinea_database_metadata')}`
-      )
-      await db.run(
-        sql`drop table if exists ${sql.identifier('alinea_source_file')}`
-      )
-      await db.create(
-        EntryIndexTable,
-        DatabaseStateTable,
-        DatabaseMetadataTable,
-        SourceFileTable
-      )
+      await db.drop(...tables)
+      await db.create(...tables)
       await createSearch(db)
       await db.insert(DatabaseMetadataTable).values({
         id: 1,

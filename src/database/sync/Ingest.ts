@@ -11,26 +11,29 @@ import {
 } from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {
-  changeBatchSize,
+  insertEntryValues,
   sqliteBatchSize,
   SyncAffected,
   SyncCascade,
-  SyncValues,
-  type AffectedEntryRow,
-  type DirectoryHashRow,
-  type FileRow,
-  type StoredHierarchyRow,
+  writeValues,
   type SyncQueries
 } from './SyncQueries.js'
+
+const changeBatchSize = 250
+
+interface FileRow {
+  filePath: string
+  fileHash: string
+}
 
 async function markAffected(
   db: Database,
   entries: EntryIndexTarget,
   filePaths: ReadonlyArray<string>,
   versionIds: ReadonlyArray<string> = []
-): Promise<Array<AffectedEntryRow>> {
+) {
   if (!filePaths.length && !versionIds.length) return []
-  const existing = (await db
+  const existing = await db
     .select({
       id: entries.id,
       filePath: entries.filePath,
@@ -46,7 +49,7 @@ async function markAffected(
           ? inArray(entries.versionId, Array.from(versionIds))
           : undefined
       )
-    )) as Array<AffectedEntryRow>
+    )
   await markRows(db, existing)
   return existing
 }
@@ -143,7 +146,7 @@ async function replaceFiles(
   }))
   const filePaths = rows.map(row => row.filePath)
   const versionIds = rows.map(row => row.versionId)
-  const previous = (await db
+  const previous = await db
     .select({
       versionId: entries.versionId,
       parentDir: entries.parentDir,
@@ -156,7 +159,7 @@ async function replaceFiles(
         inArray(entries.filePath, filePaths),
         inArray(entries.versionId, versionIds)
       )
-    )) as Array<StoredHierarchyRow>
+    )
   const previousByVersion = new Map(previous.map(row => [row.versionId, row]))
   for (const row of rows) {
     const stored = previousByVersion.get(row.versionId)
@@ -173,15 +176,7 @@ async function replaceFiles(
         inArray(entries.versionId, versionIds)
       )
     )
-  // Named parameters bypass column encoders, so bind SQLite values explicitly.
-  for (const row of rows)
-    await queries.insertEntry.run({
-      ...row,
-      parents: JSON.stringify(row.parents),
-      active: Number(row.active),
-      main: Number(row.main),
-      visible: Number(row.visible)
-    })
+  for (const row of rows) await queries.insertEntry.run(insertEntryValues(row))
   await markRows(db, rows)
 }
 
@@ -204,7 +199,7 @@ async function updateDirectoryHashes(
     })
   )
   for (const paths of chunks(Array.from(directories), sqliteBatchSize)) {
-    const rows = (await db
+    const rows = await db
       .select({
         id: entries.id,
         versionId: entries.versionId,
@@ -212,7 +207,7 @@ async function updateDirectoryHashes(
         childrenSha: entries.childrenSha
       })
       .from(entries)
-      .where(inArray(entries.childrenDir, paths))) as Array<DirectoryHashRow>
+      .where(inArray(entries.childrenDir, paths))
     const changed = rows.filter(row => {
       const childrenSha = sourceDirectorySha(tree, row.childrenDir)
       return childrenSha !== row.childrenSha
@@ -223,14 +218,14 @@ async function updateDirectoryHashes(
       SyncAffected,
       changed.map(row => row.id)
     )
-    await queries.clearValues.run()
-    await db.insert(SyncValues).values(
+    await writeValues(
+      queries,
       changed.map(row => ({
         key: row.versionId,
         value: sourceDirectorySha(tree, row.childrenDir)
-      }))
+      })),
+      queries.updateChildrenSha
     )
-    await queries.updateChildrenSha.run()
   }
 }
 

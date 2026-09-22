@@ -1,6 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
+import {requestResult, transactionComplete} from '#/core/util/IndexedDB.js'
 import {versionedCacheName} from './Version.js'
 import {Config as ConfigBuilder} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
@@ -239,18 +240,7 @@ test('browser entry stores sync source rows in bounded batches', async () => {
 })
 
 function openCache(name: string): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(name, 1)
-    request.onupgradeneeded = () => request.result.createObjectStore('database')
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
-function transactionComplete(transaction: IDBTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve()
-    transaction.onerror = () => reject(transaction.error)
-    transaction.onabort = () => reject(transaction.error)
-  })
+  const request = indexedDB.open(name, 1)
+  request.onupgradeneeded = () => request.result.createObjectStore('database')
+  return requestResult(request)
 }
