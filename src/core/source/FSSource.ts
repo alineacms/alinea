@@ -9,7 +9,7 @@ import {mapConcurrent} from '../util/Async.js'
 import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {Leaf, ReadonlyTree, WriteableTree} from './Tree.js'
 
 const limit = pLimit(1)
 const fileConcurrency = 64
@@ -21,23 +21,79 @@ function hashFileBlob(contents: Uint8Array): string {
   return createHash('sha1').update(header).update(contents).digest('hex')
 }
 
+/**
+ * List every non-directory entry below root as a path relative to root, using
+ * forward slashes. Uses dirent types so only symlinks need a stat; symlinks to
+ * directories are followed like Node's recursive readdir does.
+ */
+async function listFiles(root: string, dir = ''): Promise<Array<string>> {
+  const entries = await fs.readdir(dir ? `${root}/${dir}` : root, {
+    withFileTypes: true
+  })
+  const nested = await Promise.all(
+    entries.map(async entry => {
+      const file = dir ? `${dir}/${entry.name}` : entry.name
+      const isDirectory =
+        entry.isDirectory() ||
+        (entry.isSymbolicLink() &&
+          (await fs.stat(`${root}/${file}`).then(
+            stat => stat.isDirectory(),
+            () => false
+          )))
+      return isDirectory ? listFiles(root, file) : [file]
+    })
+  )
+  return nested.flat()
+}
+
+/** The filesystem metadata used to detect that a file did not change. */
+export interface FileStat {
+  mtimeMs: number
+  size: number
+}
+
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #cwd: string
   #locations = new Map<string, string>()
-  #lastModified = new Map<string, number>()
+  #lastModified = new Map<string, FileStat>()
 
   constructor(cwd: string) {
     this.#cwd = cwd
+  }
+
+  /**
+   * Restore a previously persisted tree and the file stats it was built from,
+   * so unchanged files are not read again.
+   */
+  hydrate(tree: ReadonlyTree, stats: ReadonlyMap<string, FileStat>): void {
+    this.#current = tree
+    for (const [path, stat] of stats) {
+      const leaf = tree.get(path)
+      if (!(leaf instanceof Leaf)) continue
+      this.#lastModified.set(path, stat)
+      this.#locations.set(leaf.sha, path)
+    }
+  }
+
+  /** The file stats of every file in the current tree. */
+  fileStats(): ReadonlyMap<string, FileStat> {
+    const stats = new Map<string, FileStat>()
+    for (const [path, stat] of this.#lastModified) {
+      if (!(this.#current.get(path) instanceof Leaf)) {
+        this.#lastModified.delete(path)
+        continue
+      }
+      stats.set(path, stat)
+    }
+    return stats
   }
 
   async getTree() {
     return limit(async () => {
       const current = this.#current
       const builder = new WriteableTree()
-      const files = await fs.readdir(this.#cwd, {
-        recursive: true
-      })
+      const files = await listFiles(this.#cwd)
       for await (const result of mapConcurrent(
         files,
         file => this.getFile(current, builder, file),
@@ -62,7 +118,11 @@ export class FSSource implements Source {
       throw error
     }
     const previouslyModified = this.#lastModified.get(filePath)
-    if (previouslyModified && stat.mtimeMs === previouslyModified) {
+    if (
+      previouslyModified &&
+      stat.mtimeMs === previouslyModified.mtimeMs &&
+      stat.size === previouslyModified.size
+    ) {
       const previous = current.get(filePath)
       if (previous && typeof previous.sha === 'string') {
         builder.add(filePath, previous.sha)
@@ -78,7 +138,7 @@ export class FSSource implements Source {
     }
     const sha = hashFileBlob(contents)
     this.#locations.set(sha, filePath)
-    this.#lastModified.set(filePath, stat.mtimeMs)
+    this.#lastModified.set(filePath, {mtimeMs: stat.mtimeMs, size: stat.size})
     builder.add(filePath, sha)
     return [sha, contents] as const
   }
@@ -138,19 +198,30 @@ export class FSSource implements Source {
 
 export class CachedFSSource extends FSSource {
   #tree: Promise<ReadonlyTree> | undefined
+  #loaded = false
   #blobs: Map<string, Uint8Array> = new Map()
 
   constructor(cwd: string) {
     super(cwd)
   }
 
-  refresh = pDebounce(() => {
+  #debouncedRefresh = pDebounce(() => this.#refresh(), 50)
+
+  refresh(): Promise<ReadonlyTree> {
+    // Only watch refreshes need coalescing; the first snapshot is needed now.
+    if (!this.#tree) return this.#refresh()
+    // The watcher and initial sync can request the first snapshot together.
+    if (!this.#loaded) return this.#tree
+    return this.#debouncedRefresh()
+  }
+
+  #refresh(): Promise<ReadonlyTree> {
     let refresh: Promise<ReadonlyTree>
     refresh = super.getTree().then(
       tree => {
-        const currentShas = new Set(tree.index().values())
+        this.#loaded = true
         for (const sha of this.#blobs.keys()) {
-          if (!currentShas.has(sha)) this.#blobs.delete(sha)
+          if (!tree.hasSha(sha)) this.#blobs.delete(sha)
         }
         return tree
       },
@@ -161,7 +232,7 @@ export class CachedFSSource extends FSSource {
     )
     this.#tree = refresh
     return refresh
-  }, 50)
+  }
 
   getTree() {
     if (!this.#tree) return this.refresh()

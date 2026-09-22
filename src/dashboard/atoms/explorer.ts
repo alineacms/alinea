@@ -1,6 +1,6 @@
 import {Entry, type EntryStatus} from '#/core/Entry.js'
 import type {EntryFields} from '#/core/EntryFields.js'
-import {filterChecker} from '#/core/db/EntryResolver.js'
+import {filterChecker} from '#/core/Filter.js'
 import {Field, type FieldOptions} from '#/core/Field.js'
 import type {Filter} from '#/core/Filter.js'
 import {getRoot, getType, getWorkspace} from '#/core/Internal.js'
@@ -45,6 +45,9 @@ import {
 } from './utils.js'
 
 export const dashboardEntryOverviewColumnCount = 5
+
+/** The best ranked matches a search loads into the explorer. */
+export const searchResultLimit = 100
 
 export type ExplorerView = 'card' | 'row'
 export type ExplorerSortBy = 'title' | 'path' | 'size' | 'id' | 'index'
@@ -925,6 +928,9 @@ export class ExplorerAtoms {
               : (location.parentId ?? null),
         locale: searchesMultipleRoots ? undefined : locale,
         search: search || undefined,
+        // Search results arrive ranked; loading every match with its data
+        // costs seconds on large sites while only the best ones are shown.
+        take: search ? searchResultLimit : undefined,
         filter: filterSelectable ? this.#options.condition : undefined,
         type: filter,
         status: 'preferDraft',

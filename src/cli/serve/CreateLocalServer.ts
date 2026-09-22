@@ -122,6 +122,7 @@ export function createLocalServer(
   } satisfies BuildOptions
 
   const builder = buildEmitter(config)
+  let closed = false
   ;(async () => {
     for await (const {type, result} of builder) {
       if (type === 'start') {
@@ -132,7 +133,10 @@ export function createLocalServer(
           reportFatal('Building Alinea dashboard failed')
         } else {
           currentBuild.resolve(buildFiles(devDir, result))
-          liveReload.reload(alineaDev ? 'reload' : 'refresh')
+          // A superseded server's watcher may still finish a build; only the
+          // current server announces revisions, or the dashboard would load
+          // one revision and immediately replace it with the next.
+          if (!closed) liveReload.reload(alineaDev ? 'reload' : 'refresh')
         }
       }
     }
@@ -315,6 +319,7 @@ export function createLocalServer(
 
   return {
     close() {
+      closed = true
       builder.return()
     },
     async handle(request: Request) {

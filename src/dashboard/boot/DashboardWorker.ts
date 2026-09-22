@@ -2,7 +2,6 @@ import type {Config} from '#/core/Config.js'
 import type {LocalConnection} from '#/core/Connection.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
-import {createId} from '#/core/Id.js'
 import {getScope} from '#/core/Scope.js'
 import {trigger} from '#/core/Trigger.js'
 import type {
@@ -10,10 +9,11 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {Source} from '#/core/source/Source.js'
+import {BrowserEntryStore} from '#/database/BrowserEntryStore.js'
+import {EntryStore} from '#/database/EntryStore.js'
 import pLimit from 'p-limit'
 import {
   type Activity,
@@ -34,7 +34,7 @@ interface QueuedMutation {
 }
 
 interface LoadedDashboard {
-  db: LocalDB
+  db: EntryStore
   client: LocalConnection
   cacheFailure?: CacheFailure
 }
@@ -46,11 +46,11 @@ interface CacheFailure {
 const activityHistoryLimit = 100
 
 export class DashboardWorker extends EventTarget {
-  #source: Source
-  #localDB: LocalDB | undefined
+  #source: Source | undefined
+  #localDB: EntryStore | undefined
   #localClient: LocalConnection | undefined
   #nextLoad = trigger<LoadedDashboard>()
-  #defer: Function | undefined
+  #defer: (() => Promise<void>) | undefined
   #currentRevision: string | undefined
   #mutations: Array<QueuedMutation> = []
   #activities: Array<Activity> = []
@@ -58,7 +58,7 @@ export class DashboardWorker extends EventTarget {
   #blocked = false
   #syncInterval: ReturnType<typeof setInterval> | undefined
 
-  constructor(source: Source) {
+  constructor(source?: Source) {
     super()
     this.#source = source
   }
@@ -73,28 +73,48 @@ export class DashboardWorker extends EventTarget {
 
   async sync(): Promise<string> {
     const load = this.#nextLoad
+    try {
+      return await this.#syncLoaded(load)
+    } catch (error) {
+      // A load that superseded this store mid-sync closed it; sync the
+      // replacement instead of surfacing the closed store.
+      const superseded =
+        this.#nextLoad !== load &&
+        (await load.then(
+          loaded => loaded.db.closed,
+          () => false
+        ))
+      if (superseded) return this.sync()
+      throw error
+    }
+  }
+
+  async #syncLoaded(load: Promise<LoadedDashboard>): Promise<string> {
     const loaded = await load
     const {db, client} = loaded
     return this.#local(async () => {
+      let revision: string
       try {
-        await remote(() => this.#syncWithClient(db, client))
+        revision = await remote(() => this.#syncWithClient(db, client))
       } catch (error) {
         if (loaded.cacheFailure) {
+          const cached = errorMessage(loaded.cacheFailure.error)
+          const remote = errorMessage(error)
           throw new AggregateError(
             [loaded.cacheFailure.error, error],
-            'Failed to load cached content and fetch remote updates'
+            `Failed to load cached content and fetch remote updates\nCached content: ${cached}\nRemote updates: ${remote}`
           )
         }
         throw error
       }
       loaded.cacheFailure = undefined
       this.#startSyncing()
-      return db.sha
+      return revision
     })
   }
 
-  async sha() {
-    return (await this.db).sha
+  sha(): Promise<string> {
+    return this.#withDb(db => db.sha)
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
@@ -123,8 +143,7 @@ export class DashboardWorker extends EventTarget {
       this.#mutations.push(item)
       this.#emitActivity()
       try {
-        await db.mutate(mutations)
-        item.sha = db.sha
+        item.sha = (await db.mutate(mutations)).sha
         this.#emitActivity()
         void this.#flush(item)
         return item.sha
@@ -142,11 +161,6 @@ export class DashboardWorker extends EventTarget {
 
   async retryActivity(): Promise<void> {
     if (this.#blocked) await this.#retryMutations()
-    if (this.#blocked) return
-    const latestFetch = this.#activities.find(
-      activity => activity.type === 'fetch'
-    )
-    if (latestFetch?.status === 'failed') await this.sync()
   }
 
   async #retryMutations(): Promise<void> {
@@ -160,8 +174,7 @@ export class DashboardWorker extends EventTarget {
         item.activity.error = undefined
         if (!item.sha) {
           try {
-            await db.mutate(item.mutations)
-            item.sha = db.sha
+            item.sha = (await db.mutate(item.mutations)).sha
           } catch (error) {
             this.#blocked = true
             this.#failActivity(item.activity, error)
@@ -220,7 +233,8 @@ export class DashboardWorker extends EventTarget {
           await this.#syncWithClient(db, client)
           item.sha = undefined
         } catch {
-          // Both the mutation and its recovery sync record their own failures.
+          // The mutation failure is already recorded; the recovery sync
+          // failure is silent and retried later.
         }
       }
     })
@@ -256,29 +270,13 @@ export class DashboardWorker extends EventTarget {
     this.dispatchEvent(new ActivityEvent(this.activities()))
   }
 
-  async #syncWithClient(db: LocalDB, client: LocalConnection) {
-    const activity: Activity = {
-      id: createId(),
-      type: 'fetch',
-      status: 'running',
-      operations: [],
-      startedAt: Date.now()
-    }
-    this.#activities.unshift(activity)
-    this.#emitActivity()
-    try {
-      const result = await db.syncWith(client)
-      activity.status = 'succeeded'
-      return result
-    } catch (error) {
-      activity.status = 'failed'
-      activity.error = errorMessage(error)
-      throw error
-    } finally {
-      activity.finishedAt = Date.now()
-      this.#trimActivities()
-      this.#emitActivity()
-    }
+  async #syncWithClient(db: EntryStore, client: LocalConnection) {
+    // Fetch syncs are intentionally not recorded as activities: they run on
+    // every load and on an interval, so history rows would just be noise.
+    // Failures throw to the caller and background syncs retry on the next
+    // interval. The initial sync failure blocks graph readiness, so a broken
+    // initial sync still surfaces as a load error.
+    return db.syncWith(client, {validate: false})
   }
 
   #failActivity(activity: Activity, error: unknown) {
@@ -305,18 +303,31 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async resolve(raw: string): Promise<unknown> {
-    const db = await this.db
-    const scope = getScope(db.config)
-    const query = scope.parse<GraphQuery>(raw)
-    return db.resolve(query)
+  resolve(raw: string): Promise<unknown> {
+    return this.#withDb(db => {
+      const scope = getScope(db.config)
+      const query = scope.parse<GraphQuery>(raw)
+      return db.resolve(query)
+    })
   }
 
-  async referencesTo(
-    query: EntryReferenceQuery
-  ): Promise<EntryReferenceResult> {
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.#withDb(db => db.referencesTo(query))
+  }
+
+  /**
+   * Run against the current store, and once more against its replacement
+   * when a load superseded the store mid-flight and closed it.
+   */
+  async #withDb<T>(run: (db: EntryStore) => Promise<T>): Promise<T> {
     const db = await this.db
-    return db.referencesTo(query)
+    try {
+      return await run(db)
+    } catch (error) {
+      const current = await this.db
+      if (!db.closed || current === db) throw error
+      return run(current)
+    }
   }
 
   async load(revision: string, config: Config, client: LocalConnection) {
@@ -327,19 +338,38 @@ export class DashboardWorker extends EventTarget {
     this.#localDB = undefined
     this.#localClient = undefined
     try {
-      const db = new LocalDB(config, this.#source)
-      if (this.#defer) this.#defer()
+      const db = globalThis.indexedDB
+        ? await BrowserEntryStore.open(config, {
+            indexedDB: globalThis.indexedDB,
+            name: 'alinea-entry-database',
+            revision
+          })
+        : await EntryStore.memory(config, this.#fallbackSource())
+      // The replaced store closes in the background: awaiting it here would
+      // stall the replacement behind the old store's in-flight work.
+      if (this.#defer)
+        void this.#defer().catch(() => {
+          // The replaced database finishes outstanding work before closing.
+        })
       const cacheFailure = await this.#syncLocalIndex(db)
       this.#localDB = db
       this.#localClient = client
       nextLoad.resolve({db, client, cacheFailure})
-      const listen = (event: Event) => {
-        if (event instanceof IndexEvent)
-          this.dispatchEvent(new IndexEvent(event.data))
-      }
-      db.index.addEventListener(IndexEvent.type, listen)
-      this.#defer = () => {
-        db.index.removeEventListener(IndexEvent.type, listen)
+      const unsubscribe = db.onChange(change => {
+        this.dispatchEvent(
+          new IndexEvent({
+            op: 'index',
+            sha: change.revision,
+            ids: [...change.changedEntryIds]
+          })
+        )
+      })
+      this.#defer = async () => {
+        unsubscribe()
+        // A superseded store must not persist its stale bytes over the
+        // replacement's cache entry.
+        if (db instanceof BrowserEntryStore) await db.abandon()
+        else await db.close()
       }
     } catch (cause) {
       this.#currentRevision = undefined
@@ -349,7 +379,13 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async #syncLocalIndex(db: LocalDB): Promise<CacheFailure | undefined> {
+  #fallbackSource(): Source {
+    if (!this.#source)
+      throw new Error('A source is required when IndexedDB is unavailable')
+    return this.#source
+  }
+
+  async #syncLocalIndex(db: EntryStore): Promise<CacheFailure | undefined> {
     const sourceTree = await db.source.getTree()
     if (sourceTree.isEmpty) return
     try {
@@ -363,7 +399,7 @@ export class DashboardWorker extends EventTarget {
     if (this.#syncInterval) return
     const sync = () => {
       void this.sync().catch(() => {
-        // Background sync failures are exposed through activity state.
+        // Background sync failures are silent and retried on the next interval.
       })
     }
     this.#syncInterval = setInterval(sync, syncInterval)
@@ -389,7 +425,7 @@ interface MutationActivitySummary {
 }
 
 async function summarizeMutations(
-  db: LocalDB,
+  db: EntryStore,
   mutations: Array<Mutation>
 ): Promise<MutationActivitySummary> {
   const targets = mutations.flatMap(mutation =>

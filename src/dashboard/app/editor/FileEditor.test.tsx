@@ -1,6 +1,6 @@
 import {cleanup, render, screen} from '#test/react.js'
 import {createTestConnection} from '#test/CreateConnection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {EntryEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'

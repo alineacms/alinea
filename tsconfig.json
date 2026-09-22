@@ -27,5 +27,5 @@
       "alinea/*": ["./src/*"]
     }
   },
-  "exclude": ["apps"]
+  "exclude": ["apps", "private"]
 }

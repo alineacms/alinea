@@ -271,7 +271,7 @@ export function RichTextFieldView<Blocks extends Schema>({
 
   return (
     <>
-      <PickTextLink picker={picker} />
+      <PickTextLink picker={picker} linkOptions={options.link} />
       <PickTextAnchor picker={anchorPicker} />
       <Label
         description={options.help}

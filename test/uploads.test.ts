@@ -3,7 +3,7 @@ import {suite} from '@alinea/suite'
 import {Config, Edit, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
 import type {UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {createPreview} from '#/core/media/CreatePreview.js'
 
 const test = suite(import.meta)

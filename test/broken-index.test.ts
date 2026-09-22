@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {syncWith} from '#/core/source/Source.js'

@@ -1,5 +1,5 @@
 import type {LocalConnection, Revision} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import type {EntryRecord} from '#/core/EntryRecord.js'
 import type {User} from '#/core/User.js'
 import {App} from '#/dashboard/App.js'
@@ -320,7 +320,7 @@ export function DashboardScenario() {
   return (
     <App
       graph={db}
-      events={db.index}
+      events={db.events}
       config={config}
       client={client}
       views={views}

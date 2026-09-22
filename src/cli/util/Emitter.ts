@@ -31,7 +31,7 @@ export function createEmitter<T>({
       while (!queue.length) {
         await new Promise<void>(_ => (resolve = _))
       }
-      const current = queue.pop()!
+      const current = queue.shift()!
       switch (current.type) {
         case 'emit':
           return {value: current.value!, done: false}

@@ -1,9 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
-import type {
-  EntryReference,
-  EntryReferenceScan
-} from '#/core/db/EntryReference.js'
+import type {EntryReference} from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
@@ -25,7 +22,7 @@ import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {clientAtom, configAtom, graphAtom} from './core.js'
+import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
@@ -53,7 +50,6 @@ interface EntryData {
 export interface EntryReferences {
   references: Array<EntryReferenceWithSource>
   total: number
-  scan: EntryReferenceScan
 }
 
 export interface EntryReferenceWithSource {
@@ -234,7 +230,7 @@ export class EntryLocaleAtoms {
     const file = join(Config.contentDir(config), entry.filePath)
     return (await client.revisions(file)).slice(1)
   })
-  history = unwrap(this.historyReady, previous => previous ?? [])
+  historyState = atomWithPending(this.historyReady)
 
   selectedNode = atom(async get => {
     const version = get(this.selectedVersion)
@@ -359,7 +355,10 @@ export class EntryLocaleAtoms {
   previewPayloadSignal = atom(get => {
     const version = get(this.selectedVersion)
     const editing = get(this.currentlyEditing)
-    return [version, editing ? get(editing.value) : undefined]
+    // The payload carries the content sha, so a sync or save that moves it
+    // must resend the payload or the preview cookie keeps a stale hash.
+    const sha = get(shaAtom)
+    return [version, editing ? get(editing.value) : undefined, sha]
   })
   updatePreviewPayload = atom(null, async get => {
     const node = await get(this.selectedNode)
@@ -588,7 +587,12 @@ export class EntryAtoms {
 
   // Should UI show overview or editor?
   #selectedView = atom<EntryDefaultView>()
-  previousVersionsOpen = atom(false)
+  #previousVersionsRequested = atom<boolean>()
+  // Local history is cheap to load, so expand it unless toggled explicitly
+  previousVersionsOpen = atom(
+    get => get(this.#previousVersionsRequested) ?? get(localAtom),
+    (_get, set, open: boolean) => set(this.#previousVersionsRequested, open)
+  )
 
   incomingReferencesReady = atom(async get => {
     get(entryRevisionAtom(this.id))
@@ -630,7 +634,7 @@ export class EntryAtoms {
       if (!source || !policy.canRead(source)) return []
       return [{reference, source} satisfies EntryReferenceWithSource]
     })
-    return {references, total: result.total, scan: result.scan}
+    return {references, total: result.total}
   })
   incomingReferences = unwrap(
     this.incomingReferencesReady,

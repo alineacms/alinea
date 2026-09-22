@@ -14,6 +14,7 @@ import {
   ListRowBody,
   ListRowDrag,
   ListRowDragHandle,
+  ListRowFoldButton,
   ListRowHeader,
   ListRowMeta,
   ListRowSettings,
@@ -137,6 +138,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
   )
   const readOnly = Boolean(options.readOnly)
   const hasRows = nodes.length > 0
+  const canCreate = options.max === undefined || nodes.length < options.max
   const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
   const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
   const [dropIndicator, setDropIndicator] =
@@ -168,11 +170,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const copyRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string) => {
-        const copied = get(copyAtom)
-        if (copied?._id === rowId) {
-          set(copyAtom, undefined)
-          return
-        }
         const nodes = get(list.nodes) as Array<ReactiveNode<ListValue>>
         const node = nodes.find(node => get(node.field('_id')) === rowId)
         if (node) set(copyAtom, get(node.value))
@@ -226,6 +223,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
               addBetweenRow={(value, position = 'after') =>
                 insertRow(insertIndex(index, position), value)
               }
+              canCreate={canCreate}
               draggingRowId={draggingRowId}
               foldedIds={foldedIds}
               index={index}
@@ -257,7 +255,7 @@ export function ListFieldView({field}: ListFieldViewProps) {
           }
         />
 
-        {!readOnly && (
+        {!readOnly && canCreate && (
           <ListCreateRow empty={!hasRows}>
             <ListFieldCreateActions
               items={typeItems}
@@ -392,6 +390,7 @@ function ListFieldCreateActions({
 }
 
 interface ListFieldRowProps {
+  canCreate: boolean
   draggingRowId: string | null
   index: number
   list: ReactiveNode<Array<ListValue>>
@@ -528,6 +527,7 @@ function ListFieldInsertPanel({
 }
 
 function ListFieldRow({
+  canCreate,
   draggingRowId,
   index,
   list,
@@ -646,6 +646,7 @@ function ListFieldRow({
             {() => <ListFieldDragPreview icon={typeIcon} label={label} />}
           </DragPreview>
           <ListFieldRowHeader
+            canInsert={canCreate}
             dragProps={dragProps}
             expanded={expanded}
             isDragging={isDragging}
@@ -707,6 +708,7 @@ function ListFieldDragPreview({icon, label}: ListFieldDragPreviewProps) {
 
 interface ListFieldRowHeaderProps {
   className?: string
+  canInsert: boolean
   dragProps?: ReturnType<typeof useDrag>['dragProps']
   expanded: boolean
   isDragging: boolean
@@ -733,6 +735,7 @@ interface ListFieldRowHeaderProps {
 }
 
 function ListFieldRowHeader({
+  canInsert,
   className,
   dragProps,
   expanded,
@@ -782,6 +785,12 @@ function ListFieldRowHeader({
       )}
       <ListRowDrag dragging={isDragging}>
         <ListRowBadges>
+          <ListRowFoldButton
+            aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+            expanded={expanded}
+            isDisabled={isPreview}
+            onPress={onToggle}
+          />
           <Badge icon={typeIcon} size="small">
             {label}
           </Badge>
@@ -875,30 +884,34 @@ function ListFieldRowHeader({
                       Move down
                     </Button>
                   )}
-                  <ListFieldInsertAction
-                    icon={IcRoundFirstPage}
-                    isDisabled={Boolean(readOnly || isPreview)}
-                    items={insertItems}
-                    label="Insert before"
-                    pasted={pasted}
-                    onClose={closeActions}
-                    onOpenPicker={() => setInsertPosition('before')}
-                    onSelect={item =>
-                      onInsertBefore(createRow(item.id, item.type))
-                    }
-                  />
-                  <ListFieldInsertAction
-                    icon={IcRoundLastPage}
-                    isDisabled={Boolean(readOnly || isPreview)}
-                    items={insertItems}
-                    label="Insert after"
-                    pasted={pasted}
-                    onClose={closeActions}
-                    onOpenPicker={() => setInsertPosition('after')}
-                    onSelect={item =>
-                      onInsertAfter(createRow(item.id, item.type))
-                    }
-                  />
+                  {canInsert && (
+                    <>
+                      <ListFieldInsertAction
+                        icon={IcRoundFirstPage}
+                        isDisabled={Boolean(readOnly || isPreview)}
+                        items={insertItems}
+                        label="Insert before"
+                        pasted={pasted}
+                        onClose={closeActions}
+                        onOpenPicker={() => setInsertPosition('before')}
+                        onSelect={item =>
+                          onInsertBefore(createRow(item.id, item.type))
+                        }
+                      />
+                      <ListFieldInsertAction
+                        icon={IcRoundLastPage}
+                        isDisabled={Boolean(readOnly || isPreview)}
+                        items={insertItems}
+                        label="Insert after"
+                        pasted={pasted}
+                        onClose={closeActions}
+                        onOpenPicker={() => setInsertPosition('after')}
+                        onSelect={item =>
+                          onInsertAfter(createRow(item.id, item.type))
+                        }
+                      />
+                    </>
+                  )}
                 </ListRowSettings>
               </>
             )}

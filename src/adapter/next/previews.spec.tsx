@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url'
 
 const projectDir = fileURLToPath(new URL('../../../', import.meta.url))
 
-test('shows the full-page widget after disconnecting or closing the CMS', async ({
+test('shows the connection state in the full-page widget', async ({
   page,
   context
 }) => {
@@ -34,7 +34,8 @@ test('shows the full-page widget after disconnecting or closing the CMS', async 
   await page.evaluate(() => window.open('/preview', '_blank'))
   const preview = await popup
   await expect(page.locator('body')).toHaveAttribute('data-connections', '1')
-  await expect(preview.getByTitle('Edit content')).toHaveCount(0)
+  await expect(preview.getByTitle('Edit content')).toBeVisible()
+  await expect(preview.locator('alinea-preview .is-connected')).toHaveCount(1)
   await page.evaluate(() => {
     window.addEventListener('message', event => {
       if (event.data === 'oversized-payload') {
@@ -72,9 +73,11 @@ test('shows the full-page widget after disconnecting or closing the CMS', async 
 
   await preview.reload()
   await expect(page.locator('body')).toHaveAttribute('data-connections', '2')
-  await expect(preview.getByTitle('Edit content')).toHaveCount(0)
+  await expect(preview.getByTitle('Edit content')).toBeVisible()
+  await expect(preview.locator('alinea-preview .is-connected')).toHaveCount(1)
   await page.close()
   await expect(preview.getByTitle('Edit content')).toBeVisible()
+  await expect(preview.locator('alinea-preview .is-connected')).toHaveCount(0)
 })
 
 test('rejects preview messages from an untrusted opener origin', async ({
@@ -147,7 +150,8 @@ test('connects to a trusted cross-origin CLI dashboard', async ({
   )
   const preview = await popup
 
-  await expect(preview.getByTitle('Edit content')).toHaveCount(0)
+  await expect(preview.getByTitle('Edit content')).toBeVisible()
+  await expect(preview.locator('alinea-preview .is-connected')).toHaveCount(1)
 })
 
 async function buildPreviewScript(dashboardUrl: string): Promise<string> {

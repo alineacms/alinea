@@ -14,12 +14,14 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {DraftKey} from '#/core/Draft.js'
+import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {ErrorCode, HttpError} from '#/core/HttpError.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
+import {MediaFile} from '#/core/media/MediaTypes.js'
 import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
@@ -65,7 +67,7 @@ export interface HandlerHooks {
 
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
-  db: LocalDB | Promise<LocalDB>
+  db: LocalStore | Promise<LocalStore>
   remote?: (context: RequestContext) => RemoteConnection
   forwardMutations?(
     request: Request,
@@ -91,9 +93,22 @@ export function createHandler({
 
     if (simulateLatency) await new Promise(resolve => setTimeout(resolve, 2000))
 
+    /** Reads keep serving the current content when the remote is unreachable. */
+    async function syncForRead(cnx: RemoteConnection): Promise<void> {
+      try {
+        await local.syncWith(cnx)
+      } catch (error) {
+        console.warn(
+          `Alinea could not sync with the remote, serving current content: ${
+            error instanceof Error ? error.message : String(error)
+          }`
+        )
+      }
+    }
+
     async function periodicSync(cnx: RemoteConnection, syncInterval?: number) {
       if (dev) return
-      return throttle(() => local.syncWith(cnx), syncInterval)
+      return throttle(() => syncForRead(cnx), syncInterval)
     }
 
     try {
@@ -137,22 +152,31 @@ export function createHandler({
           throw new HttpError(400, 'Invalid file path')
         await periodicSync(cnx)
         const requestedUrl = Config.filePathname(cms.config, normalized)
-        const entry = local.index.findByUrl(
-          requestedUrl,
-          entry =>
-            entry.type === 'MediaFile' &&
-            entry.status === 'published' &&
-            entry.main
-        )
+        const select = {
+          url: Entry.url,
+          filePath: Entry.filePath,
+          workspace: Entry.workspace,
+          location: MediaFile.location,
+          previewUrl: MediaFile.previewUrl
+        }
+        const query = {
+          type: MediaFile,
+          status: 'published' as const,
+          main: true,
+          select
+        }
+        const entry =
+          (await local.first({...query, url: requestedUrl})) ??
+          (await local.first({...query, alias: requestedUrl}))
         if (!entry) return new Response('Not found', {status: 404})
         if (entry.url !== requestedUrl && !proxy)
           return new Response(null, {
             status: 308,
             headers: {location: entry.url}
           })
-        const wasBuilt = local.index.initialSync?.has(entry.filePath) ?? false
-        const previewUrl = entry.data.previewUrl
-        const location = entry.data.location
+        const wasBuilt = await local.includedAtBuild(entry.filePath)
+        const previewUrl = entry.previewUrl
+        const location = entry.location
         if (typeof location !== 'string')
           return new Response('Not found', {status: 404})
         const previewSource =
@@ -333,8 +357,11 @@ export function createHandler({
           )
         } else {
           const preview = await decodePreviewRequest(query.preview)
-          if ('contentHash' in preview && local.sha !== preview.contentHash)
-            await local.syncWith(cnx)
+          if (
+            'contentHash' in preview &&
+            (await local.sha) !== preview.contentHash
+          )
+            await syncForRead(cnx)
           query.preview = await applyPreview(local, preview)
         }
         return Response.json((await local.resolve(query)) ?? null)
@@ -422,7 +449,7 @@ export function createHandler({
       if (action === HandleAction.Tree && request.method === 'GET') {
         expectJson()
         const sha = string(url.searchParams.get('sha'))
-        await local.syncWith(cnx)
+        await syncForRead(cnx)
         const tree = await local.getTreeIfDifferent(sha)
         return compressResponse(request, Response.json(tree ?? null))
       }

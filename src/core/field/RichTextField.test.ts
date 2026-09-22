@@ -52,15 +52,13 @@ test('resolves linked image data for queried rich text', async () => {
   ] satisfies TextDoc
   const loader = {
     locale: 'fr',
-    resolver: {
-      config: {
-        schema: {},
-        workspaces: {
-          main: workspace('Main', {
-            source: 'content',
-            roots: {}
-          })
-        }
+    config: {
+      schema: {},
+      workspaces: {
+        main: workspace('Main', {
+          source: 'content',
+          roots: {}
+        })
       }
     },
     async resolveTargets(_projection: unknown, targets: Array<unknown>) {
@@ -239,6 +237,42 @@ test('awaits custom tag and mark handlers', async () => {
       ]
     },
     {_type: 'image', src: '/media/cover.jpg'}
+  ] satisfies TextDoc)
+})
+
+test('applies links to asynchronously imported images', async () => {
+  const value = await parseHTMLAsync(
+    '<p><a href="mailto:hello@example.com" target="_blank" rel="noopener"><img src="button.png" width="98" height="32"></a></p>',
+    {
+      tags: {
+        async img(attributes) {
+          await Promise.resolve()
+          return {_type: 'image', ...attributes}
+        }
+      }
+    }
+  )
+
+  test.equal(value, [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'image',
+          src: 'button.png',
+          width: '98',
+          height: '32',
+          marks: [
+            {
+              _type: 'link',
+              href: 'mailto:hello@example.com',
+              target: '_blank',
+              rel: 'noopener'
+            }
+          ]
+        }
+      ]
+    }
   ] satisfies TextDoc)
 })
 

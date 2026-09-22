@@ -1,6 +1,12 @@
 import type {Client} from '#/core/Client.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
+import type {SyncOptions} from '#/core/db/LocalStore.js'
+import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+
+interface SyncableDB {
+  readonly sha: string | Promise<string>
+  syncWith(source: RemoteSource, options?: SyncOptions): Promise<string>
+}
 
 // Tag for the shared latest-content-sha entry. The Next handler wrapper
 // revalidates it after every commit, so renders learn about new content
@@ -74,17 +80,18 @@ export async function revalidateContentSha(): Promise<void> {
  * back to its existing throttle behavior.
  */
 export async function syncIfStale(
-  db: LocalDB,
+  db: SyncableDB,
   client: Client,
-  syncInterval?: number
+  syncInterval?: number,
+  options?: SyncOptions
 ): Promise<boolean> {
   if (syncInterval === Number.POSITIVE_INFINITY) return true
   if (syncInterval === 0) {
-    await db.syncWith(client)
+    await db.syncWith(client, options)
     return true
   }
   const expected = await latestSha(client)
   if (!expected) return false
-  if (expected !== db.sha) await db.syncWith(client)
+  if (expected !== (await db.sha)) await db.syncWith(client, options)
   return true
 }

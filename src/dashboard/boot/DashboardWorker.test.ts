@@ -1,7 +1,7 @@
 import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
@@ -11,11 +11,6 @@ import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
-
-async function suppressIndexEvents(worker: DashboardWorker) {
-  const db = await worker.db
-  db.index.dispatchEvent = () => true
-}
 
 test('loads local state without starting a remote sync', async () => {
   const fixture = new FSSource('test/fixtures/demo')
@@ -33,7 +28,6 @@ test('loads local state without starting a remote sync', async () => {
   const worker = new DashboardWorker(new MemorySource())
 
   await worker.load('deferred-remote', cms.config, client)
-  await suppressIndexEvents(worker)
 
   expect(remoteSyncs).toBe(0)
   expect(worker.activities()).toEqual([])
@@ -76,7 +70,6 @@ test('serializes concurrent sync requests and waits for each result', async () =
   }
   const worker = new DashboardWorker(new MemorySource())
   await worker.load('coalesced-sync', cms.config, client)
-  await suppressIndexEvents(worker)
 
   const first = worker.sync()
   const second = worker.sync()
@@ -131,12 +124,10 @@ test('queues a separate sync when the revision changes', async () => {
   }
   const worker = new DashboardWorker(new MemorySource())
   await worker.load('first-revision', cms.config, firstClient)
-  await suppressIndexEvents(worker)
   const first = worker.sync()
   await firstSyncStarted
 
   await worker.load('second-revision', cms.config, secondClient)
-  await suppressIndexEvents(worker)
   const second = worker.sync()
 
   expect(secondRemoteSyncs).toBe(0)
@@ -202,7 +193,6 @@ test('waits for a new revision to finish loading before syncing it', async () =>
   holdNextTreeRead = false
   releaseTreeRead?.()
   await load
-  await suppressIndexEvents(worker)
   await sync
 
   expect(firstRemoteSyncs).toBe(0)
@@ -250,7 +240,6 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   }
   const worker = new DashboardWorker(source)
   await worker.load('loaded-before-failure', cms.config, firstClient)
-  await suppressIndexEvents(worker)
   const firstSync = worker.sync()
   await firstSyncStarted
 
@@ -269,7 +258,6 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   )
 
   await worker.load('loaded-before-failure', cms.config, recoveredClient)
-  await suppressIndexEvents(worker)
   const recoveredSync = worker.sync()
 
   releaseFirstSync?.()
@@ -278,7 +266,7 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   expect(recoveredRemoteSyncs).toBe(1)
 })
 
-test('records remote database sync activity and keeps its outcome', async () => {
+test('syncs the remote database without recording fetch activity', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
   await remoteDB.sync()
@@ -301,33 +289,30 @@ test('records remote database sync activity and keeps its outcome', async () => 
     }
   }
   const worker = new DashboardWorker(new MemorySource())
-  const statuses: Array<string> = []
+  let activityEvents = 0
   worker.addEventListener(ActivityEvent.type, event => {
-    if (event instanceof ActivityEvent)
-      statuses.push(event.activities[0]?.status ?? 'missing')
+    if (event instanceof ActivityEvent) activityEvents += 1
   })
 
   await worker.load('sync-status', cms.config, client)
-  await suppressIndexEvents(worker)
   const sync = worker.sync()
   await syncStarted
 
-  expect(statuses).toEqual(['running'])
-  expect(worker.activities()).toEqual([
-    expect.objectContaining({type: 'fetch', status: 'running'})
-  ])
+  expect(worker.activities()).toEqual([])
 
   releaseSync?.()
   await sync
 
-  expect(statuses).toEqual(['running', 'succeeded'])
-  expect(worker.activities()).toEqual([
-    expect.objectContaining({
-      type: 'fetch',
-      status: 'succeeded',
-      finishedAt: expect.any(Number)
+  expect(worker.activities()).toEqual([])
+  expect(activityEvents).toBe(0)
+  expect(
+    await (
+      await worker.db
+    ).get({
+      type: cms.schema.DemoRecipe,
+      path: 'chocolate-chip'
     })
-  ])
+  ).toMatchObject({title: 'Chocolate chip'})
 })
 
 test('keeps successful content actions in activity history', async () => {
@@ -343,7 +328,6 @@ test('keeps successful content actions in activity history', async () => {
     cms.config,
     createTestConnection(remoteDB)
   )
-  await suppressIndexEvents(worker)
   await worker.sync()
   const db = await worker.db
   const original = await db.get({
@@ -444,11 +428,13 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
 
   await worker.load('incompatible-cache', cms.config, client)
   await expect(worker.sync()).rejects.toThrow(
-    'Failed to load cached content and fetch remote updates'
+    'Failed to load cached content and fetch remote updates\n' +
+      'Cached content: Invalid root: removed-root for workspace demo\n' +
+      'Remote updates: Remote unavailable'
   )
 
   remoteUnavailable = false
-  await worker.retryActivity()
+  await worker.sync()
 
   expect(remoteSyncs).toBe(2)
   expect(
@@ -480,7 +466,6 @@ test('retries a failed initial sync', async () => {
   }
   const worker = new DashboardWorker(new MemorySource())
   await worker.load('retry-initial-sync', cms.config, client)
-  await suppressIndexEvents(worker)
 
   await expect(worker.sync()).rejects.toThrow('Remote unavailable')
 
@@ -497,7 +482,7 @@ test('retries a failed initial sync', async () => {
   ).toMatchObject({title: 'Chocolate chip'})
 })
 
-test('retrying failed mutations clears the preceding fetch failure', async () => {
+test('retrying failed mutations succeeds', async () => {
   const {db, original, setUnavailable, worker} =
     await createFailedMutationFixture()
 
@@ -509,9 +494,6 @@ test('retrying failed mutations clears the preceding fetch failure', async () =>
   ).toMatchObject({title: 'Optimistic title'})
   expect(
     worker.activities().find(activity => activity.id === 'test-mutation')
-  ).toMatchObject({status: 'succeeded'})
-  expect(
-    worker.activities().find(activity => activity.type === 'fetch')
   ).toMatchObject({status: 'succeeded'})
 })
 
@@ -603,8 +585,6 @@ async function createFailedMutationFixture() {
   await initialSyncStarted
   await sync
   const db = await worker.db
-  // Index notifications are orthogonal to the queue behavior under test.
-  db.index.dispatchEvent = () => true
   const original = await db.get({
     type: cms.schema.DemoRecipe,
     path: 'chocolate-chip'
@@ -617,12 +597,13 @@ async function createFailedMutationFixture() {
     set: {title: 'Optimistic title'}
   }
   unavailable = true
-  const fetchFailure = new Promise<void>(resolve => {
+  const mutationFailed = new Promise<void>(resolve => {
     worker.addEventListener(ActivityEvent.type, event => {
       if (
         event instanceof ActivityEvent &&
         event.activities.some(
-          activity => activity.type === 'fetch' && activity.status === 'failed'
+          activity =>
+            activity.id === 'test-mutation' && activity.status === 'failed'
         )
       )
         resolve()
@@ -630,13 +611,14 @@ async function createFailedMutationFixture() {
   })
   await worker.queue('test-mutation', [mutation])
   await recoveryFailed
-  await fetchFailure
+  await mutationFailed
   expect(
     await db.get({type: cms.schema.DemoRecipe, id: original._id})
   ).toMatchObject({title: 'Optimistic title'})
   expect(worker.activities()).toContainEqual(
     expect.objectContaining({
-      type: 'fetch',
+      id: 'test-mutation',
+      type: 'mutation',
       status: 'failed',
       error: 'Remote unavailable'
     })
@@ -650,3 +632,59 @@ async function createFailedMutationFixture() {
     worker
   }
 }
+
+test('a sync queued on a superseded browser store syncs the replacement', async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB')
+  Object.defineProperty(globalThis, 'indexedDB', {
+    value: indexedDB,
+    configurable: true,
+    writable: true
+  })
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const baseClient = createTestConnection(remoteDB)
+    let releaseFirstSync: (() => void) | undefined
+    let markFirstSyncStarted: (() => void) | undefined
+    const firstSyncStarted = new Promise<void>(resolve => {
+      markFirstSyncStarted = resolve
+    })
+    const holdFirstSync = new Promise<void>(resolve => {
+      releaseFirstSync = resolve
+    })
+    let secondRemoteSyncs = 0
+    const firstClient: LocalConnection = {
+      ...baseClient,
+      async getTreeIfDifferent(sha) {
+        markFirstSyncStarted?.()
+        await holdFirstSync
+        return baseClient.getTreeIfDifferent(sha)
+      }
+    }
+    const secondClient: LocalConnection = {
+      ...baseClient,
+      getTreeIfDifferent(sha) {
+        secondRemoteSyncs += 1
+        return baseClient.getTreeIfDifferent(sha)
+      }
+    }
+    const worker = new DashboardWorker()
+    await worker.load('superseded-first', cms.config, firstClient)
+    const first = worker.sync()
+    await firstSyncStarted
+    // Queued behind the held sync, this reaches the first store only after
+    // the replacement below has abandoned it.
+    const queued = worker.sync()
+    await worker.load('superseded-second', cms.config, secondClient)
+
+    releaseFirstSync?.()
+    await first
+    const sha = await queued
+    expect(sha).toBe(await worker.sha())
+    expect(secondRemoteSyncs).toBeGreaterThanOrEqual(1)
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'indexedDB', previous)
+    else delete (globalThis as {indexedDB?: unknown}).indexedDB
+  }
+})

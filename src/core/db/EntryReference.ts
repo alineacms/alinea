@@ -35,7 +35,6 @@ export interface EntryReferenceQuery {
 export interface EntryReferenceResult {
   references: Array<EntryReference>
   total: number
-  scan: EntryReferenceScan
 }
 
 export interface FieldReferenceContext {
@@ -45,10 +44,4 @@ export interface FieldReferenceContext {
 
 export function referenceFieldPath(path: Array<string>): string {
   return path.join('.')
-}
-
-export interface EntryReferenceScan {
-  scanned: number
-  total: number
-  complete: boolean
 }

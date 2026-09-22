@@ -68,6 +68,7 @@ export namespace TextNode {
 export interface ElementNode {
   _type: string
   content?: TextDoc
+  marks?: Array<Mark>
   [key: string]: any
 }
 

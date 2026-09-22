@@ -85,6 +85,75 @@ test('uses commit request user for co-authored-by trailer', async () => {
   }
 })
 
+test('uses repository-relative media paths in commits', async () => {
+  const originalFetch = globalThis.fetch
+  const fromSha = 'from-sha'
+  const intoSha = 'into-sha'
+  let fileChanges: unknown
+  let graphQlCalls = 0
+
+  const mockFetch: typeof fetch = Object.assign(
+    async (...args: Parameters<typeof fetch>): Promise<Response> => {
+      const [input, init] = args
+      const url = String(input)
+      if (url === 'https://uploads.example/image.jpg')
+        return new Response('image')
+      if (url === 'https://api.github.com/graphql') {
+        graphQlCalls += 1
+        if (graphQlCalls === 1) {
+          return Response.json({
+            data: {repository: {ref: {target: {oid: 'head-oid'}}}}
+          })
+        }
+
+        const body = init?.body ? JSON.parse(String(init.body)) : undefined
+        fileChanges = readFileChanges(body)
+        return Response.json({
+          data: {createCommitOnBranch: {commit: {oid: 'commit-oid'}}}
+        })
+      }
+
+      const sha = url.endsWith('ref=head-oid') ? fromSha : intoSha
+      return Response.json([{path: 'content', sha}])
+    },
+    {preconnect: originalFetch.preconnect}
+  )
+
+  globalThis.fetch = mockFetch
+
+  try {
+    const api = new GithubApi({
+      authToken: 'token',
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'main',
+      rootDir: '/',
+      contentDir: '/content'
+    })
+    const request: CommitRequest = {
+      description: 'Update media',
+      fromSha,
+      intoSha,
+      changes: [
+        {
+          op: 'uploadFile',
+          url: 'https://uploads.example/image.jpg',
+          location: '/public/media/image.jpg'
+        },
+        {op: 'removeFile', location: '/public/media/old.jpg'}
+      ]
+    }
+
+    test.equal(await api.write(request), {sha: intoSha})
+    test.equal(fileChanges, {
+      additions: [{path: 'public/media/image.jpg', contents: 'aW1hZ2U='}],
+      deletions: [{path: 'public/media/old.jpg'}]
+    })
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
 function readCommitMessage(body: unknown): string | undefined {
   if (!isRecord(body)) return undefined
   const variables = body.variables
@@ -94,4 +163,12 @@ function readCommitMessage(body: unknown): string | undefined {
   const message = input.message
   if (!isRecord(message)) return undefined
   return typeof message.headline === 'string' ? message.headline : undefined
+}
+
+function readFileChanges(body: unknown): unknown {
+  if (!isRecord(body)) return
+  const variables = body.variables
+  if (!isRecord(variables)) return
+  const input = variables.input
+  return isRecord(input) ? input.fileChanges : undefined
 }

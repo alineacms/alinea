@@ -9,6 +9,7 @@ import {MediaLocation} from '#/core/media/MediaLocation.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Reference} from '#/core/Reference.js'
 import {type as createType, Type} from '#/core/Type.js'
+import type {EntryPickerConditions} from '#/picker/entry/EntryPicker.js'
 import type {EntryReference} from '#/picker/entry/EntryReference.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -94,6 +95,7 @@ export interface PickTextLinkState {
 
 export interface PickTextLinkProps {
   picker: PickTextLinkState
+  linkOptions?: EntryPickerConditions
 }
 
 export function usePickTextLink(): PickTextLinkState {
@@ -131,7 +133,7 @@ export function usePickTextLink(): PickTextLinkState {
   }
 }
 
-export function PickTextLink({picker}: PickTextLinkProps) {
+export function PickTextLink({picker, linkOptions}: PickTextLinkProps) {
   if (!picker.isOpen) return null
   if (picker.kind === 'image') return <PickRichTextImage picker={picker} />
   return (
@@ -141,7 +143,7 @@ export function PickTextLink({picker}: PickTextLinkProps) {
         if (!isOpen) picker.cancel()
       }}
     >
-      <PickTextLinkForm picker={picker} />
+      <PickTextLinkForm picker={picker} linkOptions={linkOptions} />
     </DashboardModal>
   )
 }
@@ -241,12 +243,12 @@ function imageReferenceEntryId(reference: Reference | undefined) {
   return typeof reference._entry === 'string' ? reference._entry : undefined
 }
 
-function PickTextLinkForm({picker}: PickTextLinkProps) {
+function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
   const modal = useDashboardModal()
   const options = picker.options
   const linkEditor = useMemo(
-    () => createLinkEditor(referenceToLinkRow(options.link)),
-    [options.link]
+    () => createLinkEditor(referenceToLinkRow(options.link), linkOptions),
+    [options.link, linkOptions]
   )
   const link = useAtomValueRaw(linkEditor.value)
   const [title, setTitle] = useState(options.title ?? '')
@@ -295,8 +297,12 @@ function PickTextLinkForm({picker}: PickTextLinkProps) {
   )
 }
 
-function createLinkEditor(initialValue?: LinkRow | null): TextLinkEditor {
+function createLinkEditor(
+  initialValue?: LinkRow | null,
+  linkOptions?: EntryPickerConditions
+): TextLinkEditor {
   const field = createLink('Link', {
+    ...linkOptions,
     initialValue: initialValue ?? null!
   }) as LinkField<LinkRow, unknown>
   const formType = createType('Text link', {

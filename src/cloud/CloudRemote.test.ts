@@ -2,7 +2,7 @@ import {createHandler} from '#/backend/Handler.js'
 import {createCMS} from '#/core.js'
 import {createConfig} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {suite} from '@alinea/suite'
 import {CloudRemote} from './CloudRemote.js'
 
@@ -72,6 +72,33 @@ test('returns handshake signing key failures as unavailable', async () => {
       success: false,
       error: 'Could not load handshake signing keys: 503'
     })
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+})
+
+test('serves bundled content without asking the cloud when no api key is set', async () => {
+  const context: RequestContext = {
+    apiKey: 'generated-release-id',
+    handlerUrl: new URL('https://cms.example.com/api'),
+    isDev: false
+  }
+  const config = createConfig({schema: {}, workspaces: {}})
+  const remote = new CloudRemote(context, config)
+  const originalFetch = globalThis.fetch
+  let requests = 0
+  globalThis.fetch = (async () => {
+    requests++
+    return new Response(null, {status: 500})
+  }) as unknown as typeof fetch
+  try {
+    test.is(
+      await remote.getTreeIfDifferent(
+        '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+      ),
+      undefined
+    )
+    test.is(requests, 0)
   } finally {
     globalThis.fetch = originalFetch
   }

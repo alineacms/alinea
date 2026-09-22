@@ -166,6 +166,13 @@ class EntryEditorField implements EditorField {
   error = atom((get): string | undefined => {
     const options = get(this.options)
     const value = get(this.value)
+    const {min, max} = options as {min?: unknown; max?: unknown}
+    if (Array.isArray(value)) {
+      if (typeof min === 'number' && value.length < min)
+        return `Add at least ${min} ${min === 1 ? 'item' : 'items'}`
+      if (typeof max === 'number' && value.length > max)
+        return `Add at most ${max} ${max === 1 ? 'item' : 'items'}`
+    }
     if (options.validate) {
       const result = options.validate(value)
       if (typeof result === 'boolean')

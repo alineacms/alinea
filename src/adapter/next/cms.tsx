@@ -8,11 +8,12 @@ import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import type {LocalStore, SyncOptions} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
+import {ReadonlyTree} from '#/core/source/Tree.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
@@ -28,33 +29,71 @@ export interface PreviewProps {
   root?: string
 }
 
+export type OpenBundledDatabase = (config: Config) => Promise<LocalStore>
+
+export interface SyncStatus {
+  /** Whether queries are answered from the bundled database or the handler. */
+  source: 'database' | 'handler'
+  /** The content revision the answering side is at. */
+  sha: string | undefined
+  /** When this isolate last synced its bundled database with the handler. */
+  syncedAt: Date | undefined
+}
+
+// The handler answers from a database that validated this content already.
+const preValidatedRemote: SyncOptions = {validate: false}
+
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  constructor(config: Definition) {
+  bundledDb: PLazy<LocalStore>
+  #syncedAt: number | undefined
+
+  constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
+    this.bundledDb = PLazy.from(async () => {
+      if (process.env.NEXT_RUNTIME === 'edge')
+        throw new Error(
+          'Local DB is not supported in Edge runtime environments.'
+        )
+      if (!openBundledDatabase)
+        throw new Error(
+          "A bundled database loader is required. Import createCMS from 'alinea/next'."
+        )
+      const span = trace(this.config, 'alinea.next.cms.db')
+      return span(() => openBundledDatabase(this.config))
+    })
   }
 
   throttle = createThrottledSync()
-  bundledDb = PLazy.from(async () => {
-    if (process.env.NEXT_RUNTIME === 'edge')
-      throw new Error('Local DB is not supported in Edge runtime environments.')
-    const span = trace(this.config, 'alinea.next.cms.db')
-    return span(async () => {
-      const {generatedSource} =
-        await import('#/backend/store/GeneratedSource.js')
-      const source = await generatedSource
-      const db = new LocalDB(this.config, source)
-      await db.sync()
-      return db
-    })
-  })
-  #applyPreview = cache(async () => {
-    const context = await requestContext(this.config)
+
+  /** The bundled database answers outside Edge, except during development. */
+  async #environment(context: RequestContext) {
     const isEdge = process.env.NEXT_RUNTIME === 'edge'
     const {PHASE_PRODUCTION_BUILD} = await import('next/constants.js')
     const isBuild = process.env.NEXT_PHASE === PHASE_PRODUCTION_BUILD
-    const useLocalDb = !isEdge && (!context.isDev || isBuild)
+    return {isBuild, useLocalDb: !isEdge && (!context.isDev || isBuild)}
+  }
+
+  /** Renders keep serving the current content when the handler is unreachable. */
+  async #syncDb(db: LocalStore, client: Client): Promise<string> {
+    try {
+      const sha = await db.syncWith(client, preValidatedRemote)
+      this.#syncedAt = Date.now()
+      return sha
+    } catch (error) {
+      console.warn(
+        `Alinea could not sync with the handler, serving current content: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      )
+      return db.sha
+    }
+  }
+
+  #applyPreview = cache(async () => {
+    const context = await requestContext(this.config)
+    const {isBuild, useLocalDb} = await this.#environment(context)
     const {cookies, draftMode} = await import('next/headers.js')
     const [isDraft] = await outcome(async () => (await draftMode()).isEnabled)
     if (!isDraft)
@@ -81,29 +120,42 @@ export class NextCMS<
     return {context, hasPreview: true, isDraft, isBuild, preview, useLocalDb}
   })
 
+  /**
+   * The preview cookie carries the content hash the dashboard rendered
+   * against, which is the freshness signal in draft mode: Next bypasses the
+   * `unstable_cache` that `syncIfStale` shares between renders there, so the
+   * cookie hash replaces the uncached lookup of the latest sha. A mismatch
+   * means this isolate is behind (or ahead of) the previewed content, and one
+   * sync brings it to the handler revision before the patch is applied.
+   */
   async #prepareLocalPreview(
-    db: LocalDB,
+    db: LocalStore,
     decoded: DecodedPreviewRequest,
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {
     if ('entry' in decoded) return decoded
-    if (db.sha === decoded.contentHash) return applyPreviewUpdate(db, decoded)
-
-    const source = await db.source.getTree()
-    if (source.sha === decoded.contentHash) {
-      await db.sync()
-      return applyPreviewUpdate(db, decoded)
-    }
-
-    // File patches carry and verify their own base hash. A patch can therefore
-    // be applied safely when only unrelated files changed in the content tree.
-    const applied = await applyPreviewUpdate(db, decoded)
-    if (applied) return applied
-
-    // The target entry is missing or has a different base. Only this case
-    // needs the current remote tree before applying the preview again.
-    await db.syncWith(createClient(this.config, context))
+    if ((await db.sha) !== decoded.contentHash)
+      await this.#syncDb(db, createClient(this.config, context))
     return applyPreviewUpdate(db, decoded)
+  }
+
+  /** Where queries are answered from and how fresh that side is. */
+  async status(): Promise<SyncStatus> {
+    const context = await requestContext(this.config)
+    const {useLocalDb} = await this.#environment(context)
+    if (useLocalDb) {
+      const db = await this.bundledDb
+      return {
+        source: 'database',
+        sha: await db.sha,
+        syncedAt: this.#syncedAt ? new Date(this.#syncedAt) : undefined
+      }
+    }
+    const client = createClient(this.config, context)
+    const tree = await client
+      .getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
+      .catch(() => undefined)
+    return {source: 'handler', sha: tree?.sha, syncedAt: undefined}
   }
 
   async resolve<Query extends GraphQuery>(query: Query): Promise<any> {
@@ -121,10 +173,20 @@ export class NextCMS<
     const syncInterval = request.disableSync
       ? Number.POSITIVE_INFINITY
       : (request.syncInterval ?? this.config.syncInterval)
+    // A preview cookie already settled freshness through its content hash.
     if (hasPreview) return db.resolve(request)
     if (!isBuild) {
-      const settled = await syncIfStale(db, client, syncInterval)
-      if (!settled) await this.throttle(() => db.syncWith(client), syncInterval)
+      // In draft mode Next bypasses the `unstable_cache` behind `syncIfStale`,
+      // so asking for the shared sha would cost an uncached request on every
+      // render. Without a preview cookie there is no hash to compare against,
+      // and the throttled sync keeps drafts fresh instead.
+      // Route the sync syncIfStale may trigger through #syncDb so it counts
+      // as this isolate's last sync.
+      const tracked = {sha: db.sha, syncWith: () => this.#syncDb(db, client)}
+      const settled =
+        !isDraft && (await syncIfStale(tracked, client, syncInterval))
+      if (!settled)
+        await this.throttle(() => this.#syncDb(db, client), syncInterval)
     }
     return db.resolve(request)
   }

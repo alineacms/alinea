@@ -1,5 +1,5 @@
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {Config, Field} from '#/index.js'
@@ -117,5 +117,7 @@ test('serializes concurrent seeding on the same index', async () => {
   const results = await Promise.allSettled([db.sync(), db.sync()])
 
   test.is(results.filter(result => result.status === 'rejected').length, 0)
-  test.is(db.sha, (await source.getTree()).sha)
+  const sourceTree = await source.getTreeIfDifferent(ReadonlyTree.EMPTY.sha)
+  if (!sourceTree) throw new Error('Expected the seeded source tree')
+  test.is(await db.sha, sourceTree.sha)
 })

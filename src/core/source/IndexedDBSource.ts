@@ -1,7 +1,9 @@
 import type {ChangesBatch} from './Change.js'
+import {assert} from '../util/Assert.js'
+import {requestResult, transactionComplete} from '../util/IndexedDB.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
-import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree} from './Tree.js'
+import type {GetBlobsOptions, RemoteSource, Source} from './Source.js'
+import {ReadonlyTree, type Tree} from './Tree.js'
 
 export class IndexedDBSource implements Source {
   #factory: IDBFactory
@@ -13,24 +15,19 @@ export class IndexedDBSource implements Source {
     this.#name = name
   }
 
-  #createConnection(): Promise<IDBDatabase> {
-    return new Promise<IDBDatabase>((resolve, reject) => {
-      const request = this.#factory.open(this.#name)
-      request.onsuccess = () => {
-        const db = request.result
-        db.onclose = () => {
-          console.info('IndexedDB connection closed')
-          this.#connection = undefined
-        }
-        resolve(db)
-      }
-      request.onerror = () => reject(request.error)
-      request.onupgradeneeded = () => {
-        const db = request.result
-        db.createObjectStore('blobs')
-        db.createObjectStore('tree')
-      }
-    })
+  async #createConnection(): Promise<IDBDatabase> {
+    const request = this.#factory.open(this.#name)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      db.createObjectStore('blobs')
+      db.createObjectStore('tree')
+    }
+    const db = await requestResult(request)
+    db.onclose = () => {
+      console.info('IndexedDB connection closed')
+      this.#connection = undefined
+    }
+    return db
   }
 
   #connect(): Promise<IDBDatabase> {
@@ -55,21 +52,11 @@ export class IndexedDBSource implements Source {
       const transaction = db.transaction(['tree', 'blobs'], 'readonly')
       const treeStore = transaction.objectStore('tree')
       const blobsStore = transaction.objectStore('blobs')
-      const [tree, blobKeys] = await Promise.all([
-        new Promise<ReadonlyTree>((resolve, reject) => {
-          const request = treeStore.get('tree')
-          request.onsuccess = event => {
-            const entry = (event.target as IDBRequest).result
-            resolve(entry ? new ReadonlyTree(entry) : ReadonlyTree.EMPTY)
-          }
-          request.onerror = event => reject((event.target as IDBRequest).error)
-        }),
-        new Promise<Array<string>>((resolve, reject) => {
-          const request = blobsStore.getAllKeys()
-          request.onsuccess = () => resolve(request.result as Array<string>)
-          request.onerror = event => reject((event.target as IDBRequest).error)
-        })
+      const [stored, blobKeys] = await Promise.all([
+        requestResult<Tree | undefined>(treeStore.get('tree')),
+        requestResult(blobsStore.getAllKeys())
       ])
+      const tree = stored ? new ReadonlyTree(stored) : ReadonlyTree.EMPTY
       const availableBlobs = new Set(blobKeys)
       for (const sha of tree.shas) {
         if (!availableBlobs.has(sha)) {
@@ -96,16 +83,8 @@ export class IndexedDBSource implements Source {
     const transaction = db.transaction(['blobs'], 'readonly')
     const store = transaction.objectStore('blobs')
     const [keys, values] = await Promise.all([
-      new Promise<Array<IDBValidKey>>((resolve, reject) => {
-        const request = store.getAllKeys()
-        request.onsuccess = () => resolve(request.result)
-        request.onerror = event => reject((event.target as IDBRequest).error)
-      }),
-      new Promise<Array<Uint8Array>>((resolve, reject) => {
-        const request = store.getAll()
-        request.onsuccess = () => resolve(request.result as Array<Uint8Array>)
-        request.onerror = event => reject((event.target as IDBRequest).error)
-      })
+      requestResult(store.getAllKeys()),
+      requestResult<Array<Uint8Array>>(store.getAll())
     ])
     const missing = new Set(shas)
     for (let index = 0; index < keys.length; index++) {
@@ -142,17 +121,60 @@ export class IndexedDBSource implements Source {
           blobs.put(change.contents, change.sha)
           break
       }
-    const blobKeys = await new Promise<Array<string>>((resolve, reject) => {
-      const request = blobs.getAllKeys()
-      request.onsuccess = () => resolve(request.result as Array<string>)
-      request.onerror = event => reject((event.target as IDBRequest).error)
-    })
+    const blobKeys = await requestResult(blobs.getAllKeys())
     for (const sha of blobKeys) {
-      if (!compiled.hasSha(sha)) blobs.delete(sha)
+      if (typeof sha === 'string' && !compiled.hasSha(sha)) blobs.delete(sha)
     }
-    return new Promise<void>((resolve, reject) => {
-      transaction.oncomplete = () => resolve()
-      transaction.onerror = event => reject((event.target as IDBRequest).error)
-    })
+    return transactionComplete(transaction)
+  }
+
+  async applyChangesFrom(
+    remote: RemoteSource,
+    batch: ChangesBatch,
+    tree: ReadonlyTree
+  ): Promise<void> {
+    const db = await this.#connect()
+    const current = await this.getTree()
+    if (batch.fromSha !== current.sha)
+      throw new ShaMismatchError(
+        current.sha,
+        batch.fromSha,
+        'Cannot apply changes locally due to SHA mismatch'
+      )
+    const needed = new Set(
+      batch.changes
+        .filter(change => change.op === 'add')
+        .map(change => change.sha)
+    )
+    let pending = Array<[string, Uint8Array]>()
+    const flush = async () => {
+      if (!pending.length) return
+      const transaction = db.transaction('blobs', 'readwrite')
+      const blobs = transaction.objectStore('blobs')
+      for (const [sha, blob] of pending) blobs.put(blob, sha)
+      pending = []
+      await transactionComplete(transaction)
+    }
+    for await (const [sha, blob] of remote.getBlobs([...needed])) {
+      if (!needed.delete(sha)) continue
+      pending.push([sha, blob])
+      if (pending.length >= 64) await flush()
+    }
+    await flush()
+    const missing = needed.values().next().value
+    assert(missing === undefined, `Source did not return blob ${missing}`)
+
+    const transaction = db.transaction(['blobs', 'tree'], 'readwrite')
+    const blobs = transaction.objectStore('blobs')
+    transaction.objectStore('tree').put(tree.toJSON(), 'tree')
+    const cursor = blobs.openKeyCursor()
+    cursor.onsuccess = () => {
+      const current = cursor.result
+      if (!current) return
+      const sha = current.key
+      if (typeof sha === 'string' && !tree.hasSha(sha)) blobs.delete(sha)
+      current.continue()
+    }
+    await transactionComplete(transaction)
   }
 }

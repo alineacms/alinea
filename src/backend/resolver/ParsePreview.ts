@@ -1,5 +1,4 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
 import type {PreviewRequest, PreviewUpdate} from '#/core/Preview.js'
@@ -7,6 +6,7 @@ import {applyFilePatch} from '#/core/source/FilePatch.js'
 import {trace} from '#/core/Trace.js'
 import {createEntryRow} from '#/core/util/EntryRows.js'
 import {decodePreviewPayload} from '#/preview/PreviewPayload.js'
+import type {Graph} from '#/core/Graph.js'
 
 const decoder = new TextDecoder()
 
@@ -24,7 +24,7 @@ export async function decodePreviewRequest(
 }
 
 export async function applyPreview(
-  local: LocalDB,
+  local: Graph,
   preview: DecodedPreviewRequest
 ): Promise<PreviewRequest | undefined> {
   if ('entry' in preview) return preview

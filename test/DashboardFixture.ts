@@ -1,6 +1,6 @@
 import {Config, Field} from '#/index.js'
 import type {Config as ConfigDefinition} from '#/core/Config.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {
   alineaDevAtom,
   clientAtom,

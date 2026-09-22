@@ -84,7 +84,12 @@ function nodeToContent(
     }
   }
   if (isElement(node)) {
-    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+    const {
+      [Node.type]: type,
+      [ElementNode.content]: content,
+      marks,
+      ...attrs
+    } = node
     const resolvedImage =
       type === 'image' && typeof attrs._entry === 'string'
         ? images?.get(attrs._entry)
@@ -117,6 +122,7 @@ function nodeToContent(
     return {
       type,
       attrs: withoutNullish({...attrs, ...resolvedImage}),
+      marks: marks?.map(markToContent),
       content: editorContent?.map(child => nodeToContent(child, images))
     }
   }
@@ -176,6 +182,7 @@ function contentToNodes(
     {
       [Node.type]: type,
       ...withoutNullish(elementAttributes),
+      ...(marks?.length ? {marks: marks.map(contentToMark)} : {}),
       ...(children === undefined ? {} : {[ElementNode.content]: children})
     }
   ]

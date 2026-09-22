@@ -1,8 +1,9 @@
 import {cleanup, fireEvent, render, screen, waitFor} from '#test/react.js'
 import {afterEach, expect, test} from 'bun:test'
 import type {Entry} from '#/core/Entry.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
+import {configAtom, localAtom} from '#/dashboard/atoms/core.js'
 import {EntryAtoms} from '#/dashboard/atoms/entry.js'
+import {atomWithPending} from '#/dashboard/atoms/utils.js'
 import {atom, createStore, Provider} from 'jotai'
 import {cms} from '../fixture/cms.js'
 import {EntrySidebar, entrySidebar} from './EntrySidebar.js'
@@ -75,9 +76,10 @@ test('loads sidebar data only when its tab is selected', async () => {
     await historyPending
     return []
   })
-  localeData.history = atom([])
+  localeData.historyState = atomWithPending(localeData.historyReady)
   const store = createStore()
   store.set(configAtom, cms.config)
+  store.set(localAtom, false)
   let sidebar = await entrySidebar(store.get, entry, localeData)
   expect(sidebar).toBeDefined()
 
@@ -237,6 +239,7 @@ test('starts loading a browser preview without blocking the sidebar', async () =
   })
   const store = createStore()
   store.set(configAtom, cms.config)
+  store.set(localAtom, false)
   let sidebar: Awaited<ReturnType<typeof entrySidebar>>
 
   const loading = entrySidebar(store.get, entry, localeData).then(result => {
@@ -248,4 +251,74 @@ test('starts loading a browser preview without blocking the sidebar', async () =
   expect(sidebar!).toBeDefined()
   resolvePreview()
   await loading
+})
+
+test('loads previous versions in place when running locally', async () => {
+  const selectedEntry = {
+    active: true,
+    data: {title: 'Entry'},
+    filePath: 'pages/entry.json',
+    id: 'entry-id',
+    locale: null,
+    main: true,
+    parentId: null,
+    root: 'pages',
+    status: 'published',
+    title: 'Entry',
+    type: 'Page',
+    workspace: 'simple'
+  } as unknown as Entry
+  const entry = new EntryAtoms(
+    selectedEntry.id,
+    atom({
+      id: selectedEntry.id,
+      type: selectedEntry.type,
+      parentId: selectedEntry.parentId,
+      workspace: selectedEntry.workspace,
+      root: selectedEntry.root,
+      hasChildren: false,
+      parents: [],
+      entries: [selectedEntry]
+    } as never)
+  )
+  const localeData = entry.locales(null)
+  let resolveHistory = () => {}
+  const historyPending = new Promise<void>(resolve => {
+    resolveHistory = resolve
+  })
+  let historyLoads = 0
+  localeData.historyReady = atom(async () => {
+    historyLoads++
+    await historyPending
+    return []
+  })
+  localeData.historyState = atomWithPending(localeData.historyReady)
+  const store = createStore()
+  store.set(configAtom, cms.config)
+  store.set(localAtom, true)
+  expect(store.get(entry.previousVersionsOpen)).toBe(true)
+  const sidebar = await entrySidebar(store.get, entry, localeData, false)
+  render(
+    <Provider store={store}>
+      <EntrySidebar {...sidebar!} />
+    </Provider>
+  )
+  fireEvent.click(screen.getByRole('tab', {name: 'History'}))
+  const historyPage = await entrySidebar(store.get, entry, localeData)
+  expect(historyLoads).toBe(1)
+  expect(historyPage?.previousVersionsOpen).toBe(true)
+  cleanup()
+  render(
+    <Provider store={store}>
+      <EntrySidebar {...historyPage!} />
+    </Provider>
+  )
+  expect(
+    screen.getByRole('progressbar', {name: 'Loading previous versions'})
+  ).toBeDefined()
+  resolveHistory()
+  await waitFor(() => expect(screen.getByText('No history')).toBeDefined())
+
+  store.set(entry.previousVersionsOpen, false)
+  expect(store.get(entry.previousVersionsOpen)).toBe(false)
 })

@@ -217,7 +217,10 @@ function EntryRow({
 }
 
 function useLinkEntryState(entryId: string, locale?: string) {
-  return useAtomValueRaw(linkEntryAtoms(entryId, locale))
+  const scope = useOptionalEntryAtoms()
+  // Links stored without a locale follow the locale of the edited entry
+  const linkLocale = locale ?? scope?.localeData.requestedLocale ?? undefined
+  return useAtomValueRaw(linkEntryAtoms(entryId, linkLocale))
 }
 
 interface EntryLoadingRowProps {

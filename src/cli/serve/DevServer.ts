@@ -167,6 +167,8 @@ export async function createDevServer(
 
   void reloadServer()
 
+  if (cmd === 'build') await initialServer
+
   return {
     close() {
       currentServer?.close()

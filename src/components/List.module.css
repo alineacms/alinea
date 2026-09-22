@@ -181,18 +181,25 @@
 
 .ListLabel {
   color: var(--alinea-fg-muted);
+  display: flex;
   flex-wrap: wrap;
-  min-height: auto;
-  padding-block: 0;
-  margin-left: -8px;
-  margin-bottom: 8px;
-  border: none;
   align-items: flex-start;
+  gap: 6px;
+  padding-block: 4px;
+  margin-bottom: 8px;
 }
 
-.ListLabel[data-hovered],
-.ListLabel[data-pressed],
-.ListLabel[data-active] {
+.ListLabel .ListLabel-toggle {
+  color: inherit;
+  min-height: auto;
+  padding-block: 0;
+  margin-inline: -8px;
+  border: none;
+}
+
+.ListLabel .ListLabel-toggle[data-hovered],
+.ListLabel .ListLabel-toggle[data-pressed],
+.ListLabel .ListLabel-toggle[data-active] {
   background: transparent;
 }
 

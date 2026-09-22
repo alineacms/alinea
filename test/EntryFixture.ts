@@ -1,11 +1,10 @@
 import type {Config} from '#/core/Config.js'
 import {Config as ConfigUtils} from '#/core/Config.js'
-import {EntryIndex} from '#/core/db/EntryIndex.js'
-import {EntryResolver} from '#/core/db/EntryResolver.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import {hashBlob} from '#/core/source/GitUtils.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
+import {EntryStore} from '#/database/EntryStore.js'
 
 export interface EntryFixtureEntry {
   id: string
@@ -22,15 +21,9 @@ export interface EntryFixtureEntry {
   seeded?: string | null
 }
 
-export interface EntryResolverFixture {
+export interface EntryStoreFixture {
   source: MemorySource
-  index: EntryIndex
-  resolver: EntryResolver
-}
-
-export interface EntryIndexFixture {
-  source: MemorySource
-  index: EntryIndex
+  store: EntryStore
 }
 
 function defaultWorkspace(config: Config) {
@@ -67,10 +60,10 @@ function filePathFor(
   )
 }
 
-export async function createEntryIndex(
+export async function createEntrySource(
   config: Config,
   entries: Array<EntryFixtureEntry>
-): Promise<EntryIndexFixture> {
+): Promise<MemorySource> {
   const source = new MemorySource()
   const changes = await Promise.all(
     entries.map(async input => {
@@ -122,16 +115,15 @@ export async function createEntryIndex(
     fromSha: tree.sha,
     changes
   })
-  const index = new EntryIndex(config)
-  await index.syncWith(source)
-  return {source, index}
+  return source
 }
 
-export async function createEntryResolver(
+export async function createEntryStore(
   config: Config,
   entries: Array<EntryFixtureEntry>
-): Promise<EntryResolverFixture> {
-  const {source, index} = await createEntryIndex(config, entries)
-  const resolver = new EntryResolver(config, index)
-  return {source, index, resolver}
+): Promise<EntryStoreFixture> {
+  const source = await createEntrySource(config, entries)
+  const store = await EntryStore.memory(config, source)
+  await store.sync()
+  return {source, store}
 }

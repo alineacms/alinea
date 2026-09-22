@@ -1,4 +1,6 @@
 import { Config, Field } from 'alinea'
+// Loads the table commands' type augmentation used by the toolbar below.
+import type {} from '@tiptap/extension-table'
 import {
   alignment,
   formatting,
@@ -71,6 +73,12 @@ export const RichTextFields = Config.document('Rich text fields', {
             )
           }
         })
+      }
+    }),
+    linkCondition: Field.richText('With link condition', {
+      link: {
+        condition: {_type: 'BasicFields'},
+        enableNavigation: true
       }
     }),
     table: Field.richText('With table support', {

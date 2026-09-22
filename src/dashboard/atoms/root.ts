@@ -1,6 +1,6 @@
 import type {EntryStatus} from '#/core/Entry.js'
 import type {Config} from '#/core/Config.js'
-import {Permission} from '#/core/Role.js'
+import {Permission, type Resource} from '#/core/Role.js'
 import type {RootData, RootI18n} from '#/core/Root.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
@@ -15,7 +15,7 @@ import {
   createExplorerAtoms,
   type ExplorerAtoms
 } from '#/dashboard/atoms/explorer.js'
-import {type Atom, atom, type PrimitiveAtom} from 'jotai'
+import {type Atom, atom, type Getter, type PrimitiveAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
 import type {ComponentType, SetStateAction} from 'react'
 import type {
@@ -96,27 +96,6 @@ const emptyTreeSnapshot: TreeSnapshot = {
 const emptyTreeView: TreeView = {
   entries: new Map(),
   snapshot: emptyTreeSnapshot
-}
-
-function rootTreeItem(
-  config: Config,
-  entry: TreeEntrySummary,
-  parentType: string | null
-): RootTreeItem {
-  return {
-    id: entry.id,
-    title: entry.title,
-    type: entry.type,
-    status: entry.status,
-    main: entry.main,
-    locale: entry.locale,
-    parentId: entry.parentId,
-    parents: entry.parents,
-    hasChildren: entry.hasChildren,
-    dragDisabled: Boolean(
-      parentType && getType(config.schema[parentType]).orderChildrenBy
-    )
-  }
 }
 
 export class TreeAtoms {
@@ -280,6 +259,34 @@ export class TreeAtoms {
     const selectedId = state && [...state.snapshot.selectedKeys][0]
     return selectedId ? state.entries.get(selectedId) : undefined
   })
+  canCreate = atom(get => {
+    if (get(this.#root.canCreate)) return true
+    const state = get(this.#state)
+    const selected = get(this.selectedItem)
+    if (!state || !selected) return false
+    const config = get(configAtom)
+    const selectedType = config.schema[selected.type]
+    // New entries are created inside the selected container, or next to the
+    // selected entry
+    const parent =
+      selectedType && Type.isContainer(selectedType)
+        ? selected
+        : selected.parentId
+          ? state.entries.get(selected.parentId)
+          : undefined
+    const parentType = parent && config.schema[parent.type]
+    if (!parent || !parentType) return false
+    return containsCreatableType(
+      get,
+      {
+        workspace: this.#root.workspace,
+        root: this.#root.key,
+        locale: this.#locale,
+        parents: [parent.id, ...parent.parents]
+      },
+      Type.contains(parentType)
+    )
+  })
   ready = atom(async get => {
     get(this.snapshot)
     const source = await get(this.#source)
@@ -419,25 +426,13 @@ export class RootAtoms {
     return data.isMediaRoot ? undefined : data.i18n
   })
   isMedia = atom(get => Boolean(get(this.data).isMediaRoot))
-  canCreate = atom(get => {
-    const policy = get(policyAtom)
-    const resource = {workspace: this.workspace, root: this.key}
-    const config = get(configAtom)
-    const rootData = get(this.data)
-    const seen = new Set<string>()
-    const queue = Schema.contained(config.schema, rootData.contains ?? [])
-    while (queue.length > 0) {
-      const typeName = queue.shift()!
-      if (seen.has(typeName)) continue
-      seen.add(typeName)
-      const type = config.schema[typeName]
-      if (!type || Type.isHidden(type)) continue
-      if (policy.canCreate({...resource, type: typeName})) return true
-      if (Type.isContainer(type))
-        queue.push(...Schema.contained(config.schema, Type.contains(type)))
-    }
-    return false
-  })
+  canCreate = atom(get =>
+    containsCreatableType(
+      get,
+      {workspace: this.workspace, root: this.key},
+      get(this.data).contains ?? []
+    )
+  )
   view = atom((get): ComponentType<RootViewProps> | undefined => {
     const view = get(this.data).view
     if (!view) return undefined
@@ -544,3 +539,50 @@ export class RootAtoms {
 export const rootAtoms = dispense(
   (workspace: string, root: string) => new RootAtoms(workspace, root)
 )
+
+function rootTreeItem(
+  config: Config,
+  entry: TreeEntrySummary,
+  parentType: string | null
+): RootTreeItem {
+  return {
+    id: entry.id,
+    title: entry.title,
+    type: entry.type,
+    status: entry.status,
+    main: entry.main,
+    locale: entry.locale,
+    parentId: entry.parentId,
+    parents: entry.parents,
+    hasChildren: entry.hasChildren,
+    dragDisabled: Boolean(
+      parentType && getType(config.schema[parentType]).orderChildrenBy
+    )
+  }
+}
+
+/**
+ * Whether any type accepted by `contains`, or nested in one of its containers,
+ * can be created at the given resource
+ */
+function containsCreatableType(
+  get: Getter,
+  resource: Resource,
+  contains: Array<string | Type>
+): boolean {
+  const policy = get(policyAtom)
+  const config = get(configAtom)
+  const seen = new Set<string>()
+  const queue = Schema.contained(config.schema, contains)
+  while (queue.length > 0) {
+    const typeName = queue.shift()!
+    if (seen.has(typeName)) continue
+    seen.add(typeName)
+    const type = config.schema[typeName]
+    if (!type || Type.isHidden(type)) continue
+    if (policy.canCreate({...resource, type: typeName})) return true
+    if (Type.isContainer(type))
+      queue.push(...Schema.contained(config.schema, Type.contains(type)))
+  }
+  return false
+}

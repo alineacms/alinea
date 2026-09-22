@@ -11,7 +11,6 @@ import {pendingTimerAtom} from './utils.js'
 
 export interface DashboardActivity {
   items: Array<Activity>
-  isFetchingUpdates: boolean
   isMutating: boolean
   hasFailed: boolean
   hasBlocked: boolean
@@ -201,8 +200,6 @@ export const uploadProgressAtom = atom(
 )
 
 export function activityState(items: Array<Activity>): DashboardActivity {
-  const latestFetch = items.find(activity => activity.type === 'fetch')
-  const hasFailedFetch = latestFetch?.status === 'failed'
   const hasFailedMutations = items.some(
     activity => activity.type === 'mutation' && activity.status === 'failed'
   )
@@ -211,17 +208,12 @@ export function activityState(items: Array<Activity>): DashboardActivity {
   )
   return {
     items,
-    isFetchingUpdates: items.some(
-      activity => activity.type === 'fetch' && activity.status === 'running'
-    ),
     isMutating: items.some(
-      activity =>
-        activity.type !== 'fetch' &&
-        (activity.status === 'pending' || activity.status === 'running')
+      activity => activity.status === 'pending' || activity.status === 'running'
     ),
-    hasFailed: hasFailedMutations || hasFailedUploads || hasFailedFetch,
+    hasFailed: hasFailedMutations || hasFailedUploads,
     hasBlocked: items.some(activity => activity.status === 'blocked'),
-    canRetry: hasFailedMutations || hasFailedFetch,
+    canRetry: hasFailedMutations,
     canDiscard: hasFailedUploads
   }
 }
