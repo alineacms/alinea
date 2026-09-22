@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import {type ReactNode, memo} from 'react'
+import {type ReactNode, type Ref, memo} from 'react'
 import {
   Tree as AriaTree,
   TreeItem as AriaTreeItem,
@@ -22,6 +22,7 @@ export interface TreeProps<T extends object> extends Omit<
   'className'
 > {
   className?: string
+  ref?: Ref<HTMLDivElement>
 }
 
 export function Tree<T extends object>(props: TreeProps<T>) {

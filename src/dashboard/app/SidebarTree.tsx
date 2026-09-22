@@ -5,11 +5,19 @@ import type {
   RootAtoms,
   RootTreeItem,
   RootTreeNode,
-  TreeAtoms
+  TreeAtoms,
+  TreeSnapshot
 } from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtom, useAtomValueRaw, useSetAtom, type WritableAtom} from 'jotai'
-import {memo, type ComponentType, type ReactNode} from 'react'
+import {
+  memo,
+  type ComponentType,
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useRef
+} from 'react'
 import {
   Collection,
   ListLayout,
@@ -183,6 +191,50 @@ function equalStringSets(left: Set<string>, right: Set<string>): boolean {
 
 const treeLayoutOptions = {rowHeight: 32, padding: 0, gap: 0}
 
+function visibleRowIds(items: Array<RootTreeNode>): Array<string> {
+  return items.flatMap(item => [item.id, ...visibleRowIds(item.children)])
+}
+
+/**
+ * Scroll a newly selected entry into view. Rows are virtualized so the
+ * selected row might not be rendered, its offset follows from the fixed row
+ * height instead.
+ */
+function useScrollSelectedIntoView(
+  treeRef: RefObject<HTMLDivElement | null>,
+  snapshot: TreeSnapshot
+) {
+  const [selectedId] = snapshot.selectedKeys
+  const rowIndex = selectedId
+    ? visibleRowIds(snapshot.items).indexOf(selectedId)
+    : -1
+  const scrolledId = useRef<string | undefined>(undefined)
+  // oxlint-disable react-you-might-not-need-an-effect/no-event-handler -- Sync the DOM scroll position with the selected entry.
+  useEffect(() => {
+    if (!selectedId) {
+      scrolledId.current = undefined
+      return
+    }
+    if (rowIndex === -1 || scrolledId.current === selectedId) return
+    // Wait for the virtualizer to size its content before scrolling
+    const frame = requestAnimationFrame(() => {
+      const element = treeRef.current
+      if (!element) return
+      scrolledId.current = selectedId
+      const {rowHeight} = treeLayoutOptions
+      const top = rowIndex * rowHeight
+      // Leave partially visible rows alone so a click does not move the tree
+      const isVisible =
+        top + rowHeight > element.scrollTop &&
+        top < element.scrollTop + element.clientHeight
+      if (isVisible) return
+      element.scrollTop = top - (element.clientHeight - rowHeight) / 2
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [rowIndex, selectedId, treeRef])
+  /* oxlint-enable react-you-might-not-need-an-effect/no-event-handler */
+}
+
 export const SidebarTree = memo(function SidebarTree({
   page,
   root
@@ -191,6 +243,8 @@ export const SidebarTree = memo(function SidebarTree({
   const tree = root.tree(locale)
   const view = useAtomValueRaw(tree.view)
   const {snapshot} = view
+  const treeRef = useRef<HTMLDivElement>(null)
+  useScrollSelectedIntoView(treeRef, snapshot)
   const selectedItem = useAtomValueRaw(tree.selectedItem)
   const label = useAtomValueRaw(root.label)
   const icon = useAtomValueRaw(root.icon)
@@ -284,6 +338,7 @@ export const SidebarTree = memo(function SidebarTree({
         <div className={styles.SidebarTree.tree.viewport()}>
           <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
             <Tree
+              ref={treeRef}
               aria-label="Content tree"
               items={snapshot.items}
               dragAndDropHooks={dragAndDropHooks}
@@ -352,6 +407,8 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
   const setExpandedKeys = useSetAtom(tree.expandedKeys)
   const view = useAtomValueRaw(tree.view)
   const {snapshot} = view
+  const treeRef = useRef<HTMLDivElement>(null)
+  useScrollSelectedIntoView(treeRef, snapshot)
   const selectedItem = useAtomValueRaw(tree.selectedItem)
   const dragDisabled = useAtomValueRaw(root.dragDisabled)
   const getItems = useSetAtom(root.getItems)
@@ -413,6 +470,7 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
         <div className={styles.SidebarTree.tree.viewport()}>
           <Virtualizer layout={ListLayout} layoutOptions={treeLayoutOptions}>
             <Tree
+              ref={treeRef}
               aria-label={ariaLabel}
               items={snapshot.items}
               dragAndDropHooks={dragAndDropHooks}
