@@ -34,6 +34,9 @@ const llmsHandbookFile = 'llms-full.txt'
 
 const external = builtinModules
   .concat(builtinModules.map(m => `node:${m}`))
+  // The builtin list depends on the runtime running this build; newer
+  // builtins such as node:sqlite must stay external regardless.
+  .concat(['node:*', 'bun:*'])
   .concat([
     'fs-extra',
     '@alinea/generated',
