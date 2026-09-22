@@ -8,7 +8,11 @@ import {connect} from 'rado/driver/bun-sqlite'
 import {EntryDatabase} from '../EntryDatabase.js'
 import {wasmDatabase} from '../driver/WasmDatabase.js'
 import {EntryView} from './EntryView.js'
-import {EntryIndexTable, entryIndexRow, type IndexedEntry} from './Schema.js'
+import {
+  EntryIndexTable,
+  entryIndexRow,
+  type IndexedEntry
+} from './EntryTable.js'
 
 function row(id: string, title: string) {
   return entryIndexRow({

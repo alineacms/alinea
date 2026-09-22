@@ -1,4 +1,4 @@
-import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
+import type {Tree} from '#/core/source/Tree.js'
 import {
   alias,
   and,
@@ -17,40 +17,18 @@ import {
   temporaryTable,
   when,
   type Database,
-  type Sql,
-  type Table
+  type Sql
 } from 'rado'
 import * as column from 'rado/universal/columns'
 import {
-  DatabaseStateColumns,
-  DatabaseStateTable,
-  EntryIndexTable,
   EntryIndexColumns,
   type entryIndexRow,
-  type EntryIndexTarget,
   type IndexedEntry
-} from '../entry/Schema.js'
+} from '../entry/EntryTable.js'
+import type {EntrySyncTarget} from './EntrySyncer.js'
 
 export const changeBatchSize = 250
 export const sqliteBatchSize = 5000
-
-export interface EntrySyncTarget {
-  name: string
-  entries: EntryIndexTarget
-  changes?: EntryIndexTarget
-  state: Table<typeof DatabaseStateColumns>
-}
-
-export const EntrySyncRoot: EntrySyncTarget = {
-  name: 'root',
-  entries: EntryIndexTable,
-  state: DatabaseStateTable
-}
-
-export interface EntrySyncOptions {
-  previousTree?: ReadonlyTree
-  withinTransaction?: boolean
-}
 
 export const SyncAffected = temporaryTable('alinea_sync_affected', {
   id: column.text().primaryKey()
@@ -134,14 +112,6 @@ export interface StatusRow {
   activeStatus: string
   ownStatus: string | null
   mainStatus: string
-}
-
-export function* chunks<T>(
-  items: ReadonlyArray<T>,
-  size: number
-): Generator<Array<T>> {
-  for (let offset = 0; offset < items.length; offset += size)
-    yield items.slice(offset, offset + size)
 }
 
 const builder = new Builder()

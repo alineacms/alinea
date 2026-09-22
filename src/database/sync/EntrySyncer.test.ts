@@ -10,7 +10,8 @@ import {cms} from '#test/cms.js'
 import {createEntrySource, type EntryFixtureEntry} from '#test/EntryFixture.js'
 import {config as exampleConfig} from '#test/example.js'
 import {eq} from 'rado'
-import {DatabaseStateTable, EntryIndexTable} from '../entry/Schema.js'
+import {DatabaseStateTable} from '../DatabaseTables.js'
+import {EntryIndexTable} from '../entry/EntryTable.js'
 import {EntryDatabase} from '../EntryDatabase.js'
 
 async function expectInvalidEntries(

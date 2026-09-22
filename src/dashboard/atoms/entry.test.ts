@@ -1,6 +1,6 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
 import {Entry} from '#/core/Entry.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'
 import {

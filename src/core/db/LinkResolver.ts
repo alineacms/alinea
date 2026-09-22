@@ -8,7 +8,7 @@ export interface LinkTarget {
 
 /** Field postprocessors depend on query capabilities, not an index backend. */
 export interface LinkResolver {
-  resolver: {config: Config}
+  config: Config
   locale: string | null
   includedAtBuild(filePath: string): boolean | Promise<boolean>
   resolveLinks<P extends Projection>(

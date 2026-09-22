@@ -1,6 +1,4 @@
 import {createId} from '#/core/Id.js'
-import {MemorySource} from '#/core/source/MemorySource.js'
-import {exportSource} from '#/core/source/SourceExport.js'
 import {generatedDatabaseFile} from '#/core/Version.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -18,15 +16,9 @@ const packageJson = {
     './config.js': './config.js',
     './release.js': './release.js',
     [`./${generatedDatabaseFile}`]: `./${generatedDatabaseFile}`,
-    './database.js': './database.js',
-    './source.js': {
-      'edge-light': './empty-source.js',
-      default: './source.js'
-    }
+    './database.js': './database.js'
   }
 }
-
-const emptySource = await exportSource(new MemorySource())
 
 export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.mkdir(outDir, {recursive: true}).catch(console.error)
@@ -39,14 +31,6 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.writeFile(
     path.join(outDir, 'package.json'),
     JSON.stringify(packageJson, null, 2)
-  )
-  await fs.writeFile(
-    path.join(outDir, 'empty-source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
-  )
-  await fs.writeFile(
-    path.join(outDir, 'source.js'),
-    `export const source = ${JSON.stringify(emptySource, null, 2)}`
   )
   await fs.writeFile(
     path.join(outDir, 'database.js'),

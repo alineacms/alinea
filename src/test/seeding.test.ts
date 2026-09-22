@@ -1,5 +1,5 @@
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
 import {Config, Field} from '#/index.js'

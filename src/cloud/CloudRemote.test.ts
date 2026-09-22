@@ -2,7 +2,7 @@ import {createHandler} from '#/backend/Handler.js'
 import {createCMS} from '#/core.js'
 import {createConfig} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {suite} from '@alinea/suite'
 import {CloudRemote} from './CloudRemote.js'
 

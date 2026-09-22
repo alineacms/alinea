@@ -4,7 +4,7 @@ import type {GraphQuery, InferProjection, Projection} from '#/core/Graph.js'
 import type {LinkResolver} from '#/core/db/LinkResolver.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {count, type Database} from 'rado'
-import {storedEntryData, type EntryIndexTarget} from '../entry/Schema.js'
+import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
 import {compileEntryQuery, type ProjectionPlan} from './EntryQuery.js'
 import type {RelationSource} from './Relation.js'
 import {searchQuery, type SearchQuery} from './Search.js'
@@ -46,7 +46,7 @@ function createLinkResolver(
   context: EntryQueryContext
 ): LinkResolver {
   const loader: LinkResolver = {
-    resolver: {config: context.config},
+    config: context.config,
     locale: source.locale,
     includedAtBuild(filePath) {
       return context.includedAtBuild(filePath)

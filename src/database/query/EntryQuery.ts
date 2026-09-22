@@ -4,7 +4,7 @@ import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
 import type {Field} from '#/core/Field.js'
-import type {EdgeQuery, GraphQuery} from '#/core/Graph.js'
+import type {EdgeQuery, GraphQuery, Status} from '#/core/Graph.js'
 import {
   getExpr,
   hasExpr,
@@ -39,7 +39,7 @@ import {
   EntryIndexTable,
   storedEntryData,
   type EntryIndexTarget
-} from '../entry/Schema.js'
+} from '../entry/EntryTable.js'
 import {
   arrayIncludes,
   compileCondition,
@@ -241,6 +241,33 @@ class Expressions {
   }
 }
 
+/** Rows visible under a query status; the default addresses published rows. */
+export function statusCondition(
+  entry: EntryIndexTarget,
+  status: Status = 'published'
+): Sql<boolean> {
+  switch (status) {
+    case 'all':
+      return sql.value(true)
+    case 'preferDraft':
+      return eq(entry.active, true)
+    case 'preferPublished':
+      return eq(entry.main, true)
+    default:
+      return eq(entry.status, status)
+  }
+}
+
+/** Rows in one locale, compared case-insensitively; null is unlocalized. */
+export function localeCondition(
+  entry: EntryIndexTarget,
+  locale: string | null | HasSql<string | null>
+): Sql<boolean> {
+  return locale === null
+    ? isNull(entry.locale)
+    : eq(sql`${entry.locale} collate nocase`, locale)
+}
+
 export interface EntryQueryOptions {
   source?: AnyRelationSource
   search?: ReturnType<typeof searchQuery>
@@ -285,16 +312,7 @@ export function compileEntryQuery(
       links = linkRelation(entry, source, name, edge.edge === 'entryMultiple')
     } else conditions.push(relationCondition(entry, edge, source))
   }
-  const status = query.status ?? 'published'
-  conditions.push(
-    status === 'all'
-      ? sql.value(true)
-      : status === 'preferDraft'
-        ? eq(entry.active, true)
-        : status === 'preferPublished'
-          ? eq(entry.main, true)
-          : eq(entry.status, status)
-  )
+  conditions.push(statusCondition(entry, query.status))
   for (const key of [
     'id',
     'parentId',
@@ -318,24 +336,14 @@ export function compileEntryQuery(
       conditions.push(compileCondition(membership.index(key), value))
   }
   if (query.locale !== undefined && edge?.edge !== 'translations')
-    conditions.push(
-      query.locale === null
-        ? isNull(entry.locale)
-        : eq(sql`${entry.locale} collate nocase`, query.locale)
-    )
+    conditions.push(localeCondition(entry, query.locale))
   else if (query.preferredLocale && edge?.edge !== 'translations')
     conditions.push(
-      or(
-        isNull(entry.locale),
-        eq(sql`${entry.locale} collate nocase`, query.preferredLocale)
-      )
+      or(isNull(entry.locale), localeCondition(entry, query.preferredLocale))
     )
   else if (link && source)
     conditions.push(
-      or(
-        isNull(entry.locale),
-        eq(sql`${entry.locale} collate nocase`, source.locale)
-      )
+      or(isNull(entry.locale), localeCondition(entry, source.locale))
     )
   if (query.type) {
     const types = Array.isArray(query.type) ? query.type : [query.type]

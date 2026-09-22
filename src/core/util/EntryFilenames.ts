@@ -1,5 +1,5 @@
 import * as paths from '#/core/util/Paths.js'
-import type {Config} from '../Config.js'
+import {Config} from '../Config.js'
 import {
   ALT_STATUS,
   type Entry,
@@ -9,6 +9,7 @@ import {
 import {getRoot, getType} from '../Internal.js'
 import type {EntryUrlInput, Type} from '../Type.js'
 import {Workspace} from '../Workspace.js'
+import {assert} from './Assert.js'
 import {join} from './Paths.js'
 
 export function entryInfo(
@@ -19,6 +20,76 @@ export function entryInfo(
   if (status) return [fileName.slice(0, -status.length - 1), status]
   // Otherwise, it's published
   return [fileName, 'published']
+}
+
+/** The workspace/root/locale layout encoded in a source file path. */
+export interface EntryFileLocation {
+  workspace: string
+  root: string
+  locale: string | null
+  path: string
+  versionStatus: EntryStatus
+  parentDir: string
+  childrenDir: string
+  /** Segments taken up by the workspace, root and locale. */
+  levelOffset: number
+  level: number
+  parentPaths: Array<string>
+}
+
+/**
+ * Read back the layout `Config.filePath` and `entryChildrenDir` write:
+ * `[workspace/]root/[locale/]...parents/path[.status].json`.
+ */
+export function parseEntryFilePath(
+  config: Config,
+  filePath: string
+): EntryFileLocation {
+  const segments = filePath.split('/')
+  const fileName = segments.at(-1)
+  assert(fileName, `Invalid entry path: ${filePath}`)
+  const extension = paths.extname(fileName)
+  assert(extension, `Entry must have an extension: ${filePath}`)
+  const [path, versionStatus] = entryInfo(paths.basename(fileName, extension))
+  const parentDir = segments.slice(0, -1).join('/')
+  let segmentIndex = 0
+  const workspace = Config.multipleWorkspaces(config)
+    ? segments[segmentIndex++]
+    : Object.keys(config.workspaces)[0]
+  assert(workspace, `Entry has no workspace: ${filePath}`)
+  const workspaceConfig = config.workspaces[workspace]
+  assert(workspaceConfig, `Invalid workspace: ${workspace} in ${filePath}`)
+  const root = segments[segmentIndex++]
+  assert(root, `Entry has no root: ${filePath}`)
+  const rootConfig = workspaceConfig[root]
+  assert(rootConfig, `Invalid root: ${root} for workspace ${workspace}`)
+  const i18n = getRoot(rootConfig).i18n
+  let locale: string | null = null
+  if (i18n) {
+    const segment = segments[segmentIndex++]
+    assert(segment, `Entry is missing a locale: ${filePath}`)
+    locale = segment.toLowerCase()
+    for (const candidate of i18n.locales) {
+      if (locale === candidate.toLowerCase()) {
+        locale = candidate
+        break
+      }
+    }
+    assert(i18n.locales.includes(locale), `Invalid locale: ${locale}`)
+  }
+  const levelOffset = segmentIndex
+  return {
+    workspace,
+    root,
+    locale,
+    path,
+    versionStatus,
+    parentDir,
+    childrenDir: `${parentDir}/${path}`,
+    levelOffset,
+    level: segments.length - levelOffset - 1,
+    parentPaths: segments.slice(levelOffset, -1)
+  }
 }
 
 export function entryChildrenDir(

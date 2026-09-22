@@ -7,12 +7,12 @@ import {
   type Table
 } from 'rado'
 import * as column from 'rado/universal/columns'
+import {DatabaseStateColumns} from '../DatabaseTables.js'
 import {
-  DatabaseStateColumns,
   EntryIndexColumns,
   entryIndexTable,
   type EntryIndexTarget
-} from './Schema.js'
+} from './EntryTable.js'
 
 const namePattern = /^[a-z][a-z0-9_]*$/i
 

@@ -8,11 +8,11 @@ import {Client} from '#/core/Client.js'
 import {CMS} from '#/core/CMS.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext, UploadResponse} from '#/core/Connection.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import type {Graph, GraphQuery} from '#/core/Graph.js'
+import type {GraphQuery} from '#/core/Graph.js'
 import {outcome} from '#/core/Outcome.js'
 import type {PreviewRequest} from '#/core/Preview.js'
-import type {RemoteSource, Source} from '#/core/source/Source.js'
 import {trace} from '#/core/Trace.js'
 import type {User} from '#/core/User.js'
 import {getPreviewPayloadFromCookies} from '#/preview/PreviewCookies.js'
@@ -28,19 +28,12 @@ export interface PreviewProps {
   root?: string
 }
 
-interface BundledDatabase extends Graph {
-  source: Source
-  sha: string | Promise<string>
-  sync(): Promise<string>
-  syncWith(source: RemoteSource): Promise<string>
-}
-
-export type OpenBundledDatabase = (config: Config) => Promise<BundledDatabase>
+export type OpenBundledDatabase = (config: Config) => Promise<LocalStore>
 
 export class NextCMS<
   Definition extends Config = Config
 > extends CMS<Definition> {
-  bundledDb: PLazy<BundledDatabase>
+  bundledDb: PLazy<LocalStore>
 
   constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
@@ -89,7 +82,7 @@ export class NextCMS<
   })
 
   async #prepareLocalPreview(
-    db: BundledDatabase,
+    db: LocalStore,
     decoded: DecodedPreviewRequest,
     context: RequestContext
   ): Promise<PreviewRequest | undefined> {

@@ -1,5 +1,5 @@
 import type {LocalConnection} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {App} from '#/dashboard/App.js'
 import {views} from '#/field/views.js'

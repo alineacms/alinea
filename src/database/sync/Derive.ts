@@ -1,4 +1,5 @@
 import type {Config} from '#/core/Config.js'
+import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
 import {entryUrl} from '#/core/util/EntryFilenames.js'
 import {
@@ -19,20 +20,20 @@ import {
   storedEntryData,
   type EntryIndexTarget,
   type IndexedEntry
-} from '../entry/Schema.js'
+} from '../entry/EntryTable.js'
+import type {EntrySyncTarget} from './EntrySyncer.js'
 import {
-  chunks,
   sqliteBatchSize,
   SyncAffected,
+  SyncCascade,
   SyncStatus,
   type DirectoryRow,
   type HierarchyRow,
   type MainRow,
   type ParentPathRow,
   type StatusRow,
-  type EntrySyncTarget,
   type SyncQueries
-} from './queries.js'
+} from './SyncQueries.js'
 
 export async function deriveHierarchy(
   db: Database,
@@ -102,12 +103,12 @@ export async function expandAffected(
 ): Promise<void> {
   await db.run(sql`
     with recursive descendants(id) as (
-      select id from alinea_sync_cascade
+      select id from ${SyncCascade}
       union
       select entry.id from ${entries} entry
       join descendants on entry.parentId = descendants.id
     )
-    insert or ignore into alinea_sync_affected(id) select id from descendants;
+    insert or ignore into ${SyncAffected}(id) select id from descendants;
   `)
 }
 

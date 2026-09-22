@@ -1,12 +1,13 @@
 import {createCMS, Entry} from '#/core.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {MetadataAlias} from '#/field/metadata/MetadataAliases.js'
 import {Config, Edit, Field} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
-import {TestDB} from './TestDB.js'
+import {EntryStore} from './EntryStore.js'
 
 const test = suite(import.meta)
 
@@ -172,19 +173,19 @@ async function createDb() {
       }
     }
   ])
-  const db = new TestDB(cms.config, source)
+  const db = await EntryStore.memory(cms.config, source)
   await db.sync()
   return db
 }
 
 async function createEmptyDb() {
-  const db = new TestDB(cms.config)
+  const db = await EntryStore.memory(cms.config, new MemorySource())
   await db.sync()
   return db
 }
 
 async function createDocumentDb() {
-  const db = new TestDB(documentCms.config)
+  const db = await EntryStore.memory(documentCms.config, new MemorySource())
   await db.sync()
   return db
 }
@@ -426,7 +427,7 @@ test('blocks duplicate MediaFile URLs across media roots', async () => {
       })
     }
   })
-  const db = new TestDB(mediaCms.config)
+  const db = await EntryStore.memory(mediaCms.config, new MemorySource())
   await db.sync()
   await db.create({
     type: MediaFile,
@@ -458,7 +459,7 @@ test('allows duplicate MediaFile URL aliases across media roots', async () => {
       })
     }
   })
-  const db = new TestDB(mediaCms.config)
+  const db = await EntryStore.memory(mediaCms.config, new MemorySource())
   await db.sync()
   const first = await db.create({
     type: MediaFile,
@@ -498,7 +499,7 @@ test('mediaUrl prefixes disambiguate duplicate MediaFile URLs', async () => {
       })
     }
   })
-  const db = new TestDB(mediaCms.config)
+  const db = await EntryStore.memory(mediaCms.config, new MemorySource())
   await db.sync()
   await db.create({
     type: MediaFile,
@@ -675,7 +676,7 @@ test('update removes a current MediaFile URL from legacy aliases', async () => {
       }
     }
   ])
-  const db = new TestDB(cms.config, source)
+  const db = await EntryStore.memory(cms.config, source)
   await db.sync()
 
   await db.update({

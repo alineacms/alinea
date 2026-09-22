@@ -1,7 +1,7 @@
 import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'

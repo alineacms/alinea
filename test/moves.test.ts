@@ -2,7 +2,7 @@ import {suite} from '@alinea/suite'
 import {expect} from 'bun:test'
 import {Config, Query} from '#/index.js'
 import {Entry, createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import {createEntrySource} from './EntryFixture.js'
 

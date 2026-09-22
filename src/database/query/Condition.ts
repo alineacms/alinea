@@ -1,4 +1,9 @@
-import {isRecord} from '#/core/util/Objects.js'
+import {
+  parseCondition,
+  parseFilter,
+  type ConditionNode,
+  type FilterNode
+} from '#/core/Filter.js'
 import {
   and,
   Builder,
@@ -18,6 +23,8 @@ import {
 } from 'rado'
 import {jsonExpr} from 'rado/core/expr/Json'
 
+type FieldSql = (name: string) => HasSql
+
 export function jsonField(
   target: HasSql,
   segments: Array<string> = []
@@ -35,114 +42,82 @@ function equals(field: HasSql, value: unknown): Sql<boolean> {
 
 export function compileCondition(
   field: HasSql,
-  condition: unknown,
-  depth = 0
+  condition: unknown
 ): Sql<boolean> {
-  if (condition === undefined) return sql.value(true)
-  if (!isRecord(condition)) return equals(field, condition)
-  const clauses: Array<Sql<boolean>> = []
-  for (const [operator, value] of Object.entries(condition)) {
-    if (value === undefined) continue
-    switch (operator) {
-      case 'is':
-        clauses.push(equals(field, value))
-        break
-      case 'isNot':
-        clauses.push(not(equals(field, value)))
-        break
-      case 'in':
-      case 'notIn': {
-        if (!Array.isArray(value))
-          throw new Error(`${operator} requires an array`)
-        const nonNull = value.filter(item => item !== null)
-        const matches = value.length
-          ? or(
-              value.includes(null) ? isNull(field) : undefined,
-              nonNull.length ? inArray(field, nonNull) : undefined
-            )
-          : sql.value(false)
-        clauses.push(operator === 'in' ? matches : not(matches))
-        break
-      }
-      case 'gt':
-        clauses.push(gt(field, value))
-        break
-      case 'gte':
-        clauses.push(gte(field, value))
-        break
-      case 'lt':
-        clauses.push(lt(field, value))
-        break
-      case 'lte':
-        clauses.push(lte(field, value))
-        break
-      case 'or': {
-        const values = Array.isArray(value) ? value : [value]
-        clauses.push(
-          values.length
-            ? or(...values.map(item => compileCondition(field, item, depth)))
-            : sql.value(false)
-        )
-        break
-      }
-      case 'has':
-        clauses.push(
-          compileFilter(value, name => jsonField(field, [name]), depth)
-        )
-        break
-      case 'includes':
-        clauses.push(
-          arrayIncludes(
-            field,
-            item =>
-              isRecord(value)
-                ? compileFilter(
-                    value,
-                    name => jsonField(item, [name]),
-                    depth + 1
-                  )
-                : equals(item, value),
-            depth
-          )
-        )
-        break
-      case 'startsWith': {
-        if (typeof value !== 'string')
-          throw new Error('startsWith requires a string')
-        if (value !== '')
-          clauses.push(
-            sql<boolean>`substr(${field}, 1, ${[...value].length}) = ${value}`
-          )
-        break
-      }
-      default:
-        throw new Error(`Unsupported SQL condition: ${operator}`)
-    }
-  }
-  return clauses.length ? and(...clauses) : sql.value(true)
+  return conditionSql(field, parseCondition(condition), 0)
 }
 
-export function compileFilter(
-  filter: unknown,
-  field: (name: string) => HasSql,
-  depth = 0
+export function compileFilter(filter: unknown, field: FieldSql): Sql<boolean> {
+  return filterSql(parseFilter(filter), field, 0)
+}
+
+function filterSql(
+  node: FilterNode,
+  field: FieldSql,
+  depth: number
 ): Sql<boolean> {
-  if (!isRecord(filter)) throw new Error('A query filter must be an object')
-  const keys = Object.keys(filter)
-  if (keys.length === 1 && (keys[0] === 'and' || keys[0] === 'or')) {
-    const operator = keys[0]
-    const values = filter[operator]
-    if (!Array.isArray(values)) throw new Error(`${operator} requires an array`)
-    const clauses = values
-      .filter(value => value !== undefined)
-      .map(value => compileFilter(value, field, depth))
-    if (!clauses.length) return sql.value(operator === 'and')
-    return operator === 'and' ? and(...clauses) : or(...clauses)
+  switch (node.op) {
+    case 'and': {
+      const clauses = node.nodes.map(node => filterSql(node, field, depth))
+      return clauses.length ? and(...clauses) : sql.value(true)
+    }
+    case 'or': {
+      const clauses = node.nodes.map(node => filterSql(node, field, depth))
+      return clauses.length ? or(...clauses) : sql.value(false)
+    }
+    case 'field':
+      return conditionSql(field(node.name), node.condition, depth)
   }
-  const clauses = Object.entries(filter)
-    .filter(([, value]) => value !== undefined)
-    .map(([name, value]) => compileCondition(field(name), value, depth))
-  return clauses.length ? and(...clauses) : sql.value(true)
+}
+
+function conditionSql(
+  field: HasSql,
+  node: ConditionNode,
+  depth: number
+): Sql<boolean> {
+  switch (node.op) {
+    case 'and': {
+      const clauses = node.nodes.map(node => conditionSql(field, node, depth))
+      return clauses.length ? and(...clauses) : sql.value(true)
+    }
+    case 'or': {
+      const clauses = node.nodes.map(node => conditionSql(field, node, depth))
+      return clauses.length ? or(...clauses) : sql.value(false)
+    }
+    case 'is':
+      return equals(field, node.value)
+    case 'isNot':
+      return not(equals(field, node.value))
+    case 'in':
+    case 'notIn': {
+      const nonNull = node.values.filter(item => item !== null)
+      const matches = node.values.length
+        ? or(
+            node.values.includes(null) ? isNull(field) : undefined,
+            nonNull.length ? inArray(field, nonNull) : undefined
+          )
+        : sql.value(false)
+      return node.op === 'in' ? matches : not(matches)
+    }
+    case 'gt':
+      return gt(field, node.value)
+    case 'gte':
+      return gte(field, node.value)
+    case 'lt':
+      return lt(field, node.value)
+    case 'lte':
+      return lte(field, node.value)
+    case 'startsWith':
+      return sql<boolean>`substr(${field}, 1, ${[...node.value].length}) = ${node.value}`
+    case 'has':
+      return filterSql(node.filter, name => jsonField(field, [name]), depth)
+    case 'includes':
+      return arrayIncludes(
+        field,
+        item => conditionSql(item, node.item, depth + 1),
+        depth
+      )
+  }
 }
 
 export function arrayIncludes(

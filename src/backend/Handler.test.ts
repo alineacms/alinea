@@ -10,7 +10,7 @@ import type {
   RequestContext
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {role} from '#/core/Role.js'

@@ -1,17 +1,20 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
-import type {Database} from 'rado'
+import type {Database, Table} from 'rado'
+import {
+  DatabaseStateTable,
+  type DatabaseStateColumns
+} from '../DatabaseTables.js'
+import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
 import {
   clearTemporaryTables,
   createTemporaryTables,
   dropTemporaryTables,
   prepareSyncQueries,
-  type EntrySyncOptions,
-  type EntrySyncTarget,
   type SyncQueries
-} from './queries.js'
-import {mergeTrees} from './ingest.js'
+} from './SyncQueries.js'
+import {mergeTrees} from './Ingest.js'
 import {
   copyInitialUrls,
   deriveHierarchy,
@@ -20,10 +23,25 @@ import {
   expandAffected,
   materializeAffected,
   validateEntries
-} from './derive.js'
+} from './Derive.js'
 
-export {EntrySyncRoot} from './queries.js'
-export type {EntrySyncTarget} from './queries.js'
+export interface EntrySyncTarget {
+  name: string
+  entries: EntryIndexTarget
+  changes?: EntryIndexTarget
+  state: Table<typeof DatabaseStateColumns>
+}
+
+export const EntrySyncRoot: EntrySyncTarget = {
+  name: 'root',
+  entries: EntryIndexTable,
+  state: DatabaseStateTable
+}
+
+export interface EntrySyncOptions {
+  previousTree?: ReadonlyTree
+  withinTransaction?: boolean
+}
 
 /** Prepared, serialized source synchronization for one database connection. */
 export class EntrySyncer implements AsyncDisposable {

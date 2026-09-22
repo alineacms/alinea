@@ -1,5 +1,5 @@
 import {sql, type Database, type HasSql, type Sql} from 'rado'
-import {EntryIndexTable, type EntryIndexTarget} from '../entry/Schema.js'
+import {EntryIndexTable, type EntryIndexTarget} from '../entry/EntryTable.js'
 
 export const EntrySearchName = 'alinea_entry_search'
 
@@ -45,7 +45,7 @@ export async function rebuildSearch(
     from ${entry}`)
 }
 
-export function searchTokens(input: string | Array<string> | undefined) {
+function searchTokens(input: string | Array<string> | undefined) {
   const text = Array.isArray(input) ? input.join(' ') : input
   if (!text) return undefined
   return text.match(/[\p{L}\p{N}\p{M}]+/gu) ?? []

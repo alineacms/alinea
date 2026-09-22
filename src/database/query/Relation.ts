@@ -18,7 +18,7 @@ import {
   type HasSql,
   type Sql
 } from 'rado'
-import type {EntryIndexTarget} from '../entry/Schema.js'
+import type {EntryIndexTarget} from '../entry/EntryTable.js'
 import {jsonField} from './Condition.js'
 
 export interface RelationSource {

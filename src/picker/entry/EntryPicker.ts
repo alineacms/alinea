@@ -176,7 +176,7 @@ function linkedLocalisation(
   {workspace, root}: LinkedEntryLocation
 ): RootI18n | undefined {
   if (typeof workspace !== 'string' || typeof root !== 'string') return
-  const workspaceConfig = loader.resolver.config.workspaces[workspace]
+  const workspaceConfig = loader.config.workspaces[workspace]
   const rootConfig = workspaceConfig?.[root]
   if (!rootConfig) return
   const rootData = Root.data(rootConfig)

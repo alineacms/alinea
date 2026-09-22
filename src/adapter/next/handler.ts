@@ -11,7 +11,7 @@ import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
-import type {EntryStore} from '#/database/EntryStore.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -26,7 +26,7 @@ export interface NextHandlerOptions extends HandlerHooks {
   backend?: BackendFactory | BackendOptions
 }
 
-export type OpenGeneratedDatabase = (config: Config) => Promise<EntryStore>
+export type OpenGeneratedDatabase = (config: Config) => Promise<LocalStore>
 
 export function createHandlerWithDatabase(
   input: NextCMS | NextHandlerOptions,

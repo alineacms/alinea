@@ -6,7 +6,6 @@ import {
 } from '#/core/EntryRecord.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
-import type {Tree} from '#/core/source/Tree.js'
 import {index, table, temporaryTable, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 
@@ -83,28 +82,6 @@ export function entryIndexTable(name: string, temporary = false) {
 export type EntryIndexTarget = Table<typeof EntryIndexColumns>
 
 export const EntryIndexTable = entryIndexTable('alinea_entry_index')
-
-export const DatabaseStateColumns = {
-  id: column.integer().primaryKey(),
-  revision: column.text().notNull(),
-  /** Merkle tree matching the indexed source revision. */
-  tree: column.json<Tree>()
-}
-
-export const DatabaseStateTable = table(
-  'alinea_database_state',
-  DatabaseStateColumns
-)
-
-export const DatabaseMetadataColumns = {
-  id: column.integer().primaryKey(),
-  configFingerprint: column.text().notNull()
-}
-
-export const DatabaseMetadataTable = table(
-  'alinea_database_metadata',
-  DatabaseMetadataColumns
-)
 
 /** An Entry plus the physical-version and local-index fields. */
 export interface IndexedEntry extends Entry {

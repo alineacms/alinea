@@ -1,17 +1,17 @@
 import type {Config} from '#/core/Config.js'
 import type {RemoteSource} from '#/core/source/Source.js'
 import {Leaf, ReadonlyTree} from '#/core/source/Tree.js'
+import {chunks} from '#/core/util/Arrays.js'
 import {assert} from '#/core/util/Assert.js'
 import {inArray, or, type Database} from 'rado'
 import {
   entryIndexRow,
   type EntryIndexTarget,
   type IndexedEntry
-} from '../entry/Schema.js'
+} from '../entry/EntryTable.js'
 import {parseSourceEntry} from './EntryParser.js'
 import {
   changeBatchSize,
-  chunks,
   sqliteBatchSize,
   SyncAffected,
   SyncCascade,
@@ -21,7 +21,7 @@ import {
   type FileRow,
   type StoredHierarchyRow,
   type SyncQueries
-} from './queries.js'
+} from './SyncQueries.js'
 
 async function markAffected(
   db: Database,
@@ -47,21 +47,34 @@ async function markAffected(
           : undefined
       )
     )) as Array<AffectedEntryRow>
+  await markRows(db, existing)
+  return existing
+}
+
+interface MarkableRow {
+  id: string
+  childrenSha?: string | null
+}
+
+/** Flag these entries as affected, and cascade into their children. */
+async function markRows(
+  db: Database,
+  rows: ReadonlyArray<MarkableRow>
+): Promise<void> {
   await addIds(
     db,
     SyncAffected,
-    existing.map(row => row.id)
+    rows.map(row => row.id)
   )
   await addIds(
     db,
     SyncCascade,
-    existing.flatMap(row =>
+    rows.flatMap(row =>
       row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
         ? [row.id]
         : []
     )
   )
-  return existing
 }
 
 async function addIds(
@@ -169,20 +182,7 @@ async function replaceFiles(
       main: Number(row.main),
       visible: Number(row.visible)
     })
-  await addIds(
-    db,
-    SyncAffected,
-    rows.map(row => row.id)
-  )
-  await addIds(
-    db,
-    SyncCascade,
-    rows.flatMap(row =>
-      row.childrenSha && row.childrenSha !== ReadonlyTree.EMPTY.sha
-        ? [row.id]
-        : []
-    )
-  )
+  await markRows(db, rows)
 }
 
 async function updateDirectoryHashes(

@@ -14,8 +14,8 @@ import type {
 } from '#/core/Connection.js'
 import {developmentKeyHeader} from '#/core/Connection.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import type {Mutation} from '#/core/db/Mutation.js'
-import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {DraftKey} from '#/core/Draft.js'
 import {Entry} from '#/core/Entry.js'
 import type {GraphQuery} from '#/core/Graph.js'
@@ -26,7 +26,6 @@ import {assertUploadSize} from '#/core/media/UploadLimits.js'
 import {Permission, Policy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import type {RemoteSource, Source} from '#/core/source/Source.js'
 import type {User, UserInput} from '#/core/User.js'
 import {base64} from '#/core/util/Encoding.js'
 import {isRecord} from '#/core/util/Objects.js'
@@ -68,24 +67,12 @@ export interface HandlerHooks {
 
 export interface HandlerOptions extends HandlerHooks {
   cms: CMS
-  db: HandlerDatabase | Promise<HandlerDatabase>
+  db: LocalStore | Promise<LocalStore>
   remote?: (context: RequestContext) => RemoteConnection
   forwardMutations?(
     request: Request,
     context: AuthedContext
   ): Promise<Response | undefined>
-}
-
-export interface HandlerDatabase extends WriteableGraph, RemoteSource {
-  source: Source
-  sha: string | Promise<string>
-  syncWith(remote: RemoteSource): Promise<string>
-  includedAtBuild(filePath: string): boolean | Promise<boolean>
-  request(
-    mutations: ReadonlyArray<Mutation>,
-    policy?: Policy
-  ): Promise<CommitRequest>
-  write(request: CommitRequest): Promise<{sha: string}>
 }
 
 export function createHandler({

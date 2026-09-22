@@ -1,9 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
-import type {
-  EntryReference,
-  EntryReferenceScan
-} from '#/core/db/EntryReference.js'
+import type {EntryReference} from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
@@ -53,7 +50,6 @@ interface EntryData {
 export interface EntryReferences {
   references: Array<EntryReferenceWithSource>
   total: number
-  scan: EntryReferenceScan
 }
 
 export interface EntryReferenceWithSource {
@@ -630,7 +626,7 @@ export class EntryAtoms {
       if (!source || !policy.canRead(source)) return []
       return [{reference, source} satisfies EntryReferenceWithSource]
     })
-    return {references, total: result.total, scan: result.scan}
+    return {references, total: result.total}
   })
   incomingReferences = unwrap(
     this.incomingReferencesReady,

@@ -17,7 +17,7 @@ import {join} from 'node:path'
 import {sql} from 'rado'
 import {connect} from 'rado/driver/bun-sqlite'
 import {EntryDatabase} from './EntryDatabase.js'
-import {EntryIndexTable} from './entry/Schema.js'
+import {EntryIndexTable} from './entry/EntryTable.js'
 
 function urlAlias(url: string) {
   return {

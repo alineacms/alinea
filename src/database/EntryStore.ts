@@ -20,6 +20,7 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {sourceChanges, type CommitRequest} from '#/core/db/CommitRequest.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
@@ -39,7 +40,10 @@ export interface EntryStoreOptions {
 }
 
 /** Source and commit lifecycle around the transport-neutral SQLite database. */
-export class EntryStore extends WriteableGraph implements AsyncDisposable {
+export class EntryStore
+  extends WriteableGraph
+  implements LocalStore, AsyncDisposable
+{
   readonly config: Config
   readonly database: EntryDatabase
   readonly source: Source

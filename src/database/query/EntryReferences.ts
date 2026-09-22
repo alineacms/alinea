@@ -5,8 +5,9 @@ import type {
   EntryReferenceResult
 } from '#/core/db/EntryReference.js'
 import {Type} from '#/core/Type.js'
-import {and, asc, eq, gt, isNull, sql, type Database} from 'rado'
-import {storedEntryData, type EntryIndexTarget} from '../entry/Schema.js'
+import {and, asc, eq, gt, type Database} from 'rado'
+import {storedEntryData, type EntryIndexTarget} from '../entry/EntryTable.js'
+import {localeCondition, statusCondition} from './EntryQuery.js'
 
 /** Scan references in bounded pages on the caller's active transaction. */
 export async function queryEntryReferences(
@@ -15,22 +16,16 @@ export async function queryEntryReferences(
   entry: EntryIndexTarget,
   query: EntryReferenceQuery
 ): Promise<EntryReferenceResult> {
-  const status = query.status ?? 'published'
-  const conditions = [eq(entry.visible, true)]
+  const conditions = [
+    eq(entry.visible, true),
+    statusCondition(entry, query.status)
+  ]
   if (query.locale !== undefined)
-    conditions.push(
-      query.locale === null
-        ? isNull(entry.locale)
-        : eq(sql`${entry.locale} collate nocase`, query.locale)
-    )
-  if (status === 'preferDraft') conditions.push(eq(entry.active, true))
-  else if (status === 'preferPublished') conditions.push(eq(entry.main, true))
-  else if (status !== 'all') conditions.push(eq(entry.status, status))
+    conditions.push(localeCondition(entry, query.locale))
 
   const references: Array<EntryReference> = []
   const pageSize = 500
   let cursor = ''
-  let scanned = 0
   while (true) {
     const rows = await db
       .select({
@@ -52,7 +47,6 @@ export async function queryEntryReferences(
       .all()
     if (!rows.length) break
     for (const row of rows) {
-      scanned += 1
       const type = config.schema[row.type]
       if (!type) continue
       for (const target of Type.references(
@@ -75,9 +69,5 @@ export async function queryEntryReferences(
     cursor = rows.at(-1)!.versionId
     if (rows.length < pageSize) break
   }
-  return {
-    references,
-    total: references.length,
-    scan: {scanned, total: scanned, complete: true}
-  }
+  return {references, total: references.length}
 }

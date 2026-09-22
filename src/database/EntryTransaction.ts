@@ -38,7 +38,7 @@ import type {
 } from '#/core/db/Mutation.js'
 import {EntryUrlConflictError} from '#/core/db/EntryUrlConflictError.js'
 import type {EntryDatabase} from './EntryDatabase.js'
-import {dataWithUrlAlias} from './entry/UrlAliases.js'
+import {dataWithUrlAlias} from './EntryUrlAliases.js'
 
 type Op<T> = Omit<T, 'op'>
 

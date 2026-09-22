@@ -1,5 +1,5 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {createRecord} from '#/core/EntryRecord.js'
 import type {GraphQuery} from '#/core/Graph.js'

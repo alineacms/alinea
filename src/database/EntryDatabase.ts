@@ -18,12 +18,8 @@ import {
 import {ReadonlyTree, type Tree} from '#/core/source/Tree.js'
 import {type Database, eq, inArray, sql} from 'rado'
 import {EntryView} from './entry/EntryView.js'
-import {
-  DatabaseMetadataTable,
-  DatabaseStateTable,
-  EntryIndexTable,
-  type EntryIndexTarget
-} from './entry/Schema.js'
+import {DatabaseMetadataTable, DatabaseStateTable} from './DatabaseTables.js'
+import {EntryIndexTable, type EntryIndexTarget} from './entry/EntryTable.js'
 import {resolveEntryQuery} from './query/ResolveQuery.js'
 import {queryEntryReferences} from './query/EntryReferences.js'
 import {EntryTransaction} from './EntryTransaction.js'

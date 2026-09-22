@@ -1,4 +1,4 @@
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {createMediaRoot} from '#/core/media/MediaRoot.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {Config, Field} from '#/index.js'

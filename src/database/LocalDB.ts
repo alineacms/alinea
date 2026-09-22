@@ -7,21 +7,28 @@ import type {
   Source
 } from '#/core/source/Source.js'
 import {trace} from '#/core/Trace.js'
-import {EntryStore} from '#/database/EntryStore.js'
-import type {Config} from '../Config.js'
-import type {UploadMetadata, UploadResponse} from '../Connection.js'
-import type {Policy} from '../Role.js'
-import type {CommitRequest} from './CommitRequest.js'
+import type {Config} from '#/core/Config.js'
+import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
+import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import type {
   EntryReferenceQuery,
   EntryReferenceResult
-} from './EntryReference.js'
-import type {Mutation} from './Mutation.js'
-import {IndexEvent} from './IndexEvent.js'
-import {WriteableGraph} from './WriteableGraph.js'
+} from '#/core/db/EntryReference.js'
+import {IndexEvent} from '#/core/db/IndexEvent.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
+import type {Mutation} from '#/core/db/Mutation.js'
+import {WriteableGraph} from '#/core/db/WriteableGraph.js'
+import type {Policy} from '#/core/Role.js'
+import {EntryStore} from './EntryStore.js'
 
-/** @deprecated Use EntryStore. This facade is backed by the SQLite engine. */
-export class LocalDB extends WriteableGraph implements AsyncDisposable {
+/**
+ * Sync-constructor convenience over `EntryStore.memory()`.
+ * This facade is backed by the SQLite engine.
+ */
+export class LocalDB
+  extends WriteableGraph
+  implements LocalStore, AsyncDisposable
+{
   readonly config: Config
   readonly source: Source
   readonly events = new EventTarget()

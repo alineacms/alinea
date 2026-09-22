@@ -26,9 +26,6 @@ type FieldOps<Fields> = {
   [K in keyof Fields]?: Condition<Fields[K]>
 }
 
-export interface AnyCondition<Value>
-  extends Ops<Value>, ArrayOps<Value>, ObjectOps<Value> {}
-
 export type Condition<Value> = [Value] extends [Primitive]
   ? Ops<Value> | Value
   : [Value] extends [Array<any>]
@@ -43,128 +40,177 @@ export type Filter<Fields = unknown> =
   | OrCondition<Fields>
   | FieldOps<Fields>
 
-interface RuntimeCondition {
-  is?: unknown
-  isNot?: unknown
-  in?: ReadonlyArray<unknown>
-  notIn?: ReadonlyArray<unknown>
-  gt?: unknown
-  gte?: unknown
-  lt?: unknown
-  lte?: unknown
-  startsWith?: string
-  or?: RuntimeCondition | Array<RuntimeCondition>
-  has?: Filter
-  includes?: Filter
+/** A validated filter over named fields, shared by every filter backend. */
+export type FilterNode =
+  | {op: 'and'; nodes: Array<FilterNode>}
+  | {op: 'or'; nodes: Array<FilterNode>}
+  | {op: 'field'; name: string; condition: ConditionNode}
+
+/** A validated condition on one value. */
+export type ConditionNode =
+  | {op: 'and'; nodes: Array<ConditionNode>}
+  | {op: 'or'; nodes: Array<ConditionNode>}
+  | {op: 'is' | 'isNot' | 'gt' | 'gte' | 'lt' | 'lte'; value: unknown}
+  | {op: 'in' | 'notIn'; values: Array<unknown>}
+  | {op: 'startsWith'; value: string}
+  | {op: 'has'; filter: FilterNode}
+  | {op: 'includes'; item: ConditionNode}
+
+export function parseFilter(filter: unknown): FilterNode {
+  if (!isRecord(filter)) throw new Error('A query filter must be an object')
+  const keys = Object.keys(filter)
+  if (keys.length === 1 && (keys[0] === 'and' || keys[0] === 'or')) {
+    const op = keys[0]
+    const values = filter[op]
+    if (!Array.isArray(values)) throw new Error(`${op} requires an array`)
+    return {op, nodes: definedValues(values).map(parseFilter)}
+  }
+  const nodes = Array<FilterNode>()
+  for (const [name, value] of Object.entries(filter)) {
+    if (value === undefined) continue
+    nodes.push({op: 'field', name, condition: parseCondition(value)})
+  }
+  return {op: 'and', nodes}
+}
+
+export function parseCondition(condition: unknown): ConditionNode {
+  if (condition === undefined) return {op: 'and', nodes: []}
+  if (!isRecord(condition)) return {op: 'is', value: condition}
+  const nodes = Array<ConditionNode>()
+  for (const [op, value] of Object.entries(condition)) {
+    if (value === undefined) continue
+    switch (op) {
+      case 'is':
+      case 'isNot':
+      case 'gt':
+      case 'gte':
+      case 'lt':
+      case 'lte':
+        nodes.push({op, value})
+        break
+      case 'in':
+      case 'notIn':
+        if (!Array.isArray(value)) throw new Error(`${op} requires an array`)
+        nodes.push({op, values: [...value]})
+        break
+      case 'startsWith':
+        if (typeof value !== 'string')
+          throw new Error('startsWith requires a string')
+        if (value !== '') nodes.push({op, value})
+        break
+      case 'or': {
+        const values = Array.isArray(value) ? value : [value]
+        nodes.push({op, nodes: definedValues(values).map(parseCondition)})
+        break
+      }
+      case 'has':
+        nodes.push({op, filter: parseFilter(value)})
+        break
+      case 'includes':
+        nodes.push({
+          op,
+          item: isRecord(value)
+            ? {op: 'has', filter: parseFilter(value)}
+            : {op: 'is', value}
+        })
+        break
+      default:
+        throw new Error(`Unsupported condition: ${op}`)
+    }
+  }
+  return nodes.length === 1 ? nodes[0]! : {op: 'and', nodes}
+}
+
+function definedValues(values: Array<unknown>): Array<unknown> {
+  return values.filter(value => value !== undefined)
 }
 
 type FilterCheck<Input> = (input: Input) => boolean
+type FieldAccessor<Input> = (input: Input, name: string) => unknown
 
 export function filterChecker<Input = unknown>(
   filter: Filter,
-  getField: (input: Input, name: string) => unknown = defaultField
+  getField: FieldAccessor<Input> = defaultField
 ): FilterCheck<Input> {
-  if (isRecord(filter) && Object.keys(filter).length === 1) {
-    if ('or' in filter && Array.isArray(filter.or)) {
-      const checks = filter.or
-        .filter(value => value !== undefined)
-        .map(value => filterChecker(value, getField))
-      return input => checks.some(check => check(input))
-    }
-    if ('and' in filter && Array.isArray(filter.and)) {
-      const checks = filter.and
-        .filter(value => value !== undefined)
-        .map(value => filterChecker(value, getField))
+  return filterCheck(parseFilter(filter), getField)
+}
+
+function filterCheck<Input>(
+  node: FilterNode,
+  getField: FieldAccessor<Input>
+): FilterCheck<Input> {
+  switch (node.op) {
+    case 'and': {
+      const checks = node.nodes.map(node => filterCheck(node, getField))
       return input => checks.every(check => check(input))
     }
-  }
-  if (!isRecord(filter)) return input => input === filter
-  const conditions = createConditions(filter, getField)
-  return input => conditions.every(condition => condition(input))
-}
-
-function createConditions<Input>(
-  operations: Record<string, unknown>,
-  getField: (input: Input, name: string) => unknown
-): Array<FilterCheck<Input>> {
-  const conditions = Array<FilterCheck<Input>>()
-  for (const [name, operation] of Object.entries(operations)) {
-    if (operation === undefined) continue
-    if (!isRecord(operation)) {
-      conditions.push(input => getField(input, name) === operation)
-      continue
+    case 'or': {
+      const checks = node.nodes.map(node => filterCheck(node, getField))
+      return input => checks.some(check => check(input))
     }
-    conditions.push(...createFieldConditions(name, operation, getField))
-  }
-  return conditions
-}
-
-function createFieldConditions<Input>(
-  name: string,
-  operation: Record<string, unknown>,
-  getField: (input: Input, name: string) => unknown
-): Array<FilterCheck<Input>> {
-  const inner = operation as RuntimeCondition
-  const conditions = Array<FilterCheck<Input>>()
-  if ('is' in inner && inner.is !== undefined)
-    conditions.push(input => getField(input, name) === inner.is)
-  if ('isNot' in inner && inner.isNot !== undefined)
-    conditions.push(input => getField(input, name) !== inner.isNot)
-  if (inner.in)
-    conditions.push(input => inner.in!.includes(getField(input, name)))
-  if (inner.notIn)
-    conditions.push(input => !inner.notIn!.includes(getField(input, name)))
-  if ('gt' in inner && inner.gt !== undefined)
-    conditions.push(input => compare(getField(input, name), inner.gt) > 0)
-  if ('gte' in inner && inner.gte !== undefined)
-    conditions.push(input => compare(getField(input, name), inner.gte) >= 0)
-  if ('lt' in inner && inner.lt !== undefined)
-    conditions.push(input => compare(getField(input, name), inner.lt) < 0)
-  if ('lte' in inner && inner.lte !== undefined)
-    conditions.push(input => compare(getField(input, name), inner.lte) <= 0)
-  if (inner.startsWith)
-    conditions.push(input => {
-      const value = getField(input, name)
-      return typeof value === 'string' && value.startsWith(inner.startsWith!)
-    })
-  if (inner.or) {
-    const nested = Array.isArray(inner.or) ? inner.or : [inner.or]
-    if (!nested.length) {
-      conditions.push(() => false)
-    } else {
-      const branches = nested.map(value =>
-        createFieldConditions(
-          name,
-          value as unknown as Record<string, unknown>,
-          getField
-        )
-      )
-      conditions.push(input =>
-        branches.some(branch => branch.every(check => check(input)))
-      )
+    case 'field': {
+      const check = conditionCheck(node.condition)
+      return input => check(getField(input, node.name))
     }
   }
-  if (inner.has) {
-    const has = filterChecker(inner.has)
-    conditions.push(input => has(getField(input, name)))
+}
+
+function conditionCheck(node: ConditionNode): FilterCheck<unknown> {
+  switch (node.op) {
+    case 'and': {
+      const checks = node.nodes.map(conditionCheck)
+      return value => checks.every(check => check(value))
+    }
+    case 'or': {
+      const checks = node.nodes.map(conditionCheck)
+      return value => checks.some(check => check(value))
+    }
+    case 'is':
+      return value => value === node.value
+    case 'isNot':
+      return value => value !== node.value
+    case 'in':
+      return value => node.values.includes(value)
+    case 'notIn':
+      return value => !node.values.includes(value)
+    case 'gt':
+      return value => compare(value, node.value) > 0
+    case 'gte':
+      return value => compare(value, node.value) >= 0
+    case 'lt':
+      return value => compare(value, node.value) < 0
+    case 'lte':
+      return value => compare(value, node.value) <= 0
+    case 'startsWith':
+      return value => typeof value === 'string' && value.startsWith(node.value)
+    case 'has': {
+      // Nested filters address the stored value itself, not the input.
+      const check = filterCheck(node.filter, defaultField)
+      return value => check(value)
+    }
+    case 'includes': {
+      const check = conditionCheck(node.item)
+      return value => Array.isArray(value) && value.some(check)
+    }
   }
-  if (inner.includes) {
-    const includes = filterChecker(inner.includes)
-    conditions.push(input => {
-      const value = getField(input, name)
-      return Array.isArray(value) && value.some(item => includes(item))
-    })
-  }
-  return conditions
 }
 
 function defaultField(input: unknown, name: string): unknown {
   return isRecord(input) ? input[name] : undefined
 }
 
+/** Order values the way SQLite orders JSON scalars: booleans are integers,
+ * numbers sort before text, and nulls or other types never compare. */
 function compare(left: unknown, right: unknown): number {
-  if (typeof left === 'number' && typeof right === 'number') return left - right
-  if (typeof left === 'string' && typeof right === 'string')
-    return left < right ? -1 : left > right ? 1 : 0
-  return Number.NaN
+  const a = scalar(left)
+  const b = scalar(right)
+  if (a === undefined || b === undefined) return Number.NaN
+  if (typeof a !== typeof b) return typeof a === 'number' ? -1 : 1
+  return a < b ? -1 : a > b ? 1 : 0
+}
+
+function scalar(value: unknown): number | string | undefined {
+  if (typeof value === 'boolean') return Number(value)
+  if (typeof value === 'number' || typeof value === 'string') return value
+  return undefined
 }

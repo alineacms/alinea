@@ -10,7 +10,7 @@ import {
   EntryIndexTable,
   entryIndexRow,
   type IndexedEntry
-} from '../entry/Schema.js'
+} from '../entry/EntryTable.js'
 import {compileEntryQuery} from './EntryQuery.js'
 import {aliasesFromData} from '#/core/db/EntryAliases.js'
 import * as Query from '#/query.js'

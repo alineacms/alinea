@@ -21,7 +21,7 @@ test('copying static files removes databases from other Alinea versions', async 
   ]
   try {
     await Promise.all(
-      [...currentFiles, ...oldFiles, 'source.js'].map(file =>
+      [...currentFiles, ...oldFiles].map(file =>
         writeFile(join(directory, file), '')
       )
     )
