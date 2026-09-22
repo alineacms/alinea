@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import type {AnyQueryResult, GraphQuery} from '#/core/Graph.js'
 import {WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'

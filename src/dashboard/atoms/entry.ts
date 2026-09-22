@@ -1,9 +1,6 @@
 import {JsonLoader} from '#/backend/loader/JsonLoader.js'
 import {Config} from '#/core/Config.js'
-import type {
-  EntryReference,
-  EntryReferenceScan
-} from '#/core/db/EntryReference.js'
+import type {EntryReference} from '#/core/db/EntryReference.js'
 import {Entry, EntryStatus} from '#/core/Entry.js'
 import type {Order} from '#/core/Graph.js'
 import {createRecord, parseRecord} from '#/core/EntryRecord.js'
@@ -53,7 +50,6 @@ interface EntryData {
 export interface EntryReferences {
   references: Array<EntryReferenceWithSource>
   total: number
-  scan: EntryReferenceScan
 }
 
 export interface EntryReferenceWithSource {
@@ -359,7 +355,10 @@ export class EntryLocaleAtoms {
   previewPayloadSignal = atom(get => {
     const version = get(this.selectedVersion)
     const editing = get(this.currentlyEditing)
-    return [version, editing ? get(editing.value) : undefined]
+    // The payload carries the content sha, so a sync or save that moves it
+    // must resend the payload or the preview cookie keeps a stale hash.
+    const sha = get(shaAtom)
+    return [version, editing ? get(editing.value) : undefined, sha]
   })
   updatePreviewPayload = atom(null, async get => {
     const node = await get(this.selectedNode)
@@ -635,7 +634,7 @@ export class EntryAtoms {
       if (!source || !policy.canRead(source)) return []
       return [{reference, source} satisfies EntryReferenceWithSource]
     })
-    return {references, total: result.total, scan: result.scan}
+    return {references, total: result.total}
   })
   incomingReferences = unwrap(
     this.incomingReferencesReady,

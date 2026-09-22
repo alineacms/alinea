@@ -1,7 +1,7 @@
 import {createCMS} from '#/core.js'
 import {Policy, WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {create, move, update} from '#/core/db/Operation.js'
 import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'

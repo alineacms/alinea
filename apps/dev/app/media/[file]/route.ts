@@ -6,7 +6,8 @@ interface RouteProps {
 }
 
 export const dynamic = 'force-static'
-export const revalidate = 60 * 60
+// Next statically analyses segment config, so this has to be a literal.
+export const revalidate = 3600
 
 export async function GET(_: Request, {params}: RouteProps) {
   const {file} = await params

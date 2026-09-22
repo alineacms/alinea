@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {Policy} from '#/core/Role.js'
 import {localUser} from '#/core/User.js'
 import {

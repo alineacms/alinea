@@ -1,8 +1,8 @@
 import {assert} from '../util/Assert.js'
 import type {ChangesBatch} from './Change.js'
 import {ShaMismatchError} from './ShaMismatchError.js'
-import type {GetBlobsOptions, Source} from './Source.js'
-import type {ReadonlyTree} from './Tree.js'
+import type {GetBlobsOptions, RemoteSource, Source} from './Source.js'
+import {Leaf, type ReadonlyTree} from './Tree.js'
 
 export class OverlaySource implements Source {
   #source: Source
@@ -42,6 +42,37 @@ export class OverlaySource implements Source {
   }
 
   async applyChanges(batch: ChangesBatch): Promise<void> {
+    return this.applyChangesTo(batch)
+  }
+
+  async applyChangesFrom(
+    remote: RemoteSource,
+    batch: ChangesBatch,
+    tree: ReadonlyTree
+  ): Promise<void> {
+    if (this.#tree.sha !== batch.fromSha)
+      throw new ShaMismatchError(batch.fromSha, this.#tree.sha)
+    const needed = new Set(
+      batch.changes
+        .filter(change => change.op === 'add')
+        .map(change => change.sha)
+    )
+    for await (const [sha, blob] of remote.getBlobs([...needed])) {
+      if (!needed.delete(sha)) continue
+      this.#blobs.set(sha, blob)
+    }
+    const missing = needed.values().next().value
+    assert(missing === undefined, `Source did not return blob ${missing}`)
+    const previous = this.#tree
+    this.#tree = tree
+    this.#pruneReplaced(batch, previous)
+  }
+
+  /** Apply a batch while reusing an already received or compiled target tree. */
+  async applyChangesTo(
+    batch: ChangesBatch,
+    tree?: ReadonlyTree
+  ): Promise<void> {
     if (this.#tree.sha !== batch.fromSha)
       throw new ShaMismatchError(batch.fromSha, this.#tree.sha)
     for (const change of batch.changes) {
@@ -49,9 +80,17 @@ export class OverlaySource implements Source {
       assert(change.contents, 'Missing contents')
       this.#blobs.set(change.sha, change.contents)
     }
-    this.#tree = await this.#tree.withChanges(batch)
-    for (const sha of this.#blobs.keys()) {
-      if (!this.#tree.hasSha(sha)) this.#blobs.delete(sha)
+    const previous = this.#tree
+    this.#tree = tree ?? (await this.#tree.withChanges(batch))
+    this.#pruneReplaced(batch, previous)
+  }
+
+  /** Only blobs at changed paths can have become orphaned. */
+  #pruneReplaced(batch: ChangesBatch, previous: ReadonlyTree): void {
+    for (const change of batch.changes) {
+      const replaced = previous.get(change.path)
+      if (replaced instanceof Leaf && !this.#tree.hasSha(replaced.sha))
+        this.#blobs.delete(replaced.sha)
     }
   }
 }

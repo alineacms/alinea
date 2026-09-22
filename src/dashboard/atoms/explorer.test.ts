@@ -2,7 +2,7 @@ import {
   createDashboardAtomFixture,
   createDashboardStore
 } from '#test/DashboardFixture.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {WriteablePolicy} from '#/core/Role.js'
 import {getScope} from '#/core/Scope.js'
 import {localUser} from '#/core/User.js'

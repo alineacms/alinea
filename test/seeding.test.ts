@@ -1,7 +1,7 @@
 import {suite} from '@alinea/suite'
 import {Config, Field} from '#/index.js'
 import {createCMS} from '#/core.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 
 const test = suite(import.meta)
 
@@ -121,4 +121,41 @@ test('keeps updated titles when re-indexing multiple seeded translations', async
     }),
     'page2'
   )
+})
+
+test('resolves identical seed paths within their own roots', async () => {
+  const workspace = Config.workspace('Main', {
+    source: 'content',
+    roots: {
+      first: Config.root('First', {
+        children: {
+          page: Config.page({type: Page, fields: {title: 'First page'}})
+        }
+      }),
+      second: Config.root('Second', {
+        children: {
+          page: Config.page({type: Page, fields: {title: 'Second page'}})
+        }
+      })
+    }
+  })
+  const collisionCms = createCMS({
+    schema: {Page},
+    workspaces: {main: workspace}
+  })
+  const initial = new LocalDB(collisionCms.config)
+  await initial.sync()
+  const reindexed = new LocalDB(collisionCms.config, initial.source)
+  await reindexed.sync()
+
+  test.is(
+    await reindexed.get({root: workspace.first, select: Page.title}),
+    'First page'
+  )
+  test.is(
+    await reindexed.get({root: workspace.second, select: Page.title}),
+    'Second page'
+  )
+  await reindexed.close()
+  await initial.close()
 })

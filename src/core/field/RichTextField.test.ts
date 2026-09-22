@@ -52,15 +52,13 @@ test('resolves linked image data for queried rich text', async () => {
   ] satisfies TextDoc
   const loader = {
     locale: 'fr',
-    resolver: {
-      config: {
-        schema: {},
-        workspaces: {
-          main: workspace('Main', {
-            source: 'content',
-            roots: {}
-          })
-        }
+    config: {
+      schema: {},
+      workspaces: {
+        main: workspace('Main', {
+          source: 'content',
+          roots: {}
+        })
       }
     },
     async resolveTargets(_projection: unknown, targets: Array<unknown>) {

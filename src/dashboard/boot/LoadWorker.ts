@@ -1,13 +1,12 @@
 import {IndexEvent} from '#/core/db/IndexEvent.js'
-import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import * as Comlink from 'comlink'
 import {ActivityEvent} from './ActivityEvent.js'
 import type {ConfigGenerator} from './Boot.js'
 import {DashboardWorker} from './DashboardWorker.js'
 
 export async function loadWorker(gen: ConfigGenerator) {
-  const source = new IndexedDBSource(globalThis.indexedDB, 'alinea')
-  const worker = new DashboardWorker(source)
+  const worker = new DashboardWorker(new MemorySource())
 
   addEventListener('connect', event => {
     if (!(event instanceof MessageEvent)) return

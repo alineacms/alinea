@@ -1,5 +1,5 @@
 import {cleanup, fireEvent, render, screen} from '#test/react.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import {Config, Field} from '#/index.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import {afterEach, expect, test} from 'bun:test'

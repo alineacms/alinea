@@ -10,7 +10,8 @@ import type {
   RequestContext
 } from '#/core/Connection.js'
 import {developmentKeyHeader, type Revision} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
+import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {role} from '#/core/Role.js'
 import type {User} from '#/core/User.js'
@@ -397,7 +398,7 @@ test('forwards authenticated mutations before handling them locally', async () =
     sub: 'admin'
   })
   test.is(beforeCommitCalls, 0)
-  test.not.ok(db.index.findFirst(entry => entry.id === 'forwarded-entry'))
+  test.not.ok(await db.first({id: 'forwarded-entry', status: 'all'}))
 })
 
 test('handles a mutation locally when forwarding declines after reading it', async () => {
@@ -437,7 +438,7 @@ test('handles a mutation locally when forwarding declines after reading it', asy
 
   test.is(response.status, 200)
   test.equal(forwardedMutations, mutations)
-  test.ok(db.index.findFirst(entry => entry.id === 'local-entry'))
+  test.ok(await db.first({id: 'local-entry', status: 'all'}))
 })
 
 test('runs commit hooks around a successful commit', async () => {
@@ -670,7 +671,11 @@ test('commits mutations returned by beforeCommit', async () => {
     ]),
     requestContext()
   )
-  const entry = db.index.findFirst(entry => entry.id === 'adjusted-entry')
+  const entry = await db.first({
+    id: 'adjusted-entry',
+    status: 'all',
+    select: {data: Entry.data}
+  })
 
   test.is(response.status, 200)
   test.is(entry?.data.title, 'Adjusted by hook')
@@ -783,7 +788,7 @@ test('does not report a committed mutation as failed when afterCommit throws', a
     )
 
     test.is(response.status, 200)
-    test.ok(db.index.findFirst(entry => entry.id === 'committed-entry'))
+    test.ok(await db.first({id: 'committed-entry', status: 'all'}))
   } finally {
     console.error = error
   }
@@ -833,7 +838,7 @@ test('does not commit when beforeCommit throws', async () => {
 
     test.is(response.status, 500)
     test.is(writes, 0)
-    test.not.ok(db.index.findFirst(entry => entry.id === 'rejected-entry'))
+    test.not.ok(await db.first({id: 'rejected-entry', status: 'all'}))
   } finally {
     console.error = error
   }
@@ -1413,3 +1418,42 @@ function requestContext(): RequestContext {
     isDev: true
   }
 }
+
+test('serves current content when a read cannot sync with the remote', async () => {
+  const cms = createCMS({
+    schema: {Page},
+    workspaces: {main},
+    syncInterval: 0
+  })
+  const db = new LocalDB(cms.config)
+  await db.sync()
+  db.syncWith = async () => {
+    throw new Error('Remote unavailable')
+  }
+  const handle = createHandler({
+    cms,
+    db,
+    remote(context) {
+      return composeBackend(db, {
+        async verify(): Promise<AuthedContext> {
+          return {
+            ...context,
+            token: 'test',
+            user: {roles: ['admin'], sub: 'admin'}
+          }
+        }
+      })
+    }
+  })
+  const warn = console.warn
+  const warnings: Array<string> = []
+  console.warn = (message: string) => warnings.push(message)
+  try {
+    const response = await handle(resolveRequest({}), requestContext())
+    test.is(response.status, 200)
+    test.is(warnings.length, 1)
+    test.ok(warnings[0]!.includes('Remote unavailable'))
+  } finally {
+    console.warn = warn
+  }
+})

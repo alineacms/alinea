@@ -1,6 +1,6 @@
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/next'
-import {IcRoundTranslate, IcRoundUploadFile} from '../../../src/dashboard/icons'
+import {IcRoundTranslate, IcRoundUploadFile} from 'alinea/dashboard/icons'
 import * as schema from './schema'
 
 const editor = Config.role('Editor', {
@@ -48,6 +48,12 @@ export const cms = createCMS({
   preview: true,
   handlerUrl: '/api/cms',
   baseUrl: {
+    // Preview deployments talk to their own handler; production uses the
+    // custom domain so server-side calls skip Vercel's deployment protection.
+    production:
+      process.env.VERCEL_ENV === 'production'
+        ? 'dev.alineacms.com'
+        : (process.env.VERCEL_URL ?? 'dev.alineacms.com'),
     development: 'http://localhost:3000'
   },
   schema,

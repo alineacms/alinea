@@ -1,7 +1,7 @@
 import {cms} from '#test/cms.js'
 import {createTestConnection} from '#test/CreateConnection.js'
 import type {LocalConnection} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import {LocalDB} from '#/database/LocalDB.js'
 import type {Mutation} from '#/core/db/Mutation.js'
 import {FSSource} from '#/core/source/FSSource.js'
 import {IndexedDBSource} from '#/core/source/IndexedDBSource.js'
@@ -11,11 +11,6 @@ import {expect, test} from 'bun:test'
 import {indexedDB} from 'fake-indexeddb'
 import {ActivityEvent} from './ActivityEvent.js'
 import {DashboardWorker} from './DashboardWorker.js'
-
-async function suppressIndexEvents(worker: DashboardWorker) {
-  const db = await worker.db
-  db.index.dispatchEvent = () => true
-}
 
 test('loads local state without starting a remote sync', async () => {
   const fixture = new FSSource('test/fixtures/demo')
@@ -33,7 +28,6 @@ test('loads local state without starting a remote sync', async () => {
   const worker = new DashboardWorker(new MemorySource())
 
   await worker.load('deferred-remote', cms.config, client)
-  await suppressIndexEvents(worker)
 
   expect(remoteSyncs).toBe(0)
   expect(worker.activities()).toEqual([])
@@ -76,7 +70,6 @@ test('serializes concurrent sync requests and waits for each result', async () =
   }
   const worker = new DashboardWorker(new MemorySource())
   await worker.load('coalesced-sync', cms.config, client)
-  await suppressIndexEvents(worker)
 
   const first = worker.sync()
   const second = worker.sync()
@@ -131,12 +124,10 @@ test('queues a separate sync when the revision changes', async () => {
   }
   const worker = new DashboardWorker(new MemorySource())
   await worker.load('first-revision', cms.config, firstClient)
-  await suppressIndexEvents(worker)
   const first = worker.sync()
   await firstSyncStarted
 
   await worker.load('second-revision', cms.config, secondClient)
-  await suppressIndexEvents(worker)
   const second = worker.sync()
 
   expect(secondRemoteSyncs).toBe(0)
@@ -202,7 +193,6 @@ test('waits for a new revision to finish loading before syncing it', async () =>
   holdNextTreeRead = false
   releaseTreeRead?.()
   await load
-  await suppressIndexEvents(worker)
   await sync
 
   expect(firstRemoteSyncs).toBe(0)
@@ -250,7 +240,6 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   }
   const worker = new DashboardWorker(source)
   await worker.load('loaded-before-failure', cms.config, firstClient)
-  await suppressIndexEvents(worker)
   const firstSync = worker.sync()
   await firstSyncStarted
 
@@ -269,7 +258,6 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   )
 
   await worker.load('loaded-before-failure', cms.config, recoveredClient)
-  await suppressIndexEvents(worker)
   const recoveredSync = worker.sync()
 
   releaseFirstSync?.()
@@ -307,7 +295,6 @@ test('syncs the remote database without recording fetch activity', async () => {
   })
 
   await worker.load('sync-status', cms.config, client)
-  await suppressIndexEvents(worker)
   const sync = worker.sync()
   await syncStarted
 
@@ -341,7 +328,6 @@ test('keeps successful content actions in activity history', async () => {
     cms.config,
     createTestConnection(remoteDB)
   )
-  await suppressIndexEvents(worker)
   await worker.sync()
   const db = await worker.db
   const original = await db.get({
@@ -442,7 +428,9 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
 
   await worker.load('incompatible-cache', cms.config, client)
   await expect(worker.sync()).rejects.toThrow(
-    'Failed to load cached content and fetch remote updates'
+    'Failed to load cached content and fetch remote updates\n' +
+      'Cached content: Invalid root: removed-root for workspace demo\n' +
+      'Remote updates: Remote unavailable'
   )
 
   remoteUnavailable = false
@@ -478,7 +466,6 @@ test('retries a failed initial sync', async () => {
   }
   const worker = new DashboardWorker(new MemorySource())
   await worker.load('retry-initial-sync', cms.config, client)
-  await suppressIndexEvents(worker)
 
   await expect(worker.sync()).rejects.toThrow('Remote unavailable')
 
@@ -598,8 +585,6 @@ async function createFailedMutationFixture() {
   await initialSyncStarted
   await sync
   const db = await worker.db
-  // Index notifications are orthogonal to the queue behavior under test.
-  db.index.dispatchEvent = () => true
   const original = await db.get({
     type: cms.schema.DemoRecipe,
     path: 'chocolate-chip'

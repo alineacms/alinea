@@ -66,6 +66,9 @@ export class CloudRemote extends OAuth2 implements RemoteConnection {
 
   async getTreeIfDifferent(sha: string): Promise<ReadonlyTree | undefined> {
     const ctx = this.#context
+    // Without an api key there is no cloud content to sync with: keep serving
+    // the bundled database instead of asking the cloud and failing.
+    if (!validApiKey(ctx.apiKey)) return
     return parseOutcome<Tree | null>(
       fetch(
         cloudConfig.tree,

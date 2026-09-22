@@ -7,12 +7,11 @@ import {
   createHandler as createCoreHandler,
   type HandlerHooks
 } from '#/backend/Handler.js'
-import {generatedSource} from '#/backend/store/GeneratedSource.js'
 import {JWTPreviews} from '#/backend/util/JWTPreviews.js'
 import {CloudRemote} from '#/cloud/CloudRemote.js'
 import {Config} from '#/core/Config.js'
 import type {RequestContext} from '#/core/Connection.js'
-import {LocalDB} from '#/core/db/LocalDB.js'
+import type {LocalStore} from '#/core/db/LocalStore.js'
 import {trace} from '#/core/Trace.js'
 import PLazy from 'p-lazy'
 import {NextCMS} from './cms.js'
@@ -27,7 +26,12 @@ export interface NextHandlerOptions extends HandlerHooks {
   backend?: BackendFactory | BackendOptions
 }
 
-export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
+export type OpenGeneratedDatabase = (config: Config) => Promise<LocalStore>
+
+export function createHandlerWithDatabase(
+  input: NextCMS | NextHandlerOptions,
+  openGeneratedDatabase?: OpenGeneratedDatabase
+): Handler {
   const options = input instanceof NextCMS ? {cms: input} : input
   const config = options.cms.config
   const backend: BackendFactory =
@@ -41,10 +45,15 @@ export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
-      const source = await generatedSource
-      const db = new LocalDB(config, source)
-      await db.sync()
-      return db
+      if (process.env.NEXT_RUNTIME === 'edge')
+        throw new Error(
+          'The Alinea handler is not supported in Edge runtime environments.'
+        )
+      if (!openGeneratedDatabase)
+        throw new Error(
+          "A generated database loader is required. Import createHandler from 'alinea/next'."
+        )
+      return openGeneratedDatabase(config)
     })
   )
   const handleBackend = createCoreHandler({
@@ -129,4 +138,9 @@ function rewrittenFilePath(
   } catch {
     return
   }
+}
+
+/** A handler without a generated database, as used in the Edge runtime. */
+export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
+  return createHandlerWithDatabase(input)
 }

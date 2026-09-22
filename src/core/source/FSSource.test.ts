@@ -1,7 +1,7 @@
 import demoTree from '#test/fixtures/demo.json' with {type: 'json'}
 import {suite} from '@alinea/suite'
 import {spyOn} from 'bun:test'
-import fs, {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import fs, {mkdtemp, rm, utimes, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {CachedFSSource, FSSource} from './FSSource.js'
@@ -221,6 +221,48 @@ test('cached source retains unchanged blobs and prunes removed blobs', async () 
   }
 })
 
+test('hydrated file stats avoid reading unchanged files', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-fs-hydrate-'))
+  const changedFile = join(dir, 'changed.txt')
+  try {
+    await writeFile(join(dir, 'unchanged.txt'), 'Unchanged')
+    await writeFile(changedFile, 'Changed')
+
+    const initial = new FSSource(dir)
+    const tree = await initial.getTree()
+    const stats = new Map(initial.fileStats())
+    test.is(stats.size, 2)
+
+    const source = new FSSource(dir)
+    source.hydrate(tree, stats)
+    const readFile = spyOn(fs, 'readFile')
+    try {
+      const hydrated = await source.getTree()
+      test.is(readFile.mock.calls.length, 0)
+      test.is(hydrated.sha, tree.sha)
+
+      await writeFile(changedFile, 'Changed contents')
+      const modified = new Date(Date.now() + 2000)
+      await utimes(changedFile, modified, modified)
+      readFile.mockClear()
+      const updated = await source.getTree()
+
+      // The source joins paths with forward slashes, so compare normalized
+      // paths on Windows as well.
+      const normalize = (file: string) => file.replaceAll('\\', '/')
+      test.equal(
+        readFile.mock.calls.map(([file]) => normalize(String(file))),
+        [normalize(changedFile)]
+      )
+      test.ok(updated.sha !== tree.sha)
+    } finally {
+      readFile.mockRestore()
+    }
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
+})
+
 test('cached source retries a failed tree refresh', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'alinea-fs-retry-'))
   try {
@@ -249,5 +291,43 @@ test('cached source retries a failed tree refresh', async () => {
     test.is(tree.index().size, 1)
   } finally {
     await rm(dir, {recursive: true, force: true})
+  }
+})
+
+test('lists nested files relative to the content dir', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-fs-nested-'))
+  const outside = await mkdtemp(join(tmpdir(), 'alinea-fs-outside-'))
+  try {
+    const files: Record<string, string> = {
+      'root.json': 'Root',
+      'a/one.json': 'One',
+      'a/b/two.json': 'Two',
+      'a/b/c/three.json': 'Three',
+      'empty/.gitkeep': '',
+      'linked/four.json': 'Four',
+      'linked/sub/five.json': 'Five'
+    }
+    for (const [file, contents] of Object.entries(files)) {
+      const target = file.startsWith('linked/')
+        ? join(outside, file.slice('linked/'.length))
+        : join(dir, file)
+      await fs.mkdir(join(target, '..'), {recursive: true})
+      await writeFile(target, contents)
+    }
+    await fs.mkdir(join(dir, 'a/b/c/empty'), {recursive: true})
+    // Symlinked directories are followed, as a recursive readdir does in Node
+    await fs.symlink(outside, join(dir, 'linked'), 'junction')
+
+    const expected = new WriteableTree()
+    for (const [file, contents] of Object.entries(files))
+      expected.add(file, await hashBlob(new TextEncoder().encode(contents)))
+    const expectedTree = await expected.compile()
+
+    const tree = await new FSSource(dir).getTree()
+    test.equal([...tree.index().keys()].sort(), Object.keys(files).sort())
+    test.is(tree.sha, expectedTree.sha)
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+    await rm(outside, {recursive: true, force: true})
   }
 })

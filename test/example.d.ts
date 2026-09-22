@@ -1,4 +1,4 @@
-import { LocalDB } from '#/core/db/LocalDB.js';
+import { LocalDB } from '#/database/LocalDB.js';
 export declare const config: {
     schema: {
         Fields: import("#/index.js").Type<import("../src/core/Document").Document & {

@@ -1,12 +1,13 @@
 import {createCMS, Entry} from '#/core.js'
 import {ListRow} from '#/core/ListRow.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import {isRecord} from '#/core/util/Objects.js'
 import type {MetadataAlias} from '#/field/metadata/MetadataAliases.js'
 import {Config, Edit, Field} from '#/index.js'
-import {createEntryIndex} from '#test/EntryFixture.js'
+import {createEntrySource} from '#test/EntryFixture.js'
 import {suite} from '@alinea/suite'
-import {TestDB} from './TestDB.js'
+import {EntryStore} from './EntryStore.js'
 
 const test = suite(import.meta)
 
@@ -159,7 +160,7 @@ test('create fills document metadata defaults around explicit values', async () 
 })
 
 async function createDb() {
-  const {source} = await createEntryIndex(cms.config, [
+  const source = await createEntrySource(cms.config, [
     {
       id: 'one',
       type: 'Page',
@@ -172,19 +173,19 @@ async function createDb() {
       }
     }
   ])
-  const db = new TestDB(cms.config, source)
+  const db = await EntryStore.memory(cms.config, source)
   await db.sync()
   return db
 }
 
 async function createEmptyDb() {
-  const db = new TestDB(cms.config)
+  const db = await EntryStore.memory(cms.config, new MemorySource())
   await db.sync()
   return db
 }
 
 async function createDocumentDb() {
-  const db = new TestDB(documentCms.config)
+  const db = await EntryStore.memory(documentCms.config, new MemorySource())
   await db.sync()
   return db
 }
@@ -232,8 +233,16 @@ test('assigns distinct order indexes to entries created in one batch', async () 
     }
   ])
 
-  const first = db.index.findFirst(entry => entry.id === 'batch-entry-0')
-  const second = db.index.findFirst(entry => entry.id === 'batch-entry-1')
+  const first = await db.first({
+    id: 'batch-entry-0',
+    status: 'all',
+    select: {index: Entry.index}
+  })
+  const second = await db.first({
+    id: 'batch-entry-1',
+    status: 'all',
+    select: {index: Entry.index}
+  })
   if (!first || !second) throw new Error('Expected both batch entries')
   test.ok(first.index !== second.index)
   test.ok(first.index < second.index)
@@ -277,8 +286,16 @@ test('resolves path collisions sequentially within one batch', async () => {
     }
   ])
 
-  const first = db.index.findFirst(entry => entry.id === 'batch-path-0')
-  const second = db.index.findFirst(entry => entry.id === 'batch-path-1')
+  const first = await db.first({
+    id: 'batch-path-0',
+    status: 'all',
+    select: {path: Entry.path}
+  })
+  const second = await db.first({
+    id: 'batch-path-1',
+    status: 'all',
+    select: {path: Entry.path}
+  })
   test.is(first?.path, 'same')
   test.is(second?.path, 'same-1')
 })
@@ -304,7 +321,11 @@ test('allows later mutations to target entries created in the same batch', async
     }
   ])
 
-  const entry = db.index.findFirst(entry => entry.id === 'batch-created')
+  const entry = await db.first({
+    id: 'batch-created',
+    status: 'all',
+    select: {title: Entry.title}
+  })
   test.is(entry?.title, 'Updated')
 })
 
@@ -327,8 +348,12 @@ test('create allows duplicate metadata URL aliases per root', async () => {
     set: pageData('Two', 'two', '/old-one')
   })
 
-  const found = db.index.findByUrl('/old-one', () => true)
-  test.is(found?.id, 'one')
+  const found = await db.first({
+    root: 'pages',
+    alias: '/old-one',
+    select: Entry.id
+  })
+  test.is(found, 'one')
 })
 
 test('create allows aliases that conflict with canonical URLs', async () => {
@@ -341,8 +366,12 @@ test('create allows aliases that conflict with canonical URLs', async () => {
     set: pageData('Two', 'two', '/one')
   })
 
-  const found = db.index.findByUrl('/one', () => true)
-  test.is(found?.id, 'one')
+  const found = await db.first({
+    root: 'pages',
+    url: '/one',
+    select: Entry.id
+  })
+  test.is(found, 'one')
 })
 
 test('publish allows duplicate metadata URL aliases per root', async () => {
@@ -359,8 +388,12 @@ test('publish allows duplicate metadata URL aliases per root', async () => {
     status: 'draft'
   })
 
-  const found = db.index.findByUrl('/old-one', () => true)
-  test.is(found?.id, 'one')
+  const found = await db.first({
+    root: 'pages',
+    alias: '/old-one',
+    select: Entry.id
+  })
+  test.is(found, 'one')
 })
 
 test('allows duplicate metadata URL aliases across roots', async () => {
@@ -394,7 +427,7 @@ test('blocks duplicate MediaFile URLs across media roots', async () => {
       })
     }
   })
-  const db = new TestDB(mediaCms.config)
+  const db = await EntryStore.memory(mediaCms.config, new MemorySource())
   await db.sync()
   await db.create({
     type: MediaFile,
@@ -426,7 +459,7 @@ test('allows duplicate MediaFile URL aliases across media roots', async () => {
       })
     }
   })
-  const db = new TestDB(mediaCms.config)
+  const db = await EntryStore.memory(mediaCms.config, new MemorySource())
   await db.sync()
   const first = await db.create({
     type: MediaFile,
@@ -439,8 +472,11 @@ test('allows duplicate MediaFile URL aliases across media roots', async () => {
     set: mediaFileData('Two', 'two', ['/old-file'])
   })
 
-  const found = db.index.findByUrl('/old-file', () => true)
-  test.is(found?.id, first._id)
+  const found = await db.first({
+    alias: '/old-file',
+    select: Entry.id
+  })
+  test.is(found, first._id)
 })
 
 test('mediaUrl prefixes disambiguate duplicate MediaFile URLs', async () => {
@@ -463,7 +499,7 @@ test('mediaUrl prefixes disambiguate duplicate MediaFile URLs', async () => {
       })
     }
   })
-  const db = new TestDB(mediaCms.config)
+  const db = await EntryStore.memory(mediaCms.config, new MemorySource())
   await db.sync()
   await db.create({
     type: MediaFile,
@@ -496,8 +532,11 @@ test('allows duplicate MediaFile URL aliases in the same root', async () => {
     set: mediaFileData('Two', 'two', ['/old-file'])
   })
 
-  const found = db.index.findByUrl('/old-file', () => true)
-  test.is(found?.id, first._id)
+  const found = await db.first({
+    alias: '/old-file',
+    select: Entry.id
+  })
+  test.is(found, first._id)
 })
 
 test('allows duplicate metadata URL aliases on the same entry', async () => {
@@ -624,7 +663,7 @@ test('update preserves a MediaFile URL with an empty alias row', async () => {
 })
 
 test('update removes a current MediaFile URL from legacy aliases', async () => {
-  const {source} = await createEntryIndex(cms.config, [
+  const source = await createEntrySource(cms.config, [
     {
       id: 'media-one',
       type: 'MediaFile',
@@ -637,7 +676,7 @@ test('update removes a current MediaFile URL from legacy aliases', async () => {
       }
     }
   ])
-  const db = new TestDB(cms.config, source)
+  const db = await EntryStore.memory(cms.config, source)
   await db.sync()
 
   await db.update({

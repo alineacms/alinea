@@ -18,6 +18,23 @@ export interface RemoteSource {
 export interface Source extends RemoteSource {
   getTree(): Promise<ReadonlyTree>
   applyChanges(batch: ChangesBatch): Promise<void>
+  /** Consume remote blobs incrementally instead of materializing one bundle. */
+  applyChangesFrom?(
+    remote: RemoteSource,
+    batch: ChangesBatch,
+    tree: ReadonlyTree
+  ): Promise<void>
+}
+
+export async function applyChangesFrom(
+  source: Source,
+  remote: RemoteSource,
+  batch: ChangesBatch,
+  tree: ReadonlyTree
+): Promise<void> {
+  if (source.applyChangesFrom)
+    return source.applyChangesFrom(remote, batch, tree)
+  return source.applyChanges(await bundleContents(remote, batch))
 }
 
 export async function bundleContents(
@@ -63,8 +80,15 @@ export async function syncWith(
   source: Source,
   remote: RemoteSource
 ): Promise<ChangesBatch> {
-  const batch = await diff(source, remote)
-  await source.applyChanges(batch)
+  const localTree = await source.getTree()
+  const remoteTree = await remote.getTreeIfDifferent(localTree.sha)
+  if (!remoteTree)
+    return {
+      fromSha: localTree.sha,
+      changes: []
+    }
+  const batch = localTree.diff(remoteTree)
+  await applyChangesFrom(source, remote, batch, remoteTree)
   return batch
 }
 

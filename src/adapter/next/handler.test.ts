@@ -1,5 +1,7 @@
 import {Config} from '#/index.js'
+import {MemorySource} from '#/core/source/MemorySource.js'
 import {sign} from '#/core/util/JWT.js'
+import {EntryStore} from '#/database/EntryStore.js'
 import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
 
 const apiKey = 'preview-secret'
@@ -25,10 +27,8 @@ mock.module('next/headers', () => ({
   })
 }))
 
-const [{createCMS}, {createHandler, handlerPathname}] = await Promise.all([
-  import('./cms.js'),
-  import('./handler.js')
-])
+const [{createCMS}, {createHandlerWithDatabase, handlerPathname}] =
+  await Promise.all([import('./cms.js'), import('./handler.js')])
 
 const Page = Config.document('Page', {fields: {}})
 const cms = createCMS({
@@ -42,7 +42,9 @@ const cms = createCMS({
     })
   }
 })
-const handle = createHandler(cms)
+const handle = createHandlerWithDatabase(cms, async () => {
+  throw new Error('Test handler should not open a database')
+})
 let consoleError: ReturnType<typeof spyOn>
 
 test('uses the exact pathname of an absolute handler URL', () => {
@@ -59,8 +61,11 @@ test('uses the exact pathname of an absolute handler URL', () => {
 test('reconstructs a rewritten media request from its public pathname', async () => {
   const previousDevServer = process.env.ALINEA_DEV_SERVER
   process.env.ALINEA_DEV_SERVER = 'https://example.com'
+  const mediaHandle = createHandlerWithDatabase(cms, () =>
+    EntryStore.memory(cms.config, new MemorySource())
+  )
   try {
-    const response = await handle(
+    const response = await mediaHandle(
       new Request(
         'https://example.com/admin/file/company-a/missing.jpg?version=123'
       )

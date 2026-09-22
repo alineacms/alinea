@@ -1,12 +1,11 @@
 import type {Client} from '#/core/Client.js'
-import type {LocalDB} from '#/core/db/LocalDB.js'
 import type {ReadonlyTree} from '#/core/source/Tree.js'
 import {expect, mock, test} from 'bun:test'
 import {syncIfStale} from './syncCheck.js'
 
 function dbWith(sha: string) {
   const syncWith = mock(async () => sha)
-  const db = {sha, syncWith} as unknown as LocalDB
+  const db = {sha, syncWith}
   return {db, syncWith}
 }
 
