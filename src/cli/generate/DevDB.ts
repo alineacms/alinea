@@ -35,6 +35,7 @@ export interface WatchFiles {
 /** The persistent generated database used by dev, build and the local handler. */
 export class DevDB extends EntryStore {
   declare readonly source: CachedFSSource
+  declare readonly database: EntryDatabase
   #options: DevDBOptions
 
   private constructor(

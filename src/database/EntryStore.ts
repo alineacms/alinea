@@ -24,12 +24,13 @@ import type {LocalStore} from '#/core/db/LocalStore.js'
 import {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {UploadMetadata, UploadResponse} from '#/core/Connection.js'
 import {ShaMismatchError} from '#/core/source/ShaMismatchError.js'
-import {
-  EntryDatabase,
-  type EntryChangeListener,
-  type EntryDatabaseOptions,
-  type EntrySyncResult
-} from './EntryDatabase.js'
+import {EntryDatabase} from './EntryDatabase.js'
+import type {
+  EntryChangeListener,
+  EntryDatabaseOptions,
+  EntryLayer,
+  EntrySyncResult
+} from './EntryLayer.js'
 import {wasmDatabase} from './driver/WasmDatabase.js'
 import {DatabaseSource} from './DatabaseSource.js'
 
@@ -45,7 +46,7 @@ export class EntryStore
   implements LocalStore, AsyncDisposable
 {
   readonly config: Config
-  readonly database: EntryDatabase
+  readonly database: EntryLayer
   readonly source: Source
   #ownsDatabase: boolean
   #sourceFollowsDatabase: boolean
@@ -54,7 +55,7 @@ export class EntryStore
 
   constructor(
     config: Config,
-    database: EntryDatabase,
+    database: EntryLayer,
     source: Source,
     options: EntryStoreOptions = {}
   ) {
