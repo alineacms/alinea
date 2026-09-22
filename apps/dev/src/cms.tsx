@@ -48,6 +48,7 @@ export const cms = createCMS({
   preview: true,
   handlerUrl: '/api/cms',
   baseUrl: {
+    production: process.env.VERCEL_URL ?? 'dev.alineacms.com',
     development: 'http://localhost:3000'
   },
   schema,

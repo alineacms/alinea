@@ -1,4 +1,6 @@
 import { Config, Field } from 'alinea'
+// Loads the table commands' type augmentation used by the toolbar below.
+import type {} from '@tiptap/extension-table'
 import {
   alignment,
   formatting,
