@@ -16,7 +16,6 @@ const packageJson = {
     './config.js': './config.js',
     './release.js': './release.js',
     [`./${generatedDatabaseFile}`]: `./${generatedDatabaseFile}`,
-    './database.js': './database.js',
     './database.node.js': './database.node.js'
   }
 }
@@ -32,10 +31,6 @@ export async function copyStaticFiles({outDir}: GenerateContext) {
   await fs.writeFile(
     path.join(outDir, 'package.json'),
     JSON.stringify(packageJson, null, 2)
-  )
-  await fs.writeFile(
-    path.join(outDir, 'database.js'),
-    `export const database = undefined`
   )
   // A static asset reference lets file tracing bundle the database with the
   // serverless functions that open it, wherever this package is hoisted to.

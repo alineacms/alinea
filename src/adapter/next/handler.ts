@@ -45,11 +45,13 @@ export function createHandlerWithDatabase(
   const span = trace(config, 'alinea.next.handler.db')
   const db = PLazy.from(() =>
     span(async () => {
+      if (process.env.NEXT_RUNTIME === 'edge')
+        throw new Error(
+          'The Alinea handler is not supported in Edge runtime environments.'
+        )
       if (!openGeneratedDatabase)
         throw new Error(
-          'A generated database loader is required. Import createHandler from ' +
-            "'alinea/next' for Node or 'alinea/next.edge' for Edge, " +
-            'or pass a loader to createHandlerWithDatabase.'
+          "A generated database loader is required. Import createHandler from 'alinea/next'."
         )
       return openGeneratedDatabase(config)
     })
@@ -136,4 +138,9 @@ function rewrittenFilePath(
   } catch {
     return
   }
+}
+
+/** A handler without a generated database, as used in the Edge runtime. */
+export function createHandler(input: NextCMS | NextHandlerOptions): Handler {
+  return createHandlerWithDatabase(input)
 }

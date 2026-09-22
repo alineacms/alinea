@@ -52,10 +52,13 @@ export class NextCMS<
   constructor(config: Definition, openBundledDatabase?: OpenBundledDatabase) {
     super(config)
     this.bundledDb = PLazy.from(async () => {
+      if (process.env.NEXT_RUNTIME === 'edge')
+        throw new Error(
+          'Local DB is not supported in Edge runtime environments.'
+        )
       if (!openBundledDatabase)
         throw new Error(
-          'A bundled database loader is required. Import createCMS from ' +
-            "'alinea/next' for Node or 'alinea/next.edge' for Edge."
+          "A bundled database loader is required. Import createCMS from 'alinea/next'."
         )
       const span = trace(this.config, 'alinea.next.cms.db')
       return span(() => openBundledDatabase(this.config))

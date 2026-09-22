@@ -98,16 +98,7 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   let afterGenerateCalled = false
 
   async function writeStore(db: DevDB) {
-    const size = await db.finalize()
-    // Bundle the SQLite file for Edge as a JS-importable base64 module so
-    // edge-light handlers can open it through sqlite-wasm without node:fs.
-    const databasePath = join(context.outDir, generatedDatabaseFile)
-    const bytes = await fsp.readFile(databasePath)
-    await fsp.writeFile(
-      join(context.outDir, 'database.js'),
-      `export const database = ${JSON.stringify(bytes.toString('base64'))}`
-    )
-    return size
+    return db.finalize()
   }
   for await (const cms of builds) {
     Config.handlerUrl(cms.config)
