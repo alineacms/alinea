@@ -6,7 +6,9 @@ export const DatabaseStateColumns = {
   id: column.integer().primaryKey(),
   revision: column.text().notNull(),
   /** Merkle tree matching the indexed source revision. */
-  tree: column.json<Tree>()
+  tree: column.json<Tree>(),
+  /** The revision the full-text search index was last built or updated for. */
+  searchRevision: column.text()
 }
 
 export const DatabaseStateTable = table(

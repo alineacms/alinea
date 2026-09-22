@@ -1,3 +1,4 @@
+import {chunks} from '#/core/util/Arrays.js'
 import {sql, type Database, type HasSql, type Sql} from 'rado'
 import type {EntryIndexTarget} from '../entry/EntryTable.js'
 
@@ -82,5 +83,36 @@ export function searchQuery(
         ? sql<string>`snippet(${search}, 2, ${start}, ${end}, ${cutOff}, ${limit})`
         : sql.value('')
     }
+  }
+}
+
+const updateBatchSize = 500
+
+/** Refresh the rows of changed entries and drop rows of removed entries. */
+export async function updateSearch(
+  db: Database,
+  entry: EntryIndexTarget,
+  name: string,
+  changedEntryIds: ReadonlyArray<string>
+): Promise<void> {
+  const search = sql.identifier(name)
+  for (const ids of chunks(changedEntryIds, updateBatchSize)) {
+    const list = sql.join(
+      ids.map(id => sql.value(id)),
+      sql`, `
+    )
+    await db.run(sql`delete from ${search}
+      where versionId in (select versionId from ${entry} where id in (${list}))`)
+  }
+  await db.run(sql`delete from ${search}
+    where versionId not in (select versionId from ${entry})`)
+  for (const ids of chunks(changedEntryIds, updateBatchSize)) {
+    const list = sql.join(
+      ids.map(id => sql.value(id)),
+      sql`, `
+    )
+    await db.run(sql`insert into ${search}(versionId, title, body)
+      select versionId, title, searchableText
+      from ${entry} where id in (${list})`)
   }
 }

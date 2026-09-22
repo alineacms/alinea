@@ -916,3 +916,104 @@ test('database mutations propagate shared fields between translations', async ()
   ).toEqual(['updated', 'updated'])
   await database.close()
 })
+
+test('search follows synced changes without rebuilding the index', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const encode = (id: string, title: string) =>
+    new TextEncoder().encode(
+      JSON.stringify({_id: id, _type: 'Page', _index: id, title})
+    )
+  const source = new MemorySource()
+  const initial = await transaction(source)
+  initial.add('pages/a.json', encode('a', 'Alpha'))
+  initial.add('pages/b.json', encode('b', 'Beta'))
+  const compiled = await initial.compile()
+  await source.applyChanges({
+    fromSha: compiled.from.sha,
+    changes: compiled.changes
+  })
+  using sqlite = new Database(':memory:')
+  const db = connect(sqlite)
+  await EntryDatabase.createSchema(db, ReadonlyTree.EMPTY.sha)
+  const base = new EntryDatabase(config, db)
+  await base.syncWith(source)
+  await base.prepareSearch()
+  expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual(['a'])
+
+  // Corrupting the index proves later results come from in-place updates
+  // rather than a rebuild from the entry table.
+  await db.run(
+    sql`delete from alinea_entry_search where versionId like '%"b"%'`
+  )
+  const change = await transaction(source)
+  change.add('pages/a.json', encode('a', 'Gamma'))
+  change.remove('pages/b.json')
+  change.add('pages/c.json', encode('c', 'Delta'))
+  const next = await change.compile()
+  await source.applyChanges({fromSha: next.from.sha, changes: next.changes})
+  await base.syncWith(source)
+
+  expect(await base.find({search: 'Gamma', select: Entry.id})).toEqual(['a'])
+  expect(await base.find({search: 'Alpha', select: Entry.id})).toEqual([])
+  expect(await base.find({search: 'Beta', select: Entry.id})).toEqual([])
+  expect(await base.find({search: 'Delta', select: Entry.id})).toEqual(['c'])
+  const rows = await db.all<{versionId: string}>(
+    sql`select versionId from alinea_entry_search`
+  )
+  expect(rows.length).toBe(2)
+  const state = await db.get<{revision: string; searchRevision: string}>(
+    sql`select revision, searchRevision from alinea_database_state where id = 1`
+  )
+  expect(state?.searchRevision).toBe(state?.revision)
+  await base.close()
+})
+
+test('a reopened database trusts the search index it persisted', async () => {
+  const Page = ConfigBuilder.document('Page', {fields: {}})
+  const config: Config = {
+    schema: {Page},
+    workspaces: {
+      main: ConfigBuilder.workspace('Main', {
+        source: 'content',
+        roots: {pages: ConfigBuilder.root('Pages', {contains: ['Page']})}
+      })
+    }
+  }
+  const {source} = await createEntryStore(config, [
+    {id: 'page', type: 'Page', index: 'a', data: {title: 'Persisted'}}
+  ])
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-search-'))
+  const file = join(dir, 'database.sqlite')
+  try {
+    const initial = connect(new Database(file))
+    await EntryDatabase.createSchema(initial, ReadonlyTree.EMPTY.sha)
+    const first = new EntryDatabase(config, initial)
+    await first.syncWith(source)
+    await first.prepareSearch()
+    expect(await first.find({search: 'Persisted', select: Entry.id})).toEqual([
+      'page'
+    ])
+    await first.close()
+
+    const sqlite = new Database(file)
+    const db = connect(sqlite)
+    // Emptying the persisted index shows whether reopening rebuilds it.
+    await db.run(sql`delete from alinea_entry_search`)
+    const reopened = new EntryDatabase(config, db)
+    expect(
+      await reopened.find({search: 'Persisted', select: Entry.id})
+    ).toEqual([])
+    await reopened.close()
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
+})

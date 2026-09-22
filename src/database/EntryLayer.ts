@@ -25,7 +25,15 @@ import type {EntryIndexTarget} from './entry/EntryTable.js'
 import {EntryTransaction} from './EntryTransaction.js'
 import {queryEntryReferences} from './query/EntryReferences.js'
 import {resolveEntryQuery} from './query/ResolveQuery.js'
-import {createSearch, rebuildSearch, type SearchQuery} from './query/Search.js'
+import {
+  createSearch,
+  rebuildSearch,
+  type SearchQuery,
+  updateSearch
+} from './query/Search.js'
+
+/** Above this many changed entries a full rebuild beats updating in place. */
+const searchRebuildThreshold = 2000
 import {EntrySyncer, type EntrySyncTarget} from './sync/EntrySyncer.js'
 
 /** Shared, connection-scoped state of one queryable layer of the entry index. */
@@ -48,7 +56,9 @@ export interface EntryLayerState {
   searchName: string
   /** The search table this layer rebuilds into once its contents diverge. */
   ownSearchName?: string
-  searchDirty: boolean
+  /** Whether the search table needs a full rebuild; unknown until the stored
+   * search revision is compared with the database revision. */
+  searchDirty: boolean | 'unknown'
   /** The connection is already inside a transaction: never open nested ones. */
   transactional: boolean
 }
@@ -105,7 +115,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   #initialTree?: ReadonlyTree
   #searchName: string
   #ownSearchName?: string
-  #searchDirty: boolean
+  #searchDirty: boolean | 'unknown'
   #transactional: boolean
   #children = new Set<EntryLayer>()
   #changeListeners = new Set<EntryChangeListener>()
@@ -158,9 +168,10 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#assertOpen()
     const validate = options?.validate ?? true
     return this.#syncQueue.run(async () => {
-      const current = await this.#onSyncConnection(() =>
-        this.#getRevision(this.#syncDb)
-      )
+      const current = await this.#onSyncConnection(async () => {
+        await this.#resolveSearchState(this.#syncDb)
+        return this.#getRevision(this.#syncDb)
+      })
       const tree = await source.getTreeIfDifferent(current)
       if (!tree) return {revision: current, changedEntryIds: []}
       const changedEntryIds = await this.#syncSource(
@@ -192,6 +203,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         const revision = await this.#getRevision(tx)
         if (revision !== from.sha)
           throw new ShaMismatchError(revision, from.sha)
+        await this.#resolveSearchState(tx)
         const workingSource = new OverlaySource(options.source, from)
         const workingLayer = new EntryWorkingLayer(
           this.#config,
@@ -237,7 +249,9 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       {async: true}
     )
     this.#tree = applied.tree
-    this.#markChanged(applied.result.changedEntryIds)
+    await this.#onSyncConnection(() =>
+      this.#refreshSearch(this.#syncDb, applied.result.changedEntryIds)
+    )
     this.#emitChange(applied.result)
     return applied.result
   }
@@ -360,18 +374,59 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         }
       )
       this.#tree = tree
-      this.#markChanged(changedEntryIds)
+      await this.#refreshSearch(this.#syncDb, changedEntryIds)
     }
     await this.#onSyncConnection(sync)
     this.#emitChange({revision: tree.sha, changedEntryIds})
     return changedEntryIds
   }
 
-  /** Divert to this layer's own search table once its contents diverge. */
-  #markChanged(changedEntryIds: ReadonlyArray<string>): void {
+  /**
+   * Keep the search table in step with changed entries. A layer sharing its
+   * parent's table diverts to its own on the first change and builds that on
+   * demand; a built table is updated in place, which is far cheaper than
+   * tokenizing every entry again after each sync.
+   */
+  async #refreshSearch(
+    db: Database,
+    changedEntryIds: ReadonlyArray<string>
+  ): Promise<void> {
     if (!changedEntryIds.length) return
-    if (this.#ownSearchName) this.#searchName = this.#ownSearchName
-    this.#searchDirty = true
+    if (this.#ownSearchName && this.#searchName !== this.#ownSearchName) {
+      this.#searchName = this.#ownSearchName
+      this.#searchDirty = true
+      return
+    }
+    if (this.#searchDirty !== false) {
+      this.#searchDirty = true
+      return
+    }
+    if (changedEntryIds.length > searchRebuildThreshold) {
+      this.#searchDirty = true
+      return
+    }
+    await updateSearch(db, this.#entryTarget, this.#searchName, changedEntryIds)
+    await this.#recordSearchRevision(db)
+  }
+
+  /** Trust a persisted search table when it was updated for this revision. */
+  async #resolveSearchState(db: Database): Promise<void> {
+    if (this.#searchDirty !== 'unknown') return
+    const state = this.#target.state
+    const row = await db
+      .select({revision: state.revision, searchRevision: state.searchRevision})
+      .from(state)
+      .where(eq(state.id, 1))
+      .get()
+    this.#searchDirty = !row || row.searchRevision !== row.revision
+  }
+
+  async #recordSearchRevision(db: Database): Promise<void> {
+    const state = this.#target.state
+    await db
+      .update(state)
+      .set({searchRevision: sql<string>`${state.revision}`})
+      .where(eq(state.id, 1))
   }
 
   #emitChange(change: EntrySyncResult): void {
@@ -402,9 +457,10 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     const name = `overlay_${this.#context.nextOverlayId++}`
     let child: EntryOverlay | undefined
     try {
-      const {revision, tree} = await this.#withReadConnection(() =>
-        this.#readTreeState()
-      )
+      const {revision, tree} = await this.#withReadConnection(async () => {
+        await this.#resolveSearchState(this.#db)
+        return this.#readTreeState()
+      })
       const view = await this.#withReadConnection(() =>
         EntryView.create(this.#db, name, this.#entryTarget, revision)
       )
@@ -499,10 +555,12 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   }
 
   async #ensureSearch(db: Database): Promise<void> {
+    await this.#resolveSearchState(db)
     if (!this.#searchDirty) return
     if (this.#ownSearchName) await createSearch(db, this.#searchName, true)
     await rebuildSearch(db, this.#entryTarget, this.#searchName)
     this.#searchDirty = false
+    await this.#recordSearchRevision(db)
   }
 
   onChange(listener: EntryChangeListener): () => void {

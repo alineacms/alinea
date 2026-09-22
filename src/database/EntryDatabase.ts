@@ -40,7 +40,7 @@ export class EntryDatabase extends EntryLayer {
       context: {nextOverlayId: 1, queue: new TaskQueue(), syncer},
       target: EntrySyncRoot,
       searchName: EntrySearchName,
-      searchDirty: !options.searchReady,
+      searchDirty: options.searchReady ? false : 'unknown',
       transactional: false
     })
     this.#db = db
