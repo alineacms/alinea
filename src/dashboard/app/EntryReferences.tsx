@@ -9,8 +9,6 @@ import {
   ListItemVisual
 } from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
-import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
-import {configAtom} from '#/dashboard/atoms/core.js'
 import type {
   EntryAtoms,
   EntryLocaleAtoms,
@@ -32,13 +30,12 @@ export interface EntryReferencesProps {
 
 export function EntryReferences({entry, localeData}: EntryReferencesProps) {
   const data = useAtomValueRaw(entry.incomingReferences)
-  const config = useAtomValueRaw(configAtom)
-  const typeName = useAtomValueRaw(entry.type)
   const setRoute = useSetAtom(routeAtom)
   if (!data) return null
-  const type = config.schema[typeName]
-  const showAllLocales = type === MediaFile || type === MediaLibrary
   const selectedLocale = localeData.requestedLocale
+  // Entries in roots without languages (such as media) can be referenced
+  // from any locale
+  const showAllLocales = selectedLocale === null
   const currentReferences = showAllLocales
     ? data.references
     : data.references.filter(item => matchesLocale(item, selectedLocale))
