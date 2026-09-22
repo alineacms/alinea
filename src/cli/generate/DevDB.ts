@@ -112,12 +112,8 @@ export class DevDB extends EntryStore {
       )
     this.#options = {...this.#options, ...options}
     this.config = options.config
-    await this.source.refresh()
-    await this.database.reindex(
-      options.config,
-      this.source,
-      options.configFingerprint
-    )
+    await this.database.reindex(options.config, options.configFingerprint)
+    // Files changed since the recorded tree are picked up by a normal sync.
     this.#persistedRevision = undefined
     await this.sync()
   }
