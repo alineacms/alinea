@@ -1,4 +1,11 @@
-import {mkdtemp, mkdir, readFile, rm, writeFile} from 'node:fs/promises'
+import fs, {
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  utimes,
+  writeFile
+} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {dirname, join} from 'node:path'
 import {createConfig} from '#/core/Config.js'
@@ -7,6 +14,7 @@ import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {workspace} from '#/core/Workspace.js'
 import {Config} from '#/index.js'
 import {suite} from '@alinea/suite'
+import {spyOn} from 'bun:test'
 import {DevDB} from './DevDB.js'
 
 const test = suite(import.meta)
@@ -125,6 +133,78 @@ test('reopens the generated database without loading unchanged blobs', async () 
     await changedConfig.close()
   } finally {
     await changedConfig?.close()
+    await reopened?.close()
+    await initial?.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
+})
+
+test('reopens the generated database without re-reading unchanged files', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-stats-'))
+  const databasePath = join(rootDir, 'database.sqlite')
+  const contentDir = join(rootDir, 'content')
+  const pageFile = join(contentDir, 'pages/page.json')
+  let initial: DevDB | undefined
+  let reopened: DevDB | undefined
+  const Page = Config.document('Page', {fields: {}})
+  const config = createConfig({
+    schema: {Page},
+    workspaces: {
+      main: Config.workspace('Main', {
+        source: 'content',
+        roots: {pages: Config.root('Pages', {contains: ['Page']})}
+      })
+    }
+  })
+  const options = {
+    config,
+    rootDir,
+    databasePath,
+    configFingerprint: 'same-config',
+    dashboardUrl: undefined
+  }
+  await mkdir(join(contentDir, 'pages'), {recursive: true})
+  await writeFile(
+    pageFile,
+    JSON.stringify({_id: 'page', _type: 'Page', _index: 'a', title: 'Page'})
+  )
+  try {
+    initial = await DevDB.create(options)
+    const sha = await initial.sync()
+    await initial.close()
+    initial = undefined
+
+    const readFile = spyOn(fs, 'readFile')
+    const contentReads = () =>
+      readFile.mock.calls
+        .map(([file]) => String(file))
+        .filter(file => file.startsWith(contentDir))
+    try {
+      reopened = await DevDB.create(options)
+      test.is(await reopened.sync(), sha)
+      test.equal(contentReads(), [])
+
+      await writeFile(
+        pageFile,
+        JSON.stringify({
+          _id: 'page',
+          _type: 'Page',
+          _index: 'a',
+          title: 'Changed'
+        })
+      )
+      const modified = new Date(Date.now() + 2000)
+      await utimes(pageFile, modified, modified)
+      readFile.mockClear()
+      const changed = await reopened.sync()
+
+      test.equal(contentReads(), [pageFile])
+      test.ok(changed !== sha)
+      test.equal(await reopened.find({select: Entry.title}), ['Changed'])
+    } finally {
+      readFile.mockRestore()
+    }
+  } finally {
     await reopened?.close()
     await initial?.close()
     await rm(rootDir, {recursive: true, force: true})

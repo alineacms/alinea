@@ -37,6 +37,8 @@ export class DevDB extends EntryStore {
   declare readonly source: CachedFSSource
   declare readonly database: EntryDatabase
   #options: DevDBOptions
+  /** The revision the persisted source file stats were recorded for. */
+  #persistedRevision?: string
 
   private constructor(
     options: DevDBOptions,
@@ -58,7 +60,19 @@ export class DevDB extends EntryStore {
         ReadonlyTree.EMPTY.sha,
         options.configFingerprint
       )
-      return new DevDB(options, new EntryDatabase(options.config, db), source)
+      const database = new EntryDatabase(options.config, db)
+      const devDb = new DevDB(options, database, source)
+      try {
+        const tree = await database.getTree()
+        const stats = await database.getSourceFileStats()
+        if (stats.size > 0) {
+          source.hydrate(tree, stats)
+          devDb.#persistedRevision = tree.sha
+        }
+      } catch {
+        // Without a persisted tree every file is read from disk again
+      }
+      return devDb
     } catch (error) {
       await db.close()
       throw error
@@ -67,7 +81,12 @@ export class DevDB extends EntryStore {
 
   override async sync(): Promise<string> {
     await this.source.refresh()
-    return super.sync()
+    const revision = await super.sync()
+    if (revision !== this.#persistedRevision) {
+      await this.database.setSourceFileStats(this.source.fileStats())
+      this.#persistedRevision = revision
+    }
+    return revision
   }
 
   async finalize(): Promise<number> {

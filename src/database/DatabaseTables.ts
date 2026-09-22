@@ -23,3 +23,13 @@ export const DatabaseMetadataTable = table(
   'alinea_database_metadata',
   DatabaseMetadataColumns
 )
+
+/** Filesystem metadata of the source files indexed by this database. */
+export const SourceFileColumns = {
+  path: column.varchar(undefined, {length: 512}).primaryKey(),
+  /** Last modification time in milliseconds. */
+  mtime: column.number().notNull(),
+  size: column.integer().notNull()
+}
+
+export const SourceFileTable = table('alinea_source_file', SourceFileColumns)

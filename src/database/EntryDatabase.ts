@@ -1,11 +1,18 @@
 import type {Config} from '#/core/Config.js'
+import type {FileStat} from '#/core/source/FSSource.js'
 import {ReadonlyTree} from '#/core/source/Tree.js'
+import {chunks} from '#/core/util/Arrays.js'
 import {eq, sql, type Database} from 'rado'
-import {DatabaseMetadataTable, DatabaseStateTable} from './DatabaseTables.js'
+import {
+  DatabaseMetadataTable,
+  DatabaseStateTable,
+  SourceFileTable
+} from './DatabaseTables.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
 import {EntryLayer, type EntryDatabaseOptions} from './EntryLayer.js'
 import {createSearch, EntrySearchName} from './query/Search.js'
 import {EntrySyncer, EntrySyncRoot} from './sync/EntrySyncer.js'
+import {sqliteBatchSize} from './sync/SyncQueries.js'
 
 export type {
   EntryApplyOptions,
@@ -67,6 +74,10 @@ export class EntryDatabase extends EntryLayer {
       select name from sqlite_master
       where type = 'table' and name = 'alinea_database_metadata'
     `)
+    const sourceFiles = await db.get<{name: string}>(sql`
+      select name from sqlite_master
+      where type = 'table' and name = 'alinea_source_file'
+    `)
     const current = metadata
       ? await db
           .select({
@@ -77,7 +88,9 @@ export class EntryDatabase extends EntryLayer {
           .get()
       : undefined
     const compatible =
-      schema != null && current?.configFingerprint === configFingerprint
+      schema != null &&
+      sourceFiles != null &&
+      current?.configFingerprint === configFingerprint
     if (!compatible) {
       await db.run(sql`drop table if exists ${sql.identifier(EntrySearchName)}`)
       await db.run(
@@ -89,10 +102,14 @@ export class EntryDatabase extends EntryLayer {
       await db.run(
         sql`drop table if exists ${sql.identifier('alinea_database_metadata')}`
       )
+      await db.run(
+        sql`drop table if exists ${sql.identifier('alinea_source_file')}`
+      )
       await db.create(
         EntryIndexTable,
         DatabaseStateTable,
-        DatabaseMetadataTable
+        DatabaseMetadataTable,
+        SourceFileTable
       )
       await createSearch(db)
       await db.insert(DatabaseMetadataTable).values({
@@ -111,6 +128,43 @@ export class EntryDatabase extends EntryLayer {
         revision,
         tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
       })
+  }
+
+  /** File stats recorded by the last filesystem sync of this database. */
+  async getSourceFileStats(): Promise<Map<string, FileStat>> {
+    return this.withReadConnection(async () => {
+      const rows = await this.#db
+        .select({
+          path: SourceFileTable.path,
+          mtime: SourceFileTable.mtime,
+          size: SourceFileTable.size
+        })
+        .from(SourceFileTable)
+      return new Map(
+        rows.map(row => [row.path, {mtimeMs: row.mtime, size: row.size}])
+      )
+    })
+  }
+
+  /** Replace the recorded file stats after syncing from a filesystem source. */
+  async setSourceFileStats(
+    stats: ReadonlyMap<string, FileStat>
+  ): Promise<void> {
+    const rows = Array.from(stats, ([path, stat]) => ({
+      path,
+      mtime: stat.mtimeMs,
+      size: stat.size
+    }))
+    await this.withReadConnection(() =>
+      this.#db.transaction(
+        async tx => {
+          await tx.delete(SourceFileTable)
+          for (const batch of chunks(rows, sqliteBatchSize))
+            await tx.insert(SourceFileTable).values(batch)
+        },
+        {async: true}
+      )
+    )
   }
 
   async compact(): Promise<void> {

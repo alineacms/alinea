@@ -9,7 +9,7 @@ import {mapConcurrent} from '../util/Async.js'
 import {isRecord} from '../util/Objects.js'
 import type {ChangesBatch} from './Change.js'
 import type {GetBlobsOptions, Source} from './Source.js'
-import {ReadonlyTree, WriteableTree} from './Tree.js'
+import {Leaf, ReadonlyTree, WriteableTree} from './Tree.js'
 
 const limit = pLimit(1)
 const fileConcurrency = 64
@@ -21,14 +21,47 @@ function hashFileBlob(contents: Uint8Array): string {
   return createHash('sha1').update(header).update(contents).digest('hex')
 }
 
+/** The filesystem metadata used to detect that a file did not change. */
+export interface FileStat {
+  mtimeMs: number
+  size: number
+}
+
 export class FSSource implements Source {
   #current: ReadonlyTree = ReadonlyTree.EMPTY
   #cwd: string
   #locations = new Map<string, string>()
-  #lastModified = new Map<string, number>()
+  #lastModified = new Map<string, FileStat>()
 
   constructor(cwd: string) {
     this.#cwd = cwd
+  }
+
+  /**
+   * Restore a previously persisted tree and the file stats it was built from,
+   * so unchanged files are not read again.
+   */
+  hydrate(tree: ReadonlyTree, stats: ReadonlyMap<string, FileStat>): void {
+    this.#current = tree
+    for (const [path, stat] of stats) {
+      const leaf = tree.get(path)
+      if (!(leaf instanceof Leaf)) continue
+      this.#lastModified.set(path, stat)
+      this.#locations.set(leaf.sha, path)
+    }
+  }
+
+  /** The file stats of every file in the current tree. */
+  fileStats(): ReadonlyMap<string, FileStat> {
+    const stats = new Map<string, FileStat>()
+    for (const [path, stat] of this.#lastModified) {
+      if (!(this.#current.get(path) instanceof Leaf)) {
+        this.#lastModified.delete(path)
+        continue
+      }
+      stats.set(path, stat)
+    }
+    return stats
   }
 
   async getTree() {
@@ -62,7 +95,11 @@ export class FSSource implements Source {
       throw error
     }
     const previouslyModified = this.#lastModified.get(filePath)
-    if (previouslyModified && stat.mtimeMs === previouslyModified) {
+    if (
+      previouslyModified &&
+      stat.mtimeMs === previouslyModified.mtimeMs &&
+      stat.size === previouslyModified.size
+    ) {
       const previous = current.get(filePath)
       if (previous && typeof previous.sha === 'string') {
         builder.add(filePath, previous.sha)
@@ -78,7 +115,7 @@ export class FSSource implements Source {
     }
     const sha = hashFileBlob(contents)
     this.#locations.set(sha, filePath)
-    this.#lastModified.set(filePath, stat.mtimeMs)
+    this.#lastModified.set(filePath, {mtimeMs: stat.mtimeMs, size: stat.size})
     builder.add(filePath, sha)
     return [sha, contents] as const
   }

@@ -1,7 +1,7 @@
 import demoTree from '#test/fixtures/demo.json' with {type: 'json'}
 import {suite} from '@alinea/suite'
 import {spyOn} from 'bun:test'
-import fs, {mkdtemp, rm, writeFile} from 'node:fs/promises'
+import fs, {mkdtemp, rm, utimes, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {CachedFSSource, FSSource} from './FSSource.js'
@@ -216,6 +216,45 @@ test('cached source retains unchanged blobs and prunes removed blobs', async () 
       }
     })
     test.is(source.blobReads, 1)
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+  }
+})
+
+test('hydrated file stats avoid reading unchanged files', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-fs-hydrate-'))
+  const changedFile = join(dir, 'changed.txt')
+  try {
+    await writeFile(join(dir, 'unchanged.txt'), 'Unchanged')
+    await writeFile(changedFile, 'Changed')
+
+    const initial = new FSSource(dir)
+    const tree = await initial.getTree()
+    const stats = new Map(initial.fileStats())
+    test.is(stats.size, 2)
+
+    const source = new FSSource(dir)
+    source.hydrate(tree, stats)
+    const readFile = spyOn(fs, 'readFile')
+    try {
+      const hydrated = await source.getTree()
+      test.is(readFile.mock.calls.length, 0)
+      test.is(hydrated.sha, tree.sha)
+
+      await writeFile(changedFile, 'Changed contents')
+      const modified = new Date(Date.now() + 2000)
+      await utimes(changedFile, modified, modified)
+      readFile.mockClear()
+      const updated = await source.getTree()
+
+      test.equal(
+        readFile.mock.calls.map(([file]) => String(file)),
+        [changedFile]
+      )
+      test.ok(updated.sha !== tree.sha)
+    } finally {
+      readFile.mockRestore()
+    }
   } finally {
     await rm(dir, {recursive: true, force: true})
   }
