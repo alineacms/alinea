@@ -4,10 +4,9 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "./bin/alinea dev -- next dev",
-    "build": "./bin/alinea build -- next build",
+    "dev": "alinea dev -- next dev",
+    "build": "alinea build -- next build",
     "start": "next start",
-    "postinstall": "node scripts/fix-alinea-link.mjs",
     "step1:dev": "bun run --cwd tutorial-sites/step1 dev",
     "step2:dev": "bun run --cwd tutorial-sites/step2 dev",
     "step3:dev": "bun run --cwd tutorial-sites/step3 dev",
@@ -19,7 +18,7 @@
     "@biomejs/biome": "^2.1.2",
     "@monaco-editor/react": "^4.4.5",
     "@vercel/postgres": "^0.10.0",
-    "alinea": "../..",
+    "alinea": "2.0.0-preview.7",
     "jotai": "^2.12.5",
     "lz-string": "^1.4.4",
     "next": "^16.1.6",
@@ -40,6 +39,6 @@
     "@types/node": "^22.5.2",
     "@types/react": "^18.2.13",
     "sass": "^1.89.2",
-    "typescript": "^5.6.2"
+    "typescript": "^6.0.3"
   }
 }
