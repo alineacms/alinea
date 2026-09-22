@@ -135,13 +135,14 @@ export async function updateSearch(
   }
 }
 
-/** MiniSearch's fuzzy factor: the edit distance allowed per term length. */
+/** The edit distance allowed per character of a term. */
 const fuzzyFactor = 0.1
 const maxFuzzyDistance = 6
 const maxAlternatives = 10
 const objectNamePattern = /^[a-z][a-z0-9_]*$/i
 
-/** The edits a token may be away from an indexed term, as MiniSearch had it. */
+/** The edits a token may be away from an indexed term: none below five
+ * characters, one up to fourteen, then one more per ten. */
 export function fuzzyDistance(token: string): number {
   return Math.min(maxFuzzyDistance, Math.round(token.length * fuzzyFactor))
 }
@@ -196,8 +197,8 @@ function withinDistance(a: string, b: string, max: number): boolean {
 
 /**
  * The terms of one FTS5 table, loaded once per index revision. Query tokens
- * expand to indexed terms within a small edit distance, which restores the
- * fuzzy matching the MiniSearch index offered before SQLite.
+ * expand to indexed terms within a small edit distance, so a typo still
+ * finds the entry.
  */
 export class SearchVocabulary {
   #revision: string | undefined
