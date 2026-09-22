@@ -170,11 +170,6 @@ export function ListFieldView({field}: ListFieldViewProps) {
   const copyRowAtom = useMemo(
     () =>
       atom(null, (get, set, rowId: string) => {
-        const copied = get(copyAtom)
-        if (copied?._id === rowId) {
-          set(copyAtom, undefined)
-          return
-        }
         const nodes = get(list.nodes) as Array<ReactiveNode<ListValue>>
         const node = nodes.find(node => get(node.field('_id')) === rowId)
         if (node) set(copyAtom, get(node.value))
