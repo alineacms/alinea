@@ -5,7 +5,10 @@ test('restores a previous revision as a draft', async ({dashboard, mount}) => {
   const app = await dashboard.mount(() => mount(<DashboardScenarioMount />))
 
   await app.page.getByRole('tab', {name: 'History'}).click()
-  await app.page.getByRole('button', {name: 'Previous versions'}).click()
+  // Previous versions are expanded by default in a local dashboard
+  await expect(
+    app.page.getByRole('button', {name: 'Previous versions'})
+  ).toHaveAttribute('aria-expanded', 'true')
   await app.page.evaluate(() => {
     document.documentElement.dataset.historyLoaderSeen = 'false'
     const observer = new MutationObserver(() => {
