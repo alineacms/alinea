@@ -41,6 +41,30 @@ test('round trips text, element attributes and mark attributes', () => {
   test.equal(editorNodes(content), [{...paragraph, textAlign: 'center'}])
 })
 
+test('round trips marks on element nodes', () => {
+  const image = {
+    [Node.type]: 'image',
+    src: '/button.png',
+    marks: [
+      {
+        [Mark.type]: 'link',
+        href: 'mailto:hello@example.com',
+        target: '_blank'
+      }
+    ]
+  }
+
+  const content = editorContent([image])
+
+  test.equal(content.content?.[0]?.marks, [
+    {
+      type: 'link',
+      attrs: {href: 'mailto:hello@example.com', target: '_blank'}
+    }
+  ])
+  test.equal(editorNodes(content), [image])
+})
+
 test('wraps imported inline list-item content in paragraphs', () => {
   const imported = [
     {

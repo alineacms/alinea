@@ -23,6 +23,7 @@ import {
   useSyncExternalStore,
   type ReactNode
 } from 'react'
+import {useInteractOutside} from 'react-aria'
 import {appAtom} from '../App.js'
 import {
   activityAtom,
@@ -77,6 +78,16 @@ export function ActivityStatus({
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
+  const panelRef = useRef<HTMLDivElement>(null)
+  // The popover stays non-modal so the dashboard behind it remains usable
+  // and scrollable. Non-modal popovers don't dismiss on outside interaction
+  // by themselves, so close the panel that way using the same primitive RAC
+  // overlays use internally.
+  useInteractOutside({
+    ref: panelRef,
+    onInteractOutside: () => setIsOpen(false),
+    isDisabled: !isOpen
+  })
   const isMobile = useSyncExternalStore(
     mobilePlacement ? subscribeToMobileActivity : ignoreActivityBreakpoint,
     mobilePlacement ? mobileActivitySnapshot : desktopActivitySnapshot,
@@ -84,11 +95,7 @@ export function ActivityStatus({
   )
   const wasFailed = useRef(false)
   const lastActivityLabel = useRef('Finishing up')
-  const activityLabel = getActivityLabel(
-    activity.isFetchingUpdates,
-    appPending,
-    activity.isMutating
-  )
+  const activityLabel = getActivityLabel(appPending, activity.isMutating)
   const showSpinner = useAtomValueRaw(activityPendingAtom)
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
   const visibleActivityLabel =
@@ -176,7 +183,7 @@ export function ActivityStatus({
           boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
         }}
       >
-        <div className={styles.ActivityStatus.popover()}>
+        <div ref={panelRef} className={styles.ActivityStatus.popover()}>
           <div className={styles.ActivityStatus.popover.header()}>
             <h2 className={styles.ActivityStatus.popover.title()}>Activity</h2>
             {activity.hasFailed && (
@@ -284,12 +291,7 @@ function ActivityItem({activity}: ActivityItemProps) {
   )
 }
 
-function getActivityLabel(
-  isFetchingUpdates: boolean,
-  isNavigating: boolean,
-  isMutating: boolean
-) {
-  if (isFetchingUpdates) return 'Fetching updates'
+function getActivityLabel(isNavigating: boolean, isMutating: boolean) {
   if (isNavigating) return 'Loading page'
   if (isMutating) return 'Syncing changes'
 }
@@ -312,12 +314,10 @@ function formatActivityStatus(activity: Activity) {
     case 'pending':
       return 'Pending'
     case 'running':
-      if (activity.type === 'fetch') return 'Fetching'
       if (activity.type === 'upload') return 'Uploading'
       if (isFileActivity(activity)) return 'Saving'
       return 'Syncing'
     case 'succeeded':
-      if (activity.type === 'fetch') return 'Up to date'
       if (isFileActivity(activity)) return 'Uploaded'
       return 'Synced'
     case 'failed':
@@ -360,11 +360,6 @@ function activityStatusTone(status: Activity['status']) {
 }
 
 function formatActivityTitle(activity: Activity) {
-  if (activity.type === 'fetch') {
-    if (activity.status === 'running') return 'Fetching updates'
-    if (activity.status === 'failed') return 'Fetching updates failed'
-    return 'Checked for updates'
-  }
   const uploadTitle = formatUploadTitle(activity)
   if (uploadTitle) return uploadTitle
   const titles = [
@@ -380,15 +375,11 @@ function formatActivityTitle(activity: Activity) {
 
 function formatActivityDescription(activity: Activity) {
   const details =
-    activity.type === 'fetch'
-      ? fetchDescription(activity.status)
-      : activity.type === 'mutation' && isFileActivity(activity)
-        ? fileMutationDescription(activity.status)
-        : activity.operations
-            .map(operation =>
-              formatActivityOperation(operation, activity.status)
-            )
-            .join(' · ')
+    activity.type === 'mutation' && isFileActivity(activity)
+      ? fileMutationDescription(activity.status)
+      : activity.operations
+          .map(operation => formatActivityOperation(operation, activity.status))
+          .join(' · ')
   const timestamp = activity.finishedAt ?? activity.startedAt
   const time = new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
@@ -428,13 +419,6 @@ function fileMutationDescription(status: Activity['status']) {
   if (status === 'blocked') return 'Waiting to save uploaded file.'
   if (status === 'discarded') return 'Upload discarded.'
   return 'Upload cancelled.'
-}
-
-function fetchDescription(status: Activity['status']) {
-  if (status === 'running') return 'Checking for content changes.'
-  if (status === 'succeeded') return 'Content is up to date.'
-  if (status === 'failed') return 'Could not check for content changes.'
-  return 'Content update check.'
 }
 
 function formatActivityOperation(

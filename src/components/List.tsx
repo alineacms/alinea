@@ -200,22 +200,26 @@ export function ListLabel({
   if (inline && !showFold && !description && !shared) return null
 
   return (
-    <Button
-      {...props}
-      appearance="plain"
-      className={styles.ListLabel(styler.merge({className}))}
-      data-has-rows={hasRows ? 'true' : undefined}
-      isDisabled={props.isDisabled ?? !hasRows}
-    >
-      <LabelInline>
-        {!inline && <LabelLabel asLabel={false} label={children} />}
-        {showFold && (
-          <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
-        )}
-      </LabelInline>
+    <div className={styles.ListLabel(styler.merge({className}))}>
+      {(!inline || showFold) && (
+        <Button
+          {...props}
+          appearance="plain"
+          className={styles.ListLabel.toggle()}
+          data-has-rows={hasRows ? 'true' : undefined}
+          isDisabled={props.isDisabled ?? !hasRows}
+        >
+          <LabelInline>
+            {!inline && <LabelLabel asLabel={false} label={children} />}
+            {showFold && (
+              <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
+            )}
+          </LabelInline>
+        </Button>
+      )}
       {description && <LabelDescription description={description} />}
       {shared && <SharedLabelBadge />}
-    </Button>
+    </div>
   )
 }
 

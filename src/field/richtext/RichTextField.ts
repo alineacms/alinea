@@ -3,6 +3,7 @@ import {RichTextField} from '#/core/field/RichTextField.js'
 import type {Schema} from '#/core/Schema.js'
 import type {TextDoc} from '#/core/TextDoc.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
+import type {EntryPickerConditions} from '#/picker/entry/EntryPicker.js'
 import type {AnyExtension} from '@tiptap/core'
 import type {ReactNode} from 'react'
 import type {ToolbarConfig} from './Toolbar.js'
@@ -47,6 +48,8 @@ export interface RichTextOptions<Blocks extends Schema> extends FieldOptions<
   enableTables?: boolean
   /** Enable inserting and editing images */
   enableImages?: boolean
+  /** Constrain the entries that can be picked when inserting a link */
+  link?: EntryPickerConditions
   /** Configure the toolbar layout and items */
   toolbar?: ToolbarConfig
   /** Configure tiptap extensions */

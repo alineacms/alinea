@@ -28,8 +28,7 @@ function ActivityPendingSubscription() {
   const [appPending] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
-  const pending =
-    appPending || activity.isFetchingUpdates || activity.isMutating
+  const pending = appPending || activity.isMutating
   useEffect(() => {
     setActivityPending(pending)
   }, [pending, setActivityPending])
@@ -44,38 +43,6 @@ function ActivityStatus(props: ActivityStatusProps) {
     </>
   )
 }
-
-test('shows a loader while the worker is fetching updates', async () => {
-  const {db, store} = await createDashboardAtomFixture()
-  Object.assign(db, {
-    async activities() {
-      return [
-        {
-          id: 'fetch',
-          type: 'fetch',
-          status: 'running',
-          operations: [],
-          startedAt: Date.now()
-        }
-      ]
-    }
-  })
-
-  const view = render(
-    <Provider store={store}>
-      <ActivityPendingSubscription />
-      <ActivityStatusView />
-    </Provider>
-  )
-
-  expect(
-    await screen.findByRole('button', {name: 'Fetching updates'})
-  ).toBeTruthy()
-  expect(
-    await screen.findByRole('progressbar', {name: 'Fetching updates'})
-  ).toBeTruthy()
-  view.unmount()
-})
 
 test('shows a loader while the next page is loading past the delay', async () => {
   const {db, parent, store} = await createDashboardAtomFixture()
@@ -120,8 +87,8 @@ test('suppresses short activity and holds a visible spinner', async () => {
   const events = store.get(eventsAtom)
   const timestamp = Date.now()
   const running = {
-    id: 'buffered-fetch',
-    type: 'fetch' as const,
+    id: 'buffered-mutation',
+    type: 'mutation' as const,
     status: 'running' as const,
     operations: [],
     startedAt: timestamp
@@ -140,7 +107,7 @@ test('suppresses short activity and holds a visible spinner', async () => {
 
   act(() => events.dispatchEvent(new ActivityEvent([running])))
   expect(
-    screen.queryByRole('progressbar', {name: 'Fetching updates'})
+    screen.queryByRole('progressbar', {name: 'Syncing changes'})
   ).toBeNull()
   await pause(50)
   act(() =>
@@ -152,12 +119,12 @@ test('suppresses short activity and holds a visible spinner', async () => {
   )
   await pause(100)
   expect(
-    screen.queryByRole('progressbar', {name: 'Fetching updates'})
+    screen.queryByRole('progressbar', {name: 'Syncing changes'})
   ).toBeNull()
 
   act(() => events.dispatchEvent(new ActivityEvent([running])))
   expect(
-    await screen.findByRole('progressbar', {name: 'Fetching updates'})
+    await screen.findByRole('progressbar', {name: 'Syncing changes'})
   ).toBeTruthy()
   act(() =>
     events.dispatchEvent(
@@ -190,8 +157,8 @@ test('does not restore an expired spinner after an unmounted route', async () =>
   })
   const events = store.get(eventsAtom)
   const running = {
-    id: 'expired-fetch',
-    type: 'fetch' as const,
+    id: 'expired-mutation',
+    type: 'mutation' as const,
     status: 'running' as const,
     operations: [],
     startedAt: Date.now()
@@ -312,53 +279,6 @@ test('removes transient upload progress when the worker takes over', async () =>
   view.unmount()
 })
 
-test('keeps fetching updates visible alongside failed actions', async () => {
-  const {db, store} = await createDashboardAtomFixture()
-  const startedAt = Date.now()
-  Object.assign(db, {
-    async activities() {
-      return [
-        {
-          id: 'fetch',
-          type: 'fetch',
-          status: 'running',
-          operations: [],
-          startedAt
-        },
-        {
-          id: 'failed-change',
-          type: 'mutation',
-          status: 'failed',
-          error: 'Could not save changes',
-          operations: [{op: 'update', title: 'Page'}],
-          startedAt: startedAt - 1,
-          finishedAt: startedAt
-        }
-      ]
-    }
-  })
-
-  const view = render(
-    <Provider store={store}>
-      <ActivityStatus />
-    </Provider>
-  )
-
-  const button = await screen.findByRole('button', {
-    name: 'Fetching updates; some actions failed'
-  })
-  expect(
-    await screen.findByRole('progressbar', {
-      name: 'Fetching updates; some actions failed'
-    })
-  ).toBeTruthy()
-
-  fireEvent.click(button)
-  expect(await screen.findByText(/Checking for content changes\./)).toBeTruthy()
-  expect(screen.getByText('Could not save changes')).toBeTruthy()
-  view.unmount()
-})
-
 test('offers retry but not discard for a failed mutation', async () => {
   const {db, store} = await createDashboardAtomFixture()
   Object.assign(db, {
@@ -390,17 +310,17 @@ test('offers retry but not discard for a failed mutation', async () => {
   view.unmount()
 })
 
-test('keeps retry available for a failed fetch', async () => {
+test('closes the panel when clicking outside', async () => {
   const {db, store} = await createDashboardAtomFixture()
   Object.assign(db, {
     async activities() {
       return [
         {
-          id: 'failed-fetch',
-          type: 'fetch',
+          id: 'failed-mutation',
+          type: 'mutation',
           status: 'failed',
-          error: 'Could not fetch changes',
-          operations: [],
+          error: 'Could not save changes',
+          operations: [{op: 'update', title: 'Page'}],
           startedAt: 1,
           finishedAt: 2
         }
@@ -415,9 +335,46 @@ test('keeps retry available for a failed fetch', async () => {
   )
 
   fireEvent.click(await screen.findByRole('button', {name: 'Activity failed'}))
-  expect(await screen.findByText('Could not fetch changes')).toBeTruthy()
-  expect(screen.getByRole('button', {name: 'Retry'})).toBeTruthy()
-  expect(screen.queryByRole('button', {name: 'Discard'})).toBeNull()
+  expect(await screen.findByText('Could not save changes')).toBeTruthy()
+
+  act(() => {
+    fireEvent.pointerDown(document.body)
+    fireEvent.click(document.body)
+  })
+  expect(screen.queryByText('Could not save changes')).toBeNull()
+  view.unmount()
+})
+
+test('toggles the panel closed when clicking the trigger again', async () => {
+  const {db, store} = await createDashboardAtomFixture()
+  Object.assign(db, {
+    async activities() {
+      return [
+        {
+          id: 'failed-mutation',
+          type: 'mutation',
+          status: 'failed',
+          error: 'Could not save changes',
+          operations: [{op: 'update', title: 'Page'}],
+          startedAt: 1,
+          finishedAt: 2
+        }
+      ]
+    }
+  })
+
+  const view = render(
+    <Provider store={store}>
+      <ActivityStatus />
+    </Provider>
+  )
+
+  const trigger = await screen.findByRole('button', {name: 'Activity failed'})
+  fireEvent.click(trigger)
+  expect(await screen.findByText('Could not save changes')).toBeTruthy()
+
+  fireEvent.click(trigger)
+  expect(screen.queryByText('Could not save changes')).toBeNull()
   view.unmount()
 })
 
@@ -455,40 +412,6 @@ test('keeps discard available for a failed upload', async () => {
 async function pause(duration: number) {
   await act(() => new Promise<void>(resolve => setTimeout(resolve, duration)))
 }
-
-test('shows completed activity history', async () => {
-  const {db, store} = await createDashboardAtomFixture()
-  const timestamp = Date.now()
-  Object.assign(db, {
-    async activities() {
-      return [
-        {
-          id: 'fetch',
-          type: 'fetch',
-          status: 'succeeded',
-          operations: [],
-          startedAt: timestamp - 10,
-          finishedAt: timestamp
-        }
-      ]
-    }
-  })
-
-  const view = render(
-    <Provider store={store}>
-      <ActivityStatus />
-    </Provider>
-  )
-
-  const button = await screen.findByRole('button', {
-    name: 'Content is up to date'
-  })
-  fireEvent.click(button)
-
-  expect(await screen.findByText('Checked for updates')).toBeTruthy()
-  expect(screen.getByText('Up to date')).toBeTruthy()
-  view.unmount()
-})
 
 test('shows a media upload as one filename-based activity', async () => {
   const {db, parent, store} = await createDashboardAtomFixture()

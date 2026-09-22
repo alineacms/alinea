@@ -128,11 +128,13 @@ function defaultNodeElement(
       const href = attributes?.href
       const target = attributes?.target
       const title = attributes?.title
+      const rel = attributes?.rel
       return (
         <a
           href={typeof href === 'string' ? href : undefined}
           target={typeof target === 'string' ? target : undefined}
           title={typeof title === 'string' ? title : undefined}
+          rel={typeof rel === 'string' ? rel : undefined}
         />
       )
     }
@@ -196,6 +198,28 @@ interface RichTextNodeViewProps {
   node: Node
 }
 
+function renderMarks(
+  content: ReactNode,
+  marks: Array<Mark> | undefined,
+  views: Record<string, View | undefined>
+): ReactNode {
+  return (marks ?? []).reduce((children, mark) => {
+    const element = nodeElement(mark[Mark.type], mark)
+    if (!element?.type) return children
+    const View = views[String(element.type)]
+    if (isComponentView(View)) {
+      const Component = View
+      return <Component {...element.props}>{children}</Component>
+    }
+    const view = View ?? element
+    return (
+      <view.type {...element.props} {...(view.props as Attributes)}>
+        {children}
+      </view.type>
+    )
+  }, content)
+}
+
 function RichTextNodeView({views, node}: RichTextNodeViewProps) {
   if (Node.isText(node)) {
     const {[TextNode.text]: text, [TextNode.marks]: marks} = node
@@ -206,27 +230,15 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
       ) : (
         (text ?? '')
       )
-    const wrappers = marks?.map(mark => ({
-      type: mark[Mark.type],
-      element: nodeElement(mark[Mark.type], mark)
-    }))
-    return (wrappers ?? []).reduce((children, {element}) => {
-      if (!element?.type) return children
-      const View = views[String(element.type)]
-      if (isComponentView(View)) {
-        const Component = View
-        return <Component {...element.props}>{children}</Component>
-      }
-      const view = View ?? element
-      return (
-        <view.type {...element.props} {...(view.props as Attributes)}>
-          {children}
-        </view.type>
-      )
-    }, content)
+    return renderMarks(content, marks, views)
   }
   if (Node.isElement(node)) {
-    const {[Node.type]: type, [ElementNode.content]: content, ...attrs} = node
+    const {
+      [Node.type]: type,
+      [ElementNode.content]: content,
+      marks,
+      ...attrs
+    } = node
     const element = nodeElement(type, attrs, content)
     const View =
       type === 'table'
@@ -240,13 +252,19 @@ function RichTextNodeView({views, node}: RichTextNodeViewProps) {
       )) ?? null
     if (isComponentView(View)) {
       const Component = View
-      return <Component {...element?.props}>{inner}</Component>
+      return renderMarks(
+        <Component {...element?.props}>{inner}</Component>,
+        marks,
+        views
+      )
     }
     const el = View ?? element ?? {type: Fragment, props: {}}
-    return (
+    return renderMarks(
       <el.type {...element?.props} {...(el.props as Attributes)}>
         {inner}
-      </el.type>
+      </el.type>,
+      marks,
+      views
     )
   }
   if (Node.isBlock(node)) {

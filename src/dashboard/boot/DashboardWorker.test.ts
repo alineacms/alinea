@@ -266,7 +266,7 @@ test('keeps syncs bound to their load across a failed revision', async () => {
   expect(recoveredRemoteSyncs).toBe(1)
 })
 
-test('records remote database sync activity and keeps its outcome', async () => {
+test('syncs the remote database without recording fetch activity', async () => {
   const fixture = new FSSource('test/fixtures/demo')
   const remoteDB = new LocalDB(cms.config, fixture)
   await remoteDB.sync()
@@ -289,32 +289,30 @@ test('records remote database sync activity and keeps its outcome', async () => 
     }
   }
   const worker = new DashboardWorker(new MemorySource())
-  const statuses: Array<string> = []
+  let activityEvents = 0
   worker.addEventListener(ActivityEvent.type, event => {
-    if (event instanceof ActivityEvent)
-      statuses.push(event.activities[0]?.status ?? 'missing')
+    if (event instanceof ActivityEvent) activityEvents += 1
   })
 
   await worker.load('sync-status', cms.config, client)
   const sync = worker.sync()
   await syncStarted
 
-  expect(statuses).toEqual(['running'])
-  expect(worker.activities()).toEqual([
-    expect.objectContaining({type: 'fetch', status: 'running'})
-  ])
+  expect(worker.activities()).toEqual([])
 
   releaseSync?.()
   await sync
 
-  expect(statuses).toEqual(['running', 'succeeded'])
-  expect(worker.activities()).toEqual([
-    expect.objectContaining({
-      type: 'fetch',
-      status: 'succeeded',
-      finishedAt: expect.any(Number)
+  expect(worker.activities()).toEqual([])
+  expect(activityEvents).toBe(0)
+  expect(
+    await (
+      await worker.db
+    ).get({
+      type: cms.schema.DemoRecipe,
+      path: 'chocolate-chip'
     })
-  ])
+  ).toMatchObject({title: 'Chocolate chip'})
 })
 
 test('keeps successful content actions in activity history', async () => {
@@ -436,7 +434,7 @@ test('recovers from an incompatible IndexedDB cache using the remote source', as
   )
 
   remoteUnavailable = false
-  await worker.retryActivity()
+  await worker.sync()
 
   expect(remoteSyncs).toBe(2)
   expect(
@@ -484,7 +482,7 @@ test('retries a failed initial sync', async () => {
   ).toMatchObject({title: 'Chocolate chip'})
 })
 
-test('retrying failed mutations clears the preceding fetch failure', async () => {
+test('retrying failed mutations succeeds', async () => {
   const {db, original, setUnavailable, worker} =
     await createFailedMutationFixture()
 
@@ -496,9 +494,6 @@ test('retrying failed mutations clears the preceding fetch failure', async () =>
   ).toMatchObject({title: 'Optimistic title'})
   expect(
     worker.activities().find(activity => activity.id === 'test-mutation')
-  ).toMatchObject({status: 'succeeded'})
-  expect(
-    worker.activities().find(activity => activity.type === 'fetch')
   ).toMatchObject({status: 'succeeded'})
 })
 
@@ -602,12 +597,13 @@ async function createFailedMutationFixture() {
     set: {title: 'Optimistic title'}
   }
   unavailable = true
-  const fetchFailure = new Promise<void>(resolve => {
+  const mutationFailed = new Promise<void>(resolve => {
     worker.addEventListener(ActivityEvent.type, event => {
       if (
         event instanceof ActivityEvent &&
         event.activities.some(
-          activity => activity.type === 'fetch' && activity.status === 'failed'
+          activity =>
+            activity.id === 'test-mutation' && activity.status === 'failed'
         )
       )
         resolve()
@@ -615,13 +611,14 @@ async function createFailedMutationFixture() {
   })
   await worker.queue('test-mutation', [mutation])
   await recoveryFailed
-  await fetchFailure
+  await mutationFailed
   expect(
     await db.get({type: cms.schema.DemoRecipe, id: original._id})
   ).toMatchObject({title: 'Optimistic title'})
   expect(worker.activities()).toContainEqual(
     expect.objectContaining({
-      type: 'fetch',
+      id: 'test-mutation',
+      type: 'mutation',
       status: 'failed',
       error: 'Remote unavailable'
     })

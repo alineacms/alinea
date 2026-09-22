@@ -12,6 +12,7 @@ interface MountDashboardOptions {
   entry?: DashboardScenarioName
   routeEntry?: string
   routeRoot?: string
+  theme?: 'light' | 'dark'
   title?: string
 }
 
@@ -80,10 +81,15 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
         const entry = options.entry ?? 'alpha'
         const id = options.routeEntry ?? dashboardScenarioIds[entry]
         const root = options.routeRoot ?? 'pages'
-        await page.evaluate(() => {
-          localStorage.removeItem('alinea-dashboard-theme')
+        await page.evaluate(theme => {
+          if (theme)
+            localStorage.setItem(
+              'alinea-dashboard-theme',
+              JSON.stringify(theme)
+            )
+          else localStorage.removeItem('alinea-dashboard-theme')
           document.documentElement.removeAttribute('data-theme')
-        })
+        }, options.theme)
         await page.evaluate(hash => {
           window.history.replaceState(null, '', hash)
         }, `#/entry/main/${root}/${id}`)

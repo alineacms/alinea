@@ -1,8 +1,10 @@
 import {Field} from '#/core/Field.js'
 import {createId} from '#/core/Id.js'
 import type {ListRow} from '#/core/ListRow.js'
+import {track} from '#/core/Tracker.js'
 import {Type, type} from '#/core/Type.js'
 import {generateNKeysBetween} from '#/core/util/FractionalIndexing.js'
+import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {EntryEditor} from '#/dashboard/atoms/editor.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {EditorScope} from '#/dashboard/hooks.js'
@@ -260,6 +262,36 @@ export function Example() {
           <ListFieldView field={sections} />
         </div>
       </EditorScope>
+    </StoryProvider>
+  )
+}
+
+const maxItems = number('Max items', {initialValue: 3})
+
+const limitedType = type('Limited', {
+  fields: {
+    maxItems,
+    items: track.options(
+      list('Items', {
+        schema: {quote: quoteBlock},
+        min: 2,
+        initialValue: [{_type: 'quote', quote: 'First', author: 'Alinea'}]
+      }),
+      get => ({max: get(maxItems) ?? undefined})
+    )
+  }
+})
+
+export function MinMax() {
+  const node = useMemo(
+    () => new ReactiveNode(Type.initialValue(limitedType) as object),
+    []
+  )
+  return (
+    <StoryProvider views={views}>
+      <div style={storyStyle}>
+        <NodeEditor node={node} type={limitedType} />
+      </div>
     </StoryProvider>
   )
 }

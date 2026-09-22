@@ -16,7 +16,8 @@ const dashboardThemeStorageKey = 'alinea-dashboard-theme'
 const themeStorageAtom = atomWithStorage<DashboardTheme>(
   dashboardThemeStorageKey,
   'system',
-  undefined
+  undefined,
+  {getOnInit: true}
 )
 
 const mobileMediaQuery = '(max-width: 768px)'

@@ -240,6 +240,42 @@ test('awaits custom tag and mark handlers', async () => {
   ] satisfies TextDoc)
 })
 
+test('applies links to asynchronously imported images', async () => {
+  const value = await parseHTMLAsync(
+    '<p><a href="mailto:hello@example.com" target="_blank" rel="noopener"><img src="button.png" width="98" height="32"></a></p>',
+    {
+      tags: {
+        async img(attributes) {
+          await Promise.resolve()
+          return {_type: 'image', ...attributes}
+        }
+      }
+    }
+  )
+
+  test.equal(value, [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'image',
+          src: 'button.png',
+          width: '98',
+          height: '32',
+          marks: [
+            {
+              _type: 'link',
+              href: 'mailto:hello@example.com',
+              target: '_blank',
+              rel: 'noopener'
+            }
+          ]
+        }
+      ]
+    }
+  ] satisfies TextDoc)
+})
+
 test('adds html asynchronously while keeping addHtml synchronous', async () => {
   const syncEditor = new RichTextEditor().addHtml('<kbd>Enter</kbd>', {
     marks: {kbd: () => ({_type: 'keyboard'})}

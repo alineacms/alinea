@@ -193,6 +193,37 @@ test('RichText renders image attributes', () => {
   expect(image.getAttribute('height')).toBe('480')
 })
 
+test('RichText renders links around images', () => {
+  const doc = [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'image',
+          src: 'https://example.com/button.jpg',
+          alt: 'Contact',
+          marks: [
+            {
+              _type: 'link',
+              href: 'mailto:hello@example.com',
+              target: '_blank',
+              rel: 'noopener'
+            }
+          ]
+        }
+      ]
+    }
+  ] satisfies TextDoc
+
+  render(<RichText doc={doc} />)
+
+  const image = screen.getByRole('img', {name: 'Contact'})
+  const link = image.closest('a')
+  expect(link?.getAttribute('href')).toBe('mailto:hello@example.com')
+  expect(link?.getAttribute('target')).toBe('_blank')
+  expect(link?.getAttribute('rel')).toBe('noopener')
+})
+
 test('RichText supports custom HTML views for elements and text', () => {
   const doc = [
     {

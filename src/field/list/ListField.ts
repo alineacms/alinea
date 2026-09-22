@@ -22,6 +22,11 @@ export interface ListOptions<Definitions extends Schema> extends FieldOptions<
   inline?: boolean
   /** Hide this list field */
   hidden?: boolean
+  /** Mark the field as invalid while it has fewer items */
+  min?: number
+  /** Hide the create actions once the list has this many items and mark
+   * the field as invalid while it has more */
+  max?: number
   /** The initial value of the field */
   initialValue?: Array<InferStoredValue<Definitions>>
   /** Validate the given value */
