@@ -29,10 +29,17 @@ import {
   createSearch,
   rebuildSearch,
   type SearchQuery,
+  fuzzyDistance,
+  searchQuery,
+  searchTokens,
+  SearchVocabulary,
   updateSearch
 } from './query/Search.js'
-
-import {EntrySyncer, type EntrySyncTarget} from './sync/EntrySyncer.js'
+import {
+  EntrySyncer,
+  EntrySyncRoot,
+  type EntrySyncTarget
+} from './sync/EntrySyncer.js'
 
 /** Above this many changed entries a full rebuild beats updating in place. */
 const searchRebuildThreshold = 2000
@@ -121,6 +128,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   #children = new Set<EntryLayer>()
   #changeListeners = new Set<EntryChangeListener>()
   #syncQueue = new TaskQueue()
+  #vocabulary = new SearchVocabulary()
   #closed = false
 
   constructor(
@@ -599,7 +607,8 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
       database,
       entries: this.#entryTarget,
       searchName: this.#searchName,
-      search: this.#options.search,
+      search:
+        this.#options.search ?? (input => this.#searchPlan(database, input)),
       prepareSearch: () => this.#ensureSearch(database),
       includedAtBuild: filePath =>
         this.#options.includedAtBuild?.(filePath) ?? false
@@ -620,6 +629,39 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         }
       )
     )
+  }
+
+  /**
+   * Prepare the index and its vocabulary, then plan a search whose tokens
+   * also match indexed terms within a small edit distance.
+   */
+  async #searchPlan(
+    db: Database,
+    input: GraphQuery['search']
+  ): Promise<SearchQuery | undefined> {
+    const entry = this.#entryTarget
+    const tokens = searchTokens(input)
+    if (!tokens) return undefined
+    await this.#ensureSearch(db)
+    // Short tokens only match as prefixes; the vocabulary stays unloaded.
+    if (!tokens.some(token => fuzzyDistance(token) > 0))
+      return searchQuery(input, entry, this.#searchName)
+    const own = this.#searchName === this.#ownSearchName
+    const state = own ? this.#target.state : EntrySyncRoot.state
+    const row = await db
+      .select({searchRevision: state.searchRevision})
+      .from(state)
+      .where(eq(state.id, 1))
+      .get()
+    await this.#vocabulary.load(
+      db,
+      this.#searchName,
+      own ? 'temp' : 'main',
+      row?.searchRevision ?? ''
+    )
+    return searchQuery(input, entry, this.#searchName, {
+      alternatives: token => this.#vocabulary.alternatives(token)
+    })
   }
 
   async #ensureSearch(db: Database): Promise<void> {

@@ -46,22 +46,40 @@ export async function rebuildSearch(
     from ${entry}`)
 }
 
-function searchTokens(input: string | Array<string> | undefined) {
+export function searchTokens(input: string | Array<string> | undefined) {
   const text = Array.isArray(input) ? input.join(' ') : input
   if (!text) return undefined
   return text.match(/[\p{L}\p{N}\p{M}]+/gu) ?? []
 }
 
+export interface SearchQueryOptions {
+  /** Indexed spellings a token may also match, besides its prefix. */
+  alternatives?(token: string): ReadonlyArray<string>
+}
+
 export function searchQuery(
   input: string | Array<string> | undefined,
   entry: EntryIndexTarget,
-  name: string
+  name: string,
+  options: SearchQueryOptions = {}
 ): SearchQuery | undefined {
   const tokens = searchTokens(input)
   if (!tokens) return undefined
   // Quote individual tokens and bind the entire expression: user text cannot
   // inject FTS operators, column selectors, quotes or SQL syntax.
-  const terms = tokens.map(term => `"${term}"*`).join(' AND ')
+  const terms = tokens
+    .map(token => {
+      const spellings = [
+        `"${token}"*`,
+        ...(options.alternatives?.(token) ?? []).map(
+          term => `"${term.replaceAll('"', '')}"`
+        )
+      ]
+      return spellings.length > 1
+        ? `(${spellings.join(' OR ')})`
+        : spellings[0]!
+    })
+    .join(' AND ')
   const search = sql.identifier(name)
   const match = sql`${search} match ${terms}`
   const versionId = sql`${search}.${sql.identifier('versionId')}`
@@ -114,5 +132,126 @@ export async function updateSearch(
     await db.run(sql`insert into ${search}(versionId, title, body)
       select versionId, title, searchableText
       from ${entry} where id in (${list})`)
+  }
+}
+
+/** MiniSearch's fuzzy factor: the edit distance allowed per term length. */
+const fuzzyFactor = 0.1
+const maxFuzzyDistance = 6
+const maxAlternatives = 10
+const objectNamePattern = /^[a-z][a-z0-9_]*$/i
+
+/** The edits a token may be away from an indexed term, as MiniSearch had it. */
+export function fuzzyDistance(token: string): number {
+  return Math.min(maxFuzzyDistance, Math.round(token.length * fuzzyFactor))
+}
+
+export function vocabularyName(searchName: string): string {
+  return `${searchName}_vocab`
+}
+
+export async function dropVocabulary(
+  db: Database,
+  searchName: string
+): Promise<void> {
+  await db.run(
+    sql`drop table if exists temp.${sql.identifier(vocabularyName(searchName))}`
+  )
+}
+
+interface VocabularyTerm {
+  term: string
+  count: number
+}
+
+function normalizeToken(token: string): string {
+  return token
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+}
+
+/** Whether two terms are within a bounded Levenshtein distance. */
+function withinDistance(a: string, b: string, max: number): boolean {
+  if (Math.abs(a.length - b.length) > max) return false
+  let previous = Array.from({length: b.length + 1}, (_, i) => i)
+  for (let i = 1; i <= a.length; i++) {
+    const current = [i]
+    let rowMin = i
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      const value = Math.min(
+        previous[j]! + 1,
+        current[j - 1]! + 1,
+        previous[j - 1]! + cost
+      )
+      current.push(value)
+      if (value < rowMin) rowMin = value
+    }
+    if (rowMin > max) return false
+    previous = current
+  }
+  return previous[b.length]! <= max
+}
+
+/**
+ * The terms of one FTS5 table, loaded once per index revision. Query tokens
+ * expand to indexed terms within a small edit distance, which restores the
+ * fuzzy matching the MiniSearch index offered before SQLite.
+ */
+export class SearchVocabulary {
+  #revision: string | undefined
+  #byLength = new Map<number, Array<VocabularyTerm>>()
+
+  async load(
+    db: Database,
+    searchName: string,
+    schema: 'main' | 'temp',
+    revision: string
+  ): Promise<void> {
+    if (this.#revision === revision) return
+    if (!objectNamePattern.test(searchName))
+      throw new Error(`Invalid search table name ${JSON.stringify(searchName)}`)
+    const vocab = sql.identifier(vocabularyName(searchName))
+    // Module arguments cannot be bound, and the names are validated above.
+    await db.run(
+      sql.unsafe(
+        `create virtual table if not exists temp."${vocabularyName(searchName)}"
+         using fts5vocab('${schema}', '${searchName}', 'row')`
+      )
+    )
+    const rows = await db.all<{term: string; cnt: number}>(
+      sql`select term, cnt from temp.${vocab}`
+    )
+    const byLength = new Map<number, Array<VocabularyTerm>>()
+    for (const row of rows) {
+      const terms = byLength.get(row.term.length) ?? []
+      terms.push({term: row.term, count: row.cnt})
+      byLength.set(row.term.length, terms)
+    }
+    this.#byLength = byLength
+    this.#revision = revision
+  }
+
+  /** Indexed terms close to a token, most frequent first; prefixes of the
+   * token are left to the prefix match. */
+  alternatives(token: string): Array<string> {
+    const query = normalizeToken(token)
+    const distance = fuzzyDistance(query)
+    if (!distance) return []
+    const matches: Array<VocabularyTerm> = []
+    for (
+      let length = query.length - distance;
+      length <= query.length + distance;
+      length++
+    ) {
+      for (const candidate of this.#byLength.get(length) ?? []) {
+        if (candidate.term.startsWith(query)) continue
+        if (withinDistance(query, candidate.term, distance))
+          matches.push(candidate)
+      }
+    }
+    matches.sort((a, b) => b.count - a.count)
+    return matches.slice(0, maxAlternatives).map(match => match.term)
   }
 }

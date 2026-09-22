@@ -186,3 +186,58 @@ test('search updates complete entry rows transactionally', async () => {
     sqlite.query('select count(*) as count from alinea_entry_search').get()
   ).toEqual({count: 2})
 })
+
+for (const driver of ['native', 'wasm'] as const)
+  test(`${driver} search expands tokens to close spellings of indexed terms`, async () => {
+    const db =
+      driver === 'native'
+        ? connect(new Database(':memory:'))
+        : await wasmDatabase()
+    try {
+      const source = new MemorySource()
+      await EntryDatabase.createSchema(db, (await source.getTree()).sha)
+      const runtime = new EntryDatabase(config, db)
+      const initial = await transaction(source)
+      await applySourceChange(
+        source,
+        await initial
+          .add('pages/a.json', entry('a', 'Photonics', 'research in leuven'))
+          .add('pages/b.json', entry('b', 'Semiconductors', 'research'))
+          .add('pages/c.json', entry('c', 'Campus', 'leuven'))
+          .compile()
+      )
+      await runtime.syncWith(source)
+      // One edit for terms of five characters and up, as MiniSearch allowed.
+      expect(
+        await runtime.resolve({search: 'photonocs', select: Entry.id})
+      ).toEqual(['a'])
+      expect(
+        (await runtime.resolve({search: 'leuvn', select: Entry.id})).sort()
+      ).toEqual(['a', 'c'])
+      expect(
+        await runtime.resolve({search: 'reserch leuvn', select: Entry.id})
+      ).toEqual(['a'])
+      // Short tokens only match as prefixes.
+      expect(await runtime.resolve({search: 'lex', select: Entry.id})).toEqual(
+        []
+      )
+      expect(
+        await runtime.resolve({search: 'nothing', select: Entry.id})
+      ).toEqual([])
+      // The vocabulary follows the index after a change.
+      const update = await transaction(source)
+      await applySourceChange(
+        source,
+        await update
+          .add('pages/d.json', entry('d', 'Quantum', 'photonics lab'))
+          .compile()
+      )
+      await runtime.syncWith(source)
+      expect(
+        await runtime.resolve({search: 'quantom', select: Entry.id})
+      ).toEqual(['d'])
+      await runtime.close()
+    } finally {
+      await db.close()
+    }
+  })

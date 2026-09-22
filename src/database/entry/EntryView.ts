@@ -1,6 +1,7 @@
 import {eq, sql, temporaryTable, type Database, type Table} from 'rado'
 import * as column from 'rado/universal/columns'
 import {DatabaseStateColumns} from '../DatabaseTables.js'
+import {dropVocabulary} from '../query/Search.js'
 import {
   EntryIndexColumns,
   entryIndexTable,
@@ -140,6 +141,7 @@ export class EntryView implements AsyncDisposable {
       sql`drop trigger if exists ${sql.identifier(deleteTrigger)}`
     )
     await this.#db.run(sql`drop view if exists ${sql.identifier(viewName)}`)
+    await dropVocabulary(this.#db, this.searchName)
     await this.#db.run(
       sql`drop table if exists ${sql.identifier(this.searchName)}`
     )
