@@ -1,5 +1,5 @@
 import {createId} from '#/core/Id.js'
-import {generatedDatabaseFile} from '#/core/Version.js'
+import {generatedDatabaseFile} from '#/database/Version.js'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {writeFileIfContentsDiffer} from '../util/FS.js'

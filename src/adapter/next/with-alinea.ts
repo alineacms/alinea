@@ -1,6 +1,6 @@
 import type {NextConfig} from 'next/dist/types.js'
 import {join} from '#/core/util/Paths.js'
-import {generatedDatabaseFile} from '#/core/Version.js'
+import {generatedDatabaseFile} from '#/database/Version.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'

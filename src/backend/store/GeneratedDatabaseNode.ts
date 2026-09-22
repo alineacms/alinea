@@ -1,5 +1,5 @@
 import type {Config} from '#/core/Config.js'
-import {generatedDatabaseFile} from '#/core/Version.js'
+import {generatedDatabaseFile} from '#/database/Version.js'
 import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
 import {findPackageJSON} from 'node:module'
 import {dirname, join} from 'node:path'

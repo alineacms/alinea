@@ -1,5 +1,5 @@
 import {suite} from '@alinea/suite'
-import {generatedDatabaseFile} from '#/core/Version.js'
+import {generatedDatabaseFile} from '#/database/Version.js'
 import {withAlinea} from './with-alinea.js'
 
 const test = suite(import.meta)

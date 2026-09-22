@@ -1,4 +1,4 @@
-import {generatedDatabaseFile} from '#/core/Version.js'
+import {generatedDatabaseFile} from '#/database/Version.js'
 import {expect, test} from 'bun:test'
 import {mkdtemp, readdir, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'

@@ -1,7 +1,7 @@
 import type {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import {MemorySource} from '#/core/source/MemorySource.js'
-import {versionedCacheName} from '#/core/Version.js'
+import {versionedCacheName} from './Version.js'
 import {Config as ConfigBuilder} from '#/index.js'
 import {createEntrySource} from '#test/EntryFixture.js'
 import {expect, test} from 'bun:test'
