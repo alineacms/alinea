@@ -3,7 +3,6 @@ import type {WithoutLabel} from '#/core/Field.js'
 import type {InferStoredValue} from '#/core/Infer.js'
 import type {Label} from '#/core/Label.js'
 import type {Type} from '#/core/Type.js'
-import {imageExtensions} from '#/core/media/IsImage.js'
 import {MediaFile} from '#/core/media/MediaTypes.js'
 import type {ListRow} from '#/core/ListRow.js'
 import {
@@ -30,12 +29,7 @@ export namespace FileLink {
   export const size = MediaFile.size
 }
 
-const fileCondition = {
-  _type: 'MediaFile',
-  extension: {
-    notIn: [...imageExtensions, ...imageExtensions.map(e => e.toUpperCase())]
-  }
-}
+const fileCondition = {_type: 'MediaFile'}
 
 export function filePicker<Fields>(
   multiple: boolean,

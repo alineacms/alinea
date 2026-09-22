@@ -1,23 +1,12 @@
-import {imageExtensions} from '#/core/media/IsImage.js'
 import {expect, test} from 'bun:test'
 import {file, filePicker} from './FileLink.js'
 import {link} from './Link.js'
 import {Field} from '#/core/Field.js'
 
-test('file picker excludes image extensions case-insensitively', () => {
+test('file picker allows any media file, including images', () => {
   const picker = filePicker(false, {})
 
-  expect(JSON.stringify(picker.options.condition)).toBe(
-    JSON.stringify({
-      _type: 'MediaFile',
-      extension: {
-        notIn: [
-          ...imageExtensions,
-          ...imageExtensions.map(e => e.toUpperCase())
-        ]
-      }
-    })
-  )
+  expect(picker.options.condition).toEqual({_type: 'MediaFile'})
 })
 
 test('generic link locations only constrain page links', () => {
