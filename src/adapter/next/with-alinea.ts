@@ -1,6 +1,5 @@
 import type {NextConfig} from 'next/dist/types.js'
 import {join} from '#/core/util/Paths.js'
-import {generatedDatabaseFile} from '#/database/Version.js'
 import {readFileSync} from 'node:fs'
 import {createRequire} from 'node:module'
 import {resolve} from 'node:path'
@@ -47,13 +46,6 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
         ALINEA_HANDLER_URL: settings.handlerUrl
       }
     : config.env
-  const outputFileTracingIncludes = {
-    ...config.outputFileTracingIncludes,
-    '/*': [
-      ...(config.outputFileTracingIncludes?.['/*'] ?? []),
-      `./node_modules/@alinea/generated/${generatedDatabaseFile}`
-    ]
-  }
   if (nextVersion < 15)
     return {
       ...config,
@@ -67,8 +59,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
       redirects,
       rewrites,
       images,
-      env,
-      outputFileTracingIncludes
+      env
     }
   return {
     ...config,
@@ -79,8 +70,7 @@ export function withAlinea(config: NextConfig = {}): NextConfig {
     redirects,
     rewrites,
     images,
-    env,
-    outputFileTracingIncludes
+    env
   }
 }
 

@@ -1,19 +1,19 @@
 import type {Config} from '#/core/Config.js'
-import {generatedDatabaseFile} from '#/database/Version.js'
 import {runtimeDatabase} from '#/database/driver/RuntimeDatabase.js'
-import {findPackageJSON} from 'node:module'
-import {dirname, join} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {createGeneratedDatabase} from './GeneratedDatabase.js'
 
-function generatedDatabasePath(): string {
-  const packageFile = findPackageJSON('@alinea/generated', import.meta.url)
-  if (!packageFile) throw new Error('Could not find @alinea/generated')
-  return join(dirname(packageFile), generatedDatabaseFile)
+async function generatedDatabasePath(): Promise<string> {
+  // @ts-ignore - generated at build time by the Alinea CLI
+  const {database} = await import('@alinea/generated/database.node.js')
+  if (!(database instanceof URL))
+    throw new Error('The generated database location is missing')
+  return fileURLToPath(database)
 }
 
-/** Open the NFT-traced generated file through the native SQLite driver. */
+/** Open the traced generated file through the native SQLite driver. */
 export async function generatedDatabase(config: Config) {
-  const path = generatedDatabasePath()
+  const path = await generatedDatabasePath()
   const db = await runtimeDatabase({path, readonly: true})
   return createGeneratedDatabase(config, db)
 }
