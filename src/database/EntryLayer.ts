@@ -156,6 +156,11 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     )
   }
 
+  /** Whether this layer was closed, and answers only from a replacement. */
+  get closed(): boolean {
+    return this.#closed
+  }
+
   #assertOpen(): void {
     if (this.#closed) throw new Error('EntryDatabase is closed')
   }

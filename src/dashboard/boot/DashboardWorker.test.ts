@@ -632,3 +632,59 @@ async function createFailedMutationFixture() {
     worker
   }
 }
+
+test('a sync queued on a superseded browser store syncs the replacement', async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'indexedDB')
+  Object.defineProperty(globalThis, 'indexedDB', {
+    value: indexedDB,
+    configurable: true,
+    writable: true
+  })
+  try {
+    const fixture = new FSSource('test/fixtures/demo')
+    const remoteDB = new LocalDB(cms.config, fixture)
+    await remoteDB.sync()
+    const baseClient = createTestConnection(remoteDB)
+    let releaseFirstSync: (() => void) | undefined
+    let markFirstSyncStarted: (() => void) | undefined
+    const firstSyncStarted = new Promise<void>(resolve => {
+      markFirstSyncStarted = resolve
+    })
+    const holdFirstSync = new Promise<void>(resolve => {
+      releaseFirstSync = resolve
+    })
+    let secondRemoteSyncs = 0
+    const firstClient: LocalConnection = {
+      ...baseClient,
+      async getTreeIfDifferent(sha) {
+        markFirstSyncStarted?.()
+        await holdFirstSync
+        return baseClient.getTreeIfDifferent(sha)
+      }
+    }
+    const secondClient: LocalConnection = {
+      ...baseClient,
+      getTreeIfDifferent(sha) {
+        secondRemoteSyncs += 1
+        return baseClient.getTreeIfDifferent(sha)
+      }
+    }
+    const worker = new DashboardWorker()
+    await worker.load('superseded-first', cms.config, firstClient)
+    const first = worker.sync()
+    await firstSyncStarted
+    // Queued behind the held sync, this reaches the first store only after
+    // the replacement below has abandoned it.
+    const queued = worker.sync()
+    await worker.load('superseded-second', cms.config, secondClient)
+
+    releaseFirstSync?.()
+    await first
+    const sha = await queued
+    expect(sha).toBe(await worker.sha())
+    expect(secondRemoteSyncs).toBeGreaterThanOrEqual(1)
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'indexedDB', previous)
+    else delete (globalThis as {indexedDB?: unknown}).indexedDB
+  }
+})

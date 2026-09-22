@@ -287,6 +287,11 @@ export class EntryStore
     return Promise.reject(new Error('Uploads not supported on this store'))
   }
 
+  /** Whether the underlying database was closed. */
+  get closed(): boolean {
+    return this.database.closed
+  }
+
   async close(): Promise<void> {
     await this.#queue.drain()
     if (this.#close) await this.#close()

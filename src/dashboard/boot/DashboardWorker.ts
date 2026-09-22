@@ -73,6 +73,23 @@ export class DashboardWorker extends EventTarget {
 
   async sync(): Promise<string> {
     const load = this.#nextLoad
+    try {
+      return await this.#syncLoaded(load)
+    } catch (error) {
+      // A load that superseded this store mid-sync closed it; sync the
+      // replacement instead of surfacing the closed store.
+      const superseded =
+        this.#nextLoad !== load &&
+        (await load.then(
+          loaded => loaded.db.closed,
+          () => false
+        ))
+      if (superseded) return this.sync()
+      throw error
+    }
+  }
+
+  async #syncLoaded(load: Promise<LoadedDashboard>): Promise<string> {
     const loaded = await load
     const {db, client} = loaded
     return this.#local(async () => {
@@ -96,8 +113,8 @@ export class DashboardWorker extends EventTarget {
     })
   }
 
-  async sha() {
-    return (await this.db).sha
+  sha(): Promise<string> {
+    return this.#withDb(db => db.sha)
   }
 
   async queue(id: string, mutations: Array<Mutation>): Promise<string> {
@@ -286,18 +303,31 @@ export class DashboardWorker extends EventTarget {
     }
   }
 
-  async resolve(raw: string): Promise<unknown> {
-    const db = await this.db
-    const scope = getScope(db.config)
-    const query = scope.parse<GraphQuery>(raw)
-    return db.resolve(query)
+  resolve(raw: string): Promise<unknown> {
+    return this.#withDb(db => {
+      const scope = getScope(db.config)
+      const query = scope.parse<GraphQuery>(raw)
+      return db.resolve(query)
+    })
   }
 
-  async referencesTo(
-    query: EntryReferenceQuery
-  ): Promise<EntryReferenceResult> {
+  referencesTo(query: EntryReferenceQuery): Promise<EntryReferenceResult> {
+    return this.#withDb(db => db.referencesTo(query))
+  }
+
+  /**
+   * Run against the current store, and once more against its replacement
+   * when a load superseded the store mid-flight and closed it.
+   */
+  async #withDb<T>(run: (db: EntryStore) => Promise<T>): Promise<T> {
     const db = await this.db
-    return db.referencesTo(query)
+    try {
+      return await run(db)
+    } catch (error) {
+      const current = await this.db
+      if (!db.closed || current === db) throw error
+      return run(current)
+    }
   }
 
   async load(revision: string, config: Config, client: LocalConnection) {
