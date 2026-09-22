@@ -9,6 +9,7 @@ import {
   ListItemDescription,
   ListItemTitle,
   ListItemVisual,
+  ProgressCircle,
   Tab,
   TabList,
   TabPanel,
@@ -21,6 +22,7 @@ import {Type} from '#/core/Type.js'
 import {assert} from '#/core/util/Assert.js'
 import {isRecord} from '#/core/util/Objects.js'
 import {typeAtoms} from '#/dashboard/atoms/config.js'
+import {localAtom} from '#/dashboard/atoms/core.js'
 import type {EntryAtoms, EntryLocaleAtoms} from '#/dashboard/atoms/entry.js'
 import {MetadataField, type Metadata} from '#/field/metadata.js'
 import {styler} from '@alinea/styler'
@@ -80,7 +82,11 @@ export async function entrySidebar(
       break
     }
     case 'history':
-      if (previousVersionsOpen) await get(localeData.historyReady)
+      if (!previousVersionsOpen) break
+      // Local history is expanded by default, load it in place so navigation
+      // does not wait for it
+      if (get(localAtom)) void get(localeData.historyReady)
+      else await get(localeData.historyReady)
       break
     case 'references':
       await get(entry.incomingReferencesReady)
@@ -216,7 +222,16 @@ interface EntrySidebarPreviousVersionsProps {
 function EntrySidebarPreviousVersions({
   localeData
 }: EntrySidebarPreviousVersionsProps) {
-  const history = useAtomValueRaw(localeData.history)
+  const [pending, history = []] = useAtomValueRaw(localeData.historyState)
+  if (pending && history.length === 0)
+    return (
+      <div className={styles.EntrySidebar.loading()}>
+        <ProgressCircle
+          isIndeterminate
+          aria-label="Loading previous versions"
+        />
+      </div>
+    )
   if (history.length === 0)
     return (
       <List aria-label="Previous versions" empty>

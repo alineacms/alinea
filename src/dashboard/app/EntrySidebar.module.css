@@ -77,6 +77,12 @@
   padding-top: 10px;
 }
 
+.EntrySidebar-loading {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
 .EntrySidebar-previewPanel {
   margin: 0;
   padding: 0;
