@@ -31,6 +31,7 @@ import {usersPage} from './app/pages/UsersPage.js'
 import {Rail} from './app/ui/Rail.js'
 import {activityAtom, activityPendingAtom} from './atoms/activity.js'
 import {authAtom} from './atoms/auth.js'
+import {themeAtom} from './atoms/dashboard.js'
 import {workspaceAtom, workspacesAtom} from './atoms/config.js'
 import {useInitAtoms} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
@@ -224,6 +225,8 @@ function DashboardApp(props: AppProps): ReactNode {
   const [appPending, app] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)
+  // Mounting the theme applies the stored preference to the document
+  useAtomValueRaw(themeAtom)
   const pending = appPending || activity.isMutating
   useEffect(() => {
     setActivityPending(pending)
