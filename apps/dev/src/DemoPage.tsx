@@ -49,6 +49,7 @@ export function DemoLinks(props: DemoLinksProps) {
 }
 
 export async function DemoPage(props: DemoPageProps) {
+  const started = performance.now()
   const [status, pages] = await Promise.all([
     cms.status(),
     cms.find({
@@ -57,11 +58,16 @@ export async function DemoPage(props: DemoPageProps) {
       select: {title: Entry.title, url: Entry.url, type: Entry.type}
     })
   ])
+  const queryDuration = performance.now() - started
   const renderedAt = new Date().toISOString()
   const details = [
     {term: 'Rendering', value: props.rendering},
     {term: 'Runtime', value: props.runtime},
     {term: 'Rendered at', value: renderedAt},
+    {
+      term: 'Query time',
+      value: `${queryDuration.toFixed(1)} ms (status and page list, including any sync)`
+    },
     {term: 'Answered from', value: status.source},
     {term: 'Content sha', value: status.sha ?? 'unknown'},
     {
