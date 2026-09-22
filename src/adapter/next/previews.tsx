@@ -52,8 +52,6 @@ export default function NextPreviews({
   }, [widget])
   /* oxlint-enable react-you-might-not-need-an-effect/no-event-handler */
   if (!widget) return null
-  const isFullPage = window.parent === window
-  if (isFullPage && isPreviewing && !previewDisabled) return null
   return (
     <alinea-preview
       adminUrl={String(adminUrl)}

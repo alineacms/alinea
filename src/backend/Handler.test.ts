@@ -9,7 +9,7 @@ import type {
   AuthedContext,
   RequestContext
 } from '#/core/Connection.js'
-import {developmentKeyHeader} from '#/core/Connection.js'
+import {developmentKeyHeader, type Revision} from '#/core/Connection.js'
 import {LocalDB} from '#/database/LocalDB.js'
 import {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -971,8 +971,8 @@ test('accepts authenticated commits only in development', async () => {
 test('routes history requests with a file to revisions', async () => {
   const cms = createCMS({schema: {Page}, workspaces: {main}})
   const db = new LocalDB(cms.config)
-  const revisions = [
-    {ref: 'revision', createdAt: 0, file: 'content/pages/example.json'}
+  const revisions: Array<Revision> = [
+    {ref: 'abc', createdAt: 0, file: 'content/pages/example.json'}
   ]
   const requestedFiles: Array<string> = []
   const handle = createHandler({

@@ -22,7 +22,7 @@ import {encodePreviewPayload} from '#/preview/PreviewPayload.js'
 import {parents, translations} from '#/query.js'
 import {Atom, atom, Getter} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import {clientAtom, configAtom, graphAtom} from './core.js'
+import {clientAtom, configAtom, graphAtom, localAtom} from './core.js'
 import type {ResolvedEditorImage} from './editor.js'
 import {entryRevisionAtom, shaAtom} from './graph.js'
 import {getPreviewToken, retryPreviewToken} from './preview.js'
@@ -230,7 +230,7 @@ export class EntryLocaleAtoms {
     const file = join(Config.contentDir(config), entry.filePath)
     return (await client.revisions(file)).slice(1)
   })
-  history = unwrap(this.historyReady, previous => previous ?? [])
+  historyState = atomWithPending(this.historyReady)
 
   selectedNode = atom(async get => {
     const version = get(this.selectedVersion)
@@ -587,7 +587,12 @@ export class EntryAtoms {
 
   // Should UI show overview or editor?
   #selectedView = atom<EntryDefaultView>()
-  previousVersionsOpen = atom(false)
+  #previousVersionsRequested = atom<boolean>()
+  // Local history is cheap to load, so expand it unless toggled explicitly
+  previousVersionsOpen = atom(
+    get => get(this.#previousVersionsRequested) ?? get(localAtom),
+    (_get, set, open: boolean) => set(this.#previousVersionsRequested, open)
+  )
 
   incomingReferencesReady = atom(async get => {
     get(entryRevisionAtom(this.id))

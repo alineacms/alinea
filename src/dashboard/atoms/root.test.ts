@@ -619,3 +619,60 @@ test('canCreate terminates on cyclic contains', () => {
   )
   expect(store.get(rootAtoms('main', 'pages').canCreate)).toBe(true)
 })
+
+test('tree canCreate follows the selected container', async () => {
+  const Tag = Config.document('Tag', {
+    fields: {title: Field.text('Title')}
+  })
+  const Tags = Config.document('Tags', {
+    contains: ['Tag'],
+    fields: {title: Field.text('Title')}
+  })
+  const workspace = 'selected_container_test'
+  const config = Config.create({
+    schema: {Tag, Tags},
+    workspaces: {
+      [workspace]: Config.workspace('Main', {
+        source: '.',
+        roots: {general: Config.root('General', {contains: []})}
+      })
+    }
+  })
+  const db = new LocalDB(config)
+  await db.sync()
+  const tags = await db.create({
+    root: 'general',
+    type: Tags,
+    workspace,
+    set: {title: 'Tags'}
+  })
+  const tag = await db.create({
+    parentId: tags._id,
+    root: 'general',
+    type: Tag,
+    workspace,
+    set: {title: 'Tag'}
+  })
+  const store = createDashboardStore(config, db)
+  store.set(
+    preloadUserPolicyAtom,
+    localUser,
+    new WriteablePolicy(getScope(config))
+      .set({workspace: config.workspaces[workspace], allow: {read: true}})
+      .set({type: Tag, allow: {create: true}})
+  )
+  const root = rootAtoms(workspace, 'general')
+  const selectedKeys = atom(new Set<Key>())
+  const tree = root.createTree(null, selectedKeys)
+  await store.get(tree.ready)
+  expect(store.get(root.canCreate)).toBe(false)
+  expect(store.get(tree.canCreate)).toBe(false)
+
+  store.set(selectedKeys, new Set<Key>([tags._id]))
+  await store.get(tree.ready)
+  expect(store.get(tree.canCreate)).toBe(true)
+
+  store.set(selectedKeys, new Set<Key>([tag._id]))
+  await store.get(tree.ready)
+  expect(store.get(tree.canCreate)).toBe(true)
+})
