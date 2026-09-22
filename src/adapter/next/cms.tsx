@@ -165,6 +165,8 @@ export class NextCMS<
       // so asking for the shared sha would cost an uncached request on every
       // render. Without a preview cookie there is no hash to compare against,
       // and the throttled sync keeps drafts fresh instead.
+      // Route the sync syncIfStale may trigger through #syncDb so it counts
+      // as this isolate's last sync.
       const tracked = {sha: db.sha, syncWith: () => this.#syncDb(db, client)}
       const settled =
         !isDraft && (await syncIfStale(tracked, client, syncInterval))

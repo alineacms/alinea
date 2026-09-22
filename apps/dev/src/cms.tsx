@@ -1,6 +1,6 @@
 import {Config} from 'alinea'
 import {createCMS} from 'alinea/next'
-import {IcRoundTranslate, IcRoundUploadFile} from '../../../src/dashboard/icons'
+import {IcRoundTranslate, IcRoundUploadFile} from 'alinea/dashboard/icons'
 import * as schema from './schema'
 
 const editor = Config.role('Editor', {
