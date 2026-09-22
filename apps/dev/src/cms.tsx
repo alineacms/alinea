@@ -48,7 +48,12 @@ export const cms = createCMS({
   preview: true,
   handlerUrl: '/api/cms',
   baseUrl: {
-    production: process.env.VERCEL_URL ?? 'dev.alineacms.com',
+    // Preview deployments talk to their own handler; production uses the
+    // custom domain so server-side calls skip Vercel's deployment protection.
+    production:
+      process.env.VERCEL_ENV === 'production'
+        ? 'dev.alineacms.com'
+        : (process.env.VERCEL_URL ?? 'dev.alineacms.com'),
     development: 'http://localhost:3000'
   },
   schema,
