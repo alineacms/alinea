@@ -100,54 +100,66 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   async function writeStore(db: DevDB) {
     return db.finalize()
   }
-  for await (const cms of builds) {
-    Config.handlerUrl(cms.config)
-    if (cmd === 'build') {
-      const baseUrl = Config.baseUrl(cms.config, 'production')
-      if (!baseUrl) {
-        reportFatal(
-          'No baseUrl was set for the production build in Alinea config'
-        )
-        process.exit(1)
-      }
-    }
-    const write = async (recordCount: number) => {
-      let dbSize = 0
+  // One database serves the whole session: a changed config derives the
+  // entries again in place instead of closing and reopening the file.
+  let db: DevDB | undefined
+  let databaseReady = false
+  try {
+    for await (const cms of builds) {
+      Config.handlerUrl(cms.config)
       if (cmd === 'build') {
-        ;[, dbSize] = await Promise.all([
-          generatePackage(context, cms),
-          writeStore(db)
-        ])
+        const baseUrl = Config.baseUrl(cms.config, 'production')
+        if (!baseUrl) {
+          reportFatal(
+            'No baseUrl was set for the production build in Alinea config'
+          )
+          process.exit(1)
+        }
       }
-      let message = `${cmd} ${location} in `
-      const duration = performance.now() - now
-      if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
-      else message += `${duration.toFixed(0)}ms`
-      const details = [`${recordCount} records`]
-      if (dbSize > 0) details.unshift(`db ${prettyBytes(dbSize)}`)
-      if (db.hydrated) details.push(`hydrated, ${db.lastSyncChanges} changed`)
-      message += ` (${details.join(', ')})`
-      return message
-    }
-    const db = await DevDB.create({
-      config: cms.config,
-      rootDir,
-      databasePath: join(context.outDir, generatedDatabaseFile),
-      configFingerprint: await hashBlob(
-        await fsp.readFile(join(context.outDir, 'config.js'))
-      ),
-      dashboardUrl: await options.dashboardUrl
-    })
-    try {
-      indexing = fillCache(db, context.fix, watch)
-    } catch (error: any) {
-      await db.close()
-      reportError(error)
-      if (cmd === 'build') process.exit(1)
-      continue
-    }
-    let databaseReady = false
-    try {
+      const databaseOptions = {
+        config: cms.config,
+        rootDir,
+        databasePath: join(context.outDir, generatedDatabaseFile),
+        configFingerprint: await hashBlob(
+          await fsp.readFile(join(context.outDir, 'config.js'))
+        ),
+        dashboardUrl: await options.dashboardUrl
+      }
+      try {
+        if (db) await db.reconfigure(databaseOptions)
+        else db = await DevDB.create(databaseOptions)
+      } catch (error) {
+        if (error instanceof Error) reportError(error)
+        if (cmd === 'build') process.exit(1)
+        continue
+      }
+      const current = db
+      const write = async (recordCount: number) => {
+        let dbSize = 0
+        if (cmd === 'build') {
+          ;[, dbSize] = await Promise.all([
+            generatePackage(context, cms),
+            writeStore(current)
+          ])
+        }
+        let message = `${cmd} ${location} in `
+        const duration = performance.now() - now
+        if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
+        else message += `${duration.toFixed(0)}ms`
+        const details = [`${recordCount} records`]
+        if (dbSize > 0) details.unshift(`db ${prettyBytes(dbSize)}`)
+        if (current.hydrated)
+          details.push(`hydrated, ${current.lastSyncChanges} changed`)
+        message += ` (${details.join(', ')})`
+        return message
+      }
+      try {
+        indexing = fillCache(current, context.fix, watch)
+      } catch (error) {
+        if (error instanceof Error) reportError(error)
+        if (cmd === 'build') process.exit(1)
+        continue
+      }
       for await (const db of indexing) {
         databaseReady = true
         yield {cms, db}
@@ -165,12 +177,12 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
           )
         }
       }
+    }
+  } finally {
+    try {
+      await db?.close()
     } finally {
-      try {
-        await db.close()
-      } finally {
-        if (databaseReady) await cleanupOldDatabases(context.outDir)
-      }
+      if (databaseReady) await cleanupOldDatabases(context.outDir)
     }
   }
 }

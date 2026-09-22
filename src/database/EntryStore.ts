@@ -43,7 +43,8 @@ export class EntryStore
   extends WriteableGraph
   implements LocalStore, AsyncDisposable
 {
-  readonly config: Config
+  /** Replaced only by a reindex, which derives every entry again. */
+  config: Config
   readonly database: EntryLayer
   readonly source: Source
   #ownsDatabase: boolean

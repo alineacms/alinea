@@ -9,10 +9,11 @@ import fs, {
 import {tmpdir} from 'node:os'
 import {dirname, join} from 'node:path'
 import {createConfig} from '#/core/Config.js'
+import type {Field as FieldDefinition} from '#/core/Field.js'
 import {Entry} from '#/core/Entry.js'
 import type {CommitRequest} from '#/core/db/CommitRequest.js'
 import {workspace} from '#/core/Workspace.js'
-import {Config} from '#/index.js'
+import {Config, Field} from '#/index.js'
 import {suite} from '@alinea/suite'
 import {spyOn} from 'bun:test'
 import {DevDB} from './DevDB.js'
@@ -243,6 +244,82 @@ test('prepares uploads on the development server origin', async () => {
     const upload = await db.prepareUpload('public/media/example.png')
 
     test.is(upload.url.startsWith('http://localhost:4500/?/upload&file='), true)
+  } finally {
+    await db?.close()
+    await rm(rootDir, {recursive: true, force: true})
+  }
+})
+
+test('reconfigures the open database when the config changes', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'alinea-dev-db-reconfigure-'))
+  const contentDir = join(rootDir, 'content')
+  const databasePath = join(rootDir, 'database.sqlite')
+  const pages = (fields: Record<string, FieldDefinition>) =>
+    createConfig({
+      schema: {Page: Config.document('Page', {fields})},
+      workspaces: {
+        main: workspace('Main', {
+          source: 'content',
+          roots: {pages: Config.root('Pages', {contains: ['Page']})}
+        })
+      }
+    })
+  const plain = pages({title: Field.text('Title'), body: Field.text('Body')})
+  const searchable = pages({
+    title: Field.text('Title'),
+    body: Field.text('Body', {searchable: true})
+  })
+  let db: DevDB | undefined
+  await mkdir(join(contentDir, 'pages'), {recursive: true})
+  await writeFile(
+    join(contentDir, 'pages/page.json'),
+    JSON.stringify({
+      _id: 'page',
+      _type: 'Page',
+      _index: 'a',
+      title: 'Page',
+      body: 'needle'
+    })
+  )
+  try {
+    db = await DevDB.create({
+      config: plain,
+      rootDir,
+      databasePath,
+      configFingerprint: 'plain',
+      dashboardUrl: undefined
+    })
+    await db.sync()
+    test.equal(await db.find({search: 'needle', select: Entry.id}), [])
+
+    await db.reconfigure({
+      config: searchable,
+      configFingerprint: 'searchable',
+      dashboardUrl: undefined
+    })
+    test.is(db.closed, false)
+    test.is(db.config, searchable)
+    test.equal(await db.find({search: 'needle', select: Entry.id}), ['page'])
+    test.equal(await db.find({select: Entry.title}), ['Page'])
+    await db.close()
+    db = undefined
+
+    // The recorded fingerprint lets the next open keep the reindexed rows.
+    const reopened = await DevDB.create({
+      config: searchable,
+      rootDir,
+      databasePath,
+      configFingerprint: 'searchable',
+      dashboardUrl: undefined
+    })
+    try {
+      test.is(reopened.hydrated, true)
+      test.equal(await reopened.find({search: 'needle', select: Entry.id}), [
+        'page'
+      ])
+    } finally {
+      await reopened.close()
+    }
   } finally {
     await db?.close()
     await rm(rootDir, {recursive: true, force: true})

@@ -95,6 +95,33 @@ export class DevDB extends EntryStore {
     }
   }
 
+  /**
+   * Adopt a changed config in place: every entry is derived again from the
+   * content files while the database stays open, so the dev server keeps
+   * serving through the rebuild and the hydrated file stats stay valid.
+   */
+  async reconfigure(
+    options: Pick<DevDBOptions, 'config' | 'configFingerprint' | 'dashboardUrl'>
+  ): Promise<void> {
+    const {rootDir} = this.#options
+    const previousDir = join(rootDir, Config.contentDir(this.#options.config))
+    const contentDir = join(rootDir, Config.contentDir(options.config))
+    if (contentDir !== previousDir)
+      throw new Error(
+        'Changing the content directory requires restarting the dev server'
+      )
+    this.#options = {...this.#options, ...options}
+    this.config = options.config
+    await this.source.refresh()
+    await this.database.reindex(
+      options.config,
+      this.source,
+      options.configFingerprint
+    )
+    this.#persistedRevision = undefined
+    await this.sync()
+  }
+
   override async sync(): Promise<string> {
     await this.source.refresh()
     const revision = await super.sync()

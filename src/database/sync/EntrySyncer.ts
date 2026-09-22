@@ -60,6 +60,13 @@ export class EntrySyncer implements AsyncDisposable {
     this.#ready = createTemporaryTables(this.#db)
   }
 
+  /** Derive later syncs with another config; prepared statements are shared. */
+  reconfigure(config: Config): Promise<void> {
+    return this.#queue.run(async () => {
+      this.#config = config
+    })
+  }
+
   /** Stream a source/tree diff directly into the canonical SQLite table. */
   sync(
     target: EntrySyncTarget,

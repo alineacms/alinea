@@ -10,7 +10,12 @@ import {
   SourceFileTable
 } from './DatabaseTables.js'
 import {EntryIndexTable} from './entry/EntryTable.js'
-import {EntryLayer, type EntryDatabaseOptions} from './EntryLayer.js'
+import type {RemoteSource} from '#/core/source/Source.js'
+import {
+  EntryLayer,
+  type EntryDatabaseOptions,
+  type EntrySyncResult
+} from './EntryLayer.js'
 import {createSearch, EntrySearchName} from './query/Search.js'
 import {EntrySyncer, EntrySyncRoot} from './sync/EntrySyncer.js'
 import {sqliteBatchSize} from './sync/SyncQueries.js'
@@ -104,6 +109,23 @@ export class EntryDatabase extends EntryLayer {
         revision,
         tree: revision === ReadonlyTree.EMPTY.sha ? ReadonlyTree.EMPTY : null
       })
+  }
+
+  /**
+   * Derive every entry again with another config, recording the fingerprint
+   * so a later open recognizes the database as written by that config.
+   */
+  reindex(
+    config: Config,
+    source: RemoteSource,
+    configFingerprint = defaultConfigFingerprint
+  ): Promise<EntrySyncResult> {
+    return this.reindexEntries(config, source, async tx => {
+      await tx
+        .update(DatabaseMetadataTable)
+        .set({configFingerprint})
+        .where(eq(DatabaseMetadataTable.id, 1))
+    })
   }
 
   /** File stats recorded by the last filesystem sync of this database. */

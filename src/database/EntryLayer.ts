@@ -32,9 +32,10 @@ import {
   updateSearch
 } from './query/Search.js'
 
+import {EntrySyncer, type EntrySyncTarget} from './sync/EntrySyncer.js'
+
 /** Above this many changed entries a full rebuild beats updating in place. */
 const searchRebuildThreshold = 2000
-import {EntrySyncer, type EntrySyncTarget} from './sync/EntrySyncer.js'
 
 /** Shared, connection-scoped state of one queryable layer of the entry index. */
 export interface EntryLayerContext {
@@ -185,6 +186,68 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
         current,
         validate
       )
+      return {revision: tree.sha, changedEntryIds}
+    })
+  }
+
+  /**
+   * Adopt another config and derive every entry again from the source. The
+   * rows of the previous config are replaced within one transaction, so reads
+   * keep answering from them until the replacement is committed. Only a root
+   * layer without overlays can be reindexed.
+   */
+  protected async reindexEntries(
+    config: Config,
+    source: RemoteSource,
+    reset?: (tx: Database) => Promise<void>
+  ): Promise<EntrySyncResult> {
+    this.#assertOpen()
+    if (this.#ownSearchName)
+      throw new Error('Cannot reindex an overlay, reindex its base instead')
+    if (this.#children.size)
+      throw new Error('Cannot reindex an entry database with active overlays')
+    return this.#syncQueue.run(async () => {
+      this.#config = config
+      await this.#syncer.reconfigure(config)
+      if (this.#context.syncer !== this.#syncer)
+        await this.#context.syncer.reconfigure(config)
+      const tree =
+        (await source.getTreeIfDifferent(ReadonlyTree.EMPTY.sha)) ??
+        ReadonlyTree.EMPTY
+      const state = this.#target.state
+      const changedEntryIds = await this.#onSyncConnection(() =>
+        this.#syncDb.transaction(
+          async tx => {
+            await tx.delete(this.#entryTarget)
+            await tx
+              .update(state)
+              .set({
+                revision: ReadonlyTree.EMPTY.sha,
+                tree: ReadonlyTree.EMPTY,
+                searchRevision: null
+              })
+              .where(eq(state.id, 1))
+            await reset?.(tx)
+            return this.#syncer.sync(
+              this.#target,
+              source,
+              tree,
+              ReadonlyTree.EMPTY.sha,
+              {
+                previousTree: ReadonlyTree.EMPTY,
+                withinTransaction: true,
+                validate: true
+              }
+            )
+          },
+          {async: true}
+        )
+      )
+      this.#tree = tree
+      // Searchable text depends on the config: build the index again on the
+      // next search instead of updating rows in place.
+      this.#searchDirty = true
+      this.#emitChange({revision: tree.sha, changedEntryIds})
       return {revision: tree.sha, changedEntryIds}
     })
   }

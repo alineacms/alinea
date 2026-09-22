@@ -11,7 +11,6 @@ import {fetch, Headers, Request, type Response} from '@alinea/iso'
 import type {BuildOptions} from 'esbuild'
 import path from 'node:path'
 import {generate} from '../Generate.js'
-import type {DevDB} from '../generate/DevDB.js'
 import {dirname} from '../util/Dirname.js'
 import {findConfigFile} from '../util/FindConfigFile.js'
 import {reportError} from '../util/Report.js'
@@ -98,9 +97,6 @@ export async function createDevServer(
   })
   let currentCMS: CMS | undefined
   let currentServer: LocalServer | undefined
-  let currentDb: DevDB | undefined
-  // Resolves with the server that replaces the current one after a rebuild.
-  let replacement = Promise.withResolvers<LocalServer>()
   let failed: unknown
   let resolveInitialServer!: (server: LocalServer) => void
   let rejectInitialServer!: (reason?: unknown) => void
@@ -125,7 +121,6 @@ export async function createDevServer(
   async function reloadServer() {
     try {
       for await (const {cms, db} of generateFiles) {
-        currentDb = db
         if (currentCMS === cms) {
           context.liveReload.reload('refetch')
           continue
@@ -151,8 +146,6 @@ export async function createDevServer(
         currentServer = nextServer
         currentCMS = cms
         settleInitialServer(nextServer)
-        replacement.resolve(nextServer)
-        replacement = Promise.withResolvers<LocalServer>()
 
         function backend(context: RequestContext): RemoteConnection {
           if (process.env.ALINEA_CLOUD_URL)
@@ -168,7 +161,6 @@ export async function createDevServer(
     } catch (error) {
       failed = error
       failInitialServer(error)
-      replacement.reject(error)
       if (error instanceof Error) reportError(error)
     }
   }
@@ -184,10 +176,7 @@ export async function createDevServer(
     },
     async handle(request: Request) {
       if (failed) throw failed
-      let server = currentServer ?? (await initialServer)
-      // A config change closes the database before its replacement is
-      // indexed; requests wait for the next server instead of failing.
-      if (currentDb?.closed) server = await replacement.promise
+      const server = currentServer ?? (await initialServer)
       return server.handle(request)
     }
   }
