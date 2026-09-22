@@ -290,3 +290,41 @@ test('cached source retries a failed tree refresh', async () => {
     await rm(dir, {recursive: true, force: true})
   }
 })
+
+test('lists nested files relative to the content dir', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'alinea-fs-nested-'))
+  const outside = await mkdtemp(join(tmpdir(), 'alinea-fs-outside-'))
+  try {
+    const files: Record<string, string> = {
+      'root.json': 'Root',
+      'a/one.json': 'One',
+      'a/b/two.json': 'Two',
+      'a/b/c/three.json': 'Three',
+      'empty/.gitkeep': '',
+      'linked/four.json': 'Four',
+      'linked/sub/five.json': 'Five'
+    }
+    for (const [file, contents] of Object.entries(files)) {
+      const target = file.startsWith('linked/')
+        ? join(outside, file.slice('linked/'.length))
+        : join(dir, file)
+      await fs.mkdir(join(target, '..'), {recursive: true})
+      await writeFile(target, contents)
+    }
+    await fs.mkdir(join(dir, 'a/b/c/empty'), {recursive: true})
+    // Symlinked directories are followed, as a recursive readdir does in Node
+    await fs.symlink(outside, join(dir, 'linked'), 'junction')
+
+    const expected = new WriteableTree()
+    for (const [file, contents] of Object.entries(files))
+      expected.add(file, await hashBlob(new TextEncoder().encode(contents)))
+    const expectedTree = await expected.compile()
+
+    const tree = await new FSSource(dir).getTree()
+    test.equal([...tree.index().keys()].sort(), Object.keys(files).sort())
+    test.is(tree.sha, expectedTree.sha)
+  } finally {
+    await rm(dir, {recursive: true, force: true})
+    await rm(outside, {recursive: true, force: true})
+  }
+})

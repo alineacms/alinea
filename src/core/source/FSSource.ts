@@ -21,6 +21,31 @@ function hashFileBlob(contents: Uint8Array): string {
   return createHash('sha1').update(header).update(contents).digest('hex')
 }
 
+/**
+ * List every non-directory entry below root as a path relative to root, using
+ * forward slashes. Uses dirent types so only symlinks need a stat; symlinks to
+ * directories are followed like Node's recursive readdir does.
+ */
+async function listFiles(root: string, dir = ''): Promise<Array<string>> {
+  const entries = await fs.readdir(dir ? `${root}/${dir}` : root, {
+    withFileTypes: true
+  })
+  const nested = await Promise.all(
+    entries.map(async entry => {
+      const file = dir ? `${dir}/${entry.name}` : entry.name
+      const isDirectory =
+        entry.isDirectory() ||
+        (entry.isSymbolicLink() &&
+          (await fs.stat(`${root}/${file}`).then(
+            stat => stat.isDirectory(),
+            () => false
+          )))
+      return isDirectory ? listFiles(root, file) : [file]
+    })
+  )
+  return nested.flat()
+}
+
 /** The filesystem metadata used to detect that a file did not change. */
 export interface FileStat {
   mtimeMs: number
@@ -68,9 +93,7 @@ export class FSSource implements Source {
     return limit(async () => {
       const current = this.#current
       const builder = new WriteableTree()
-      const files = await fs.readdir(this.#cwd, {
-        recursive: true
-      })
+      const files = await listFiles(this.#cwd)
       for await (const result of mapConcurrent(
         files,
         file => this.getFile(current, builder, file),
