@@ -170,7 +170,9 @@ test('reopens the generated database without re-reading unchanged files', async 
   )
   try {
     initial = await DevDB.create(options)
+    test.is(initial.hydrated, false)
     const sha = await initial.sync()
+    test.is(initial.lastSyncChanges, 1)
     await initial.close()
     initial = undefined
 
@@ -181,7 +183,9 @@ test('reopens the generated database without re-reading unchanged files', async 
         .filter(file => file.startsWith(contentDir))
     try {
       reopened = await DevDB.create(options)
+      test.is(reopened.hydrated, true)
       test.is(await reopened.sync(), sha)
+      test.is(reopened.lastSyncChanges, 0)
       test.equal(contentReads(), [])
 
       await writeFile(

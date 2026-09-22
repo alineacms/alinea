@@ -132,9 +132,10 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       const duration = performance.now() - now
       if (duration > 1000) message += `${(duration / 1000).toFixed(2)}s`
       else message += `${duration.toFixed(0)}ms`
-      if (dbSize > 0)
-        message += ` (db ${prettyBytes(dbSize)}, ${recordCount} records)`
-      else message += ` (${recordCount} records)`
+      const details = [`${recordCount} records`]
+      if (dbSize > 0) details.unshift(`db ${prettyBytes(dbSize)}`)
+      if (db.hydrated) details.push(`hydrated, ${db.lastSyncChanges} changed`)
+      message += ` (${details.join(', ')})`
       return message
     }
     const db = await DevDB.create({

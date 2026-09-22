@@ -39,6 +39,8 @@ export class DevDB extends EntryStore {
   #options: DevDBOptions
   /** The revision the persisted source file stats were recorded for. */
   #persistedRevision?: string
+  #hydrated = false
+  #lastSyncChanges = 0
 
   private constructor(
     options: DevDBOptions,
@@ -47,6 +49,19 @@ export class DevDB extends EntryStore {
   ) {
     super(options.config, database, source, {ownsDatabase: true})
     this.#options = options
+    this.onChange(change => {
+      this.#lastSyncChanges = change.changedEntryIds.length
+    })
+  }
+
+  /** Whether the source was restored from a previously built database. */
+  get hydrated(): boolean {
+    return this.#hydrated
+  }
+
+  /** How many entries the last sync changed; zero when everything was reused. */
+  get lastSyncChanges(): number {
+    return this.#lastSyncChanges
   }
 
   static async create(options: DevDBOptions): Promise<DevDB> {
@@ -68,6 +83,7 @@ export class DevDB extends EntryStore {
         if (stats.size > 0) {
           source.hydrate(tree, stats)
           devDb.#persistedRevision = tree.sha
+          devDb.#hydrated = true
         }
       } catch {
         // Without a persisted tree every file is read from disk again
