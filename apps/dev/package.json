@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "bun run --cwd ../.. build && node ts-setup-check.cjs && node ../../dist/cli.js build -- next build",
+    "build": "bun run --cwd ../.. build && node ../../dist/cli.js build -- next build",
     "start": "next start"
   },
   "dependencies": {
@@ -14,5 +14,8 @@
     "next": "^16.1.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

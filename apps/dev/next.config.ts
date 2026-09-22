@@ -1,8 +1,9 @@
 import {withAlinea} from 'alinea/next'
 
 export default withAlinea({
-  // The monorepo is on the TypeScript 7 native preview, which does not expose
-  // the compiler API Next uses to type check builds. Types are checked with
-  // `tsc --noEmit` instead.
+  // The monorepo is on TypeScript 7, whose package has no compiler API. Next
+  // still needs one to write tsconfig defaults, so the app depends on
+  // TypeScript 5 itself, but its type check is skipped: types are checked
+  // with `tsc --noEmit` from the root.
   typescript: {ignoreBuildErrors: true}
 })
