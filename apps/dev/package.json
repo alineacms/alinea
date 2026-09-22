@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "bun run --cwd ../.. build && node ../../dist/cli.js build -- next build",
+    "build": "bun run --cwd ../.. build && NODE_OPTIONS=\"--trace-exit --trace-uncaught\" node ../../dist/cli.js build -- next build",
     "start": "next start"
   },
   "dependencies": {
