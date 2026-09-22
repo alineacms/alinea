@@ -178,6 +178,22 @@ test('switches a localized card picker without showing its loader', async ({
     .toBe('false')
 })
 
+test('shows links without a stored locale in the edited locale', async ({
+  dashboard,
+  mount
+}) => {
+  const app = await dashboard.mount(() => mount(<LinkFieldScenarioMount />), {
+    routeWorkspace: 'localized',
+    routeRoot: 'pages:fr',
+    routeEntry: 'localized-link-source',
+    title: 'Source française'
+  })
+
+  const field = app.page.getByRole('list', {name: 'Localized page'})
+  await expect(field).toContainText('Cible française')
+  await expect(field).not.toContainText('English target')
+})
+
 test('hides card navigation when picker locations are limited', async ({
   dashboard,
   mount

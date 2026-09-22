@@ -20,7 +20,7 @@ const ScenarioPage = Config.document('Page', {
       async location({entry, graph}) {
         const folder = await graph.get({
           id: linkScenarioIds.referenceFolder,
-          workspace: entry.workspace === 'main' ? 'references' : 'main'
+          workspace: entry.workspace === 'references' ? 'main' : 'references'
         })
         return {
           workspace: folder._workspace,
@@ -223,6 +223,38 @@ async function createLinkFieldScenario(): Promise<LinkFieldScenarioState> {
     root: 'pages',
     locale: 'fr',
     set: {summary: 'Localized French result', title: 'French result'}
+  })
+  await db.create({
+    id: 'localized-link-target',
+    type: ScenarioPage,
+    workspace: 'localized',
+    root: 'pages',
+    locale: 'en',
+    set: {title: 'English target'}
+  })
+  await db.create({
+    id: 'localized-link-target',
+    type: ScenarioPage,
+    workspace: 'localized',
+    root: 'pages',
+    locale: 'fr',
+    set: {title: 'Cible française'}
+  })
+  await db.create({
+    id: 'localized-link-source',
+    type: ScenarioPage,
+    workspace: 'localized',
+    root: 'pages',
+    locale: 'fr',
+    set: {
+      title: 'Source française',
+      // Stored before links recorded their locale
+      localizedPage: {
+        _id: 'localized-link-source-link',
+        _type: 'entry',
+        _entry: 'localized-link-target'
+      }
+    }
   })
   return {client: createTestConnection(db), db}
 }

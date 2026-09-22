@@ -12,6 +12,7 @@ interface MountDashboardOptions {
   entry?: DashboardScenarioName
   routeEntry?: string
   routeRoot?: string
+  routeWorkspace?: string
   theme?: 'light' | 'dark'
   title?: string
 }
@@ -81,6 +82,7 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
         const entry = options.entry ?? 'alpha'
         const id = options.routeEntry ?? dashboardScenarioIds[entry]
         const root = options.routeRoot ?? 'pages'
+        const workspace = options.routeWorkspace ?? 'main'
         await page.evaluate(theme => {
           if (theme)
             localStorage.setItem(
@@ -92,7 +94,7 @@ export const test = base.extend<{dashboard: DashboardFixture}>({
         }, options.theme)
         await page.evaluate(hash => {
           window.history.replaceState(null, '', hash)
-        }, `#/entry/main/${root}/${id}`)
+        }, `#/entry/${workspace}/${root}/${id}`)
         const component = await render()
         const driver = new DashboardDriver(page, component)
         const expectedTitle =
