@@ -90,7 +90,7 @@ test('serves bundled content without asking the cloud when no api key is set', a
   globalThis.fetch = (async () => {
     requests++
     return new Response(null, {status: 500})
-  }) as typeof fetch
+  }) as unknown as typeof fetch
   try {
     test.is(
       await remote.getTreeIfDifferent(
