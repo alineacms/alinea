@@ -1,0 +1,74 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding: 128px var(--cloud-gutter) 0;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding-top: 72px;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 48px;
+  border-radius: 28px;
+  background: var(--cloud-surface);
+  border: 1px solid var(--cloud-border);
+
+  @include s {
+    padding: 28px;
+    border-radius: 22px;
+  }
+
+  &.is-dashed {
+    background: transparent;
+    border: 1px dashed var(--cloud-border-dashed);
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--cloud-title-font);
+    font-weight: 600;
+    font-size: 36px;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+
+    @include s {
+      font-size: 28px;
+    }
+  }
+
+  &-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 16.5px;
+    color: var(--cloud-text-bright);
+  }
+
+  &-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &-check {
+    display: flex;
+    flex-shrink: 0;
+    color: var(--cloud-accent);
+  }
+
+  &.is-dashed &-check {
+    color: var(--cloud-text-muted);
+  }
+}

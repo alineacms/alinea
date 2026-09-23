@@ -1,0 +1,80 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 104px var(--cloud-gutter) 0;
+  text-align: center;
+
+  @include sm {
+    gap: 20px;
+    padding-top: 56px;
+  }
+
+  &-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px 6px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 14px;
+    color: var(--cloud-text-bright);
+
+    &-label {
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--cloud-accent-solid);
+      color: #ffffff;
+      font-size: 12.5px;
+      font-weight: 600;
+    }
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--cloud-title-font);
+    font-weight: 600;
+    font-size: 88px;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    color: var(--cloud-heading);
+
+    @include sm {
+      font-size: 64px;
+    }
+
+    @include s {
+      font-size: 44px;
+    }
+
+    &-accent {
+      color: var(--cloud-accent);
+    }
+  }
+
+  &-lead {
+    margin: 0;
+    max-width: 660px;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--cloud-text);
+
+    @include s {
+      font-size: 18px;
+    }
+  }
+
+  &-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding-top: 8px;
+  }
+}

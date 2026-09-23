@@ -1,0 +1,34 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  text-decoration: none;
+
+  // Doubled class to win over the Logo component's own width
+  & &-logo {
+    width: 96px;
+
+    @include s {
+      width: 80px;
+    }
+  }
+
+  &-badge {
+    padding: 3px 9px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  &.is-small &-logo {
+    width: 90px;
+  }
+
+  &.is-small &-badge {
+    font-size: 12px;
+  }
+}

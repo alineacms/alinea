@@ -1,0 +1,67 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 32px;
+  border-radius: 20px;
+  background: var(--cloud-surface);
+  border: 1px solid var(--cloud-border);
+
+  @include s {
+    padding: 28px;
+  }
+
+  &-number {
+    font-family: var(--cloud-title-font);
+    font-weight: 600;
+    font-size: 44px;
+    line-height: 1;
+    color: var(--cloud-accent);
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--cloud-title-font);
+    font-weight: 500;
+    font-size: 22px;
+  }
+
+  &-description {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--cloud-text-faded);
+  }
+
+  &-code {
+    display: block;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--cloud-bg);
+    border: 1px solid var(--cloud-border);
+    font-family: var(--cloud-code-font);
+    font-size: 13.5px;
+    color: var(--cloud-text-bright);
+    overflow-x: auto;
+    white-space: nowrap;
+
+    &-key {
+      color: var(--cloud-accent);
+    }
+  }
+}
