@@ -70,6 +70,9 @@ export interface EntryLayerState {
   /** Whether the search table needs a full rebuild; unknown until the stored
    * search revision is compared with the database revision. */
   searchDirty: boolean | 'unknown'
+  /** The search table belongs to the layer receiving this layer's commit,
+   * which updates it once the commit lands: never write to it from here. */
+  searchDeferred?: boolean
   /** The connection is already inside a transaction: never open nested ones. */
   transactional: boolean
 }
@@ -127,6 +130,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
   #searchName: string
   #ownSearchName?: string
   #searchDirty: boolean | 'unknown'
+  #searchDeferred: boolean
   #transactional: boolean
   #children = new Set<EntryLayer>()
   #changeListeners = new Set<EntryChangeListener>()
@@ -153,6 +157,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     this.#searchName = state.searchName
     this.#ownSearchName = state.ownSearchName
     this.#searchDirty = state.searchDirty
+    this.#searchDeferred = state.searchDeferred ?? false
     this.#transactional = state.transactional
   }
 
@@ -339,6 +344,9 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
             tree: from,
             searchName: this.#searchName,
             searchDirty: this.#searchDirty,
+            // The search table may be shared with a parent layer or live in a
+            // readonly base; this layer refreshes it after the commit instead
+            searchDeferred: true,
             transactional: true
           }
         )
@@ -513,7 +521,7 @@ export abstract class EntryLayer extends Graph implements AsyncDisposable {
     db: Database,
     changedEntryIds: ReadonlyArray<string>
   ): Promise<void> {
-    if (!changedEntryIds.length) return
+    if (!changedEntryIds.length || this.#searchDeferred) return
     if (this.#ownSearchName && this.#searchName !== this.#ownSearchName) {
       this.#searchName = this.#ownSearchName
       this.#searchDirty = true
