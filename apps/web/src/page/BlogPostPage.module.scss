@@ -1,32 +1,196 @@
+@use '@/style' as *;
+
 .root {
-  max-width: 900px;
+  padding-bottom: var(--web-section-gap);
 
   &-header {
-    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+    max-width: calc(800px + 2 * var(--web-gutter));
+    margin-inline: auto;
+    padding: 72px var(--web-gutter) 0;
+    text-align: center;
 
-    &-title {
-      padding-bottom: 10px;
+    @include sm {
+      gap: 18px;
+      padding-top: 48px;
     }
-  }
 
-  &-author {
-    padding-bottom: 10px;
+    &-back {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--web-accent);
 
-    &-url {
-      font-weight: bold;
       &:hover {
-        text-decoration: underline;
+        color: var(--web-accent-strong);
       }
     }
 
-    &-avatar {
-      display: inline-block;
-      vertical-align: middle;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      overflow: hidden;
-      object-fit: cover;
+    &-meta {
+      justify-content: center;
+    }
+
+    &-title {
+      margin: 0;
+      font-family: var(--web-title-font);
+      font-weight: 600;
+      font-size: 68px;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+      overflow-wrap: break-word;
+
+      @include sm {
+        font-size: 40px;
+        line-height: 1.08;
+      }
+    }
+
+    &-introduction {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.5;
+      color: var(--web-foreground-faded);
+
+      @include sm {
+        font-size: 18px;
+      }
+    }
+
+    &-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 4px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+  }
+
+  &-cover {
+    margin-top: 56px;
+
+    @include sm {
+      margin-top: 40px;
+    }
+
+    &-figure {
+      height: 600px;
+      border-radius: 28px;
+
+      @include sm {
+        height: auto;
+        aspect-ratio: 16 / 10;
+        border-radius: 20px;
+      }
+    }
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+    width: 100%;
+    max-width: calc(680px + 2 * var(--web-gutter));
+    margin-inline: auto;
+    padding: 72px var(--web-gutter) 0;
+
+    @include sm {
+      gap: 40px;
+      padding-top: 48px;
+    }
+  }
+
+  &-authorCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    border-radius: 18px;
+    border: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    line-height: 1.5;
+
+    &-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    &-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    &-link {
+      font-size: 15px;
+      color: var(--web-accent);
+
+      &:hover {
+        color: var(--web-accent-strong);
+      }
+    }
+  }
+
+  &-more {
+    margin-top: 112px;
+
+    @include sm {
+      margin-top: 72px;
+    }
+
+    &-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+
+      @include sm {
+        gap: 20px;
+      }
+    }
+
+    &-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    &-title {
+      margin: 0;
+      font-family: var(--web-title-font);
+      font-weight: 600;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+
+      @include sm {
+        font-size: 26px;
+      }
+    }
+
+    &-all {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--web-accent);
+
+      &:hover {
+        color: var(--web-accent-strong);
+      }
+    }
+
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+
+      @include sm {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+      }
     }
   }
 }

@@ -1,17 +1,16 @@
 import styler from '@alinea/styler'
 import {Query} from 'alinea'
-import {Entry} from 'alinea/core/Entry'
-import {VStack} from 'alinea/ui'
 import type {Metadata, MetadataRoute} from 'next'
 import {cms} from '@/cms'
-import {Link} from '@/layout/nav/Link'
-import {PageContainer, PageContent} from '@/layout/Page'
-import {WebTypo} from '@/layout/WebTypo'
+import {Button} from '@/layout/Button'
+import {Newsletter} from '@/layout/engage/Newsletter'
+import {Section} from '@/layout/Section'
 import {BlogOverview} from '@/schema/BlogOverview'
-import {BlogPost} from '@/schema/BlogPost'
 import {getMetadata} from '@/utils/metadata'
 import css from './BlogPage.module.scss'
-import {BlogPostMeta} from './blog/BlogPostMeta'
+import {BlogFeaturedPost} from './blog/BlogFeaturedPost'
+import {BlogPostCard} from './blog/BlogPostCard'
+import {findBlogPosts} from './blog/blogPosts'
 
 const styles = styler(css)
 
@@ -29,51 +28,43 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BlogPage() {
-  const overview = await cms.get({
-    type: BlogOverview,
-    select: {
-      title: BlogOverview.title,
-      posts: Query.children({
-        type: BlogPost,
-        select: {
-          ...Entry,
-          id: Entry.id,
-          introduction: BlogPost.introduction,
-          author: BlogPost.author,
-          publishDate: BlogPost.publishDate
-        }
-      })
-    }
-  })
+  const [featured, ...posts] = await findBlogPosts()
   return (
-    <PageContainer>
-      <PageContent>
-        <WebTypo>
-          <VStack>
-            {overview.posts.map(post => {
-              return (
-                <VStack
-                  gap={8}
-                  key={post.id}
-                  className={styles.root.post()}
-                  align="flex-start"
-                >
-                  <div>
-                    <Link href={post.url} className={styles.root.post.link()}>
-                      <WebTypo.H2 flat>{post.title}</WebTypo.H2>
-                    </Link>
-                    <BlogPostMeta {...post} />
-                  </div>
-                  <Link href={post.url}>
-                    <WebTypo.P flat>{post.introduction}</WebTypo.P>
-                  </Link>
-                </VStack>
-              )
-            })}
-          </VStack>
-        </WebTypo>
-      </PageContent>
-    </PageContainer>
+    <div className={styles.root()}>
+      <Section flush>
+        <header className={styles.root.header()}>
+          <div className={styles.root.header.intro()}>
+            <h1 className={styles.root.header.title()}>News and updates</h1>
+            <p className={styles.root.header.description()}>
+              Releases, guides and notes from the people building Alinea.
+            </p>
+          </div>
+          <Button href="/changelog" variant="secondary">
+            View the changelog →
+          </Button>
+        </header>
+      </Section>
+      {featured && (
+        <Section flush className={styles.root.featured()}>
+          <BlogFeaturedPost post={featured} />
+        </Section>
+      )}
+      {posts.length > 0 && (
+        <Section flush className={styles.root.posts()}>
+          <div className={styles.root.posts.inner()}>
+            <h2 className={styles.root.posts.title()}>All posts</h2>
+            <div className={styles.root.posts.grid()}>
+              {posts.map(post => (
+                <BlogPostCard key={post.id} post={post} />
+              ))}
+            </div>
+          </div>
+        </Section>
+      )}
+      <Section flush className={styles.root.newsletter()}>
+        <Newsletter variant="panel" />
+      </Section>
+    </div>
   )
 }
 

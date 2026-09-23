@@ -1,21 +1,108 @@
+@use '@/style' as *;
+
 .root {
-  &-post {
-    & + & {
-      margin-top: 30px;
-      padding-top: 30px;
-      border-top: 1px solid var(--web-outline);
+  padding-bottom: var(--web-section-gap);
+
+  &-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 48px;
+    padding-top: 80px;
+
+    @include sm {
+      flex-direction: column;
+      align-items: flex-start;
+      padding-top: 48px;
     }
 
-    &-link {
-      display: inline-block;
+    &-intro {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
 
-      &-publishDate {
-        display: block;
-      }
+    &-title {
+      margin: 0;
+      font-family: var(--web-title-font);
+      font-weight: 600;
+      font-size: 64px;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
 
-      &:hover {
-        text-decoration: underline;
+      @include sm {
+        font-size: 44px;
       }
+    }
+
+    &-description {
+      margin: 0;
+      max-width: 560px;
+      font-size: 19px;
+      line-height: 1.5;
+      color: var(--web-foreground-faded);
+
+      @include sm {
+        font-size: 17px;
+      }
+    }
+  }
+
+  &-featured {
+    margin-top: 56px;
+
+    @include sm {
+      margin-top: 40px;
+    }
+  }
+
+  &-posts {
+    margin-top: 96px;
+
+    @include sm {
+      margin-top: 72px;
+    }
+
+    &-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+
+      @include sm {
+        gap: 20px;
+      }
+    }
+
+    &-title {
+      margin: 0;
+      font-family: var(--web-title-font);
+      font-weight: 600;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+
+      @include sm {
+        font-size: 26px;
+      }
+    }
+
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+
+      @include sm {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+      }
+    }
+  }
+
+  &-newsletter {
+    margin-top: 96px;
+
+    @include sm {
+      margin-top: 72px;
     }
   }
 }

@@ -1,0 +1,36 @@
+.root {
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--web-code-background);
+  color: var(--web-code-foreground);
+
+  &-header {
+    display: flex;
+    align-items: center;
+    height: 42px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--web-cloud-outline);
+    font-family: var(--web-mono-font);
+    font-size: 12.5px;
+    line-height: 1;
+    color: var(--web-foreground-muted);
+  }
+
+  &-code {
+    font-family: var(--web-mono-font);
+    font-size: 15px;
+    line-height: 1.75;
+
+    :global(.shiki) {
+      margin: 0;
+      padding: 18px 20px;
+      overflow: auto;
+      font-family: inherit;
+      background: transparent !important;
+    }
+  }
+
+  &.is-compact &-code {
+    line-height: 1.4;
+  }
+}

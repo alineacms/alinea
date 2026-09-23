@@ -1,0 +1,64 @@
+@use '@/style' as *;
+
+.root {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  padding: 40px;
+  background: var(--web-code-background);
+
+  @include sm {
+    padding: 24px;
+  }
+
+  &.is-post {
+    justify-content: center;
+    align-items: center;
+  }
+
+  &-image {
+    object-fit: cover;
+
+    &.is-flipped {
+      transform: scaleX(-1);
+    }
+  }
+
+  &-text {
+    position: relative;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 180px;
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+    color: var(--web-code-foreground);
+
+    @include sm {
+      font-size: 120px;
+    }
+  }
+
+  &.is-post &-text {
+    font-size: 220px;
+
+    @include sm {
+      font-size: 120px;
+    }
+  }
+
+  &-fallback {
+    position: relative;
+    max-width: 440px;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 40px;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    color: var(--web-code-foreground);
+
+    @include sm {
+      font-size: 28px;
+    }
+  }
+}

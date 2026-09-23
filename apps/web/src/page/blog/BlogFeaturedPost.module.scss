@@ -1,0 +1,95 @@
+@use '@/style' as *;
+
+.root {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid var(--web-outline);
+  background: var(--web-surface);
+  color: var(--web-foreground);
+  text-decoration: none;
+  transition: border-color 0.2s ease-out;
+
+  @include sm {
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 22px;
+  }
+
+  &:is(:hover, :focus-visible) {
+    border-color: var(--web-foreground-muted);
+  }
+
+  &-cover {
+    min-height: 398px;
+
+    @include sm {
+      min-height: 240px;
+    }
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    padding: 56px;
+
+    @include sm {
+      gap: 16px;
+      padding: 28px;
+    }
+  }
+
+  &-title {
+    margin: 0;
+    font-family: var(--web-title-font);
+    font-weight: 600;
+    font-size: 48px;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+
+    @include sm {
+      font-size: 32px;
+      line-height: 1.1;
+    }
+  }
+
+  &-introduction {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--web-foreground-faded);
+
+    @include sm {
+      font-size: 16px;
+    }
+  }
+
+  &-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 8px;
+  }
+
+  &-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  &-read {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--web-accent);
+  }
+
+  &:hover &-read {
+    color: var(--web-accent-strong);
+  }
+}
