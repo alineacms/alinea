@@ -1,4 +1,4 @@
-import {Button, Dialog, TextField} from '#/components.js'
+import {Button, Dialog, TextField, useDialog} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
@@ -24,8 +24,7 @@ import {
   DashboardModalFormBody,
   DashboardModalFormFooter,
   DashboardModalFormHeader,
-  DashboardModalTitle,
-  useDashboardModal
+  DashboardModalTitle
 } from '#/dashboard/app/ui/DashboardModal.js'
 import {link as createLink, type LinkRow} from '#/field/link.js'
 import type {LinkField} from '#/field/link/LinkField.js'
@@ -138,7 +137,8 @@ export function PickTextLink({picker, linkOptions}: PickTextLinkProps) {
   if (picker.kind === 'image') return <PickRichTextImage picker={picker} />
   return (
     <DashboardModal
-      isOpen
+      open
+      aria-label="Pick text link"
       onOpenChange={isOpen => {
         if (!isOpen) picker.cancel()
       }}
@@ -244,7 +244,7 @@ function imageReferenceEntryId(reference: Reference | undefined) {
 }
 
 function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const options = picker.options
   const linkEditor = useMemo(
     () => createLinkEditor(referenceToLinkRow(options.link), linkOptions),
@@ -264,7 +264,7 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
   }
 
   return (
-    <DashboardModalDialog aria-label="Pick text link">
+    <DashboardModalDialog>
       <DashboardModalForm onSubmit={onSubmit}>
         <DashboardModalFormHeader>
           <DashboardModalTitle>Pick text link</DashboardModalTitle>

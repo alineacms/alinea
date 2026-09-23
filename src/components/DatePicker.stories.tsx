@@ -30,4 +30,10 @@ export function Controlled() {
   )
 }
 
+export function Locale() {
+  return (
+    <DatePicker label="British date" locale="en-GB" defaultValue="2026-09-23" />
+  )
+}
+
 export default {title: 'Pure components / DatePicker'}

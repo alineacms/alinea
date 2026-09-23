@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Controlled, Example} from './DatePicker.stories.js'
+import {Controlled, Example, Locale} from './DatePicker.stories.js'
 
 test('picks a date from the calendar', async ({mount, page}) => {
   await mount(<Controlled />)
@@ -37,4 +37,11 @@ test('limits the calendar to min and max', async ({mount, page}) => {
 test('shows the error', async ({mount, page}) => {
   await mount(<Example />)
   await expect(page.getByRole('alert')).toHaveText('Date is required')
+})
+
+test('formats the date in the given locale', async ({mount, page}) => {
+  await mount(<Locale />)
+  await expect(
+    page.getByRole('group', {name: 'British date'}).getByRole('spinbutton')
+  ).toHaveText(['23', '09', '2026'])
 })

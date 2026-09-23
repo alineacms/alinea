@@ -129,6 +129,8 @@ export interface DragDropProps {
   onDropItems?: (event: DropItemsEvent) => void
   /** Files dropped on an item or on the collection */
   onDropFiles?: (event: DropFilesEvent) => void
+  /** Rendered under the pointer while dragging, gets the `getDragData` result */
+  renderDragPreview?: (items: Array<Record<string, string>>) => ReactNode
 }
 
 export type ContentStatus =

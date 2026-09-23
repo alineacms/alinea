@@ -9,7 +9,6 @@ import {
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
-import {Button} from 'react-aria-components'
 import {IcRoundUnfoldMore} from '../icons.js'
 import css from './LocaleMenu.module.css'
 
@@ -92,13 +91,17 @@ export function LocaleMenuSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button aria-label={ariaLabel} className={styles.LocaleMenu.trigger()}>
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          className={styles.LocaleMenu.trigger()}
+        >
           <LocaleLabel locale={activeLocale} />
           <Icon
             icon={IcRoundUnfoldMore}
             className={styles.LocaleMenu.trigger.icon()}
           />
-        </Button>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent aria-label={ariaLabel} side="bottom" align="end">
         <DropdownMenuRadioGroup

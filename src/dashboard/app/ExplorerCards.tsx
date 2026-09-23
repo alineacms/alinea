@@ -1,25 +1,21 @@
-import {Icon, Surface} from '#/components.js'
+import {
+  ContentCard,
+  type ContentCardProps,
+  ContentCardSkeleton,
+  ContentGrid,
+  ContentGridItem,
+  type DragDropProps
+} from '#/components.js'
 import {getWorkspace} from '#/core/Internal.js'
+import {isImage} from '#/core/media/IsImage.js'
+import type {MediaFile} from '#/core/media/MediaTypes.js'
+import type {Infer} from '#/types.js'
 import styler from '@alinea/styler'
-import {Size} from '@react-stately/virtualizer'
 import {useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {unwrap} from 'jotai/utils'
-import type {ComponentType, ReactNode} from 'react'
-import {Fragment, memo, startTransition, useMemo} from 'react'
-import {
-  Button as AriaButton,
-  type DragAndDropHooks,
-  GridLayout,
-  type GridLayoutOptions,
-  GridList,
-  GridListItem,
-  Virtualizer
-} from 'react-aria-components'
-import {
-  IcRoundKeyboardArrowRight,
-  IcTwotoneDescription,
-  IcTwotoneFolder
-} from '../icons.js'
+import prettyBytes from 'pretty-bytes'
+import type {ReactNode} from 'react'
+import {memo, startTransition, useMemo} from 'react'
 import {configAtom} from '../atoms/core.js'
 import type {
   DashboardEntry,
@@ -27,19 +23,10 @@ import type {
   DashboardExplorer,
   ExplorerReadyPage
 } from '../atoms/explorer.js'
+import {IcTwotoneDescription, IcTwotoneFolder} from '../icons.js'
 import css from './ExplorerCards.module.css'
-import {ExplorerSelectionCheckbox} from './ExplorerSelectionCheckbox.js'
-import {ExplorerFileCard} from './ExplorerFileCard.js'
 
 const styles = styler(css)
-
-const cardLayoutOptions: GridLayoutOptions = {
-  minItemSize: new Size(240, 196),
-  maxItemSize: new Size(320, 196),
-  minSpace: new Size(16, 16),
-  maxColumns: 5,
-  preserveAspectRatio: true
-}
 
 interface ExplorerCardItemProps {
   breadcrumbs: boolean
@@ -47,7 +34,6 @@ interface ExplorerCardItemProps {
   explorer: DashboardExplorer
   locale: string | null
   includeWorkspace: boolean
-  showSelectionControls: boolean
 }
 
 const ExplorerCardItem = memo(function ExplorerCardItem({
@@ -55,18 +41,20 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
   entry,
   explorer,
   locale,
-  includeWorkspace,
-  showSelectionControls
+  includeWorkspace
 }: ExplorerCardItemProps) {
   const {data} = useAtomValueRaw(entry.data)
   const isSelectable = useAtomValueRaw(explorer.isSelectable(entry))
   if (!data)
     return (
-      <ExplorerCardLoadingItem
-        entry={entry}
-        isSelectable={isSelectable}
-        showSelectionControls={showSelectionControls}
-      />
+      <ContentGridItem
+        id={entry.id}
+        textValue="Loading entry"
+        aria-label="Loading entry"
+        selectable={isSelectable}
+      >
+        <ContentCardSkeleton />
+      </ContentGridItem>
     )
   return (
     <ExplorerCardLoadedItem
@@ -77,54 +65,9 @@ const ExplorerCardItem = memo(function ExplorerCardItem({
       locale={locale}
       isSelectable={isSelectable}
       includeWorkspace={includeWorkspace}
-      showSelectionControls={showSelectionControls}
     />
   )
 })
-
-interface ExplorerCardLoadingItemProps {
-  entry: DashboardEntry
-  isSelectable: boolean
-  showSelectionControls: boolean
-}
-
-function ExplorerCardLoadingItem({
-  entry,
-  isSelectable,
-  showSelectionControls
-}: ExplorerCardLoadingItemProps) {
-  return (
-    <GridListItem
-      id={entry.id}
-      textValue="Loading entry"
-      className={styles.ExplorerCards.item({loading: true})}
-      aria-label="Loading entry"
-      isDisabled={!isSelectable}
-    >
-      {showSelectionControls && isSelectable && (
-        <ExplorerCardCheckbox label="Loading entry" />
-      )}
-      <Surface className={styles.ExplorerCards.item.card()}>
-        <div className={styles.ExplorerCards.entry()}>
-          <div className={styles.ExplorerCards.entry.top()}>
-            <div
-              className={styles.ExplorerCards.entry.iconSkeleton()}
-              aria-hidden="true"
-            />
-          </div>
-          <div className={styles.ExplorerCards.entry.body()}>
-            <div className={styles.ExplorerCards.entry.body.inner()}>
-              <div
-                className={styles.ExplorerCards.entry.skeleton({wide: true})}
-              />
-              <div className={styles.ExplorerCards.entry.skeleton()} />
-            </div>
-          </div>
-        </div>
-      </Surface>
-    </GridListItem>
-  )
-}
 
 interface ExplorerCardLoadedItemProps {
   breadcrumbs: boolean
@@ -134,7 +77,6 @@ interface ExplorerCardLoadedItemProps {
   locale: string | null
   isSelectable: boolean
   includeWorkspace: boolean
-  showSelectionControls: boolean
 }
 
 const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
@@ -144,8 +86,7 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   explorer,
   locale,
   isSelectable,
-  includeWorkspace,
-  showSelectionControls
+  includeWorkspace
 }: ExplorerCardLoadedItemProps) {
   const label = useAtomValueRaw(data.label)
   const icon = useAtomValueRaw(data.icon)
@@ -156,67 +97,58 @@ const ExplorerCardLoadedItem = memo(function ExplorerCardLoadedItem({
   function onAction() {
     startTransition(() => performAction(entry, locale))
   }
-  const info = useAtomValueRaw(
+  const file = useAtomValueRaw(
     useMemo(() => unwrap(data.fileInfo, previous => previous ?? null), [data])
   )
-  const location = breadcrumbs ? (
-    <ExplorerCardLocation
-      data={data}
-      entry={entry}
-      includeWorkspace={includeWorkspace}
-    />
-  ) : null
-  const fallbackIcon = canOpen ? IcTwotoneFolder : IcTwotoneDescription
+  const card: ContentCardProps = file
+    ? {
+        variant: 'media',
+        image:
+          file.extension && isImage(file.extension) ? file.preview : undefined,
+        color: file.averageColor,
+        title: label,
+        description: formatExtension(file.extension),
+        details: formatFileDetails(file)
+      }
+    : {
+        icon: icon ?? (canOpen ? IcTwotoneFolder : IcTwotoneDescription),
+        title: label,
+        description: type.label
+      }
   return (
-    <GridListItem
+    <ContentGridItem
       id={entry.id}
       textValue={label}
+      selectable={isSelectable}
       onAction={hasAction ? onAction : undefined}
-      className={styles.ExplorerCards.item()}
-      isDisabled={!isSelectable}
     >
-      {showSelectionControls && isSelectable && (
-        <ExplorerCardCheckbox label={label} />
+      {breadcrumbs ? (
+        <ExplorerLocatedCard
+          {...card}
+          data={data}
+          entry={entry}
+          includeWorkspace={includeWorkspace}
+        />
+      ) : (
+        <ContentCard {...card} />
       )}
-      <AriaButton
-        slot="drag"
-        aria-label={`Drag ${label}`}
-        className={styles.ExplorerCards.item.drag.handle()}
-      />
-      <Surface
-        className={styles.ExplorerCards.item.card({file: Boolean(info)})}
-      >
-        {info ? (
-          <ExplorerFileCard
-            file={info}
-            label={label}
-            layout="card"
-            parents={location}
-          />
-        ) : (
-          <ExplorerEntryCard
-            icon={icon ?? fallbackIcon}
-            label={label}
-            parents={location}
-            typeLabel={type.label}
-          />
-        )}
-      </Surface>
-    </GridListItem>
+    </ContentGridItem>
   )
 })
 
-interface ExplorerCardLocationProps {
+interface ExplorerLocatedCardProps extends ContentCardProps {
   data: DashboardEntryData
   entry: DashboardEntry
   includeWorkspace: boolean
 }
 
-function ExplorerCardLocation({
+/** A card with the location of its entry as breadcrumbs */
+function ExplorerLocatedCard({
   data,
   entry,
-  includeWorkspace
-}: ExplorerCardLocationProps) {
+  includeWorkspace,
+  ...card
+}: ExplorerLocatedCardProps) {
   const config = useAtomValueRaw(configAtom)
   const parents = useAtomValueRaw(data.parents)
   const root = useAtomValueRaw(data.root)
@@ -225,96 +157,14 @@ function ExplorerCardLocation({
   const workspaceLabel = workspace
     ? getWorkspace(workspace).label
     : entry.workspace
-  return (
-    <ExplorerCardParents
-      parents={parents}
-      rootLabel={rootLabel}
-      workspaceLabel={includeWorkspace ? workspaceLabel : undefined}
-    />
-  )
-}
-
-interface ExplorerCardCheckboxProps {
-  label: string
-}
-
-function ExplorerCardCheckbox({label}: ExplorerCardCheckboxProps) {
-  return (
-    <ExplorerSelectionCheckbox
-      className={styles.ExplorerCards.item.checkbox()}
-      label={label}
-    />
-  )
-}
-
-interface ExplorerEntryCardProps {
-  icon?: ComponentType
-  label: string
-  parents?: ReactNode
-  typeLabel: string
-}
-
-function ExplorerEntryCard({
-  icon,
-  label,
-  parents,
-  typeLabel
-}: ExplorerEntryCardProps) {
-  return (
-    <div
-      className={styles.ExplorerCards.entry({breadcrumbs: Boolean(parents)})}
-    >
-      <div className={styles.ExplorerCards.entry.top()}>
-        {icon && (
-          <Icon icon={icon} className={styles.ExplorerCards.entry.icon()} />
-        )}
-      </div>
-      <div className={styles.ExplorerCards.entry.body()}>
-        <div className={styles.ExplorerCards.entry.body.inner()}>
-          {parents}
-          <div className={styles.ExplorerCards.entry.label()}>{label}</div>
-          <div className={styles.ExplorerCards.entry.meta()}>{typeLabel}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-interface ExplorerCardParentsProps {
-  parents: Array<DashboardEntry>
-  rootLabel: string
-  workspaceLabel?: string
-}
-
-function ExplorerCardParents({
-  parents,
-  rootLabel,
-  workspaceLabel
-}: ExplorerCardParentsProps) {
-  const breadcrumbs: Array<{id: string; value: ReactNode}> = [
-    ...(workspaceLabel ? [{id: 'workspace', value: workspaceLabel}] : []),
-    ...(rootLabel ? [{id: 'root', value: rootLabel}] : []),
-    ...parents.map(parent => ({
-      id: `parent-${parent.id}`,
-      value: <ExplorerCardParent parent={parent} />
-    }))
+  const breadcrumbs: Array<ReactNode> = [
+    ...(includeWorkspace && workspaceLabel ? [workspaceLabel] : []),
+    ...(rootLabel ? [rootLabel] : []),
+    ...parents.map(parent => (
+      <ExplorerCardParent key={parent.id} parent={parent} />
+    ))
   ]
-  if (breadcrumbs.length === 0) return null
-  return (
-    <div className={styles.ExplorerCards.parents()}>
-      {breadcrumbs.map((breadcrumb, index) => (
-        <Fragment key={breadcrumb.id}>
-          {index > 0 && (
-            <IcRoundKeyboardArrowRight
-              aria-hidden
-              className={styles.ExplorerCards.parents.separator()}
-            />
-          )}
-          {breadcrumb.value}
-        </Fragment>
-      ))}
-    </div>
-  )
+  return <ContentCard {...card} breadcrumbs={breadcrumbs} />
 }
 
 interface ExplorerCardParentProps {
@@ -324,20 +174,19 @@ interface ExplorerCardParentProps {
 function ExplorerCardParent({parent}: ExplorerCardParentProps) {
   const {data} = useAtomValueRaw(parent.data)
   if (!data) return null
-  return <ExplorerCardLoadedParent parent={data} />
+  return <ExplorerCardParentLabel parent={data} />
 }
 
-interface ExplorerCardLoadedParentProps {
+interface ExplorerCardParentLabelProps {
   parent: DashboardEntryData
 }
 
-function ExplorerCardLoadedParent({parent}: ExplorerCardLoadedParentProps) {
-  const label = useAtomValueRaw(parent.label)
-  return <Fragment>{label}</Fragment>
+function ExplorerCardParentLabel({parent}: ExplorerCardParentLabelProps) {
+  return useAtomValueRaw(parent.label)
 }
 
 export interface ExplorerCardsProps {
-  dragAndDropHooks: DragAndDropHooks<DashboardEntry>
+  dragDrop: DragDropProps
   explorer: DashboardExplorer
   items: Array<DashboardEntry>
   page: ExplorerReadyPage
@@ -346,7 +195,7 @@ export interface ExplorerCardsProps {
 }
 
 export function ExplorerCards({
-  dragAndDropHooks,
+  dragDrop,
   explorer,
   items,
   page,
@@ -356,44 +205,56 @@ export function ExplorerCards({
   const [selected, setSelected] = useAtom(explorer.selection)
   const selectionMode = explorer.selectionMode
   const hasSelection = selectionMode !== 'none'
-  const showSelectionControls = hasSelection && explorer.showSelectionControls
+  const breadcrumbs =
+    explorer.breadcrumbs ||
+    page.resultMode === 'matches' ||
+    page.searchesEverything
   return (
     <div
       aria-label="Explorer card results"
-      className={styles.ExplorerCards.viewport()}
+      className={styles.ExplorerCards()}
       role="region"
     >
-      <Virtualizer layout={GridLayout} layoutOptions={cardLayoutOptions}>
-        <GridList
-          aria-label="Explorer entries"
-          items={items}
-          layout="grid"
-          className={styles.ExplorerCards()}
-          selectionMode={hasSelection ? selectionMode : undefined}
-          selectionBehavior={explorer.selectionBehavior}
-          disabledBehavior="selection"
-          dragAndDropHooks={dragAndDropHooks}
-          selectedKeys={hasSelection ? selected : undefined}
-          onSelectionChange={hasSelection ? setSelected : undefined}
-          renderEmptyState={renderEmptyState}
-          style={{display: 'block', width: '100%', height: '100%'}}
-        >
-          {item => (
-            <ExplorerCardItem
-              breadcrumbs={
-                explorer.breadcrumbs ||
-                page.resultMode === 'matches' ||
-                page.searchesEverything
-              }
-              entry={item}
-              explorer={explorer}
-              locale={locale}
-              includeWorkspace={page.searchesEverything}
-              showSelectionControls={showSelectionControls}
-            />
-          )}
-        </GridList>
-      </Virtualizer>
+      <ContentGrid
+        {...dragDrop}
+        aria-label="Explorer entries"
+        dropLabel="Drop files to upload"
+        items={items}
+        dependencies={[breadcrumbs, locale, page]}
+        selectionMode={selectionMode}
+        selectionBehavior={explorer.selectionBehavior}
+        showSelectionControls={hasSelection && explorer.showSelectionControls}
+        selectedKeys={hasSelection ? selected : undefined}
+        onSelectionChange={
+          hasSelection
+            ? selection =>
+                setSelected(selection === 'all' ? 'all' : new Set(selection))
+            : undefined
+        }
+        renderEmptyState={renderEmptyState}
+      >
+        {item => (
+          <ExplorerCardItem
+            breadcrumbs={breadcrumbs}
+            entry={item}
+            explorer={explorer}
+            locale={locale}
+            includeWorkspace={page.searchesEverything}
+          />
+        )}
+      </ContentGrid>
     </div>
   )
+}
+
+function formatExtension(extension?: string) {
+  if (!extension) return ''
+  return extension.replace(/^\./, '').toUpperCase()
+}
+
+function formatFileDetails(file: Infer<typeof MediaFile>) {
+  const details = new Array<string>()
+  if (file.width && file.height) details.push(`${file.width}×${file.height}`)
+  if (typeof file.size === 'number') details.push(prettyBytes(file.size))
+  return details.join(' - ')
 }

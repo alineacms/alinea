@@ -8,7 +8,8 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Icon
+  Icon,
+  useDialog
 } from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import {workspaceAtom, workspacesAtom} from '#/dashboard/atoms/config.js'
@@ -19,7 +20,6 @@ import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {Suspense, useState, type ComponentType, type ReactNode} from 'react'
-import {Button as AriaButton} from 'react-aria-components'
 import {IcOutlineSettings, IcRoundSearch, IcRoundUnfoldMore} from '../icons.js'
 import {AlineaLogo} from './AlineaLogo.js'
 import {ExplorerBody, ExplorerHeader} from './Explorer.js'
@@ -28,8 +28,7 @@ import {LogoShape} from './LogoShape.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
-  DashboardModalDialog,
-  useDashboardModal
+  DashboardModalDialog
 } from './ui/DashboardModal.js'
 import css from './WorkspaceMenu.module.css'
 
@@ -172,7 +171,7 @@ interface GlobalSearchProps {
 }
 
 function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const setRoute = useSetAtom(routeAtom)
   const [explorer] = useState(() =>
     createExplorerAtoms(
@@ -201,15 +200,9 @@ function SearchPopup({initialSearchScope, root}: SearchPopupProps) {
   )
   const explorerPage = useAtomValueRaw(explorer.page)
   if (!explorerPage)
-    return (
-      <DashboardModalDialog
-        aria-label="Search entries"
-        variant="explorer"
-        isLoading
-      />
-    )
+    return <DashboardModalDialog variant="explorer" isLoading />
   return (
-    <DashboardModalDialog aria-label="Search entries" variant="explorer">
+    <DashboardModalDialog variant="explorer">
       <ExplorerModalSuspense>
         <ExplorerModal>
           <ExplorerHeader
@@ -233,15 +226,9 @@ export function GlobalSearch({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DashboardModal size="explorer">
+      <DashboardModal size="explorer" aria-label="Search entries">
         <Suspense
-          fallback={
-            <DashboardModalDialog
-              aria-label="Search entries"
-              variant="explorer"
-              isLoading
-            />
-          }
+          fallback={<DashboardModalDialog variant="explorer" isLoading />}
         >
           <SearchPopup initialSearchScope={initialSearchScope} root={root} />
         </Suspense>
@@ -264,12 +251,12 @@ export function WorkspaceMenu({
         ariaLabel="Workspace"
         includeUsersLink={canManageMembers}
         label={
-          <AriaButton className={styles.WorkspaceMenu.trigger()}>
+          <button type="button" className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>
               {workspace.label}
             </span>
             <Icon icon={IcRoundUnfoldMore} fontSize={12} />
-          </AriaButton>
+          </button>
         }
       />
     ) : (

@@ -18,7 +18,8 @@ import {
   TableHeader,
   TableRow,
   Tag,
-  TextField
+  TextField,
+  useDialog
 } from '#/components.js'
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
@@ -39,8 +40,7 @@ import {
   DashboardModal,
   DashboardModalContent,
   DashboardModalDialog,
-  DashboardModalFooter,
-  useDashboardModal
+  DashboardModalFooter
 } from '../ui/DashboardModal.js'
 import {SidebarHeader} from '../ui/Sidebar.js'
 import css from './UsersPage.module.css'
@@ -214,7 +214,7 @@ export function UsersPage() {
         )}
       </div>
       <DashboardModal
-        isOpen={editingUser !== undefined}
+        open={editingUser !== undefined}
         onOpenChange={isOpen => {
           if (!isOpen) setEditingUser(undefined)
         }}
@@ -222,7 +222,7 @@ export function UsersPage() {
         {editingUser && <UserModal user={editingUser} />}
       </DashboardModal>
       <DashboardModal
-        isOpen={deletingUser !== undefined}
+        open={deletingUser !== undefined}
         onOpenChange={isOpen => {
           if (!isOpen) setDeletingUser(undefined)
         }}
@@ -417,7 +417,7 @@ interface DeactivateUserModalProps {
 
 function DeactivateUserModal({user}: DeactivateUserModalProps) {
   const saveUser = useSetAtom(usersAtom)
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string>()
   const email = user.email
@@ -482,7 +482,7 @@ interface UserModalProps {
 function UserModal({user}: UserModalProps) {
   const config = useAtomValueRaw(configAtom)
   const saveUser = useSetAtom(usersAtom)
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const isEditing = user !== undefined
   const [email, setEmail] = useState(user?.email ?? '')
   const [name, setName] = useState(user?.name ?? '')

@@ -1,4 +1,4 @@
-import {Button, Checkbox, Field, TextField} from '#/components.js'
+import {Button, Checkbox, Field, TextField, useDialog} from '#/components.js'
 import {useState, type FormEvent} from 'react'
 import {
   DashboardModal,
@@ -8,8 +8,7 @@ import {
   DashboardModalFormBody,
   DashboardModalFormFooter,
   DashboardModalFormHeader,
-  DashboardModalTitle,
-  useDashboardModal
+  DashboardModalTitle
 } from './ui/DashboardModal.js'
 
 export interface ExternalLinkValue {
@@ -32,7 +31,11 @@ export function ExternalLinkPicker({
   onConfirm
 }: ExternalLinkPickerProps) {
   return (
-    <DashboardModal>
+    <DashboardModal
+      aria-label={
+        selectionMode === 'multiple' ? 'External links' : 'External link'
+      }
+    >
       <ExternalLinkPickerDialog
         initialValue={initialValue}
         selectionMode={selectionMode}
@@ -49,7 +52,7 @@ function ExternalLinkPickerDialog({
   submitLabel,
   onConfirm
 }: ExternalLinkPickerProps) {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const initialUrl = initialValue?.url ?? ''
   const initialTitle = initialValue?.title ?? ''
   const [url, setUrl] = useState(initialUrl)
@@ -76,12 +79,7 @@ function ExternalLinkPickerDialog({
   }
 
   return (
-    <DashboardModalDialog
-      aria-label={
-        selectionMode === 'multiple' ? 'External links' : 'External link'
-      }
-      variant="explorer"
-    >
+    <DashboardModalDialog variant="explorer">
       <DashboardModalForm onSubmit={onSubmit}>
         <DashboardModalFormHeader>
           <DashboardModalTitle>

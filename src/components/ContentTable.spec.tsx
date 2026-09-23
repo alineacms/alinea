@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
   CustomRootView,
+  DragAndDrop,
   Empty,
   ExplorerStyle,
   NestedRows
@@ -61,4 +62,31 @@ test('nested rows', async ({mount, page}) => {
 test('empty state', async ({mount, page}) => {
   await mount(<Empty />)
   await expect(page.getByText('No articles yet')).toBeVisible()
+})
+
+test('drags rows onto rows and marks row states', async ({mount, page}) => {
+  await mount(<DragAndDrop />)
+  const table = page.getByRole('treegrid', {name: 'Pages'})
+  const legal = table.getByRole('row', {name: 'Legal'})
+  await expect(legal).toHaveAttribute('data-unselectable', 'true')
+  await expect(legal.getByRole('checkbox')).toHaveCount(0)
+  await expect(table.getByRole('row', {name: 'Home'})).toContainText(
+    'Main / Pages'
+  )
+  await table.getByRole('row', {name: 'News'}).dblclick()
+  await expect(page.getByTestId('log')).toHaveText('Opened News')
+  await table
+    .getByRole('button', {name: 'Drag About us'})
+    .dragTo(table.getByRole('row', {name: 'Home'}), {force: true})
+  await expect(page.getByTestId('log')).toContainText(
+    'Moved About us into Home'
+  )
+  await expect(table.getByRole('row', {name: 'About us'})).toHaveCount(0)
+})
+
+test('collapses columns on narrow screens', async ({mount, page}) => {
+  await page.setViewportSize({width: 600, height: 600})
+  await mount(<DragAndDrop />)
+  const row = page.getByRole('row', {name: 'Home'})
+  await expect(row.getByText('/', {exact: true})).toBeHidden()
 })

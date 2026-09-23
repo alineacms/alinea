@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/experimental-ct-react'
-import {Controlled, Example} from './Dialog.stories.js'
+import {Controlled, Example, Sizes} from './Dialog.stories.js'
 
 test('opens from the trigger and closes with DialogClose', async ({
   mount,
@@ -39,4 +39,24 @@ test('controlled alert dialog is not dismissed by clicking outside', async ({
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', {name: 'Discard'}).click()
   await expect(dialog).toBeHidden()
+})
+
+test('sizes the content and closes with useDialog', async ({mount, page}) => {
+  await mount(<Sizes />)
+  await page.getByRole('button', {name: 'Open full'}).click()
+  const dialog = page.getByRole('dialog', {name: 'Size full'})
+  await expect(dialog).toBeVisible()
+  const content = page.locator('[data-slot="dialog-content"]')
+  await expect(content).toHaveAttribute('data-size', 'full')
+  await expect(page.getByRole('button', {name: 'Close'})).toHaveCount(0)
+  const viewport = page.viewportSize()!
+  // Poll until the zoom-in animation has finished
+  await expect
+    .poll(async () => (await content.boundingBox())!.height)
+    .toBeGreaterThan(viewport.height - 60)
+  await dialog.getByRole('button', {name: 'Save (open)'}).click()
+  await expect(dialog).toBeHidden()
+  await page.getByRole('button', {name: 'Open lg'}).click()
+  await expect(content).toHaveAttribute('data-size', 'lg')
+  await expect.poll(async () => (await content.boundingBox())!.width).toBe(640)
 })

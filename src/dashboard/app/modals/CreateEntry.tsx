@@ -5,7 +5,8 @@ import {
   SelectItem,
   TextField,
   ToggleGroup,
-  ToggleGroupItem
+  ToggleGroupItem,
+  useDialog
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Reference} from '#/core/Reference.js'
@@ -33,8 +34,7 @@ import {NodeEditor} from '../EntryFields.js'
 import {
   DashboardModalContent,
   DashboardModalDialog,
-  DashboardModalFooter,
-  useDashboardModal
+  DashboardModalFooter
 } from '../ui/DashboardModal.js'
 import css from './CreateEntry.module.css'
 
@@ -101,17 +101,11 @@ function createLinkEditor(
 }
 
 function CreateEntryLoading() {
-  return (
-    <DashboardModalDialog
-      aria-label="Create entry"
-      variant="explorer"
-      isLoading
-    />
-  )
+  return <DashboardModalDialog variant="explorer" isLoading />
 }
 
 function CreateEntryForm() {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const {page, root} = useDashboardContext()
   const createEntry = useSetAtom(createEntryAtom)
   const config = useAtomValueRaw(configAtom).schema
@@ -225,11 +219,7 @@ function CreateEntryForm() {
   const canCreate = Boolean(selectedType && title.trim())
 
   return (
-    <DashboardModalDialog
-      aria-label="Create entry"
-      variant="explorer"
-      label="Create entry"
-    >
+    <DashboardModalDialog variant="explorer" label="Create entry">
       <form onSubmit={onSubmit} id="submit">
         <DashboardModalContent>
           <TextField

@@ -435,7 +435,7 @@ function EntryEditorContent({
   return (
     <>
       <DashboardModal
-        isOpen={Boolean(routeBlock)}
+        open={Boolean(routeBlock)}
         onOpenChange={open => !open && setRouteBlock(null)}
       >
         {routeBlock && (

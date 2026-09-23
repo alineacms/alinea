@@ -1,4 +1,4 @@
-import {Button, TextField} from '#/components.js'
+import {Button, TextField, useDialog} from '#/components.js'
 import {
   DashboardModal,
   DashboardModalCloseButton,
@@ -7,8 +7,7 @@ import {
   DashboardModalFormBody,
   DashboardModalFormFooter,
   DashboardModalFormHeader,
-  DashboardModalTitle,
-  useDashboardModal
+  DashboardModalTitle
 } from '#/dashboard/app/ui/DashboardModal.js'
 import {useCallback, useState, type FormEvent} from 'react'
 
@@ -69,7 +68,8 @@ export function PickTextAnchor({picker}: PickTextAnchorProps) {
   if (!picker.isOpen) return null
   return (
     <DashboardModal
-      isOpen
+      open
+      aria-label="Set text anchor"
       onOpenChange={isOpen => {
         if (!isOpen) picker.cancel()
       }}
@@ -80,7 +80,7 @@ export function PickTextAnchor({picker}: PickTextAnchorProps) {
 }
 
 function PickTextAnchorForm({picker}: PickTextAnchorProps) {
-  const modal = useDashboardModal()
+  const modal = useDialog()
   const [name, setName] = useState(picker.anchor)
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -91,7 +91,7 @@ function PickTextAnchorForm({picker}: PickTextAnchorProps) {
   }
 
   return (
-    <DashboardModalDialog aria-label="Set text anchor">
+    <DashboardModalDialog>
       <DashboardModalForm onSubmit={onSubmit}>
         <DashboardModalFormHeader>
           <DashboardModalTitle>Set text anchor</DashboardModalTitle>

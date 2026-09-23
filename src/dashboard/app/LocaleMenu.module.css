@@ -21,8 +21,9 @@
   text-align: left;
 }
 
-.LocaleMenu-trigger[data-hovered],
-.LocaleMenu-trigger[data-pressed] {
+.LocaleMenu-trigger:hover,
+.LocaleMenu-trigger:active,
+.LocaleMenu-trigger[aria-expanded='true'] {
   background: color-mix(in srgb, currentColor 8%, transparent);
 }
 

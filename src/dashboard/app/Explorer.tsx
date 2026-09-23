@@ -5,10 +5,13 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
+  FileTrigger,
+  type Key,
   Popover,
   PopoverContent,
   PopoverTrigger,
   SearchField,
+  type Selection,
   Switch,
   ToggleGroup,
   ToggleGroupItem
@@ -29,7 +32,6 @@ import {
   type KeyboardEvent,
   type ReactNode
 } from 'react'
-import {FileTrigger, type Key, type Selection} from 'react-aria-components'
 import {configAtom} from '../atoms/core.js'
 import {
   type DashboardEntry,
@@ -841,12 +843,7 @@ function ExplorerToolbar({explorer, page}: ExplorerToolbarProps) {
       <div className={styles.Explorer.toolbar.mediaActions()}>
         <ViewToggle view={page.view} setView={setView} />
         {page.isMedia && page.canUpload && !locationIsPending && (
-          <FileTrigger
-            allowsMultiple
-            onSelect={files => {
-              if (files) upload(files)
-            }}
-          >
+          <FileTrigger multiple onSelect={files => upload(files)}>
             <Button icon={IcRoundUploadFile} color="primary">
               Upload media
             </Button>

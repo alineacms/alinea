@@ -8,7 +8,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
+  useDialog
 } from './Dialog.js'
 import {TextField} from './TextField.js'
 
@@ -55,6 +56,35 @@ export function Controlled() {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+function SaveButton() {
+  const dialog = useDialog()
+  return (
+    <Button color="primary" onClick={dialog.close}>
+      Save {dialog.open ? '(open)' : ''}
+    </Button>
+  )
+}
+
+export function Sizes() {
+  return (
+    <div style={{display: 'flex', gap: 8}}>
+      {(['default', 'lg', 'full'] as const).map(size => (
+        <Dialog key={size}>
+          <DialogTrigger>{`Open ${size}`}</DialogTrigger>
+          <DialogContent size={size} showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>{`Size ${size}`}</DialogTitle>
+            </DialogHeader>
+            <DialogFooter>
+              <SaveButton />
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ))}
+    </div>
   )
 }
 

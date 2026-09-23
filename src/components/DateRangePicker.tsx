@@ -10,6 +10,7 @@ import {
 } from 'react-aria-components'
 import {IcRoundDateRange} from '../dashboard/icons.js'
 import {RangeCalendar} from './Calendar.js'
+import {Locale} from './internal/Locale.js'
 import css from './DateRangePicker.module.css'
 import {Field} from './Field.js'
 import {Icon} from './Icon.js'
@@ -27,6 +28,8 @@ const styles = styler(css)
 
 export interface DateRangePickerProps
   extends FieldSharedProps, StyleProps, AriaProps, DataProps {
+  /** BCP 47 locale used to format dates, eg. `en-GB`, defaults to the user's locale */
+  locale?: string
   value?: DateRange | null
   defaultValue?: DateRange | null
   onValueChange?: (value: DateRange | null) => void
@@ -59,81 +62,84 @@ export function DateRangePicker({
   max,
   isDateUnavailable,
   className,
+  locale,
   ...props
 }: DateRangePickerProps) {
   return (
-    <DateRangePickerPrimitive
-      data-slot="date-range-picker"
-      {...props}
-      className={styles.DateRangePicker(styler.merge({className}))}
-      value={toCalendarRange(value)}
-      defaultValue={toCalendarRange(defaultValue)}
-      onChange={
-        onValueChange &&
-        (range =>
-          onValueChange(
-            range
-              ? {start: range.start.toString(), end: range.end.toString()}
-              : null
-          ))
-      }
-      minValue={toCalendarDate(min)}
-      maxValue={toCalendarDate(max)}
-      isDateUnavailable={
-        isDateUnavailable &&
-        ((date: DateValue) => isDateUnavailable(date.toString()))
-      }
-      isRequired={required}
-      isDisabled={disabled}
-      isReadOnly={readOnly}
-      isInvalid={error ? true : undefined}
-    >
-      <Field
-        label={label}
-        description={description}
-        error={error}
-        required={required}
-        disabled={disabled}
-        readOnly={readOnly}
-        icon={icon}
-        shared={shared}
+    <Locale locale={locale}>
+      <DateRangePickerPrimitive
+        data-slot="date-range-picker"
+        {...props}
+        className={styles.DateRangePicker(styler.merge({className}))}
+        value={toCalendarRange(value)}
+        defaultValue={toCalendarRange(defaultValue)}
+        onChange={
+          onValueChange &&
+          (range =>
+            onValueChange(
+              range
+                ? {start: range.start.toString(), end: range.end.toString()}
+                : null
+            ))
+        }
+        minValue={toCalendarDate(min)}
+        maxValue={toCalendarDate(max)}
+        isDateUnavailable={
+          isDateUnavailable &&
+          ((date: DateValue) => isDateUnavailable(date.toString()))
+        }
+        isRequired={required}
+        isDisabled={disabled}
+        isReadOnly={readOnly}
+        isInvalid={error ? true : undefined}
       >
-        <Group
-          data-slot="date-range-picker-control"
-          aria-disabled={disabled || undefined}
-          className={styles.DateRangePicker.control()}
+        <Field
+          label={label}
+          description={description}
+          error={error}
+          required={required}
+          disabled={disabled}
+          readOnly={readOnly}
+          icon={icon}
+          shared={shared}
         >
-          <div
-            data-slot="date-range-picker-inputs"
-            className={styles.DateRangePicker.inputs()}
+          <Group
+            data-slot="date-range-picker-control"
+            aria-disabled={disabled || undefined}
+            className={styles.DateRangePicker.control()}
           >
-            <DateRangePickerInput slot="start" />
-            <span
-              aria-hidden="true"
-              data-slot="date-range-picker-separator"
-              className={styles.DateRangePicker.separator()}
+            <div
+              data-slot="date-range-picker-inputs"
+              className={styles.DateRangePicker.inputs()}
             >
-              –
-            </span>
-            <DateRangePickerInput slot="end" />
-          </div>
-          <Button
-            data-slot="date-range-picker-trigger"
-            className={styles.DateRangePicker.trigger()}
-          >
-            <Icon
-              icon={IcRoundDateRange}
-              className={styles.DateRangePicker.icon()}
-            />
-          </Button>
-        </Group>
-      </Field>
-      <PopoverSurface data-slot="date-range-picker-content">
-        <Dialog className={styles.DateRangePicker.dialog()}>
-          <RangeCalendar />
-        </Dialog>
-      </PopoverSurface>
-    </DateRangePickerPrimitive>
+              <DateRangePickerInput slot="start" />
+              <span
+                aria-hidden="true"
+                data-slot="date-range-picker-separator"
+                className={styles.DateRangePicker.separator()}
+              >
+                –
+              </span>
+              <DateRangePickerInput slot="end" />
+            </div>
+            <Button
+              data-slot="date-range-picker-trigger"
+              className={styles.DateRangePicker.trigger()}
+            >
+              <Icon
+                icon={IcRoundDateRange}
+                className={styles.DateRangePicker.icon()}
+              />
+            </Button>
+          </Group>
+        </Field>
+        <PopoverSurface data-slot="date-range-picker-content">
+          <Dialog className={styles.DateRangePicker.dialog()}>
+            <RangeCalendar />
+          </Dialog>
+        </PopoverSurface>
+      </DateRangePickerPrimitive>
+    </Locale>
   )
 }
 

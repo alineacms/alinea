@@ -46,6 +46,12 @@ export function DialogTrigger(props: DialogTriggerProps) {
 
 export interface DialogContentProps extends StyleProps, AriaProps, DataProps {
   role?: 'dialog' | 'alertdialog'
+  /**
+   * `default` fits its content up to a narrow width, `lg` is a fixed wide
+   * dialog and `full` fills the viewport (minus a margin), defaults to
+   * `default`
+   */
+  size?: 'default' | 'lg' | 'full'
   /** Close the dialog when clicking outside of it, defaults to true */
   dismissable?: boolean
   /** Defaults to true */
@@ -55,6 +61,7 @@ export interface DialogContentProps extends StyleProps, AriaProps, DataProps {
 
 export function DialogContent({
   role,
+  size = 'default',
   dismissable = true,
   showCloseButton = true,
   className,
@@ -73,6 +80,7 @@ export function DialogContent({
     >
       <Modal
         data-slot="dialog-content"
+        data-size={size}
         {...props}
         className={styles.DialogContent(styler.merge({className}))}
         style={style}
@@ -154,6 +162,22 @@ export function DialogDescription({
       className={styles.DialogDescription(styler.merge({className}))}
     />
   )
+}
+
+export interface DialogState {
+  /** Whether the surrounding Dialog or Popover is open */
+  open: boolean
+  close(): void
+}
+
+/**
+ * The open state of the surrounding Dialog or Popover, to close it from
+ * within its content
+ */
+export function useDialog(): DialogState {
+  const state = useContext(OverlayTriggerStateContext)
+  if (!state) throw new Error('useDialog must be used within a Dialog')
+  return {open: state.isOpen, close: () => state.close()}
 }
 
 export interface DialogCloseProps extends ButtonProps {}

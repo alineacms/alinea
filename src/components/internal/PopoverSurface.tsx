@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {ReactNode} from 'react'
+import type {ReactNode, Ref} from 'react'
 import {
   type PopoverProps as PopoverPrimitiveProps,
   Popover as PopoverPrimitive
@@ -13,6 +13,7 @@ export interface PopoverSurfaceProps extends Omit<
   'children' | 'className'
 > {
   className?: string
+  ref?: Ref<HTMLElement>
   children: ReactNode
   [attribute: `data-${string}`]: string | number | boolean | undefined
 }

@@ -1,9 +1,11 @@
 /* Padding stays on the surface so call sites can override it with className
-   or style, the dialog only resets its focus outline. */
+   or style, the dialog only resets its focus outline. It fills a surface that
+   was given a fixed height. */
 .PopoverContent {
   display: block;
 }
 
 .PopoverContent-dialog {
+  height: 100%;
   outline: none;
 }

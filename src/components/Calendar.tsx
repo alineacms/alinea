@@ -16,6 +16,7 @@ import {
   IcRoundKeyboardArrowLeft,
   IcRoundKeyboardArrowRight
 } from '../dashboard/icons.js'
+import {Locale} from './internal/Locale.js'
 import css from './Calendar.module.css'
 import {Icon} from './Icon.js'
 import {toCalendarDate, toCalendarRange} from './internal/DateValue.js'
@@ -24,6 +25,8 @@ import type {AriaProps, DataProps, DateRange, StyleProps} from './types.js'
 const styles = styler(css)
 
 interface CalendarSharedProps extends StyleProps, AriaProps, DataProps {
+  /** BCP 47 locale used to format dates, eg. `en-GB`, defaults to the user's locale */
+  locale?: string
   /** The earliest selectable date, `YYYY-MM-DD` */
   min?: string
   /** The latest selectable date, `YYYY-MM-DD` */
@@ -47,19 +50,22 @@ export function Calendar({
   defaultValue,
   onValueChange,
   className,
+  locale,
   ...props
 }: CalendarProps) {
   return (
-    <CalendarPrimitive
-      data-slot="calendar"
-      {...calendarProps(props)}
-      className={styles.Calendar(styler.merge({className}))}
-      value={toCalendarDate(value)}
-      defaultValue={toCalendarDate(defaultValue)}
-      onChange={onValueChange && (date => onValueChange(date.toString()))}
-    >
-      <CalendarBody />
-    </CalendarPrimitive>
+    <Locale locale={locale}>
+      <CalendarPrimitive
+        data-slot="calendar"
+        {...calendarProps(props)}
+        className={styles.Calendar(styler.merge({className}))}
+        value={toCalendarDate(value)}
+        defaultValue={toCalendarDate(defaultValue)}
+        onChange={onValueChange && (date => onValueChange(date.toString()))}
+      >
+        <CalendarBody />
+      </CalendarPrimitive>
+    </Locale>
   )
 }
 
@@ -74,27 +80,30 @@ export function RangeCalendar({
   defaultValue,
   onValueChange,
   className,
+  locale,
   ...props
 }: RangeCalendarProps) {
   return (
-    <RangeCalendarPrimitive
-      data-slot="calendar"
-      data-range
-      {...calendarProps(props)}
-      className={styles.Calendar(styler.merge({className}))}
-      value={toCalendarRange(value)}
-      defaultValue={toCalendarRange(defaultValue)}
-      onChange={
-        onValueChange &&
-        (range =>
-          onValueChange({
-            start: range.start.toString(),
-            end: range.end.toString()
-          }))
-      }
-    >
-      <CalendarBody />
-    </RangeCalendarPrimitive>
+    <Locale locale={locale}>
+      <RangeCalendarPrimitive
+        data-slot="calendar"
+        data-range
+        {...calendarProps(props)}
+        className={styles.Calendar(styler.merge({className}))}
+        value={toCalendarRange(value)}
+        defaultValue={toCalendarRange(defaultValue)}
+        onChange={
+          onValueChange &&
+          (range =>
+            onValueChange({
+              start: range.start.toString(),
+              end: range.end.toString()
+            }))
+        }
+      >
+        <CalendarBody />
+      </RangeCalendarPrimitive>
+    </Locale>
   )
 }
 

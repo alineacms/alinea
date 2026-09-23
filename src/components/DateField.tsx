@@ -5,6 +5,7 @@ import {
   DateSegment,
   Group
 } from 'react-aria-components'
+import {Locale} from './internal/Locale.js'
 import css from './DateField.module.css'
 import {Field} from './Field.js'
 import {toCalendarDate} from './internal/DateValue.js'
@@ -19,6 +20,8 @@ const styles = styler(css)
 
 export interface DateFieldProps
   extends FieldSharedProps, StyleProps, AriaProps, DataProps {
+  /** BCP 47 locale used to format dates, eg. `en-GB`, defaults to the user's locale */
+  locale?: string
   /** The date, `YYYY-MM-DD` */
   value?: string | null
   defaultValue?: string | null
@@ -46,56 +49,60 @@ export function DateField({
   min,
   max,
   className,
+  locale,
   ...props
 }: DateFieldProps) {
   return (
-    <DateFieldPrimitive
-      data-slot="date-field"
-      {...props}
-      className={styles.DateField(styler.merge({className}))}
-      value={toCalendarDate(value)}
-      defaultValue={toCalendarDate(defaultValue)}
-      onChange={
-        onValueChange && (date => onValueChange(date ? date.toString() : null))
-      }
-      minValue={toCalendarDate(min)}
-      maxValue={toCalendarDate(max)}
-      isRequired={required}
-      isDisabled={disabled}
-      isReadOnly={readOnly}
-      isInvalid={error ? true : undefined}
-    >
-      <Field
-        label={label}
-        description={description}
-        error={error}
-        required={required}
-        disabled={disabled}
-        readOnly={readOnly}
-        icon={icon}
-        shared={shared}
+    <Locale locale={locale}>
+      <DateFieldPrimitive
+        data-slot="date-field"
+        {...props}
+        className={styles.DateField(styler.merge({className}))}
+        value={toCalendarDate(value)}
+        defaultValue={toCalendarDate(defaultValue)}
+        onChange={
+          onValueChange &&
+          (date => onValueChange(date ? date.toString() : null))
+        }
+        minValue={toCalendarDate(min)}
+        maxValue={toCalendarDate(max)}
+        isRequired={required}
+        isDisabled={disabled}
+        isReadOnly={readOnly}
+        isInvalid={error ? true : undefined}
       >
-        <Group
-          data-slot="date-field-control"
-          aria-disabled={disabled || undefined}
-          className={styles.DateField.control()}
+        <Field
+          label={label}
+          description={description}
+          error={error}
+          required={required}
+          disabled={disabled}
+          readOnly={readOnly}
+          icon={icon}
+          shared={shared}
         >
-          <DateInput
-            data-slot="date-field-input"
-            className={styles.DateField.input()}
+          <Group
+            data-slot="date-field-control"
+            aria-disabled={disabled || undefined}
+            className={styles.DateField.control()}
           >
-            {segment => (
-              <DateSegment
-                data-slot="date-field-segment"
-                className={state =>
-                  styles.DateField.segment({placeholder: state.isPlaceholder})
-                }
-                segment={segment}
-              />
-            )}
-          </DateInput>
-        </Group>
-      </Field>
-    </DateFieldPrimitive>
+            <DateInput
+              data-slot="date-field-input"
+              className={styles.DateField.input()}
+            >
+              {segment => (
+                <DateSegment
+                  data-slot="date-field-segment"
+                  className={state =>
+                    styles.DateField.segment({placeholder: state.isPlaceholder})
+                  }
+                  segment={segment}
+                />
+              )}
+            </DateInput>
+          </Group>
+        </Field>
+      </DateFieldPrimitive>
+    </Locale>
   )
 }

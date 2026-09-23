@@ -3,9 +3,7 @@ import {
   type CSSProperties,
   type ReactElement,
   type ReactNode,
-  type Ref,
-  useRef,
-  useState
+  type Ref
 } from 'react'
 import {
   Tree as AriaTree,
@@ -13,22 +11,18 @@ import {
   TreeItemContent as AriaTreeItemContent,
   Button,
   Collection,
-  DropIndicator,
-  type DropItem,
-  type DropTarget as AriaDropTarget,
   ListLayout,
-  useDragAndDrop,
   Virtualizer
 } from 'react-aria-components'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
+import {useDragDrop} from './internal/useDragDrop.js'
 import css from './Tree.module.css'
 import type {
   AriaProps,
   DataProps,
   DragDropProps,
-  DropTarget,
   IconType,
   Key,
   SelectionProps,
@@ -79,93 +73,26 @@ export function Tree<T extends object>({
   onMove,
   onDropItems,
   onDropFiles,
+  renderDragPreview,
   ref,
   ...props
 }: TreeProps<T>) {
-  const draggable = Boolean(getDragData)
-  const droppable = Boolean(onReorder || onMove || onDropItems || onDropFiles)
-  // react-aria cannot add or remove drag and drop hooks on a mounted tree,
-  // once enabled we keep them and remount the tree when that happens
-  const [dnd, setDnd] = useState({draggable, droppable})
-  if ((draggable && !dnd.draggable) || (droppable && !dnd.droppable))
-    setDnd({
-      draggable: draggable || dnd.draggable,
-      droppable: droppable || dnd.droppable
-    })
-  const dragging = useRef<ReadonlySet<Key> | null>(null)
-  async function drop(items: Array<DropItem>, target?: DropTarget) {
-    const data: Array<Record<string, string>> = []
-    const files: Array<File> = []
-    for (const item of items) {
-      if (item.kind === 'file') files.push(await item.getFile())
-      if (item.kind !== 'text') continue
-      const record: Record<string, string> = {}
-      for (const type of item.types) record[type] = await item.getText(type)
-      data.push(record)
-    }
-    if (target && data.length > 0) onDropItems?.({items: data, target})
-    if (files.length > 0) onDropFiles?.({files, target})
-  }
-  const {dragAndDropHooks} = useDragAndDrop({
-    isDisabled: !draggable && !droppable,
+  const dnd = useDragDrop<T>({
+    getDragData,
     acceptedDragTypes,
-    getItems: dnd.draggable ? keys => getDragData?.(keys) ?? [] : undefined,
-    onDragStart: event => {
-      dragging.current = event.keys
-    },
-    onDragEnd: () => {
-      dragging.current = null
-    },
-    getDropOperation(target, types, allowedOperations) {
-      const internal = dragging.current
-      if (target.type === 'root') {
-        if (internal || !onDropFiles) return 'cancel'
-      } else {
-        const position = target.dropPosition
-        const accepts = internal
-          ? position === 'on'
-            ? Boolean(onMove) && !internal.has(target.key)
-            : Boolean(onReorder)
-          : Boolean(onDropItems || onDropFiles)
-        if (!accepts) return 'cancel'
-        if (canDrop && !canDrop(dropTarget(target)!, types)) return 'cancel'
-      }
-      return allowedOperations.includes('move') ? 'move' : allowedOperations[0]
-    },
-    ...(dnd.droppable && {
-      onMove(event) {
-        const target = dropTarget(event.target)!
-        const move = {keys: event.keys, target}
-        if (target.position === 'on') onMove?.(move)
-        else onReorder?.(move)
-      },
-      onInsert(event) {
-        return drop(event.items, dropTarget(event.target))
-      },
-      onItemDrop(event) {
-        if (event.isInternal) return
-        return drop(event.items, dropTarget(event.target))
-      },
-      onRootDrop(event) {
-        return drop(event.items)
-      }
-    }),
-    renderDropIndicator(target) {
-      return (
-        <DropIndicator
-          target={target}
-          data-slot="tree-drop-indicator"
-          className={({isDropTarget}) =>
-            styles.TreeDropIndicator({active: isDropTarget})
-          }
-        />
-      )
-    }
+    canDrop,
+    onReorder,
+    onMove,
+    onDropItems,
+    onDropFiles,
+    renderDragPreview,
+    dropIndicatorSlot: 'tree-drop-indicator',
+    dropIndicatorClassName: active => styles.TreeDropIndicator({active})
   })
   const tree = (
     <AriaTree
       {...props}
-      key={`${dnd.draggable}-${dnd.droppable}`}
+      key={dnd.key}
       ref={ref}
       data-slot="tree"
       className={styles.Tree(styler.merge({className}))}
@@ -190,9 +117,7 @@ export function Tree<T extends object>({
             )
           : undefined
       }
-      dragAndDropHooks={
-        dnd.draggable || dnd.droppable ? dragAndDropHooks : undefined
-      }
+      dragAndDropHooks={dnd.dragAndDropHooks}
     >
       {children}
     </AriaTree>
@@ -206,11 +131,6 @@ export function Tree<T extends object>({
       {tree}
     </Virtualizer>
   )
-}
-
-function dropTarget(target: AriaDropTarget): DropTarget | undefined {
-  if (target.type === 'root') return undefined
-  return {key: target.key, position: target.dropPosition}
 }
 
 export interface TreeItemProps<T extends object = object>

@@ -1,8 +1,7 @@
-import type {Selection} from '#/components.js'
+import type {Key, Selection} from '#/components.js'
 import {rootAtoms} from '#/dashboard/atoms/root.js'
 import {atom, useSetAtom} from 'jotai'
 import {startTransition, useMemo} from 'react'
-import type {Key} from 'react-aria-components'
 import type {
   DashboardExplorer,
   ExplorerLocation,

@@ -71,7 +71,7 @@ interface UrlConflictModalProps {
 function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
   return (
     <DashboardModal
-      isOpen={Boolean(conflict)}
+      open={Boolean(conflict)}
       onOpenChange={isOpen => {
         if (!isOpen) onClose()
       }}

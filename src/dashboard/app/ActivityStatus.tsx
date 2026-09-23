@@ -27,7 +27,6 @@ import {
   useSyncExternalStore,
   type ReactNode
 } from 'react'
-import {useInteractOutside} from 'react-aria'
 import {appAtom} from '../App.js'
 import {
   activityAtom,
@@ -84,16 +83,6 @@ export function ActivityStatus({
   const retry = useSetAtom(retryActivityAtom)
   const discard = useSetAtom(discardActivityAtom)
   const [isOpen, setIsOpen] = useState(false)
-  const panelRef = useRef<HTMLDivElement>(null)
-  // The popover stays non-modal so the dashboard behind it remains usable
-  // and scrollable. Non-modal popovers don't dismiss on outside interaction
-  // by themselves, so close the panel that way using the same primitive RAC
-  // overlays use internally.
-  useInteractOutside({
-    ref: panelRef,
-    onInteractOutside: () => setIsOpen(false),
-    isDisabled: !isOpen
-  })
   const isMobile = useSyncExternalStore(
     mobileSide ? subscribeToMobileActivity : ignoreActivityBreakpoint,
     mobileSide ? mobileActivitySnapshot : desktopActivitySnapshot,
@@ -126,6 +115,8 @@ export function ActivityStatus({
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
+    // The popover stays non-modal so the dashboard behind it remains usable
+    // and scrollable, it still closes on interaction outside of it
     <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <PopoverTrigger asChild>
         <Tooltip delayDuration={300}>
@@ -193,7 +184,7 @@ export function ActivityStatus({
           boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
         }}
       >
-        <div ref={panelRef} className={styles.ActivityStatus.popover()}>
+        <div className={styles.ActivityStatus.popover()}>
           <div className={styles.ActivityStatus.popover.header()}>
             <h2 className={styles.ActivityStatus.popover.title()}>Activity</h2>
             {activity.hasFailed && (

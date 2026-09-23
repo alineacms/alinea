@@ -1,5 +1,6 @@
 /* Mirrors the dashboard explorer table so custom views feel native */
 .ContentTable {
+  --alinea-content-table-indent: 0px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -7,6 +8,14 @@
   height: 100%;
   overflow-x: auto;
   color: var(--alinea-fg);
+
+  &:not([data-selectable]) {
+    --alinea-content-table-indent: 6px;
+  }
+
+  &[data-variant='plain'] {
+    border-radius: 0;
+  }
 }
 
 .ContentTable-body {
@@ -17,6 +26,18 @@
   overflow-y: auto;
   background: var(--alinea-bg);
   outline: none;
+
+  /* Files dragged over the table, react-aria has no render prop for this */
+  &[data-drop-target]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--alinea-bg) 74%, transparent);
+    outline: 2px dashed var(--alinea-blue-600);
+    outline-offset: -10px;
+  }
 }
 
 .ContentTable-empty {
@@ -29,9 +50,27 @@
   pointer-events: none;
 }
 
+.ContentTableDropIndicator {
+  position: relative;
+  height: 0;
+  pointer-events: none;
+  z-index: 2;
+
+  &.is-active::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--alinea-ring);
+  }
+}
+
 .ContentTableHeader {
   display: grid;
   flex: 0 0 auto;
+  grid-template-columns: var(--alinea-content-table-columns);
   min-width: var(--alinea-content-table-min-width);
   border-bottom: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
@@ -58,7 +97,7 @@
 
   /* Line up with titles that follow the expand toggle */
   &.is-indented {
-    padding-inline-start: 36px;
+    padding-inline-start: calc(34px + var(--alinea-content-table-indent));
   }
 }
 
@@ -93,22 +132,50 @@
   position: relative;
   box-sizing: border-box;
   min-width: 100%;
-  border-bottom: 1px solid var(--alinea-border);
   background: var(--alinea-bg);
   outline: none;
   cursor: pointer;
+
+  /* A divider that does not take space from the row */
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    pointer-events: none;
+    background: var(--alinea-border);
+  }
 
   &:hover {
     background: var(--alinea-bg-muted);
   }
 
   &[aria-selected='true'] {
-    background: color-mix(in oklab, var(--alinea-primary) 9%, var(--alinea-bg));
+    background: color-mix(in srgb, var(--alinea-blue-600) 9%, var(--alinea-bg));
   }
 
-  &[aria-disabled='true'] {
+  /* Rows that cannot be selected */
+  &[data-unselectable] {
     background: var(--alinea-bg-muted);
     color: var(--alinea-fg-muted);
+  }
+
+  &[data-unselectable]:hover {
+    background: color-mix(in srgb, var(--alinea-fg-muted) 10%, var(--alinea-bg));
+  }
+
+  &.is-highlighted {
+    background: color-mix(in srgb, var(--alinea-selected) 60%, var(--alinea-bg));
+  }
+
+  &.is-dropTarget {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+
+  &.is-dragging {
+    opacity: 0.5;
   }
 
   &:focus-visible {
@@ -118,31 +185,28 @@
 
 .ContentTableRow-grid {
   display: grid;
+  grid-template-columns: var(--alinea-content-table-columns);
   height: 100%;
 }
 
 .ContentTableRow-selection {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 8px;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
 .ContentTableRow-first {
   display: flex;
   align-items: center;
   min-width: 0;
-
-  .ContentTable:not([data-selectable]) & {
-    padding-inline-start: 6px;
-  }
 }
 
 .ContentTableRow-chevron {
   display: inline-flex;
   flex: 0 0 16px;
   justify-content: center;
-  margin-inline-start: 10px;
+  margin-inline: 10px -2px;
   color: var(--alinea-fg-muted);
   font-size: 16px;
 }
@@ -184,7 +248,8 @@
   color: var(--alinea-field-label);
   font-size: 11px;
   font-weight: 500;
-  line-height: 1.2;
+  /* 1.2 times the 12px explorer base size */
+  line-height: 14.4px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -224,11 +289,34 @@
   overflow: hidden;
 }
 
+.ContentTableTitle-drag {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  outline: none;
+  cursor: grab;
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
 .ContentTableTitle-icon {
   flex: 0 0 auto;
   width: 1em;
   height: 1em;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .ContentTableTitle-text {
@@ -244,11 +332,29 @@
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  .ContentTableRow[data-unselectable] & {
+    color: color-mix(in srgb, var(--alinea-fg-muted) 72%, transparent);
+  }
 }
 
 @media (max-width: 768px) {
   .ContentTable-body,
   .ContentTableHeader {
     min-width: 0;
+  }
+
+  .ContentTableHeader,
+  .ContentTableRow-grid {
+    grid-template-columns: var(--alinea-content-table-columns-narrow);
+  }
+
+  .ContentTableHeader-head,
+  .ContentTableCell,
+  .ContentTableThumbnail,
+  .ContentTableTitle {
+    &[data-collapsible] {
+      display: none;
+    }
   }
 }

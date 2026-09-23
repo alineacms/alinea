@@ -281,6 +281,85 @@ export function NestedRows() {
   )
 }
 
+interface Page {
+  id: string
+  title: string
+  path: string
+  locked?: boolean
+}
+
+const initialPages: Array<Page> = [
+  {id: 'home', title: 'Home', path: '/'},
+  {id: 'about', title: 'About us', path: '/about'},
+  {id: 'news', title: 'News', path: '/news'},
+  {id: 'legal', title: 'Legal', path: '/legal', locked: true}
+]
+
+/**
+ * The explorer behaviours: drag rows by their icon onto another row, drop
+ * files on the table, unselectable (locked) and highlighted rows, a
+ * breadcrumb line above the title and columns that collapse on small screens
+ */
+export function DragAndDrop() {
+  const [pages, setPages] = useState(initialPages)
+  const [log, setLog] = useState<Array<string>>([])
+  const [selected, setSelected] = useState<Selection>(new Set())
+  const titleOf = (key: Key) => pages.find(page => page.id === key)?.title
+  return (
+    <div
+      style={{height: 320, padding: 16, background: 'var(--alinea-bg-muted)'}}
+    >
+      <ContentTable
+        aria-label="Pages"
+        items={pages}
+        columns={[
+          {id: 'title', header: 'Title', width: 300},
+          {id: 'path', header: 'Path', width: '1fr', collapsible: true}
+        ]}
+        showHeader={false}
+        selectionMode="multiple"
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
+        getDragData={keys =>
+          [...keys].map(key => ({'text/plain': String(key)}))
+        }
+        canDrop={target => target.position === 'on'}
+        onMove={({keys, target}) => {
+          const moved = [...keys].map(titleOf).join(', ')
+          setLog(log => [...log, `Moved ${moved} into ${titleOf(target.key)}`])
+          setPages(pages => pages.filter(page => !keys.has(page.id)))
+        }}
+        onDropFiles={({files}) =>
+          setLog(log => [
+            ...log,
+            `Uploaded ${files.map(f => f.name).join(', ')}`
+          ])
+        }
+      >
+        {page => (
+          <ContentTableRow
+            id={page.id}
+            textValue={page.title}
+            selectable={!page.locked}
+            highlighted={page.id === 'home'}
+            onDoubleClick={() =>
+              setLog(log => [...log, `Opened ${page.title}`])
+            }
+          >
+            <ContentTableTitle
+              icon={LucideFile}
+              title={page.title}
+              label="Main / Pages"
+            />
+            <ContentTableCell label="Path">{page.path}</ContentTableCell>
+          </ContentTableRow>
+        )}
+      </ContentTable>
+      <output data-testid="log">{log.join('. ')}</output>
+    </div>
+  )
+}
+
 export function Empty() {
   return (
     <div style={{height: 200, padding: 16}}>
