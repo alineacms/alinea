@@ -131,6 +131,10 @@ function renderNode(
       const body = renderNodes(node.body, entryMap, mediaMap).trim()
       return body ? `Note (${level}): ${body}` : `Note (${level})`
     }
+    case 'CopyPromptBlock': {
+      const prompt = normalizeText(asString(node.prompt)).trim()
+      return prompt ? `> ${prompt}` : ''
+    }
     case 'ImageBlock': {
       const image =
         node.image && typeof node.image === 'object'

@@ -2,6 +2,7 @@ import {Field} from 'alinea'
 import {ChapterLinkBlock} from '../blocks/ChapterLinkBlock'
 import {CodeBlock} from '../blocks/CodeBlock'
 import {CodeVariantsBlock} from '../blocks/CodeVariantsBlock'
+import {CopyPromptBlock} from '../blocks/CopyPromptBlock'
 import {ExampleBlock} from '../blocks/ExampleBlock'
 import {ImageBlock} from '../blocks/ImageBlock'
 import {NoticeBlock} from '../blocks/NoticeBlock'
@@ -15,6 +16,7 @@ export const bodyField = () =>
       ImageBlock,
       NoticeBlock,
       ChapterLinkBlock,
-      ExampleBlock
+      ExampleBlock,
+      CopyPromptBlock
     }
   })

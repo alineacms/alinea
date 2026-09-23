@@ -1,0 +1,1055 @@
+{
+  "_id": "3JjtPxuJN2K4q6JhBgqfqIzNCX4",
+  "_type": "Doc",
+  "_index": "a0V",
+  "title": "Set up with an AI agent",
+  "navigationTitle": "AI-assisted setup",
+  "body": [
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Let a coding agent such as Claude Code, Cursor or Codex add Alinea to your Next.js project. Paste the prompt below into your agent: it reads this guide as Markdown from "
+        },
+        {
+          "_type": "text",
+          "text": "alineacms.com/start.md",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtWnQaQZndMzGtNpUJHeO8qxq",
+              "_link": "url",
+              "href": "https://alineacms.com/start.md"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", sets up Alinea step by step, then helps you model your content and create the first entries."
+        }
+      ]
+    },
+    {
+      "_type": "CopyPromptBlock",
+      "_id": "3JjtPueeJhQgj5w6vH06wc97ZME",
+      "prompt": "Read https://alineacms.com/start.md and help me add Alinea to my Next.js project"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The rest of this page is written for the agent. You are adding Alinea, a git-based headless CMS, to the user's Next.js project. Content is stored as JSON files in the repository and the schema is TypeScript in `cms.ts`. Follow the steps in order, run the commands yourself, check each result before moving on and ask the user whenever a step needs a decision. The complete documentation is available as one file at "
+        },
+        {
+          "_type": "text",
+          "text": "alineacms.com/llms-full.txt",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtWskGPi6CFBfWMaho61JdI8J",
+              "_link": "url",
+              "href": "https://alineacms.com/llms-full.txt"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": ", fetch it when you need an API that is not covered here."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "1. Check the project"
+        }
+      ],
+      "_anchor": "1-check-the-project"
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Confirm this is a Next.js project that uses the App Router: `next` is listed in the `dependencies` of `package.json` and there is an `app/` or `src/app/` directory. Alinea's Next.js integration needs the App Router. If there is no project yet, ask the user whether to create one with `npx create-next-app@latest`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Detect the package manager from the lockfile: `package-lock.json` (npm), `pnpm-lock.yaml` (pnpm), `yarn.lock` (yarn), `bun.lock` or `bun.lockb` (bun). Use it for every command in this guide. The examples use npm: replace `npx alinea` with `pnpm alinea`, `yarn alinea` or `bun alinea`, and `npm run` with `pnpm`, `yarn` or `bun run`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Check that `node --version` is 24 or higher and that the project uses React 19, the Alinea CLI refuses to run otherwise."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "If a `cms.ts`, `cms.tsx`, `src/cms.ts` or `src/cms.tsx` file already exists, Alinea is already set up: check steps 4 and 5, then continue at step 6."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Suggest committing any pending changes first, so the user can review what you change."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "2. Install Alinea"
+        }
+      ],
+      "_anchor": "2-install-alinea"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Install the package in the project root."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPsftrqgAWFbrpuAxjPXTc8H",
+      "code": "npm install alinea",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "With other package managers: `pnpm add alinea`, `yarn add alinea` or `bun add alinea`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "3. Run alinea init"
+        }
+      ],
+      "_anchor": "3-run-alinea-init"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPyZvgZ0Wc5gLLj8daL70eNs",
+      "code": "npx alinea init",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a Next.js project `alinea init` creates:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`cms.ts`, in `src/` if the project has a `src` directory: an example schema and workspace, `baseUrl`, `handlerUrl: '/api/cms'` and `adminPath: '/admin'`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`app/(alinea)/api/cms/route.ts`, also under `src/` when it exists: the API route the dashboard talks to. It is only created when `next` is listed in `dependencies`."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`content/pages/welcome.json` and `content/media/`: a first entry and the media folder."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "It prefixes the `dev` and `build` scripts in `package.json` with `alinea dev --` and `alinea build --`."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Read the generated files. The route imports `@/cms`: check that `tsconfig.json` maps `@/*` to the folder that holds `cms.ts` (create-next-app sets this up), otherwise fix the import."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "4. Wire up Next.js"
+        }
+      ],
+      "_anchor": "4-wire-up-next-js"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Wrap the existing Next.js config with `withAlinea` and keep all of its options. It serves the dashboard at `/admin` and keeps the generated content package out of the server bundle."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPwhZGH33ni6QJOUFu4VGoVD",
+      "code": "import {withAlinea} from 'alinea/next'\nimport type {NextConfig} from 'next'\n\nconst nextConfig: NextConfig = {\n  // The existing options\n}\n\nexport default withAlinea(nextConfig)",
+      "fileName": "next.config.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In a CommonJS `next.config.js` use `const {withAlinea} = require('alinea/next')` and `module.exports = withAlinea(nextConfig)`."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Check that the API route exists, and create it if `alinea init` did not:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPyyPHHW5R8yWM9OwQ8DO6So",
+      "code": "import {cms} from '@/cms'\nimport {createHandler} from 'alinea/next'\n\n// This handler responds to the API requests of the dashboard\nconst handler = createHandler({cms})\n\nexport const GET = handler\nexport const POST = handler",
+      "fileName": "app/(alinea)/api/cms/route.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Check the scripts in `package.json`. Keep any flags the user had after `next dev` or `next build`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPutYO8F4ZvCXM3ecg3dluOq",
+      "code": "{\n  \"scripts\": {\n    \"dev\": \"alinea dev -- next dev\",\n    \"build\": \"alinea build -- next build\"\n  }\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea build` writes the dashboard to `public/admin.html` and `public/admin/`. Add `/public/admin*` to `.gitignore`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "5. Enable live previews"
+        }
+      ],
+      "_anchor": "5-enable-live-previews"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Set `preview: true` in the `createCMS` options in `cms.ts` (`alinea init` leaves it commented out). Then render the preview component in the root layout, add only this line to the existing `app/layout.tsx`:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPzNQj0fiJvW0NQkcHgqql5a",
+      "code": "import {cms} from '@/cms'\n\nexport default function RootLayout({children}: {children: React.ReactNode}) {\n  return (\n    <html lang=\"en\">\n      <body>\n        {children}\n        <cms.previews widget />\n      </body>\n    </html>\n  )\n}",
+      "fileName": "app/layout.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The dashboard now shows the page next to the editor and updates it while the user types. Remove the `widget` prop to hide the small preview toolbar on the page. Ask the user for the production URL of the site and set it as `baseUrl.production` in `cms.ts`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "6. Start the dev server"
+        }
+      ],
+      "_anchor": "6-start-the-dev-server"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Start the dev script in the background and keep it running for the rest of this guide."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPzG7LZcIcpv6nvtJ77pWFom",
+      "code": "npm run dev",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "`alinea dev` compiles `cms.ts`, starts the local CMS and then starts `next dev`. Read the output:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`MCP server: http://localhost:4500/mcp` is the MCP server for the next step. The port moves to 4501 and up when 4500 is taken, always use the printed url."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`- Alinea CMS: http://localhost:3000/admin` is the dashboard. Ask the user to open it and have a look around."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "If the output shows an error in `cms.ts`, fix it before continuing. The config is recompiled whenever you save it."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "7. Connect to the Alinea MCP server"
+        }
+      ],
+      "_anchor": "7-connect-to-the-alinea-mcp-server"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "While `alinea dev` runs it also serves a Model Context Protocol server that reads the schema and creates, edits and publishes entries through the same write path as the dashboard. It fills in internal fields such as ids, ordering keys and rich text nodes, so use it for all content changes instead of writing JSON files. It only runs during `alinea dev` and only accepts requests from localhost."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "In Claude Code, add it with the url from the dev server output:"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPw7eCBbMmQPhuX20NiQ2Wpy",
+      "code": "claude mcp add --transport http alinea http://localhost:4500/mcp",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "For other agents add an HTTP MCP server named `alinea` with the same url, for example in a project `.mcp.json` (Cursor reads `.cursor/mcp.json`):"
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPuk2zlWW0DxhKssJpFtsgPP",
+      "code": "{\n  \"mcpServers\": {\n    \"alinea\": {\n      \"type\": \"http\",\n      \"url\": \"http://localhost:4500/mcp\"\n    }\n  }\n}",
+      "fileName": "",
+      "language": "json"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Most agents only load MCP servers when a session starts. If the tools do not show up, ask the user to restart or reload the session, and to point you back to "
+        },
+        {
+          "_type": "text",
+          "text": "alineacms.com/start.md",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtWqqY4AZv50zpNT05WrleMrq",
+              "_link": "url",
+              "href": "https://alineacms.com/start.md"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " to continue at this step."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The tools are `describe_schema`, `find_entries`, `get_entry`, `create_entry`, `update_entry`, `delete_entry`, `publish_entry`, `archive_entry`, `move_entry`, `upload_file` and `find_references`. Call `describe_schema` first. If the MCP server cannot be connected, edit the content JSON files following "
+        },
+        {
+          "_type": "text",
+          "text": "Working with AI agents",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtWtvRmGtjcuUl8oebOyOsh7k",
+              "_link": "url",
+              "href": "https://alineacms.com/docs/ai-agents"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": " instead."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "8. Model the content"
+        }
+      ],
+      "_anchor": "8-model-the-content"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Ask the user what the site needs before you write any schema: which pages and sections, which content repeats (posts, products, team members, events), what is shared across pages (navigation, footer, settings) and whether the site is translated. Propose a schema in plain words and wait for confirmation."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Then define the types in `cms.ts`, or in separate files imported there:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Config.document(label, {fields, contains})` for entries that have their own page. Title, path (the url slug) and SEO metadata fields are added automatically, `contains` lists the types allowed as children."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "`Config.type(label, {fields})` for blocks in lists or rich text, and for entries without a page of their own such as site settings."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Fields such as `Field.text`, `Field.richText`, `Field.image`, `Field.link`, `Field.entry`, `Field.list`, `Field.select`, `Field.check`, `Field.date` and `Field.number`, see "
+                },
+                {
+                  "_type": "text",
+                  "text": "Fields",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWptIjxPHYcaaYXsNSGtkU39",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/fields"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": "."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Register every type in `schema` and list the types each root accepts in `contains`. Pages that must always exist, such as the homepage, can be seeded with `Config.page` in the `children` of a root."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3Jjtj7SbusnRCTceDmXvuRQnFAf",
+      "code": "import {Config, Field} from 'alinea'\nimport {createCMS} from 'alinea/next'\n\nexport const Page = Config.document('Page', {\n  fields: {\n    intro: Field.text('Intro', {multiline: true}),\n    body: Field.richText('Body')\n  }\n})\n\nexport const Blog = Config.document('Blog', {\n  contains: ['BlogPost'],\n  fields: {\n    intro: Field.text('Intro', {multiline: true})\n  }\n})\n\nexport const BlogPost = Config.document('Blog post', {\n  fields: {\n    publishDate: Field.date('Publish date'),\n    image: Field.image('Image'),\n    body: Field.richText('Body')\n  }\n})\n\nexport const cms = createCMS({\n  schema: {Page, Blog, BlogPost},\n  workspaces: {\n    main: Config.workspace('Main', {\n      source: 'content',\n      mediaDir: 'public/media',\n      roots: {\n        pages: Config.root('Pages', {\n          contains: ['Page', 'Blog']\n        }),\n        media: Config.media()\n      }\n    })\n  },\n  baseUrl: {\n    development: 'http://localhost:3000',\n    production: 'https://example.com'\n  },\n  preview: true,\n  handlerUrl: '/api/cms',\n  adminPath: '/admin'\n})",
+      "fileName": "cms.ts",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "The example `content/pages/welcome.json` entry has type `Page`. If you remove or rename that type, delete the entry with `delete_entry`. Save `cms.ts`, check the dev server output for errors and call `describe_schema` again to confirm the new types."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "9. Create the first entries"
+        }
+      ],
+      "_anchor": "9-create-the-first-entries"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Create the starting content with the MCP tools: find the parent with `find_entries`, then call `create_entry` with the type, the parent and the field values. Rich text fields accept Markdown, link fields accept entry ids, and `upload_file` adds images to the media library and returns the id for image fields. Entries are published by default. Write real starting content with the user rather than placeholder text, then ask them to review it in the dashboard. Every entry is a JSON file under `content/`."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "10. Render the content"
+        }
+      ],
+      "_anchor": "10-render-the-content"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Query content in server components with the `cms` instance: `cms.find` returns an array, `cms.first` returns the first match or null, `cms.get` returns one entry and throws when nothing matches. An entry's url is built from the paths of its parents, a post with path `hello` below a blog with path `blog` is at `/blog/hello`."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPy3yre05UvAmYKIdp6j7iOd",
+      "code": "import {Query} from 'alinea'\nimport Link from 'next/link'\nimport {BlogPost, cms} from '@/cms'\n\nexport default async function BlogPage() {\n  const posts = await cms.find({\n    type: BlogPost,\n    select: {id: Query.id, title: Query.title, url: Query.url}\n  })\n  return (\n    <ul>\n      {posts.map(post => (\n        <li key={post.id}>\n          <Link href={post.url}>{post.title}</Link>\n        </li>\n      ))}\n    </ul>\n  )\n}",
+      "fileName": "app/blog/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPyQNhYC3WHCkE3L0icKkMaE",
+      "code": "import {Query} from 'alinea'\nimport {RichText} from 'alinea/ui'\nimport {notFound} from 'next/navigation'\nimport {BlogPost, cms} from '@/cms'\n\ninterface PostPageProps {\n  params: Promise<{slug: string}>\n}\n\nexport default async function PostPage({params}: PostPageProps) {\n  const {slug} = await params\n  const post = await cms.first({type: BlogPost, url: `/blog/${slug}`})\n  if (!post) notFound()\n  return (\n    <article>\n      <h1>{post.title}</h1>\n      <RichText doc={post.body} />\n    </article>\n  )\n}\n\nexport async function generateStaticParams() {\n  const paths = await cms.find({type: BlogPost, select: Query.path})\n  return paths.map(slug => ({slug}))\n}",
+      "fileName": "app/blog/[slug]/page.tsx",
+      "language": "tsx"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Open the pages in the browser and in the dashboard preview. Filtering, ordering, relations and child queries are described in "
+        },
+        {
+          "_type": "text",
+          "text": "Querying content",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtWs9jBIZmr0lc82FWgS7uwug",
+              "_link": "url",
+              "href": "https://alineacms.com/docs/query"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "heading",
+      "level": 2,
+      "content": [
+        {
+          "_type": "text",
+          "text": "11. Verify and hand over"
+        }
+      ],
+      "_anchor": "11-verify-and-hand-over"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Run a production build and fix every error it reports."
+        }
+      ]
+    },
+    {
+      "_type": "CodeBlock",
+      "_id": "3JjtPuWyFj7u0oRRqENYb9vD0jv",
+      "code": "npm run build",
+      "fileName": "",
+      "language": "shellscript"
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Then give the user a short summary: the files you changed, how to open the dashboard (`npm run dev`, then http://localhost:3000/admin) and what to do next. Publishing from a deployed site needs a backend for login, drafts and git commits, see "
+        },
+        {
+          "_type": "text",
+          "text": "Deploying",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtWtHxI4qk8wEBM8D4axSwp2i",
+              "_link": "url",
+              "href": "https://alineacms.com/docs/deploy"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "paragraph",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Further reading:"
+        }
+      ]
+    },
+    {
+      "_type": "bulletList",
+      "content": [
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Complete documentation in one file",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWperptVvR4RqKpCkbXoHMmy",
+                      "_link": "url",
+                      "href": "https://alineacms.com/llms-full.txt"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Configuration",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWtBB1DjNYsCAV6PtMnTxejs",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/configuration"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Schema",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWuIV6eQHuSE9SsfGK5Y08Zz",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/schema"
+                    }
+                  ]
+                },
+                {
+                  "_type": "text",
+                  "text": " and "
+                },
+                {
+                  "_type": "text",
+                  "text": "fields",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWrnZ76ITpIghQhxm9xkuOvk",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/fields"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Querying content",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWnD9ddQhbxGTklo4pQLMXNV",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/query"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Live previews",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWpoPzQjxzVC6xRJSAmCbRjM",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/live-previews"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Working with AI agents and the MCP server",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWrHb93LGCV9OcyvynorODWU",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/ai-agents"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "CLI",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWr3JsNfgeajblyV7odmNKc3",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/cli"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "_type": "listItem",
+          "content": [
+            {
+              "_type": "paragraph",
+              "content": [
+                {
+                  "_type": "text",
+                  "text": "Deploying",
+                  "marks": [
+                    {
+                      "_type": "link",
+                      "_id": "3JjtWqTjWZUzTc4gGhPQxLcWD2f",
+                      "_link": "url",
+                      "href": "https://alineacms.com/docs/deploy"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "title": "",
+    "description": "Paste one prompt into Claude Code, Cursor or Codex and let your coding agent add Alinea to your Next.js project, model your content and create the first entries.",
+    "aliases": [],
+    "openGraph": {
+      "image": null,
+      "title": "",
+      "description": ""
+    },
+    "createdAt": 1790186284,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790186437,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    }
+  }
+}

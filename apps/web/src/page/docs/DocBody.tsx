@@ -7,6 +7,7 @@ import {WebText} from '@/layout/WebText'
 import {ChapterLinkView} from '@/page/blocks/ChapterLinkView'
 import {CodeBlockView} from '@/page/blocks/CodeBlockView'
 import {CodeVariantsView} from '@/page/blocks/CodeVariantsView'
+import {CopyPromptView} from '@/page/blocks/CopyPromptView'
 import {ExampleBlockView} from '@/page/blocks/ExampleBlockView'
 import {ImageBlockView} from '@/page/blocks/ImageBlockView'
 import {NoticeView} from '@/page/blocks/NoticeView'
@@ -115,6 +116,7 @@ function DocText({doc}: DocTextProps) {
       ChapterLinkBlock={ChapterLinkView}
       NoticeBlock={NoticeView}
       ImageBlock={ImageBlockView}
+      CopyPromptBlock={CopyPromptView}
     />
   )
 }

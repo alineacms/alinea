@@ -1,0 +1,147 @@
+@use '@/style' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 760px;
+
+  &.is-center {
+    align-items: center;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  &-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 6px 6px 16px;
+    border: 1px solid var(--web-outline);
+    border-radius: 14px;
+    background: var(--web-surface);
+    box-shadow: 0 1px 2px
+      color-mix(in srgb, var(--web-foreground) 5%, transparent);
+    text-align: left;
+    transition: border-color 0.2s ease-out;
+
+    @include s {
+      gap: 10px;
+      padding-left: 14px;
+    }
+  }
+
+  &:has(&-button:hover) &-box,
+  &.is-copied &-box {
+    border-color: color-mix(in srgb, var(--web-accent) 40%, var(--web-outline));
+  }
+
+  &-icon {
+    display: block;
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--web-accent);
+
+    @include s {
+      display: none;
+    }
+  }
+
+  &-prompt {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--web-foreground);
+
+    @include s {
+      font-size: 14px;
+    }
+  }
+
+  &-button {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 132px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--web-body-font);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    color: var(--web-accent);
+    background: var(--web-accent-soft);
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease-out,
+      color 0.2s ease-out;
+
+    &:is(:hover, :focus-visible) {
+      color: var(--web-accent-foreground);
+      background: var(--web-accent);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: 2px;
+    }
+
+    @include s {
+      min-width: 0;
+      padding-inline: 12px;
+    }
+
+    &-icon {
+      display: block;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    &-label {
+      display: block;
+    }
+  }
+
+  &.is-copied &-button {
+    color: var(--web-positive);
+    background: var(--web-positive-soft);
+  }
+
+  &-status {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+    margin: 0;
+    padding-inline: 4px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--web-foreground-muted);
+
+    &-icon {
+      display: block;
+      flex-shrink: 0;
+      margin-right: 6px;
+      font-size: 16px;
+    }
+  }
+
+  &.is-copied &-status {
+    color: var(--web-positive);
+    font-weight: 500;
+  }
+
+  &.is-failed &-status {
+    color: var(--web-foreground);
+    font-weight: 500;
+  }
+}

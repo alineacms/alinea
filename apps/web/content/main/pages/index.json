@@ -20,7 +20,8 @@
       "_target": "_blank",
       "label": "Try the demo"
     },
-    "command": "npx alinea init"
+    "command": "npx alinea init",
+    "prompt": "Read https://alineacms.com/start.md and help me add Alinea to my Next.js project"
   },
   "sections": [
     {
@@ -923,7 +924,7 @@
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"
     },
-    "updatedAt": 1790179379,
+    "updatedAt": 1790186536,
     "updatedBy": {
       "name": "Ben Merckx",
       "email": "ben@codeurs.be"

@@ -3,6 +3,7 @@ import {Query} from 'alinea'
 import type {Metadata, MetadataRoute} from 'next'
 import {cms} from '@/cms'
 import {Button} from '@/layout/Button'
+import {CopyPrompt} from '@/layout/CopyPrompt'
 import {InstallCommand} from '@/layout/InstallCommand'
 import WebLayout from '@/layout/WebLayout'
 import {type LabeledLink, resolveLink} from '@/page/sections/links'
@@ -31,9 +32,17 @@ interface HomeHeroProps {
   button?: LabeledLink | null
   link?: LabeledLink | null
   command?: string
+  prompt?: string
 }
 
-function HomeHero({headline, byline, button, link, command}: HomeHeroProps) {
+function HomeHero({
+  headline,
+  byline,
+  button,
+  link,
+  command,
+  prompt
+}: HomeHeroProps) {
   const [first, ...rest] = (headline ?? '').split('\n')
   const primary = resolveLink(button)
   const secondary = resolveLink(link)
@@ -68,6 +77,13 @@ function HomeHero({headline, byline, button, link, command}: HomeHeroProps) {
         )}
         <InstallCommand command={command || undefined} />
       </div>
+      {prompt && (
+        <CopyPrompt
+          prompt={prompt}
+          align="center"
+          className={styles.hero.prompt()}
+        />
+      )}
     </header>
   )
 }

@@ -6,6 +6,37 @@
   "navigationTitle": "",
   "body": [
     {
+      "_type": "paragraph",
+      "textAlign": "left",
+      "content": [
+        {
+          "_type": "text",
+          "text": "Add Alinea to a Next.js project in five steps. Prefer to let your coding agent do the work? Paste this prompt into Claude Code, Cursor or Codex and it follows the "
+        },
+        {
+          "_type": "text",
+          "text": "AI-assisted setup guide",
+          "marks": [
+            {
+              "_type": "link",
+              "_id": "3JjtxNdx25tc4K2H6ucc7uuRVET",
+              "_link": "entry",
+              "_entry": "3JjtPxuJN2K4q6JhBgqfqIzNCX4"
+            }
+          ]
+        },
+        {
+          "_type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "_type": "CopyPromptBlock",
+      "_id": "3JjtxQAWdy9VI3aU1YeY0iajumi",
+      "prompt": "Read https://alineacms.com/start.md and help me add Alinea to my Next.js project"
+    },
+    {
       "_type": "heading",
       "level": 2,
       "content": [
