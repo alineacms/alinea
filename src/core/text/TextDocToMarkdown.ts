@@ -45,6 +45,8 @@ const htmlMarks: Record<string, string> = {
 class MarkdownWriter {
   #options: TextDocToMarkdownOptions
   #escapeBackticks = true
+  /** Writing a link label or image alt, which ends at the first `]` */
+  #inLabel = false
 
   constructor(options: TextDocToMarkdownOptions) {
     this.#options = options
@@ -106,7 +108,7 @@ class MarkdownWriter {
           typeof record.title === 'string' && record.title
             ? ` "${record.title.replaceAll('"', '\\"')}"`
             : ''
-        return `![${this.escape(alt)}](${src}${title})`
+        return `![${this.label(() => this.escape(alt))}](${src}${title})`
       }
       case 'table':
         return this.table(content)
@@ -201,7 +203,7 @@ class MarkdownWriter {
         if (current._type !== 'text') break
         const currentLink = linkMark(current as TextNode)
         if (!currentLink || !sameLink(currentLink, link)) break
-        label += this.marked(current as TextNode)
+        label += this.label(() => this.marked(current as TextNode))
         index++
       }
       const href = this.#options.href?.(link) ?? linkHref(link)
@@ -245,8 +247,18 @@ class MarkdownWriter {
     return leading + inner + trailing
   }
 
+  label(write: () => string): string {
+    const inLabel = this.#inLabel
+    this.#inLabel = true
+    try {
+      return write()
+    } finally {
+      this.#inLabel = inLabel
+    }
+  }
+
   escape(text: string): string {
-    const spans = codeSpans(text)
+    const spans = codeSpans(text, this.#inLabel)
     if (spans.length === 0) return escapeText(text, this.#escapeBackticks)
     // Code spans are not parsed further, write them without escapes
     const verbatim: Array<string> = []
@@ -267,10 +279,15 @@ class MarkdownWriter {
 
 /**
  * The code spans Markdown to TextDoc finds in a text: a backtick run up to the
- * next run of the same length. Spans holding characters that end a link label,
- * a table cell or a line are left out, those are escaped instead.
+ * next run of the same length. Spans holding characters that end a table cell
+ * or a line, or brackets inside a link label (which ends at the first `]`), are
+ * left out, those are escaped instead.
  */
-function codeSpans(text: string): Array<[from: number, to: number]> {
+function codeSpans(
+  text: string,
+  inLabel: boolean
+): Array<[from: number, to: number]> {
+  const unsafe = inLabel ? /[\n[\]|]/ : /[\n|]/
   const spans: Array<[number, number]> = []
   let index = text.indexOf('`')
   while (index !== -1) {
@@ -282,7 +299,7 @@ function codeSpans(text: string): Array<[from: number, to: number]> {
       continue
     }
     const end = close + run
-    if (!/[\n[\]|]/.test(text.slice(index, end))) spans.push([index, end])
+    if (!unsafe.test(text.slice(index, end))) spans.push([index, end])
     index = text.indexOf('`', end)
   }
   return spans

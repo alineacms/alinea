@@ -157,7 +157,16 @@ test('writes code spans in text as they are', () => {
         {_type: 'text', text: ' and y`'}
       ]
     },
-    {_type: 'paragraph', content: [{_type: 'text', text: 'A `[link]` span'}]}
+    {_type: 'paragraph', content: [{_type: 'text', text: 'A `[link]` span'}]},
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'Images are `![alt](entry:ID)`, filters `{in: [a, b]}` and `x]` [y'
+        }
+      ]
+    }
   ]
   const markdown = textDocToMarkdown(doc)
   test.is(
@@ -165,10 +174,40 @@ test('writes code spans in text as they are', () => {
     [
       'Run `bun *test*` and ``a ` b``, then the \\` key',
       '**Bold \\`x** and y\\`',
-      'A \\`\\[link\\]\\` span'
+      'A `[link]` span',
+      'Images are `![alt](entry:ID)`, filters `{in: [a, b]}` and `x]` \\[y'
     ].join('\n\n')
   )
   test.equal(markdownToTextDoc(markdown), doc)
+})
+
+test('escapes code spans with brackets in a link label', () => {
+  const doc: TextDoc = [
+    {
+      _type: 'paragraph',
+      content: [
+        {
+          _type: 'text',
+          text: 'see `a]` and `b`',
+          marks: [{_type: 'link', _id: 'l1', _link: 'url', href: 'https://x'}]
+        }
+      ]
+    },
+    {_type: 'image', src: 'https://x/a.png', alt: 'the `[b]` key'}
+  ]
+  const markdown = textDocToMarkdown(doc)
+  test.is(
+    markdown,
+    [
+      '[see \\`a\\]\\` and `b`](https://x)',
+      '![the \\`\\[b\\]\\` key](https://x/a.png)'
+    ].join('\n\n')
+  )
+  const back = markdownToTextDoc(markdown, {
+    link: href => ({_type: 'link', _id: 'l1', _link: 'url', href}),
+    image: (src, alt) => ({_type: 'image', src, alt})
+  })
+  test.equal(back, doc)
 })
 
 test('leaves backticks and angle brackets in prose alone', () => {

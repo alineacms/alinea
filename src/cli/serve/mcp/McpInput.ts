@@ -6,6 +6,10 @@ import {
 } from '#/core/text/MarkdownToTextDoc.js'
 import type {Mark, Node, TextDoc} from '#/core/TextDoc.js'
 import {Type} from '#/core/Type.js'
+import {
+  generateNKeysBetween,
+  isValidOrderKey
+} from '#/core/util/FractionalIndexing.js'
 import {entries, isRecord, keys} from '#/core/util/Objects.js'
 import {McpToolError} from './McpServer.js'
 import {
@@ -53,6 +57,83 @@ function rowId(row: unknown): string | undefined {
     : undefined
 }
 
+function orderKey(value: unknown): string | undefined {
+  return typeof value === 'string' && isValidOrderKey(value) ? value : undefined
+}
+
+/** Positions of the longest run of strictly increasing keys */
+function increasingKeys(keys: Array<string | undefined>): Set<number> {
+  const length = keys.map(() => 0)
+  const previous = keys.map(() => -1)
+  let best = -1
+  keys.forEach((key, at) => {
+    if (key === undefined) return
+    length[at] = 1
+    for (let before = 0; before < at; before++) {
+      const candidate = keys[before]
+      if (
+        candidate !== undefined &&
+        candidate < key &&
+        length[before] + 1 > length[at]
+      ) {
+        length[at] = length[before] + 1
+        previous[at] = before
+      }
+    }
+    if (best === -1 || length[at] > length[best]) best = at
+  })
+  const keep = new Set<number>()
+  for (let at = best; at !== -1; at = previous[at]) keep.add(at)
+  return keep
+}
+
+/**
+ * Give list rows an order key between their neighbours where they have none,
+ * like the dashboard does for inserted and moved rows. Rows whose keys are in
+ * order keep them. Rows without an `_index` property (content written by hand)
+ * are left as they are.
+ */
+function withOrderKeys(rows: Array<Row>): Array<Row> {
+  const indexed = rows.flatMap((row, at) => ('_index' in row ? [at] : []))
+  const keys = indexed.map(at => orderKey(rows[at]._index))
+  const keep = increasingKeys(keys)
+  if (keep.size === indexed.length) return rows
+  const result = [...rows]
+  let from = 0
+  while (from < indexed.length) {
+    if (keep.has(from)) {
+      from++
+      continue
+    }
+    let to = from
+    while (to < indexed.length && !keep.has(to)) to++
+    const generated = generateNKeysBetween(
+      from > 0 ? keys[from - 1]! : null,
+      to < indexed.length ? keys[to]! : null,
+      to - from
+    )
+    for (let at = from; at < to; at++)
+      result[indexed[at]] = {
+        ...rows[indexed[at]],
+        _index: generated[at - from]
+      }
+    from = to
+  }
+  return result
+}
+
+/** Rich text blocks by id, to convert a resent block against its stored value */
+function storedBlocks(doc: unknown, result = new Map<string, Row>()) {
+  if (!Array.isArray(doc)) return result
+  for (const node of doc) {
+    if (!isRecord(node)) continue
+    const id = rowId(node)
+    if (id && isBlockType(node._type)) result.set(id, node)
+    if (Array.isArray(node.content)) storedBlocks(node.content, result)
+  }
+  return result
+}
+
 /**
  * Converts the convenient input an agent sends into stored field values,
  * validating against the schema. Values merge into the current data: fields,
@@ -75,14 +156,16 @@ export class EntryInput {
   /**
    * Convert the fields of a type, rejecting unknown keys. Given the current
    * value the result is the current value with the given fields replaced in
-   * place, other keys keep their value and order.
+   * place, other keys keep their value and order. Given fields convert
+   * against their value in `stored`, which defaults to the current value.
    */
   typeData(
     type: Type,
     input: unknown,
     path: string,
     current?: Row,
-    allowedMeta: Set<string> = new Set()
+    allowedMeta: Set<string> = new Set(),
+    stored: Row | undefined = current
   ): Row {
     if (!isRecord(input))
       this.fail(path, `expected an object with fields, got ${describe(input)}`)
@@ -101,7 +184,7 @@ export class EntryInput {
         field,
         value,
         childPath(path, key),
-        current?.[key]
+        stored?.[key]
       )
     }
     return result
@@ -249,19 +332,29 @@ export class EntryInput {
         `expected a Markdown string or a TextDoc array for rich text field "${String(fieldOptions(field).label)}", got ${describe(input)}`
       )
     return reconcileDoc(
-      this.#nodes(blocks, doc, path),
+      this.#nodes(blocks, doc, path, storedBlocks(current)),
       current,
       typeof input === 'string'
     )
   }
 
-  #nodes(blocks: Record<string, Type>, nodes: Array<unknown>, path: string) {
+  #nodes(
+    blocks: Record<string, Type>,
+    nodes: Array<unknown>,
+    path: string,
+    stored: Map<string, Row>
+  ) {
     return nodes.map((node, index) =>
-      this.#node(blocks, node, childPath(path, index))
+      this.#node(blocks, node, childPath(path, index), stored)
     )
   }
 
-  #node(blocks: Record<string, Type>, input: unknown, path: string): Node {
+  #node(
+    blocks: Record<string, Type>,
+    input: unknown,
+    path: string,
+    stored: Map<string, Row>
+  ): Node {
     if (!isRecord(input) || typeof input._type !== 'string' || !input._type)
       this.fail(
         path,
@@ -283,12 +376,16 @@ export class EntryInput {
       const base: Row = id
         ? {_type: type, _id: id}
         : {_type: type, _id: createId(), ...Type.initialValue(blockType)}
+      // A block with the id of a stored block holds its rows and links, which
+      // keep their stored order keys
+      const previous = id ? stored.get(id) : undefined
       return this.typeData(
         blockType,
         input,
         path,
         base,
-        new Set(['_id', '_type'])
+        new Set(['_id', '_type']),
+        previous?._type === type ? previous : undefined
       ) as unknown as Node
     }
     const node: Row = {...input}
@@ -307,7 +404,8 @@ export class EntryInput {
       node.content = this.#nodes(
         blocks,
         node.content,
-        childPath(path, 'content')
+        childPath(path, 'content'),
+        stored
       )
     }
     if (node.marks !== undefined) {
@@ -355,16 +453,18 @@ export class EntryInput {
       })
     )
     if (Array.isArray(input))
-      return input.map((row, index) => {
-        const id = rowId(row)
-        return this.#row(blocks, row, childPath(path, index), byId.get(id!))
-      })
+      return withOrderKeys(
+        input.map((row, index) => {
+          const id = rowId(row)
+          return this.#row(blocks, row, childPath(path, index), byId.get(id!))
+        })
+      )
     if (!isRecord(input) || !keys(input).some(key => listOperations.has(key)))
       this.fail(
         path,
         `expected an array of rows or an object of operations ({update, insert, remove, order}) for list field "${String(fieldOptions(field).label)}", got ${describe(input)}`
       )
-    return this.#listOperations(blocks, input, path, currentRows)
+    return withOrderKeys(this.#listOperations(blocks, input, path, currentRows))
   }
 
   #listOperations(
@@ -484,10 +584,11 @@ export class EntryInput {
         path,
         `unknown row type "${type}", expected one of: ${blockKeys.join(', ')}`
       )
-    // New rows are shaped like the dashboard creates them
+    // New rows are shaped like the dashboard creates them, the list gives
+    // them an order key unless a valid one is given
     const base: Row = existing ?? {
       _id: rowId(row) ?? createId(),
-      _index: '',
+      _index: orderKey(row._index) ?? '',
       _type: type,
       ...Type.initialValue(blockType)
     }
@@ -505,7 +606,8 @@ export class EntryInput {
         field,
         input,
         path,
-        isRecord(current) ? [current] : []
+        isRecord(current) ? [current] : [],
+        false
       )
     }
     if (input === null) return []
@@ -515,32 +617,40 @@ export class EntryInput {
         `expected an array of links for "${String(fieldOptions(field).label)}", got ${describe(input)}`
       )
     const unused = Array.isArray(current) ? current.filter(isRecord) : []
-    return input.map((item, index) => {
-      const result = this.#reference(
-        field,
-        item,
-        childPath(path, index),
-        unused
-      )
-      const used = unused.indexOf(result)
-      if (used === -1) {
-        const same = unused.findIndex(row => row._id === result._id)
-        if (same !== -1) unused.splice(same, 1)
-      } else unused.splice(used, 1)
-      return result
-    })
+    return withOrderKeys(
+      input.map((item, index) => {
+        const result = this.#reference(
+          field,
+          item,
+          childPath(path, index),
+          unused,
+          true
+        )
+        const used = unused.indexOf(result)
+        if (used === -1) {
+          const same = unused.findIndex(row => row._id === result._id)
+          if (same !== -1) unused.splice(same, 1)
+        } else unused.splice(used, 1)
+        return result
+      })
+    )
   }
 
   /**
    * Convert a link. A link to the same target as one of the candidates (the
-   * current value) keeps that stored link and only changes given fields.
+   * current value) keeps that stored link and only changes given fields. Links
+   * of a multiple link field are list rows with an order key, a single link
+   * has none.
    */
   #reference(
     field: Field,
     input: unknown,
     path: string,
-    candidates: Array<Row>
+    candidates: Array<Row>,
+    multiple: boolean
   ): Row {
+    const givenIndex = isRecord(input) ? orderKey(input._index) : undefined
+    const index = multiple ? {_index: givenIndex ?? ''} : {}
     const pickers = linkPickers(field)
     const types = keys(pickers)
     const entryType = (['entry', 'image', 'file'] as const).find(
@@ -591,7 +701,7 @@ export class EntryInput {
         ...initialFields(type),
         _id: givenId ?? createId(),
         _type: type,
-        _index: '',
+        ...index,
         _entry: id,
         ...(type === 'entry' && this.#locale ? {_locale: this.#locale} : {})
       }
@@ -622,7 +732,7 @@ export class EntryInput {
             ...initialFields('url'),
             _id: givenId ?? createId(),
             _type: 'url',
-            _index: '',
+            ...index,
             _url: url,
             _title: title ?? '',
             _target: target ?? '_blank'

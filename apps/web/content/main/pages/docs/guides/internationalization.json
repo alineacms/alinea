@@ -52,13 +52,11 @@
       "image": {
         "_id": "3Jjfk8zpnBmHrQ8BI6RSFLzJq2N",
         "_type": "image",
-        "_index": "",
         "_entry": "3Jjeyr3NGyStGEZtrtcB1cooDBD"
       },
       "darkImage": {
         "_id": "3JjfkArJ3HAoUEMu5nxN0tyHniM",
         "_type": "image",
-        "_index": "",
         "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
       },
       "caption": "The Dutch translation of a product. Shared fields are the same in every language, the badge switches between locales."

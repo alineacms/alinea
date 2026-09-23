@@ -39,7 +39,8 @@ const quotePattern = /^ {0,3}> ?(.*)$/
 const listPattern = /^( {0,3})([-*+]|\d{1,9}[.)])([ \t]+(.*))?$/
 const tableSeparatorPattern =
   /^ {0,3}\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/
-const imagePattern = /^!\[([^\]]*)\]\(\s*<?([^\s>)]*)>?(?:\s+"([^"]*)")?\s*\)$/
+const imagePattern =
+  /^!\[((?:\\.|[^\]\\])*)\]\(\s*<?([^\s>)]*)>?(?:\s+"([^"]*)")?\s*\)$/
 const htmlMarks: Record<string, string> = {
   u: 'underline',
   ins: 'underline',
@@ -189,7 +190,13 @@ class MarkdownParser {
     if (text.length === 1) {
       const image = imagePattern.exec(text[0].trim())
       if (image) {
-        const node = this.#image(image[2], image[1], image[3])
+        // The alt text is written escaped, with code spans as they are
+        const alt = this.inline(image[1])
+          .map(node =>
+            node._type === 'text' ? ((node as TextNode).text ?? '') : ''
+          )
+          .join('')
+        const node = this.#image(image[2], alt, image[3])
         if (node) return [node]
       }
     }

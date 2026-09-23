@@ -20,13 +20,11 @@
       "image": {
         "_id": "3Jjg46elZbWsbEunGMdjKi7L7Nx",
         "_type": "image",
-        "_index": "",
         "_entry": "3Jjg25g3yx9TK9S96LEVcsIMsXg"
       },
       "darkImage": {
         "_id": "3Jjg45NAYthflNPc3o0tAbkMwFe",
         "_type": "image",
-        "_index": "",
         "_entry": "3Jjg22DCeoJV5TIl5n8Lsa8x1oe"
       },
       "caption": "The users screen of the demo, with a role for each user: Admin, Editor, Translator and Viewer."

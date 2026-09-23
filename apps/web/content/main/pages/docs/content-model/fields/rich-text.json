@@ -129,7 +129,7 @@
       "variants": [
         {
           "_id": "pZZfVGHe4bIZGFtii-8zR",
-          "_index": "",
+          "_index": "a0",
           "_type": "Variant",
           "name": "JSON",
           "language": "tsx",
@@ -137,7 +137,7 @@
         },
         {
           "_id": "jKrgWIwJaQMb-XL58ZPcv",
-          "_index": "",
+          "_index": "a1",
           "_type": "Variant",
           "name": "Types",
           "language": "tsx",

@@ -120,7 +120,7 @@
       "variants": [
         {
           "_id": "2Ycqwgl3s7szk2B92gnXY5unG3Q",
-          "_index": "",
+          "_index": "a0",
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
@@ -128,7 +128,7 @@
         },
         {
           "_id": "2YcqyQsBjtLQbXB3v9l7AtdcH3U",
-          "_index": "",
+          "_index": "a1",
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
@@ -136,7 +136,7 @@
         },
         {
           "_id": "2YcqzHpnfHK43fhtMEY6r7Wrpf1",
-          "_index": "",
+          "_index": "a2",
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
@@ -144,7 +144,7 @@
         },
         {
           "_id": "2nvByMUmxNTiXafJjyx1NimzTVv",
-          "_index": "",
+          "_index": "a3",
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",
@@ -195,7 +195,7 @@
       "variants": [
         {
           "_id": "2YcrGaP9oBJwHo8pWmHLU7blTfN",
-          "_index": "",
+          "_index": "a0",
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
@@ -203,7 +203,7 @@
         },
         {
           "_id": "2YcrHzKowUENzFVBgP5M7hf1qT1",
-          "_index": "",
+          "_index": "a1",
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
@@ -211,7 +211,7 @@
         },
         {
           "_id": "2YcrJEDLa8oWOLJSSjsstOKg4Sl",
-          "_index": "",
+          "_index": "a2",
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
@@ -219,7 +219,7 @@
         },
         {
           "_id": "2nvC5Pfk9WeObDYgbSL8GkJ0OZu",
-          "_index": "",
+          "_index": "a3",
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",
@@ -324,7 +324,7 @@
       "variants": [
         {
           "_id": "2bRCBQoR8tqmnewVSC95tvRYmFk",
-          "_index": "",
+          "_index": "Zz",
           "_type": "Variant",
           "name": "next.config.ts",
           "language": "tsx",
@@ -332,7 +332,7 @@
         },
         {
           "_id": "2bRC6k9IXwZsgnaBLqqWcybH8H9",
-          "_index": "",
+          "_index": "a0",
           "_type": "Variant",
           "name": "next.config.js",
           "language": "tsx",
@@ -367,7 +367,7 @@
       "variants": [
         {
           "_id": "2YcspJhldAQ2xaUIDqKHbWHrtSz",
-          "_index": "",
+          "_index": "a0",
           "_type": "Variant",
           "name": "npm",
           "language": "shellscript",
@@ -375,7 +375,7 @@
         },
         {
           "_id": "2YcsqDyTPJFoUeSjn6ZYJpcdWix",
-          "_index": "",
+          "_index": "a1",
           "_type": "Variant",
           "name": "yarn",
           "language": "shellscript",
@@ -383,7 +383,7 @@
         },
         {
           "_id": "2YcsrOH1ImdTgzQ3C4nWULoN0lQ",
-          "_index": "",
+          "_index": "a2",
           "_type": "Variant",
           "name": "pnpm",
           "language": "shellscript",
@@ -391,7 +391,7 @@
         },
         {
           "_id": "2nvS0mDMAOjffEPMa3RJpL5rzUe",
-          "_index": "",
+          "_index": "a3",
           "_type": "Variant",
           "name": "bun",
           "language": "shellscript",

@@ -38,6 +38,21 @@ const Notice = Config.type('Notice', {
   }
 })
 
+const Variant = Config.type('Variant', {
+  fields: {
+    name: Field.text('Name'),
+    code: Field.code('Code')
+  }
+})
+
+const Tabs = Config.type('Tabs', {
+  fields: {
+    variants: Field.list('Variants', {schema: {Variant}}),
+    link: Field.entry('Link'),
+    related: Field.entry.multiple('Related')
+  }
+})
+
 const Item = Config.type('Item', {
   fields: {
     text: Field.text('Text')
@@ -58,7 +73,7 @@ const Page = Config.document('Page', {
   contains: ['Page'],
   fields: {
     intro: Field.text('Intro', {multiline: true}),
-    body: Field.richText('Body', {schema: {CodeBlock, Notice}}),
+    body: Field.richText('Body', {schema: {CodeBlock, Notice, Tabs}}),
     features: Field.list('Features', {schema: {Feature}}),
     related: Field.entry.multiple('Related'),
     image: Field.image('Image'),
@@ -278,7 +293,7 @@ test('describe_schema', async () => {
   test.equal(page.contains, ['Page'])
   const byKey = page.fields
   test.is(byKey.title, 'text (required)')
-  test.is(byKey.body, 'richText[CodeBlock|Notice]')
+  test.is(byKey.body, 'richText[CodeBlock|Notice|Tabs]')
   test.is(byKey.features, 'list[Feature]')
   test.is(byKey.related, 'link[entry] (multiple)')
   test.is(byKey.image, 'link[image]')
@@ -460,7 +475,7 @@ test('validation errors name the field and what is expected', async () => {
   })
   test.is(
     badBlock.text,
-    'body[0]: unknown block "Video", this field accepts: CodeBlock, Notice'
+    'body[0]: unknown block "Video", this field accepts: CodeBlock, Notice, Tabs'
   )
 })
 
@@ -758,10 +773,15 @@ test('updates only change what was asked', async () => {
     'link',
     'items'
   ])
-  test.is(zero._index, '')
+  // with an order key before the next row that has one
+  test.is(zero._index, 'Zz')
   test.equal(
     (afterInsert[2].items as Array<Row>).map(row => row.text),
     ['a', 'c', 'b']
+  )
+  test.equal(
+    (afterInsert[2].items as Array<Row>).map(row => row._index),
+    ['a0', 'a0V', 'a1']
   )
   await env.ok('update_entry', {
     id: created.id,
@@ -783,6 +803,152 @@ test('updates only change what was asked', async () => {
     data: {features: {order: [one._id]}}
   })
   test.ok(badOrder.text.startsWith('features.order: expected every row _id'))
+})
+
+test('rows keep their order keys, new rows get one', async () => {
+  await using env = await setup()
+  const target = await env.ok('create_entry', {
+    type: 'Page',
+    data: {title: 'Target'}
+  })
+  const created = await env.ok('create_entry', {
+    type: 'Page',
+    data: {
+      title: 'Ordered',
+      body: [
+        {_type: 'paragraph', content: [{_type: 'text', text: 'Install'}]},
+        {
+          _type: 'Tabs',
+          variants: [
+            {name: 'npm', code: 'npm i'},
+            {name: 'yarn', code: 'yarn add'}
+          ],
+          link: target.id,
+          related: [target.id]
+        }
+      ],
+      features: [{title: 'One'}, {title: 'Two'}],
+      related: [target.id]
+    }
+  })
+  const original = await env.readText(created.file)
+  const stored = JSON.parse(original)
+  const tabs = stored.body[1]
+  test.equal(
+    tabs.variants.map((row: Row) => row._index),
+    ['a0', 'a1']
+  )
+  test.is(tabs.related[0]._index, 'a0')
+  // A single link is not a list row
+  test.equal(Object.keys(tabs.link), ['_id', '_type', '_entry'])
+  test.equal(
+    stored.features.map((row: Row) => row._index),
+    ['a0', 'a1']
+  )
+  test.is(stored.related[0]._index, 'a0')
+
+  // Resending the Markdown, the stored TextDoc or the block unchanged keeps
+  // the entry as it is
+  const read = await env.ok('get_entry', {id: created.id})
+  test.ok(String(read.data.body).includes('```alinea-block'))
+  await env.ok('update_entry', {id: created.id, data: {body: read.data.body}})
+  test.is(await env.readText(created.file), original)
+  await env.ok('update_entry', {id: created.id, data: {body: stored.body}})
+  test.is(await env.readText(created.file), original)
+  const fence = (block: unknown) =>
+    `Install\n\n\`\`\`alinea-block\n${JSON.stringify(block, null, 2)}\n\`\`\``
+  await env.ok('update_entry', {id: created.id, data: {body: fence(tabs)}})
+  test.is(await env.readText(created.file), original)
+
+  // New rows in a block get keys between their neighbours
+  const [npm, yarn] = tabs.variants
+  await env.ok('update_entry', {
+    id: created.id,
+    data: {
+      body: fence({
+        ...tabs,
+        variants: [
+          npm,
+          {name: 'pnpm', code: 'pnpm add'},
+          yarn,
+          {_type: 'Variant', _index: '', name: 'bun', code: 'bun add'}
+        ],
+        related: [...tabs.related, {id: created.id}]
+      }),
+      features: [
+        {title: 'Zero'},
+        ...stored.features,
+        {title: 'Three', _index: 'a5'}
+      ]
+    }
+  })
+  const updated = await env.readEntry(created.file)
+  const variants = updated.body[1].variants as Array<Row>
+  test.equal(
+    variants.map(row => [row.name, row._index]),
+    [
+      ['npm', 'a0'],
+      ['pnpm', 'a0V'],
+      ['yarn', 'a1'],
+      ['bun', 'a2']
+    ]
+  )
+  test.equal(variants[0], npm)
+  test.equal(
+    (updated.body[1].related as Array<Row>).map(row => row._index),
+    ['a0', 'a1']
+  )
+  test.equal(
+    (updated.features as Array<Row>).map(row => [row.title, row._index]),
+    [
+      ['Zero', 'Zz'],
+      ['One', 'a0'],
+      ['Two', 'a1'],
+      ['Three', 'a5']
+    ]
+  )
+
+  // Moving a row gives it a key between its new neighbours
+  const features = updated.features as Array<Row>
+  await env.ok('update_entry', {
+    id: created.id,
+    data: {
+      features: {
+        order: [
+          features[1]._id,
+          features[2]._id,
+          features[0]._id,
+          features[3]._id
+        ]
+      }
+    }
+  })
+  test.equal(
+    ((await env.readEntry(created.file)).features as Array<Row>).map(row => [
+      row.title,
+      row._index
+    ]),
+    [
+      ['One', 'a0'],
+      ['Two', 'a1'],
+      ['Zero', 'a2'],
+      ['Three', 'a5']
+    ]
+  )
+})
+
+test('inline code reads back as written', async () => {
+  await using env = await setup()
+  const body =
+    'Link images with `![alt](entry:ID)` and filter with `{in: [a, b]}`'
+  const created = await env.ok('create_entry', {
+    type: 'Page',
+    data: {title: 'Code', body}
+  })
+  const stored = await env.readEntry(created.file)
+  test.equal(stored.body[0].content, [{_type: 'text', text: body}])
+  const read = await env.ok('get_entry', {id: created.id})
+  test.is(read.data.body, body)
 })
 
 test('writes match the dashboard for the same edit', async () => {
