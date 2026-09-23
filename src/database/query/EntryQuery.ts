@@ -1,5 +1,4 @@
 import type {Config} from '#/core/Config.js'
-import {aliasesFromData} from '#/core/db/EntryAliases.js'
 import {Entry as EntryExpressions} from '#/core/Entry.js'
 import {EntryFields} from '#/core/EntryFields.js'
 import type {Expr} from '#/core/Expr.js'
@@ -30,6 +29,7 @@ import {
   or,
   sql,
   when,
+  type DriverSpecs,
   type HasSql,
   type SelectionInput,
   type SelectionRecord,
@@ -40,7 +40,6 @@ import {
   storedEntryData,
   type EntryIndexTarget
 } from '../entry/EntryTable.js'
-import {entryDataText} from '../entry/EntryData.js'
 import {
   arrayIncludes,
   compileCondition,
@@ -49,30 +48,24 @@ import {
 } from './Condition.js'
 import {EntrySearchName, searchQuery} from './Search.js'
 
-import {
-  linkRelation,
-  relationCondition,
-  relationSource,
-  type AnyRelationSource
-} from './Relation.js'
+import {linkRelation, relationCondition} from './Relation.js'
 
 const builder = new Builder()
 
+/** Read a selected JSON path; SQLite's -> yields SQL null only when absent. */
+function readJson(value: unknown, specs: DriverSpecs): unknown {
+  if (value === null) return undefined
+  return specs.parsesJson ? value : JSON.parse(String(value))
+}
+
 interface RelationProjection {
   path: Array<string>
-  query: EdgeQuery
   plan: ProjectionPlan
 }
 
 interface FieldProjection {
   path: Array<string>
   field: Field
-  name: string
-}
-
-interface OptionalProjection {
-  path: Array<string>
-  dataPath: Array<string>
 }
 
 export interface ProjectionPlan {
@@ -81,7 +74,6 @@ export interface ProjectionPlan {
   needsSearch: boolean
   relations: Array<RelationProjection>
   fields: Array<FieldProjection>
-  optional: Array<OptionalProjection>
 }
 
 interface CompiledRelation {
@@ -93,7 +85,6 @@ interface CompiledRelation {
 class Expressions {
   relations: Array<RelationProjection> = []
   fields: Array<FieldProjection> = []
-  optional: Array<OptionalProjection> = []
   #scope: Scope
   #search: ReturnType<typeof searchQuery>
   #entry: EntryIndexTarget
@@ -111,16 +102,17 @@ class Expressions {
     this.#relation = relation
   }
 
-  data(path: Array<string>): HasSql {
-    if (path.length === 1 && path[0] === 'path') {
-      const stored = jsonField(this.#entry.data, path)
+  /** A stored value; selected, an absent key reads as undefined. */
+  data(path: Array<string>, selecting = false): HasSql {
+    const stored = jsonField(this.#entry.data, path)
+    if (path.length === 1 && path[0] === 'path')
       return sql`coalesce(${stored}, ${this.#entry.path})`
-    }
-    return jsonField(this.#entry.data, path)
+    if (!selecting) return stored
+    return getSql(stored).forSelection().mapWith({mapFromDriverValue: readJson})
   }
 
-  index(name: string, path?: Array<string>): HasSql {
-    if (path) return this.data([...path, name])
+  index(name: string, path?: Array<string>, selecting = false): HasSql {
+    if (path) return this.data([...path, name], selecting)
     if (Object.hasOwn(this.#entry, name))
       return this.#entry[name as keyof EntryIndexTarget] as HasSql
     const expr = EntryExpressions[name as keyof typeof EntryExpressions]
@@ -136,7 +128,7 @@ class Expressions {
     return name.startsWith('_') ? this.index(name.slice(1)) : this.data([name])
   }
 
-  selection(name: string, field: HasSql): HasSql {
+  selection(name: string, path?: Array<string>): HasSql {
     if (name === 'data')
       return sql`json_set(
         ${this.#entry.data}, '$.path',
@@ -144,31 +136,28 @@ class Expressions {
       )`
         .forSelection()
         .mapWith({mapFromDriverValue: value => storedEntryData(value, '')})
-    if (name === 'aliases')
-      return sql`${entryDataText(this.#entry)}`.forSelection().mapWith({
-        mapFromDriverValue(value, specs) {
-          const data = specs.parsesJson
-            ? (value as Record<string, unknown>)
-            : (JSON.parse(String(value)) as Record<string, unknown>)
-          return aliasesFromData(data)
-        }
-      })
-    return getSql(field).forSelection()
+    const field = getSql(this.index(name, path, true))
+    if (name !== 'aliases') return field
+    return field.mapWith({
+      mapFromDriverValue(value, specs) {
+        const aliases = readJson(value, specs)
+        return Array.isArray(aliases) ? aliases : undefined
+      }
+    })
   }
 
   expr(expression: Expr, selecting = false): HasSql {
     const internal = getExpr(expression)
     switch (internal.type) {
-      case 'entryField': {
-        const field = this.index(internal.name, internal.path)
-        return selecting ? this.selection(internal.name, field) : field
-      }
+      case 'entryField':
+        return selecting
+          ? this.selection(internal.name, internal.path)
+          : this.index(internal.name, internal.path)
       case 'field': {
         const name = this.#scope.nameOf(expression)
         if (!name)
           throw new Error('Field expression is not in the configured schema')
-        const field = this.data([name])
-        return selecting ? getSql(field).forSelection() : field
+        return this.data([name], selecting)
       }
       case 'value':
         return sql.value(internal.value)
@@ -201,36 +190,15 @@ class Expressions {
 
   projection(value: unknown, path: Array<string> = []): SelectionInput {
     if (isRecord(value) && hasExpr(value)) {
-      const internal = getExpr(value as Expr)
-      if (hasField(value)) {
-        const field = value as Field
-        const name = this.#scope.nameOf(field)
-        if (!name)
-          throw new Error('Field expression is not in the configured schema')
-        this.fields.push({path, field, name})
-      }
-      if (
-        internal.type === 'entryField' &&
-        internal.path &&
-        internal.name !== 'aliases'
-      )
-        this.optional.push({
-          path,
-          dataPath: [...internal.path, internal.name]
-        })
+      if (hasField(value)) this.fields.push({path, field: value as Field})
       return this.expr(value as Expr, true)
     }
     if (!isRecord(value)) throw new Error('Invalid SQL projection')
     if ('edge' in value) {
       if (!this.#relation)
         throw new Error('Relations cannot be used as query conditions')
-      const query = value as unknown as EdgeQuery
-      const relation = this.#relation(query)
-      this.relations.push({
-        path,
-        query,
-        plan: relation.plan
-      })
+      const relation = this.#relation(value as unknown as EdgeQuery)
+      this.relations.push({path, plan: relation.plan})
       return relation.selection
     }
     const result: SelectionRecord = {}
@@ -268,7 +236,7 @@ export function localeCondition(
 }
 
 interface EntryQueryOptions {
-  source?: AnyRelationSource
+  source?: EntryIndexTarget
   search?: ReturnType<typeof searchQuery>
   entry?: EntryIndexTarget
   depth?: number
@@ -309,7 +277,7 @@ export function compileEntryQuery(
     if (link) {
       const name = scope.nameOf(edge.field)
       if (!name) throw new Error('Link field is not in the configured schema')
-      links = linkRelation(entry, source, name, edge.edge === 'entryMultiple')
+      links = linkRelation(source, name, edge.edge === 'entryMultiple')
     } else conditions.push(relationCondition(entry, edge, source))
   }
   conditions.push(statusCondition(entry, query.status))
@@ -364,9 +332,7 @@ export function compileEntryQuery(
     if (location.length === 3)
       conditions.push(eq(entry.sourceRoot, location[2]))
   }
-  if (search) {
-    conditions.push(search.condition)
-  }
+  if (search) conditions.push(search.condition)
   if (query.alias !== undefined)
     conditions.push(
       arrayIncludes(membership.index('aliases'), item =>
@@ -405,20 +371,8 @@ export function compileEntryQuery(
     }
   } else if (search) ordering.push(asc(search.rank))
   else if (edge?.edge === 'parents') ordering.push(asc(entry.level))
-  else if (edge?.edge === 'translations' && edge.includeSelf && source) {
-    const locale = source.locale
-    ordering.push(
-      asc(
-        when(
-          [
-            locale === null ? isNull(entry.locale) : eq(entry.locale, locale),
-            0
-          ],
-          1
-        )
-      )
-    )
-  }
+  else if (edge?.edge === 'translations' && edge.includeSelf && source)
+    ordering.push(asc(when([eq(entry.locale, source.locale), 0], 1)))
   if (!uniquelyOrdered) ordering.push(...stableOrdering)
 
   const projection = new Expressions(scope, entry, search, relationQuery => {
@@ -427,7 +381,7 @@ export function compileEntryQuery(
       config,
       {...relationQuery, status: query.status ?? 'published'},
       {
-        source: relationSource(entry),
+        source: entry,
         entry: nestedEntry,
         depth: depth + 1,
         baseEntry,
@@ -523,22 +477,13 @@ export function compileEntryQuery(
       query.search !== undefined ||
       projection.relations.some(relation => relation.plan.needsSearch),
     relations: projection.relations,
-    fields: projection.fields,
-    optional: projection.optional
+    fields: projection.fields
   }
-  const needsContext =
-    plan.relations.length || plan.fields.length || plan.optional.length
+  // Fields resolve their links in the locale of the entry they were read from.
+  const needsContext = plan.relations.length || plan.fields.length
   return {
     rows: selectRows(
-      needsContext
-        ? {
-            value: selection,
-            source: relationSource(entry),
-            ...(plan.fields.length || plan.optional.length
-              ? {data: entryDataText(entry)}
-              : {})
-          }
-        : selection
+      needsContext ? {value: selection, locale: entry.locale} : selection
     ),
     plan
   }

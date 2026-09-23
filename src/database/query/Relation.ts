@@ -15,55 +15,18 @@ import {
   ne,
   not,
   sql,
-  type HasSql,
   type Sql
 } from 'rado'
 import type {EntryIndexTarget} from '../entry/EntryTable.js'
 import {jsonField} from './Condition.js'
 
-export interface RelationSource {
-  versionId: string
-  id: string
-  locale: string | null
-  parentId: string | null
-  parents: Array<string>
-  level: number
-  index: string
-  path: string
-}
-
-// A mapped type cannot be expressed as an interface.
-type SqlRelationSource = {
-  [K in keyof RelationSource]: HasSql<RelationSource[K]>
-}
-
-export type AnyRelationSource = RelationSource | SqlRelationSource
-
-export function relationSource(entry: EntryIndexTarget): SqlRelationSource {
-  return {
-    versionId: entry.versionId,
-    id: entry.id,
-    locale: entry.locale,
-    parentId: entry.parentId,
-    parents: entry.parents,
-    level: entry.level,
-    index: entry.index,
-    path: entry.path
-  }
-}
-
 /** Expand the stored references as SQL rows, retaining list order and duplicates. */
 export function linkRelation(
-  entry: EntryIndexTarget,
-  source: AnyRelationSource,
+  source: EntryIndexTarget,
   field: string,
   multiple: boolean
 ) {
-  const payload = new Builder()
-    .select(getSql(jsonField(entry.data, [field])).forSelection())
-    .from(entry)
-    .where(eq(entry.versionId, source.versionId))
-  const value = sql`(${payload})`
+  const value = getSql(jsonField(source.data, [field])).forSelection()
   const array = multiple ? value : sql`json_array(json(${value}))`
   return {
     target: sql`(select json_extract(value, '$._entry') as id, key as ordinal from json_each(${array}) where type = 'object') as alinea_link`,
@@ -76,22 +39,18 @@ export function linkRelation(
 export function relationCondition(
   entry: EntryIndexTarget,
   query: EdgeQuery,
-  source: AnyRelationSource
+  source: EntryIndexTarget
 ): Sql<boolean> {
   const locale = sql<boolean>`${entry.locale} is ${source.locale}`
   switch (query.edge) {
     case 'parent':
-      return source.parentId
-        ? and(eq(entry.id, source.parentId), locale)
-        : sql.value(false)
+      return and(eq(entry.id, source.parentId), locale)
     case 'siblings':
-      return source.parentId
-        ? and(
-            eq(entry.parentId, source.parentId),
-            locale,
-            query.includeSelf ? sql.value(true) : ne(entry.id, source.id)
-          )
-        : sql.value(false)
+      return and(
+        eq(entry.parentId, source.parentId),
+        locale,
+        query.includeSelf ? sql.value(true) : ne(entry.id, source.id)
+      )
     case 'translations':
       return and(
         eq(entry.id, source.id),
@@ -102,19 +61,17 @@ export function relationCondition(
     case 'parents': {
       const depth = query.depth ?? Number.POSITIVE_INFINITY
       if (depth <= 0) return sql.value(false)
-      const ids = Array.isArray(source.parents)
-        ? source.parents.slice(-depth)
-        : new Builder()
-            .select(sql<string>`value`)
-            .from(sql`json_each(${source.parents})`)
-            .where(
-              Number.isFinite(depth)
-                ? gte(
-                    sql<number>`key`,
-                    sql<number>`json_array_length(${source.parents}) - ${depth}`
-                  )
-                : sql.value(true)
-            )
+      const ids = new Builder()
+        .select(sql<string>`value`)
+        .from(sql`json_each(${source.parents})`)
+        .where(
+          Number.isFinite(depth)
+            ? gte(
+                sql<number>`key`,
+                sql<number>`json_array_length(${source.parents}) - ${depth}`
+              )
+            : sql.value(true)
+        )
       return and(inArray(entry.id, ids), locale)
     }
     case 'children': {
@@ -122,12 +79,10 @@ export function relationCondition(
       if (depth <= 0) return sql.value(false)
       if (depth === 1) return and(eq(entry.parentId, source.id), locale)
       const Child = alias(entry, 'alinea_descendant')
-      const sourceId =
-        typeof source.id === 'string' ? sql.value(source.id) : source.id
       const descendants = new Builder().$with('alinea_descendants').as(
         new Builder()
           .select({
-            id: sourceId,
+            id: source.id,
             level: sql<number>`0`
           })
           .unionAll(self =>
@@ -156,7 +111,6 @@ export function relationCondition(
     }
     case 'next':
     case 'previous': {
-      if (!source.parentId) return sql.value(false)
       const next = query.edge === 'next'
       const neighbor = new Builder()
         .select(entry.id)
