@@ -1,7 +1,37 @@
-.image {
+@use '@/style' as *;
+
+.ImageBlockView {
+  margin: 30px auto;
+}
+
+.ImageBlockView-image {
   display: block;
   width: 100%;
-  max-width: auto;
   height: auto;
-  margin: 30px auto;
+  margin: 0 auto;
+  border-radius: 10px;
+  // A hairline edge so screenshots do not blend into the page background
+  box-shadow: 0 0 0 1px var(--web-outline);
+
+  &.is-dark {
+    display: none;
+  }
+
+  @include theme-dark {
+    &.is-light {
+      display: none;
+    }
+
+    &.is-dark {
+      display: block;
+    }
+  }
+}
+
+.ImageBlockView-caption {
+  margin-top: 12px;
+  color: var(--web-foreground-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
 }

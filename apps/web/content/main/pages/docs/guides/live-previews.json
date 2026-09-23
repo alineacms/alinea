@@ -2,7 +2,6 @@
   "_id": "2YlBsRF2vZwxcS27oOSJYmQM37q",
   "_type": "Doc",
   "_index": "a0",
-  "_i18nId": "2YlBsRF2vZwxcS27oOSJYmQM37q",
   "title": "Live previews",
   "navigationTitle": "",
   "body": [
@@ -15,6 +14,21 @@
           "text": "You can set up a live preview of your website inside the dashboard."
         }
       ]
+    },
+    {
+      "_id": "3JjflSkQHtGkdnGtjYCD52QKgyq",
+      "_type": "ImageBlock",
+      "image": {
+        "_id": "3JjflRflm91E2wRpkpdzWTYGn3F",
+        "_type": "image",
+        "_entry": "3JjekoQez3OJmuOiJSZ37tE5JDo"
+      },
+      "darkImage": {
+        "_id": "3JjflOMFNob3ZlaVosZsxIXTaNF",
+        "_type": "image",
+        "_entry": "3JjeksPO46LakWub1Kw2JxvvpGV"
+      },
+      "caption": "Editing a product in the Oak & Loom demo, with the page previewed live beside the form."
     },
     {
       "_type": "paragraph",
@@ -44,8 +58,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "2YlCBIFhktYqXLnxlG8MWbFhkA4",
+      "_type": "CodeBlock",
       "code": "import {createCMS} from 'alinea/next'\n\nexport const cms = createCMS({\n  // schema and workspaces ...\n  baseUrl: {\n    // Point this url to your Next.js website\n    development: 'http://localhost:3000'\n  },\n  preview: true\n})",
       "fileName": "cms.ts",
       "language": "",
@@ -62,8 +76,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "2YlDBfC8A8tt3H8vaxKz1JZuov8",
+      "_type": "CodeBlock",
       "code": "import {cms} from '@/cms'\n\nexport default async function Layout({children}: PropsWithChildren) {\n  return (\n    <>\n      <header />\n      <main>{children}</main>\n      <footer />\n      <cms.previews widget />\n    </>\n  )\n}",
       "fileName": "app/layout.tsx",
       "language": "",
@@ -88,6 +102,17 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790179547,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790179547,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

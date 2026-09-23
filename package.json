@@ -61,6 +61,7 @@
     "format:check": "oxfmt --check src apps/web/src",
     "lint": "oxlint",
     "prepublishOnly": "bun run build",
+    "screenshots": "bun apps/web/scripts/screenshots.ts",
     "self-hosted": "bun test/self-hosted/server.ts",
     "stories": "bunx --bun ladle serve",
     "tag": "bun tag.js",

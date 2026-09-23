@@ -1,0 +1,24 @@
+{
+  "_id": "3Jjg22DCeoJV5TIl5n8Lsa8x1oe",
+  "_type": "MediaFile",
+  "_index": "a8",
+  "title": "dashboard-roles-dark",
+  "location": "/dashboard-roles-dark.3Jjg21WNYdtl8LJrVgcwPZmJGMK.webp",
+  "previewUrl": "",
+  "extension": ".webp",
+  "size": 32670,
+  "hash": "54b91c37",
+  "width": 2400,
+  "height": 840,
+  "thumbHash": "S+cBAoDHhABOTEuhX9LEn8c=",
+  "averageColor": "#202c3a",
+  "preview": "data:image/webp;base64,UklGRhgCAABXRUJQVlA4IAwCAADwDgCdASqgADgAPm02lEgkIyIhJnn5QIANiWkA1jQKnaej9EU608QsBcpRwW/E/JuRPhk2EMC4HwHybVmq/0oXe8MuohU0001robIq1xR2Z4jpEV7hzsulkTFxi/z+fIvxvKdwCdjdKcRQBryc00pMtPu/0nzIHqp/OzIUh5wosAD+/QPDVdIE+zig0XFQrXiH0nG2bDwlM7SRQmhdhQ9Tfb+Fb/KvV5lXcn6OrnGH620UvoPkHn3MZVyteDsoJy8MV7vsmYawq2b6EqeBAhG3STDx6uGE6KvWkZEYEh/sM0DfCWBiXQyvorPzlPo1F9Dm5d3piK2ogfIlwQY8zi3t1qnBAKcq6noBQy/yz3exbsP1e52hNFT8HVXJdCZnN8XqJUt741F2I2PAXL2bu/fG33bpINeHfKiFooNljQRErvblg7g3zRa9k7/YsqW3q5tpugIkLK+R/FAzOXu2T2rjMkrJaAAecE+YZd75oGBNrgiPsmWSU5TyeAZDbqpPlbOUKvGxSjYamfexTwS6XUHy5Ed3cNgFWTALPvFUe4ZvIcCFRhVxVLMwzyLFWbLidbPcI2vtk64rTd5fkIdBwMNDohmH1rePf9t9gntQ0LvMYk/QRHRJX9eqEqcRIks6lcIWw8/JAEVtTfZVsNTh22CkJjwj9veqe7ngLdGgXCsQC7GT8lCib76IAAAAAA==",
+  "focus": {
+    "x": 0.5,
+    "y": 0.5
+  },
+  "alt": "The users screen with an admin, editor, translator and viewer, each with their role",
+  "metadata": {
+    "aliases": []
+  }
+}

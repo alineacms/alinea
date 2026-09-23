@@ -63,16 +63,63 @@
     justify-content: center;
     padding: 80px 40px;
 
-    @include sm {
-      padding: 32px 20px;
+    // Like the illustration, small screens show the top left of a larger
+    // screenshot running off the edge so the interface stays legible
+    @include m {
+      height: 440px;
+      justify-content: flex-start;
+      padding: 40px 0 0 40px;
+    }
+
+    @include s {
+      height: 340px;
+      justify-content: flex-start;
+      padding: 32px 0 0 20px;
+    }
+  }
+
+  // A window around the screenshot: rounded, a hairline edge that reads on
+  // both the light and dark screenshot, and a soft shadow on the backdrop
+  &-frame {
+    width: 100%;
+    max-width: 1120px;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.35),
+      0 1px 2px rgba(16, 24, 90, 0.2),
+      0 40px 100px rgba(16, 24, 90, 0.45);
+
+    @include m {
+      flex-shrink: 0;
+      width: 880px;
+      max-width: none;
+      border-radius: 12px;
+    }
+
+    @include s {
+      flex-shrink: 0;
+      width: 640px;
+      max-width: none;
+      border-radius: 10px;
     }
   }
 
   &-image {
-    width: 100%;
-    max-width: 960px;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 40px 100px rgba(16, 24, 90, 0.45);
+    display: block;
+
+    &.is-dark {
+      display: none;
+    }
+
+    @include theme-dark {
+      &.is-light {
+        display: none;
+      }
+
+      &.is-dark {
+        display: block;
+      }
+    }
   }
 }

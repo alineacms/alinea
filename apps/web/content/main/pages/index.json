@@ -26,7 +26,18 @@
     {
       "_id": "3JjOvjKqEzXrH6CzvYZZjYfLorK",
       "_index": "a0",
-      "_type": "ProductShot"
+      "_type": "ProductShot",
+      "image": {
+        "_id": "3JjfQNDOQpFyIFtoAKpIraw5OHm",
+        "_type": "image",
+        "_entry": "3JjekoQez3OJmuOiJSZ37tE5JDo"
+      },
+      "darkImage": {
+        "_id": "3JjfQKH1V6M8s6ZpGiMyhyFyOkL",
+        "_type": "image",
+        "_entry": "3JjeksPO46LakWub1Kw2JxvvpGV"
+      },
+      "anchor": ""
     },
     {
       "_id": "3JjOvjfZnce3zPbm7f5f9BQ9m5y",
@@ -79,7 +90,8 @@
           "filename": "app/api/cms/route.ts",
           "code": "createHandler({\n  cms,\n  afterCommit() {\n    revalidatePath('/', 'layout')\n  }\n})"
         }
-      ]
+      ],
+      "anchor": ""
     },
     {
       "_id": "3JjOvpnh6hmPMXLUeLPoYOTmaa3",
@@ -180,7 +192,8 @@
           ],
           "footnote": "Packages and disk size of a clean npm install, excluding React and Next.js. Measured September 2026."
         }
-      ]
+      ],
+      "anchor": ""
     },
     {
       "_id": "3JjOvpBS8UrfUJTzZjBaGOzAN9B",
@@ -252,7 +265,9 @@
           "title": "Commit hooks",
           "text": "Rewrite changes before they are committed, or revalidate, notify and deploy after."
         }
-      ]
+      ],
+      "description": "",
+      "anchor": ""
     },
     {
       "_id": "3JjOvjPGqugZsMGrjVGWQAlzdzn",
@@ -269,7 +284,8 @@
           "_type": "Feature",
           "icon": "StrokeGitBranch",
           "title": "Content in git",
-          "text": "Every entry is a JSON file in your repository. Review, branch and roll back content like code."
+          "text": "Every entry is a JSON file in your repository. Review, branch and roll back content like code.",
+          "tag": ""
         },
         {
           "_id": "3JjOvj7CkF401qmvapCGb6QnpT7",
@@ -277,7 +293,8 @@
           "_type": "Feature",
           "icon": "StrokeCode",
           "title": "Typed, no codegen",
-          "text": "Query types come straight from your schema. No generate step and no stale types."
+          "text": "Query types come straight from your schema. No generate step and no stale types.",
+          "tag": ""
         },
         {
           "_id": "3JjOvoyw8BAP8YWYCF7RetVzO24",
@@ -285,7 +302,8 @@
           "_type": "Feature",
           "icon": "StrokeSearch",
           "title": "No database server",
-          "text": "Content is indexed in SQLite, bundled with your site. Fast, fuzzy search in the dashboard."
+          "text": "Content is indexed in SQLite, bundled with your site. Fast, fuzzy search in the dashboard.",
+          "tag": ""
         },
         {
           "_id": "3JjOvjYxCURFqClrTOHhUEkLI0R",
@@ -293,7 +311,8 @@
           "_type": "Feature",
           "icon": "StrokeCloud",
           "title": "Self-host or Cloud",
-          "text": "Run the backend on your own database with one of eight drivers, or let Alinea Cloud handle it."
+          "text": "Run the backend on your own database with one of eight drivers, or let Alinea Cloud handle it.",
+          "tag": ""
         },
         {
           "_id": "3JjOvpMPmso6UVnQET0aj6p7kMY",
@@ -301,7 +320,8 @@
           "_type": "Feature",
           "icon": "StrokeSparkle",
           "title": "Ready for coding agents",
-          "text": "llms-full.txt ships with the package, so AI agents know the full API."
+          "text": "llms-full.txt ships with the package, so AI agents know the full API.",
+          "tag": ""
         },
         {
           "_id": "3JjOvmBACcRwGTTXJFajS8ABDII",
@@ -309,9 +329,12 @@
           "_type": "Feature",
           "icon": "StrokeHeart",
           "title": "Open source",
-          "text": "MIT licensed and part of the Vercel Open Source Program."
+          "text": "MIT licensed and part of the Vercel Open Source Program.",
+          "tag": ""
         }
-      ]
+      ],
+      "label": "",
+      "link": null
     },
     {
       "_id": "3JjOvigrbkK2yqPDnBI6BckX4j6",
@@ -348,7 +371,8 @@
           "visual": "commits",
           "code": ""
         }
-      ]
+      ],
+      "anchor": ""
     },
     {
       "_id": "3JjOvkLgdFYZjdVjWQZFeQfEzEp",
@@ -384,7 +408,8 @@
       },
       "filename": "app/blog/[slug]/page.tsx",
       "code": "export default async function Post({params}) {\n  const {slug} = await params\n  const post = await cms.get({\n    type: BlogPost,\n    url: `/blog/${slug}`,\n    select: {\n      title: BlogPost.title,\n      publishDate: BlogPost.publishDate,\n      body: BlogPost.body\n    }\n  })\n  return <Article {...post} />\n}",
-      "tooltip": "const post: {\n  title: string\n  publishDate: string\n  body: TextDoc\n}"
+      "tooltip": "const post: {\n  title: string\n  publishDate: string\n  body: TextDoc\n}",
+      "anchor": ""
     },
     {
       "_id": "3JjOvluOLIBS3yTe1KwrX2cR4eJ",
@@ -415,7 +440,8 @@
               "text": "Any host that runs Next.js"
             }
           ],
-          "code": "export default withAlinea(nextConfig)"
+          "code": "export default withAlinea(nextConfig)",
+          "link": null
         },
         {
           "_id": "3JjOvihhWk7UBtEeQ2kIEGbjdaK",
@@ -449,7 +475,8 @@
             "label": "Learn about Alinea Cloud"
           }
         }
-      ]
+      ],
+      "anchor": ""
     },
     {
       "_id": "3JjOvkduXgiMgyNoUaQc5VZoUfk",
@@ -535,7 +562,8 @@
         "_title": "",
         "_target": "_blank",
         "label": "See the demo"
-      }
+      },
+      "anchor": ""
     },
     {
       "_id": "3JjOvpN8Qt6hAii3DsEqO3hGcYF",
@@ -556,10 +584,9 @@
               "marks": [
                 {
                   "_type": "link",
-                  "_id": "3JjOvpU5OJBR8TEbnKbEjPEJP1f",
+                  "_id": "3JjfQMrjEuP8laOmvoIGIkJAAQC",
                   "_link": "url",
-                  "href": "https://github.com/alineacms/alinea",
-                  "target": "_blank"
+                  "href": "https://github.com/alineacms/alinea"
                 }
               ]
             },
@@ -641,9 +668,9 @@
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3JjOvpHpGXnPSRNWodNCSUbs0KB",
-                      "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48",
-                      "_link": "entry"
+                      "_id": "3JjfQKHSOy84QTGq9LLr9XXF1hQ",
+                      "_link": "entry",
+                      "_entry": "3JjNWhIOOARLjiO2HjeVoVyVN48"
                     }
                   ]
                 },
@@ -674,9 +701,9 @@
                   "marks": [
                     {
                       "_type": "link",
-                      "_id": "3JjOvoqDMKszS97T7RP1qUkpU2N",
-                      "_entry": "3JjNWipmERvnXDeWpUbqsCO0MTL",
-                      "_link": "entry"
+                      "_id": "3JjfQLfD5MtfYZNy7xXBir4xrhk",
+                      "_link": "entry",
+                      "_entry": "3JjNWipmERvnXDeWpUbqsCO0MTL"
                     }
                   ]
                 },
@@ -688,7 +715,8 @@
             }
           ]
         }
-      ]
+      ],
+      "anchor": ""
     },
     {
       "_id": "3JjOvq6ZDWzrcY3A9LRGgtGEf1F",
@@ -703,7 +731,8 @@
         "label": "Get started"
       },
       "command": "npx alinea init",
-      "background": "gradient"
+      "background": "gradient",
+      "anchor": ""
     }
   ],
   "links": [
@@ -887,6 +916,17 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790179379,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790179379,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

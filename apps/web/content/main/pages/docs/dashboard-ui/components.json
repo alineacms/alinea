@@ -16,16 +16,31 @@
       ]
     },
     {
-      "_type": "CodeBlock",
+      "_id": "3JjflViXwJCI3t5K6eARQYBLHzu",
+      "_type": "ImageBlock",
+      "image": {
+        "_id": "3JjflQpOXvKkrT9JMYnTRROZGKT",
+        "_type": "image",
+        "_entry": "3JjeypESFeYvmOWKh1BvKaDtCpe"
+      },
+      "darkImage": {
+        "_id": "3JjflUvLy315mGY9pYXgYc8q8W7",
+        "_type": "image",
+        "_entry": "3Jjf6X1hAnKCbxkKnnUx4LThjNZ"
+      },
+      "caption": "A stock overview panel in the demo, a custom view built with alinea/components."
+    },
+    {
       "_id": "3JjNWim7SkrxztPeoQ9o58qXo6U",
+      "_type": "CodeBlock",
       "code": "import {Button, Tabs, TextField} from 'alinea/components'",
       "fileName": "CustomField.tsx",
       "language": "",
       "compact": false
     },
     {
-      "_type": "NoticeBlock",
       "_id": "3JjNWj9XrL6wd9oiHsd5mHDRBSc",
+      "_type": "NoticeBlock",
       "level": "info",
       "body": [
         {
@@ -48,6 +63,17 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790179547,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790179547,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }

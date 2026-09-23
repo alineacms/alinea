@@ -50,3 +50,19 @@
     box-shadow: inset 0 0 0 5px hsla(var(--web-negative-hsl), 0.4);
   }
 }
+
+/// Applies the content when the site renders in its dark theme: the default
+/// unless the visitor prefers light, forced with `html.is-dark` or inside a
+/// `.theme-dark` section (see global.scss)
+@mixin theme-dark {
+  @media not all and (prefers-color-scheme: light) {
+    :global(html:not(.is-light)) & {
+      @content;
+    }
+  }
+
+  :global(html.is-dark) &,
+  :global(.theme-dark) & {
+    @content;
+  }
+}

@@ -12,8 +12,13 @@ const styles = styler(css)
 
 export interface ProductShotProps extends Infer<typeof ProductShotSchema> {}
 
-export function ProductShot({image}: ProductShotProps) {
+// The screenshot is shown at most this wide, see ProductShot.module.scss
+const imageSizes = '(max-width: 439px) 640px, (max-width: 1023px) 880px, 1120px'
+const imageStyle = {display: 'block', width: '100%', height: 'auto'}
+
+export function ProductShot({image, darkImage}: ProductShotProps) {
   const hasImage = Boolean(image?.src)
+  const hasDarkImage = Boolean(darkImage?.src)
   return (
     <Section flush>
       <div className={styles.root({image: hasImage})}>
@@ -27,12 +32,22 @@ export function ProductShot({image}: ProductShotProps) {
           className={styles.root.background()}
         />
         {hasImage ? (
-          <Image
-            {...image}
-            sizes="(max-width: 1024px) 100vw, 960px"
-            style={{display: 'block', width: '100%', height: 'auto'}}
-            className={styles.root.image()}
-          />
+          <div className={styles.root.frame()}>
+            <Image
+              {...image}
+              sizes={imageSizes}
+              style={imageStyle}
+              className={styles.root.image({light: hasDarkImage})}
+            />
+            {hasDarkImage && (
+              <Image
+                {...darkImage}
+                sizes={imageSizes}
+                style={imageStyle}
+                className={styles.root.image('dark')}
+              />
+            )}
+          </div>
         ) : (
           <div className={styles.root.shot()}>
             <DashboardMock mode="auto" className={styles.root.dashboard()} />

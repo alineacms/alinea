@@ -137,16 +137,17 @@ function renderNode(
           ? (node.image as Record<string, unknown>)
           : null
       const entryId = image ? (image._entry as string | undefined) : undefined
+      const caption = normalizeText(asString(node.caption)).trim()
       if (typeof entryId === 'string') {
         const image = mediaMap.get(entryId)
         if (image) {
-          const title = normalizeText(image.title || '').trim()
+          const title = caption || normalizeText(image.title || '').trim()
           const location = normalizeText(image.location || '').trim()
           if (title && location) return `Image: ${title} (${location})`
           if (location) return `Image: ${location}`
         }
       }
-      return 'Image'
+      return caption ? `Image: ${caption}` : 'Image'
     }
     case 'ChapterLinkBlock': {
       const link = node.link

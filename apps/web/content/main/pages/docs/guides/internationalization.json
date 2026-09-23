@@ -2,8 +2,6 @@
   "_id": "2YcyNztG4JXc8TLpT4l1l7njGtn",
   "_type": "Doc",
   "_index": "a3",
-  "_i18nId": "2YcyNztG4JXc8TLpT4l1l7njGtn",
-  "_root": "pages",
   "title": "Internationalization",
   "body": [
     {
@@ -21,7 +19,8 @@
             {
               "_type": "link",
               "_id": "XHuywJ5Fm6kEPueYKwPkt",
-              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S"
+              "_entry": "28hcdyq0sGJdgY6kM24NZd1XP5S",
+              "_link": "entry"
             }
           ]
         },
@@ -36,7 +35,8 @@
             {
               "_type": "link",
               "_id": "sQuOh2rPighhFO4a3-Q0e",
-              "_entry": "267QuOShP41WnFxQFOcHZQoCsla"
+              "_entry": "267QuOShP41WnFxQFOcHZQoCsla",
+              "_link": "entry"
             }
           ]
         },
@@ -45,6 +45,21 @@
           "text": ")."
         }
       ]
+    },
+    {
+      "_id": "3JjfkDkCvQmXgItj0h8phLzfmYl",
+      "_type": "ImageBlock",
+      "image": {
+        "_id": "3Jjfk8zpnBmHrQ8BI6RSFLzJq2N",
+        "_type": "image",
+        "_entry": "3Jjeyr3NGyStGEZtrtcB1cooDBD"
+      },
+      "darkImage": {
+        "_id": "3JjfkArJ3HAoUEMu5nxN0tyHniM",
+        "_type": "image",
+        "_entry": "3Jjf6ShePIkxLnMTgu6Y8BVjt7W"
+      },
+      "caption": "The Dutch translation of a product. Shared fields are the same in every language, the badge switches between locales."
     }
   ],
   "metadata": {
@@ -54,6 +69,18 @@
       "title": "",
       "image": {},
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790179537,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790179537,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
-  }
+  },
+  "navigationTitle": ""
 }

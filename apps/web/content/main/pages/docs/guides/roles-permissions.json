@@ -15,6 +15,21 @@
       ]
     },
     {
+      "_id": "3JjflOnZVNWqDyvVAQQD6WHPFT3",
+      "_type": "ImageBlock",
+      "image": {
+        "_id": "3Jjg46elZbWsbEunGMdjKi7L7Nx",
+        "_type": "image",
+        "_entry": "3Jjg25g3yx9TK9S96LEVcsIMsXg"
+      },
+      "darkImage": {
+        "_id": "3Jjg45NAYthflNPc3o0tAbkMwFe",
+        "_type": "image",
+        "_entry": "3Jjg22DCeoJV5TIl5n8Lsa8x1oe"
+      },
+      "caption": "The users screen of the demo, with a role for each user: Admin, Editor, Translator and Viewer."
+    },
+    {
       "_type": "paragraph"
     },
     {
@@ -25,7 +40,8 @@
           "_type": "text",
           "text": "Setting up roles"
         }
-      ]
+      ],
+      "_anchor": "setting-up-roles"
     },
     {
       "_type": "paragraph",
@@ -37,8 +53,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3Ai3jSucgSlqqmzWcHlRroHEtak",
+      "_type": "CodeBlock",
       "code": "const myRole = Config.role('My role', {\n  async permissions(policy, graph) {\n    // Define permissions here\n  }\n})\n\nexport const cms = createCMS({\n  roles: { myRole },\n  // ...other config\n})",
       "fileName": "",
       "language": ""
@@ -51,7 +67,8 @@
           "_type": "text",
           "text": "Defining Policies"
         }
-      ]
+      ],
+      "_anchor": "defining-policies"
     },
     {
       "_type": "paragraph",
@@ -63,8 +80,8 @@
       ]
     },
     {
-      "_type": "NoticeBlock",
       "_id": "3AiAlR79kfrcrHvH4mVGHL8PvNU",
+      "_type": "NoticeBlock",
       "level": "info",
       "body": [
         {
@@ -95,7 +112,8 @@
           "_type": "text",
           "text": "Available Actions"
         }
-      ]
+      ],
+      "_anchor": "available-actions"
     },
     {
       "_type": "paragraph",
@@ -312,7 +330,8 @@
           "_type": "text",
           "text": "Understanding Grants"
         }
-      ]
+      ],
+      "_anchor": "understanding-grants"
     },
     {
       "_type": "paragraph",
@@ -324,8 +343,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3AiCX7aXzZVdWeDiGhngdzch2ny",
+      "_type": "CodeBlock",
       "code": "// (Default) Permissions automatically trickle down to all child entries and sub-pages.\ngrant: 'implicit' \n// Permissions only apply to the specific entry or level defined. \n// Access to children must be granted separately.\ngrant: 'explicit' ",
       "fileName": "",
       "language": ""
@@ -338,7 +357,8 @@
           "_type": "text",
           "text": "Example use cases"
         }
-      ]
+      ],
+      "_anchor": "example-use-cases"
     },
     {
       "_type": "heading",
@@ -348,7 +368,8 @@
           "_type": "text",
           "text": "Static Access Control"
         }
-      ]
+      ],
+      "_anchor": "static-access-control"
     },
     {
       "_type": "paragraph",
@@ -378,8 +399,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3Ai3GxZihQfZjdQtywffg7mB1Eo",
+      "_type": "CodeBlock",
       "code": "// Block specified pages, only give read-rights\nconst viewer = Config.role('Viewer', {\n  async permissions(policy) {\n    policy.set(\n      {\n        allow: {read: true}\n      },\n      {\n        root: cms.workspaces.main.general,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.redirects,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.configurator,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.database,\n        deny: {read: true}\n      }\n    )\n  }\n})",
       "fileName": "",
       "language": ""
@@ -403,8 +424,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3Ahwa7yMlETIJ4wuAZEMy6pdx5E",
+      "_type": "CodeBlock",
       "code": "// Block acces to certain roots, give read and update rights to everything else\nconst editor = Config.role('Editor', {\n  async permissions(policy) {\n    policy.set(\n      {\n        allow: {read: true, update: true}\n      },\n      {\n        root: cms.workspaces.main.general,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.redirects,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.configurator,\n        deny: {read: true}\n      },\n      {\n        root: cms.workspaces.main.database,\n        deny: {read: true}\n      }\n    )\n  }\n})",
       "fileName": "",
       "language": ""
@@ -417,7 +438,8 @@
           "_type": "text",
           "text": "Explicit Granular Access"
         }
-      ]
+      ],
+      "_anchor": "explicit-granular-access"
     },
     {
       "_type": "paragraph",
@@ -429,8 +451,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3Ai3DJiqX2CO5U4ugw1QszvRqlh",
+      "_type": "CodeBlock",
       "code": "const bikeId = '4d454f57636d735f323032365f7a'\n\n// Grant explicit to make sure not all children are visible\nconst bikeModerator = Config.role('Bike Moderator', {\n  async permissions(policy) {\n    policy.set(\n      {\n        workspace: cms.workspaces.main,\n        allow: {read: true},\n        grant: 'explicit'\n      },\n      {\n        root: cms.workspaces.main.pages,\n        allow: {read: true},\n        grant: 'explicit'\n      },\n      {\n        id: bikeId,\n        allow: {all: true}\n      }\n    )\n  }\n})",
       "fileName": "",
       "language": ""
@@ -443,7 +465,8 @@
           "_type": "text",
           "text": "Dynamic Query-based Permissions"
         }
-      ]
+      ],
+      "_anchor": "dynamic-query-based-permissions"
     },
     {
       "_type": "paragraph",
@@ -455,8 +478,8 @@
       ]
     },
     {
-      "_type": "CodeBlock",
       "_id": "3Ai34341S0rJQ1xXiauCpkPo35K",
+      "_type": "CodeBlock",
       "code": "bikeBrandId = '2o7I2ig8ry0ci1e0hZ5k1kKK3Qx'\n\n// Use querying to show only specific products\nconst bikeBrandModerator = Config.role('Bike Brand Moderator', {\n  async permissions(policy, graph) {\n    const bikes = await graph.find({\n      type: ProductSchema,\n      filter: {\n        brand: {\n          has: {_entry: bikeBrandId}\n        }\n      }\n    })\n    policy.set({\n      workspace: cms.workspaces.main,\n      allow: {read: true},\n      grant: 'explicit'\n    },\n    {\n    root: cms.workspaces.main.products,\n      allow: {read: true},\n      grant: 'explicit'\n    })\n    for (const bike of bikes) {\n      policy.set({\n        id: bike._id,\n        allow: {read: true, update: true}\n      })\n    }\n  }\n})",
       "fileName": "",
       "language": ""
@@ -469,6 +492,17 @@
       "image": {},
       "title": "",
       "description": ""
+    },
+    "aliases": [],
+    "createdAt": 1790179547,
+    "createdBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
+    },
+    "updatedAt": 1790179696,
+    "updatedBy": {
+      "name": "Ben Merckx",
+      "email": "ben@codeurs.be"
     }
   }
 }
