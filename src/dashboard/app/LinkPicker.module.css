@@ -45,9 +45,3 @@
   padding: 8px;
   border-top: 1px solid var(--alinea-border);
 }
-
-.LinkPickerCompact-selection {
-  color: var(--alinea-fg-muted);
-  font-size: 13px;
-  line-height: 20px;
-}

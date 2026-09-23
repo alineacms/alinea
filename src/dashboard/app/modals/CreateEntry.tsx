@@ -3,6 +3,7 @@ import {
   Field,
   Select,
   SelectItem,
+  Text,
   TextField,
   ToggleGroup,
   ToggleGroupItem,
@@ -244,9 +245,9 @@ function CreateEntryForm() {
           </Select>
 
           {typeOptions.length === 0 && (
-            <p className={styles.CreateEntry.message()}>
+            <Text as="p" color="muted">
               No entry types are available at this location.
-            </p>
+            </Text>
           )}
 
           <div className={styles.CreateEntry.parentRow()}>

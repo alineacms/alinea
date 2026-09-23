@@ -43,12 +43,6 @@
   border-bottom: 0;
 }
 
-.ExplorerModalSelection {
-  color: var(--alinea-fg-muted);
-  font-size: 13px;
-  line-height: 20px;
-}
-
 .ExplorerModalActions {
   display: flex;
   align-items: center;

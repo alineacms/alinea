@@ -1,5 +1,6 @@
 import {
   Button,
+  Code,
   Empty,
   EmptyContent,
   EmptyDescription,
@@ -176,8 +177,7 @@ export function NotFoundPanel({
             <EmptyTitle as="h1">{title}</EmptyTitle>
             <EmptyDescription>{message}</EmptyDescription>
             <EmptyDescription>
-              {requestedLabel}:{' '}
-              <code className={styles.MissingEntry.id()}>{requestedValue}</code>
+              {requestedLabel}: <Code>{requestedValue}</Code>
             </EmptyDescription>
           </EmptyHeader>
           {onAction && actionLabel && (

@@ -16,14 +16,7 @@
   box-sizing: border-box;
   width: 100%;
   max-height: 300px;
-  margin: 0;
-  padding: 12px;
-  overflow: auto;
-  border-radius: var(--alinea-radius);
-  background: var(--alinea-bg-muted);
   color: var(--alinea-fg-muted);
-  font-family: var(--alinea-mono-font);
-  font-size: 0.9em;
   text-align: left;
   white-space: pre-line;
 }

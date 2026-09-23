@@ -116,15 +116,7 @@
 }
 
 .LinkFieldView-metaLabel {
-  min-width: 0;
   max-width: 240px;
-  overflow: hidden;
-  color: var(--alinea-fg-muted);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .LinkFieldView-anchorOption {

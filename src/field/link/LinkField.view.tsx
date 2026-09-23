@@ -14,6 +14,7 @@ import {
   SortableListItem,
   SortableListItemActions,
   SortableListItemContent,
+  SortableListItemDescription,
   SortableListHandle,
   SortableListItemToggle,
   SortableListItemFooter,
@@ -1137,7 +1138,11 @@ interface ResolvedLinkMetaLabelProps {
 function ResolvedLinkMetaLabel({className, label}: ResolvedLinkMetaLabelProps) {
   const value = label?.trim()
   if (!value) return null
-  return <span className={className}>{value}</span>
+  return (
+    <SortableListItemDescription className={className}>
+      {value}
+    </SortableListItemDescription>
+  )
 }
 
 interface LinkTypeBadgeProps extends ComponentPropsWithoutRef<'span'> {

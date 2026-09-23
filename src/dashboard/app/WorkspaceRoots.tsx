@@ -13,6 +13,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  Text,
   Tooltip,
   TooltipContent,
   TooltipTrigger
@@ -163,51 +164,40 @@ function WorkspaceProfileMenu({
               icon={IcBaselineAccountCircle}
               className={styles.WorkspaceRoots.profile.popover.user.icon()}
             />
-            <span
+            <Text
+              weight="medium"
+              truncate
               className={styles.WorkspaceRoots.profile.popover.user.title()}
             >
               {userName}
-            </span>
+            </Text>
           </li>
           {canManageMembers && (
             <li className={styles.WorkspaceRoots.profile.popover.action()}>
               <Button
                 variant="ghost"
                 aria-label="Manage users"
+                icon={IcOutlineSettings}
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
                 onClick={() => setRoute({page: 'users'})}
               >
-                <Icon
-                  icon={IcOutlineSettings}
-                  className={styles.WorkspaceRoots.profile.popover.action.icon()}
-                />
-                <span
-                  className={styles.WorkspaceRoots.profile.popover.action.label()}
-                >
-                  Manage users
-                </span>
+                <Text truncate>Manage users</Text>
               </Button>
             </li>
           )}
           <li className={styles.WorkspaceRoots.profile.popover.item()}>
-            <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
-              Appearance
-            </p>
+            <Text as="p">Appearance</Text>
             <AppearanceToggle />
           </li>
           {isLocal && roleEntries.length > 0 && (
             <li className={styles.WorkspaceRoots.profile.popover.item()}>
-              <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
-                Role
-              </p>
+              <Text as="p">Role</Text>
               <DropdownMenu>
                 <DropdownMenuTrigger
                   variant="outline"
                   className={styles.WorkspaceRoots.trigger()}
                 >
-                  <span className={styles.WorkspaceRoots.trigger.text()}>
-                    {roleLabel}
-                  </span>
+                  <Text truncate>{roleLabel}</Text>
                   <IcRoundUnfoldMore />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent aria-label="Development roles">
@@ -230,18 +220,11 @@ function WorkspaceProfileMenu({
               <Button
                 variant="ghost"
                 aria-label="Logout"
+                icon={IcRoundLogout}
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
                 onClick={logout}
               >
-                <Icon
-                  icon={IcRoundLogout}
-                  className={styles.WorkspaceRoots.profile.popover.action.icon()}
-                />
-                <span
-                  className={styles.WorkspaceRoots.profile.popover.action.label()}
-                >
-                  Logout
-                </span>
+                <Text truncate>Logout</Text>
               </Button>
             </li>
           )}

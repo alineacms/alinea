@@ -6,7 +6,8 @@ import {
   ListItemDescription,
   ListItemStatus,
   ListItemTitle,
-  ListItemVisual
+  ListItemVisual,
+  Text
 } from '#/components.js'
 import type {EntryStatus} from '#/core/Entry.js'
 import type {
@@ -53,9 +54,9 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
           </ListEmpty>
         </List>
         {otherSummary && (
-          <p className={styles.EntryReferences.other()}>
+          <Text as="p" size="sm" color="muted">
             {formatOtherSummary(otherSummary)}
-          </p>
+          </Text>
         )}
       </div>
     )
@@ -79,9 +80,9 @@ export function EntryReferences({entry, localeData}: EntryReferencesProps) {
         ))}
       </List>
       {otherSummary && (
-        <p className={styles.EntryReferences.other()}>
+        <Text as="p" size="sm" color="muted">
           {formatOtherSummary(otherSummary)}
-        </p>
+        </Text>
       )}
     </div>
   )

@@ -39,20 +39,6 @@
 
 .WorkspaceRoots-profile-popover-user-title {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  font-size: var(--alinea-font-size-base);
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.WorkspaceRoots-profile-popover-item-label {
-  margin: 0;
-  color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 400;
-  line-height: 24px;
 }
 
 .WorkspaceRoots-profile-popover-action {
@@ -80,31 +66,7 @@
   }
 }
 
-.WorkspaceRoots-profile-popover-action-icon {
-  flex-shrink: 0;
-  font-size: 16px;
-}
-
-.WorkspaceRoots-profile-popover-action-label {
-  min-width: 0;
-  overflow: hidden;
-  color: inherit;
-  font-size: var(--alinea-font-size-base);
-  font-weight: 400;
-  line-height: 24px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .WorkspaceRoots-trigger {
   min-width: 96px;
   justify-content: space-between;
-}
-
-.WorkspaceRoots-trigger-text {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }

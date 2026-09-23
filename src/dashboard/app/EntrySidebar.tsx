@@ -1,4 +1,5 @@
 import {
+  Badge,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -17,6 +18,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Text,
   Timestamp
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
@@ -40,7 +42,6 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from '#/components.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
@@ -186,7 +187,11 @@ function EntrySidebarHistory({
   return (
     <div className={styles.EntrySidebar.history()}>
       <section className={styles.EntrySidebar.section()}>
-        <h2 className={styles.EntrySidebar.sectionTitle()}>Current versions</h2>
+        <Text asChild color="muted" weight="medium">
+          <h2 className={styles.EntrySidebar.sectionTitle()}>
+            Current versions
+          </h2>
+        </Text>
         <List aria-label="Current versions">
           {statuses.map(status => (
             <EntrySidebarStatusItem

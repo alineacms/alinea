@@ -54,17 +54,6 @@ export function ExplorerModalFooter(props: ExplorerModalFooterProps) {
   )
 }
 
-export interface ExplorerModalSelectionProps extends ComponentProps<'span'> {}
-
-export function ExplorerModalSelection(props: ExplorerModalSelectionProps) {
-  return (
-    <span
-      {...props}
-      className={styles.ExplorerModalSelection(styler.merge(props))}
-    />
-  )
-}
-
 export interface ExplorerModalActionsProps extends ComponentProps<'div'> {}
 
 export function ExplorerModalActions(props: ExplorerModalActionsProps) {

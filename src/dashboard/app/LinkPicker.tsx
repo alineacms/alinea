@@ -7,6 +7,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  Text,
   useDialog
 } from '#/components.js'
 import {
@@ -34,7 +35,6 @@ import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
@@ -329,9 +329,9 @@ function LinkPickerCompact({
       />
       {selectsMultiple && (
         <div className={styles.LinkPickerCompact.footer()}>
-          <span className={styles.LinkPickerCompact.selection()}>
+          <Text color="muted">
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-          </span>
+          </Text>
           <Button color="primary" onClick={() => commitSelection(selection)}>
             Select
           </Button>
@@ -384,9 +384,9 @@ function LinkPickerExpanded({
             tree={tree}
           />
           <ExplorerModalFooter>
-            <ExplorerModalSelection>
+            <Text color="muted">
               {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
+            </Text>
             <ExplorerModalActions>
               <Button onClick={modal.close}>Cancel</Button>
               <Button color="primary" onClick={onSubmit}>

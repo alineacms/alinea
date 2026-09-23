@@ -1,6 +1,7 @@
 import {
   type Align,
   Button,
+  Heading,
   Icon,
   List,
   ListEmpty,
@@ -14,6 +15,7 @@ import {
   PopoverTrigger,
   Spinner,
   type Side,
+  Text,
   Timestamp,
   Tooltip,
   TooltipContent,
@@ -187,7 +189,9 @@ export function ActivityStatus({
       >
         <div className={styles.ActivityStatus.popover()}>
           <div className={styles.ActivityStatus.popover.header()}>
-            <h2 className={styles.ActivityStatus.popover.title()}>Activity</h2>
+            <Heading as="h2" size="xs">
+              Activity
+            </Heading>
             {activity.hasFailed && (
               <div className={styles.ActivityStatus.popover.actions()}>
                 {activity.canDiscard && (
@@ -248,9 +252,9 @@ function ActivityItem({activity}: ActivityItemProps) {
     <ListItem
       inner={
         activity.error && (
-          <p className={styles.ActivityStatus.popover.item.error()}>
+          <Text as="p" size="xs" color="destructive">
             {activity.error}
-          </p>
+          </Text>
         )
       }
       onClick={

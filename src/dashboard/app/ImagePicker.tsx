@@ -1,5 +1,5 @@
 // oxlint-disable jsx_a11y/no-autofocus
-import {Button, useDialog} from '#/components.js'
+import {Button, Text, useDialog} from '#/components.js'
 import {getRoot} from '#/core/Internal.js'
 import {
   createExplorerAtoms,
@@ -16,7 +16,6 @@ import {
   ExplorerModal,
   ExplorerModalActions,
   ExplorerModalFooter,
-  ExplorerModalSelection,
   ExplorerModalSuspense
 } from './ExplorerModal.js'
 import {
@@ -134,9 +133,9 @@ function ImagePickerModalContent({options}: ExplorerModalProps) {
             tree={tree}
           />
           <ExplorerModalFooter>
-            <ExplorerModalSelection>
+            <Text color="muted">
               {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
-            </ExplorerModalSelection>
+            </Text>
             <ExplorerModalActions>
               <Button onClick={modal.close}>Cancel</Button>
               <Button color="primary" onClick={onSubmit}>

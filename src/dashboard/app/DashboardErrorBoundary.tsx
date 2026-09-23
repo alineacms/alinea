@@ -1,5 +1,6 @@
 import {
   Button,
+  Code,
   Empty,
   EmptyContent,
   EmptyHeader,
@@ -70,9 +71,9 @@ function DashboardRouteErrorBoundary({
             <EmptyTitle as="h1">Oops, something went wrong</EmptyTitle>
           </EmptyHeader>
           <EmptyContent>
-            <pre className={styles.DashboardErrorBoundary.message()}>
+            <Code block className={styles.DashboardErrorBoundary.message()}>
               {message}
-            </pre>
+            </Code>
             <Button color="primary" onClick={reloadDashboard}>
               Reload dashboard
             </Button>

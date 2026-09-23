@@ -7,14 +7,17 @@ import {
   DropdownMenuTrigger,
   FileTrigger,
   type Key,
+  PageBack,
   PageContent,
   PageHeader,
+  PageTitle,
   Popover,
   PopoverContent,
   PopoverTrigger,
   SearchField,
   type Selection,
   Switch,
+  Text,
   ToggleGroup,
   ToggleGroupItem
 } from '#/components.js'
@@ -54,7 +57,6 @@ import {
   IcRoundSearch,
   IcRoundUploadFile
 } from '../icons.js'
-import {EditorBackButton} from './EditorBackButton.js'
 import css from './Explorer.module.css'
 import {ExplorerList} from './ExplorerList.js'
 import {LocaleMenu} from './LocaleMenu.js'
@@ -323,16 +325,16 @@ function ExplorerHeaderLoadedParentMain({
   const parent = parents.at(-1)
   return (
     <div className={styles.ExplorerHeader.main()}>
-      <EditorBackButton
+      <PageBack
         label={parent ? 'Back to parent entry' : 'Back to root'}
-        onPress={() => {
+        onClick={() => {
           setLocation(location => ({
             ...location,
             parentId: parent?.id
           }))
         }}
       />
-      <h1 className={styles.ExplorerHeader.title()}>{label}</h1>
+      <PageTitle>{label}</PageTitle>
       {titleControls}
     </div>
   )
@@ -348,11 +350,11 @@ function ExplorerHeaderMain({
   if (headerEntry) {
     return (
       <div className={styles.ExplorerHeader.main()}>
-        <EditorBackButton
+        <PageBack
           label={headerEntry.backLabel}
-          onPress={headerEntry.onBack}
+          onClick={() => headerEntry.onBack()}
         />
-        <h1 className={styles.ExplorerHeader.title()}>{headerEntry.title}</h1>
+        <PageTitle>{headerEntry.title}</PageTitle>
         {titleControls}
       </div>
     )
@@ -773,7 +775,14 @@ function ExplorerControlsPopover({
     <>
       {isMedia && (
         <>
-          <p className={styles.Popover.Label()}>Filter by</p>
+          <Text
+            as="p"
+            size="sm"
+            color="muted"
+            className={styles.Explorer.popoverLabel()}
+          >
+            Filter by
+          </Text>
           {filters.map(filter => (
             <Button
               key={slugify(filter.label)}
@@ -788,7 +797,14 @@ function ExplorerControlsPopover({
           ))}
         </>
       )}
-      <p className={styles.Popover.Label()}>Sort by</p>
+      <Text
+        as="p"
+        size="sm"
+        color="muted"
+        className={styles.Explorer.popoverLabel()}
+      >
+        Sort by
+      </Text>
       {sortingOptions.map(option =>
         !isMedia && option.id === 'size' ? null : (
           <Button

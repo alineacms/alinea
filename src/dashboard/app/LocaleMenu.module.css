@@ -1,34 +1,25 @@
 .LocaleMenu-trigger {
-  display: flex;
-  align-items: center;
+  /* Follow the color of the surrounding text, eg. inside an Alert */
+  --alinea-button-accent: currentColor;
+
   gap: 4px;
   min-width: 0;
-  width: auto;
   max-width: 92px;
   min-height: 24px;
   padding: 0 4px;
-  margin: 0;
   border: 0;
   border-radius: var(--alinea-radius-sm);
-  appearance: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
   font-size: 12px;
+  font-weight: inherit;
   line-height: normal;
-  outline: none;
-  text-align: left;
 
-  &[data-size='lg'] {
+  &.is-lg {
     min-height: 30px;
     font-size: var(--alinea-font-size-base);
     line-height: 24px;
   }
 }
 
-.LocaleMenu-trigger:hover,
-.LocaleMenu-trigger:active,
 .LocaleMenu-trigger[aria-expanded='true'] {
   background: color-mix(in oklab, currentColor 8%, transparent);
 }

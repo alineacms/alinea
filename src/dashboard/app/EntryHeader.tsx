@@ -8,7 +8,8 @@ import {
   PageActions,
   PageBack,
   PageHeader,
-  PageTitle
+  PageTitle,
+  Text
 } from '#/components.js'
 import {
   EntryUrlConflictError,
@@ -82,13 +83,15 @@ function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
       {conflict && (
         <DashboardModalDialog label="URL already in use">
           <DashboardModalContent>
-            <p>
+            <Text as="p">
               The URL <strong>{conflict.url}</strong> is already defined on
               entry <strong>{conflict.entryId}</strong> in workspace{' '}
               <strong>{conflict.workspace}</strong>, root{' '}
               <strong>{conflict.root}</strong>.
-            </p>
-            <p>Change the entry path or remove this alias, then try again.</p>
+            </Text>
+            <Text as="p">
+              Change the entry path or remove this alias, then try again.
+            </Text>
           </DashboardModalContent>
           <DashboardModalFooter>
             <Button color="primary" onClick={onClose}>

@@ -39,12 +39,6 @@
 }
 
 .EntrySidebar-sectionTitle {
-  margin: 0;
-  color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 500;
-  transition: var(--alinea-transition);
-  transition-property: color;
   line-height: 1;
 }
 

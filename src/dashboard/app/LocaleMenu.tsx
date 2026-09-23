@@ -1,4 +1,5 @@
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuRadioGroup,
@@ -100,18 +101,17 @@ export function LocaleMenuSelect({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           aria-label={ariaLabel}
-          data-size={size}
-          className={styles.LocaleMenu.trigger()}
+          className={styles.LocaleMenu.trigger({lg: size === 'lg'})}
         >
           <LocaleLabel locale={activeLocale} />
           <Icon
             icon={IcRoundUnfoldMore}
             className={styles.LocaleMenu.trigger.icon()}
           />
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent aria-label={ariaLabel} side="bottom" align="end">
         <DropdownMenuRadioGroup

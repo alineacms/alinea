@@ -47,15 +47,6 @@
   padding: 3px 8px;
   border: 1px solid transparent;
   color: var(--alinea-fg);
-  font-size: var(--alinea-font-size-base);
-  font-weight: 500;
-}
-
-.SplashPage-user-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .SplashPage-action {
@@ -78,13 +69,6 @@
   box-shadow: var(--alinea-shadow-raised);
 }
 
-.SplashPage-search-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .SplashPage-actionIcon {
   flex-shrink: 0;
   font-size: 16px;
@@ -98,11 +82,6 @@
   gap: 12px;
   padding: 4px 5px 4px 9px;
   color: var(--alinea-fg-muted);
-  font-size: var(--alinea-font-size-base);
-}
-
-.SplashPage-appearance-label {
-  font-size: inherit;
 }
 
 .SplashPage-grid {

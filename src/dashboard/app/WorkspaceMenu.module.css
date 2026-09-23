@@ -38,11 +38,10 @@
   align-items: center;
   gap: 8px;
   padding: 0 8px;
+  border: 0;
   margin-left: -8px;
   justify-content: space-between;
-  cursor: pointer;
   margin-right: auto;
-  outline: none;
 }
 
 .WorkspaceMenu-trigger-text {

@@ -1,8 +1,8 @@
 'use client'
 
 import {
-  Button,
   Dialog,
+  DialogClose,
   DialogContent,
   DialogTitle,
   PageContent,
@@ -12,8 +12,7 @@ import {
   type PageContentProps,
   type PageFooterProps,
   type PageHeaderProps,
-  Surface,
-  useDialog
+  Surface
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {
@@ -145,15 +144,12 @@ export function DashboardModalTitle({children}: PropsWithChildren) {
 }
 
 export function DashboardModalCloseButton() {
-  const {close} = useDialog()
   return (
-    <Button
+    <DialogClose
       aria-label="Close modal"
       variant="ghost"
       className={styles.DashboardModalCloseButton()}
       size="icon"
-      type="button"
-      onClick={close}
       icon={IcRoundClose}
     />
   )

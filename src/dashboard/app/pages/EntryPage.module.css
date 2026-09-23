@@ -1,14 +1,3 @@
-.EntryEditor-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.2;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .EntryEditor-body {
   min-height: 0;
   min-width: 0;
@@ -25,13 +14,6 @@
 .EntryEditor-banner {
   padding-bottom: 22px;
   background: var(--alinea-bg-muted);
-}
-
-.EntryEditor-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
 }
 
 .EntryEditor-toolbar {
@@ -66,11 +48,6 @@
   border-radius: 999px;
   background: var(--alinea-warning-subtle);
   color: var(--alinea-warning-subtle-fg);
-}
-
-.MissingEntry-id {
-  font-family: var(--alinea-mono-font);
-  font-size: 12px;
 }
 
 @media (max-width: 768px) {

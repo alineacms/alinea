@@ -4,8 +4,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  Heading,
   Icon,
   Surface,
+  Text,
   Timestamp
 } from '#/components.js'
 import {Entry, type EntryAuditUser} from '#/core/Entry.js'
@@ -218,38 +220,30 @@ function SplashPage({
                   icon={IcBaselineAccountCircle}
                   className={styles.SplashPage.actionIcon()}
                 />
-                <span className={styles.SplashPage.user.label()}>
+                <Text weight="medium" truncate>
                   {userName}
-                </span>
+                </Text>
               </div>
             )}
             {searchRoot && (
               <GlobalSearch initialSearchScope="everything" root={searchRoot}>
                 <Button
                   variant="ghost"
+                  icon={IcRoundSearch}
                   className={styles.SplashPage.action()}
                   aria-label="Search content"
                 >
-                  <Icon
-                    icon={IcRoundSearch}
-                    className={styles.SplashPage.actionIcon()}
-                  />
-                  <span className={styles.SplashPage.search.label()}>
-                    Search content
-                  </span>
+                  <Text truncate>Search content</Text>
                 </Button>
               </GlobalSearch>
             )}
             {canManageMembers && (
               <Button
                 variant="ghost"
+                icon={IcOutlineSettings}
                 className={styles.SplashPage.action()}
                 onClick={() => setRoute({page: 'users'})}
               >
-                <Icon
-                  icon={IcOutlineSettings}
-                  className={styles.SplashPage.actionIcon()}
-                />
                 Manage users
               </Button>
             )}
@@ -257,9 +251,7 @@ function SplashPage({
               aria-label="Appearance"
               className={styles.SplashPage.appearance()}
             >
-              <span className={styles.SplashPage.appearance.label()}>
-                Appearance
-              </span>
+              <Text>Appearance</Text>
               <AppearanceToggle />
             </div>
           </div>
@@ -295,7 +287,11 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
   return (
     <Surface className={styles.SplashPage.card()} onClick={onCardClick}>
       <header className={styles.SplashPage.card.header()}>
-        <h2 className={styles.SplashPage.card.header.title()}>
+        <Heading
+          as="h2"
+          size="xs"
+          className={styles.SplashPage.card.header.title()}
+        >
           <Button
             variant="ghost"
             className={styles.SplashPage.card.header.button()}
@@ -308,7 +304,7 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
               </span>
             </span>
           </Button>
-        </h2>
+        </Heading>
         <div className={styles.SplashPage.card.footer()}>
           {visibleRoots.map(root => (
             <Button

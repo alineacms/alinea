@@ -1,5 +1,6 @@
 import {
   Alert,
+  Badge,
   AlertDescription,
   AppShell,
   AppShellContent,
@@ -17,6 +18,7 @@ import {
   NavRailItem,
   Page as PageLayout,
   PageHeader,
+  PageTitle,
   MultipleSelectItem,
   Spinner,
   SearchField,
@@ -25,6 +27,7 @@ import {
   TableRow,
   type TableColumn,
   Tag,
+  Text,
   TextField,
   useDialog
 } from '#/components.js'
@@ -42,7 +45,6 @@ import {
   IcRoundSearch
 } from '../../icons.js'
 import {ActivityStatus} from '../ActivityStatus.js'
-import {Badge} from '#/components.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -175,7 +177,7 @@ export function UsersPage() {
   return (
     <PageLayout className={styles.UsersPage()}>
       <PageHeader className={styles.UsersPage.header()}>
-        <div className={styles.UsersPage.header.title()}>Manage users</div>
+        <PageTitle>Manage users</PageTitle>
 
         <SearchField
           aria-label="Search users"
@@ -272,7 +274,7 @@ function UsersPageStatus({label, pending}: UsersPageStatusProps) {
   return (
     <div className={styles.UsersPage.status()}>
       {pending && <Spinner aria-label={label} />}
-      <p className={styles.UsersPage.status.text()}>{label}</p>
+      <Text as="p">{label}</Text>
     </div>
   )
 }
@@ -293,9 +295,7 @@ function UsersTable({onDeactivate, onEdit, users, roleLabel}: UsersTableProps) {
       rowHeight={56}
       className={styles.UsersPage.table()}
       dependencies={[roleLabel, onEdit, onDeactivate]}
-      renderEmptyState={() => (
-        <span className={styles.UsersPage.empty()}>No users found</span>
-      )}
+      renderEmptyState={() => <Text color="muted">No users found</Text>}
     >
       {user => (
         <TableRow
@@ -330,14 +330,14 @@ interface UserIdentityProps {
 function UserIdentity({user}: UserIdentityProps) {
   return (
     <span className={styles.UsersPage.identity()}>
-      <span className={styles.UsersPage.identity.text()}>
-        {user.name && (
-          <span className={styles.UsersPage.identity.title()}>{user.name}</span>
-        )}
-        <span className={styles.UsersPage.identity.email()}>
-          {user.email || user.sub}
-        </span>
-      </span>
+      {user.name && (
+        <Text weight="semibold" truncate>
+          {user.name}
+        </Text>
+      )}
+      <Text color="muted" truncate>
+        {user.email || user.sub}
+      </Text>
     </span>
   )
 }
@@ -354,8 +354,7 @@ function UserRoles({user, roleLabel}: UserRolesProps) {
       return label ? {id: role, label} : undefined
     })
     .filter((role): role is {id: string; label: string} => Boolean(role))
-  if (roles.length === 0)
-    return <span className={styles.UsersPage.noRoles()}>No roles</span>
+  if (roles.length === 0) return <Text color="muted">No roles</Text>
   return (
     <span className={styles.UsersPage.roles()}>
       {roles.map(role => (
@@ -425,10 +424,10 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
     <DashboardModalDialog label="Deactivate account">
       <DashboardModalContent>
         <div className={styles.UsersPage.form.fields()}>
-          <p className={styles.UsersPage.confirmation()}>
+          <Text as="p">
             Are you sure you want to deactivate {label}? This will remove the
             user account and role assignments.
-          </p>
+          </Text>
           {error && (
             <Alert variant="destructive" icon={IcBaselineErrorOutline}>
               <AlertDescription>{error}</AlertDescription>

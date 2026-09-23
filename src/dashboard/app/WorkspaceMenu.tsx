@@ -251,12 +251,12 @@ export function WorkspaceMenu({
         ariaLabel="Workspace"
         includeUsersLink={canManageMembers}
         label={
-          <button type="button" className={styles.WorkspaceMenu.trigger()}>
+          <Button variant="ghost" className={styles.WorkspaceMenu.trigger()}>
             <span className={styles.WorkspaceMenu.trigger.text()}>
               {workspace.label}
             </span>
             <Icon icon={IcRoundUnfoldMore} fontSize={12} />
-          </button>
+          </Button>
         }
       />
     ) : (

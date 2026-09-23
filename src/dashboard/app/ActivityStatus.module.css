@@ -46,12 +46,6 @@
   border-bottom: 1px solid var(--alinea-border);
 }
 
-.ActivityStatus-popover-title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .ActivityStatus-popover-actions {
   display: flex;
   align-items: center;
@@ -61,11 +55,4 @@
 .ActivityStatus-popover-list {
   max-height: 280px;
   overflow: auto;
-}
-
-.ActivityStatus-popover-item-error {
-  margin: 0;
-  color: var(--alinea-danger-subtle-fg);
-  font-size: 11px;
-  line-height: 15px;
 }
