@@ -207,7 +207,7 @@ export function ListLabel({
 
   return (
     <div className={styles.ListLabel(styler.merge({className}))}>
-      {(!inline || showFold) && (
+      {showFold ? (
         <Button
           {...props}
           variant="ghost"
@@ -219,11 +219,20 @@ export function ListLabel({
             {!inline && (
               <span className={styles.ListLabel.title.text()}>{children}</span>
             )}
-            {showFold && (
-              <FoldIcon aria-hidden data-slot="icon" expanded={expanded} />
-            )}
+            <FoldIcon
+              aria-hidden
+              className={styles.ListLabel.fold()}
+              data-slot="icon"
+              expanded={expanded}
+            />
           </span>
         </Button>
+      ) : (
+        !inline && (
+          <span className={styles.ListLabel.title()}>
+            <span className={styles.ListLabel.title.text()}>{children}</span>
+          </span>
+        )
       )}
       {description && <FieldDescription>{description}</FieldDescription>}
       {shared && <FieldSharedBadge />}

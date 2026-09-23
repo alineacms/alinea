@@ -4,21 +4,8 @@ import type {LocalConnection} from '#/core/Connection.js'
 import type {WriteableGraph} from '#/core/db/WriteableGraph.js'
 import type {User} from '#/core/User.js'
 import {styler} from '@alinea/styler'
-import {
-  atom,
-  createStore,
-  Provider,
-  useAtom,
-  useAtomValueRaw,
-  type Getter
-} from 'jotai'
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentType,
-  type ReactNode
-} from 'react'
+import {atom, Provider, useAtom, useAtomValueRaw, type Getter} from 'jotai'
+import {useEffect, useMemo, type ComponentType, type ReactNode} from 'react'
 import css from './App.module.css'
 import {AccessDenied} from './app/AccessDenied.js'
 import {AuthView} from './app/AuthView.js'
@@ -33,7 +20,7 @@ import {activityAtom, activityPendingAtom} from './atoms/activity.js'
 import {authAtom} from './atoms/auth.js'
 import {themeAtom} from './atoms/dashboard.js'
 import {workspaceAtom, workspacesAtom} from './atoms/config.js'
-import {useInitAtoms} from './atoms/core.js'
+import {useDashboardStore} from './atoms/core.js'
 import {entryAtoms, MissingEntryError} from './atoms/entry.js'
 import {graphReadyAtom} from './atoms/graph.js'
 import {pageAtom, type Page} from './atoms/nav.js'
@@ -199,7 +186,7 @@ const authenticatedAtom = atom(async get => {
 })
 
 export function App(props: AppProps) {
-  const [store] = useState(createStore)
+  const store = useDashboardStore(props)
   const dashboard = useMemo(
     (): Dashboard => ({
       graph: props.graph,
@@ -223,7 +210,6 @@ export function App(props: AppProps) {
 }
 
 function DashboardApp(props: AppProps): ReactNode {
-  useInitAtoms(props)
   const [appPending, app] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
   const [, setActivityPending] = useAtom(activityPendingAtom)

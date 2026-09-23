@@ -2,6 +2,7 @@ import type {FieldOptions} from '#/core/Field.js'
 import {Field} from '#/core/Field.js'
 import {getField} from '#/core/Internal.js'
 import {viewKeys} from '#/dashboard/ViewKeys.js'
+import {selectLocale} from './SelectLocale.js'
 
 export type LocalisedValue<Locale extends string, Value> = Record<Locale, Value>
 
@@ -180,16 +181,6 @@ export function selectLocalisedValue<Locale extends string, Value>({
   return directValue === undefined && defaultValue !== undefined
     ? defaultValue
     : (directValue as Value)
-}
-
-function selectLocale<Locale extends string>(
-  locale: string | null,
-  locales: ReadonlyArray<Locale>
-): Locale {
-  const matchingLocale = locales.find(
-    candidate => candidate.toLowerCase() === locale?.toLowerCase()
-  )
-  return matchingLocale ?? locales[0]
 }
 
 function isAvailable<Value>(value: Value | undefined): value is Value {

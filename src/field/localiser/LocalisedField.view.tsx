@@ -2,13 +2,13 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from '#/components.js'
 import {createType} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
-import {useFieldNode} from '#/dashboard/hooks.js'
+import {useFieldNode, useOptionalEntryAtoms} from '#/dashboard/hooks.js'
 import {type LocalisedField} from '#/field/localiser.js'
 import styler from '@alinea/styler'
-import {atom, useAtom} from 'jotai'
-import {atomFamily} from 'jotai-family'
+import {useAtom} from 'jotai'
 import {useMemo} from 'react'
 import css from './LocalisedField.module.css'
+import {localisedFieldTab} from './LocalisedFieldTab.js'
 
 const styles = styler(css)
 
@@ -16,13 +16,16 @@ export interface LocalisedFieldViewProps {
   field: LocalisedField<string, unknown, unknown, unknown>
 }
 
-const localeSelection = atomFamily((locales: ReadonlyArray<string>) => {
-  return atom(locales[0])
-})
-
 export function LocalisedFieldView({field}: LocalisedFieldViewProps) {
   const {locales, inner} = field.localisation
-  const [selectedLocale, setSelectedLocale] = useAtom(localeSelection(locales))
+  const scope = useOptionalEntryAtoms()
+  const [selectedLocale, setSelectedLocale] = useAtom(
+    localisedFieldTab(
+      locales,
+      scope?.entry.id ?? null,
+      scope?.localeData.requestedLocale ?? null
+    )
+  )
   const node = useFieldNode(field) as ReactiveNode<object>
   const types = useMemo(() => {
     return locales.map(locale =>

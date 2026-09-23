@@ -211,6 +211,16 @@
   transition: color var(--alinea-transition);
 }
 
+/* A toggle without rows to fold still labels the field: keep the label
+   text at full strength and only fade the fold icon */
+.ListLabel .ListLabel-toggle:disabled {
+  opacity: 1;
+}
+
+.ListLabel .ListLabel-toggle:disabled .ListLabel-fold {
+  opacity: 0.5;
+}
+
 .ListLabel .ListLabel-toggle:hover,
 .ListLabel .ListLabel-toggle:active,
 .ListLabel .ListLabel-toggle[data-active] {
