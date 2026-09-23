@@ -43,15 +43,18 @@ test('single and multiple selection', async ({mount, page}) => {
   )
 
   const multiple = page.getByRole('grid', {name: 'Multiple selection'})
-  const checkboxes = multiple.getByRole('checkbox')
+  // Rows trigger their action while nothing is selected
+  await multiple.getByRole('rowheader', {name: 'Windows'}).click()
+  await expect(page.getByTestId('action')).toHaveText('windows')
+  // The checkbox input is visually hidden, click its label instead
+  const checkboxes = multiple
+    .getByRole('checkbox')
+    .locator('xpath=ancestor::label')
   await checkboxes.nth(1).click()
   await checkboxes.nth(2).click()
   await expect(page.getByTestId('selected')).toHaveText('games,program-files')
   await checkboxes.first().click()
   await expect(page.getByTestId('selected')).toHaveText('all')
-
-  await multiple.getByRole('rowheader', {name: 'Windows'}).click()
-  await expect(page.getByTestId('action')).toHaveText('windows')
 })
 
 test('sorts by column', async ({mount, page}) => {

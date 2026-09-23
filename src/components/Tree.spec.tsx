@@ -57,12 +57,18 @@ test('single selection, links, actions and disabled items', async ({
 test('multiple selection with checkboxes', async ({mount, page}) => {
   await mount(<MultipleSelection />)
   const tree = page.getByRole('treegrid', {name: 'Photos'})
-  await tree.getByRole('row', {name: 'Image 1'}).getByRole('checkbox').click()
-  await tree.getByRole('row', {name: 'Image 3'}).getByRole('checkbox').click()
+  // The checkbox input is visually hidden, click its label instead
+  const checkbox = (name: string) =>
+    tree
+      .getByRole('row', {name})
+      .getByRole('checkbox')
+      .locator('xpath=ancestor::label')
+  await checkbox('Image 1').click()
+  await checkbox('Image 3').click()
   await expect(page.getByTestId('selected')).toHaveText('image-1,image-3')
 })
 
-test('reorders and moves items with the keyboard', async ({mount, page}) => {
+test('reorders and moves items by dragging', async ({mount, page}) => {
   await mount(<DragAndDrop />)
   const tree = page.getByRole('treegrid', {name: 'Groceries'})
   const rows = tree.getByRole('row')

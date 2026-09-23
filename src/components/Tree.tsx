@@ -257,9 +257,16 @@ export function TreeItem<T extends object = object>({
       textValue={title}
       hasChildItems={hasChildItems}
       data-slot="tree-item"
-      className={({isDragging, isDropTarget, allowsDragging}) =>
+      className={renderProps =>
         styles.TreeItem(
-          {dragging: isDragging, dropTarget: isDropTarget, allowsDragging},
+          {
+            // aria-expanded is missing on items whose children load lazily
+            expandable: renderProps.hasChildItems,
+            expanded: renderProps.hasChildItems && renderProps.isExpanded,
+            dragging: renderProps.isDragging,
+            dropTarget: renderProps.isDropTarget,
+            allowsDragging: renderProps.allowsDragging
+          },
           styler.merge({className})
         )
       }
