@@ -2,24 +2,14 @@ import {
   MultipleSelect,
   MultipleSelectItem,
   Select,
-  SelectItem,
-  Tag
+  SelectItem
 } from '#/components.js'
 import {useField, useFieldError, useFieldOptions} from '#/dashboard/hooks.js'
-import type {Key} from '@react-types/shared'
-import {type ReactNode, useMemo} from 'react'
-import {useListData} from 'react-stately'
 import type {
   MultipleSelectOptions,
   SelectField,
   SelectOptions
 } from './SelectField.js'
-
-interface SelectItemData<KeyType extends string> {
-  id: KeyType
-  name: string
-  label: string
-}
 
 export interface SelectFieldViewProps<
   Value extends KeyType | null,
@@ -35,37 +25,26 @@ export function SelectFieldView<
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field) as SelectOptions<KeyType, Value>
   const error = useFieldError(field)
-  const items = useMemo(() => {
-    return Object.entries<string>(options.options).map(
-      ([id, label]): SelectItemData<KeyType> => ({
-        id: id as KeyType,
-        name: label,
-        label
-      })
-    )
-  }, [options.options])
-
-  function handleSelectionChange(key: Key | null) {
-    setValue((key === null ? null : String(key)) as Value)
-  }
-
   return (
     <Select
       description={options.help}
-      errorMessage={error}
-      isDisabled={options.readOnly}
-      isRequired={options.required}
-      items={items}
+      error={error}
+      disabled={options.readOnly}
+      required={options.required}
       aria-label={options.inline ? options.label : undefined}
       label={options.inline ? undefined : options.label}
       shared={options.shared}
-      onSelectionChange={handleSelectionChange}
+      onValueChange={next => setValue(next as Value)}
       placeholder={
         options.placeholder ?? (options.inline ? options.label : undefined)
       }
-      selectedKey={value}
+      value={value}
     >
-      {item => <SelectItem id={item.id}>{item.label}</SelectItem>}
+      {Object.entries<string>(options.options).map(([id, label]) => (
+        <SelectItem key={id} value={id}>
+          {label}
+        </SelectItem>
+      ))}
     </Select>
   )
 }
@@ -80,90 +59,26 @@ export function MultipleSelectFieldView<KeyType extends string>({
   const [value, setValue] = useField(field)
   const options = useFieldOptions(field) as MultipleSelectOptions<KeyType>
   const error = useFieldError(field)
-  const items = useMemo(() => {
-    return Object.entries<string>(options.options).map(
-      ([id, label]): SelectItemData<KeyType> => ({
-        id: id as KeyType,
-        name: label,
-        label
-      })
-    )
-  }, [options.options])
-
-  function handleItemInserted(key: Key) {
-    const itemKey = String(key) as KeyType
-    setValue(current => {
-      if (current.includes(itemKey)) return current
-      return [...current, itemKey]
-    })
-  }
-
-  function handleItemCleared(key: Key) {
-    const itemKey = String(key) as KeyType
-    setValue(current => {
-      return current.filter(key => key !== itemKey)
-    })
-  }
-
   return (
-    <SelectFieldMultipleInput
-      key={value.join('\0')}
+    <MultipleSelect
       description={options.help}
-      errorMessage={error}
-      isDisabled={options.readOnly}
-      isRequired={options.required}
-      items={items}
+      error={error}
+      disabled={options.readOnly}
+      required={options.required}
       aria-label={options.inline ? options.label : undefined}
       label={options.inline ? undefined : options.label}
       shared={options.shared}
-      onItemCleared={handleItemCleared}
-      onItemInserted={handleItemInserted}
+      onValueChange={next => setValue(next as Array<KeyType>)}
       placeholder={
         options.placeholder ?? (options.inline ? options.label : undefined)
       }
-      selectedKeys={value}
-    />
-  )
-}
-
-interface SelectFieldMultipleViewProps<KeyType extends string> {
-  'aria-label'?: string
-  description?: ReactNode
-  errorMessage?: string
-  isDisabled?: boolean
-  isRequired?: boolean
-  items: Array<SelectItemData<KeyType>>
-  label?: ReactNode
-  shared?: boolean
-  onItemCleared: (key: Key) => void
-  onItemInserted: (key: Key) => void
-  placeholder?: string
-  selectedKeys: Array<KeyType>
-}
-
-function SelectFieldMultipleInput<KeyType extends string>({
-  items,
-  selectedKeys,
-  ...props
-}: SelectFieldMultipleViewProps<KeyType>) {
-  const selectedItems = useListData<SelectItemData<KeyType>>({
-    initialItems: selectedKeys
-      .map(key => items.find(item => item.id === key))
-      .filter((item): item is SelectItemData<KeyType> => Boolean(item))
-  })
-
-  return (
-    <MultipleSelect
-      {...props}
-      items={items}
-      selectedItems={selectedItems}
-      tag={item => <Tag data-shape="circle">{item.label}</Tag>}
+      value={value}
     >
-      {item => (
-        <MultipleSelectItem id={item.id} textValue={item.label}>
-          {item.label}
+      {Object.entries<string>(options.options).map(([id, label]) => (
+        <MultipleSelectItem key={id} value={id} textValue={label}>
+          {label}
         </MultipleSelectItem>
-      )}
+      ))}
     </MultipleSelect>
   )
 }

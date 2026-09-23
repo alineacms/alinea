@@ -242,14 +242,12 @@ function CreateEntryForm() {
 
           <Select
             label="Type"
-            selectedKey={selectedType}
-            onSelectionChange={key => {
-              setSelectedType(key ? String(key) : null)
-            }}
-            isRequired
+            value={selectedType}
+            onValueChange={setSelectedType}
+            required
           >
             {typeOptions.map(option => (
-              <SelectItem id={option.id} key={option.id}>
+              <SelectItem value={option.id} key={option.id}>
                 {option.label}
               </SelectItem>
             ))}

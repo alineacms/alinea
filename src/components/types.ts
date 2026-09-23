@@ -78,6 +78,12 @@ export interface FieldSharedProps {
   shared?: boolean
 }
 
+/** A range of ISO dates (`YYYY-MM-DD`), both ends inclusive */
+export interface DateRange {
+  start: string
+  end: string
+}
+
 /** Where dragged items are dropped, relative to the item with `key` */
 export interface DropTarget {
   key: Key

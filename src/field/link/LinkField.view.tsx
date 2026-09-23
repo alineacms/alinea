@@ -1080,14 +1080,17 @@ function EntryAnchorFieldInner({
   const anchors = state.state === 'hasData' ? (state.data?.anchors ?? []) : []
   return (
     <Select
-      isDisabled={isDisabled || anchors.length === 0}
-      items={anchors}
+      disabled={isDisabled || anchors.length === 0}
       label="Anchor"
-      onChange={next => onChange(next === null ? undefined : String(next))}
+      onValueChange={next => onChange(next ?? undefined)}
       value={anchor ?? null}
     >
-      {item => (
-        <SelectItem id={item.id} textValue={item.label ?? `#${item.id}`}>
+      {anchors.map(item => (
+        <SelectItem
+          key={item.id}
+          value={item.id}
+          textValue={item.label ?? `#${item.id}`}
+        >
           <span className={styles.LinkFieldView.anchorOption()}>
             <span className={styles.LinkFieldView.anchorOption.label()}>
               {item.label ?? `#${item.id}`}
@@ -1097,7 +1100,7 @@ function EntryAnchorFieldInner({
             </span>
           </span>
         </SelectItem>
-      )}
+      ))}
     </Select>
   )
 }

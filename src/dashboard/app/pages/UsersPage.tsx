@@ -24,7 +24,6 @@ import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
 import {useMemo, useState, type FormEvent} from 'react'
-import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
 import {
@@ -494,11 +493,9 @@ function UserModal({user}: UserModalProps) {
       return {id, name: role.label ?? id}
     })
   }, [config.roles])
-  const selectedRoles = useListData<RoleItem>({
-    initialItems: (user?.roles ?? [])
-      .map(role => roleItems.find(item => item.id === role))
-      .filter((item): item is RoleItem => Boolean(item))
-  })
+  const [selectedRoles, setSelectedRoles] = useState<Array<string>>(() =>
+    (user?.roles ?? []).filter(role => roleItems.some(item => item.id === role))
+  )
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -514,7 +511,7 @@ function UserModal({user}: UserModalProps) {
       const request: UserInput = {
         email: userEmail,
         name: userName || undefined,
-        roles: selectedRoles.items.map(item => String(item.id))
+        roles: selectedRoles
       }
       await saveUser({
         type: isEditing ? 'update' : 'create',
@@ -555,16 +552,15 @@ function UserModal({user}: UserModalProps) {
             <MultipleSelect
               label="Roles"
               placeholder="Select roles"
-              items={roleItems}
-              selectedItems={selectedRoles}
-              tag={item => <Tag data-shape="circle">{item.name}</Tag>}
-              renderEmptyState={() => 'No roles'}
+              value={selectedRoles}
+              onValueChange={setSelectedRoles}
+              emptyMessage="No roles"
             >
-              {item => (
-                <MultipleSelectItem id={item.id} textValue={item.name}>
+              {roleItems.map(item => (
+                <MultipleSelectItem key={item.id} value={item.id}>
                   {item.name}
                 </MultipleSelectItem>
-              )}
+              ))}
             </MultipleSelect>
             {error && (
               <p className={styles.UsersPage.form.error()} role="alert">
