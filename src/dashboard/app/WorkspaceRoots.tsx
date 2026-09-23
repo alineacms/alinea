@@ -1,10 +1,13 @@
 import {
   Button,
-  DialogTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
   Icon,
-  Menu,
-  MenuItem,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   Tooltip
 } from '#/components.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
@@ -17,7 +20,6 @@ import {setUserRolesAtom} from '#/dashboard/atoms/auth.js'
 import {policyAtom} from '#/dashboard/atoms/user.js'
 import {useUser} from '#/dashboard/hooks.js'
 import styler from '@alinea/styler'
-import type {Key} from '@react-types/shared'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
 import {
   IcBaselineAccountCircle,
@@ -60,7 +62,7 @@ export function WorkspaceRoots({
         ))}
       </nav>
       <div className={styles.WorkspaceRoots.footer()}>
-        <ActivityStatus mobilePlacement="bottom right" openOnFail />
+        <ActivityStatus mobileSide="bottom" mobileAlign="end" openOnFail />
         <WorkspaceProfileMenu canManageMembers={canManageMembers} page={page} />
       </div>
     </aside>
@@ -80,19 +82,18 @@ function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
   return (
     <Tooltip placement="right" delay={100} tooltip={label}>
       <Button
-        size="icon-nav"
+        size="icon-lg"
+        icon={icon ?? undefined}
         className={styles.WorkspaceRoots.rootButton()}
         aria-label={label}
-        onPress={() =>
+        onClick={() =>
           setRoute({
             workspace: root.workspace,
             root: root.key
           })
         }
         data-selected={selected ? '' : undefined}
-      >
-        {icon && <Icon icon={icon} data-slot="icon" />}
-      </Button>
+      />
     </Tooltip>
   )
 }
@@ -115,7 +116,7 @@ function WorkspaceProfileMenu({
   const logout = useSetAtom(logoutAtom)
   if (!user) return null
   const roleEntries = Object.entries(config.roles ?? {})
-  const selectedRoles = new Set<Key>(user.roles)
+  const selectedRoles = new Set(user.roles)
   const roleLabel =
     user
       .roles!.map(role => config.roles?.[role]?.label ?? role)
@@ -123,26 +124,32 @@ function WorkspaceProfileMenu({
       .join(', ') || 'No roles'
   const userName = user.name ?? user.sub
 
-  function handleRoleSelectionChange(keys: 'all' | Set<Key>) {
-    if (keys !== 'all') setUserRoles([...keys].map(String))
+  function toggleRole(role: string, checked: boolean) {
+    const roles = new Set(selectedRoles)
+    if (checked) roles.add(role)
+    else roles.delete(role)
+    setUserRoles([...roles])
   }
 
   return (
-    <DialogTrigger>
-      <Tooltip placement="right" delay={100} tooltip={userName}>
-        <Button
-          size="icon-nav"
-          appearance="plain"
-          className={styles.WorkspaceRoots.profile()}
-          aria-label={userName}
-        >
-          <Icon data-slot="icon" icon={IcBaselineAccountCircle} />
-        </Button>
-      </Tooltip>
-      <Popover
+    <Popover>
+      <PopoverTrigger asChild>
+        <Tooltip placement="right" delay={100} tooltip={userName}>
+          <Button
+            size="icon-lg"
+            variant="ghost"
+            icon={IcBaselineAccountCircle}
+            className={styles.WorkspaceRoots.profile()}
+            aria-label={userName}
+          />
+        </Tooltip>
+      </PopoverTrigger>
+      <PopoverContent
+        aria-label={userName}
         className={styles.WorkspaceRoots.profile.popover.surface()}
-        placement="right bottom"
-        offset={16}
+        side="right"
+        align="end"
+        sideOffset={16}
         style={{padding: '0', boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'}}
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
@@ -160,10 +167,10 @@ function WorkspaceProfileMenu({
           {canManageMembers && (
             <li className={styles.WorkspaceRoots.profile.popover.action()}>
               <Button
-                appearance="plain"
+                variant="ghost"
                 aria-label="Manage users"
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onPress={() => setRoute({page: 'users'})}
+                onClick={() => setRoute({page: 'users'})}
               >
                 <Icon
                   icon={IcOutlineSettings}
@@ -188,38 +195,38 @@ function WorkspaceProfileMenu({
               <p className={styles.WorkspaceRoots.profile.popover.item.label()}>
                 Role
               </p>
-              <Menu
-                aria-label="Development roles"
-                selectionMode="multiple"
-                selectedKeys={selectedRoles}
-                onSelectionChange={handleRoleSelectionChange}
-                label={
-                  <Button
-                    appearance="outline"
-                    className={styles.WorkspaceRoots.trigger()}
-                  >
-                    <span className={styles.WorkspaceRoots.trigger.text()}>
-                      {roleLabel}
-                    </span>
-                    <IcRoundUnfoldMore />
-                  </Button>
-                }
-              >
-                {roleEntries.map(([name, role]) => (
-                  <MenuItem id={name} key={name} textValue={role.label}>
-                    {role.label}
-                  </MenuItem>
-                ))}
-              </Menu>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  variant="outline"
+                  className={styles.WorkspaceRoots.trigger()}
+                >
+                  <span className={styles.WorkspaceRoots.trigger.text()}>
+                    {roleLabel}
+                  </span>
+                  <IcRoundUnfoldMore />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent aria-label="Development roles">
+                  {roleEntries.map(([name, role]) => (
+                    <DropdownMenuCheckboxItem
+                      key={name}
+                      textValue={role.label}
+                      checked={selectedRoles.has(name)}
+                      onCheckedChange={checked => toggleRole(name, checked)}
+                    >
+                      {role.label}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </li>
           )}
           {canLogout && (
             <li className={styles.WorkspaceRoots.profile.popover.action()}>
               <Button
-                appearance="plain"
+                variant="ghost"
                 aria-label="Logout"
                 className={styles.WorkspaceRoots.profile.popover.action.button()}
-                onPress={logout}
+                onClick={logout}
               >
                 <Icon
                   icon={IcRoundLogout}
@@ -234,7 +241,7 @@ function WorkspaceProfileMenu({
             </li>
           )}
         </ul>
-      </Popover>
-    </DialogTrigger>
+      </PopoverContent>
+    </Popover>
   )
 }

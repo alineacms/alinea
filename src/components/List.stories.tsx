@@ -1,6 +1,5 @@
 import styler from '@alinea/styler'
 import type {ComponentType, ReactNode} from 'react'
-import {DialogTrigger} from 'react-aria-components'
 import type {EntryStatus} from '#/core/Entry.js'
 import {Badge} from '#/dashboard/app/Badge.js'
 import {
@@ -43,7 +42,7 @@ import {
   ListRowSettings
 } from './List.js'
 import css from './List.stories.module.css'
-import {Popover} from './Popover.js'
+import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
 
@@ -51,8 +50,8 @@ const styles = styler(css)
 
 const itemControls = (
   <div style={{display: 'flex'}}>
-    <Button size="icon" appearance="plain" icon={IcRoundEdit} />
-    <Button size="icon" appearance="plain" icon={IcRoundClose} />
+    <Button size="icon" variant="ghost" icon={IcRoundEdit} />
+    <Button size="icon" variant="ghost" icon={IcRoundClose} />
   </div>
 )
 
@@ -109,7 +108,7 @@ export function FieldRows() {
                 <ListRowFoldButton
                   aria-label="Collapse hero"
                   expanded
-                  onPress={() => undefined}
+                  onClick={() => undefined}
                 />
                 <Badge icon={IcRoundPanorama} size="small">
                   Hero
@@ -119,20 +118,20 @@ export function FieldRows() {
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
-              <DialogTrigger>
-                <Button
-                  appearance="plain"
+              <Popover>
+                <PopoverTrigger
+                  variant="ghost"
                   aria-label="Hero settings"
                   icon={IcRoundMoreHoriz}
-                  size="icon-small"
+                  size="icon-sm"
                 />
-                <Popover placement="bottom right">
+                <PopoverContent side="bottom" align="end">
                   <ListRowSettings>
                     <TextField label="Label" value="Landing page intro" />
                     <TextField label="Anchor" value="landing-page-intro" />
                   </ListRowSettings>
-                </Popover>
-              </DialogTrigger>
+                </PopoverContent>
+              </Popover>
             </ListRowActions>
           </ListRowHeader>
           <ListRowBody>
@@ -150,7 +149,7 @@ export function FieldRows() {
                 <ListRowFoldButton
                   aria-label="Expand quote"
                   expanded={false}
-                  onPress={() => undefined}
+                  onClick={() => undefined}
                 />
                 <Badge size="small">Quote</Badge>
                 <ListRowMeta>Editorial quote</ListRowMeta>
@@ -158,10 +157,10 @@ export function FieldRows() {
             </ListRowDrag>
             <ListRowActions>
               <Button
-                appearance="plain"
+                variant="ghost"
                 aria-label="Quote settings"
                 icon={IcRoundMoreHoriz}
-                size="icon-small"
+                size="icon-sm"
               />
             </ListRowActions>
           </ListRowHeader>
@@ -170,10 +169,10 @@ export function FieldRows() {
           </ListRowFooter>
         </ListRow>
         <ListCreateRow>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Add Hero
           </Button>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Add Quote
           </Button>
         </ListCreateRow>

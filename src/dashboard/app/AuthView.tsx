@@ -68,9 +68,9 @@ export function AuthView({auth: authState = authAtom}: AuthViewProps) {
       </p>
       <div className={styles.AuthView.actionRow()}>
         <Button
-          intent="primary"
+          color="primary"
           icon={IcRoundArrowForward}
-          onPress={() => setAuth({type: 'setupCloud'})}
+          onClick={() => setAuth({type: 'setupCloud'})}
         >
           Continue with alinea.cloud
         </Button>

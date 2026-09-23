@@ -40,7 +40,7 @@ export interface ListItemProps extends Omit<
   leading?: ReactNode
   trailing?: ReactNode
   inner?: ReactNode
-  onPress?: ButtonProps['onPress']
+  onPress?: () => void
   selected?: boolean
 }
 
@@ -70,11 +70,11 @@ export function ListItem({
     >
       {onPress ? (
         <Button
-          appearance="plain"
+          variant="ghost"
           aria-pressed={selected || undefined}
           className={styles.ListItem.header()}
           data-action="true"
-          onPress={onPress}
+          onClick={() => onPress()}
         >
           {headerContent}
         </Button>
@@ -174,7 +174,7 @@ export function ListEmpty({
 
 export interface ListLabelProps extends Omit<
   ButtonProps,
-  'appearance' | 'children' | 'className' | 'size'
+  'variant' | 'children' | 'className' | 'size'
 > {
   children: ReactNode
   className?: string
@@ -204,10 +204,10 @@ export function ListLabel({
       {(!inline || showFold) && (
         <Button
           {...props}
-          appearance="plain"
+          variant="ghost"
           className={styles.ListLabel.toggle()}
           data-has-rows={hasRows ? 'true' : undefined}
-          isDisabled={props.isDisabled ?? !hasRows}
+          disabled={props.disabled ?? !hasRows}
         >
           <LabelInline>
             {!inline && <LabelLabel asLabel={false} label={children} />}
@@ -361,7 +361,7 @@ export function ListRowActions({className, ...props}: ListRowActionsProps) {
 
 export interface ListRowFoldButtonProps extends Omit<
   ButtonProps,
-  'appearance' | 'children' | 'className' | 'size'
+  'variant' | 'children' | 'className' | 'size'
 > {
   className?: string
   expanded: boolean
@@ -375,9 +375,9 @@ export function ListRowFoldButton({
   return (
     <Button
       {...props}
-      appearance="plain"
+      variant="ghost"
       className={styles.ListRowFoldButton(styler.merge({className}))}
-      size="icon-small"
+      size="icon-sm"
     >
       <FoldIcon
         aria-hidden

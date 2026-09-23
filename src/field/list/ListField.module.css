@@ -75,11 +75,6 @@
   padding: 0;
 }
 
-.ListFieldTypePicker-dialog {
-  padding: 0;
-  overflow: hidden;
-}
-
 .ListFieldTypePicker-search {
   padding: 8px;
   border-bottom: 1px solid var(--alinea-border);
@@ -129,4 +124,11 @@
 .ListFieldTypePicker-item[data-disabled] {
   pointer-events: none;
   opacity: 0.2;
+}
+
+.ListFieldRowHeader-separator {
+  height: 1px;
+  margin: 4px 8px;
+  border: none;
+  background-color: var(--alinea-border);
 }

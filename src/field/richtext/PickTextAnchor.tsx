@@ -107,10 +107,10 @@ function PickTextAnchorForm({picker}: PickTextAnchorProps) {
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
           <Button
-            appearance="outline"
-            intent="secondary"
+            variant="outline"
+            color="secondary"
             type="button"
-            onPress={modal.close}
+            onClick={modal.close}
           >
             Cancel
           </Button>

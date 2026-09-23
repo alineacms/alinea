@@ -53,19 +53,19 @@ export function Rows() {
       <Surface role="list">
         <SurfaceRow role="listitem">
           <strong style={{flex: '1 1 auto'}}>Hero</strong>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Edit
           </Button>
         </SurfaceRow>
         <SurfaceRow role="listitem">
           <strong style={{flex: '1 1 auto'}}>Quote</strong>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Edit
           </Button>
         </SurfaceRow>
         <SurfaceRow role="listitem">
           <strong style={{flex: '1 1 auto'}}>Gallery</strong>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Edit
           </Button>
         </SurfaceRow>
@@ -95,7 +95,7 @@ export function NestedLists() {
       <Surface role="list">
         <SurfaceRow role="listitem">
           <strong style={{flex: '1 1 auto'}}>Landing page</strong>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Edit
           </Button>
         </SurfaceRow>
@@ -105,19 +105,19 @@ export function NestedLists() {
             <Surface role="list">
               <SurfaceRow role="listitem">
                 <span style={{flex: '1 1 auto'}}>Hero</span>
-                <Button appearance="plain" size="small">
+                <Button variant="ghost" size="sm">
                   Edit
                 </Button>
               </SurfaceRow>
               <SurfaceRow role="listitem">
                 <span style={{flex: '1 1 auto'}}>Feature grid</span>
-                <Button appearance="plain" size="small">
+                <Button variant="ghost" size="sm">
                   Edit
                 </Button>
               </SurfaceRow>
               <SurfaceRow role="listitem">
                 <span style={{flex: '1 1 auto'}}>Call to action</span>
-                <Button appearance="plain" size="small">
+                <Button variant="ghost" size="sm">
                   Edit
                 </Button>
               </SurfaceRow>
@@ -126,7 +126,7 @@ export function NestedLists() {
         </SurfaceRow>
         <SurfaceRow role="listitem">
           <strong style={{flex: '1 1 auto'}}>SEO metadata</strong>
-          <Button appearance="plain" size="small">
+          <Button variant="ghost" size="sm">
             Edit
           </Button>
         </SurfaceRow>

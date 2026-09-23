@@ -166,7 +166,7 @@
   text-align: left;
 
   --alinea-button-bg: transparent;
-  --alinea-button-hovered: transparent;
+  --alinea-button-hover: transparent;
 }
 
 .SplashPage-card-header-button[data-hovered] {
@@ -216,7 +216,7 @@
   font-weight: 400;
 
   --alinea-button-bg: transparent;
-  --alinea-button-hovered: transparent;
+  --alinea-button-hover: transparent;
 }
 
 .SplashPage-entry[data-hovered] {
@@ -334,17 +334,12 @@
     opacity 0.25s ease-out;
 
   --alinea-button-bg: transparent;
-  --alinea-button-hovered: transparent;
+  --alinea-button-hover: transparent;
 }
 
 .SplashPage-root[data-hovered] {
   color: var(--alinea-fg);
   opacity: 1;
-}
-
-.SplashPage-root-menuIcon {
-  flex-shrink: 0;
-  font-size: 16px;
 }
 
 @media (hover: none), (pointer: coarse) {

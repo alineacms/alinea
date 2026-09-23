@@ -1,5 +1,7 @@
 import {
   Button,
+  type ButtonProps,
+  Dialog,
   DialogTrigger,
   Icon,
   Label,
@@ -17,8 +19,9 @@ import {
   ListRowFooter,
   ListRowHeader,
   ListRowSettings,
-  MenuSeparator,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectItem,
   TextField
@@ -384,9 +387,9 @@ interface LinkPickerActionProps {
   allowDuplicates?: boolean
   anchorRef?: RefObject<Element | null>
   ariaLabel?: string
-  buttonAppearance?: 'solid' | 'outline' | 'plain' | 'active'
+  buttonVariant?: ButtonProps['variant']
   buttonIcon?: ComponentType
-  buttonSize?: 'small' | 'icon' | 'icon-small'
+  buttonSize?: ButtonProps['size']
   children?: ReactNode
   className?: string
   isDisabled?: boolean
@@ -450,7 +453,7 @@ function LinkPickerAction({
   allowDuplicates = false,
   anchorRef,
   ariaLabel,
-  buttonAppearance = 'plain',
+  buttonVariant = 'ghost',
   buttonIcon,
   buttonSize,
   children,
@@ -472,17 +475,17 @@ function LinkPickerAction({
   const resolved = useResolvedEntryPickerOptions(options, type, currentEntry)
   if (type === 'url') {
     return (
-      <DialogTrigger>
-        <Button
+      <Dialog>
+        <DialogTrigger
           aria-label={ariaLabel}
-          appearance={buttonAppearance}
+          variant={buttonVariant}
           className={className}
           icon={buttonIcon}
-          isDisabled={isDisabled}
+          disabled={isDisabled}
           size={buttonSize}
         >
           {children}
-        </Button>
+        </DialogTrigger>
         <ExternalLinkPicker
           key={value?._id ?? 'new'}
           initialValue={externalLinkValue(value)}
@@ -490,7 +493,7 @@ function LinkPickerAction({
           submitLabel={value ? 'Save link' : undefined}
           onConfirm={link => onPick(createUrlLink(link, picker, value))}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   const childLocation =
@@ -557,38 +560,38 @@ function LinkPickerAction({
   } as const
   if (type === 'file' || type === 'image') {
     return (
-      <DialogTrigger>
-        <Button
+      <Dialog>
+        <DialogTrigger
           aria-label={ariaLabel}
-          appearance={buttonAppearance}
+          variant={buttonVariant}
           className={className}
           icon={buttonIcon}
-          isDisabled={isDisabled}
+          disabled={isDisabled}
           size={buttonSize}
         >
           {children}
-        </Button>
+        </DialogTrigger>
         <ImagePicker
           {...pickerProps}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   return (
-    <DialogTrigger>
-      <Button
+    <Dialog>
+      <DialogTrigger
         aria-label={ariaLabel}
-        appearance={buttonAppearance}
+        variant={buttonVariant}
         className={className}
         icon={buttonIcon}
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         size={buttonSize}
       >
         {children}
-      </Button>
+      </DialogTrigger>
       <LinkPicker {...pickerProps} anchorRef={anchorRef} />
-    </DialogTrigger>
+    </Dialog>
   )
 }
 
@@ -617,7 +620,7 @@ function LinkPickerDialog({
 
   if (type === 'url') {
     return (
-      <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <Button style={{display: 'none'}}>Replace link</Button>
         <ExternalLinkPicker
           key={value?._id ?? 'new'}
@@ -626,7 +629,7 @@ function LinkPickerDialog({
           submitLabel={value ? 'Save link' : undefined}
           onConfirm={link => handlePick(createUrlLink(link, picker, value))}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   const childLocation =
@@ -687,20 +690,20 @@ function LinkPickerDialog({
   } as const
   if (type === 'file' || type === 'image') {
     return (
-      <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <Button style={{display: 'none'}}>Replace link</Button>
         <ImagePicker
           {...pickerProps}
           label={type === 'file' ? 'Pick a file' : 'Pick an image'}
         />
-      </DialogTrigger>
+      </Dialog>
     )
   }
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <Button style={{display: 'none'}}>Replace link</Button>
       <LinkPickerModal {...pickerProps} />
-    </DialogTrigger>
+    </Dialog>
   )
 }
 
@@ -846,7 +849,7 @@ function SingleLinkCreateActions({field, value}: SingleLinkCreateActionsProps) {
       {Object.entries(options.pickers).map(([type, picker]) => (
         <LinkPickerAction
           anchorRef={anchorRef}
-          buttonSize="small"
+          buttonSize="sm"
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={setValue}
@@ -883,7 +886,7 @@ function MultipleLinkCreateActions({field}: MultipleLinkCreateActionsProps) {
         <LinkPickerAction
           allowDuplicates={options.allowDuplicates}
           anchorRef={anchorRef}
-          buttonSize="small"
+          buttonSize="sm"
           className={styles.LinkFieldView.createButton()}
           key={type}
           onPick={link => {
@@ -960,10 +963,10 @@ function LinkRowActions({
       {picker && (
         <Button
           aria-label="Replace link"
-          appearance="plain"
+          variant="ghost"
           icon={IcRoundEdit}
-          isDisabled={isDisabled}
-          onPress={() => {
+          disabled={isDisabled}
+          onClick={() => {
             closeActions()
             onEdit()
           }}
@@ -1312,11 +1315,11 @@ function ResolvedLinkLabelField({
 
 function LinkSettingsButton() {
   return (
-    <Button
-      appearance="plain"
+    <PopoverTrigger
+      variant="ghost"
       aria-label="Link settings"
       icon={IcRoundMoreHoriz}
-      size="icon-small"
+      size="icon-sm"
     />
   )
 }
@@ -1362,10 +1365,10 @@ function EntryLinkRowActions({
     return (
       <Button
         aria-label="Open link"
-        appearance="plain"
+        variant="ghost"
         icon={IcRoundOpenInNew}
-        isDisabled
-        size="small"
+        disabled
+        size="sm"
       >
         Open link
       </Button>
@@ -1378,9 +1381,9 @@ function EntryLinkRowActions({
   return (
     <Button
       aria-label="Open link"
-      appearance="plain"
+      variant="ghost"
       icon={IcRoundOpenInNew}
-      onPress={() => {
+      onClick={() => {
         window.open(href, '_blank', 'noopener,noreferrer')
         closeActions()
       }}
@@ -1446,18 +1449,22 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
           ) : (
             <Button
               aria-label="Edit link"
-              appearance="plain"
+              variant="ghost"
               className={styles.LinkFieldView.rowAction()}
-              onPress={() => setActionsOpen(true)}
+              onClick={() => setActionsOpen(true)}
             >
               {rowContent}
             </Button>
           )}
           {!options.readOnly && (
             <ListRowActions>
-              <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+              <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
                 <LinkSettingsButton />
-                <Popover placement="bottom right">
+                <PopoverContent
+                  aria-label="Link settings"
+                  side="bottom"
+                  align="end"
+                >
                   <ListRowSettings actions>
                     <LinkRowActions
                       closeActions={closeActions}
@@ -1467,20 +1474,20 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
                       value={value}
                     />
                   </ListRowSettings>
-                  <MenuSeparator />
+                  <hr className={styles.LinkFieldView.settingsSeparator()} />
                   <ListRowSettings>
                     <LinkLabelField node={node} value={value} />
                     <EntryAnchorField node={node} value={value} />
                     <EntryLinkSuffixField node={node} value={value} />
                   </ListRowSettings>
-                </Popover>
-              </DialogTrigger>
+                </PopoverContent>
+              </Popover>
               <Button
-                appearance="plain"
+                variant="ghost"
                 aria-label="Remove link"
                 icon={IcRoundClose}
-                onPress={removeLink}
-                size="icon-small"
+                onClick={removeLink}
+                size="icon-sm"
               />
             </ListRowActions>
           )}
@@ -1649,7 +1656,7 @@ function MultipleLinkRow({
                   <ListRowFoldButton
                     aria-label={expanded ? 'Collapse link' : 'Expand link'}
                     expanded={expanded}
-                    onPress={() => onToggleRow(itemId)}
+                    onClick={() => onToggleRow(itemId)}
                   />
                 )}
                 {imagePreviewEntryId && hasFields && (
@@ -1665,9 +1672,13 @@ function MultipleLinkRow({
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
-              <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
+              <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
                 <LinkSettingsButton />
-                <Popover placement="bottom right">
+                <PopoverContent
+                  aria-label="Link settings"
+                  side="bottom"
+                  align="end"
+                >
                   <ListRowSettings actions>
                     <LinkRowActions
                       closeActions={closeActions}
@@ -1678,7 +1689,7 @@ function MultipleLinkRow({
                       value={value}
                     />
                   </ListRowSettings>
-                  <MenuSeparator />
+                  <hr className={styles.LinkFieldView.settingsSeparator()} />
                   <ListRowSettings>
                     <LinkLabelField
                       isDisabled={readOnly}
@@ -1696,15 +1707,15 @@ function MultipleLinkRow({
                       value={value}
                     />
                   </ListRowSettings>
-                </Popover>
-              </DialogTrigger>
+                </PopoverContent>
+              </Popover>
               <Button
-                appearance="plain"
+                variant="ghost"
                 aria-label="Remove link"
                 icon={IcRoundClose}
-                isDisabled={readOnly}
-                onPress={removeLink}
-                size="icon-small"
+                disabled={readOnly}
+                onClick={removeLink}
+                size="icon-sm"
               />
             </ListRowActions>
           </ListRowHeader>
@@ -1939,8 +1950,8 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
         }
         expanded={allExpanded}
         hasRows={hasRows}
-        isDisabled={!hasFoldableRows}
-        onPress={toggleAll}
+        disabled={!hasFoldableRows}
+        onClick={toggleAll}
         description={options.help}
         shared={options.shared}
         showFold={!options.inline && hasFoldableRows}

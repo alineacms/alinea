@@ -1,16 +1,30 @@
-import {Button, DialogTrigger, Heading} from 'react-aria-components'
-import {Popover} from './Popover.js'
+import {IcRoundSearch} from '../dashboard/icons.js'
+import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 
-export const Example = (args: any) => (
-  <DialogTrigger>
-    <Button aria-label="Help">ⓘ</Button>
-    <Popover {...args}>
-      <Heading slot="title">Help</Heading>
-      <p>For help accessing your account, please contact support.</p>
+export function Example() {
+  return (
+    <Popover>
+      <PopoverTrigger variant="outline" icon={IcRoundSearch}>
+        Help
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" aria-label="Help">
+        <p>For help accessing your account, please contact support.</p>
+      </PopoverContent>
     </Popover>
-  </DialogTrigger>
-)
+  )
+}
+
+export function NonModal() {
+  return (
+    <Popover modal={false}>
+      <PopoverTrigger>Open without blocking the page</PopoverTrigger>
+      <PopoverContent side="right" aria-label="Details">
+        <p>The rest of the page stays interactive.</p>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 export default {
-  title: 'Components / Popover'
+  title: 'Pure components / Popover'
 }

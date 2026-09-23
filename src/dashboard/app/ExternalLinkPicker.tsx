@@ -113,7 +113,7 @@ function ExternalLinkPickerDialog({
           </Label>
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
-          <Button type="submit" intent="primary">
+          <Button type="submit" color="primary">
             {submitLabel ?? 'Add link'}
           </Button>
         </DashboardModalFormFooter>

@@ -1,4 +1,11 @@
-import {Icon, Menu, MenuItem} from '#/components.js'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+  Icon
+} from '#/components.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw} from 'jotai'
@@ -83,8 +90,8 @@ export function LocaleMenuSelect({
   const activeLocale = locale ?? locales[0]
   if (!activeLocale) return null
   return (
-    <Menu
-      label={
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <Button aria-label={ariaLabel} className={styles.LocaleMenu.trigger()}>
           <LocaleLabel locale={activeLocale} />
           <Icon
@@ -92,24 +99,23 @@ export function LocaleMenuSelect({
             className={styles.LocaleMenu.trigger.icon()}
           />
         </Button>
-      }
-      aria-label={ariaLabel}
-      popoverProps={{placement: 'bottom right'}}
-      selectionMode="single"
-      selectedKeys={[activeLocale]}
-      onAction={key => {
-        onLocaleChange(String(key))
-      }}
-    >
-      {locales.map(locale => (
-        <MenuItem
-          key={locale}
-          id={locale}
-          textValue={localeDisplay(locale).textValue}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent aria-label={ariaLabel} side="bottom" align="end">
+        <DropdownMenuRadioGroup
+          value={activeLocale}
+          onValueChange={onLocaleChange}
         >
-          <LocaleLabel locale={locale} />
-        </MenuItem>
-      ))}
-    </Menu>
+          {locales.map(locale => (
+            <DropdownMenuRadioItem
+              key={locale}
+              value={locale}
+              textValue={localeDisplay(locale).textValue}
+            >
+              <LocaleLabel locale={locale} />
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

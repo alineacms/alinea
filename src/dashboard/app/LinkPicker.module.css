@@ -1,5 +1,7 @@
 .LinkPicker-popover {
+  display: block;
   box-sizing: border-box;
+  outline: none;
   width: min(520px, calc(100vw - 32px));
   min-width: min(360px, calc(100vw - 32px));
   max-width: min(520px, calc(100vw - 32px));
@@ -7,11 +9,15 @@
   max-height: min(350px, calc(var(--visual-viewport-height, 100dvh) - 32px));
   padding: 0;
   overflow: hidden;
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
   background: var(--alinea-bg);
+  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
 }
 
 .LinkPickerCompact {
   display: flex;
+  outline: none;
   box-sizing: border-box;
   min-height: 0;
   height: 100%;

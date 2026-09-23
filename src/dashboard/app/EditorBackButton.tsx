@@ -13,11 +13,11 @@ export interface EditorBackButtonProps {
 export function EditorBackButton({label, onPress}: EditorBackButtonProps) {
   return (
     <Button
-      appearance="plain"
+      variant="ghost"
       size="icon"
       className={styles.EditorBackButton()}
       aria-label={label}
-      onPress={onPress}
+      onClick={onPress}
       icon={IcRoundArrowBack}
     />
   )

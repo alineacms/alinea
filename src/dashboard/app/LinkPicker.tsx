@@ -1,4 +1,4 @@
-import {Button, Dialog, Popover, Tooltip} from '#/components.js'
+import {Button, Tooltip} from '#/components.js'
 import {
   createExplorerAtoms,
   type DashboardEntry,
@@ -18,7 +18,7 @@ import {
   type ReactNode,
   type RefObject
 } from 'react'
-import type {Selection} from 'react-aria-components'
+import {Dialog, Popover, type Selection} from 'react-aria-components'
 import {IcRoundOpenInFull} from '../icons.js'
 import {ExplorerBody, ExplorerHeader, ExplorerSearch} from './Explorer.js'
 import {
@@ -295,10 +295,10 @@ function LinkPickerCompact({
         <Tooltip tooltip="Expand entry picker">
           <Button
             aria-label="Expand entry picker"
-            appearance="plain"
+            variant="ghost"
             icon={IcRoundOpenInFull}
-            size="icon-nav"
-            onPress={openExpanded}
+            size="icon-lg"
+            onClick={openExpanded}
           />
         </Tooltip>
       </div>
@@ -313,7 +313,7 @@ function LinkPickerCompact({
           <span className={styles.LinkPickerCompact.selection()}>
             {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
           </span>
-          <Button intent="primary" onPress={() => commitSelection(selection)}>
+          <Button color="primary" onClick={() => commitSelection(selection)}>
             Select
           </Button>
         </div>
@@ -369,8 +369,8 @@ function LinkPickerExpanded({
               {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
             </ExplorerModalSelection>
             <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
+              <Button onClick={modal.close}>Cancel</Button>
+              <Button color="primary" onClick={onSubmit}>
                 Select
               </Button>
             </ExplorerModalActions>

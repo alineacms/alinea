@@ -1,4 +1,9 @@
-import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '#/components.js'
 import {createId} from '#/core/Id.js'
 import {getType} from '#/core/Internal.js'
 import type {Schema} from '#/core/Schema.js'
@@ -39,37 +44,31 @@ export function RichTextInsertMenu({
         )
       }}
     >
-      <Menu
-        aria-label="Insert block"
-        label={
-          <Button appearance="plain">
-            <Icon icon={IcRoundAddCircle} />
-            Insert block
-          </Button>
-        }
-      >
-        {entries(schema).map(([name, type]) => (
-          <MenuItem
-            key={name}
-            id={name}
-            textValue={Type.label(type)}
-            onAction={() => {
-              onInsert({
-                [Node.type]: name,
-                [BlockNode.id]: createId(),
-                ...Type.initialValue(type)
-              } as BlockNode)
-            }}
-          >
-            <span className={styles.RichTextInsertMenu.item()}>
-              <Icon icon={getType(type).icon ?? IcRoundAddCircle} />
+      <DropdownMenu>
+        <DropdownMenuTrigger variant="ghost" icon={IcRoundAddCircle}>
+          Insert block
+        </DropdownMenuTrigger>
+        <DropdownMenuContent aria-label="Insert block">
+          {entries(schema).map(([name, type]) => (
+            <DropdownMenuItem
+              key={name}
+              icon={getType(type).icon ?? IcRoundAddCircle}
+              textValue={Type.label(type)}
+              onSelect={() => {
+                onInsert({
+                  [Node.type]: name,
+                  [BlockNode.id]: createId(),
+                  ...Type.initialValue(type)
+                } as BlockNode)
+              }}
+            >
               <span className={styles.RichTextInsertMenu.label()}>
                 {Type.label(type)}
               </span>
-            </span>
-          </MenuItem>
-        ))}
-      </Menu>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </FloatingMenu>
   )
 }

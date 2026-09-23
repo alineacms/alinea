@@ -1,8 +1,25 @@
 .DashboardModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
   align-items: safe center;
+  justify-content: center;
+  width: 100vw;
+  height: var(--visual-viewport-height);
   overflow-y: auto;
   padding: 32px;
+  background: var(--alinea-scrim);
   scrollbar-width: thin;
+
+  &[data-entering] {
+    animation: DashboardModalOverlay-fade 200ms;
+  }
+
+  &[data-exiting] {
+    animation: DashboardModalOverlay-fade 150ms reverse ease-in;
+  }
 
   @media (max-width: 768px) {
     padding: 16px;
@@ -14,8 +31,12 @@
   max-width: calc(100vw - 64px);
   max-height: none;
   overflow: hidden;
+  outline: none;
+  border: 1px solid var(--alinea-border);
   border-radius: 8px;
   background: var(--alinea-overlay);
+  box-shadow: var(--alinea-shadow-modal);
+  color: var(--alinea-fg);
 
   &:has(.DashboardModalDialog.is-loading) {
     width: auto;
@@ -63,6 +84,9 @@
 }
 
 .DashboardModalDialog {
+  box-sizing: border-box;
+  max-height: inherit;
+  outline: none;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -154,6 +178,16 @@
   justify-content: flex-end;
   gap: 8px;
   padding: 0 12px;
+}
+
+@keyframes DashboardModalOverlay-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes DashboardModal-enter {

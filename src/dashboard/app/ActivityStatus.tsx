@@ -1,6 +1,6 @@
 import {
+  type Align,
   Button,
-  DialogTrigger,
   Icon,
   List,
   ListEmpty,
@@ -10,9 +10,11 @@ import {
   ListItemTitle,
   ListItemVisual,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   ProgressCircle,
-  Tooltip,
-  type PopoverProps
+  type Side,
+  Tooltip
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
@@ -61,17 +63,25 @@ function ignoreActivityBreakpoint() {
 export interface ActivityStatusProps {
   ariaLabel?: string
   children?: ReactNode
-  mobilePlacement?: PopoverProps['placement']
+  mobileAlign?: Align
+  mobileSide?: Side
   openOnFail?: boolean
-  placement?: PopoverProps['placement']
+  side?: Side
+}
+
+function tooltipPlacement(side: Side, align?: Align) {
+  if (!align || align === 'center' || side === 'left' || side === 'right')
+    return side
+  return `${side} ${align}` as const
 }
 
 export function ActivityStatus({
   ariaLabel,
   children,
-  mobilePlacement,
+  mobileAlign,
+  mobileSide,
   openOnFail = false,
-  placement = 'right'
+  side = 'right'
 }: ActivityStatusProps) {
   const [appPending] = useAtomValueRaw(appAtom)
   const activity = useAtomValueRaw(activityAtom)
@@ -89,8 +99,8 @@ export function ActivityStatus({
     isDisabled: !isOpen
   })
   const isMobile = useSyncExternalStore(
-    mobilePlacement ? subscribeToMobileActivity : ignoreActivityBreakpoint,
-    mobilePlacement ? mobileActivitySnapshot : desktopActivitySnapshot,
+    mobileSide ? subscribeToMobileActivity : ignoreActivityBreakpoint,
+    mobileSide ? mobileActivitySnapshot : desktopActivitySnapshot,
     desktopActivitySnapshot
   )
   const wasFailed = useRef(false)
@@ -100,6 +110,8 @@ export function ActivityStatus({
   if (activityLabel !== undefined) lastActivityLabel.current = activityLabel
   const visibleActivityLabel =
     activityLabel ?? (showSpinner ? lastActivityLabel.current : undefined)
+  const popoverSide = isMobile && mobileSide ? mobileSide : side
+  const popoverAlign = isMobile && mobileSide ? mobileAlign : undefined
   const label = getStatusLabel(
     visibleActivityLabel,
     activity.hasFailed,
@@ -118,66 +130,69 @@ export function ActivityStatus({
   // eslint-enable react-you-might-not-need-an-effect/no-adjust-state-on-prop-change
   // eslint-enable react-you-might-not-need-an-effect/no-event-handler
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip
-        placement={isMobile ? mobilePlacement : placement}
-        delay={300}
-        tooltip={label}
-      >
-        <Button
-          size={children ? undefined : 'icon'}
-          appearance={children ? 'outline' : 'plain'}
-          className={styles.ActivityStatus({
-            failed: activity.hasFailed,
-            syncing: showSpinner
-          })}
-          aria-label={children ? ariaLabel : label}
+    <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
+      <PopoverTrigger asChild>
+        <Tooltip
+          placement={tooltipPlacement(popoverSide, popoverAlign)}
+          delay={300}
+          tooltip={label}
         >
-          {children ? (
-            <span className={styles.ActivityStatus.label()}>
-              {showSpinner ? (
-                <ProgressCircle
-                  isIndeterminate
-                  aria-label={label}
-                  className={styles.ActivityStatus.icon()}
-                />
-              ) : activity.hasFailed ? (
-                <IcRoundWarning
-                  aria-hidden="true"
-                  className={styles.ActivityStatus.icon()}
-                />
-              ) : (
-                <IcRoundCheck
-                  aria-hidden="true"
-                  className={styles.ActivityStatus.icon()}
-                />
-              )}
-              {children}
-            </span>
-          ) : showSpinner ? (
-            <ProgressCircle
-              isIndeterminate
-              aria-label={label}
-              className={styles.ActivityStatus.icon()}
-            />
-          ) : activity.hasFailed ? (
-            <IcRoundWarning
-              aria-hidden="true"
-              className={styles.ActivityStatus.icon()}
-            />
-          ) : (
-            <IcRoundCheck
-              aria-hidden="true"
-              className={styles.ActivityStatus.icon()}
-            />
-          )}
-        </Button>
-      </Tooltip>
-      <Popover
+          <Button
+            size={children ? undefined : 'icon'}
+            variant={children ? 'outline' : 'ghost'}
+            className={styles.ActivityStatus({
+              failed: activity.hasFailed,
+              syncing: showSpinner
+            })}
+            aria-label={children ? ariaLabel : label}
+          >
+            {children ? (
+              <span className={styles.ActivityStatus.label()}>
+                {showSpinner ? (
+                  <ProgressCircle
+                    isIndeterminate
+                    aria-label={label}
+                    className={styles.ActivityStatus.icon()}
+                  />
+                ) : activity.hasFailed ? (
+                  <IcRoundWarning
+                    aria-hidden="true"
+                    className={styles.ActivityStatus.icon()}
+                  />
+                ) : (
+                  <IcRoundCheck
+                    aria-hidden="true"
+                    className={styles.ActivityStatus.icon()}
+                  />
+                )}
+                {children}
+              </span>
+            ) : showSpinner ? (
+              <ProgressCircle
+                isIndeterminate
+                aria-label={label}
+                className={styles.ActivityStatus.icon()}
+              />
+            ) : activity.hasFailed ? (
+              <IcRoundWarning
+                aria-hidden="true"
+                className={styles.ActivityStatus.icon()}
+              />
+            ) : (
+              <IcRoundCheck
+                aria-hidden="true"
+                className={styles.ActivityStatus.icon()}
+              />
+            )}
+          </Button>
+        </Tooltip>
+      </PopoverTrigger>
+      <PopoverContent
         className={styles.ActivityStatus.popover.surface()}
-        isNonModal
-        placement={isMobile ? mobilePlacement : placement}
-        offset={16}
+        aria-label="Activity"
+        side={popoverSide}
+        align={popoverAlign}
+        sideOffset={16}
         style={{
           padding: '0',
           boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
@@ -190,20 +205,20 @@ export function ActivityStatus({
               <div className={styles.ActivityStatus.popover.actions()}>
                 {activity.canDiscard && (
                   <Button
-                    size="small"
-                    appearance="plain"
-                    intent="danger"
-                    onPress={() => discard()}
+                    size="sm"
+                    variant="ghost"
+                    color="destructive"
+                    onClick={() => discard()}
                   >
                     Discard
                   </Button>
                 )}
                 {activity.canRetry && (
                   <Button
-                    size="small"
-                    appearance="outline"
-                    intent="danger"
-                    onPress={() => retry()}
+                    size="sm"
+                    variant="outline"
+                    color="destructive"
+                    onClick={() => retry()}
                   >
                     Retry
                   </Button>
@@ -227,8 +242,8 @@ export function ActivityStatus({
             )}
           </List>
         </div>
-      </Popover>
-    </DialogTrigger>
+      </PopoverContent>
+    </Popover>
   )
 }
 

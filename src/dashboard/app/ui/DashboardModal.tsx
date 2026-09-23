@@ -1,6 +1,6 @@
 'use client'
 
-import {Button, Dialog, Modal, ProgressCircle, Surface} from '#/components.js'
+import {Button, ProgressCircle, Surface} from '#/components.js'
 import styler from '@alinea/styler'
 import {
   useContext,
@@ -9,8 +9,12 @@ import {
   type ReactNode
 } from 'react'
 import {
-  OverlayTriggerStateContext,
-  type ModalOverlayProps
+  Dialog,
+  type DialogProps,
+  Modal,
+  ModalOverlay,
+  type ModalOverlayProps,
+  OverlayTriggerStateContext
 } from 'react-aria-components'
 import {IcRoundClose} from '../../icons.js'
 import css from './DashboardModal.module.css'
@@ -32,21 +36,22 @@ export function DashboardModal({
   ...props
 }: DashboardModalProps) {
   return (
-    <Modal
+    <ModalOverlay
       isDismissable
-      className={styles.DashboardModal(size)}
-      overlayClassName={styles.DashboardModalOverlay()}
       {...props}
+      className={styles.DashboardModalOverlay()}
     >
-      <Surface className={styles.DashboardModal.surface()}>{children}</Surface>
-    </Modal>
+      <Modal className={styles.DashboardModal(size)}>
+        <Surface className={styles.DashboardModal.surface()}>
+          {children}
+        </Surface>
+      </Modal>
+    </ModalOverlay>
   )
 }
 
 export interface DashboardModalDialogProps
-  extends
-    PropsWithChildren,
-    Omit<ComponentProps<typeof Dialog>, 'children' | 'className'> {
+  extends PropsWithChildren, Omit<DialogProps, 'children' | 'className'> {
   isLoading?: boolean
   label?: ReactNode
   controls?: ReactNode
@@ -132,11 +137,11 @@ export function DashboardModalCloseButton() {
   return (
     <Button
       aria-label="Close modal"
-      appearance="plain"
+      variant="ghost"
       className={styles.DashboardModalCloseButton()}
       size="icon"
       type="button"
-      onPress={close}
+      onClick={close}
       icon={IcRoundClose}
     />
   )

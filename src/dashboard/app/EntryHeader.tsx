@@ -1,4 +1,10 @@
-import {Button, Icon, Menu, MenuItem} from '#/components.js'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '#/components.js'
 import {
   EntryUrlConflictError,
   type EntryUrlConflictErrorInfo
@@ -82,7 +88,7 @@ function UrlConflictModal({conflict, onClose}: UrlConflictModalProps) {
             <p>Change the entry path or remove this alias, then try again.</p>
           </DashboardModalContent>
           <DashboardModalFooter>
-            <Button intent="primary" onPress={onClose}>
+            <Button color="primary" onClick={onClose}>
               OK
             </Button>
           </DashboardModalFooter>
@@ -296,10 +302,10 @@ export function EntryHeader({
     primaryAction = (
       <Button
         icon={IcRoundSave}
-        intent="primary"
-        isDisabled={isActionDisabled}
-        isPending={isPending}
-        onPress={createDraft}
+        color="primary"
+        disabled={isActionDisabled}
+        loading={isPending}
+        onClick={createDraft}
       >
         Create draft
       </Button>
@@ -308,10 +314,10 @@ export function EntryHeader({
     primaryAction = (
       <Button
         icon={IcRoundSave}
-        intent="primary"
-        isDisabled={isActionDisabled}
-        isPending={isPending}
-        onPress={saveTranslationChanges}
+        color="primary"
+        disabled={isActionDisabled}
+        loading={isPending}
+        onClick={saveTranslationChanges}
       >
         Save translation
       </Button>
@@ -319,20 +325,16 @@ export function EntryHeader({
   } else if (primaryActions.dirty) {
     primaryAction = (
       <>
-        <Button
-          appearance="plain"
-          isDisabled={isPending}
-          onPress={() => reset()}
-        >
+        <Button variant="ghost" disabled={isPending} onClick={() => reset()}>
           Discard my changes
         </Button>
         {primaryActions.dirty.publish && (
           <Button
             icon={IcRoundCheck}
-            intent={canSaveDraft ? 'secondary' : 'primary'}
-            isDisabled={isActionDisabled}
-            isPending={isPending}
-            onPress={publishChanges}
+            color={canSaveDraft ? 'secondary' : 'primary'}
+            disabled={isActionDisabled}
+            loading={isPending}
+            onClick={publishChanges}
           >
             Publish
           </Button>
@@ -340,10 +342,10 @@ export function EntryHeader({
         {primaryActions.dirty.saveDraft && (
           <Button
             icon={IcRoundSave}
-            intent="primary"
-            isDisabled={isActionDisabled}
-            isPending={isPending}
-            onPress={saveDraftChanges}
+            color="primary"
+            disabled={isActionDisabled}
+            loading={isPending}
+            onClick={saveDraftChanges}
           >
             Save draft
           </Button>
@@ -354,10 +356,10 @@ export function EntryHeader({
     primaryAction = (
       <Button
         icon={IcRoundCheck}
-        intent="primary"
-        isDisabled={isActionDisabled}
-        isPending={isPending}
-        onPress={publishCurrentDraft}
+        color="primary"
+        disabled={isActionDisabled}
+        loading={isPending}
+        onClick={publishCurrentDraft}
       >
         Publish
       </Button>
@@ -455,33 +457,33 @@ export function EntryHeader({
           </Badge>
           {!access.update && <ReadOnlyBadge />}
           {menuItems.length > 0 && (
-            <Menu
-              label={
-                <Button
-                  size="icon"
-                  appearance="plain"
-                  aria-label="More actions"
-                  icon={IcRoundMoreHoriz}
-                  isDisabled={isActionDisabled}
-                  isPending={isPending}
-                />
-              }
-              aria-label="More actions"
-              popoverProps={{placement: 'bottom start'}}
-            >
-              {menuItems.map(item => (
-                <MenuItem
-                  key={item.id}
-                  id={item.id}
-                  textValue={item.label}
-                  isDisabled={isActionDisabled}
-                  onAction={() => runAction(item.action)}
-                >
-                  {item.icon && <Icon icon={item.icon} />}
-                  {item.label}
-                </MenuItem>
-              ))}
-            </Menu>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                size="icon"
+                variant="ghost"
+                aria-label="More actions"
+                icon={IcRoundMoreHoriz}
+                disabled={isActionDisabled}
+                loading={isPending}
+              />
+              <DropdownMenuContent
+                aria-label="More actions"
+                side="bottom"
+                align="start"
+              >
+                {menuItems.map(item => (
+                  <DropdownMenuItem
+                    key={item.id}
+                    icon={item.icon}
+                    textValue={item.label}
+                    disabled={isActionDisabled}
+                    onSelect={() => runAction(item.action)}
+                  >
+                    {item.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
         <div className={styles.EntryHeader.actions()}>

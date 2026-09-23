@@ -301,11 +301,11 @@ export const SidebarTree = memo(function SidebarTree({
             className={styles.SidebarTree.rootButton({selected: !page.entry})}
           >
             <Button
-              appearance="plain"
+              variant="ghost"
               aria-current={!page.entry ? 'page' : undefined}
               className={styles.SidebarTree.rootButton.action()}
               icon={icon}
-              onPress={() =>
+              onClick={() =>
                 setRoute({
                   workspace: root.workspace,
                   root: root.key,
@@ -447,10 +447,10 @@ export const SidebarTreeExplorer = memo(function SidebarTreeExplorer({
             className={styles.SidebarTree.rootButton({selected: rootSelected})}
           >
             <Button
-              appearance="plain"
+              variant="ghost"
               className={styles.SidebarTree.rootButton.action()}
               icon={icon}
-              onPress={onRootPress}
+              onClick={onRootPress}
             >
               <span className={styles.SidebarTree.rootButton.label()}>
                 {label}

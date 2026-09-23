@@ -18,7 +18,7 @@ import {
   IcRoundKeyboardArrowDown
 } from '../dashboard/icons.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
-import {Popover} from './Popover.js'
+import {PopoverSurface} from './internal/PopoverSurface.js'
 import css from './Select.module.css'
 
 const styles = styler(css)
@@ -87,14 +87,14 @@ function SelectPopover<T extends object>(props: SelectProps<T>) {
   const state = useContext(SelectStateContext)
   const hasClear = Boolean(!props.isRequired && state?.selectedKey)
   return (
-    <Popover
+    <PopoverSurface
       className={styles.SelectPopover()}
       data-clear={hasClear || undefined}
     >
       <ListBox items={props.items} className={styles.SelectPopover.listbox()}>
         {props.children}
       </ListBox>
-    </Popover>
+    </PopoverSurface>
   )
 }
 

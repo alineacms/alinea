@@ -50,7 +50,7 @@
 }
 
 .WorkspaceRoots-rootButton[data-hovered] {
-  background: var(--alinea-button-hovered);
+  background: var(--alinea-button-hover);
 }
 
 .WorkspaceRoots-profile-popover {
@@ -126,12 +126,12 @@
   font-size: var(--alinea-font-size-base);
   font-weight: 400;
 
-  &[data-appearance='plain'] {
-    --alinea-button-default-plain-color: var(--alinea-fg-muted);
+  &[data-variant='ghost'] {
+    --alinea-button-accent: var(--alinea-fg-muted);
   }
 
-  &[data-hovered] {
-    --alinea-button-default-plain-color: var(--alinea-fg);
+  &[data-variant='ghost'][data-hovered] {
+    --alinea-button-accent: var(--alinea-fg);
   }
 }
 

@@ -129,11 +129,11 @@ export const Dynamic = () => {
           onChange={setNewOption}
         />
         <Button
-          onPress={() => {
+          onClick={() => {
             setOptions([...options, {id: options.length + 1, name: newOption}])
             setNewOption('')
           }}
-          data-size="large"
+          data-size="lg"
         >
           Add option
         </Button>

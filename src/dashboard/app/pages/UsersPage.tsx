@@ -2,10 +2,13 @@ import {
   Button,
   Cell,
   Column,
+  Dialog,
   DialogTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Icon,
-  Menu,
-  MenuItem,
   MultipleSelect,
   MultipleSelectItem,
   ProgressCircle,
@@ -20,7 +23,7 @@ import {
 import type {User, UserInput} from '#/core/User.js'
 import styler from '@alinea/styler'
 import {atom, useAtom, useAtomValueRaw, useSetAtom} from 'jotai'
-import {useMemo, useState, type FormEvent, type Key} from 'react'
+import {useMemo, useState, type FormEvent} from 'react'
 import {useListData} from 'react-stately'
 import {clientAtom, configAtom} from '../../atoms/core.js'
 import {Page, page, routeAtom} from '../../atoms/nav.js'
@@ -179,18 +182,18 @@ export function UsersPage() {
           onChange={setQuery}
           className={styles.UsersPage.search()}
         />
-        <DialogTrigger>
-          <Button
-            intent="primary"
+        <Dialog>
+          <DialogTrigger
+            color="primary"
             icon={IcRoundAdd}
             className={styles.UsersPage.createButton()}
           >
             Create user
-          </Button>
+          </DialogTrigger>
           <DashboardModal>
             <UserModal />
           </DashboardModal>
-        </DialogTrigger>
+        </Dialog>
       </SidebarHeader>
       <div className={styles.UsersPage.content()}>
         {usersState.status === 'loading' ? (
@@ -246,10 +249,10 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
       <nav className={styles.UsersPageSidebar.nav()}>
         <Button
           aria-label="Back to app"
-          appearance="plain"
+          variant="ghost"
           className={styles.UsersPageSidebar.item()}
-          size="icon-nav"
-          onPress={handleBack}
+          size="icon-lg"
+          onClick={handleBack}
         >
           <Icon
             icon={IcRoundArrowBack}
@@ -258,7 +261,7 @@ export function UsersPageSidebar({page}: UsersPageSidebarProps) {
         </Button>
       </nav>
       <div className={styles.UsersPageSidebar.footer()}>
-        <ActivityStatus mobilePlacement="bottom right" />
+        <ActivityStatus mobileSide="bottom" mobileAlign="end" />
       </div>
     </aside>
   )
@@ -382,32 +385,21 @@ function UserActionsMenu({user, onDeactivate, onEdit}: UserActionsMenuProps) {
   const email = user.email
   const label = user.name || user.email || user.sub
 
-  function handleAction(key: Key) {
-    if (key === 'edit') {
-      onEdit(user)
-      return
-    }
-    if (key !== 'deactivate' || !email) return
-    onDeactivate(user)
-  }
-
   return (
-    <Menu
-      aria-label={`Actions for ${label}`}
-      label={
-        <Button
-          aria-label={`Actions for ${label}`}
-          appearance="plain"
-          size="icon-small"
-          icon={IcRoundMoreHoriz}
-        />
-      }
-      disabledKeys={email ? undefined : ['deactivate']}
-      onAction={handleAction}
-    >
-      <MenuItem id="edit">Edit</MenuItem>
-      <MenuItem id="deactivate">Deactivate account</MenuItem>
-    </Menu>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`Actions for ${label}`}
+        variant="ghost"
+        size="icon-sm"
+        icon={IcRoundMoreHoriz}
+      />
+      <DropdownMenuContent aria-label={`Actions for ${label}`}>
+        <DropdownMenuItem onSelect={() => onEdit(user)}>Edit</DropdownMenuItem>
+        <DropdownMenuItem disabled={!email} onSelect={() => onDeactivate(user)}>
+          Deactivate account
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -455,18 +447,18 @@ function DeactivateUserModal({user}: DeactivateUserModalProps) {
       <DashboardModalFooter>
         <Button
           type="button"
-          appearance="outline"
-          intent="secondary"
-          onPress={modal.close}
+          variant="outline"
+          color="secondary"
+          onClick={modal.close}
         >
           Cancel
         </Button>
         <Button
           type="button"
-          intent="danger"
-          isDisabled={!email}
-          isPending={isPending}
-          onPress={handleDeactivate}
+          color="destructive"
+          disabled={!email}
+          loading={isPending}
+          onClick={handleDeactivate}
         >
           Deactivate account
         </Button>
@@ -580,18 +572,13 @@ function UserModal({user}: UserModalProps) {
       <DashboardModalFooter>
         <Button
           type="button"
-          appearance="outline"
-          intent="secondary"
-          onPress={modal.close}
+          variant="outline"
+          color="secondary"
+          onClick={modal.close}
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          intent="primary"
-          isPending={isPending}
-          form="submit"
-        >
+        <Button type="submit" color="primary" loading={isPending} form="submit">
           {isEditing ? 'Save changes' : 'Create user'}
         </Button>
       </DashboardModalFooter>

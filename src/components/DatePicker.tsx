@@ -14,7 +14,7 @@ import {Calendar} from './Calendar.js'
 import css from './DatePicker.module.css'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
-import {Popover} from './Popover.js'
+import {PopoverSurface} from './internal/PopoverSurface.js'
 
 const styles = styler(css)
 
@@ -51,11 +51,11 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
           </Button>
         </Group>
       </Label>
-      <Popover>
+      <PopoverSurface>
         <Dialog>
           <Calendar />
         </Dialog>
-      </Popover>
+      </PopoverSurface>
     </DatePickerPrimitive>
   )
 }

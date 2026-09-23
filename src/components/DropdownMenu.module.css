@@ -1,0 +1,88 @@
+.DropdownMenuContent {
+  outline: none;
+}
+
+.DropdownMenuGroup {
+  display: block;
+}
+
+.DropdownMenuItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0.4rem;
+  border-radius: 4px;
+  font-size: var(--alinea-font-size-base);
+  outline: none;
+  cursor: pointer;
+
+  &:focus {
+    background: var(--alinea-primary);
+    color: var(--alinea-primary-fg);
+  }
+
+  &[aria-checked='true'] {
+    font-weight: 500;
+  }
+
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  &[data-variant='destructive'] {
+    color: var(--alinea-danger-subtle-fg);
+
+    &:focus {
+      background: var(--alinea-danger);
+      color: var(--alinea-danger-fg);
+    }
+  }
+
+  &[data-inset] {
+    padding-left: calc(0.4rem + 24px);
+  }
+}
+
+.DropdownMenuItem-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.DropdownMenuItem-indicator {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 16px;
+}
+
+.DropdownMenuLabel {
+  padding: 4px 6px;
+  color: var(--alinea-fg-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+
+  &[data-inset] {
+    padding-left: calc(6px + 24px);
+  }
+}
+
+.DropdownMenuSeparator {
+  height: 1px;
+  margin: 4px 8px;
+  border: none;
+  background: var(--alinea-border);
+}
+
+.DropdownMenuShortcut {
+  margin-left: auto;
+  color: var(--alinea-fg-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+
+  .DropdownMenuItem:focus & {
+    color: inherit;
+  }
+}

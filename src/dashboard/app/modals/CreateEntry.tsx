@@ -296,15 +296,15 @@ function CreateEntryForm() {
       </form>
 
       <DashboardModalFooter>
-        <Button type="button" appearance="outline" onPress={modal.close}>
+        <Button type="button" variant="outline" onClick={modal.close}>
           Cancel
         </Button>
         <Button
           type="submit"
           form="submit"
-          intent="primary"
-          isDisabled={!canCreate}
-          isPending={isCreating}
+          color="primary"
+          disabled={!canCreate}
+          loading={isCreating}
         >
           Create entry
         </Button>

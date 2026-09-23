@@ -50,11 +50,11 @@ function EmptyResults({explorer, page, root}: EmptyResultsProps) {
         </div>
         {canSearchAll && (
           <Button
-            appearance="plain"
-            intent="primary"
-            size="small"
+            variant="ghost"
+            color="primary"
+            size="sm"
             className={styles.ExplorerList.empty.button()}
-            onPress={() => setSearchScope('everything')}
+            onClick={() => setSearchScope('everything')}
           >
             Try searching all workspaces
           </Button>

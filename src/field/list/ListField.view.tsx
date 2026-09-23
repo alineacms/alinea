@@ -1,8 +1,6 @@
 import {
   Button,
   ListRow as ComponentListRow,
-  Dialog,
-  DialogTrigger,
   Icon,
   List,
   ListCreateRow,
@@ -18,8 +16,9 @@ import {
   ListRowHeader,
   ListRowMeta,
   ListRowSettings,
-  MenuSeparator,
   Popover,
+  PopoverContent,
+  PopoverTrigger,
   SearchField,
   TextField
 } from '#/components.js'
@@ -283,8 +282,8 @@ export function ListFieldView({field}: ListFieldViewProps) {
         }
         expanded={allExpanded}
         hasRows={hasRows}
-        isDisabled={!hasRows}
-        onPress={toggleAll}
+        disabled={!hasRows}
+        onClick={toggleAll}
         description={options.help}
         shared={options.shared}
         inline={options.inline}
@@ -354,10 +353,10 @@ function ListFieldCreateActions({
       {pasted && (
         <Button
           className={styles.ListFieldCreateActions.button()}
-          onPress={() => onPaste(pasted)}
-          size="small"
+          onClick={() => onPaste(pasted)}
+          size="sm"
           icon={IcBaselineContentPasteGo}
-          appearance="plain"
+          variant="ghost"
         >
           {pasteBlockLabel(pasted, items)}
         </Button>
@@ -366,10 +365,10 @@ function ListFieldCreateActions({
         <Button
           className={styles.ListFieldCreateActions.button()}
           key={item.id}
-          onPress={() => onSelect(item)}
-          size="small"
+          onClick={() => onSelect(item)}
+          size="sm"
           icon={getType(item.type).icon || IcRoundAdd}
-          appearance="plain"
+          variant="ghost"
         >
           {item.label}
         </Button>
@@ -440,11 +439,11 @@ function ListFieldInsertAction({
   if (directAddItem) {
     return (
       <Button
-        appearance="plain"
+        variant="ghost"
         className={styles.ListFieldView.insertAction()}
         icon={icon}
-        isDisabled={isDisabled}
-        onPress={() => {
+        disabled={isDisabled}
+        onClick={() => {
           onSelect(directAddItem)
           onClose()
         }}
@@ -455,10 +454,10 @@ function ListFieldInsertAction({
   }
   return (
     <Button
-      appearance="plain"
+      variant="ghost"
       className={styles.ListFieldView.insertAction()}
-      isDisabled={isDisabled}
-      onPress={() => {
+      disabled={isDisabled}
+      onClick={() => {
         onOpenPicker()
       }}
       icon={icon}
@@ -788,8 +787,8 @@ function ListFieldRowHeader({
           <ListRowFoldButton
             aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
             expanded={expanded}
-            isDisabled={isPreview}
-            onPress={onToggle}
+            disabled={isPreview}
+            onClick={onToggle}
           />
           <Badge icon={typeIcon} size="small">
             {label}
@@ -799,14 +798,18 @@ function ListFieldRowHeader({
         </ListRowBadges>
       </ListRowDrag>
       <ListRowActions>
-        <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-          <Button
-            appearance="plain"
+        <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+          <PopoverTrigger
+            variant="ghost"
             aria-label={`${label} actions`}
             icon={IcRoundMoreHoriz}
-            size="icon-small"
+            size="icon-sm"
           />
-          <Popover placement="bottom right">
+          <PopoverContent
+            aria-label={`${label} actions`}
+            side="bottom"
+            align="end"
+          >
             {insertPosition ? (
               <ListFieldInsertPanel
                 items={insertItems}
@@ -845,42 +848,42 @@ function ListFieldRowHeader({
                     source={customLabel}
                   />
                 </ListRowSettings>
-                <MenuSeparator />
+                <hr className={styles.ListFieldRowHeader.separator()} />
                 <ListRowSettings actions>
                   <Button
-                    appearance="plain"
-                    onPress={() => {
+                    variant="ghost"
+                    icon={IcBaselineContentCopy}
+                    onClick={() => {
                       onCopy?.()
                       closeActions()
                     }}
                   >
-                    <Icon icon={IcBaselineContentCopy} />
                     Copy
                   </Button>
                 </ListRowSettings>
-                <MenuSeparator />
+                <hr className={styles.ListFieldRowHeader.separator()} />
                 <ListRowSettings actions>
                   {!isFirstRow && (
                     <Button
-                      appearance="plain"
-                      onPress={() => {
+                      variant="ghost"
+                      icon={IcRoundArrowUpward}
+                      onClick={() => {
                         onMoveUp?.()
                         closeActions()
                       }}
                     >
-                      <Icon icon={IcRoundArrowUpward} />
                       Move up
                     </Button>
                   )}
                   {!isLastRow && (
                     <Button
-                      appearance="plain"
-                      onPress={() => {
+                      variant="ghost"
+                      icon={IcRoundArrowDownward}
+                      onClick={() => {
                         onMoveDown?.()
                         closeActions()
                       }}
                     >
-                      <Icon icon={IcRoundArrowDownward} />
                       Move down
                     </Button>
                   )}
@@ -915,15 +918,15 @@ function ListFieldRowHeader({
                 </ListRowSettings>
               </>
             )}
-          </Popover>
-        </DialogTrigger>
+          </PopoverContent>
+        </Popover>
         <Button
-          appearance="plain"
+          variant="ghost"
           aria-label={`Remove ${label}`}
           icon={IcRoundClose}
-          isDisabled={readOnly || isPreview}
-          onPress={onDelete}
-          size="icon-small"
+          disabled={readOnly || isPreview}
+          onClick={onDelete}
+          size="icon-sm"
         />
       </ListRowActions>
     </ListRowHeader>
@@ -997,50 +1000,51 @@ function ListFieldTypePicker({
   }
 
   return (
-    <DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <Button
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
+      <PopoverTrigger
         aria-label={label}
         className={styles.ListFieldTypePicker.trigger(
           styler.merge({className})
         )}
         data-open={isOpen ? 'true' : undefined}
-        isDisabled={isDisabled}
+        disabled={isDisabled}
         size="icon"
         icon={triggerIcon}
       />
-      <Popover className={styles.ListFieldTypePicker.popover()}>
-        <Dialog className={styles.ListFieldTypePicker.dialog()}>
-          <Autocomplete filter={contains}>
-            <SearchField
-              aria-label="Search types"
-              autoFocus
-              className={styles.ListFieldTypePicker.search()}
-              hasIcon
-              placeholder="Search types..."
-            />
-            <ListBox
-              aria-label={label}
-              className={styles.ListFieldTypePicker.list()}
-              items={pickerItems}
-              renderEmptyState={() => (
-                <div className={styles.ListFieldTypePicker.empty()}>
-                  No matching types
-                </div>
-              )}
-            >
-              {item => (
-                <ListFieldTypePickerAction
-                  key={item.id}
-                  item={item}
-                  onPaste={onPaste}
-                  onSelect={onSelect}
-                />
-              )}
-            </ListBox>
-          </Autocomplete>
-        </Dialog>
-      </Popover>
-    </DialogTrigger>
+      <PopoverContent
+        aria-label={label}
+        className={styles.ListFieldTypePicker.popover()}
+      >
+        <Autocomplete filter={contains}>
+          <SearchField
+            aria-label="Search types"
+            autoFocus
+            className={styles.ListFieldTypePicker.search()}
+            hasIcon
+            placeholder="Search types..."
+          />
+          <ListBox
+            aria-label={label}
+            className={styles.ListFieldTypePicker.list()}
+            items={pickerItems}
+            renderEmptyState={() => (
+              <div className={styles.ListFieldTypePicker.empty()}>
+                No matching types
+              </div>
+            )}
+          >
+            {item => (
+              <ListFieldTypePickerAction
+                key={item.id}
+                item={item}
+                onPaste={onPaste}
+                onSelect={onSelect}
+              />
+            )}
+          </ListBox>
+        </Autocomplete>
+      </PopoverContent>
+    </Popover>
   )
 }
 

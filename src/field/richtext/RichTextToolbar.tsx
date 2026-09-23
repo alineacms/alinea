@@ -1,9 +1,13 @@
 import {
   Button,
-  Icon,
-  Menu,
-  MenuItem,
-  MenuSeparator,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
   Toolbar,
   ToolbarGroup,
   ToolbarSeparator
@@ -162,7 +166,7 @@ function ToolbarItems({config, context, menu, ownerId}: ToolbarItemsProps) {
         ? []
         : [
             menu ? (
-              <MenuSeparator key={`${name}-separator`} />
+              <DropdownMenuSeparator key={`${name}-separator`} />
             ) : (
               <ToolbarSeparator key={`${name}-separator`} />
             )
@@ -182,20 +186,37 @@ function renderEntry(
     const label = resolve(entry.label, context)
     const items =
       typeof entry.items === 'function' ? entry.items(context) : entry.items
-    return (
-      <Menu
-        key={name}
-        aria-label={text(label) ?? humanize(name)}
-        popoverProps={{'data-richtext-toolbar-owner': ownerId}}
-        label={
-          <Button appearance="plain">
-            {entry.icon && <Icon icon={entry.icon(context)} data-slot="icon" />}
+    const ariaLabel = text(label) ?? humanize(name)
+    const icon = entry.icon?.(context)
+    const content = (
+      <ToolbarItems config={items} context={context} menu ownerId={ownerId} />
+    )
+    if (menu)
+      return (
+        <DropdownMenuSub key={name}>
+          <DropdownMenuSubTrigger icon={icon} textValue={ariaLabel}>
             {label}
-          </Button>
-        }
-      >
-        <ToolbarItems config={items} context={context} menu ownerId={ownerId} />
-      </Menu>
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent
+            aria-label={ariaLabel}
+            data-richtext-toolbar-owner={ownerId}
+          >
+            {content}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+      )
+    return (
+      <DropdownMenu key={name}>
+        <DropdownMenuTrigger variant="ghost" icon={icon}>
+          {label}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          aria-label={ariaLabel}
+          data-richtext-toolbar-owner={ownerId}
+        >
+          {content}
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
   if ('group' in entry) {
@@ -210,32 +231,29 @@ function renderEntry(
   const title = entry.title ?? text(label) ?? humanize(name)
   if (menu) {
     return (
-      <MenuItem
+      <DropdownMenuItem
         key={name}
-        id={name}
+        icon={entry.icon?.(context)}
         textValue={title}
-        isDisabled={entry.disabled?.(context)}
-        onAction={() => entry.onSelect(context)}
+        disabled={entry.disabled?.(context)}
+        onSelect={() => entry.onSelect(context)}
       >
-        {entry.icon && <Icon icon={entry.icon(context)} data-slot="icon" />}
-        <span>{label ?? title}</span>
-      </MenuItem>
+        {label ?? title}
+      </DropdownMenuItem>
     )
   }
   return (
     <Button
       key={name}
-      size="icon-nav"
-      appearance={entry.active?.(context) ? 'active' : 'plain'}
+      size="icon-lg"
+      variant="ghost"
+      active={entry.active?.(context)}
       aria-label={title}
-      isDisabled={entry.disabled?.(context)}
-      onPress={() => entry.onSelect(context)}
+      icon={entry.icon?.(context)}
+      disabled={entry.disabled?.(context)}
+      onClick={() => entry.onSelect(context)}
     >
-      {entry.icon ? (
-        <Icon icon={entry.icon(context)} data-slot="icon" />
-      ) : (
-        label
-      )}
+      {entry.icon ? null : label}
     </Button>
   )
 }

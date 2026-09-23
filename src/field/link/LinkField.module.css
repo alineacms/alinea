@@ -183,6 +183,13 @@
   padding: 0;
 }
 
+.LinkFieldView-settingsSeparator {
+  height: 1px;
+  margin: 4px 8px;
+  border: none;
+  background-color: var(--alinea-border);
+}
+
 .LinkFieldView-rowDropTarget {
   display: grid;
 }

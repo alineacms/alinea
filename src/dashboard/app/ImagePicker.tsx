@@ -148,8 +148,8 @@ function ImagePickerModalContent({label, options}: ExplorerModalProps) {
               {selectedItems} {selectedItems === 1 ? 'item' : 'items'} selected
             </ExplorerModalSelection>
             <ExplorerModalActions>
-              <Button onPress={modal.close}>Cancel</Button>
-              <Button intent="primary" onPress={onSubmit}>
+              <Button onClick={modal.close}>Cancel</Button>
+              <Button color="primary" onClick={onSubmit}>
                 Select
               </Button>
             </ExplorerModalActions>

@@ -40,9 +40,9 @@ export function AccessDenied({canManageMembers, scope}: AccessDeniedProps) {
               <p className={styles.AccessDenied.message()}>{message}</p>
               {canManageMembers && (
                 <Button
-                  appearance="plain"
-                  intent="primary"
-                  onPress={() => setRoute({page: 'users'})}
+                  variant="ghost"
+                  color="primary"
+                  onClick={() => setRoute({page: 'users'})}
                 >
                   Manage users
                 </Button>

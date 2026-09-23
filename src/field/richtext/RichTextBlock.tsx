@@ -1,6 +1,5 @@
 import {
   Button,
-  DialogTrigger,
   Icon,
   List,
   ListRow,
@@ -11,7 +10,9 @@ import {
   ListRowDragHandle,
   ListRowHeader,
   ListRowSettings,
-  Popover
+  Popover,
+  PopoverContent,
+  PopoverTrigger
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Type} from '#/core/Type.js'
@@ -87,36 +88,40 @@ export const RichTextBlock = memo(function RichTextBlock({
             </ListRowBadges>
           </ListRowDrag>
           <ListRowActions>
-            <DialogTrigger isOpen={actionsOpen} onOpenChange={setActionsOpen}>
-              <Button
-                appearance="plain"
+            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+              <PopoverTrigger
+                variant="ghost"
                 aria-label={`${label} actions`}
                 icon={IcRoundMoreHoriz}
-                size="icon-small"
+                size="icon-sm"
               />
-              <Popover placement="bottom right">
+              <PopoverContent
+                aria-label={`${label} actions`}
+                side="bottom"
+                align="end"
+              >
                 <ListRowSettings actions>
                   <Button
-                    appearance="plain"
-                    isDisabled={readOnly}
-                    onPress={() => {
+                    variant="ghost"
+                    icon={IcBaselineContentCopy}
+                    disabled={readOnly}
+                    onClick={() => {
                       onDuplicate()
                       closeActions()
                     }}
                   >
-                    <Icon icon={IcBaselineContentCopy} />
                     Duplicate
                   </Button>
                 </ListRowSettings>
-              </Popover>
-            </DialogTrigger>
+              </PopoverContent>
+            </Popover>
             <Button
-              appearance="plain"
+              variant="ghost"
               aria-label={`Remove ${label}`}
               icon={IcRoundClose}
-              isDisabled={readOnly}
-              onPress={onDelete}
-              size="icon-small"
+              disabled={readOnly}
+              onClick={onDelete}
+              size="icon-sm"
             />
           </ListRowActions>
         </ListRowHeader>

@@ -298,10 +298,10 @@ export function DynamicList() {
       }}
     >
       <Button
-        appearance="outline"
-        intent="secondary"
-        isPending={isPending}
-        onPress={handleSimulateTransition}
+        variant="outline"
+        color="secondary"
+        loading={isPending}
+        onClick={handleSimulateTransition}
       >
         Simulate transition
       </Button>

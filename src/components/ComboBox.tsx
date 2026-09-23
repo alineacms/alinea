@@ -19,7 +19,7 @@ import {
 } from '../dashboard/icons.js'
 import css from './ComboBox.module.css'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
-import {Popover} from './Popover.js'
+import {PopoverSurface} from './internal/PopoverSurface.js'
 
 const styles = styler(css)
 
@@ -83,7 +83,7 @@ function ComboBoxPopover<T extends object>(props: ComboBoxProps<T>) {
   const hasClear = Boolean(state?.inputValue)
 
   return (
-    <Popover
+    <PopoverSurface
       className={styles.ComboBoxPopover()}
       data-clear={hasClear || undefined}
     >
@@ -94,7 +94,7 @@ function ComboBoxPopover<T extends object>(props: ComboBoxProps<T>) {
       >
         {props.children}
       </ListBox>
-    </Popover>
+    </PopoverSurface>
   )
 }
 

@@ -1,4 +1,4 @@
-import {Button, DialogTrigger, TextField} from '#/components.js'
+import {Button, Dialog, TextField} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {Entry} from '#/core/Entry.js'
 import type {Graph} from '#/core/Graph.js'
@@ -176,8 +176,8 @@ function PickRichTextImage({picker}: PickTextLinkProps) {
   }
 
   return (
-    <DialogTrigger
-      isOpen
+    <Dialog
+      open
       onOpenChange={isOpen => {
         if (!isOpen && !confirming.current) picker.cancel()
       }}
@@ -191,7 +191,7 @@ function PickRichTextImage({picker}: PickTextLinkProps) {
         selectionMode="single"
         onConfirm={onConfirm}
       />
-    </DialogTrigger>
+    </Dialog>
   )
 }
 
@@ -283,10 +283,10 @@ function PickTextLinkForm({picker, linkOptions}: PickTextLinkProps) {
         </DashboardModalFormBody>
         <DashboardModalFormFooter>
           <Button
-            appearance="outline"
-            intent="secondary"
+            variant="outline"
+            color="secondary"
             type="button"
-            onPress={modal.close}
+            onClick={modal.close}
           >
             Cancel
           </Button>

@@ -166,7 +166,7 @@ export function NotFoundPanel({
             <code className={styles.MissingEntry.id()}>{requestedValue}</code>
           </p>
           {onAction && actionLabel && (
-            <Button onPress={onAction}>{actionLabel}</Button>
+            <Button onClick={onAction}>{actionLabel}</Button>
           )}
         </Surface>
       </RailBody>
@@ -191,10 +191,10 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
     <Tooltip delay={300} tooltip={tooltip}>
       <Button
         aria-label={label}
-        appearance="plain"
+        variant="ghost"
         icon={ViewIcon}
         size="icon"
-        onPress={() =>
+        onClick={() =>
           setRoute({
             workspace: page.workspace,
             root: page.root,
@@ -436,14 +436,14 @@ function EntryEditorContent({
               This entry has unsaved changes
             </DashboardModalContent>
             <DashboardModalFooter>
-              <Button onPress={discardAndConfirm} appearance="plain">
+              <Button onClick={discardAndConfirm} variant="ghost">
                 Discard my changes
               </Button>
               <div className={styles.EntryEditorContent.navigationActions()}>
                 {dirtyActions.publish && (
                   <Button
-                    onPress={publishAndConfirm}
-                    intent={canSaveDraft ? 'secondary' : 'primary'}
+                    onClick={publishAndConfirm}
+                    color={canSaveDraft ? 'secondary' : 'primary'}
                     icon={IcRoundCheck}
                   >
                     Publish
@@ -451,8 +451,8 @@ function EntryEditorContent({
                 )}
                 {dirtyActions.saveDraft && (
                   <Button
-                    onPress={saveDraftAndConfirm}
-                    intent="primary"
+                    onClick={saveDraftAndConfirm}
+                    color="primary"
                     icon={IcRoundSave}
                   >
                     Save as draft

@@ -32,7 +32,7 @@ import {
 } from '../dashboard/icons.js'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
-import {Popover} from './Popover.js'
+import {PopoverSurface} from './internal/PopoverSurface.js'
 
 import css from './MultipleSelect.module.css'
 
@@ -182,7 +182,7 @@ export function MultipleSelect<T extends SelectedKey>({
               />
             </Button>
           </Group>
-          <Popover
+          <PopoverSurface
             className={styles.MultipleSelectPopover()}
             triggerRef={triggerRef}
           >
@@ -228,7 +228,7 @@ export function MultipleSelect<T extends SelectedKey>({
                 {children}
               </ListBox>
             </Autocomplete>
-          </Popover>
+          </PopoverSurface>
         </Label>
       </SelectPrimitive>
       {name && (

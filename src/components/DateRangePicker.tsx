@@ -14,7 +14,7 @@ import {RangeCalendar} from './Calendar.js'
 import css from './DateRangePicker.module.css'
 import {Icon} from './Icon.js'
 import {Label, type LabelSharedProps, labelProps} from './Label.js'
-import {Popover} from './Popover.js'
+import {PopoverSurface} from './internal/PopoverSurface.js'
 
 const styles = styler(css)
 
@@ -64,11 +64,11 @@ export function DateRangePicker<T extends DateValue>({
           </Button>
         </Group>
       </Label>
-      <Popover>
+      <PopoverSurface>
         <Dialog className={styles.DateRangePicker.dialog()}>
           <RangeCalendar />
         </Dialog>
-      </Popover>
+      </PopoverSurface>
     </DateRangePickerPrimitive>
   )
 }

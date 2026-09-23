@@ -109,37 +109,37 @@ function EntrySidebarBrowserPreviewHeader({
     <RailHeader className={styles.EntrySidebarPreview.subheader()}>
       <div className={styles.EntrySidebarPreview.controls()}>
         <Button
-          appearance="plain"
+          variant="ghost"
           size="icon"
           icon={IcRoundArrowBack}
           aria-label="Go back in preview"
-          isDisabled={!canOpenPreview}
-          onPress={onPrevious}
+          disabled={!canOpenPreview}
+          onClick={onPrevious}
         />
         <Button
-          appearance="plain"
+          variant="ghost"
           size="icon"
           icon={IcRoundArrowForward}
           aria-label="Go forward in preview"
-          isDisabled={!canOpenPreview}
-          onPress={onNext}
+          disabled={!canOpenPreview}
+          onClick={onNext}
         />
         <Button
-          appearance="plain"
+          variant="ghost"
           size="icon"
           icon={IcRoundRefresh}
           aria-label={reloadLabel}
-          isDisabled={!onReload}
-          onPress={onReload}
+          disabled={!onReload}
+          onClick={onReload}
         />
       </div>
       <Button
-        appearance="plain"
+        variant="ghost"
         size="icon"
         icon={IcRoundOpenInNew}
         aria-label="Open preview in new tab"
-        isDisabled={!canOpenPreview}
-        onPress={onOpen}
+        disabled={!canOpenPreview}
+        onClick={onOpen}
       />
     </RailHeader>
   )

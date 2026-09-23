@@ -62,7 +62,7 @@ function DashboardRouteErrorBoundary({
             {message}
           </pre>
           <div className={styles.DashboardErrorBoundary.actions()}>
-            <Button intent="primary" onPress={reloadDashboard}>
+            <Button color="primary" onClick={reloadDashboard}>
               Reload dashboard
             </Button>
           </div>

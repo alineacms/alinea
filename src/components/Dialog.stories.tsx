@@ -1,41 +1,63 @@
-import {use} from 'react'
-import {DialogTrigger, OverlayTriggerStateContext} from 'react-aria-components'
-import {IcRoundClose} from '../dashboard/icons.js'
+import {useState} from 'react'
 import {Button} from './Button.js'
-import {Dialog} from './Dialog.js'
-import {Modal} from './Modal.js'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from './Dialog.js'
 import {TextField} from './TextField.js'
 
-function CloseButton() {
-  const state = use(OverlayTriggerStateContext)
+export function Example() {
   return (
-    <Button size="icon-nav" appearance="plain" onPress={() => state!.close()}>
-      <IcRoundClose data-slot="icon" />
-    </Button>
+    <Dialog>
+      <DialogTrigger color="primary">Edit profile</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here.
+          </DialogDescription>
+        </DialogHeader>
+        <TextField label="Name" defaultValue="Ada Lovelace" autoFocus />
+        <DialogFooter>
+          <DialogClose variant="ghost">Cancel</DialogClose>
+          <DialogClose color="primary">Save</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
-export const Example = () => {
+export function Controlled() {
+  const [open, setOpen] = useState(false)
   return (
-    <DialogTrigger>
-      <Button>Sign up…</Button>
-      <Modal>
-        <Dialog>
-          Sign up
-          <CloseButton />
-          <form>
-            <TextField name="fname" isRequired label="First Name" autoFocus />
-            <TextField name="lname" isRequired label="Last Name" />
-            <Button slot="close" style={{marginTop: 8}}>
-              Submit
+    <>
+      <Button onClick={() => setOpen(true)}>Open from outside</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent role="alertdialog" dismissable={false}>
+          <DialogHeader>
+            <DialogTitle>Discard changes?</DialogTitle>
+            <DialogDescription>This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>
+              Keep editing
             </Button>
-          </form>
-        </Dialog>
-      </Modal>
-    </DialogTrigger>
+            <Button color="destructive" onClick={() => setOpen(false)}>
+              Discard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
 export default {
-  title: 'Components / Dialog'
+  title: 'Pure components / Dialog'
 }

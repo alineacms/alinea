@@ -1,4 +1,4 @@
-import {Button, DialogTrigger} from '#/components.js'
+import {Button, Dialog, DialogTrigger} from '#/components.js'
 import type {WorkspaceInternal} from '#/core/Workspace.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
 import type {RootAtoms} from '#/dashboard/atoms/root.js'
@@ -94,18 +94,18 @@ export function CreateEntryButton({
   const canCreate = useAtomValueRaw(root.tree(page.locale).canCreate)
   if (!canCreate) return null
   return (
-    <DialogTrigger>
-      <Button
+    <Dialog>
+      <DialogTrigger
         aria-label="Create new"
         className={styles.DashboardLayout.create({toolbar})}
         icon={IcRoundAdd}
-        intent={toolbar ? 'primary' : 'secondary'}
+        color={toolbar ? 'primary' : 'secondary'}
       >
         Create new
-      </Button>
+      </DialogTrigger>
       <DashboardModal>
         <CreateEntry />
       </DashboardModal>
-    </DialogTrigger>
+    </Dialog>
   )
 }

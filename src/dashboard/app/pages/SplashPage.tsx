@@ -1,4 +1,12 @@
-import {Button, Icon, Menu, MenuItem, Surface} from '#/components.js'
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Icon,
+  Surface
+} from '#/components.js'
 import {Entry, type EntryAuditUser} from '#/core/Entry.js'
 import {timestampFromId} from '#/core/Id.js'
 import {getRoot, getType} from '#/core/Internal.js'
@@ -229,7 +237,7 @@ function SplashPage({
             {searchRoot && (
               <GlobalSearch initialSearchScope="everything" root={searchRoot}>
                 <Button
-                  appearance="plain"
+                  variant="ghost"
                   className={styles.SplashPage.action()}
                   aria-label="Search content"
                 >
@@ -245,9 +253,9 @@ function SplashPage({
             )}
             {canManageMembers && (
               <Button
-                appearance="plain"
+                variant="ghost"
                 className={styles.SplashPage.action()}
-                onPress={() => setRoute({page: 'users'})}
+                onClick={() => setRoute({page: 'users'})}
               >
                 <Icon
                   icon={IcOutlineSettings}
@@ -300,9 +308,9 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
       <header className={styles.SplashPage.card.header()}>
         <h2 className={styles.SplashPage.card.header.title()}>
           <Button
-            appearance="plain"
+            variant="ghost"
             className={styles.SplashPage.card.header.button()}
-            onPress={() => setRoute(openRoute)}
+            onClick={() => setRoute(openRoute)}
           >
             <WorkspaceAvatar color={workspace.color} icon={workspace.icon} />
             <span className={styles.SplashPage.card.header.content()}>
@@ -316,37 +324,39 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
           {visibleRoots.map(root => (
             <Button
               key={root.key}
-              appearance="plain"
+              variant="ghost"
               className={styles.SplashPage.root()}
               icon={root.icon}
-              onPress={() => setRoute({workspace: key, root: root.key})}
+              onClick={() => setRoute({workspace: key, root: root.key})}
             >
               {root.label}
             </Button>
           ))}
           {remainingRoots.length > 0 && (
-            <Menu
-              aria-label={`More roots in ${workspace.label}`}
-              onAction={rootKey =>
-                setRoute({workspace: key, root: String(rootKey)})
-              }
-              popoverProps={{placement: 'bottom start'}}
-              label={
-                <Button appearance="plain" className={styles.SplashPage.root()}>
-                  +{remainingRoots.length} more
-                </Button>
-              }
-            >
-              {remainingRoots.map(root => (
-                <MenuItem key={root.key} id={root.key} textValue={root.label}>
-                  <Icon
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                variant="ghost"
+                className={styles.SplashPage.root()}
+              >
+                +{remainingRoots.length} more
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                aria-label={`More roots in ${workspace.label}`}
+                side="bottom"
+                align="start"
+              >
+                {remainingRoots.map(root => (
+                  <DropdownMenuItem
+                    key={root.key}
                     icon={root.icon}
-                    className={styles.SplashPage.root.menuIcon()}
-                  />
-                  {root.label}
-                </MenuItem>
-              ))}
-            </Menu>
+                    textValue={root.label}
+                    onSelect={() => setRoute({workspace: key, root: root.key})}
+                  >
+                    {root.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </header>
@@ -355,9 +365,9 @@ function WorkspaceCard({summary}: WorkspaceCardProps) {
           {entries.map(entry => (
             <Button
               key={entry.id}
-              appearance="plain"
+              variant="ghost"
               className={styles.SplashPage.entry()}
-              onPress={() =>
+              onClick={() =>
                 setRoute({
                   workspace: entry.workspace,
                   root: entry.root,
