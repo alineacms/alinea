@@ -27,6 +27,7 @@
   text-align: left;
   text-decoration: none;
   vertical-align: middle;
+  white-space: nowrap;
   appearance: none;
   outline: none;
   cursor: pointer;
