@@ -1,30 +1,145 @@
 import styler from '@alinea/styler'
-import type {
-  ComponentPropsWithoutRef,
-  ComponentType,
-  HTMLAttributes,
-  ReactNode
+import {
+  type ComponentPropsWithoutRef,
+  type ComponentType,
+  createContext,
+  type DOMAttributes,
+  type HTMLAttributes,
+  type ReactNode,
+  type RefObject,
+  useContext,
+  useMemo,
+  useRef,
+  useState
 } from 'react'
+import {
+  DragPreview,
+  type DragPreviewRenderer,
+  mergeProps,
+  useDrag,
+  useDrop
+} from 'react-aria'
 import css from './List.module.css'
 import {Button, type ButtonProps} from './Button.js'
 import {FieldDescription, FieldSharedBadge} from './Field.js'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {Surface, SurfaceRow, type SurfaceProps} from './Surface.js'
+import type {DragMoveEvent, DropTarget, Key} from './types.js'
 
 const styles = styler(css)
 
-export interface ListProps extends SurfaceProps {
-  empty?: boolean
+const DEFAULT_DRAG_TYPE = 'alinea/list-row'
+
+type RowDropPosition = 'before' | 'after'
+
+interface ListRowDropTarget extends DropTarget {
+  position: RowDropPosition
 }
 
-export function List({className, empty, role, ...props}: ListProps) {
+interface ListReorderContextValue {
+  dragType: string
+  draggingKey: Key | null
+  dropTarget: ListRowDropTarget | null
+  /** Whether the current drag was started with a pointer (native drag) */
+  pointerDrag: RefObject<boolean>
+  /** Row element of the dragged row */
+  source: RefObject<HTMLElement | null>
+  startDrag(key: Key, row: HTMLElement | null, pointer: boolean): void
+  endDrag(): void
+  setDropTarget(target: ListRowDropTarget | null, exit?: boolean): void
+  drop(target: ListRowDropTarget): void
+}
+
+const ListReorderContext = createContext<ListReorderContextValue | null>(null)
+
+interface ListRowDragContextValue {
+  dragProps: DOMAttributes<HTMLElement>
+  dragging: boolean
+  handle: RefObject<HTMLSpanElement>
+}
+
+const ListRowDragContext = createContext<ListRowDragContextValue | null>(null)
+
+export interface ListProps extends SurfaceProps {
+  empty?: boolean
+  /**
+   * Enables reordering: rows with an `id` can be dragged by their
+   * `ListRowDragHandle`, with a pointer or with the keyboard (Enter on the
+   * handle, Tab to a row, Enter to drop). Called with the key of the dragged
+   * row and the row it was dropped before or after.
+   * Rows only drop within the list they were dragged from.
+   */
+  onReorder?: (event: DragMoveEvent) => void
+  /** Mime type the dragged rows carry, defaults to `alinea/list-row` */
+  dragType?: string
+}
+
+export function List({
+  className,
+  empty,
+  role,
+  onReorder,
+  dragType = DEFAULT_DRAG_TYPE,
+  ...props
+}: ListProps) {
+  const [draggingKey, setDraggingKey] = useState<Key | null>(null)
+  const [dropTarget, setDropTargetState] = useState<ListRowDropTarget | null>(
+    null
+  )
+  const pointerDrag = useRef(false)
+  const source = useRef<HTMLElement | null>(null)
+  const dragged = useRef<Key | null>(null)
+  const reorderRef = useRef(onReorder)
+  reorderRef.current = onReorder
+  const reorderable = Boolean(onReorder)
+  const reorder = useMemo<ListReorderContextValue | null>(() => {
+    if (!reorderable) return null
+    return {
+      dragType,
+      draggingKey,
+      dropTarget,
+      pointerDrag,
+      source,
+      startDrag(key, row, pointer) {
+        dragged.current = key
+        source.current = row
+        pointerDrag.current = pointer
+        setDraggingKey(key)
+      },
+      endDrag() {
+        dragged.current = null
+        source.current = null
+        pointerDrag.current = false
+        setDraggingKey(null)
+        setDropTargetState(null)
+      },
+      setDropTarget(target, exit) {
+        setDropTargetState(current => {
+          if (!exit) return target
+          // Only clear the target if it was not replaced by another row yet
+          return current && target && current.key !== target.key
+            ? current
+            : null
+        })
+      },
+      drop(target) {
+        const key = dragged.current
+        setDropTargetState(null)
+        if (key === null || key === target.key) return
+        reorderRef.current?.({keys: new Set([key]), target})
+      }
+    }
+  }, [reorderable, dragType, draggingKey, dropTarget])
   return (
-    <Surface
-      {...props}
-      className={className}
-      role={role ?? (empty ? 'status' : 'list')}
-    />
+    <ListReorderContext.Provider value={reorder}>
+      <Surface
+        data-slot="list"
+        {...props}
+        className={className}
+        role={role ?? (empty ? 'status' : 'list')}
+      />
+    </ListReorderContext.Provider>
   )
 }
 
@@ -249,14 +364,49 @@ export function ListCreateRow({
   )
 }
 
-export interface ListRowProps extends ComponentPropsWithoutRef<'div'> {
+export interface ListRowProps extends Omit<
+  ComponentPropsWithoutRef<'div'>,
+  'id'
+> {
+  /**
+   * Identifies the row within its list. Rows with an id can be dragged when
+   * the list has `onReorder`. The id is not rendered as a DOM id.
+   */
+  id?: Key
+  /** Shows the row as being dragged, detected automatically when reordering */
   dragging?: boolean
   first?: boolean
+  /** Rendered under the pointer while dragging, eg. a `ListDragPreview` */
+  dragPreview?: ReactNode
 }
 
-export function ListRow({className, dragging, first, ...props}: ListRowProps) {
+export function ListRow({id, dragPreview, ...props}: ListRowProps) {
+  const reorder = useContext(ListReorderContext)
+  if (reorder && id !== undefined)
+    return (
+      <ReorderableListRow
+        {...props}
+        dragPreview={dragPreview}
+        id={id}
+        reorder={reorder}
+      />
+    )
+  return (
+    <ListRowDragContext.Provider value={null}>
+      <ListRowElement {...props} />
+    </ListRowDragContext.Provider>
+  )
+}
+
+function ListRowElement({
+  className,
+  dragging,
+  first,
+  ...props
+}: Omit<ListRowProps, 'id' | 'dragPreview'>) {
   return (
     <div
+      data-slot="list-row"
       {...props}
       className={styles.ListRow(styler.merge({className}))}
       data-dragging={dragging || undefined}
@@ -267,20 +417,169 @@ export function ListRow({className, dragging, first, ...props}: ListRowProps) {
   )
 }
 
+interface ReorderableListRowProps extends Omit<ListRowProps, 'id'> {
+  id: Key
+  reorder: ListReorderContextValue
+}
+
+function ReorderableListRow({
+  id,
+  reorder,
+  dragPreview,
+  dragging,
+  children,
+  ...props
+}: ReorderableListRowProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const handle = useRef<HTMLSpanElement>(null)
+  const preview = useRef<DragPreviewRenderer | null>(null)
+  const nativeDrag = useRef(false)
+  const {dragType, draggingKey, dropTarget} = reorder
+  const {dragProps, isDragging} = useDrag({
+    getItems() {
+      return [{'text/plain': String(id), [dragType]: String(id)}]
+    },
+    getAllowedDropOperations() {
+      return ['move']
+    },
+    onDragStart() {
+      reorder.startDrag(id, ref.current, nativeDrag.current)
+    },
+    onDragEnd() {
+      const keyboard = !nativeDrag.current
+      nativeDrag.current = false
+      reorder.endDrag()
+      // Keep keyboard focus on the moved row
+      if (keyboard)
+        requestAnimationFrame(() => {
+          if (handle.current?.isConnected) handle.current.focus()
+        })
+    },
+    preview: dragPreview ? preview : undefined
+  })
+  const handleDragProps = useMemo<DOMAttributes<HTMLElement>>(
+    () => ({
+      ...dragProps,
+      onDragStart(event) {
+        // Native drag events are only fired for pointer drags
+        nativeDrag.current = true
+        dragProps.onDragStart?.(event)
+      }
+    }),
+    [dragProps]
+  )
+  function dropPosition(y: number): RowDropPosition {
+    const row = ref.current
+    if (!row) return 'after'
+    if (!reorder.pointerDrag.current) {
+      // Keyboard drops take the place of the target row
+      const source = reorder.source.current
+      if (!source || source === row) return 'after'
+      const sourceFollows =
+        row.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING
+      return sourceFollows ? 'before' : 'after'
+    }
+    return y < row.offsetHeight / 2 ? 'before' : 'after'
+  }
+  function acceptDrop(
+    types: {has(type: string): boolean},
+    allowedOperations: Array<string>
+  ) {
+    return types.has(dragType) && allowedOperations.includes('move')
+      ? 'move'
+      : 'cancel'
+  }
+  const {dropProps} = useDrop({
+    ref,
+    isDisabled: draggingKey === null,
+    getDropOperation: acceptDrop,
+    getDropOperationForPoint: acceptDrop,
+    onDropEnter(event) {
+      reorder.setDropTarget({key: id, position: dropPosition(event.y)})
+    },
+    onDropMove(event) {
+      reorder.setDropTarget({key: id, position: dropPosition(event.y)})
+    },
+    onDropExit() {
+      reorder.setDropTarget({key: id, position: 'after'}, true)
+    },
+    onDrop(event) {
+      reorder.drop({key: id, position: dropPosition(event.y)})
+    }
+  })
+  const active = dropTarget?.key === id ? dropTarget.position : undefined
+  const rowDragging = dragging ?? isDragging
+  const dragContext = useMemo<ListRowDragContextValue>(
+    () => ({dragProps: handleDragProps, dragging: rowDragging, handle}),
+    [handleDragProps, rowDragging]
+  )
+  return (
+    <ListRowDragContext.Provider value={dragContext}>
+      <div
+        {...dropProps}
+        className={styles.ListRow.dropTarget()}
+        data-slot="list-row-drop-target"
+        ref={ref}
+        tabIndex={draggingKey !== null ? -1 : undefined}
+      >
+        <ListRowElement {...props} dragging={rowDragging}>
+          {dragPreview && (
+            <DragPreview ref={preview}>{() => <>{dragPreview}</>}</DragPreview>
+          )}
+          {children}
+        </ListRowElement>
+        <div
+          aria-hidden
+          className={styles.ListRow.dropIndicator()}
+          data-active={active === 'before' || undefined}
+          data-position="before"
+          data-slot="list-row-drop-indicator"
+        />
+        <div
+          aria-hidden
+          className={styles.ListRow.dropIndicator()}
+          data-active={active === 'after' || undefined}
+          data-position="after"
+          data-slot="list-row-drop-indicator"
+        />
+      </div>
+    </ListRowDragContext.Provider>
+  )
+}
+
 export interface ListRowDragHandleProps extends ComponentPropsWithoutRef<'span'> {
+  /** Shows the handle as dragging, detected automatically when reordering */
   dragging?: boolean
 }
 
+/**
+ * Drags its `ListRow` when the list has `onReorder`. Focusable in that case:
+ * press Enter to start a keyboard drag.
+ */
 export function ListRowDragHandle({
   className,
   dragging,
   ...props
 }: ListRowDragHandleProps) {
+  const drag = useContext(ListRowDragContext)
+  if (!drag)
+    return (
+      <span
+        data-slot="list-row-drag-handle"
+        {...props}
+        className={styles.ListRowDragHandle(styler.merge({className}))}
+        data-dragging={dragging || undefined}
+      />
+    )
   return (
     <span
-      {...props}
+      data-slot="list-row-drag-handle"
+      role="button"
+      tabIndex={0}
+      {...mergeProps(props, drag.dragProps)}
       className={styles.ListRowDragHandle(styler.merge({className}))}
-      data-dragging={dragging || undefined}
+      data-dragging={(dragging ?? drag.dragging) || undefined}
+      ref={drag.handle}
     />
   )
 }
@@ -314,11 +613,12 @@ export interface ListRowDragProps extends ComponentPropsWithoutRef<'div'> {
 }
 
 export function ListRowDrag({className, dragging, ...props}: ListRowDragProps) {
+  const drag = useContext(ListRowDragContext)
   return (
     <div
       {...props}
       className={styles.ListRowDrag(styler.merge({className}))}
-      data-dragging={dragging || undefined}
+      data-dragging={(dragging ?? drag?.dragging) || undefined}
     />
   )
 }

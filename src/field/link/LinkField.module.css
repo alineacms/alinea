@@ -190,37 +190,6 @@
   background-color: var(--alinea-border);
 }
 
-.LinkFieldView-rowDropTarget {
-  display: grid;
-}
-
-.LinkFieldView-dropIndicator {
-  position: relative;
-  z-index: 2;
-  height: 8px;
-  margin: -4px 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 140ms ease-out;
-}
-
-.LinkFieldView-dropIndicator::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 190px;
-  max-width: calc(100% - 20px);
-  height: 6px;
-  background: var(--alinea-primary);
-  border-radius: 4px;
-  transform: translate(-50%, -50%);
-}
-
-.LinkFieldView-dropIndicator[data-active] {
-  opacity: 1;
-}
-
 @keyframes LinkFieldView-skeleton-pulse {
   0%,
   100% {

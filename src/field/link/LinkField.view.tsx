@@ -3,6 +3,7 @@ import {
   type ButtonProps,
   Dialog,
   DialogTrigger,
+  type DragMoveEvent,
   Field,
   Icon,
   List,
@@ -82,15 +83,7 @@ import type {
   ReactNode,
   RefObject
 } from 'react'
-import {Fragment, useMemo, useRef, useState} from 'react'
-import {
-  type DragItem,
-  DragPreview,
-  type DragPreviewRenderer,
-  type DropItem,
-  useDrag,
-  useDrop
-} from 'react-aria'
+import {useMemo, useRef, useState} from 'react'
 import css from './LinkField.module.css'
 
 const styles = styler(css)
@@ -808,33 +801,6 @@ function reorderIndex(fromIndex: number, targetIndex: number): number {
   return fromIndex < targetIndex ? targetIndex - 1 : targetIndex
 }
 
-function dragRowItem(id: string): DragItem {
-  return {
-    'text/plain': id,
-    [LINK_FIELD_ROW_DRAG_TYPE]: id
-  }
-}
-
-function rowDropPosition(
-  row: HTMLDivElement | null,
-  y: number
-): 'before' | 'after' {
-  if (!row) return 'after'
-  return y < row.offsetHeight / 2 ? 'before' : 'after'
-}
-
-async function getDraggedRowId(
-  items: Array<DropItem>,
-  dragType: string
-): Promise<string | null> {
-  for (const item of items) {
-    if (item.kind === 'text' && item.types.has(dragType) && item.getText) {
-      return item.getText(dragType)
-    }
-  }
-  return null
-}
-
 interface SingleLinkCreateActionsProps extends StandardFieldActionProps {
   value?: LinkFieldRow
 }
@@ -1516,43 +1482,19 @@ function SingleLinkRow({field, node, value}: SingleLinkRowProps) {
 }
 
 interface MultipleLinkRowProps {
-  dragging: boolean
   expanded: boolean
   field: LinksField<LinkFieldRow, unknown>
   index: number
   node: ReactiveNode<LinkFieldRow>
-  onMoveRow: (rowId: string, targetIndex: number) => void
-  onRowDragEnd: () => void
-  onRowDragStart: () => void
-  onDropIndicatorChange: (position: 'before' | 'after' | null) => void
   onToggleRow: (rowId: string) => void
   value: LinkFieldRow
 }
 
-interface LinkFieldDropIndicatorState {
-  index: number
-  position: 'before' | 'after'
-}
-
-interface LinkFieldDragPreviewProps {
-  icon: ComponentType
-  label: ReactNode
-}
-
-function LinkFieldDragPreview({icon, label}: LinkFieldDragPreviewProps) {
-  return <ListDragPreview icon={icon} label={label} />
-}
-
 function MultipleLinkRow({
-  dragging,
   expanded,
   field,
   index,
   node,
-  onMoveRow,
-  onRowDragEnd,
-  onRowDragStart,
-  onDropIndicatorChange,
   onToggleRow,
   value
 }: MultipleLinkRowProps) {
@@ -1568,51 +1510,6 @@ function MultipleLinkRow({
   const readOnly = Boolean(options.readOnly)
   const [actionsOpen, setActionsOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
-  const dragPreview = useRef<DragPreviewRenderer | null>(null)
-  const rowRef = useRef<HTMLDivElement>(null)
-  const {dragProps, isDragging} = useDrag({
-    getItems() {
-      return [dragRowItem(itemId)]
-    },
-    getAllowedDropOperations() {
-      return ['move']
-    },
-    isDisabled: readOnly,
-    onDragEnd: onRowDragEnd,
-    onDragStart: onRowDragStart,
-    preview: dragPreview
-  })
-  const {dropProps, isDropTarget} = useDrop({
-    ref: rowRef,
-    isDisabled: readOnly || !dragging,
-    getDropOperation(types, allowedOperations) {
-      if (!types.has(LINK_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    getDropOperationForPoint(types, allowedOperations) {
-      if (!types.has(LINK_FIELD_ROW_DRAG_TYPE)) return 'cancel'
-      return allowedOperations.includes('move') ? 'move' : 'cancel'
-    },
-    onDropEnter(event) {
-      const position = rowDropPosition(rowRef.current, event.y)
-      onDropIndicatorChange(position)
-    },
-    onDropMove(event) {
-      const position = rowDropPosition(rowRef.current, event.y)
-      onDropIndicatorChange(position)
-    },
-    onDropExit() {
-      onDropIndicatorChange(null)
-    },
-    async onDrop(event) {
-      const position = rowDropPosition(rowRef.current, event.y)
-      const rowId = await getDraggedRowId(event.items, LINK_FIELD_ROW_DRAG_TYPE)
-      onDropIndicatorChange(null)
-      if (!rowId) return
-      onMoveRow(rowId, insertIndex(index, position))
-    }
-  })
-
   function closeActions() {
     setActionsOpen(false)
   }
@@ -1623,121 +1520,109 @@ function MultipleLinkRow({
 
   return (
     <>
-      <div
-        {...dropProps}
-        className={styles.LinkFieldView.rowDropTarget()}
-        ref={rowRef}
+      <ListRow
+        aria-label={`Link item ${index + 1}`}
+        dragPreview={
+          <ListDragPreview
+            icon={getLinkIcon(type)}
+            label={<LinkRowText node={node} />}
+          />
+        }
+        first={index === 0}
+        id={itemId}
+        role="listitem"
       >
-        <ListRow
-          aria-label={`Link item ${index + 1}`}
-          dragging={isDragging}
-          first={index === 0}
-          role="listitem"
-        >
-          <ListRowHeader first={index === 0} hasFold={hasFields}>
-            {!readOnly && (
-              <ListRowDragHandle
-                {...dragProps}
-                aria-label={`Drag link item ${index + 1}`}
-                dragging={isDragging}
-              />
-            )}
-            {imagePreviewEntryId && !hasFields && (
-              <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-            )}
-            <DragPreview ref={dragPreview}>
-              {() => (
-                <LinkFieldDragPreview
-                  icon={getLinkIcon(type)}
-                  label={<LinkRowText node={node} />}
+        <ListRowHeader first={index === 0} hasFold={hasFields}>
+          {!readOnly && (
+            <ListRowDragHandle aria-label={`Drag link item ${index + 1}`} />
+          )}
+          {imagePreviewEntryId && !hasFields && (
+            <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+          )}
+          <ListRowDrag>
+            <ListRowBadges>
+              {hasFields && (
+                <ListRowFoldButton
+                  aria-label={expanded ? 'Collapse link' : 'Expand link'}
+                  expanded={expanded}
+                  onClick={() => onToggleRow(itemId)}
                 />
               )}
-            </DragPreview>
-            <ListRowDrag dragging={isDragging}>
-              <ListRowBadges>
-                {hasFields && (
-                  <ListRowFoldButton
-                    aria-label={expanded ? 'Collapse link' : 'Expand link'}
-                    expanded={expanded}
-                    onClick={() => onToggleRow(itemId)}
-                  />
-                )}
-                {imagePreviewEntryId && hasFields && (
-                  <EntryLinkImagePreview entryId={imagePreviewEntryId} />
-                )}
-                <LinkTypeBadge picker={picker} type={type} value={value} />
-                <LinkMetaLabel
-                  className={styles.LinkFieldView.metaLabel()}
-                  node={node}
-                  value={value}
-                />
-                <EntryAnchorBadge node={node} value={value} />
-              </ListRowBadges>
-            </ListRowDrag>
-            <ListRowActions>
-              <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
-                <LinkSettingsButton />
-                <PopoverContent
-                  aria-label="Link settings"
-                  side="bottom"
-                  align="end"
-                >
-                  <ListRowSettings actions>
-                    <LinkRowActions
-                      closeActions={closeActions}
-                      isDisabled={readOnly}
-                      onEdit={() => setEditOpen(true)}
-                      picker={picker}
-                      type={type}
-                      value={value}
-                    />
-                  </ListRowSettings>
-                  <hr className={styles.LinkFieldView.settingsSeparator()} />
-                  <ListRowSettings>
-                    <LinkLabelField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                    <EntryAnchorField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                    <EntryLinkSuffixField
-                      isDisabled={readOnly}
-                      node={node}
-                      value={value}
-                    />
-                  </ListRowSettings>
-                </PopoverContent>
-              </Popover>
-              <Button
-                variant="ghost"
-                aria-label="Remove link"
-                icon={IcRoundClose}
-                disabled={readOnly}
-                onClick={removeLink}
-                size="icon-sm"
-              />
-            </ListRowActions>
-          </ListRowHeader>
-          {expanded && hasFields && (
-            <ListRowBody>
-              <LinkRowEditor node={node} picker={picker} />
-            </ListRowBody>
-          )}
-          {!expanded && picker?.fields && (
-            <ListRowFooter>
-              <CompactRecordFields
-                fields={Type.fields(picker.fields)}
-                layout="footer"
+              {imagePreviewEntryId && hasFields && (
+                <EntryLinkImagePreview entryId={imagePreviewEntryId} />
+              )}
+              <LinkTypeBadge picker={picker} type={type} value={value} />
+              <LinkMetaLabel
+                className={styles.LinkFieldView.metaLabel()}
+                node={node}
                 value={value}
               />
-            </ListRowFooter>
-          )}
-        </ListRow>
-      </div>
+              <EntryAnchorBadge node={node} value={value} />
+            </ListRowBadges>
+          </ListRowDrag>
+          <ListRowActions>
+            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+              <LinkSettingsButton />
+              <PopoverContent
+                aria-label="Link settings"
+                side="bottom"
+                align="end"
+              >
+                <ListRowSettings actions>
+                  <LinkRowActions
+                    closeActions={closeActions}
+                    isDisabled={readOnly}
+                    onEdit={() => setEditOpen(true)}
+                    picker={picker}
+                    type={type}
+                    value={value}
+                  />
+                </ListRowSettings>
+                <hr className={styles.LinkFieldView.settingsSeparator()} />
+                <ListRowSettings>
+                  <LinkLabelField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                  <EntryAnchorField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                  <EntryLinkSuffixField
+                    isDisabled={readOnly}
+                    node={node}
+                    value={value}
+                  />
+                </ListRowSettings>
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="ghost"
+              aria-label="Remove link"
+              icon={IcRoundClose}
+              disabled={readOnly}
+              onClick={removeLink}
+              size="icon-sm"
+            />
+          </ListRowActions>
+        </ListRowHeader>
+        {expanded && hasFields && (
+          <ListRowBody>
+            <LinkRowEditor node={node} picker={picker} />
+          </ListRowBody>
+        )}
+        {!expanded && picker?.fields && (
+          <ListRowFooter>
+            <CompactRecordFields
+              fields={Type.fields(picker.fields)}
+              layout="footer"
+              value={value}
+            />
+          </ListRowFooter>
+        )}
+      </ListRow>
       {picker && (
         <LinkPickerDialog
           isOpen={editOpen}
@@ -1755,20 +1640,6 @@ function MultipleLinkRow({
         />
       )}
     </>
-  )
-}
-
-interface LinkFieldDropIndicatorProps {
-  active: boolean
-}
-
-function LinkFieldDropIndicator({active}: LinkFieldDropIndicatorProps) {
-  return (
-    <div
-      aria-hidden
-      className={styles.LinkFieldView.dropIndicator()}
-      data-active={active || undefined}
-    />
   )
 }
 
@@ -1832,9 +1703,6 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     return Boolean(picker?.fields)
   })
   const [foldedIds, setFoldedIds] = useState<Set<string>>(new Set())
-  const [draggingRowId, setDraggingRowId] = useState<string | null>(null)
-  const [dropIndicator, setDropIndicator] =
-    useState<LinkFieldDropIndicatorState | null>(null)
   const rowIdsAtom = useMemo(
     () =>
       atom(get => {
@@ -1846,14 +1714,19 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
   const rowIds = useAtomValueRaw(rowIdsAtom)
   const moveRowAtom = useMemo(
     () =>
-      atom(null, (get, set, rowId: string, targetIndex: number) => {
+      atom(null, (get, set, {keys, target}: DragMoveEvent) => {
         const currentNodes = get(list.nodes) as Array<
           ReactiveNode<LinkFieldRow>
         >
-        const fromIndex = currentNodes.findIndex(node => {
-          return get(node.field('_id')) === rowId
-        })
-        if (fromIndex === -1) return
+        const ids = currentNodes.map(node => get(node.field('_id')))
+        const [rowId] = keys
+        const fromIndex = ids.indexOf(rowId)
+        const targetRow = ids.indexOf(target.key)
+        if (fromIndex === -1 || targetRow === -1) return
+        const targetIndex = insertIndex(
+          targetRow,
+          target.position === 'before' ? 'before' : 'after'
+        )
         const toIndex = reorderIndex(fromIndex, targetIndex)
         if (toIndex === fromIndex) return
         set(list.move, fromIndex, toIndex)
@@ -1876,69 +1749,33 @@ export function MultipleLinksFieldView({field}: MultipleLinksFieldViewProps) {
     })
   }
 
-  function isBoundaryDropTarget(index: number) {
-    return (
-      (dropIndicator?.index === index && dropIndicator.position === 'before') ||
-      (dropIndicator?.index === index - 1 && dropIndicator.position === 'after')
-    )
-  }
-
   const content = (hasRows || !readOnly) && (
-    <>
-      <LinkFieldDropIndicator
-        active={
-          dropIndicator?.index === 0 && dropIndicator.position === 'before'
-        }
-      />
-      <List aria-label={options.label || 'Links'}>
-        {nodes.length > 0 && (
-          <>
-            {nodes.map((node, index) => {
-              const value = links[index]
-              if (!value) return null
-              return (
-                <Fragment key={value._id}>
-                  {index > 0 && (
-                    <LinkFieldDropIndicator
-                      active={isBoundaryDropTarget(index)}
-                    />
-                  )}
-                  <MultipleLinkRow
-                    dragging={Boolean(draggingRowId)}
-                    expanded={!foldedIds.has(value._id)}
-                    field={field}
-                    index={index}
-                    node={node}
-                    onMoveRow={moveRow}
-                    onRowDragEnd={() => {
-                      setDraggingRowId(null)
-                      setDropIndicator(null)
-                    }}
-                    onRowDragStart={() => setDraggingRowId(value._id)}
-                    onDropIndicatorChange={position =>
-                      setDropIndicator(position ? {index, position} : null)
-                    }
-                    onToggleRow={toggleRow}
-                    value={value}
-                  />
-                </Fragment>
-              )
-            })}
-          </>
-        )}
-        <LinkFieldDropIndicator
-          active={
-            dropIndicator?.index === nodes.length - 1 &&
-            dropIndicator.position === 'after'
-          }
-        />
-        {!readOnly && (
-          <ListCreateRow empty={!hasRows}>
-            <MultipleLinkCreateActions field={field} />
-          </ListCreateRow>
-        )}
-      </List>
-    </>
+    <List
+      aria-label={options.label || 'Links'}
+      dragType={LINK_FIELD_ROW_DRAG_TYPE}
+      onReorder={readOnly ? undefined : moveRow}
+    >
+      {nodes.map((node, index) => {
+        const value = links[index]
+        if (!value) return null
+        return (
+          <MultipleLinkRow
+            key={value._id}
+            expanded={!foldedIds.has(value._id)}
+            field={field}
+            index={index}
+            node={node}
+            onToggleRow={toggleRow}
+            value={value}
+          />
+        )
+      })}
+      {!readOnly && (
+        <ListCreateRow empty={!hasRows}>
+          <MultipleLinkCreateActions field={field} />
+        </ListCreateRow>
+      )}
+    </List>
   )
 
   return (

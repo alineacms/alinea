@@ -1,4 +1,4 @@
-import {expect, test} from '@playwright/experimental-ct-react'
+import {expect, type MountResult, test} from '@playwright/experimental-ct-react'
 import {Example, MinMax} from './ListField.stories.js'
 
 test('keeps the remove control visible beside block row actions', async ({
@@ -86,4 +86,119 @@ test('folds a single item', async ({mount, page}) => {
 
   await hero.getByRole('button', {name: 'Expand Hero'}).click()
   await expect(hero.getByRole('textbox', {name: 'Heading'})).toBeVisible()
+})
+
+type Locator = ReturnType<MountResult['locator']>
+
+/** Accessible names of the direct rows of a list */
+function rowNames(list: Locator) {
+  return list.evaluate(element =>
+    Array.from(
+      element.querySelectorAll(':scope > [data-slot="list-row-drop-target"]')
+    ).map(row =>
+      row.querySelector('[role="listitem"]')!.getAttribute('aria-label')
+    )
+  )
+}
+
+test('reorders rows by dragging the handle', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const hero = sections.getByRole('listitem', {name: 'Hero item 1'})
+  const quote = sections.getByRole('listitem', {name: 'Quote item 2'})
+  await hero.getByRole('button', {name: 'Collapse Hero'}).click()
+  await quote.getByRole('button', {name: 'Collapse Quote'}).click()
+  await hero.hover()
+  const quoteBox = (await quote.boundingBox())!
+  await hero.getByRole('button', {name: 'Drag Hero item 1'}).dragTo(quote, {
+    sourcePosition: {x: 10, y: 6},
+    targetPosition: {x: 40, y: quoteBox.height - 4}
+  })
+  await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
+    'Quote item 1'
+  )
+  await expect(
+    sections.getByRole('listitem', {name: 'Hero item 2'})
+  ).toBeVisible()
+})
+
+test('reorders rows with the keyboard', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const handle = sections.getByRole('button', {name: 'Drag Hero item 1'})
+  await handle.focus()
+  await page.keyboard.press('Enter')
+  await expect(handle).not.toBeFocused()
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Enter')
+  await expect(sections.getByRole('listitem').first()).toHaveAccessibleName(
+    'Quote item 1'
+  )
+  await expect(
+    sections.getByRole('button', {name: 'Drag Hero item 2'})
+  ).toBeFocused()
+})
+
+test('keeps nested list drags inside their own list', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const before = await rowNames(sections)
+  const items = page.getByRole('list', {name: 'Items', exact: true})
+  await expect(items.getByRole('listitem')).toHaveCount(2)
+  const handle = items.getByRole('button', {name: /^Drag .* item 1$/})
+  await handle.focus()
+  await page.keyboard.press('Enter')
+  await expect(handle).not.toBeFocused()
+  // Only the two nested rows are drop targets
+  await expect(
+    page.locator('[data-slot="list-row-drop-target"][tabindex="-1"]')
+  ).toHaveCount(2)
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Enter')
+  await expect(items.getByRole('textbox').first()).toHaveValue(
+    'Review responsive layout'
+  )
+  expect(await rowNames(sections)).toEqual(before)
+})
+
+test('copies and pastes rows', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const hero = sections.getByRole('listitem', {name: 'Hero item 1'})
+  await hero.getByRole('button', {name: 'Hero actions'}).click()
+  await page
+    .getByRole('dialog', {name: 'Hero actions'})
+    .getByRole('button', {name: 'Copy'})
+    .click()
+  await expect(page.getByRole('dialog', {name: 'Hero actions'})).toBeHidden()
+  const count = (await rowNames(sections)).length
+  await sections.getByRole('button', {name: 'Paste Hero'}).last().click()
+  expect(await rowNames(sections)).toHaveLength(count + 1)
+  expect((await rowNames(sections)).at(-1)).toBe(`Hero item ${count + 1}`)
+})
+
+test('adds blocks from the type picker', async ({mount, page}) => {
+  await mount(<Example />)
+  const sections = page.getByRole('list', {name: 'Sections'})
+  const count = (await rowNames(sections)).length
+  await sections.getByRole('button', {name: 'More block types'}).last().click()
+  const picker = page.getByRole('dialog', {name: 'More block types'})
+  const search = picker.getByRole('searchbox', {name: 'Search types'})
+  await expect(search).toBeFocused()
+  await search.fill('zzz')
+  await expect(picker.getByText('No matching types')).toBeVisible()
+  await search.fill('stat')
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('Enter')
+  await expect(picker).toBeHidden()
+  expect((await rowNames(sections)).at(-1)).toBe(`Stat item ${count + 1}`)
+
+  // Insert before a row through the row actions
+  const hero = sections.getByRole('listitem', {name: 'Hero item 1'})
+  await hero.getByRole('button', {name: 'Hero actions'}).click()
+  const actions = page.getByRole('dialog', {name: 'Hero actions'})
+  await actions.getByRole('button', {name: 'Insert before'}).click()
+  await actions.getByRole('option', {name: 'Quote'}).click()
+  await expect(actions).toBeHidden()
+  expect((await rowNames(sections))[0]).toBe('Quote item 1')
 })

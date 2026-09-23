@@ -404,6 +404,7 @@ export function ContentTableRow({
       hasChildItems={hasChildren}
       isDisabled={!selectable}
       data-unselectable={!selectable || undefined}
+      data-highlighted={highlighted || undefined}
       onAction={onAction}
       onPress={onPress}
       onDoubleClick={onDoubleClick}

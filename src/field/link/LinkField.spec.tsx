@@ -241,7 +241,8 @@ test('allows duplicate generic links by default', async ({mount, page}) => {
   const picker = page.getByRole('dialog', {name: 'Pick a link'})
   const home = picker.getByRole('row', {name: /^Home /})
   await expect(home).not.toHaveAttribute('aria-selected', 'true')
-  await expect(home).toHaveClass(/is-linked/)
+  // Rows that are already linked are highlighted
+  await expect(home).toHaveAttribute('data-highlighted', 'true')
   await expect(picker.getByRole('checkbox')).toHaveCount(0)
   await home.click()
 
@@ -324,4 +325,41 @@ test('truncates long link labels', async ({mount, page}) => {
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap'
   })
+})
+
+test('reorders multiple links by dragging the handle', async ({
+  mount,
+  page
+}) => {
+  await mount(<Example />)
+  const resources = page.getByRole('list', {name: 'Resources'})
+  const first = resources.getByRole('listitem', {name: 'Link item 1'})
+  const second = resources.getByRole('listitem', {name: 'Link item 2'})
+  await expect(second).toContainText('Alinea documentation')
+  // Hover the row header to reveal the drag handle
+  await second.hover({position: {x: 40, y: 10}})
+  await second.getByRole('button', {name: 'Drag link item 2'}).dragTo(first, {
+    sourcePosition: {x: 10, y: 6},
+    targetPosition: {x: 40, y: 4}
+  })
+  await expect(
+    resources.getByRole('listitem', {name: 'Link item 1'})
+  ).toContainText('Alinea documentation')
+})
+
+test('reorders multiple links with the keyboard', async ({mount, page}) => {
+  await mount(<Example />)
+  const resources = page.getByRole('list', {name: 'Resources'})
+  const handle = resources.getByRole('button', {name: 'Drag link item 1'})
+  await handle.focus()
+  await page.keyboard.press('Enter')
+  await expect(handle).not.toBeFocused()
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('Enter')
+  await expect(
+    resources.getByRole('listitem', {name: 'Link item 1'})
+  ).toContainText('Alinea documentation')
+  await expect(
+    resources.getByRole('button', {name: 'Drag link item 2'})
+  ).toBeFocused()
 })

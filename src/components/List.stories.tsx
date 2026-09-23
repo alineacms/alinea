@@ -1,5 +1,5 @@
 import styler from '@alinea/styler'
-import type {ComponentType, ReactNode} from 'react'
+import {type ComponentType, type ReactNode, useState} from 'react'
 import type {EntryStatus} from '#/core/Entry.js'
 import {Badge} from './Badge.js'
 import {
@@ -35,6 +35,7 @@ import {
   ListRowBadges,
   ListRowBody,
   ListRowDrag,
+  ListRowDragHandle,
   ListRowFoldButton,
   ListRowFooter,
   ListRowHeader,
@@ -45,6 +46,7 @@ import css from './List.stories.module.css'
 import {Popover, PopoverContent, PopoverTrigger} from './Popover.js'
 import {Surface, SurfaceContent} from './Surface.js'
 import {TextField} from './TextField.js'
+import type {DragMoveEvent} from './types.js'
 
 const styles = styler(css)
 
@@ -184,6 +186,67 @@ export function FieldRows() {
 
 export function DragPreview() {
   return <ListDragPreview icon={IcRoundPanorama} label="Hero" />
+}
+
+interface ReorderRow {
+  id: string
+  label: string
+  icon: ComponentType
+}
+
+const reorderRows: Array<ReorderRow> = [
+  {id: 'hero', label: 'Hero', icon: IcRoundPanorama},
+  {id: 'text', label: 'Text', icon: IcRoundEdit},
+  {id: 'image', label: 'Image', icon: IcRoundImage},
+  {id: 'links', label: 'Links', icon: IcRoundLink}
+]
+
+function moveRows<T extends {id: string}>(
+  rows: Array<T>,
+  {keys, target}: DragMoveEvent
+): Array<T> {
+  const moved = rows.filter(row => keys.has(row.id))
+  const rest = rows.filter(row => !keys.has(row.id))
+  const index = rest.findIndex(row => row.id === target.key)
+  if (index === -1) return rows
+  rest.splice(target.position === 'before' ? index : index + 1, 0, ...moved)
+  return rest
+}
+
+export function Reorderable() {
+  const [rows, setRows] = useState(reorderRows)
+  return (
+    <div style={{maxWidth: 480}}>
+      <List
+        aria-label="Sections"
+        data-depth="muted"
+        onReorder={event => setRows(rows => moveRows(rows, event))}
+      >
+        {rows.map((row, index) => (
+          <ListRow
+            aria-label={row.label}
+            dragPreview={<ListDragPreview icon={row.icon} label={row.label} />}
+            first={index === 0}
+            id={row.id}
+            key={row.id}
+            role="listitem"
+          >
+            <ListRowHeader first={index === 0} hasFold={false}>
+              <ListRowDragHandle aria-label={`Drag ${row.label}`} />
+              <ListRowDrag>
+                <ListRowBadges>
+                  <Badge icon={row.icon} size="sm">
+                    {row.label}
+                  </Badge>
+                </ListRowBadges>
+              </ListRowDrag>
+            </ListRowHeader>
+          </ListRow>
+        ))}
+      </List>
+      <p data-testid="order">{rows.map(row => row.label).join(', ')}</p>
+    </div>
+  )
 }
 
 interface ExampleProps {
@@ -479,4 +542,4 @@ export function EmptySmallLists() {
   )
 }
 
-export default {title: 'Components / List'}
+export default {title: 'Pure components / List'}

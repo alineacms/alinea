@@ -258,6 +258,60 @@
   border-top: 0;
 }
 
+.ListRow-dropTarget {
+  position: relative;
+  display: grid;
+  outline: none;
+}
+
+.ListRow-dropTarget:not(:first-child) > .ListRow:not([data-first-row='true']) {
+  border-top: 1px solid var(--alinea-border);
+}
+
+.ListRow-dropIndicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease-out;
+}
+
+.ListRow-dropIndicator::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  max-width: calc(100% - 20px);
+  height: 6px;
+  background: var(--alinea-primary);
+  border-radius: 4px;
+  transform: translate(-50%, -50%);
+}
+
+.ListRow-dropIndicator[data-position='before'] {
+  top: -4px;
+}
+
+.ListRow-dropIndicator[data-position='after'] {
+  bottom: -4px;
+}
+
+.ListRow-dropTarget:first-child > .ListRow-dropIndicator[data-position='before'] {
+  top: 0;
+}
+
+.ListRow-dropTarget:last-child > .ListRow-dropIndicator[data-position='after'] {
+  bottom: 0;
+}
+
+.ListRow-dropIndicator[data-active] {
+  opacity: 1;
+}
+
 .ListRowDragHandle {
   position: absolute;
   top: -1px;
@@ -288,6 +342,12 @@
 .ListRowDragHandle[data-dragging],
 .ListRowDragHandle:active {
   cursor: grabbing;
+}
+
+.ListRowDragHandle:focus-visible::before {
+  background: var(--alinea-primary);
+  outline: 2px solid var(--alinea-primary-overlay);
+  outline-offset: 2px;
 }
 
 .ListRowHeader {

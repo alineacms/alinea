@@ -1,7 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "import"],
-  "jsPlugins": ["eslint-plugin-react-you-might-not-need-an-effect"],
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "jsPlugins": [
+    "eslint-plugin-react-you-might-not-need-an-effect"
+  ],
   "env": {
     "builtin": true
   },
@@ -13,7 +18,9 @@
         "paths": [
           {
             "name": "jotai",
-            "importNames": ["useAtomValue"],
+            "importNames": [
+              "useAtomValue"
+            ],
             "message": "Use useAtomValueRaw so async values remain visible to TypeScript."
           }
         ]
@@ -30,5 +37,73 @@
     "react-you-might-not-need-an-effect/no-external-store-subscription": "warn",
     "react-you-might-not-need-an-effect/no-initialize-state": "warn",
     "react/rules-of-hooks": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/dashboard/**",
+        "src/field/**",
+        "src/ui/**",
+        "src/preview/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "jotai",
+                "importNames": [
+                  "useAtomValue"
+                ],
+                "message": "Use useAtomValueRaw so async values remain visible to TypeScript."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "react-aria-components",
+                  "react-aria-components/*",
+                  "react-aria",
+                  "react-aria/*",
+                  "react-stately",
+                  "react-stately/*",
+                  "@react-aria/*",
+                  "@react-stately/*",
+                  "@react-types/*",
+                  "@internationalized/*"
+                ],
+                "message": "Use the public components from #/components.js, they wrap react-aria. Add what's missing there instead."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.tsx",
+        "**/*.stories.tsx",
+        "**/*.story.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "jotai",
+                "importNames": [
+                  "useAtomValue"
+                ],
+                "message": "Use useAtomValueRaw so async values remain visible to TypeScript."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
