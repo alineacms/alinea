@@ -4,7 +4,9 @@ import styler from '@alinea/styler'
 import type {Metadata, Viewport} from 'next'
 import type {PropsWithChildren} from 'react'
 import {Footer} from '@/layout/Footer'
+import {FooterSlot} from '@/layout/FooterSlot'
 import {Header} from '@/layout/Header'
+import {SkipLink} from '@/layout/SkipLink'
 import css from './WebLayout.module.scss'
 
 const styles = styler(css)
@@ -35,9 +37,16 @@ export default async function WebLayout({
   const themeClass = theme === 'dark' ? 'theme-dark' : undefined
   return (
     <div className={styles.layout(styler.merge({className: themeClass}))}>
+      <SkipLink />
       <Header badge={badge || undefined} />
-      <div className={styles.layout.content()}>{children}</div>
-      {footer && <Footer />}
+      <div id="content" tabIndex={-1} className={styles.layout.content()}>
+        {children}
+      </div>
+      {footer && (
+        <FooterSlot>
+          <Footer />
+        </FooterSlot>
+      )}
       <cms.previews widget />
     </div>
   )

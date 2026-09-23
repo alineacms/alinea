@@ -1,43 +1,21 @@
 @use '@/style' as *;
 
 .root {
-  flex-grow: 1;
   display: flex;
-  border-top: 1px solid var(--web-outline);
-  background: var(--web-surface);
+  justify-content: center;
+  gap: 64px;
+  padding: 40px 56px 0;
+  // Next.js scrolls a new page into view on navigation, this lands it at the
+  // very top of the document instead of below the sticky header
+  scroll-margin-top: var(--web-docs-offset);
 
-  &-inner {
-    display: flex;
-    width: 100%;
-    max-width: calc(var(--web-content-width) + 2 * var(--web-gutter));
-    margin-inline: auto;
+  @media (max-width: 1279.999px) {
+    gap: 48px;
+    padding-inline: 40px;
   }
 
-  &-sidebar {
-    flex-shrink: 0;
-    border-right: 1px solid var(--web-outline);
-
-    @include sm {
-      display: none;
-    }
-  }
-
-  &-main {
-    flex-grow: 1;
-    min-width: 0;
-    display: flex;
-    justify-content: center;
-    gap: 64px;
-    padding: 48px 56px 0;
-
-    @media (max-width: 1279.999px) {
-      gap: 48px;
-      padding-inline: 40px;
-    }
-
-    @include sm {
-      padding: 32px var(--web-gutter) 0;
-    }
+  @include sm {
+    padding: 28px var(--web-gutter) 0;
   }
 
   &-article {
@@ -134,84 +112,20 @@
     }
   }
 
-  &-pager {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    margin-top: 48px;
-
-    @include s {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    &-link {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 18px 20px;
-      border-radius: 14px;
-      border: 1px solid var(--web-outline);
-      color: var(--web-foreground);
-      transition: border-color 0.15s ease-out;
-
-      &:hover,
-      &:focus-visible {
-        border-color: var(--web-accent);
-      }
-
-      &.is-next {
-        grid-column: 2;
-        align-items: flex-end;
-        text-align: right;
-
-        @include s {
-          grid-column: 1;
-        }
-      }
-
-      &-label {
-        font-size: 13px;
-        color: var(--web-foreground-muted);
-      }
-
-      &-title {
-        font-size: 16px;
-        font-weight: 600;
-        line-height: 1.35;
-      }
-    }
-  }
-
-  &-footer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 40px;
-    padding: 20px 0 48px;
-    border-top: 1px solid var(--web-outline);
-    font-size: 14px;
-    color: var(--web-foreground-muted);
-
-    &-edit {
-      color: var(--web-foreground-faded);
-      transition: color 0.15s ease-out;
-
-      &:hover,
-      &:focus-visible {
-        color: var(--web-accent);
-      }
-    }
-  }
-
   &-toc {
     position: sticky;
-    top: 32px;
+    top: var(--web-docs-offset);
     align-self: flex-start;
     flex-shrink: 0;
     width: 220px;
-    max-height: calc(100vh - 64px);
+    max-height: calc(100dvh - var(--web-docs-offset));
+    padding: 40px 4px 40px 0;
+    margin-top: -40px;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--web-foreground) 15%, transparent)
+      transparent;
 
     @media (max-width: 1199.999px) {
       display: none;

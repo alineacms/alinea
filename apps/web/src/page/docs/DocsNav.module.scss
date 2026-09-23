@@ -37,10 +37,15 @@
     background 0.15s ease-out,
     color 0.15s ease-out;
 
-  &:hover,
-  &:focus-visible {
+  &:hover {
     color: var(--web-foreground);
     background: var(--web-neutral-soft);
+  }
+
+  &:focus-visible {
+    color: var(--web-foreground);
+    outline: 2px solid var(--web-accent);
+    outline-offset: -2px;
   }
 
   &.is-nested {
@@ -58,6 +63,10 @@
     color: var(--web-accent-strong);
     background: var(--web-accent-soft);
   }
+
+  &.is-active:hover {
+    color: var(--web-accent-strong);
+  }
 }
 
 .toggle {
@@ -72,10 +81,15 @@
   color: var(--web-foreground-muted);
   cursor: pointer;
 
-  &:hover,
-  &:focus-visible {
+  &:hover {
     color: var(--web-foreground);
     background: var(--web-neutral-soft);
+  }
+
+  &:focus-visible {
+    color: var(--web-foreground);
+    outline: 2px solid var(--web-accent);
+    outline-offset: -2px;
   }
 
   &-icon {

@@ -1,6 +1,7 @@
 'use client'
 
 import {Breadcrumbs} from '@/layout/Breadcrumbs'
+import {isDocsPath} from '@/utils/docs'
 import styler from '@alinea/styler'
 import {HStack, VStack} from 'alinea/ui'
 import {IcRoundSearch} from 'alinea/ui/icons/IcRoundSearch'
@@ -27,7 +28,12 @@ const styles = styler(css)
 export function HeaderRoot({children}: PropsWithChildren) {
   const pathname = usePathname()
   return (
-    <header className={styles.root({transparent: pathname === '/'})}>
+    <header
+      className={styles.root({
+        transparent: pathname === '/',
+        sticky: isDocsPath(pathname)
+      })}
+    >
       {children}
     </header>
   )

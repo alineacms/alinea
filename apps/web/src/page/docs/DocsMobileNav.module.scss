@@ -1,0 +1,159 @@
+@use '@/style' as *;
+
+.root {
+  position: sticky;
+  top: var(--web-header-height);
+  z-index: 6;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding-inline: calc(var(--web-gutter) - 10px) var(--web-gutter);
+  border-bottom: 1px solid var(--web-outline);
+  background: var(--web-background);
+  font-size: 14px;
+
+  @include sm {
+    display: flex;
+  }
+
+  &-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: var(--web-foreground);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--web-neutral-soft);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: -2px;
+    }
+
+    &-icon {
+      font-size: 18px;
+    }
+  }
+
+  &-separator {
+    flex-shrink: 0;
+    font-size: 14px;
+    color: var(--web-foreground-muted);
+  }
+
+  &-current {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--web-foreground-faded);
+  }
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--web-foreground);
+
+  &::backdrop {
+    background: color-mix(in srgb, var(--web-background) 75%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
+  &[open] {
+    display: flex;
+  }
+
+  &-panel {
+    display: flex;
+    flex-direction: column;
+    width: min(340px, 88vw);
+    height: 100%;
+    border-right: 1px solid var(--web-outline);
+    background: var(--web-surface);
+    animation: drawer-in 0.2s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    height: 60px;
+    padding: 0 12px 0 20px;
+    border-bottom: 1px solid var(--web-outline);
+  }
+
+  &-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--web-foreground-muted);
+  }
+
+  &-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 20px;
+    color: var(--web-foreground-faded);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--web-foreground);
+      background: var(--web-neutral-soft);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--web-accent);
+      outline-offset: -2px;
+    }
+  }
+
+  &-body {
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px 16px 40px;
+  }
+}
+
+:global(html):has(.drawer[open]) {
+  overflow: hidden;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

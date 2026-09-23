@@ -6,6 +6,14 @@
   height: var(--web-header-height);
   z-index: 7;
   color: var(--web-foreground);
+
+  // Docs pages keep the header in view, their sidebar sticks below it
+  &.is-sticky {
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid var(--web-outline);
+    background: var(--web-background);
+  }
 }
 
 .menu {

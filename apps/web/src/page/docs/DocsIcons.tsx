@@ -82,3 +82,31 @@ export function DocsIconArrowRight(props: SVGProps<SVGSVGElement>) {
     </StrokeIcon>
   )
 }
+
+export function DocsIconArrowLeft(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M19 12H5" />
+      <path d="m11 6-6 6 6 6" />
+    </StrokeIcon>
+  )
+}
+
+export function DocsIconMenu(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </StrokeIcon>
+  )
+}
+
+export function DocsIconClose(props: SVGProps<SVGSVGElement>) {
+  return (
+    <StrokeIcon {...props}>
+      <path d="m6 6 12 12" />
+      <path d="M18 6 6 18" />
+    </StrokeIcon>
+  )
+}

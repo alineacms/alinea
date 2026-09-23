@@ -33,7 +33,9 @@
 .h3,
 .h4 {
   color: var(--web-foreground);
-  scroll-margin-top: 24px;
+  scroll-margin-top: calc(
+    var(--web-docs-offset, var(--web-header-height)) + 24px
+  );
 }
 
 .h2 {
@@ -175,6 +177,8 @@
     line-height: 1.3;
     letter-spacing: -0.02em;
     color: var(--web-foreground);
-    scroll-margin-top: 24px;
+    scroll-margin-top: calc(
+      var(--web-docs-offset, var(--web-header-height)) + 24px
+    );
   }
 }
