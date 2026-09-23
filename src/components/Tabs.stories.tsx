@@ -1,142 +1,122 @@
-import {Tab, TabList, TabPanel, Tabs} from './Tabs.js'
+import {useState} from 'react'
+import {Tabs, TabsContent, TabsList, TabsTrigger} from './Tabs.js'
 
-export const Variants = () => (
-  <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
-    <Tabs>
-      <TabList>
-        <Tab id="tab1">Tab 1</Tab>
-        <Tab id="tab2">Tab 2</Tab>
-        <Tab id="tab3">Tab 3</Tab>
-      </TabList>
-      <TabPanel id="tab1">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-      </TabPanel>
-      <TabPanel id="tab2">
-        Aliquam ipsum nisl, venenatis vitae volutpat in, sagittis lorem.
-      </TabPanel>
-      <TabPanel id="tab3">
-        Proin rhoncus, nunc eu venenatis convallis, arcu sagittis risus.
-      </TabPanel>
-    </Tabs>
-    <Tabs variant="subtle">
-      <TabList>
-        <Tab id="tab1">Details</Tab>
-        <Tab id="tab2">Address</Tab>
-        <Tab id="tab3">Contacts</Tab>
-        <Tab id="tab4">Projects</Tab>
-        <Tab id="tab5">Subscriptions</Tab>
-        <Tab id="tab6">Estimates</Tab>
-        <Tab id="tab7">Invoices</Tab>
-      </TabList>
-      <TabPanel id="tab1">
-        Here you can find detailed information about the selected item.
-      </TabPanel>
-      <TabPanel id="tab2">This section contains the address details.</TabPanel>
-      <TabPanel id="tab3">Contact information is listed here.</TabPanel>
-      <TabPanel id="tab4">View and manage your projects in this tab.</TabPanel>
-      <TabPanel id="tab5">
-        Information about your subscriptions can be found here.
-      </TabPanel>
-      <TabPanel id="tab6">
-        This tab contains estimates and related details.
-      </TabPanel>
-      <TabPanel id="tab7">Here you can view and manage your invoices.</TabPanel>
-    </Tabs>
-    <Tabs variant="enclosed">
-      <TabList>
-        <Tab id="tab1">Tab 1</Tab>
-        <Tab id="tab2">Tab 2</Tab>
-        <Tab id="tab3">Tab 3</Tab>
-      </TabList>
-      <TabPanel id="tab1">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-      </TabPanel>
-      <TabPanel id="tab2">
-        Aliquam ipsum nisl, venenatis vitae volutpat in, sagittis lorem.
-      </TabPanel>
-      <TabPanel id="tab3">
-        Proin rhoncus, nunc eu venenatis convallis, arcu sagittis risus.
-      </TabPanel>
-    </Tabs>
-  </div>
-)
+const sections = [
+  {value: 'account', label: 'Account', text: 'Make changes to your account.'},
+  {value: 'password', label: 'Password', text: 'Change your password here.'},
+  {value: 'billing', label: 'Billing', text: 'Manage your subscription.'}
+]
 
-export const Orientation = () => (
-  <Tabs orientation="vertical" variant="subtle" overflow>
-    <TabList overflow>
-      <Tab id="tab1">Tab 1</Tab>
-      <Tab id="tab2">Tab 2</Tab>
-      <Tab id="tab3">Tab 3</Tab>
-    </TabList>
-    <TabPanel id="tab1">
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-    </TabPanel>
-    <TabPanel id="tab2">
-      Aliquam ipsum nisl, venenatis vitae volutpat in, sagittis lorem.
-    </TabPanel>
-    <TabPanel id="tab3">
-      Proin rhoncus, nunc eu venenatis convallis, arcu sagittis risus.
-    </TabPanel>
-  </Tabs>
-)
+export function Example() {
+  return (
+    <Tabs defaultValue="account">
+      <TabsList aria-label="Settings">
+        {sections.map(section => (
+          <TabsTrigger key={section.value} value={section.value}>
+            {section.label}
+          </TabsTrigger>
+        ))}
+        <TabsTrigger value="disabled" disabled>
+          Disabled
+        </TabsTrigger>
+      </TabsList>
+      {sections.map(section => (
+        <TabsContent key={section.value} value={section.value}>
+          {section.text}
+        </TabsContent>
+      ))}
+    </Tabs>
+  )
+}
 
-export const overflow = () => (
-  <Tabs variant="subtle">
-    <TabList>
-      <Tab id="tab1">Details</Tab>
-      <Tab id="tab2">Address</Tab>
-      <Tab id="tab3">Contacts</Tab>
-      <Tab id="tab4">Projects</Tab>
-      <Tab id="tab5">Subscriptions</Tab>
-      <Tab id="tab6">Estimates</Tab>
-      <Tab id="tab7">Invoices</Tab>
-      <Tab id="tab8">Payments</Tab>
-      <Tab id="tab9">Reports</Tab>
-      <Tab id="tab10">Settings</Tab>
-      <Tab id="tab11">Notifications</Tab>
-      <Tab id="tab12">Activity</Tab>
-      <Tab id="tab13">Support</Tab>
-      <Tab id="tab14">Feedback</Tab>
-      <Tab id="tab15">Profile</Tab>
-      <Tab id="tab16">Security</Tab>
-      <Tab id="tab17">Billing</Tab>
-      <Tab id="tab18">Integrations</Tab>
-      <Tab id="tab19">API</Tab>
-      <Tab id="tab20">Logs</Tab>
-    </TabList>
-    <TabPanel id="tab1">
-      Here you can find detailed information about the selected item.
-    </TabPanel>
-    <TabPanel id="tab2">This section contains the address details.</TabPanel>
-    <TabPanel id="tab3">Contact information is listed here.</TabPanel>
-    <TabPanel id="tab4">View and manage your projects in this tab.</TabPanel>
-    <TabPanel id="tab5">
-      Information about your subscriptions can be found here.
-    </TabPanel>
-    <TabPanel id="tab6">
-      This tab contains estimates and related details.
-    </TabPanel>
-    <TabPanel id="tab7">Here you can view and manage your invoices.</TabPanel>
-    <TabPanel id="tab8">Manage your payments in this section.</TabPanel>
-    <TabPanel id="tab9">Access various reports here.</TabPanel>
-    <TabPanel id="tab10">Customize your settings in this tab.</TabPanel>
-    <TabPanel id="tab11">View your notifications here.</TabPanel>
-    <TabPanel id="tab12">Track your activity in this section.</TabPanel>
-    <TabPanel id="tab13">Get support and help here.</TabPanel>
-    <TabPanel id="tab14">Provide feedback in this tab.</TabPanel>
-    <TabPanel id="tab15">Manage your profile information here.</TabPanel>
-    <TabPanel id="tab16">
-      Update your security settings in this section.
-    </TabPanel>
-    <TabPanel id="tab17">
-      View and manage your billing information here.
-    </TabPanel>
-    <TabPanel id="tab18">Configure integrations in this tab.</TabPanel>
-    <TabPanel id="tab19">Access API settings and documentation here.</TabPanel>
-    <TabPanel id="tab20">View system logs in this section.</TabPanel>
-  </Tabs>
-)
+export function Variants() {
+  return (
+    <div style={{display: 'flex', flexDirection: 'column', gap: 32}}>
+      {(['line', 'subtle', 'enclosed'] as const).map(variant => (
+        <Tabs key={variant} variant={variant} defaultValue="account">
+          <TabsList aria-label={`${variant} tabs`}>
+            {sections.map(section => (
+              <TabsTrigger key={section.value} value={section.value}>
+                {section.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {sections.map(section => (
+            <TabsContent key={section.value} value={section.value}>
+              {section.text}
+            </TabsContent>
+          ))}
+        </Tabs>
+      ))}
+    </div>
+  )
+}
+
+export function Controlled() {
+  const [value, setValue] = useState('password')
+  return (
+    <div>
+      <p>Selected: {value}</p>
+      <Tabs value={value} onValueChange={setValue}>
+        <TabsList aria-label="Settings">
+          {sections.map(section => (
+            <TabsTrigger key={section.value} value={section.value}>
+              {section.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {sections.map(section => (
+          <TabsContent key={section.value} value={section.value}>
+            {section.text}
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  )
+}
+
+export function Vertical() {
+  return (
+    <Tabs orientation="vertical" variant="subtle" defaultValue="account">
+      <TabsList aria-label="Settings">
+        {sections.map(section => (
+          <TabsTrigger key={section.value} value={section.value}>
+            {section.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {sections.map(section => (
+        <TabsContent key={section.value} value={section.value}>
+          {section.text}
+        </TabsContent>
+      ))}
+    </Tabs>
+  )
+}
+
+const many = Array.from({length: 20}, (_, index) => `Tab ${index + 1}`)
+
+export function Overflow() {
+  return (
+    <div style={{width: 400}}>
+      <Tabs defaultValue="Tab 1">
+        <TabsList aria-label="Many tabs">
+          {many.map(tab => (
+            <TabsTrigger key={tab} value={tab}>
+              {tab}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {many.map(tab => (
+          <TabsContent key={tab} value={tab}>
+            Content of {tab}
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
+  )
+}
 
 export default {
-  title: 'Components / Tabs'
+  title: 'Pure components / Tabs'
 }

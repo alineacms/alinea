@@ -58,19 +58,14 @@
   min-width: 0;
 }
 
-.EntrySidebar-disclosure [slot='trigger'] {
+.EntrySidebar-disclosureTrigger {
   padding-bottom: 0;
   font-size: 14px;
   line-height: 1.2;
-}
 
-.EntrySidebar-disclosure [slot='trigger'][data-focus-visible],
-.EntrySidebar-disclosure [data-focus-visible-within] {
-  outline: none;
-}
-
-.EntrySidebar-disclosure [data-focus-visible-within] {
-  padding-top: 10px;
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .EntrySidebar-disclosurePanel {

@@ -1,4 +1,4 @@
-import {Button, Tooltip} from '#/components.js'
+import {Button, Tooltip, TooltipContent, TooltipTrigger} from '#/components.js'
 import {
   createExplorerAtoms,
   type DashboardEntry,
@@ -292,14 +292,15 @@ function LinkPickerCompact({
           onEntryAction={commitEntry}
           page={page}
         />
-        <Tooltip tooltip="Expand entry picker">
-          <Button
+        <Tooltip>
+          <TooltipTrigger
             aria-label="Expand entry picker"
             variant="ghost"
             icon={IcRoundOpenInFull}
             size="icon-lg"
             onClick={openExpanded}
           />
+          <TooltipContent>Expand entry picker</TooltipContent>
         </Tooltip>
       </div>
       <ExplorerBody

@@ -1,7 +1,7 @@
 import {
-  Disclosure,
-  DisclosureHeader,
-  DisclosurePanel,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   Icon,
   List,
   ListEmpty,
@@ -10,10 +10,10 @@ import {
   ListItemTitle,
   ListItemVisual,
   Spinner,
-  Tab,
-  TabList,
-  TabPanel,
-  Tabs
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
 } from '#/components.js'
 import {Revision} from '#/core/Connection.js'
 import type {EntryStatus} from '#/core/Entry.js'
@@ -119,34 +119,34 @@ export function EntrySidebar({
     <Sidebar>
       <Tabs
         className={styles.EntrySidebar.tabs()}
-        selectedKey={selectedTab}
-        onSelectionChange={key => {
-          const next = key as EntrySidebarTab
+        value={selectedTab}
+        onValueChange={value => {
+          const next = value as EntrySidebarTab
           if (allowedTabs.includes(next)) setSelectedTab(next)
         }}
       >
         <RailHeader className={styles.EntrySidebar.header()}>
-          <TabList aria-label="Entry sidebar">
-            {hasPreview && <Tab id="preview">Preview</Tab>}
-            {!isMediaFile && <Tab id="history">History</Tab>}
-            <Tab id="references">References</Tab>
-          </TabList>
+          <TabsList aria-label="Entry sidebar">
+            {hasPreview && <TabsTrigger value="preview">Preview</TabsTrigger>}
+            {!isMediaFile && <TabsTrigger value="history">History</TabsTrigger>}
+            <TabsTrigger value="references">References</TabsTrigger>
+          </TabsList>
           {onOpenChange && (
             <EntrySidebarToggle isOpen={true} onOpenChange={onOpenChange} />
           )}
         </RailHeader>
         <SidebarBody className={styles.EntrySidebar.body()}>
           {hasPreview && (
-            <TabPanel
-              id="preview"
+            <TabsContent
+              value="preview"
               className={styles.EntrySidebar.previewPanel()}
             >
               <EntrySidebarPreview entry={entry} localeData={localeData} />
-            </TabPanel>
+            </TabsContent>
           )}
           {!isMediaFile && (
-            <TabPanel
-              id="history"
+            <TabsContent
+              value="history"
               className={styles.EntrySidebar.historyPanel()}
             >
               <EntrySidebarHistory
@@ -154,14 +154,14 @@ export function EntrySidebar({
                 localeData={localeData}
                 previousVersionsOpen={previousVersionsOpen}
               />
-            </TabPanel>
+            </TabsContent>
           )}
-          <TabPanel
-            id="references"
+          <TabsContent
+            value="references"
             className={styles.EntrySidebar.referencesPanel()}
           >
             <EntryReferences entry={entry} localeData={localeData} />
-          </TabPanel>
+          </TabsContent>
         </SidebarBody>
       </Tabs>
     </Sidebar>
@@ -197,19 +197,21 @@ function EntrySidebarHistory({
         </List>
       </section>
       <section className={styles.EntrySidebar.section()}>
-        <Disclosure
+        <Collapsible
           key={entry.id}
           className={styles.EntrySidebar.disclosure()}
-          isExpanded={previousVersionsOpen}
-          onExpandedChange={setPreviousVersionsOpen}
+          open={previousVersionsOpen}
+          onOpenChange={setPreviousVersionsOpen}
         >
-          <DisclosureHeader>Previous versions</DisclosureHeader>
-          <DisclosurePanel className={styles.EntrySidebar.disclosurePanel()}>
-            {previousVersionsOpen && (
-              <EntrySidebarPreviousVersions localeData={localeData} />
-            )}
-          </DisclosurePanel>
-        </Disclosure>
+          <CollapsibleTrigger
+            className={styles.EntrySidebar.disclosureTrigger()}
+          >
+            Previous versions
+          </CollapsibleTrigger>
+          <CollapsibleContent className={styles.EntrySidebar.disclosurePanel()}>
+            <EntrySidebarPreviousVersions localeData={localeData} />
+          </CollapsibleContent>
+        </Collapsible>
       </section>
     </div>
   )
@@ -226,9 +228,7 @@ function EntrySidebarPreviousVersions({
   if (pending && history.length === 0)
     return (
       <div className={styles.EntrySidebar.loading()}>
-        <Spinner
-          aria-label="Loading previous versions"
-        />
+        <Spinner aria-label="Loading previous versions" />
       </div>
     )
   if (history.length === 0)

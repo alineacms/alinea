@@ -1,4 +1,11 @@
-import {Button, Icon, Surface, Tooltip} from '#/components.js'
+import {
+  Button,
+  Icon,
+  Surface,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from '#/components.js'
 import type {Entry} from '#/core/Entry.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
 import {assert} from '#/core/util/Assert.js'
@@ -188,8 +195,8 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
   const tooltip = nextView === 'overview' ? 'Overview view' : 'Edit view'
   const ViewIcon = nextView === 'overview' ? IcOutlineViewList : IcRoundEdit
   return (
-    <Tooltip delay={300} tooltip={tooltip}>
-      <Button
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger
         aria-label={label}
         variant="ghost"
         icon={ViewIcon}
@@ -204,6 +211,7 @@ function EntryViewToggle({entry, page}: EntryViewToggleProps) {
           })
         }
       />
+      <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
   )
 }

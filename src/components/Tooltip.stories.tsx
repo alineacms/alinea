@@ -1,90 +1,82 @@
-import {Button} from 'react-aria-components'
-import {Tooltip} from './Tooltip.js'
+import {useState} from 'react'
+import {IcRoundDelete, IcRoundSave} from '../dashboard/icons.js'
+import {Button} from './Button.js'
+import {Tooltip, TooltipContent, TooltipTrigger} from './Tooltip.js'
 
-export const Basic = () => (
-  <div style={{paddingBlock: '80px'}}>
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 64
-      }}
-    >
-      <Tooltip tooltip="Save">
-        <Button>💾</Button>
-      </Tooltip>
-
-      <Tooltip tooltip="Delete">
-        <Button>❌</Button>
+export function Example() {
+  return (
+    <div style={{padding: 80}}>
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger variant="outline">Hover me</TooltipTrigger>
+        <TooltipContent>Add to library</TooltipContent>
       </Tooltip>
     </div>
-  </div>
-)
+  )
+}
 
-export const Positions = () => (
-  <div style={{paddingBlock: '80px'}}>
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 32
-      }}
-    >
-      <Tooltip
-        placement="start"
-        tooltip="
-      In left-to-right, this is on the left. In right-to-left, this is on the
-      right."
-      >
-        <Button>⬅️</Button>
+export function AsChild() {
+  return (
+    <div style={{display: 'flex', gap: 16, padding: 80}}>
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            icon={IcRoundSave}
+            aria-label="Save"
+          />
+        </TooltipTrigger>
+        <TooltipContent>Save</TooltipContent>
       </Tooltip>
-
-      <Tooltip placement="top" tooltip="This tooltip is above the button">
-        <Button>⬆️</Button>
-      </Tooltip>
-
-      <Tooltip placement="bottom" tooltip="This tooltip is below the button.">
-        <Button>⬇️</Button>
-      </Tooltip>
-
-      <Tooltip
-        placement="end"
-        tooltip="In left-to-right, this is on the right. In right-to-left, this is on the
-      left."
-      >
-        <Button>➡️</Button>
+      <Tooltip delayDuration={0}>
+        <TooltipTrigger asChild>
+          <button type="button">Native button</button>
+        </TooltipTrigger>
+        <TooltipContent>Describes the native button</TooltipContent>
       </Tooltip>
     </div>
-  </div>
-)
+  )
+}
 
-export const DelayedTooltip = () => (
-  <Tooltip delay={500} tooltip="Tooltip appears after 500ms">
-    <Button>⏳</Button>
-  </Tooltip>
-)
+export function Sides() {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, max-content)',
+        gap: 48,
+        padding: 80
+      }}
+    >
+      {(['top', 'right', 'bottom', 'left'] as const).map(side => (
+        <Tooltip key={side} delayDuration={0}>
+          <TooltipTrigger variant="outline">{side}</TooltipTrigger>
+          <TooltipContent side={side}>Tooltip on the {side}</TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  )
+}
 
-export const InteractiveTooltip = () => (
-  <Tooltip
-    tooltip={
-      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-        <strong>Important Info</strong>
-        <p>This tooltip contains multiple elements.</p>
-      </div>
-    }
-  >
-    <Button>🛠️ Hover for info</Button>
-  </Tooltip>
-)
-
-export const DisabledButtonTooltip = () => (
-  <Tooltip tooltip="Cannot perform this action">
-    <Button isDisabled>🔒</Button>
-  </Tooltip>
-)
+export function Controlled() {
+  const [open, setOpen] = useState(true)
+  return (
+    <div style={{display: 'flex', gap: 16, padding: 80}}>
+      <Button onClick={() => setOpen(!open)}>
+        {open ? 'Hide tooltip' : 'Show tooltip'}
+      </Button>
+      <Tooltip open={open} onOpenChange={setOpen}>
+        <TooltipTrigger
+          variant="outline"
+          icon={IcRoundDelete}
+          aria-label="Delete"
+        />
+        <TooltipContent side="right">Cannot be undone</TooltipContent>
+      </Tooltip>
+    </div>
+  )
+}
 
 export default {
-  title: 'Components / Tooltip'
+  title: 'Pure components / Tooltip'
 }

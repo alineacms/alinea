@@ -1,0 +1,28 @@
+.ToggleGroup {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 2px;
+
+  &[data-orientation='vertical'] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  &[data-variant='outline'] {
+    height: 32px;
+    padding: 2px;
+    border: 1px solid var(--alinea-border);
+    border-radius: 8px;
+    background-color: var(--alinea-bg);
+
+    &[data-size='sm'] {
+      border-radius: 7px;
+    }
+
+    &[data-orientation='vertical'] {
+      height: auto;
+      padding: 3px;
+    }
+  }
+}

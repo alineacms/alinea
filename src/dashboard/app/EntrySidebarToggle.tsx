@@ -1,4 +1,4 @@
-import {ToggleButton} from '#/components.js'
+import {Toggle} from '#/components.js'
 import {
   MaterialSymbolsRightPanelCloseRounded,
   MaterialSymbolsRightPanelOpenRounded
@@ -15,17 +15,17 @@ export function EntrySidebarToggle({
   isOpen,
   onOpenChange
 }: EntrySidebarToggleProps) {
-  const Icon = isOpen
-    ? MaterialSymbolsRightPanelCloseRounded
-    : MaterialSymbolsRightPanelOpenRounded
   return (
-    <ToggleButton
+    <Toggle
       className={className}
-      isSelected={isOpen}
+      pressed={isOpen}
       aria-label={isOpen ? 'Close entry sidebar' : 'Open entry sidebar'}
-      onChange={onOpenChange}
-    >
-      <Icon data-slot="icon" />
-    </ToggleButton>
+      onPressedChange={onOpenChange}
+      icon={
+        isOpen
+          ? MaterialSymbolsRightPanelCloseRounded
+          : MaterialSymbolsRightPanelOpenRounded
+      }
+    />
   )
 }

@@ -1,5 +1,4 @@
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -9,6 +8,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   Toolbar,
+  ToolbarButton,
   ToolbarGroup,
   ToolbarSeparator
 } from '#/components.js'
@@ -30,7 +30,7 @@ import {currentAnchor} from './extensions/Anchor.js'
 import {
   defaultToolbar,
   type RichTextToolbarContext,
-  type ToolbarButton,
+  type ToolbarButton as ToolbarButtonConfig,
   type ToolbarConfig,
   type ToolbarGroup as ToolbarConfigGroup,
   type ToolbarMenu
@@ -177,7 +177,7 @@ function ToolbarItems({config, context, menu, ownerId}: ToolbarItemsProps) {
 
 function renderEntry(
   name: string,
-  entry: ToolbarButton | ToolbarMenu | ToolbarConfigGroup,
+  entry: ToolbarButtonConfig | ToolbarMenu | ToolbarConfigGroup,
   context: RichTextToolbarContext,
   menu: boolean,
   ownerId: string
@@ -242,19 +242,20 @@ function renderEntry(
       </DropdownMenuItem>
     )
   }
+  const active = entry.active?.(context)
   return (
-    <Button
+    <ToolbarButton
       key={name}
       size="icon-lg"
-      variant="ghost"
-      active={entry.active?.(context)}
+      active={active}
+      aria-pressed={entry.active ? Boolean(active) : undefined}
       aria-label={title}
       icon={entry.icon?.(context)}
       disabled={entry.disabled?.(context)}
       onClick={() => entry.onSelect(context)}
     >
       {entry.icon ? null : label}
-    </Button>
+    </ToolbarButton>
   )
 }
 
@@ -358,7 +359,7 @@ function browserLink(
 }
 
 function resolve(
-  value: ToolbarButton['label'] | ToolbarMenu['label'],
+  value: ToolbarButtonConfig['label'] | ToolbarMenu['label'],
   context: RichTextToolbarContext
 ) {
   return typeof value === 'function' ? value(context) : value

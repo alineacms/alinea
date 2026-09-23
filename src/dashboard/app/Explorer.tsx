@@ -10,8 +10,8 @@ import {
   PopoverTrigger,
   SearchField,
   Switch,
-  ToggleButton,
-  ToggleButtonGroup
+  ToggleGroup,
+  ToggleGroupItem
 } from '#/components.js'
 import {getRoot, getWorkspace} from '#/core/Internal.js'
 import {MediaFile, MediaLibrary} from '#/core/media/MediaTypes.js'
@@ -276,30 +276,36 @@ function ExplorerResultMode({
   const canBrowse =
     navigationEnabled && !explorer.pickChildren && !search.trim()
   return (
-    <ToggleButtonGroup
+    <ToggleGroup
+      type="single"
       aria-label="Explorer results"
       className={styles.Explorer.resultMode()}
-      disallowEmptySelection
-      selectedKeys={[resultMode]}
-      selectionMode="single"
-      variant="compact"
-      onSelectionChange={(keys: Set<Key>) => {
-        const next = keys.has('matches') ? 'matches' : 'browse'
-        if (!canBrowse && next === 'browse') return
+      value={resultMode}
+      variant="outline"
+      size="sm"
+      onValueChange={value => {
+        if (value !== 'browse' && value !== 'matches') return
+        if (!canBrowse && value === 'browse') return
         startTransition(() => {
-          setResultMode(next)
+          setResultMode(value)
         })
       }}
     >
-      <ToggleButton id="browse" isDisabled={!canBrowse}>
-        <IcRoundAccountTree aria-hidden data-slot="icon" />
+      <ToggleGroupItem
+        value="browse"
+        icon={IcRoundAccountTree}
+        disabled={!canBrowse}
+      >
         Browse
-      </ToggleButton>
-      <ToggleButton id="matches" isDisabled={!canShowFiltered}>
-        <IcRoundFilterList aria-hidden data-slot="icon" />
+      </ToggleGroupItem>
+      <ToggleGroupItem
+        value="matches"
+        icon={IcRoundFilterList}
+        disabled={!canShowFiltered}
+      >
         Filtered
-      </ToggleButton>
-    </ToggleButtonGroup>
+      </ToggleGroupItem>
+    </ToggleGroup>
   )
 }
 

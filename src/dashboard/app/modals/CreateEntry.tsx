@@ -4,8 +4,8 @@ import {
   Select,
   SelectItem,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup
+  ToggleGroup,
+  ToggleGroupItem
 } from '#/components.js'
 import {getType} from '#/core/Internal.js'
 import {Reference} from '#/core/Reference.js'
@@ -270,23 +270,23 @@ function CreateEntryForm() {
                 label="Insert"
                 className={styles.CreateEntry.insertOrder()}
               >
-                <ToggleButtonGroup
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
                   aria-label="Insert"
-                  selectionMode="single"
-                  disallowEmptySelection
-                  selectedKeys={[insertOrder]}
-                  onSelectionChange={key => {
-                    if (key.has('first')) setInsertOrder('first')
-                    else if (key.has('last')) setInsertOrder('last')
+                  value={insertOrder}
+                  onValueChange={value => {
+                    if (value === 'first' || value === 'last')
+                      setInsertOrder(value)
                   }}
                 >
-                  <ToggleButton id="first">
-                    <IcRoundFirstPage data-slot="icon" /> First
-                  </ToggleButton>
-                  <ToggleButton id="last">
-                    <IcRoundLastPage data-slot="icon" /> Last
-                  </ToggleButton>
-                </ToggleButtonGroup>
+                  <ToggleGroupItem value="first" icon={IcRoundFirstPage}>
+                    First
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="last" icon={IcRoundLastPage}>
+                    Last
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </Field>
             )}
           </div>

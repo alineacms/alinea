@@ -1,5 +1,11 @@
 import {type} from '#/config.js'
-import {Surface, Tab, TabList, TabPanel, Tabs} from '#/components.js'
+import {
+  Surface,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from '#/components.js'
 import {Config} from '#/core/Config.js'
 import {isImage as isImageExtension} from '#/core/media/IsImage.js'
 import {MediaLocation} from '#/core/media/MediaLocation.js'
@@ -66,14 +72,14 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
   const node = useEditor().node
   return (
     <Surface className={styles.FileEditor.surface()}>
-      <Tabs className={styles.FileEditor.tabs()}>
+      <Tabs defaultValue="file" className={styles.FileEditor.tabs()}>
         <div className={styles.FileEditor.tabs.header()}>
-          <TabList aria-label="File editor">
-            <Tab id="file">File</Tab>
-            <Tab id="metadata">Metadata</Tab>
-          </TabList>
+          <TabsList aria-label="File editor">
+            <TabsTrigger value="file">File</TabsTrigger>
+            <TabsTrigger value="metadata">Metadata</TabsTrigger>
+          </TabsList>
         </div>
-        <TabPanel id="file" className={styles.FileEditor.tabPanel()}>
+        <TabsContent value="file" className={styles.FileEditor.tabPanel()}>
           <div className={styles.FileEditor({image: isImage})}>
             {isImage && (
               <FilePreview
@@ -154,12 +160,12 @@ export function FileEditor({parentPaths, workspace}: FileEditorProps) {
               )}
             </div>
           </div>
-        </TabPanel>
-        <TabPanel id="metadata" className={styles.FileEditor.tabPanel()}>
+        </TabsContent>
+        <TabsContent value="metadata" className={styles.FileEditor.tabPanel()}>
           <div className={styles.FileEditor.metadataPanel()}>
             <NodeEditor node={node} type={metadataFields} />
           </div>
-        </TabPanel>
+        </TabsContent>
       </Tabs>
     </Surface>
   )

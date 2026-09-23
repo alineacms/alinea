@@ -8,7 +8,9 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Tooltip
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
 } from '#/components.js'
 import type {Page} from '#/dashboard/atoms/nav.js'
 import {rootAtoms, type RootAtoms} from '#/dashboard/atoms/root.js'
@@ -80,8 +82,8 @@ function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
   const setRoute = useSetAtom(routeAtom)
   const selected = page.root === root.key
   return (
-    <Tooltip placement="right" delay={100} tooltip={label}>
-      <Button
+    <Tooltip delayDuration={100}>
+      <TooltipTrigger
         size="icon-lg"
         icon={icon ?? undefined}
         className={styles.WorkspaceRoots.rootButton()}
@@ -94,6 +96,7 @@ function WorkspaceRootButton({page, root}: WorkspaceRootButtonProps) {
         }
         data-selected={selected ? '' : undefined}
       />
+      <TooltipContent side="right">{label}</TooltipContent>
     </Tooltip>
   )
 }
@@ -134,14 +137,17 @@ function WorkspaceProfileMenu({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Tooltip placement="right" delay={100} tooltip={userName}>
-          <Button
-            size="icon-lg"
-            variant="ghost"
-            icon={IcBaselineAccountCircle}
-            className={styles.WorkspaceRoots.profile()}
-            aria-label={userName}
-          />
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon-lg"
+              variant="ghost"
+              icon={IcBaselineAccountCircle}
+              className={styles.WorkspaceRoots.profile()}
+              aria-label={userName}
+            />
+          </TooltipTrigger>
+          <TooltipContent side="right">{userName}</TooltipContent>
         </Tooltip>
       </PopoverTrigger>
       <PopoverContent

@@ -1,4 +1,4 @@
-import {Tab, TabList, TabPanel, Tabs} from '#/components.js'
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '#/components.js'
 import {createType} from '#/core/Type.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -33,24 +33,24 @@ export function LocalisedFieldView({field}: LocalisedFieldViewProps) {
   }, [locales, inner])
   return (
     <Tabs
-      selectedKey={selectedLocale}
-      onSelectionChange={key => setSelectedLocale(String(key))}
+      value={selectedLocale}
+      onValueChange={setSelectedLocale}
       className={styles.LocalisedFieldView()}
     >
-      <TabList>
+      <TabsList>
         {locales.map(locale => {
           return (
-            <Tab id={locale} key={locale}>
+            <TabsTrigger value={locale} key={locale}>
               {locale.toUpperCase()}
-            </Tab>
+            </TabsTrigger>
           )
         })}
-      </TabList>
+      </TabsList>
       {locales.map((locale, index) => {
         return (
-          <TabPanel id={locale} key={locale}>
+          <TabsContent value={locale} key={locale}>
             <NodeEditor node={node} type={types[index]} />
-          </TabPanel>
+          </TabsContent>
         )
       })}
     </Tabs>

@@ -14,7 +14,9 @@ import {
   PopoverTrigger,
   Spinner,
   type Side,
-  Tooltip
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
 } from '#/components.js'
 import styler from '@alinea/styler'
 import {useAtomValueRaw, useSetAtom} from 'jotai'
@@ -67,12 +69,6 @@ export interface ActivityStatusProps {
   mobileSide?: Side
   openOnFail?: boolean
   side?: Side
-}
-
-function tooltipPlacement(side: Side, align?: Align) {
-  if (!align || align === 'center' || side === 'left' || side === 'right')
-    return side
-  return `${side} ${align}` as const
 }
 
 export function ActivityStatus({
@@ -132,57 +128,58 @@ export function ActivityStatus({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
       <PopoverTrigger asChild>
-        <Tooltip
-          placement={tooltipPlacement(popoverSide, popoverAlign)}
-          delay={300}
-          tooltip={label}
-        >
-          <Button
-            size={children ? undefined : 'icon'}
-            variant={children ? 'outline' : 'ghost'}
-            className={styles.ActivityStatus({
-              failed: activity.hasFailed,
-              syncing: showSpinner
-            })}
-            aria-label={children ? ariaLabel : label}
-          >
-            {children ? (
-              <span className={styles.ActivityStatus.label()}>
-                {showSpinner ? (
-                  <Spinner
-                    aria-label={label}
-                    className={styles.ActivityStatus.icon()}
-                  />
-                ) : activity.hasFailed ? (
-                  <IcRoundWarning
-                    aria-hidden="true"
-                    className={styles.ActivityStatus.icon()}
-                  />
-                ) : (
-                  <IcRoundCheck
-                    aria-hidden="true"
-                    className={styles.ActivityStatus.icon()}
-                  />
-                )}
-                {children}
-              </span>
-            ) : showSpinner ? (
-              <Spinner
-                aria-label={label}
-                className={styles.ActivityStatus.icon()}
-              />
-            ) : activity.hasFailed ? (
-              <IcRoundWarning
-                aria-hidden="true"
-                className={styles.ActivityStatus.icon()}
-              />
-            ) : (
-              <IcRoundCheck
-                aria-hidden="true"
-                className={styles.ActivityStatus.icon()}
-              />
-            )}
-          </Button>
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <Button
+              size={children ? undefined : 'icon'}
+              variant={children ? 'outline' : 'ghost'}
+              className={styles.ActivityStatus({
+                failed: activity.hasFailed,
+                syncing: showSpinner
+              })}
+              aria-label={children ? ariaLabel : label}
+            >
+              {children ? (
+                <span className={styles.ActivityStatus.label()}>
+                  {showSpinner ? (
+                    <Spinner
+                      aria-label={label}
+                      className={styles.ActivityStatus.icon()}
+                    />
+                  ) : activity.hasFailed ? (
+                    <IcRoundWarning
+                      aria-hidden="true"
+                      className={styles.ActivityStatus.icon()}
+                    />
+                  ) : (
+                    <IcRoundCheck
+                      aria-hidden="true"
+                      className={styles.ActivityStatus.icon()}
+                    />
+                  )}
+                  {children}
+                </span>
+              ) : showSpinner ? (
+                <Spinner
+                  aria-label={label}
+                  className={styles.ActivityStatus.icon()}
+                />
+              ) : activity.hasFailed ? (
+                <IcRoundWarning
+                  aria-hidden="true"
+                  className={styles.ActivityStatus.icon()}
+                />
+              ) : (
+                <IcRoundCheck
+                  aria-hidden="true"
+                  className={styles.ActivityStatus.icon()}
+                />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side={popoverSide} align={popoverAlign}>
+            {label}
+          </TooltipContent>
         </Tooltip>
       </PopoverTrigger>
       <PopoverContent
