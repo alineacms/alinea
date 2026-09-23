@@ -7,8 +7,9 @@ import {codeHighlighter} from './code/CodeHighlighter'
 
 const styles = styler(css)
 
-export interface CodeVariantsViewProps
-  extends Infer<typeof CodeVariantsBlock> {}
+export interface CodeVariantsViewProps extends Infer<
+  typeof CodeVariantsBlock
+> {}
 
 export async function CodeVariantsView({variants}: CodeVariantsViewProps) {
   const {codeToHtml} = await codeHighlighter

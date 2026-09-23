@@ -38,7 +38,6 @@ export async function CodeTextBlockView({
         <div className={styles.root.code()}>
           <WebTypo.Monospace
             as="div"
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
             dangerouslySetInnerHTML={{__html: html}}
             className={styles.root.code()}
           />

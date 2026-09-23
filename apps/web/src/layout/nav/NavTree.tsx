@@ -44,7 +44,7 @@ function NavTreeItem({level, page}: NavTreeItemProps) {
   const behavesAsNestedSection = page.url === '/docs/tutorial'
   const isOpen = Boolean(
     (level < 1 && !behavesAsNestedSection) ||
-      (showChildren ?? (url && pathname.startsWith(url)))
+    (showChildren ?? (url && pathname.startsWith(url)))
   )
   const isContainer = page.children && page.children.length > 0
   const isActive = pathname === url
