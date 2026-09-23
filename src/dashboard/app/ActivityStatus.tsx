@@ -181,7 +181,7 @@ export function ActivityStatus({
         sideOffset={16}
         style={{
           padding: '0',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'
+          boxShadow: 'var(--alinea-shadow-tooltip)'
         }}
       >
         <div className={styles.ActivityStatus.popover()}>

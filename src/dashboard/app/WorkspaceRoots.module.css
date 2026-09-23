@@ -67,7 +67,7 @@
   justify-content: flex-start;
   gap: 9px;
   padding: 3px 8px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   font-size: var(--alinea-font-size-base);
   font-weight: 400;
 

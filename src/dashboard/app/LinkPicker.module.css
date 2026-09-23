@@ -10,9 +10,9 @@
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: var(--alinea-bg);
-  box-shadow: 0 2px 3.5px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--alinea-shadow-raised);
 }
 
 .LinkPickerCompact {

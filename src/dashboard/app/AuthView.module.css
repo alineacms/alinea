@@ -37,7 +37,7 @@
   width: 40px;
   height: 40px;
   flex: 0 0 auto;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   background: var(--alinea-primary);
   color: var(--alinea-primary-fg);
   font-size: 24px;

@@ -675,6 +675,7 @@ function ExplorerLocationMenu({
               </span>
             ) : (
               <LocaleMenu
+                size="lg"
                 root={localeRoot}
                 locale={selectedLocale}
                 onLocaleChange={selectLocale}

@@ -17,11 +17,13 @@ const styles = styler(css)
 interface LocaleMenuProps {
   root: RootAtoms
   locale: string | null
+  size?: 'default' | 'lg'
   onLocaleChange(locale: string): void
 }
 
 export interface LocaleMenuSelectProps {
   ariaLabel?: string
+  size?: 'default' | 'lg'
   locale: string | null
   locales: ReadonlyArray<string>
   onLocaleChange(locale: string): void
@@ -68,13 +70,19 @@ function LocaleLabel({locale}: LocaleLabelProps) {
   )
 }
 
-export function LocaleMenu({root, locale, onLocaleChange}: LocaleMenuProps) {
+export function LocaleMenu({
+  root,
+  locale,
+  size,
+  onLocaleChange
+}: LocaleMenuProps) {
   const i18n = useAtomValueRaw(root.i18n)
   if (!i18n) return null
   return (
     <LocaleMenuSelect
       locale={locale}
       locales={i18n.locales}
+      size={size}
       onLocaleChange={onLocaleChange}
     />
   )
@@ -84,6 +92,7 @@ export function LocaleMenuSelect({
   ariaLabel = 'Language',
   locale,
   locales,
+  size = 'default',
   onLocaleChange
 }: LocaleMenuSelectProps) {
   const activeLocale = locale ?? locales[0]
@@ -94,6 +103,7 @@ export function LocaleMenuSelect({
         <button
           type="button"
           aria-label={ariaLabel}
+          data-size={size}
           className={styles.LocaleMenu.trigger()}
         >
           <LocaleLabel locale={activeLocale} />

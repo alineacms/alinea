@@ -2,7 +2,7 @@
    dialog chrome to the dashboard look. */
 .DashboardModal {
   padding: 0;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
 
   &:has(.DashboardModalDialog.is-loading) {
     width: auto;

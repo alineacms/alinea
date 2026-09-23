@@ -10,7 +10,7 @@
   max-height: 480px;
   margin: 16px 4px 16px 16px;
   padding: 16px;
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   overflow: hidden;
   background-size: cover;
 
@@ -21,8 +21,8 @@
     inset: 0;
     background: linear-gradient(
       to top,
-      rgb(from var(--alinea-bg) r g b / 20%),
-      rgb(from var(--alinea-bg) r g b / 80%)
+      color-mix(in oklab, var(--alinea-bg) 20%, transparent),
+      color-mix(in oklab, var(--alinea-bg) 80%, transparent)
     );
   }
 }

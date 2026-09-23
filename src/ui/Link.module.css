@@ -1,7 +1,7 @@
 .Link {
   outline: none;
   cursor: pointer;
-  color: var(--alinea-link);
+  color: var(--alinea-primary-subtle-fg);
   text-decoration: underline;
   text-decoration-color: currentColor;
   text-underline-offset: 2px;
@@ -9,11 +9,7 @@
 }
 
 .Link:hover {
-  color: var(--alinea-link-hover);
-}
-
-.Link:active {
-  color: var(--alinea-link-pressed);
+  color: var(--alinea-primary);
 }
 
 .Link:focus-visible {

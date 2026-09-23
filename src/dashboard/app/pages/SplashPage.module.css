@@ -75,7 +75,7 @@
 .SplashPage-action[data-hovered] {
   color: var(--alinea-fg);
   background: var(--alinea-bg);
-  box-shadow: var(--alinea-shadow);
+  box-shadow: var(--alinea-shadow-raised);
 }
 
 .SplashPage-search-label {
@@ -114,10 +114,6 @@
 }
 
 .SplashPage-card {
-  --alinea-card-fg: var(--alinea-fg-muted);
-  --alinea-card-fg-strong: var(--alinea-fg-muted);
-  --alinea-card-fg-subtle: var(--alinea-fg-muted);
-
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -131,13 +127,9 @@
 .SplashPage-card:hover,
 .SplashPage-card:focus-within,
 .SplashPage-card:has(.SplashPage-root[data-pressed]) {
-  --alinea-card-fg: var(--alinea-fg);
-  --alinea-card-fg-strong: var(--alinea-fg-strong);
-  --alinea-card-fg-subtle: var(--alinea-fg-subtle);
-
   box-shadow:
     var(--alinea-shadow-modal),
-    inset 0 0 0 1px var(--alinea-border-hover);
+    inset 0 0 0 1px var(--alinea-border-strong);
 }
 
 .SplashPage-card-header {
@@ -164,13 +156,6 @@
   border: 0;
   border-radius: 0;
   text-align: left;
-
-  --alinea-button-bg: transparent;
-  --alinea-button-hover: transparent;
-}
-
-.SplashPage-card-header-button[data-hovered] {
-  background: transparent;
 }
 
 .SplashPage-card-header-content {
@@ -185,7 +170,7 @@
   flex: 1;
   min-width: 0;
   overflow: hidden;
-  color: var(--alinea-card-fg-strong);
+  color: var(--alinea-fg-muted);
   font-size: 13px;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -212,15 +197,8 @@
   min-height: 41px;
   padding: 4px 0 5px;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--alinea-radius-sm);
   font-weight: 400;
-
-  --alinea-button-bg: transparent;
-  --alinea-button-hover: transparent;
-}
-
-.SplashPage-entry[data-hovered] {
-  background: transparent;
 }
 
 .SplashPage-entry-visual {
@@ -230,7 +208,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: var(--alinea-radius-sm);
   color: var(--alinea-fg-muted);
   background: var(--alinea-bg);
 }
@@ -262,7 +240,7 @@
 .SplashPage-entry-title {
   min-width: 0;
   overflow: hidden;
-  color: var(--alinea-card-fg-strong);
+  color: var(--alinea-fg-muted);
   font-weight: 500;
   text-overflow: ellipsis;
   transition: color 0.25s ease-out;
@@ -279,7 +257,7 @@
   min-width: 0;
   gap: 4px;
   overflow: hidden;
-  color: var(--alinea-card-fg-subtle);
+  color: var(--alinea-fg-muted);
   font-size: inherit;
   font-weight: 400;
   line-height: 1.2;
@@ -291,6 +269,21 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.SplashPage-card:hover,
+.SplashPage-card:focus-within,
+.SplashPage-card:has(.SplashPage-root[data-pressed]) {
+  & .SplashPage-card-header-label,
+  & .SplashPage-entry-title {
+    color: var(--alinea-fg-strong);
+  }
+}
+
+.SplashPage-card-header-button[data-variant]:hover,
+.SplashPage-entry[data-variant]:hover,
+.SplashPage-root[data-variant]:hover {
+  background: transparent;
 }
 
 .SplashPage-card-footer {
@@ -323,7 +316,7 @@
   min-height: 28px;
   padding-inline: 6px;
   overflow: hidden;
-  color: var(--alinea-card-fg-subtle);
+  color: var(--alinea-fg-muted);
   font-size: 12px;
   font-weight: 400;
   opacity: 0.62;
@@ -332,9 +325,6 @@
   transition:
     color 0.25s ease-out,
     opacity 0.25s ease-out;
-
-  --alinea-button-bg: transparent;
-  --alinea-button-hover: transparent;
 }
 
 .SplashPage-root[data-hovered] {

@@ -140,7 +140,7 @@
 
 .Popover-Label {
   padding: 4px 8px;
-  color: var(--alinea-fg-subtle);
+  color: var(--alinea-fg-muted);
   font-size: 12px;
 }
 
@@ -193,10 +193,6 @@
 }
 
 .Explorer-locationBreadcrumbs-root-locale {
-  --alinea-locale-height: 30px;
-  --alinea-locale-font-size: var(--alinea-font-size-base);
-  --alinea-locale-line-height: 24px;
-
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;

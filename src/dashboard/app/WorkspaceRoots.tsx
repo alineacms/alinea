@@ -155,7 +155,7 @@ function WorkspaceProfileMenu({
         side="right"
         align="end"
         sideOffset={16}
-        style={{padding: '0', boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)'}}
+        style={{padding: '0', boxShadow: 'var(--alinea-shadow-tooltip)'}}
       >
         <ul className={styles.WorkspaceRoots.profile.popover()}>
           <li className={styles.WorkspaceRoots.profile.popover.user()}>

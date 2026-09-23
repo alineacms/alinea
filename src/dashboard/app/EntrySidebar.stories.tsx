@@ -29,7 +29,7 @@ const sectionStyle: CSSProperties = {
 
 const headingStyle: CSSProperties = {
   margin: 0,
-  color: 'var(--alinea-content-secondary)',
+  color: 'var(--alinea-fg-muted)',
   fontSize: 'var(--alinea-font-size-base)',
   fontWeight: 500,
   lineHeight: 1

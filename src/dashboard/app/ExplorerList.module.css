@@ -23,7 +23,7 @@
   color: var(--alinea-fg);
   background: var(--alinea-overlay);
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   box-shadow: var(--alinea-shadow-raised);
 }
 
@@ -53,7 +53,7 @@
   color: color-mix(in srgb, var(--alinea-fg) 48%, transparent);
   background: var(--alinea-bg-muted);
   border: 1px solid var(--alinea-border);
-  border-radius: 8px;
+  border-radius: var(--alinea-radius);
   font-size: 24px;
 }
 
