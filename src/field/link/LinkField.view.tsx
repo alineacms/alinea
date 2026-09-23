@@ -35,7 +35,7 @@ import type {Picker} from '#/core/Picker.js'
 import {Reference} from '#/core/Reference.js'
 import {Root} from '#/core/Root.js'
 import {Type} from '#/core/Type.js'
-import {Badge} from '#/dashboard/app/Badge.js'
+import {Badge} from '#/components.js'
 import {CompactRecordFields} from '#/dashboard/app/CompactField.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
@@ -1058,7 +1058,7 @@ function EntryAnchorField({isDisabled, node, value}: EntryAnchorFieldProps) {
 function EntryAnchorBadge({node, value}: EntryAnchorFieldProps) {
   const anchor = useAtomValueRaw(node.field('_anchor')) as string | undefined
   if (value[Reference.type] !== 'entry' || !anchor) return null
-  return <Badge size="small">#{anchor}</Badge>
+  return <Badge size="sm">#{anchor}</Badge>
 }
 
 interface EntryAnchorFieldInnerProps {
@@ -1187,7 +1187,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
   if (type === 'image') return null
   if (type === 'file') {
     return (
-      <Badge {...props} icon={IcRoundAttachFile} size="small">
+      <Badge {...props} icon={IcRoundAttachFile} size="sm">
         File
       </Badge>
     )
@@ -1204,7 +1204,7 @@ function LinkTypeBadge({picker, type, value, ...props}: LinkTypeBadgeProps) {
     )
   }
   return (
-    <Badge {...props} icon={fallbackIcon} size="small">
+    <Badge {...props} icon={fallbackIcon} size="sm">
       {fallbackLabel}
     </Badge>
   )
@@ -1247,7 +1247,7 @@ function EntryLinkTypeBadge({
   const type = entry ? config.schema[entry.type] : undefined
   if (!type) {
     return (
-      <Badge {...props} icon={fallbackIcon} size="small">
+      <Badge {...props} icon={fallbackIcon} size="sm">
         {fallbackLabel}
       </Badge>
     )
@@ -1259,7 +1259,7 @@ function EntryLinkTypeBadge({
         styler.merge({className: props.className})
       )}
       icon={getType(type).icon || IcRoundLink}
-      size="small"
+      size="sm"
     >
       {Type.label(type)}
     </Badge>

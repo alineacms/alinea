@@ -130,3 +130,10 @@ export interface DragDropProps {
   /** Files dropped on an item or on the collection */
   onDropFiles?: (event: DropFilesEvent) => void
 }
+
+export type ContentStatus =
+  | 'published'
+  | 'draft'
+  | 'unpublished'
+  | 'archived'
+  | 'untranslated'

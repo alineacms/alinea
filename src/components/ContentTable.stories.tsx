@@ -1,212 +1,281 @@
 import {useMemo, useState} from 'react'
+import {IcRoundRefresh, LucideFile} from '../dashboard/icons.js'
+import {Badge} from './Badge.js'
 import {Button} from './Button.js'
 import {
   ContentTable,
   type ContentTableColumn,
   ContentTableCell,
   ContentTableRow,
+  ContentTableThumbnail,
   ContentTableTitle
 } from './ContentTable.js'
+import {Select, SelectItem} from './Select.js'
 import type {Key, Selection, SortDescriptor} from './types.js'
 
-interface Product {
+interface Article {
   id: string
   title: string
-  sku: string
-  category: string
-  price: number
-  stock: number
-  updated: string
-  color: string
-  variants?: Array<Product>
+  path: string
+  publicationDate: string
+  createdBy: string
+  updatedBy: string
+  ownerRegion: string
+  visibility: string
+  hue: number
 }
 
-function thumbnail(color: string, label: string) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="${color}"/><text x="32" y="40" font-family="sans-serif" font-size="22" font-weight="600" fill="white" text-anchor="middle">${label}</text></svg>`
+const titles = [
+  'Meet our senior fellow in quantum sensing',
+  'How hyperscalers are rethinking AI infrastructure',
+  'Four decades of in-fab metrology and inspection: pivotal milestones',
+  'Towards scalable single-molecule biosensing',
+  'Biomanufacturing innovations for complex therapeutics',
+  'Neural telemetry breakthrough: new chip delivers ten-fold compression',
+  'Transforming lab-in-the-loop protein engineering',
+  'When does it make sense to move from a monolith',
+  'A flexible sensor that repairs itself',
+  'Two research centers formalize a shared vision',
+  'Photonics on a chip, explained',
+  '2025 in twelve highlights'
+]
+const people = ['Niels', 'Cat', 'Jade', 'Maarten', 'Els']
+const regions = ['International', 'Netherlands', 'Belgium']
+
+const articles: Array<Article> = titles.map((title, index) => ({
+  id: `article-${index}`,
+  title,
+  path: title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, ''),
+  publicationDate: `2026-${String(9 - (index % 9)).padStart(2, '0')}-${String(
+    28 - index * 2
+  ).padStart(2, '0')}`,
+  createdBy: people[index % people.length],
+  updatedBy: people[(index + 3) % people.length],
+  ownerRegion: regions[index % 3 === 2 ? 1 : 0],
+  visibility: regions[index % 4 === 3 ? 2 : 0],
+  hue: (index * 47) % 360
+}))
+
+function thumbnail(hue: number) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="64"><defs><linearGradient id="g" x2="1" y2="1"><stop offset="0" stop-color="hsl(${hue} 70% 55%)"/><stop offset="1" stop-color="hsl(${hue + 60} 60% 25%)"/></linearGradient></defs><rect width="96" height="64" fill="url(#g)"/><circle cx="64" cy="26" r="14" fill="white" fill-opacity=".25"/></svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
-const products: Array<Product> = [
-  {
-    id: 'chair',
-    title: 'Lounge chair',
-    sku: 'FUR-001',
-    category: 'Furniture',
-    price: 649,
-    stock: 12,
-    updated: '2026-09-18',
-    color: '#8b5cf6',
-    variants: [
-      {
-        id: 'chair-oak',
-        title: 'Lounge chair, oak',
-        sku: 'FUR-001-OAK',
-        category: 'Furniture',
-        price: 649,
-        stock: 8,
-        updated: '2026-09-18',
-        color: '#a16207'
-      },
-      {
-        id: 'chair-walnut',
-        title: 'Lounge chair, walnut',
-        sku: 'FUR-001-WAL',
-        category: 'Furniture',
-        price: 699,
-        stock: 4,
-        updated: '2026-09-12',
-        color: '#78350f'
-      }
-    ]
-  },
-  {
-    id: 'lamp',
-    title: 'Desk lamp',
-    sku: 'LIG-014',
-    category: 'Lighting',
-    price: 129,
-    stock: 0,
-    updated: '2026-09-20',
-    color: '#f59e0b'
-  },
-  {
-    id: 'rug',
-    title: 'Wool rug',
-    sku: 'TEX-203',
-    category: 'Textiles',
-    price: 349,
-    stock: 23,
-    updated: '2026-08-30',
-    color: '#0ea5e9'
-  },
-  {
-    id: 'vase',
-    title: 'Ceramic vase',
-    sku: 'DEC-077',
-    category: 'Decoration',
-    price: 59,
-    stock: 41,
-    updated: '2026-09-02',
-    color: '#10b981'
-  }
-]
-
-const columns: Array<ContentTableColumn> = [
-  {id: 'title', header: 'Product', width: '2fr', minWidth: 260, sortable: true},
-  {id: 'category', header: 'Category', width: '1fr', minWidth: 120},
-  {id: 'price', header: 'Price', width: 110, align: 'end', sortable: true},
-  {id: 'stock', header: 'Stock', width: 110, align: 'end', sortable: true},
-  {id: 'updated', header: 'Updated', width: 140, sortable: true}
-]
-
-const currency = new Intl.NumberFormat('en', {
-  style: 'currency',
-  currency: 'EUR'
-})
-const date = new Intl.DateTimeFormat('en', {dateStyle: 'medium'})
-
-function sortProducts(items: Array<Product>, sort: SortDescriptor) {
-  const key = sort.column as keyof Product
-  const sorted = [...items].sort((a, b) => {
-    const left = a[key] ?? ''
-    const right = b[key] ?? ''
-    return left < right ? -1 : left > right ? 1 : 0
-  })
+function sortArticles(items: Array<Article>, sort: SortDescriptor) {
+  const key = sort.column as keyof Article
+  const sorted = [...items].sort((a, b) =>
+    String(a[key]).localeCompare(String(b[key]))
+  )
   return sort.direction === 'asc' ? sorted : sorted.reverse()
 }
 
-function ProductRow({product}: {product: Product}) {
-  return (
-    <ContentTableRow
-      id={product.id}
-      textValue={product.title}
-      hasChildren={Boolean(product.variants)}
-      rows={product.variants?.map(variant => (
-        <ProductRow key={variant.id} product={variant} />
-      ))}
-    >
-      <ContentTableTitle
-        image={thumbnail(product.color, product.title[0])}
-        title={product.title}
-        description={product.sku}
-      />
-      <ContentTableCell>{product.category}</ContentTableCell>
-      <ContentTableCell align="end">
-        {currency.format(product.price)}
-      </ContentTableCell>
-      <ContentTableCell align="end">
-        {product.stock === 0 ? 'Sold out' : product.stock}
-      </ContentTableCell>
-      <ContentTableCell>
-        {date.format(new Date(product.updated))}
-      </ContentTableCell>
-    </ContentTableRow>
-  )
-}
+const articleColumns: Array<ContentTableColumn> = [
+  {id: 'thumbnail', header: 'Thumbnail', width: 104},
+  {id: 'title', header: 'Title', width: '2fr', minWidth: 260, sortable: true},
+  {
+    id: 'publicationDate',
+    header: 'Publication date',
+    width: 140,
+    sortable: true
+  },
+  {id: 'createdBy', header: 'Created by', width: '1fr', minWidth: 110},
+  {id: 'updatedBy', header: 'Updated by', width: '1fr', minWidth: 110},
+  {
+    id: 'ownerRegion',
+    header: 'Owner region',
+    width: '1fr',
+    minWidth: 130,
+    sortable: true
+  },
+  {id: 'visibility', header: 'Visibility', width: 140}
+]
 
 /**
  * A custom root view, as configured with `Config.root({view})`, that lists
- * the root's entries with its own columns.
+ * the root's articles with its own columns, filters and column headers.
  */
 export function CustomRootView() {
+  const [region, setRegion] = useState<string | null>(null)
   const [sort, setSort] = useState<SortDescriptor>({
-    column: 'title',
-    direction: 'asc'
+    column: 'publicationDate',
+    direction: 'desc'
   })
   const [selected, setSelected] = useState<Selection>(new Set())
   const [opened, setOpened] = useState<Key | null>(null)
-  const items = useMemo(() => sortProducts(products, sort), [sort])
-  const count = selected === 'all' ? products.length : selected.size
+  const items = useMemo(
+    () =>
+      sortArticles(
+        articles.filter(article => !region || article.ownerRegion === region),
+        sort
+      ),
+    [region, sort]
+  )
   return (
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         gap: 16,
-        height: 480,
-        padding: 16
+        height: 560,
+        padding: 16,
+        background: 'var(--alinea-bg-muted)'
       }}
     >
-      <header style={{display: 'flex', alignItems: 'center', gap: 12}}>
-        <div style={{flex: 1}}>
-          <h1 style={{margin: 0, fontSize: 20}}>Products</h1>
-          <p style={{margin: 0, color: 'var(--alinea-fg-muted)'}}>
-            {opened ? `Opened ${opened}` : `${products.length} products`}
-          </p>
-        </div>
-        <Button variant="outline" disabled={count === 0}>
-          Archive {count > 0 ? count : ''}
-        </Button>
-        <Button color="primary">New product</Button>
-      </header>
+      <div style={{display: 'flex', alignItems: 'flex-end', gap: 12}}>
+        <Select
+          label="Owner region"
+          placeholder="All owner regions"
+          value={region}
+          onValueChange={setRegion}
+          style={{width: 240}}
+        >
+          {regions.map(name => (
+            <SelectItem key={name} value={name}>
+              {name}
+            </SelectItem>
+          ))}
+        </Select>
+        <span style={{marginLeft: 'auto', color: 'var(--alinea-fg-muted)'}}>
+          {opened && `Opened ${articles.find(a => a.id === opened)?.title} · `}
+          {items.length} articles
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          icon={IcRoundRefresh}
+          aria-label="Refresh"
+        />
+      </div>
       <ContentTable
-        aria-label="Products"
+        aria-label="Articles"
         items={items}
-        columns={columns}
-        expandable
+        columns={articleColumns}
+        rowHeight={64}
         selectionMode="multiple"
         selectedKeys={selected}
         onSelectionChange={setSelected}
         sortDescriptor={sort}
         onSortChange={setSort}
         onRowAction={setOpened}
+        renderEmptyState={() => 'No articles in this region'}
       >
-        {product => <ProductRow product={product} />}
+        {article => (
+          <ContentTableRow id={article.id} textValue={article.title}>
+            <ContentTableThumbnail src={thumbnail(article.hue)} />
+            <ContentTableTitle title={article.title} />
+            <ContentTableCell>{article.publicationDate}</ContentTableCell>
+            <ContentTableCell>{article.createdBy}</ContentTableCell>
+            <ContentTableCell>{article.updatedBy}</ContentTableCell>
+            <ContentTableCell>{article.ownerRegion}</ContentTableCell>
+            <ContentTableCell>
+              <Badge size="sm">{article.visibility}</Badge>
+            </ContentTableCell>
+          </ContentTableRow>
+        )}
       </ContentTable>
     </div>
   )
 }
 
-export function WithoutHeader() {
+const explorerColumns: Array<ContentTableColumn> = [
+  {id: 'title', header: 'Title', width: 300},
+  {id: 'path', header: 'Path', width: '1fr', minWidth: 120},
+  {id: 'publicationDate', header: 'Publication date', width: '1fr'},
+  {id: 'type', header: 'Type', width: '1fr'},
+  {id: 'owner', header: 'Owner', width: '1fr'},
+  {id: 'visibility', header: 'Visibility', width: '1fr'}
+]
+
+/** The same data presented like the dashboard explorer does today */
+export function ExplorerStyle() {
+  const [selected, setSelected] = useState<Selection>(new Set())
+  return (
+    <div
+      style={{height: 480, padding: 16, background: 'var(--alinea-bg-muted)'}}
+    >
+      <ContentTable
+        aria-label="Articles"
+        items={articles}
+        columns={explorerColumns}
+        showHeader={false}
+        selectionMode="multiple"
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
+      >
+        {article => (
+          <ContentTableRow id={article.id} textValue={article.title}>
+            <ContentTableTitle icon={LucideFile} title={article.title} />
+            <ContentTableCell label="Path">{article.path}</ContentTableCell>
+            <ContentTableCell label="Publication date">
+              {article.publicationDate}
+            </ContentTableCell>
+            <ContentTableCell label="Type">Article</ContentTableCell>
+            <ContentTableCell label="Owner">
+              {article.ownerRegion}
+            </ContentTableCell>
+            <ContentTableCell label="Visibility">
+              <Badge size="sm">{article.visibility}</Badge>
+            </ContentTableCell>
+          </ContentTableRow>
+        )}
+      </ContentTable>
+    </div>
+  )
+}
+
+interface Folder {
+  id: string
+  title: string
+  children: Array<Folder>
+}
+
+const folders: Array<Folder> = [
+  {
+    id: 'news',
+    title: 'News',
+    children: [
+      {id: 'news-2026', title: '2026', children: []},
+      {id: 'news-2025', title: '2025', children: []}
+    ]
+  },
+  {id: 'events', title: 'Events', children: []}
+]
+
+function FolderRow({folder}: {folder: Folder}) {
+  return (
+    <ContentTableRow
+      id={folder.id}
+      textValue={folder.title}
+      hasChildren={folder.children.length > 0}
+      rows={folder.children.map(child => (
+        <FolderRow key={child.id} folder={child} />
+      ))}
+    >
+      <ContentTableTitle icon={LucideFile} title={folder.title} />
+      <ContentTableCell label="Entries">
+        {folder.children.length}
+      </ContentTableCell>
+    </ContentTableRow>
+  )
+}
+
+export function NestedRows() {
   return (
     <div style={{height: 260, padding: 16}}>
       <ContentTable
-        aria-label="Products"
-        items={products}
-        columns={columns}
+        aria-label="Folders"
+        items={folders}
+        columns={[
+          {id: 'title', header: 'Title', width: '2fr'},
+          {id: 'entries', header: 'Entries', width: '1fr'}
+        ]}
         showHeader={false}
+        expandable
       >
-        {product => <ProductRow product={product} />}
+        {folder => <FolderRow folder={folder} />}
       </ContentTable>
     </div>
   )
@@ -216,12 +285,16 @@ export function Empty() {
   return (
     <div style={{height: 200, padding: 16}}>
       <ContentTable
-        aria-label="Products"
+        aria-label="Articles"
         items={[]}
-        columns={columns}
-        renderEmptyState={() => 'No products yet'}
+        columns={articleColumns}
+        renderEmptyState={() => 'No articles yet'}
       >
-        {(product: Product) => <ProductRow product={product} />}
+        {(article: Article) => (
+          <ContentTableRow id={article.id} textValue={article.title}>
+            <ContentTableTitle title={article.title} />
+          </ContentTableRow>
+        )}
       </ContentTable>
     </div>
   )

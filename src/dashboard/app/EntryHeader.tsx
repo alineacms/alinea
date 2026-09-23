@@ -38,7 +38,7 @@ import {
   IcRoundSync,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import {EditorBackButton} from './EditorBackButton.js'
 import css from './EntryHeader.module.css'
 import {

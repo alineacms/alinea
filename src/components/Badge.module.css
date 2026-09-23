@@ -1,0 +1,66 @@
+.Badge {
+  --alinea-badge-fg: var(--alinea-fg-subtle);
+  --alinea-badge-bg: var(--alinea-muted);
+
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  align-self: center;
+  gap: 4px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 12px;
+  border-radius: 32px;
+  background: var(--alinea-badge-bg);
+  color: var(--alinea-badge-fg);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 24px;
+  white-space: nowrap;
+
+  &[data-size='sm'] {
+    gap: 3px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  &[data-status='published'] {
+    --alinea-badge-fg: var(--alinea-status-published-fg);
+    --alinea-badge-bg: var(--alinea-status-published-bg);
+  }
+
+  &[data-status='draft'],
+  &[data-status='untranslated'] {
+    --alinea-badge-fg: var(--alinea-status-draft-fg);
+    --alinea-badge-bg: var(--alinea-status-draft-bg);
+  }
+
+  &[data-status='archived'] {
+    --alinea-badge-fg: var(--alinea-status-archived-fg);
+    --alinea-badge-bg: var(--alinea-status-archived-bg);
+  }
+
+  &[data-status='unpublished'] {
+    --alinea-badge-fg: var(--alinea-status-unpublished-fg);
+    --alinea-badge-bg: var(--alinea-status-unpublished-bg);
+  }
+}
+
+.Badge-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+
+  .Badge[data-size='sm'] & {
+    font-size: 12px;
+  }
+}
+
+.Badge-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

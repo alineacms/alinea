@@ -1,7 +1,7 @@
 import {styler} from '@alinea/styler'
 import type {ComponentPropsWithoutRef} from 'react'
 import {IcOutlineLock} from '../icons.js'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import css from './ReadOnlyBadge.module.css'
 
 const styles = styler(css)

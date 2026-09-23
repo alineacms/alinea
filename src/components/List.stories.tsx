@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import type {ComponentType, ReactNode} from 'react'
 import type {EntryStatus} from '#/core/Entry.js'
-import {Badge} from '#/dashboard/app/Badge.js'
+import {Badge} from './Badge.js'
 import {
   IcOutlineDrafts,
   IcRoundArchive,
@@ -110,11 +110,11 @@ export function FieldRows() {
                   expanded
                   onClick={() => undefined}
                 />
-                <Badge icon={IcRoundPanorama} size="small">
+                <Badge icon={IcRoundPanorama} size="sm">
                   Hero
                 </Badge>
                 <ListRowMeta>Landing page intro</ListRowMeta>
-                <Badge size="small">#landing-page-intro</Badge>
+                <Badge size="sm">#landing-page-intro</Badge>
               </ListRowBadges>
             </ListRowDrag>
             <ListRowActions>
@@ -151,7 +151,7 @@ export function FieldRows() {
                   expanded={false}
                   onClick={() => undefined}
                 />
-                <Badge size="small">Quote</Badge>
+                <Badge size="sm">Quote</Badge>
                 <ListRowMeta>Editorial quote</ListRowMeta>
               </ListRowBadges>
             </ListRowDrag>

@@ -1,4 +1,4 @@
-import {Badge} from '#/dashboard/app/Badge.js'
+import {Badge} from '#/components.js'
 import {
   IcOutlineArchive,
   IcRoundCheck,

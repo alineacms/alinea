@@ -7,7 +7,7 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import {
   EntrySidebarVersionRow,
   type EntrySidebarVersionStatus
@@ -85,7 +85,7 @@ function VersionRows({selected, showEditing}: VersionRowsProps) {
           meta="Stijn Codeurs - Today at 10:40"
         >
           {showEditing && row.status === 'draft' && (
-            <Badge size="small">Editing</Badge>
+            <Badge size="sm">Editing</Badge>
           )}
         </EntrySidebarVersionRow>
       ))}

@@ -1,7 +1,7 @@
 import styler from '@alinea/styler'
 import type {ReactNode} from 'react'
 import {Label as LabelPrimitive} from 'react-aria-components'
-import {Badge} from '../dashboard/app/Badge.js'
+import {Badge} from './Badge.js'
 import {IcRoundPublic} from '../dashboard/icons.js'
 import css from './Field.module.css'
 import {Icon} from './Icon.js'
@@ -129,7 +129,7 @@ export function FieldSharedBadge({
     <Badge
       data-slot="field-shared-badge"
       icon={IcRoundPublic}
-      size="small"
+      size="sm"
       title="Shared field"
       {...props}
     >

@@ -23,6 +23,7 @@ import css from './ContentTable.module.css'
 import {FoldIcon} from './FoldIcon.js'
 import {Icon} from './Icon.js'
 import {SelectionCheckbox} from './internal/SelectionCheckbox.js'
+import {Surface} from './Surface.js'
 import type {
   AriaProps,
   DataProps,
@@ -141,12 +142,14 @@ export function ContentTable<T extends object>({
   const isEmpty = Array.from(items).length === 0
   return (
     <ContentTableContext.Provider value={context}>
-      <div
+      <Surface
         data-slot="content-table"
+        data-selectable={selectable || undefined}
         className={styles.ContentTable(styler.merge({className}))}
         style={{
           ...style,
-          ['--alinea-content-table-min-width' as string]: `${minimumWidth(columns, selectable)}px`
+          ['--alinea-content-table-min-width' as string]: `${minimumWidth(columns, selectable)}px`,
+          ['--alinea-content-table-row-height' as string]: `${rowHeight}px`
         }}
       >
         {showHeader && (
@@ -180,7 +183,7 @@ export function ContentTable<T extends object>({
             {renderEmptyState()}
           </div>
         )}
-      </div>
+      </Surface>
     </ContentTableContext.Provider>
   )
 }
@@ -333,40 +336,80 @@ export function ContentTableRow({
 }
 
 export interface ContentTableCellProps extends StyleProps {
+  /**
+   * A small caption above the value, like the dashboard explorer shows its
+   * columns when the header is hidden
+   */
+  label?: ReactNode
   align?: 'start' | 'end'
   children?: ReactNode
 }
 
 export function ContentTableCell({
+  label,
   align,
   className,
-  ...props
+  style,
+  children
 }: ContentTableCellProps) {
   return (
     <div
       data-slot="content-table-cell"
       role="gridcell"
       data-align={align}
-      {...props}
       className={styles.ContentTableCell(styler.merge({className}))}
-    />
+      style={style}
+    >
+      {label && (
+        <span className={styles.ContentTableCell.label()}>{label}</span>
+      )}
+      <span className={styles.ContentTableCell.value()}>{children}</span>
+    </div>
+  )
+}
+
+export interface ContentTableThumbnailProps extends StyleProps {
+  src?: string
+  alt?: string
+}
+
+/** An image cell, sized to the row height */
+export function ContentTableThumbnail({
+  src,
+  alt = '',
+  className,
+  style
+}: ContentTableThumbnailProps) {
+  return (
+    <div
+      data-slot="content-table-thumbnail"
+      role="gridcell"
+      className={styles.ContentTableThumbnail(styler.merge({className}))}
+      style={style}
+    >
+      {src && (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className={styles.ContentTableThumbnail.image()}
+        />
+      )}
+    </div>
   )
 }
 
 export interface ContentTableTitleProps extends StyleProps {
-  /** Thumbnail url, rendered instead of the icon */
-  image?: string
   icon?: IconType
   title: ReactNode
-  /** A second, muted line such as a path or type */
-  description?: ReactNode
+  /** A small caption above the title, eg. the parent path */
+  label?: ReactNode
 }
 
 export function ContentTableTitle({
-  image,
   icon,
   title,
-  description,
+  label,
   className,
   style
 }: ContentTableTitleProps) {
@@ -377,23 +420,12 @@ export function ContentTableTitle({
       className={styles.ContentTableTitle(styler.merge({className}))}
       style={style}
     >
-      {image ? (
-        <img
-          src={image}
-          alt=""
-          loading="lazy"
-          className={styles.ContentTableTitle.image()}
-        />
-      ) : (
-        icon && <Icon icon={icon} className={styles.ContentTableTitle.icon()} />
-      )}
+      {icon && <Icon icon={icon} className={styles.ContentTableTitle.icon()} />}
       <span className={styles.ContentTableTitle.text()}>
-        <span className={styles.ContentTableTitle.title()}>{title}</span>
-        {description && (
-          <span className={styles.ContentTableTitle.description()}>
-            {description}
-          </span>
+        {label && (
+          <span className={styles.ContentTableTitle.label()}>{label}</span>
         )}
+        <span className={styles.ContentTableTitle.title()}>{title}</span>
       </span>
     </div>
   )

@@ -34,7 +34,7 @@ import {
 } from '../../icons.js'
 import {ActivityStatus} from '../ActivityStatus.js'
 import {AppShell, AppShellContent, AppShellInner} from '../AppShell.js'
-import {Badge} from '../Badge.js'
+import {Badge} from '#/components.js'
 import {
   DashboardModal,
   DashboardModalContent,
@@ -368,7 +368,7 @@ function renderUserCell(
       ) : (
         <span className={styles.UsersPage.roles()}>
           {roles.map(role => (
-            <Badge key={role.id} size="small">
+            <Badge key={role.id} size="sm">
               {role.label}
             </Badge>
           ))}

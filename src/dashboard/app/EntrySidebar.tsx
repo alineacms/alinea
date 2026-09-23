@@ -36,7 +36,7 @@ import {
   IcRoundVisibility,
   IcRoundVisibilityOff
 } from '../icons.js'
-import {Badge} from './Badge.js'
+import {Badge} from '#/components.js'
 import {EntryReferences} from './EntryReferences.js'
 import css from './EntrySidebar.module.css'
 import {EntrySidebarPreview} from './EntrySidebarPreview.js'
@@ -291,7 +291,7 @@ function EntrySidebarStatusItem({
       meta={meta}
       onPress={() => setSelectedVersion({type: 'status', status})}
     >
-      {isEditing && <Badge size="small">Editing</Badge>}
+      {isEditing && <Badge size="sm">Editing</Badge>}
     </EntrySidebarVersionRow>
   )
 }

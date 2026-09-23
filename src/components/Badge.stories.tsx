@@ -6,7 +6,7 @@ import {
   IcRoundFlashOn,
   IcRoundPublic,
   IcRoundVisibility
-} from '../icons.js'
+} from '../dashboard/icons.js'
 import {Badge} from './Badge.js'
 
 const storyStyle: CSSProperties = {
@@ -36,16 +36,16 @@ export function Usages() {
     <div style={storyStyle}>
       <h2 style={headingStyle}>Shared label</h2>
       <div style={rowStyle}>
-        <Badge icon={IcRoundPublic} size="small">
+        <Badge icon={IcRoundPublic} size="sm">
           Shared
         </Badge>
       </div>
 
       <h2 style={headingStyle}>Compact multi-select</h2>
       <div style={rowStyle}>
-        <Badge size="small">Web</Badge>
-        <Badge size="small">App</Badge>
-        <Badge size="small">Email</Badge>
+        <Badge size="sm">Web</Badge>
+        <Badge size="sm">App</Badge>
+        <Badge size="sm">Email</Badge>
       </div>
 
       <h2 style={headingStyle}>Reference statuses</h2>
@@ -73,17 +73,17 @@ export function Usages() {
 
       <h2 style={headingStyle}>Sidebar editing state</h2>
       <div style={rowStyle}>
-        <Badge icon={IcRoundEdit} size="small">
+        <Badge icon={IcRoundEdit} size="sm">
           Editing
         </Badge>
       </div>
 
       <h2 style={headingStyle}>Long labels truncate</h2>
       <div style={{...rowStyle, maxWidth: 320, flexWrap: 'nowrap'}}>
-        <Badge icon={IcRoundPublic} size="small">
+        <Badge icon={IcRoundPublic} size="sm">
           A very long shared label that should be truncated
         </Badge>
-        <Badge icon={IcRoundPublic} size="small">
+        <Badge icon={IcRoundPublic} size="sm">
           A very long shared label that should be truncated
         </Badge>
       </div>
@@ -92,5 +92,5 @@ export function Usages() {
 }
 
 export default {
-  title: 'Dashboard / Badge'
+  title: 'Pure components / Badge'
 }

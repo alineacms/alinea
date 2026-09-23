@@ -29,7 +29,7 @@ import {ListRow} from '#/core/ListRow.js'
 import {Schema} from '#/core/Schema.js'
 import {Type} from '#/core/Type.js'
 import {slugify} from '#/core/util/Slugs.js'
-import {Badge} from '#/dashboard/app/Badge.js'
+import {Badge} from '#/components.js'
 import {NodeEditor} from '#/dashboard/app/EntryFields.js'
 import {ReactiveNode} from '#/dashboard/atoms/ReactiveNode.js'
 import {
@@ -791,11 +791,11 @@ function ListFieldRowHeader({
             disabled={isPreview}
             onClick={onToggle}
           />
-          <Badge icon={typeIcon} size="small">
+          <Badge icon={typeIcon} size="sm">
             {label}
           </Badge>
           {displayLabel && <ListRowMeta>{displayLabel}</ListRowMeta>}
-          {showAnchor && <Badge size="small">#{displayAnchor}</Badge>}
+          {showAnchor && <Badge size="sm">#{displayAnchor}</Badge>}
         </ListRowBadges>
       </ListRowDrag>
       <ListRowActions>
