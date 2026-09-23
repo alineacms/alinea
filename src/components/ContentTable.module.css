@@ -1,0 +1,209 @@
+.ContentTable {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--alinea-border);
+  border-radius: 8px;
+  background: var(--alinea-bg);
+  color: var(--alinea-fg);
+}
+
+.ContentTable-body {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  min-width: var(--alinea-content-table-min-width);
+  overflow-y: auto;
+  outline: none;
+}
+
+.ContentTable-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ContentTableHeader {
+  display: grid;
+  flex: 0 0 auto;
+  min-width: var(--alinea-content-table-min-width);
+  border-bottom: 1px solid var(--alinea-border);
+  background: var(--alinea-bg-muted);
+  color: var(--alinea-fg-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ContentTableHeader-head {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  white-space: nowrap;
+
+  &[data-align='end'] {
+    justify-content: flex-end;
+  }
+
+  /* Line up with titles that follow the expand toggle */
+  &.is-indented {
+    padding-inline-start: 36px;
+  }
+}
+
+.ContentTableHeader-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 -4px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--alinea-fg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+  }
+}
+
+.ContentTableHeader-sortIcon {
+  font-size: 14px;
+}
+
+.ContentTableRow {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 100%;
+  border-bottom: 1px solid var(--alinea-border);
+  outline: none;
+  cursor: default;
+
+  &:hover {
+    background: var(--alinea-bg-muted);
+  }
+
+  &[aria-selected='true'] {
+    background: color-mix(in oklab, var(--alinea-primary) 9%, var(--alinea-bg));
+  }
+
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--alinea-ring);
+  }
+}
+
+.ContentTableRow-grid {
+  display: grid;
+  height: 100%;
+}
+
+.ContentTableRow-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ContentTableRow-first {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.ContentTableRow-chevron {
+  display: inline-flex;
+  flex: 0 0 16px;
+  justify-content: center;
+  margin-inline-start: 10px;
+  color: var(--alinea-fg-muted);
+  font-size: 16px;
+}
+
+.ContentTableRow-chevron-button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--alinea-ring);
+  }
+}
+
+.ContentTableCell {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  padding: 0 10px;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &[data-align='end'] {
+    justify-content: flex-end;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.ContentTableTitle {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 10px;
+}
+
+.ContentTableTitle-image {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background: var(--alinea-muted);
+  object-fit: cover;
+}
+
+.ContentTableTitle-icon {
+  flex: 0 0 auto;
+  font-size: 16px;
+}
+
+.ContentTableTitle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ContentTableTitle-title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ContentTableTitle-description {
+  overflow: hidden;
+  color: var(--alinea-fg-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
