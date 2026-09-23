@@ -9,10 +9,7 @@ import * as fsp from 'node:fs/promises'
 import path from 'node:path'
 import prettyBytes from 'pretty-bytes'
 import {compileConfig} from './generate/CompileConfig.js'
-import {
-  cleanupOldDatabases,
-  copyStaticFiles
-} from './generate/CopyStaticFiles.js'
+import {copyStaticFiles} from './generate/CopyStaticFiles.js'
 import {DevDB} from './generate/DevDB.js'
 import {fillCache} from './generate/FillCache.js'
 import type {GenerateContext} from './generate/GenerateContext.js'
@@ -100,7 +97,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
   // One database serves the whole session: a changed config derives the
   // entries again in place instead of closing and reopening the file.
   let db: DevDB | undefined
-  let databaseReady = false
   try {
     for await (const cms of builds) {
       Config.handlerUrl(cms.config)
@@ -159,7 +155,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
         continue
       }
       for await (const db of indexing) {
-        databaseReady = true
         yield {cms, db}
         if (onAfterGenerate && !afterGenerateCalled) {
           const recordCount = await db.count({})
@@ -177,10 +172,6 @@ export async function* generate(options: GenerateOptions): AsyncGenerator<
       }
     }
   } finally {
-    try {
-      await db?.close()
-    } finally {
-      if (databaseReady) await cleanupOldDatabases(context.outDir)
-    }
+    await db?.close()
   }
 }

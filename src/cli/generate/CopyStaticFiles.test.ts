@@ -1,12 +1,12 @@
 import {generatedDatabaseFile} from '#/database/Version.js'
 import {expect, test} from 'bun:test'
-import {mkdtemp, readdir, rm, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, readdir, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {copyStaticFiles} from './CopyStaticFiles.js'
 import type {GenerateContext} from './GenerateContext.js'
 
-test('copying static files removes databases from other Alinea versions', async () => {
+test('copying static files removes outputs from other Alinea versions', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'alinea-generated-'))
   const currentFiles = [
     generatedDatabaseFile,
@@ -17,7 +17,9 @@ test('copying static files removes databases from other Alinea versions', async 
     'database.sqlite',
     'database-old-version.sqlite',
     'database-old-version.sqlite-shm',
-    'database-old-version.sqlite-wal'
+    'database-old-version.sqlite-wal',
+    'source.js',
+    'empty-source.js'
   ]
   try {
     await Promise.all(
@@ -25,6 +27,8 @@ test('copying static files removes databases from other Alinea versions', async 
         writeFile(join(directory, file), '')
       )
     )
+    await mkdir(join(directory, '.server'))
+    oldFiles.push('.server')
 
     await copyStaticFiles({outDir: directory} as GenerateContext)
 
