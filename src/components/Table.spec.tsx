@@ -1,5 +1,6 @@
 import {expect, test} from '@playwright/experimental-ct-react'
 import {
+  Compact,
   CustomRootView,
   DragAndDrop,
   Empty,
@@ -89,4 +90,21 @@ test('collapses columns on narrow screens', async ({mount, page}) => {
   await mount(<DragAndDrop />)
   const row = page.getByRole('row', {name: 'Home'})
   await expect(row.getByText('/', {exact: true})).toBeHidden()
+})
+
+test('rows fill their row height whatever the cells contain', async ({
+  mount,
+  page
+}) => {
+  const heights = async () =>
+    page
+      .getByRole('row')
+      .evaluateAll(rows =>
+        rows.map(row => Math.round(row.getBoundingClientRect().height))
+      )
+  const compact = await mount(<Compact />)
+  expect(new Set(await heights())).toEqual(new Set([44]))
+  await compact.unmount()
+  await mount(<CustomRootView />)
+  expect(new Set(await heights())).toEqual(new Set([64]))
 })

@@ -277,6 +277,28 @@ export function NestedRows() {
   )
 }
 
+/** Single line rows, like the dashboard's compact link picker */
+export function Compact() {
+  return (
+    <div style={{height: 260, width: 420, padding: 16}}>
+      <Table
+        aria-label="Pages"
+        items={folders}
+        columns={[{id: 'title', header: 'Title', width: '1fr'}]}
+        showHeader={false}
+        variant="plain"
+        selectionMode="single"
+      >
+        {folder => (
+          <TableRow id={folder.id} textValue={folder.title}>
+            <TableTitle icon={LucideFile} title={folder.title} />
+          </TableRow>
+        )}
+      </Table>
+    </div>
+  )
+}
+
 interface Page {
   id: string
   title: string
